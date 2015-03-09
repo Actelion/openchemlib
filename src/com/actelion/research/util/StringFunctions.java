@@ -806,7 +806,7 @@ public class StringFunctions {
 	}
 
 	/**
-	 * finds the next corresponding closing bracket "]" to the first open bracket
+	 * finds the next balanced closing bracket "]" to the first open bracket
 	 * "[" in the string.
 	 * @param sLine String
 	 * @param iIndexStart start index
