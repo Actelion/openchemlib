@@ -34,7 +34,9 @@
 package com.actelion.research.chem;
 
 import java.awt.*;
+import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -43,19 +45,24 @@ import java.util.ArrayList;
 public class SVGDepictor extends AbstractDepictor
 {
     public static final int DEFAULT_ELEM_WIDTH = 8;
-    private static int instanceCnt  = 0;
+
+    private static final String FONTNAME = "Helvetica";
+    private static int instanceCnt = 0;
 
     private float lineWidth = 1;
     private int textSize = 10;
-    private String currentColor = "black";
     private int width = 400;
     private int height = 400;
 
+    private String currentColor = "black";
     private final java.util.List<String> bonds = new ArrayList<String>();
     private final java.util.List<String> atoms = new ArrayList<String>();
-    private String id;
 
+    private String id;
     private StringBuffer buffer = new StringBuffer();
+
+    private Font currentFont = new Font(FONTNAME, Font.PLAIN, 12);
+    private Graphics2D graphics;
 
     public SVGDepictor(StereoMolecule mol, String id)
     {
@@ -93,13 +100,13 @@ public class SVGDepictor extends AbstractDepictor
         int x2 = (int) theLine.x2;
         int y1 = (int) theLine.y1;
         int y2 = (int) theLine.y2;
-        String s ="<line " +
-                        "x1=\"" + x1 + "\" " +
-                        "y1=\"" + y1 + "\" " +
-                        "x2=\"" + x2 + "\" " +
-                        "y2=\"" + y2 + "\" " +
-                        "style=\"stroke:" + currentColor + ";" +
-                        "stroke-width:" + (int) (lineWidth) + "\"/>";
+        String s = "<line " +
+                "x1=\"" + x1 + "\" " +
+                "y1=\"" + y1 + "\" " +
+                "x2=\"" + x2 + "\" " +
+                "y2=\"" + y2 + "\" " +
+                "style=\"stroke:" + currentColor + ";" +
+                "stroke-width:" + (int) (lineWidth) + "\"/>";
         write(s);
     }
 
@@ -144,9 +151,10 @@ public class SVGDepictor extends AbstractDepictor
 
         float strWidth = getStringWidth(theString);
         String s = "<text " +
-                "x=\"" + (int) (x - strWidth / 2.0 - 2) + "\" " +
-                "y=\"" + (int) (y + textSize / 3 ) + "\" " +
-                "font-family=\"Helvetica\" font-size=\"" + textSize + "\" " +
+                "x=\"" + (int) (x - strWidth / 2.0) + "\" " +
+                "y=\"" + (int) (y + textSize / 3) + "\" " +
+                "font-family=\" " + currentFont.getName() + "\" " +
+                "font-size=\"" + currentFont.getSize() + "\" " +
                 "fill=\"" + currentColor + "\">" + theString +
                 "</text>";
         write(s);
@@ -172,7 +180,8 @@ public class SVGDepictor extends AbstractDepictor
     @Override
     protected float getStringWidth(String theString)
     {
-        return theString.length() * 5;
+        GlyphVector mCurrentGlyphVector = currentFont.createGlyphVector(graphics.getFontRenderContext(), theString);
+        return (float) mCurrentGlyphVector.getLogicalBounds().getWidth();
     }
 
     @Override
@@ -184,15 +193,16 @@ public class SVGDepictor extends AbstractDepictor
     @Override
     protected void setTextSize(int theSize)
     {
-        textSize = theSize;
-//        System.out.printf("Test size set = %d\n", textSize);
+        if (textSize != theSize) {
+            textSize = theSize;
+            currentFont = new Font(FONTNAME, Font.PLAIN, theSize);
+        }
     }
 
     @Override
     protected void setLineWidth(float width)
     {
         lineWidth = width;
-
     }
 
     @Override
@@ -280,10 +290,11 @@ public class SVGDepictor extends AbstractDepictor
 
         width = (int) viewRect.getWidth();
         height = (int) viewRect.getHeight();
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        graphics = img.createGraphics();
 
         return super.simpleValidateView(viewRect, mode);
     }
-
 
 
 }
