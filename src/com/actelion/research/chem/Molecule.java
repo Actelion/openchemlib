@@ -41,14 +41,14 @@ import java.util.Arrays;
 
 
 public class Molecule implements Serializable {
-    // We need the serialVersionUID in order to make sure, that after obfuscation the Molecule keeps
-    // the same serialVersionUID since the inter-JVM drag & drop checks the Serializable version ID
-    // which is either generated at via hash or can explicitly set via serialVersionUID. Due to the
-    // fact, that the obfuscation process alters member/type names the generated hash is going to
-    // be changed as well.
-    // In addition to the above requirement, the class name should not be obfuscated at all!
+	// We need the serialVersionUID in order to make sure, that after obfuscation the Molecule keeps
+	// the same serialVersionUID since the inter-JVM drag & drop checks the Serializable version ID
+	// which is either generated at via hash or can explicitly set via serialVersionUID. Due to the
+	// fact, that the obfuscation process alters member/type names the generated hash is going to
+	// be changed as well.
+	// In addition to the above requirement, the class name should not be obfuscated at all!
 
-    static final long serialVersionUID = 0x20100310;    // after splitting bond flags and query features
+	static final long serialVersionUID = 0x20100310;	// after splitting bond flags and query features
 
 	public static final int cMaxAtomicNo = 190;
 
@@ -57,9 +57,9 @@ public class Molecule implements Serializable {
 	public static final int cAtomParityNone			= 0x000000;
 	public static final int cAtomParity1			= 0x000001;
 	public static final int cAtomParity2			= 0x000002;
-    public static final int cAtomParityUnknown      = 0x000003;
+	public static final int cAtomParityUnknown	  = 0x000003;
 
-    public static final int cAtomParityIsPseudo     = 0x000004;
+	public static final int cAtomParityIsPseudo	 = 0x000004;
 	protected static final int cAtomFlagSmallRing	= 0x000008;
 
 	public static final int cAtomRadicalState		= 0x000030;
@@ -82,7 +82,7 @@ public class Molecule implements Serializable {
 
 	protected static final int cAtomFlagsHelper		= 0x0003FC0F;
 	protected static final int cAtomFlagsHelper2	= 0x00007C08;
-	protected static final int cAtomFlagsHelper3    = 0x08038007;
+	protected static final int cAtomFlagsHelper3	= 0x08038007;
 
 	protected static final int cAtomFlagsRingBonds	= 0x000C00;
 	protected static final int cAtomFlags2RingBonds = 0x000400;
@@ -93,34 +93,34 @@ public class Molecule implements Serializable {
 	protected static final int cAtomFlagStabilized	= 0x004000;
 
 	private static final int cAtomFlagsCIPParity	= 0x018000;
-    private static final int cAtomFlagsCIPParityShift = 15;
-	public static final int cAtomCIPParityNone      = 0x000000;
-	public static final int cAtomCIPParityRorM      = 0x000001;
-	public static final int cAtomCIPParitySorP	    = 0x000002;
+	private static final int cAtomFlagsCIPParityShift = 15;
+	public static final int cAtomCIPParityNone	  = 0x000000;
+	public static final int cAtomCIPParityRorM	  = 0x000001;
+	public static final int cAtomCIPParitySorP		= 0x000002;
 	public static final int cAtomCIPParityProblem   = 0x000003;
 
 	protected static final int cAtomFlagStereoProblem = 0x020000;
 	protected static final int cAtomFlagMarked		= 0x040000;
 
-        // MDL's enhanced stereochemical representation (ESR group and type may be assigned
+		// MDL's enhanced stereochemical representation (ESR group and type may be assigned
 		// to TH and allene stereo centers as well as to BINAP kind of stereo bonds)
-    public static final int cESRTypeAbs             = 0;
-    public static final int cESRTypeAnd             = 1;
-    public static final int cESRTypeOr              = 2;
-    public static final int cESRMaxGroups           = 32;
-    public static final int cESRGroupBits           = 5;
+	public static final int cESRTypeAbs			 = 0;
+	public static final int cESRTypeAnd			 = 1;
+	public static final int cESRTypeOr			  = 2;
+	public static final int cESRMaxGroups		   = 32;
+	public static final int cESRGroupBits		   = 5;
 
-    protected static final int cAtomFlagsESR        = 0x03F80000;
-    private static final int cAtomFlagsESRType      = 0x00180000;
-    private static final int cAtomFlagsESRTypeShift = 19;
-    private static final int cAtomFlagsESRGroup     = 0x03E00000;
-    private static final int cAtomFlagsESRGroupShift = 21;
+	protected static final int cAtomFlagsESR		= 0x03F80000;
+	private static final int cAtomFlagsESRType	  = 0x00180000;
+	private static final int cAtomFlagsESRTypeShift = 19;
+	private static final int cAtomFlagsESRGroup	 = 0x03E00000;
+	private static final int cAtomFlagsESRGroupShift = 21;
 
-    protected static final int cAtomFlagConfigurationUnknown = 0x04000000;
-    private static final int cAtomFlagIsStereoCenter = 0x08000000;
+	protected static final int cAtomFlagConfigurationUnknown = 0x04000000;
+	private static final int cAtomFlagIsStereoCenter = 0x08000000;
 
-    private static final int cAtomFlagsValence      = 0xF0000000;
-    private static final int cAtomFlagsValenceShift = 28;
+	private static final int cAtomFlagsValence	  = 0xF0000000;
+	private static final int cAtomFlagsValenceShift = 28;
 
 	public static final int cAtomQFNoOfBits			= 29;
 	public static final int cAtomQFAromStateBits	= 2;
@@ -129,14 +129,14 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFRingStateShift	= 3;
 	public static final int cAtomQFHydrogenBits		= 4;
 	public static final int cAtomQFHydrogenShift	= 7;
-    public static final int cAtomQFPiElectronBits   = 3;
-    public static final int cAtomQFPiElectronShift  = 14;
-    public static final int cAtomQFNeighbourBits    = 5;
-    public static final int cAtomQFNeighbourShift   = 17;
-    public static final int cAtomQFRingSizeBits     = 3;
-    public static final int cAtomQFRingSizeShift    = 22;
-    public static final int cAtomQFChargeBits		= 3;
-    public static final int cAtomQFChargeShift		= 25;
+	public static final int cAtomQFPiElectronBits   = 3;
+	public static final int cAtomQFPiElectronShift  = 14;
+	public static final int cAtomQFNeighbourBits	= 5;
+	public static final int cAtomQFNeighbourShift   = 17;
+	public static final int cAtomQFRingSizeBits	 = 3;
+	public static final int cAtomQFRingSizeShift	= 22;
+	public static final int cAtomQFChargeBits		= 3;
+	public static final int cAtomQFChargeShift		= 25;
 	public static final int cAtomQFSimpleFeatures	= 0x0E3FC7FE;
 	public static final int cAtomQFNarrowing		= 0x0E3FC7FE;
 	public static final int cAtomQFAny				= 0x00000001;
@@ -152,26 +152,26 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFNot0Hydrogen		= 0x00000080;
 	public static final int cAtomQFNot1Hydrogen		= 0x00000100;
 	public static final int cAtomQFNot2Hydrogen		= 0x00000200;
-    public static final int cAtomQFNot3Hydrogen     = 0x00000400;
+	public static final int cAtomQFNot3Hydrogen	 = 0x00000400;
 	public static final int cAtomQFNoMoreNeighbours	= 0x00000800;
 	public static final int cAtomQFMoreNeighbours	= 0x00001000;
 	public static final int cAtomQFMatchStereo		= 0x00002000;
-    public static final int cAtomQFPiElectrons      = 0x0001C000;
-    public static final int cAtomQFNot0PiElectrons  = 0x00004000;
-    public static final int cAtomQFNot1PiElectron   = 0x00008000;
-    public static final int cAtomQFNot2PiElectrons  = 0x00010000;
-    public static final int cAtomQFNeighbours       = 0x003E0000;  // these QF refer to non-H neighbours
-    public static final int cAtomQFNot0Neighbours   = 0x00020000;
-    public static final int cAtomQFNot1Neighbour    = 0x00040000;
-    public static final int cAtomQFNot2Neighbours   = 0x00080000;
-    public static final int cAtomQFNot3Neighbours   = 0x00100000;
-    public static final int cAtomQFNot4Neighbours   = 0x00200000;  // this is not 4 or more neighbours
-    public static final int cAtomQFRingSize         = 0x01C00000;
-    public static final int cAtomQFCharge			= 0x0E000000;
-    public static final int cAtomQFNotChargeNeg		= 0x02000000;
-    public static final int cAtomQFNotCharge0		= 0x04000000;
-    public static final int cAtomQFNotChargePos		= 0x08000000;
-    public static final int cAtomQFFlatNitrogen		= 0x10000000;  // currently only used in TorsionDetail
+	public static final int cAtomQFPiElectrons	  = 0x0001C000;
+	public static final int cAtomQFNot0PiElectrons  = 0x00004000;
+	public static final int cAtomQFNot1PiElectron   = 0x00008000;
+	public static final int cAtomQFNot2PiElectrons  = 0x00010000;
+	public static final int cAtomQFNeighbours	   = 0x003E0000;  // these QF refer to non-H neighbours
+	public static final int cAtomQFNot0Neighbours   = 0x00020000;
+	public static final int cAtomQFNot1Neighbour	= 0x00040000;
+	public static final int cAtomQFNot2Neighbours   = 0x00080000;
+	public static final int cAtomQFNot3Neighbours   = 0x00100000;
+	public static final int cAtomQFNot4Neighbours   = 0x00200000;  // this is not 4 or more neighbours
+	public static final int cAtomQFRingSize		 = 0x01C00000;
+	public static final int cAtomQFCharge			= 0x0E000000;
+	public static final int cAtomQFNotChargeNeg		= 0x02000000;
+	public static final int cAtomQFNotCharge0		= 0x04000000;
+	public static final int cAtomQFNotChargePos		= 0x08000000;
+	public static final int cAtomQFFlatNitrogen		= 0x10000000;  // currently only used in TorsionDetail
 
 	public static final int cBondTypeSingle			= 0x00000001;
 	public static final int cBondTypeDouble			= 0x00000002;
@@ -179,10 +179,10 @@ public class Molecule implements Serializable {
 	public static final int cBondTypeDown			= 0x00000009;
 	public static final int cBondTypeUp				= 0x00000011;
 	public static final int cBondTypeCross			= 0x0000001A;
-    public static final int cBondTypeMetalLigand    = 0x00000020;
+	public static final int cBondTypeMetalLigand	= 0x00000020;
 	public static final int cBondTypeDelocalized	= 0x00000040;
 	public static final int cBondTypeDeleted		= 0x00000080;
-    public static final int cBondTypeIncreaseOrder  = 0x0000007F;
+	public static final int cBondTypeIncreaseOrder  = 0x0000007F;
 
 	private static final int cBondTypeMaskSimple	= 0x00000067;	// masks
 	protected static final int cBondTypeMaskStereo	= 0x00000018;
@@ -199,21 +199,21 @@ public class Molecule implements Serializable {
 	private static final int cBondParityIsPseudo	= 0x00000004;
 
 	private static final int cBondFlagsCIPParity	= 0x00000030;
-    protected static final int cBondFlagsCIPParityShift = 4;
-    public static final int cBondCIPParityNone	    = 0x00000000;
-    public static final int cBondCIPParityEorP	    = 0x00000001;
-    public static final int cBondCIPParityZorM      = 0x00000002;
-    public static final int cBondCIPParityProblem   = 0x00000003;
+	protected static final int cBondFlagsCIPParityShift = 4;
+	public static final int cBondCIPParityNone		= 0x00000000;
+	public static final int cBondCIPParityEorP		= 0x00000001;
+	public static final int cBondCIPParityZorM	  = 0x00000002;
+	public static final int cBondCIPParityProblem   = 0x00000003;
 
 	protected static final int cBondFlagRing		= 0x00000040;
 	protected static final int cBondFlagSmallRing	= 0x00000080;
 	protected static final int cBondFlagAromatic	= 0x00000100;
 	protected static final int cBondFlagDelocalized	= 0x00000200;
-    protected static final int cBondFlagsESR        = 0x0001FC00;
-    private static final int cBondFlagsESRType      = 0x00000C00;
-    private static final int cBondFlagsESRTypeShift = 10;
-    private static final int cBondFlagsESRGroup     = 0x0001F000;
-    private static final int cBondFlagsESRGroupShift = 12;
+	protected static final int cBondFlagsESR		= 0x0001FC00;
+	private static final int cBondFlagsESRType	  = 0x00000C00;
+	private static final int cBondFlagsESRTypeShift = 10;
+	private static final int cBondFlagsESRGroup	 = 0x0001F000;
+	private static final int cBondFlagsESRGroupShift = 12;
 	private static final int cBondFlagBGHilited		= 0x00020000;
 	private static final int cBondFlagFGHilited		= 0x00040000;
 
@@ -228,16 +228,16 @@ public class Molecule implements Serializable {
 	public static final int cBondQFBondTypesShift	= 0;
 	public static final int cBondQFRingStateBits	= 2;
 	public static final int cBondQFRingStateShift	= 4;
-    public static final int cBondQFBridgeBits       = 8;
-    public static final int cBondQFBridgeShift      = 6;
-    public static final int cBondQFBridgeMinBits    = 4;
-    public static final int cBondQFBridgeMinShift   = 6;
-    public static final int cBondQFBridgeSpanBits   = 4;
-    public static final int cBondQFBridgeSpanShift  = 10;
-    public static final int cBondQFRingSizeBits     = 3;
-    public static final int cBondQFRingSizeShift    = 14;
-    public static final int cBondQFAromStateBits    = 2;
-    public static final int cBondQFAromStateShift	= 18;
+	public static final int cBondQFBridgeBits	   = 8;
+	public static final int cBondQFBridgeShift	  = 6;
+	public static final int cBondQFBridgeMinBits	= 4;
+	public static final int cBondQFBridgeMinShift   = 6;
+	public static final int cBondQFBridgeSpanBits   = 4;
+	public static final int cBondQFBridgeSpanShift  = 10;
+	public static final int cBondQFRingSizeBits	 = 3;
+	public static final int cBondQFRingSizeShift	= 14;
+	public static final int cBondQFAromStateBits	= 2;
+	public static final int cBondQFAromStateShift	= 18;
 	public static final int cBondQFAllFeatures		= 0x000FFFFF;
 	public static final int cBondQFSimpleFeatures	= 0x000C003F;
 	public static final int cBondQFNarrowing		= 0x000C0030;
@@ -249,9 +249,9 @@ public class Molecule implements Serializable {
 	public static final int cBondQFRingState		= 0x00000030;
 	public static final int cBondQFNotRing			= 0x00000010;
 	public static final int cBondQFRing				= 0x00000020;
-    public static final int cBondQFBridge           = 0x00003FC0;
-    public static final int cBondQFBridgeMin        = 0x000003C0;
-    public static final int cBondQFBridgeSpan       = 0x00003C00;
+	public static final int cBondQFBridge		   = 0x00003FC0;
+	public static final int cBondQFBridgeMin		= 0x000003C0;
+	public static final int cBondQFBridgeSpan	   = 0x00003C00;
 	public static final int cBondQFRingSize			= 0x0001C000;
 	public static final int cBondQFMatchStereo		= 0x00020000;
 	public static final int cBondQFAromState		= 0x000C0000;
@@ -259,37 +259,37 @@ public class Molecule implements Serializable {
 	public static final int cBondQFNotAromatic		= 0x00080000;
 
 
-    public static final int cHelperNone = 0x0000;
-    public static final int cHelperBitNeighbours = 0x0001;
-    public static final int cHelperBitRings = 0x0002;
-    public static final int cHelperBitParities = 0x0004;
-    public static final int cHelperBitCIP = 0x0008;
+	public static final int cHelperNone = 0x0000;
+	public static final int cHelperBitNeighbours = 0x0001;
+	public static final int cHelperBitRings = 0x0002;
+	public static final int cHelperBitParities = 0x0004;
+	public static final int cHelperBitCIP = 0x0008;
 
-    public static final int cHelperBitSymmetrySimple = 0x0010;
-    public static final int cHelperBitSymmetryDiastereotopic = 0x0020;
-    public static final int cHelperBitSymmetryEnantiotopic = 0x0040;
-    public static final int cHelperBitIncludeNitrogenParities = 0x0080;
+	public static final int cHelperBitSymmetrySimple = 0x0010;
+	public static final int cHelperBitSymmetryDiastereotopic = 0x0020;
+	public static final int cHelperBitSymmetryEnantiotopic = 0x0040;
+	public static final int cHelperBitIncludeNitrogenParities = 0x0080;
 
-    public static final int cHelperBitsStereo = 0x00FC;
+	public static final int cHelperBitsStereo = 0x00FC;
 
-    public static final int cHelperNeighbours = cHelperBitNeighbours;
-    public static final int cHelperRings = cHelperNeighbours | cHelperBitRings;
-    public static final int cHelperParities = cHelperRings | cHelperBitParities;
-    public static final int cHelperCIP = cHelperParities | cHelperBitCIP;
+	public static final int cHelperNeighbours = cHelperBitNeighbours;
+	public static final int cHelperRings = cHelperNeighbours | cHelperBitRings;
+	public static final int cHelperParities = cHelperRings | cHelperBitParities;
+	public static final int cHelperCIP = cHelperParities | cHelperBitCIP;
 
-    public static final int cHelperSymmetrySimple = cHelperCIP | cHelperBitSymmetrySimple;
-    public static final int cHelperSymmetryDiastereotopic = cHelperCIP | cHelperBitSymmetryDiastereotopic;
-    public static final int cHelperSymmetryEnantiotopic = cHelperCIP | cHelperBitSymmetryEnantiotopic;
+	public static final int cHelperSymmetrySimple = cHelperCIP | cHelperBitSymmetrySimple;
+	public static final int cHelperSymmetryDiastereotopic = cHelperCIP | cHelperBitSymmetryDiastereotopic;
+	public static final int cHelperSymmetryEnantiotopic = cHelperCIP | cHelperBitSymmetryEnantiotopic;
 
-    public static final int cChiralityIsomerCountMask   = 0x00FFFF;
-	public static final int cChiralityUnknown          	= 0x000000;
-	public static final int cChiralityNotChiral        	= 0x010000;
-    public static final int cChiralityMeso              = 0x020000; // this has added the number of meso isomers
-	public static final int cChiralityRacemic	        = 0x030000;
+	public static final int cChiralityIsomerCountMask   = 0x00FFFF;
+	public static final int cChiralityUnknown		  	= 0x000000;
+	public static final int cChiralityNotChiral			= 0x010000;
+	public static final int cChiralityMeso			  = 0x020000; // this has added the number of meso isomers
+	public static final int cChiralityRacemic			= 0x030000;
 	public static final int cChiralityKnownEnantiomer   = 0x040000;
-    public static final int cChiralityUnknownEnantiomer = 0x050000;
-    public static final int cChiralityEpimers           = 0x060000;
-    public static final int cChiralityDiastereomers     = 0x070000; // this has added the number of diastereomers
+	public static final int cChiralityUnknownEnantiomer = 0x050000;
+	public static final int cChiralityEpimers		   = 0x060000;
+	public static final int cChiralityDiastereomers	 = 0x070000; // this has added the number of diastereomers
 
 	public static final String cAtomLabel[] = { "?",
 		"H"  ,"He" ,"Li" ,"Be" ,"B"  ,"C"  ,"N"  ,"O"  ,
@@ -318,79 +318,79 @@ public class Molecule implements Serializable {
 		"Pro","Ser","Thr","Trp","Tyr","Val" };
 
 	public static final short cRoundedMass[] = { 0,
-       1,      4,      7,      9,     11,     12,   //  H  ,He ,Li ,Be ,B  ,C  ,
-      14,     16,     19,     20,     23,     24,   //  N , O  ,F  ,Ne ,Na ,Mg ,
-      27,     28,     31,     32,     35,     40,   //  Al ,Si ,P  ,S  ,Cl ,Ar ,
-      39,     40,     45,     48,     51,     52,   //  K  ,Ca ,Sc ,Ti ,V  ,Cr ,
-      55,     56,     59,     58,     63,     64,   //  Mn ,Fe ,Co ,Ni ,Cu ,Zn ,
-      69,     74,     75,     80,     79,     84,   //  Ga ,Ge ,As ,Se ,Br ,Kr ,
-      85,     88,     89,     90,     93,     98,   //  Rb ,Sr ,Y  ,Zr ,Nb ,Mo ,
-       0,    102,    103,    106,    107,    114,   //  Tc ,Ru ,Rh ,Pd ,Ag ,Cd ,
-     115,    120,    121,    130,    127,    132,   //  In ,Sn ,Sb ,Te ,I  ,Xe ,
-     133,    138,    139,    140,    141,    142,   //  Cs ,Ba ,La ,Ce ,Pr ,Nd ,
-       0,    152,    153,    158,    159,    164,   //  Pm ,Sm ,Eu ,Gd ,Tb ,Dy ,
-     165,    166,    169,    174,    175,    180,   //  Ho ,Er ,Tm ,Yb ,Lu ,Hf ,
-     181,    184,    187,    192,    193,    195,   //  Ta ,W , Re ,Os ,Ir ,Pt ,
-     197,    202,    205,    208,    209,      0,   //  Au ,Hg ,Tl ,Pb ,Bi ,Po ,
-       0,      0,      0,      0,      0,    232,   //  At ,Rn ,Fr ,Ra ,Ac ,Th ,
-       0,    238,      0,      0,      0,      0,   //  Pa ,U , Np ,Pu ,Am ,Cm ,
-       0,      0,      0,      0,      0,      0,   //  Bk ,Cf ,Es ,Fm ,Md ,No ,
-       0,      0,      0,      0,      0,      0,   //  Lr ,?? ,?? ,?? ,?? ,?? ,
-       0,      0,      0,      0,      0,      0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
-       0,      0,      0,      0,      0,      0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
-       0,      0,      0,      0,      0,      0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
-       0,      0,      0,      0,      0,      0,   //  ?? ,?? ,R4 ,R5 ,R6 ,R7 ,
-       0,      0,      0,      0,      0,      0,   //  R8 ,R9 ,R10,R11,R12,R13,
-       0,      0,      0,      0,      0,      0,   //  R14,R15,R16,R1 ,R2 ,R3 ,
-       0,      0,      0,      0,      0,      0,   //  A  ,A1 ,A2 ,A3 ,?? ,?? ,
-       2,      3,      0,      0,      0,      0,   //  D  ,T  ,X  ,R  ,H2 ,H+
-       0,      0,      0,      0,      0,      0,   //  Nnn,HYD,Pol,?? ,?? ,?? ,
-       0,      0,      0,      0,      0,      0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
-       0,      0,     71,    156,    114,    115,   //  ?? ,?? ,Ala,Arg,Asn,Asp,
-     103,    128,    129,     57,    137,    113,   //  Cys,Gln,Glu,Gly,His,Ile,
-     113,    128,    131,    147,     97,     87,   //  Leu,Lys,Met,Phe,Pro,Ser,
-	 101,    186,    163,     99 };					//  Thr,Trp,Tyr,Val,
+	   1,	  4,	  7,	  9,	 11,	 12,   //  H  ,He ,Li ,Be ,B  ,C  ,
+	  14,	 16,	 19,	 20,	 23,	 24,   //  N , O  ,F  ,Ne ,Na ,Mg ,
+	  27,	 28,	 31,	 32,	 35,	 40,   //  Al ,Si ,P  ,S  ,Cl ,Ar ,
+	  39,	 40,	 45,	 48,	 51,	 52,   //  K  ,Ca ,Sc ,Ti ,V  ,Cr ,
+	  55,	 56,	 59,	 58,	 63,	 64,   //  Mn ,Fe ,Co ,Ni ,Cu ,Zn ,
+	  69,	 74,	 75,	 80,	 79,	 84,   //  Ga ,Ge ,As ,Se ,Br ,Kr ,
+	  85,	 88,	 89,	 90,	 93,	 98,   //  Rb ,Sr ,Y  ,Zr ,Nb ,Mo ,
+	   0,	102,	103,	106,	107,	114,   //  Tc ,Ru ,Rh ,Pd ,Ag ,Cd ,
+	 115,	120,	121,	130,	127,	132,   //  In ,Sn ,Sb ,Te ,I  ,Xe ,
+	 133,	138,	139,	140,	141,	142,   //  Cs ,Ba ,La ,Ce ,Pr ,Nd ,
+	   0,	152,	153,	158,	159,	164,   //  Pm ,Sm ,Eu ,Gd ,Tb ,Dy ,
+	 165,	166,	169,	174,	175,	180,   //  Ho ,Er ,Tm ,Yb ,Lu ,Hf ,
+	 181,	184,	187,	192,	193,	195,   //  Ta ,W , Re ,Os ,Ir ,Pt ,
+	 197,	202,	205,	208,	209,	  0,   //  Au ,Hg ,Tl ,Pb ,Bi ,Po ,
+	   0,	  0,	  0,	  0,	  0,	232,   //  At ,Rn ,Fr ,Ra ,Ac ,Th ,
+	   0,	238,	  0,	  0,	  0,	  0,   //  Pa ,U , Np ,Pu ,Am ,Cm ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  Bk ,Cf ,Es ,Fm ,Md ,No ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  Lr ,?? ,?? ,?? ,?? ,?? ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,R4 ,R5 ,R6 ,R7 ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  R8 ,R9 ,R10,R11,R12,R13,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  R14,R15,R16,R1 ,R2 ,R3 ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  A  ,A1 ,A2 ,A3 ,?? ,?? ,
+	   2,	  3,	  0,	  0,	  0,	  0,   //  D  ,T  ,X  ,R  ,H2 ,H+
+	   0,	  0,	  0,	  0,	  0,	  0,   //  Nnn,HYD,Pol,?? ,?? ,?? ,
+	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
+	   0,	  0,	 71,	156,	114,	115,   //  ?? ,?? ,Ala,Arg,Asn,Asp,
+	 103,	128,	129,	 57,	137,	113,   //  Cys,Gln,Glu,Gly,His,Ile,
+	 113,	128,	131,	147,	 97,	 87,   //  Leu,Lys,Met,Phe,Pro,Ser,
+	 101,	186,	163,	 99 };					//  Thr,Trp,Tyr,Val,
 
 	public static final int cDefaultAtomValence = 6;
-    public static final byte cAtomValence[][] = { null,
-        { 1 }, { 0 }, { 1 }, { 2 }, { 3 }, { 4 }, { 3 }, { 2 }, { 1 }, { 0 },   // H to Ne
-        { 1 }, { 2 }, { 3 }, { 4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 }, { 0 },     // Na to Ar
-        { 1 }, { 2 }, null, null, null, null, null, null, null, null,           // K to Ni
-        null, null, { 2,3 }, { 2,4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 }, { 0,2 }, // Cu to Kr
-        { 1,2,3,4 }, { 2 }, null, null, null, null, null, null, null, null,     // Rb to Pd
-        null, null, { 1,2,3 }, { 2,4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 },        // Ag to I
-        { 0,2,4,6 }, { 1 }, { 2 } };                                                         // Xe to Ba
+	public static final byte cAtomValence[][] = { null,
+		{ 1 }, { 0 }, { 1 }, { 2 }, { 3 }, { 4 }, { 3 }, { 2 }, { 1 }, { 0 },   // H to Ne
+		{ 1 }, { 2 }, { 3 }, { 4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 }, { 0 },	 // Na to Ar
+		{ 1 }, { 2 }, null, null, null, null, null, null, null, null,		   // K to Ni
+		null, null, { 2,3 }, { 2,4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 }, { 0,2 }, // Cu to Kr
+		{ 1,2,3,4 }, { 2 }, null, null, null, null, null, null, null, null,	 // Rb to Pd
+		null, null, { 1,2,3 }, { 2,4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 },		// Ag to I
+		{ 0,2,4,6 }, { 1 }, { 2 } };														 // Xe to Ba
 
-    transient protected int mMaxAtoms;
-    transient protected int mMaxBonds;
+	transient protected int mMaxAtoms;
+	transient protected int mMaxBonds;
 
-    transient protected int mValidHelperArrays;
-    transient protected int mAllAtoms;
-    transient protected int mAllBonds;
-    transient protected int mAtomicNo[];
-    transient protected int mAtomCharge[];
-    transient protected int mAtomMapNo[];
-    transient protected int mAtomMass[];
-    transient protected int mAtomFlags[];
-    transient protected int mAtomQueryFeatures[];
-    transient protected int mBondAtom[][];
-    transient protected int mBondType[];
-    transient protected int mBondFlags[];
-    transient protected int mBondQueryFeatures[];
-    transient protected float mAtomX[];
-    transient protected float mAtomY[];
-    transient protected float mAtomZ[];
-    transient protected boolean mIsFragment;
-    transient protected boolean mIsRacemate;     	// to indicate a molfileV2's chiral flat to be 0
-    transient protected boolean mProtectHydrogen;  	// protects hydrogens atoms from being converted to query features
-    transient protected int mChirality;		    // property set by Canonizer
-    transient protected int[][] mAtomList;
-    transient protected byte[][] mAtomCustomLabel;
+	transient protected int mValidHelperArrays;
+	transient protected int mAllAtoms;
+	transient protected int mAllBonds;
+	transient protected int mAtomicNo[];
+	transient protected int mAtomCharge[];
+	transient protected int mAtomMapNo[];
+	transient protected int mAtomMass[];
+	transient protected int mAtomFlags[];
+	transient protected int mAtomQueryFeatures[];
+	transient protected int mBondAtom[][];
+	transient protected int mBondType[];
+	transient protected int mBondFlags[];
+	transient protected int mBondQueryFeatures[];
+	transient protected float mAtomX[];
+	transient protected float mAtomY[];
+	transient protected float mAtomZ[];
+	transient protected boolean mIsFragment;
+	transient protected boolean mIsRacemate;	 	// to indicate a molfileV2's chiral flat to be 0
+	transient protected boolean mProtectHydrogen;  	// protects hydrogens atoms from being converted to query features
+	transient protected int mChirality;			// property set by Canonizer
+	transient protected int[][] mAtomList;
+	transient protected byte[][] mAtomCustomLabel;
 
-    transient private float mZoomRotationX,mZoomRotationY;
-    transient private float mOriginalAngle[];
-    transient private float mOriginalDistance[];
-    transient private String mName;
+	transient private float mZoomRotationX,mZoomRotationY;
+	transient private float mOriginalAngle[];
+	transient private float mOriginalDistance[];
+	transient private String mName;
 
 	public static int getAtomicNoFromLabel(String atomLabel) {
 		for (int i=1; i<cAtomLabel.length; i++)
@@ -445,7 +445,7 @@ public class Molecule implements Serializable {
 
 
 	private void init() {
-	    mValidHelperArrays = cHelperNone;
+		mValidHelperArrays = cHelperNone;
 		mAtomicNo = new int[mMaxAtoms];
 		mAtomCharge = new int[mMaxAtoms];
 		mAtomMapNo = new int[mMaxAtoms];
@@ -454,7 +454,7 @@ public class Molecule implements Serializable {
 		mAtomZ = new float[mMaxAtoms];
 		mAtomMass = new int[mMaxAtoms];
 		mAtomFlags = new int[mMaxAtoms];
-        mAtomQueryFeatures = new int[mMaxAtoms];
+		mAtomQueryFeatures = new int[mMaxAtoms];
 		mAtomList = null;
 		mAtomCustomLabel = null;
 		mBondAtom = new int[2][mMaxBonds];
@@ -483,7 +483,7 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public int addAtom(float x, float y, float z) {
-	    int atom = addAtom(6);
+		int atom = addAtom(6);
 		mAtomX[atom] = x;
 		mAtomY[atom] = y;
 		mAtomZ[atom] = z;
@@ -516,7 +516,7 @@ public class Molecule implements Serializable {
 
 		mAtomCharge[mAllAtoms] = 0;
 		mAtomFlags[mAllAtoms] = 0;
-        mAtomQueryFeatures[mAllAtoms] = 0;
+		mAtomQueryFeatures[mAllAtoms] = 0;
 		mAtomMapNo[mAllAtoms] = 0;
 		mAtomX[mAllAtoms] = 0;
 		mAtomY[mAllAtoms] = 0;
@@ -524,8 +524,8 @@ public class Molecule implements Serializable {
 
 		if (mAtomList != null)
 			mAtomList[mAllAtoms] = null;
-        if (mAtomCustomLabel != null)
-            mAtomCustomLabel[mAllAtoms] = null;
+		if (mAtomCustomLabel != null)
+			mAtomCustomLabel[mAllAtoms] = null;
 
 		mValidHelperArrays = cHelperNone;
 		return mAllAtoms++;
@@ -540,10 +540,10 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public int addBond(int atm1,int atm2,int type) {
-	    if (atm1 == atm2)
-	        return -1;
+		if (atm1 == atm2)
+			return -1;
 
-	    for (int bnd=0; bnd<mAllBonds; bnd++) {
+		for (int bnd=0; bnd<mAllBonds; bnd++) {
 			if (mBondAtom[0][bnd] == atm1 && mBondAtom[1][bnd] == atm2
 			 || mBondAtom[0][bnd] == atm2 && mBondAtom[1][bnd] == atm1) {
 				if (mBondType[bnd] < type)
@@ -635,7 +635,7 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean addRing(float x, float y, int ringSize, boolean aromatic) {
-        while(mAllAtoms + ringSize > mMaxAtoms)
+		while(mAllAtoms + ringSize > mMaxAtoms)
 			setMaxAtoms(mMaxAtoms*2);
 		while(mAllBonds + ringSize > mMaxBonds)
 			setMaxBonds(mMaxBonds*2);
@@ -786,26 +786,26 @@ public class Molecule implements Serializable {
 		if (mAtomList != null)
 			mAtomList[atom] = null;
 		if (mAtomCustomLabel != null)
-		    mAtomCustomLabel[atom] = null;
+			mAtomCustomLabel[atom] = null;
 
 		if (atomicNo == mAtomicNo[atom]
 		 && mass == mAtomMass[atom]
 		 && abnormalValence == getAtomAbnormalValence(atom)
 		 && radical == getAtomRadical(atom))
-		    return false;
+			return false;
 
 		if (atomicNo == 151 || atomicNo == 152) {	// 'D' or 'T'
 			mass = atomicNo - 149;
 			atomicNo = 1;
 			}
 
-        mAtomFlags[atom] &= (cAtomFlagsColor | cAtomFlagSelected);
+		mAtomFlags[atom] &= (cAtomFlagsColor | cAtomFlagSelected);
 		mAtomicNo[atom] = atomicNo;
 		mAtomMass[atom] = mass;
 		mAtomCharge[atom] = 0;
-        mAtomQueryFeatures[atom] = 0;
-        setAtomAbnormalValence(atom, abnormalValence);
-        setAtomRadical(atom, radical);
+		mAtomQueryFeatures[atom] = 0;
+		setAtomAbnormalValence(atom, abnormalValence);
+		setAtomRadical(atom, radical);
 		removeMappingNo(mAtomMapNo[atom]);
 
 		mValidHelperArrays = cHelperNone;
@@ -823,8 +823,8 @@ public class Molecule implements Serializable {
 	 */
 	public boolean changeAtomCharge(float x, float y, boolean positive) {
 		int atom = findAtom(x,y);
-        return (atom == -1) ? false : changeAtomCharge(atom, positive);
-        }
+		return (atom == -1) ? false : changeAtomCharge(atom, positive);
+		}
 
 
 	/**
@@ -833,8 +833,8 @@ public class Molecule implements Serializable {
 	 * @param positive
 	 * @return
 	 */
-    public boolean changeAtomCharge(int atom, boolean positive) {
-        if (positive) {
+	public boolean changeAtomCharge(int atom, boolean positive) {
+		if (positive) {
 			if (mAtomCharge[atom] > 3) return false;
 			mAtomCharge[atom]++;
 			}
@@ -848,59 +848,59 @@ public class Molecule implements Serializable {
 		}
 
 
-    /**
+	/**
 	 * High level function for constructing a molecule.
-     * @param bnd
-     * @param type
-     * @return
-     */
+	 * @param bnd
+	 * @param type
+	 * @return
+	 */
 	public boolean changeBond(int bnd, int type) {
 		boolean bondWasChanged = false;
 		int oldType = mBondType[bnd];
 
 		if (type == cBondTypeIncreaseOrder) {
 			bondWasChanged = incrementBondOrder(bnd);
-		    }
+			}
 		else if (validateBondType(bnd, type)) {
-    		if (type == cBondTypeUp || type == cBondTypeDown) {
-    			boolean bondAtAtom1Qualifies = qualifiesAsStereoBond(bnd, mBondAtom[0][bnd]);
-    			boolean bondAtAtom2Qualifies = qualifiesAsStereoBond(bnd, mBondAtom[1][bnd]);
-    			if (type == oldType) {
-    			    // If both atoms are stereocenters (or none is recognized yet as stereo center)
-    			    // or if only one atom is a stereo center and the bond points to the other one
-    			    // then we can invert the bond direction.
-                    if (bondAtAtom1Qualifies == bondAtAtom2Qualifies
-                     || bondAtAtom2Qualifies) {
-        				int temp = mBondAtom[0][bnd];
-        				mBondAtom[0][bnd] = mBondAtom[1][bnd];
-        				mBondAtom[1][bnd] = temp;
-        	            bondWasChanged = true;
-                        }
-    				}
-    			else {
-    					// if stereo center information available assure proper bond direction
-    				if (!bondAtAtom1Qualifies && bondAtAtom2Qualifies) {
-    					int temp = mBondAtom[0][bnd];
-    					mBondAtom[0][bnd] = mBondAtom[1][bnd];
-    					mBondAtom[1][bnd] = temp;
-    					}
-    	            mBondType[bnd] = type;
-    	            bondWasChanged = true;
-    				}
-    		    }
-    		else {
-                mBondType[bnd] = type;
-                bondWasChanged = true;
-    		    }
-	        }
+			if (type == cBondTypeUp || type == cBondTypeDown) {
+				boolean bondAtAtom1Qualifies = qualifiesAsStereoBond(bnd, mBondAtom[0][bnd]);
+				boolean bondAtAtom2Qualifies = qualifiesAsStereoBond(bnd, mBondAtom[1][bnd]);
+				if (type == oldType) {
+					// If both atoms are stereocenters (or none is recognized yet as stereo center)
+					// or if only one atom is a stereo center and the bond points to the other one
+					// then we can invert the bond direction.
+					if (bondAtAtom1Qualifies == bondAtAtom2Qualifies
+					 || bondAtAtom2Qualifies) {
+						int temp = mBondAtom[0][bnd];
+						mBondAtom[0][bnd] = mBondAtom[1][bnd];
+						mBondAtom[1][bnd] = temp;
+						bondWasChanged = true;
+						}
+					}
+				else {
+						// if stereo center information available assure proper bond direction
+					if (!bondAtAtom1Qualifies && bondAtAtom2Qualifies) {
+						int temp = mBondAtom[0][bnd];
+						mBondAtom[0][bnd] = mBondAtom[1][bnd];
+						mBondAtom[1][bnd] = temp;
+						}
+					mBondType[bnd] = type;
+					bondWasChanged = true;
+					}
+				}
+			else {
+				mBondType[bnd] = type;
+				bondWasChanged = true;
+				}
+			}
 
 		if (bondWasChanged) {
-            mValidHelperArrays = (oldType & cBondTypeMaskSimple)
-                                 == (type & cBondTypeMaskSimple) ?
-                        mValidHelperArrays & cHelperRings
-                      : cHelperNone;
+			mValidHelperArrays = (oldType & cBondTypeMaskSimple)
+								 == (type & cBondTypeMaskSimple) ?
+						mValidHelperArrays & cHelperRings
+					  : cHelperNone;
 			mBondQueryFeatures[bnd] = 0;
-		    }
+			}
 
 		return bondWasChanged;
 		}
@@ -913,30 +913,30 @@ public class Molecule implements Serializable {
 	 * @return true if an attached stereo bond aids in stereo recognition
 	 */
 	private boolean qualifiesAsStereoBond(int bond, int atom) {
-	    if (getBondOrder(bond) != 1)
-	    	return false;
+		if (getBondOrder(bond) != 1)
+			return false;
 
-	    if ((mAtomFlags[atom] & cAtomFlagsParity) != cAtomParityNone)
-	    	return true;
+		if ((mAtomFlags[atom] & cAtomFlagsParity) != cAtomParityNone)
+			return true;
 
-	    // stereo bond at allene 
-	    for (int i=0; i<mAllBonds; i++)
-	    	if (i != bond
-	    	 && mBondType[i] == cBondTypeDouble
-	    	 &&	((mBondAtom[0][i] == atom && (mAtomFlags[mBondAtom[1][i]] & cAtomFlagsParity) != cAtomParityNone)
-	    	  || (mBondAtom[1][i] == atom && (mAtomFlags[mBondAtom[0][i]] & cAtomFlagsParity) != cAtomParityNone)))
-	    		return true;
+		// stereo bond at allene 
+		for (int i=0; i<mAllBonds; i++)
+			if (i != bond
+			 && mBondType[i] == cBondTypeDouble
+			 &&	((mBondAtom[0][i] == atom && (mAtomFlags[mBondAtom[1][i]] & cAtomFlagsParity) != cAtomParityNone)
+			  || (mBondAtom[1][i] == atom && (mAtomFlags[mBondAtom[0][i]] & cAtomFlagsParity) != cAtomParityNone)))
+				return true;
 
-	    // stereo bond indicating BINAP axial chirality
-	    for (int i=0; i<mAllBonds; i++)
-	    	if (i != bond
-	    	 && mBondType[i] == cBondTypeSingle
-	    	 && (mBondAtom[0][i] == atom || mBondAtom[1][i] == atom)
-	    	 && (mBondFlags[i] & cBondFlagsParity) != cBondParityNone)
-	    		return true;
+		// stereo bond indicating BINAP axial chirality
+		for (int i=0; i<mAllBonds; i++)
+			if (i != bond
+			 && mBondType[i] == cBondTypeSingle
+			 && (mBondAtom[0][i] == atom || mBondAtom[1][i] == atom)
+			 && (mBondFlags[i] & cBondFlagsParity) != cBondParityNone)
+				return true;
 
-	    return false;
-	    }
+		return false;
+		}
 
 
 	/**
@@ -945,17 +945,17 @@ public class Molecule implements Serializable {
 	 * @return atom mapping from original mol to this molecule after incorporation of mol
 	 */
 	public int[] addMolecule(Molecule mol) {
-	    int[] atomMap = new int[mol.mAllAtoms];
-        int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
-        int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
-        for (int atom=0; atom<mol.mAllAtoms; atom++) {
-            atomMap[atom] = mol.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
-            }
+		int[] atomMap = new int[mol.mAllAtoms];
+		int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
+		int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
+		for (int atom=0; atom<mol.mAllAtoms; atom++) {
+			atomMap[atom] = mol.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
+			}
 		for (int bond=0; bond<mol.mAllBonds; bond++) {
-            mol.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
+			mol.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
 			}
 
-        mIsRacemate = (mIsRacemate && mol.mIsRacemate);
+		mIsRacemate = (mIsRacemate && mol.mIsRacemate);
 		mChirality = cChiralityUnknown;
 		mIsFragment |= mol.mIsFragment;
 		mValidHelperArrays = cHelperNone;
@@ -971,19 +971,19 @@ public class Molecule implements Serializable {
 	 */
 	public int[] addSubstituent(Molecule substituent, int connectionAtom) {
 		int[] atomMap = new int[substituent.mAllAtoms];
-        int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
-        int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
+		int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
+		int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
 		for (int atom=0; atom<substituent.mAllAtoms; atom++) {
 			if (substituent.getAtomicNo(atom) != 0)
-                atomMap[atom] = substituent.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
+				atomMap[atom] = substituent.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
 			else
 				atomMap[atom] = connectionAtom;
 			}
 		for (int bond=0; bond<substituent.mAllBonds; bond++) {
-		    substituent.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
+			substituent.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
 			}
 
-        mIsRacemate = (mIsRacemate && substituent.mIsRacemate);
+		mIsRacemate = (mIsRacemate && substituent.mIsRacemate);
 		mChirality = cChiralityUnknown;
 		mValidHelperArrays = cHelperNone;
 		return atomMap;
@@ -997,20 +997,20 @@ public class Molecule implements Serializable {
 	 * @param destMol
 	 */
 	public void copyMolecule(Molecule destMol) {
-        destMol.mAtomList = null;
-        destMol.mAtomCustomLabel = null;
+		destMol.mAtomList = null;
+		destMol.mAtomCustomLabel = null;
 
-        destMol.mIsFragment = mIsFragment;	// to allow copying of atom/bond query features
+		destMol.mIsFragment = mIsFragment;	// to allow copying of atom/bond query features
 
-        destMol.mAllAtoms = 0;
+		destMol.mAllAtoms = 0;
 		for (int atom=0; atom<mAllAtoms;atom++)
 			copyAtom(destMol, atom, 0, 0);
 
-        destMol.mAllBonds = 0;
+		destMol.mAllBonds = 0;
 		for (int bnd=0; bnd<mAllBonds;bnd++)
 			copyBond(destMol, bnd, 0, 0, null, false);
 
-        copyMoleculeProperties(destMol);
+		copyMoleculeProperties(destMol);
 		}
 
 
@@ -1024,39 +1024,39 @@ public class Molecule implements Serializable {
 	 * @return index of new atom in destMol
 	 */
 	public int copyAtom(Molecule destMol, int sourceAtom, int esrGroupOffsetAND, int esrGroupOffsetOR) {
-	    int destAtom = destMol.mAllAtoms;
+		int destAtom = destMol.mAllAtoms;
 		if (destAtom >= destMol.mMaxAtoms)
 			destMol.setMaxAtoms(destMol.mMaxAtoms*2);
 
-        int esrType = getAtomESRType(sourceAtom);
-        int esrGroup = -1;
-        if (esrType == cESRTypeAnd) {
-            if (esrGroupOffsetAND == -1)   // create a new ESR group for this atom
-                esrGroup = destMol.renumberESRGroups(esrType);
-            else    // take existing group and add offset that should be the
-                    // ESR group member count of destMol before starting to add atoms
-                esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetAND + getAtomESRGroup(sourceAtom));
-            }
-        else if (esrType == cESRTypeOr) {
-            if (esrGroupOffsetOR == -1)   // create a new ESR group for this atom
-                esrGroup = destMol.renumberESRGroups(esrType);
-            else    // take existing group and add offset that should be the
-                    // ESR group member count of destMol before starting to add atoms
-                esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetOR + getAtomESRGroup(sourceAtom));
-            }
+		int esrType = getAtomESRType(sourceAtom);
+		int esrGroup = -1;
+		if (esrType == cESRTypeAnd) {
+			if (esrGroupOffsetAND == -1)   // create a new ESR group for this atom
+				esrGroup = destMol.renumberESRGroups(esrType);
+			else	// take existing group and add offset that should be the
+					// ESR group member count of destMol before starting to add atoms
+				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetAND + getAtomESRGroup(sourceAtom));
+			}
+		else if (esrType == cESRTypeOr) {
+			if (esrGroupOffsetOR == -1)   // create a new ESR group for this atom
+				esrGroup = destMol.renumberESRGroups(esrType);
+			else	// take existing group and add offset that should be the
+					// ESR group member count of destMol before starting to add atoms
+				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetOR + getAtomESRGroup(sourceAtom));
+			}
 
-        destMol.mAtomicNo[destAtom] = mAtomicNo[sourceAtom];
+		destMol.mAtomicNo[destAtom] = mAtomicNo[sourceAtom];
 		destMol.mAtomCharge[destAtom] = mAtomCharge[sourceAtom];
 		destMol.mAtomMass[destAtom] = mAtomMass[sourceAtom];
 		destMol.mAtomFlags[destAtom] = mAtomFlags[sourceAtom];
-        destMol.mAtomQueryFeatures[destAtom] = destMol.mIsFragment ? mAtomQueryFeatures[sourceAtom] : 0;
+		destMol.mAtomQueryFeatures[destAtom] = destMol.mIsFragment ? mAtomQueryFeatures[sourceAtom] : 0;
 		destMol.mAtomX[destAtom] = mAtomX[sourceAtom];
 		destMol.mAtomY[destAtom] = mAtomY[sourceAtom];
 		destMol.mAtomZ[destAtom] = mAtomZ[sourceAtom];
 		destMol.mAtomMapNo[destAtom] = mAtomMapNo[sourceAtom];
 
 		if (destMol.mAtomList != null)
-            destMol.mAtomList[destAtom] = null;
+			destMol.mAtomList[destAtom] = null;
 		if (mAtomList != null && mAtomList[sourceAtom] != null && destMol.mIsFragment) {
 			if (destMol.mAtomList == null)
 				destMol.mAtomList = new int[destMol.mAtomicNo.length][];
@@ -1067,26 +1067,26 @@ public class Molecule implements Serializable {
 			}
 
 		if (destMol.mAtomCustomLabel != null)
-		    destMol.mAtomCustomLabel[destAtom] = null;
-	    if (mAtomCustomLabel != null && mAtomCustomLabel[sourceAtom] != null) {
-	        if (destMol.mAtomCustomLabel == null)
-	            destMol.mAtomCustomLabel = new byte[destMol.mAtomicNo.length][];
+			destMol.mAtomCustomLabel[destAtom] = null;
+		if (mAtomCustomLabel != null && mAtomCustomLabel[sourceAtom] != null) {
+			if (destMol.mAtomCustomLabel == null)
+				destMol.mAtomCustomLabel = new byte[destMol.mAtomicNo.length][];
 
-	        destMol.mAtomCustomLabel[destAtom] = new byte[mAtomCustomLabel[sourceAtom].length];
-	        for (int i=0; i<mAtomCustomLabel[sourceAtom].length; i++)
-	            destMol.mAtomCustomLabel[destAtom][i] = mAtomCustomLabel[sourceAtom][i];
-	        }
+			destMol.mAtomCustomLabel[destAtom] = new byte[mAtomCustomLabel[sourceAtom].length];
+			for (int i=0; i<mAtomCustomLabel[sourceAtom].length; i++)
+				destMol.mAtomCustomLabel[destAtom][i] = mAtomCustomLabel[sourceAtom][i];
+			}
 
-        if (esrGroup != -1) {
-            destMol.mAtomFlags[destAtom] &= ~cAtomFlagsESRGroup;
-            destMol.mAtomFlags[destAtom] |= (esrGroup << cAtomFlagsESRGroupShift);
-            }
+		if (esrGroup != -1) {
+			destMol.mAtomFlags[destAtom] &= ~cAtomFlagsESRGroup;
+			destMol.mAtomFlags[destAtom] |= (esrGroup << cAtomFlagsESRGroupShift);
+			}
 
-        destMol.mAllAtoms++;
-        destMol.mValidHelperArrays = cHelperNone;
+		destMol.mAllAtoms++;
+		destMol.mValidHelperArrays = cHelperNone;
 
-        return destAtom;
-	    }
+		return destAtom;
+		}
 
 
 	/**
@@ -1100,48 +1100,48 @@ public class Molecule implements Serializable {
 	 */
 	public int copyBond(Molecule destMol, int sourceBond, int esrGroupOffsetAND, int esrGroupOffsetOR,
 						int[] atomMap, boolean useBondTypeDelocalized) {
-        int destBond = destMol.mAllBonds;
+		int destBond = destMol.mAllBonds;
 		if (destBond >= destMol.mMaxBonds)
 			destMol.setMaxBonds(destMol.mMaxBonds*2);
 
-        int esrType = getBondESRType(sourceBond);
-        int esrGroup = -1;
-        if (esrType == cESRTypeAnd) {
-            if (esrGroupOffsetAND == -1)   // create a new ESR group for this atom
-                esrGroup = destMol.renumberESRGroups(esrType);
-            else    // take existing group and add offset that should be the
-                    // ESR group member count of destMol before starting to add atoms
-                esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetAND + getBondESRGroup(sourceBond));
-            }
-        if (esrType == cESRTypeOr) {
-            if (esrGroupOffsetOR == -1)   // create a new ESR group for this atom
-                esrGroup = destMol.renumberESRGroups(esrType);
-            else    // take existing group and add offset that should be the
-                    // ESR group member count of destMol before starting to add atoms
-                esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetOR + getBondESRGroup(sourceBond));
-            }
+		int esrType = getBondESRType(sourceBond);
+		int esrGroup = -1;
+		if (esrType == cESRTypeAnd) {
+			if (esrGroupOffsetAND == -1)   // create a new ESR group for this atom
+				esrGroup = destMol.renumberESRGroups(esrType);
+			else	// take existing group and add offset that should be the
+					// ESR group member count of destMol before starting to add atoms
+				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetAND + getBondESRGroup(sourceBond));
+			}
+		if (esrType == cESRTypeOr) {
+			if (esrGroupOffsetOR == -1)   // create a new ESR group for this atom
+				esrGroup = destMol.renumberESRGroups(esrType);
+			else	// take existing group and add offset that should be the
+					// ESR group member count of destMol before starting to add atoms
+				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetOR + getBondESRGroup(sourceBond));
+			}
 
 		for (int i=0; i<2; i++)
-            destMol.mBondAtom[i][destBond] = (atomMap == null) ?
+			destMol.mBondAtom[i][destBond] = (atomMap == null) ?
 					mBondAtom[i][sourceBond] : atomMap[mBondAtom[i][sourceBond]];
 
-        int bondType = (useBondTypeDelocalized
-                     && (mBondFlags[sourceBond] & cBondFlagDelocalized) != 0) ?
-                                    cBondTypeDelocalized : mBondType[sourceBond];
-        destMol.mBondType[destBond] = bondType;
+		int bondType = (useBondTypeDelocalized
+					 && (mBondFlags[sourceBond] & cBondFlagDelocalized) != 0) ?
+									cBondTypeDelocalized : mBondType[sourceBond];
+		destMol.mBondType[destBond] = bondType;
 		destMol.mBondFlags[destBond] = mBondFlags[sourceBond];
-        destMol.mBondQueryFeatures[destBond] = destMol.mIsFragment ? mBondQueryFeatures[sourceBond] : 0;
+		destMol.mBondQueryFeatures[destBond] = destMol.mIsFragment ? mBondQueryFeatures[sourceBond] : 0;
 
-        if (esrGroup != -1) {
-            destMol.mBondFlags[destBond] &= ~cBondFlagsESRGroup;
-            destMol.mBondFlags[destBond] |= (esrGroup << cBondFlagsESRGroupShift);
-            }
+		if (esrGroup != -1) {
+			destMol.mBondFlags[destBond] &= ~cBondFlagsESRGroup;
+			destMol.mBondFlags[destBond] |= (esrGroup << cBondFlagsESRGroupShift);
+			}
 
-        destMol.mAllBonds++;
-        destMol.mValidHelperArrays = cHelperNone;
+		destMol.mAllBonds++;
+		destMol.mValidHelperArrays = cHelperNone;
 
-        return destBond;
-	    }
+		return destBond;
+		}
 
 
 	/**
@@ -1155,7 +1155,7 @@ public class Molecule implements Serializable {
 		destMol.mIsFragment = mIsFragment;
 		destMol.mIsRacemate = mIsRacemate;
 		destMol.mProtectHydrogen = mProtectHydrogen;
-        destMol.mChirality = mChirality;
+		destMol.mChirality = mChirality;
 		destMol.mName = (mName == null) ? null : new String(mName);
 		destMol.mValidHelperArrays = (mValidHelperArrays & (cHelperBitParities | cHelperBitCIP));
 		}
@@ -1177,51 +1177,51 @@ public class Molecule implements Serializable {
 	 * @return number of ESR groups
 	 */
 	public int renumberESRGroups(int type) {
-        if (type == cESRTypeAbs)
-            return 0;
+		if (type == cESRTypeAbs)
+			return 0;
 
-        // reassign group numbers from bottom up
-        boolean[] groupUsed = null;
-        for (int atom=0; atom<mAllAtoms; atom++) {
-            if (getAtomESRType(atom) == type) {
-                if (groupUsed == null)
-                    groupUsed = new boolean[cESRMaxGroups];
-                groupUsed[getAtomESRGroup(atom)] = true;
-                }
-            }
-        for (int bond=0; bond<mAllBonds; bond++) {
-            if (getBondESRType(bond) == type) {
-                if (groupUsed == null)
-                    groupUsed = new boolean[cESRMaxGroups];
-                groupUsed[getBondESRGroup(bond)] = true;
-                }
-            }
-    
-        int newIndex = 0;
-        if (groupUsed != null) {
-            int[] newGroup = new int[cESRMaxGroups];
-            for (int i=0; i<cESRMaxGroups; i++)
-                if (groupUsed[i])
-                    newGroup[i] = newIndex++;
-    
-            for (int atom=0; atom<mAllAtoms; atom++) {
-                if (getAtomESRType(atom) == type) {
-                    int group = newGroup[getAtomESRGroup(atom)];
-                    mAtomFlags[atom] &= ~cAtomFlagsESRGroup;
-                    mAtomFlags[atom] |= (group << cAtomFlagsESRGroupShift);
-                    }
-                }
-            for (int bond=0; bond<mAllBonds; bond++) {
-                if (getBondESRType(bond) == type) {
-                    int group = newGroup[getBondESRGroup(bond)];
-                    mBondFlags[bond] &= ~cBondFlagsESRGroup;
-                    mBondFlags[bond] |= (group << cBondFlagsESRGroupShift);
-                    }
-                }
-            }
-    
-        return newIndex;
-        }
+		// reassign group numbers from bottom up
+		boolean[] groupUsed = null;
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			if (getAtomESRType(atom) == type) {
+				if (groupUsed == null)
+					groupUsed = new boolean[cESRMaxGroups];
+				groupUsed[getAtomESRGroup(atom)] = true;
+				}
+			}
+		for (int bond=0; bond<mAllBonds; bond++) {
+			if (getBondESRType(bond) == type) {
+				if (groupUsed == null)
+					groupUsed = new boolean[cESRMaxGroups];
+				groupUsed[getBondESRGroup(bond)] = true;
+				}
+			}
+	
+		int newIndex = 0;
+		if (groupUsed != null) {
+			int[] newGroup = new int[cESRMaxGroups];
+			for (int i=0; i<cESRMaxGroups; i++)
+				if (groupUsed[i])
+					newGroup[i] = newIndex++;
+	
+			for (int atom=0; atom<mAllAtoms; atom++) {
+				if (getAtomESRType(atom) == type) {
+					int group = newGroup[getAtomESRGroup(atom)];
+					mAtomFlags[atom] &= ~cAtomFlagsESRGroup;
+					mAtomFlags[atom] |= (group << cAtomFlagsESRGroupShift);
+					}
+				}
+			for (int bond=0; bond<mAllBonds; bond++) {
+				if (getBondESRType(bond) == type) {
+					int group = newGroup[getBondESRGroup(bond)];
+					mBondFlags[bond] &= ~cBondFlagsESRGroup;
+					mBondFlags[bond] |= (group << cBondFlagsESRGroupShift);
+					}
+				}
+			}
+	
+		return newIndex;
+		}
 
 	/**
 	 * Swaps two atoms' indexes/locations in the atom table. This is used to move hydrogen atoms
@@ -1242,9 +1242,9 @@ public class Molecule implements Serializable {
 		tempInt = mAtomFlags[atom1];
 		mAtomFlags[atom1] = mAtomFlags[atom2];
 		mAtomFlags[atom2] = tempInt;
-        tempInt = mAtomQueryFeatures[atom1];
-        mAtomQueryFeatures[atom1] = mAtomQueryFeatures[atom2];
-        mAtomQueryFeatures[atom2] = tempInt;
+		tempInt = mAtomQueryFeatures[atom1];
+		mAtomQueryFeatures[atom1] = mAtomQueryFeatures[atom2];
+		mAtomQueryFeatures[atom2] = tempInt;
 		tempInt = mAtomMapNo[atom1];
 		mAtomMapNo[atom1] = mAtomMapNo[atom2];
 		mAtomMapNo[atom2] = tempInt;
@@ -1258,15 +1258,15 @@ public class Molecule implements Serializable {
 		mAtomZ[atom1] = mAtomZ[atom2];
 		mAtomZ[atom2] = tempFloat;
 		if (mAtomList != null) {
-            int[] tempList = mAtomList[atom1];
+			int[] tempList = mAtomList[atom1];
 			mAtomList[atom1] = mAtomList[atom2];
 			mAtomList[atom2] = tempList;
 			}
 		if (mAtomCustomLabel != null) {
-		    byte[] tempList = mAtomCustomLabel[atom1];
-		    mAtomCustomLabel[atom1] = mAtomCustomLabel[atom2];
-		    mAtomCustomLabel[atom2] = tempList;
-		    }
+			byte[] tempList = mAtomCustomLabel[atom1];
+			mAtomCustomLabel[atom1] = mAtomCustomLabel[atom2];
+			mAtomCustomLabel[atom2] = tempList;
+			}
 
 		for (int bond=0; bond<mAllBonds; bond++) {
 			for (int i=0; i<2; i++) {
@@ -1314,6 +1314,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * High level function for constructing a molecule.
+	 * After the deletion the original order of atom and bond indexes is retained.
 	 * @param atom
 	 */
 	public void deleteAtom(int atom) {
@@ -1339,8 +1340,8 @@ public class Molecule implements Serializable {
 		mAtomicNo[atom] = -1;		// mark for delete
 		if (mAtomList != null)
 			mAtomList[atom] = null;
-        if (mAtomCustomLabel != null)
-            mAtomCustomLabel[atom] = null;
+		if (mAtomCustomLabel != null)
+			mAtomCustomLabel[atom] = null;
 		compressMolTable();
 		mValidHelperArrays = cHelperNone;
 		}
@@ -1365,7 +1366,7 @@ public class Molecule implements Serializable {
 		int bnd = findBond(x,y);
 		if (bnd != -1) {
 			if (((mAtomFlags[mBondAtom[0][bnd]]
-			    & mAtomFlags[mBondAtom[1][bnd]])
+				& mAtomFlags[mBondAtom[1][bnd]])
 			   & cAtomFlagSelected) != 0)
 				deleteSelectedAtoms();
 			else
@@ -1379,6 +1380,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * High level function for constructing a molecule.
+	 * After the deletion the original order of atom and bond indexes is retained.
 	 * @param bnd
 	 */
 	public void deleteBond(int bond) {
@@ -1390,6 +1392,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * High level function for constructing a molecule.
+	 * After the deletion the original order of atom and bond indexes is retained.
 	 * @param bnd
 	 */
 	public void deleteBondAndSurrounding(int bond) {
@@ -1414,45 +1417,49 @@ public class Molecule implements Serializable {
 
 	/**
 	 * High level function for constructing a molecule.
+	 * This method deletes atoms flagged in deleteAtom and all bonds leading to them.
+	 * After the deletion the original order of atom and bond indexes is retained.
 	 * @param deleteAtom
 	 * @return
 	 */
-    public int[] deleteAtoms(boolean[] deleteAtom) {
-        boolean found = false;
-        for (int atom=0; atom<mAllAtoms; atom++) {
-            if (deleteAtom[atom]) {
+	public int[] deleteAtoms(boolean[] deleteAtom) {
+		boolean found = false;
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			if (deleteAtom[atom]) {
 				markAtomForDeletion(atom);
-                found = true;
-                }
-            }
-        if (!found)
-            return null;
+				found = true;
+				}
+			}
+		if (!found)
+			return null;
 
-        return deleteMarkedAtomsAndBonds();
-        }
+		return deleteMarkedAtomsAndBonds();
+		}
 
 
-    /**
+	/**
 	 * High level function for constructing a molecule.
-     * @param atomList
-     * @return
-     */
-    public int[] deleteAtoms(int[] atomList) {
-        if (atomList.length == 0)
-            return null;
+	 * After the deletion the original order of atom and bond indexes is retained.
+	 * @param atomList
+	 * @return
+	 */
+	public int[] deleteAtoms(int[] atomList) {
+		if (atomList.length == 0)
+			return null;
 
-        for (int i=0; i<atomList.length; i++)
+		for (int i=0; i<atomList.length; i++)
 			markAtomForDeletion(atomList[i]);
 
-        return deleteMarkedAtomsAndBonds();
-        }
+		return deleteMarkedAtomsAndBonds();
+		}
 
 
-    /**
+	/**
 	 * High level function for constructing a molecule.
-     * Delete all selected atoms and all bonds attached to them.
-     * @return
-     */
+	 * Delete all selected atoms and all bonds attached to them.
+	 * After the deletion the original order of atom and bond indexes is retained.
+	 * @return
+	 */
 	public boolean deleteSelectedAtoms() {
 		boolean found = false;
 		for (int atom=0; atom<mAllAtoms; atom++) {
@@ -1463,61 +1470,62 @@ public class Molecule implements Serializable {
 			}
 
 		return found ? deleteMarkedAtomsAndBonds() != null : false;
-	    }
+		}
 
 
-    /**
-     * Marks this atom to be deleted in a later call to deleteMarkedAtomsAndBonds().
-     * @param atom
-     */
-    public void markAtomForDeletion(int atom) {
+	/**
+	 * Marks this atom to be deleted in a later call to deleteMarkedAtomsAndBonds().
+	 * @param atom
+	 */
+	public void markAtomForDeletion(int atom) {
 		mAtomicNo[atom] = -1;		// mark for delete
-    	}
+		}
 
 
-    /**
-     * Marks this bond to be deleted in a later call to deleteMarkedAtomsAndBonds().
-     * @param atom
-     */
-    public void markBondForDeletion(int bond) {
-    	mBondType[bond] = cBondTypeDeleted;		// mark for delete
-    	}
+	/**
+	 * Marks this bond to be deleted in a later call to deleteMarkedAtomsAndBonds().
+	 * @param atom
+	 */
+	public void markBondForDeletion(int bond) {
+		mBondType[bond] = cBondTypeDeleted;		// mark for delete
+		}
 
 
-    /**
-     * Checks whether this atom was marked to be deleted and not deleted yet.
-     * @param atom
-     * @return
-     */
-    public boolean isAtomMarkedForDeletion(int atom) {
-    	return (mAtomicNo[atom] == -1);
-    	}
+	/**
+	 * Checks whether this atom was marked to be deleted and not deleted yet.
+	 * @param atom
+	 * @return
+	 */
+	public boolean isAtomMarkedForDeletion(int atom) {
+		return (mAtomicNo[atom] == -1);
+		}
 
 
-    /**
-     * Checks whether this bond was marked to be deleted and not deleted yet.
-     * @param atom
-     * @return
-     */
-    public boolean isBondMarkedForDeletion(int bond) {
-    	return (mBondType[bond] == cBondTypeDeleted);
-    	}
+	/**
+	 * Checks whether this bond was marked to be deleted and not deleted yet.
+	 * @param atom
+	 * @return
+	 */
+	public boolean isBondMarkedForDeletion(int bond) {
+		return (mBondType[bond] == cBondTypeDeleted);
+		}
 
 
-    /**
+	/**
 	 * High level function for constructing a molecule.
-     * Deletes all atoms and bonds from the molecule, which were marked before for deletion
-     * by calling markAtomForDeletion() or markBondForDeletion(). Bonds connecting atoms
-     * that are marked for deletion, are deleted automatically and don't require to be
-     * explicitly marked.
-     * When multiple atoms and/or bonds need to be deleted, marking them and calling
-     * this method is more efficient than deleting them individually with deleteAtom() and
-     * deleteBond().
+	 * Deletes all atoms and bonds from the molecule, which were marked before for deletion
+	 * by calling markAtomForDeletion() or markBondForDeletion(). Bonds connecting atoms
+	 * of which at least one is marked for deletion, are deleted automatically and don't
+	 * require to be explicitly marked.<br>
+	 * When multiple atoms and/or bonds need to be deleted, marking them and calling
+	 * this method is more efficient than deleting them individually with deleteAtom() and
+	 * deleteBond().
 	 * Bonds, whose atoms carry opposite charges are treated in the following manner: If only one of
 	 * the two bond atoms is kept, then its absolute charge will be reduced by 1.
-     * @return mapping from old to new atom indices; null if no atoms nor bonds were deleted
-     */
-    public int[] deleteMarkedAtomsAndBonds() {
+	 * After the deletion the original order of atom and bond indexes is retained.
+	 * @return mapping from old to new atom indices; null if no atoms nor bonds were deleted
+	 */
+	public int[] deleteMarkedAtomsAndBonds() {
 		boolean found = false;
 		for (int atom=0; atom<mAllAtoms; atom++) {
 			if (mAtomicNo[atom] == -1) {
@@ -1538,22 +1546,22 @@ public class Molecule implements Serializable {
 
 		if (found) {
 			mValidHelperArrays = cHelperNone;
-		    return compressMolTable();
+			return compressMolTable();
 			}
 
 		return null;
 		}
 
 
-    /**
-     * Empties the molecule to serve as container for constructing a new molecule,
-     * e.g. by multiply calling addAtom(...), addBond(...) and other high level methods.
-     */
+	/**
+	 * Empties the molecule to serve as container for constructing a new molecule,
+	 * e.g. by multiply calling addAtom(...), addBond(...) and other high level methods.
+	 */
 	public void deleteMolecule() {
 		mAllAtoms = 0;
 		mAllBonds = 0;
-        mIsFragment = false;
-        mIsRacemate = false;
+		mIsFragment = false;
+		mIsRacemate = false;
 		mChirality = cChiralityUnknown;
 		mAtomList = null;
 		mAtomCustomLabel = null;
@@ -1600,19 +1608,19 @@ public class Molecule implements Serializable {
 	 * @return index of closest of nearby atoms or -1, if no atom is close
 	 */
 	public int findAtom(float pickx, float picky) {
-        int foundAtom = -1;
-        float avbl = this.getAverageBondLength();
-        float foundDistanceSquare = Float.MAX_VALUE;
-        float maxDistanceSquare = avbl * avbl / 12.0f;
+		int foundAtom = -1;
+		float avbl = this.getAverageBondLength();
+		float foundDistanceSquare = Float.MAX_VALUE;
+		float maxDistanceSquare = avbl * avbl / 12.0f;
 		for (int atom=0; atom<mAllAtoms; atom++) {
 			float distanceSquare = (pickx-mAtomX[atom]) * (pickx-mAtomX[atom])
-                                  + (picky-mAtomY[atom]) * (picky-mAtomY[atom]);
+								  + (picky-mAtomY[atom]) * (picky-mAtomY[atom]);
 			if (distanceSquare < maxDistanceSquare
-             && distanceSquare < foundDistanceSquare) {
-                foundDistanceSquare = distanceSquare;
-                foundAtom = atom;
-			    }
-            }
+			 && distanceSquare < foundDistanceSquare) {
+				foundDistanceSquare = distanceSquare;
+				foundAtom = atom;
+				}
+			}
 		return foundAtom;
 		}
 
@@ -1623,9 +1631,9 @@ public class Molecule implements Serializable {
 	 * @return index of closest of nearby bonds or -1, if no bond is close
 	 */
 	public int findBond(float pickx, float picky) {
-        int foundBond = -1;
-        float maxDistance = this.getAverageBondLength();
-        float foundDistance = Float.MAX_VALUE;
+		int foundBond = -1;
+		float maxDistance = this.getAverageBondLength();
+		float foundDistance = Float.MAX_VALUE;
 		for (int bond=0; bond<mAllBonds; bond++) {
 			float x1 = mAtomX[mBondAtom[0][bond]];
 			float y1 = mAtomY[mBondAtom[0][bond]];
@@ -1650,11 +1658,11 @@ public class Molecule implements Serializable {
 				distance = Math.abs((constA * pickx + picky + constC)
 						 / (float)Math.sqrt(constA * constA + 1f));
 				}
-            if (distance < maxDistance
-             && distance < foundDistance) {
-                foundDistance = distance;
-                foundBond = bond;
-                }
+			if (distance < maxDistance
+			 && distance < foundDistance) {
+				foundDistance = distance;
+				foundBond = bond;
+				}
 			}
 		return foundBond;
 		}
@@ -1676,20 +1684,20 @@ public class Molecule implements Serializable {
 		}
 
 
-    /**
-     * Get an atom's defined maximum valance if different from the default one.
-     * @param atom
-     * @return valence 0-14: new maximum valence; -1: use default
-     */
-    public int getAtomAbnormalValence(int atom) {
-        return ((mAtomFlags[atom] & cAtomFlagsValence) >>> cAtomFlagsValenceShift) -1;
-        }
+	/**
+	 * Get an atom's defined maximum valance if different from the default one.
+	 * @param atom
+	 * @return valence 0-14: new maximum valence; -1: use default
+	 */
+	public int getAtomAbnormalValence(int atom) {
+		return ((mAtomFlags[atom] & cAtomFlagsValence) >>> cAtomFlagsValenceShift) -1;
+		}
 
 
-    /**
-     * @param atom
-     * @return the formal atom charge
-     */
+	/**
+	 * @param atom
+	 * @return the formal atom charge
+	 */
 	public int getAtomCharge(int atom) {
 		return mAtomCharge[atom];
 		}
@@ -1714,87 +1722,87 @@ public class Molecule implements Serializable {
 		}
 
 
-    /**
-     * This is MDL's enhanced stereo representation (ESR).
-     * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
-     * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
-     * @param atom
-     * @return group index starting with 0
-     */
-    public int getAtomESRGroup(int atom) {
-        if (getAtomESRType(atom) != cESRTypeAnd
-         && getAtomESRType(atom) != cESRTypeOr)
-            return -1;
-        else
-            return (mAtomFlags[atom] & cAtomFlagsESRGroup) >> cAtomFlagsESRGroupShift;
-        }
+	/**
+	 * This is MDL's enhanced stereo representation (ESR).
+	 * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
+	 * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
+	 * @param atom
+	 * @return group index starting with 0
+	 */
+	public int getAtomESRGroup(int atom) {
+		if (getAtomESRType(atom) != cESRTypeAnd
+		 && getAtomESRType(atom) != cESRTypeOr)
+			return -1;
+		else
+			return (mAtomFlags[atom] & cAtomFlagsESRGroup) >> cAtomFlagsESRGroupShift;
+		}
 
 
-    /**
-     * This is MDL's enhanced stereo representation (ESR).
-     * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
-     * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
-     * @param atom
-     * @return one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
-     */
-    public int getAtomESRType(int atom) {
-        return (mAtomFlags[atom] & cAtomFlagsESRType) >> cAtomFlagsESRTypeShift;
-        }
+	/**
+	 * This is MDL's enhanced stereo representation (ESR).
+	 * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
+	 * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
+	 * @param atom
+	 * @return one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
+	 */
+	public int getAtomESRType(int atom) {
+		return (mAtomFlags[atom] & cAtomFlagsESRType) >> cAtomFlagsESRTypeShift;
+		}
 
 
-    /**
-     * In addition to the natural atomic numbers, we support additional pseudo atomic numbers.
-     * Most of these are for compatibility with the MDL atom table, e.g. for amino acids and R-groups.
-     * D and T are accepted for setting, but are on-the-fly translated to H with the proper atom mass.
-     * @param atom
-     * @return
-     */
-    public int getAtomicNo(int atom) {
+	/**
+	 * In addition to the natural atomic numbers, we support additional pseudo atomic numbers.
+	 * Most of these are for compatibility with the MDL atom table, e.g. for amino acids and R-groups.
+	 * D and T are accepted for setting, but are on-the-fly translated to H with the proper atom mass.
+	 * @param atom
+	 * @return
+	 */
+	public int getAtomicNo(int atom) {
 		return mAtomicNo[atom];
 		}
 
 
-    /**
-     * If a custom atom label is set, a molecule depiction displays
-     * the custom label instead of the original one.
-     * @param atom
-     * @return null or previously defined atom custom label
-     */
-    public String getAtomCustomLabel(int atom) {
-        return (mAtomCustomLabel == null) ? null
-             : (mAtomCustomLabel[atom] == null) ? null
-             : new String(mAtomCustomLabel[atom]);
-        }
+	/**
+	 * If a custom atom label is set, a molecule depiction displays
+	 * the custom label instead of the original one.
+	 * @param atom
+	 * @return null or previously defined atom custom label
+	 */
+	public String getAtomCustomLabel(int atom) {
+		return (mAtomCustomLabel == null) ? null
+			 : (mAtomCustomLabel[atom] == null) ? null
+			 : new String(mAtomCustomLabel[atom]);
+		}
 
 
-    /**
-     * This method is more efficient than getAtomCustomLabel(),
-     * because internally atom custom labels are stored as a byte[].
-     * Use this if you can work with bytes and don't need a String.
-     * @param atom
-     * @return null or previously defined atom custom label as byte[]
-     */
-    public byte[] getAtomCustomLabelBytes(int atom) {
-        return (mAtomCustomLabel == null) ? null : mAtomCustomLabel[atom];
-        }
+	/**
+	 * This method is more efficient than getAtomCustomLabel(),
+	 * because internally atom custom labels are stored as a byte[].
+	 * Use this if you can work with bytes and don't need a String.
+	 * @param atom
+	 * @return null or previously defined atom custom label as byte[]
+	 */
+	public byte[] getAtomCustomLabelBytes(int atom) {
+		return (mAtomCustomLabel == null) ? null : mAtomCustomLabel[atom];
+		}
 
 
-    /**
-     * @param atom
-     * @return standard atom label of the atom: C,Li,Sc,...
-     */
-    public String getAtomLabel(int atom) {
-        return cAtomLabel[mAtomicNo[atom]];
-        }
+	/**
+	 * @param atom
+	 * @return standard atom label of the atom: C,Li,Sc,...
+	 */
+	public String getAtomLabel(int atom) {
+		return cAtomLabel[mAtomicNo[atom]];
+		}
 
 
-    /**
-     * The list of atoms that are allowed at this position during sub-structure search.
-     * (or refused atoms, if atom query feature cAtomQFAny is set).
-     * @param atom
-     * @return null or atom list, if defined
-     */
-    public int[] getAtomList(int atom) {
+	/**
+	 * The list of atoms that are allowed at this position during sub-structure search.
+	 * (or refused atoms, if atom query feature cAtomQFAny is set).
+	 * @param atom
+	 * @return null or atom list, if defined
+	 */
+	public int[] getAtomList(int atom) {
 		return (mAtomList == null) ? null : mAtomList[atom];
 		}
 
@@ -1853,7 +1861,7 @@ public class Molecule implements Serializable {
 	 * @return one of cAtomParity1,cAtomParity2,cAtomParityNone,cAtomParityUnknown
 	 */
 	public int getAtomParity(int atom) {
-        return mAtomFlags[atom] & cAtomFlagsParity;
+		return mAtomFlags[atom] & cAtomFlagsParity;
 		}
 
 
@@ -1868,11 +1876,11 @@ public class Molecule implements Serializable {
 		}
 
 
-    /**
-     * Gets an atom's radical state as singulet,dublet,triplet or none
-     * @param atom
-     * @return one of cAtomRadicalStateNone,cAtomRadicalStateS,cAtomRadicalStateD,cAtomRadicalStateT
-     */
+	/**
+	 * Gets an atom's radical state as singulet,dublet,triplet or none
+	 * @param atom
+	 * @return one of cAtomRadicalStateNone,cAtomRadicalStateS,cAtomRadicalStateD,cAtomRadicalStateT
+	 */
 	public int getAtomRadical(int atom) {
 		return mAtomFlags[atom] & cAtomRadicalState;
 		}
@@ -1899,11 +1907,11 @@ public class Molecule implements Serializable {
 
 
 	public float getAverageBondLength(int atoms, int bonds) {
-        for (int bond=0; bond<bonds; bond++)
-            if ((mBondQueryFeatures[bond] & cBondQFBridge) != 0)
-                bonds--;
+		for (int bond=0; bond<bonds; bond++)
+			if ((mBondQueryFeatures[bond] & cBondQFBridge) != 0)
+				bonds--;
 
-        if (bonds == 0) {
+		if (bonds == 0) {
 				// since this function is used to get an idea about the scale
 				// of the molecule return as approximation a mean atom distance
 			if (mAllAtoms < 2)
@@ -1925,12 +1933,12 @@ public class Molecule implements Serializable {
 
 		float avblSum = 0.0f;
 		for (int bond=0; bond<bonds; bond++) {
-            if ((mBondQueryFeatures[bond] & cBondQFBridge) == 0) {
-            	float dx = mAtomX[mBondAtom[1][bond]] - mAtomX[mBondAtom[0][bond]];
-            	float dy = mAtomY[mBondAtom[1][bond]] - mAtomY[mBondAtom[0][bond]];
-            	float dz = mAtomZ[mBondAtom[1][bond]] - mAtomZ[mBondAtom[0][bond]];
-            	avblSum += Math.sqrt(dx*dx+dy*dy+dz*dz);
-                }
+			if ((mBondQueryFeatures[bond] & cBondQFBridge) == 0) {
+				float dx = mAtomX[mBondAtom[1][bond]] - mAtomX[mBondAtom[0][bond]];
+				float dy = mAtomY[mBondAtom[1][bond]] - mAtomY[mBondAtom[0][bond]];
+				float dz = mAtomZ[mBondAtom[1][bond]] - mAtomZ[mBondAtom[0][bond]];
+				avblSum += Math.sqrt(dx*dx+dy*dy+dz*dz);
+				}
 			}
 		return avblSum / bonds;
 		}
@@ -1965,38 +1973,38 @@ public class Molecule implements Serializable {
 		}
 
 
-    /**
-     * This is MDL's enhanced stereo representation (ESR).
-     * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
-     * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
-     * @param bond
-     * @return group index starting with 0
-     */
-    public int getBondESRGroup(int bond) {
-        if (getBondESRType(bond) != cESRTypeAnd
-         && getBondESRType(bond) != cESRTypeOr)
-            return -1;
-        else
-            return (mBondFlags[bond] & cBondFlagsESRGroup) >> cBondFlagsESRGroupShift;
-        }
+	/**
+	 * This is MDL's enhanced stereo representation (ESR).
+	 * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
+	 * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
+	 * @param bond
+	 * @return group index starting with 0
+	 */
+	public int getBondESRGroup(int bond) {
+		if (getBondESRType(bond) != cESRTypeAnd
+		 && getBondESRType(bond) != cESRTypeOr)
+			return -1;
+		else
+			return (mBondFlags[bond] & cBondFlagsESRGroup) >> cBondFlagsESRGroupShift;
+		}
 
 
-    /**
-     * This is MDL's enhanced stereo representation (ESR).
-     * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
-     * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
-     * @param atom
-     * @return one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
-     */
-    public int getBondESRType(int bond) {
-        return (mBondFlags[bond] & cBondFlagsESRType) >> cBondFlagsESRTypeShift;
-        }
+	/**
+	 * This is MDL's enhanced stereo representation (ESR).
+	 * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
+	 * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
+	 * @param atom
+	 * @return one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
+	 */
+	public int getBondESRType(int bond) {
+		return (mBondFlags[bond] & cBondFlagsESRType) >> cBondFlagsESRTypeShift;
+		}
 
 
-    /**
-     * @param bond
-     * @return bond length calculated from atom 2D-coordinates.
-     */
+	/**
+	 * @param bond
+	 * @return bond length calculated from atom 2D-coordinates.
+	 */
 	public float getBondLength(int bond) {
 		int atom1 = mBondAtom[0][bond];
 		int atom2 = mBondAtom[1][bond];
@@ -2018,7 +2026,7 @@ public class Molecule implements Serializable {
 		case cBondTypeDelocalized: return 1;
 		case cBondTypeDouble: return 2;
 		case cBondTypeTriple: return 3;
-		default: return 0;    // metal bond
+		default: return 0;	// metal bond
 			}
 		}
 
@@ -2041,20 +2049,20 @@ public class Molecule implements Serializable {
 		}
 
 
-    public boolean isBondBridge(int bond) {
-        return (mBondQueryFeatures[bond] & cBondQFBridge) != 0;
-        }
+	public boolean isBondBridge(int bond) {
+		return (mBondQueryFeatures[bond] & cBondQFBridge) != 0;
+		}
 
 
-    public int getBondBridgeMinSize(int bond) {
-        return (mBondQueryFeatures[bond] & cBondQFBridgeMin) >> cBondQFBridgeMinShift;
-        }
+	public int getBondBridgeMinSize(int bond) {
+		return (mBondQueryFeatures[bond] & cBondQFBridgeMin) >> cBondQFBridgeMinShift;
+		}
 
 
-    public int getBondBridgeMaxSize(int bond) {
-        return ((mBondQueryFeatures[bond] & cBondQFBridgeMin) >> cBondQFBridgeMinShift)
-             + ((mBondQueryFeatures[bond] & cBondQFBridgeSpan) >> cBondQFBridgeSpanShift);
-        }
+	public int getBondBridgeMaxSize(int bond) {
+		return ((mBondQueryFeatures[bond] & cBondQFBridgeMin) >> cBondQFBridgeMinShift)
+			 + ((mBondQueryFeatures[bond] & cBondQFBridgeSpan) >> cBondQFBridgeSpanShift);
+		}
 
 
 	/**
@@ -2062,21 +2070,21 @@ public class Molecule implements Serializable {
 	 * @param bond
 	 * @return one of cBondTypeSingle,cBondTypeDouble,cBondTypeUp,cBondTypeCross,...
 	 */
-    public int getBondType(int bond) {
+	public int getBondType(int bond) {
 		return mBondType[bond];
 		}
 
 
-    /**
-     * This is the bond type without stereo information.
-     * @param bond
-     * @return cBondTypeSingle,cBondTypeDouble,cBondTypeTriple,cBondTypeDelocalized
-     */
-    public int getBondTypeSimple(int bond) {
-        return mBondType[bond] & cBondTypeMaskSimple;
-        }
+	/**
+	 * This is the bond type without stereo information.
+	 * @param bond
+	 * @return cBondTypeSingle,cBondTypeDouble,cBondTypeTriple,cBondTypeDelocalized
+	 */
+	public int getBondTypeSimple(int bond) {
+		return mBondType[bond] & cBondTypeMaskSimple;
+		}
 
-    
+	
 	/**
 	 * Gets the overall chirality of the molecule, which is a calculated information considering:
 	 * Recognition of stereo centers and stereo bonds, defined ESR features, meso detection.
@@ -2085,25 +2093,25 @@ public class Molecule implements Serializable {
 	 * of racemates, epimers, or other diastereomers.
 	 * The information is used during depiction.
 	 */
-    public int getChirality() {
+	public int getChirality() {
 		return mChirality;
 		}
 
 
-    /**
-     * The currently defined maximum of atoms, which increases automatically when using high level
-     * construction methods and new atoms exceed the current maximum.
-     * @return
-     */
-    public int getMaxAtoms() {
+	/**
+	 * The currently defined maximum of atoms, which increases automatically when using high level
+	 * construction methods and new atoms exceed the current maximum.
+	 * @return
+	 */
+	public int getMaxAtoms() {
 		return mMaxAtoms;
-	    }
+		}
 
 
-    /**
-     * Usually called automatically and hardly needed to be called.
-     * @param v
-     */
+	/**
+	 * Usually called automatically and hardly needed to be called.
+	 * @param v
+	 */
 	public void setMaxAtoms(int v) {
 		mAtomicNo = Arrays.copyOf(mAtomicNo, v);
 		mAtomCharge = Arrays.copyOf(mAtomCharge, v);
@@ -2113,28 +2121,28 @@ public class Molecule implements Serializable {
 		mAtomZ = Arrays.copyOf(mAtomZ, v);
 		mAtomMass = Arrays.copyOf(mAtomMass, v);
 		mAtomFlags = Arrays.copyOf(mAtomFlags, v);
-        mAtomQueryFeatures = Arrays.copyOf(mAtomQueryFeatures, v);
+		mAtomQueryFeatures = Arrays.copyOf(mAtomQueryFeatures, v);
 		if (mAtomList != null)
 			mAtomList = Arrays.copyOf(mAtomList, v);
-        if (mAtomCustomLabel != null)
-            mAtomCustomLabel = Arrays.copyOf(mAtomCustomLabel, v);
+		if (mAtomCustomLabel != null)
+			mAtomCustomLabel = Arrays.copyOf(mAtomCustomLabel, v);
 		mMaxAtoms = v;
-	    }
+		}
 
 
-    /**
-     * The currently defined maximum of bonds, which increases automatically when using high level
-     * construction methods and new bonds exceed the current maximum.
-     * @return
-     */
+	/**
+	 * The currently defined maximum of bonds, which increases automatically when using high level
+	 * construction methods and new bonds exceed the current maximum.
+	 * @return
+	 */
 	public int getMaxBonds() {
 		return mMaxBonds;
-	    }
+		}
 
-    /**
-     * Usually called automatically and hardly needed to be called.
-     * @param v
-     */
+	/**
+	 * Usually called automatically and hardly needed to be called.
+	 * @param v
+	 */
 	public void setMaxBonds(int v) {
 		mBondAtom[0] = Arrays.copyOf(mBondAtom[0], v);
 		mBondAtom[1] = Arrays.copyOf(mBondAtom[1], v);
@@ -2142,7 +2150,7 @@ public class Molecule implements Serializable {
 		mBondFlags = Arrays.copyOf(mBondFlags, v);
 		mBondQueryFeatures = Arrays.copyOf(mBondQueryFeatures, v);
 		mMaxBonds = v;
-	    }
+		}
 
 
 	/**
@@ -2163,53 +2171,53 @@ public class Molecule implements Serializable {
 	 * @param atom
 	 * @return
 	 */
-    public boolean getStereoProblem(int atom) {
+	public boolean getStereoProblem(int atom) {
 		return ((mAtomFlags[atom] & cAtomFlagStereoProblem) != 0);
 		}
 
 
-    /**
-     * @param atom
-     * @return whether the atom's stereo configuration was explicitly deplared unknown
-     */
+	/**
+	 * @param atom
+	 * @return whether the atom's stereo configuration was explicitly deplared unknown
+	 */
 	public boolean isAtomConfigurationUnknown(int atom) {
 		return ((mAtomFlags[atom] & cAtomFlagConfigurationUnknown) != 0);
 		}
 
 
-    /**
-     * Pseudo paries are parities that indicate a relative configuration.
-     * It always needs at least 2 pseudo parities (atom or bond) within
-     * a part of a molecule to be meaningful.
-     * This information is calculated by ensureHelperArrays(Molecule.cHelperCIP).
-     * Molecules extracted from IDCode don't know about pseudo parities.
-     * @param atom
-     * @return wether this atom's parity is a relative configuration
-     */
-    public boolean isAtomParityPseudo(int atom) {
-        return ((mAtomFlags[atom] & cAtomParityIsPseudo) != 0);
-        }
+	/**
+	 * Pseudo paries are parities that indicate a relative configuration.
+	 * It always needs at least 2 pseudo parities (atom or bond) within
+	 * a part of a molecule to be meaningful.
+	 * This information is calculated by ensureHelperArrays(Molecule.cHelperCIP).
+	 * Molecules extracted from IDCode don't know about pseudo parities.
+	 * @param atom
+	 * @return wether this atom's parity is a relative configuration
+	 */
+	public boolean isAtomParityPseudo(int atom) {
+		return ((mAtomFlags[atom] & cAtomParityIsPseudo) != 0);
+		}
 
 
-    /**
-     * Atoms with pseudo parities are not considered stereo centers.
-     * While parities are canonized and always refer to the full set
-     * of molecules (in case ESR groups are defined), this method
-     * returns true if this atom is a stereo center in any(!) of the
-     * individual molecules described by the ESR settings.
-     * @param atom
-     * @return true if atom is stereo center in at least one molecule after ESR resolution
-     */
-    public boolean isAtomStereoCenter(int atom) {
-        return ((mAtomFlags[atom] & cAtomFlagIsStereoCenter) != 0);
-        }
+	/**
+	 * Atoms with pseudo parities are not considered stereo centers.
+	 * While parities are canonized and always refer to the full set
+	 * of molecules (in case ESR groups are defined), this method
+	 * returns true if this atom is a stereo center in any(!) of the
+	 * individual molecules described by the ESR settings.
+	 * @param atom
+	 * @return true if atom is stereo center in at least one molecule after ESR resolution
+	 */
+	public boolean isAtomStereoCenter(int atom) {
+		return ((mAtomFlags[atom] & cAtomFlagIsStereoCenter) != 0);
+		}
 
-    
-    public boolean isBondParityPseudo(int bond) {
-        return ((mBondFlags[bond] & cBondParityIsPseudo) != 0);
-        }
+	
+	public boolean isBondParityPseudo(int bond) {
+		return ((mBondFlags[bond] & cBondParityIsPseudo) != 0);
+		}
 
-    
+	
 	/**
 	 * This hint/flag is set by CoordinateInventor for double bonds without given EZ-parity,
 	 * because the new coordinates may imply a not intended EZ-parity. If parities are calculated
@@ -2218,20 +2226,20 @@ public class Molecule implements Serializable {
 	 * This method usually should not be called for other purposes.
 	 * @return whether the bond parity was unknown when 2D- atom coordinates were created
 	 */
-    public boolean isBondParityUnknownOrNone(int bond) {
+	public boolean isBondParityUnknownOrNone(int bond) {
 		return ((mBondFlags[bond] & cBondParityUnknownOrNone) != 0);
 		}
 
 
-    /**
-     * Molecule objects may represent complete molecules or sub-structure fragments,
-     * depending on, whether they are flagges as being a fragment or not. Both representations
-     * have much in common, but in certain aspects behave differently. Thus, complete molecules
-     * are considered to carry implicit hydrogens to fill unoccupied atom valences.
-     * Sub-structure fragments on the other hand may carry atom or bond query features.
-     * Depiction, sub-structure search, and other algorithms treat fragments and complete molecules differerently.
-     * @return
-     */
+	/**
+	 * Molecule objects may represent complete molecules or sub-structure fragments,
+	 * depending on, whether they are flagges as being a fragment or not. Both representations
+	 * have much in common, but in certain aspects behave differently. Thus, complete molecules
+	 * are considered to carry implicit hydrogens to fill unoccupied atom valences.
+	 * Sub-structure fragments on the other hand may carry atom or bond query features.
+	 * Depiction, sub-structure search, and other algorithms treat fragments and complete molecules differerently.
+	 * @return
+	 */
 	public boolean isFragment() {
 		return mIsFragment;
 		}
@@ -2280,9 +2288,9 @@ public class Molecule implements Serializable {
 		}
 
 
-    /**
-     * Atom marking may be used for any external purpose
-     */
+	/**
+	 * Atom marking may be used for any external purpose
+	 */
 	public boolean isMarkedAtom(int atom) {
 		return ((mAtomFlags[atom] & cAtomFlagMarked) != 0) ? true : false;
 		}
@@ -2367,22 +2375,22 @@ public class Molecule implements Serializable {
 	 * @param atom
 	 * @param valence 0-14: new maximum valence; -1: use default
 	 */
-    public void setAtomAbnormalValence(int atom, int valence) {
-        if (mAtomicNo[atom] == 6) {
-            if (valence == -1 || valence == 0 || valence == 2) {
-                mAtomFlags[atom] &= ~(cAtomFlagsValence | cAtomRadicalState);
-                mAtomFlags[atom] |= ((1+valence) << cAtomFlagsValenceShift);
-                if (valence == 2)
-                    mAtomFlags[atom] |= cAtomRadicalStateS;
-                }
-            }
-        else {
-            if (valence >= -1 && valence <= 14) {
-                mAtomFlags[atom] &= ~cAtomFlagsValence;
-                mAtomFlags[atom] |= ((1+valence) << cAtomFlagsValenceShift);
-                }
-            }
-        }
+	public void setAtomAbnormalValence(int atom, int valence) {
+		if (mAtomicNo[atom] == 6) {
+			if (valence == -1 || valence == 0 || valence == 2) {
+				mAtomFlags[atom] &= ~(cAtomFlagsValence | cAtomRadicalState);
+				mAtomFlags[atom] |= ((1+valence) << cAtomFlagsValenceShift);
+				if (valence == 2)
+					mAtomFlags[atom] |= cAtomRadicalStateS;
+				}
+			}
+		else {
+			if (valence >= -1 && valence <= 14) {
+				mAtomFlags[atom] &= ~cAtomFlagsValence;
+				mAtomFlags[atom] |= ((1+valence) << cAtomFlagsValenceShift);
+				}
+			}
+		}
 
 
 	public void setAtomCharge(int atom, int charge) {
@@ -2423,7 +2431,7 @@ public class Molecule implements Serializable {
 
 
 	/**
-     * Atom marking may be used for any external purpose
+	 * Atom marking may be used for any external purpose
 	 */
 	public void setAtomMarker(int atom,boolean s) {
 		if (s)
@@ -2448,7 +2456,7 @@ public class Molecule implements Serializable {
 				mAtomicNo[atom] = no;
 				mAtomMass[atom] = 0;
 				}
-            mAtomFlags[atom] &= ~cAtomFlagsValence;
+			mAtomFlags[atom] &= ~cAtomFlagsValence;
 
 			mValidHelperArrays = cHelperNone;
 			}
@@ -2463,29 +2471,29 @@ public class Molecule implements Serializable {
 	 * @param list null or int[] of valid atomic numbers
 	 */
 	public void setAtomList(int atom, int[] list) {
-        /*
-         * 'list' is null or an int[] of valid atomic numbers.
-         * Depending on cAtomQFAny the list must contain at least 1 or 2 members
-         */
+		/*
+		 * 'list' is null or an int[] of valid atomic numbers.
+		 * Depending on cAtomQFAny the list must contain at least 1 or 2 members
+		 */
 		if (mAtomList == null)
 			mAtomList = new int[mMaxAtoms][];
 
-        if (list != null)
-            Arrays.sort(list);
+		if (list != null)
+			Arrays.sort(list);
 
-        mAtomList[atom] = list;
+		mAtomList[atom] = list;
 
 		mValidHelperArrays = cHelperNone;
 		mIsFragment = true;
 		}
 
 
-    /**
-     * Defines an atom list as query feature for substructure search
-     * @param atom
-     * @param list is null or a sorted int[] of valid atomic numbers
-     * @param isExcludeList true if atom is a wild card and list contains atoms to be excluded 
-     */
+	/**
+	 * Defines an atom list as query feature for substructure search
+	 * @param atom
+	 * @param list is null or a sorted int[] of valid atomic numbers
+	 * @param isExcludeList true if atom is a wild card and list contains atoms to be excluded 
+	 */
 	public void setAtomList(int atom, int[] list, boolean isExcludeList) {
 		if (list == null) {
 			if (mAtomList != null)
@@ -2508,7 +2516,7 @@ public class Molecule implements Serializable {
 		mAtomList[atom] = list;
 
 		if (isExcludeList)
-            mAtomQueryFeatures[atom] |= cAtomQFAny;
+			mAtomQueryFeatures[atom] |= cAtomQFAny;
 
 		mValidHelperArrays = cHelperNone;
 		mIsFragment = true;
@@ -2528,11 +2536,11 @@ public class Molecule implements Serializable {
 		}
 
 
-    /**
-     * Set atom to specific isotop or to have a natural isotop distribution
-     * @param atom
-     * @param mass rounded atom mass or 0 (default) for natural abundance
-     */
+	/**
+	 * Set atom to specific isotop or to have a natural isotop distribution
+	 * @param atom
+	 * @param mass rounded atom mass or 0 (default) for natural abundance
+	 */
 	public void setAtomMass(int atom, int mass) {
 		mAtomMass[atom] = mass;
 		mValidHelperArrays &= cHelperRings;
@@ -2559,8 +2567,8 @@ public class Molecule implements Serializable {
 	public void setAtomParity(int atom, int parity, boolean isPseudo) {
 		mAtomFlags[atom] &= ~(cAtomFlagsParity | cAtomParityIsPseudo);
 		mAtomFlags[atom] |= parity;
-        if (isPseudo)
-            mAtomFlags[atom] |= cAtomParityIsPseudo;
+		if (isPseudo)
+			mAtomFlags[atom] |= cAtomParityIsPseudo;
 		}
 
 
@@ -2572,49 +2580,49 @@ public class Molecule implements Serializable {
 	 * @param atom
 	 * @param isStereoCenter
 	 */
-    protected void setAtomStereoCenter(int atom, boolean isStereoCenter) {
-        mAtomFlags[atom] &= ~cAtomFlagIsStereoCenter;
-        if (isStereoCenter)
-            mAtomFlags[atom] |= cAtomFlagIsStereoCenter;
-        }
+	protected void setAtomStereoCenter(int atom, boolean isStereoCenter) {
+		mAtomFlags[atom] &= ~cAtomFlagIsStereoCenter;
+		if (isStereoCenter)
+			mAtomFlags[atom] |= cAtomFlagIsStereoCenter;
+		}
 
 
-    /**
-     * Introduce or remove an atom query feature and make sure, the molecule is flagged
-     * to be a sub-structure fragment (see setFragment()).
-     * A query feature is usually a flag, which if set, poses an additional atom/bond matching constraint
-     * for the sub-structure search and, thus, reduces the number of matching atoms and therefore also
-     * the number of molecules found. Often multiple query feature flags are related and grouped, e.g.
-     * to define the number of hydrogens atoms. These are the flags related to hydrogen neighbors:<br><br>
+	/**
+	 * Introduce or remove an atom query feature and make sure, the molecule is flagged
+	 * to be a sub-structure fragment (see setFragment()).
+	 * A query feature is usually a flag, which if set, poses an additional atom/bond matching constraint
+	 * for the sub-structure search and, thus, reduces the number of matching atoms and therefore also
+	 * the number of molecules found. Often multiple query feature flags are related and grouped, e.g.
+	 * to define the number of hydrogens atoms. These are the flags related to hydrogen neighbors:<br><br>
 	 * public static final int cAtomQFHydrogen		= 0x00000780;<br>
 	 * public static final int cAtomQFNot0Hydrogen	= 0x00000080;<br>
 	 * public static final int cAtomQFNot1Hydrogen	= 0x00000100;<br>
 	 * public static final int cAtomQFNot2Hydrogen	= 0x00000200;<br>
-     * public static final int cAtomQFNot3Hydrogen	= 0x00000400;<br>
-     * <p>An inverse logic needs to be applied to translate a user request to the bits needed. For example,
-     * to only accept atoms that have 1 or 2 hydrogen neighbors, we need to filter out all others. Thus, we
-     * would call<br>setAtomQueryFeature(atom, cAtomQFNot0Hydrogen | cAtomQFNot3Hydrogen, true);</p>
-     * <p>To match only atoms without hydrogen neighbors, call<br>setAtomQueryFeature(atom, cAtomQFHydrogen & ~cAtomQFNot3Hydrogen, true);<br>
-     * This mechanism allows a very efficient atom matching and therefore very fast sub-structure search.</p>
-     * @param atom
-     * @param feature one of cAtomQF...
-     * @param value if true, the feature is set, otherwise it is removed
-     */
-    public void setAtomQueryFeature(int atom, int feature, boolean value) {
+	 * public static final int cAtomQFNot3Hydrogen	= 0x00000400;<br>
+	 * <p>An inverse logic needs to be applied to translate a user request to the bits needed. For example,
+	 * to only accept atoms that have 1 or 2 hydrogen neighbors, we need to filter out all others. Thus, we
+	 * would call<br>setAtomQueryFeature(atom, cAtomQFNot0Hydrogen | cAtomQFNot3Hydrogen, true);</p>
+	 * <p>To match only atoms without hydrogen neighbors, call<br>setAtomQueryFeature(atom, cAtomQFHydrogen & ~cAtomQFNot3Hydrogen, true);<br>
+	 * This mechanism allows a very efficient atom matching and therefore very fast sub-structure search.</p>
+	 * @param atom
+	 * @param feature one of cAtomQF...
+	 * @param value if true, the feature is set, otherwise it is removed
+	 */
+	public void setAtomQueryFeature(int atom, int feature, boolean value) {
 		if (value)
-            mAtomQueryFeatures[atom] |= feature;
+			mAtomQueryFeatures[atom] |= feature;
 		else
-            mAtomQueryFeatures[atom] &= ~feature;
+			mAtomQueryFeatures[atom] &= ~feature;
 		mValidHelperArrays &= cHelperNeighbours;
 		mIsFragment = true;
 		}
 
 
-    /**
-     * Sets an atom's radical state as singulet,dublet,triplet or none
-     * @param atom
-     * @param radical one of cAtomRadicalStateNone,cAtomRadicalStateS,cAtomRadicalStateD,cAtomRadicalStateT
-     */
+	/**
+	 * Sets an atom's radical state as singulet,dublet,triplet or none
+	 * @param atom
+	 * @param radical one of cAtomRadicalStateNone,cAtomRadicalStateS,cAtomRadicalStateD,cAtomRadicalStateT
+	 */
 	public void setAtomRadical(int atom, int radical) {
 		mAtomFlags[atom] &= ~cAtomRadicalState;
 		mAtomFlags[atom] |= radical;
@@ -2730,8 +2738,8 @@ public class Molecule implements Serializable {
 	public void setBondParity(int bond, int parity, boolean isPseudo) {
 		mBondFlags[bond] &= ~(cBondFlagsParity | cBondParityIsPseudo | cBondParityUnknownOrNone);
 		mBondFlags[bond] |= parity;
-        if (isPseudo)
-            mBondFlags[bond] |= cBondParityIsPseudo;
+		if (isPseudo)
+			mBondFlags[bond] |= cBondParityIsPseudo;
 		}
 
 
@@ -2796,176 +2804,176 @@ public class Molecule implements Serializable {
 		}
 
 
-    /**
-     * This is for compatibility with old MDL stereo representation
-     * that contained a 'chiral' flag to indicate that the molecule
-     * is not a racemate. If a molecule is constructed from a source
-     * format (e.g. a molfile version 2) that contains a 'chiral' flag
-     * then setToRacemate() needs to be called if the chiral flag is
-     * not(!) set. This causes after stereo center recognition to
-     * turn all absolute stereo centers into racemic ones.
-     */
-    public void setToRacemate() {
-        mIsRacemate = true;
-        }
+	/**
+	 * This is for compatibility with old MDL stereo representation
+	 * that contained a 'chiral' flag to indicate that the molecule
+	 * is not a racemate. If a molecule is constructed from a source
+	 * format (e.g. a molfile version 2) that contains a 'chiral' flag
+	 * then setToRacemate() needs to be called if the chiral flag is
+	 * not(!) set. This causes after stereo center recognition to
+	 * turn all absolute stereo centers into racemic ones.
+	 */
+	public void setToRacemate() {
+		mIsRacemate = true;
+		}
 
-    /**
-     * If a custom atom label is set, a molecule depiction displays
-     * the custom label instead of the original one. Custom labels
-     * are not interpreted otherwise. However, they may optionally
-     * be encoded into idcodes; see Canonizer.encodeAtomCustomLabels().
-     * @param atom
-     * @param label null to remove custom label
-     */
-    public void setAtomCustomLabel(int atom, byte[] label) {
-        if (label != null && label.length == 0)
-        	label = null;
+	/**
+	 * If a custom atom label is set, a molecule depiction displays
+	 * the custom label instead of the original one. Custom labels
+	 * are not interpreted otherwise. However, they may optionally
+	 * be encoded into idcodes; see Canonizer.encodeAtomCustomLabels().
+	 * @param atom
+	 * @param label null to remove custom label
+	 */
+	public void setAtomCustomLabel(int atom, byte[] label) {
+		if (label != null && label.length == 0)
+			label = null;
 
-        if (label == null) {
-            if (mAtomCustomLabel != null)
-                mAtomCustomLabel[atom] = null;
-            }
-        else {
-            if (mAtomCustomLabel == null)
-                mAtomCustomLabel = new byte[mMaxAtoms][];
-            mAtomCustomLabel[atom] = label;
-            }
-        }
+		if (label == null) {
+			if (mAtomCustomLabel != null)
+				mAtomCustomLabel[atom] = null;
+			}
+		else {
+			if (mAtomCustomLabel == null)
+				mAtomCustomLabel = new byte[mMaxAtoms][];
+			mAtomCustomLabel[atom] = label;
+			}
+		}
 
-    /**
-     * If a custom atom label is set, a molecule depiction displays
-     * the custom label instead of the original one. Custom labels
-     * are not interpreted otherwise. However, they may optionally
-     * be encoded into idcodes; see Canonizer.encodeAtomCustomLabels().
-     * This label equals the normal atom label, then the custom label
-     * is removed. This method is less efficient than the byte[] version:
-     * setAtomCustomLabel(int, byte[])
-     * @param atom
-     * @param label null to remove custom label
-     */
-    public void setAtomCustomLabel(int atom, String label) {
-        if (label != null) {
-            if (label.length() == 0)
-                label = null;
-            else {
-                int atomicNo = getAtomicNoFromLabel(label);
-                if ((atomicNo != 0 && label.equals(cAtomLabel[atomicNo]))
-                 || label.equals("?")) {
-                    setAtomicNo(atom, atomicNo);
-                    label = null;
-                    }
-                }
-            }
+	/**
+	 * If a custom atom label is set, a molecule depiction displays
+	 * the custom label instead of the original one. Custom labels
+	 * are not interpreted otherwise. However, they may optionally
+	 * be encoded into idcodes; see Canonizer.encodeAtomCustomLabels().
+	 * This label equals the normal atom label, then the custom label
+	 * is removed. This method is less efficient than the byte[] version:
+	 * setAtomCustomLabel(int, byte[])
+	 * @param atom
+	 * @param label null to remove custom label
+	 */
+	public void setAtomCustomLabel(int atom, String label) {
+		if (label != null) {
+			if (label.length() == 0)
+				label = null;
+			else {
+				int atomicNo = getAtomicNoFromLabel(label);
+				if ((atomicNo != 0 && label.equals(cAtomLabel[atomicNo]))
+				 || label.equals("?")) {
+					setAtomicNo(atom, atomicNo);
+					label = null;
+					}
+				}
+			}
 
-        if (label == null) {
-            if (mAtomCustomLabel != null)
-                mAtomCustomLabel[atom] = null;
-            }
-        else {
-            if (mAtomCustomLabel == null)
-                mAtomCustomLabel = new byte[mMaxAtoms][];
-            mAtomCustomLabel[atom] = label.getBytes();
-            }
-        }
+		if (label == null) {
+			if (mAtomCustomLabel != null)
+				mAtomCustomLabel[atom] = null;
+			}
+		else {
+			if (mAtomCustomLabel == null)
+				mAtomCustomLabel = new byte[mMaxAtoms][];
+			mAtomCustomLabel[atom] = label.getBytes();
+			}
+		}
 
-    /**
-     * This is MDL's enhanced stereo representation (ESR).
-     * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
-     * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
-     * @param atom
-     * @param type one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
-     * @param group index starting with 0
-     */
-    public void setAtomESR(int atom, int type, int group) {
-        if (type == cESRTypeAbs) {
-            mAtomFlags[atom] &= ~cAtomFlagsESR;
-            mAtomFlags[atom] |= (type << cAtomFlagsESRTypeShift);
-            }
-        else {
-            if (group >= cESRMaxGroups)
-                return;
+	/**
+	 * This is MDL's enhanced stereo representation (ESR).
+	 * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
+	 * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
+	 * @param atom
+	 * @param type one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
+	 * @param group index starting with 0
+	 */
+	public void setAtomESR(int atom, int type, int group) {
+		if (type == cESRTypeAbs) {
+			mAtomFlags[atom] &= ~cAtomFlagsESR;
+			mAtomFlags[atom] |= (type << cAtomFlagsESRTypeShift);
+			}
+		else {
+			if (group >= cESRMaxGroups)
+				return;
 
-            if (group == -1) {  // find unused group
-                int maxGroup = -1;
-                for (int i=0; i<mAllAtoms; i++)
-                    if (i != atom
-                     && type == getAtomESRType(i)
-                     && maxGroup < getAtomESRGroup(i))
-                        maxGroup = getAtomESRGroup(i);
-                for (int i=0; i<mAllBonds; i++)
-                    if (type == getBondESRType(i)
-                     && maxGroup < getBondESRGroup(i))
-                        maxGroup = getBondESRGroup(i);
-                group = maxGroup + 1;
-                if (group >= cESRMaxGroups)
-                    return;
-                }
-            mAtomFlags[atom] &= ~cAtomFlagsESR;
-            mAtomFlags[atom] |= ((type << cAtomFlagsESRTypeShift)
-                               | (group << cAtomFlagsESRGroupShift));
-            }
+			if (group == -1) {  // find unused group
+				int maxGroup = -1;
+				for (int i=0; i<mAllAtoms; i++)
+					if (i != atom
+					 && type == getAtomESRType(i)
+					 && maxGroup < getAtomESRGroup(i))
+						maxGroup = getAtomESRGroup(i);
+				for (int i=0; i<mAllBonds; i++)
+					if (type == getBondESRType(i)
+					 && maxGroup < getBondESRGroup(i))
+						maxGroup = getBondESRGroup(i);
+				group = maxGroup + 1;
+				if (group >= cESRMaxGroups)
+					return;
+				}
+			mAtomFlags[atom] &= ~cAtomFlagsESR;
+			mAtomFlags[atom] |= ((type << cAtomFlagsESRTypeShift)
+							   | (group << cAtomFlagsESRGroupShift));
+			}
 
-        mValidHelperArrays &= cHelperRings;
-        }
-
-
-    /**
-     * MDL's enhanced stereo representation for BINAP type of stereo bonds.
-     * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
-     * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
-     * @param bond
-     * @param type one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
-     * @param group index starting with 0
-     */
-    public void setBondESR(int bond, int type, int group) {
-        if (type == cESRTypeAbs) {
-            mBondFlags[bond] &= ~cBondFlagsESR;
-            mBondFlags[bond] |= (type << cBondFlagsESRTypeShift);
-            }
-        else {
-            if (group >= cESRMaxGroups)
-                return;
-
-            if (group == -1) {  // find unused group
-                int maxGroup = -1;
-                for (int i=0; i<mAllAtoms; i++)
-                    if (type == getAtomESRType(i)
-                     && maxGroup < getAtomESRGroup(i))
-                        maxGroup = getAtomESRGroup(i);
-                for (int i=0; i<mAllBonds; i++)
-                    if (i != bond
-                     && type == getBondESRType(i)
-                     && maxGroup < getBondESRGroup(i))
-                        maxGroup = getBondESRGroup(i);
-                group = maxGroup + 1;
-                if (group >= cESRMaxGroups)
-                    return;
-                }
-            mBondFlags[bond] &= ~cBondFlagsESR;
-            mBondFlags[bond] |= ((type << cBondFlagsESRTypeShift)
-                               | (group << cBondFlagsESRGroupShift));
-            }
-
-        mValidHelperArrays &= cHelperRings;
-        }
+		mValidHelperArrays &= cHelperRings;
+		}
 
 
-    /**
-     * Molecule objects may represent complete molecules or sub-structure fragments,
-     * depending on, whether they are flagges as being a fragment or not. Both representations
-     * have much in common, but in certain aspects behave differently. Thus, complete molecules
-     * are considered to carry implicit hydrogens to fill unoccupied atom valences.
-     * Sub-structure fragments on the other hand may carry atom or bond query features.
-     * Depiction, sub-structure search, and other algorithms treat fragments and complete molecules differerently.
-     * @param isFragment if false, then all query features are removed
-     */
+	/**
+	 * MDL's enhanced stereo representation for BINAP type of stereo bonds.
+	 * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
+	 * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
+	 * @param bond
+	 * @param type one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
+	 * @param group index starting with 0
+	 */
+	public void setBondESR(int bond, int type, int group) {
+		if (type == cESRTypeAbs) {
+			mBondFlags[bond] &= ~cBondFlagsESR;
+			mBondFlags[bond] |= (type << cBondFlagsESRTypeShift);
+			}
+		else {
+			if (group >= cESRMaxGroups)
+				return;
+
+			if (group == -1) {  // find unused group
+				int maxGroup = -1;
+				for (int i=0; i<mAllAtoms; i++)
+					if (type == getAtomESRType(i)
+					 && maxGroup < getAtomESRGroup(i))
+						maxGroup = getAtomESRGroup(i);
+				for (int i=0; i<mAllBonds; i++)
+					if (i != bond
+					 && type == getBondESRType(i)
+					 && maxGroup < getBondESRGroup(i))
+						maxGroup = getBondESRGroup(i);
+				group = maxGroup + 1;
+				if (group >= cESRMaxGroups)
+					return;
+				}
+			mBondFlags[bond] &= ~cBondFlagsESR;
+			mBondFlags[bond] |= ((type << cBondFlagsESRTypeShift)
+							   | (group << cBondFlagsESRGroupShift));
+			}
+
+		mValidHelperArrays &= cHelperRings;
+		}
+
+
+	/**
+	 * Molecule objects may represent complete molecules or sub-structure fragments,
+	 * depending on, whether they are flagges as being a fragment or not. Both representations
+	 * have much in common, but in certain aspects behave differently. Thus, complete molecules
+	 * are considered to carry implicit hydrogens to fill unoccupied atom valences.
+	 * Sub-structure fragments on the other hand may carry atom or bond query features.
+	 * Depiction, sub-structure search, and other algorithms treat fragments and complete molecules differerently.
+	 * @param isFragment if false, then all query features are removed
+	 */
 	public void setFragment(boolean isFragment) {
 		mIsFragment = isFragment;
 
 		if (!isFragment) {
 			mAtomList = null;
 			for (int atom=0; atom<mAllAtoms; atom++)
-                mAtomQueryFeatures[atom] = 0;
+				mAtomQueryFeatures[atom] = 0;
 			for (int bond=0; bond<mAllBonds; bond++) {
 				mBondQueryFeatures[bond] = 0;
 				if (mBondType[bond] == cBondTypeDelocalized)
@@ -3026,9 +3034,9 @@ public class Molecule implements Serializable {
 	 * is redone, if needed.
 	 */
 	public void stripStereoInformation() {
-        mIsRacemate = false;
-        for (int atom=0; atom<mAllAtoms; atom++)
-            mAtomFlags[atom] &= ~(cAtomFlagConfigurationUnknown | cAtomFlagsESR);
+		mIsRacemate = false;
+		for (int atom=0; atom<mAllAtoms; atom++)
+			mAtomFlags[atom] &= ~(cAtomFlagConfigurationUnknown | cAtomFlagsESR);
 		for (int bond=0; bond<mAllBonds; bond++)
 			mBondType[bond] &= ~cBondTypeMaskStereo;
 
@@ -3085,15 +3093,15 @@ public class Molecule implements Serializable {
 
 
 	private int getMaximumBondOrder(int bond) {
-        int maxBondOrder = 3;
-        for (int i=0; i<2; i++) {
-            int atom = mBondAtom[i][bond];
-            int max = getBondOrder(bond) + getMaxValence(atom) - getOccupiedValence(atom);
-            if (maxBondOrder > max)
-                maxBondOrder = max;
-            }
-        return maxBondOrder;
-	    }
+		int maxBondOrder = 3;
+		for (int i=0; i<2; i++) {
+			int atom = mBondAtom[i][bond];
+			int max = getBondOrder(bond) + getMaxValence(atom) - getOccupiedValence(atom);
+			if (maxBondOrder > max)
+				maxBondOrder = max;
+			}
+		return maxBondOrder;
+		}
 
 
 	private boolean incrementBondOrder(int bond) {
@@ -3140,31 +3148,31 @@ public class Molecule implements Serializable {
 		}
 
 
-    protected boolean validateBondType(int bond, int type) {
-        int simpleType = type & Molecule.cBondTypeMaskSimple;
+	protected boolean validateBondType(int bond, int type) {
+		int simpleType = type & Molecule.cBondTypeMaskSimple;
 
-        int maxBondOrder = getMaximumBondOrder(bond);
-        switch (simpleType) {
-        case cBondTypeSingle:
-        case cBondTypeDelocalized:
-            return maxBondOrder >= 1;
-        case cBondTypeDouble:
-            return maxBondOrder >= 2;
-        case cBondTypeTriple:
-            return maxBondOrder >= 3;
-        case cBondTypeMetalLigand:
-            return isMetalAtom(mBondAtom[0][bond]) ^ isMetalAtom(mBondAtom[1][bond]);
-        default:
-            return false;
-            }
-        }
+		int maxBondOrder = getMaximumBondOrder(bond);
+		switch (simpleType) {
+		case cBondTypeSingle:
+		case cBondTypeDelocalized:
+			return maxBondOrder >= 1;
+		case cBondTypeDouble:
+			return maxBondOrder >= 2;
+		case cBondTypeTriple:
+			return maxBondOrder >= 3;
+		case cBondTypeMetalLigand:
+			return isMetalAtom(mBondAtom[0][bond]) ^ isMetalAtom(mBondAtom[1][bond]);
+		default:
+			return false;
+			}
+		}
 
 
-    /**
-     * The sum of bond orders of explicitly connected neighbour atoms.
-     * @param atom
-     * @return explicitly used valence
-     */
+	/**
+	 * The sum of bond orders of explicitly connected neighbour atoms.
+	 * @param atom
+	 * @return explicitly used valence
+	 */
 	protected int getOccupiedValence(int atom) {
 			// ExtendedMolecule overwrites this function by updateing and using neighbour arrays
 		return simpleGetValence(atom);
@@ -3191,10 +3199,10 @@ public class Molecule implements Serializable {
 		int valence = getAtomAbnormalValence(atom);
 
 		if (valence == -1) {
-		    byte[] valenceList = (mAtomicNo[atom] < cAtomValence.length) ?
-		                         cAtomValence[mAtomicNo[atom]] : null;
-		    valence = (valenceList == null) ? cDefaultAtomValence : valenceList[valenceList.length-1];
-		    }
+			byte[] valenceList = (mAtomicNo[atom] < cAtomValence.length) ?
+								 cAtomValence[mAtomicNo[atom]] : null;
+			valence = (valenceList == null) ? cDefaultAtomValence : valenceList[valenceList.length-1];
+			}
 
 		return valence;
 		}
@@ -3218,33 +3226,33 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public int getElectronValenceCorrection(int atom) {
-        if (mAtomicNo[atom] >= 171 && mAtomicNo[atom] <= 190)
-            return 0;
+		if (mAtomicNo[atom] >= 171 && mAtomicNo[atom] <= 190)
+			return 0;
 
-        int correction = 0;
+		int correction = 0;
 
-	    if ((mAtomFlags[atom] & cAtomRadicalState) == cAtomRadicalStateD)
-	        correction -= 1;
-        if ((mAtomFlags[atom] & cAtomRadicalState) == cAtomRadicalStateS
-         || (mAtomFlags[atom] & cAtomRadicalState) == cAtomRadicalStateT)
-            correction -= 2;
+		if ((mAtomFlags[atom] & cAtomRadicalState) == cAtomRadicalStateD)
+			correction -= 1;
+		if ((mAtomFlags[atom] & cAtomRadicalState) == cAtomRadicalStateS
+		 || (mAtomFlags[atom] & cAtomRadicalState) == cAtomRadicalStateT)
+			correction -= 2;
 
-        int charge = mAtomCharge[atom];
-        if (charge == 0 && mIsFragment) {
-        	if ((mAtomQueryFeatures[atom] & cAtomQFCharge) == cAtomQFNotCharge0+cAtomQFNotChargePos)
-        		charge = -1;
-        	if ((mAtomQueryFeatures[atom] & cAtomQFCharge) == cAtomQFNotCharge0+cAtomQFNotChargeNeg)
-        		charge = 1;
-        	}
-        if (mAtomicNo[atom] == 6)
-            correction -= Math.abs(charge);
-        else if (isElectronegative(atom))
-            correction += charge;
-        else
-            correction -= charge;
+		int charge = mAtomCharge[atom];
+		if (charge == 0 && mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFCharge) == cAtomQFNotCharge0+cAtomQFNotChargePos)
+				charge = -1;
+			if ((mAtomQueryFeatures[atom] & cAtomQFCharge) == cAtomQFNotCharge0+cAtomQFNotChargeNeg)
+				charge = 1;
+			}
+		if (mAtomicNo[atom] == 6)
+			correction -= Math.abs(charge);
+		else if (isElectronegative(atom))
+			correction += charge;
+		else
+			correction -= charge;
 
-        return correction;
-	    }
+		return correction;
+		}
 
 
 	public static boolean isAtomicNoElectronegative(int atomicNo) {
@@ -3308,18 +3316,18 @@ public class Molecule implements Serializable {
 	 * @param atom
 	 * @return whether atom is any metal atom
 	 */
-    public boolean isMetalAtom(int atom) {
-        int atomicNo = mAtomicNo[atom];
-        return (atomicNo >=  3 && atomicNo <=  4)
-            || (atomicNo >= 11 && atomicNo <= 13)
-            || (atomicNo >= 19 && atomicNo <= 31)
-            || (atomicNo >= 37 && atomicNo <= 51)
-            || (atomicNo >= 55 && atomicNo <= 84)
-            || (atomicNo >= 87 && atomicNo <= 103);
-        }
+	public boolean isMetalAtom(int atom) {
+		int atomicNo = mAtomicNo[atom];
+		return (atomicNo >=  3 && atomicNo <=  4)
+			|| (atomicNo >= 11 && atomicNo <= 13)
+			|| (atomicNo >= 19 && atomicNo <= 31)
+			|| (atomicNo >= 37 && atomicNo <= 51)
+			|| (atomicNo >= 55 && atomicNo <= 84)
+			|| (atomicNo >= 87 && atomicNo <= 103);
+		}
 
 
-    protected void removeMappingNo(int mapNo) {
+	protected void removeMappingNo(int mapNo) {
 		for (int atom=0; atom<mAllAtoms; atom++)
 			if (Math.abs(mAtomMapNo[atom]) == Math.abs(mapNo))
 				mAtomMapNo[atom] = 0;
@@ -3364,15 +3372,15 @@ public class Molecule implements Serializable {
 				mAtomCharge[atomDest] = mAtomCharge[atom];
 				mAtomMass[atomDest] = mAtomMass[atom];
 				mAtomFlags[atomDest] = mAtomFlags[atom];
-                mAtomQueryFeatures[atomDest] = mAtomQueryFeatures[atom];
+				mAtomQueryFeatures[atomDest] = mAtomQueryFeatures[atom];
 				mAtomMapNo[atomDest] = mAtomMapNo[atom];
 				mAtomX[atomDest] = mAtomX[atom];
 				mAtomY[atomDest] = mAtomY[atom];
 				mAtomZ[atomDest] = mAtomZ[atom];
 				if (mAtomList != null)
 					mAtomList[atomDest] = mAtomList[atom];
-                if (mAtomCustomLabel != null)
-                    mAtomCustomLabel[atomDest] = mAtomCustomLabel[atom];
+				if (mAtomCustomLabel != null)
+					mAtomCustomLabel[atomDest] = mAtomCustomLabel[atom];
 				}
 			newAtmNo[atom] = atomDest;
 			atomDest++;
@@ -3391,8 +3399,6 @@ public class Molecule implements Serializable {
 			}
 		mAllBonds = bondDest;
 
-//		for (int atom=0; atom<mAllAtoms; atom++)
-//			checkAtomParity(atom);
 		return newAtmNo;
 		}
 
@@ -3481,7 +3487,7 @@ public class Molecule implements Serializable {
 			stream.writeInt(mAtomCharge[atom]);
 			stream.writeInt(mAtomMass[atom]);
 			stream.writeInt(mAtomFlags[atom] & ~cAtomFlagsHelper);
-            stream.writeInt(mAtomQueryFeatures[atom]);
+			stream.writeInt(mAtomQueryFeatures[atom]);
 			stream.writeDouble(mAtomX[atom]);	// for compatibility with earlier double based coords
 			stream.writeDouble(mAtomY[atom]);
 			stream.writeDouble(mAtomZ[atom]);
@@ -3496,13 +3502,13 @@ public class Molecule implements Serializable {
 				stream.writeInt(0);
 
 			if (mAtomCustomLabel != null && mAtomCustomLabel[atom] != null) {
-			    stream.writeInt(mAtomCustomLabel[atom].length);
-			    for (int i=0; i<mAtomCustomLabel[atom].length; i++)
-			        stream.writeByte(mAtomCustomLabel[atom][i]);
-			    }
+				stream.writeInt(mAtomCustomLabel[atom].length);
+				for (int i=0; i<mAtomCustomLabel[atom].length; i++)
+					stream.writeByte(mAtomCustomLabel[atom][i]);
+				}
 			else
-			    stream.writeInt(0);
-		    }
+				stream.writeInt(0);
+			}
 		for (int bond=0; bond<mAllBonds;bond++) {
 			stream.writeInt(mBondAtom[0][bond]);
 			stream.writeInt(mBondAtom[1][bond]);
@@ -3530,7 +3536,7 @@ public class Molecule implements Serializable {
 			mAtomCharge[atom] = stream.readInt();
 			mAtomMass[atom] = stream.readInt();
 			mAtomFlags[atom] = stream.readInt();
-            mAtomQueryFeatures[atom] = stream.readInt();
+			mAtomQueryFeatures[atom] = stream.readInt();
 			mAtomX[atom] = (float)stream.readDouble();	// for compatibility with earlier double based coords
 			mAtomY[atom] = (float)stream.readDouble();
 			mAtomZ[atom] = (float)stream.readDouble();
@@ -3547,25 +3553,25 @@ public class Molecule implements Serializable {
 
 			count = stream.readInt();
 			if (count != 0) {
-			    if (mAtomCustomLabel == null)
-			        mAtomCustomLabel = new byte[mMaxAtoms][];
-			    mAtomCustomLabel[atom] = new byte[count];
-			    for (int i=0; i<count; i++)
-			        mAtomCustomLabel[atom][i] = stream.readByte();
-			    }
-		    }
+				if (mAtomCustomLabel == null)
+					mAtomCustomLabel = new byte[mMaxAtoms][];
+				mAtomCustomLabel[atom] = new byte[count];
+				for (int i=0; i<count; i++)
+					mAtomCustomLabel[atom][i] = stream.readByte();
+				}
+			}
 
 		for (int bond=0; bond<mAllBonds; bond++) {
 			mBondAtom[0][bond] = stream.readInt();
 			mBondAtom[1][bond] = stream.readInt();
 			mBondType[bond] = stream.readInt();
 			mBondFlags[bond] = stream.readInt();
-            mBondQueryFeatures[bond] = stream.readInt();
+			mBondQueryFeatures[bond] = stream.readInt();
 			}
 		
 		try {
 			mName = (String) stream.readObject();
-		    } catch(Exception e) {}
+			} catch(Exception e) {}
 
 		mValidHelperArrays = cHelperNone;
 		}

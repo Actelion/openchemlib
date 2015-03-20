@@ -1621,7 +1621,7 @@ public class Matrix {
 	 * @param row
 	 * @return column index for the field with the largest value for the given row.
 	 */
-    public int getMaxColIndex(int row) {
+    public int getColIndexContainingMaxVal(int row) {
 
         int cols = getColDim();
         double max = -Double.MAX_VALUE;
@@ -1633,6 +1633,49 @@ public class Matrix {
             }
         }
         return col;
+    }
+    
+    /**
+     * 
+     * @param rowEnd the values in the matrix will be considered until this row (exclusively).
+     * @param colEnd the values in the matrix will be considered until this col (exclusively).
+     * @return
+     */
+    public ScorePoint getColIndexContainingMaxVal(int rowEnd, int colEnd) {
+    	
+    	int cols = colEnd;
+    	
+    	int rows = rowEnd;
+    	        
+        double max = -Double.MAX_VALUE;
+        
+        int rowMax = -1;
+        int colMax = -1;
+        
+        for (int i = 0; i < cols; i++) {
+        	
+        	double maxInCol = -Double.MAX_VALUE;
+        	
+        	int rowMaxInCol=-1;
+        	for (int j = 0; j < rows; j++) {
+        		if(data[j][i] > maxInCol) {
+        			maxInCol = data[j][i];
+        			rowMaxInCol=j;
+                }
+			}
+        	
+        	if(maxInCol>max){
+        		max = maxInCol;
+        		rowMax = rowMaxInCol;
+        		colMax = i;
+        	}
+        }
+        
+        ScorePoint sc = new ScorePoint(rowMax, colMax);
+        
+        sc.setScore(max);
+        
+        return sc;
     }
 
     public Matrix getNormalizedMatrix() {
