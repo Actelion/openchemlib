@@ -1,11 +1,3 @@
-package com.actelion.research.gui.dnd;
-
-import com.actelion.research.chem.*;
-
-import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
 /*
 * Copyright (c) 1997 - 2015
 * Actelion Pharmaceuticals Ltd.
@@ -39,6 +31,14 @@ import java.awt.dnd.*;
 *
 */
 
+package com.actelion.research.gui.dnd;
+
+import com.actelion.research.chem.*;
+
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 public class MoleculeDropAdapter implements DropTargetListener
 {
     public static final boolean debug = false;

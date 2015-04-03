@@ -1785,10 +1785,13 @@ System.out.println("noOfRanks:"+canRank);
 		if (!mMol.isBINAPChiralityBond(bond))
 			return false;
 
-		EZHalfParity halfParity1 = new EZHalfParity(mMol, mCanRank, mMol.getBondAtom(0, bond), mMol.getBondAtom(1, bond));
+		int atom1 = mMol.getBondAtom(0, bond);
+		int atom2 = mMol.getBondAtom(1, bond);
+
+		EZHalfParity halfParity1 = new EZHalfParity(mMol, mCanRank, atom1, atom2);
 		if (halfParity1.mRanksEqual && !calcProParity)
 			return false;
-		EZHalfParity halfParity2 = new EZHalfParity(mMol, mCanRank, mMol.getBondAtom(1, bond), mMol.getBondAtom(0, bond));
+		EZHalfParity halfParity2 = new EZHalfParity(mMol, mCanRank, atom2, atom1);
 		if (halfParity2.mRanksEqual && !calcProParity)
 			return false;
 
@@ -1796,8 +1799,10 @@ System.out.println("noOfRanks:"+canRank);
 			return false;	// both ends of DB bear equal substituents
 
 		if (calcProParity) {
-			if (halfParity1.mRanksEqual || halfParity2.mRanksEqual)
-				mProEZAtomsInSameFragment[bond] = true;
+			if (halfParity1.mRanksEqual)	// this is a hack, we should find a better solution considering other proparities as well
+				mProEZAtomsInSameFragment[bond] = hasSecondBINAPBond(atom2);
+			if (halfParity2.mRanksEqual)
+				mProEZAtomsInSameFragment[bond] = hasSecondBINAPBond(atom1);
 			}
 
 		int hp1 = halfParity1.getValue();
@@ -1848,6 +1853,22 @@ System.out.println("noOfRanks:"+canRank);
 			}
 
 		return true;
+		}
+
+
+	private boolean hasSecondBINAPBond(int atom) {
+		RingCollection ringSet = mMol.getRingSet();
+		for (int i=0; i<ringSet.getSize(); i++) {
+			if (ringSet.isAromatic(i) && ringSet.isAtomMember(i, atom)) {
+				for (int j:ringSet.getRingAtoms(i))
+					if (j != atom)
+						for (int k=0; k<mMol.getConnAtoms(j); k++)
+							if (mMol.isBINAPChiralityBond(mMol.getConnBond(j, k)))
+								return true;
+				return false;
+				}
+			}
+		return false;
 		}
 
 

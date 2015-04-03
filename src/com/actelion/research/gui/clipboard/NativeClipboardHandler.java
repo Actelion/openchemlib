@@ -34,18 +34,6 @@
 package com.actelion.research.gui.clipboard;
 
 
-/**
- *
- * <p>Title: Actelion Library</p>
- * Copyright 1997-2011 Actelion Ltd., Inc. All Rights Reserved.
- *
- * This software is the proprietary information of Actelion Pharmaceuticals, Ltd.
- * Use is subject to license terms.
- * @author Thomas Sander, Christian Rufener
- * @version 1.3
- * 
- * 10/7/2009 CXR Added MacOS basic support
- */
 public class NativeClipboardHandler
 {
 

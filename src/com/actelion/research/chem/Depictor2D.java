@@ -41,144 +41,159 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
 
-public class Depictor2D extends AbstractDepictor {
+public class Depictor2D extends AbstractDepictor
+{
     private static boolean isMac = (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0);
-	private int			mpTextSize;
-	private float      mCurrentStringWidth;
-	private float		mLineWidth;
-	private ArrayList<Font>	mFonts;
-	private String      mCurrentString;
-	private Font        mCurrentFont;
-	private GlyphVector mCurrentGlyphVector;
+    private int mpTextSize;
+    private float mCurrentStringWidth;
+    private float mLineWidth;
+    private ArrayList<Font> mFonts;
+    private String mCurrentString;
+    private Font mCurrentFont;
+    private GlyphVector mCurrentGlyphVector;
 
-	public Depictor2D(StereoMolecule mol) {
-		super(mol);
-		}
-
-
-	public Depictor2D(StereoMolecule mol, int displayMode) {
-		super(mol, displayMode);
-		}
-
-	
-	protected void init() {
-		super.init();
-		mFonts = new ArrayList<Font>();
-		mLineWidth = 1.0f;
-		}
+    public Depictor2D(StereoMolecule mol)
+    {
+        super(mol);
+    }
 
 
-
-	protected void drawBlackLine(DepictorLine theLine) {
-		// Lines on OSX are shifted left and down when drawn in Graphics2D by 0.5. We must compensate.
-		if (isMac)
-			((Graphics2D)mG).draw(new Line2D.Float(theLine.x1-0.5f, theLine.y1-0.5f, theLine.x2-0.5f, theLine.y2-0.5f));
-		else
-			((Graphics2D)mG).draw(new Line2D.Float(theLine.x1, theLine.y1, theLine.x2, theLine.y2));
-		}
+    public Depictor2D(StereoMolecule mol, int displayMode)
+    {
+        super(mol, displayMode);
+    }
 
 
-    protected void drawDottedLine(DepictorLine theLine) {
-        Stroke stroke = ((Graphics2D)mG).getStroke();
-        ((Graphics2D)mG).setStroke(new BasicStroke(
-        						mLineWidth,
-                                BasicStroke.CAP_ROUND,
-                                BasicStroke.JOIN_ROUND,
-                                mLineWidth,
-                                new float[] {3.0f*mLineWidth},
-                                0f));
+    protected void init()
+    {
+        super.init();
+        mFonts = new ArrayList<Font>();
+        mLineWidth = 1.0f;
+    }
+
+
+    protected void drawBlackLine(DepictorLine theLine)
+    {
+        // Lines on OSX are shifted left and down when drawn in Graphics2D by 0.5. We must compensate.
+        if (isMac)
+            ((Graphics2D) mG).draw(new Line2D.Float(theLine.x1 - 0.5f, theLine.y1 - 0.5f, theLine.x2 - 0.5f, theLine.y2 - 0.5f));
+        else
+            ((Graphics2D) mG).draw(new Line2D.Float(theLine.x1, theLine.y1, theLine.x2, theLine.y2));
+    }
+
+
+    protected void drawDottedLine(DepictorLine theLine)
+    {
+        Stroke stroke = ((Graphics2D) mG).getStroke();
+        ((Graphics2D) mG).setStroke(new BasicStroke(
+                mLineWidth,
+                BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND,
+                mLineWidth,
+                new float[]{3.0f * mLineWidth},
+                0f));
 
         drawBlackLine(theLine);
 
-        ((Graphics2D)mG).setStroke(stroke);
+        ((Graphics2D) mG).setStroke(stroke);
+    }
+
+
+    protected void drawString(String theString, float x, float y)
+    {
+        float strWidth = getStringWidth(theString);
+        ((Graphics2D) mG).drawGlyphVector(mCurrentGlyphVector,
+                (float) (x - strWidth / 2.0),
+                (float) (y + (float) mpTextSize / 3.0));
+    }
+
+
+    protected void drawPolygon(float[] x, float[] y, int count)
+    {
+        GeneralPath polygon = new GeneralPath(GeneralPath.WIND_NON_ZERO, count);
+        polygon.moveTo((float) x[0], (float) y[0]);
+        for (int i = 1; i < count; i++) {
+            polygon.lineTo((float) x[i], (float) y[i]);
+        }
+        polygon.closePath();
+
+        ((Graphics2D) mG).fill(polygon);
+
+        if (isMac) {
+            polygon = new GeneralPath(GeneralPath.WIND_NON_ZERO, count);
+            polygon.moveTo((float) x[0] - 0.5f, (float) y[0] - 0.5f);
+            for (int i = 1; i < count; i++) {
+                polygon.lineTo((float) x[i] - 0.5f, (float) y[i] - 0.5f);
+            }
+            polygon.closePath();
         }
 
-
-	protected void drawString(String theString, float x, float y) {
-		float strWidth = getStringWidth(theString);
-		((Graphics2D)mG).drawGlyphVector(mCurrentGlyphVector,
-									     (float)(x-strWidth/2.0),
-									     (float)(y+(float)mpTextSize/3.0));
-		}
+        ((Graphics2D) mG).draw(polygon);
+    }
 
 
-	protected void drawPolygon(float[] x, float[] y, int count) {
-		GeneralPath polygon = new GeneralPath(GeneralPath.WIND_NON_ZERO, count);
-		polygon.moveTo((float)x[0], (float)y[0]);
-		for (int i=1; i<count; i++)
-			polygon.lineTo((float)x[i], (float)y[i]);
-		polygon.closePath();
-
-		((Graphics2D)mG).fill(polygon);
-		
-		if (isMac) {
-			polygon = new GeneralPath(GeneralPath.WIND_NON_ZERO, count);
-			polygon.moveTo((float)x[0]-0.5f, (float)y[0]-0.5f);
-			for (int i=1; i<count; i++)
-				polygon.lineTo((float)x[i]-0.5f, (float)y[i]-0.5f);
-			polygon.closePath();
-			}
-		
-		((Graphics2D)mG).draw(polygon);
-		}
+    protected void fillCircle(float x, float y, float r)
+    {
+        if (isMac)
+            ((Graphics2D) mG).fill(new Ellipse2D.Float(x - 0.5f, y - 0.5f, r, r));
+        else
+            ((Graphics2D) mG).fill(new Ellipse2D.Float(x, y, r, r));
+    }
 
 
-	protected void fillCircle(float x, float y, float r) {
-		if (isMac)
-			((Graphics2D)mG).fill(new Ellipse2D.Float(x-0.5f, y-0.5f, r, r));
-		else
-			((Graphics2D)mG).fill(new Ellipse2D.Float(x, y, r, r));
-		}
+    protected float getStringWidth(String theString)
+    {
+        if (!theString.equals(mCurrentString)) {
+            mCurrentString = theString;
+            mCurrentGlyphVector = mCurrentFont.createGlyphVector(((Graphics2D) mG).getFontRenderContext(), theString);
+            mCurrentStringWidth = (float) mCurrentGlyphVector.getLogicalBounds().getWidth();
+        }
+        return mCurrentStringWidth;
+    }
 
 
-	protected float getStringWidth(String theString) {
-		if (!theString.equals(mCurrentString)
-		 || mCurrentFont != ((Graphics2D)mG).getFont()) {
-			mCurrentString = theString;
-			mCurrentFont = ((Graphics2D)mG).getFont();
-			mCurrentGlyphVector = ((Graphics2D)mG).getFont().createGlyphVector(((Graphics2D)mG).getFontRenderContext(), theString);
-			mCurrentStringWidth = (float)mCurrentGlyphVector.getLogicalBounds().getWidth();
-		    }
-		return mCurrentStringWidth;
-		}
+    protected void setTextSize(int theSize)
+    {
+        mpTextSize = (int) theSize;
+        if (mG != null) {
+            if (mCurrentFont == null || mCurrentFont.getSize() != theSize) {
+                for (int i = 0; i < mFonts.size(); i++) {
+                    if ((mFonts.get(i)).getSize() == theSize) {
+                        ((Graphics2D) mG).setFont(mFonts.get(i));
+                        return;
+                    }
+                }
+                Font newFont = new Font("Helvetica", 0, (int) theSize);
+                mFonts.add(newFont);
+                mCurrentFont = newFont;
+                ((Graphics2D) mG).setFont(newFont);
+            }
+        }
+    }
 
 
-	protected void setTextSize(int theSize) {
-		mpTextSize = (int)theSize;
-		if (mG != null) {
-			if (((Graphics2D) mG).getFont().getSize() != theSize) {
-				for (int i = 0; i < mFonts.size(); i++) {
-					if ((mFonts.get(i)).getSize() == theSize) {
-						((Graphics2D) mG).setFont(mFonts.get(i));
-						return;
-					}
-				}
-				Font newFont = new Font("Helvetica", 0, (int) theSize);
-				mFonts.add(newFont);
-				((Graphics2D) mG).setFont(newFont);
-			}
-		}
-		}
-
-
-    public int getTextSize() {
+    public int getTextSize()
+    {
         return mpTextSize;
-        }
+    }
 
 
-	protected float getLineWidth() {
-		return mLineWidth;
-		}
+    protected float getLineWidth()
+    {
+        return mLineWidth;
+    }
 
 
-	protected void setLineWidth(float lineWidth) {
-		mLineWidth = (float)lineWidth;
-		((Graphics2D)mG).setStroke(new BasicStroke((float)lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-		}
+    protected void setLineWidth(float lineWidth)
+    {
+        mLineWidth = (float) lineWidth;
+        ((Graphics2D) mG).setStroke(new BasicStroke((float) lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+    }
 
 
-	protected void setColor(Color theColor) {
-	    ((Graphics2D)mG).setColor(theColor);
-		((Graphics2D)mG).setPaint(theColor);
-		}
-	}
+    protected void setColor(Color theColor)
+    {
+        ((Graphics2D) mG).setColor(theColor);
+        ((Graphics2D) mG).setPaint(theColor);
+    }
+}

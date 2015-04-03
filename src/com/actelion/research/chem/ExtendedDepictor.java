@@ -39,6 +39,9 @@ import java.awt.geom.*;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionArrow;
 
+
+
+
 public class ExtendedDepictor {
     private StereoMolecule[]		mMolecule;
     private AbstractDepictor[]		mDepictor;
@@ -106,7 +109,7 @@ public class ExtendedDepictor {
     private void initialize() {
             // for reactions and sets of molecules the availability of coordinates
             // is mandatory. However, every individual molecule may have its first
-            // atom at coords 0.0/0.0, e.g. if they are encoded idcodes or if 
+            // atom at coords 0.0/0.0, e.g. if they are encoded idcodes or if
         mTransformation = new DepictorTransformation();
         if (mMolecule != null) {
             mDepictor = new AbstractDepictor[mMolecule.length];

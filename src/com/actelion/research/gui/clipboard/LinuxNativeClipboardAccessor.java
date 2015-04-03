@@ -36,15 +36,6 @@ package com.actelion.research.gui.clipboard;
 import java.awt.*;
 import java.awt.datatransfer.*;
 
-/**
- *
- * <p>Title: Actelion Library</p>
- * <p>Description: Actelion Java Library</p>
- * <p>Copyright: Copyright (c) 2002-2003</p>
- * <p>Company: Actelion Ltd</p>
- * @author Thomas Sander, Christian Rufener
- * @version 1.2
- */
 public class LinuxNativeClipboardAccessor implements ClipboardOwner
 {
 	static public DataFlavor MOLFLAVOUR = new DataFlavor(com.actelion.research.chem.StereoMolecule.class,"Actelion Molecule");

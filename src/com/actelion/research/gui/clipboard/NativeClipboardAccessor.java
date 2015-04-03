@@ -33,15 +33,6 @@
 
 package com.actelion.research.gui.clipboard;
 
-/**
- *
- * <p>Title: Actelion Library</p>
- * <p>Description: Actelion Java Library</p>
- * <p>Copyright: Copyright (c) 2002-2003</p>
- * <p>Company: Actelion Ltd</p>
- * @author Thomas Sander, Christian Rufener
- * @version 1.2
- */
 public class NativeClipboardAccessor
 {
 

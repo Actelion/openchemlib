@@ -1,5 +1,3 @@
-package com.actelion.research.gui.dnd;
-
 /*
 * Copyright (c) 1997 - 2015
 * Actelion Pharmaceuticals Ltd.
@@ -32,6 +30,8 @@ package com.actelion.research.gui.dnd;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.gui.dnd;
 
 import java.awt.datatransfer.DataFlavor;
 

@@ -42,6 +42,7 @@ public class Depictor extends AbstractDepictor {
 	private int			mpTextSize,mMaxTextSize;
 	private float		mLineWidth;
 	private ArrayList<Font>	mFonts;
+    private Font currentFont;
 
 	public Depictor(StereoMolecule mol) {
 		super(mol);
@@ -115,21 +116,24 @@ public class Depictor extends AbstractDepictor {
 		}
 
 
-	public void setTextSize(int theSize) {
-		mpTextSize = Math.min(theSize, mMaxTextSize);
-		if (((Graphics)mG).getFont().getSize() != mpTextSize) {
-			for (int i=0; i<mFonts.size(); i++) {
-				if ((mFonts.get(i)).getSize() == mpTextSize) {
-				    ((Graphics)mG).setFont(mFonts.get(i));
-					return;
-					}
-				}
-			Font newFont = new Font("Helvetica",0, mpTextSize);
-			mFonts.add(newFont);
-			((Graphics)mG).setFont(newFont);
-			}
-		}
-
+	public void setTextSize(int theSize)
+    {
+        mpTextSize = Math.min(theSize, mMaxTextSize);
+        if (mG != null) {
+            if (currentFont == null || currentFont.getSize() != mpTextSize) {
+                for (int i = 0; i < mFonts.size(); i++) {
+                    if ((mFonts.get(i)).getSize() == mpTextSize) {
+                        ((Graphics) mG).setFont(mFonts.get(i));
+                        return;
+                    }
+                }
+                Font newFont = new Font("Helvetica", 0, mpTextSize);
+                mFonts.add(newFont);
+                currentFont = newFont;
+                ((Graphics) mG).setFont(newFont);
+            }
+        }
+    }
 
 	public int getTextSize() {
 	    return mpTextSize;

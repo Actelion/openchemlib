@@ -142,6 +142,15 @@ public class CompareUtils {
 	    return ival;
 	}
 	
+	public static int compare(Object[] a1, Object[] a2) {
+		for (int i = 0; i < a1.length || i < a2.length; i++) {
+			Object o1 = i < a1.length? a1[i]: null;
+			Object o2 = i < a2.length? a2[i]: null;
+			int c = CompareUtils.compare(o1, o2);
+			if(c!=0) return c;
+		}
+		return 0;
+	}
 	public static int compare(Object o1, Object o2) {
 		if(o1==null && o2==null) return 0; 
 		if(o1==null) return 1; //Null at the end
@@ -149,7 +158,9 @@ public class CompareUtils {
 
 		if((o1 instanceof String) && (o2 instanceof String)) {
 			return compare((String) o1, (String) o2);
-		} else if((o1 instanceof Comparable) && (o2 instanceof Comparable)) {
+		} else if((o1 instanceof Object[]) && (o2 instanceof Object[])) {
+			return compare((Object[]) o1, (Object[]) o2);
+		} else if((o1 instanceof Comparable) && (o2 instanceof Comparable)) {			
 			return ((Comparable) o1).compareTo((Comparable) o2);
 		} else {
 			return compare(o1.toString(), o2.toString());			

@@ -50,6 +50,10 @@ public class ReactionEncoder
 	public static final int RETURN_RXN_CODE_ONLY = 0;
 	public static final int RETURN_DEFAULT = INCLUDE_MAPPING | INCLUDE_COORDS;
 
+
+    private ReactionEncoder()
+    {}
+
 	/**
 	 * Creates a String containing a unique reaction code by
 	 * creating idcodes of every reactant and product and
