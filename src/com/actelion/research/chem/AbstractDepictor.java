@@ -327,7 +327,7 @@ public abstract class AbstractDepictor {
 		}
 
 
-	protected DepictorTransformation simpleValidateView(Rectangle2D.Float viewRect, int mode) {
+	 public DepictorTransformation simpleValidateView(Rectangle2D.Float viewRect, int mode) {
 	// returns incremental transformation that moves/scales already transformed molecule into viewRect
 		if (mMol.getAllAtoms() == 0)
 			return null;

@@ -3109,36 +3109,33 @@ System.out.println();
 			return;
 			}
 
+		// if we have 3D-coords and explicit hydrogens and if all hydrogens are explicit then encode hydrogen coordinates
+		boolean includeHydrogenCoordinates = false;
+		if (mZCoordinatesAvailable && mMol.getAllAtoms() > mMol.getAtoms()) {
+			includeHydrogenCoordinates = true;
+			for (int i=0; i<mMol.getAtoms(); i++) {
+				if (mMol.getImplicitHydrogens(i) != 0) {
+					includeHydrogenCoordinates = false;
+					break;
+					}
+				}
+			}
+
 		int resolutionBits = mZCoordinatesAvailable ? 16 : 8;	// must be an even number
 		encodeBitsStart();
-		mEncodingBuffer.append('!');
+		mEncodingBuffer.append(includeHydrogenCoordinates ? '#' : '!');
 		encodeBits(mZCoordinatesAvailable ? 1 : 0, 1);
 		encodeBits(keepAbsoluteValues ? 1 : 0, 1);
 		encodeBits(resolutionBits/2, 4);	// resolution bits devided by 2
 
 		float maxDelta = 0.0f;
-		for (int i=1; i<mMol.getAtoms(); i++) {
-			int atom = mGraphAtom[i];
-			int from = (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]];
-
-			float deltaX = (from == -1) ?
-							Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0f
-						  : Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(from));
-			if (maxDelta < deltaX)
-				maxDelta = deltaX;
-
-			float deltaY = (from == -1) ?
-							Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0f
-						  : Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(from));
-			if (maxDelta < deltaY)
-				maxDelta = deltaY;
-
-			if (mZCoordinatesAvailable) {
-				float deltaZ = (from == -1) ?
-								Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0f
-							  : Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(from));
-				if (maxDelta < deltaZ)
-					maxDelta = deltaZ;
+		for (int i=1; i<mMol.getAtoms(); i++)
+			maxDelta = getMaxDelta(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDelta);
+		if (includeHydrogenCoordinates) {
+			for (int i=0; i<mMol.getAtoms(); i++) {
+				int atom = mGraphAtom[i];
+				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++)
+					maxDelta = getMaxDelta(mMol.getConnAtom(atom, j), atom, maxDelta);
 				}
 			}
 
@@ -3149,29 +3146,15 @@ System.out.println();
 
 		int binCount = (1 << resolutionBits);
 		float increment = maxDelta / (binCount / 2.0f - 1);
-		float halfIncrement = increment / 2.0f;
+		float maxDeltaPlusHalfIncrement = maxDelta + increment / 2.0f;
 
-		for (int i=1; i<mMol.getAtoms(); i++) {
-			int atom = mGraphAtom[i];
-			int from = (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]];
-
-			float deltaX = (from == -1) ?
-							(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0f
-						   : mMol.getAtomX(atom) - mMol.getAtomX(from);
-
-			float deltaY = (from == -1) ?
-							(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0f
-						   : mMol.getAtomY(atom) - mMol.getAtomY(from);
-
-			encodeBits((int)((maxDelta + deltaX + halfIncrement) / increment), resolutionBits);
-			encodeBits((int)((maxDelta + deltaY + halfIncrement) / increment), resolutionBits);
-
-			if (mZCoordinatesAvailable) {
-				float deltaZ = (from == -1) ?
-								(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0f
-							   : mMol.getAtomZ(atom) - mMol.getAtomZ(from);
-
-				encodeBits((int)((maxDelta + deltaZ + halfIncrement) / increment), resolutionBits);
+		for (int i=1; i<mMol.getAtoms(); i++)
+			encodeAtomCoords(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDeltaPlusHalfIncrement, increment, resolutionBits);
+		if (includeHydrogenCoordinates) {
+			for (int i=0; i<mMol.getAtoms(); i++) {
+				int atom = mGraphAtom[i];
+				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++)
+					encodeAtomCoords(mMol.getConnAtom(atom, j), atom, maxDeltaPlusHalfIncrement, increment, resolutionBits);
 				}
 			}
 
@@ -3186,6 +3169,51 @@ System.out.println();
 			}
 
 		mCoordinates = encodeBitsEnd();
+		}
+
+	private float getMaxDelta(int atom, int from, float maxDelta) {
+		float deltaX = (from == -1) ?
+						Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0f
+					  : Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(from));
+		if (maxDelta < deltaX)
+			maxDelta = deltaX;
+
+		float deltaY = (from == -1) ?
+						Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0f
+					  : Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(from));
+		if (maxDelta < deltaY)
+			maxDelta = deltaY;
+
+		if (mZCoordinatesAvailable) {
+			float deltaZ = (from == -1) ?
+							Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0f
+						  : Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(from));
+			if (maxDelta < deltaZ)
+				maxDelta = deltaZ;
+			}
+
+		return maxDelta;
+		}
+
+	private void encodeAtomCoords(int atom, int from, float maxDeltaPlusHalfIncrement, float increment, int resolutionBits) {
+		float deltaX = (from == -1) ?
+						(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0f
+					   : mMol.getAtomX(atom) - mMol.getAtomX(from);
+
+		float deltaY = (from == -1) ?
+						(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0f
+					   : mMol.getAtomY(atom) - mMol.getAtomY(from);
+
+		encodeBits((int)((maxDeltaPlusHalfIncrement + deltaX) / increment), resolutionBits);
+		encodeBits((int)((maxDeltaPlusHalfIncrement + deltaY) / increment), resolutionBits);
+
+		if (mZCoordinatesAvailable) {
+			float deltaZ = (from == -1) ?
+							(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0f
+						   : mMol.getAtomZ(atom) - mMol.getAtomZ(from);
+
+			encodeBits((int)((maxDeltaPlusHalfIncrement + deltaZ) / increment), resolutionBits);
+			}
 		}
 
 	/**

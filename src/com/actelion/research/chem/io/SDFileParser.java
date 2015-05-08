@@ -259,12 +259,15 @@ public class SDFileParser extends CompoundFileParser {
 		}
 
 
+	/**
+	 * @return the molecule of the current record (null in case of parsing error)
+	 */
 	public StereoMolecule getMolecule() {
 	    if (mMol != null)
 	        return mMol;
 
 	    mMol = new MolfileParser().getCompactMolecule(getNextMolFile());
-	    if (mMol.getName() == null || mMol.getName().length() == 0)
+	    if (mMol != null && (mMol.getName() == null || mMol.getName().length() == 0))
 	        mMol.setName(getMoleculeName());
 	    return mMol;
 	    }

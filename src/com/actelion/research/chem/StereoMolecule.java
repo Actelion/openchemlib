@@ -83,16 +83,36 @@ public class StereoMolecule extends ExtendedMolecule {
 		return theCopy;
 		}
 
+	/**
+	 * Separates all disconnected fragments of this Molecule into individual Molecule objects.
+	 * If fragment separation is only needed, if there are multiple fragments, it may me more
+	 * efficient to run this functionality in two steps, e.g.:<br>
+	 * int[] fragmentNo = new int[mol.getAllAtoms()];<br>
+	 * int fragmentCount = getFragmentNumbers(fragmentNo, boolean);<br>
+	 * if (fragmentCount > 1) {<br>
+	 *     StereoMolecule[] fragment = getFragments(int[] fragmentNo, fragmentCount);<br>
+	 *     ...<br>
+	 *     }<br>
+	 * @return
+	 */
 	public StereoMolecule[] getFragments() {
         int[] fragmentNo = new int[mAllAtoms];
         int fragments = getFragmentNumbers(fragmentNo, false);
         return getFragments(fragmentNo, fragments);
         }
 
-    public StereoMolecule[] getFragments(int[] fragmentNo, int fragments) {
-        StereoMolecule[] fragment = new StereoMolecule[fragments];
-        int[] atoms = new int[fragments];
-        int[] bonds = new int[fragments];
+	/**
+	 * Separates all disconnected fragments of this Molecule into individual molecule objects.
+	 * The parameters fragmentNo and fragmentCount are typically obtained from a call of
+	 * getFragmentNumbers().
+	 * @param fragmentNo
+	 * @param fragmentCount
+	 * @return
+	 */
+    public StereoMolecule[] getFragments(int[] fragmentNo, int fragmentCount) {
+        StereoMolecule[] fragment = new StereoMolecule[fragmentCount];
+        int[] atoms = new int[fragmentCount];
+        int[] bonds = new int[fragmentCount];
         int[] atomMap = new int[mAllAtoms];
         for (int atom=0; atom<mAllAtoms; atom++)
         	if (fragmentNo[atom] != -1)
@@ -103,7 +123,7 @@ public class StereoMolecule extends ExtendedMolecule {
         	if (f1 == f2 && f1 != -1)
         		bonds[f1]++;
         	}
-        for (int i=0; i<fragments; i++) {
+        for (int i=0; i<fragmentCount; i++) {
             fragment[i] = createMolecule(atoms[i], bonds[i]);
             copyMoleculeProperties(fragment[i]);
             }

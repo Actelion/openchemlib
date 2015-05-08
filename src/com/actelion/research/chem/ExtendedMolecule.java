@@ -398,7 +398,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
-	 * The sum of bond orders of explicitly connected neighbour atoms including hydrogen.
+	 * The sum of bond orders of explicitly connected neighbour atoms including explicit hydrogen.
      * @param atom
      * @return explicitly used valence
 	 */

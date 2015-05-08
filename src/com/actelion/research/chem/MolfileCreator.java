@@ -41,18 +41,39 @@ import java.util.Locale;
 public class MolfileCreator {
     private static final float TARGET_AVBL = 1.5f;
 	
-    private StringBuilder mMolfile;
-    
+    private StringBuilder mBuilder;
+
+    /**
+     * This creates a new molfile version 2 from the given molecule.
+     * If the average bond length is smaller than 1.0 or larger than 3.0,
+     * then all coordinates are scaled to achieve an average bond length of 1.5.
+     * @param mol
+     */
     public MolfileCreator(ExtendedMolecule mol) {
         this(mol, true);
         }
     
     /**
-     * This constructor is needed for the reactionfile writer, since we cannot allow scaling on individual molecule within a reaction
+     * This creates a new molfile version 2 from the given molecule.
+     * If scale==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * then all coordinates are scaled to achieve an average bond length of 1.5.
      * @param mol
      * @param scale
      */
     public MolfileCreator(ExtendedMolecule mol, boolean scale) {
+        this(mol, scale, new StringBuilder(32768));
+        }
+    
+    /**
+     * This creates a new molfile version 2 from the given molecule.
+     * If scale==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * then all coordinates are scaled to achieve an average bond length of 1.5.
+     * If a StringBuilder is given, then the molfile will be appended to that.
+     * @param mol
+     * @param scale
+     * @param builder null or StringBuilder to append to
+     */
+    public MolfileCreator(ExtendedMolecule mol, boolean scale, StringBuilder builder) {
         mol.ensureHelperArrays(Molecule.cHelperParities);
 
         boolean isRacemic = true;
@@ -83,16 +104,16 @@ public class MolfileCreator {
                 }
             }
         
-        mMolfile = new StringBuilder(32768);
+        mBuilder = builder;
         String name = (mol.getName() != null) ? mol.getName() : "";
-        mMolfile.append(name+"\n");
-        mMolfile.append("Actelion Java MolfileCreator 1.0\n\n");
+        mBuilder.append(name+"\n");
+        mBuilder.append("Actelion Java MolfileCreator 1.0\n\n");
 
         appendThreeDigitInt(mol.getAllAtoms());
         appendThreeDigitInt(mol.getAllBonds());
-        mMolfile.append("  0  0");
+        mBuilder.append("  0  0");
         appendThreeDigitInt((!isRacemic) ? 1 : 0);
-        mMolfile.append("  0  0  0  0  0999 V2000\n");
+        mBuilder.append("  0  0  0  0  0999 V2000\n");
 
         boolean hasCoordinates = (mol.getAllAtoms() == 1);
         for(int atom=1; atom<mol.getAllAtoms(); atom++) {
@@ -135,48 +156,48 @@ public class MolfileCreator {
                 appendTenDigitDouble(grafac * -mol.getAtomZ(atom));
                 }
             else {
-                mMolfile.append("    0.0000    0.0000    0.0000");
+                mBuilder.append("    0.0000    0.0000    0.0000");
                 }
             if (mol.getAtomList(atom) != null)
-                mMolfile.append(" L  ");
+                mBuilder.append(" L  ");
             else if ((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0)
-                mMolfile.append(" A  ");
+                mBuilder.append(" A  ");
             else {
                 String atomLabel = mol.getAtomLabel(atom);
-                mMolfile.append(" "+atomLabel);
+                mBuilder.append(" "+atomLabel);
                 if (atomLabel.length() == 1)
-                    mMolfile.append("  ");
+                    mBuilder.append("  ");
                 else if (atomLabel.length() == 2)
-                    mMolfile.append(" ");
+                    mBuilder.append(" ");
                 }
 
-            mMolfile.append(" 0  0  0");	// massDif, charge, parity
+            mBuilder.append(" 0  0  0");	// massDif, charge, parity
 
             int hydrogenFlags = Molecule.cAtomQFHydrogen & mol.getAtomQueryFeatures(atom);
             if (hydrogenFlags == 0)
-                mMolfile.append("  0");
+                mBuilder.append("  0");
             else if (hydrogenFlags == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen))
-                mMolfile.append("  3");	// at least 2 hydrogens
+                mBuilder.append("  3");	// at least 2 hydrogens
             else if (hydrogenFlags == Molecule.cAtomQFNot0Hydrogen)
-                mMolfile.append("  2");	// at least 1 hydrogens
+                mBuilder.append("  2");	// at least 1 hydrogens
             else if (hydrogenFlags == (Molecule.cAtomQFNot1Hydrogen | Molecule.cAtomQFNot2Hydrogen | Molecule.cAtomQFNot3Hydrogen))
-                mMolfile.append("  1");	// no hydrogens
+                mBuilder.append("  1");	// no hydrogens
             else if (hydrogenFlags == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot2Hydrogen | Molecule.cAtomQFNot3Hydrogen))
-                mMolfile.append("  2");	// use at least 1 hydrogens as closest match for exactly one
+                mBuilder.append("  2");	// use at least 1 hydrogens as closest match for exactly one
 
-            mMolfile.append(((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFMatchStereo) != 0) ? "  1" : "  0");
+            mBuilder.append(((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFMatchStereo) != 0) ? "  1" : "  0");
 
             int valence = mol.getAtomAbnormalValence(atom);
             if (valence == -1)
-                mMolfile.append("  0");
+                mBuilder.append("  0");
             else if (valence == 0)
-                mMolfile.append(" 15");
+                mBuilder.append(" 15");
             else
                 appendThreeDigitInt(valence);
 
-            mMolfile.append("  0  0  0");
+            mBuilder.append("  0  0  0");
             appendThreeDigitInt(mol.getAtomMapNo(atom));
-            mMolfile.append("  0  0\n");
+            mBuilder.append("  0  0\n");
             }
 
         for (int bond=0; bond<mol.getAllBonds(); bond++) {
@@ -217,9 +238,9 @@ public class MolfileCreator {
             appendThreeDigitInt(1 + mol.getBondAtom(1, bond));
             appendThreeDigitInt(order);
             appendThreeDigitInt(stereo);
-            mMolfile.append("  0");
+            mBuilder.append("  0");
             appendThreeDigitInt(topology);
-            mMolfile.append("  0\n");
+            mBuilder.append("  0\n");
             }
 
         int no = 0;
@@ -228,23 +249,23 @@ public class MolfileCreator {
                 no++;
 
         if (no != 0) {
-            mMolfile.append("M  CHG");
+            mBuilder.append("M  CHG");
             appendThreeDigitInt(no);
             for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                 if (mol.getAtomCharge(atom) != 0) {
-                    mMolfile.append(" ");
+                    mBuilder.append(" ");
                     appendThreeDigitInt(atom + 1);
                     int charge = mol.getAtomCharge(atom);
                     if (charge < 0) {
-                        mMolfile.append("  -");
+                        mBuilder.append("  -");
                         charge = -charge;
                         }
                     else
-                        mMolfile.append("   ");
-                    mMolfile.append((char)('0' + charge));
+                        mBuilder.append("   ");
+                    mBuilder.append((char)('0' + charge));
                     }
                 }
-            mMolfile.append("\n");
+            mBuilder.append("\n");
             }
 
         no = 0;
@@ -252,19 +273,19 @@ public class MolfileCreator {
             if (!mol.isNaturalAbundance(atom))
                 no++;
         if (no != 0) {
-            mMolfile.append("M  ISO");
+            mBuilder.append("M  ISO");
             appendThreeDigitInt(no);
 
             for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                 if (!mol.isNaturalAbundance(atom)) {
-                    mMolfile.append(" ");
+                    mBuilder.append(" ");
                     appendThreeDigitInt(atom + 1);
-                    mMolfile.append(" ");
+                    mBuilder.append(" ");
                     appendThreeDigitInt(mol.getAtomMass(atom));
                     }
                 }
 
-            mMolfile.append("\n");
+            mBuilder.append("\n");
             }
 
         no = 0;
@@ -272,28 +293,28 @@ public class MolfileCreator {
             if (mol.getAtomRadical(atom) != 0)
                 no++;
         if (no != 0) {
-            mMolfile.append("M  RAD");
+            mBuilder.append("M  RAD");
             appendThreeDigitInt(no);
 
             for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                 if (mol.getAtomRadical(atom) != 0) {
-                    mMolfile.append(" ");
+                    mBuilder.append(" ");
                     appendThreeDigitInt(atom + 1);
                     switch (mol.getAtomRadical(atom)) {
                     case Molecule.cAtomRadicalStateS:
-                        mMolfile.append("   1");
+                        mBuilder.append("   1");
                         break;
                     case Molecule.cAtomRadicalStateD:
-                        mMolfile.append("   2");
+                        mBuilder.append("   2");
                         break;
                     case Molecule.cAtomRadicalStateT:
-                        mMolfile.append("   3");
+                        mBuilder.append("   3");
                         break;
                         }
                     }
                 }
 
-            mMolfile.append("\n");
+            mBuilder.append("\n");
             }
 
         if (mol.isFragment()) {
@@ -302,61 +323,61 @@ public class MolfileCreator {
                 if ((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFRingState) != 0)
                     no++;
             if (no != 0) {
-                mMolfile.append("M  RBD");
+                mBuilder.append("M  RBD");
                 appendThreeDigitInt(no);
 
                 for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                     int ringFeatures = mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFRingState;
                     if (ringFeatures != 0) {
-                        mMolfile.append(" ");
+                        mBuilder.append(" ");
                         appendThreeDigitInt(atom + 1);
                         switch (ringFeatures) {
                             case Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
-                                mMolfile.append("  -1");
+                                mBuilder.append("  -1");
                                 break;
                             case Molecule.cAtomQFNotChain:
-                                mMolfile.append("   1");	// any ring atom; there is no MDL equivalent
+                                mBuilder.append("   1");	// any ring atom; there is no MDL equivalent
                                 break;
                             case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
-                                mMolfile.append("   2");
+                                mBuilder.append("   2");
                                 break;
                             case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds:
-                                mMolfile.append("   3");
+                                mBuilder.append("   3");
                                 break;
                             case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds:
-                                mMolfile.append("   4");
+                                mBuilder.append("   4");
                                 break;
                             }
                         }
                     }
-                mMolfile.append("\n");
+                mBuilder.append("\n");
                 }
 
             for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                 int[] atomList = mol.getAtomList(atom);
                 if (atomList != null) {
-                    mMolfile.append("M  ALS ");
+                    mBuilder.append("M  ALS ");
                     appendThreeDigitInt(atom+1);
                     appendThreeDigitInt(atomList.length);
-                    mMolfile.append(((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0) ? " T " : " F ");
+                    mBuilder.append(((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0) ? " T " : " F ");
                     for (int i=0; i<atomList.length; i++) {
                         String label = Molecule.cAtomLabel[atomList[i]];
                         switch (label.length()) {
                         case 1:
-                            mMolfile.append(label+"   ");
+                            mBuilder.append(label+"   ");
                             break;
                         case 2:
-                            mMolfile.append(label+"  ");
+                            mBuilder.append(label+"  ");
                             break;
                         case 3:
-                            mMolfile.append(label+" ");
+                            mBuilder.append(label+" ");
                             break;
                         default:
-                            mMolfile.append("   ?");
+                            mBuilder.append("   ?");
                             break;
                             }
                         }
-                    mMolfile.append("\n");
+                    mBuilder.append("\n");
                     }
                 }
 
@@ -365,41 +386,46 @@ public class MolfileCreator {
                 if ((mol.getAtomQueryFeatures(atom) & (Molecule.cAtomQFMoreNeighbours | Molecule.cAtomQFNoMoreNeighbours)) != 0)
                     no++;
             if (no != 0) {
-                mMolfile.append("M  SUB");
+                mBuilder.append("M  SUB");
                 appendThreeDigitInt(no);
 
                 for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                     int substitution = mol.getAtomQueryFeatures(atom) & (Molecule.cAtomQFMoreNeighbours | Molecule.cAtomQFNoMoreNeighbours);
                     if (substitution != 0) {
-                        mMolfile.append(" ");
+                        mBuilder.append(" ");
                         appendThreeDigitInt(atom + 1);
                         if ((substitution & Molecule.cAtomQFMoreNeighbours) != 0)
-                            mMolfile.append("   "+(mol.getAllConnAtoms(atom)+1));
+                            mBuilder.append("   "+(mol.getAllConnAtoms(atom)+1));
                         else
-                            mMolfile.append("  -2");
+                            mBuilder.append("  -2");
                         }
                     }
-                mMolfile.append("\n");
+                mBuilder.append("\n");
                 }
             }
 
-        mMolfile.append("M  END\n");
+        mBuilder.append("M  END\n");
         }
 
 
+    /**
+     * If a pre-filled StringBuilder was passed to the constructor, then this returns
+     * the original content with the appended molfile.
+     * @return
+     */
     public String getMolfile() {
-        return mMolfile.toString();
+        return mBuilder.toString();
         }
 
 
     public void writeMolfile(Writer theWriter) throws IOException {
-        theWriter.write(mMolfile.toString());
+        theWriter.write(mBuilder.toString());
         }
 
 
     private void appendThreeDigitInt(int data) {
         if (data < 0 || data > 999) {
-            mMolfile.append("  ?");
+            mBuilder.append("  ?");
             return;
             }
 
@@ -408,12 +434,12 @@ public class MolfileCreator {
             int theChar = data / 100;
             if (theChar==0) {
                 if (i==2 || digitFound)
-                    mMolfile.append((char)'0');
+                    mBuilder.append((char)'0');
                 else
-                    mMolfile.append((char)' ');
+                    mBuilder.append((char)' ');
                 }
             else {
-                mMolfile.append((char)('0' + theChar));
+                mBuilder.append((char)('0' + theChar));
                 digitFound = true;
                 }
             data = 10 * (data % 100);
@@ -423,8 +449,8 @@ public class MolfileCreator {
     DecimalFormat df = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.ENGLISH)); //English local ('.' for the dot)
     private void appendTenDigitDouble(double theDouble) {
     	String val = df.format(theDouble);  
-    	for(int i=val.length(); i<10; i++) mMolfile.append(' ');   
-    	mMolfile.append(val);  
+    	for(int i=val.length(); i<10; i++) mBuilder.append(' ');   
+    	mBuilder.append(val);  
         }
 	}
 

@@ -1011,7 +1011,7 @@ if (false) {
                     btype = 2;
                     break;
                 case Molecule.cBondTypeTriple: //			= 0x0004;
-                    btype = 3;
+                    btype = 4;
                     break;
                 case Molecule.cBondTypeDown: //			= 0x0009;
                     btype = 1;

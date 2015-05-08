@@ -56,15 +56,40 @@ public class MolfileV3Creator
 
     private float mScalingFactor = 1.0f;
 
+    /**
+     * This creates a new molfile version 3 from the given molecule.
+     * If the average bond length is smaller than 1.0 or larger than 3.0,
+     * then all coordinates are scaled to achieve an average bond length of 1.5.
+     * @param mol
+     */
     public MolfileV3Creator(ExtendedMolecule mol) {
         this(mol, true);
     	}
 
-    // this constructor is needed for the reactionfile writer, since we cannot allow scaling on individual molecule within a reaction
+    /**
+     * This creates a new molfile version 3 from the given molecule.
+     * If scale==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * then all coordinates are scaled to achieve an average bond length of 1.5.
+     * @param mol
+     * @param scale
+     */
     public MolfileV3Creator(ExtendedMolecule mol, boolean scale) {
+        this(mol, scale, new StringBuilder(32768));
+    	}
+
+    /**
+     * This creates a new molfile version 3 from the given molecule.
+     * If scale==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * then all coordinates are scaled to achieve an average bond length of 1.5.
+     * If a StringBuilder is given, then the molfile will be appended to that.
+     * @param mol
+     * @param scale
+     * @param builder null or StringBuilder to append to
+     */
+    public MolfileV3Creator(ExtendedMolecule mol, boolean scale, StringBuilder builder) {
         mol.ensureHelperArrays(Molecule.cHelperParities);
 
-        mMolfile = new StringBuilder(32768);
+        mMolfile = builder;
         String name = (mol.getName() != null) ? mol.getName() : "";
         mMolfile.append(name + "\n");
         mMolfile.append("Actelion Java MolfileCreator 2.0\n\n");
@@ -470,6 +495,11 @@ public class MolfileV3Creator
         mMolfile.append("M  V30 END CTAB\n");
     	}
 
+    /**
+     * If a pre-filled StringBuilder was passed to the constructor, then this returns
+     * the original content with the appended molfile.
+     * @return
+     */
     public String getMolfile() {
         return mMolfile.toString();
     	}

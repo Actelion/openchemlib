@@ -83,6 +83,9 @@ public class SmilesParser {
 		int smilesLength = smiles.length;
 		int bondType = Molecule.cBondTypeSingle;
 
+		while (smiles[position] <= 32)
+			position++;
+
 		while (position < smilesLength) {
 			char theChar = (char)smiles[position++];
 

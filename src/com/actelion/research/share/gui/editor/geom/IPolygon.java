@@ -31,50 +31,24 @@
 *
 */
 
-package com.actelion.research.gui;
+package com.actelion.research.share.gui.editor.geom;
 
-import java.awt.*;
-import javax.swing.*;
-import com.actelion.research.chem.*;
-import com.actelion.research.chem.reaction.IReactionMapper;
+/**
+ * Project:
+ * User: rufenec
+ * Date: 11/24/2014
+ * Time: 4:45 PM
+ */
+public interface IPolygon
+{
+    void add(java.awt.geom.Point2D pt);
 
-public class JDrawPanel extends JPanel {
-    static final long serialVersionUID = 0x20061019;
+    int size();
 
-    protected JDrawToolbar mToolBar;
-    
-	protected JDrawArea mArea;
+    java.awt.geom.Point2D get(int i);
 
-	public JDrawPanel(Frame parent, StereoMolecule mol) {
-		this(parent, mol, 0);
-	}
 
-	public JDrawPanel(Frame parent, StereoMolecule mol, boolean isReaction) {
-		this(parent, mol, JDrawArea.MODE_MULTIPLE_FRAGMENTS
-				| JDrawArea.MODE_REACTION);
-	}
+    void remove(java.awt.geom.Point2D origin);
 
-	public JDrawPanel(Frame parent, StereoMolecule mol, int mode) {
-		setLayout(new BorderLayout());
-
-		mArea = new JDrawArea(mol, mode);
-		add(mArea, BorderLayout.CENTER);
-
-		mToolBar = new JDrawToolbar(mArea, mode);
-		add(mToolBar, BorderLayout.WEST);
-	}
-
-    public void setMapper(IReactionMapper mapper)
-    {
-        mArea.setMapper(mapper);
-    }
-	public JDrawArea getDrawArea() {
-		return mArea;
-	}
-	
-	public void cleanStructure(){
-		mArea.toolChanged(1);
-	}
+    boolean contains(double atomX, double atomY);
 }
-
-

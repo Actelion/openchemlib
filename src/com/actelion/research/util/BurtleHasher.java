@@ -374,8 +374,8 @@ public class BurtleHasher {
 	  return (int)abc.c;
 	}
 
-	public static int hashlittle(byte [] k, long initval)
-	{
+	public static int hashlittle(byte [] k, long initval) {
+		
 	  long a,b,c;
 
 	  /* Set up the internal state */

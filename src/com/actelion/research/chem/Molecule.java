@@ -392,7 +392,9 @@ public class Molecule implements Serializable {
 	transient private float mOriginalDistance[];
 	transient private String mName;
 
-	public static int getAtomicNoFromLabel(String atomLabel) {
+    private float defaultBondLength = 24.0f;
+
+    public static int getAtomicNoFromLabel(String atomLabel) {
 		for (int i=1; i<cAtomLabel.length; i++)
 			if (atomLabel.equalsIgnoreCase(cAtomLabel[i]))
 				return i;
@@ -1102,7 +1104,7 @@ public class Molecule implements Serializable {
 						int[] atomMap, boolean useBondTypeDelocalized) {
 		int destBond = destMol.mAllBonds;
 		if (destBond >= destMol.mMaxBonds)
-			destMol.setMaxBonds(destMol.mMaxBonds*2);
+			destMol.setMaxBonds(destMol.mMaxBonds * 2);
 
 		int esrType = getBondESRType(sourceBond);
 		int esrGroup = -1;
@@ -1284,8 +1286,8 @@ public class Molecule implements Serializable {
 	/**
 	 * Swaps two bonds' indexes/locations in the atom table. This is used to move hydrogen atoms
 	 * to the end of the table and for some testsing purposes.
-	 * @param atom1
-	 * @param atom2
+	 * @param bond1
+	 * @param bond2
 	 */
 	protected void swapBonds(int bond1, int bond2) {
 		int temp = mBondAtom[0][bond1];
@@ -1381,7 +1383,7 @@ public class Molecule implements Serializable {
 	/**
 	 * High level function for constructing a molecule.
 	 * After the deletion the original order of atom and bond indexes is retained.
-	 * @param bnd
+	 * @param bond
 	 */
 	public void deleteBond(int bond) {
 		mBondType[bond] = cBondTypeDeleted;
@@ -1393,7 +1395,7 @@ public class Molecule implements Serializable {
 	/**
 	 * High level function for constructing a molecule.
 	 * After the deletion the original order of atom and bond indexes is retained.
-	 * @param bnd
+	 * @param bond
 	 */
 	public void deleteBondAndSurrounding(int bond) {
 		for (int i=0; i<2; i++) {
@@ -1906,6 +1908,7 @@ public class Molecule implements Serializable {
 		}
 
 
+
 	public float getAverageBondLength(int atoms, int bonds) {
 		for (int bond=0; bond<bonds; bond++)
 			if ((mBondQueryFeatures[bond] & cBondQFBridge) != 0)
@@ -1915,7 +1918,7 @@ public class Molecule implements Serializable {
 				// since this function is used to get an idea about the scale
 				// of the molecule return as approximation a mean atom distance
 			if (mAllAtoms < 2)
-				return 24.0f;
+				return defaultBondLength;
 
 			float sum = 0.0f;
 			int count = 0;
@@ -1928,7 +1931,7 @@ public class Molecule implements Serializable {
 					count++;
 					}
 				}
-			return Math.min(24.0f, (float)Math.sqrt(mAllAtoms) * sum / (2f * count));
+			return Math.min(defaultBondLength, (float)Math.sqrt(mAllAtoms) * sum / (2f * count));
 			}
 
 		float avblSum = 0.0f;
@@ -1993,7 +1996,7 @@ public class Molecule implements Serializable {
 	 * This is MDL's enhanced stereo representation (ESR).
 	 * Stereo atoms and bonds with the same ESR type (AND or OR) and the same ESR group number
 	 * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
-	 * @param atom
+	 * @param bond
 	 * @return one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
 	 */
 	public int getBondESRType(int bond) {
@@ -2664,17 +2667,17 @@ public class Molecule implements Serializable {
 
 
 	public void setAtomX(int atom, double x) {
-		setAtomX(atom, (float)x);
+		setAtomX(atom, (float) x);
 		}
 
 
 	public void setAtomY(int atom, double y) {
-		setAtomY(atom, (float)y);
+		setAtomY(atom, (float) y);
 		}
 
 
 	public void setAtomZ(int atom, double z) {
-		setAtomZ(atom, (float)z);
+		setAtomZ(atom, (float) z);
 		}
 
 
@@ -3575,4 +3578,5 @@ public class Molecule implements Serializable {
 
 		mValidHelperArrays = cHelperNone;
 		}
-	}
+
+}

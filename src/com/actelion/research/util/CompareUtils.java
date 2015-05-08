@@ -232,7 +232,7 @@ public class CompareUtils {
 	 */
 	public static void main(String[] args) {
 //		List<String> initial = Arrays.asList(new String[] {"heart", "", "lung", "lung/left", "1", "10", "2", "3", "11", "Box1","Box10", "Box2", "Box 2", "Box 1", "Box 10", "10.9.2012", "11.9.12", "2012", "Genomics", "_2", "_3", "_10", " 1", "_1", "-10", "-1. 0", "-2", "-1.00", "-1. 00", "-1.  00", "1-1", "1-10", "Proteomics", "Clinical Analysis", "Lung/Right", "Lung", "Lung/Left", "1", "-1", "-1.1", "-1.10", "2.A", "10.B-1", "10.B-10", "10.B-2", "1.C", "21.D", "3.B-3", "Heart","11.C", "11. C", "10. B-1", "2.C", "1.B","d030; Heart","d030; Heart/Left ventricle + Septum","d030; Heart/Right ventricle"});
-		List<String> initial = Arrays.asList(new String[] {"a", "A", "b", "B", "c", "C", "1", "11", "12", "2", "21", "22"});
+		List<String> initial = Arrays.asList(new String[] {"1", "4", "2B", "2A", "3A", "3B", "a", "A", "b", "B", "c", "C", "1", "11", "12", "2", "21", "22"});
 		List<String> l = new ArrayList<String>();
 		l.addAll(initial);
 //		l.addAll(initial);

@@ -1876,7 +1876,8 @@ public class JDrawArea extends JPanel
                         mMol.setAtomMapNo(mAtom1, freeMapNo, false);
                         mMol.setAtomMapNo(atom2, freeMapNo, false);
 
-                        tryAutoMapReaction();
+                        if(mapper != null)
+                            tryAutoMapReaction();
                     }
 
 //				new MoleculeAutoMapper(mMol).autoMap();

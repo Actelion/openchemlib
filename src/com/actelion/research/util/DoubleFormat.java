@@ -34,108 +34,201 @@
 package com.actelion.research.util;
 
 public class DoubleFormat {
-    /**
-     * Converts a double value into a String representation in scientific format
-     * rounded to 5 significant digits, e.g. 1.2345e-6.
-     * Double values that are effectively integers are turned into the scientific
-     * format only, if they consist of more than 8 digits.
-     * @param theDouble
-     * @param significantDigits
-     * @return
-     */
-    public static String toString(double theDouble) {
-        return toString(theDouble, 5);
-        }
+	private static String[] ZEROS = {"","0","00","000","0000","00000","000000","0000000","00000000"};
+	/**
+	 * Converts a double value into a String representation in scientific format
+	 * rounded to 5 significant digits, e.g. 1.2345e-6.
+	 * Double values that are effectively integers are turned into the scientific
+	 * format only, if they consist of more than 8 digits.
+	 * @param theDouble
+	 * @param significantDigits
+	 * @return
+	 */
+	public static String toString(double theDouble) {
+		return toString(theDouble, 5, true);
+		}
 
-    /**
-     * Converts a double value into a String representation in scientific format
-     * rounded to a definable number of digits, e.g. 1.2345e-6.
-     * Double values that are effectively integers are turned into the scientific
-     * format only, if they consist of more than significantDigits+3 digits.
-     * @param theDouble
-     * @param significantDigits
-     * @return
-     */
-    public static String toString(double theDouble, int significantDigits) {
-        if (Double.isInfinite(theDouble))
-            return "Infinity";
-        if (Double.isNaN(theDouble))
-            return "NaN";
-        if (theDouble == 0.0)
-            return "0";
+	/**
+	 * Converts a double value into a String representation in scientific format
+	 * rounded to a definable number of digits, e.g. 1.2345e-6.
+	 * Double values that are effectively integers are turned into the scientific
+	 * format only, if they consist of more than significantDigits+3 digits.
+	 * @param value
+	 * @param significantDigits
+	 * @return
+	 */
+	public static String toString(double value, int significantDigits) {
+		return toString(value, significantDigits, false);
+		}
 
-        double limit = Math.pow(10.0, significantDigits);
+	/**
+	 * Converts a double value into a String representation in scientific format
+	 * rounded to a definable number of digits, e.g. 1.2345e-6.
+	 * Double values that are effectively integers are turned into the scientific
+	 * format only, if they consist of more than significantDigits+3 digits.
+	 * @param value
+	 * @param significantDigits
+	 * @param skipTrailingZeros if true then trailing zeros after a decimal point are not shown
+	 * @return
+	 */
+	public static String toString(double value, int significantDigits, boolean skipTrailingZeros) {
+		if (Double.isNaN(value))
+			return "NaN";
+		if (Double.isInfinite(value))
+			return "Infinity";
 
-        if (theDouble - (int)theDouble == 0.0
-         && theDouble < 1000 * limit)
-        	return ""+(int)theDouble;
+		if (value == 0.0)
+			return (skipTrailingZeros || significantDigits==1) ? "0" : "0."+zeros(significantDigits-1);
 
-        int exponent = 0;
-        while (Math.abs(theDouble) + 0.5 < limit) {
-            theDouble *= 10;
-            exponent--;
-            }
-        while (Math.abs(theDouble) + 0.5 >= limit) {
-            theDouble /= 10.0;
-            exponent++;
-            }
+		double limit1 = 1;
+		for (int i=1; i<significantDigits; i++)
+			limit1 *=10;
+		double limit2 = limit1 * 10;
 
-        return toString((int)(theDouble+(theDouble < 0 ? -0.5 : 0.5)), exponent);
-        }
+		int exponent = 0;
+		while (Math.abs(value) + 0.5 < limit1) {
+			value *= 10;
+			exponent--;
+			}
+		while (Math.abs(value) + 0.5 >= limit2) {
+			value /= 10.0;
+			exponent++;
+			}
 
-	public static String toString(int theInt, int exponent) {
-		int noOfCiphers = 0;
-        if (theInt != 0) {
-            while (theInt % 10 == 0) {
-                theInt /= 10;
-                exponent++;
-                }
-    		for (int temp=theInt; temp!=0; temp/=10)
-    			noOfCiphers++;
-            }
+		return toString((long)(value+(value < 0 ? -0.5 : 0.5)), exponent, significantDigits, skipTrailingZeros);
+		}
 
-		String label;
+	/**
+	 * Converts the value with the given exponent into a short string representation
+	 * using the scientific notation if it is more compact. Trailing zeros ar not shown.
+	 * @param value
+	 * @param exponent
+	 * @return
+	 */
+	public static String toShortString(long value, int exponent) {
+		return toString(value, exponent, 16, true);
+		}
 
-        String cipherString = ""+Math.abs(theInt);
-        String sign = (theInt < 0) ? "-" : "";
-		if (exponent == 0 || theInt == 0)
-			label = sign+cipherString;
+	private static String toString(long value, int exponent, int significantDigits, boolean skipTrailingZeros) {
+		int noOfCiphers = 1;
+
+		if (value != 0) {
+			while (value % 10 == 0) {
+				value /= 10;
+				exponent++;
+				}
+
+			noOfCiphers = 0;
+			for (long temp=value; temp!=0; temp/=10)
+				noOfCiphers++;
+			}
+
+		assert(significantDigits >= noOfCiphers);
+
+		StringBuilder label = new StringBuilder();
+		if (value < 0)
+			label.append('-');
+
+		int trailingZeros = Math.max(0, significantDigits-noOfCiphers);
+
+		String cipherString = Long.toString(Math.abs(value));
+		if (exponent == 0) {
+			label.append(cipherString);
+			if (!skipTrailingZeros && trailingZeros != 0) {
+				label.append(".");
+				label.append(zeros(trailingZeros));
+				}
+			}
 		else if (exponent > 0) {
-			if (noOfCiphers+exponent > 5) {
-                if (noOfCiphers == 1)
-                    label = sign+cipherString+".0e"+exponent;
-                else
-                    label = sign+cipherString.substring(0, 1)+"."+cipherString.substring(1)+"e"+(exponent+noOfCiphers-1);
-                }
+			boolean useScientificNotation = skipTrailingZeros ? (exponent > 4) : (exponent-trailingZeros > 4);
+			if (useScientificNotation) {	// scientific notation for numbers above/equal 0.001
+				if (noOfCiphers == 1) {
+					label.append(cipherString);
+					if (significantDigits > 1) {
+						label.append(".");
+						if (skipTrailingZeros)
+							label.append("0");
+						else
+							label.append(zeros(trailingZeros));
+						}
+					}
+				else {
+					label.append(cipherString.substring(0, 1));
+					label.append(".");
+					label.append(cipherString.substring(1));
+					if (!skipTrailingZeros && trailingZeros != 0)
+						label.append(zeros(trailingZeros));
+					}
+				label.append("e");
+				label.append(Integer.toString(exponent+noOfCiphers-1));
+				}
 			else {
-				label = sign+cipherString;
-				for (int i=0; i<exponent; i++)
-					label = label.concat("0");
+				label.append(cipherString);
+				label.append(zeros(exponent));
+				if (!skipTrailingZeros && trailingZeros > exponent) {
+					label.append(".");
+					label.append(zeros(trailingZeros-exponent));
+					}
 				}
 			}
 		else {  // exponent < 0
-			if (-exponent < noOfCiphers)
-				label = sign + cipherString.substring(0, noOfCiphers+exponent)
-					  + "." + cipherString.substring(noOfCiphers+exponent);
-			else if (-exponent == noOfCiphers)
-				label = sign + "0."+cipherString;
-		    else {
-				if (exponent < -5) {
-					if (noOfCiphers == 1)
-						label = sign + cipherString+".0e-";
-				    else
-						label = sign + cipherString.charAt(0)+"."+cipherString.substring(1)+"e-";
-					label = label+(1-exponent-noOfCiphers);
+			if (-exponent < noOfCiphers) {
+				label.append(cipherString.substring(0, noOfCiphers+exponent));
+				label.append(".");
+				label.append(cipherString.substring(noOfCiphers+exponent));
+				if (!skipTrailingZeros && trailingZeros != 0)
+					label.append(zeros(trailingZeros));
+				}
+			else if (-exponent == noOfCiphers) {
+				label.append("0.");
+				label.append(cipherString);
+				if (!skipTrailingZeros && trailingZeros != 0)
+					label.append(zeros(trailingZeros));
+				}
+			else {
+				if (exponent+noOfCiphers < -2) {	// scientific notation for numbers below 0.001
+					if (noOfCiphers == 1) {
+						label.append(cipherString);
+						if (significantDigits > 1) {
+							label.append(".");
+							if (skipTrailingZeros)
+								label.append("0");
+							else
+								label.append(zeros(trailingZeros));
+							}
+						}
+					else {
+						label.append(cipherString.charAt(0));
+						label.append(".");
+						label.append(cipherString.substring(1));
+						if (!skipTrailingZeros && trailingZeros != 0)
+							label.append(zeros(trailingZeros));
+						}
+					label.append("e-");
+					label.append(Integer.toString(1-exponent-noOfCiphers));
 					}
 				else {
-				    label = sign + "0.";
-					for (int i=0; i<-exponent-noOfCiphers; i++)
-						label = label.concat("0");
-					label = label+cipherString;
+					label.append("0.");
+					label.append(zeros(-exponent-noOfCiphers));
+					label.append(cipherString);
+					if (!skipTrailingZeros && trailingZeros != 0)
+						label.append(zeros(trailingZeros));
 					}
 				}
 			}
 //System.out.println("int:"+theInt+" exp:"+exponent+" label:"+label);
-		return label;
+		return label.toString();
+		}
+
+	private static String zeros(int i) {
+		if (i<ZEROS.length)
+			return ZEROS[i];
+		StringBuilder b = new StringBuilder();
+		while (i >= ZEROS.length) {
+			b.append(ZEROS[ZEROS.length-1]);
+			i -= ZEROS.length-1;
+			}
+		b.append(ZEROS[i]);
+		return b.toString();
 		}
 	}

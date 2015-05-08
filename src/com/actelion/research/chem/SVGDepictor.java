@@ -214,7 +214,7 @@ public class SVGDepictor extends AbstractDepictor
     {
         String s = "<line " +
                 "id=\"" + getId() + ":Bond:" + atom1 + "-" + atom2 + "\" " +
-                "class=\"event\" " +
+                "class=\"event\" " +	// class to respond to the mouse event
                 "x1=\"" + (int) (x1) + "\" " +
                 "y1=\"" + (int) (y1) + "\" " +
                 "x2=\"" + (int) (x2) + "\" " +
@@ -231,7 +231,7 @@ public class SVGDepictor extends AbstractDepictor
         int r = DEFAULT_ELEM_WIDTH;
         String s = "<circle " +
                 "id=\"" + getId() + ":Atom:" + atom + "\" " +
-                "class=\"event\" " +
+                "class=\"event\" " + // class to respond to the mouse event
                 "cx=\"" + (int) (x) + "\" " +
                 "cy=\"" + (int) (y) + "\" " +
                 "r=\"" + r + "\" " +
@@ -255,9 +255,9 @@ public class SVGDepictor extends AbstractDepictor
 
         String style = "<style>" +
                 " #" + getId() +
-                " {pointer-events:none; } " +
+                " {pointer-events:none; } " +	// Disable Mouse events on the root element so they get passed to the childs
                 " #" + getId() + " .event " +
-                " { pointer-events:all;} " +
+                " { pointer-events:all;} " +	// Enable Mouse events for elements possessing the class "event"
                 " </style>\n";
         String rect =
                 "<rect " +
@@ -283,7 +283,7 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected DepictorTransformation simpleValidateView(Rectangle2D.Float viewRect, int mode)
+    public DepictorTransformation simpleValidateView(Rectangle2D.Float viewRect, int mode)
     {
 
         width = (int) viewRect.getWidth();
