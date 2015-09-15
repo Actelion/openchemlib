@@ -31,57 +31,66 @@
 *
 */
 
-package com.actelion.research.share.gui.editor.geom;
+package com.actelion.research.chem.prediction;
+
+import java.io.*;
+import java.util.ArrayList;
+
+public class IncrementTable {
+	ArrayList<IncrementTableRecord> mRecords;
+
+	protected IncrementTable() {
+		mRecords = new ArrayList<IncrementTableRecord>();
+		}
+
+	protected IncrementTable(String filename) throws Exception {
+		BufferedReader theReader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(filename)));
+		mRecords = new ArrayList<IncrementTableRecord>();
+		while (true) {
+			String theLine = theReader.readLine();
+			if (theLine == null)
+				break;
+
+			int tabPosition = theLine.indexOf('\t');
+			if (tabPosition == -1)
+				throw new Exception("line without TAB");
+
+			String idcode = theLine.substring(0, tabPosition);
+			double increment = Double.valueOf(theLine.substring(tabPosition+1)).doubleValue();
+
+			mRecords.add(new IncrementTableRecord(idcode, increment));
+			}
+		theReader.close();
+		}
 
 
-/**
- * Project:
- * User: rufenec
- * Date: 11/24/2014
- * Time: 3:22 PM
- */
-public interface IDrawContext<T>
-{
-
-    T getNative();
-
-    void drawLine(double x, double y, double x1, double y1);
-
-    void drawDashedLine(double srcx, double srcy, double targetx, double targety, int[] dashPattern);
-
-    void drawPolygon(IPolygon polygon);
-
-//    void drawArrow(double[] px, double[] py, boolean selected);
-
-    java.awt.Dimension getBounds(String s);
-
-    void setFont(String helvetica, double size,boolean bold);
-
-    void setFill(long color);
-
-    void fillText(String str, double x, double y);
-
-    void save();
-
-    void restore();
-
-    void drawRect(double x, double y, double width, double height);
-
-    void drawText(String s, double x, double y, boolean centerHorz, boolean centerVert);
-
-    void clearRect(double x, double y, double w, double h);
-
-    void setStroke(long color);
-
-    void fillElipse(double v, double v1, double highlightAtomDiameter, double highlightAtomDiameter1);
-
-    void fillRect(double x, double y, double w, double h);
-
-    void strokeLine(double x, double y, double x1, double y1);
-
-    void fillPolygon(double[] px, double[] py, int i);
-
-    void setLineWidth(double i);
+	protected void addElement(String idcode, double increment) {
+		mRecords.add(new IncrementTableRecord(idcode, increment));
+		}
 
 
-}
+	protected int getSize() {
+		return mRecords.size();
+		}
+
+
+	protected String getFragment(int i) {
+		return mRecords.get(i).mIDCode;
+		}
+
+
+	protected double getIncrement(int i) {
+		return mRecords.get(i).mIncrement;
+		}
+	}
+
+
+class IncrementTableRecord {
+	String	mIDCode;
+	double	mIncrement;
+
+	protected IncrementTableRecord(String idcode, double increment) {
+		mIDCode = idcode;
+		mIncrement = increment;
+		}
+	}

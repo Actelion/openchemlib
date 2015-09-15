@@ -177,15 +177,19 @@ public abstract class CompoundFileParser {
 
     /**
      * Either this method or getIDCode() and getCoordinates() must be overwritten!!!
-     * @return the structure of the records (primary) molecule
+     * @return the structure of the records (primary) molecule or null
      */
     public StereoMolecule getMolecule() {
         if (!mStructureUpToDate) {
             String idcode = getIDCode();
             String coords = getCoordinates();
-            mMol = new IDCodeParser(coords == null).getCompactMolecule(idcode, coords);
-            if (mMol != null)
-                mMol.setName(getMoleculeName());
+            mMol = null;
+            try {
+	            mMol = new IDCodeParser(coords == null).getCompactMolecule(idcode, coords);
+	            if (mMol != null)
+	                mMol.setName(getMoleculeName());
+            	}
+            catch (Exception e) {}
             }
         mStructureUpToDate = true;
         return mMol;

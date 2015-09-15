@@ -435,6 +435,20 @@ public class IntVec implements Comparable<IntVec> {
     	return sizeInteger;
     }
     
+    public static int getNumberAbove(int [] a, int val){
+    	
+    	int n=0;
+    	
+    	for (int i = 0; i < a.length; i++) {
+			if(a[i]>val){
+				n++;
+			}
+		}
+    	
+    	
+    	return n;
+    }
+    
     public static int getInt(byte [] arr) {
     	
         int t1 = MASK_FIRST_BYTE & arr[0];

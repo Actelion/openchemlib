@@ -441,5 +441,14 @@ public class IntArray {
     	return ia;
     }
     
-	
+	public static List<Integer> toList(int [] a) {
+		List<Integer> li = new ArrayList<Integer>(a.length);
+
+		for (int i = 0; i < a.length; i++) {
+			li.add(a[i]);
+		}
+		
+		return li;
+	}
+
 }

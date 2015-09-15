@@ -36,11 +36,15 @@ package com.actelion.research.chem.prediction;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
-
+/**
+ * This class predicts the topological polar surface area (TPSA) of a molecule as a sum of
+ * contributions of its polar atom-types. The method was published by
+ * Peter Ertl, Bernhard Rohde and Paul Selzer in J. Med. Chem. 2000, 43, 3714-3717.
+ */
 public class PolarSurfaceAreaPredictor {
 	public static final float cPSAUnknown = -1.0f;
 
-	private static final String[] cAtomTypeName = {
+	protected static final String[] cPolarAtomTypeName = {
 		"[N](-*)(-*)-*",
 		"[N](-*)=*",
 		"[N]#*",
@@ -86,7 +90,7 @@ public class PolarSurfaceAreaPredictor {
 		"[PH](-*)(-*)=*"
 		};
 
-	private static final float[] cIncrement = {
+	private static final float[] cTPSAIncrement = {
 	   3.24f,  12.36f,  23.79f,  11.68f,  13.60f,   3.01f,  12.03f,  21.94f,
 	  23.85f,  26.02f,   0.00f,   3.01f,   4.36f,   4.44f,  13.97f,  16.61f,
 	  25.59f,  27.64f,  12.89f,   4.41f,   4.93f,   8.39f,  15.79f,   4.10f,
@@ -98,12 +102,24 @@ public class PolarSurfaceAreaPredictor {
 		}
 
 
+	public static int getPolarAtomTypeCount() {
+		return cPolarAtomTypeName.length;
+		}
+
+
+	/**
+	 * Calculates the topological polar surface area (TPSA) of a molecule as a sum of
+	 * contributions of its polar atom-types. This method uses the polar atom contributions
+	 * originally published by Peter Ertl et al. in J. Med. Chem. 2000, 43, 3714-3717.
+	 * @param mol
+	 * @return
+	 */
 	public float assessPSA(StereoMolecule mol) {
-		int[] count = getAtomTypeCounts(mol);
+		int[] count = getPolarAtomTypeCounts(mol);
 
 		float psa = 0.0f;
-		for (int i=0; i<cIncrement.length; i++)
-			psa += count[i] * cIncrement[i];
+		for (int i=0; i<cTPSAIncrement.length; i++)
+			psa += count[i] * cTPSAIncrement[i];
 
 		return psa;
 		}
@@ -120,30 +136,35 @@ public class PolarSurfaceAreaPredictor {
 		detail.add("Recognized atom types and their contributions are:",
 							ParameterizedStringList.cStringTypeText);
 
-		int[] count = getAtomTypeCounts(mol);
-
-		for (int i=0; i<cIncrement.length; i++)
-			if (count[i] != 0)
-				detail.add(""+count[i]+" * "+cIncrement[i]+"   AtomType: "
-								  +cAtomTypeName[i],ParameterizedStringList.cStringTypeText);
+		addTPSAIncrements(mol, detail);
 
 		return detail;
 		}
 
 
-	private int[] getAtomTypeCounts(StereoMolecule mol) {
-		int[] count = new int[cIncrement.length+2];
+	private void addTPSAIncrements(StereoMolecule mol, ParameterizedStringList detail) {
+		int[] count = getPolarAtomTypeCounts(mol);
+
+		for (int i=0; i<cTPSAIncrement.length; i++)
+			if (count[i] != 0)
+				detail.add(""+count[i]+" * "+cTPSAIncrement[i]+"   AtomType: "
+								  +cPolarAtomTypeName[i],ParameterizedStringList.cStringTypeText);
+		}
+
+
+	public int[] getPolarAtomTypeCounts(StereoMolecule mol) {
+		int[] count = new int[cTPSAIncrement.length+2];
 
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 
 		for (int atom=0; atom<mol.getAtoms(); atom++)
-			count[getAtomType(mol, atom)]++;
+			count[getPolarAtomType(mol, atom)]++;
 
 		return count;
 		}
 
 
-	private int getAtomType(StereoMolecule mol, int atom) {
+	protected int getPolarAtomType(StereoMolecule mol, int atom) {
 		switch (mol.getAtomicNo(atom)) {
 		case 7:
 			if (mol.isAromaticAtom(atom)) {
@@ -213,7 +234,7 @@ public class PolarSurfaceAreaPredictor {
 							return hasNegativeNeighbour(mol, atom) ? 3 : 11;
 						case 2:	// pi
 							if (mol.getConnBondOrder(atom, 0) == 2)
-								return hasNegativeNeighbour(mol, atom) ? 4 : cIncrement.length+1;
+								return hasNegativeNeighbour(mol, atom) ? 4 : cTPSAIncrement.length+1;
 							else
 								return 12;
 							}
@@ -233,7 +254,7 @@ public class PolarSurfaceAreaPredictor {
 						}
 					}
 				}
-			return cIncrement.length+1;	// unrecognized N
+			return cTPSAIncrement.length+1;	// unrecognized N
 		case 8:
 			if (mol.isAromaticAtom(atom)) {
 				if (mol.getAtomCharge(atom) == 0)
@@ -256,7 +277,7 @@ public class PolarSurfaceAreaPredictor {
 					return 30;
 					}
 				}
-			return cIncrement.length+1;	// unrecognized O
+			return cTPSAIncrement.length+1;	// unrecognized O
 		case 15:
 			if (mol.getAtomCharge(atom) == 0) {
 				if (mol.getAllHydrogens(atom) == 0) {
@@ -276,7 +297,7 @@ public class PolarSurfaceAreaPredictor {
 						return 42;
 					}
 				}
-			return cIncrement.length+1;	// unrecognized P
+			return cTPSAIncrement.length+1;	// unrecognized P
 		case 16:
 			if (mol.getAtomCharge(atom) == 0) {
 				if (mol.isAromaticAtom(atom)) {
@@ -306,10 +327,10 @@ public class PolarSurfaceAreaPredictor {
 						}
 					}
 				}
-			return cIncrement.length+1;	// unrecognized S
+			return cTPSAIncrement.length+1;	// unrecognized S
 			}
 
-		return cIncrement.length;	// undefined type
+		return cTPSAIncrement.length;	// undefined type
 		}
 
 

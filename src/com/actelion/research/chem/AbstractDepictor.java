@@ -1491,7 +1491,7 @@ public abstract class AbstractDepictor {
 			                    : String.valueOf(Math.abs(mMol.getAtomCharge(atom)));
 			propStr = (mMol.getAtomCharge(atom) < 0) ? valStr + "-" : valStr + "+";
 			}
-		if (mAtomText != null && (atom < mAtomText.length) && mAtomText[atom] != null)
+		if (mAtomText != null && (atom < mAtomText.length) && mAtomText[atom] != null && mAtomText[atom].length() > 0)
 			propStr = append(propStr, mAtomText[atom]);
 
 		String isoStr = null;

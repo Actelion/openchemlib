@@ -100,7 +100,7 @@ public class DoubleFormat {
 
 	/**
 	 * Converts the value with the given exponent into a short string representation
-	 * using the scientific notation if it is more compact. Trailing zeros ar not shown.
+	 * using the scientific notation if it is more compact. Trailing zeros are not shown.
 	 * @param value
 	 * @param exponent
 	 * @return

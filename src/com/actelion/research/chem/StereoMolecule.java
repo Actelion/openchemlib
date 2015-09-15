@@ -321,9 +321,9 @@ public class StereoMolecule extends ExtendedMolecule {
      * thus, effectively running the canonicalization and validating the Canonizer itself.
      * @return
      */
-    public String getCanonizer() {
+    public Canonizer getCanonizer() {
         ensureHelperArrays(cHelperParities);
-        return mCanonizer.getIDCode();
+        return mCanonizer;
         }
 
     public int getStereoCenterCount() {

@@ -70,14 +70,16 @@ public class CompareUtils {
 //		return res;
 //	}
 	/**
-	 * Compare 2 strings by splitting the chains into blocks and comparing each blocks individually. Each Block is then compared as integer or string
+	 * Compare 2 strings by splitting the chains into blocks and comparing each blocks individually.
+	 * Each Block is then compared as integer or string.
+	 * Special character and null go to the end
 	 * Example
 	 * Dose 10 ->  [Dose] [10]
 	 * Dose 100 -> [Dose] [100]
 	 * 
 	 * Caveat:
 	 * The sorting does not consider "-" as negative but as a separator, so the sorting goes:
-	 * _1, -1, -2, -10, 1, 2, 10
+	 * _1, -1, -2, -10, 1, 2, 10, A, B, C, -, null
 	 * 
 	 * @param o1
 	 * @param o2
@@ -88,8 +90,9 @@ public class CompareUtils {
 		if(o1==null) return 1; 
 		if(o2==null) return -1;
 		
-		StringTokenizer st1 = new StringTokenizer(o1, "_/,-.:\n\t ", true);
-		StringTokenizer st2 = new StringTokenizer(o2, "_/,-.:\n\t ", true);
+		final String separators = "_/,;-.:\n\t+ ";
+		StringTokenizer st1 = new StringTokenizer(o1, separators, true);
+		StringTokenizer st2 = new StringTokenizer(o2, separators, true);
 
 		String s1, s2;
 		boolean allDigits1, allDigits2;
@@ -100,9 +103,22 @@ public class CompareUtils {
 			
 			if(s1.length()==0) {
 				if(s2.length()==0) continue;
+				else return -1;
+			} else if(s2.length()==0) {
+				return 1;
+			}
+			
+			if(s1.length()==1 && separators.indexOf(s1.charAt(0))>=0) {
+				if(s2.length()==1 && separators.indexOf(s2.charAt(0))>=0) {
+					c = separators.indexOf(s1.charAt(0))- separators.indexOf(s2.charAt(0));
+					if(c!=0) return c;
+				} else {
+					return 1;
+				}
+			} else if(s2.length()==1 && !Character.isLetterOrDigit(s2.charAt(0))) {
 				return -1;
 			}
-			if(s2.length()==0) return 1;
+
 			
 			//Compare first the numeric value if possible
 			allDigits1 = true;
@@ -160,8 +176,8 @@ public class CompareUtils {
 			return compare((String) o1, (String) o2);
 		} else if((o1 instanceof Object[]) && (o2 instanceof Object[])) {
 			return compare((Object[]) o1, (Object[]) o2);
-		} else if((o1 instanceof Comparable) && (o2 instanceof Comparable)) {			
-			return ((Comparable) o1).compareTo((Comparable) o2);
+		} else if((o1 instanceof Comparable) /*&& o2.getClass().isAssignableFrom(o1.getClass())*/) {			
+			return ((Comparable) o1).compareTo(o2);
 		} else {
 			return compare(o1.toString(), o2.toString());			
 		}
@@ -232,7 +248,7 @@ public class CompareUtils {
 	 */
 	public static void main(String[] args) {
 //		List<String> initial = Arrays.asList(new String[] {"heart", "", "lung", "lung/left", "1", "10", "2", "3", "11", "Box1","Box10", "Box2", "Box 2", "Box 1", "Box 10", "10.9.2012", "11.9.12", "2012", "Genomics", "_2", "_3", "_10", " 1", "_1", "-10", "-1. 0", "-2", "-1.00", "-1. 00", "-1.  00", "1-1", "1-10", "Proteomics", "Clinical Analysis", "Lung/Right", "Lung", "Lung/Left", "1", "-1", "-1.1", "-1.10", "2.A", "10.B-1", "10.B-10", "10.B-2", "1.C", "21.D", "3.B-3", "Heart","11.C", "11. C", "10. B-1", "2.C", "1.B","d030; Heart","d030; Heart/Left ventricle + Septum","d030; Heart/Right ventricle"});
-		List<String> initial = Arrays.asList(new String[] {"1", "4", "2B", "2A", "3A", "3B", "a", "A", "b", "B", "c", "C", "1", "11", "12", "2", "21", "22"});
+		List<String> initial = Arrays.asList(new String[] {"-5_4", "-5", "+1_8", "+2", "-", "#", "1", "2B", "2A", "3A", "3B", "a", "A", "b", "B", "c", "C", "1", "11", "2", "21", "22"});
 		List<String> l = new ArrayList<String>();
 		l.addAll(initial);
 //		l.addAll(initial);

@@ -71,6 +71,11 @@ public class MolfileParser
 			String line;
 			int natoms,nbonds,nlists,chiral,version;
 
+			if(mMol != null){
+				mMol.deleteMolecule();
+				mMol.setFragment(false);
+			}
+
 			/*** Name line ***/
 			String name = (line = reader.readLine());
 			if(null == name){
@@ -103,11 +108,6 @@ public class MolfileParser
 			} catch(Exception e){
 				TRACE("Warning [readMoleculeFromBuffer]: Unable to interpret counts line\n");
 				return false;
-			}
-
-			if(mMol != null){
-				mMol.deleteMolecule();
-				mMol.setFragment(false);
 			}
 
 			if(version == 3){

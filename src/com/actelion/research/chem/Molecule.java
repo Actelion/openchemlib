@@ -104,22 +104,22 @@ public class Molecule implements Serializable {
 
 		// MDL's enhanced stereochemical representation (ESR group and type may be assigned
 		// to TH and allene stereo centers as well as to BINAP kind of stereo bonds)
-	public static final int cESRTypeAbs			 = 0;
-	public static final int cESRTypeAnd			 = 1;
-	public static final int cESRTypeOr			  = 2;
-	public static final int cESRMaxGroups		   = 32;
-	public static final int cESRGroupBits		   = 5;
+	public static final int cESRTypeAbs				= 0;
+	public static final int cESRTypeAnd				= 1;
+	public static final int cESRTypeOr				= 2;
+	public static final int cESRMaxGroups			= 32;
+	public static final int cESRGroupBits			= 5;
 
 	protected static final int cAtomFlagsESR		= 0x03F80000;
-	private static final int cAtomFlagsESRType	  = 0x00180000;
+	private static final int cAtomFlagsESRType		= 0x00180000;
 	private static final int cAtomFlagsESRTypeShift = 19;
-	private static final int cAtomFlagsESRGroup	 = 0x03E00000;
+	private static final int cAtomFlagsESRGroup		= 0x03E00000;
 	private static final int cAtomFlagsESRGroupShift = 21;
 
 	protected static final int cAtomFlagConfigurationUnknown = 0x04000000;
 	private static final int cAtomFlagIsStereoCenter = 0x08000000;
 
-	private static final int cAtomFlagsValence	  = 0xF0000000;
+	protected static final int cAtomFlagsValence	= 0xF0000000;
 	private static final int cAtomFlagsValenceShift = 28;
 
 	public static final int cAtomQFNoOfBits			= 29;
@@ -2258,7 +2258,7 @@ public class Molecule implements Serializable {
 
 
 	/**
-	 * @return true if atom is one of H,B,C,N,O,F,Si,P,S,Cl,As,Se,Br,I
+	 * @return true if atom is one of H,B,C,N,O,F,Si,P,S,Cl,As,Se,Br,Te,I
 	 */
 	public boolean isPurelyOrganic() {
 		for (int atom=0; atom<mAllAtoms; atom++) {
@@ -2276,6 +2276,7 @@ public class Molecule implements Serializable {
 			case 33:	// As
 			case 34:	// Se
 			case 35:	// Br
+			case 52:	// Te
 			case 53:	// I
 				continue;
 			default:
@@ -2373,24 +2374,23 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Set an atom's maximum valance to be different from the default one.
-	 * If atom is a carbon atom, only -1 and 2 are allowed valences.
+	 * If a carbon atom's valence is set to -1,0 or 4 its radical state is removed.
 	 * If a carbon atom's valence is set to 2, a singulet carbene state is assumed.
 	 * @param atom
 	 * @param valence 0-14: new maximum valence; -1: use default
 	 */
 	public void setAtomAbnormalValence(int atom, int valence) {
-		if (mAtomicNo[atom] == 6) {
-			if (valence == -1 || valence == 0 || valence == 2) {
-				mAtomFlags[atom] &= ~(cAtomFlagsValence | cAtomRadicalState);
+		if (valence >= -1 && valence <= 14) {
+			mAtomFlags[atom] &= ~cAtomFlagsValence;
+			if (valence != getDefaultMaxValenceUncharged(atom))
 				mAtomFlags[atom] |= ((1+valence) << cAtomFlagsValenceShift);
-				if (valence == 2)
-					mAtomFlags[atom] |= cAtomRadicalStateS;
-				}
-			}
-		else {
-			if (valence >= -1 && valence <= 14) {
-				mAtomFlags[atom] &= ~cAtomFlagsValence;
-				mAtomFlags[atom] |= ((1+valence) << cAtomFlagsValenceShift);
+
+			if (mAtomicNo[atom] == 6) {
+				if (valence == -1 || valence == 0 || valence == 2 || valence == 4) {
+					mAtomFlags[atom] &= ~cAtomRadicalState;
+					if (valence == 2)
+						mAtomFlags[atom] |= cAtomRadicalStateS;
+					}
 				}
 			}
 		}
@@ -2616,7 +2616,7 @@ public class Molecule implements Serializable {
 			mAtomQueryFeatures[atom] |= feature;
 		else
 			mAtomQueryFeatures[atom] &= ~feature;
-		mValidHelperArrays &= cHelperNeighbours;
+		mValidHelperArrays = 0;	// there is an influence on occipied valence, bond order, etc.
 		mIsFragment = true;
 		}
 
@@ -2764,7 +2764,7 @@ public class Molecule implements Serializable {
 			mBondQueryFeatures[bond] |= feature;
 		else
 			mBondQueryFeatures[bond] &= ~feature;
-		mValidHelperArrays &= cHelperNeighbours;
+		mValidHelperArrays = 0;	// there is an influence on occipied valence, bond order, etc.
 		mIsFragment = true;
 		}
 
@@ -3201,13 +3201,24 @@ public class Molecule implements Serializable {
 	public int getMaxValenceUncharged(int atom) {
 		int valence = getAtomAbnormalValence(atom);
 
-		if (valence == -1) {
-			byte[] valenceList = (mAtomicNo[atom] < cAtomValence.length) ?
-								 cAtomValence[mAtomicNo[atom]] : null;
-			valence = (valenceList == null) ? cDefaultAtomValence : valenceList[valenceList.length-1];
-			}
+		if (valence == -1)
+			valence = getDefaultMaxValenceUncharged(atom);
 
 		return valence;
+		}
+
+	
+	/**
+	 * This is the default maximum valence of the atom
+	 * neglecting atom charge or radical influences, e.g. N or N(+) -> 3.
+	 * If the atomic no has multiple valid max valences, it is the highest one.
+	 * @param atom
+	 * @return
+	 */
+	public int getDefaultMaxValenceUncharged(int atom) {
+		byte[] valenceList = (mAtomicNo[atom] < cAtomValence.length) ?
+							 cAtomValence[mAtomicNo[atom]] : null;
+		return (valenceList == null) ? cDefaultAtomValence : valenceList[valenceList.length-1];
 		}
 
 
@@ -3330,6 +3341,20 @@ public class Molecule implements Serializable {
 		}
 
 
+	/**
+	 * @param atom
+	 * @return true if this atom is not a metal and not a nobel gas
+	 */
+	public boolean isOrganicAtom(int atom) {
+		int atomicNo = mAtomicNo[atom];
+		return atomicNo == 1
+			|| (atomicNo >=  5 && atomicNo <=  9)	// B,C,N,O,F
+			|| (atomicNo >= 14 && atomicNo <= 17)	// Si,P,S,Cl
+			|| (atomicNo >= 33 && atomicNo <= 35)	// As,Se,Br
+			|| (atomicNo >= 52 && atomicNo <= 53);	// Te,I
+		}
+
+	
 	protected void removeMappingNo(int mapNo) {
 		for (int atom=0; atom<mAllAtoms; atom++)
 			if (Math.abs(mAtomMapNo[atom]) == Math.abs(mapNo))

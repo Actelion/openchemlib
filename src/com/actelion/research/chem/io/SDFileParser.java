@@ -45,7 +45,7 @@ import com.actelion.research.chem.MolfileParser;
 import com.actelion.research.chem.StereoMolecule;
 
 public class SDFileParser extends CompoundFileParser {
-    private static final int DEFAULT_RECORDS_TO_INSPECT = 256;
+    private static final int DEFAULT_RECORDS_TO_INSPECT = 10240;
     private static final String[] cIDFieldNames = { "Actelion No", "ID", "IDNUMBER", "COMPOUND_ID", "NAME", "COMPND" };
 	public static final String cNewLineString = "\n";
 

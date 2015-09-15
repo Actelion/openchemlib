@@ -179,11 +179,14 @@ public class AtomFunctionAnalyzer {
 		if (mol.getAtomicNo(atom) != 8)
 			return false;
 		
-		if (mol.getConnAtoms(atom)!=1)
+		if (mol.getConnAtoms(atom) != 1)
 			return false;
-		
+
+		if (mol.getConnBondOrder(atom, 0) != 1)
+			return false;
+
 		int indexConnected = mol.getConnAtom(atom, 0);
-		
+
 		// COOH
 		if(mol.getAtomicNo(indexConnected)==6){
 			int nConnected2C = mol.getConnAtoms(indexConnected);
@@ -205,7 +208,10 @@ public class AtomFunctionAnalyzer {
 					break;
 				}
 			}
-		} else if(mol.getAtomicNo(indexConnected)==8){ // CSOOOH
+		} else if (mol.getAtomicNo(indexConnected) == 7) {
+			if (mol.getAtomCharge(indexConnected) == 1) // (N+)-OH
+				acidic=true;
+		} else if (mol.getAtomicNo(indexConnected) == 16) { // CSOOOH
 			int nConnected2S = mol.getConnAtoms(indexConnected);
 			
 			int nDoubleBondedO2S=0;
@@ -232,7 +238,6 @@ public class AtomFunctionAnalyzer {
 			}
 			
 		} else if(isAcidicOxygenAtPhosphoricAcid(mol, atom)){ // CP=O(OH)(OH)
-			
 			acidic=true;
 				
 		}
@@ -277,7 +282,7 @@ public class AtomFunctionAnalyzer {
 		return acidic;
 	}
 	
-	
+
 	public static boolean isMemberOfNitroGroup(StereoMolecule mol, int atom) {
 		
 		boolean member = false;

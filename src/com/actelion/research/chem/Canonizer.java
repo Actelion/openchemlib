@@ -392,6 +392,10 @@ public class Canonizer {
 			  && explicitAbnormalValence >= mMol.getOccupiedValence(atom)))
 				valence = (byte)explicitAbnormalValence;
 			}
+		else if (!mMol.supportsImplicitHydrogen(atom)
+			  && mMol.getAllConnAtoms(atom) != mMol.getConnAtoms(atom)) {
+			valence = mMol.getOccupiedValence(atom) - mMol.getElectronValenceCorrection(atom);
+			}
 
 		canSetAbnormalValence(atom, valence);
 		return valence;
@@ -2265,7 +2269,14 @@ System.out.println("noOfRanks:"+canRank);
 		}
 
 
-	public void setSingleUnknownAsRacemicParity() {
+	/**
+	 * If the molecule contains exactly one stereo center and if that has unknown configuration,
+	 * than assume that the configuration is meant to be racemic and update molecule accordingly.
+	 * If stereo configuration is ill defined with a stereo bond whose pointed tip is not at the
+	 * stereo center, then the molecule is not touched and the stereo center kept as undefined.
+	 * @return whether a stereo center was converted to be racemic
+	 */
+	public boolean setSingleUnknownAsRacemicParity() {
 		int unknownTHParities = 0;
 		int knownTHParities = 0;
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
@@ -2302,14 +2313,14 @@ System.out.println("noOfRanks:"+canRank);
 							int connAtom = mMol.getConnAtom(atom, i);
 							for (int j=0; j<mMol.getConnAtoms(connAtom); j++)
 								if (mMol.isStereoBond(mMol.getConnBond(connAtom, j)))
-									return;
+									return false;
 							}
 						}
 					else {
 						// tetrahedral chirality
 						for (int i=0; i<mMol.getConnAtoms(atom); i++)
 							if (mMol.isStereoBond(mMol.getConnBond(atom, i)))
-								return;
+								return false;
 						}
 
 						// This must be parity2 (rather than 1) because
@@ -2330,7 +2341,7 @@ System.out.println("noOfRanks:"+canRank);
 						mMol.setBondAtom(0, stereoBond, atom);
 						mMol.setBondAtom(1, stereoBond, connAtom);
 						}
-					return;
+					return true;
 					}
 				}
 			for (int bond=0; bond<mMol.getBonds(); bond++) {
@@ -2347,7 +2358,7 @@ System.out.println("noOfRanks:"+canRank);
 						int atom = mMol.getBondAtom(i, bond);
 						for (int j=0; j<mMol.getConnAtoms(atom); j++)
 							if (mMol.isStereoBond(mMol.getConnBond(atom, j)))
-								return;
+								return false;
 						}
 	
 						// This must be parity2 (rather than 1) because
@@ -2369,10 +2380,11 @@ System.out.println("noOfRanks:"+canRank);
 						mMol.setBondAtom(0, stereoBond, mMol.getBondAtom(1, stereoBond));
 						mMol.setBondAtom(1, stereoBond, connAtom);
 						}
-					return;
+					return true;
 					}
 				}
 			}
+		return false;
 		}
 
 
@@ -2941,10 +2953,10 @@ System.out.println();
 		RingCollection ringSet = mMol.getRingSet();
 		for (int r=0; r<ringSet.getSize(); r++) {
 			if (ringSet.isDelocalized(r)) {
-				int[] ringAtom = ringSet.getRingAtoms(r);
 				int count = 0;
+				int[] ringAtom = ringSet.getRingAtoms(r);
 				for (int atom:ringAtom)
-					if (mMol.getAtomPi(atom) == 2)
+					if (hasTwoAromaticPiElectrons(atom))
 						count++;
 				if (count != 0) {
 					int[] ringBond = ringSet.getRingBonds(r);
@@ -2969,15 +2981,15 @@ System.out.println();
 						}
 					else {
 						int index = 0;
-						while (mMol.getAtomPi(ringAtom[index]) == 2)
+						while (hasTwoAromaticPiElectrons(ringAtom[index]))
 							index++;
-						while (mMol.getAtomPi(ringAtom[index]) != 2)
+						while (!hasTwoAromaticPiElectrons(ringAtom[index]))
 							index = validateCyclicIndex(index+1, ringAtom.length);
 						while (count > 0) {
 							isAromaticSPBond[ringBond[index]] = true;
 							index = validateCyclicIndex(index+2, ringAtom.length);
 							count -= 2;
-							while (mMol.getAtomPi(ringAtom[index]) != 2)
+							while (!hasTwoAromaticPiElectrons(ringAtom[index]))
 								index = validateCyclicIndex(index+1, ringAtom.length);
 							}
 						}
@@ -2985,6 +2997,21 @@ System.out.println();
 				}
 			}
 		return isAromaticSPBond;
+		}
+
+
+	private boolean hasTwoAromaticPiElectrons(int atom) {
+		if (mMol.getAtomPi(atom) < 2)
+			return false;
+		if (mMol.getConnAtoms(atom) == 2)
+			return true;
+		int aromaticPi = 0;
+		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+			int connBond = mMol.getConnBond(atom, i);
+			if (mMol.isAromaticBond(connBond))
+				aromaticPi += mMol.getBondOrder(connBond) - 1;
+			}
+		return aromaticPi > 1;
 		}
 
 
@@ -3111,7 +3138,9 @@ System.out.println();
 
 		// if we have 3D-coords and explicit hydrogens and if all hydrogens are explicit then encode hydrogen coordinates
 		boolean includeHydrogenCoordinates = false;
-		if (mZCoordinatesAvailable && mMol.getAllAtoms() > mMol.getAtoms()) {
+		if (mZCoordinatesAvailable
+		 && mMol.getAllAtoms() > mMol.getAtoms()
+		 && !mMol.isFragment()) {
 			includeHydrogenCoordinates = true;
 			for (int i=0; i<mMol.getAtoms(); i++) {
 				if (mMol.getImplicitHydrogens(i) != 0) {

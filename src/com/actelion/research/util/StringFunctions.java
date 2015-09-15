@@ -759,6 +759,20 @@ public class StringFunctions {
 		return sb.toString();
 	}
 	
+	public static String toStringLong(List<Long> li, String sep) {
+		StringBuilder sb = new StringBuilder();
+		
+		for (int i = 0; i < li.size(); i++) {
+			sb.append(li.get(i));
+			
+			if(i < li.size()-1){
+				sb.append(sep);
+			}
+		}
+		
+		return sb.toString();
+	}
+	
 	public static String toSortedString(List<String> li) {
 		StringBuilder sb = new StringBuilder();
 		

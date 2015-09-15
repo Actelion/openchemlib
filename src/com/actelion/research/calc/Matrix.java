@@ -2615,6 +2615,10 @@ public class Matrix {
         return var;
     }
 
+    /**
+     * 
+     * @return row with variance
+     */
     public Matrix getVarianceCols() {
         Matrix ma = new Matrix(1, getColDim());
         Matrix maMean = getMeanCols();
@@ -3256,6 +3260,145 @@ public class Matrix {
 		}
     }
 
+    public String toStringWithColTags(List<String> liColTags, DecimalFormat nf, String separator) {
+    	    	
+    	if(cols()!=liColTags.size()){
+    		throw new RuntimeException("Number of cols and col tags differ.");
+    	}
+    	
+    	int [] arrWidth = new int [cols()];
+    	
+    	for (int i = 0; i < arrWidth.length; i++) {
+			
+    		arrWidth[i] = liColTags.get(i).length();
+    		
+		}
+    	
+    	for (int i = 0; i < arrWidth.length; i++) {
+    		
+    		for (int j = 0; j < rows(); j++) {
+    			arrWidth[i] = Math.max(arrWidth[i], nf.format(get(j,i)).length());
+			}
+    	}
+    	
+    	StringBuilder sbAll = new StringBuilder();
+    	
+    	for (int i = 0; i < arrWidth.length; i++) {
+    		
+    		int w = arrWidth[i];
+    		
+    		StringBuilder sb = new StringBuilder(liColTags.get(i));
+    		
+    		int l = w-sb.length();
+    		
+    		for (int j = 0; j < l; j++) {
+    			sb.append(" ");
+			}
+    		
+    		sbAll.append(sb.toString());
+    		sbAll.append(" ");
+    		
+    	}
+    	
+    	sbAll.append("\n");
+    	
+    	
+    	for (int i = 0; i < rows(); i++) {
+    		
+    		for (int j = 0; j < arrWidth.length; j++) {
+        		
+        		int w = arrWidth[j];
+        		
+        		StringBuilder sb = new StringBuilder(nf.format(get(i,j)));
+        		
+        		int l = w-sb.length();
+        		
+        		for (int k = 0; k < l; k++) {
+        			sb.append(" ");
+    			}
+        		
+        		sbAll.append(sb.toString());
+        		sbAll.append(" ");
+        		
+        	}
+    		
+    		sbAll.append("\n");
+		}
+    	
+    	return sbAll.toString();
+    }
+    
+    public String toStringWithRowTags(List<String> liRowTags, DecimalFormat nf, String separator) {
+    	
+    	if(rows()!=liRowTags.size()){
+    		throw new RuntimeException("Number of rows and row tags differ.");
+    	}
+    	
+    	int [] arrWidth = new int [cols()+1];
+    	
+    	for (int i = 0; i < liRowTags.size(); i++) {
+			
+    		arrWidth[0] = Math.max(arrWidth[0], liRowTags.get(i).length());
+    		
+		}
+    	
+    	for (int i = 0; i < cols(); i++) {
+    		
+    		for (int j = 0; j < rows(); j++) {
+    			arrWidth[i+1] = Math.max(arrWidth[i+1], nf.format(get(j,i)).length());
+			}
+    	}
+    	
+    	StringBuilder sbAll = new StringBuilder();
+    	
+    	for (int i = 0; i < arrWidth.length; i++) {
+    		
+    		int w = arrWidth[i];
+    		
+    		StringBuilder sb = new StringBuilder(liRowTags.get(i));
+    		
+    		int l = w-sb.length();
+    		
+    		for (int j = 0; j < l; j++) {
+    			sb.append(" ");
+			}
+    		
+    		sbAll.append(sb.toString());
+    		sbAll.append(" ");
+    		
+    	}
+    	
+    	sbAll.append("\n");
+    	
+    	
+    	for (int i = 0; i < rows(); i++) {
+    		
+    		for (int j = 0; j < arrWidth.length; j++) {
+        		
+        		int w = arrWidth[j];
+        		
+        		StringBuilder sb = new StringBuilder(nf.format(get(i,j)));
+        		
+        		int l = w-sb.length();
+        		
+        		for (int k = 0; k < l; k++) {
+        			sb.append(" ");
+    			}
+        		
+        		sbAll.append(sb.toString());
+        		sbAll.append(" ");
+        		
+        	}
+    		
+    		sbAll.append("\n");
+		}
+    	
+    	return sbAll.toString();
+    }
+
+    
+    
+    
 	public void writeSerialized(File fiOut) throws IOException {
 		FileOutputStream fos = new FileOutputStream(fiOut);
 		ObjectOutputStream oos = new ObjectOutputStream(fos);
