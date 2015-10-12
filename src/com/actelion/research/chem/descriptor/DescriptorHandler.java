@@ -38,7 +38,7 @@ package com.actelion.research.chem.descriptor;
  * handling StereoMolecules or Reactions
  */
 
-public interface DescriptorHandler<T, U extends Object> extends ISimilarityCalculator<T> {
+public interface DescriptorHandler<T, U> extends ISimilarityCalculator<T> {
     static final String FAILED_STRING = "Calculation Failed";
     static final byte[] FAILED_BYTES = FAILED_STRING.getBytes();
     public abstract DescriptorInfo getInfo();

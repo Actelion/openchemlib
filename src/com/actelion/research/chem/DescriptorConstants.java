@@ -139,6 +139,14 @@ public interface DescriptorConstants {
                                true,
                                true,
                                false);
+    
+    public static final DescriptorInfo DESCRIPTOR_PhysicoChemicalProperties = 
+            new DescriptorInfo("DescriptorPhysicoChemicalProperties",
+                               "PhysChem",
+                               DescriptorConstants.DESCRIPTOR_TYPE_MOLECULE,
+                               false,
+                               false,
+                               false);
 
     public static final DescriptorInfo[] DESCRIPTOR_LIST = {
                                                 DESCRIPTOR_FFP512,
@@ -164,7 +172,8 @@ public interface DescriptorConstants {
                                                 DESCRIPTOR_Flexophore_HighRes,
                                                 DESCRIPTOR_ReactionIndex,
                                                 DESCRIPTOR_IntegerVector,
-                                                DESCRIPTOR_FULL_FRAGMENT_SET
+                                                DESCRIPTOR_FULL_FRAGMENT_SET,
+                                                DESCRIPTOR_PhysicoChemicalProperties
                                                 };
     }
 

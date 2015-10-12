@@ -37,7 +37,7 @@ import java.util.Arrays;
 
 import com.actelion.research.chem.*;
 
-abstract public class AbstractDescriptorHandlerFP<U extends Object> implements DescriptorHandler<int[], U> {
+abstract public class AbstractDescriptorHandlerFP<U> implements DescriptorHandler<int[], U> {
     protected static final int[] FAILED_OBJECT = new int[0];
 
     public String encode(int[] o) {

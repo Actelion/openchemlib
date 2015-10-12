@@ -64,14 +64,6 @@ public class StereoMolecule extends ExtendedMolecule {
         }
 
 
-    /*
-     * Constructor removed to avoid dependancy to FFMolecule
-     * You must user the FFMolecule.toStereoMolecule instead
-	public StereoMolecule(FFMolecule mol) {
-		super(mol);
-		}
-	*/
-
 	public StereoMolecule createMolecule(int atoms, int bonds) {
 		return new StereoMolecule(atoms, bonds);
 		}
@@ -81,6 +73,26 @@ public class StereoMolecule extends ExtendedMolecule {
 		StereoMolecule theCopy = new StereoMolecule(mAllAtoms, mAllBonds);
 		copyMolecule(theCopy);
 		return theCopy;
+		}
+
+	/**
+	 * Copies name, isFragment, chirality. If this molecule has valid parities, but no
+	 * atom coordinates, then the validity of parity & CIP flags is copied as well.
+	 * When copying molecules parts only or when changing the atom order during copy,
+	 * then atom parities or CIP parities may not be valid anymore and
+	 * invalidateHelperArrays([affected bits]) should be called in these cases.
+	 * @param destMol
+	 */
+	public void copyMoleculeProperties(Molecule destMol) {
+		super.copyMoleculeProperties(destMol);
+		// Super class behavior is to retain parity and CIP bits, which is correct in
+		// the rare case where we have valid parities and no atom coordinates.
+		// Then mCanonizer is null and the parities were read as part of a persistent
+		// molecule. In this case and parity and CIP validity needs to be copied.
+		// Otherwise parity is a perceived property from up/down bonds or 3D atom coords
+		// and should be freshly calculated. 
+		if (mCanonizer != null)
+			destMol.mValidHelperArrays = 0;
 		}
 
 	/**
@@ -297,28 +309,34 @@ public class StereoMolecule extends ExtendedMolecule {
      * without explicitly creating a Canonizer object for this purpose.
      * The idcode is a compact String that uniquely encodes the molecule
      * with all stereo and query features.
+     * <br>WARNING: If the molecule has no atom coordinates but valid parities,
+     * e.g. after new IDCodeParser(false).parse(idcode, null), this method returns null;
      * @return
      */
     public String getIDCode() {
         ensureHelperArrays(cHelperParities);
-        return mCanonizer.getIDCode();
+        return mCanonizer == null ? null : mCanonizer.getIDCode();
         }
 
     /**
      * This is a convenience method that creates the molecule's id-coordinates
      * matching the idcode available with getIDCode().
      * It does not explicitly create a Canonizer object for this purpose.
+     * <br>WARNING: If the molecule has no atom coordinates but valid parities,
+     * e.g. after new IDCodeParser(false).parse(idcode, null), this method returns null;
      * @return
      */
     public String getIDCoordinates() {
         ensureHelperArrays(cHelperParities);
-        return mCanonizer.getEncodedCoordinates();
+        return mCanonizer == null ? null : mCanonizer.getEncodedCoordinates();
         }
 
     /**
      * This is a convenience method returning the StereoMolecule's Canonizer
      * object after calling internally ensureHelperArrays(cHelperParities) and,
      * thus, effectively running the canonicalization and validating the Canonizer itself.
+     * <br>WARNING: If the molecule has no atom coordinates but valid parities,
+     * e.g. after new IDCodeParser(false).parse(idcode, null), this method returns null;
      * @return
      */
     public Canonizer getCanonizer() {
@@ -343,7 +361,8 @@ public class StereoMolecule extends ExtendedMolecule {
 	 */
 	public void setUnknownParitiesToExplicitlyUnknown() {
 		ensureHelperArrays(cHelperCIP);
-		mCanonizer.setUnknownParitiesToExplicitlyUnknown();
+		if (mCanonizer != null)
+			mCanonizer.setUnknownParitiesToExplicitlyUnknown();
 		}
 
 

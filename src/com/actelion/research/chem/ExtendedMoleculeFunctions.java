@@ -574,13 +574,13 @@ public class ExtendedMoleculeFunctions {
 	 * 
 	 * @param mol
 	 * @param liAtomicNo
-	 * @return true if an unwanted atom is found.
+	 * @return true if an atomic number from the hash set is found.
 	 */
-	public static boolean checkForUnwanted(ExtendedMolecule mol, HashSet<Integer> liAtomicNo) {
+	public static boolean containsAtLeastOneAtomicNumbersFromHashSet(ExtendedMolecule mol, HashSet<Integer> hsAtomicNo) {
 		boolean bOk=false;
         
         for (int i = 0; i < mol.getAllAtoms(); i++) {
-			if(liAtomicNo.contains(new Integer(mol.getAtomicNo(i)))) {
+			if(hsAtomicNo.contains(mol.getAtomicNo(i))) {
 				bOk=true;
 				break;
 			}
@@ -588,15 +588,27 @@ public class ExtendedMoleculeFunctions {
 		return bOk;
 	}
 
-	public static boolean checkMolForWanted(ExtendedMolecule mol, HashSet<Integer> liAtomicNo) {
-		boolean bOk=true;
+	/**
+	 * 
+	 * @param mol
+	 * @param hsAtomicNo
+	 * @return true if the molecule contains an atomic number that is not in the hash set.
+	 */
+	public static boolean containsSolelyAtomicNumbersFromHashSet(ExtendedMolecule mol, HashSet<Integer> hsAtomicNo) {
+		
+		boolean allAtomicNosInHashset=true;
+		
         for (int i = 0; i < mol.getAllAtoms(); i++) {
-			if(!liAtomicNo.contains(mol.getAtomicNo(i))) {
-				bOk=false;
+        	
+			if(!hsAtomicNo.contains(mol.getAtomicNo(i))) {
+				
+				allAtomicNosInHashset=false;
+				
 				break;
 			}
 		}
-		return bOk;
+        
+		return allAtomicNosInHashset;
 	}
 
 	/**
