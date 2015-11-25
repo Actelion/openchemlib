@@ -1,20 +1,35 @@
 /*
- * Copyright 2014 Actelion Pharmaceuticals Ltd., Gewerbestrasse 16, CH-4123 Allschwil, Switzerland
- *
- * This file is part of DataWarrior.
- * 
- * DataWarrior is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- * 
- * DataWarrior is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with DataWarrior.
- * If not, see http://www.gnu.org/licenses/.
- *
- * @author Thomas Sander
- */
+* Copyright (c) 1997 - 2015
+* Actelion Pharmaceuticals Ltd.
+* Gewerbestrasse 16
+* CH-4123 Allschwil, Switzerland
+*
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+*    list of conditions and the following disclaimer.
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+* 3. Neither the name of the the copyright holder nor the
+*    names of its contributors may be used to endorse or promote products
+*    derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+*/
 
 package com.actelion.research.chem;
 
@@ -64,18 +79,15 @@ public abstract class AbstractDepictor {
 		0x00FA9600, 0x00B45AB4, 0x003232AA, 0x000F820F
 		};
 
-	private static final Color BOND_BG_HILITE_COLOR = new Color(204,222,255);
-    private static final Color BOND_FG_HILITE_COLOR = new Color(255, 85,  0);
-    private static final float BOND_FG_HILITE_HUE = 20f/360f;	// orange-red
+    private static final Color BOND_FG_HILITE_COLOR = new Color(192, 64,  0);
+	private static final Color BOND_BG_HILITE_COLOR = new Color(0, 64, 224);
 
-	// the minimum perceived brightness difference of color atom labels to the background
-    private static final float MIN_COLOR_BG_CONTRAST = 0.4f;
-   
     private static final int COLOR_UNDEFINED = -1;
     private static final int COLOR_HILITE_BOND_BG = -2;
     private static final int COLOR_HILITE_BOND_FG = -3;
     private static final int COLOR_OVERRULED = -4;
     private static final int RGB_COLOR = -5;
+	private static final int COLOR_CUSTOM_FOREGROUND = -6;
 
     public static final int cOptAvBondLen = 24;
 	public static final int cColorGray = 1;	// avoid the Molecule.cAtomFlagsColor range
@@ -131,7 +143,8 @@ public abstract class AbstractDepictor {
 	private int[]					mAtomColor;
 	private String[]				mAtomText;
 	private Point2D.Float[]			mAlternativeCoords;
-	private Color					mOverruleForeground,mOverruleBackground,mBondBGHiliteColor,mBondFGHiliteColor;
+	private Color					mOverruleForeground,mOverruleBackground,mBondBGHiliteColor,mBondFGHiliteColor,
+									mCustomForeground,mCustomBackground;
 
 	protected Object				mG;
 
@@ -163,11 +176,27 @@ public abstract class AbstractDepictor {
 		}
 
 
+	@Deprecated
 	public void setDefaultColor(int c) {
 		mDefaultColor = c;
 	    updateBondHiliteColor();
 		}
 
+
+	/**
+	 * If the foreground color is set, the molecule is drawn in the foreground
+	 * color except for non carbon atoms, which are drawn in atomicNo specific
+	 * colors. If a background color is given, then atom coloring and highlighting
+	 * is optimized to achieve good contrasts.
+	 * @param foreground null (black) or color to be used for molecule drawing
+	 * @param background null (white) or color on which the molecule is drawn
+	 */
+	public void setForegroundColor(Color foreground, Color background) {
+		mDefaultColor = COLOR_CUSTOM_FOREGROUND;
+		mCustomForeground = foreground;
+		mCustomBackground = background;
+		updateBondHiliteColor();
+		}
 
 
 	/**
@@ -428,28 +457,18 @@ public abstract class AbstractDepictor {
 		mpDot = new ArrayList<DepictorDot>();
 		mAtomLabelDisplayed = new boolean[mMol.getAllAtoms()];
 		mChiralTextLocation = new Point2D.Float();
-		mDefaultColor = Molecule.cAtomColorBlack;
+		mDefaultColor = Molecule.cAtomColorNone;
 		mCurrentColor = COLOR_UNDEFINED;
-		mBondBGHiliteColor = BOND_BG_HILITE_COLOR;
-		mBondFGHiliteColor = BOND_FG_HILITE_COLOR;
+		updateBondHiliteColor();
 		}
 
 
     private void updateBondHiliteColor() {
-    	if (mOverruleBackground == null) {
-    		mBondBGHiliteColor = BOND_BG_HILITE_COLOR;
-    		mBondFGHiliteColor = BOND_FG_HILITE_COLOR;
-    		}
-    	else {
-    		Color foreground = (mOverruleForeground == null) ? Color.BLACK : mOverruleForeground;
-    		Color background = (mOverruleBackground == null) ? Color.WHITE : mOverruleBackground;
+   		Color background = (mOverruleBackground != null) ? mOverruleBackground
+			             : (mCustomBackground != null) ? mCustomBackground : Color.WHITE;
 
-    		mBondBGHiliteColor = new Color((3*foreground.getRed()+7*background.getRed())/10,
-    									   (3*foreground.getGreen()+7*background.getGreen())/10,
-    									   (3*foreground.getBlue()+7*background.getBlue())/10);
-    		float brightness = ColorHelper.perceivedBrightness(mOverruleBackground);
-    		mBondFGHiliteColor = Color.getHSBColor(BOND_FG_HILITE_HUE, 1.0f, brightness > 0.5 ? 0.5f : 1.0f);
-    		}
+   		mBondBGHiliteColor = ColorHelper.intermediateColor(background, BOND_BG_HILITE_COLOR, 0.2f);
+	    mBondFGHiliteColor = ColorHelper.getContrastColor(BOND_FG_HILITE_COLOR, background);
     	}
 
 
@@ -477,7 +496,7 @@ public abstract class AbstractDepictor {
 		mAtomColor = new int[mMol.getAllAtoms()];
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 			mAtomColor[atom] = mMol.getAtomColor(atom);
-			if (mAtomColor[atom] != Molecule.cAtomColorBlack)
+			if (mAtomColor[atom] != Molecule.cAtomColorNone)
 				explicitAtomColors = true;
 			if (mMol.isSelectedAtom(atom))
 				mAtomColor[atom] = Molecule.cAtomColorRed;
@@ -523,38 +542,14 @@ public abstract class AbstractDepictor {
 		mpDrawAllDots();
         mpDrawBondQueryFeatures();
 		mpDrawAllBonds();
-
 		}
 
 
 	private Color getContrastColor(int rgb) {
-		Color bg = (mOverruleBackground == null) ? Color.WHITE : mOverruleBackground;
-		float bgb = ColorHelper.perceivedBrightness(bg);
+		Color bg = (mOverruleBackground != null) ? mOverruleBackground
+				 : (mCustomBackground != null) ? mCustomBackground : Color.WHITE;
 		Color fg = new Color(rgb);
-		float fgb = ColorHelper.perceivedBrightness(fg);
-
-		// minConstrast is MIN_COLOR_BG_CONTRAST with white or black background and reduces
-		// to 0.5*MIN_COLOR_BG_CONTRAST when background brightness goes to 0.5
-		float minContrast = MIN_COLOR_BG_CONTRAST * (0.5f + Math.abs(0.5f - bgb));
-
-		float b1 = bgb - minContrast;	// lower edge of brightness avoidance zone
-		float b2 = bgb + minContrast;	// higher edge of brightness avoidance zone
-		boolean darken = (b1 <= 0f) ? false : (b2 >= 1.0f) ? true : fgb < bgb;
-		float factor = 1f / 255f * ((darken) ?
-				  1f-minContrast * brightnessShiftFunction(Math.max((bgb - fgb) / bgb, 0f))
-				: 1f+minContrast * brightnessShiftFunction(Math.max((fgb - bgb) / (1f - bgb), 0f)));
-
-		return new Color(factor * fg.getRed(), factor * fg.getGreen(), factor * fg.getBlue());
-		}
-
-
-	/**
-	 * Nonlinear function for adjusting color brightness depending on similarity to background brightness
-	 * @param d distance between color brightness and background brightness (0 ... 1)
-	 * @return
-	 */
-	private float brightnessShiftFunction(float d) {
-		return (1.0f/(0.5f+1.5f*d)-0.5f)/1.5f;
+		return ColorHelper.getContrastColor(fg, bg);
 		}
 
 
@@ -2038,7 +2033,7 @@ public abstract class AbstractDepictor {
     	else if (mAtomColor[atom1] != mAtomColor[atom2]) {
     		drawColorLine(theLine, atom1, atom2);
     		}
-    	else if (mAtomColor[atom1] != Molecule.cAtomColorBlack) {
+    	else if (mAtomColor[atom1] != Molecule.cAtomColorNone) {
 			setColor(mAtomColor[atom1]);
 			drawBlackLine(theLine);
 			setColor(mDefaultColor);
@@ -2190,6 +2185,12 @@ public abstract class AbstractDepictor {
 		mCurrentColor = theColor;
 
 		switch (theColor) {
+		case Molecule.cAtomColorNone:
+			setColor(mCustomForeground == null ? Color.black : mCustomForeground);
+			break;
+		case COLOR_CUSTOM_FOREGROUND:
+			setColor(mCustomForeground);
+			break;
 		case COLOR_OVERRULED:
 		    setColor(mOverruleForeground);
 			break;

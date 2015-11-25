@@ -1,20 +1,35 @@
 /*
- * Copyright 2014 Actelion Pharmaceuticals Ltd., Gewerbestrasse 16, CH-4123 Allschwil, Switzerland
- *
- * This file is part of DataWarrior.
- * 
- * DataWarrior is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- * 
- * DataWarrior is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with DataWarrior.
- * If not, see http://www.gnu.org/licenses/.
- *
- * @author Thomas Sander
- */
+* Copyright (c) 1997 - 2015
+* Actelion Pharmaceuticals Ltd.
+* Gewerbestrasse 16
+* CH-4123 Allschwil, Switzerland
+*
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+*    list of conditions and the following disclaimer.
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+* 3. Neither the name of the the copyright holder nor the
+*    names of its contributors may be used to endorse or promote products
+*    derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+*/
 
 package com.actelion.research.chem;
 
@@ -55,7 +70,7 @@ public class Molecule implements Serializable {
 	public static final int cAtomRadicalStateT		= 0x000030;
 
 	private static final int cAtomFlagsColor		= 0x0001C0;
-	public static final int cAtomColorBlack			= 0x000000;
+	public static final int cAtomColorNone = 0x000000;
 	public static final int cAtomColorBlue			= 0x000040;
 	public static final int cAtomColorRed			= 0x000080;
 	public static final int cAtomColorGreen			= 0x0000C0;
@@ -1471,7 +1486,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Marks this bond to be deleted in a later call to deleteMarkedAtomsAndBonds().
-	 * @param atom
+	 * @param bond
 	 */
 	public void markBondForDeletion(int bond) {
 		mBondType[bond] = cBondTypeDeleted;		// mark for delete
@@ -1490,7 +1505,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Checks whether this bond was marked to be deleted and not deleted yet.
-	 * @param atom
+	 * @param bond
 	 * @return
 	 */
 	public boolean isBondMarkedForDeletion(int bond) {
@@ -1787,7 +1802,7 @@ public class Molecule implements Serializable {
 	 * The list of atoms that are allowed at this position during sub-structure search.
 	 * (or refused atoms, if atom query feature cAtomQFAny is set).
 	 * @param atom
-	 * @return null or atom list, if defined
+	 * @return null or sorted list of unique atomic numbers, if defined
 	 */
 	public int[] getAtomList(int atom) {
 		return (mAtomList == null) ? null : mAtomList[atom];
@@ -1836,7 +1851,7 @@ public class Molecule implements Serializable {
 	 * The atom parity is a calculated property available above/equal helper level cHelperParities.
 	 * It describes the stereo configuration of a chiral atom and is calculated either from
 	 * 2D-atom-coordinates and up/down-bonds or from 3D-atom-coordinates, whatever is available.
-	 * It depends on the atom indices of the neighbor atoms and their orientation is space.<br>
+	 * It depends on the atom indexes of the neighbor atoms and their orientation in space.<br>
 	 * The parity is defined as follows: Look at the chiral atom such that its neighbor atom with the
 	 * highest atom index (or the hydrogen atom if it is implicit) is oriented to the back.
 	 * If the remaining three neighbors are in clockwise order (considering ascending atom indexes)
@@ -2456,13 +2471,9 @@ public class Molecule implements Serializable {
 	 * If this atom's query feature cAtomQFAny (any atom) is set, then the list is considered to be a NOT-list.
 	 * Depending on cAtomQFAny the list must contain at least 1 or 2 members.
 	 * @param atom
-	 * @param list null or int[] of valid atomic numbers
+	 * @param list null or int[] of valid unique, but not sorted, atomic numbers
 	 */
 	public void setAtomList(int atom, int[] list) {
-		/*
-		 * 'list' is null or an int[] of valid atomic numbers.
-		 * Depending on cAtomQFAny the list must contain at least 1 or 2 members
-		 */
 		if (mAtomList == null)
 			mAtomList = new int[mMaxAtoms][];
 

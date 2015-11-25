@@ -1,20 +1,35 @@
 /*
- * Copyright 2014 Actelion Pharmaceuticals Ltd., Gewerbestrasse 16, CH-4123 Allschwil, Switzerland
- *
- * This file is part of DataWarrior.
- * 
- * DataWarrior is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- * 
- * DataWarrior is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with DataWarrior.
- * If not, see http://www.gnu.org/licenses/.
- *
- * @author Thomas Sander
- */
+* Copyright (c) 1997 - 2015
+* Actelion Pharmaceuticals Ltd.
+* Gewerbestrasse 16
+* CH-4123 Allschwil, Switzerland
+*
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+*    list of conditions and the following disclaimer.
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+* 3. Neither the name of the the copyright holder nor the
+*    names of its contributors may be used to endorse or promote products
+*    derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+*/
 
 package com.actelion.research.gui;
 
@@ -24,6 +39,7 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionArrow;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
+import com.actelion.research.util.ColorHelper;
 import com.actelion.research.util.CursorHelper;
 
 import javax.swing.*;
@@ -64,8 +80,15 @@ public class JDrawArea extends JPanel
 
     private static final boolean USE_GRAPHICS_2D = true;
 
-    public static final Color SELECTION_COLOR = new Color(161, 204, 255);
-    public static final Color CHAIN_HILITE_COLOR = new Color(204, 222, 255);
+	public static final Color BACKGROUND_COLOR = UIManager.getColor("TextArea.background");
+	public static final Color FOREGROUND_COLOR = UIManager.getColor("TextArea.foreground");
+	public static final Color SELECTION_COLOR = UIManager.getColor("TextArea.selectionBackground");
+	private static final boolean IS_DARK_LAF = (ColorHelper.perceivedBrightness(BACKGROUND_COLOR) < 0.5f);
+	private static final Color FRAGMENT_NO_COLOR = IS_DARK_LAF ? ColorHelper.brighter(BACKGROUND_COLOR, 0.85f)
+															   : ColorHelper.darker(BACKGROUND_COLOR, 0.85f);
+	private static final Color LASSO_COLOR = ColorHelper.createColor(SELECTION_COLOR, IS_DARK_LAF ? 0.65f : 0.35f);
+	private static final Color MAP_TOOL_COLOR = ColorHelper.getContrastColor(new Color(128, 0, 0), BACKGROUND_COLOR);
+	private static final Color CHAIN_HILITE_COLOR = ColorHelper.intermediateColor(SELECTION_COLOR, BACKGROUND_COLOR, 0.5f);
 
     protected static final int UPDATE_NONE = 0;
     protected static final int UPDATE_REDRAW = 1;
@@ -110,7 +133,7 @@ public class JDrawArea extends JPanel
     private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
     private float mX1, mY1, mX2, mY2;
     private float[] mX, mY, mChainAtomX, mChainAtomY;
-    private boolean mShiftIsDown, mControlIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported;
+    private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported;
     private boolean[] mIsSelectedAtom, mIsSelectedObject;
     private String[] mAtomText;
     private ExtendedDepictor mDepictor;
@@ -216,7 +239,11 @@ public class JDrawArea extends JPanel
             }
         }
 
-        if ((mMode & MODE_REACTION) != 0 && mDrawingObjectList.size() == 0) {
+	    Color foreground = UIManager.getColor("TextArea.foreground");
+	    g.setColor(BACKGROUND_COLOR);
+	    g.fillRect(0, 0, theSize.width, theSize.height);
+
+	    if ((mMode & MODE_REACTION) != 0 && mDrawingObjectList.size() == 0) {
             float mx = 0.5f * (float) theSize.width;
             float my = 0.5f * (float) theSize.height;
             float dx = 0.5f * DEFAULT_ARROW_LENGTH * (float) theSize.width;
@@ -241,13 +268,13 @@ public class JDrawArea extends JPanel
                 new ExtendedDepictor(mFragment, mDrawingObjectList, USE_GRAPHICS_2D)
                 : new ExtendedDepictor(mMol, mDrawingObjectList, USE_GRAPHICS_2D);
 
-            mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) != 0) ?
-                getBackground().brighter() : null);
+	        mDepictor.setForegroundColor(FOREGROUND_COLOR, BACKGROUND_COLOR);
+            mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) != 0) ? FRAGMENT_NO_COLOR : null);
             mDepictor.setDisplayMode(mDisplayMode
                 | AbstractDepictor.cDModeHiliteAllQueryFeatures
                 | ((mCurrentTool == JDrawToolbar.cToolMapper) ?
-                AbstractDepictor.cDModeShowMapping
-                    | AbstractDepictor.cDModeSuppressCIPParity : 0));
+                    AbstractDepictor.cDModeShowMapping
+                  | AbstractDepictor.cDModeSuppressCIPParity : 0));
 
             if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE | MODE_MULTIPLE_FRAGMENTS)) == 0) {
                 mDepictor.getMoleculeDepictor(0).setAtomText(mAtomText);
@@ -271,7 +298,6 @@ public class JDrawArea extends JPanel
                     isScaledView = (t2 != null && !t2.isVoidTransformation());
                     break;
             }
-
             mUpdateMode = UPDATE_NONE;
         }
 
@@ -294,16 +320,16 @@ public class JDrawArea extends JPanel
             int y = (int) mMol.getAtomY(mCurrentHiliteAtom);
             String s = mAtomKeyStrokeBuffer.toString();
             int validity = getAtomKeyStrokeValidity(s);
-            g.setColor((validity == KEY_IS_ATOM_LABEL) ? Color.BLACK
-                : (validity == KEY_IS_SUBSTITUENT) ? Color.BLUE
-                : (validity == KEY_IS_VALID_START) ? Color.GRAY : Color.RED);
+            g.setColor((validity == KEY_IS_ATOM_LABEL) ? foreground
+                     : (validity == KEY_IS_SUBSTITUENT) ? Color.BLUE
+                     : (validity == KEY_IS_VALID_START) ? Color.GRAY : Color.RED);
             if (validity == KEY_IS_INVALID)
                 s = s + "<unknown>";
             g.setFont(new Font("Helvetica", 0, 24));
             g.drawString(s, x, y);
         }
 
-        g.setColor(Color.black);
+        g.setColor(foreground);
         switch (mPendingRequest) {
             case cRequestNewBond:
                 int x1, y1, x2, y2, xdiff, ydiff;
@@ -359,18 +385,18 @@ public class JDrawArea extends JPanel
                 }
                 break;
             case cRequestLassoSelect:
-                g.setColor(Color.gray);
+                g.setColor(LASSO_COLOR);
                 g.drawPolygon(mLassoRegion);
-                g.setColor(Color.black);
+                g.setColor(foreground);
                 break;
             case cRequestSelectRect:
                 int x = (mX1 < mX2) ? (int) mX1 : (int) mX2;
                 int y = (mY1 < mY2) ? (int) mY1 : (int) mY2;
                 int w = (int) Math.abs(mX2 - mX1);
                 int h = (int) Math.abs(mY2 - mY1);
-                g.setColor(Color.gray);
+                g.setColor(LASSO_COLOR);
                 g.drawRect(x, y, w, h);
-                g.setColor(Color.black);
+                g.setColor(foreground);
                 break;
             case cRequestMapAtoms:
                 x1 = (int) mX1;
@@ -382,9 +408,9 @@ public class JDrawArea extends JPanel
                     x2 = (int) mMol.getAtomX(mCurrentHiliteAtom);
                     y2 = (int) mMol.getAtomY(mCurrentHiliteAtom);
                 }
-                g.setColor(new Color(192, 0, 0));
+                g.setColor(MAP_TOOL_COLOR);
                 g.drawLine(x1, y1, x2, y2);
-                g.setColor(Color.black);
+                g.setColor(foreground);
                 break;
         }
     }
@@ -694,6 +720,9 @@ public class JDrawArea extends JPanel
 
     public void mousePressed(MouseEvent e)
     {
+        if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0)
+            expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
+
         mAtomKeyStrokeBuffer.setLength(0);
 
         if (handlePopupTrigger(e)) {
@@ -874,7 +903,7 @@ public class JDrawArea extends JPanel
                 boolean selectedObjectsFound = false;
                 if (mDrawingObjectList != null) {
                     for (int i = 0; i < mDrawingObjectList.size() && !selectedObjectsFound; i++) {
-                        selectedObjectsFound = ((AbstractDrawingObject) mDrawingObjectList.get(i)).isSelected();
+                        selectedObjectsFound = mDrawingObjectList.get(i).isSelected();
                     }
                 }
                 float magnification = (Math.abs(mY2 - mY1) < 20) ? 1.0f : (float) Math.exp((mY2 - mY1) / 100f);
@@ -882,8 +911,8 @@ public class JDrawArea extends JPanel
                 boolean selectedOnly = (selectedAtomsFound || selectedObjectsFound);
                 if (mDrawingObjectList != null && (!selectedOnly || selectedObjectsFound)) {
                     for (int i = 0; i < mDrawingObjectList.size(); i++) {
-                        if (!selectedOnly || ((AbstractDrawingObject) mDrawingObjectList.get(i)).isSelected()) {
-                            ((AbstractDrawingObject) mDrawingObjectList.get(i)).zoomAndRotate(magnification, angleChange);
+                        if (!selectedOnly || mDrawingObjectList.get(i).isSelected()) {
+                            mDrawingObjectList.get(i).zoomAndRotate(magnification, angleChange);
                         }
                     }
                     update(UPDATE_CHECK_VIEW);
@@ -912,7 +941,7 @@ public class JDrawArea extends JPanel
                 }
                 if (mDrawingObjectList != null) {
                     for (int i = 0; i < mDrawingObjectList.size(); i++) {
-                        AbstractDrawingObject object = (AbstractDrawingObject) mDrawingObjectList.get(i);
+                        AbstractDrawingObject object = mDrawingObjectList.get(i);
                         boolean isSelected = object.isSurroundedBy(selectedRegion);
                         if ((!mIsAddingToSelection || !mIsSelectedObject[i])
                             && (isSelected != object.isSelected())) {
@@ -960,6 +989,10 @@ public class JDrawArea extends JPanel
             mShiftIsDown = true;
             updateCursor();
         }
+	    if (e.getKeyCode() == KeyEvent.VK_ALT) {
+		    mAltIsDown = true;
+		    updateCursor();
+	    }
         if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
             mControlIsDown = true;
             updateCursor();
@@ -1154,7 +1187,11 @@ public class JDrawArea extends JPanel
             mShiftIsDown = false;
             updateCursor();
         }
-        if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+	    if (e.getKeyCode() == KeyEvent.VK_ALT) {
+		    mAltIsDown = false;
+		    updateCursor();
+	    }
+	    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
             mControlIsDown = false;
             updateCursor();
         }
@@ -1197,7 +1234,7 @@ public class JDrawArea extends JPanel
                     popup.addSeparator();
                 }
                 JMenu colorMenu = new JMenu("Set Atom Color");
-                addColorToMenu(colorMenu, Color.BLACK, Molecule.cAtomColorBlack, atomColor == Molecule.cAtomColorBlack);
+                addColorToMenu(colorMenu, Color.BLACK, Molecule.cAtomColorNone, atomColor == Molecule.cAtomColorNone);
                 addColorToMenu(colorMenu, Color.BLUE, Molecule.cAtomColorBlue, atomColor == Molecule.cAtomColorBlue);
                 addColorToMenu(colorMenu, new Color(160, 0, 0), Molecule.cAtomColorDarkRed, atomColor == Molecule.cAtomColorDarkRed);
                 addColorToMenu(colorMenu, Color.RED, Molecule.cAtomColorRed, atomColor == Molecule.cAtomColorRed);
@@ -1475,11 +1512,11 @@ public class JDrawArea extends JPanel
                 }
                 if (mDrawingObjectList != null) {
                     for (int i = 0; i < mDrawingObjectList.size(); i++) {
-                        mIsSelectedObject[i] = ((AbstractDrawingObject) mDrawingObjectList.get(i)).isSelected();
+                        mIsSelectedObject[i] = mDrawingObjectList.get(i).isSelected();
                     }
                 }
 
-                if (e.isControlDown()) {
+                if (e.isAltDown()) {
                     mPendingRequest = cRequestSelectRect;
                 } else {
                     mLassoRegion = new Polygon();
@@ -3152,8 +3189,8 @@ public class JDrawArea extends JPanel
                         CursorHelper.cHandPlusCursor : CursorHelper.cHandCursor;
                 } else {
                     cursor = mShiftIsDown ?
-                        (mControlIsDown ? CursorHelper.cSelectRectPlusCursor : CursorHelper.cLassoPlusCursor)
-                        : (mControlIsDown ? CursorHelper.cSelectRectCursor : CursorHelper.cLassoCursor);
+                        (mAltIsDown ? CursorHelper.cSelectRectPlusCursor : CursorHelper.cLassoPlusCursor)
+                        : (mAltIsDown ? CursorHelper.cSelectRectCursor : CursorHelper.cLassoCursor);
                 }
                 break;
             case JDrawToolbar.cToolDelete:
