@@ -1,0 +1,44 @@
+<project name="OpenChemLib" default="jar" basedir=".">
+
+    <!-- those properties are generic and don't have to be changed-->
+    <property name="project" value="${ant.project.name}" />
+
+    <property name="src.dir" value="src" />
+    <property name="build.dir" value="build" />
+
+    <path id="srcs">
+        <dirset dir="." includes="${src.dir}" />
+    </path>
+
+
+    <!-- targets -->
+    <target name="clean">
+        <echo message="Cleaning..."/>
+        <delete dir="${build.dir}" failonerror="false" />
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${build.dir}" />
+        <javac
+                destdir="${build.dir}"
+                failonerror="true" source="1.7" target="1.7" debug="false" encoding="ISO-8859-1">
+
+            <src refid="srcs" />
+
+            <include name="**/*.java" />
+        </javac>
+
+        <copy overwrite="true" todir="${build.dir}">
+            <fileset dir="${src.dir}" includes="**/*" excludes="**/*.java" />
+        </copy>
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar basedir="${build.dir}" includes="**/*" excludes="**/*.jar" destfile="${build.dir}/${project}.jar" >
+            <manifest>
+                <attribute name="Created-By" value="${user.name}" />
+            </manifest>
+        </jar>
+    </target>
+
+</project>
