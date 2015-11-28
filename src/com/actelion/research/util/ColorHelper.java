@@ -38,7 +38,7 @@ import java.awt.Color;
 public class ColorHelper {
 	private static final float[] PERCEIVED_BRIGHTNESS = { 0.299f, 0.587f, 0.114f };
 	// the desired perceived brightness difference between foreground color and background
-	private static final float MIN_COLOR_BG_CONTRAST = 0.5f;
+	private static final float MIN_CONTRAST_TO_BACKGROUND = 0.25f;
 
 	/**
 	 * Creates an intermediate color between color c1 and color c2
@@ -171,48 +171,44 @@ public class ColorHelper {
 		}
 
 	/**
-	 * Based on the percieved brightness of foreground color <code>fg</code> and
-	 * background color <code>bg</code> checks and possibly adjusts <code>fg</code>
-	 * such that it is well perceivable on the background.
+	 * Based on the differences of hue and perceived brightness of foreground color
+	 * <code>fg</code> and background color <code>bg</code>, this method checks and
+	 * possibly adjusts the given foreground color <code>fg</code> such that its hue
+	 * stays unchanged, but its brightness is adapted to make it better perceivable
+	 * on the background.
 	 * @param fg foreground color
 	 * @param bg background color
+//	 * @param minContrast the minimum desired contrast (0 to 0.5)
 	 * @return unchanged or adjusted fg
 	 */
 	public static Color getContrastColor(Color fg, Color bg) {
 		float bgb = ColorHelper.perceivedBrightness(bg);
 		float fgb = ColorHelper.perceivedBrightness(fg);
 
-		// minContrast is MIN_COLOR_BG_CONTRAST with white or black background and reduces
-		// to 0.5*MIN_COLOR_BG_CONTRAST when background brightness goes to 0.5
-		float minContrast = MIN_COLOR_BG_CONTRAST * (0.5f + Math.abs(0.5f - bgb));  // smalest allowed contrast
-		float maxContrast = 2*minContrast;  // maximum contrast to correct
-
-		float b1 = bgb - minContrast;	// lower edge of brightness avoidance zone
-		float b2 = bgb + minContrast;	// higher edge of brightness avoidance zone
-		boolean darken = (b1 <= 0f) ? false : (b2 >= 1.0f) ? true : fgb < bgb;
-		float contrast = darken ? bgb - fgb : fgb - bgb;
-		if (contrast > maxContrast)
+		float contrast = Math.abs(bgb - fgb);
+		if (contrast > MIN_CONTRAST_TO_BACKGROUND)
 			return fg;
-		float brightnessShift = minContrast*brightnessShiftFunction(Math.max(contrast/maxContrast, 0f));
-		float[] hsb = new float[3];
-		Color.RGBtoHSB(fg.getRed(), fg.getGreen(), fg.getBlue(), hsb);
-		if (darken) {
-			hsb[2] = Math.max(0.0f, hsb[2] - brightnessShift);
-			hsb[1] = Math.min(1.0f, hsb[1] + brightnessShift);
-			}
-		else {
-			hsb[2] = Math.min(1.0f, hsb[2] + brightnessShift);
-			hsb[1] = Math.max(0.0f, hsb[1] - brightnessShift / 2);
-			}
-		return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
-		}
 
-	/**
-	 * Nonlinear function for adjusting color brightness depending on similarity to background brightness
-	 * @param d distance between color brightness and background brightness (0 ... 1)
-	 * @return
-	 */
-	private static float brightnessShiftFunction(float d) {
-		return (1.0f/(0.5f+1.5f*d)-0.5f)/1.5f;
+		float[] hsbBG = new float[3];
+		Color.RGBtoHSB(bg.getRed(), bg.getGreen(), bg.getBlue(), hsbBG);
+		float[] hsbFG = new float[3];
+		Color.RGBtoHSB(fg.getRed(), fg.getGreen(), fg.getBlue(), hsbFG);
+
+		double hueDif = Math.abs(hsbFG[0] - hsbBG[0]);
+		if (hueDif > 0.5)
+			hueDif = 1.0 - hueDif;
+
+		float saturationFactor = 1-Math.max(hsbFG[1], hsbBG[1]);
+		float brightnessFactor = Math.abs(fgb + bgb - 1);
+		float hueDifferenceFactor = (float)Math.cos(Math.PI*hueDif*3);
+
+		float neededContrast = MIN_CONTRAST_TO_BACKGROUND * Math.max(saturationFactor, Math.max(brightnessFactor, hueDifferenceFactor));
+
+		if (contrast > neededContrast)
+			return fg;
+
+		boolean darken = (fgb > bgb) ? (fgb + neededContrast > 1f) : (fgb - neededContrast > 0f);
+
+		return createColor(fg, darken ? bgb - neededContrast : bgb + neededContrast);
 		}
 	}

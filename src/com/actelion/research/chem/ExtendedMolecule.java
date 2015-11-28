@@ -1128,48 +1128,82 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		int rCount = 0;
 		ensureHelperArrays(Molecule.cHelperRings);
 		for (int bond=0; bond<mBonds; bond++) {
-			if (getBondOrder(bond) == 3
-			 && mConnAtoms[mBondAtom[0][bond]] > 1
-			 && mConnAtoms[mBondAtom[1][bond]] > 1) {
-				rCount++;   // count x-x#x-x as one rotatable bond
-				continue;
-				}
+			if (getBondOrder(bond) == 1 && !isRingBond(bond)) {
+				boolean isRotatable = true;
+				for (int i = 0; i < 2; i++) {
+					int atom1 = mBondAtom[i][bond];
+					if (mConnAtoms[atom1] == 1) {
+						isRotatable = false;
+						break;  // terminal bond
+						}
 
-			if (getBondOrder(bond) != 1 || isRingBond(bond))
-				continue;
-
-			boolean isRotatable = true;
-			for (int i=0; i<2; i++) {
-				int atom1 = mBondAtom[i][bond];
-				if (mConnAtoms[atom1] == 1) {
-					isRotatable = false;
-					break;  // terminal bond
-					}
-				if (mPi[atom1] == 2
-				 && mConnAtoms[atom1] == 2) {
-					isRotatable = false;
-					break;  // vicinal to triple bond (count triple bond instead)
-					}
-				if (mAtomicNo[atom1] == 7 && !isAromaticAtom(atom1)) {
-					int atom2 = mBondAtom[1-i][bond];
-					for (int j=0; j<mConnAtoms[atom2]; j++) {
-						int connAtom = mConnAtom[atom2][j];
-						int connBond = mConnBond[atom2][j];
-						if (connBond != bond
-						 && getBondOrder(connBond) > 1
-						 && !isAromaticAtom(connAtom)
-						 && isElectronegative(connAtom)) {
-							isRotatable = false;
-							break;  // amid bond
+					if (mAtomicNo[atom1] == 7 && !isAromaticAtom(atom1)) {
+						int atom2 = mBondAtom[1 - i][bond];
+						for (int j = 0; j < mConnAtoms[atom2]; j++) {
+							int connAtom = mConnAtom[atom2][j];
+							int connBond = mConnBond[atom2][j];
+							if (connBond != bond
+									&& getBondOrder(connBond) > 1
+									&& !isAromaticAtom(connAtom)
+									&& isElectronegative(connAtom)) {
+								isRotatable = false;
+								break;  // amid bond
+								}
 							}
+						}
+					}
+
+				if (isRotatable && !isPseudoRotatableBond(bond))
+					rCount++;
+				}
+			}
+		return rCount;
+		}
+
+	/**
+	 * In a consecutive sequence of sp-hybridized atoms multiple single bonds
+	 * cause redundant torsions. Only that single bond with the smallest bond index
+	 * is considered really rotatable; all other single bonds are pseudo rotatable.
+	 * If one/both end(s) of the sp-atom sequence doesn't carry atoms
+	 * outside of the straight line then no bond is considered rotatable.
+	 * A simple terminal single bond
+	 * @param bond
+	 * @return true, if this bond is not considered rotatable because of a redundancy
+	 */
+	public boolean isPseudoRotatableBond(int bond) {
+		if (getBondOrder(bond) != 1)
+			return false;
+
+		for (int i=0; i<2; i++) {
+			int atom = mBondAtom[i][bond];
+			int rearAtom = mBondAtom[1-i][bond];
+
+			while (mPi[atom] == 2
+				&& mConnAtoms[atom] == 2
+				&& mAtomicNo[atom] < 10) {
+				for (int j=0; j<2; j++) {
+					int connAtom = mConnAtom[atom][j];
+					if (connAtom != rearAtom) {
+						if (mConnAtoms[connAtom] == 1)
+							return true;
+
+						int connBond = mConnBond[atom][j];
+						if (getBondOrder(connBond) == 1
+						 && connBond < bond)
+							return true;
+
+						rearAtom = atom;
+						atom = connAtom;
+						break;
 						}
 					}
 				}
 
-			if (isRotatable)
-				rCount++;
+			if (mConnAtoms[atom] == 1)
+				return true;
 			}
-		return rCount;
+
+		return false;
 		}
 
 	public int getAromaticRingCount() {
