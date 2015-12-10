@@ -80,16 +80,6 @@ public class JDrawArea extends JPanel
 
     private static final boolean USE_GRAPHICS_2D = true;
 
-	public static final Color BACKGROUND_COLOR = UIManager.getColor("TextArea.background");
-	public static final Color FOREGROUND_COLOR = UIManager.getColor("TextArea.foreground");
-	public static final Color SELECTION_COLOR = UIManager.getColor("TextArea.selectionBackground");
-	private static final boolean IS_DARK_LAF = (ColorHelper.perceivedBrightness(BACKGROUND_COLOR) < 0.5f);
-	private static final Color FRAGMENT_NO_COLOR = IS_DARK_LAF ? ColorHelper.brighter(BACKGROUND_COLOR, 0.85f)
-															   : ColorHelper.darker(BACKGROUND_COLOR, 0.85f);
-	private static final Color LASSO_COLOR = ColorHelper.createColor(SELECTION_COLOR, IS_DARK_LAF ? 0.65f : 0.35f);
-	private static final Color MAP_TOOL_COLOR = ColorHelper.getContrastColor(new Color(128, 0, 0), BACKGROUND_COLOR);
-	private static final Color CHAIN_HILITE_COLOR = ColorHelper.intermediateColor(SELECTION_COLOR, BACKGROUND_COLOR, 0.5f);
-
     protected static final int UPDATE_NONE = 0;
     protected static final int UPDATE_REDRAW = 1;
     // redraw molecules and drawing objects with their current coordinates
@@ -230,8 +220,18 @@ public class JDrawArea extends JPanel
         super.paintComponent(g);
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-
-        Dimension theSize = getSize();
+/*
+	    public static final Color BACKGROUND_COLOR = UIManager.getColor("TextArea.background");
+	    public static final Color FOREGROUND_COLOR = UIManager.getColor("TextArea.foreground");
+	    public static final Color SELECTION_COLOR = UIManager.getColor("TextArea.selectionBackground");
+	    private static final boolean IS_DARK_LAF = (ColorHelper.perceivedBrightness(BACKGROUND_COLOR) < 0.5f);
+	    private static final Color FRAGMENT_NO_COLOR = IS_DARK_LAF ? ColorHelper.brighter(BACKGROUND_COLOR, 0.85f)
+			    : ColorHelper.darker(BACKGROUND_COLOR, 0.85f);
+	    private static final Color LASSO_COLOR = ColorHelper.createColor(SELECTION_COLOR, IS_DARK_LAF ? 0.65f : 0.35f);
+	    private static final Color MAP_TOOL_COLOR = ColorHelper.getContrastColor(new Color(128, 0, 0), BACKGROUND_COLOR);
+	    private static final Color CHAIN_HILITE_COLOR = ColorHelper.intermediateColor(SELECTION_COLOR, BACKGROUND_COLOR, 0.5f);
+*/
+	    Dimension theSize = getSize();
         if (mSize == null || mSize.width != theSize.width || mSize.height != theSize.height) {
             mSize = theSize;
             if (mUpdateMode < UPDATE_CHECK_COORDS) {
@@ -239,8 +239,10 @@ public class JDrawArea extends JPanel
             }
         }
 
+	    Color background = UIManager.getColor("TextArea.background");
 	    Color foreground = UIManager.getColor("TextArea.foreground");
-	    g.setColor(BACKGROUND_COLOR);
+
+	    g.setColor(background);
 	    g.fillRect(0, 0, theSize.width, theSize.height);
 
 	    if ((mMode & MODE_REACTION) != 0 && mDrawingObjectList.size() == 0) {
@@ -268,8 +270,10 @@ public class JDrawArea extends JPanel
                 new ExtendedDepictor(mFragment, mDrawingObjectList, USE_GRAPHICS_2D)
                 : new ExtendedDepictor(mMol, mDrawingObjectList, USE_GRAPHICS_2D);
 
-	        mDepictor.setForegroundColor(FOREGROUND_COLOR, BACKGROUND_COLOR);
-            mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) != 0) ? FRAGMENT_NO_COLOR : null);
+	        mDepictor.setForegroundColor(foreground, background);
+            mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) ? null
+		            : LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(background, 0.85f)
+		                                                    : ColorHelper.darker(background, 0.85f));
             mDepictor.setDisplayMode(mDisplayMode
                 | AbstractDepictor.cDModeHiliteAllQueryFeatures
                 | ((mCurrentTool == JDrawToolbar.cToolMapper) ?
@@ -385,7 +389,7 @@ public class JDrawArea extends JPanel
                 }
                 break;
             case cRequestLassoSelect:
-                g.setColor(LASSO_COLOR);
+                g.setColor(lassoColor());
                 g.drawPolygon(mLassoRegion);
                 g.setColor(foreground);
                 break;
@@ -394,7 +398,7 @@ public class JDrawArea extends JPanel
                 int y = (mY1 < mY2) ? (int) mY1 : (int) mY2;
                 int w = (int) Math.abs(mX2 - mX1);
                 int h = (int) Math.abs(mY2 - mY1);
-                g.setColor(LASSO_COLOR);
+                g.setColor(lassoColor());
                 g.drawRect(x, y, w, h);
                 g.setColor(foreground);
                 break;
@@ -408,24 +412,44 @@ public class JDrawArea extends JPanel
                     x2 = (int) mMol.getAtomX(mCurrentHiliteAtom);
                     y2 = (int) mMol.getAtomY(mCurrentHiliteAtom);
                 }
-                g.setColor(MAP_TOOL_COLOR);
+                g.setColor(mapToolColor());
                 g.drawLine(x1, y1, x2, y2);
                 g.setColor(foreground);
                 break;
         }
     }
 
+	private Color lassoColor() {
+		Color selectionColor = UIManager.getColor("TextArea.selectionBackground");
+		return ColorHelper.createColor(selectionColor, LookAndFeelHelper.isDarkLookAndFeel() ? 0.65f : 0.35f);
+	}
+
+	private Color selectionColor() {
+		return UIManager.getColor("TextArea.selectionBackground");
+	}
+
+	private Color mapToolColor() {
+		Color background = UIManager.getColor("TextArea.background");
+		return ColorHelper.getContrastColor(new Color(128, 0, 0), background);
+	}
+
+	private Color chainHiliteColor() {
+		Color background = UIManager.getColor("TextArea.background");
+		Color selectionColor = UIManager.getColor("TextArea.selectionBackground");
+		return ColorHelper.intermediateColor(selectionColor, background, 0.5f);
+	}
+
     private void drawHiliting(Graphics g)
     {
         if (mHiliteBondSet != null) {
-            g.setColor(CHAIN_HILITE_COLOR);
+            g.setColor(chainHiliteColor());
             for (int i = 0; i < mHiliteBondSet.length; i++) {
                 hiliteBond(g, mHiliteBondSet[i]);
             }
         }
 
         if (mCurrentHiliteAtom != -1) {
-            g.setColor(SELECTION_COLOR);
+            g.setColor(selectionColor());
             hiliteAtom(g, mCurrentHiliteAtom);
             if (mCurrentTool == JDrawToolbar.cToolMapper) {
                 int mapNo = mMol.getAtomMapNo(mCurrentHiliteAtom);
@@ -441,7 +465,7 @@ public class JDrawArea extends JPanel
         }
 
         if (mCurrentHiliteBond != -1) {
-            g.setColor(SELECTION_COLOR);
+            g.setColor(selectionColor());
             hiliteBond(g, mCurrentHiliteBond);
         }
 

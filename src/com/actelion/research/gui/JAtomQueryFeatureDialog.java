@@ -33,19 +33,23 @@
 
 package com.actelion.research.gui;
 
+import com.actelion.research.chem.ExtendedMolecule;
+import com.actelion.research.chem.Molecule;
 import info.clearthought.layout.TableLayout;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.Arrays;
 import javax.swing.*;
-
-import com.actelion.research.chem.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.Arrays;
 
 public class JAtomQueryFeatureDialog extends JDialog
 					 implements ActionListener,ItemListener {
     static final long serialVersionUID = 0x20060720;
 
+	private Frame               mParentFrame;
     private ExtendedMolecule	mMol;
 	private int					mAtom;
 	private JCheckBox			mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo;
@@ -56,6 +60,7 @@ public class JAtomQueryFeatureDialog extends JDialog
 
 	protected JAtomQueryFeatureDialog(Frame parent, ExtendedMolecule mol, int atom) {
 		super(parent, (mol.isSelectedAtom(atom)) ? "Multiple Atom Properties" : "Atom Properties", true);
+		mParentFrame = parent;
 		mMol = mol;
 		mAtom = atom;
 		boolean opaque = false;
@@ -577,7 +582,10 @@ public class JAtomQueryFeatureDialog extends JDialog
 
 			int atomicNo = Molecule.getAtomicNoFromLabel(label);
 			if (atomicNo != 0) {
-                if (list == null) {
+				if (atomicNo == 1) {
+					JOptionPane.showMessageDialog(mParentFrame, "'H' cannot be part of an atom list and is removed.");
+					}
+                else if (list == null) {
                     list = new int[1];
                     list[0] = atomicNo;
                     }
