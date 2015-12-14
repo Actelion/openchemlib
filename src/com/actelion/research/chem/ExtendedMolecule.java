@@ -33,12 +33,12 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.util.Angle;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-
-import com.actelion.research.util.Angle;
 
 /**
  * While the Molecule class covers all primary molecule information as atom and bond properties,
@@ -1637,7 +1637,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * tetrahedral parity is returned. If the horizontal bonds are plain
 	 * single bonds, then they are interpreted as up-bonds.
 	 * @param atom the stereo center
-	 * @param index map of neighbours sorted by atom index
+	 * @param sortedConnMap map of neighbours sorted by atom index
 	 * @param angle bond angles sorted by neighbour atom index
 	 * @param direction null or int[] large enough to receive bond directions
 	 * @return cAtomParity1,cAtomParity2 or cAtomParityUnknown
@@ -1675,7 +1675,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * are met, then an int array is returned defining the directions of all
 	 * connected bonds (0:south; 1:west; 2:north; 3:east).
 	 * @param atom
-	 * @param index map of neighbours sorted by atom index
+	 * @param sortedConnMap map of neighbours sorted by atom index
 	 * @param angle bond angles sorted by neighbour atom index
 	 * @param direction array large enough to receive bond directions
 	 * @return false if fisher projection conditions are not met
@@ -2443,7 +2443,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * from the stereo configurations.<br>
 	 * <i>cHelperCIP</i>: Cahn-Ingold-Prelog stereo information for atoms and bonds.<br>
 	 * <br>cHelperParities and cHelperCIP require a StereoMolecule!!!<br>
-	 * @param one of cHelperNeighbours,cHelperRings,cHelperParities,cHelperCIP
+	 * @param required one of cHelperNeighbours,cHelperRings,cHelperParities,cHelperCIP
 	 * @return true if the molecule was changed
 	 */
 	public void ensureHelperArrays(int required) {

@@ -42,7 +42,8 @@ public class CanonizerBaseValue implements Comparable<CanonizerBaseValue> {
     private int mAvailableBits;
 
     /**
-     * @param size with bond query features 4, for everything else 3 suffices
+     * @param size depends on the maximum number of non-H neighbors
+     *             and whether bond query features are present
      */
     public CanonizerBaseValue(int size) {
         mValue = new long[size];

@@ -139,7 +139,7 @@ public class Canonizer {
 
 	private String		  mIDCode,mCoordinates,mMapping;
 	private StringBuilder	mEncodingBuffer;
-	private	int				mEncodingBitsAvail,mEncodingTempData;
+	private	int				mEncodingBitsAvail,mEncodingTempData,mMaxConnAtoms;
 
 	/**
 	 * Runs a canonicalization process molecule creating a unique atom ranking
@@ -524,7 +524,7 @@ System.out.println();
 		if ((mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS+4, mCanRank[atom] << 12);
+				mCanBase[atom].add(ATOM_BITS+12, mCanRank[atom] << 12);
 				}
 			}
 		if (mNoOfRanks < mMol.getAtoms()) {
@@ -631,10 +631,17 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				}
 			}
 
+		mMaxConnAtoms = 2;
+		for (int atom=0; atom<mMol.getAtoms(); atom++)
+			mMaxConnAtoms = Math.max(mMaxConnAtoms, mMol.getConnAtoms(atom));
+		int baseValueSize = Math.max(2, bondQueryFeaturesPresent ?
+				(62 + ATOM_BITS + mMaxConnAtoms * (ATOM_BITS+Molecule.cBondQFNoOfBits)) / 63
+			  : (62 + ATOM_BITS + mMaxConnAtoms * (ATOM_BITS+5)) / 63);
+
 		mCanRank = new int[mMol.getAllAtoms()];
 		mCanBase = new CanonizerBaseValue[mMol.getAtoms()];
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			mCanBase[atom] = new CanonizerBaseValue(bondQueryFeaturesPresent ? 4 : 3);
+			mCanBase[atom] = new CanonizerBaseValue(baseValueSize);
 
 		boolean atomListFound = false;
 
@@ -676,7 +683,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 					bondRingSize[i] |= Math.min(31, mMol.getBondRingSize(mMol.getConnBond(atom, i)));
 					}
 				Arrays.sort(bondRingSize);
-				for (int i=6; i>bondRingSize.length; i--)
+				for (int i=mMaxConnAtoms; i>bondRingSize.length; i--)
 					mCanBase[atom].add(ATOM_BITS+5, 0);
 				for (int i=bondRingSize.length-1; i>=0; i--)
 					mCanBase[atom].add(ATOM_BITS+5, bondRingSize[i]);
@@ -710,7 +717,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 					bondQFList[i] |= mMol.getBondQueryFeatures(mMol.getConnBond(atom, i));
 					}
 				Arrays.sort(bondQFList);
-				for (int i=6; i>bondQFList.length; i--)
+				for (int i=mMaxConnAtoms; i>bondQFList.length; i--)
 					mCanBase[atom].add(ATOM_BITS+Molecule.cBondQFNoOfBits, 0);
 				for (int i=bondQFList.length-1; i>=0; i--)
 					mCanBase[atom].add(ATOM_BITS+Molecule.cBondQFNoOfBits, bondQFList[i]);
@@ -1472,10 +1479,11 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 				connRank[j] = rank;
 				}
 
-			int neighbours = Math.min(6, mMol.getConnAtoms(atom));
+			int neighbours = mMol.getConnAtoms(atom);
 			mCanBase[atom].init(atom);
 			mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
-			mCanBase[atom].add((6 - neighbours)*(ATOM_BITS + 1), 0);
+			for (int i=neighbours; i<mMaxConnAtoms; i++)
+				mCanBase[atom].add(ATOM_BITS + 1, 0);
 			for (int i=0; i<neighbours; i++)
 				mCanBase[atom].add(ATOM_BITS + 1, connRank[i]);
 			}
