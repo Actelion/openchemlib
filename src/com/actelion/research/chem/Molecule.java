@@ -942,11 +942,16 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 * Copies all atoms and bonds of mol to the end of this Molecule's atom and bond
+	 * tables. If mol is a fragment then this Molecule's fragment flag is set to true
+	 * and all query features of mol are also copied.
 	 * High level function for constructing a molecule.
 	 * @param mol
 	 * @return atom mapping from original mol to this molecule after incorporation of mol
 	 */
 	public int[] addMolecule(Molecule mol) {
+		mIsFragment |= mol.mIsFragment;
+
 		int[] atomMap = new int[mol.mAllAtoms];
 		int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
 		int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
@@ -959,7 +964,6 @@ public class Molecule implements Serializable {
 
 		mIsRacemate = (mIsRacemate && mol.mIsRacemate);
 		mChirality = cChiralityUnknown;
-		mIsFragment |= mol.mIsFragment;
 		mValidHelperArrays = cHelperNone;
 		return atomMap;
 		}

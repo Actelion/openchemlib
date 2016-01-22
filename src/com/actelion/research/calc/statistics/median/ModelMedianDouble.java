@@ -58,7 +58,7 @@ public class ModelMedianDouble {
 	 * 
 	 */
 	public ModelMedianDouble() {
-		// TODO Auto-generated constructor stub
+
 	}
 	
 	/**
