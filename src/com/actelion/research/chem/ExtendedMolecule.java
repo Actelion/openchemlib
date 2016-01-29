@@ -862,7 +862,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			return null;
 
 		int[] fragmentSize = new int[fragmentCount];
-		for (int atom=0; atom<mAllAtoms; atom++)
+		for (int atom=0; atom<mAtoms; atom++)
 			fragmentSize[fragmentNo[atom]]++;
 
 		int largestFragment = 0;
