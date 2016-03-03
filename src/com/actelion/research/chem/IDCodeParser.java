@@ -851,7 +851,56 @@ public class IDCodeParser {
 		if (abits > 8)	// abits is the version number
 			abits = bbits;
 
+		if (abits == 0)
+			return 0;
+
 		return decodeBits(abits);
+		}
+
+	/**
+	 * Determines atom and bond counts of the given idcode
+	 * @param idcode
+	 * @param count null or int[2], which is filled and returned
+	 * @return int[] with atom and bond count as first and second values
+	 */
+	public int[] getAtomAndBondCounts(String idcode, int[] count) {
+		if (idcode == null || idcode.length() == 0)
+			return null;
+
+		return getAtomAndBondCounts(idcode.getBytes(), 0, count);
+		}
+
+	/**
+	 * Determines atom and bond counts of the given idcode
+	 * @param idcode
+	 * @param offset
+	 * @param count null or int[2], which is filled and returned
+     * @return int[] with atom and bond count as first and second values
+     */
+	public int[] getAtomAndBondCounts(byte[] idcode, int offset, int[] count) {
+		if (idcode == null || idcode.length == 0)
+			return null;
+
+		decodeBitsStart(idcode, 0);
+		int abits = decodeBits(4);
+		int bbits = decodeBits(4);
+
+		if (abits > 8)   // abits is the version number
+			abits = bbits;
+
+		if (count == null)
+			count = new int[2];
+
+		if (abits == 0) {
+			count[0] = 0;
+			count[1] = 0;
+			}
+		else {
+			count[0] = decodeBits(abits);
+			count[1] = decodeBits(bbits);
+			}
+
+		return count;
 		}
 
 	private void decodeBitsStart(byte[] bytes, int offset) {
