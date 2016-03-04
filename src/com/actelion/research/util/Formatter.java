@@ -208,9 +208,9 @@ public class Formatter {
 					if(!Character.isDigit(tok.charAt(i))) return null;					
 				}
 				if(inDate) {
-					date[ndate] = CompareUtils.fastIntValueOf(tok);
+					date[ndate] = Integer.parseInt(tok);
 				} else {
-					time[ntime] = CompareUtils.fastIntValueOf(tok);					
+					time[ntime] = Integer.parseInt(tok);					
 				}			
 			}
 		}

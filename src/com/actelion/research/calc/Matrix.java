@@ -1402,6 +1402,10 @@ public class Matrix {
         return maMaxMin;
     }
 
+    /**
+     *
+     * @return
+     */
     public double getMax() {
 
         int rows = getRowDim();
@@ -1415,6 +1419,11 @@ public class Matrix {
         return dMax;
     }
 
+    /**
+     * get max value for that col.
+     * @param col
+     * @return
+     */
     public double getMax(int col) {
 
         int iRows = getRowDim();

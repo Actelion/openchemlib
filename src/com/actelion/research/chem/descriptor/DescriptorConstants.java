@@ -94,7 +94,14 @@ public interface DescriptorConstants {
                                                false,
                                                false,
                                                false);
-    public static final DescriptorInfo DESCRIPTOR_Flexophore_HighRes = 
+    public static final DescriptorInfo DESCRIPTOR_FlexophoreV4 =
+            new DescriptorInfo("FlexophoreV4",
+                    "FlexophoreV4",
+                    DESCRIPTOR_TYPE_MOLECULE,
+                    false,
+                    false,
+                    false);
+    public static final DescriptorInfo DESCRIPTOR_Flexophore_HighRes =
         					new DescriptorInfo("FlexophoreHighResolution",
         									   "FlexophoreHighRes",
         									   DESCRIPTOR_TYPE_MOLECULE,
