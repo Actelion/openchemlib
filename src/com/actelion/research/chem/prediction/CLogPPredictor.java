@@ -33,12 +33,12 @@
 
 package com.actelion.research.chem.prediction;
 
-import java.util.TreeMap;
-
 import com.actelion.research.chem.AtomTypeCalculator;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.SortedList;
+
+import java.util.TreeMap;
 
 public class CLogPPredictor {
 	private static final int ATOM_TYPE_MODE = AtomTypeCalculator.cPropertiesForCLogPCharges;
@@ -251,6 +251,27 @@ public class CLogPPredictor {
 		
 		return cLogP;
 		}
+
+	/**
+	 * Normalizes ambiguous bonds and assigns cLogP increments to every atom
+	 * based on its enhanced atom type.
+	 * @param mol
+	 * @param increment not smaller than non-H atom count of mol
+	 * @return
+	 */
+	public void getCLogPIncrements(StereoMolecule mol, float[] increment) {
+		mol.normalizeAmbiguousBonds();
+		mol.ensureHelperArrays(Molecule.cHelperRings);
+
+		for (int atom=0; atom<mol.getAtoms(); atom++) {
+			try {
+				int index = sSortedTypeList.getIndex(AtomTypeCalculator.getAtomType(mol, atom, ATOM_TYPE_MODE));
+				if (index != -1)
+					increment[atom] = INCREMENT[index];
+			}
+			catch (Exception e) {}	// unsupported atom type exceptions are tolerable
+		}
+	}
 
 	public ParameterizedStringList getDetail(StereoMolecule mol) {
 		ParameterizedStringList detail = new ParameterizedStringList();
