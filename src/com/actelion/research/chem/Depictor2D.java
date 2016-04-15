@@ -153,7 +153,8 @@ public class Depictor2D extends AbstractDepictor {
 						return;
 						}
 					}
-				Font newFont = new Font("Helvetica", 0, (int) theSize);
+				Font newFont = ((Graphics)mG).getFont().deriveFont(0, theSize);
+//				Font newFont = new Font("Helvetica", 0, (int) theSize);
 				mFonts.add(newFont);
 				((Graphics2D) mG).setFont(newFont);
 				}

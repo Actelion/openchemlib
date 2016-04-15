@@ -611,6 +611,13 @@ public class IDCodeParser {
 				for (int i=0; i<no; i++)
 					aromaticSPBond[i] = decodeBits(bbits);
 				break;
+			case 27:	//	datatype 'part of an exclude group'
+				no = decodeBits(abits);
+				for (int i=0; i<no; i++) {
+					int atom = decodeBits(abits);
+					mMol.setAtomQueryFeature(atom, Molecule.cAtomQFExcludeGroup, true);
+					}
+				break;
 				}
 			}
 
@@ -1307,6 +1314,13 @@ public class IDCodeParser {
 				no = decodeBits(bbits);
 				for (int i=0; i<no; i++)
 					System.out.print(" "+decodeBits(bbits));
+				break;
+			case 27:	//	datatype 'part of an exclude group'
+				no = decodeBits(abits);
+				System.out.print("AtomQFExcludeGroup:");
+				for (int i=0; i<no; i++)
+					System.out.print(" "+decodeBits(abits)+":true");
+				System.out.println();
 				break;
 				}
 			}

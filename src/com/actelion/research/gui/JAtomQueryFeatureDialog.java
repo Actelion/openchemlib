@@ -52,7 +52,7 @@ public class JAtomQueryFeatureDialog extends JDialog
 	private Frame               mParentFrame;
     private ExtendedMolecule	mMol;
 	private int					mAtom;
-	private JCheckBox			mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo;
+	private JCheckBox			mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo,mCBExcludeGroup;
 	private JComboBox			mChoiceArom,mChoiceRingState,mChoiceRingSize,mChoiceCharge,
 	                            mChoiceNeighbours,mChoiceHydrogen,mChoicePi;
 	private JTextField			mTFAtomList;
@@ -80,6 +80,7 @@ public class JAtomQueryFeatureDialog extends JDialog
                              4, TableLayout.PREFERRED,
                             12, TableLayout.PREFERRED,
                              0, TableLayout.PREFERRED,
+							 4, TableLayout.PREFERRED,
                              4, TableLayout.PREFERRED} };
         p1.setLayout(new TableLayout(size));
 		
@@ -178,7 +179,11 @@ public class JAtomQueryFeatureDialog extends JDialog
 		mCBMatchStereo.setOpaque(opaque);
 		p1.add(mCBMatchStereo, "1,23,3,23");
 
-        JPanel buttonpanel = new JPanel();
+		mCBExcludeGroup = new JCheckBox("is part of exclude group");
+		mCBExcludeGroup.setOpaque(opaque);
+		p1.add(mCBExcludeGroup, "1,25,3,25");
+
+		JPanel buttonpanel = new JPanel();
         buttonpanel.setBorder(BorderFactory.createEmptyBorder(12, 8, 8, 8));
         buttonpanel.setLayout(new BorderLayout());
         JPanel ibp = new JPanel();
@@ -245,7 +250,7 @@ public class JAtomQueryFeatureDialog extends JDialog
 		else
 			mLabelAtomList.setText("allowed atoms:");
 
-		mTFAtomList.setText(mMol.getAtomListString(mAtom));
+		mTFAtomList.setText(mMol.getAtomList(mAtom) == null ? "" : mMol.getAtomListString(mAtom));
 
 		if ((queryFeatures & Molecule.cAtomQFAromatic) != 0)
 			mChoiceArom.setSelectedIndex(1);
@@ -364,6 +369,9 @@ public class JAtomQueryFeatureDialog extends JDialog
 
 		if ((queryFeatures & Molecule.cAtomQFMatchStereo) != 0)
 			mCBMatchStereo.setSelected(true);
+
+		if ((queryFeatures & Molecule.cAtomQFExcludeGroup) != 0)
+			mCBExcludeGroup.setSelected(true);
 		}
 
 
@@ -554,6 +562,9 @@ public class JAtomQueryFeatureDialog extends JDialog
 
 		if (mCBMatchStereo.isSelected())
 			queryFeatures |= Molecule.cAtomQFMatchStereo;
+
+		if (mCBExcludeGroup.isSelected())
+			queryFeatures |= Molecule.cAtomQFExcludeGroup;
 
 		mMol.setAtomQueryFeature(atom, 0xFFFFFFFF, false);
 		mMol.setAtomQueryFeature(atom, queryFeatures, true);

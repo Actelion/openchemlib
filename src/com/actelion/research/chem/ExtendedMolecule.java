@@ -105,6 +105,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			ensureHelperArrays(cHelperRings);
 
 		destMol.mAtomList = null;
+		if (mIsFragment)
+			destMol.setFragment(true);
 
 		int atomCount = includeAtom.length;
 
@@ -165,6 +167,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			ensureHelperArrays(cHelperRings);
 
 		destMol.mAtomList = null;
+		if (mIsFragment)
+			destMol.setFragment(true);
 
 		if (atomMap == null)
 			atomMap = new int[mAllAtoms];
@@ -399,6 +403,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The sum of bond orders of explicitly connected neighbour atoms including explicit hydrogen.
+	 * The occupied valence includes bonds to atoms with set cAtomQFExcludeGroup flags.
 	 * @param atom
 	 * @return explicitly used valence
 	 */
@@ -411,6 +416,23 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		return valence;
 		}
+
+
+	/**
+	 * The sum of bond orders of explicitly connected neighbour atoms with the cAtomQFExcludeGroup flag set to true.
+	 * @param atom
+	 * @return occupied valence caused by exclude group atoms
+	 */
+	public int getExcludeGroupValence(int atom) {
+		ensureHelperArrays(cHelperNeighbours);
+
+		int valence = 0;
+		for (int i=0; i<mAllConnAtoms[atom]; i++)
+			if (mIsFragment && (mAtomQueryFeatures[mConnAtom[atom][i]] & cAtomQFExcludeGroup) != 0)
+				valence += mConnBondOrder[atom][i];
+
+		return valence;
+	}
 
 
 	/**

@@ -38,7 +38,7 @@ import java.awt.Color;
 public class ColorHelper {
 	private static final float[] PERCEIVED_BRIGHTNESS = { 0.299f, 0.587f, 0.114f };
 	// the desired perceived brightness difference between foreground color and background
-	private static final float MIN_CONTRAST_TO_BACKGROUND = 0.25f;
+	private static final float MIN_CONTRAST_TO_BACKGROUND = 0.30f;
 
 	/**
 	 * Creates an intermediate color between color c1 and color c2

@@ -173,7 +173,7 @@ public class ExtendedDepictor {
         if (mFragmentNoColor != null && mMolecule != null) {
         	float averageBondLength = calculateAverageBondLength();
             g.setColor(mFragmentNoColor);
-            g.setFont(new Font("Helvetica",Font.BOLD, (int)(1.6*averageBondLength)));
+            g.setFont(g.getFont().deriveFont(Font.BOLD, (int)(1.6*averageBondLength)));
             for (int i=0; i<mMolecule.length; i++) {
                 if (mMolecule[i].getAllAtoms() != 0) {
                     Point cog = new Point();

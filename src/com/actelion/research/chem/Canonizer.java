@@ -2909,6 +2909,9 @@ System.out.println();
 					encodeBits(bond, nbits);
 			}
 
+		if (mMol.isFragment())	// 27 = datatype 'part of an exclude-group'
+			isSecondFeatureBlock |= addAtomQueryFeatures(27, isSecondFeatureBlock, nbits, Molecule.cAtomQFExcludeGroup, 1, -1);
+
 		encodeBits(0, 1);
 		mIDCode = encodeBitsEnd();
 		}

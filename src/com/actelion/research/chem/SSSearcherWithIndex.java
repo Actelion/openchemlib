@@ -709,6 +709,15 @@ public class SSSearcherWithIndex {
 		}
 
 
+	/**
+	 * If the match count mode is one of cCountModeFirstMatch, cCountModeOverlapping,
+	 * cCountModeRigorous then this method returns an arraylist of all counted matches,
+	 * i.e. int arrays mapping fragment atoms to molecule atoms. Atoms being part of a
+	 * matched bridge bond are naturally not covered by the mapping.<br>
+	 * Note: If some query fragment atoms are marked as exclude group, then the respective
+	 * matchlist values are -1.
+	 * @return list of distinct counted matches.
+	 */
 	public ArrayList<int[]> getMatchList() {
 		return mSSSearcher.getMatchList();
 		}
@@ -716,6 +725,7 @@ public class SSSearcherWithIndex {
 
 	public int[] createIndex(StereoMolecule mol) {
 		int[] index = new int[(cKeyIDCode.length+31)/32];
+		mol = removeExcludeGroups(mol);
 		mSSSearcher.setMolecule(mol);
 		for (int i=0; i<cKeyIDCode.length; i++) {
 			mSSSearcher.setFragment(sKeyFragment[i]);
@@ -727,7 +737,23 @@ public class SSSearcherWithIndex {
 		}
 
 
-    public static float getSimilarityTanimoto(int[] index1, int[] index2) {
+	private StereoMolecule removeExcludeGroups(StereoMolecule mol) {
+		if (mol.isFragment()) {
+			for (int atom=0; atom<mol.getAllAtoms(); atom++) {
+				if ((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0) {
+					mol = new StereoMolecule(mol);
+					for (int i=atom; i<mol.getAllAtoms(); i++)
+						if ((mol.getAtomQueryFeatures(i) & Molecule.cAtomQFExcludeGroup) != 0)
+							mol.markAtomForDeletion(i);
+					mol.deleteMarkedAtomsAndBonds();
+					}
+				}
+			}
+		return mol;
+		}
+
+
+	public static float getSimilarityTanimoto(int[] index1, int[] index2) {
         int sharedKeys = 0;
         int allKeys = 0;
         for (int i=0; i<index1.length; i++) {

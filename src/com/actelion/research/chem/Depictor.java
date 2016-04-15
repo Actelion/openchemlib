@@ -127,7 +127,8 @@ public class Depictor extends AbstractDepictor {
                         return;
                     }
                 }
-                Font newFont = new Font("Helvetica", 0, mpTextSize);
+				Font newFont = ((Graphics)mG).getFont().deriveFont(0, mpTextSize);
+//                Font newFont = new Font("Helvetica", 0, mpTextSize);
                 mFonts.add(newFont);
                 currentFont = newFont;
                 ((Graphics) mG).setFont(newFont);
