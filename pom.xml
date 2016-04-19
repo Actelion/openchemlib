@@ -17,6 +17,23 @@
         <name>Actelion Pharmaceuticals Ltd., Gewerbestrasse 16, CH-4123 Allschwil, Switzerland</name>
         <url>http://www.actelion.com</url>
     </organization>
+    <developers>
+        <developer>
+            <name>Thomas Sander</name>
+            <email>thomas.sander@actelion.com</email>
+            <organization>Actelion Pharmaceuticals Ltd.</organization>
+        </developer>
+        <developer>
+            <name>Christian Rufener</name>
+            <email>christian.rufener@actelion.com</email>
+            <organization>Actelion Pharmaceuticals Ltd.</organization>
+        </developer>
+        <developer>
+            <name>Roman Bär</name>
+            <email>roman.baer@actelion.com</email>
+            <organization>Actelion Pharmaceuticals Ltd.</organization>
+        </developer>
+    </developers>
 
     <licenses>
         <license>
