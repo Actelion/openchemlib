@@ -128,7 +128,21 @@ public class ArrayUtils {
 		}
 		return res;
 	}
-	
+
+	public final static float max(float [] array) {
+
+		if(array.length==0)
+			return 0;
+
+		float res = array[0];
+
+		for(int i=1; i<array.length; i++) {
+			res = Math.max(res, array[i]);
+		}
+
+		return res;
+	}
+
 	public final static String toString(int[] v) {
 		String res = "[";
 		for(int i=0; i<v.length; i++) {
