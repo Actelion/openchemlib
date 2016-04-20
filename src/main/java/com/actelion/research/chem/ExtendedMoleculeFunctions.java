@@ -724,6 +724,52 @@ public class ExtendedMoleculeFunctions {
 		return dist;
 	}
 
+	public final static int [][] getTopologicalDistanceMatrix(StereoMolecule mol) {
+
+		return getNumberOfBondsBetweenAtoms(mol, mol.getBonds(), null);
+
+	}
+
+	/**
+	 * From Joel Freyss developed for the FFMolecule
+	 * Computes a matrix of distances between all the atoms in the graph.
+	 * Complexity: O(m*n*maxBonds) m = number of bonds, n = number of atoms
+	 * @param mol
+	 * @param maxBonds
+	 * @return an array A[i][j] = nBonds if i and j are connected by less than maxBonds
+	 * 						      or -1  otherwise
+	 */
+	public static int[][] getNumberOfBondsBetweenAtoms(StereoMolecule mol, int maxBonds, int[][] dist) {
+		//Initialization of the data
+		if(dist==null)  dist = new int[mol.getAtoms()][mol.getAtoms()];
+		int N = dist.length;
+		for(int i=0; i<N; i++) {
+			dist[i][i] = 0;
+			for(int j=i+1; j<N; j++) {
+				dist[i][j] = dist[j][i] = -1;
+			}
+		}
+
+		//Algo: Dynamic Programming
+		for(int j=0; j<maxBonds; j++) { //Maximum of nBonds bonds
+			for(int i=0; i<mol.getBonds(); i++) {
+				int a1 = mol.getBondAtom(0, i);
+				int a2 = mol.getBondAtom(1, i);
+				if(a1>=N || a2>=N) continue;
+				for(int a0=0; a0<N; a0++) {
+					// Dynamic Programming: dist(a0,a2) = min(dist(a0, a2), dist(a0,a1)+1) [if dist(a0,a1)>0]
+					if(dist[a0][a1]>=0 && (dist[a0][a2]==-1 || dist[a0][a1]+1<dist[a0][a2]) && dist[a0][a1]<maxBonds) {
+						dist[a2][a0] = (dist[a0][a2] = (dist[a0][a1] + 1));
+					}
+					if(dist[a0][a2]>=0 && (dist[a0][a1]==-1 || dist[a0][a2]+1<dist[a0][a1]) && dist[a0][a2]<maxBonds) {
+						dist[a1][a0] = (dist[a0][a1] = (dist[a0][a2] + 1));
+					}
+				}
+			}
+		}
+		return dist;
+	}
+
 	/**
 	 *
 	 * @param mol
