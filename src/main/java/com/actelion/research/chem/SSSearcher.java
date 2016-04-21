@@ -400,7 +400,7 @@ System.out.println();
 	 * @return count of sub-structure matches of fragment in molecule
 	 */
 	public int findFragmentInMolecule(int countMode, int matchMode, final boolean[] atomExcluded) {
-		mMatchList.clear();
+		mMatchList = new ArrayList<int[]>();
 		mSortedMatchSet.clear();
 		mExcludedMatchSet.clear();
 
