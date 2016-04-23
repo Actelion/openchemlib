@@ -57,21 +57,23 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 		mBond = bond;
 
 		JPanel p1 = new JPanel();
-        double[][] size = { {8, TableLayout.PREFERRED, 16, TableLayout.FILL, TableLayout.PREFERRED, TableLayout.PREFERRED, 8},
-                            {8, TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 4} };
+        double[][] size = { {8, TableLayout.FILL, TableLayout.PREFERRED, TableLayout.PREFERRED, 8},
+                            {8, TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.PREFERRED, 8,
+								TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 16,
+								TableLayout.PREFERRED, 4, TableLayout.PREFERRED, 4, TableLayout.PREFERRED, 16} };
         p1.setLayout(new TableLayout(size));
 
 		mCBSingle = new JCheckBox("Single");
-		p1.add(mCBSingle,"1,1");
+		p1.add(mCBSingle,"1,1,3,1");
 
 		mCBDouble = new JCheckBox("Double");
-		p1.add(mCBDouble,"1,2");
+		p1.add(mCBDouble,"1,2,3,2");
 
 		mCBTriple = new JCheckBox("Triple");
-		p1.add(mCBTriple,"1,3");
+		p1.add(mCBTriple,"1,3,3,3");
 
 		mCBDelocalized = new JCheckBox("Delocalized");
-		p1.add(mCBDelocalized,"1,4");
+		p1.add(mCBDelocalized,"1,4,3,4");
 
 		mComboBoxRing = new JComboBox();
 		mComboBoxRing.addItem("any ring state");
@@ -79,37 +81,38 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 		mComboBoxRing.addItem("is any ring bond");
 		mComboBoxRing.addItem("is non-aromatic ring bond");
 		mComboBoxRing.addItem("is aromatic bond");
-		p1.add(mComboBoxRing,"1,6");
+		mComboBoxRing.addActionListener(this);
+		p1.add(mComboBoxRing,"1,6,3,6");
 
-        mCBIsBridge = new JCheckBox("Is atom bridge between");
+		mComboBoxRingSize = new JComboBox();
+		mComboBoxRingSize.addItem("any ring size");
+		mComboBoxRingSize.addItem("is in 3-membered ring");
+		mComboBoxRingSize.addItem("is in 4-membered ring");
+		mComboBoxRingSize.addItem("is in 5-membered ring");
+		mComboBoxRingSize.addItem("is in 6-membered ring");
+		mComboBoxRingSize.addItem("is in 7-membered ring");
+		p1.add(mComboBoxRingSize, "1,8,3,8");
+
+		mCBMatchStereo = new JCheckBox("Match Stereo Configuration", (mol.getBondQueryFeatures(bond) & Molecule.cBondQFMatchStereo) != 0);
+		mCBMatchStereo.addActionListener(this);
+		p1.add(mCBMatchStereo, "1,10,3,10");
+
+		mCBIsBridge = new JCheckBox("Is atom bridge between");
         mCBIsBridge.addActionListener(this);
-        p1.add(mCBIsBridge,"3,1,5,1");
+        p1.add(mCBIsBridge,"1,12,3,12");
 
         mComboBoxMinAtoms = new JComboBox();
         int itemCount = (1 << Molecule.cBondQFBridgeMinBits);
         for (int i=0; i<itemCount; i++)
             mComboBoxMinAtoms.addItem(""+i);
-        p1.add(mComboBoxMinAtoms,"4,2");
-        p1.add(new JLabel(" and"),"5,2");
+        p1.add(mComboBoxMinAtoms,"2,14");
+        p1.add(new JLabel(" and"),"3,14");
         mComboBoxMinAtoms.addActionListener(this);
 
         mComboBoxMaxAtoms = new JComboBox();
         populateComboBoxMaxAtoms(0);
-        p1.add(mComboBoxMaxAtoms,"4,3");
-        p1.add(new JLabel(" atoms"),"5,3");
-
-        mComboBoxRingSize = new JComboBox();
-        mComboBoxRingSize.addItem("any ring size");
-        mComboBoxRingSize.addItem("is in 3-membered ring");
-        mComboBoxRingSize.addItem("is in 4-membered ring");
-        mComboBoxRingSize.addItem("is in 5-membered ring");
-        mComboBoxRingSize.addItem("is in 6-membered ring");
-        mComboBoxRingSize.addItem("is in 7-membered ring");
-		p1.add(mComboBoxRingSize, "3,6,5,6");
-
-		mCBMatchStereo = new JCheckBox("Match Stereo Configuration", (mol.getBondQueryFeatures(bond) & Molecule.cBondQFMatchStereo) != 0);
-		mCBMatchStereo.addActionListener(this);
-		p1.add(mCBMatchStereo, "1,8,5,8");
+        p1.add(mComboBoxMaxAtoms,"2,16");
+        p1.add(new JLabel(" atoms"),"3,16");
 
 		JPanel bp = new JPanel();
         bp.setBorder(BorderFactory.createEmptyBorder(12, 8, 8, 8));
@@ -138,7 +141,8 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 
 
 	public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == mCBIsBridge) {
+        if (e.getSource() == mCBIsBridge
+		 || e.getSource() == mComboBoxRing) {
             enableItems();
             return;
             }
@@ -230,7 +234,7 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
         						&& mMol.getBondParity(mBond) != Molecule.cBondParityNone
         						&& mMol.getBondParity(mBond) != Molecule.cBondParityUnknown);
         mComboBoxRing.setEnabled(!bridgeIsSelected);
-        mComboBoxRingSize.setEnabled(!bridgeIsSelected);
+        mComboBoxRingSize.setEnabled(!bridgeIsSelected && mComboBoxRing.getSelectedIndex() != 1);
         mComboBoxMinAtoms.setEnabled(bridgeIsSelected);
         mComboBoxMaxAtoms.setEnabled(bridgeIsSelected);
         }
