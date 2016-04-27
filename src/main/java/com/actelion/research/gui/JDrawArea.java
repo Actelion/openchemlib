@@ -39,6 +39,8 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionArrow;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
+import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.gui.hidpi.ScaledEditorKit;
 import com.actelion.research.util.ColorHelper;
 import com.actelion.research.util.CursorHelper;
 
@@ -1158,7 +1160,7 @@ public class JDrawArea extends JPanel
 	{
 		if (mHelpDialog == null || !mHelpDialog.isVisible()) {
 			JEditorPane helpPane = new JEditorPane();
-			helpPane.setEditorKit(new HTMLEditorKit());
+			helpPane.setEditorKit(HiDPIHelper.getUIScaleFactor() == 1f ? new HTMLEditorKit() : new ScaledEditorKit());
 			helpPane.setEditable(false);
 			try {
 				helpPane.setPage(getClass().getResource("/html/editor/editor.html"));
@@ -1176,7 +1178,7 @@ public class JDrawArea extends JPanel
 				mHelpDialog = new JDialog((Dialog) c, "Actelion Structure Editor Help", false);
 			}
 
-			mHelpDialog.setSize(520, 440);
+			mHelpDialog.setSize(HiDPIHelper.scale(520), HiDPIHelper.scale(440));
 			mHelpDialog.getContentPane().add(new JScrollPane(helpPane,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
@@ -2933,8 +2935,7 @@ public class JDrawArea extends JPanel
 			mMol.setStereoBondsFromParity();
 		}
 
-		depictor.updateCoords(g, new Rectangle2D.Float(0, 0, getWidth(), getHeight()),
-			AbstractDepictor.cModeInflateToMaxAVBL);
+		depictor.updateCoords(g, new Rectangle2D.Float(0, 0, getWidth(), getHeight()), maxUpdateMode());
 	}
 
 	private void cleanupMultiFragmentCoordinates(Graphics g, ExtendedDepictor depictor, boolean selectedOnly)
@@ -2989,8 +2990,7 @@ public class JDrawArea extends JPanel
 			rawX += spacing + boundingRect[fragment].width;
 		}
 
-		depictor.updateCoords(g, new Rectangle2D.Float(0, 0, getWidth(), getHeight()),
-			AbstractDepictor.cModeInflateToMaxAVBL);
+		depictor.updateCoords(g, new Rectangle2D.Float(0, 0, getWidth(), getHeight()), maxUpdateMode());
 
 		int[] fragmentAtom = new int[mFragment.length];
 		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
@@ -3318,6 +3318,9 @@ public class JDrawArea extends JPanel
 			}
 		}*/
 
+	private int maxUpdateMode() {
+		return AbstractDepictor.cModeInflateToMaxAVBL + HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
+	}
 
 	private Point2D calculateCenterOfGravity()
 	{
