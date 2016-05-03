@@ -373,6 +373,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
+	/**
+	 * Calculates and returns the mean bond length of all bonds including or not
+	 * including hydrogen bonds.
+	 * If there are no bonds, then the average distance between unconnected atoms is
+	 * returned. If we have less than 2 atoms, cDefaultAverageBondLength is returned.
+	 * @param nonHydrogenBondsOnly
+	 * @return
+	 */
 	public float getAverageBondLength(boolean nonHydrogenBondsOnly) {
 		if (nonHydrogenBondsOnly) {
 			ensureHelperArrays(cHelperNeighbours);

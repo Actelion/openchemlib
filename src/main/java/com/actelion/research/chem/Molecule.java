@@ -259,7 +259,6 @@ public class Molecule implements Serializable {
 	public static final int cBondQFAromatic			= 0x00040000;
 	public static final int cBondQFNotAromatic		= 0x00080000;
 
-
 	public static final int cHelperNone = 0x0000;
 	public static final int cHelperBitNeighbours = 0x0001;
 	public static final int cHelperBitRings = 0x0002;
@@ -291,6 +290,8 @@ public class Molecule implements Serializable {
 	public static final int cChiralityUnknownEnantiomer = 0x050000;
 	public static final int cChiralityEpimers		   = 0x060000;
 	public static final int cChiralityDiastereomers	 = 0x070000; // this has added the number of diastereomers
+
+	public static final float cDefaultAverageBondLength = 24.0f;
 
 	public static final String cAtomLabel[] = { "?",
 		"H"  ,"He" ,"Li" ,"Be" ,"B"  ,"C"  ,"N"  ,"O"  ,
@@ -392,8 +393,6 @@ public class Molecule implements Serializable {
 	transient private float mOriginalAngle[];
 	transient private float mOriginalDistance[];
 	transient private String mName;
-
-    private float defaultBondLength = 24.0f;
 
     public static int getAtomicNoFromLabel(String atomLabel) {
 		for (int i=1; i<cAtomLabel.length; i++)
@@ -1908,13 +1907,39 @@ public class Molecule implements Serializable {
 		}
 
 
+	/**
+	 * Calculates and returns the mean bond length. If the molecule has
+	 * no bonds, then the average distance between unconnected atoms is
+	 * returned. If is has less than 2 atoms, cDefaultAverageBondLength is returned.
+	 * @return
+	 */
 	public float getAverageBondLength() {
-		return getAverageBondLength(mAllAtoms, mAllBonds);
+		return getAverageBondLength(mAllAtoms, mAllBonds, cDefaultAverageBondLength);
 		}
 
 
-
+	/**
+	 * Calculates and returns the mean bond length of all bonds 0...bonds.
+	 * If there are no bonds, then the average distance between unconnected atoms is
+	 * returned. If we have less than 2 atoms, cDefaultAverageBondLength is returned.
+	 * @param atoms atom indexes >= this are not considered
+	 * @param bonds bond indexes >= this are not considered
+	 * @return
+	 */
 	public float getAverageBondLength(int atoms, int bonds) {
+		return getAverageBondLength(atoms, bonds, cDefaultAverageBondLength);
+		}
+
+
+	/**
+	 * Calculates and returns the mean bond length of all bonds 0...bonds.
+	 * If there are no bonds, then the average distance between unconnected atoms is
+	 * returned. If we have less than 2 atoms, defaultBondLength is returned.
+	 * @param atoms atom indexes >= this are not considered
+	 * @param bonds bond indexes >= this are not considered
+	 * @return
+	 */
+	public float getAverageBondLength(int atoms, int bonds, float defaultBondLength) {
 		for (int bond=0; bond<bonds; bond++)
 			if ((mBondQueryFeatures[bond] & cBondQFBridge) != 0)
 				bonds--;
@@ -1922,12 +1947,12 @@ public class Molecule implements Serializable {
 		if (bonds == 0) {
 				// since this function is used to get an idea about the scale
 				// of the molecule return as approximation a mean atom distance
-			if (mAllAtoms < 2)
+			if (atoms < 2)
 				return defaultBondLength;
 
 			float sum = 0.0f;
 			int count = 0;
-			for (int atom1=1; atom1<mAllAtoms; atom1++) {
+			for (int atom1=1; atom1<atoms; atom1++) {
 				for (int atom2=0; atom2<atom1; atom2++) {
 					float dx = mAtomX[atom1] - mAtomX[atom2];
 					float dy = mAtomY[atom1] - mAtomY[atom2];
@@ -1936,7 +1961,7 @@ public class Molecule implements Serializable {
 					count++;
 					}
 				}
-			return Math.min(defaultBondLength, (float)Math.sqrt(mAllAtoms) * sum / (2f * count));
+			return Math.min(defaultBondLength, (float)Math.sqrt(atoms) * sum / (2f * count));
 			}
 
 		float avblSum = 0.0f;
@@ -2968,7 +2993,8 @@ public class Molecule implements Serializable {
 	 * have much in common, but in certain aspects behave differently. Thus, complete molecules
 	 * are considered to carry implicit hydrogens to fill unoccupied atom valences.
 	 * Sub-structure fragments on the other hand may carry atom or bond query features.
-	 * Depiction, sub-structure search, and other algorithms treat fragments and complete molecules differerently.
+	 * Depiction, sub-structure search, and other algorithms treat fragments and complete molecules
+	 * differently.
 	 * @param isFragment if false, then all query features are removed
 	 */
 	public void setFragment(boolean isFragment) {
@@ -3604,5 +3630,4 @@ public class Molecule implements Serializable {
 
 		mValidHelperArrays = cHelperNone;
 		}
-
-}
+	}

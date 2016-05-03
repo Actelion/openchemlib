@@ -45,16 +45,16 @@ public class JDrawPanel extends JPanel {
     
 	protected JDrawArea mArea;
 
-	public JDrawPanel(Frame parent, StereoMolecule mol) {
-		this(parent, mol, 0);
+	public JDrawPanel(StereoMolecule mol) {
+		this(mol, 0);
 	}
 
-	public JDrawPanel(Frame parent, StereoMolecule mol, boolean isReaction) {
-		this(parent, mol, JDrawArea.MODE_MULTIPLE_FRAGMENTS
+	public JDrawPanel(StereoMolecule mol, boolean isReaction) {
+		this(mol, JDrawArea.MODE_MULTIPLE_FRAGMENTS
 				| JDrawArea.MODE_REACTION);
 	}
 
-	public JDrawPanel(Frame parent, StereoMolecule mol, int mode) {
+	public JDrawPanel(StereoMolecule mol, int mode) {
 		setLayout(new BorderLayout());
 
 		mArea = new JDrawArea(mol, mode);
@@ -76,5 +76,3 @@ public class JDrawPanel extends JPanel {
 		mArea.toolChanged(1);
 	}
 }
-
-

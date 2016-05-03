@@ -48,6 +48,7 @@ public class ReactionEncoder
 	public static final int INCLUDE_COORDS = 2;
 	public static final int INCLUDE_DRAWING_OBJECTS = 4;
 	public static final int RETURN_RXN_CODE_ONLY = 0;
+	public static final int RETAIN_REACTANT_AND_PRODUCT_ORDER = 8;
 	public static final int RETURN_DEFAULT = INCLUDE_MAPPING | INCLUDE_COORDS;
 
 
@@ -66,8 +67,23 @@ public class ReactionEncoder
 	 *
 	 * @return String[4] with reaction code, coordinates, mapping, drawing objects
 	 */
-	public static String[] encode(Reaction reaction, boolean keepAbsoluteCoordinates)
-	{
+	public static String[] encode(Reaction reaction, boolean keepAbsoluteCoordinates) {
+		return encode(reaction, keepAbsoluteCoordinates, true);
+	}
+
+	/**
+	 * Creates a non-unique String containing a reaction code by
+	 * creating idcodes of every reactant and product and
+	 * concatenating them in original order.
+	 * If mapping information is available this will be encoded
+	 * in a 2nd string. Otherwise this will be null.
+	 * Coordinates, if available, will be encoded in a 3rd string.
+	 * If there are drawing objects assigned to this reaction
+	 * then these are encoded in a 4th string.
+	 *
+	 * @return String[4] with reaction code, coordinates, mapping, drawing objects
+	 */
+	private static String[] encode(Reaction reaction, boolean keepAbsoluteCoordinates, boolean sortByIDCode) {
 		if (reaction == null
 			|| reaction.getReactants() == 0
 			|| reaction.getProducts() == 0) {
@@ -89,17 +105,20 @@ public class ReactionEncoder
 			coords[i] = canonizer.getEncodedCoordinates(keepAbsoluteCoordinates);
 		}
 
-		StringBuffer idcodeSequence = new StringBuffer();
-		StringBuffer coordsSequence = new StringBuffer();
-		StringBuffer mappingSequence = new StringBuffer();
+		StringBuilder idcodeSequence = new StringBuilder();
+		StringBuilder coordsSequence = new StringBuilder();
+		StringBuilder mappingSequence = new StringBuilder();
 
 		for (int i = 0; i < reaction.getReactants(); i++) {
-			String maxString = "";
-			int maxIndex = -1;
-			for (int j = 0; j < reaction.getReactants(); j++) {
-				if (maxString.compareTo(idcode[j]) < 0) {
-					maxString = idcode[j];
-					maxIndex = j;
+			int index = i;
+			if (sortByIDCode) {
+				String maxString = "";
+				index = -1;
+				for (int j = 0; j < reaction.getReactants(); j++) {
+					if (maxString.compareTo(idcode[j]) < 0) {
+						maxString = idcode[j];
+						index = j;
+					}
 				}
 			}
 			if (i > 0) {
@@ -107,10 +126,10 @@ public class ReactionEncoder
 				mappingSequence.append(MOLECULE_DELIMITER);
 				coordsSequence.append(MOLECULE_DELIMITER);
 			}
-			idcodeSequence.append(idcode[maxIndex]);
-			mappingSequence.append(mapping[maxIndex]);
-			coordsSequence.append(coords[maxIndex]);
-			idcode[maxIndex] = "";
+			idcodeSequence.append(idcode[index]);
+			mappingSequence.append(mapping[index]);
+			coordsSequence.append(coords[index]);
+			idcode[index] = "";
 		}
 
 		idcodeSequence.append(PRODUCT_IDENTIFIER);
@@ -118,12 +137,15 @@ public class ReactionEncoder
 		coordsSequence.append(MOLECULE_DELIMITER);
 
 		for (int i = reaction.getReactants(); i < reaction.getMolecules(); i++) {
-			String maxString = "";
-			int maxIndex = -1;
-			for (int j = reaction.getReactants(); j < reaction.getMolecules(); j++) {
-				if (maxString.compareTo(idcode[j]) < 0) {
-					maxString = idcode[j];
-					maxIndex = j;
+			int index = i;
+			if (sortByIDCode) {
+				String maxString = "";
+				index = -1;
+				for (int j = reaction.getReactants(); j < reaction.getMolecules(); j++) {
+					if (maxString.compareTo(idcode[j]) < 0) {
+						maxString = idcode[j];
+						index = j;
+					}
 				}
 			}
 			if (i > reaction.getReactants()) {
@@ -131,10 +153,10 @@ public class ReactionEncoder
 				mappingSequence.append(MOLECULE_DELIMITER);
 				coordsSequence.append(MOLECULE_DELIMITER);
 			}
-			idcodeSequence.append(idcode[maxIndex]);
-			mappingSequence.append(mapping[maxIndex]);
-			coordsSequence.append(coords[maxIndex]);
-			idcode[maxIndex] = "";
+			idcodeSequence.append(idcode[index]);
+			mappingSequence.append(mapping[index]);
+			coordsSequence.append(coords[index]);
+			idcode[index] = "";
 		}
 
 		String[] result = new String[4];
@@ -155,51 +177,46 @@ public class ReactionEncoder
 	}
 
 	/**
-	 * Creates a String containing a unique reaction code by
-	 * creating idcodes of every reactant and product and
-	 * concatenating them in lexical order.
-	 * If mapping information is available this will be encoded
-	 * in a 2nd string.
+	 * Creates a String containing a reaction code by creating idcodes of every reactant and product and
+	 * concatenating them in original (if mode includes RETAIN_REACTANT_AND_PRODUCT_ORDER) or in
+	 * lexical order. In the latter case this string is a canonical reaction encoding.
+	 * If mapping information is available this will be encoded in a 2nd string.
 	 * Coordinates, if available, will be encoded in a 3rd string.
-	 * If there are drawing objects assigned to this reaction
-	 * then these are encoded in a 4th string.
+	 * If there are drawing objects assigned to this reaction then these are encoded in a 4th string.
 	 *
-	 * @return One String with reaction code, coordinates, mapping, drawing objects
-	 * as defined by whatToReturn.
+	 * @return One String with reaction code, coordinates, mapping, drawing objects as defined by mode.
 	 */
-	public static String encode(Reaction reaction, boolean keepAbsoluteCoordinates,
-								int whatToReturn)
-	{
-		String[] result = encode(reaction, keepAbsoluteCoordinates);
+	public static String encode(Reaction reaction, boolean keepAbsoluteCoordinates, int mode) {
+		String[] result = encode(reaction, keepAbsoluteCoordinates, (mode & RETAIN_REACTANT_AND_PRODUCT_ORDER) == 0);
 		if (result == null) {
 			return null;
 		}
 
 		StringBuffer buf = new StringBuffer(result[0]);
 //		System.out.println("Buffer: 1:" + buf);
-		if (whatToReturn != 0) {
+		if (mode != 0) {
 			buf.append(OBJECT_DELIMITER);
-			if ((whatToReturn & INCLUDE_MAPPING) != 0
+			if ((mode & INCLUDE_MAPPING) != 0
 				&& result.length > 1
 				&& result[1] != null) {
 				buf.append(result[1]);
 			}
 		}
 //		System.out.println("Buffer: 2:" + buf);
-		whatToReturn &= ~INCLUDE_MAPPING;
-		if (whatToReturn != 0) {
+		mode &= ~INCLUDE_MAPPING;
+		if (mode != 0) {
 			buf.append(OBJECT_DELIMITER);
-			if ((whatToReturn & INCLUDE_COORDS) != 0
+			if ((mode & INCLUDE_COORDS) != 0
 				&& result.length > 2
 				&& result[2] != null) {
 				buf.append(result[2]);
 			}
 		}
 //		System.out.println("Buffer: 3:" + buf);
-		whatToReturn &= ~INCLUDE_COORDS;
-		if (whatToReturn != 0) {
+		mode &= ~INCLUDE_COORDS;
+		if (mode != 0) {
 			buf.append(OBJECT_DELIMITER);
-			if ((whatToReturn & INCLUDE_DRAWING_OBJECTS) != 0
+			if ((mode & INCLUDE_DRAWING_OBJECTS) != 0
 				&& result.length > 3
 				&& result[3] != null) {
 				buf.append(result[3]);
@@ -222,8 +239,7 @@ public class ReactionEncoder
 	 * @return Reaction
 	 */
 	public static Reaction decode(String rxnCode, String rxnMapping, String rxnCoords,
-								  String rxnObjects, boolean ensureCoordinates)
-	{
+								  String rxnObjects, boolean ensureCoordinates) {
 		if (rxnCode == null || rxnCode.length() == 0) {
 			return null;
 		}
@@ -320,8 +336,10 @@ public class ReactionEncoder
 	 *
 	 * @return Reaction
 	 */
-	public static Reaction decode(String s, boolean ensureCoordinates)
-	{
+	public static Reaction decode(String s, boolean ensureCoordinates) {
+		if (s == null)
+			return null;
+
 		String rxnCode = s;
 		String rxnMapping = null;
 		String rxnCoords = null;
@@ -350,8 +368,10 @@ public class ReactionEncoder
 	}
 
 
-	public static Reaction decode(String s, int type)
-	{
+	public static Reaction decode(String s, int type) {
+		if (s == null)
+			return null;
+
 		String rxnCode = s;
 		String rxnMapping = null;
 		String rxnCoords = null;

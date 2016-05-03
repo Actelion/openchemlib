@@ -2716,7 +2716,7 @@ public class JDrawArea extends JPanel
 	 */
 	public Reaction getReaction()
 	{
-		if ((mMode & MODE_REACTION) == 0) {
+		if ((mMode & MODE_REACTION) == 0 || mFragment == null) {
 			return null;
 		}
 

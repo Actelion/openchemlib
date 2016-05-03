@@ -3227,10 +3227,12 @@ System.out.println();
 			}
 
 		if (keepAbsoluteValues) {
-			encodeBits(encodeABVL(mMol.getAverageBondLength(true), binCount), resolutionBits);
+			float avblDefault = mZCoordinatesAvailable ? 1.5f : Molecule.cDefaultAverageBondLength;
+			float avbl = mMol.getAverageBondLength(mMol.getAtoms(), mMol.getBonds(), avblDefault);
+			encodeBits(encodeABVL(avbl, binCount), resolutionBits);
 
-			encodeBits(encodeShift(mMol.getAtomX(mGraphAtom[0]), binCount), resolutionBits);
-			encodeBits(encodeShift(mMol.getAtomY(mGraphAtom[0]), binCount), resolutionBits);
+			encodeBits(encodeShift(mMol.getAtomX(mGraphAtom[0]) / avbl, binCount), resolutionBits);
+			encodeBits(encodeShift(mMol.getAtomY(mGraphAtom[0]) / avbl, binCount), resolutionBits);
 
 			if (mZCoordinatesAvailable)
 				encodeBits(encodeShift(mMol.getAtomZ(mGraphAtom[0]), binCount), resolutionBits);
@@ -3297,8 +3299,8 @@ System.out.println();
 		int halfBinCount = binCount / 2;
 		boolean isNegative =  (value < 0);
 		value = Math.abs(value);
-		float steepness = (float)binCount/100f;
-		int intValue = (int)(0.5 + value * (halfBinCount-1) / (value + steepness));
+		float steepness = (float)binCount/32f;
+		int intValue = Math.min(halfBinCount-1, Math.round(value * halfBinCount / (value + steepness)));
 		return isNegative ? halfBinCount + intValue : intValue;
 		}
 

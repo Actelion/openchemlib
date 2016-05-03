@@ -545,6 +545,7 @@ public abstract class AbstractDepictor {
 				}
 			else if (!explicitAtomColors
 				  && ((mDisplayMode & cDModeNoImplicitAtomLabelColors) == 0)
+				  && mMol.getAtomList(i) == null
 				  && mMol.getAtomicNo(i) < ATOM_LABEL_COLOR.length) {
 				setRGBColor(getContrastColor(ATOM_LABEL_COLOR[mMol.getAtomicNo(i)]));
 	    		mpDrawAtom(i, true);
