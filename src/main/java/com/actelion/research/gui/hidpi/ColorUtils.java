@@ -1,4 +1,4 @@
-package com.actelion.research.datawarrior.action;
+package com.actelion.research.gui.hidpi;
 
 import java.awt.Color;
 

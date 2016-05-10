@@ -398,7 +398,7 @@ public class StereoMolecule extends ExtendedMolecule {
 			if ((getAtomParity(atom) == Molecule.cAtomParity1
 			  || getAtomParity(atom) == Molecule.cAtomParity2)
 			 && getAtomPi(atom) == 0) {
-				float[] angle = new float[getConnAtoms(atom)];
+				double[] angle = new double[getConnAtoms(atom)];
 				for (int i=0; i<getConnAtoms(atom); i++)
 					angle[i] = getBondAngle(atom, getConnAtom(atom, i));
 				for (int i=1; i<getConnAtoms(atom); i++)

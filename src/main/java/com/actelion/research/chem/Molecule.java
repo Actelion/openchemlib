@@ -291,7 +291,7 @@ public class Molecule implements Serializable {
 	public static final int cChiralityEpimers		   = 0x060000;
 	public static final int cChiralityDiastereomers	 = 0x070000; // this has added the number of diastereomers
 
-	public static final float cDefaultAverageBondLength = 24.0f;
+	public static final double cDefaultAverageBondLength = 24.0;
 
 	public static final String cAtomLabel[] = { "?",
 		"H"  ,"He" ,"Li" ,"Be" ,"B"  ,"C"  ,"N"  ,"O"  ,
@@ -379,9 +379,7 @@ public class Molecule implements Serializable {
 	transient protected int mBondType[];
 	transient protected int mBondFlags[];
 	transient protected int mBondQueryFeatures[];
-	transient protected float mAtomX[];
-	transient protected float mAtomY[];
-	transient protected float mAtomZ[];
+	transient protected Coordinates[] mCoordinates;
 	transient protected boolean mIsFragment;
 	transient protected boolean mIsRacemate;	 	// to indicate a molfileV2's chiral flat to be 0
 	transient protected boolean mProtectHydrogen;  	// protects hydrogens atoms from being converted to query features
@@ -389,9 +387,9 @@ public class Molecule implements Serializable {
 	transient protected int[][] mAtomList;
 	transient protected byte[][] mAtomCustomLabel;
 
-	transient private float mZoomRotationX,mZoomRotationY;
-	transient private float mOriginalAngle[];
-	transient private float mOriginalDistance[];
+	transient private double mZoomRotationX,mZoomRotationY;
+	transient private double mOriginalAngle[];
+	transient private double mOriginalDistance[];
 	transient private String mName;
 
     public static int getAtomicNoFromLabel(String atomLabel) {
@@ -402,13 +400,13 @@ public class Molecule implements Serializable {
 		}
 
 
-	public static float getAngle(float x1, float y1, float x2, float y2) {
-		float angle;
-		float xdiff = x2 - x1;
-		float ydiff = y2 - y1;
+	public static double getAngle(double x1, double y1, double x2, double y2) {
+		double angle;
+		double xdiff = x2 - x1;
+		double ydiff = y2 - y1;
 
 		if (ydiff != 0) {
-			angle = (float)Math.atan(xdiff/ydiff);
+			angle = Math.atan(xdiff/ydiff);
 			if (ydiff < 0) {
 				if (xdiff < 0)
 					angle -= Math.PI;
@@ -417,14 +415,14 @@ public class Molecule implements Serializable {
 				}
 			}
 		else
-			angle = (xdiff > 0f) ? (float)Math.PI/2 : -(float)Math.PI/2;
+			angle = (xdiff > 0f) ? Math.PI/2 : -Math.PI/2;
 
 		return angle;
 		}
 
 
-	public static float getAngleDif(float angle1, float angle2) {
-		float angleDif = angle1 - angle2;
+	public static double getAngleDif(double angle1, double angle2) {
+		double angleDif = angle1 - angle2;
 		while (angleDif < -Math.PI)
 			angleDif += 2 * Math.PI;
 		while (angleDif > Math.PI)
@@ -451,9 +449,9 @@ public class Molecule implements Serializable {
 		mAtomicNo = new int[mMaxAtoms];
 		mAtomCharge = new int[mMaxAtoms];
 		mAtomMapNo = new int[mMaxAtoms];
-		mAtomX = new float[mMaxAtoms];
-		mAtomY = new float[mMaxAtoms];
-		mAtomZ = new float[mMaxAtoms];
+		mCoordinates = new Coordinates[mMaxAtoms];
+		for (int i=0; i<mMaxAtoms; i++)
+			mCoordinates[i] = new Coordinates();
 		mAtomMass = new int[mMaxAtoms];
 		mAtomFlags = new int[mMaxAtoms];
 		mAtomQueryFeatures = new int[mMaxAtoms];
@@ -472,7 +470,7 @@ public class Molecule implements Serializable {
 	 * @param y
 	 * @return
 	 */
-	public int addAtom(float x, float y) {
+	public int addAtom(double x, double y) {
 		return addAtom(x, y, 0);
 		}
 
@@ -484,11 +482,9 @@ public class Molecule implements Serializable {
 	 * @param z
 	 * @return
 	 */
-	public int addAtom(float x, float y, float z) {
+	public int addAtom(double x, double y, double z) {
 		int atom = addAtom(6);
-		mAtomX[atom] = x;
-		mAtomY[atom] = y;
-		mAtomZ[atom] = z;
+		mCoordinates[atom].set(x, y, z);
 		return atom;
 		}
 
@@ -520,9 +516,7 @@ public class Molecule implements Serializable {
 		mAtomFlags[mAllAtoms] = 0;
 		mAtomQueryFeatures[mAllAtoms] = 0;
 		mAtomMapNo[mAllAtoms] = 0;
-		mAtomX[mAllAtoms] = 0;
-		mAtomY[mAllAtoms] = 0;
-		mAtomZ[mAllAtoms] = 0;
+		mCoordinates[mAllAtoms].set(0, 0, 0);
 
 		if (mAtomList != null)
 			mAtomList[mAllAtoms] = null;
@@ -579,15 +573,14 @@ public class Molecule implements Serializable {
 	 * @param radical
 	 * @return
 	 */
-	public boolean addOrChangeAtom(float x, float y, int atomicNo, int mass, int abnormalValence, int radical) {
+	public boolean addOrChangeAtom(double x, double y, int atomicNo, int mass, int abnormalValence, int radical) {
 		int atom = findAtom(x,y);
 		if (atom == -1) {
 			if (mAllAtoms >= mMaxAtoms)
 				setMaxAtoms(mMaxAtoms*2);
 
 			atom = addAtom(atomicNo);
-			mAtomX[atom] = x;
-			mAtomY[atom] = y;
+			mCoordinates[atom].set(x, y, 0);
 			mAtomMass[atom] = mass;
 			setAtomAbnormalValence(atom, abnormalValence);
 			setAtomRadical(atom, radical);
@@ -636,7 +629,7 @@ public class Molecule implements Serializable {
 	 * @param aromatic
 	 * @return
 	 */
-	public boolean addRing(float x, float y, int ringSize, boolean aromatic) {
+	public boolean addRing(double x, double y, int ringSize, boolean aromatic) {
 		while(mAllAtoms + ringSize > mMaxAtoms)
 			setMaxAtoms(mMaxAtoms*2);
 		while(mAllBonds + ringSize > mMaxBonds)
@@ -652,8 +645,8 @@ public class Molecule implements Serializable {
 
 		// new ring in empty space
 		atom = addAtom(x,y);
-		float cornerAngle = ((float)Math.PI * (ringSize-2))/ringSize;
-		polygon(atom, ringSize, atom,aromatic, 0, (float)Math.PI - cornerAngle);
+		double cornerAngle = Math.PI * (ringSize-2)/ringSize;
+		polygon(atom, ringSize, atom,aromatic, 0, Math.PI - cornerAngle);
 		mValidHelperArrays = cHelperNone;
 		return true;
 		}
@@ -672,7 +665,7 @@ public class Molecule implements Serializable {
 			return false;
 
 		int angles = 0;
-		float angle[] = new float[4];
+		double angle[] = new double[4];
 		for (int i=0; i<mAllBonds; i++) {
 			for (int j=0; j<2; j++) {
 				if (mBondAtom[j][i] == atom) {
@@ -680,7 +673,7 @@ public class Molecule implements Serializable {
 						angles = 3;
 						break;
 						}
-					angle[angles++] = getBondAngle(atom,mBondAtom[1-j][i]);
+					angle[angles++] = getBondAngle(atom, mBondAtom[1-j][i]);
 					}
 				}
 			if (angles == 3)
@@ -689,12 +682,12 @@ public class Molecule implements Serializable {
 		if (angles == 3)
 			return false;
 
-		float newAngle = (angles == 1) ? angle[0] + (float)Math.PI
-				: (Math.abs(angle[0] - angle[1]) > (float)Math.PI) ? (angle[0] + angle[1])/2
-				: (angle[0] + angle[1])/2 + (float)Math.PI;
+		double newAngle = (angles == 1) ? angle[0] + Math.PI
+				: (Math.abs(angle[0] - angle[1]) > Math.PI) ? (angle[0] + angle[1])/2
+				: (angle[0] + angle[1])/2 + Math.PI;
 
-				float cornerAngle = ((float)Math.PI * (ringSize-2))/ringSize;
-		polygon(atom, ringSize, atom, aromatic, newAngle-cornerAngle/2, (float)Math.PI - cornerAngle);
+		double cornerAngle = (Math.PI * (ringSize-2))/ringSize;
+		polygon(atom, ringSize, atom, aromatic, newAngle-cornerAngle/2, Math.PI - cornerAngle);
 		mValidHelperArrays = cHelperNone;
 //				checkAtomParity(atom);
 		return true;
@@ -710,14 +703,14 @@ public class Molecule implements Serializable {
 	 */
 	public boolean addRingToBond(int bond, int ringSize, boolean aromatic) {
 		int bondAtom[] = new int[2];
-		float bondAngle[] = new float[2];
+		double bondAngle[] = new double[2];
 
 		bondAtom[0] = mBondAtom[0][bond];
 		bondAtom[1] = mBondAtom[1][bond];
 		if (getOccupiedValence(bondAtom[0]) > 3) return false;
 		if (getOccupiedValence(bondAtom[1]) > 3) return false;
 		int angles = 0;
-		float angle[] = new float[4];
+		double angle[] = new double[4];
 		for (int i=0; i<mAllBonds; i++) {
 			if (i == bond) continue;
 			for (int j=0; j<2; j++) {
@@ -727,8 +720,7 @@ public class Molecule implements Serializable {
 							angles = 5;
 							break;
 							}
-						angle[angles++] = getBondAngle(bondAtom[k],
-												   mBondAtom[1-j][i]);
+						angle[angles++] = getBondAngle(bondAtom[k], mBondAtom[1-j][i]);
 						}
 					}
 				if (angles == 5) break;
@@ -740,12 +732,12 @@ public class Molecule implements Serializable {
 		bondAngle[0] = getBondAngle(bondAtom[0], bondAtom[1]);
 		int atomNo;
 		if (bondAngle[0] < 0) {
-			bondAngle[1] = bondAngle[0] + (float)Math.PI;
+			bondAngle[1] = bondAngle[0] + Math.PI;
 			atomNo = 0;
 			}
 		else {
 			bondAngle[1] = bondAngle[0];
-			bondAngle[0] = bondAngle[1] - (float)Math.PI;
+			bondAngle[0] = bondAngle[1] - Math.PI;
 			atomNo = 1;
 			}
 		int side = 0;
@@ -757,11 +749,10 @@ public class Molecule implements Serializable {
 			}
 
 		atomNo = (side > 0) ? 1-atomNo : atomNo;
-		float cornerAngle = ((float)Math.PI * (ringSize-2))/ringSize;
+		double cornerAngle = (Math.PI * (ringSize-2))/ringSize;
 		polygon(bondAtom[atomNo], ringSize-1,
 				bondAtom[1-atomNo], aromatic,
-				bondAngle[(side > 0) ? 0 : 1] + (float)Math.PI - cornerAngle,
-				(float)Math.PI - cornerAngle);
+				bondAngle[(side > 0) ? 0 : 1] + Math.PI - cornerAngle, Math.PI - cornerAngle);
 
 		mValidHelperArrays = cHelperNone;
 //		checkAtomParity(bondAtom[0]);
@@ -823,7 +814,7 @@ public class Molecule implements Serializable {
 	 * @param positive
 	 * @return
 	 */
-	public boolean changeAtomCharge(float x, float y, boolean positive) {
+	public boolean changeAtomCharge(double x, double y, boolean positive) {
 		int atom = findAtom(x,y);
 		return (atom == -1) ? false : changeAtomCharge(atom, positive);
 		}
@@ -1056,9 +1047,7 @@ public class Molecule implements Serializable {
 		destMol.mAtomMass[destAtom] = mAtomMass[sourceAtom];
 		destMol.mAtomFlags[destAtom] = mAtomFlags[sourceAtom];
 		destMol.mAtomQueryFeatures[destAtom] = destMol.mIsFragment ? mAtomQueryFeatures[sourceAtom] : 0;
-		destMol.mAtomX[destAtom] = mAtomX[sourceAtom];
-		destMol.mAtomY[destAtom] = mAtomY[sourceAtom];
-		destMol.mAtomZ[destAtom] = mAtomZ[sourceAtom];
+		destMol.mCoordinates[destAtom].set(mCoordinates[sourceAtom]);
 		destMol.mAtomMapNo[destAtom] = mAtomMapNo[sourceAtom];
 
 		if (destMol.mAtomList != null)
@@ -1254,15 +1243,9 @@ public class Molecule implements Serializable {
 		tempInt = mAtomMapNo[atom1];
 		mAtomMapNo[atom1] = mAtomMapNo[atom2];
 		mAtomMapNo[atom2] = tempInt;
-		float tempFloat = mAtomX[atom1];
-		mAtomX[atom1] = mAtomX[atom2];
-		mAtomX[atom2] = tempFloat;
-		tempFloat = mAtomY[atom1];
-		mAtomY[atom1] = mAtomY[atom2];
-		mAtomY[atom2] = tempFloat;
-		tempFloat = mAtomZ[atom1];
-		mAtomZ[atom1] = mAtomZ[atom2];
-		mAtomZ[atom2] = tempFloat;
+		Coordinates tempCoords = mCoordinates[atom1];
+		mCoordinates[atom1] = mCoordinates[atom2];
+		mCoordinates[atom2] = tempCoords;
 		if (mAtomList != null) {
 			int[] tempList = mAtomList[atom1];
 			mAtomList[atom1] = mAtomList[atom2];
@@ -1359,7 +1342,7 @@ public class Molecule implements Serializable {
 	 * @param y
 	 * @return
 	 */
-	public boolean deleteAtomOrBond(float x, float y) {
+	public boolean deleteAtomOrBond(double x, double y) {
 		int atom = findAtom(x,y);
 		if (atom != -1) {
 			if ((mAtomFlags[atom] & cAtomFlagSelected) != 0)
@@ -1613,14 +1596,15 @@ public class Molecule implements Serializable {
 	 * @param picky
 	 * @return index of closest of nearby atoms or -1, if no atom is close
 	 */
-	public int findAtom(float pickx, float picky) {
+	public int findAtom(double pickx, double picky) {
 		int foundAtom = -1;
-		float avbl = this.getAverageBondLength();
-		float foundDistanceSquare = Float.MAX_VALUE;
-		float maxDistanceSquare = avbl * avbl / 12.0f;
+		double avbl = getAverageBondLength();
+		double foundDistanceSquare = Double.MAX_VALUE;
+		double maxDistanceSquare = avbl * avbl / 12.0;
 		for (int atom=0; atom<mAllAtoms; atom++) {
-			float distanceSquare = (pickx-mAtomX[atom]) * (pickx-mAtomX[atom])
-								  + (picky-mAtomY[atom]) * (picky-mAtomY[atom]);
+			double x = mCoordinates[atom].x;
+			double y = mCoordinates[atom].y;
+			double distanceSquare = (pickx-x) * (pickx-x) + (picky-y) * (picky-y);
 			if (distanceSquare < maxDistanceSquare
 			 && distanceSquare < foundDistanceSquare) {
 				foundDistanceSquare = distanceSquare;
@@ -1636,33 +1620,33 @@ public class Molecule implements Serializable {
 	 * @param picky
 	 * @return index of closest of nearby bonds or -1, if no bond is close
 	 */
-	public int findBond(float pickx, float picky) {
+	public int findBond(double pickx, double picky) {
 		int foundBond = -1;
-		float maxDistance = this.getAverageBondLength();
-		float foundDistance = Float.MAX_VALUE;
+		double maxDistance = getAverageBondLength();
+		double foundDistance = Double.MAX_VALUE;
 		for (int bond=0; bond<mAllBonds; bond++) {
-			float x1 = mAtomX[mBondAtom[0][bond]];
-			float y1 = mAtomY[mBondAtom[0][bond]];
-			float x2 = mAtomX[mBondAtom[1][bond]];
-			float y2 = mAtomY[mBondAtom[1][bond]];
+			double x1 = mCoordinates[mBondAtom[0][bond]].x;
+			double y1 = mCoordinates[mBondAtom[0][bond]].y;
+			double x2 = mCoordinates[mBondAtom[1][bond]].x;
+			double y2 = mCoordinates[mBondAtom[1][bond]].y;
 
-			float dx = x2 - x1;// if pick position not within bond circle continue
-			float dy = y2 - y1;
-			float bondLength = (float)Math.sqrt((dx*dx + dy*dy));
-			float centralX = (x1+x2) / 2.0f;
-			float centralY = (y1+y2) / 2.0f;
+			double dx = x2 - x1;// if pick position not within bond circle continue
+			double dy = y2 - y1;
+			double bondLength = Math.sqrt((dx*dx + dy*dy));
+			double centralX = (x1+x2) / 2.0;
+			double centralY = (y1+y2) / 2.0;
 			dx = pickx - centralX;
 			dy = picky - centralY;
 			if (Math.sqrt(dx*dx + dy*dy) > bondLength / 2.0) continue;
 
-			float distance;
+			double distance;
 			if (x2 == x1)// if pick posn closer to bond than cPickRange return bnd
 				distance = Math.abs(x1 - pickx);
 			else {
-				float constA = (y2-y1)/(x1-x2);
-				float constC = - constA * x1 - y1;
+				double constA = (y2-y1)/(x1-x2);
+				double constC = - constA * x1 - y1;
 				distance = Math.abs((constA * pickx + picky + constC)
-						 / (float)Math.sqrt(constA * constA + 1f));
+						 / Math.sqrt(constA * constA + 1));
 				}
 			if (distance < maxDistance
 			 && distance < foundDistance) {
@@ -1892,18 +1876,23 @@ public class Molecule implements Serializable {
 		}
 
 
-	public float getAtomX(int atom) {
-		return mAtomX[atom];
+	public Coordinates getCoordinates(int atom) {
+		return mCoordinates[atom];
+	}
+
+
+	public double getAtomX(int atom) {
+		return mCoordinates[atom].x;
 		}
 
 
-	public float getAtomY(int atom) {
-		return mAtomY[atom];
+	public double getAtomY(int atom) {
+		return mCoordinates[atom].y;
 		}
 
 
-	public float getAtomZ(int atom) {
-		return mAtomZ[atom];
+	public double getAtomZ(int atom) {
+		return mCoordinates[atom].z;
 		}
 
 
@@ -1913,7 +1902,7 @@ public class Molecule implements Serializable {
 	 * returned. If is has less than 2 atoms, cDefaultAverageBondLength is returned.
 	 * @return
 	 */
-	public float getAverageBondLength() {
+	public double getAverageBondLength() {
 		return getAverageBondLength(mAllAtoms, mAllBonds, cDefaultAverageBondLength);
 		}
 
@@ -1926,7 +1915,7 @@ public class Molecule implements Serializable {
 	 * @param bonds bond indexes >= this are not considered
 	 * @return
 	 */
-	public float getAverageBondLength(int atoms, int bonds) {
+	public double getAverageBondLength(int atoms, int bonds) {
 		return getAverageBondLength(atoms, bonds, cDefaultAverageBondLength);
 		}
 
@@ -1939,7 +1928,7 @@ public class Molecule implements Serializable {
 	 * @param bonds bond indexes >= this are not considered
 	 * @return
 	 */
-	public float getAverageBondLength(int atoms, int bonds, float defaultBondLength) {
+	public double getAverageBondLength(int atoms, int bonds, double defaultBondLength) {
 		for (int bond=0; bond<bonds; bond++)
 			if ((mBondQueryFeatures[bond] & cBondQFBridge) != 0)
 				bonds--;
@@ -1950,35 +1939,28 @@ public class Molecule implements Serializable {
 			if (atoms < 2)
 				return defaultBondLength;
 
-			float sum = 0.0f;
+			double sum = 0.0;
 			int count = 0;
 			for (int atom1=1; atom1<atoms; atom1++) {
 				for (int atom2=0; atom2<atom1; atom2++) {
-					float dx = mAtomX[atom1] - mAtomX[atom2];
-					float dy = mAtomY[atom1] - mAtomY[atom2];
-					float dz = mAtomZ[atom1] - mAtomZ[atom2];
-					sum += Math.sqrt(dx*dx+dy*dy+dz*dz);
+					sum += mCoordinates[atom1].distance(mCoordinates[atom2]);
 					count++;
 					}
 				}
-			return Math.min(defaultBondLength, (float)Math.sqrt(atoms) * sum / (2f * count));
+			return Math.min(defaultBondLength, Math.sqrt(atoms) * sum / (2f * count));
 			}
 
-		float avblSum = 0.0f;
+		double avblSum = 0.0;
 		for (int bond=0; bond<bonds; bond++) {
-			if ((mBondQueryFeatures[bond] & cBondQFBridge) == 0) {
-				float dx = mAtomX[mBondAtom[1][bond]] - mAtomX[mBondAtom[0][bond]];
-				float dy = mAtomY[mBondAtom[1][bond]] - mAtomY[mBondAtom[0][bond]];
-				float dz = mAtomZ[mBondAtom[1][bond]] - mAtomZ[mBondAtom[0][bond]];
-				avblSum += Math.sqrt(dx*dx+dy*dy+dz*dz);
-				}
+			if ((mBondQueryFeatures[bond] & cBondQFBridge) == 0)
+				avblSum += mCoordinates[mBondAtom[1][bond]].distance(mCoordinates[mBondAtom[0][bond]]);
 			}
 		return avblSum / bonds;
 		}
 
 
-	public float getBondAngle(int atom1, int atom2) {
-		return getAngle(mAtomX[atom1], mAtomY[atom1], mAtomX[atom2], mAtomY[atom2]);
+	public double getBondAngle(int atom1, int atom2) {
+		return getAngle(mCoordinates[atom1].x, mCoordinates[atom1].y, mCoordinates[atom2].x, mCoordinates[atom2].y);
 		}
 
 
@@ -2038,12 +2020,12 @@ public class Molecule implements Serializable {
 	 * @param bond
 	 * @return bond length calculated from atom 2D-coordinates.
 	 */
-	public float getBondLength(int bond) {
+	public double getBondLength(int bond) {
 		int atom1 = mBondAtom[0][bond];
 		int atom2 = mBondAtom[1][bond];
-		float xdif = mAtomX[atom2] - mAtomX[atom1];
-		float ydif = mAtomY[atom2] - mAtomY[atom1];
-		return (float)Math.sqrt(xdif * xdif + ydif * ydif);
+		double xdif = mCoordinates[atom2].x - mCoordinates[atom1].x;
+		double ydif = mCoordinates[atom2].y - mCoordinates[atom1].y;
+		return Math.sqrt(xdif * xdif + ydif * ydif);
 		}
 
 
@@ -2149,9 +2131,10 @@ public class Molecule implements Serializable {
 		mAtomicNo = Arrays.copyOf(mAtomicNo, v);
 		mAtomCharge = Arrays.copyOf(mAtomCharge, v);
 		mAtomMapNo = Arrays.copyOf(mAtomMapNo, v);
-		mAtomX = Arrays.copyOf(mAtomX, v);
-		mAtomY = Arrays.copyOf(mAtomY, v);
-		mAtomZ = Arrays.copyOf(mAtomZ, v);
+		int orig = mCoordinates.length;
+		mCoordinates = Arrays.copyOf(mCoordinates, v);
+		for (int i=orig; i<v; i++)
+			mCoordinates[i] = new Coordinates();
 		mAtomMass = Arrays.copyOf(mAtomMass, v);
 		mAtomFlags = Arrays.copyOf(mAtomFlags, v);
 		mAtomQueryFeatures = Arrays.copyOf(mAtomQueryFeatures, v);
@@ -2674,36 +2657,21 @@ public class Molecule implements Serializable {
 		}
 
 
-	public void setAtomX(int atom, float x) {
-		mAtomX[atom] = x;
-		mValidHelperArrays &= cHelperRings;
-		}
-
-
-	public void setAtomY(int atom, float y) {
-		mAtomY[atom] = y;
-		mValidHelperArrays &= cHelperRings;
-		}
-
-
-	public void setAtomZ(int atom, float z) {
-		mAtomZ[atom] = z;
-		mValidHelperArrays &= cHelperRings;
-		}
-
-
 	public void setAtomX(int atom, double x) {
-		setAtomX(atom, (float) x);
+		mCoordinates[atom].x = x;
+		mValidHelperArrays &= cHelperRings;
 		}
 
 
 	public void setAtomY(int atom, double y) {
-		setAtomY(atom, (float) y);
+		mCoordinates[atom].y = y;
+		mValidHelperArrays &= cHelperRings;
 		}
 
 
 	public void setAtomZ(int atom, double z) {
-		setAtomZ(atom, (float) z);
+		mCoordinates[atom].z = z;
+		mValidHelperArrays &= cHelperRings;
 		}
 
 
@@ -2793,6 +2761,20 @@ public class Molecule implements Serializable {
 		mValidHelperArrays = 0;	// there is an influence on occipied valence, bond order, etc.
 		mIsFragment = true;
 		}
+
+
+	/**
+	 * Sets the bond type based on bond order without stereo orientation.
+	 * @param bond
+	 * @param order 1,2, or 3
+	 */
+	public void setBondOrder(int bond,int order) {
+		mBondType[bond] = (order == 1) ? cBondTypeSingle
+						: (order == 2) ? cBondTypeDouble
+						: (order == 3) ? cBondTypeTriple
+						: cBondTypeMetalLigand;
+		mValidHelperArrays = cHelperNone;
+	}
 
 
 	/**
@@ -3074,45 +3056,45 @@ public class Molecule implements Serializable {
 		}
 
 
-	public void translateCoords(float dx, float dy) {
+	public void translateCoords(double dx, double dy) {
 		for (int i=0; i<mAllAtoms; i++) {
-			mAtomX[i] += dx;
-			mAtomY[i] += dy;
+			mCoordinates[i].x += dx;
+			mCoordinates[i].y += dy;
 			}
 		mZoomRotationX += dx;
 		mZoomRotationY += dy;
 		}
 
 
-	public void scaleCoords(float f) {
+	public void scaleCoords(double f) {
 		for (int i=0; i<mAllAtoms; i++) {
-			mAtomX[i] *= f;
-			mAtomY[i] *= f;
+			mCoordinates[i].x *= f;
+			mCoordinates[i].y *= f;
 			}
 		}
 
 
-	public void zoomAndRotateInit(float x, float y) {
+	public void zoomAndRotateInit(double x, double y) {
 		mZoomRotationX = x;
 		mZoomRotationY = y;
-		mOriginalAngle = new float[mAllAtoms];
-		mOriginalDistance = new float[mAllAtoms];
+		mOriginalAngle = new double[mAllAtoms];
+		mOriginalDistance = new double[mAllAtoms];
 		for (int atom=0; atom<mAllAtoms; atom++) {
-			float dx = x - mAtomX[atom];
-			float dy = y - mAtomY[atom];
-			mOriginalDistance[atom] = (float)Math.sqrt(dx*dx+dy*dy);	// distance to center of gravity
-			mOriginalAngle[atom] = getAngle(x, y, mAtomX[atom], mAtomY[atom]);
+			double dx = x - mCoordinates[atom].x;
+			double dy = y - mCoordinates[atom].y;
+			mOriginalDistance[atom] = Math.sqrt(dx*dx+dy*dy);	// distance to center of gravity
+			mOriginalAngle[atom] = getAngle(x, y, mCoordinates[atom].x, mCoordinates[atom].y);
 			}
 		}
 
 
-	public void zoomAndRotate(float zoom, float angle, boolean selected) {
+	public void zoomAndRotate(double zoom, double angle, boolean selected) {
 		for (int atom=0; atom<mAllAtoms; atom++) {
 			if (!selected || isSelectedAtom(atom)) {
-				float newDistance = mOriginalDistance[atom] * zoom;
-				float newAngle = mOriginalAngle[atom] - angle;
-				mAtomX[atom] = mZoomRotationX + newDistance*(float)Math.sin(newAngle);
-				mAtomY[atom] = mZoomRotationY + newDistance*(float)Math.cos(newAngle);
+				double newDistance = mOriginalDistance[atom] * zoom;
+				double newAngle = mOriginalAngle[atom] - angle;
+				mCoordinates[atom].x = mZoomRotationX + newDistance*Math.sin(newAngle);
+				mCoordinates[atom].y = mZoomRotationY + newDistance*Math.cos(newAngle);
 				}
 			}
 
@@ -3429,9 +3411,7 @@ public class Molecule implements Serializable {
 				mAtomFlags[atomDest] = mAtomFlags[atom];
 				mAtomQueryFeatures[atomDest] = mAtomQueryFeatures[atom];
 				mAtomMapNo[atomDest] = mAtomMapNo[atom];
-				mAtomX[atomDest] = mAtomX[atom];
-				mAtomY[atomDest] = mAtomY[atom];
-				mAtomZ[atomDest] = mAtomZ[atom];
+				mCoordinates[atomDest] = mCoordinates[atom];
 				if (mAtomList != null)
 					mAtomList[atomDest] = mAtomList[atom];
 				if (mAtomCustomLabel != null)
@@ -3458,41 +3438,40 @@ public class Molecule implements Serializable {
 		}
 
 
-	private void polygon(int atom, int bonds, int endAtm, boolean aromatic,
-						 float actlAngle, float angleChange) {
+	private void polygon(int atom, int bonds, int endAtm, boolean aromatic, double actlAngle, double angleChange) {
 		boolean dblBnd;
 		int actlAtm,remoteAtm,bnd;
-		float bondLength,xdiff,ydiff,newx,newy;
+		double bondLength,xdiff,ydiff,newx,newy;
 
 		bondLength = 0.0f;
 		if (atom == endAtm) {
 			bondLength = getAverageBondLength();
 			}
 		else {
-			xdiff = mAtomX[atom] - mAtomX[endAtm];
-			ydiff = mAtomY[atom] - mAtomY[endAtm];
-			bondLength = (float)Math.sqrt(xdiff * xdiff + ydiff * ydiff);
+			xdiff = mCoordinates[atom].x - mCoordinates[endAtm].x;
+			ydiff = mCoordinates[atom].y - mCoordinates[endAtm].y;
+			bondLength = Math.sqrt(xdiff * xdiff + ydiff * ydiff);
 			}
 
 		actlAtm = atom;
 		dblBnd = !(simpleGetValence(atom) == 3);
 
 		for (int step=1; step<bonds; step++) {
-			newx = mAtomX[actlAtm] + bondLength * (float)Math.sin(actlAngle);
-			newy = mAtomY[actlAtm] + bondLength * (float)Math.cos(actlAngle);
+			newx = mCoordinates[actlAtm].x + bondLength * Math.sin(actlAngle);
+			newy = mCoordinates[actlAtm].y + bondLength * Math.cos(actlAngle);
 			remoteAtm = -1;
 			for (int i=0; i<mAllAtoms; i++) {
-				if ((Math.abs(newx - mAtomX[i]) < 4)
-				 && (Math.abs(newy - mAtomY[i]) < 4)) {
+				if ((Math.abs(newx - mCoordinates[i].x) < 4)
+				 && (Math.abs(newy - mCoordinates[i].y) < 4)) {
 					remoteAtm = i;
 					break;
 					}
 				}
 			if (remoteAtm == -1) {
-				remoteAtm = addAtom(newx,newy);
-				mAtomX[remoteAtm] = newx;
-				mAtomY[remoteAtm] = newy;
-				mAtomZ[remoteAtm] = 0;
+				remoteAtm = addAtom(newx, newy);
+				mCoordinates[remoteAtm].x = newx;
+				mCoordinates[remoteAtm].y = newy;
+				mCoordinates[remoteAtm].z = 0;
 				}
 			bnd = getBondNo(actlAtm,remoteAtm);
 			if (bnd == -1) {
@@ -3543,9 +3522,9 @@ public class Molecule implements Serializable {
 			stream.writeInt(mAtomMass[atom]);
 			stream.writeInt(mAtomFlags[atom] & ~cAtomFlagsHelper);
 			stream.writeInt(mAtomQueryFeatures[atom]);
-			stream.writeDouble(mAtomX[atom]);	// for compatibility with earlier double based coords
-			stream.writeDouble(mAtomY[atom]);
-			stream.writeDouble(mAtomZ[atom]);
+			stream.writeDouble(mCoordinates[atom].x);	// for compatibility with earlier double based coords
+			stream.writeDouble(mCoordinates[atom].y);
+			stream.writeDouble(mCoordinates[atom].z);
 			stream.writeInt(mAtomMapNo[atom]);
 
 			if (mAtomList != null && mAtomList[atom] != null) {
@@ -3592,9 +3571,7 @@ public class Molecule implements Serializable {
 			mAtomMass[atom] = stream.readInt();
 			mAtomFlags[atom] = stream.readInt();
 			mAtomQueryFeatures[atom] = stream.readInt();
-			mAtomX[atom] = (float)stream.readDouble();	// for compatibility with earlier double based coords
-			mAtomY[atom] = (float)stream.readDouble();
-			mAtomZ[atom] = (float)stream.readDouble();
+			mCoordinates[atom].set(stream.readDouble(), stream.readDouble(), stream.readDouble());
 			mAtomMapNo[atom] = stream.readInt();
 
 			int count = stream.readInt();

@@ -205,6 +205,11 @@ public class Graphics2DContext implements IDrawContext<Graphics2D>
     }
 
     @Override
+    public String getFont() {
+        return delegate.getFont().getName();
+    }
+
+    @Override
     public void setFill(long color)
     {
         delegate.setColor(createColor(color));

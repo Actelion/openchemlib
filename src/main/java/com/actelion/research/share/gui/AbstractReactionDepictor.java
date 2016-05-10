@@ -37,11 +37,11 @@ package com.actelion.research.share.gui;
 
 
 //import java.awt.*;
-import java.awt.geom.*;
-
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
+
+import java.awt.geom.Rectangle2D;
 
 public abstract class AbstractReactionDepictor
 {
@@ -158,7 +158,7 @@ public abstract class AbstractReactionDepictor
                 java.awt.geom.Rectangle2D o = ChemistryHelper.getBoundingRect(rxn.getMolecule(i));
                 if (o != null) {
                     DepictorTransformation tm = depict.validateView(ctx.getNative(),
-                            new java.awt.geom.Rectangle2D.Float((float) o.getX() + (float) insetx, (float) o.getY() + (float) insety, (float) o.getWidth(), (float) o.getHeight()),
+                            new java.awt.geom.Rectangle2D.Double(o.getX() + insetx, o.getY() + insety, o.getWidth(), o.getHeight()),
                             AbstractDepictor.cModeInflateToMaxAVBL);
                     depict.paint(ctx.getNative());
                 }
@@ -173,7 +173,7 @@ public abstract class AbstractReactionDepictor
                 } else {
                     a = new Arrow((int) insetx + (int) ar.getX() + (int) (ar.getWidth() - ARROWWIDTH) / 2, (int) insety + (int) ar.getY(), ARROWWIDTH, ARROWHEIGHT);
                 }
-                a.paint(ctx);
+                a.draw(ctx,null);
             }
 //            FontMetrics fm = g.getFontMetrics(PLUSFONT);
 //            java.awt.font.LineMetrics lm = fm.getLineMetrics(PLUSSTRING, g);
@@ -228,7 +228,7 @@ public abstract class AbstractReactionDepictor
     public boolean updateCoords(IDrawContext g, double x1, double y1, double width, double height, int mode)
     {
         ExtendedDepictor dep = new ExtendedDepictor(rxn_, null,false, false);
-        dep.updateCoords(g.getNative(), new java.awt.geom.Rectangle2D.Float((float)x1, (float)y1, (float)width, (float)height), AbstractDepictor.cModeInflateToMaxAVBL);
+        dep.updateCoords(g.getNative(), new java.awt.geom.Rectangle2D.Double((float)x1, (float)y1, (float)width, (float)height), AbstractDepictor.cModeInflateToMaxAVBL);
 
         dim_ = new Rectangle2D.Double((int) x1, (int) y1, (int) width, (int) height);
         return true;

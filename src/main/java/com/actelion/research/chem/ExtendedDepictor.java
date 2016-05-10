@@ -171,7 +171,7 @@ public class ExtendedDepictor {
 
     public void paintFragmentNumbers(Graphics g) {
         if (mFragmentNoColor != null && mMolecule != null) {
-        	float averageBondLength = calculateAverageBondLength();
+            double averageBondLength = calculateAverageBondLength();
             g.setColor(mFragmentNoColor);
             g.setFont(g.getFont().deriveFont(Font.BOLD, (int)(1.6*averageBondLength)));
             for (int i=0; i<mMolecule.length; i++) {
@@ -238,7 +238,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             }
         }
 
-    public DepictorTransformation updateCoords(Object g, Rectangle2D.Float viewRect, int mode) {
+    public DepictorTransformation updateCoords(Object g, Rectangle2D.Double viewRect, int mode) {
     // returns full transformation that moves/scales original molecules/objects into viewRect
         validateView(g, viewRect, mode);
 
@@ -264,32 +264,32 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             }
         }
 
-    public DepictorTransformation validateView(Object g, Rectangle2D.Float viewRect, int mode) {
+    public DepictorTransformation validateView(Object g, Rectangle2D.Double viewRect, int mode) {
     // returns incremental transformation that moves/scales already transformed molecules/objects into viewRect
         if (mDoLayoutMolecules)
             doLayoutMolecules(g);
 
-        Rectangle2D.Float boundingRect = null;
+        Rectangle2D.Double boundingRect = null;
         if (mDepictor != null) {
             for (int i=0; i<mDepictor.length; i++) {
                 mDepictor[i].validateView(g, null, 0);
                 boundingRect = (boundingRect == null) ? mDepictor[i].getBoundingRect()
-                            : (Rectangle2D.Float)boundingRect.createUnion(mDepictor[i].getBoundingRect());
+                            : (Rectangle2D.Double)boundingRect.createUnion(mDepictor[i].getBoundingRect());
                 }
             }
         if (mDrawingObjectList != null) {
             for (int i=0; i<mDrawingObjectList.size(); i++) {
-                Rectangle2D.Float objectBounds = ((AbstractDrawingObject)mDrawingObjectList.get(i)).getBoundingRect();
+                Rectangle2D.Double objectBounds = mDrawingObjectList.get(i).getBoundingRect();
                 mTransformation.applyTo(objectBounds);
                 boundingRect = (boundingRect == null) ? objectBounds
-                        : (Rectangle2D.Float)boundingRect.createUnion(objectBounds);
+                        : (Rectangle2D.Double)boundingRect.createUnion(objectBounds);
                 }
             }
 
         if (boundingRect == null)
             return null;
 
-        float avbl = calculateAverageBondLength();
+        double avbl = calculateAverageBondLength();
 
         DepictorTransformation t = new DepictorTransformation(boundingRect, viewRect, avbl, mode);
 
@@ -306,7 +306,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
         return null;
         }
 
-    private float calculateAverageBondLength() {
+    private double calculateAverageBondLength() {
     	float averageBondLength = 0.0f;
         int bondCount = 0;
         if (mMolecule != null) {
@@ -323,9 +323,9 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
         }
 
     private void doLayoutMolecules(Object g) {
-        Rectangle2D.Float[] boundingRect = new Rectangle2D.Float[mMolecule.length];
-        float totalWidth = 0.0f;
-        float totalHeight = 0.0f;
+        Rectangle2D.Double[] boundingRect = new Rectangle2D.Double[mMolecule.length];
+        double totalWidth = 0.0;
+        double totalHeight = 0.0;
         for (int i=0; i<mMolecule.length; i++) {
             mDepictor[i].validateView(g, null, AbstractDepictor.cModeInflateToMaxAVBL);
             boundingRect[i] = mDepictor[i].getBoundingRect();
@@ -333,8 +333,8 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             totalHeight = Math.max(totalHeight, boundingRect[i].height);
             }
 
-        float spacing = 1.5f * AbstractDepictor.cOptAvBondLen;
-        float arrowWidth = 2f * AbstractDepictor.cOptAvBondLen;
+        double spacing = 1.5 * AbstractDepictor.cOptAvBondLen;
+        double arrowWidth = 2 * AbstractDepictor.cOptAvBondLen;
 
         int arrow = -1;
         if (mDrawingObjectList == null) {
@@ -355,7 +355,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
                 }
             }
 
-        float rawX = 0.5f * spacing;
+        double rawX = 0.5 * spacing;
         for (int i=0; i<mMolecule.length; i++) {
             if (i == mReactantOrCoreCount) {
                 ((ReactionArrow)mDrawingObjectList.get(arrow)).setCoordinates(
@@ -363,9 +363,9 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
                 rawX += arrowWidth;
                 }
 
-            float dx = rawX - boundingRect[i].x;
-            float dy = 0.5f * (totalHeight - boundingRect[i].height) - boundingRect[i].y;
-            mDepictor[i].applyTransformation(new DepictorTransformation(1.0f, dx, dy));
+            double dx = rawX - boundingRect[i].x;
+            double dy = 0.5 * (totalHeight - boundingRect[i].height) - boundingRect[i].y;
+            mDepictor[i].applyTransformation(new DepictorTransformation(1.0, dx, dy));
 
             rawX += spacing + boundingRect[i].width;
             }

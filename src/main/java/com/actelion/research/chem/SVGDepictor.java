@@ -45,7 +45,7 @@ public class SVGDepictor extends AbstractDepictor
     private static final String FONTNAME = "Helvetica";
     private static int instanceCnt = 0;
 
-    private float lineWidth = 1;
+    private double lineWidth = 1;
     private int textSize = 10;
     private int width = 400;
     private int height = 400;
@@ -125,7 +125,7 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void drawPolygon(float[] x, float[] y, int count)
+    protected void drawPolygon(double[] x, double[] y, int count)
     {
         StringBuilder s = new StringBuilder("<polygon points=\"");
         for (int i = 0; i < count; i++) {
@@ -142,10 +142,10 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void drawString(String theString, float x, float y)
+    protected void drawString(String theString, double x, double y)
     {
 
-        float strWidth = getStringWidth(theString);
+        double strWidth = getStringWidth(theString);
         String s = "<text " +
                 "x=\"" + (int) (x - strWidth / 2.0) + "\" " +
                 "y=\"" + (int) (y + textSize / 3) + "\" " +
@@ -157,7 +157,7 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void fillCircle(float x, float y, float r)
+    protected void fillCircle(double x, double y, double r)
     {
         String s = "<circle " +
                 "cx=\"" + (int) x + "\" " +
@@ -168,13 +168,13 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected float getLineWidth()
+    protected double getLineWidth()
     {
         return lineWidth;
     }
 
     @Override
-    protected float getStringWidth(String theString)
+    protected double getStringWidth(String theString)
     {
         float ret =  (float)currentFont.getStringBounds(theString,graphics.getFontRenderContext()).getWidth();
         return ret;
@@ -198,7 +198,7 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void setLineWidth(float width)
+    protected void setLineWidth(double width)
     {
         lineWidth = width;
     }
@@ -210,7 +210,7 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void onDrawBond(int atom1, int atom2, float x1, float y1, float x2, float y2)
+    protected void onDrawBond(int atom1, int atom2, double x1, double y1, double x2, double y2)
     {
         String s = "<line " +
                 "id=\"" + getId() + ":Bond:" + atom1 + "-" + atom2 + "\" " +
@@ -226,7 +226,7 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void onDrawAtom(int atom, String symbol, float x, float y)
+    protected void onDrawAtom(int atom, String symbol, double x, double y)
     {
         int r = DEFAULT_ELEM_WIDTH;
         String s = "<circle " +
@@ -283,7 +283,7 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    public DepictorTransformation simpleValidateView(Rectangle2D.Float viewRect, int mode)
+    public DepictorTransformation simpleValidateView(Rectangle2D.Double viewRect, int mode)
     {
 
         width = (int) viewRect.getWidth();

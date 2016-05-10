@@ -1632,7 +1632,7 @@ System.out.println("noOfRanks:"+canRank);
 								  { 2,2,1,1 },	// second dimension: number of
 								  { 1,2,1,2 } };// mMol.getConnAtom that has stereobond
 
-		float angle[] = new float[mMol.getAllConnAtoms(atom)];
+		double angle[] = new double[mMol.getAllConnAtoms(atom)];
 		for (int i=0; i<mMol.getAllConnAtoms(atom); i++)
 			angle[i] = mMol.getBondAngle(mMol.getConnAtom(atom, remappedConn[i]),atom);
 
@@ -1714,7 +1714,7 @@ System.out.println("noOfRanks:"+canRank);
 		if (mMol.getAllConnAtoms(atom) == 3)
 			atomList[3] = atom;
 
-		float[][] coords = new float[3][3];
+		double[][] coords = new double[3][3];
 		for (int i=0; i<3; i++) {
 			coords[i][0] = mMol.getAtomX(atomList[i+1]) - mMol.getAtomX(atomList[0]);
 			coords[i][1] = mMol.getAtomY(atomList[i+1]) - mMol.getAtomY(atomList[0]);
@@ -1722,15 +1722,15 @@ System.out.println("noOfRanks:"+canRank);
 			}
 
 		// calculate the normal vector (vector product of coords[0] and coords[1])
-		float[] n = new float[3];
+		double[] n = new double[3];
 		n[0] = coords[0][1]*coords[1][2]-coords[0][2]*coords[1][1];
 		n[1] = coords[0][2]*coords[1][0]-coords[0][0]*coords[1][2];
 		n[2] = coords[0][0]*coords[1][1]-coords[0][1]*coords[1][0];
 
 		// calculate cos(angle) of coords[2] to normal vector
-		float cosa = (coords[2][0]*n[0]+coords[2][1]*n[1]+coords[2][2]*n[2])
-					/ ((float)Math.sqrt(coords[2][0]*coords[2][0]+coords[2][1]*coords[2][1]+coords[2][2]*coords[2][2])
-					 * (float)Math.sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]));
+		double cosa = (coords[2][0]*n[0]+coords[2][1]*n[1]+coords[2][2]*n[2])
+					/ (Math.sqrt(coords[2][0]*coords[2][0]+coords[2][1]*coords[2][1]+coords[2][2]*coords[2][2])
+					 * Math.sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]));
 
 		return (cosa > 0.0) ? (byte)Molecule.cAtomParity1 : Molecule.cAtomParity2;
 		}
@@ -2024,42 +2024,42 @@ System.out.println("noOfRanks:"+canRank);
 
 
 	private byte canCalcEZParity3D(EZHalfParity halfParity1, EZHalfParity halfParity2) {
-		float[] db = new float[3];
+		double[] db = new double[3];
 		db[0] = mMol.getAtomX(halfParity2.mCentralAxialAtom) - mMol.getAtomX(halfParity1.mCentralAxialAtom);
 		db[1] = mMol.getAtomY(halfParity2.mCentralAxialAtom) - mMol.getAtomY(halfParity1.mCentralAxialAtom);
 		db[2] = mMol.getAtomZ(halfParity2.mCentralAxialAtom) - mMol.getAtomZ(halfParity1.mCentralAxialAtom);
 
-		float[] s1 = new float[3];
+		double[] s1 = new double[3];
 		s1[0] = mMol.getAtomX(halfParity1.mHighConn) - mMol.getAtomX(halfParity1.mCentralAxialAtom);
 		s1[1] = mMol.getAtomY(halfParity1.mHighConn) - mMol.getAtomY(halfParity1.mCentralAxialAtom);
 		s1[2] = mMol.getAtomZ(halfParity1.mHighConn) - mMol.getAtomZ(halfParity1.mCentralAxialAtom);
 
-		float[] s2 = new float[3];
+		double[] s2 = new double[3];
 		s2[0] = mMol.getAtomX(halfParity2.mHighConn) - mMol.getAtomX(halfParity2.mCentralAxialAtom);
 		s2[1] = mMol.getAtomY(halfParity2.mHighConn) - mMol.getAtomY(halfParity2.mCentralAxialAtom);
 		s2[2] = mMol.getAtomZ(halfParity2.mHighConn) - mMol.getAtomZ(halfParity2.mCentralAxialAtom);
 
 		// calculate the normal vector n1 of plane from db and s1 (vector product)
-		float[] n1 = new float[3];
+		double[] n1 = new double[3];
 		n1[0] = db[1]*s1[2]-db[2]*s1[1];
 		n1[1] = db[2]*s1[0]-db[0]*s1[2];
 		n1[2] = db[0]*s1[1]-db[1]*s1[0];
 
 		// calculate the normal vector n2 of plane from db and n1 (vector product)
-		float[] n2 = new float[3];
+		double[] n2 = new double[3];
 		n2[0] = db[1]*n1[2]-db[2]*n1[1];
 		n2[1] = db[2]*n1[0]-db[0]*n1[2];
 		n2[2] = db[0]*n1[1]-db[1]*n1[0];
 
 		// calculate cos(angle) of s1 and normal vector n2
-		float cosa = (s1[0]*n2[0]+s1[1]*n2[1]+s1[2]*n2[2])
-					/ ((float)Math.sqrt(s1[0]*s1[0]+s1[1]*s1[1]+s1[2]*s1[2])
-					 * (float)Math.sqrt(n2[0]*n2[0]+n2[1]*n2[1]+n2[2]*n2[2]));
+		double cosa = (s1[0]*n2[0]+s1[1]*n2[1]+s1[2]*n2[2])
+					/ (Math.sqrt(s1[0]*s1[0]+s1[1]*s1[1]+s1[2]*s1[2])
+					 * Math.sqrt(n2[0]*n2[0]+n2[1]*n2[1]+n2[2]*n2[2]));
 
 		// calculate cos(angle) of s2 and normal vector n2
-		float cosb = (s2[0]*n2[0]+s2[1]*n2[1]+s2[2]*n2[2])
-					/ ((float)Math.sqrt(s2[0]*s2[0]+s2[1]*s2[1]+s2[2]*s2[2])
-					 * (float)Math.sqrt(n2[0]*n2[0]+n2[1]*n2[1]+n2[2]*n2[2]));
+		double cosb = (s2[0]*n2[0]+s2[1]*n2[1]+s2[2]*n2[2])
+					/ (Math.sqrt(s2[0]*s2[0]+s2[1]*s2[1]+s2[2]*s2[2])
+					 * Math.sqrt(n2[0]*n2[0]+n2[1]*n2[1]+n2[2]*n2[2]));
 
 		return ((cosa < 0.0) ^ (cosb < 0.0)) ? (byte)Molecule.cBondParityEor1 : Molecule.cBondParityZor2;
 		}
@@ -3196,7 +3196,7 @@ System.out.println();
 		encodeBits(keepAbsoluteValues ? 1 : 0, 1);
 		encodeBits(resolutionBits/2, 4);	// resolution bits devided by 2
 
-		float maxDelta = 0.0f;
+		double maxDelta = 0.0;
 		for (int i=1; i<mMol.getAtoms(); i++)
 			maxDelta = getMaxDelta(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDelta);
 		if (includeHydrogenCoordinates) {
@@ -3213,8 +3213,8 @@ System.out.println();
 			}
 
 		int binCount = (1 << resolutionBits);
-		float increment = maxDelta / (binCount / 2.0f - 1);
-		float maxDeltaPlusHalfIncrement = maxDelta + increment / 2.0f;
+		double increment = maxDelta / (binCount / 2.0 - 1);
+		double maxDeltaPlusHalfIncrement = maxDelta + increment / 2.0;
 
 		for (int i=1; i<mMol.getAtoms(); i++)
 			encodeAtomCoords(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDeltaPlusHalfIncrement, increment, resolutionBits);
@@ -3227,8 +3227,8 @@ System.out.println();
 			}
 
 		if (keepAbsoluteValues) {
-			float avblDefault = mZCoordinatesAvailable ? 1.5f : Molecule.cDefaultAverageBondLength;
-			float avbl = mMol.getAverageBondLength(mMol.getAtoms(), mMol.getBonds(), avblDefault);
+			double avblDefault = mZCoordinatesAvailable ? 1.5 : Molecule.cDefaultAverageBondLength;
+			double avbl = mMol.getAverageBondLength(mMol.getAtoms(), mMol.getBonds(), avblDefault);
 			encodeBits(encodeABVL(avbl, binCount), resolutionBits);
 
 			encodeBits(encodeShift(mMol.getAtomX(mGraphAtom[0]) / avbl, binCount), resolutionBits);
@@ -3241,22 +3241,22 @@ System.out.println();
 		mCoordinates = encodeBitsEnd();
 		}
 
-	private float getMaxDelta(int atom, int from, float maxDelta) {
-		float deltaX = (from == -1) ?
-						Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0f
+	private double getMaxDelta(int atom, int from, double maxDelta) {
+		double deltaX = (from == -1) ?
+						Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0
 					  : Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(from));
 		if (maxDelta < deltaX)
 			maxDelta = deltaX;
 
-		float deltaY = (from == -1) ?
-						Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0f
+		double deltaY = (from == -1) ?
+						Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0
 					  : Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(from));
 		if (maxDelta < deltaY)
 			maxDelta = deltaY;
 
 		if (mZCoordinatesAvailable) {
-			float deltaZ = (from == -1) ?
-							Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0f
+			double deltaZ = (from == -1) ?
+							Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0
 						  : Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(from));
 			if (maxDelta < deltaZ)
 				maxDelta = deltaZ;
@@ -3265,21 +3265,21 @@ System.out.println();
 		return maxDelta;
 		}
 
-	private void encodeAtomCoords(int atom, int from, float maxDeltaPlusHalfIncrement, float increment, int resolutionBits) {
-		float deltaX = (from == -1) ?
-						(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0f
+	private void encodeAtomCoords(int atom, int from, double maxDeltaPlusHalfIncrement, double increment, int resolutionBits) {
+		double deltaX = (from == -1) ?
+						(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0
 					   : mMol.getAtomX(atom) - mMol.getAtomX(from);
 
-		float deltaY = (from == -1) ?
-						(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0f
+		double deltaY = (from == -1) ?
+						(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0
 					   : mMol.getAtomY(atom) - mMol.getAtomY(from);
 
 		encodeBits((int)((maxDeltaPlusHalfIncrement + deltaX) / increment), resolutionBits);
 		encodeBits((int)((maxDeltaPlusHalfIncrement + deltaY) / increment), resolutionBits);
 
 		if (mZCoordinatesAvailable) {
-			float deltaZ = (from == -1) ?
-							(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0f
+			double deltaZ = (from == -1) ?
+							(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0
 						   : mMol.getAtomZ(atom) - mMol.getAtomZ(from);
 
 			encodeBits((int)((maxDeltaPlusHalfIncrement + deltaZ) / increment), resolutionBits);
@@ -3291,16 +3291,16 @@ System.out.println();
 	 * @param value
 	 * @return
 	 */
-	private int encodeABVL(float value, int binCount) {
+	private int encodeABVL(double value, int binCount) {
 		return Math.min(binCount-1, Math.max(0, (int)(0.5 + Math.log10(value/0.1) / Math.log10(200/0.1) * (binCount-1))));
 		}
 
-	private int encodeShift(float value, int binCount) {
+	private int encodeShift(double value, int binCount) {
 		int halfBinCount = binCount / 2;
 		boolean isNegative =  (value < 0);
 		value = Math.abs(value);
-		float steepness = (float)binCount/32f;
-		int intValue = Math.min(halfBinCount-1, Math.round(value * halfBinCount / (value + steepness)));
+		double steepness = binCount/32;
+		int intValue = Math.min(halfBinCount-1, (int)Math.round(value * halfBinCount / (value + steepness)));
 		return isNegative ? halfBinCount + intValue : intValue;
 		}
 
@@ -4367,13 +4367,13 @@ class EZHalfParity {
 				}
 			}
 
-		float angleDB = mMol.getBondAngle(mCentralAxialAtom,mRemoteAxialAtom);
-		float angleHigh = mMol.getBondAngle(mCentralAxialAtom,mHighConn);
+		double angleDB = mMol.getBondAngle(mCentralAxialAtom,mRemoteAxialAtom);
+		double angleHigh = mMol.getBondAngle(mCentralAxialAtom,mHighConn);
 		if (angleHigh < angleDB)
 			angleHigh += Math.PI*2;
 
 		if (mMol.getAllConnAtoms(mCentralAxialAtom) == 2) {
-			float angleDif = angleHigh - angleDB;
+			double angleDif = angleHigh - angleDB;
 			if ((angleDif > Math.PI - 0.05) && (angleDif < Math.PI + 0.05)) {
 				mValue = -1;	// less than 3 degrees different from double bond
 				return mValue;	// is counted as non-stereo-specified double bond
@@ -4382,7 +4382,7 @@ class EZHalfParity {
 			return mValue;
 			}
 		else {
-			float angleOther = mMol.getBondAngle(mCentralAxialAtom,mLowConn);
+			double angleOther = mMol.getBondAngle(mCentralAxialAtom,mLowConn);
 			if (angleOther < angleDB)
 				angleOther += Math.PI*2;
 			mValue = (angleOther < angleHigh) ? 2 : 4;

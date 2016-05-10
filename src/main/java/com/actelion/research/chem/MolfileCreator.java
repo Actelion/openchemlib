@@ -125,22 +125,22 @@ public class MolfileCreator {
             }
         }
 
-        float grafac = 1.0f;
+        double grafac = 1.0;
 
         if (hasCoordinates && scale) {
-            float avbl = mol.getAverageBondLength();
+            double avbl = mol.getAverageBondLength();
             if (avbl != 0.0f) {
             	if (avbl < 1.0f || avbl > 3.0f)
             		grafac = TARGET_AVBL / avbl;
             	}
             else { // make the minimum distance between any two atoms twice as long as TARGET_AVBL
-                float minDistance = Float.MAX_VALUE;
+                double minDistance = Double.MAX_VALUE;
                 for (int atom1=1; atom1<mol.getAllAtoms(); atom1++) {
                     for (int atom2=0; atom2<atom1; atom2++) {
-                    	float dx = mol.getAtomX(atom2) - mol.getAtomX(atom1);
-                    	float dy = mol.getAtomY(atom2) - mol.getAtomY(atom1);
-                    	float dz = mol.getAtomZ(atom2) - mol.getAtomZ(atom1);
-                    	float distance = dx*dx + dy*dy + dz*dz;
+                        double dx = mol.getAtomX(atom2) - mol.getAtomX(atom1);
+                        double dy = mol.getAtomY(atom2) - mol.getAtomY(atom1);
+                        double dz = mol.getAtomZ(atom2) - mol.getAtomZ(atom1);
+                        double distance = dx*dx + dy*dy + dz*dz;
                         if (minDistance > distance)
                             minDistance = distance;
                         }

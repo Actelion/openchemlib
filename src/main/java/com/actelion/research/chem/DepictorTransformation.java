@@ -36,7 +36,7 @@ package com.actelion.research.chem;
 import java.awt.geom.*;
 
 public class DepictorTransformation {
-    private float mOffsetX,mOffsetY,mScaling;
+    private double mOffsetX,mOffsetY,mScaling;
 
     public DepictorTransformation() {
         clear();
@@ -48,15 +48,15 @@ public class DepictorTransformation {
         mOffsetY = t.mOffsetY;
         }
 
-	public DepictorTransformation(float scaling, float offsetX, float offsetY) {
+	public DepictorTransformation(double scaling, double offsetX, double offsetY) {
         mScaling = scaling;
         mOffsetX = offsetX;
         mOffsetY = offsetY;
         }
 
-    public DepictorTransformation(Rectangle2D.Float bounds,
-                                  Rectangle2D.Float view,
-                                  float averageBondLength,
+    public DepictorTransformation(Rectangle2D.Double bounds,
+                                  Rectangle2D.Double view,
+                                  double averageBondLength,
                                   int mode) {
             // calculates transformation needed to transfer bounds into view considering mode.
             // averageBondLength may be 0 if (mode & cModeInflateToMaxAVBL) == 0.
@@ -67,8 +67,8 @@ public class DepictorTransformation {
                 // check if bounds fit in view. If not then center and reduce if needed
                 if (!view.contains(bounds)) {
                     if ((bounds.width > view.width) || (bounds.height > view.height)) {
-                    	float hScaling = view.width / bounds.width;
-                    	float vScaling = view.height / bounds.height;
+                        double hScaling = view.width / bounds.width;
+                        double vScaling = view.height / bounds.height;
                         mScaling = Math.min(hScaling, vScaling);
                         }
 
@@ -89,16 +89,16 @@ public class DepictorTransformation {
                 }
             else {
                 // inflate to maximum bond length or maximum that fits
-            	float hScaling = view.width / bounds.width;
-            	float vScaling = view.height / bounds.height;
+                double hScaling = view.width / bounds.width;
+                double vScaling = view.height / bounds.height;
 
-            	float maxAVBL = mode & AbstractDepictor.cModeMaxBondLength;
+                double maxAVBL = mode & AbstractDepictor.cModeMaxBondLength;
             	if (maxAVBL == 0)
             		maxAVBL = AbstractDepictor.cOptAvBondLen;
             	else if ((mode & AbstractDepictor.cModeInflateToHighResAVBL) != 0)
             		maxAVBL /= 256;
 
-            	float bScaling = maxAVBL / averageBondLength;
+                double bScaling = maxAVBL / averageBondLength;
 
                 mScaling = Math.min(bScaling, Math.min(hScaling, vScaling));
 
@@ -107,7 +107,7 @@ public class DepictorTransformation {
                 }
             }
         else if ((mode & AbstractDepictor.cModeInflateToMaxAVBL) != 0) {
-        	float maxAVBL = ((mode & AbstractDepictor.cModeMaxBondLength) != 0) ?
+            double maxAVBL = ((mode & AbstractDepictor.cModeMaxBondLength) != 0) ?
                                mode & AbstractDepictor.cModeMaxBondLength : AbstractDepictor.cOptAvBondLen;
             mScaling = maxAVBL / averageBondLength;
             }
@@ -119,33 +119,33 @@ public class DepictorTransformation {
         mScaling = 1.0f;
         }
 
-    public float transformX(float x) {
+    public double transformX(double x) {
         return x*mScaling+mOffsetX;
         }
 
-    public float transformY(float y) {
+    public double transformY(double y) {
         return y*mScaling+mOffsetY;
         }
 
-    public float getScaling() {
+    public double getScaling() {
         return mScaling;
         }
 
-    public float getOffsetX()
+    public double getOffsetX()
     {
         return mOffsetX;
     }
 
-    public float getOffsetY()
+    public double getOffsetY()
     {
         return mOffsetY;
     }
 
-    public void move(float dx, float dy) {
+    public void move(double dx, double dy) {
         mOffsetX += dx;
         mOffsetY += dy;
         }
-    public void setScaling(float scale) {
+    public void setScaling(double scale) {
         mScaling = scale;
         }
 
@@ -159,12 +159,12 @@ public class DepictorTransformation {
         t.mOffsetY = t.mOffsetY * mScaling + mOffsetY;
         }
 
-    public void applyTo(Point2D.Float p) {
+    public void applyTo(Point2D.Double p) {
         p.x = p.x * mScaling + mOffsetX;
         p.y = p.y * mScaling + mOffsetY;
         }
 
-    public void applyTo(Rectangle2D.Float r) {
+    public void applyTo(Rectangle2D.Double r) {
         r.x = r.x * mScaling + mOffsetX;
         r.y = r.y * mScaling + mOffsetY;
         r.width *= mScaling;

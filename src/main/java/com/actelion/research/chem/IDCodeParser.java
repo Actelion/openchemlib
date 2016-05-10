@@ -238,10 +238,10 @@ public class IDCodeParser {
 		mMol.setAtomZ(0, 0.0);
 
 		boolean decodeOldCoordinates = (coordinates != null && coordinates[0] >= '\'');
-		float targetAVBL = 0.0f;
-		float xOffset = 0.0f;
-		float yOffset = 0.0f;
-		float zOffset = 0.0f;
+		double targetAVBL = 0.0;
+		double xOffset = 0.0;
+		double yOffset = 0.0;
+		double zOffset = 0.0;
 		boolean coordsAre3D = false;
 		boolean coordsAreAbsolute = false;
 
@@ -252,17 +252,17 @@ public class IDCodeParser {
 				coordsAre3D = (coordinates.length == 3*allAtoms-3+9);
 				int index = coordsAre3D ? 3*allAtoms-3 : 2*allAtoms-2;
 				int avblInt = 86*((int)coordinates[index+1]-40)+(int)coordinates[index+2]-40;
-				targetAVBL = (float)Math.pow(10.0, avblInt/2000.0-1.0);
+				targetAVBL = Math.pow(10.0, avblInt/2000.0-1.0);
 				index += 2;
 				int xInt = 86*((int)coordinates[index+1]-40)+(int)coordinates[index+2]-40;
-				xOffset = (float)Math.pow(10.0, xInt/1500.0-1.0);
+				xOffset = Math.pow(10.0, xInt/1500.0-1.0);
 				index += 2;
 				int yInt = 86*((int)coordinates[index+1]-40)+(int)coordinates[index+2]-40;
-				yOffset = (float)Math.pow(10.0, yInt/1500.0-1.0);
+				yOffset = Math.pow(10.0, yInt/1500.0-1.0);
 				if (coordsAre3D) {
 					index += 2;
 					int zInt = 86*((int)coordinates[index+1]-40)+(int)coordinates[index+2]-40;
-					zOffset = (float)Math.pow(10.0, zInt/1500.0-1.0);
+					zOffset = Math.pow(10.0, zInt/1500.0-1.0);
 					}
 				}
 			else {
@@ -636,17 +636,17 @@ public class IDCodeParser {
 				int resolutionBits = 2 * decodeBits(4);
 				int binCount = (1 << resolutionBits);
 
-				float factor = 0.0f;
+				double factor = 0.0;
 				int from = 0;
 				int bond = 0;
 				for (int atom=1; atom<allAtoms; atom++) {
 					if (bond<allBonds && mMol.getBondAtom(1, bond) == atom) {
 						from = mMol.getBondAtom(0, bond++);
-						factor = 1.0f;
+						factor = 1.0;
 						}
 					else {
 						from = 0;
-						factor = 8.0f;
+						factor = 8.0;
 						}
 					mMol.setAtomX(atom, mMol.getAtomX(from) + factor * (decodeBits(resolutionBits) - binCount/2));
 					mMol.setAtomY(atom, mMol.getAtomY(from) + factor * (decodeBits(resolutionBits) - binCount/2));
@@ -694,7 +694,7 @@ public class IDCodeParser {
 						}
 					}
 				else {	// with new format 2D and 3D coordinates are scaled to average bond lengths of 1.5 Angstrom
-					targetAVBL = 1.5f;
+					targetAVBL = 1.5;
 					factor = targetAVBL / mMol.getAverageBondLength(true);
 					for (int atom=0; atom<allAtoms; atom++) {
 						mMol.setAtomX(atom, factor * mMol.getAtomX(atom));
@@ -706,18 +706,18 @@ public class IDCodeParser {
 				}
 			else {	// old coordinate format
 				if (coordsAre3D && !coordsAreAbsolute && targetAVBL == 0.0) // if no scaling factor is given, then scale to mean bond length = 1.5
-					targetAVBL = 1.5f;
+					targetAVBL = 1.5;
 
-				if (targetAVBL != 0.0f && mMol.getAllBonds() != 0) {
-					float avbl = 0.0f;
+				if (targetAVBL != 0.0 && mMol.getAllBonds() != 0) {
+					double avbl = 0.0;
 					for (int bond=0; bond<mMol.getAllBonds(); bond++) {
-						float dx = mMol.getAtomX(mMol.getBondAtom(0, bond)) - mMol.getAtomX(mMol.getBondAtom(1, bond));
-						float dy = mMol.getAtomY(mMol.getBondAtom(0, bond)) - mMol.getAtomY(mMol.getBondAtom(1, bond));
-						float dz = coordsAre3D ? mMol.getAtomZ(mMol.getBondAtom(0, bond)) - mMol.getAtomZ(mMol.getBondAtom(1, bond)) : 0.0f;
+						double dx = mMol.getAtomX(mMol.getBondAtom(0, bond)) - mMol.getAtomX(mMol.getBondAtom(1, bond));
+						double dy = mMol.getAtomY(mMol.getBondAtom(0, bond)) - mMol.getAtomY(mMol.getBondAtom(1, bond));
+						double dz = coordsAre3D ? mMol.getAtomZ(mMol.getBondAtom(0, bond)) - mMol.getAtomZ(mMol.getBondAtom(1, bond)) : 0.0f;
 						avbl += Math.sqrt(dx*dx + dy*dy + dz*dz);
 						}
 					avbl /= mMol.getAllBonds();
-					float f = targetAVBL / avbl;
+					double f = targetAVBL / avbl;
 					for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 						mMol.setAtomX(atom, mMol.getAtomX(atom) * f + xOffset);
 						mMol.setAtomY(atom, mMol.getAtomY(atom) * f + yOffset);
@@ -934,18 +934,18 @@ public class IDCodeParser {
 		return data;
 		}
 
-	private float decodeAVBL(int value, int binCount) {
-		return (float)Math.pow(10, Math.log10(200/0.1) * value / (binCount - 1) - 1f);
+	private double decodeAVBL(int value, int binCount) {
+		return Math.pow(10, Math.log10(200/0.1) * value / (binCount - 1) - 1);
 		}
 
-	private float decodeShift(int value, int binCount) {
+	private double decodeShift(int value, int binCount) {
 		int halfBinCount = binCount / 2;
 		boolean isNegative = (value >= halfBinCount);
 		if (isNegative)
 			value -= halfBinCount;
-		float steepness = (float)binCount/32f;
-		float floatValue = steepness * value / ((float)halfBinCount - value);
-		return isNegative ? -floatValue : floatValue;
+		double steepness = binCount/32;
+		double doubleValue = steepness * value / (halfBinCount - value);
+		return isNegative ? -doubleValue : doubleValue;
 		}
 
 	public void printContent(byte[] idcode, byte[] coordinates) {
@@ -1332,19 +1332,19 @@ public class IDCodeParser {
 				boolean coordsAreAbsolute = (decodeBits(1) == 1);
 				int resolutionBits = 2 * decodeBits(4);
 				int binCount = (1 << resolutionBits);
-	
-				float factor = 0.0f;
-				float[][] coords = new float[coordsAre3D?3:2][allAtoms];
+
+				double factor = 0.0;
+				double[][] coords = new double[coordsAre3D?3:2][allAtoms];
 				int from = 0;
 				int bond = 0;
 				for (int atom=1; atom<allAtoms; atom++) {
 					if (bond<allBonds && bondAtom[1][bond] == atom) {
 						from = bondAtom[0][bond++];
-						factor = 1.0f;
+						factor = 1.0;
 						}
 					else {
 						from = 0;
-						factor = 8.0f;
+						factor = 8.0;
 						}
 					coords[0][atom] = coords[0][from] + factor * (decodeBits(resolutionBits) - binCount/2);
 					coords[1][atom] = coords[1][from] + factor * (decodeBits(resolutionBits) - binCount/2);
@@ -1353,11 +1353,11 @@ public class IDCodeParser {
 					}
 
 				// with new format 2D and 3D coordinates are scaled to average bond lengths of 1.5 Angstrom
-				float avbl = 0f;
+				double avbl = 0;
 				for (bond=0; bond<allBonds; bond++) {
-					float dx = coords[0][bondAtom[0][bond]] - coords[0][bondAtom[1][bond]];
-					float dy = coords[1][bondAtom[0][bond]] - coords[1][bondAtom[1][bond]];
-					float dz = coordsAre3D ? coords[2][bondAtom[0][bond]] - coords[2][bondAtom[1][bond]] : 0f;
+					double dx = coords[0][bondAtom[0][bond]] - coords[0][bondAtom[1][bond]];
+					double dy = coords[1][bondAtom[0][bond]] - coords[1][bondAtom[1][bond]];
+					double dz = coordsAre3D ? coords[2][bondAtom[0][bond]] - coords[2][bondAtom[1][bond]] : 0;
 					avbl += Math.sqrt(dx*dx + dy*dy + dz*dz);
 				}
 				avbl /= allBonds;	// avbl without hydrogen atoms
@@ -1385,10 +1385,10 @@ public class IDCodeParser {
 				}
 
 				if (coordsAreAbsolute) {
-					float targetAVBL = decodeAVBL(decodeBits(resolutionBits), binCount);
-					float xOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
-					float yOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
-					float zOffset = 0;
+					double targetAVBL = decodeAVBL(decodeBits(resolutionBits), binCount);
+					double xOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
+					double yOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
+					double zOffset = 0;
 					if (coordsAre3D)
 						zOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
 					System.out.println("Abs-coord transformation: targetAVBL:"+targetAVBL+" xOffset:"+xOffset+" yOffset:"+yOffset+" zOffset:"+zOffset);
@@ -1402,7 +1402,7 @@ public class IDCodeParser {
 					}
 				}
 				else {
-					float targetAVBL = 1.5f;
+					double targetAVBL = 1.5;
 					factor = targetAVBL / avbl;
 					for (int atom=0; atom<allAtoms; atom++) {
 						coords[0][atom] = coords[0][atom] * factor;
@@ -1414,9 +1414,9 @@ public class IDCodeParser {
 
 				System.out.print(coordsAreAbsolute ? "absolute coords:" : "relative coords:");
 				for (int atom=0; atom<allAtoms; atom++) {
-					System.out.print(" "+((int)(1000f*coords[0][atom]))/1000f+","+((int)(1000f*coords[1][atom]))/1000f);
+					System.out.print(" "+((int)(1000*coords[0][atom]))/1000+","+((int)(1000*coords[1][atom]))/1000);
 					if (coordsAre3D)
-						System.out.print(","+((int)(1000f*coords[2][atom]))/1000f);
+						System.out.print(","+((int)(1000*coords[2][atom]))/1000);
 					}
 				System.out.println();
 				if (hydrogenCount != 0)

@@ -31,59 +31,24 @@
 *
 */
 
-package com.actelion.research.share.gui.editor.geom;
+package com.actelion.research.share.gui.editor.chem;
 
+import com.actelion.research.chem.DepictorTransformation;
+import com.actelion.research.share.gui.editor.geom.IDrawContext;
 
 /**
  * Project:
  * User: rufenec
  * Date: 11/24/2014
- * Time: 3:22 PM
+ * Time: 3:28 PM
  */
-public interface IDrawContext<T>
+public interface IDrawingObject
 {
-
-    T getNative();
-
-    void drawLine(double x, double y, double x1, double y1);
-
-    void drawDashedLine(double srcx, double srcy, double targetx, double targety, int[] dashPattern);
-
-    void drawPolygon(IPolygon polygon);
-
-//    void drawArrow(double[] px, double[] py, boolean selected);
-
-    java.awt.Dimension getBounds(String s);
-
-    void setFont(String helvetica, double size,boolean bold);
-
-    String getFont();
-
-    void setFill(long color);
-
-    void fillText(String str, double x, double y);
-
-    void save();
-
-    void restore();
-
-    void drawRect(double x, double y, double width, double height);
-
-    void drawText(String s, double x, double y, boolean centerHorz, boolean centerVert);
-
-    void clearRect(double x, double y, double w, double h);
-
-    void setStroke(long color);
-
-    void fillElipse(double v, double v1, double highlightAtomDiameter, double highlightAtomDiameter1);
-
-    void fillRect(double x, double y, double w, double h);
-
-    void strokeLine(double x, double y, double x1, double y1);
-
-    void fillPolygon(double[] px, double[] py, int i);
-
-    void setLineWidth(double i);
-
-
+    void setSelected(boolean b);
+    boolean isSelected();
+    void move(float v, float v1);
+    java.awt.geom.Rectangle2D getBoundingRect();
+    void setRect(float x,float y, float w, float h);
+    void scale(float scaling);
+    void draw(IDrawContext ctx,DepictorTransformation t);
 }

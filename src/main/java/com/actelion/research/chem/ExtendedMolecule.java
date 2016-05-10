@@ -381,7 +381,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @param nonHydrogenBondsOnly
 	 * @return
 	 */
-	public float getAverageBondLength(boolean nonHydrogenBondsOnly) {
+	public double getAverageBondLength(boolean nonHydrogenBondsOnly) {
 		if (nonHydrogenBondsOnly) {
 			ensureHelperArrays(cHelperNeighbours);
 			return getAverageBondLength(mAtoms, mBonds);
@@ -1521,7 +1521,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		int[] sortedConnMap = getSortedConnMap(atom);
 
-		float angle[] = new float[mAllConnAtoms[atom]];
+		double angle[] = new double[mAllConnAtoms[atom]];
 		for (int i=0; i<mAllConnAtoms[atom]; i++)
 			angle[i] = getBondAngle(mConnAtom[atom][sortedConnMap[i]], atom);
 
@@ -1640,7 +1640,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
-	private boolean setFisherProjectionStereoBondsFromParity(int atom, int[] sortedConnMap, float[] angle) {
+	private boolean setFisherProjectionStereoBondsFromParity(int atom, int[] sortedConnMap, double[] angle) {
 		int[] direction = new int[mAllConnAtoms[atom]];
 		int parity = getFisherProjectionParity(atom, sortedConnMap, angle, direction);
 		if (parity == cAtomParityUnknown)
@@ -1672,7 +1672,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @param direction null or int[] large enough to receive bond directions
 	 * @return cAtomParity1,cAtomParity2 or cAtomParityUnknown
 	 */
-	public int getFisherProjectionParity(int atom, int[] sortedConnMap, float[] angle, int[] direction) {
+	public int getFisherProjectionParity(int atom, int[] sortedConnMap, double[] angle, int[] direction) {
 		if (direction == null)
 			direction = new int[mAllConnAtoms[atom]];
 		if (!getFisherProjectionBondDirections(atom, sortedConnMap, angle, direction))
@@ -1710,7 +1710,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @param direction array large enough to receive bond directions
 	 * @return false if fisher projection conditions are not met
 	 */
-	private boolean getFisherProjectionBondDirections(int atom, int[] sortedConnMap, float[] angle, int[] direction) {
+	private boolean getFisherProjectionBondDirections(int atom, int[] sortedConnMap, double[] angle, int[] direction) {
 		if (mPi[atom] != 0
 		 || isAromaticAtom(atom)
 		 || mConnAtoms[atom] < 3
@@ -1719,7 +1719,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		boolean[] isUsed = new boolean[4];
 		for (int i=0; i<mAllConnAtoms[atom]; i++) {
-			float a = (float)Math.PI*5/4 - angle[i];
+			double a = Math.PI*5/4 - angle[i];
 			if (Math.abs(Math.PI/4 - (a % (Math.PI/2))) > FISCHER_PROJECTION_LIMIT)
 				return false;
 
@@ -1805,8 +1805,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				oppositeAtom[oppositeAtoms++] = connAtom;
 			}
 
-		float alleneAngle = getBondAngle(atom, oppositeAlleneAtom);
-		float angleDif = 0.0f;
+		double alleneAngle = getBondAngle(atom, oppositeAlleneAtom);
+		double angleDif = 0.0;
 
 		if (oppositeAtoms == 2) {
 			if (oppositeAtom[0] > oppositeAtom[1]) {
@@ -1815,15 +1815,12 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				oppositeAtom[1] = temp;
 				}
 
-			float hpAngleDif = getAngleDif(alleneAngle,
-											getBondAngle(oppositeAlleneAtom, oppositeAtom[0]));
-			float lpAngleDif = getAngleDif(alleneAngle,
-											getBondAngle(oppositeAlleneAtom, oppositeAtom[1]));
+			double hpAngleDif = getAngleDif(alleneAngle, getBondAngle(oppositeAlleneAtom, oppositeAtom[0]));
+			double lpAngleDif = getAngleDif(alleneAngle, getBondAngle(oppositeAlleneAtom, oppositeAtom[1]));
 			angleDif = hpAngleDif - lpAngleDif;
 			}
 		else {
-			angleDif = getAngleDif(alleneAngle,
-								   getBondAngle(oppositeAlleneAtom, oppositeAtom[0]));
+			angleDif = getAngleDif(alleneAngle, getBondAngle(oppositeAlleneAtom, oppositeAtom[0]));
 			}
 
 		if ((angleDif < 0.0)
@@ -1900,8 +1897,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			if (mConnBond[oppositeBINAPAtom][i] != bond)
 				oppositeAtom[oppositeAtoms++] = mConnAtom[oppositeBINAPAtom][i];
 
-		float binapAngle = getBondAngle(preferredBINAPAtom, oppositeBINAPAtom);
-		float angleDif = 0.0f;
+		double binapAngle = getBondAngle(preferredBINAPAtom, oppositeBINAPAtom);
+		double angleDif = 0.0;
 
 		if (oppositeAtoms == 2) {
 			if (oppositeAtom[0] > oppositeAtom[1]) {
@@ -1910,8 +1907,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				oppositeAtom[1] = temp;
 				}
 
-			float hpAngleDif = getAngleDif(binapAngle, getBondAngle(oppositeBINAPAtom, oppositeAtom[0]));
-			float lpAngleDif = getAngleDif(binapAngle, getBondAngle(oppositeBINAPAtom, oppositeAtom[1]));
+			double hpAngleDif = getAngleDif(binapAngle, getBondAngle(oppositeBINAPAtom, oppositeAtom[0]));
+			double lpAngleDif = getAngleDif(binapAngle, getBondAngle(oppositeBINAPAtom, oppositeAtom[1]));
 			angleDif = hpAngleDif - lpAngleDif;
 			}
 		else {
@@ -1927,8 +1924,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
-	protected boolean bondsAreParallel(float angle1, float angle2) {
-		float angleDif = Math.abs(getAngleDif(angle1, angle2));
+	protected boolean bondsAreParallel(double angle1, double angle2) {
+		double angleDif = Math.abs(getAngleDif(angle1, angle2));
 		return (angleDif < 0.08 || angleDif > Math.PI - 0.08);
 		}
 
@@ -1936,7 +1933,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	private int preferredTHStereoBond(int atom) {
 		// If we have two (anti-)parallel bonds, the we need to select
 		// that one of those that is closest to the other bonds.
-		float[] angle = new float[mAllConnAtoms[atom]];
+		double[] angle = new double[mAllConnAtoms[atom]];
 		for (int i=0; i<mAllConnAtoms[atom]; i++)
 			angle[i] = getBondAngle(atom, mConnAtom[atom][i]);
 		for (int i=1; i<mAllConnAtoms[atom]; i++) {
@@ -2206,12 +2203,12 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	
 	public void validate() throws Exception {
-		float avbl = getAverageBondLength();
-		float minDistanceSquare = avbl * avbl / 16.0f;
+		double avbl = getAverageBondLength();
+		double minDistanceSquare = avbl * avbl / 16.0;
 		for (int atom1=1; atom1<mAllAtoms; atom1++) {
 			for (int atom2=0; atom2<atom1; atom2++) {
-				float xdif = mAtomX[atom2] - mAtomX[atom1];
-				float ydif = mAtomY[atom2] - mAtomY[atom1];
+				double xdif = mCoordinates[atom2].x - mCoordinates[atom1].x;
+				double ydif = mCoordinates[atom2].y - mCoordinates[atom1].y;
 				if ((xdif*xdif + ydif*ydif) < minDistanceSquare)
 					throw new Exception("The distance between two atoms is too close.");
 				}

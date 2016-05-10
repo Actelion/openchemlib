@@ -45,7 +45,7 @@ public class Depictor2D extends AbstractDepictor {
     private static boolean isMac = (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0);
 
     private int			mpTextSize;
-	private float      mCurrentStringWidth;
+	private double      mCurrentStringWidth;
 	private float		mLineWidth;
 	private ArrayList<Font>	mFonts;
 	private String      mCurrentString;
@@ -72,9 +72,9 @@ public class Depictor2D extends AbstractDepictor {
 	protected void drawBlackLine(DepictorLine theLine) {
 		// Lines on OSX are shifted left and down when drawn in Graphics2D by 0.5. We must compensate.
 		if (isMacintosh())
-			((Graphics2D)mG).draw(new Line2D.Float(theLine.x1-0.5f, theLine.y1-0.5f, theLine.x2-0.5f, theLine.y2-0.5f));
+			((Graphics2D)mG).draw(new Line2D.Double(theLine.x1-0.5, theLine.y1-0.5, theLine.x2-0.5, theLine.y2-0.5));
 		else
-			((Graphics2D)mG).draw(new Line2D.Float(theLine.x1, theLine.y1, theLine.x2, theLine.y2));
+			((Graphics2D)mG).draw(new Line2D.Double(theLine.x1, theLine.y1, theLine.x2, theLine.y2));
 		}
 
 
@@ -94,15 +94,14 @@ public class Depictor2D extends AbstractDepictor {
         }
 
 
-	protected void drawString(String theString, float x, float y) {
-		float strWidth = getStringWidth(theString);
-		((Graphics2D)mG).drawGlyphVector(mCurrentGlyphVector,
-									     (float)(x-strWidth/2.0),
-									     (float)(y+(float)mpTextSize/3.0));
+	protected void drawString(String theString, double x, double y) {
+		double strWidth = getStringWidth(theString);
+		((Graphics2D)mG).drawGlyphVector(mCurrentGlyphVector, (float)(x-strWidth/2.0),
+										(float)(y+(float)mpTextSize/3.0));
 		}
 
 
-	protected void drawPolygon(float[] x, float[] y, int count) {
+	protected void drawPolygon(double[] x, double[] y, int count) {
 		GeneralPath polygon = new GeneralPath(GeneralPath.WIND_NON_ZERO, count);
 		polygon.moveTo((float)x[0], (float)y[0]);
 		for (int i=1; i<count; i++)
@@ -123,21 +122,21 @@ public class Depictor2D extends AbstractDepictor {
 		}
 
 
-	protected void fillCircle(float x, float y, float r) {
+	protected void fillCircle(double x, double y, double r) {
 		if (isMacintosh())
-			((Graphics2D)mG).fill(new Ellipse2D.Float(x-0.5f, y-0.5f, r, r));
+			((Graphics2D)mG).fill(new Ellipse2D.Double(x-0.5f, y-0.5f, r, r));
 		else
-			((Graphics2D)mG).fill(new Ellipse2D.Float(x, y, r, r));
+			((Graphics2D)mG).fill(new Ellipse2D.Double(x, y, r, r));
 		}
 
 
-	protected float getStringWidth(String theString) {
+	protected double getStringWidth(String theString) {
 		if (!theString.equals(mCurrentString)
 		 || mCurrentFont != ((Graphics2D)mG).getFont()) {
 			mCurrentString = theString;
 			mCurrentFont = ((Graphics2D)mG).getFont();
 			mCurrentGlyphVector = ((Graphics2D)mG).getFont().createGlyphVector(((Graphics2D)mG).getFontRenderContext(), theString);
-			mCurrentStringWidth = (float)mCurrentGlyphVector.getLogicalBounds().getWidth();
+			mCurrentStringWidth = mCurrentGlyphVector.getLogicalBounds().getWidth();
 		    }
 		return mCurrentStringWidth;
 		}
@@ -167,12 +166,12 @@ public class Depictor2D extends AbstractDepictor {
         }
 
 
-	protected float getLineWidth() {
+	protected double getLineWidth() {
 		return mLineWidth;
 		}
 
 
-	protected void setLineWidth(float lineWidth) {
+	protected void setLineWidth(double lineWidth) {
 		mLineWidth = (float)lineWidth;
 		((Graphics2D)mG).setStroke(new BasicStroke((float)lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		}

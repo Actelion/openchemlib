@@ -114,7 +114,7 @@ public class CursorHelper {
 		return sCursor[cursor];
 		}
 
-	private static Cursor createCursor(int cursor) {
+	public static Cursor createCursor(int cursor) {
 		if (cursor<cCursorData.length) {
 			Toolkit tk = Toolkit.getDefaultToolkit();
 			Dimension size = tk.getBestCursorSize(16, 16);

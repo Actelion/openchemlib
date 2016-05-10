@@ -33,14 +33,10 @@
 
 package com.actelion.research.chem;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Shape;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-
-import javax.swing.UIManager;
 
 
 public abstract class AbstractDrawingObject {
@@ -50,12 +46,12 @@ public abstract class AbstractDrawingObject {
 
     protected static final Color SELECTION_COLOR = UIManager.getColor("TextArea.selectionBackground");
 
-	protected Point2D.Float[]	mPoint;
+	protected Point2D.Double[]	mPoint;
 	protected boolean			mIsSelected,mProtectedFromDeletion;
 
-	protected float			mTransformationReferenceX,mTransformationReferenceY;
-	protected float			mTransformationValue1[];
-	protected float			mTransformationValue2[];
+	protected double			mTransformationReferenceX,mTransformationReferenceY;
+	protected double			mTransformationValue1[];
+	protected double			mTransformationValue2[];
 
 	abstract public void draw(Graphics g, DepictorTransformation t);
 	abstract public void draw2D(Graphics2D g, DepictorTransformation t);
@@ -68,9 +64,9 @@ public abstract class AbstractDrawingObject {
 	 * @param y
 	 * @return
 	 */
-	abstract public boolean contains(float x, float y);
+	abstract public boolean contains(double x, double y);
 
-	abstract public boolean checkHiliting(float x, float y);
+	abstract public boolean checkHiliting(double x, double y);
 	abstract public AbstractDrawingObject clone();
 
 	/**
@@ -87,7 +83,7 @@ public abstract class AbstractDrawingObject {
 		return DrawingObjectFactory.createObject(descriptor);
 		}
 
-	public void move(float dx, float dy) {
+	public void move(double dx, double dy) {
 		if (mPoint != null) {
 			for (int i=0; i<mPoint.length; i++) {
 				mPoint[i].x += dx;
@@ -96,7 +92,7 @@ public abstract class AbstractDrawingObject {
 			}
 		}
 
-	public void scale(float f) {
+	public void scale(double f) {
 		if (mPoint != null) {
 			for (int i=0; i<mPoint.length; i++) {
 				mPoint[i].x *= f;
@@ -121,11 +117,11 @@ public abstract class AbstractDrawingObject {
 		mIsSelected = s;
 		}
 
-	public Rectangle2D.Float getBoundingRect() {
+	public Rectangle2D.Double getBoundingRect() {
 		if (mPoint == null)
 			return null;
 
-		Rectangle2D.Float bounds = new Rectangle2D.Float();
+		Rectangle2D.Double bounds = new Rectangle2D.Double();
 		bounds.x = mPoint[0].x;
 		bounds.y = mPoint[0].y;
 
@@ -160,13 +156,13 @@ public abstract class AbstractDrawingObject {
 		return true;
 		}
 
-	public void translateInit(float x, float y) {
+	public void translateInit(double x, double y) {
 		mTransformationReferenceX = x;
 		mTransformationReferenceY = y;
 		if (mPoint != null) {
 			int pointCount = mPoint.length;
-			mTransformationValue1 = new float[pointCount];
-			mTransformationValue2 = new float[pointCount];
+			mTransformationValue1 = new double[pointCount];
+			mTransformationValue2 = new double[pointCount];
 			for (int i=0; i<pointCount; i++) {
 				mTransformationValue1[i] = mPoint[i].x;
 				mTransformationValue2[i] = mPoint[i].y;
@@ -174,7 +170,7 @@ public abstract class AbstractDrawingObject {
 			}
 		}
 
-	public void translate(float x, float y) {
+	public void translate(double x, double y) {
 			// overwrite this if only hilited parts of the object shall be moved
 		if (mPoint != null) {
 			for (int i=0; i<mPoint.length; i++) {
@@ -184,29 +180,29 @@ public abstract class AbstractDrawingObject {
 			}
 		}
 
-	public void zoomAndRotateInit(float x, float y) {
+	public void zoomAndRotateInit(double x, double y) {
 		mTransformationReferenceX = x;
 		mTransformationReferenceY = y;
 		if (mPoint != null) {
 			int pointCount = mPoint.length;
-			mTransformationValue1 = new float[pointCount];
-			mTransformationValue2 = new float[pointCount];
+			mTransformationValue1 = new double[pointCount];
+			mTransformationValue2 = new double[pointCount];
 			for (int i=0; i<pointCount; i++) {
-				float dx = x - mPoint[i].x;
-				float dy = y - mPoint[i].y;
-				mTransformationValue2[i] = (float)Math.sqrt(dx*dx+dy*dy);	// distance to center of gravity
+				double dx = x - mPoint[i].x;
+				double dy = y - mPoint[i].y;
+				mTransformationValue2[i] = Math.sqrt(dx*dx+dy*dy);	// distance to center of gravity
 				mTransformationValue1[i] = Molecule.getAngle(x,y,mPoint[i].x,mPoint[i].y);
 				}
 			}
 		}
 
-	public void zoomAndRotate(float zoom,float angle) {
+	public void zoomAndRotate(double zoom, double angle) {
 		if (mPoint != null) {
 			for (int i=0; i<mPoint.length; i++) {
-				float newDistance = mTransformationValue2[i] * zoom;
-				float newAngle = mTransformationValue1[i] - angle;
-				mPoint[i].x = mTransformationReferenceX + newDistance*(float)Math.sin(newAngle);
-				mPoint[i].y = mTransformationReferenceY + newDistance*(float)Math.cos(newAngle);
+				double newDistance = mTransformationValue2[i] * zoom;
+				double newAngle = mTransformationValue1[i] - angle;
+				mPoint[i].x = mTransformationReferenceX + newDistance*Math.sin(newAngle);
+				mPoint[i].y = mTransformationReferenceY + newDistance*Math.cos(newAngle);
 				}
 			}
 		}

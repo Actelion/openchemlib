@@ -45,28 +45,28 @@ import java.util.ArrayList;
 
 public class TextDrawingObject extends AbstractDrawingObject {
 	public static final String TYPE_STRING = "text";
-	public static final float DEFAULT_SIZE = 9.0f;
+	public static final double DEFAULT_SIZE = 9.0;
 	public static final int DEFAULT_STYLE = Font.PLAIN;
 
 	private static final float LINE_SPACING = 1.4f;
 
-	float				mSize,mZoomReferenceSize;
+	double				mSize,mZoomReferenceSize;
 	String				mText;
 	int					mStyle;
 	boolean				mHilite;
 
 	public TextDrawingObject() {
-        this("",new Point2D.Float(),DEFAULT_SIZE, DEFAULT_STYLE);
+        this("",new Point2D.Double(),DEFAULT_SIZE, DEFAULT_STYLE);
 		}
 
-    public TextDrawingObject(String text, float x, float y)
+    public TextDrawingObject(String text, double x, double y)
     {
         this(text,x,y,DEFAULT_SIZE, DEFAULT_STYLE);
     }
     
-    public TextDrawingObject(String text, float x, float y, float size, int style)
+    public TextDrawingObject(String text, double x, double y, double size, int style)
     {
-        this(text,new Point2D.Float(x,y),size,style);
+        this(text,new Point2D.Double(x,y),size,style);
     }
     
 	public TextDrawingObject(String descriptorDetail) {
@@ -128,11 +128,11 @@ public class TextDrawingObject extends AbstractDrawingObject {
 
 
 
-    private TextDrawingObject(String text, Point2D.Float pt,  float size, int style) {
+    private TextDrawingObject(String text, Point2D.Double pt,  double size, int style) {
 		mText = text;
 		mSize = size;
 		mStyle = style;
-		mPoint = new Point2D.Float[1];
+		mPoint = new Point2D.Double[1];
 		mPoint[0] = pt;        
     	}
 
@@ -146,7 +146,7 @@ public class TextDrawingObject extends AbstractDrawingObject {
 		detail.append(" x=\""+mPoint[0].x + "\"");
 		detail.append(" y=\""+mPoint[0].y + "\"");
 		if (mSize != DEFAULT_SIZE)
-			detail.append(String.format(" size=\"%.4f\"", new Float(mSize)));
+			detail.append(String.format(" size=\"%.4f\"", new Double(mSize)));
 		if (mStyle != DEFAULT_STYLE)
 			detail.append(" style=\""+mStyle+ "\"");
 
@@ -161,33 +161,33 @@ public class TextDrawingObject extends AbstractDrawingObject {
 		return duplicate;
 		}
 
-	public void setCoordinates(float x, float y) {
+	public void setCoordinates(double x, double y) {
 		mPoint[0].x = x;
 		mPoint[0].y = y;
 		}
 
-	public void scale(float f) {
+	public void scale(double f) {
 		super.scale(f);
 		mSize *= f;
 		}
 
-	public void zoomAndRotateInit(float x, float y) {
+	public void zoomAndRotateInit(double x, double y) {
 		super.zoomAndRotateInit(x, y);
 		mZoomReferenceSize = mSize;
 		}
 
-	public void zoomAndRotate(float zoom,float angle) {
+	public void zoomAndRotate(double zoom,double angle) {
 		super.zoomAndRotate(zoom, angle);
 		mSize = mZoomReferenceSize * zoom;
 		}
 
 	public void draw(Graphics g, DepictorTransformation t) {
-		float size = (t == null) ? mSize : t.getScaling()*mSize;
+		double size = (t == null) ? mSize : t.getScaling()*mSize;
 		g.setFont(new Font("Helvetica", mStyle, (int)size));
 		g.setColor(mIsSelected ? Color.red : Color.black);
 
 		ArrayList<String> textList = getTextLineList();
-		Rectangle2D.Float bounds = calculateBoundingRect(/* g.getFontMetrics() */ g.getFont(), textList);
+		Rectangle2D.Double bounds = calculateBoundingRect(/* g.getFontMetrics() */ g.getFont(), textList);
 		if (t != null)
 			t.applyTo(bounds);
 
@@ -201,7 +201,7 @@ public class TextDrawingObject extends AbstractDrawingObject {
 		draw(g, t);
 		}
 
-	private Rectangle2D.Float calculateBoundingRect(/* FontMetrics fm */Font font, ArrayList<String> textList) {
+	private Rectangle2D.Double calculateBoundingRect(/* FontMetrics fm */Font font, ArrayList<String> textList) {
 		FontRenderContext frc = new FontRenderContext(font.getTransform(), true, true);
 				
 		float maxWidth = 0;
@@ -214,11 +214,11 @@ public class TextDrawingObject extends AbstractDrawingObject {
 					maxWidth = width;
 				}
 			}
-		float height = mSize * LINE_SPACING * (textList.size()-1) + mSize;
-		return new Rectangle2D.Float(mPoint[0].x, mPoint[0].y-mSize/2, maxWidth, height);
+		double height = mSize * LINE_SPACING * (textList.size()-1) + mSize;
+		return new Rectangle2D.Double(mPoint[0].x, mPoint[0].y-mSize/2, maxWidth, height);
 		}
 
-	public Rectangle2D.Float getBoundingRect() {
+	public Rectangle2D.Double getBoundingRect() {
 //		FontMetrics fm = Toolkit.getDefaultToolkit().getFontMetrics(new Font("Helvetica", mStyle, (int)mSize));
 		ArrayList<String> textList = getTextLineList();
 		return calculateBoundingRect(/* fm */new Font("Helvetica", mStyle, (int)mSize), textList);
@@ -243,20 +243,20 @@ public class TextDrawingObject extends AbstractDrawingObject {
 		}
 
 	public void hilite(Graphics g) {
-		Rectangle2D.Float bounds = getBoundingRect();
+		Rectangle2D.Double bounds = getBoundingRect();
 		g.setColor(SELECTION_COLOR);
 		g.fillRect((int)bounds.x, (int)bounds.y,
 				   (int)bounds.width, (int)bounds.height);
 		}
 
-	public boolean checkHiliting(float x, float y) {
-		Rectangle2D.Float bounds = getBoundingRect();
+	public boolean checkHiliting(double x, double y) {
+		Rectangle2D.Double bounds = getBoundingRect();
 		mHilite = bounds.contains(x, y);
 		return mHilite;
 		}
 
-	public boolean contains(float x, float y) {
-		Rectangle2D.Float bounds = getBoundingRect();
+	public boolean contains(double x, double y) {
+		Rectangle2D.Double bounds = getBoundingRect();
 		return bounds.contains(x, y);
 		}
 
@@ -264,7 +264,7 @@ public class TextDrawingObject extends AbstractDrawingObject {
 		mHilite = false;
 		}
 
-	public void setValues(String text, float size, int style) {
+	public void setValues(String text, double size, int style) {
 		mText = text;
 		mSize = size;
 		mStyle = style;
@@ -274,7 +274,7 @@ public class TextDrawingObject extends AbstractDrawingObject {
 		return mText;
 		}
 
-	public float getSize() {
+	public double getSize() {
 		return mSize;
 		}
 

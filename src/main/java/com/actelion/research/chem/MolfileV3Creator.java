@@ -51,10 +51,10 @@ import java.io.Writer;
 public class MolfileV3Creator
 {
     private StringBuilder mMolfile;
-    private static final float TARGET_AVBL = 1.5f;
-    private static final float PRECISION_FACTOR = 10000f;
+    private static final double TARGET_AVBL = 1.5;
+    private static final double PRECISION_FACTOR = 10000;
 
-    private float mScalingFactor = 1.0f;
+    private double mScalingFactor = 1.0;
 
     /**
      * This creates a new molfile version 3 from the given molecule.
@@ -105,31 +105,31 @@ public class MolfileV3Creator
             }
         }
 
-        mScalingFactor = 1.0f;
+        mScalingFactor = 1.0;
 
         if (hasCoordinates && scale) {
         	// Calculate a reasonable molecule size for ISIS-Draw default settings.
-            float avbl = mol.getAverageBondLength();
-            if (avbl != 0.0f) {
+	        double avbl = mol.getAverageBondLength();
+            if (avbl != 0.0) {
             	// 0.84 seems to be the average bond distance in ISIS Draw 2.5 with the default setting of 0.7 cm standard bond length.
-                // grafac = 0.84f / mol.getAverageBondLength();
+                // grafac = 0.84 / mol.getAverageBondLength();
 
-            	if (avbl < 1.0f || avbl > 3.0f)
+            	if (avbl < 1.0 || avbl > 3.0)
             		mScalingFactor = TARGET_AVBL / avbl;
             	}
             else { // make the minimum distance between any two atoms twice as long as TARGET_AVBL
-                float minDistance = Float.MAX_VALUE;
+	            double minDistance = Float.MAX_VALUE;
                 for (int atom1=1; atom1<mol.getAllAtoms(); atom1++) {
                     for (int atom2=0; atom2<atom1; atom2++) {
-                    	float dx = mol.getAtomX(atom2) - mol.getAtomX(atom1);
-                    	float dy = mol.getAtomY(atom2) - mol.getAtomY(atom1);
-                    	float dz = mol.getAtomZ(atom2) - mol.getAtomZ(atom1);
-                    	float distance = dx*dx + dy*dy + dz*dz;
+	                    double dx = mol.getAtomX(atom2) - mol.getAtomX(atom1);
+	                    double dy = mol.getAtomY(atom2) - mol.getAtomY(atom1);
+	                    double dz = mol.getAtomZ(atom2) - mol.getAtomZ(atom1);
+	                    double distance = dx*dx + dy*dy + dz*dz;
                         if (minDistance > distance)
                             minDistance = distance;
                         }
                     }
-                mScalingFactor = 2.0f * TARGET_AVBL / minDistance;
+                mScalingFactor = 2.0 * TARGET_AVBL / minDistance;
 	            }
 	        }
 
@@ -504,7 +504,7 @@ public class MolfileV3Creator
         return mMolfile.toString();
     	}
 
-    public float getScalingFactor() {
+    public double getScalingFactor() {
         return mScalingFactor;
     	}
 

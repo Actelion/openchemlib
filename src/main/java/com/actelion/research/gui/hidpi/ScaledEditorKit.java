@@ -33,8 +33,6 @@ package com.actelion.research.gui.hidpi;
 *
 */
 
-		import com.actelion.research.datawarrior.action.ColorUtils;
-		import com.actelion.research.gui.hidpi.HiDPIHelper;
 
 		import java.awt.Color;
 		import java.awt.Font;

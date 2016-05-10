@@ -87,7 +87,7 @@ public class JDrawArea extends JPanel
 	// redraw molecules and drawing objects with their current coordinates
 	protected static final int UPDATE_CHECK_VIEW = 2;
 	// redraw with on-the-fly coordinate transformation only if current coords do not fit within view area
-	// (new coords are generated for one paint() only; the original coords are not changed)
+	// (new coords are generated for one draw() only; the original coords are not changed)
 	protected static final int UPDATE_CHECK_COORDS = 3;
 	// redraw with in-place coordinate transformation only if current coords do not fit within view area
 	// (the original atom and object coords are replaced by the new ones)
@@ -123,8 +123,8 @@ public class JDrawArea extends JPanel
 		mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest,
 		mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
-	private float mX1, mY1, mX2, mY2;
-	private float[] mX, mY, mChainAtomX, mChainAtomY;
+	private double mX1, mY1, mX2, mY2;
+	private double[] mX, mY, mChainAtomX, mChainAtomY;
 	private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
 	private String[] mAtomText;
@@ -283,14 +283,14 @@ public class JDrawArea extends JPanel
 					cleanupCoordinates(g, mDepictor);
 					break;
 				case UPDATE_CHECK_COORDS:
-					DepictorTransformation t1 = mDepictor.updateCoords(g, new Rectangle2D.Float(0, 0, theSize.width, theSize.height), 0);
+					DepictorTransformation t1 = mDepictor.updateCoords(g, new Rectangle2D.Double(0, 0, theSize.width, theSize.height), 0);
 					if (t1 != null && (mMode & MODE_MULTIPLE_FRAGMENTS) != 0) {
 						// in fragment mode depictor transforms mFragment[] rather than mMol
 						t1.applyTo(mMol);
 					}
 					break;
 				case UPDATE_CHECK_VIEW:
-					DepictorTransformation t2 = mDepictor.validateView(g, new Rectangle2D.Float(0, 0, theSize.width, theSize.height), 0);
+					DepictorTransformation t2 = mDepictor.validateView(g, new Rectangle2D.Double(0, 0, theSize.width, theSize.height), 0);
 					isScaledView = (t2 != null && !t2.isVoidTransformation());
 					break;
 			}
@@ -715,7 +715,7 @@ public class JDrawArea extends JPanel
 				} else {
 					int avbl = (int) mMol.getAverageBondLength();
 					Depictor d = new Depictor(mol);
-					d.updateCoords(this.getGraphics(), new Rectangle2D.Float(0, 0,
+					d.updateCoords(this.getGraphics(), new Rectangle2D.Double(0, 0,
 							this.getWidth(),
 							this.getHeight()),
 						AbstractDepictor.cModeInflateToMaxAVBL + avbl
@@ -798,7 +798,7 @@ public class JDrawArea extends JPanel
 
 		switch (mPendingRequest) {
 			case cRequestNewChain:
-				float lastX, lastY;
+				double lastX, lastY;
 				if (mChainAtoms > 0) {
 					lastX = mChainAtomX[mChainAtoms - 1];
 					lastY = mChainAtomY[mChainAtoms - 1];
@@ -806,19 +806,19 @@ public class JDrawArea extends JPanel
 					lastX = 0;
 					lastY = 0;
 				}
-				float avbl = mMol.getAverageBondLength();
-				float s0 = (int) avbl;
-				float s1 = (int) (0.866 * avbl);
-				float s2 = (int) (0.5 * avbl);
-				float dx = mX2 - mX1;
-				float dy = mY2 - mY1;
+				double avbl = mMol.getAverageBondLength();
+				double s0 = (int) avbl;
+				double s1 = (int) (0.866 * avbl);
+				double s2 = (int) (0.5 * avbl);
+				double dx = mX2 - mX1;
+				double dy = mY2 - mY1;
 				if (Math.abs(dy) > Math.abs(dx)) {
 					mChainAtoms = (int) (2 * Math.abs(dy) / (s0 + s2));
 					if (Math.abs(dy) % (s0 + s2) > s0) {
 						mChainAtoms++;
 					}
-					mChainAtomX = new float[mChainAtoms];
-					mChainAtomY = new float[mChainAtoms];
+					mChainAtomX = new double[mChainAtoms];
+					mChainAtomY = new double[mChainAtoms];
 					if (mX2 < mX1) {
 						s1 = -s1;
 					}
@@ -835,8 +835,8 @@ public class JDrawArea extends JPanel
 					}
 				} else {
 					mChainAtoms = (int) (Math.abs(dx) / s1);
-					mChainAtomX = new float[mChainAtoms];
-					mChainAtomY = new float[mChainAtoms];
+					mChainAtomX = new double[mChainAtoms];
+					mChainAtomY = new double[mChainAtoms];
 					if (mX2 < mX1) {
 						s1 = -s1;
 					}
@@ -922,8 +922,8 @@ public class JDrawArea extends JPanel
 						selectedObjectsFound = mDrawingObjectList.get(i).isSelected();
 					}
 				}
-				float magnification = (Math.abs(mY2 - mY1) < 20) ? 1.0f : (float) Math.exp((mY2 - mY1) / 100f);
-				float angleChange = (Math.abs(mX2 - mX1) < 20) ? 0.0f : (mX2 - mX1) / 50;
+				double magnification = (Math.abs(mY2 - mY1) < 20) ? 1.0 : Math.exp((mY2 - mY1) / 100);
+				double angleChange = (Math.abs(mX2 - mX1) < 20) ? 0.0f : (mX2 - mX1) / 50;
 				boolean selectedOnly = (selectedAtomsFound || selectedObjectsFound);
 				if (mDrawingObjectList != null && (!selectedOnly || selectedObjectsFound)) {
 					for (int i = 0; i < mDrawingObjectList.size(); i++) {
@@ -1367,8 +1367,8 @@ public class JDrawArea extends JPanel
 			}
 
 			if (fragment != -1) {
-				float minX = Integer.MAX_VALUE;
-				float maxX = Integer.MIN_VALUE;
+				double minX = Integer.MAX_VALUE;
+				double maxX = Integer.MIN_VALUE;
 				for (int i = 0; i < mMol.getAllAtoms(); i++) {
 					if (fragment == -2 || mFragmentNo[i] == fragment) {
 						if (minX > mMol.getAtomX(i)) {
@@ -1381,7 +1381,7 @@ public class JDrawArea extends JPanel
 				}
 
 				if (maxX > minX) {
-					float centerX = (maxX + minX) / 2;
+					double centerX = (maxX + minX) / 2;
 					for (int i = 0; i < mMol.getAllAtoms(); i++) {
 						if (fragment == -2 || mFragmentNo[i] == fragment) {
 							mMol.setAtomX(i, 2 * centerX - mMol.getAtomX(i));
@@ -1439,8 +1439,8 @@ public class JDrawArea extends JPanel
 		switch (mCurrentTool) {
 			case JDrawToolbar.cToolZoom:
 				// mX1,mY1 define anker for rotation and zooming
-				float x = mX1;
-				float y = mY1;
+				double x = mX1;
+				double y = mY1;
 
 				mAtom1 = mMol.findAtom(mX1, mY1);
 				if (mAtom1 != -1) {
@@ -1500,8 +1500,8 @@ public class JDrawArea extends JPanel
 				}
 
 				if (mPendingRequest != cRequestNone) {
-					mX = new float[mMol.getAllAtoms()];
-					mY = new float[mMol.getAllAtoms()];
+					mX = new double[mMol.getAllAtoms()];
+					mY = new double[mMol.getAllAtoms()];
 					for (int i = 0; i < mMol.getAllAtoms(); i++) {
 						mX[i] = mMol.getAtomX(i);
 						mY[i] = mMol.getAtomY(i);
@@ -2182,14 +2182,14 @@ public class JDrawArea extends JPanel
 		}
 	}
 
-	private int findFragment(float x, float y)
+	private int findFragment(double x, double y)
 	{
 		int fragment = -1;
-		float minDistance = Float.MAX_VALUE;
+		double minDistance = Double.MAX_VALUE;
 		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
-			float dx = mX1 - mMol.getAtomX(atom);
-			float dy = mY1 - mMol.getAtomY(atom);
-			float distance = (float) Math.sqrt(dx * dx + dy * dy);
+			double dx = mX1 - mMol.getAtomX(atom);
+			double dy = mY1 - mMol.getAtomY(atom);
+			double distance = Math.sqrt(dx * dx + dy * dy);
 			if (distance < FRAGMENT_MAX_CLICK_DISTANCE
 				&& minDistance > distance) {
 				minDistance = distance;
@@ -2207,47 +2207,47 @@ public class JDrawArea extends JPanel
 	 */
 	private void suggestNewX2AndY2(int atom)
 	{
-		float newAngle = (float) Math.PI * 2 / 3;
+		double newAngle = Math.PI * 2 / 3;
 		if (atom != -1) {
-			float angle[] = new float[MAX_CONNATOMS + 1];
+			double angle[] = new double[MAX_CONNATOMS + 1];
 			for (int i = 0; i < mMol.getAllConnAtoms(atom); i++) {
 				angle[i] = mMol.getBondAngle(atom, mMol.getConnAtom(atom, i));
 			}
 
 			if (mMol.getAllConnAtoms(atom) == 1) {
 				if (angle[0] < -Math.PI * 5 / 6) {
-					newAngle = (float) Math.PI / 3;
+					newAngle = Math.PI / 3;
 				} else if (angle[0] < -Math.PI / 2) {
-					newAngle = (float) Math.PI * 2 / 3;
+					newAngle = Math.PI * 2 / 3;
 				} else if (angle[0] < -Math.PI / 6) {
-					newAngle = (float) Math.PI / 3;
+					newAngle = Math.PI / 3;
 				} else if (angle[0] < 0.0) {
-					newAngle = (float) Math.PI * 2 / 3;
+					newAngle = Math.PI * 2 / 3;
 				} else if (angle[0] < Math.PI / 6) {
-					newAngle = -(float) Math.PI * 2 / 3;
+					newAngle = -Math.PI * 2 / 3;
 				} else if (angle[0] < Math.PI / 2) {
-					newAngle = -(float) Math.PI / 3;
+					newAngle = -Math.PI / 3;
 				} else if (angle[0] < Math.PI * 5 / 6) {
-					newAngle = -(float) Math.PI * 2 / 3;
+					newAngle = -Math.PI * 2 / 3;
 				} else {
-					newAngle = -(float) Math.PI / 3;
+					newAngle = -Math.PI / 3;
 				}
 			} else {
 				for (int i = mMol.getAllConnAtoms(atom) - 1; i > 0; i--) {	// bubble sort
 					for (int j = 0; j < i; j++) {
 						if (angle[j] > angle[j + 1]) {
-							float temp = angle[j];
+							double temp = angle[j];
 							angle[j] = angle[j + 1];
 							angle[j + 1] = temp;
 						}
 					}
 				}
-				angle[mMol.getAllConnAtoms(atom)] = angle[0] + (float) Math.PI * 2;
+				angle[mMol.getAllConnAtoms(atom)] = angle[0] + Math.PI * 2;
 
 				int largestNo = 0;
-				float largestDiff = 0.0f;
+				double largestDiff = 0.0;
 				for (int i = 0; i < mMol.getAllConnAtoms(atom); i++) {
-					float angleDiff = angle[i + 1] - angle[i];
+					double angleDiff = angle[i + 1] - angle[i];
 					if (largestDiff < angleDiff) {
 						largestDiff = angleDiff;
 						largestNo = i;
@@ -2256,7 +2256,7 @@ public class JDrawArea extends JPanel
 				newAngle = (angle[largestNo] + angle[largestNo + 1]) / 2;
 			}
 		}
-		float avbl = mMol.getAverageBondLength();
+		double avbl = mMol.getAverageBondLength();
 		mX2 = ((atom == -1) ? mX1 : mMol.getAtomX(atom)) + avbl * (float) Math.sin(newAngle);
 		mY2 = ((atom == -1) ? mY1 : mMol.getAtomY(atom)) + avbl * (float) Math.cos(newAngle);
 	}
@@ -2291,7 +2291,7 @@ public class JDrawArea extends JPanel
 		return mMol.getAtomicNo(atom1) == mMol.getAtomicNo(atom2);
 	}
 
-	private boolean trackHiliting(float x, float y, boolean isDragging)
+	private boolean trackHiliting(double x, double y, boolean isDragging)
 	{
 		int theAtom = mMol.findAtom(x, y);
 		int theBond = -1;
@@ -2451,15 +2451,15 @@ public class JDrawArea extends JPanel
 			// while retaining coordinates of the fragment.
 			StereoMolecule fragment = new StereoMolecule();
 			fragment.addFragment(mMol, mCurrentHiliteAtom, null);
-			float sourceAVBL = fragment.getAverageBondLength();
+			double sourceAVBL = fragment.getAverageBondLength();
 			int firstAtomInFragment = fragment.getAllAtoms();
 			for (int atom = 0; atom < fragment.getAllAtoms(); atom++)
 				fragment.setAtomMarker(atom, true);
 			fragment.addSubstituent(substituent, 0);
 			new CoordinateInventor(CoordinateInventor.MODE_KEEP_MARKED_ATOM_COORDS).invent(fragment);
 
-			float dx = mMol.getAtomX(mCurrentHiliteAtom) - sourceAVBL * fragment.getAtomX(0);
-			float dy = mMol.getAtomY(mCurrentHiliteAtom) - sourceAVBL * fragment.getAtomY(0);
+			double dx = mMol.getAtomX(mCurrentHiliteAtom) - sourceAVBL * fragment.getAtomX(0);
+			double dy = mMol.getAtomY(mCurrentHiliteAtom) - sourceAVBL * fragment.getAtomY(0);
 
 			// Attach the substituent to the complete molecule and take coodinates from the
 			// previously created fragment-substituent species.
@@ -2477,7 +2477,7 @@ public class JDrawArea extends JPanel
 		}
 	}
 
-	private AbstractDrawingObject findDrawingObject(float x, float y, String type, boolean forDeletion)
+	private AbstractDrawingObject findDrawingObject(double x, double y, String type, boolean forDeletion)
 	{
 		if (mDrawingObjectList != null) {
 			for (AbstractDrawingObject drawingObject : mDrawingObjectList) {
@@ -2569,7 +2569,7 @@ public class JDrawArea extends JPanel
 		return false;
 	}
 
-	private boolean deleteAt(float x, float y)
+	private boolean deleteAt(double x, double y)
 	{
 		if (mMol.deleteAtomOrBond(x, y)) {
 			fireMoleculeChanged();
@@ -2935,7 +2935,7 @@ public class JDrawArea extends JPanel
 			mMol.setStereoBondsFromParity();
 		}
 
-		depictor.updateCoords(g, new Rectangle2D.Float(0, 0, getWidth(), getHeight()), maxUpdateMode());
+		depictor.updateCoords(g, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
 	}
 
 	private void cleanupMultiFragmentCoordinates(Graphics g, ExtendedDepictor depictor, boolean selectedOnly)
@@ -2949,7 +2949,7 @@ public class JDrawArea extends JPanel
 			}
 		}
 
-		Rectangle2D.Float[] boundingRect = new Rectangle2D.Float[mFragment.length];
+		Rectangle2D.Double[] boundingRect = new Rectangle2D.Double[mFragment.length];
 //		float fragmentWidth = 0.0f;
 		for (int fragment = 0; fragment < mFragment.length; fragment++) {
 			if (mUpdateMode == UPDATE_INVENT_COORDS) {
@@ -2962,15 +2962,15 @@ public class JDrawArea extends JPanel
 //			fragmentWidth += boundingRect[fragment].width;
 		}
 
-		float spacing = FRAGMENT_CLEANUP_DISTANCE * AbstractDepictor.cOptAvBondLen;
-		float avbl = mMol.getAverageBondLength();
-		float arrowWidth = ((mMode & MODE_REACTION) == 0) ?
+		double spacing = FRAGMENT_CLEANUP_DISTANCE * AbstractDepictor.cOptAvBondLen;
+		double avbl = mMol.getAverageBondLength();
+		double arrowWidth = ((mMode & MODE_REACTION) == 0) ?
 			0f
 			: (mUpdateMode == UPDATE_SCALE_COORDS_USE_FRAGMENTS) ?
 			DEFAULT_ARROW_LENGTH * getWidth()
 			: ((ReactionArrow) mDrawingObjectList.get(0)).getLength() * AbstractDepictor.cOptAvBondLen / avbl;
 
-		float rawX = 0.5f * spacing;
+		double rawX = 0.5 * spacing;
 		for (int fragment = 0; fragment <= mFragment.length; fragment++) {
 			if ((mMode & MODE_REACTION) != 0 && fragment == mReactantCount) {
 				((ReactionArrow) mDrawingObjectList.get(0)).setCoordinates(
@@ -2982,15 +2982,15 @@ public class JDrawArea extends JPanel
 				break;
 			}
 
-			float dx = rawX - boundingRect[fragment].x;
-			float dy = 0.5f * (getHeight() - boundingRect[fragment].height)
+			double dx = rawX - boundingRect[fragment].x;
+			double dy = 0.5 * (getHeight() - boundingRect[fragment].height)
 				- boundingRect[fragment].y;
 			mFragment[fragment].translateCoords(dx, dy);
 
 			rawX += spacing + boundingRect[fragment].width;
 		}
 
-		depictor.updateCoords(g, new Rectangle2D.Float(0, 0, getWidth(), getHeight()), maxUpdateMode());
+		depictor.updateCoords(g, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
 
 		int[] fragmentAtom = new int[mFragment.length];
 		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
@@ -3046,12 +3046,12 @@ public class JDrawArea extends JPanel
 			mergeFragments[i] = new boolean[i];
 		}
 
-		float avbl = mMol.getAverageBondLength();
+		double avbl = mMol.getAverageBondLength();
 		for (int atom1 = 1; atom1 < mMol.getAllAtoms(); atom1++) {
 			for (int atom2 = 0; atom2 < atom1; atom2++) {
-				float dx = mMol.getAtomX(atom2) - mMol.getAtomX(atom1);
-				float dy = mMol.getAtomY(atom2) - mMol.getAtomY(atom1);
-				float distance = (float) Math.sqrt(dx * dx + dy * dy);
+				double dx = mMol.getAtomX(atom2) - mMol.getAtomX(atom1);
+				double dy = mMol.getAtomY(atom2) - mMol.getAtomY(atom1);
+				double distance = Math.sqrt(dx * dx + dy * dy);
 				if (distance < FRAGMENT_GROUPING_DISTANCE * avbl) {
 					int fragment1 = fragmentNo[atom1];
 					int fragment2 = fragmentNo[atom2];
@@ -3239,8 +3239,8 @@ public class JDrawArea extends JPanel
 							mMol.setAtomSelection(atom, false);				// deselect all current atoms
 						}
 
-						float avbl = mMol.getAverageBondLength();
-						float dropAVBL = m.getAverageBondLength();
+						double avbl = mMol.getAverageBondLength();
+						double dropAVBL = m.getAverageBondLength();
 						m.scaleCoords(avbl / dropAVBL);
 						Point cog = new Point();
 						for (int atom = 0; atom < m.getAllAtoms(); atom++) {

@@ -199,7 +199,7 @@ public abstract class MoleculeDragAdapter implements DragSourceListener//,DragSo
                     Graphics g = img.getGraphics();
                     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     		        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-                    depict.validateView(g, new Rectangle2D.Float(0, 0, width, height), AbstractDepictor.cModeInflateToMaxAVBL);
+                    depict.validateView(g, new Rectangle2D.Double(0, 0, width, height), AbstractDepictor.cModeInflateToMaxAVBL);
                     depict.paint(g);
                     return img;
                 }

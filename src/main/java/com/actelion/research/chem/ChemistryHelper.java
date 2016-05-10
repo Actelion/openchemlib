@@ -288,7 +288,6 @@ public class ChemistryHelper
     public static void scaleInto(Reaction reaction, double x, double y, double width, double height, double arrowSize)
     {
 
-//        System.out.printf("Clean RXN Into %f %f %f %f\n",x,y,width,height);
         if (width > arrowSize * 2) {
             ExtendedMolecule[] reactants = getReactants(reaction);
             ExtendedMolecule[] products = getProducts(reaction);
@@ -296,12 +295,6 @@ public class ChemistryHelper
             Rectangle2D rb = getBoundingRect(reactants);
             Rectangle2D pb = getBoundingRect(products);
 
-/*
-            System.out.printf("\n\nReactant rectangle %s\n", rb);
-            System.out.printf("Product rectangle %s\n", pb);
-            System.out.printf("Dest rectangle %s\n",new Rectangle2D.Double(x,y,width,height));
-            System.out.printf("Arrow len:  %f\n\n",arrowSize);
-*/
             // left and right space
             double w = (width - arrowSize) / 2;
             double h = height;
