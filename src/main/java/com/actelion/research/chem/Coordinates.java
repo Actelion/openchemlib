@@ -195,7 +195,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		double d = dist();
 		if(d==0) {
 			System.err.println("Cannot call unitC() on a null vector");
-			Thread.dumpStack();
+//			Thread.dumpStack();
 			return new Coordinates(1,0,0);
 
 		}
@@ -206,7 +206,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		double d = dist();
 		if(d==0) {
 			System.err.println("Cannot call unit() on a null vector. Returned (1,0,0)");
-			Thread.dumpStack();
+//			Thread.dumpStack();
 			x = 1;
 			y = 0;
 			z = 0;
