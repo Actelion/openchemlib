@@ -34,7 +34,6 @@
 package com.actelion.research.share.gui;
 
 import com.actelion.research.chem.DepictorTransformation;
-import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.share.gui.editor.chem.IDrawingObject;
 import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
@@ -135,8 +134,8 @@ public class Arrow implements IDrawingObject
         };
 
         if (selected) {
-            ctx.setStroke(builder.getHighLightColor());
-            ctx.setFill(builder.getHighLightColor());
+            ctx.setStroke(builder.getSelectionColor());
+            ctx.setFill(builder.getSelectionColor());
         }
         if ((arrowEndX - dx) >= 5) {
             ctx.drawLine((int) dx, (int) arrowEndY, (int) arrowEndX-xOffset, (int) arrowEndY);
