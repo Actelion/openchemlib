@@ -55,6 +55,7 @@ public class NativeClipboardHandler
     public static final String NC_ALDUSMETAFILE	= "ALDUS_METAFILE";;
     public static final String NC_EMBEDDEDSKETCH = "MDLSK_EMBEDDED";
     public static final String NC_CHEMDRAWINTERCHANGE = "ChemDraw Interchange Format";
+    public static final String NC_IDCODE		= "IDCODE";
 
 
 

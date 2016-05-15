@@ -59,6 +59,19 @@ public class LinuxNativeClipboardAccessor implements ClipboardOwner
         System.out.println("GetClipboardData " + format);
 		try {
 			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+//			DataFlavor[] flavors = t.getTransferDataFlavors();
+//			for (DataFlavor df: flavors) {
+//				System.out.printf("Flavor: %s\n",df);
+//				Object o = t.getTransferData(df);
+//				System.out.printf("Returned object is %s\n",o);
+//			}
+
+			if (format.equals(NativeClipboardHandler.NC_IDCODE)) {
+				Object o = t.getTransferData(DataFlavor.stringFlavor);
+				if (o != null) {
+					return o.toString().getBytes();
+				}
+			}
 			DataFlavor df[] = {MOLFLAVOUR,REACTIONFLAVOUR};
 			for (int i = 0; i < df.length; i++) {
 				try{
@@ -71,6 +84,7 @@ public class LinuxNativeClipboardAccessor implements ClipboardOwner
                     System.out.println("Exception in getClipboardData: " + e);
 				}
 			}
+
 		} catch (Exception e) {
 			System.err.println("error getting clipboard data "+ e);
 
