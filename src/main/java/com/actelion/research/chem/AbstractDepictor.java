@@ -98,7 +98,15 @@ public abstract class AbstractDepictor {
 	private static final int COLOR_EXCLUDE_GROUP_FG = -8;
 	private static final int COLOR_RESTORE_PREVIOUS = -9;
 
-    public static final int cOptAvBondLen = 24;
+	public static final Color COLOR_BLUE = new Color(32, 96, 255);
+	public static final Color COLOR_RED = new Color(255, 0, 0);
+	public static final Color COLOR_GREEN = new Color(0, 255, 0);
+	public static final Color COLOR_MAGENTA = new Color(192, 0, 255);
+	public static final Color COLOR_ORANGE = new Color(224, 80, 0);
+	public static final Color COLOR_DARK_GREEN = new Color(0, 128, 0);
+	public static final Color COLOR_DARK_RED = new Color(160, 0, 0);
+
+	public static final int cOptAvBondLen = 24;
 	public static final int cColorGray = 1;	// avoid the Molecule.cAtomFlagsColor range
 
 	protected static final int cModeMaxBondLength			= 0x0FFFF;
@@ -2309,25 +2317,25 @@ public abstract class AbstractDepictor {
 			setColor(mExcludeGroupFGColor);
 			break;
 		case Molecule.cAtomColorBlue:
-		    setColor(Color.blue);
+		    setColor(COLOR_BLUE);
 			break;
 		case Molecule.cAtomColorRed:
-		    setColor(Color.red);
+		    setColor(COLOR_RED);
 			break;
 		case Molecule.cAtomColorMagenta:
-		    setColor(Color.magenta);
+		    setColor(COLOR_MAGENTA);
 			break;
 		case Molecule.cAtomColorGreen:
-		    setColor(Color.green);
+		    setColor(COLOR_GREEN);
 			break;
 		case Molecule.cAtomColorOrange:
-		    setColor(Color.orange);
+		    setColor(COLOR_ORANGE);
 			break;
 		case Molecule.cAtomColorDarkGreen:
-		    setColor(new Color(0,160,0));
+		    setColor(COLOR_DARK_GREEN);
 			break;
 		case Molecule.cAtomColorDarkRed:
-		    setColor(new Color(160,0,0));
+		    setColor(COLOR_DARK_RED);
 			break;
 		case cColorGray:
 		    setColor(Color.gray);

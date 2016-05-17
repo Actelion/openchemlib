@@ -1251,13 +1251,13 @@ public class JDrawArea extends JPanel
 				}
 				JMenu colorMenu = new JMenu("Set Atom Color");
 				addColorToMenu(colorMenu, Color.BLACK, Molecule.cAtomColorNone, atomColor == Molecule.cAtomColorNone);
-				addColorToMenu(colorMenu, Color.BLUE, Molecule.cAtomColorBlue, atomColor == Molecule.cAtomColorBlue);
-				addColorToMenu(colorMenu, new Color(160, 0, 0), Molecule.cAtomColorDarkRed, atomColor == Molecule.cAtomColorDarkRed);
-				addColorToMenu(colorMenu, Color.RED, Molecule.cAtomColorRed, atomColor == Molecule.cAtomColorRed);
-				addColorToMenu(colorMenu, new Color(0, 160, 0), Molecule.cAtomColorDarkGreen, atomColor == Molecule.cAtomColorDarkGreen);
-				addColorToMenu(colorMenu, Color.GREEN, Molecule.cAtomColorGreen, atomColor == Molecule.cAtomColorGreen);
-				addColorToMenu(colorMenu, Color.MAGENTA, Molecule.cAtomColorMagenta, atomColor == Molecule.cAtomColorMagenta);
-				addColorToMenu(colorMenu, Color.ORANGE, Molecule.cAtomColorOrange, atomColor == Molecule.cAtomColorOrange);
+				addColorToMenu(colorMenu, AbstractDepictor.COLOR_BLUE, Molecule.cAtomColorBlue, atomColor == Molecule.cAtomColorBlue);
+				addColorToMenu(colorMenu, AbstractDepictor.COLOR_DARK_RED, Molecule.cAtomColorDarkRed, atomColor == Molecule.cAtomColorDarkRed);
+				addColorToMenu(colorMenu, AbstractDepictor.COLOR_RED, Molecule.cAtomColorRed, atomColor == Molecule.cAtomColorRed);
+				addColorToMenu(colorMenu, AbstractDepictor.COLOR_DARK_GREEN, Molecule.cAtomColorDarkGreen, atomColor == Molecule.cAtomColorDarkGreen);
+				addColorToMenu(colorMenu, AbstractDepictor.COLOR_GREEN, Molecule.cAtomColorGreen, atomColor == Molecule.cAtomColorGreen);
+				addColorToMenu(colorMenu, AbstractDepictor.COLOR_MAGENTA, Molecule.cAtomColorMagenta, atomColor == Molecule.cAtomColorMagenta);
+				addColorToMenu(colorMenu, AbstractDepictor.COLOR_ORANGE, Molecule.cAtomColorOrange, atomColor == Molecule.cAtomColorOrange);
 				popup.add(colorMenu);
 			}
 			if (popup != null) {
