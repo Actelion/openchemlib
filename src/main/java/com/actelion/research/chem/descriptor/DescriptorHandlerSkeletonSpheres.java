@@ -202,7 +202,7 @@ if (((double)matching/(double)total) > 0.8) {
 			 : (float)(1.0-Math.pow(1-Math.pow(value, CORRECTION_FACTOR) ,1.0/CORRECTION_FACTOR));
 		}
 
-    public DescriptorHandler<byte[], StereoMolecule> getDeepCopy() {
-		return new DescriptorHandlerSkeletonSpheres();
+    public DescriptorHandler<byte[], StereoMolecule> getThreadSafeCopy() {
+		return this;
     	}
 	}

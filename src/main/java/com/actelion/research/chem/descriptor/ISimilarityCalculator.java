@@ -43,6 +43,6 @@ public interface ISimilarityCalculator<T extends Object> {
      * 
      * @return a deep copy for parallel computing.
      */
-    public abstract ISimilarityCalculator<T> getDeepCopy();
+    public abstract ISimilarityCalculator<T> getThreadSafeCopy();
 
 }

@@ -48,5 +48,5 @@ public interface DescriptorHandler<T, U> extends ISimilarityCalculator<T> {
     public abstract T decode(byte[] bytes);
     public abstract T createDescriptor(U chemObject);
     public abstract boolean calculationFailed(T o);
-    public abstract DescriptorHandler<T,U> getDeepCopy();
+    public abstract DescriptorHandler<T,U> getThreadSafeCopy();
     }

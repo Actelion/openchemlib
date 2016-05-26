@@ -142,8 +142,8 @@ public class DescriptorHandlerHashedCFp extends AbstractDescriptorHandlerFP<Ster
 			 : (float)(1.0-Math.pow(1-Math.pow(value, CORRECTION_FACTOR) ,1.0/CORRECTION_FACTOR));
 	}
 
-    public DescriptorHandler<int[], StereoMolecule> getDeepCopy() {
-    	return new DescriptorHandlerHashedCFp();
+    public DescriptorHandler<int[], StereoMolecule> getThreadSafeCopy() {
+    	return this;
     }
 
 }

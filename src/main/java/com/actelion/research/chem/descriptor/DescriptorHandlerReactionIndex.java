@@ -61,8 +61,8 @@ public class DescriptorHandlerReactionIndex extends AbstractDescriptorHandlerFP<
         return (descriptor == null) ? FAILED_OBJECT : descriptor;
     }
     
-	public DescriptorHandler<int[], Reaction> getDeepCopy() {
-		return new DescriptorHandlerReactionIndex();
+	public DescriptorHandler<int[], Reaction> getThreadSafeCopy() {
+		return this;
 	}
 
 }

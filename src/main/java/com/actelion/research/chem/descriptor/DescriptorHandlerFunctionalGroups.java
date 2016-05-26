@@ -146,7 +146,7 @@ public class DescriptorHandlerFunctionalGroups implements DescriptorHandler<int[
 			 : (float)(1.0-Math.pow(1-Math.pow(value, CORRECTION_FACTOR) ,1.0/CORRECTION_FACTOR));
 		}
 
-    public DescriptorHandler<int[][], StereoMolecule> getDeepCopy() {
+    public DescriptorHandler<int[][], StereoMolecule> getThreadSafeCopy() {
 		return new DescriptorHandlerFunctionalGroups();
     	}
 

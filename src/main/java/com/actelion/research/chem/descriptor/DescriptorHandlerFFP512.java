@@ -74,7 +74,7 @@ public class DescriptorHandlerFFP512 extends AbstractDescriptorHandlerFP<StereoM
 		}
 	
 	
-	public DescriptorHandler<int[], StereoMolecule> getDeepCopy() {
-		return new DescriptorHandlerFFP512();
+	public DescriptorHandler<int[], StereoMolecule> getThreadSafeCopy() {
+		return this;
 		}
 	}
