@@ -86,8 +86,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 	public ExtendedMolecule(Molecule mol) {
-		super(mol.getMaxAtoms(), mol.getMaxBonds());
-		mol.copyMolecule(this);
+		super(mol==null ? 256 : mol.getMaxAtoms(), mol==null ? 256 : mol.getMaxBonds());
+		if (mol != null)
+			mol.copyMolecule(this);
 		}
 
 

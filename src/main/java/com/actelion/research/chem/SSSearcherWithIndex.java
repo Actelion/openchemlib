@@ -724,6 +724,9 @@ public class SSSearcherWithIndex {
 
 
 	public int[] createIndex(StereoMolecule mol) {
+		if (mol == null)
+			return null;
+
 		int[] index = new int[(cKeyIDCode.length+31)/32];
 		mol = removeExcludeGroups(mol);
 		mSSSearcher.setMolecule(mol);
