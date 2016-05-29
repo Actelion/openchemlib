@@ -3411,7 +3411,7 @@ public class Molecule implements Serializable {
 				mAtomFlags[atomDest] = mAtomFlags[atom];
 				mAtomQueryFeatures[atomDest] = mAtomQueryFeatures[atom];
 				mAtomMapNo[atomDest] = mAtomMapNo[atom];
-				mCoordinates[atomDest] = mCoordinates[atom];
+				mCoordinates[atomDest].set(mCoordinates[atom]);
 				if (mAtomList != null)
 					mAtomList[atomDest] = mAtomList[atom];
 				if (mAtomCustomLabel != null)
