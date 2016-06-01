@@ -60,6 +60,9 @@ public class DescriptorHandlerPFP512 extends AbstractDescriptorHandlerFP<StereoM
 	}
 
 	public int[] createDescriptor(StereoMolecule mol) {
+		if (mol ==null)
+			return null;
+
 		java.util.BitSet bitset = new FingerPrintGenerator().getFingerprint(mol);
 
 		if (bitset == null)

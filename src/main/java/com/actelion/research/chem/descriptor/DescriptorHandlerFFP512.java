@@ -73,7 +73,6 @@ public class DescriptorHandlerFFP512 extends AbstractDescriptorHandlerFP<StereoM
 		return (descriptor == null) ? FAILED_OBJECT : descriptor;
 		}
 	
-	
 	public DescriptorHandler<int[], StereoMolecule> getThreadSafeCopy() {
 		return this;
 		}

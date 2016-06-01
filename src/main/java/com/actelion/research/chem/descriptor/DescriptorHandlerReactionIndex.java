@@ -57,6 +57,9 @@ public class DescriptorHandlerReactionIndex extends AbstractDescriptorHandlerFP<
     }
 
     public int[] createDescriptor(Reaction rxn) {
+	    if (rxn ==null)
+		    return null;
+
         int[] descriptor = new ReactionSearcher().createIndex(rxn);
         return (descriptor == null) ? FAILED_OBJECT : descriptor;
     }

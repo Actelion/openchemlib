@@ -33,12 +33,12 @@
 
 package com.actelion.research.chem.descriptor;
 
-import java.util.Arrays;
-
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.BurtleHasher;
+
+import java.util.Arrays;
 
 public class DescriptorHandlerSkeletonSpheres implements DescriptorHandler<byte[], StereoMolecule> {
     private static final double CORRECTION_FACTOR = 0.7;
@@ -73,6 +73,9 @@ public class DescriptorHandlerSkeletonSpheres implements DescriptorHandler<byte[
      * the respective option.
      */
     public byte[] createDescriptor(StereoMolecule mol) {
+	    if (mol == null)
+		    return null;
+
         mol.ensureHelperArrays(Molecule.cHelperRings);
         StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
 

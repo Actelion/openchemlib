@@ -33,11 +33,11 @@
 
 package com.actelion.research.chem.descriptor;
 
-import java.util.Arrays;
-import java.util.TreeSet;
-
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.FunctionalGroupClassifier;
+
+import java.util.Arrays;
+import java.util.TreeSet;
 
 public class DescriptorHandlerFunctionalGroups implements DescriptorHandler<int[][], StereoMolecule> {
     private static final double CORRECTION_FACTOR = 0.7;
@@ -66,6 +66,9 @@ public class DescriptorHandlerFunctionalGroups implements DescriptorHandler<int[
      * are neglected by the descriptor generation.
      */
     public int[][] createDescriptor(StereoMolecule mol) {
+	    if (mol ==null)
+		    return null;
+
         FunctionalGroupClassifier fgc = new FunctionalGroupClassifier(mol);
 		return fgc.getOrganicFunctionalGroupCounts();
         }
