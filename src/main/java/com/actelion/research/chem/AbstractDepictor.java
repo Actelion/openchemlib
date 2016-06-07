@@ -102,7 +102,7 @@ public abstract class AbstractDepictor {
 	public static final Color COLOR_RED = new Color(255, 0, 0);
 	public static final Color COLOR_GREEN = new Color(0, 255, 0);
 	public static final Color COLOR_MAGENTA = new Color(192, 0, 255);
-	public static final Color COLOR_ORANGE = new Color(224, 80, 0);
+	public static final Color COLOR_ORANGE = new Color(255, 160, 0);
 	public static final Color COLOR_DARK_GREEN = new Color(0, 128, 0);
 	public static final Color COLOR_DARK_RED = new Color(160, 0, 0);
 
@@ -575,6 +575,8 @@ public abstract class AbstractDepictor {
 				setColor(mDefaultColor);
 				}
 			else if (!explicitAtomColors
+				  && mMol.getAtomicNo(i) != 1
+				  && mMol.getAtomicNo(i) != 6
 				  && ((mDisplayMode & cDModeNoImplicitAtomLabelColors) == 0)
 				  && mMol.getAtomList(i) == null
 				  && mMol.getAtomicNo(i) < ATOM_LABEL_COLOR.length) {
