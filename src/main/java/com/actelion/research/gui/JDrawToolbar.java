@@ -33,11 +33,18 @@
 
 package com.actelion.research.gui;
 
+import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.gui.hidpi.HiDPIIconButton;
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 
 public class JDrawToolbar extends JComponent
         implements MouseListener,MouseMotionListener {
@@ -66,8 +73,6 @@ public class JDrawToolbar extends JComponent
 	protected static final int cToolZoom = 18;
 	protected static final int cToolMapper = 19;
     protected static final int cToolESR = 20;
-//	protected static final int cButtonChiral = 20;	// in multi fragment mode this button is used as tool
-//	protected static final int cToolChiral = 20;
 	protected static final int cToolText = 21;
 	protected static final int cToolChain = 22;
 	protected static final int cToolDownBond = 23;
@@ -83,8 +88,10 @@ public class JDrawToolbar extends JComponent
 	protected static final int cToolAtomOther = 33;
 
     private static final int cESRMenuBorder = 4;
-    private static final int cESRMenuX = 10;
-    private static final int cESRMenuY = 54;
+    private static final int cESRMenuX = HiDPIHelper.scale(10);
+    private static final int cESRMenuY = HiDPIHelper.scale(54);
+	private static final float cButtonBorder = HiDPIHelper.getUIScaleFactor()*3f;
+	private static final float cButtonSize = HiDPIHelper.getUIScaleFactor()*21f;
     protected static final int cToolESRAbs = 101;
     protected static final int cToolESROr = 102;
     protected static final int cToolESRAnd  = 103;
@@ -120,19 +127,12 @@ public class JDrawToolbar extends JComponent
 	private void init() {
 		MediaTracker t = new MediaTracker(this);
 
-		mImageDown = getImageResource("drawButtonsDown.gif");
-		mImageUp = getImageResource("drawButtonsUp.gif");
-        mESRImageDown = getImageResource("ESRButtonsDown.gif");
-        mESRImageUp = getImageResource("ESRButtonsUp.gif");
+		mImageDown = createImage("drawButtonsDown.gif");
+		mImageUp = createImage("drawButtonsUp.gif");
+        mESRImageDown = createImage("ESRButtonsDown.gif");
+        mESRImageUp = createImage("ESRButtonsUp.gif");
 
-		t.addImage(mImageUp,0);
-		t.addImage(mImageDown,0);
-        t.addImage(mESRImageDown,0);
-        t.addImage(mESRImageDown,0);
-		try {
-			t.waitForAll();
-			}
-		catch (InterruptedException e) {}
+		scaleImages();
 
 		int w = mImageUp.getWidth(this);
 		int h = mImageUp.getHeight(this);
@@ -147,24 +147,42 @@ public class JDrawToolbar extends JComponent
         addMouseMotionListener(this);
 		}
 
+	private void scaleImages() {
+		if (cButtonSize == 21)	// no scaling
+			return;
+
+		mImageDown = scaleImage(mImageDown);
+		mImageUp = scaleImage(mImageUp);
+		mESRImageDown = scaleImage(mESRImageDown);
+		mESRImageUp = scaleImage(mESRImageUp);
+		}
+
+	public static BufferedImage createImage(String fileName) {
+		// Once double resolution is available use HiDPIHelper.createImage() !!!
+
+		URL url = JDrawToolbar.class.getResource("/images/" + fileName);
+		if (url == null)
+			throw new RuntimeException("Could not find: " + fileName);
+
+		try {
+			BufferedImage image = ImageIO.read(url);
+			return image;
+			}
+		catch (IOException ioe) { return null; }
+		}
+
+	private Image scaleImage(Image image) {
+		return image.getScaledInstance(HiDPIHelper.scale(image.getWidth(this)),
+									   HiDPIHelper.scale(image.getHeight(this)),
+									   Image.SCALE_SMOOTH);
+		}
+
 	public void setCurrentTool(int tool) {
 		if (mCurrentTool != tool) {
 			mCurrentTool = tool;
 			mArea.toolChanged(tool);
 			repaint();
 			}
-		}
-
-	private Image getImageResource(String imageFileName) {
-		Image im=null;
-		try {
-            ImageIcon ic = new ImageIcon(getClass().getResource("/images/"+imageFileName));
-            im = ic.getImage();
-			}
-		catch (Exception e) {
-			System.out.println("Error loading images: "+e);
-			}
-		return im;
 		}
 
 	public void paintComponent(Graphics g) {
@@ -179,14 +197,14 @@ public class JDrawToolbar extends JComponent
             setButtonClip(g, cToolESR);
             Point l = getButtonLocation(cToolESR);
             Image esrButtons = (mCurrentTool == cToolESR) ? mESRImageDown : mESRImageUp;
-            g.drawImage(esrButtons, l.x-cESRMenuBorder, l.y-cESRMenuBorder-21*mESRSelected, this);
+            g.drawImage(esrButtons, l.x-cESRMenuBorder, Math.round(l.y-cESRMenuBorder-cButtonSize*mESRSelected), this);
             g.setClip(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
             }
 
         if (mESRMenuVisible) {
             g.drawImage(mESRImageUp, cESRMenuX-cESRMenuBorder, cESRMenuY-cESRMenuBorder, this);
             if (mESRHilited != -1) {
-                g.setClip(cESRMenuX, cESRMenuY+21*mESRHilited, 20, 20);
+                g.setClip(cESRMenuX, Math.round(cESRMenuY+cButtonSize*mESRHilited), Math.round(cButtonSize-1), Math.round(cButtonSize-1));
                 g.drawImage(mESRImageDown, cESRMenuX-cESRMenuBorder, cESRMenuY-cESRMenuBorder, this);
                 g.setClip(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
                }
@@ -273,19 +291,19 @@ public class JDrawToolbar extends JComponent
  	private int getButtonNo(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
-		if (x<0 || x>44 || y<0 || y>cButtonsPerColumn*21) return -1;
-		x -= 3;
-		y -= 3;
-		if ((x % 21) > 18) return -1;
-		if ((y % 21) > 18) return -1;
-		return cButtonsPerColumn * (x/21) + (y/21);
+		if (x<0 || x>=2*cButtonSize+cButtonBorder || y<0 || y>cButtonsPerColumn*cButtonSize) return -1;
+		x -= cButtonBorder;
+		y -= cButtonBorder;
+		if ((x % cButtonSize) > cButtonSize-cButtonBorder) return -1;
+		if ((y % cButtonSize) > cButtonSize-cButtonBorder) return -1;
+		return cButtonsPerColumn * (int)(x/cButtonSize) + (int)(y/cButtonSize);
 		}
 
     private void validateESRHiliting(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
-        if (x>cESRMenuX && x<cESRMenuX+21) {
-            mESRHilited = (y-cESRMenuY) / 21;
+        if (x>cESRMenuX && x<cESRMenuX+cButtonSize) {
+            mESRHilited = Math.round((y-cESRMenuY) / cButtonSize);
             if (mESRHilited < 0 || mESRHilited > 2)
                 mESRHilited = -1;
             }
@@ -293,7 +311,7 @@ public class JDrawToolbar extends JComponent
 
     private void setButtonClip(Graphics g, int button) {
         Point l = getButtonLocation(button);
-        g.setClip(l.x, l.y,20,20);
+        g.setClip(l.x, l.y,Math.round(cButtonSize-1),Math.round(cButtonSize-1));
         }
 
 	private void drawPressedButton(Graphics g, int button) {
@@ -303,7 +321,7 @@ public class JDrawToolbar extends JComponent
 		}
 
     private Point getButtonLocation(int button) {
-        return new Point(21 * (button / cButtonsPerColumn) + 2,
-                         21 * (button % cButtonsPerColumn) + 2);
+        return new Point(Math.round(cButtonSize * (button / cButtonsPerColumn) + cButtonBorder-2),
+						 Math.round(cButtonSize * (button % cButtonsPerColumn) + cButtonBorder-2));
         }
 	}

@@ -291,7 +291,8 @@ public class Molecule implements Serializable {
 	public static final int cChiralityEpimers		   = 0x060000;
 	public static final int cChiralityDiastereomers	 = 0x070000; // this has added the number of diastereomers
 
-	public static final double cDefaultAverageBondLength = 24.0;
+	private static final double cDefaultAVBL = 24.0;
+	private static double sDefaultAVBL = cDefaultAVBL;
 
 	public static final String cAtomLabel[] = { "?",
 		"H"  ,"He" ,"Li" ,"Be" ,"B"  ,"C"  ,"N"  ,"O"  ,
@@ -1895,6 +1896,21 @@ public class Molecule implements Serializable {
 		return mCoordinates[atom].z;
 		}
 
+	public static double getDefaultAverageBondLength() {
+		return sDefaultAVBL;
+		}
+
+	/**
+	 * When the molecule adds a new bond to a new atom or a new ring,
+	 * then atoms are positioned such that the lengths of the new bonds
+	 * are equal to the average length of existing bonds. If there are no
+	 * existing bonds, then this default is used.
+	 * If the default is not set by this function, then it is 24.
+	 * @param defaultAVBL
+	 */
+	public static void setDefaultAverageBondLength(double defaultAVBL) {
+		sDefaultAVBL = defaultAVBL;
+		}
 
 	/**
 	 * Calculates and returns the mean bond length. If the molecule has
@@ -1903,7 +1919,7 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public double getAverageBondLength() {
-		return getAverageBondLength(mAllAtoms, mAllBonds, cDefaultAverageBondLength);
+		return getAverageBondLength(mAllAtoms, mAllBonds, sDefaultAVBL);
 		}
 
 
@@ -1916,7 +1932,7 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public double getAverageBondLength(int atoms, int bonds) {
-		return getAverageBondLength(atoms, bonds, cDefaultAverageBondLength);
+		return getAverageBondLength(atoms, bonds, sDefaultAVBL);
 		}
 
 

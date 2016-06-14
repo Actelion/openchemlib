@@ -3227,7 +3227,7 @@ System.out.println();
 			}
 
 		if (keepAbsoluteValues) {
-			double avblDefault = mZCoordinatesAvailable ? 1.5 : Molecule.cDefaultAverageBondLength;
+			double avblDefault = mZCoordinatesAvailable ? 1.5 : Molecule.getDefaultAverageBondLength();
 			double avbl = mMol.getAverageBondLength(mMol.getAtoms(), mMol.getBonds(), avblDefault);
 			encodeBits(encodeABVL(avbl, binCount), resolutionBits);
 
