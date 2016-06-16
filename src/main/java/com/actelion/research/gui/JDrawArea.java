@@ -102,6 +102,8 @@ public class JDrawArea extends JPanel
 	// are generated from scratch, then molecules and objects are scaled to fill
 	// the view unless the maximum average bond length reaches the optimum.
 
+	private static final Color DEFAULT_SELECTION_BACKGROUND = new Color(128,164,192);
+
 	private static final int ALLOWED_DROP_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 
 	private static final int cRequestNone = 0;
@@ -412,12 +414,13 @@ public class JDrawArea extends JPanel
 	}
 
 	private Color lassoColor() {
-		Color selectionColor = UIManager.getColor("TextArea.selectionBackground");
+		Color selectionColor = selectionColor();
 		return ColorHelper.createColor(selectionColor, LookAndFeelHelper.isDarkLookAndFeel() ? 0.65f : 0.35f);
 	}
 
 	private Color selectionColor() {
-		return UIManager.getColor("TextArea.selectionBackground");
+		Color selectionColor = UIManager.getColor("TextArea.selectionBackground");
+		return (selectionColor != null) ? selectionColor : DEFAULT_SELECTION_BACKGROUND;
 	}
 
 	private Color mapToolColor() {
@@ -427,7 +430,7 @@ public class JDrawArea extends JPanel
 
 	private Color chainHiliteColor() {
 		Color background = UIManager.getColor("TextArea.background");
-		Color selectionColor = UIManager.getColor("TextArea.selectionBackground");
+		Color selectionColor = selectionColor();
 		return ColorHelper.intermediateColor(selectionColor, background, 0.5f);
 	}
 

@@ -97,6 +97,7 @@ public abstract class AbstractDepictor {
 	private static final int COLOR_EXCLUDE_GROUP_BG = -7;
 	private static final int COLOR_EXCLUDE_GROUP_FG = -8;
 	private static final int COLOR_RESTORE_PREVIOUS = -9;
+	private static final int COLOR_INITIALIZE = -10;
 
 	public static final Color COLOR_BLUE = new Color(32, 96, 255);
 	public static final Color COLOR_RED = new Color(255, 0, 0);
@@ -150,7 +151,7 @@ public abstract class AbstractDepictor {
 	private boolean[]				mAtomLabelDisplayed;
 	private double					mpBondSpacing,mpDotDiameter,mpLineWidth,mpQFDiameter,mpBondHiliteRadius,
 									mFactorTextSize,mpExcludeGroupRadius,mChiralTextSize;
-	private int						mpLabelSize,mDefaultColor,mDisplayMode,mCurrentColor,mPreviousColor;
+	private int						mpLabelSize, mStandardForegroundColor,mDisplayMode,mCurrentColor,mPreviousColor;
 	private ArrayList<Rectangle2D.Double> mpTabuZone;
     private ArrayList<DepictorDot>  mpDot;
 	private StereoMolecule     		mMol;
@@ -195,7 +196,7 @@ public abstract class AbstractDepictor {
 
 /*	@Deprecated
 	public void setDefaultColor(int c) {
-		mDefaultColor = c;
+		mStandardForegroundColor = c;
 	    updateBondHiliteColor();
 		}*/
 
@@ -209,7 +210,7 @@ public abstract class AbstractDepictor {
 	 * @param background null (white) or color on which the molecule is drawn
 	 */
 	public void setForegroundColor(Color foreground, Color background) {
-		mDefaultColor = COLOR_CUSTOM_FOREGROUND;
+		mStandardForegroundColor = COLOR_CUSTOM_FOREGROUND;
 		mCustomForeground = foreground;
 		mCustomBackground = background;
 		updateBondHiliteColor();
@@ -499,7 +500,7 @@ public abstract class AbstractDepictor {
 		mpDot = new ArrayList<DepictorDot>();
 		mAtomLabelDisplayed = new boolean[mMol.getAllAtoms()];
 		mChiralTextLocation = new Point2D.Double();
-		mDefaultColor = Molecule.cAtomColorNone;
+		mStandardForegroundColor = Molecule.cAtomColorNone;
 		mCurrentColor = COLOR_UNDEFINED;
 		updateBondHiliteColor();
 		}
@@ -549,6 +550,8 @@ public abstract class AbstractDepictor {
 				mAtomColor[atom] = Molecule.cAtomColorMagenta;
 			}
 
+		setColor(COLOR_INITIALIZE);	// to initialize the color tracking mechanism
+
 		hiliteExcludeGroups();
 		hiliteBondBackgrounds();
 		indicateQueryFeatures();
@@ -556,8 +559,8 @@ public abstract class AbstractDepictor {
 
 		setTextSize(mpLabelSize);
 		setLineWidth(mpLineWidth);
-		setColor(mDefaultColor);
 
+		setColor(mStandardForegroundColor);
 		markIsolatedAtoms();
 
 		mpDot.clear();
@@ -567,12 +570,12 @@ public abstract class AbstractDepictor {
 			if (isHighlightedAtom(i)) {
 				setColor(COLOR_HILITE_BOND_FG);
 	    		mpDrawAtom(i, true);
-				setColor(mDefaultColor);
+				setColor(mStandardForegroundColor);
 				}
 			else if (mAtomColor[i] != 0) {
 				setColor(mAtomColor[i]);
 	    		mpDrawAtom(i, true);
-				setColor(mDefaultColor);
+				setColor(mStandardForegroundColor);
 				}
 			else if (!explicitAtomColors
 				  && mMol.getAtomicNo(i) != 1
@@ -582,7 +585,7 @@ public abstract class AbstractDepictor {
 				  && mMol.getAtomicNo(i) < ATOM_LABEL_COLOR.length) {
 				setRGBColor(getContrastColor(ATOM_LABEL_COLOR[mMol.getAtomicNo(i)]));
 	    		mpDrawAtom(i, true);
-				setColor(mDefaultColor);
+				setColor(mStandardForegroundColor);
 				}
 			else {
 	    		mpDrawAtom(i, true);
@@ -758,7 +761,7 @@ public abstract class AbstractDepictor {
 					double dx = (getAtomX(atom1) - getAtomX(atom2)) / 3;
 					double dy = (getAtomY(atom1) - getAtomY(atom2)) / 3;
 					mpDrawString(x+dy,y-dx,cipStr,true,true);
-					setColor(mDefaultColor);
+					setColor(mStandardForegroundColor);
 					setTextSize(mpLabelSize);
 					}
 				}
@@ -774,7 +777,7 @@ public abstract class AbstractDepictor {
 				double y = (getAtomY(atom1) + getAtomY(atom2)) / 2;
 				mpDrawString(x,y,String.valueOf(i),true,true);
 				}
-			setColor(mDefaultColor);
+			setColor(mStandardForegroundColor);
 			setTextSize(mpLabelSize);
 			}
 		}
@@ -864,7 +867,7 @@ public abstract class AbstractDepictor {
 					if (mpProperLine(aLine)) {
 						setColor((i<9) ? color1 : color2);
 						drawBlackLine(aLine);
-						setColor(mDefaultColor);
+						setColor(mStandardForegroundColor);
 						}
 					}
 				break;
@@ -2062,7 +2065,7 @@ public abstract class AbstractDepictor {
 			setColor(dot.color);
 			drawDot(dot.x, dot.y);
 			}
-		setColor(mDefaultColor);
+		setColor(mStandardForegroundColor);
 		}
 
 
@@ -2129,7 +2132,7 @@ public abstract class AbstractDepictor {
     	if (mMol.isBondForegroundHilited(mMol.getBond(atom1, atom2))) {
 			setColor(COLOR_HILITE_BOND_FG);
 			drawBlackLine(theLine);
-			setColor(mDefaultColor);
+			setColor(mStandardForegroundColor);
     		}
     	else if (mAtomColor[atom1] != mAtomColor[atom2]) {
     		drawColorLine(theLine, atom1, atom2);
@@ -2137,7 +2140,7 @@ public abstract class AbstractDepictor {
     	else if (mAtomColor[atom1] != Molecule.cAtomColorNone) {
 			setColor(mAtomColor[atom1]);
 			drawBlackLine(theLine);
-			setColor(mDefaultColor);
+			setColor(mStandardForegroundColor);
     		}
 		else {
 			drawBlackLine(theLine);
@@ -2164,7 +2167,7 @@ public abstract class AbstractDepictor {
 			setColor(mAtomColor[atm2]);
 			drawBlackLine(line2);
 			}
-		setColor(mDefaultColor);
+		setColor(mStandardForegroundColor);
 		}
 
 
@@ -2208,7 +2211,7 @@ public abstract class AbstractDepictor {
 		aLine.y2 = theLine.y2;
 		drawBlackLine(aLine);
 
-		setColor(mDefaultColor);
+		setColor(mStandardForegroundColor);
 		}
 
 
@@ -2253,7 +2256,7 @@ public abstract class AbstractDepictor {
 		drawPolygon(p1x,p1y,3);
 		setColor(color2);
 		drawPolygon(p2x,p2y,4);
-		setColor(mDefaultColor);
+		setColor(mStandardForegroundColor);
 		}
 
 
@@ -2282,11 +2285,17 @@ public abstract class AbstractDepictor {
 		 && mOverruleForeground != null)
 			theColor = COLOR_OVERRULED;
 
+		if (theColor == COLOR_INITIALIZE) {
+			mCurrentColor = -999;
+			theColor = mStandardForegroundColor;
+			}
+
 		if (theColor == mCurrentColor)
 			return;
 
-		// if we have COLOR_EXCLUDE_GROUP_FG, then don't change until we get mDefaultColor
-		if (mCurrentColor == COLOR_EXCLUDE_GROUP_FG && theColor != COLOR_RESTORE_PREVIOUS)
+		// if we have COLOR_EXCLUDE_GROUP_FG, then don't change until we get COLOR_RESTORE_PREVIOUS
+		if (mCurrentColor == COLOR_EXCLUDE_GROUP_FG
+		 && theColor != COLOR_RESTORE_PREVIOUS)
 			return;
 
 		if (theColor == COLOR_EXCLUDE_GROUP_FG)
