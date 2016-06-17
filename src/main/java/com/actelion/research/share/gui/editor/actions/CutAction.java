@@ -31,19 +31,31 @@
 *
 */
 
-package com.actelion.research.share.gui;
+package com.actelion.research.share.gui.editor.actions;
 
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.share.gui.editor.Model;
 
+/**
+ * Project:
+ * User: rufenec
+ * Date: 5/16/13
+ * Time: 3:43 PM
+ */
+public class CutAction extends CommandAction
+{
+    public CutAction(Model model)
+    {
+        super(model);
+    }
 
-public interface IClipboardHandler {
-	public StereoMolecule pasteMolecule();
-	public Reaction pasteReaction();
-	public boolean copyMolecule(String molfile);
-	public boolean copyMolecule(StereoMolecule mol);
-	public boolean copyReaction(Reaction r);
-	public boolean copyReaction(String ctab);
-	public boolean copyImage(java.awt.Image img);
-	public java.awt.Image pasteImage();
-	}
+    @Override
+    public void onCommand()
+    {
+//        ClipboardHandler handler = new ClipboardHandler();
+//        handler.copyMolecule(model.getMol());
+//        model.pushUndo();
+//        model.setValue(new StereoMolecule());
+
+    }
+}
+
