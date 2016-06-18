@@ -413,22 +413,22 @@ public class JDrawArea extends JPanel
 		}
 	}
 
-	private Color lassoColor() {
+	public static Color lassoColor() {
 		Color selectionColor = selectionColor();
 		return ColorHelper.createColor(selectionColor, LookAndFeelHelper.isDarkLookAndFeel() ? 0.65f : 0.35f);
 	}
 
-	private Color selectionColor() {
+	public static Color selectionColor() {
 		Color selectionColor = UIManager.getColor("TextArea.selectionBackground");
 		return (selectionColor != null) ? selectionColor : DEFAULT_SELECTION_BACKGROUND;
 	}
 
-	private Color mapToolColor() {
+	public static Color mapToolColor() {
 		Color background = UIManager.getColor("TextArea.background");
 		return ColorHelper.getContrastColor(new Color(128, 0, 0), background);
 	}
 
-	private Color chainHiliteColor() {
+	public static Color chainHiliteColor() {
 		Color background = UIManager.getColor("TextArea.background");
 		Color selectionColor = selectionColor();
 		return ColorHelper.intermediateColor(selectionColor, background, 0.5f);
