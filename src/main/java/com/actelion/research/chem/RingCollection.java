@@ -525,9 +525,9 @@ public class RingCollection {
 		for (int i=0; i<ringBonds; i++) {
 			bondSequence <<= 1;
 			aromaticButNotDelocalizedSequence <<= 1;
-			if (mMol.getBondOrder(ringBond[i]) > 1
-			 || mMol.getBondType(ringBond[i]) == Molecule.cBondTypeDelocalized)
+			if (qualifiesAsPiBond(ringBond[i])) {
 				bondSequence |= 1;
+				}
 			else {
 				int annelated = annelatedRing[ringNo][i];
 				if (annelated != -1) {
@@ -632,5 +632,28 @@ public class RingCollection {
 			return true;
 
 		return !unhandledAnnelatedRingFound;
+		}
+
+	private boolean qualifiesAsPiBond(int bond) {
+		if (mMol.getBondOrder(bond) > 1
+		 || mMol.getBondType(bond) == Molecule.cBondTypeDelocalized)
+			return true;
+
+		// we consider amide bonds as potentially contributers to a pi-system
+		for (int i=0; i<2; i++) {
+			if (mMol.getAtomicNo(mMol.getBondAtom(1-i, bond)) == 7) {
+				int atom = mMol.getBondAtom(i, bond);
+				for (int j=0; j<mMol.getConnAtoms(atom); j++) {
+					int connAtom = mMol.getConnAtom(atom, j);
+					int connBond = mMol.getConnBond(atom, j);
+					if (mMol.getAtomicNo(connAtom) == 8
+					 && mMol.getBondOrder(connBond) == 2
+					 && mMol.getConnAtoms(connAtom) == 1)
+					return true;
+					}
+				}
+			}
+
+		return false;
 		}
 	}
