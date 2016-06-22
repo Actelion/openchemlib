@@ -3058,11 +3058,19 @@ System.out.println();
 		return (index < limit) ? index : index - limit;
 		}
 
-
+	/**
+	 * Encodes the molecule's atom coordinates into a compact String. Together with the
+	 * idcode the coordinate string can be passed to the IDCodeParser to recreate the
+	 * original molecule including coordinates.<br>
+	 * If the molecule has 3D-coordinates and if there are no implicit hydrogen atoms,
+	 * i.e. all hydrogen atoms are explicitly available with their coordinates, then
+	 * hydrogen 3D-coordinates are also encoded despite the fact that the idcode itself does
+	 * not contain hydrogen atoms, because it must be canonical.
+	 * @return
+	 */
 	public String getEncodedCoordinates() {
 		return getEncodedCoordinates(mZCoordinatesAvailable);
 		}
-
 
 	public String getEncodedCoordinates(boolean keepAbsoluteValues) {
 		if (mCoordinates == null) {

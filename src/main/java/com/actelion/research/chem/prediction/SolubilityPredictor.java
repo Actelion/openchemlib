@@ -36,6 +36,9 @@ package com.actelion.research.chem.prediction;
 import com.actelion.research.chem.AtomTypeCalculator;
 import com.actelion.research.chem.StereoMolecule;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+
 
 public class SolubilityPredictor {
 	public static final float cSolubilityUnknown = -999;
@@ -204,10 +207,13 @@ public class SolubilityPredictor {
 					}
 				}
 			}
+		NumberFormat formatter = new DecimalFormat("#0.000");
 
 		for (int i=0; i<cIncrement.length; i++)
 			if (count[i] != 0)
-				detail.add(""+count[i]+" * "+cIncrement[i]+"   AtomType: 0x"
+				detail.add(""+count[i]+" * "+
+									formatter.format(cIncrement[i])
+									+"   AtomType: 0x"
 								  +Long.toHexString(cAtomType[i]),
 								  ParameterizedStringList.cStringTypeText);
 

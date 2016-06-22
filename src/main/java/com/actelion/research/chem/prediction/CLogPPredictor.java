@@ -38,6 +38,8 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.SortedList;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.TreeMap;
 
 public class CLogPPredictor {
@@ -287,6 +289,7 @@ public class CLogPPredictor {
 		if (mol != null) {
 			int errorCount = 0;
 			TreeMap<Long,Integer> countMap = new TreeMap<Long,Integer>();
+			NumberFormat formatter = new DecimalFormat("#0.000");
 			for (int atom=0; atom<mol.getAtoms(); atom++) {
 				try {
 					long atomType = AtomTypeCalculator.getAtomType(mol, atom, ATOM_TYPE_MODE);
@@ -306,7 +309,8 @@ public class CLogPPredictor {
 
 			for (Long type:countMap.keySet()) {
 				if (sSortedTypeList.contains(type))
-					detail.add(countMap.get(type) + " * "+ INCREMENT[sSortedTypeList.getIndex(type)] + " AtomType: 0x" + Long.toHexString(type),ParameterizedStringList.cStringTypeText);
+					detail.add(countMap.get(type) + " * "+
+							formatter.format(INCREMENT[sSortedTypeList.getIndex(type)]) + " AtomType: 0x" + Long.toHexString(type),ParameterizedStringList.cStringTypeText);
 				else
 					detail.add("Warning: For atom type 0x"+Long.toHexString(type)+" ("+countMap.get(type)+" times found) is no increment available.", ParameterizedStringList.cStringTypeText);
 				}

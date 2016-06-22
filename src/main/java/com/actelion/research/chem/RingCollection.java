@@ -640,7 +640,7 @@ public class RingCollection {
 			return true;
 
 		// we consider amide bonds as potentially contributers to a pi-system
-		for (int i=0; i<2; i++) {
+/*		for (int i=0; i<2; i++) {
 			if (mMol.getAtomicNo(mMol.getBondAtom(1-i, bond)) == 7) {
 				int atom = mMol.getBondAtom(i, bond);
 				for (int j=0; j<mMol.getConnAtoms(atom); j++) {
@@ -652,7 +652,7 @@ public class RingCollection {
 					return true;
 					}
 				}
-			}
+			}*/
 
 		return false;
 		}
