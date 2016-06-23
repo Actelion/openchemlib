@@ -3062,6 +3062,9 @@ System.out.println();
 	 * Encodes the molecule's atom coordinates into a compact String. Together with the
 	 * idcode the coordinate string can be passed to the IDCodeParser to recreate the
 	 * original molecule including coordinates.<br>
+	 * If the molecule's coordinates are 2D, then coordinate encoding will be relative,
+	 * i.e. scale and absolute positions get lost during the encoding.
+	 * 3D-coordinates, however, are encoded retaining scale and absolute positions.<br>
 	 * If the molecule has 3D-coordinates and if there are no implicit hydrogen atoms,
 	 * i.e. all hydrogen atoms are explicitly available with their coordinates, then
 	 * hydrogen 3D-coordinates are also encoded despite the fact that the idcode itself does
@@ -3072,10 +3075,24 @@ System.out.println();
 		return getEncodedCoordinates(mZCoordinatesAvailable);
 		}
 
-	public String getEncodedCoordinates(boolean keepAbsoluteValues) {
+	/**
+	 * Encodes the molecule's atom coordinates into a compact String. Together with the
+	 * idcode the coordinate string can be passed to the IDCodeParser to recreate the
+	 * original molecule including coordinates.<br>
+	 * If keepPositionAndScale==false, then coordinate encoding will be relative,
+	 * i.e. scale and absolute positions get lost during the encoding.
+	 * Otherwise the encoding retains scale and absolute positions.<br>
+	 * If the molecule has 3D-coordinates and if there are no implicit hydrogen atoms,
+	 * i.e. all hydrogen atoms are explicitly available with their coordinates, then
+	 * hydrogen 3D-coordinates are also encoded despite the fact that the idcode itself does
+	 * not contain hydrogen atoms, because it must be canonical.
+	 * @param keepPositionAndScale if false, then coordinates are scaled to an average bond length of 1.5 units
+	 * @return
+	 */
+	public String getEncodedCoordinates(boolean keepPositionAndScale) {
 		if (mCoordinates == null) {
 			generateGraph();
-			encodeCoordinates(keepAbsoluteValues);
+			encodeCoordinates(keepPositionAndScale);
 			}
 
 		return mCoordinates;
@@ -3177,7 +3194,7 @@ System.out.println();
 		mCoordinates = coordinateBuffer.toString();
 		}	*/
 
-	private void encodeCoordinates(boolean keepAbsoluteValues) {
+	private void encodeCoordinates(boolean keepPositionAndScale) {
 		if (mMol.getAtoms() == 0) {
 			mCoordinates = "";
 			return;
@@ -3201,7 +3218,7 @@ System.out.println();
 		encodeBitsStart();
 		mEncodingBuffer.append(includeHydrogenCoordinates ? '#' : '!');
 		encodeBits(mZCoordinatesAvailable ? 1 : 0, 1);
-		encodeBits(keepAbsoluteValues ? 1 : 0, 1);
+		encodeBits(keepPositionAndScale ? 1 : 0, 1);
 		encodeBits(resolutionBits/2, 4);	// resolution bits devided by 2
 
 		double maxDelta = 0.0;
@@ -3234,7 +3251,7 @@ System.out.println();
 				}
 			}
 
-		if (keepAbsoluteValues) {
+		if (keepPositionAndScale) {
 			double avblDefault = mZCoordinatesAvailable ? 1.5 : Molecule.getDefaultAverageBondLength();
 			double avbl = mMol.getAverageBondLength(mMol.getAtoms(), mMol.getBonds(), avblDefault);
 			encodeBits(encodeABVL(avbl, binCount), resolutionBits);
