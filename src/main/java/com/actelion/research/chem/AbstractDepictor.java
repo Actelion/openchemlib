@@ -773,9 +773,11 @@ public abstract class AbstractDepictor {
 			for (int i=0; i<mMol.getAllBonds(); i++) {
 				int atom1 = mMol.getBondAtom(0,i);
 				int atom2 = mMol.getBondAtom(1,i);
+				String type = mMol.isDelocalizedBond(i) ? "d"
+							: mMol.isAromaticBond(i) ? "a" : "";
 				double x = (getAtomX(atom1) + getAtomX(atom2)) / 2;
 				double y = (getAtomY(atom1) + getAtomY(atom2)) / 2;
-				mpDrawString(x,y,String.valueOf(i),true,true);
+				mpDrawString(x,y,type+String.valueOf(i),true,true);
 				}
 			setColor(mStandardForegroundColor);
 			setTextSize(mpLabelSize);
