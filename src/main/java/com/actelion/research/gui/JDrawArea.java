@@ -710,19 +710,17 @@ public class JDrawArea extends JPanel
 		if (mClipboardHandler != null) {
 			StereoMolecule mol = mClipboardHandler.pasteMolecule();
 			if (mol != null && mol.getAllAtoms() != 0) {
+				if (mol.getAllBonds() != 0)
+					new Depictor(mol).updateCoords(getGraphics(),
+									new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()),
+									AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
+
 				if (mMol.getAllAtoms() == 0) {
 					boolean isFragment = mMol.isFragment();
 					mol.copyMolecule(mMol);
 					mMol.setFragment(isFragment);
 					moleculeChanged(true);
 				} else {
-					int avbl = (int) mMol.getAverageBondLength();
-					Depictor d = new Depictor(mol);
-					d.updateCoords(this.getGraphics(), new Rectangle2D.Double(0, 0,
-							this.getWidth(),
-							this.getHeight()),
-						AbstractDepictor.cModeInflateToMaxAVBL + avbl
-					);
 					int originalAtoms = mMol.getAllAtoms();
 					mMol.addMolecule(mol);
 					for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
