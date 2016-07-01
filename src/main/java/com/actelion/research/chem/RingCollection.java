@@ -649,7 +649,7 @@ public class RingCollection {
 			 || mMol.getBondType(bond) == Molecule.cBondTypeDelocalized);
 		}
 
-	private boolean qualifiesAsAmideTypeBond(int bond) {
+	public boolean qualifiesAsAmideTypeBond(int bond) {
 		// According to M J Cook, A R Katritzky, P Linda, R D Tack
 		// J. Chem. Soc., Perkin Trans. 2, 1972, 1295-1301
 		// 2-pyridone and 2-pyridinethione retain most of the aromatic resonance

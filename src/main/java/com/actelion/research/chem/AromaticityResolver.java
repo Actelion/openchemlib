@@ -35,6 +35,7 @@ package com.actelion.research.chem;
 
 public class AromaticityResolver {
 	ExtendedMolecule	mMol;
+	private boolean		mAllHydrogensAreExplicit;
 	private boolean[]	mIsAromaticBond;
     private int         mAromaticAtoms,mAromaticBonds,mPiElectronsAdded;
 
@@ -106,24 +107,57 @@ public class AromaticityResolver {
      * @return true if all bonds of the delocalized area could be consistently converted. 
      */
 	public boolean locateDelocalizedDoubleBonds() {
+		return locateDelocalizedDoubleBonds(false, false);
+		}
+
+	/**
+	 * This method promotes all necessary bonds of the defined delocalized part of the molecule
+	 * from single to double bonds in order to create a valid delocalized system
+	 * of conjugated single and double bonds.
+	 * Non-cyclic atom chains defined to be delocalized are treated depending
+	 * on whether we have a molecule or a query fragment. For fragments the respective bond
+	 * types will be set to cBondTypeDelocalized; for molecules the chain will
+	 * have alternating single and double bonds starting with double at a non-ring end.
+	 * @param mayChangeAtomCharges true if input molecule doesn't carry atom charges and these may be added to achieve aromaticity
+	 * @param allHydrogensAreExplicit true this method can rely on all hydrogens being explicitly present
+	 * @return true if all bonds of the delocalized area could be consistently converted.
+	 */
+	public boolean locateDelocalizedDoubleBonds(boolean mayChangeAtomCharges, boolean allHydrogensAreExplicit) {
         if (mAromaticBonds == 0)
             return true;
+
+		mAllHydrogensAreExplicit = allHydrogensAreExplicit;
 
         RingCollection ringSet = new RingCollection(mMol, RingCollection.MODE_SMALL_RINGS_ONLY);
 
         if (mMol.isFragment())	
         	promoteDelocalizedChains();
 
+		if (mayChangeAtomCharges)
+			addObviousAtomCharges(ringSet);
+
         // find mandatory conjugation breaking atoms, i.e. atoms whose neighbour bonds must (!) be single bonds
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (isAromaticAtom(atom)
-			 && mMol.getAtomicNo(atom) ==  6) {
-	            // C+ in tropylium and C- in cyclopentadienyl
-				if ((mMol.getAtomCharge(atom) == -1 && ringSet.getAtomRingSize(atom) == 5)
-				 || (mMol.getAtomCharge(atom) == 1 && ringSet.getAtomRingSize(atom) == 7))
-					protectAtom(atom);
+			if (isAromaticAtom(atom)) {
+				if (ringSet.getAtomRingSize(atom) == 7) {
+					// B,C+ in tropylium
+					if ((mMol.getAtomicNo(atom) == 5 && mMol.getAtomCharge(atom) == 0)
+					 || (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == 1))
+						protectAtom(atom);
+					}
+				if (ringSet.getAtomRingSize(atom) == 5) {
+					// C-,N,O,S in cyclopentadienyl, furan, pyrrol, etc.
+					if ((mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == -1)
+					 || (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 0 && mMol.getAllConnAtoms(atom) == 3)
+					 || (mMol.getAtomicNo(atom) == 8 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2)
+					 || (mMol.getAtomicNo(atom) == 16 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2))
+						protectAtom(atom);
+					}
 				}
 			}
+
+		protectAmideBonds(ringSet);
+		protectDoubleBondAtoms();
 
 		promoteObviousBonds();
 
@@ -306,4 +340,190 @@ public class AromaticityResolver {
                 }
             }
         }
-    }
+
+	private void protectAmideBonds(RingCollection ringSet) {
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
+			if (mIsAromaticBond[bond] && ringSet.qualifiesAsAmideTypeBond(bond)) {
+				protectAtom(mMol.getBondAtom(0, bond));
+				protectAtom(mMol.getBondAtom(1, bond));
+				}
+			}
+		}
+
+	private void protectDoubleBondAtoms() {
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
+			if (mMol.getBondOrder(bond) == 2) {
+				for (int i=0; i<2; i++) {
+					int atom = mMol.getBondAtom(i, bond);
+					for (int j=0; j<mMol.getConnAtoms(atom); j++) {
+						int connBond = mMol.getConnBond(atom, j);
+						if (mIsAromaticBond[connBond]) {
+							protectAtom(atom);
+							break;
+							}
+						}
+					}
+				}
+			}
+		}
+
+	private void addObviousAtomCharges(RingCollection ringSet) {
+		int[] ringCount = new int[mMol.getAtoms()];
+		for (int r=0; r<ringSet.getSize(); r++)
+			for (int atom:ringSet.getRingAtoms(r))
+				ringCount[atom]++;
+
+		for (int r=0; r<ringSet.getSize(); r++) {
+			int ringSize = ringSet.getRingSize(r);
+			if (ringSize >= 5 && ringSize <= 7) {
+				boolean isDelocalized = true;
+				for (int bond:ringSet.getRingBonds(r)) {
+					if (!mIsAromaticBond[bond]) {
+						isDelocalized = false;
+						break;
+						}
+					}
+
+				if (isDelocalized) {
+					boolean possible = true;
+					int leakAtom = -1;
+					int leakPriority = 0;
+
+					for (int atom:ringSet.getRingAtoms(r)) {
+						if (ringSize == 6 || ringCount[atom] > 1) {	// bridgehead atom
+							if (!checkAtomTypePi1(atom, false)) {
+								possible = false;
+								break;
+								}
+							}
+						else {	// non-bridgehead in 5- or 7-membered ring
+							int priority = (ringSize == 5) ?
+									checkAtomTypeLeak5(atom, false) : checkAtomTypeLeak7(atom, false);
+							if (!checkAtomTypePi1(atom, false)) {
+								if (leakPriority == 10) {
+									possible = false;
+									break;
+									}
+								leakAtom = atom;
+								leakPriority = 10;	// MAX
+								}
+							else if (leakPriority < priority) {
+								leakPriority = priority;
+								leakAtom = atom;
+								}
+							}
+						}
+
+					if (possible) {
+						for (int atom : ringSet.getRingAtoms(r)) {
+							if (atom == leakAtom) {
+								if (ringSize == 5)
+									checkAtomTypeLeak5(atom, true);
+								else
+									checkAtomTypeLeak7(atom, true);
+
+								protectAtom(atom);
+								}
+							else {
+								checkAtomTypePi1(atom, true);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+	/**
+	 * Checks, whether the atom is compatible with an aromatic atom of the type
+	 * that carries one half of a delocalized double bond.
+	 * @param atom
+	 * @param correctCharge if true then may add a charge to make the atom compatible
+	 * @return
+	 */
+	private boolean checkAtomTypePi1(int atom, boolean correctCharge) {
+		if (mMol.getAtomicNo(atom) == 6 && mMol.getAllConnAtoms(atom) <= 3)
+			return true;
+		if (mMol.getAtomicNo(atom) == 7) {
+			if (mMol.getConnAtoms(atom) == 2)
+				return true;
+			if (mMol.getConnAtoms(atom) == 3) {
+				if (correctCharge)
+					mMol.setAtomCharge(atom, 1);
+				return true;
+				}
+			}
+		if (mMol.getAtomicNo(atom) == 5) {
+			if (mMol.getConnAtoms(atom) == 2)
+				return true;
+			if (mMol.getConnAtoms(atom) == 3) {
+				if (correctCharge)
+					mMol.setAtomCharge(atom, -1);
+				return true;
+				}
+			}
+		if (mMol.getAtomicNo(atom) == 8) {
+			if (correctCharge)
+				mMol.setAtomCharge(atom, 1);
+			return true;
+			}
+		return false;
+		}
+
+	/**
+	 * Checks, whether the atom is compatible with that aromatic atom of
+	 * a 5-membered ring that supplies the additional electron pair.
+	 * @param atom
+	 * @param correctCharge if true then may add a charge to make the atom compatible
+	 * @return 0 (not compatible) or priority to be used (higher numbers have higher priority)
+	 */
+	private int checkAtomTypeLeak5(int atom, boolean correctCharge) {
+		if (mMol.getAtomicNo(atom) == 7) {
+			if (mMol.getConnAtoms(atom) >= 2)
+				return 2;
+			}
+		if (mMol.getAtomicNo(atom) == 8) {
+			return 4;
+			}
+		if (mMol.getAtomicNo(atom) == 16) {
+			if (mMol.getConnAtoms(atom) == 2)
+				return 3;
+			}
+		if (mMol.getAtomicNo(atom) == 6) {
+			if (correctCharge)
+				mMol.setAtomCharge(atom, -1);
+			return 1;
+			}
+		return 0;
+		}
+
+
+	/**
+	 * Checks, whether the atom is compatible with that aromatic atom of
+	 * a 7-membered ring that supplies the empty orbital.
+	 * @param atom
+	 * @param correctCharge if true then may add a charge to make the atom compatible
+	 * @return 0 (not compatible) or priority to be used (higher numbers have higher priority)
+	 */
+	private int checkAtomTypeLeak7(int atom, boolean correctCharge) {
+		if (mAllHydrogensAreExplicit) {
+			if (mMol.getAllConnAtoms(atom) != 3)
+				return 0;
+			}
+		else {
+			if (mMol.getAllConnAtoms(atom) > 3)
+				return 0;
+			}
+
+		if (mMol.getAtomicNo(atom) == 6) {
+			if (correctCharge)
+				mMol.setAtomCharge(atom, 1);
+			return 2;
+			}
+		if (mMol.getAtomicNo(atom) == 5) {
+			return 4;
+			}
+
+		return 0;
+		}
+	}
