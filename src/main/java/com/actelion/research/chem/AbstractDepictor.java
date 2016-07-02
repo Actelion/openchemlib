@@ -874,7 +874,7 @@ public abstract class AbstractDepictor {
 					}
 				break;
             case Molecule.cBondTypeMetalLigand:
-                mpHandleDashedLine(theLine, atom1, atom2);
+                mpHandleShortDashedLine(theLine, atom1, atom2);
                 break;
 			}
 			break;
@@ -1342,10 +1342,16 @@ public abstract class AbstractDepictor {
 		}
 
 
-    private void mpHandleDottedLine(DepictorLine theLine,int atm1,int atm2) {
+    private void mpHandleShortDashedLine(DepictorLine theLine,int atm1,int atm2) {
         if (mpProperLine(theLine))
-            drawDottedLine(theLine);
+            drawShortDashedLine(theLine, atm1, atm2);
         }
+
+
+	private void mpHandleDottedLine(DepictorLine theLine,int atm1,int atm2) {
+		if (mpProperLine(theLine))
+			drawDottedLine(theLine);
+		}
 
 
 	private void mpHandleWedge(DepictorLine origWedge,int atm1,int atm2) {
@@ -2212,6 +2218,46 @@ public abstract class AbstractDepictor {
 		aLine.x2 = theLine.x2;
 		aLine.y2 = theLine.y2;
 		drawBlackLine(aLine);
+
+		setColor(mStandardForegroundColor);
+		}
+
+
+	private void drawShortDashedLine(DepictorLine theLine, int atom1, int atom2) {
+		double xdif = theLine.x2 - theLine.x1;
+		double ydif = theLine.y2 - theLine.y1;
+		double length = Math.sqrt(xdif * xdif + ydif * ydif);
+		int points = 2 * (int)Math.round(length / (4 * mpLineWidth));
+
+		double xinc = xdif / (points-1);
+		double yinc = ydif / (points-1);
+
+		int color1,color2;
+		if (mMol.isBondForegroundHilited(mMol.getBond(atom1, atom2))) {
+			color1 = COLOR_HILITE_BOND_FG;
+			color2 = COLOR_HILITE_BOND_FG;
+			}
+		else {
+			color1 = mAtomColor[atom1];
+			color2 = mAtomColor[atom2];
+			}
+
+		double x = theLine.x1 - mpLineWidth/2;
+		double y = theLine.y1 - mpLineWidth/2;
+
+		setColor(color1);
+		for (int i=0; i<points/2; i++) {
+			fillCircle(x, y, mpLineWidth);
+			x += xinc;
+			y += yinc;
+			}
+
+		setColor(color2);
+		for (int i=0; i<points/2; i++) {
+			fillCircle(x, y, mpLineWidth);
+			x += xinc;
+			y += yinc;
+			}
 
 		setColor(mStandardForegroundColor);
 		}

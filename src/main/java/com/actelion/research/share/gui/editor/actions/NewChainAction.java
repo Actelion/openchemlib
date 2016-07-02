@@ -118,10 +118,10 @@ public class NewChainAction extends BondHighlightAction
                         java.awt.geom.Point2D p = suggestNewX2AndY2(atom);
                         int targetAtom = mol.findAtom((float) p.getX(), (float) p.getY());
                         if (targetAtom != -1) {
-                            mol.addOrChangeBond(atom, targetAtom, Molecule.cBondTypeSingle);
+                            mol.addOrChangeBond(atom, targetAtom, mol.suggestBondType(atom, targetAtom));
                         } else {
                             targetAtom = mol.addAtom((float) p.getX(), (float) p.getY(), 0.0f);
-                            mol.addBond(atom, targetAtom, Molecule.cBondTypeSingle);
+                            mol.addBond(atom, targetAtom, mol.suggestBondType(atom, targetAtom));
                             mol.ensureHelperArrays(Molecule.cHelperNeighbours);
                         }
                     }
@@ -137,7 +137,7 @@ public class NewChainAction extends BondHighlightAction
                 }
 
                 if (mChainAtom[0] != -1) {
-                    mol.addBond(sourceAtom, mChainAtom[0], Molecule.cBondTypeSingle);
+                    mol.addBond(sourceAtom, mChainAtom[0]);
                 }
                 model.needsLayout(true);
             }
@@ -149,7 +149,7 @@ public class NewChainAction extends BondHighlightAction
                         mChainAtom[i] = mol.addAtom((float) mChainAtomX[i], (float) mChainAtomY[i]);
                     }
                     if (mChainAtom[i] != -1) {
-                        mol.addBond(mChainAtom[i - 1], mChainAtom[i], Molecule.cBondTypeSingle);
+                        mol.addBond(mChainAtom[i - 1], mChainAtom[i]);
                     }
                 }
                 model.needsLayout(true);

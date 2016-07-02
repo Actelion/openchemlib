@@ -1114,7 +1114,7 @@ public class JDrawArea extends JPanel
 							break;
 						}
 
-						mMol.addBond(atom1, atom2, Molecule.cBondTypeSingle);
+						mMol.addBond(atom1, atom2);
 						atom1 = atom2 - hydrogenCount;	// new atom was added behind all hydrogens and travels now to the front
 						mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 					}
@@ -1801,7 +1801,8 @@ public class JDrawArea extends JPanel
 				}
 
 				if ((mAtom1 != -1 && stopAtom != -1)) {
-					int bondType = Molecule.cBondTypeSingle;
+					int bondType = (mMol.isMetalAtom(mAtom1) || mMol.isMetalAtom(stopAtom)) ?
+							Molecule.cBondTypeMetalLigand : Molecule.cBondTypeSingle;
 					if (mCurrentTool == JDrawToolbar.cToolUpBond) {
 						bondType = Molecule.cBondTypeUp;
 					}
@@ -1827,7 +1828,7 @@ public class JDrawArea extends JPanel
 					}
 
 					if (mChainAtom[0] != -1) {
-						mMol.addBond(mAtom1, mChainAtom[0], Molecule.cBondTypeSingle);
+						mMol.addBond(mAtom1, mChainAtom[0]);
 					}
 				}
 
@@ -1838,7 +1839,7 @@ public class JDrawArea extends JPanel
 								mChainAtomY[i]);
 						}
 						if (mChainAtom[i] != -1) {
-							mMol.addBond(mChainAtom[i - 1], mChainAtom[i], Molecule.cBondTypeSingle);
+							mMol.addBond(mChainAtom[i - 1], mChainAtom[i]);
 						}
 					}
 				}

@@ -530,19 +530,44 @@ public class Molecule implements Serializable {
 
 
 	/**
-	 * High level function for constructing a molecule.
-	 * @param atm1
-	 * @param atm2
-	 * @param type
-	 * @return
+	 * Suggests either cBondTypeSingle or cBondTypeMetalLigand
+	 * whatever seems more appropriate for a new bond between the two atoms.
+	 * @param atom1
+	 * @param atom2
+	 * @return preferred bond type
 	 */
-	public int addBond(int atm1,int atm2,int type) {
-		if (atm1 == atm2)
+	public int suggestBondType(int atom1, int atom2) {
+		return isMetalAtom(atom1) || isMetalAtom(atom2) ?
+				cBondTypeMetalLigand : cBondTypeSingle;
+	}
+
+	/**
+	 * High level function for constructing a molecule.
+	 * Adds a single or metal bond between the two atoms
+	 * depending on whether one of them is a metal atom.
+	 * @param atom1
+	 * @param atom2
+	 * @return new bond index
+	 */
+	public int addBond(int atom1, int atom2) {
+		return addBond(atom1, atom2, suggestBondType(atom1, atom2));
+		}
+
+
+	/**
+	 * High level function for constructing a molecule.
+	 * @param atom1
+	 * @param atom2
+	 * @param type
+	 * @return new bond index
+	 */
+	public int addBond(int atom1, int atom2, int type) {
+		if (atom1 == atom2)
 			return -1;
 
 		for (int bnd=0; bnd<mAllBonds; bnd++) {
-			if (mBondAtom[0][bnd] == atm1 && mBondAtom[1][bnd] == atm2
-			 || mBondAtom[0][bnd] == atm2 && mBondAtom[1][bnd] == atm1) {
+			if (mBondAtom[0][bnd] == atom1 && mBondAtom[1][bnd] == atom2
+			 || mBondAtom[0][bnd] == atom2 && mBondAtom[1][bnd] == atom1) {
 				if (mBondType[bnd] < type)
 					mBondType[bnd] = type;
 				return bnd;
@@ -552,8 +577,8 @@ public class Molecule implements Serializable {
 		if (mAllBonds >= mMaxBonds)
 			setMaxBonds(mMaxBonds*2);
 
-		mBondAtom[0][mAllBonds] = atm1;
-		mBondAtom[1][mAllBonds] = atm2;
+		mBondAtom[0][mAllBonds] = atom1;
+		mBondAtom[1][mAllBonds] = atom2;
 		mBondType[mAllBonds] = type;
 		mBondFlags[mAllBonds] = 0;
 		mBondQueryFeatures[mAllBonds] = 0;
@@ -3134,9 +3159,11 @@ public class Molecule implements Serializable {
 
 	private boolean incrementBondOrder(int bond) {
 		int maxBondOrder = getMaximumBondOrder(bond);
+		boolean hasMetal = isMetalAtom(mBondAtom[0][bond]) || isMetalAtom(mBondAtom[1][bond]);
+		int startBond = hasMetal ? cBondTypeMetalLigand : cBondTypeSingle;
 
 		if (mBondType[bond] == cBondTypeTriple) {
-			mBondType[bond] = cBondTypeSingle;
+			mBondType[bond] = startBond;
 			mValidHelperArrays = cHelperNone;
 			return true;
 			}
@@ -3152,7 +3179,7 @@ public class Molecule implements Serializable {
 			if (maxBondOrder == 3)
 				mBondType[bond] = cBondTypeTriple;
 			else
-				mBondType[bond] = cBondTypeSingle;
+				mBondType[bond] = startBond;
 			mValidHelperArrays = cHelperNone;
 			return true;
 			}
@@ -3168,6 +3195,12 @@ public class Molecule implements Serializable {
 
 		if (mBondType[bond] == cBondTypeSingle) {
 			mBondType[bond] = cBondTypeDouble;
+			mValidHelperArrays = cHelperNone;
+			return true;
+			}
+
+		if (mBondType[bond] == cBondTypeMetalLigand) {
+			mBondType[bond] = cBondTypeSingle;
 			mValidHelperArrays = cHelperNone;
 			return true;
 			}
@@ -3491,7 +3524,7 @@ public class Molecule implements Serializable {
 				}
 			bnd = getBondNo(actlAtm,remoteAtm);
 			if (bnd == -1) {
-				bnd = addBond(actlAtm,remoteAtm,1);
+				bnd = addBond(actlAtm, remoteAtm, suggestBondType(actlAtm, remoteAtm));
 				if (aromatic) {
 					if (dblBnd) {
 						if ((simpleGetValence(mBondAtom[0][bnd]) < 4)
@@ -3506,7 +3539,7 @@ public class Molecule implements Serializable {
 			}
 		bnd = getBondNo(actlAtm,endAtm);
 		if (bnd == -1)
-			bnd = addBond(actlAtm,endAtm,1);
+			bnd = addBond(actlAtm, endAtm, suggestBondType(actlAtm, endAtm));
 
 		if (aromatic)
 			if (dblBnd)

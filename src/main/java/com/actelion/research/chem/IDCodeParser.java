@@ -311,7 +311,11 @@ public class IDCodeParser {
 			int bondOrder = decodeBits(2);
 			switch (bondOrder) {
 			case 0:
-				isAromaticBond[bond] = true;
+				if (mMol.isMetalAtom(mMol.getBondAtom(0, bond))
+				 || mMol.isMetalAtom(mMol.getBondAtom(0, bond)))
+					mMol.setBondType(bond, Molecule.cBondTypeMetalLigand);
+				else
+					isAromaticBond[bond] = true;
 				break;
 			case 2:
 				mMol.setBondType(bond, Molecule.cBondTypeDouble);

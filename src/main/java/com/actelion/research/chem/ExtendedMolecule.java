@@ -2283,32 +2283,23 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		// split covalent bonds between hetero atoms and one of (Li,Na,K,Mg,Ca,...)
 		boolean bondDeleted = false;
 		for (int bond=0; bond<mBonds; bond++) {
-			if (getBondOrder(bond) == 1) {
-				for (int i=0; i<2; i++) {
-					if (isElectronegative(mBondAtom[i][bond])) {
-						int atom = mBondAtom[1-i][bond];
-						int atomicNo = mAtomicNo[atom];
-						if (atomicNo == 3	 // Li
-						 || atomicNo == 11	// Na
-						 || atomicNo == 12	// Mg
-						 || atomicNo == 19	// K
-						 || atomicNo == 20	// Ca
-						 || atomicNo == 37	// Rb
-						 || atomicNo == 38	// Sr
-						 || atomicNo == 55	// Cs
-						 || atomicNo == 56) { // Ba
+			for (int i=0; i<2; i++) {
+				if (isElectronegative(mBondAtom[i][bond])) {
+					int atom = mBondAtom[1-i][bond];
+					if (isGroupAlkaliOrEarthAlkaliMetal(atom)) {
+						if (getBondOrder(bond) == 1) {
 							mAtomCharge[atom]++;
 							mAtomCharge[mBondAtom[i][bond]]--;
 							mBondType[bond] = cBondTypeDeleted;
 							bondDeleted = true;
 							}
-						break;
+						else if (mBondType[bond] == cBondTypeMetalLigand) {
+							mBondType[bond] = cBondTypeDeleted;
+							bondDeleted = true;
+							}
 						}
+					break;
 					}
-				}
-			else if (mBondType[bond] == cBondTypeMetalLigand) {
-				mBondType[bond] = cBondTypeDeleted;
-				bondDeleted = true;
 				}
 			}
 		if (bondDeleted) {
@@ -2322,6 +2313,18 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return found;
 		}
 
+	private boolean isGroupAlkaliOrEarthAlkaliMetal(int atom) {
+		int atomicNo = mAtomicNo[atom];
+		return atomicNo == 3	 // Li
+			|| atomicNo == 11	// Na
+			|| atomicNo == 12	// Mg
+			|| atomicNo == 19	// K
+			|| atomicNo == 20	// Ca
+			|| atomicNo == 37	// Rb
+			|| atomicNo == 38	// Sr
+			|| atomicNo == 55	// Cs
+			|| atomicNo == 56;	// Ba
+		}
 
 	/**
 	 * Canonizes charge distribution in single- and multifragment molecules.

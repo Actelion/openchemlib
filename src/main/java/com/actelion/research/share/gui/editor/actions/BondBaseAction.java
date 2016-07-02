@@ -70,7 +70,10 @@ public abstract class BondBaseAction extends BondHighlightAction
     {
         StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
         if (mol != null) {
-            mol.addBond(srcAtom, targetAtom, getBondType());
+            int bondType = getBondType();
+            if (bondType == Molecule.cBondTypeSingle)
+                bondType = mol.suggestBondType(srcAtom, targetAtom);
+            mol.addBond(srcAtom, targetAtom, bondType);
             mol.ensureHelperArrays(Molecule.cHelperNeighbours);
         } else {
 //            mol = new StereoMolecule();
@@ -109,7 +112,10 @@ public abstract class BondBaseAction extends BondHighlightAction
                     java.awt.geom.Point2D p = suggestNewX2AndY2(sourceAtom);
                     int stopAtom = mol.findAtom((float) p.getX(), (float) p.getY());
                     if (stopAtom != -1) {
-                        mol.addOrChangeBond(sourceAtom, stopAtom, getBondType());
+                        int bondType = getBondType();
+                        if (bondType == Molecule.cBondTypeSingle)
+                            bondType = mol.suggestBondType(sourceAtom, stopAtom);
+                        mol.addOrChangeBond(sourceAtom, stopAtom, bondType);
                     } else {
                         int t = mol.addAtom((float) p.getX(), (float) p.getY(), 0.0f);
                         onAddBond(sourceAtom, t);
