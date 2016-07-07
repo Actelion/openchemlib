@@ -445,20 +445,20 @@ public class AromaticityResolver {
 		if (mMol.getAtomicNo(atom) == 6 && mMol.getAllConnAtoms(atom) <= 3)
 			return true;
 		if (mMol.getAtomicNo(atom) == 7) {
-			if (mMol.getConnAtoms(atom) == 2)
-				return true;
-			if (mMol.getConnAtoms(atom) == 3) {
-				if (correctCharge)
-					mMol.setAtomCharge(atom, 1);
+			if (mMol.getAllConnAtoms(atom) <= 3) {
+				if (mMol.getAllConnAtoms(atom) == 3) {
+					if (correctCharge)
+						mMol.setAtomCharge(atom, 1);
+					}
 				return true;
 				}
 			}
 		if (mMol.getAtomicNo(atom) == 5) {
-			if (mMol.getConnAtoms(atom) == 2)
-				return true;
-			if (mMol.getConnAtoms(atom) == 3) {
-				if (correctCharge)
-					mMol.setAtomCharge(atom, -1);
+			if (mMol.getAllConnAtoms(atom) <= 3) {
+				if (mMol.getAllConnAtoms(atom) == 3) {
+					if (correctCharge)
+						mMol.setAtomCharge(atom, -1);
+					}
 				return true;
 				}
 			}
@@ -479,7 +479,9 @@ public class AromaticityResolver {
 	 */
 	private int checkAtomTypeLeak5(int atom, boolean correctCharge) {
 		if (mMol.getAtomicNo(atom) == 7) {
-			if (mMol.getConnAtoms(atom) >= 2)
+			if (mMol.getAllConnAtoms(atom) > 2)
+				return 3;
+			if (mMol.getConnAtoms(atom) == 2)
 				return 2;
 			}
 		if (mMol.getAtomicNo(atom) == 8) {
@@ -487,7 +489,7 @@ public class AromaticityResolver {
 			}
 		if (mMol.getAtomicNo(atom) == 16) {
 			if (mMol.getConnAtoms(atom) == 2)
-				return 3;
+				return 5;
 			}
 		if (mMol.getAtomicNo(atom) == 6) {
 			if (correctCharge)

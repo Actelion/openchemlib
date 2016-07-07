@@ -3190,7 +3190,7 @@ public class Molecule implements Serializable {
 			return true;
 			}
 
-		if (maxBondOrder < 2)
+		if (!hasMetal && maxBondOrder < 2)
 			return false;
 
 		if (mBondType[bond] == cBondTypeSingle) {
@@ -3198,6 +3198,9 @@ public class Molecule implements Serializable {
 			mValidHelperArrays = cHelperNone;
 			return true;
 			}
+
+		if (maxBondOrder < 1)
+			return false;
 
 		if (mBondType[bond] == cBondTypeMetalLigand) {
 			mBondType[bond] = cBondTypeSingle;
