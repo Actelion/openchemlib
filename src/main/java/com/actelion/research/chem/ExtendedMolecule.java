@@ -2452,6 +2452,69 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * Provided that the bond parity of a double bond is available,
+	 * this method determines, whether connAtom has a counterpart with
+	 * Z- (cis) configuration at the other end of the double bond.
+	 * If there is no Z-counterpart, then -1 is returned.
+	 * Requires cHelperParities.
+	 * @param connAtom directly connected to one of the double bond atoms
+	 * @param bond double bond with available bond parity
+	 * @return -1 or counterpart to connAtom in Z-configuration
+	 */
+	public int getZNeighbour(int connAtom, int bond) {
+		if (getBondOrder(bond) != 2 && !isAromaticBond(bond))
+			return -1;
+		int parity = getBondParity(bond);
+		if (parity != cBondParityEor1 && parity != cBondCIPParityZorM)
+			return -1;
+
+		for (int i=0; i<2; i++) {
+			int atom1 = mBondAtom[i][bond];
+			int atom2 = mBondAtom[1-i][bond];
+			int other1 = -1;
+			boolean found = false;
+			for (int j=0; j<mConnAtoms[atom1]; j++) {
+				int conn = mConnAtom[atom1][j];
+				if (conn != atom2) {
+					if (conn == connAtom)
+						found = true;
+					else
+						other1 = conn;
+					}
+				}
+			if (found) {
+				int lowConn = -1;
+				int highConn = -1;
+				for (int j=0; j<mConnAtoms[atom2]; j++) {
+					int conn = mConnAtom[atom2][j];
+					if (conn != atom1) {
+						if (lowConn == -1)
+							lowConn = conn;
+						else if (conn > lowConn)
+							highConn = conn;
+						else {
+							highConn = lowConn;
+							lowConn = conn;
+							}
+						}
+					}
+
+				if (mConnAtoms[atom1] == 2) {
+					if (mConnAtoms[atom2] == 2)
+						return parity == cBondCIPParityZorM ? lowConn : -1;
+					return (parity == cBondCIPParityZorM) ? lowConn : highConn;
+					}
+				else {
+					if (mConnAtoms[atom2] == 2)
+						return (parity == cBondCIPParityZorM) ^ (connAtom < other1) ? -1 : lowConn;
+					return (parity == cBondCIPParityZorM) ^ (connAtom < other1) ? highConn : lowConn;
+					}
+				}
+			}
+		return -1;
+		}
+
+	/**
 	 * While the Molecule class covers all primary molecule information, its derived class
 	 * ExtendedMolecule handles secondary, i.e. calculated molecule information, which is cached
 	 * in helper arrays and stays valid as long as the molecule's primary information is not changed.
