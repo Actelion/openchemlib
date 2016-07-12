@@ -368,11 +368,13 @@ public class AromaticityResolver {
 		}
 
 	private void addObviousAtomCharges(RingCollection ringSet) {
+		// count for every atom of how many rings it is a member
 		int[] ringCount = new int[mMol.getAtoms()];
 		for (int r=0; r<ringSet.getSize(); r++)
 			for (int atom:ringSet.getRingAtoms(r))
 				ringCount[atom]++;
 
+		// for all ring atoms add charges and protect preferred delocalization leak atoms
 		for (int r=0; r<ringSet.getSize(); r++) {
 			int ringSize = ringSet.getRingSize(r);
 			if (ringSize >= 5 && ringSize <= 7) {
@@ -432,6 +434,23 @@ public class AromaticityResolver {
 					}
 				}
 			}
+
+		// count for every atom the number of delocalized bonds attached
+		int[] delocalizedNeighbourCount = new int[mMol.getAtoms()];
+		boolean[] hasMetalLigandBond = new boolean[mMol.getAtoms()];
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
+			if (mIsAromaticBond[bond]) {
+				delocalizedNeighbourCount[mMol.getBondAtom(0, bond)]++;
+				delocalizedNeighbourCount[mMol.getBondAtom(1, bond)]++;
+				}
+			if (mMol.getBondType(bond) == Molecule.cBondTypeMetalLigand) {
+				hasMetalLigandBond[mMol.getBondAtom(0, bond)] = true;
+				hasMetalLigandBond[mMol.getBondAtom(1, bond)] = true;
+				}
+			}
+
+		// add obvious charges to non-ring atoms and protect preferred atoms in delocalized chains
+
 		}
 
 	/**
