@@ -347,7 +347,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * @param atom
-	 * @return the number of direct neighbor atoms excluding hydrogen atoms
+	 * @return the number of direct neighbor atoms excluding plain hydrogen atoms
 	 */
 	public int getConnAtoms(int atom) {
 		return mConnAtoms[atom];
@@ -371,6 +371,24 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 */
 	public int getConnBondOrder(int atom, int i) {
 		return mConnBondOrder[atom][i];
+		}
+
+
+	/**
+	 * This method returns the non-hydrogen neighbour count of atom.
+	 * It excludes any hydrogen atoms in contrast to getConnAtoms(), which only
+	 * excludes plain hydrogen (not deuterium, tritium, custom labelled hydrogen, etc.).
+	 * Don't use this method's return value for loops with getConnAtom(),
+	 * getConnBond(), or getConnBondOrder().
+	 * @param atom
+	 * @return the number of non-hydrogen neighbor atoms
+	 */
+	public int getNonHydrogenNeighbourCount(int atom) {
+		int count = mConnAtoms[atom];
+		for (int i=0; i<mConnAtoms[atom]; i++)
+			if (mAtomicNo[mConnAtom[atom][i]] == 1)
+				count--;
+		return count;
 		}
 
 
