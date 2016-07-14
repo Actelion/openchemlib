@@ -191,11 +191,13 @@ public class Canonizer {
 		canInitializeRanking();
 		canRankStereo();
 		canRankFinal();
-
-		if (mCIPParityNoDistinctionProblem)
-			System.out.println("No distinction applying CIP rules: "+getIDCode()+" "+getEncodedCoordinates());
+//		if (mCIPParityNoDistinctionProblem)
+//			System.out.println("No distinction applying CIP rules: "+getIDCode()+" "+getEncodedCoordinates());
 		}
 
+	public boolean hasCIPParityDistinctionProblem() {
+		return mCIPParityNoDistinctionProblem;
+		}
 
 	/**
 	 * Locate those tetrahedral nitrogen atoms with at least 3 neighbors that

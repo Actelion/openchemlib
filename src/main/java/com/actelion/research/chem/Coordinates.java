@@ -199,6 +199,30 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		z=-z;
 	}
 
+	/**
+	 * @param m
+	 * @return this after rotating it with rotation matrix m
+	 */
+	public Coordinates rotate(double[][] m) {
+		double x0 = x;
+		double y0 = y;
+		double z0 = z;
+		x = x0*m[0][0]+y0*m[1][0]+z0*m[2][0];
+		y = x0*m[0][1]+y0*m[1][1]+z0*m[2][1];
+		z = x0*m[0][2]+y0*m[1][2]+z0*m[2][2];
+		return this;
+	}
+
+	/**
+	 * @param m
+	 * @return new Coordinates created from this point rotated by rotation matrix m
+	 */
+	public Coordinates rotateC(double[][] m) {
+		return new Coordinates(x*m[0][0]+y*m[1][0]+z*m[2][0],
+							   x*m[0][1]+y*m[1][1]+z*m[2][1],
+							   x*m[0][2]+y*m[1][2]+z*m[2][2]);
+	}
+
 	public final Coordinates rotate(Coordinates normal, double theta) {
 		if(Math.abs(normal.x*normal.x+normal.y*normal.y+normal.z*normal.z-1)>1E-6) throw new IllegalArgumentException("normal needs to a unit vector: "+normal);
 		double x = normal.x;

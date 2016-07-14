@@ -75,13 +75,7 @@ public class IDCodeParser {
 	 * @return
 	 */
 	public StereoMolecule getCompactMolecule(String idcode) {
-		if (idcode == null || idcode.length() == 0)
-			return null;
-		int index = idcode.indexOf(' ');
-		if (index > 0 && index < idcode.length()-1)
-			return getCompactMolecule(idcode.substring(0, index).getBytes(), idcode.substring(index+1).getBytes());
-		else
-			return getCompactMolecule(idcode.getBytes(), null);
+		return (idcode == null || idcode.length() == 0) ? null : getCompactMolecule(idcode.getBytes(), null);
 		}
 
 	/**
@@ -632,103 +626,118 @@ public class IDCodeParser {
 				mMol.setBondType(bond, mMol.getBondType(bond) == Molecule.cBondTypeDouble ?
 						Molecule.cBondTypeTriple : Molecule.cBondTypeDouble);
 
+		int coordinateIndex = 0;
+		if (coordinates == null
+		 && idcode.length > mIDCodeBufferIndex+1
+		 && (idcode[mIDCodeBufferIndex+1] == ' ' || idcode[mIDCodeBufferIndex+1] == '\t')) {
+			coordinates = idcode;
+			coordinateIndex = mIDCodeBufferIndex+2;
+			}
+
 		if (coordinates != null) {
-			if (coordinates[0] == '!' || coordinates[0] == '#') {	// new coordinate format
-				decodeBitsStart(coordinates, 1);
-				coordsAre3D = (decodeBits(1) == 1);
-				coordsAreAbsolute = (decodeBits(1) == 1);
-				int resolutionBits = 2 * decodeBits(4);
-				int binCount = (1 << resolutionBits);
+			try {
+				if (coordinates[coordinateIndex] == '!' || coordinates[coordinateIndex] == '#') {    // new coordinate format
+					decodeBitsStart(coordinates, coordinateIndex + 1);
+					coordsAre3D = (decodeBits(1) == 1);
+					coordsAreAbsolute = (decodeBits(1) == 1);
+					int resolutionBits = 2 * decodeBits(4);
+					int binCount = (1 << resolutionBits);
 
-				double factor = 0.0;
-				int from = 0;
-				int bond = 0;
-				for (int atom=1; atom<allAtoms; atom++) {
-					if (bond<allBonds && mMol.getBondAtom(1, bond) == atom) {
-						from = mMol.getBondAtom(0, bond++);
-						factor = 1.0;
+					double factor = 0.0;
+					int from = 0;
+					int bond = 0;
+					for (int atom = 1; atom < allAtoms; atom++) {
+						if (bond < allBonds && mMol.getBondAtom(1, bond) == atom) {
+							from = mMol.getBondAtom(0, bond++);
+							factor = 1.0;
+							}
+						else {
+							from = 0;
+							factor = 8.0;
+							}
+						mMol.setAtomX(atom, mMol.getAtomX(from) + factor * (decodeBits(resolutionBits) - binCount / 2));
+						mMol.setAtomY(atom, mMol.getAtomY(from) + factor * (decodeBits(resolutionBits) - binCount / 2));
+						if (coordsAre3D)
+							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits) - binCount / 2));
 						}
-					else {
-						from = 0;
-						factor = 8.0;
+
+					if (coordinates[coordinateIndex] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
+						int hydrogenCount = 0;
+
+						// we need to cache hCount, because otherwise getImplicitHydrogens() would create helper arrays with every call
+						int[] hCount = new int[allAtoms];
+						for (int atom = 0; atom < allAtoms; atom++)
+							hydrogenCount += (hCount[atom] = mMol.getImplicitHydrogens(atom));
+
+						for (int atom = 0; atom < allAtoms; atom++) {
+							for (int i = 0; i < hCount[atom]; i++) {
+								int hydrogen = mMol.addAtom(1);
+								mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
+
+								mMol.setAtomX(hydrogen, mMol.getAtomX(atom) + (decodeBits(resolutionBits) - binCount / 2));
+								mMol.setAtomY(hydrogen, mMol.getAtomY(atom) + (decodeBits(resolutionBits) - binCount / 2));
+								if (coordsAre3D)
+									mMol.setAtomZ(hydrogen, mMol.getAtomZ(atom) + (decodeBits(resolutionBits) - binCount / 2));
+								}
+							}
+
+						allAtoms += hydrogenCount;
+						allBonds += hydrogenCount;
 						}
-					mMol.setAtomX(atom, mMol.getAtomX(from) + factor * (decodeBits(resolutionBits) - binCount/2));
-					mMol.setAtomY(atom, mMol.getAtomY(from) + factor * (decodeBits(resolutionBits) - binCount/2));
-					if (coordsAre3D)
-						mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits) - binCount/2));
-					}
 
-				if (coordinates[0] == '#') {	// we have 3D-coordinates that include implicit hydrogen coordinates
-					int hydrogenCount = 0;
+					if (coordsAreAbsolute) {
+						targetAVBL = decodeAVBL(decodeBits(resolutionBits), binCount);
+						xOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
+						yOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
+						if (coordsAre3D)
+							zOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
 
-					// we need to cache hCount, because otherwise getImplicitHydrogens() would create helper arrays with every call
-					int[] hCount = new int[allAtoms];
-					for (int atom=0; atom<allAtoms; atom++)
-						hydrogenCount += (hCount[atom] = mMol.getImplicitHydrogens(atom));
-
-					for (int atom=0; atom<allAtoms; atom++) {
-						for (int i=0; i<hCount[atom]; i++) {
-							int hydrogen = mMol.addAtom(1);
-							mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
-
-							mMol.setAtomX(hydrogen, mMol.getAtomX(atom) + (decodeBits(resolutionBits) - binCount/2));
-							mMol.setAtomY(hydrogen, mMol.getAtomY(atom) + (decodeBits(resolutionBits) - binCount/2));
+						factor = targetAVBL / mMol.getAverageBondLength(true);
+						for (int atom = 0; atom < allAtoms; atom++) {
+							mMol.setAtomX(atom, xOffset + factor * mMol.getAtomX(atom));
+							mMol.setAtomY(atom, yOffset + factor * mMol.getAtomY(atom));
 							if (coordsAre3D)
-								mMol.setAtomZ(hydrogen, mMol.getAtomZ(atom) + (decodeBits(resolutionBits) - binCount/2));
+								mMol.setAtomZ(atom, zOffset + factor * mMol.getAtomZ(atom));
 							}
 						}
-
-					allAtoms += hydrogenCount;
-					allBonds += hydrogenCount;
-					}
-
-				if (coordsAreAbsolute) {
-					targetAVBL = decodeAVBL(decodeBits(resolutionBits), binCount);
-					xOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
-					yOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
-					if (coordsAre3D)
-						zOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
-	
-					factor = targetAVBL / mMol.getAverageBondLength(true);
-					for (int atom=0; atom<allAtoms; atom++) {
-						mMol.setAtomX(atom, xOffset + factor * mMol.getAtomX(atom));
-						mMol.setAtomY(atom, yOffset + factor * mMol.getAtomY(atom));
-						if (coordsAre3D)
-							mMol.setAtomZ(atom, zOffset + factor * mMol.getAtomZ(atom));
+					else {    // with new format 2D and 3D coordinates are scaled to average bond lengths of 1.5 Angstrom
+						targetAVBL = 1.5;
+						factor = targetAVBL / mMol.getAverageBondLength(true);
+						for (int atom = 0; atom < allAtoms; atom++) {
+							mMol.setAtomX(atom, factor * mMol.getAtomX(atom));
+							mMol.setAtomY(atom, factor * mMol.getAtomY(atom));
+							if (coordsAre3D)
+								mMol.setAtomZ(atom, factor * mMol.getAtomZ(atom));
+							}
 						}
 					}
-				else {	// with new format 2D and 3D coordinates are scaled to average bond lengths of 1.5 Angstrom
-					targetAVBL = 1.5;
-					factor = targetAVBL / mMol.getAverageBondLength(true);
-					for (int atom=0; atom<allAtoms; atom++) {
-						mMol.setAtomX(atom, factor * mMol.getAtomX(atom));
-						mMol.setAtomY(atom, factor * mMol.getAtomY(atom));
-						if (coordsAre3D)
-							mMol.setAtomZ(atom, factor * mMol.getAtomZ(atom));
+				else {    // old coordinate format
+					if (coordsAre3D && !coordsAreAbsolute && targetAVBL == 0.0) // if no scaling factor is given, then scale to mean bond length = 1.5
+						targetAVBL = 1.5;
+
+					if (targetAVBL != 0.0 && mMol.getAllBonds() != 0) {
+						double avbl = 0.0;
+						for (int bond = 0; bond < mMol.getAllBonds(); bond++) {
+							double dx = mMol.getAtomX(mMol.getBondAtom(0, bond)) - mMol.getAtomX(mMol.getBondAtom(1, bond));
+							double dy = mMol.getAtomY(mMol.getBondAtom(0, bond)) - mMol.getAtomY(mMol.getBondAtom(1, bond));
+							double dz = coordsAre3D ? mMol.getAtomZ(mMol.getBondAtom(0, bond)) - mMol.getAtomZ(mMol.getBondAtom(1, bond)) : 0.0f;
+							avbl += Math.sqrt(dx * dx + dy * dy + dz * dz);
+							}
+						avbl /= mMol.getAllBonds();
+						double f = targetAVBL / avbl;
+						for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+							mMol.setAtomX(atom, mMol.getAtomX(atom) * f + xOffset);
+							mMol.setAtomY(atom, mMol.getAtomY(atom) * f + yOffset);
+							if (coordsAre3D)
+								mMol.setAtomZ(atom, mMol.getAtomZ(atom) * f + zOffset);
+							}
 						}
 					}
 				}
-			else {	// old coordinate format
-				if (coordsAre3D && !coordsAreAbsolute && targetAVBL == 0.0) // if no scaling factor is given, then scale to mean bond length = 1.5
-					targetAVBL = 1.5;
-
-				if (targetAVBL != 0.0 && mMol.getAllBonds() != 0) {
-					double avbl = 0.0;
-					for (int bond=0; bond<mMol.getAllBonds(); bond++) {
-						double dx = mMol.getAtomX(mMol.getBondAtom(0, bond)) - mMol.getAtomX(mMol.getBondAtom(1, bond));
-						double dy = mMol.getAtomY(mMol.getBondAtom(0, bond)) - mMol.getAtomY(mMol.getBondAtom(1, bond));
-						double dz = coordsAre3D ? mMol.getAtomZ(mMol.getBondAtom(0, bond)) - mMol.getAtomZ(mMol.getBondAtom(1, bond)) : 0.0f;
-						avbl += Math.sqrt(dx*dx + dy*dy + dz*dz);
-						}
-					avbl /= mMol.getAllBonds();
-					double f = targetAVBL / avbl;
-					for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
-						mMol.setAtomX(atom, mMol.getAtomX(atom) * f + xOffset);
-						mMol.setAtomY(atom, mMol.getAtomY(atom) * f + yOffset);
-						if (coordsAre3D)
-							mMol.setAtomZ(atom, mMol.getAtomZ(atom) * f + zOffset);
-						}
-					}
+			catch (Exception e) {
+				System.out.println("Faulty id-coordinates:"+e.getMessage());
+				coordinates = null;
+				coordsAre3D = false;
 				}
 			}
 
