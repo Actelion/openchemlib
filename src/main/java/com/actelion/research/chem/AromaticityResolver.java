@@ -375,11 +375,12 @@ public class AromaticityResolver {
 				ringCount[atom]++;
 
 		// for all ring atoms add charges and protect preferred delocalization leak atoms
-		for (int r=0; r<ringSet.getSize(); r++) {
-			int ringSize = ringSet.getRingSize(r);
+		boolean[] isAromaticRingAtom = new boolean[mMol.getAtoms()];
+		for (int ring=0; ring<ringSet.getSize(); ring++) {
+			int ringSize = ringSet.getRingSize(ring);
 			if (ringSize >= 5 && ringSize <= 7) {
 				boolean isDelocalized = true;
-				for (int bond:ringSet.getRingBonds(r)) {
+				for (int bond:ringSet.getRingBonds(ring)) {
 					if (!mIsAromaticBond[bond]) {
 						isDelocalized = false;
 						break;
@@ -387,11 +388,14 @@ public class AromaticityResolver {
 					}
 
 				if (isDelocalized) {
+					for (int atom:ringSet.getRingAtoms(ring))
+						isAromaticRingAtom[atom] = true;
+
 					boolean possible = true;
 					int leakAtom = -1;
 					int leakPriority = 0;
 
-					for (int atom:ringSet.getRingAtoms(r)) {
+					for (int atom:ringSet.getRingAtoms(ring)) {
 						if (ringSize == 6 || ringCount[atom] > 1) {	// bridgehead atom
 							if (!checkAtomTypePi1(atom, false)) {
 								possible = false;
@@ -417,7 +421,7 @@ public class AromaticityResolver {
 						}
 
 					if (possible) {
-						for (int atom : ringSet.getRingAtoms(r)) {
+						for (int atom : ringSet.getRingAtoms(ring)) {
 							if (atom == leakAtom) {
 								if (ringSize == 5)
 									checkAtomTypeLeak5(atom, true);
@@ -435,22 +439,120 @@ public class AromaticityResolver {
 				}
 			}
 
+		// From here locate delocalized strings of atoms, which are not member
+		// of an aromatic ring. Protect preferred atoms and add obvious atom charges.
+
 		// count for every atom the number of delocalized bonds attached
 		int[] delocalizedNeighbourCount = new int[mMol.getAtoms()];
 		boolean[] hasMetalLigandBond = new boolean[mMol.getAtoms()];
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
-			if (mIsAromaticBond[bond]) {
-				delocalizedNeighbourCount[mMol.getBondAtom(0, bond)]++;
-				delocalizedNeighbourCount[mMol.getBondAtom(1, bond)]++;
-				}
-			if (mMol.getBondType(bond) == Molecule.cBondTypeMetalLigand) {
-				hasMetalLigandBond[mMol.getBondAtom(0, bond)] = true;
-				hasMetalLigandBond[mMol.getBondAtom(1, bond)] = true;
+			int atom1 = mMol.getBondAtom(0, bond);
+			int atom2 = mMol.getBondAtom(1, bond);
+			if (!isAromaticRingAtom[atom1] && !isAromaticRingAtom[atom2]) {
+				if (mIsAromaticBond[bond]) {
+					delocalizedNeighbourCount[atom1]++;
+					delocalizedNeighbourCount[atom2]++;
+					}
+				if (mMol.getBondType(bond) == Molecule.cBondTypeMetalLigand) {
+					hasMetalLigandBond[atom1] = true;
+					hasMetalLigandBond[atom2] = true;
+					}
 				}
 			}
 
-		// add obvious charges to non-ring atoms and protect preferred atoms in delocalized chains
+		// From any delocalized atom with one delocalized neighbor (chain end)
+		// locate the path to a branch atom (including) or chain end, whatever comes first.
+		// Then mark every second atom from the startAtom as not being capable to assume
+		// the role of a delocalization leak (priority:-1).
+		int[] priority = new int[mMol.getAtoms()];
+		int graphAtom[] = new int[mMol.getAtoms()];
+		for (int seedAtom=0; seedAtom<mMol.getAtoms(); seedAtom++) {
+			if (delocalizedNeighbourCount[seedAtom] == 1) {
+				graphAtom[0] = seedAtom;
+				int current = 0;
+				int highest = 0;
+				while (current <= highest) {
+					for (int i=0; i<mMol.getConnAtoms(graphAtom[current]); i++) {
+						if (mIsAromaticBond[mMol.getConnBond(graphAtom[current], i)]) {
+							int candidate = mMol.getConnAtom(graphAtom[current], i);
+							if ((current == 0 || candidate != graphAtom[current-1])
+							 && delocalizedNeighbourCount[candidate] != 0) {
+								graphAtom[++highest] = candidate;
+								if ((delocalizedNeighbourCount[candidate] & 1) != 0) {	// 1 or 3
+									for (int j=1; j<highest; j+=2)
+										priority[graphAtom[j]] = -1;
+									highest = 0;	// to break outer loop
+									}
+								break;
+								}
+							}
+						}
+					current++;
+					}
+				}
+			}
 
+		// For every connected delocalized area not being part of an aromatic ring
+		// calculate delocalization leak priorities for all atoms not marked above.
+		// Then protect the atom with highest priority.
+		boolean[] atomHandled = new boolean[mMol.getAtoms()];
+		for (int seedAtom=0; seedAtom<mMol.getAtoms(); seedAtom++) {
+			if (!atomHandled[seedAtom] && delocalizedNeighbourCount[seedAtom] != 0) {
+				graphAtom[0] = seedAtom;
+				atomHandled[seedAtom] = true;
+				int current = 0;
+				int highest = 0;
+				while (current <= highest) {
+					for (int i = 0; i < mMol.getConnAtoms(graphAtom[current]); i++) {
+						if (mIsAromaticBond[mMol.getConnBond(graphAtom[current], i)]) {
+							int candidate = mMol.getConnAtom(graphAtom[current], i);
+							if (!atomHandled[candidate]) {
+								graphAtom[++highest] = candidate;
+								atomHandled[candidate] = true;
+								}
+							}
+						}
+					current++;
+					}
+
+				// if we have an odd number of delocalized atoms in a region, we need to assign a leak
+				if ((highest & 1) == 0) {	// highest is atom count-1
+
+					// check for all potential delocalization leak atoms, whether they are compatible
+					for (int i = 0; i <= highest; i++)
+						if (priority[graphAtom[i]] == 0)
+							priority[graphAtom[i]] = checkAtomTypeLeakNonRing(graphAtom[i], false);
+
+					// check for all atoms, which cannot be the leak, whether they can carry a pi-bond
+					boolean isPossible = true;
+					for (int i = 0; i <= highest; i++) {
+						if (priority[graphAtom[i]] <= 0) {
+							if (!checkAtomTypePi1(graphAtom[i], false)) {
+								isPossible = false;
+								break;
+								}
+							}
+						}
+
+					// find the preferred atom for the leak
+					if (isPossible) {
+						int maxPriority = 0;
+						int maxAtom = -1;
+						for (int i = 0; i <= highest; i++) {
+							if (maxPriority < priority[graphAtom[i]]) {
+								maxPriority = priority[graphAtom[i]];
+								maxAtom = graphAtom[i];
+								}
+							}
+
+						if (maxPriority > 0) {
+							checkAtomTypeLeakNonRing(maxAtom, true);
+							protectAtom(maxAtom);
+							}
+						}
+					}
+				}
+			}
 		}
 
 	/**
@@ -546,5 +648,91 @@ public class AromaticityResolver {
 			}
 
 		return 0;
+		}
+
+	/**
+	 * Checks, whether the atom is compatible with the (typically charged) atom
+	 * in a delocalized chain of an odd number of atoms that does not carry a pi bond.
+	 * @param atom
+	 * @param correctCharge if true then may add a charge to make the atom compatible
+	 * @return 0 (not compatible) or priority to be used (higher numbers have higher priority)
+	 */
+	private int checkAtomTypeLeakNonRing(int atom, boolean correctCharge) {
+		if (mAllHydrogensAreExplicit) {
+			if (mMol.getAtomicNo(atom) == 5) {
+				if (mMol.getOccupiedValence(atom) != 2)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, 1);
+				return 1;
+				}
+
+			if (mMol.getAtomicNo(atom) == 7) {
+				if (mMol.getOccupiedValence(atom) != 2)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, -1);
+				return hasMetalNeighbour(atom) ? 6 : 3;
+				}
+
+			if (mMol.getAtomicNo(atom) == 8) {
+				if (mMol.getOccupiedValence(atom) != 1)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, -1);
+				return hasMetalNeighbour(atom) ? 7 : 4;
+				}
+
+			if (mMol.getAtomicNo(atom) == 16) {
+				if (mMol.getOccupiedValence(atom) != 1)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, -1);
+				return hasMetalNeighbour(atom) ? 5 : 2;
+				}
+			}
+		else {
+			if (mMol.getAtomicNo(atom) == 5) {
+				if (mMol.getOccupiedValence(atom) > 2)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, 1);
+				return 1;
+				}
+
+			if (mMol.getAtomicNo(atom) == 7) {
+				if (mMol.getOccupiedValence(atom) > 2)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, -1);
+				return hasMetalNeighbour(atom) ? 5 : 3;
+				}
+
+			if (mMol.getAtomicNo(atom) == 8) {
+				if (mMol.getOccupiedValence(atom) > 1)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, -1);
+				return hasMetalNeighbour(atom) ? 7 : 4;
+				}
+
+			if (mMol.getAtomicNo(atom) == 16) {
+				if (mMol.getOccupiedValence(atom) > 1)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, -1);
+				return hasMetalNeighbour(atom) ? 5 : 2;
+				}
+			}
+
+		return 0;
+		}
+
+	private boolean hasMetalNeighbour(int atom) {
+		for (int i=0; i<mMol.getConnAtoms(atom); i++)
+			if (mMol.isMetalAtom(mMol.getConnAtom(atom, i)))
+				return true;
+
+		return false;
 		}
 	}
