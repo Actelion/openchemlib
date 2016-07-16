@@ -186,7 +186,7 @@ public class RingCollection {
 				if ((current > 1) && candidate == atom1) {
 					int ringAtom[] = new int[graphLevel[graphAtom[current]]];
 					int atom = graphAtom[current];
-					for (int j=0; j<ringAtom.length; j++) {
+					for (int j = 0; j < ringAtom.length; j++) {
 						ringAtom[j] = atom;
 						atom = graphParent[atom];
 						}
@@ -252,7 +252,7 @@ public class RingCollection {
 				if ((current > 1) && candidate == atom1) {
 					int ringAtom[] = new int[graphLevel[graphAtom[current]]];
 					int atom = graphAtom[current];
-					for (int j=0; j<ringAtom.length; j++) {
+					for (int j = 0; j < ringAtom.length; j++) {
 						ringAtom[j] = atom;
 						atom = graphParent[atom];
 						}

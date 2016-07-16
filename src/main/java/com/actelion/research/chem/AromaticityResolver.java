@@ -563,31 +563,24 @@ public class AromaticityResolver {
 	 * @return
 	 */
 	private boolean checkAtomTypePi1(int atom, boolean correctCharge) {
-		if (mMol.getAtomicNo(atom) == 6 && mMol.getAllConnAtoms(atom) <= 3)
+		int atomicNo = mMol.getAtomicNo(atom);
+		if (atomicNo <5 || atomicNo > 8)
+			return false;
+
+		int freeValence = mMol.getFreeValence(atom);
+		if (mAllHydrogensAreExplicit && freeValence == 1)
 			return true;
-		if (mMol.getAtomicNo(atom) == 7) {
-			if (mMol.getAllConnAtoms(atom) <= 3) {
-				if (mMol.getAllConnAtoms(atom) == 3) {
-					if (correctCharge)
-						mMol.setAtomCharge(atom, 1);
-					}
+		if (!mAllHydrogensAreExplicit && freeValence >= 1)
+			return true;
+
+		if (atomicNo != 6) {
+			if (freeValence == 0 && mMol.getAtomCharge(atom) == 0) {
+				if (correctCharge)
+					mMol.setAtomCharge(atom, atomicNo < 6 ? -1 : 1);
 				return true;
 				}
 			}
-		if (mMol.getAtomicNo(atom) == 5) {
-			if (mMol.getAllConnAtoms(atom) <= 3) {
-				if (mMol.getAllConnAtoms(atom) == 3) {
-					if (correctCharge)
-						mMol.setAtomCharge(atom, -1);
-					}
-				return true;
-				}
-			}
-		if (mMol.getAtomicNo(atom) == 8) {
-			if (correctCharge)
-				mMol.setAtomCharge(atom, 1);
-			return true;
-			}
+
 		return false;
 		}
 
@@ -658,6 +651,9 @@ public class AromaticityResolver {
 	 * @return 0 (not compatible) or priority to be used (higher numbers have higher priority)
 	 */
 	private int checkAtomTypeLeakNonRing(int atom, boolean correctCharge) {
+		if (mMol.getAtomCharge(atom) != 0)
+			return 0;
+
 		if (mAllHydrogensAreExplicit) {
 			if (mMol.getAtomicNo(atom) == 5) {
 				if (mMol.getOccupiedValence(atom) != 2)

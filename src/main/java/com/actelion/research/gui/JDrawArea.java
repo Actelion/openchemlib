@@ -2533,7 +2533,7 @@ public class JDrawArea extends JPanel
 			null : new DrawingObjectList(mUndoDrawingObjectList);
 	}
 
-	protected void storeState()
+	public void storeState()
 	{
 		if (mUndoMol == null) {
 			mUndoMol = new Molecule();

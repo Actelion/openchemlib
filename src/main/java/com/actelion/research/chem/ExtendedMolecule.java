@@ -347,7 +347,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * @param atom
-	 * @return the number of direct neighbor atoms excluding plain hydrogen atoms
+	 * @return the number of direct neighbor atoms excluding plain hydrogen atoms and 0-order bonded metals
 	 */
 	public int getConnAtoms(int atom) {
 		return mConnAtoms[atom];
@@ -1144,6 +1144,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			}
 
 		return Math.max(0, maxValence - occupiedValence);
+		}
+
+	public int getExplicitHydrogens(int atom) {
+		int count = 0;
+		for (int i=mConnAtoms[atom]; i<mAllConnAtoms[atom]; i++)
+			if (mConnBondOrder[atom][i] != 0)
+				count++;
+		return count;
 		}
 
 	/**
@@ -2837,22 +2845,52 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			mConnBondOrder[atom] = new int[connCount[atom]];
 			}
 
-		for(int bnd=0; bnd<mAllBonds; bnd++) {
+		boolean metalBondFound = false;
+		for(int bnd=0; bnd<mBonds; bnd++) {
 			int order = getBondOrder(bnd);
-			for(int i=0; i<2; i++) {
+			if (order == 0) {
+				metalBondFound = true;
+				continue;
+				}
+
+			for (int i = 0; i < 2; i++) {
 				int atom = mBondAtom[i][bnd];
 				mConnBondOrder[atom][mAllConnAtoms[atom]] = order;
-				mConnAtom[atom][mAllConnAtoms[atom]] = mBondAtom[1-i][bnd];
+				mConnAtom[atom][mAllConnAtoms[atom]] = mBondAtom[1 - i][bnd];
 				mConnBond[atom][mAllConnAtoms[atom]] = bnd;
 				mAllConnAtoms[atom]++;
-				if (bnd < mBonds)
-					mConnAtoms[atom]++;
+				mConnAtoms[atom]++;
 				if (atom < mAtoms) {
 					if (order > 1)
 						mPi[atom] += order + order - 2;
 					else if (mBondType[bnd] == cBondTypeDelocalized)
 						mPi[atom] = 2;
 					}
+				}
+			}
+
+		if (metalBondFound) {
+			for(int bnd=0; bnd<mBonds; bnd++) {
+				int order = getBondOrder(bnd);
+				if (order == 0) {
+					for (int i = 0; i < 2; i++) {
+						int atom = mBondAtom[i][bnd];
+						mConnBondOrder[atom][mAllConnAtoms[atom]] = order;
+						mConnAtom[atom][mAllConnAtoms[atom]] = mBondAtom[1 - i][bnd];
+						mConnBond[atom][mAllConnAtoms[atom]] = bnd;
+						mAllConnAtoms[atom]++;
+						}
+					}
+				}
+			}
+
+		for(int bnd=mBonds; bnd<mAllBonds; bnd++) {
+			for (int i = 0; i < 2; i++) {
+				int atom = mBondAtom[i][bnd];
+				mConnBondOrder[atom][mAllConnAtoms[atom]] = 1;
+				mConnAtom[atom][mAllConnAtoms[atom]] = mBondAtom[1 - i][bnd];
+				mConnBond[atom][mAllConnAtoms[atom]] = bnd;
+				mAllConnAtoms[atom]++;
 				}
 			}
 
@@ -2919,7 +2957,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			// and remove explicit hydrogens except those with stereo bonds
 		boolean deleteHydrogens = false;
 		for (int atom=0; atom<mAtoms; atom++) {
-			int explicitHydrogens = mAllConnAtoms[atom] - mConnAtoms[atom];
+			int explicitHydrogens = getExplicitHydrogens(atom);
 			if (!mProtectHydrogen && explicitHydrogens > 0) {
 				if ((mAtomQueryFeatures[atom] & cAtomQFNoMoreNeighbours) == 0) {
 					if (getFreeValence(atom) == 0)

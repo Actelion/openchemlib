@@ -306,7 +306,7 @@ public class IDCodeParser {
 			switch (bondOrder) {
 			case 0:
 				if (mMol.isMetalAtom(mMol.getBondAtom(0, bond))
-				 || mMol.isMetalAtom(mMol.getBondAtom(0, bond)))
+				 || mMol.isMetalAtom(mMol.getBondAtom(1, bond)))
 					mMol.setBondType(bond, Molecule.cBondTypeMetalLigand);
 				else
 					isAromaticBond[bond] = true;
