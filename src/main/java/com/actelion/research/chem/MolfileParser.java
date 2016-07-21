@@ -54,7 +54,7 @@ import java.util.TreeMap;
 
 public class MolfileParser
 {
-	public static boolean debug = true;
+	public static boolean debug = false;
 	private StereoMolecule mMol;
 	private TreeMap<Integer,Integer> mAtomIndexMap,mBondIndexMap;
 	
