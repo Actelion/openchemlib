@@ -148,7 +148,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			destMol.setFragment(true);
 
 		if (recognizeDelocalizedBonds)
-			new AromaticityResolver(destMol).locateDelocalizedDoubleBonds();
+			new AromaticityResolver(destMol).locateDelocalizedDoubleBonds(null);
 		}
 
 
@@ -218,7 +218,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			destMol.setFragment(true);
 
 		if (recognizeDelocalizedBonds)
-			new AromaticityResolver(destMol).locateDelocalizedDoubleBonds();
+			new AromaticityResolver(destMol).locateDelocalizedDoubleBonds(null);
  
 		return atomMap;
 		}
@@ -2096,6 +2096,34 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				if (isBINAPChiralityBond(mConnBond[atom][i]))
 					return mConnBond[atom][i];
 		return -1;
+		}
+
+
+	/**
+	 * Evaluates, whether bond is an amide bond, thio-amide, or amidine bond.
+	 * @param bond
+	 * @return
+	 */
+	public boolean isAmideTypeBond(int bond) {
+		ensureHelperArrays(cHelperNeighbours);
+
+		for (int i=0; i<2; i++) {
+			int atom1 = mBondAtom[i][bond];
+			if (mAtomicNo[atom1] == 7) {
+				int atom2 = mBondAtom[1-i][bond];
+				for (int j=0; j<mConnAtoms[atom2]; j++) {
+					int connAtom = mConnAtom[atom2][j];
+					int connBond = mConnBond[atom2][j];
+					if ((mAtomicNo[connAtom] == 7
+					  || mAtomicNo[connAtom] == 8
+					  || mAtomicNo[connAtom] == 16)
+					 && getBondOrder(connBond) >= 2)
+						return true;
+					}
+				}
+			}
+
+		return false;
 		}
 
 

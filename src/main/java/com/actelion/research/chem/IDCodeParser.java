@@ -619,7 +619,7 @@ public class IDCodeParser {
 				}
 			}
 
-		new AromaticityResolver(mMol, isAromaticBond).locateDelocalizedDoubleBonds();
+		new AromaticityResolver(mMol).locateDelocalizedDoubleBonds(isAromaticBond);
 
 		if (aromaticSPBond != null)
 			for (int bond:aromaticSPBond)
