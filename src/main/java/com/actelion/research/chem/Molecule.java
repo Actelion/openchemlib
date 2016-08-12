@@ -3411,7 +3411,7 @@ public class Molecule implements Serializable {
 		return atomicNo == 1
 			|| (atomicNo >=  5 && atomicNo <=  9)	// B,C,N,O,F
 			|| (atomicNo >= 14 && atomicNo <= 17)	// Si,P,S,Cl
-			|| (atomicNo >= 33 && atomicNo <= 35)	// As,Se,Br
+			|| (atomicNo >= 32 && atomicNo <= 35)	// Ge,As,Se,Br
 			|| (atomicNo >= 52 && atomicNo <= 53);	// Te,I
 		}
 
