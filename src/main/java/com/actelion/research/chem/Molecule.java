@@ -3319,7 +3319,9 @@ public class Molecule implements Serializable {
 			if ((mAtomQueryFeatures[atom] & cAtomQFCharge) == cAtomQFNotCharge0+cAtomQFNotChargeNeg)
 				charge = 1;
 			}
-		if (mAtomicNo[atom] == 6)
+		if (mAtomicNo[atom] == 6
+		 || mAtomicNo[atom] == 14	// Si
+		 || mAtomicNo[atom] == 32)	// Ge
 			correction -= Math.abs(charge);
 		else if (isElectronegative(atom))
 			correction += charge;

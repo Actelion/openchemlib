@@ -2407,6 +2407,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				else
 					continue;
 
+				if (isMetalAtom(atom1)
+				 || isMetalAtom(atom2))
+					continue;
+
 				if (mAtomicNo[atom1] < 9)
 					if (getOccupiedValence(atom1) > 3)
 						continue;
