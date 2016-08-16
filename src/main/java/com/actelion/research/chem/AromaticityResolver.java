@@ -371,7 +371,7 @@ public class AromaticityResolver {
 		boolean[] isAromaticRingAtom = new boolean[mMol.getAtoms()];
 		for (int ring=0; ring<ringSet.getSize(); ring++) {
 			int ringSize = ringSet.getRingSize(ring);
-			if (ringSize >= 5 && ringSize <= 7) {
+			if (ringSize == 3 || ringSize == 5 || ringSize == 6 || ringSize == 7) {
 				boolean isDelocalized = true;
 				for (int bond:ringSet.getRingBonds(ring)) {
 					if (!mIsDelocalizedBond[bond]) {
@@ -417,9 +417,9 @@ public class AromaticityResolver {
 						for (int atom : ringSet.getRingAtoms(ring)) {
 							if (atom == leakAtom) {
 								if (ringSize == 5)
-									checkAtomTypeLeak5(atom, true);
+									checkAtomTypeLeak5(atom, true);	// 5-membered
 								else
-									checkAtomTypeLeak7(atom, true);
+									checkAtomTypeLeak7(atom, true);	// 3- or 7-membered
 
 								protectAtom(atom);
 								}
@@ -609,7 +609,7 @@ public class AromaticityResolver {
 
 	/**
 	 * Checks, whether the atom is compatible with that aromatic atom of
-	 * a 7-membered ring that supplies the empty orbital.
+	 * a 3- or 7-membered ring that supplies the empty orbital.
 	 * @param atom
 	 * @param correctCharge if true then may add a charge to make the atom compatible
 	 * @return 0 (not compatible) or priority to be used (higher numbers have higher priority)
