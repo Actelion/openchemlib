@@ -3290,17 +3290,25 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public int getMaxValence(int atom) {
-		return getMaxValenceUncharged(atom) + getElectronValenceCorrection(atom);
+		int valence = getMaxValenceUncharged(atom);
+		return valence + getElectronValenceCorrection(atom, valence);
 		}
 
 
 	/**
 	 * This is the maximum valence correction caused by atom charge
-	 * or radical status, e.g. N+ -> 1; N- -> -1; Al+ -> -1; C+,C- -> -1
+	 * or radical status, e.g. N+ -> 1; N- -> -1; Al+ -> -1; C+,C- -> -1.
+	 * In some cases, where the atomicNo can have multiple valences,
+	 * the influence of a charge depends on the atom's actual valence, e.g.
+	 * valence corrections for R3P(+) and R5p(+) are 1 and -1, respectively.
+	 * Criteria are:<br>
+	 * -in the given valence state is there a lone pair that can be protonated<br>
+	 * -can we introduce a negative substituent as in BH3 or PF5 vs. SF6<br>
 	 * @param atom
+	 * @param occupiedValence
 	 * @return
 	 */
-	public int getElectronValenceCorrection(int atom) {
+	public int getElectronValenceCorrection(int atom, int occupiedValence) {
 		if (mAtomicNo[atom] >= 171 && mAtomicNo[atom] <= 190)
 			return 0;
 
@@ -3319,14 +3327,40 @@ public class Molecule implements Serializable {
 			if ((mAtomQueryFeatures[atom] & cAtomQFCharge) == cAtomQFNotCharge0+cAtomQFNotChargeNeg)
 				charge = 1;
 			}
-		if (mAtomicNo[atom] == 6
-		 || mAtomicNo[atom] == 14	// Si
-		 || mAtomicNo[atom] == 32)	// Ge
+		if (mAtomicNo[atom] == 7		// N
+		 || mAtomicNo[atom] == 8		// Si
+		 || mAtomicNo[atom] == 9)		// Ge
 			correction -= Math.abs(charge);
-		else if (isElectronegative(atom))
-			correction += charge;
-		else
+		else if (mAtomicNo[atom] == 6	// C
+			  || mAtomicNo[atom] == 14	// Si
+			  || mAtomicNo[atom] == 32)	// Ge
+			correction -= Math.abs(charge);
+		else if (mAtomicNo[atom] == 15		// P
+			  || mAtomicNo[atom] == 33) {	// As
+			if (occupiedValence + correction + charge <= 3)
+				correction += charge;
+			else
+				correction -= charge;
+			}
+		else if (mAtomicNo[atom] == 16		// S
+			  || mAtomicNo[atom] == 34		// Se
+			  || mAtomicNo[atom] == 52) {	// Te
+			if (occupiedValence + correction + charge <= 4)
+				correction += charge;
+			else
+				correction -= Math.abs(charge);
+			}
+		else if (mAtomicNo[atom] == 17		// Cl
+			  || mAtomicNo[atom] == 35		// Br
+			  || mAtomicNo[atom] == 53) {   // I
+			if (occupiedValence + correction + charge <= 5)
+				correction += charge;
+			else
+				correction -= Math.abs(charge);
+			}
+		else {	// B, Al, other metals
 			correction -= charge;
+			}
 
 		return correction;
 		}

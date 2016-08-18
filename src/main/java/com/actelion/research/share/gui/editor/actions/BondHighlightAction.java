@@ -73,12 +73,10 @@ public abstract class BondHighlightAction extends AtomHighlightAction
         StereoMolecule mol = model.getMoleculeAt(pt, true);
         if (super.trackHighLight(pt)) {
             setHighlightBond(null, -1);
-//            System.out.printf("setHighBond return true\n");
             return true;
         }
 
         int bond = getBondAt(mol, pt);
-//            System.out.println("trackHighLight bond " + pt + " " + bond );
         if (bond >= 0) {
             setHighlightBond(mol, bond);
             setHighlightAtom(mol, -1);

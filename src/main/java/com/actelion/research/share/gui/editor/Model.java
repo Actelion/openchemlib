@@ -506,7 +506,6 @@ public abstract class Model
 
     private void cleanupMultiFragmentCoordinatesEx(AbstractExtendedDepictor depictor, boolean selectedOnly, boolean invent)
     {
-        System.out.printf("cleanupMultiFragmentCoordinates!!\n");
         //if (selectedOnly && mUpdateMode == UPDATE_INVENT_COORDS)
         if (invent) {
             int[] fragmentAtom = new int[mFragment.length];
@@ -526,12 +525,10 @@ public abstract class Model
                     CoordinateInventor.MODE_KEEP_MARKED_ATOM_COORDS : 0).invent(mFragment[fragment]);
                 mFragment[fragment].setStereoBondsFromParity();
             }
-            System.out.printf("Updating\n");
             AbstractDepictor d = createDepictor(mFragment[fragment]);// new Depictor(mFragment[fragment]);
 //            depictor.updateCoords(null, null, AbstractDepictor.cModeInflateToMaxAVBL);
             depictor.updateCoords(null, null, AbstractDepictor.cModeInflateToMaxAVBL);
 
-            System.out.printf("BR %s\n",d.getBoundingRect());
 //            boundingRect[fragment] = d.getBoundingRect();
 //			fragmentWidth += boundingRect[fragment].width;
         }

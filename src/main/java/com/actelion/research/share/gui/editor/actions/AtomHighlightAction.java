@@ -89,7 +89,8 @@ public abstract class AtomHighlightAction extends DrawAction
             }
         }
         atom = model.getSelectedAtom();
-        ok = ok | currentAtom != atom;
+//        System.out.printf("Atom track %s %d %d\n",ok,currentAtom,atom);
+        ok = ok | atom != -1;
         return ok;
     }
 

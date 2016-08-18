@@ -487,7 +487,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return abnormal valence or -1 if valence doesn't exceed standard valence
 	 */
 	public int getImplicitHigherValence(int atom, boolean neglectExplicitHydrogen) {
-		int occupiedValence = getOccupiedValence(atom) - getElectronValenceCorrection(atom);
+		int occupiedValence = getOccupiedValence(atom);
+		occupiedValence -= getElectronValenceCorrection(atom, occupiedValence);
 		if (neglectExplicitHydrogen)
 			occupiedValence -= mAllConnAtoms[atom] - mConnAtoms[atom];
 
@@ -1123,7 +1124,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			occupiedValence += delocalizedBonds >> 1;
 			}
 
-		occupiedValence -= getElectronValenceCorrection(atom);
+		occupiedValence -= getElectronValenceCorrection(atom, occupiedValence);
 		int maxValence = getAtomAbnormalValence(atom);
 		if (maxValence == -1) {
 			if (mAtomicNo[atom] >= 171 && mAtomicNo[atom] <= 190) {

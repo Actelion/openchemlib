@@ -399,7 +399,8 @@ public class SmilesParser {
 					if (mMol.getAtomicNo(atom) < Molecule.cAtomValence.length
 					 && Molecule.cAtomValence[mMol.getAtomicNo(atom)] != null) {
 						boolean compatibleValenceFound = false;
-						int usedValence = mMol.getOccupiedValence(atom) - mMol.getElectronValenceCorrection(atom);
+						int usedValence = mMol.getOccupiedValence(atom);
+						usedValence -= mMol.getElectronValenceCorrection(atom, usedValence);
 						for (byte valence:Molecule.cAtomValence[mMol.getAtomicNo(atom)]) {
 							if (usedValence <= valence) {
 								compatibleValenceFound = true;
