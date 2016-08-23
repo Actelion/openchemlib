@@ -355,14 +355,29 @@ public class Molecule implements Serializable {
 	 101,	186,	163,	 99 };					//  Thr,Trp,Tyr,Val,
 
 	public static final int cDefaultAtomValence = 6;
-	public static final byte cAtomValence[][] = { null,
-		{ 1 }, { 0 }, { 1 }, { 2 }, { 3 }, { 4 }, { 3 }, { 2 }, { 1 }, { 0 },   // H to Ne
-		{ 1 }, { 2 }, { 3 }, { 4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 }, { 0 },	 // Na to Ar
-		{ 1 }, { 2 }, null, null, null, null, null, null, null, null,		   // K to Ni
-		null, null, { 2,3 }, { 2,4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 }, { 0,2 }, // Cu to Kr
-		{ 1,2,3,4 }, { 2 }, null, null, null, null, null, null, null, null,	 // Rb to Pd
-		null, null, { 1,2,3 }, { 2,4 }, { 3,5 }, { 2,4,6 }, { 1,3,5,7 },		// Ag to I
-		{ 0,2,4,6 }, { 1 }, { 2 } };														 // Xe to Ba
+	public static final byte cAtomValence[][] = {null,
+			{1}, {0}, {1}, {2}, {3}, {4}, {3}, {2}, {1}, {0},			// H to Ne
+			{1}, {2}, {3}, {4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0},	// Na to Ar
+			{1}, {2}, null, null, null, null, null, null, null, null,	// K to Ni
+			null, null, {2, 3}, {2, 4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0, 2}, // Cu to Kr
+			{1, 2, 3, 4}, {2}, null, null, null, null, null, null, null, null, // Rb to Pd
+			null, null, {1, 2, 3}, {2, 4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, // Ag to I
+			{0, 2, 4, 6}, {1}, {2},										// Xe to Ba
+			null, null, null, null, null, null, null, null, null, null, // La to Dy
+			null, null, null, null, null, null, null, null, null, null, // Ho to Os
+			null, null, null, null, null, null, null, null, null, null, // Ir to Rn
+			null, null, null, null, null, null, null, null, null, null, // Fr to Cm
+			null, null, null, null, null, null, null, null, null, null, // Bk to Sg
+			null, null, null, null, null, null, null, null, null, null, // Bh to Lv
+			null, null, null, null, null, null, null, null, null, null, // Uus to 126
+			null, null, null, null, null, null, null, null, null, null,	// 127 to R5
+			null, null, null, null, null, null, null, null, null, null, // R6 to R15
+			null, null, null, null, null, null, null, null, null, null,	// R16 to 156
+			null, null, null, null, null, null, null, null, null, null, // D to 166
+			null, null, null, null,										// 167 to 170
+			{2}, {2}, {2}, {2}, {3}, {2}, {2}, {2}, {2}, {2},			// Ala to Ile
+			{2}, {2}, {2}, {2}, {2}, {2}, {2}, {2}, {2}, {2},			// Leu to Val
+	};
 
 	transient protected int mMaxAtoms;
 	transient protected int mMaxBonds;
@@ -3328,16 +3343,16 @@ public class Molecule implements Serializable {
 				charge = 1;
 			}
 		if (mAtomicNo[atom] == 7		// N
-		 || mAtomicNo[atom] == 8		// Si
-		 || mAtomicNo[atom] == 9)		// Ge
-			correction -= Math.abs(charge);
+		 || mAtomicNo[atom] == 8		// O
+		 || mAtomicNo[atom] == 9)		// F
+			correction += charge;
 		else if (mAtomicNo[atom] == 6	// C
 			  || mAtomicNo[atom] == 14	// Si
 			  || mAtomicNo[atom] == 32)	// Ge
 			correction -= Math.abs(charge);
 		else if (mAtomicNo[atom] == 15		// P
 			  || mAtomicNo[atom] == 33) {	// As
-			if (occupiedValence + correction + charge <= 3)
+			if (occupiedValence - correction - charge <= 3)
 				correction += charge;
 			else
 				correction -= charge;
@@ -3345,7 +3360,7 @@ public class Molecule implements Serializable {
 		else if (mAtomicNo[atom] == 16		// S
 			  || mAtomicNo[atom] == 34		// Se
 			  || mAtomicNo[atom] == 52) {	// Te
-			if (occupiedValence + correction + charge <= 4)
+			if (occupiedValence - correction - charge <= 4)
 				correction += charge;
 			else
 				correction -= Math.abs(charge);
@@ -3353,7 +3368,7 @@ public class Molecule implements Serializable {
 		else if (mAtomicNo[atom] == 17		// Cl
 			  || mAtomicNo[atom] == 35		// Br
 			  || mAtomicNo[atom] == 53) {   // I
-			if (occupiedValence + correction + charge <= 5)
+			if (occupiedValence - correction - charge <= 5)
 				correction += charge;
 			else
 				correction -= Math.abs(charge);

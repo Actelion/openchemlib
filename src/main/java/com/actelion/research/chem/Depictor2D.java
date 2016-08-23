@@ -131,13 +131,15 @@ public class Depictor2D extends AbstractDepictor {
 
 
 	protected double getStringWidth(String theString) {
-		if (!theString.equals(mCurrentString)
-		 || mCurrentFont != ((Graphics2D)mG).getFont()) {
-			mCurrentString = theString;
-			mCurrentFont = ((Graphics2D)mG).getFont();
-			mCurrentGlyphVector = ((Graphics2D)mG).getFont().createGlyphVector(((Graphics2D)mG).getFontRenderContext(), theString);
-			mCurrentStringWidth = mCurrentGlyphVector.getLogicalBounds().getWidth();
-		    }
+		if (mG != null) {
+			if (!theString.equals(mCurrentString)
+				|| mCurrentFont != ((Graphics2D) mG).getFont()) {
+				mCurrentString = theString;
+				mCurrentFont = ((Graphics2D) mG).getFont();
+				mCurrentGlyphVector = ((Graphics2D) mG).getFont().createGlyphVector(((Graphics2D) mG).getFontRenderContext(), theString);
+				mCurrentStringWidth = mCurrentGlyphVector.getLogicalBounds().getWidth();
+			}
+		}
 		return mCurrentStringWidth;
 		}
 
