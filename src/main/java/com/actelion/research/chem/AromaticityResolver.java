@@ -557,20 +557,29 @@ public class AromaticityResolver {
 	 */
 	private boolean checkAtomTypePi1(int atom, boolean correctCharge) {
 		int atomicNo = mMol.getAtomicNo(atom);
-		if (atomicNo <5 || atomicNo > 8)
-			return false;
-
-		int freeValence = mMol.getFreeValence(atom);
-		if (mAllHydrogensAreExplicit && freeValence == 1)
-			return true;
-		if (!mAllHydrogensAreExplicit && freeValence >= 1)
-			return true;
-
-		if (atomicNo != 6) {
-			if (freeValence == 0 && mMol.getAtomCharge(atom) == 0) {
-				if (correctCharge)
-					mMol.setAtomCharge(atom, atomicNo < 6 ? -1 : 1);
+		if ((atomicNo >=5 && atomicNo <= 8) || atomicNo == 16) {
+			int freeValence = mMol.getFreeValence(atom);
+			if (mAllHydrogensAreExplicit && (freeValence == 1 || freeValence == 3))	// 3: rare S cases
 				return true;
+			if (!mAllHydrogensAreExplicit && freeValence >= 1)
+				return true;
+
+			if (mMol.getAtomCharge(atom) == 0) {
+				if (atomicNo == 16 && freeValence == 4) {
+					if (correctCharge)
+						mMol.setAtomCharge(atom, 1);
+					return true;
+					}
+				if (atomicNo == 5 && freeValence == 0) {
+					if (correctCharge)
+						mMol.setAtomCharge(atom, -1);
+					return true;
+					}
+				if ((atomicNo == 7 || atomicNo == 8) && freeValence == 0) {
+					if (correctCharge)
+						mMol.setAtomCharge(atom, 1);
+					return true;
+					}
 				}
 			}
 

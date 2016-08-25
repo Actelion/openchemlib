@@ -70,11 +70,11 @@ public class NewChainAction extends BondHighlightAction
     public boolean onMouseDown(IMouseEvent evt)
     {
         java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        StereoMolecule mol = model.getMolecule();
         boolean update = false;
         origin = pt;
-        sourceAtom = getAtomAt(pt);
+        sourceAtom = findAtom(mol,pt);// getAtomAt(pt);
         if (sourceAtom != -1) {
-            StereoMolecule mol = model.getMolecule();
             //if (mol != null)
             {
                 if (mol.getAllConnAtoms(sourceAtom) == Model.MAX_CONNATOMS) {
@@ -88,7 +88,7 @@ public class NewChainAction extends BondHighlightAction
                 mChainAtom = null;
             }
         } else {
-            StereoMolecule mol = model.getMolecule();
+//            StereoMolecule mol = model.getMolecule();
 //            model.setSelectedMolecule(mol);
             origin = new Point2D.Double(evt.getX(), evt.getY());
             update = true;
