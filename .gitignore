@@ -1,5 +1,6 @@
 ### Project specific excludes
 build
+target
 
 ### Java template
 *.class
