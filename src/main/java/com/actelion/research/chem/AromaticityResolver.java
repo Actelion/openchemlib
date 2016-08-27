@@ -559,9 +559,7 @@ public class AromaticityResolver {
 		int atomicNo = mMol.getAtomicNo(atom);
 		if ((atomicNo >=5 && atomicNo <= 8) || atomicNo == 16) {
 			int freeValence = mMol.getFreeValence(atom);
-			if (mAllHydrogensAreExplicit && (freeValence == 1 || freeValence == 3))	// 3: rare S cases
-				return true;
-			if (!mAllHydrogensAreExplicit && freeValence >= 1)
+			if (freeValence == 1 || freeValence == 2)	// we allow one more free valence, because the atom may have a missing charge
 				return true;
 
 			if (mMol.getAtomCharge(atom) == 0) {
@@ -595,7 +593,7 @@ public class AromaticityResolver {
 	 */
 	private int checkAtomTypeLeak5(int atom, boolean correctCharge) {
 		if (mMol.getAtomicNo(atom) == 7) {
-			if (mMol.getAllConnAtoms(atom) > 2)
+			if (mMol.getAllConnAtoms(atom) == 3)
 				return 3;
 			if (mMol.getConnAtoms(atom) == 2)
 				return 2;
