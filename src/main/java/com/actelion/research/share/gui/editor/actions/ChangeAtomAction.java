@@ -52,7 +52,6 @@ public class ChangeAtomAction extends AtomHighlightAction {
     public ChangeAtomAction(Model model, int atomNo) {
         super(model);
         theAtomNo = atomNo;
-        //        this.ctx = ctx;
     }
 
 
@@ -61,15 +60,18 @@ public class ChangeAtomAction extends AtomHighlightAction {
         model.pushUndo();
         int theAtom = model.getSelectedAtom();
         java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
-        StereoMolecule mol = model.getMoleculeAt(pt, false);
-        if (mol != null && theAtom != -1) {
+//        StereoMolecule mol = model.getMoleculeAt(pt, false);
+        StereoMolecule mol = model.getMolecule();
+        if (/*mol != null && */theAtom != -1) {
             mol.setAtomicNo(theAtom, theAtomNo);
         } else {
+/*
             if (mol == null) {
                 mol = model.getMolecule();
 //                model.setSelectedMolecule(mol);
                 model.needsLayout(true);
             }
+*/
             int atom = mol.addAtom((float) pt.getX(), (float) pt.getY());
             mol.setAtomicNo(atom, theAtomNo);
         }

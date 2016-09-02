@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.util.DoubleFormat;
+
 public class IDCodeParser {
 	private StereoMolecule mMol;
 	private byte[]		mDecodingBytes;
@@ -661,6 +663,9 @@ public class IDCodeParser {
 							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits) - binCount / 2));
 						}
 
+					double avblDefault = coordsAre3D ? 1.5 : Molecule.getDefaultAverageBondLength();
+					double avbl = mMol.getAverageBondLength(allAtoms, allBonds, avblDefault);
+
 					if (coordinates[coordinateIndex] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
 						int hydrogenCount = 0;
 
@@ -692,7 +697,7 @@ public class IDCodeParser {
 						if (coordsAre3D)
 							zOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
 
-						factor = targetAVBL / mMol.getAverageBondLength(true);
+						factor = targetAVBL / avbl;
 						for (int atom = 0; atom < allAtoms; atom++) {
 							mMol.setAtomX(atom, xOffset + factor * mMol.getAtomX(atom));
 							mMol.setAtomY(atom, yOffset + factor * mMol.getAtomY(atom));
@@ -702,7 +707,7 @@ public class IDCodeParser {
 						}
 					else {    // with new format 2D and 3D coordinates are scaled to average bond lengths of 1.5 Angstrom
 						targetAVBL = 1.5;
-						factor = targetAVBL / mMol.getAverageBondLength(true);
+						factor = targetAVBL / avbl;
 						for (int atom = 0; atom < allAtoms; atom++) {
 							mMol.setAtomX(atom, factor * mMol.getAtomX(atom));
 							mMol.setAtomY(atom, factor * mMol.getAtomY(atom));
@@ -1367,13 +1372,28 @@ public class IDCodeParser {
 
 				// with new format 2D and 3D coordinates are scaled to average bond lengths of 1.5 Angstrom
 				double avbl = 0;
-				for (bond=0; bond<allBonds; bond++) {
-					double dx = coords[0][bondAtom[0][bond]] - coords[0][bondAtom[1][bond]];
-					double dy = coords[1][bondAtom[0][bond]] - coords[1][bondAtom[1][bond]];
-					double dz = coordsAre3D ? coords[2][bondAtom[0][bond]] - coords[2][bondAtom[1][bond]] : 0;
-					avbl += Math.sqrt(dx*dx + dy*dy + dz*dz);
-				}
-				avbl /= allBonds;	// avbl without hydrogen atoms
+				if (allBonds != 0) {
+					for (bond=0; bond<allBonds; bond++)
+						avbl += getDistance(coords, bondAtom[0][bond], bondAtom[1][bond], coordsAre3D);
+					avbl /= allBonds;    // avbl without hydrogen atoms
+					}
+				else {
+					double defaultAVBL = coordsAre3D ? 1.5 : Molecule.getDefaultAverageBondLength();
+					if (allAtoms < 2) {
+						avbl = defaultAVBL;
+						}
+					else {
+						double lowDistance = Double.MAX_VALUE;
+						for (int atom1=1; atom1<allAtoms; atom1++) {
+							for (int atom2=0; atom2<atom1; atom2++) {
+								double distance = getDistance(coords, atom1, atom2, coordsAre3D);
+								if (distance > 0 && distance < lowDistance)
+									lowDistance = distance;
+								}
+							}
+						avbl = (lowDistance == Double.MAX_VALUE) ? defaultAVBL : lowDistance;
+						}
+					}
 
 				int hydrogenCount = 0;
 				if (coordinates[0] == '#') {	// we have 3D-coordinates that include implicit hydrogen coordinates
@@ -1427,9 +1447,10 @@ public class IDCodeParser {
 
 				System.out.print(coordsAreAbsolute ? "absolute coords:" : "relative coords:");
 				for (int atom=0; atom<allAtoms; atom++) {
-					System.out.print(" "+((int)(1000*coords[0][atom]))/1000+","+((int)(1000*coords[1][atom]))/1000);
+					System.out.print(DoubleFormat.toString(coords[0][atom])+","+DoubleFormat.toString(coords[1][atom]));
 					if (coordsAre3D)
-						System.out.print(","+((int)(1000*coords[2][atom]))/1000);
+						System.out.print(","+DoubleFormat.toString(coords[2][atom]));
+					System.out.print(" ");
 					}
 				System.out.println();
 				if (hydrogenCount != 0)
@@ -1437,5 +1458,12 @@ public class IDCodeParser {
 				}
 			}
 		System.out.println();
+		}
+
+	private double getDistance(double[][] coords, int atom1, int atom2, boolean coordsAre3D) {
+		double dx = coords[0][atom1] - coords[0][atom2];
+		double dy = coords[1][atom1] - coords[1][atom2];
+		double dz = coordsAre3D ? coords[2][atom1] - coords[2][atom2] : 0;
+		return Math.sqrt(dx*dx + dy*dy + dz*dz);
 		}
 	}

@@ -538,7 +538,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
-	 * Calculates for every atom the mean value of all shortest routes (bonds in between)
+	 * Calculates for every non-H atom the mean value of all shortest routes (bonds in between)
 	 * to any other atom of the same fragment.
 	 * @return 
 	 */
@@ -583,15 +583,15 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		ensureHelperArrays(cHelperNeighbours);
 
-		int[] graphLevel = new int[mAtoms];
-		int graphAtom[] = new int[mAtoms];
+		int[] graphLevel = new int[mAllAtoms];
+		int graphAtom[] = new int[mAllAtoms];
 
 		graphAtom[0] = atom1;
 		graphLevel[atom1] = 1;
 		int current = 0;
 		int highest = 0;
 		while (current <= highest) {
-			for (int i=0; i<mConnAtoms[graphAtom[current]]; i++) {
+			for (int i=0; i<mAllConnAtoms[graphAtom[current]]; i++) {
 				int candidate = mConnAtom[graphAtom[current]][i];
 				if (candidate == atom2)
 					return graphLevel[graphAtom[current]];
@@ -621,20 +621,21 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		ensureHelperArrays(cHelperNeighbours);
 
-		int[] graphLevel = new int[mAtoms];
-		int graphAtom[] = new int[mAtoms];
+		int[] graphLevel = new int[mAllAtoms];
+		int graphAtom[] = new int[mAllAtoms];
 
 		graphAtom[0] = atom1;
 		graphLevel[atom1] = 1;
 		int current = 0;
 		int highest = 0;
 		while (current <= highest && graphLevel[graphAtom[current]] <= maxLength) {
-			for (int i=0; i<mConnAtoms[graphAtom[current]]; i++) {
+			for (int i=0; i<mAllConnAtoms[graphAtom[current]]; i++) {
 				int candidate = mConnAtom[graphAtom[current]][i];
 				if (candidate == atom2)
 					return graphLevel[graphAtom[current]];
 
-				if (graphLevel[candidate] == 0 && (neglectAtom == null || !neglectAtom[candidate])) {
+				if (graphLevel[candidate] == 0
+						&& (neglectAtom == null || neglectAtom.length <= candidate || !neglectAtom[candidate])) {
 					graphAtom[++highest] = candidate;
 					graphLevel[candidate] = graphLevel[graphAtom[current]]+1;
 					}
@@ -662,9 +663,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		ensureHelperArrays(cHelperNeighbours);
 
-		int[] graphLevel = new int[mAtoms];
-		int graphAtom[] = new int[mAtoms];
-		int parentAtom[] = new int[mAtoms];
+		int[] graphLevel = new int[mAllAtoms];
+		int graphAtom[] = new int[mAllAtoms];
+		int parentAtom[] = new int[mAllAtoms];
 
 		graphAtom[0] = atom1;
 		graphLevel[atom1] = 1;
@@ -673,8 +674,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		int highest = 0;
 		while (current <= highest && graphLevel[graphAtom[current]] <= maxLength) {
 			int parent = graphAtom[current];
-			for (int i=0; i<mConnAtoms[parent]; i++) {
-				if (neglectBond == null || !neglectBond[mConnBond[parent][i]]) {
+			for (int i=0; i<mAllConnAtoms[parent]; i++) {
+				if (neglectBond == null
+				 || neglectBond.length <= mConnBond[parent][i]
+				 || !neglectBond[mConnBond[parent][i]]) {
 					int candidate = mConnAtom[parent][i];
 					if (candidate == atom2) {
 						int index = graphLevel[parent];
@@ -709,7 +712,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	public void getPathBonds(int[] pathAtom, int[] pathBond, int pathLength) {
 		ensureHelperArrays(cHelperNeighbours);
 		for (int i=0; i<pathLength; i++) {
-			for (int j=0; j<mConnAtoms[pathAtom[i]]; j++) {
+			for (int j=0; j<mAllConnAtoms[pathAtom[i]]; j++) {
 				if (mConnAtom[pathAtom[i]][j] == pathAtom[i+1]) {
 					pathBond[i] = mConnBond[pathAtom[i]][j];
 					break;

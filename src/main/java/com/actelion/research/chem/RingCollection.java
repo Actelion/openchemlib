@@ -483,7 +483,7 @@ public class RingCollection {
 		int[] ringMembership = new int[mMol.getBonds()];
 		for (int ring=0; ring<mRingBondSet.size(); ring++) {
 			int[] ringBond = mRingBondSet.get(ring);
-			if (ringBond.length >= 5 && ringBond.length <= 7) {
+			if (ringBond.length == 3 || (ringBond.length >= 5 && ringBond.length <= 7)) {
 				for (int i=0; i<ringBond.length; i++) {
 					int bond = ringBond[i];
 					if (mMol.getConnAtoms(mMol.getBondAtom(0, bond)) == 3
@@ -557,13 +557,33 @@ public class RingCollection {
 
 		boolean hasDelocalizationLeak = false;
 		switch (ringBonds) {
+		case 3:
+			final int[] cSequence3Ring = {
+				2,	 // 010
+				1,	 // 001
+				4 }; // 100
+			hasDelocalizationLeak = true;
+			for (int carbeniumPosition=0; carbeniumPosition<3; carbeniumPosition++) {
+				if ((bondSequence & cSequence3Ring[carbeniumPosition]) == cSequence3Ring[carbeniumPosition]) {
+					if ((mMol.getAtomicNo(ringAtom[carbeniumPosition]) == 6
+							&& mMol.getAtomCharge(ringAtom[carbeniumPosition]) == 1)
+							|| (mMol.getAtomicNo(ringAtom[carbeniumPosition]) == 5
+							&& mMol.getAtomCharge(ringAtom[carbeniumPosition]) == 0)) {
+						isAromatic[ringNo] = true;
+						heteroPosition[ringNo] = carbeniumPosition;
+						if ((aromaticButNotDelocalizedSequence & cSequence3Ring[carbeniumPosition]) == 0)
+							hasDelocalizationLeak = false;
+						}
+					}
+				}
+			break;
 		case 5:
 			final int[] cSequence5Ring = {
 			   10,	// 01010
 				5,	// 00101
 			   18,	// 10010
 				9,	// 01001
-			   20 };  // 01010
+			   20 };// 01010
 			hasDelocalizationLeak = true;
 			for (int position=0; position<5; position++) {
 				if ((bondSequence & cSequence5Ring[position]) == cSequence5Ring[position]) {

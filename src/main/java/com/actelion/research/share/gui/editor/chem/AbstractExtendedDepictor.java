@@ -36,6 +36,7 @@ package com.actelion.research.share.gui.editor.chem;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.share.gui.Arrow;
+import com.actelion.research.share.gui.DrawConfig;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -51,29 +52,18 @@ public abstract class AbstractExtendedDepictor<T, C>
     protected int mDisplayMode, mReactantOrCoreCount;
     protected boolean mUseGraphics2D, mDoLayoutMolecules, mIsMarkushStructure;
     protected DepictorTransformation mTransformation;
+    private DrawConfig drawConfig;
     protected C mFragmentNoColor;
 
-    public AbstractExtendedDepictor(StereoMolecule mol, java.util.List<IDrawingObject> drawingObjectList, boolean useGraphics2D)
+    public AbstractExtendedDepictor(StereoMolecule mol, java.util.List<IDrawingObject> drawingObjectList, boolean useGraphics2D, DrawConfig cfg)
     {
-        if (mol != null) {
-            mMolecule = new StereoMolecule[1];
-            mMolecule[0] = mol;
-        }
-        mIsMarkushStructure = false;
-        mDrawingObjectList = drawingObjectList;
-        mUseGraphics2D = useGraphics2D;
-        mReactantOrCoreCount = -1;
-        initialize();
+        this(new StereoMolecule[] {mol},drawingObjectList,useGraphics2D,cfg);
     }
 
-    public AbstractExtendedDepictor(StereoMolecule[] mol, java.util.List<IDrawingObject> drawingObjectList, boolean useGraphics2D)
+    public AbstractExtendedDepictor(StereoMolecule[] mol, java.util.List<IDrawingObject> drawingObjectList, boolean useGraphics2D, DrawConfig cfg)
     {
-        mMolecule = mol;
-        mIsMarkushStructure = false;
-        mDrawingObjectList = drawingObjectList;
-        mUseGraphics2D = useGraphics2D;
+        initialize(mol,drawingObjectList,useGraphics2D,cfg);
         mReactantOrCoreCount = -1;
-        initialize();
     }
 
     /**
@@ -88,32 +78,26 @@ public abstract class AbstractExtendedDepictor<T, C>
      * @param drawingObjectList
      * @param useGraphics2D
      */
-    public AbstractExtendedDepictor(StereoMolecule[] mol, int markushCoreCount, java.util.List<IDrawingObject> drawingObjectList, boolean useGraphics2D)
+    public AbstractExtendedDepictor(StereoMolecule[] mol, int markushCoreCount, java.util.List<IDrawingObject> drawingObjectList, boolean useGraphics2D, DrawConfig cfg)
     {
-        mMolecule = mol;
-        mIsMarkushStructure = true;
-        mDrawingObjectList = drawingObjectList;
-        mUseGraphics2D = useGraphics2D;
+        this(mol,drawingObjectList,useGraphics2D,cfg);
         mReactantOrCoreCount = markushCoreCount;
-        initialize();
     }
 
-    public AbstractExtendedDepictor(Reaction reaction, java.util.List<IDrawingObject> drawingObjectList, boolean layoutReaction, boolean useGraphics2D)
+    public AbstractExtendedDepictor(Reaction reaction, java.util.List<IDrawingObject> drawingObjectList, boolean layoutReaction, boolean useGraphics2D, DrawConfig cfg)
     {
+        StereoMolecule[] mol = null;
         if (reaction != null) {
-            mMolecule = new StereoMolecule[reaction.getMolecules()];
+            mol = new StereoMolecule[reaction.getMolecules()];
             for (int i = 0; i < reaction.getMolecules(); i++)
-                mMolecule[i] = reaction.getMolecule(i);
+               mol[i] = reaction.getMolecule(i);
             mReactantOrCoreCount = reaction.getReactants();
             mDoLayoutMolecules = layoutReaction;
         }
-        mIsMarkushStructure = false;
-        mDrawingObjectList = drawingObjectList;
-        mUseGraphics2D = useGraphics2D;
-        initialize();
+        initialize(mol,drawingObjectList,useGraphics2D,cfg);
     }
 
-    public abstract AbstractDepictor createDepictor(StereoMolecule stereoMolecule, boolean mUseGraphics2D);
+    public abstract AbstractDepictor createDepictor(StereoMolecule stereoMolecule, boolean mUseGraphics2D,DrawConfig cfg);
 
     protected abstract void paintFragmentNumbers(T g);
 
@@ -121,8 +105,21 @@ public abstract class AbstractExtendedDepictor<T, C>
 
     protected abstract void paintDrawingObjects(T g);
 
-    private void initialize()
+    private void initialize(
+        StereoMolecule[] mol,
+        java.util.List<IDrawingObject> drawingObjectList,
+        boolean useGraphics2D,
+        DrawConfig cfg
+    )
     {
+
+        mMolecule = mol;
+        mIsMarkushStructure = false;
+        mDrawingObjectList = drawingObjectList;
+        mUseGraphics2D = useGraphics2D;
+        drawConfig = cfg;
+
+
         // for reactions and sets of molecules the availability of coordinates
         // is mandatory. However, every individual molecule may have its first
         // atom at coords 0.0/0.0, e.g. if they are encoded idcodes or if
@@ -130,7 +127,7 @@ public abstract class AbstractExtendedDepictor<T, C>
         if (mMolecule != null) {
             mDepictor = new AbstractDepictor[mMolecule.length];
             for (int i = 0; i < mMolecule.length; i++) {
-                mDepictor[i] = createDepictor(mMolecule[i], mUseGraphics2D);
+                mDepictor[i] = createDepictor(mMolecule[i], mUseGraphics2D, drawConfig);
 /*
                 if (mUseGraphics2D)
                 mDepictor[i] = new Depictor2D(mMolecule[i]);
@@ -299,7 +296,7 @@ public abstract class AbstractExtendedDepictor<T, C>
         int arrow = -1;
         if (mDrawingObjectList == null) {
             mDrawingObjectList = new ArrayList<IDrawingObject>();
-            mDrawingObjectList.add(new Arrow(0,0,0,0));
+            mDrawingObjectList.add(new Arrow(drawConfig, 0,0,0,0));
             arrow = 0;
         } else {
 //            for (int i = 0; i < mDrawingObjectList.size(); i++) {
@@ -312,7 +309,7 @@ public abstract class AbstractExtendedDepictor<T, C>
             //if (arrow == -1)
             {
                 arrow = mDrawingObjectList.size();
-                mDrawingObjectList.add(new Arrow(0,0,0,0));
+                mDrawingObjectList.add(new Arrow(drawConfig,0,0,0,0));
             }
         }
 

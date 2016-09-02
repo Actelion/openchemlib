@@ -35,7 +35,6 @@ package com.actelion.research.share.gui;
 
 import com.actelion.research.chem.DepictorTransformation;
 import com.actelion.research.share.gui.editor.chem.IDrawingObject;
-import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 
 import java.awt.geom.Rectangle2D;
@@ -43,7 +42,7 @@ import java.awt.geom.Rectangle2D;
 public class Arrow implements IDrawingObject
 {
 
-    protected static final GeomFactory builder = GeomFactory.getGeomFactory();
+    protected final DrawConfig gfxConfig;/* = GeomFactory.getGeomFactory();*/
 
      /*
                                       *
@@ -65,15 +64,12 @@ public class Arrow implements IDrawingObject
     protected Rectangle2D rect = null;
     private boolean selected = false;
 
-    public Arrow(double x, double y, double w, double h)
+    public Arrow(DrawConfig cfg, double x, double y, double w, double h)
     {
+        gfxConfig = cfg;
         rect = new Rectangle2D.Double(x, y, w, h);
     }
 
-//    public Arrow(Rectangle2D r)
-//    {
-//        rect = r;
-//    }
 
     @Override
     public void setSelected(boolean b) {
@@ -109,11 +105,6 @@ public class Arrow implements IDrawingObject
     @Override
     public void draw(IDrawContext ctx,DepictorTransformation t)
     {
-//        float x1 = (t == null) ? mPoint[0].x : t.transformX(mPoint[0].x);
-//        float y1 = (t == null) ? mPoint[0].y : t.transformY(mPoint[0].y);
-//        float x2 = (t == null) ? mPoint[1].x : t.transformX(mPoint[1].x);
-//        float y2 = (t == null) ? mPoint[1].y : t.transformY(mPoint[1].y);
-
 
         double dx =        t == null ? (rect.getMinX()) :   t.transformX((float)rect.getMinX()) ;
         double dy =        t == null ? (rect.getMinY()) :   t.transformY((float)rect.getMinY()) ;
@@ -134,8 +125,8 @@ public class Arrow implements IDrawingObject
         };
 
         if (selected) {
-            ctx.setStroke(builder.getSelectionColor());
-            ctx.setFill(builder.getSelectionColor());
+            ctx.setStroke(gfxConfig.getSelectionColor());
+            ctx.setFill(gfxConfig.getSelectionColor());
         }
         if ((arrowEndX - dx) >= 5) {
             ctx.drawLine((int) dx, (int) arrowEndY, (int) arrowEndX-xOffset, (int) arrowEndY);

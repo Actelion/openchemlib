@@ -38,6 +38,7 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.share.gui.DialogResult;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.dialogs.IBondQueryFeaturesDialog;
+import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
@@ -153,9 +154,10 @@ public abstract class BondHighlightAction extends AtomHighlightAction
     public boolean onKeyPressed(IKeyEvent evt)
     {
         int theBond = model.getSelectedBond();
+        GeomFactory factory = model.getGeomFactory();
         StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
         if (mol != null) {
-            if (evt.getCode().equals(builder.getDeleteKey())) {
+            if (evt.getCode().equals(factory.getDeleteKey())) {
                 if (theBond != -1) {
                     mol.deleteBondAndSurrounding(theBond);
                     setHighlightBond(mol, -1);
@@ -221,7 +223,8 @@ public abstract class BondHighlightAction extends AtomHighlightAction
     {
         StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
         if (mol != null) {
-            IBondQueryFeaturesDialog dlg = builder.createBondFeaturesDialog(/*new BondQueryFeaturesDialog(*/mol, bond);
+            GeomFactory factory = model.getGeomFactory();
+            IBondQueryFeaturesDialog dlg = factory.createBondFeaturesDialog(/*new BondQueryFeaturesDialog(*/mol, bond);
             return dlg.doModalAt(lastHightlightPoint.getX(),lastHightlightPoint.getY()) == DialogResult.IDOK;
         }
         return false;

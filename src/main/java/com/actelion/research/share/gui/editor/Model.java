@@ -40,6 +40,7 @@ import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.share.gui.Arrow;
 import com.actelion.research.share.gui.editor.chem.AbstractExtendedDepictor;
 import com.actelion.research.share.gui.editor.chem.IDrawingObject;
+import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.listeners.IChangeListener;
 import com.actelion.research.share.gui.editor.listeners.IValidationListener;
 
@@ -71,6 +72,7 @@ public abstract class Model
 
 
     //    protected static GeomFactory builder = GeomFactory.getGeomFactory() ;
+    protected GeomFactory geomFactory;
     public static final int KEY_IS_ATOM_LABEL = 1;
     public static final int KEY_IS_SUBSTITUENT = 2;
     public static final int KEY_IS_VALID_START = 3;
@@ -145,8 +147,9 @@ public abstract class Model
     private ImageProvider imageProvider;
 
 
-    public Model(int mode)
+    public Model(GeomFactory factory,int mode)
     {
+        this.geomFactory = factory;
         mDrawingObjectList = new ArrayList<IDrawingObject>();
         mMode = mode;
         if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE)) != 0) {
@@ -157,13 +160,17 @@ public abstract class Model
 
         }
         if ((mMode & (MODE_REACTION)) != 0) {
-            Arrow arrow = new Arrow(0, 0, 0, 0);
+            Arrow arrow = new Arrow(factory.getDrawConfig(), 0, 0, 0, 0);
 //            arrow.setDeletable(false);
             mDrawingObjectList.add(arrow);
         }
 
     }
 
+    public GeomFactory getGeomFactory()
+    {
+        return geomFactory;
+    }
 
     public void resizeReaction(Dimension os, Dimension ns)
     {
@@ -991,6 +998,10 @@ public abstract class Model
     {
         StereoMolecule mol = mMol;
         {
+            if (mol.findAtom(pt.getX(),pt.getY()) != -1) {
+                return mol;
+            }
+/*
             for (int atom = 0; atom < mol.getAllAtoms(); atom++) {
                 java.awt.geom.Point2D ap = new Point2D.Double(mol.getAtomX(atom), mol.getAtomY(atom));
                 if (Math.abs(ap.distance(pt)) < 5) {
@@ -998,6 +1009,7 @@ public abstract class Model
                     return mol;
                 }
             }
+*/
             if (includeBond) {
                 for (int i = 0; i < mol.getAllBonds(); i++) {
                     int source = mol.getBondAtom(0, i);

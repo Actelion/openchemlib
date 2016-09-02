@@ -1954,7 +1954,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Calculates and returns the mean bond length. If the molecule has
-	 * no bonds, then the average distance between unconnected atoms is
+	 * no bonds, then the smallest distance between unconnected atoms is
 	 * returned. If is has less than 2 atoms, cDefaultAverageBondLength is returned.
 	 * @return
 	 */
@@ -1965,7 +1965,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Calculates and returns the mean bond length of all bonds 0...bonds.
-	 * If there are no bonds, then the average distance between unconnected atoms is
+	 * If there are no bonds, then the smallest distance between unconnected atoms is
 	 * returned. If we have less than 2 atoms, cDefaultAverageBondLength is returned.
 	 * @param atoms atom indexes >= this are not considered
 	 * @param bonds bond indexes >= this are not considered
@@ -1978,7 +1978,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Calculates and returns the mean bond length of all bonds 0...bonds.
-	 * If there are no bonds, then the average distance between unconnected atoms is
+	 * If there are no bonds, then the smallest distance between unconnected atoms is
 	 * returned. If we have less than 2 atoms, defaultBondLength is returned.
 	 * @param atoms atom indexes >= this are not considered
 	 * @param bonds bond indexes >= this are not considered
@@ -1991,19 +1991,19 @@ public class Molecule implements Serializable {
 
 		if (bonds == 0) {
 				// since this function is used to get an idea about the scale
-				// of the molecule return as approximation a mean atom distance
+				// of the molecule return as approximation the smallest atom distance
 			if (atoms < 2)
 				return defaultBondLength;
 
-			double sum = 0.0;
-			int count = 0;
+			double lowDistance = Double.MAX_VALUE;
 			for (int atom1=1; atom1<atoms; atom1++) {
 				for (int atom2=0; atom2<atom1; atom2++) {
-					sum += mCoordinates[atom1].distance(mCoordinates[atom2]);
-					count++;
+					double distance = mCoordinates[atom1].distance(mCoordinates[atom2]);
+					if (distance > 0 && distance < lowDistance)
+						lowDistance = distance;
 					}
 				}
-			return Math.min(defaultBondLength, Math.sqrt(atoms) * sum / (2f * count));
+			return (lowDistance != Double.MAX_VALUE) ? lowDistance : defaultBondLength;
 			}
 
 		double avblSum = 0.0;

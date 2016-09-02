@@ -35,8 +35,8 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.share.gui.DrawConfig;
 import com.actelion.research.share.gui.editor.Model;
-import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IColor;
 import com.actelion.research.share.gui.editor.geom.ICursor;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
@@ -50,13 +50,11 @@ import java.awt.geom.Point2D;
  */
 public abstract class DrawAction implements Action
 {
-    protected static final GeomFactory builder = GeomFactory.getGeomFactory();
     public static final double HIGHLIGHT_ATOM_RADIUS = 5;
-//    public static final long HIGHLIGHT_STYLE = builder.createColor(.7, .8, 1, 0.8);// new Color(.7, .8, 1, 0.8);
     public static final int MAX_CONNATOMS = 8;
     public static final String UNKNOWN = "<unknown>";
-//    public static final String KEYSTROKEFONT = "Helvetica";
     public static final int KEYSTROKEFONTSIZE = 24;
+
     protected Model model;
 
     public DrawAction(Model m)
@@ -162,10 +160,11 @@ public abstract class DrawAction implements Action
         double x2 = mol.getAtomX(mol.getBondAtom(1, theBond));
         double y2 = mol.getAtomY(mol.getBondAtom(1, theBond));
 
+        DrawConfig cfg = model.getGeomFactory().getDrawConfig();
 
         ctx.save();
         ctx.setLineWidth(width);
-        ctx.setStroke(builder.getHighLightColor());
+        ctx.setStroke(cfg.getHighLightColor());
 //        ctx.setStroke(IColor.BLUE);
         ctx.drawLine(x1, y1, x2, y2);
         ctx.restore();
@@ -193,9 +192,10 @@ public abstract class DrawAction implements Action
         if (radius < 5)
             radius = (int)HIGHLIGHT_ATOM_RADIUS;
 
+        DrawConfig cfg = model.getGeomFactory().getDrawConfig();
         java.awt.geom.Point2D highlightPoint = new Point2D.Double(mol.getAtomX(theAtom), mol.getAtomY(theAtom));
         ctx.save();
-        ctx.setFill(builder.getHighLightColor());
+        ctx.setFill(cfg.getHighLightColor());
         ctx.fillElipse(
                 highlightPoint.getX() - radius, highlightPoint.getY() - radius ,
                 2 * radius, 2 * radius
@@ -210,10 +210,11 @@ public abstract class DrawAction implements Action
         String s = model.getKeyStrokeBuffer().toString();
         int validity = model.getAtomKeyStrokeValidity(s);
         java.awt.geom.Point2D highlightPoint = new Point2D.Double(mol.getAtomX(theAtom), mol.getAtomY(theAtom));
+        DrawConfig cfg = model.getGeomFactory().getDrawConfig();
 
         ctx.save();
         ctx.setFill((
-                validity == Model.KEY_IS_ATOM_LABEL) ? builder.getForegroundColor()
+                validity == Model.KEY_IS_ATOM_LABEL) ? cfg.getForegroundColor()
                 : (validity == Model.KEY_IS_SUBSTITUENT) ? IColor.BLUE
                 : (validity == Model.KEY_IS_VALID_START) ? IColor.GRAY : IColor.RED);
 

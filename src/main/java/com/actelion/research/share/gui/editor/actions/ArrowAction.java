@@ -35,6 +35,7 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.chem.IArrow;
+import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
 
@@ -76,6 +77,7 @@ public class ArrowAction extends DrawAction
     public boolean onMouseMove(IMouseEvent ev, boolean drag)
     {
         if (drag) {
+            GeomFactory factory = model.getGeomFactory();
             last = new Point2D.Double(ev.getX(),ev.getY());
             java.awt.geom.Rectangle2D r = new java.awt.geom.Rectangle2D.Double(
                 (int) Math.min(last.getX(), origin.getX()),
@@ -87,7 +89,7 @@ public class ArrowAction extends DrawAction
 //                (int) last.getY(),
 //                (int) Math.abs(last.getX() - origin.getX()),
 //                2);
-            arrow = builder.createArrow(r);
+            arrow = factory.createArrow(r);
             return true;
         }
         return false;  //To change body of implemented methods use File | Settings | File Templates.

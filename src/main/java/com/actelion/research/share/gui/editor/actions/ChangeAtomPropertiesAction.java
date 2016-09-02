@@ -37,6 +37,7 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.DialogResult;
 import com.actelion.research.share.gui.editor.dialogs.IAtomPropertiesDialog;
+import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
 
 /**
@@ -60,6 +61,7 @@ public class ChangeAtomPropertiesAction extends AtomHighlightAction
         int theAtom = model.getSelectedAtom();
         StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
         if (mol != null && theAtom != -1) {
+            GeomFactory builder = model.getGeomFactory();
             IAtomPropertiesDialog dlg = builder.createAtomPropertiesDialog(mol,theAtom);
             if (dlg.doModalAt(evt.getX(),evt.getY()) == DialogResult.IDOK) {
                 return true;

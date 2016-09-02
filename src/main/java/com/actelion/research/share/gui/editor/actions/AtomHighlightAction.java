@@ -40,6 +40,7 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.share.gui.DialogResult;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.dialogs.IAtomQueryFeaturesDialog;
+import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
@@ -89,7 +90,6 @@ public abstract class AtomHighlightAction extends DrawAction
             }
         }
         atom = model.getSelectedAtom();
-//        System.out.printf("Atom track %s %d %d\n",ok,currentAtom,atom);
         ok = ok | atom != -1;
         return ok;
     }
@@ -141,10 +141,10 @@ public abstract class AtomHighlightAction extends DrawAction
     @Override
     public boolean onKeyPressed(IKeyEvent evt)
     {
-        if (evt.getCode().equals(builder.getDeleteKey())) {
+        GeomFactory factory = model.getGeomFactory();
+        if (evt.getCode().equals(factory.getDeleteKey())) {
             int theAtom = model.getSelectedAtom();
             StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
-//            System.out.println("Delete Atom " + theAtom);
             if (theAtom != -1) {
                 mol.deleteAtom(theAtom);
                 setHighlightAtom(mol, -1);
@@ -179,7 +179,6 @@ public abstract class AtomHighlightAction extends DrawAction
         if (theAtom != -1 /*&& !evt.isShiftDown()*/) {
             char c = code != null && code.length() > 0 ? code.charAt(0) : 0;
             boolean isFirst = (keyStrokeBuffer.length() == 0);
-//                System.out.printf("KeyStroke is first: %s\n", isFirst);
             if (isFirst) {
                 switch (c) {
                     case '+':
@@ -213,6 +212,7 @@ public abstract class AtomHighlightAction extends DrawAction
 
     private boolean handleCharsNonSelected(String code)
     {
+
         if ("h".equals(code)) {
             model.flip(true);
             return true;
@@ -229,6 +229,7 @@ public abstract class AtomHighlightAction extends DrawAction
         int atomicNo = Molecule.getAtomicNoFromLabel(keyStrokes);
         if (atomicNo != 0) {
             if (mol.changeAtom(highliteAtom, atomicNo, 0, -1, 0)) {
+                model.changed();
                 return;
             }
         }
@@ -262,16 +263,18 @@ public abstract class AtomHighlightAction extends DrawAction
                 mol.setAtomY(firstAtomInMol + i, sourceAVBL * fragment.getAtomY(firstAtomInFragment + i) + dy);
             }
             mol.setStereoBondsFromParity();
+            model.changed();
         }
     }
 
     private boolean handleCharacter(StereoMolecule mol, int theAtom, IKeyEvent evt)
     {
+        GeomFactory factory = model.getGeomFactory();
         StringBuilder keyStrokeBuffer = model.getKeyStrokeBuffer();
         boolean isFirst = (keyStrokeBuffer.length() == 0);
         String code = evt.getText();
         char c = code != null && code.length() > 0 ? code.charAt(0) : 0;
-        if (evt.getCode().equals(builder.getDeleteKey())) {
+        if (evt.getCode().equals(factory.getDeleteKey())) {
             if (theAtom != -1) {
                 mol.deleteAtom(theAtom);
                 setHighlightAtom(mol, -1);
@@ -281,20 +284,18 @@ public abstract class AtomHighlightAction extends DrawAction
                     return true;
                 }
             }
-        } else if (!isFirst && evt.getCode().equals(builder.getEscapeKey())) {
+        } else if (!isFirst && evt.getCode().equals(factory.getEscapeKey())) {
             keyStrokeBuffer.setLength(0);
             return true;
-        } else if (!isFirst && evt.getCode().equals(builder.getBackSpaceKey())) {
-//            System.out.println("BackSpace!");
+        } else if (!isFirst && evt.getCode().equals(factory.getBackSpaceKey())) {
             keyStrokeBuffer.setLength(keyStrokeBuffer.length() - 1);
             return true;
-        } else if (evt.getCode().equals(builder.getEnterKey())) {
+        } else if (evt.getCode().equals(factory.getEnterKey())) {
             expandAtomKeyStrokes(mol, theAtom, keyStrokeBuffer.toString());
             keyStrokeBuffer.setLength(0);
             return true;
         } else if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 48 && c <= 57) || (c == '-')) {
             keyStrokeBuffer.append(c);
-//            System.out.printf("KeyStroke buffer is first: %s\n", keyStrokeBuffer);
             return true;
         }
         return false;
@@ -303,9 +304,10 @@ public abstract class AtomHighlightAction extends DrawAction
 
     private boolean showAtomQFDialog(int atom)
     {
+        GeomFactory factory = model.getGeomFactory();
         StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
         if (mol != null) {
-            IAtomQueryFeaturesDialog dlg = builder.createAtomQueryFeatureDialog(/*new AtomQueryFeaturesDialog*/mol, atom);
+            IAtomQueryFeaturesDialog dlg = factory.createAtomQueryFeatureDialog(/*new AtomQueryFeaturesDialog*/mol, atom);
             return dlg.doModalAt(lastHightlightPoint.getX(),lastHightlightPoint.getY()) == DialogResult.IDOK;
         }
         return false;
@@ -328,7 +330,6 @@ public abstract class AtomHighlightAction extends DrawAction
                 foundAtom = atom;
             }
         }
-//        System.out.printf("Atom %d\n",foundAtom);
         return foundAtom;
     }
 

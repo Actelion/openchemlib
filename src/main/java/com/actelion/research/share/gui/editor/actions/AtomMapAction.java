@@ -36,7 +36,7 @@ package com.actelion.research.share.gui.editor.actions;
 import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.share.gui.editor.Model;
-import com.actelion.research.share.gui.editor.geom.IColor;
+import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
@@ -87,6 +87,7 @@ public class AtomMapAction extends AtomHighlightAction
     @Override
     public boolean onKeyPressed(IKeyEvent evt)
     {
+        GeomFactory builder = model.getGeomFactory();
         if (evt.getCode().equals(builder.getDeleteKey())) {
             StereoMolecule mMol = model.getMolecule();//.getSelectedMolecule();
             boolean found = false;
@@ -201,6 +202,7 @@ public class AtomMapAction extends AtomHighlightAction
                         drawAtomHighlight(ctx, mol, theAtom);
                 }
 //                ctx.setStroke(IColor.RED);
+                GeomFactory builder = model.getGeomFactory();
                 ctx.setStroke(builder.getMapToolColor());
                 ctx.drawLine(firstPoint.getX(), firstPoint.getY(), lastPoint.getX(), lastPoint.getY());
             } else if( secondAtom != -1) {
