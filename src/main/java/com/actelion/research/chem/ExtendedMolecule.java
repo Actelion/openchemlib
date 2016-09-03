@@ -464,15 +464,51 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The free valence is the number of potential additional single bonded
-	 * neighbours to reach the atom's maximum valence. Atom charges are considered.
-	 * Implicit hydrogens are not considered.
+	 * neighbours to reach the atom's maximum valence. Atomic numbers that have
+	 * multiple possible valences, the highest value is taken.
+	 * Atom charges are considered. Implicit hydrogens are not considered.
 	 * Thus, the oxygen in a R-O(-) has a free valence of 0, the nitrogen in R3N(+)
-	 * has a free valence of 1.
+	 * has a free valence of 1. Chlorine in Cl(-) has a free valence of 6. If you need
+	 * the free valence taking the lowest possible valence into account, use
+	 * getLowestFreeValence(), which would return 0 for Cl(-).
 	 * @param atom
 	 * @return
 	 */
 	public int getFreeValence(int atom) {
 		return getMaxValence(atom) - getOccupiedValence(atom);
+		}
+
+
+	/**
+	 * The free valence is the number of potential additional single bonded
+	 * neighbours to reach the atom's lowest valence above or equal its current
+	 * occupied valence. Atom charges are considered. Implicit hydrogens are not considered.
+	 * Thus, the phosphor atoms in PF2 and PF4 both have a lowest free valence of 1.
+	 * The oxygen in R-O(-) has a lowest free valence of 0, the nitrogen in R3N(+)
+	 * has a free valence of 1. If you need the maximum possible free valence,
+	 * use getFreeValence(), which would give 6 for Cl(-) and HCl.
+	 * @param atom
+	 * @return
+	 */
+	public int getLowestFreeValence(int atom) {
+		int occupiedValence = getOccupiedValence(atom);
+		occupiedValence += getElectronValenceCorrection(atom, occupiedValence);
+
+		int valence = getAtomAbnormalValence(atom);
+		if (valence == -1) {
+			byte[] valenceList = (mAtomicNo[atom] < cAtomValence.length) ? cAtomValence[mAtomicNo[atom]] : null;
+			if (valenceList == null) {
+				valence = cDefaultAtomValence;
+			}
+			else {
+				int i= 0;
+				while (occupiedValence > valenceList[i] && i<valenceList.length-1)
+					i++;
+				valence = valenceList[i];
+				}
+			}
+
+		return valence - occupiedValence;
 		}
 
 
