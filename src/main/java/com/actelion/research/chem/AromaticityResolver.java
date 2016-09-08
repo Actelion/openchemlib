@@ -557,13 +557,19 @@ public class AromaticityResolver {
 	 */
 	private boolean checkAtomTypePi1(int atom, boolean correctCharge) {
 		int atomicNo = mMol.getAtomicNo(atom);
-		if ((atomicNo >=5 && atomicNo <= 8) || atomicNo == 16) {
+		if ((atomicNo >=5 && atomicNo <= 8)
+				|| atomicNo == 15 || atomicNo == 16 || atomicNo == 33 || atomicNo == 34) {	// P,S,As,Se
 			int freeValence = mMol.getFreeValence(atom);
 			if (freeValence == 1 || freeValence == 2)	// we allow one more free valence, because the atom may have a missing charge
 				return true;
 
 			if (mMol.getAtomCharge(atom) == 0) {
-				if (atomicNo == 16 && freeValence == 4) {
+				if ((atomicNo == 15 || atomicNo == 33) && freeValence == 3) {
+					if (correctCharge)
+						mMol.setAtomCharge(atom, 1);
+					return true;
+					}
+				if ((atomicNo == 16 || atomicNo == 34) && freeValence == 4) {
 					if (correctCharge)
 						mMol.setAtomCharge(atom, 1);
 					return true;
