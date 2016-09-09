@@ -2963,6 +2963,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mConnAtom[atom][mAllConnAtoms[atom]] = mBondAtom[1 - i][bnd];
 				mConnBond[atom][mAllConnAtoms[atom]] = bnd;
 				mAllConnAtoms[atom]++;
+				if (mBondAtom[1-i][bnd] < mAtoms)
+					mConnAtoms[atom]++;
 				}
 			}
 
