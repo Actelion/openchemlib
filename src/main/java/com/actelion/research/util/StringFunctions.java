@@ -989,6 +989,18 @@ public class StringFunctions {
 		return false;
 	}
 
+	public static boolean containsLowerCase(String s) {
+
+		for(char c : s.toCharArray()) {
+
+			if(Character.isLetter(c) && Character.isLowerCase(c)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * 
 	 * @param s
