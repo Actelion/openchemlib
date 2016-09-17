@@ -2740,7 +2740,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * Usually explicit hydrogen atoms can be removed without changing a molecule,
-	 * because the removal just convert explicit into implicit hydrogen atoms.
+	 * because the removal just converts explicit into implicit hydrogen atoms.
 	 * Exceptions are hydrogen with isotop information, hydrogens not connected to a non-H atom,
 	 * hydrogens carrying a custom label and hydrogens whose existence implicitly defines a neighbour
 	 * atom to have an abnormal valence.<br>

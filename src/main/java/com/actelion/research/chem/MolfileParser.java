@@ -57,7 +57,9 @@ public class MolfileParser
 	public static boolean debug = false;
 	private StereoMolecule mMol;
 	private TreeMap<Integer,Integer> mAtomIndexMap,mBondIndexMap;
-	
+	private boolean mTreatAnyAsMetalBond;
+
+
 	/**
 	 * Constructor of a MolFileParser, which will mirror Y,Z coordinates
 	 */
@@ -92,6 +94,8 @@ public class MolfileParser
 				TRACE("Error [readMoleculeFromBuffer]: No Comment Line\n");
 				return false;
 			}
+
+			mTreatAnyAsMetalBond = line.contains("From CSD data. Using bond type 'Any'");
 
 			/*** Counts line ***/
 			if(null == (line = reader.readLine())){
@@ -920,6 +924,10 @@ public class MolfileParser
 					case 4:
 						realBondType = Molecule.cBondTypeDelocalized;
 						break;
+					case 8:
+						if (mTreatAnyAsMetalBond)
+							realBondType = Molecule.cBondTypeMetalLigand;
+						break;
 				}
 				break;
 		}
@@ -943,8 +951,9 @@ public class MolfileParser
 					queryFeatures |= Molecule.cBondQFDouble | Molecule.cBondQFDelocalized;
 					break;
 				case 8:
-					queryFeatures |= Molecule.cBondQFSingle | Molecule.cBondQFDouble
-						| Molecule.cBondQFTriple | Molecule.cBondQFDelocalized;
+					if (!mTreatAnyAsMetalBond)
+						queryFeatures |= Molecule.cBondQFSingle | Molecule.cBondQFDouble
+										| Molecule.cBondQFTriple | Molecule.cBondQFDelocalized;
 					break;
 			}
 		}

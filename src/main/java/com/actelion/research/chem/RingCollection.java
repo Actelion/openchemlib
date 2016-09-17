@@ -155,7 +155,7 @@ public class RingCollection {
 		// which is not a member of a small ring
 		if ((mode & MODE_LARGE_RINGS) != 0) {
 			for (int bond=0; bond<mMol.getBonds(); bond++) {
-				if (!isConfirmedChainBond[bond]) {
+				if (!isConfirmedChainBond[bond] && mMol.getBondOrder(bond) != 0) {
 					int ringAtom[] = findSmallestRing(bond, isConfirmedChainAtom);
 					if (ringAtom != null)
 						updateRingSizes(ringAtom, getRingBonds(ringAtom));
