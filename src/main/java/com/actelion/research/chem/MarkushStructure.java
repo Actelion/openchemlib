@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.chem.coords.CoordinateInventor;
+
 import java.util.ArrayList;
 
 public class MarkushStructure implements java.io.Serializable {

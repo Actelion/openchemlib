@@ -61,7 +61,7 @@ public class ChangeChargeAction extends AtomHighlightAction
         model.pushUndo();
         int theAtom = model.getSelectedAtom();
         if (theAtom != -1) {
-            StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+            StereoMolecule mol = model.getMolecule();
             int charge = mol.getAtomCharge(theAtom);
             if (plus)
                 charge++;

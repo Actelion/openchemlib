@@ -47,40 +47,33 @@ import java.awt.geom.Point2D;
  * Date: 4/28/2014
  * Time: 12:39 PM
  */
-public class ZoomRotateAction extends DrawAction
-{
+public class ZoomRotateAction extends DrawAction {
     private java.awt.geom.Point2D origin = null;
 
-    public ZoomRotateAction(Model m)
-    {
+    public ZoomRotateAction(Model m) {
         super(m);
     }
 
     @Override
-    public  void onActionEnter()
-    {
+    public void onActionEnter() {
         model.pushUndo();
     }
 
     @Override
-    public boolean onMouseDown(IMouseEvent ev)
-    {
+    public boolean onMouseDown(IMouseEvent ev) {
         origin = new Point2D.Double(ev.getX(), ev.getY());
-//        for (StereoMolecule mol : model.getMols()) {
         StereoMolecule mol = model.getMolecule();
         mol.zoomAndRotateInit((float) origin.getX(), (float) origin.getY());
         return false;
     }
 
     @Override
-    public boolean onMouseUp(IMouseEvent ev)
-    {
+    public boolean onMouseUp(IMouseEvent ev) {
         return true;
     }
 
     @Override
-    public boolean onMouseMove(IMouseEvent ev, boolean drag)
-    {
+    public boolean onMouseMove(IMouseEvent ev, boolean drag) {
         if (drag) {
             boolean selectedOnly = false;
             if (model.getSelectedAtom() != -1) {
@@ -89,25 +82,20 @@ public class ZoomRotateAction extends DrawAction
             java.awt.geom.Point2D pt = new Point2D.Double(ev.getX(), ev.getY());
             float magnification = (Math.abs(pt.getY() - origin.getY()) < 20 ? 1.0f : (float) Math.exp((pt.getY() - origin.getY()) / 100f));
             float angleChange = (Math.abs(pt.getX() - origin.getX()) < 20 ? 0.0f : (float) (pt.getX() - origin.getX()) / 50.0f);
-//            for (StereoMolecule mol : model.getMols()) {
             StereoMolecule mol = model.getMolecule();
-          {
-                mol.zoomAndRotate(magnification, angleChange, selectedOnly);
-            }
+            mol.zoomAndRotate(magnification, angleChange, selectedOnly);
             return true;
         }
         return false;
     }
 
     @Override
-    public boolean paint(IDrawContext ctx)
-    {
+    public boolean paint(IDrawContext ctx) {
         return false;
     }
 
     @Override
-    public int getCursor()
-    {
+    public int getCursor() {
         return ICursor.TOOL_ZOOMCURSOR;
     }
 

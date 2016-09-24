@@ -2447,11 +2447,15 @@ public abstract class AbstractDepictor {
 		if ((mDisplayMode & cDModeSuppressESR) != 0)
 			return mAtomColor[atom];
 
-		int alleneCenter = mMol.findAlleneCenterAtom(atom);
-		if (alleneCenter != -1)
-			atom = alleneCenter;
-
 		int esrInfo = getESRTypeToDisplayAt(atom);
+		if (esrInfo == -1) {
+			int alleneCenter = mMol.findAlleneCenterAtom(atom);
+			if (alleneCenter != -1) {
+				atom = alleneCenter;
+				esrInfo = getESRTypeToDisplayAt(atom);
+				}
+			}
+
 		if (esrInfo == -1)
 			return mAtomColor[atom];
 

@@ -47,14 +47,11 @@ import com.actelion.research.share.gui.editor.io.IMouseEvent;
 public abstract class CommandAction implements Action
 {
     protected Model model;
-//    protected static GeomFactory builder = GeomFactory.getGeomFactory() ;
 
     public CommandAction(Model m)
     {
         model = m;
     }
-
-//    protected abstract void onCommand();
 
     @Override
     public final boolean onMouseDown(IMouseEvent evt)
@@ -81,10 +78,6 @@ public abstract class CommandAction implements Action
         return false;
     }
 
-//    public boolean onSelection(boolean selected)
-//    {
-//        return false;
-//    }
 
     @Override
     public boolean paint(IDrawContext ctx)

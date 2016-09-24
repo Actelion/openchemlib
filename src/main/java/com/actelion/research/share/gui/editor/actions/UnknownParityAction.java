@@ -59,7 +59,7 @@ public class UnknownParityAction extends AtomHighlightAction
         boolean ok = false;
 
         int theAtom = model.getSelectedAtom();
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+        StereoMolecule mol = model.getMolecule();
         if (mol != null && theAtom != -1) {
             mol.setAtomConfigurationUnknown(theAtom,!mol.isAtomConfigurationUnknown(theAtom));
             ok = true;

@@ -97,10 +97,10 @@ public class StereoMolecule extends ExtendedMolecule {
 
 	/**
 	 * Separates all disconnected fragments of this Molecule into individual Molecule objects.
-	 * If fragment separation is only needed, if there are multiple fragments, it may me more
+	 * If fragment separation is only needed, if there are multiple fragments, it may be more
 	 * efficient to run this functionality in two steps, e.g.:<br>
 	 * int[] fragmentNo = new int[mol.getAllAtoms()];<br>
-	 * int fragmentCount = getFragmentNumbers(fragmentNo, boolean);<br>
+	 * int fragmentCount = getFragmentNumbers(fragmentNo, boolean, boolean);<br>
 	 * if (fragmentCount > 1) {<br>
 	 *     StereoMolecule[] fragment = getFragments(int[] fragmentNo, fragmentCount);<br>
 	 *     ...<br>
@@ -109,7 +109,7 @@ public class StereoMolecule extends ExtendedMolecule {
 	 */
 	public StereoMolecule[] getFragments() {
         int[] fragmentNo = new int[mAllAtoms];
-        int fragments = getFragmentNumbers(fragmentNo, false);
+        int fragments = getFragmentNumbers(fragmentNo, false, false);
         return getFragments(fragmentNo, fragments);
         }
 

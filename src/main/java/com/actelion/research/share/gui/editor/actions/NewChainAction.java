@@ -49,31 +49,24 @@ import java.awt.geom.Point2D;
  * Date: 3/26/13
  * Time: 3:42 PM
  */
-public class NewChainAction extends BondHighlightAction
-        //DrawAction
-{
+public class NewChainAction extends BondHighlightAction {
 
-    //    private int theAtom = -1;
     private int sourceAtom = -1;
-    //    private boolean isDragging = false;
-//    private Point2D origin = null;
     private int numChainAtoms = 0;
     private double[] mChainAtomX = null;
     private double[] mChainAtomY = null;
     private int[] mChainAtom = null;
 
-    public NewChainAction(Model model)
-    {
+    public NewChainAction(Model model) {
         super(model);
     }
 
-    public boolean onMouseDown(IMouseEvent evt)
-    {
+    public boolean onMouseDown(IMouseEvent evt) {
         java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
         StereoMolecule mol = model.getMolecule();
         boolean update = false;
         origin = pt;
-        sourceAtom = findAtom(mol,pt);// getAtomAt(pt);
+        sourceAtom = findAtom(mol, pt);
         if (sourceAtom != -1) {
             //if (mol != null)
             {
@@ -88,86 +81,82 @@ public class NewChainAction extends BondHighlightAction
                 mChainAtom = null;
             }
         } else {
-//            StereoMolecule mol = model.getMolecule();
-//            model.setSelectedMolecule(mol);
             origin = new Point2D.Double(evt.getX(), evt.getY());
             update = true;
             numChainAtoms = 0;
             mChainAtomX = null;
             mChainAtomY = null;
             mChainAtom = null;
-//            isDragging = true;
         }
 
         return update;
     }
 
-    public boolean onMouseUp(IMouseEvent evt)
-    {
+    public boolean onMouseUp(IMouseEvent evt) {
         boolean ok = false;
         model.pushUndo();
         java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
-        //if (mol != null)
-        {
-            if (numChainAtoms == 0) {
-                mol = model.getMoleculeAt(pt, false);
-                if (mol != null) {
-                    int atom = model.getSelectedAtom();
-                    if (atom != -1) {
-                        java.awt.geom.Point2D p = suggestNewX2AndY2(atom);
-                        int targetAtom = mol.findAtom((float) p.getX(), (float) p.getY());
-                        if (targetAtom != -1) {
-                            mol.addOrChangeBond(atom, targetAtom, mol.suggestBondType(atom, targetAtom));
-                        } else {
-                            targetAtom = mol.addAtom((float) p.getX(), (float) p.getY(), 0.0f);
-                            mol.addBond(atom, targetAtom, mol.suggestBondType(atom, targetAtom));
-                            mol.ensureHelperArrays(Molecule.cHelperNeighbours);
-                        }
-                    }
+        StereoMolecule mol = model.getMolecule();
+        if (numChainAtoms == 0) {
+            mol = model.getMoleculeAt(pt, false);
+            if (mol != null) {
+                int atom = model.getSelectedAtom();
+                if (atom != -1) {
+                    addSingleBondAtAtom(mol, atom);
                 }
-
-            } else if (numChainAtoms > 0) {
-                if (sourceAtom == -1) {
-                    sourceAtom = mol.addAtom((float) origin.getX(), (float) origin.getY());
-                }
-
-                if (mChainAtom[0] == -1) {
-                    mChainAtom[0] = mol.addAtom((float) mChainAtomX[0], (float) mChainAtomY[0]);
-                }
-
-                if (mChainAtom[0] != -1) {
-                    mol.addBond(sourceAtom, mChainAtom[0]);
-                }
-                model.needsLayout(true);
             }
 
-            if (numChainAtoms > 1) {
-//                System.out.printf("Connecting %d bonds \n", numChainAtoms);
-                for (int i = 1; i < numChainAtoms; i++) {
-                    if (mChainAtom[i] == -1) {
-                        mChainAtom[i] = mol.addAtom((float) mChainAtomX[i], (float) mChainAtomY[i]);
-                    }
-                    if (mChainAtom[i] != -1) {
-                        mol.addBond(mChainAtom[i - 1], mChainAtom[i]);
-                    }
-                }
-                model.needsLayout(true);
+        } else if (numChainAtoms > 0) {
+            if (sourceAtom == -1) {
+                sourceAtom = mol.addAtom((float) origin.getX(), (float) origin.getY());
             }
-            highlightAtom(mol, -1);
-            ok = true;
 
+            if (mChainAtom[0] == -1) {
+                mChainAtom[0] = mol.addAtom((float) mChainAtomX[0], (float) mChainAtomY[0]);
+            }
+
+            if (mChainAtom[0] != -1) {
+                mol.addBond(sourceAtom, mChainAtom[0]);
+            }
+            if(model.isReaction())
+                model.needsLayout(true);
         }
+
+        if (numChainAtoms > 1) {
+            for (int i = 1; i < numChainAtoms; i++) {
+                if (mChainAtom[i] == -1) {
+                    mChainAtom[i] = mol.addAtom((float) mChainAtomX[i], (float) mChainAtomY[i]);
+                }
+                if (mChainAtom[i] != -1) {
+                    mol.addBond(mChainAtom[i - 1], mChainAtom[i]);
+                }
+            }
+            if(model.isReaction())
+                model.needsLayout(true);
+        }
+        highlightAtom(mol, -1);
+        ok = true;
         dragging = false;
         return ok;
 
     }
 
+    private void addSingleBondAtAtom(StereoMolecule mol, int atom) {
+        Point2D p = suggestNewX2AndY2(atom);
+        int targetAtom = mol.findAtom((float) p.getX(), (float) p.getY());
+        if (targetAtom != -1) {
+            mol.addOrChangeBond(atom, targetAtom, mol.suggestBondType(atom, targetAtom));
+        } else {
+            targetAtom = mol.addAtom((float) p.getX(), (float) p.getY(), 0.0f);
+            mol.addBond(atom, targetAtom, mol.suggestBondType(atom, targetAtom));
+            mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+        }
+    }
+
 
     @Override
-    protected boolean onDrag(java.awt.geom.Point2D pt)
-    {
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+    protected boolean onDrag(java.awt.geom.Point2D pt) {
+        StereoMolecule mol = model.getMolecule();
         boolean repaintNeeded = false;
         if (mol != null) {
             double lastX, lastY;
@@ -254,23 +243,20 @@ public class NewChainAction extends BondHighlightAction
     }
 
     @Override
-    public boolean paint(IDrawContext ctx)
-    {
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+    public boolean paint(IDrawContext ctx) {
+        StereoMolecule mol = model.getMolecule();
         if (mol != null) {
             if (!dragging) {
                 super.paint(ctx);
             } else {
                 int theAtom = model.getSelectedAtom();
                 drawChain(ctx, theAtom != -1 ? new Point2D.Double(mol.getAtomX(theAtom), mol.getAtomY(theAtom)) : origin);
-//                drawChain(ctx);
             }
         }
         return false;
     }
 
-    private void drawChain(IDrawContext ctx, java.awt.geom.Point2D pt)
-    {
+    private void drawChain(IDrawContext ctx, java.awt.geom.Point2D pt) {
         if (numChainAtoms > 0) {
             drawLine(ctx, pt.getX(), pt.getY(), mChainAtomX[0], mChainAtomY[0]);
         }
@@ -282,14 +268,12 @@ public class NewChainAction extends BondHighlightAction
     }
 
 
-    void drawLine(IDrawContext _ctx, double x1, double y1, double x2, double y2)
-    {
+    void drawLine(IDrawContext _ctx, double x1, double y1, double x2, double y2) {
         _ctx.drawLine(x1, y1, x2, y2);
     }
 
     @Override
-    public int getCursor()
-    {
+    public int getCursor() {
         return ICursor.TOOL_CHAINCURSOR;
     }
 

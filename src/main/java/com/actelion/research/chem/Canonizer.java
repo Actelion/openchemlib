@@ -622,19 +622,6 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 			}
 		}
 
-	/**
-	 * This method returns all normal connected atoms plus(!) order-0 connected metal atoms.
-	 * @param atom
-	 * @return
-	 */
-	private int canGetConnAtoms(int atom) {
-		int connAtoms = mMol.getConnAtoms(atom);
-		while(connAtoms < mMol.getAllConnAtoms(atom)
-		   && mMol.getConnBondOrder(atom, connAtoms) == 0)
-			connAtoms++;
-		return connAtoms;
-		}
-
 	private void canInitializeRanking() {
 		boolean bondQueryFeaturesPresent = false;
 		if (mMol.isFragment()) {
@@ -648,7 +635,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 
 		mMaxConnAtoms = 2;
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			mMaxConnAtoms = Math.max(mMaxConnAtoms, canGetConnAtoms(atom));
+			mMaxConnAtoms = Math.max(mMaxConnAtoms, mMol.getConnAtoms(atom)+mMol.getMetalBondedConnAtoms(atom));
 		int baseValueSize = Math.max(2, bondQueryFeaturesPresent ?
 				(62 + ATOM_BITS + mMaxConnAtoms * (ATOM_BITS+Molecule.cBondQFNoOfBits)) / 63
 			  : (62 + ATOM_BITS + mMaxConnAtoms * (ATOM_BITS+5)) / 63);
@@ -669,7 +656,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				mCanBase[atom].add(8, mMol.getAtomicNo(atom));
 			mCanBase[atom].add(8, mMol.getAtomMass(atom));
 			mCanBase[atom].add(2, mMol.getAtomPi(atom));
-			mCanBase[atom].add(3, canGetConnAtoms(atom));
+			mCanBase[atom].add(4, mMol.getConnAtoms(atom)+mMol.getMetalBondedConnAtoms(atom));
 			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0)
 				mCanBase[atom].add(4, 8);
 			else
@@ -687,7 +674,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 
 		mNoOfRanks = canPerformRanking();
 
-		// In very rare cases we need to consider the bond ring size
+		// In very rare cases we need to consider the bond ring size (we neglect rings caused by metal ligand bonds)
 		if (mNoOfRanks < mMol.getAtoms()) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
@@ -725,11 +712,15 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
 				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
-				long[] bondQFList = new long[canGetConnAtoms(atom)];
-				for (int i=0; i<canGetConnAtoms(atom); i++) {
-					bondQFList[i] = mCanRank[mMol.getConnAtom(atom, i)];
-					bondQFList[i] <<= Molecule.cBondQFNoOfBits;
-					bondQFList[i] |= mMol.getBondQueryFeatures(mMol.getConnBond(atom, i));
+				long[] bondQFList = new long[mMol.getConnAtoms(atom)+mMol.getMetalBondedConnAtoms(atom)];
+				int index = 0;
+				for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
+					if (i< mMol.getConnAtoms(atom) || i>=mMol.getAllConnAtoms(atom)) {
+						bondQFList[index] = mCanRank[mMol.getConnAtom(atom, i)];
+						bondQFList[index] <<= Molecule.cBondQFNoOfBits;
+						bondQFList[index] |= mMol.getBondQueryFeatures(mMol.getConnBond(atom, i));
+						index++;
+						}
 					}
 				Arrays.sort(bondQFList);
 				for (int i=mMaxConnAtoms; i>bondQFList.length; i--)
@@ -1433,7 +1424,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 				fragmentNo[atom] = ++fragmentCount;
 				boolean bondHandled[] = new boolean[mMol.getBonds()];
 				for (int current=0; current<fragmentAtoms; current++) {
-					for (int i=0; i<canGetConnAtoms(fragmentAtom[current]); i++) {
+					for (int i=0; i<mMol.getConnAtoms(fragmentAtom[current]); i++) {
 						int connBond = mMol.getConnBond(fragmentAtom[current],i);
 						if (mMol.isRingBond(connBond) || mMol.getBondOrder(connBond) == 2 || mMol.isBINAPChiralityBond(connBond)) {
 							int connAtom = mMol.getConnAtom(fragmentAtom[current],i);
@@ -1476,23 +1467,25 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 
 
 	private void canCalcNextBaseValues() {
-		int	connRank[] = new int[ExtendedMolecule.cMaxConnAtoms];
+		int	connRank[] = new int[mMaxConnAtoms];
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 								// generate sorted list of ranks of neighbours
-			int neighbours = canGetConnAtoms(atom);
-			for (int i=0; i<neighbours; i++) {
-				int rank = 2 * mCanRank[mMol.getConnAtom(atom,i)];
-				int connBond = mMol.getConnBond(atom,i);
-				if (mMol.getBondOrder(connBond) == 2)
-					if (!mMol.isAromaticBond(connBond))
-						rank++;		// set a flag for non-aromatic double bond
-				int j;
-				for (j=0; j<i; j++)
-					if (rank < connRank[j])
-						break;
-				for (int k=i; k>j; k--)
-					connRank[k] = connRank[k-1];
-				connRank[j] = rank;
+			int neighbours = mMol.getConnAtoms(atom)+mMol.getMetalBondedConnAtoms(atom);
+			for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
+				if (i<mMol.getConnAtoms(atom) || i>=mMol.getAllConnAtoms(atom)) {
+					int rank = 2 * mCanRank[mMol.getConnAtom(atom, i)];
+					int connBond = mMol.getConnBond(atom, i);
+					if (mMol.getBondOrder(connBond) == 2)
+						if (!mMol.isAromaticBond(connBond))
+							rank++;        // set a flag for non-aromatic double bond
+					int j;
+					for (j = 0; j < i; j++)
+						if (rank < connRank[j])
+							break;
+					for (int k = i; k > j; k--)
+						connRank[k] = connRank[k - 1];
+					connRank[j] = rank;
+					}
 				}
 
 			mCanBase[atom].init(atom);
@@ -2199,12 +2192,15 @@ System.out.println("noOfRanks:"+canRank);
 					int highestRankingConnAtom = 0;
 					int highestRankingConnBond = 0;
 					int highestRank = -1;
-					for (int i=0; i<canGetConnAtoms(mGraphAtom[firstUnhandled]); i++) {
-						int connAtom = mMol.getConnAtom(mGraphAtom[firstUnhandled],i);
-						if (!atomHandled[connAtom] && mCanRank[connAtom] > highestRank) {
-							highestRankingConnAtom = connAtom;
-							highestRankingConnBond = mMol.getConnBond(mGraphAtom[firstUnhandled],i);
-							highestRank = mCanRank[connAtom];
+					int atom = mGraphAtom[firstUnhandled];
+					for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
+						if (i<mMol.getConnAtoms(atom) || i>=mMol.getAllConnAtoms(atom)) {
+							int connAtom = mMol.getConnAtom(atom, i);
+							if (!atomHandled[connAtom] && mCanRank[connAtom] > highestRank) {
+								highestRankingConnAtom = connAtom;
+								highestRankingConnBond = mMol.getConnBond(atom, i);
+								highestRank = mCanRank[connAtom];
+								}
 							}
 						}
 
@@ -3242,7 +3238,7 @@ System.out.println();
 		if (includeHydrogenCoordinates) {
 			for (int i=0; i<mMol.getAtoms(); i++) {
 				int atom = mGraphAtom[i];
-				for (int j=canGetConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++)
+				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++)
 					maxDelta = getMaxDelta(mMol.getConnAtom(atom, j), atom, maxDelta);
 				}
 			}
@@ -3261,7 +3257,7 @@ System.out.println();
 		if (includeHydrogenCoordinates) {
 			for (int i=0; i<mMol.getAtoms(); i++) {
 				int atom = mGraphAtom[i];
-				for (int j=canGetConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++)
+				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++)
 					encodeAtomCoords(mMol.getConnAtom(atom, j), atom, maxDeltaPlusHalfIncrement, increment, resolutionBits);
 				}
 			}

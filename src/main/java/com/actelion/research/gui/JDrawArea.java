@@ -34,6 +34,7 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionArrow;
@@ -2817,6 +2818,11 @@ public class JDrawArea extends JPanel
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
 	}
 
+	public int getDisplayMode()
+	{
+		return mDisplayMode;
+	}
+
 	public void setDisplayMode(int dMode)
 	{
 		mDisplayMode = dMode;
@@ -3011,7 +3017,7 @@ public class JDrawArea extends JPanel
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
 
 		int[] fragmentNo = new int[mMol.getAllAtoms()];
-		int fragments = mMol.getFragmentNumbers(fragmentNo, false);
+		int fragments = mMol.getFragmentNumbers(fragmentNo, false, true);
 
 		fragments = joinCloseFragments(fragmentNo, fragments);
 		sortFragmentsByPosition(fragmentNo, fragments);
@@ -3025,7 +3031,7 @@ public class JDrawArea extends JPanel
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
 
 		int[] fragmentNo = new int[mMol.getAllAtoms()];
-		int fragments = mMol.getFragmentNumbers(fragmentNo, false);
+		int fragments = mMol.getFragmentNumbers(fragmentNo, false, true);
 
 //		fragments = joinCloseFragments(fragmentNo, fragments);
 		sortFragmentsByPosition(fragmentNo, fragments);

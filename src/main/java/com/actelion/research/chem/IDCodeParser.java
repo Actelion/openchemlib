@@ -33,6 +33,7 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.util.DoubleFormat;
 
 public class IDCodeParser {

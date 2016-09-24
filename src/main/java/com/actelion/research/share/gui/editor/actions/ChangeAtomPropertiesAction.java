@@ -59,7 +59,7 @@ public class ChangeAtomPropertiesAction extends AtomHighlightAction
     {
         model.pushUndo();
         int theAtom = model.getSelectedAtom();
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+        StereoMolecule mol = model.getMolecule();
         if (mol != null && theAtom != -1) {
             GeomFactory builder = model.getGeomFactory();
             IAtomPropertiesDialog dlg = builder.createAtomPropertiesDialog(mol,theAtom);

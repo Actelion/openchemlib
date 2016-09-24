@@ -91,8 +91,6 @@ public abstract class BondHighlightAction extends AtomHighlightAction
 
     void setHighlightBond(StereoMolecule mol, int bond)
     {
-//        if (mol != null)
-//            model.setSelectedMolecule(mol);
         model.setSelectedBond(bond);
     }
 
@@ -132,7 +130,7 @@ public abstract class BondHighlightAction extends AtomHighlightAction
 
     public boolean paint(IDrawContext _ctx)
     {
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+        StereoMolecule mol = model.getMolecule();
         boolean ok = false;
         if (mol != null) {
             int theAtom = model.getSelectedAtom();
@@ -142,8 +140,6 @@ public abstract class BondHighlightAction extends AtomHighlightAction
                 ok = true;
             } else if (theAtom != -1) {
                 return super.paint(_ctx);
-//                drawAtomHighlight(_ctx, mol, theAtom);
-//                ok = true;
             }
         }
         return ok;
@@ -155,7 +151,7 @@ public abstract class BondHighlightAction extends AtomHighlightAction
     {
         int theBond = model.getSelectedBond();
         GeomFactory factory = model.getGeomFactory();
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+        StereoMolecule mol = model.getMolecule();
         if (mol != null) {
             if (evt.getCode().equals(factory.getDeleteKey())) {
                 if (theBond != -1) {
@@ -174,7 +170,7 @@ public abstract class BondHighlightAction extends AtomHighlightAction
 
     private boolean handleCharacter(String code)
     {
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+        StereoMolecule mol = model.getMolecule();
         int theBond = model.getSelectedBond();
 
         if (mol != null && theBond != -1) {
@@ -221,7 +217,7 @@ public abstract class BondHighlightAction extends AtomHighlightAction
 
     private boolean showBondQFDialog(int bond)
     {
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+        StereoMolecule mol = model.getMolecule();
         if (mol != null) {
             GeomFactory factory = model.getGeomFactory();
             IBondQueryFeaturesDialog dlg = factory.createBondFeaturesDialog(/*new BondQueryFeaturesDialog(*/mol, bond);
@@ -229,27 +225,6 @@ public abstract class BondHighlightAction extends AtomHighlightAction
         }
         return false;
     }
-
-//    private void drawBondHighlight(GraphicsContext ctx, StereoMolecule mol, int theBond)
-//    {
-////        int theBond = model.getSelectedBond();
-//        double x1 = mol.getAtomX(mol.getBondAtom(0, theBond));
-//        double y1 = mol.getAtomY(mol.getBondAtom(0, theBond));
-//        double x2 = mol.getAtomX(mol.getBondAtom(1, theBond));
-//        double y2 = mol.getAtomY(mol.getBondAtom(1, theBond));
-//
-//        ctx.save();
-//        ctx.setStroke(DrawAction.HIGHLIGHT_STYLE);
-//        ctx.setLineWidth(10);
-//        ctx.setLineCap(StrokeLineCap.ROUND);
-//        ctx.setLineJoin(StrokeLineJoin.ROUND);
-//        ctx.beginPath();
-//        ctx.moveTo(x1, y1);
-//        ctx.lineTo(x2, y2);
-//        ctx.stroke();
-//        ctx.closePath();
-//        ctx.restore();
-//    }
 
 }
 

@@ -34,6 +34,7 @@
 package com.actelion.research.share.gui.editor;
 
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
@@ -663,7 +664,7 @@ public abstract class Model
         mMol.ensureHelperArrays(Molecule.cHelperParities);
 
         int[] fragmentNo = new int[mMol.getAllAtoms()];
-        int fragments = mMol.getFragmentNumbers(fragmentNo, false);
+        int fragments = mMol.getFragmentNumbers(fragmentNo, false, true);
 
         fragments = joinCloseFragments(fragmentNo, fragments);
         sortFragmentsByPosition(fragmentNo, fragments);
@@ -677,7 +678,7 @@ public abstract class Model
         mMol.ensureHelperArrays(Molecule.cHelperParities);
 
         int[] fragmentNo = new int[mMol.getAllAtoms()];
-        int fragments = mMol.getFragmentNumbers(fragmentNo, false);
+        int fragments = mMol.getFragmentNumbers(fragmentNo, false, true);
 
 //        fragments = joinCloseFragments(fragmentNo, fragments);
         if (layout)

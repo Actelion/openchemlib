@@ -57,7 +57,7 @@ public class DeleteAction extends BondHighlightAction
     {
         boolean ok = false;
         model.pushUndo();
-        StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+        StereoMolecule mol = model.getMolecule();
         int theAtom = model.getSelectedAtom();
         int theBond = model.getSelectedBond();
         if (mol != null && theAtom != -1) {
@@ -87,18 +87,5 @@ public class DeleteAction extends BondHighlightAction
     {
         return ICursor.TOOL_DELETECURSOR;
     }
-//    @Override
-//    public boolean onKeyPressed(KeyEvent evt)
-//    {
-//        if (evt.getCode() == KeyCode.DELETE) {
-//            model.pushUndo();
-//            StereoMolecule mol = model.getMol();
-//            if (mol.deleteSelectedAtoms()) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-//
 
 }

@@ -312,9 +312,16 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
         if (mMolecule != null) {
             for (int i=0; i<mMolecule.length; i++) {
                 if (mMolecule[i].getAllAtoms() != 0) {
-                    averageBondLength += mDepictor[i].getTransformation().getScaling()
-                                       * mMolecule[i].getAllBonds() * mMolecule[i].getAverageBondLength();
-                    bondCount += mMolecule[i].getAllBonds();
+                    if (mMolecule[i].getAllBonds() != 0) {
+                        averageBondLength += mDepictor[i].getTransformation().getScaling()
+                                * mMolecule[i].getAllBonds() * mMolecule[i].getAverageBondLength();
+                        bondCount += mMolecule[i].getAllBonds();
+                        }
+                    else {
+						averageBondLength += mDepictor[i].getTransformation().getScaling()
+								* mMolecule[i].getAverageBondLength();
+						bondCount ++;
+                        }
                     }
                 }
             }

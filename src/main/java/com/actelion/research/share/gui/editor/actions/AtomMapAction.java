@@ -89,7 +89,7 @@ public class AtomMapAction extends AtomHighlightAction
     {
         GeomFactory builder = model.getGeomFactory();
         if (evt.getCode().equals(builder.getDeleteKey())) {
-            StereoMolecule mMol = model.getMolecule();//.getSelectedMolecule();
+            StereoMolecule mMol = model.getMolecule();
             boolean found = false;
             for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
                 if (mMol.getAtomMapNo(atom) != 0) {
@@ -107,7 +107,7 @@ public class AtomMapAction extends AtomHighlightAction
     {
         firstPoint = lastPoint = null;
         if (model.isReaction()) {
-            StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+            StereoMolecule mol = model.getMolecule();
             if (!drag) {
                 java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
                 secondAtom = -1;
@@ -192,7 +192,7 @@ public class AtomMapAction extends AtomHighlightAction
         boolean ok = false;
         ctx.save();
         if (model.isReaction()) {
-            StereoMolecule mol = model.getMolecule();//.getSelectedMolecule();
+            StereoMolecule mol = model.getMolecule();
             if (firstPoint != null && lastPoint != null) {
                 StereoMolecule source = model.getFragmentAt(firstPoint, false);
                 StereoMolecule target = model.getFragmentAt(lastPoint, false);

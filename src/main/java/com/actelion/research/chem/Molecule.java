@@ -1979,7 +1979,8 @@ public class Molecule implements Serializable {
 	/**
 	 * Calculates and returns the mean bond length of all bonds 0...bonds.
 	 * If there are no bonds, then the smallest distance between unconnected atoms is
-	 * returned. If we have less than 2 atoms, defaultBondLength is returned.
+	 * determined and a reasonable potential bond length derived from that is returned.
+	 * If we have less than 2 atoms, defaultBondLength is returned.
 	 * @param atoms atom indexes >= this are not considered
 	 * @param bonds bond indexes >= this are not considered
 	 * @return
@@ -2003,7 +2004,7 @@ public class Molecule implements Serializable {
 						lowDistance = distance;
 					}
 				}
-			return (lowDistance != Double.MAX_VALUE) ? lowDistance : defaultBondLength;
+			return (lowDistance != Double.MAX_VALUE) ? 0.6 * lowDistance : defaultBondLength;
 			}
 
 		double avblSum = 0.0;
