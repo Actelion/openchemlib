@@ -739,7 +739,36 @@ public class StringFunctions {
 		
 		return sb.toString();
 	}
-    
+
+	/**
+	 * Elements are separated by tabs and rows are separated by newline.
+	 * @param arr
+	 * @return
+	 */
+	public static String toStringTabNL(String [][] arr){
+
+		StringBuilder sb = new  StringBuilder();
+
+		for (int i = 0; i < arr.length; i++) {
+
+
+			for (int j = 0; j < arr[i].length; j++) {
+				sb.append(arr[i][j]);
+
+				if(j <arr [i].length-1){
+					sb.append("\t");
+				}
+			}
+
+			if(i < arr.length-1){
+				sb.append("\n");
+			}
+
+		}
+
+		return sb.toString();
+	}
+
 
 	public static String toString(List<String> li) {
 		return toString(li, " ");
@@ -845,7 +874,7 @@ public class StringFunctions {
 	/**
 	 * finds the next balanced closing bracket "]" to the first open bracket
 	 * "[" in the string.
-	 * @param sLine String
+	 * @param txt String
 	 * @param iIndexStart start index
 	 * @return index of the next corresponding bracket
 	 */
