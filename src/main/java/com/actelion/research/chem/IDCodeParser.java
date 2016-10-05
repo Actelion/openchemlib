@@ -767,6 +767,7 @@ public class IDCodeParser {
 			}
 
 		if (!coords2DAvailable && mEnsure2DCoordinates) {
+			mMol.setParitiesValid(0);
 			CoordinateInventor inventor = new CoordinateInventor();
 			inventor.setRandomSeed(0x1234567890L);  // create reproducible coordinates
 			inventor.invent(mMol);
@@ -933,7 +934,7 @@ public class IDCodeParser {
 		mIDCodeBitsAvail = 6;
 		mIDCodeBufferIndex = offset;
 		mDecodingBytes = bytes;
-		mIDCodeTempData = (bytes[mIDCodeBufferIndex] - 64) << 11;
+		mIDCodeTempData = (bytes[mIDCodeBufferIndex] & 0x3F) << 11;
 		}
 
 	private int decodeBits(int bits) {
@@ -942,7 +943,7 @@ public class IDCodeParser {
 		int data = 0;
 		while (bits != 0) {
 			if (mIDCodeBitsAvail == 0) {
-				mIDCodeTempData = (mDecodingBytes[++mIDCodeBufferIndex] - 64) << 11;
+				mIDCodeTempData = (mDecodingBytes[++mIDCodeBufferIndex] & 0x3F) << 11;
 				mIDCodeBitsAvail = 6;
 				}
 			data |= ((0x00010000 & mIDCodeTempData) >> (16 - allBits + bits));

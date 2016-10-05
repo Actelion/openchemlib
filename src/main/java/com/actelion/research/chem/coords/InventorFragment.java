@@ -1,5 +1,6 @@
 package com.actelion.research.chem.coords;
 
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
 import java.util.ArrayList;
@@ -8,16 +9,18 @@ public class InventorFragment {
 	private static final double cCollisionLimitBondRotation = 0.8;
 	private static final double cCollisionLimitAtomMovement = 0.5;
 
-	protected int[] mAtom;
-	protected int[] mBond;
-	protected int[] mAtomIndex;
+	private final int CIRCULAR_BINS = 36;
+
+	protected int[] mGlobalAtom;
+	protected int[] mGlobalBond;
+	protected int[] mGlobalToLocalAtom;
 	protected int[] mPriority;
 	protected double[] mAtomX;
 	protected double[] mAtomY;
 
 	private StereoMolecule mMol;
 	private int mMode;
-	private boolean	mMinMaxAvail,mConsiderMarkedAtoms;
+	private boolean	mMinMaxAvail;
 	private double mMinX;
 	private double mMinY;
 	private double mMaxX;
@@ -28,7 +31,7 @@ public class InventorFragment {
 	protected InventorFragment(StereoMolecule mol, int atoms, int mode) {
 		mMol = mol;
 		mMode = mode;
-		mAtom = new int[atoms];
+		mGlobalAtom = new int[atoms];
 		mPriority = new int[atoms];
 		mAtomX = new double[atoms];
 		mAtomY = new double[atoms];
@@ -37,30 +40,38 @@ public class InventorFragment {
 	protected InventorFragment(InventorFragment f, int mode) {
 		mMol = f.mMol;
 		mMode = mode;
-		mAtom = new int[f.size()];
+		mGlobalAtom = new int[f.size()];
 		mPriority = new int[f.size()];
 		mAtomX = new double[f.size()];
 		mAtomY = new double[f.size()];
 		for (int i=0; i<f.size(); i++) {
-			mAtom[i]	 = f.mAtom[i];
+			mGlobalAtom[i]	 = f.mGlobalAtom[i];
 			mPriority[i] = f.mPriority[i];
 			mAtomX[i]	 = f.mAtomX[i];
 			mAtomY[i]	 = f.mAtomY[i];
 		}
-		if (f.mBond != null) {
-			mBond = new int[f.mBond.length];
-			for (int i=0; i<f.mBond.length; i++)
-				mBond[i] = f.mBond[i];
+		if (f.mGlobalBond != null) {
+			mGlobalBond = new int[f.mGlobalBond.length];
+			for (int i = 0; i<f.mGlobalBond.length; i++)
+				mGlobalBond[i] = f.mGlobalBond[i];
 		}
-		if (f.mAtomIndex != null) {
-			mAtomIndex = new int[f.mAtomIndex.length];
-			for (int i=0; i<f.mAtomIndex.length; i++)
-				mAtomIndex[i] = f.mAtomIndex[i];
+		if (f.mGlobalToLocalAtom != null) {
+			mGlobalToLocalAtom = new int[f.mGlobalToLocalAtom.length];
+			for (int i = 0; i<f.mGlobalToLocalAtom.length; i++)
+				mGlobalToLocalAtom[i] = f.mGlobalToLocalAtom[i];
 		}
 	}
 
 	protected int size() {
-		return mAtom.length;
+		return mGlobalAtom.length;
+	}
+
+	protected double getAtomX(int index) {
+		return mAtomX[index];
+	}
+
+	protected double getAtomY(int index) {
+		return mAtomY[index];
 	}
 
 	protected double getWidth() {
@@ -73,31 +84,35 @@ public class InventorFragment {
 		return mMaxY - mMinY + 1.0;	// add half a bond length on every side
 	}
 
-	protected boolean isMember(int atom) {
-		for (int i=0; i<mAtom.length; i++)
-			if (atom == mAtom[i])
+	protected boolean isMember(int globalAtom) {
+		for (int i = 0; i<mGlobalAtom.length; i++)
+			if (globalAtom == mGlobalAtom[i])
 				return true;
 
 		return false;
 	}
 
-	protected int getIndex(int atom) {
-		for (int i=0; i<mAtom.length; i++)
-			if (atom == mAtom[i])
+	protected int getGlobalAtom(int localAtom) {
+		return mGlobalAtom[localAtom];
+	}
+
+	protected int getLocalAtom(int globalAtom) {
+		for (int i = 0; i<mGlobalAtom.length; i++)
+			if (globalAtom == mGlobalAtom[i])
 				return i;
 
 		return -1;
 	}
 
 	protected void translate(double dx, double dy) {
-		for (int i=0; i<mAtom.length; i++) {
+		for (int i = 0; i<mGlobalAtom.length; i++) {
 			mAtomX[i] += dx;
 			mAtomY[i] += dy;
 		}
 	}
 
 	protected void rotate(double x, double y, double angleDif) {
-		for (int i=0; i<mAtom.length; i++) {
+		for (int i = 0; i< mGlobalAtom.length; i++) {
 			double distance = Math.sqrt((mAtomX[i] - x) * (mAtomX[i] - x)
 					+ (mAtomY[i] - y) * (mAtomY[i] - y));
 			double angle = InventorAngle.getAngle(x, y, mAtomX[i], mAtomY[i]) + angleDif;
@@ -107,7 +122,7 @@ public class InventorFragment {
 	}
 
 	protected void flip(double x, double y, double mirrorAngle) {
-		for (int i=0; i<mAtom.length; i++) {
+		for (int i = 0; i< mGlobalAtom.length; i++) {
 			double distance = Math.sqrt((mAtomX[i] - x) * (mAtomX[i] - x)
 					+ (mAtomY[i] - y) * (mAtomY[i] - y));
 			double angle = 2 * mirrorAngle - InventorAngle.getAngle(x, y, mAtomX[i], mAtomY[i]);
@@ -127,7 +142,7 @@ public class InventorFragment {
 			mFlipList = new int[mMol.getAllBonds()][];
 
 		if (mFlipList[bond] == null) {
-			int[] graphAtom = new int[mAtom.length];
+			int[] graphAtom = new int[mGlobalAtom.length];
 			boolean[] isOnSide = new boolean[mMol.getAllAtoms()];
 			int atom1 = mMol.getBondAtom(0, bond);
 			int atom2 = mMol.getBondAtom(1, bond);
@@ -150,15 +165,15 @@ public class InventorFragment {
 			}
 
 			// default is to flip the smaller side
-			boolean flipOtherSide = (highest+1 > mAtom.length/2);
+			boolean flipOtherSide = (highest+1 > mGlobalAtom.length/2);
 
 			// if we retain core atoms and the smaller side contains core atoms, then flip the larger side
 			if ((mMode & CoordinateInventor.MODE_CONSIDER_MARKED_ATOMS) != 0) {
 				boolean coreOnSide = false;
 				boolean coreOffSide = false;
-				for (int i=0; i<mAtom.length; i++) {
-					if (mMol.isMarkedAtom(mAtom[i])) {
-						if (isOnSide[mAtom[i]])
+				for (int i = 0; i< mGlobalAtom.length; i++) {
+					if (mMol.isMarkedAtom(mGlobalAtom[i])) {
+						if (isOnSide[mGlobalAtom[i]])
 							coreOnSide = true;
 						else
 							coreOffSide = true;
@@ -169,13 +184,13 @@ public class InventorFragment {
 			}
 
 			int count = 2;
-			mFlipList[bond] = new int[flipOtherSide ? mAtom.length-highest : highest+2];
-			for (int i=0; i<mAtom.length; i++) {
-				if (mAtom[i] == atom1)
+			mFlipList[bond] = new int[flipOtherSide ? mGlobalAtom.length-highest : highest+2];
+			for (int i = 0; i< mGlobalAtom.length; i++) {
+				if (mGlobalAtom[i] == atom1)
 					mFlipList[bond][flipOtherSide ? 0 : 1] = i;
-				else if (mAtom[i] == atom2)
+				else if (mGlobalAtom[i] == atom2)
 					mFlipList[bond][flipOtherSide ? 1 : 0] = i;
-				else if (flipOtherSide ^ isOnSide[mAtom[i]])
+				else if (flipOtherSide ^ isOnSide[mGlobalAtom[i]])
 					mFlipList[bond][count++] = i;
 			}
 		}
@@ -248,7 +263,7 @@ public class InventorFragment {
 		mMaxX = mAtomX[0];
 		mMinY = mAtomY[0];
 		mMaxY = mAtomY[0];
-		for (int i=0; i<mAtom.length; i++) {
+		for (int i = 0; i< mGlobalAtom.length; i++) {
 			double surplus = getAtomSurplus(i);
 
 			if (mMinX > mAtomX[i] - surplus)
@@ -266,7 +281,7 @@ public class InventorFragment {
 
 	private double getCornerDistance(int corner) {
 		double minDistance = 9999.0;
-		for (int atom=0; atom<mAtom.length; atom++) {
+		for (int atom = 0; atom< mGlobalAtom.length; atom++) {
 			double surplus = getAtomSurplus(atom);
 			double d = 0.0;
 			switch (corner) {
@@ -292,26 +307,22 @@ public class InventorFragment {
 	}
 
 	private double getAtomSurplus(int atom) {
-		return (mMol.getAtomQueryFeatures(mAtom[atom]) != 0) ? 0.6
-				: (mMol.getAtomicNo(mAtom[atom]) != 6) ? 0.25 : 0.0;
-	}
-
-	protected void generateAtomListsOfFlipBonds(byte[] flipBondType) {
-
+		return (mMol.getAtomQueryFeatures(mGlobalAtom[atom]) != 0) ? 0.6
+				: (mMol.getAtomicNo(mGlobalAtom[atom]) != 6) ? 0.25 : 0.0;
 	}
 
 	protected ArrayList<int[]> getCollisionList() {
 		mCollisionPanalty = 0.0;
 		ArrayList<int[]> collisionList = new ArrayList<int[]>();
-		for (int i=1; i<mAtom.length; i++) {
+		for (int i = 1; i< mGlobalAtom.length; i++) {
 			for (int j=0; j<i; j++) {
 				double xdif = Math.abs(mAtomX[i]-mAtomX[j]);
 				double ydif = Math.abs(mAtomY[i]-mAtomY[j]);
 				double dist = Math.sqrt(xdif * xdif + ydif * ydif);
 				if (dist < cCollisionLimitBondRotation) {
 					int[] collidingAtom = new int[2];
-					collidingAtom[0] = mAtom[i];
-					collidingAtom[1] = mAtom[j];
+					collidingAtom[0] = mGlobalAtom[i];
+					collidingAtom[1] = mGlobalAtom[j];
 					collisionList.add(collidingAtom);
 				}
 				double panalty = 1.0 - Math.min(dist, 1.0);
@@ -327,45 +338,53 @@ public class InventorFragment {
 
 	protected void locateBonds() {
 		int fragmentBonds = 0;
-		for (int i=0; i<mAtom.length; i++)
-			for (int j=0; j<mMol.getAllConnAtoms(mAtom[i]); j++)
-				if (mMol.getConnAtom(mAtom[i], j) > mAtom[i])
+		for (int i=0; i<mGlobalAtom.length; i++) {
+			int atom = mGlobalAtom[i];
+			int connAtoms = mMol.getAllConnAtoms(atom);
+			for (int j=0; j<connAtoms; j++)
+				if (mMol.getConnAtom(atom, j) > atom)
 					fragmentBonds++;
+//			for (int j=connAtoms; j<mMol.getAllConnAtomsPlusMetalBonds(atom); j++)
+//				if (mMol.getConnAtom(atom, j) > atom && isMember(mMol.getConnAtom(atom, j)))
+//					fragmentBonds++;
+		}
 
-		mBond = new int[fragmentBonds];
-		mAtomIndex = new int[mMol.getAllAtoms()];
+		mGlobalBond = new int[fragmentBonds];
+		mGlobalToLocalAtom = new int[mMol.getAllAtoms()];
 
 		fragmentBonds = 0;
-		for (int i=0; i<mAtom.length; i++) {
-			mAtomIndex[mAtom[i]] = i;
-			for (int j=0; j<mMol.getAllConnAtoms(mAtom[i]); j++) {
-				if (mMol.getConnAtom(mAtom[i], j) > mAtom[i]) {
-					mBond[fragmentBonds] = mMol.getConnBond(mAtom[i], j);
-					fragmentBonds++;
-				}
-			}
+		for (int i=0; i<mGlobalAtom.length; i++) {
+			int atom = mGlobalAtom[i];
+			int connAtoms = mMol.getAllConnAtoms(atom);
+			mGlobalToLocalAtom[atom] = i;
+			for (int j = 0; j<connAtoms; j++)
+				if (mMol.getConnAtom(atom, j) > atom)
+					mGlobalBond[fragmentBonds++] = mMol.getConnBond(atom, j);
+//			for (int j=connAtoms; j<mMol.getAllConnAtomsPlusMetalBonds(atom); j++)
+//				if (mMol.getConnAtom(atom, j) > atom && isMember(mMol.getConnAtom(atom, j)))
+//					mGlobalBond[fragmentBonds++] = mMol.getConnBond(atom, j);
 		}
 	}
 
-	protected void optimizeAtomCoordinates(int atomIndex) {
-		double x = mAtomX[atomIndex];
-		double y = mAtomY[atomIndex];
+	protected void optimizeAtomCoordinates(int atom) {
+		double x = mAtomX[atom];
+		double y = mAtomY[atom];
 
 		InventorAngle[] collisionForce = new InventorAngle[4];
 
 		int forces = 0;
-		for (int i=0; i<mBond.length; i++) {
+		for (int i = 0; i< mGlobalBond.length; i++) {
 			if (forces >= 4)
 				break;
 
-			if (atomIndex == mAtomIndex[mMol.getBondAtom(0, mBond[i])]
-					|| atomIndex == mAtomIndex[mMol.getBondAtom(1, mBond[i])])
+			if (atom == mGlobalToLocalAtom[mMol.getBondAtom(0, mGlobalBond[i])]
+			 || atom == mGlobalToLocalAtom[mMol.getBondAtom(1, mGlobalBond[i])])
 				continue;
 
-			double x1 = mAtomX[mAtomIndex[mMol.getBondAtom(0, mBond[i])]];
-			double y1 = mAtomY[mAtomIndex[mMol.getBondAtom(0, mBond[i])]];
-			double x2 = mAtomX[mAtomIndex[mMol.getBondAtom(1, mBond[i])]];
-			double y2 = mAtomY[mAtomIndex[mMol.getBondAtom(1, mBond[i])]];
+			double x1 = mAtomX[mGlobalToLocalAtom[mMol.getBondAtom(0, mGlobalBond[i])]];
+			double y1 = mAtomY[mGlobalToLocalAtom[mMol.getBondAtom(0, mGlobalBond[i])]];
+			double x2 = mAtomX[mGlobalToLocalAtom[mMol.getBondAtom(1, mGlobalBond[i])]];
+			double y2 = mAtomY[mGlobalToLocalAtom[mMol.getBondAtom(1, mGlobalBond[i])]];
 			double d1 = Math.sqrt((x1-x)*(x1-x)+(y1-y)*(y1-y));
 			double d2 = Math.sqrt((x2-x)*(x2-x)+(y2-y)*(y2-y));
 			double bondLength = Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
@@ -413,8 +432,102 @@ public class InventorFragment {
 
 		if (forces > 0) {
 			InventorAngle force = CoordinateInventor.getMeanAngle(collisionForce, forces);
-			mAtomX[atomIndex] += force.mLength * Math.sin(force.mAngle);
-			mAtomY[atomIndex] += force.mLength * Math.cos(force.mAngle);
+			mAtomX[atom] += force.mLength * Math.sin(force.mAngle);
+			mAtomY[atom] += force.mLength * Math.cos(force.mAngle);
 		}
+	}
+
+	/**
+	 * @param x
+	 * @param y
+	 * @return angle
+	 */
+	protected double calculatePreferredAttachmentAngle(double x, double y, int neighbourAtomCount, double padding) {
+		if (size() == 1)
+			return 0;
+
+		final double BIN_ANGLE = 2.0 * Math.PI / CIRCULAR_BINS;
+
+		double neighbourRadius = padding
+				+ Math.sqrt(neighbourAtomCount);	// assume a little large, because they neighbour exposes its wide side
+
+		double[] distance = new double[CIRCULAR_BINS];
+		for (int i = 0; i< mGlobalAtom.length; i++) {
+			double angle = InventorAngle.getAngle(x, y, mAtomX[i], mAtomY[i]);
+			int bin = correctBin((int)Math.round(angle * CIRCULAR_BINS / (2.0*Math.PI)));
+			double dx = x - mAtomX[i];
+			double dy = y - mAtomY[i];
+			double sd = dx*dx + dy*dy;
+			if (distance[bin] < sd)
+				distance[bin] = sd;
+			}
+		double maxDistance = -1;
+		int maxBin = -1;
+		for (int i=0; i<CIRCULAR_BINS; i++) {
+			distance[i] = Math.sqrt(distance[i]);
+			if (maxDistance < distance[i]) {
+				maxDistance = distance[i];
+				maxBin = i;
+				}
+			}
+
+		int preferredBin = correctBin(maxBin - CIRCULAR_BINS / 2);
+		// give the bin opposite of the farthest atom a tiny bias
+		for (int i=0; i<=CIRCULAR_BINS / 2; i++) {
+			distance[correctBin(preferredBin+i)] += 0.01 * i;
+			distance[correctBin(preferredBin-i)] += 0.01 * i;
+			}
+
+		int neighbourCount = CIRCULAR_BINS / 4;
+		double[] sin = new double[neighbourCount];
+		for (int i=1; i<neighbourCount; i++)
+			sin[i] = Math.sin(i*BIN_ANGLE);
+
+		double squareRadius = neighbourRadius * neighbourRadius;
+
+		double minDistance = Double.MAX_VALUE;
+		int minBin = -1;
+		for (int bin=0; bin<CIRCULAR_BINS; bin++) {
+			if (distance[bin] >= minDistance)
+				continue;
+
+			double localMinDistance = distance[bin];
+
+			// check, whether localMinDistance is compatible with adjacent bins and adapt, if needed
+			for (int i=1; i<neighbourCount; i++) {
+
+				for (int j=-1; j<=1; j+=2) {	// both sides
+					int neighbourBin = correctBin(bin + j*i);
+
+					if (distance[neighbourBin] <= localMinDistance)	// this does not conflict
+						continue;
+
+					// calculate how close we can move the neighbour fragment towards this fragment until it touches the most remote atom in a neighbour bin
+					double h = distance[neighbourBin] * sin[i];
+					if (h < neighbourRadius) {
+						double hSquare = h * h;
+						double d = Math.sqrt(squareRadius-hSquare) + Math.sqrt(distance[neighbourBin]*distance[neighbourBin]-hSquare) - neighbourRadius;
+						if (localMinDistance < d) {
+							localMinDistance = d;
+							if (minDistance <= localMinDistance)
+								break;
+							}
+						}
+					}
+				if (minDistance <= localMinDistance)
+					break;
+				}
+
+			if (minDistance > localMinDistance) {
+				minDistance = localMinDistance;
+				minBin = bin;
+				}
+			}
+
+		return Math.PI * 2 * minBin / CIRCULAR_BINS;
+	}
+
+	private int correctBin(int bin) {
+		return bin < 0 ? bin + CIRCULAR_BINS : bin >= CIRCULAR_BINS ? bin - CIRCULAR_BINS : bin;
 	}
 }

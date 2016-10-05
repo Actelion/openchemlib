@@ -36,6 +36,7 @@ package com.actelion.research.gui;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.reaction.IReactionMapper;
+import com.actelion.research.chem.reaction.MoleculeAutoMapper;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionArrow;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
@@ -143,9 +144,7 @@ public class JDrawArea extends JPanel
 	private IClipboardHandler mClipboardHandler;
 	private JDialog mHelpDialog;
 	private StringBuilder mAtomKeyStrokeBuffer;
-
-
-	private IReactionMapper mMapper; //= new ReactionMapper();
+	private IReactionMapper mMapper;
 
 	/**
 	 * @param mol  an empty or valid stereo molecule
@@ -217,7 +216,7 @@ public class JDrawArea extends JPanel
 
 	public void setMapper(IReactionMapper mapper)
 	{
-		this.mMapper = mapper;
+		mMapper = mapper;
 	}
 
 	public void paintComponent(Graphics g)
@@ -503,18 +502,7 @@ public class JDrawArea extends JPanel
 	{
 		switch (button) {
 			case JDrawToolbar.cButtonClear:
-				if (mDrawingObjectList != null) {
-					mDrawingObjectList.clear();
-					update(UPDATE_REDRAW);
-				}
-				storeState();
-				boolean isFragment = mMol.isFragment();
-				mMol.deleteMolecule();
-				mMol.setFragment(isFragment);
-				if (mUndoMol.getAllAtoms() != 0) {
-					fireMoleculeChanged();
-				}
-				update(UPDATE_REDRAW);
+				clearAll();
 				return;
 			case JDrawToolbar.cButtonCleanStructure:
 				storeState();
@@ -527,6 +515,21 @@ public class JDrawArea extends JPanel
 				update(UPDATE_CHECK_VIEW);
 				return;
 		}
+	}
+
+	public void clearAll() {
+		if (mDrawingObjectList != null) {
+			mDrawingObjectList.clear();
+			update(UPDATE_REDRAW);
+		}
+		storeState();
+		boolean isFragment = mMol.isFragment();
+		mMol.deleteMolecule();
+		mMol.setFragment(isFragment);
+		if (mUndoMol.getAllAtoms() != 0) {
+			fireMoleculeChanged();
+		}
+		update(UPDATE_REDRAW);
 	}
 
 	public void toolChanged(int newTool)
@@ -698,6 +701,7 @@ public class JDrawArea extends JPanel
 				for (int i = 0; i < rxn.getMolecules(); i++) {
 					rxn.getMolecule(i).setFragment(mMol.isFragment());
 				}
+				storeState();
 				setReaction(rxn);
 				ret = true;
 			}
@@ -716,6 +720,7 @@ public class JDrawArea extends JPanel
 									new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()),
 									AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
 
+				storeState();
 				if (mMol.getAllAtoms() == 0) {
 					boolean isFragment = mMol.isFragment();
 					mol.copyMolecule(mMol);
@@ -1882,9 +1887,8 @@ public class JDrawArea extends JPanel
 								mMol.setAtomMapNo(atom, 0, false);
 							}
 						}
-						if(mMapper != null)
-							tryAutoMapReaction();
-//					new MoleculeAutoMapper(mMol).autoMap();
+
+					tryAutoMapReaction();
 					}
 				} else {
 					storeState();
@@ -1916,12 +1920,9 @@ public class JDrawArea extends JPanel
 						}
 						mMol.setAtomMapNo(mAtom1, freeMapNo, false);
 						mMol.setAtomMapNo(atom2, freeMapNo, false);
-
-						if(mMapper != null)
-							tryAutoMapReaction();
 					}
 
-//				new MoleculeAutoMapper(mMol).autoMap();
+				tryAutoMapReaction();
 				}
 
 				if (mapNoChanged) {
@@ -1959,7 +1960,11 @@ public class JDrawArea extends JPanel
 
 	private void tryAutoMapReaction()
 	{
-		//				new MoleculeAutoMapper(mMol).autoMap();
+		if (mMapper == null) {
+			new MoleculeAutoMapper(mMol).autoMap();
+			return;
+		}
+
 		SSSearcher sss = new MySSSearcher();
 		syncFragments();
 
@@ -3029,10 +3034,8 @@ public class JDrawArea extends JPanel
 	private void syncFragments()
 	{
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
-
 		int[] fragmentNo = new int[mMol.getAllAtoms()];
 		int fragments = mMol.getFragmentNumbers(fragmentNo, false, true);
-
 //		fragments = joinCloseFragments(fragmentNo, fragments);
 		sortFragmentsByPosition(fragmentNo, fragments);
 		mFragmentNo = fragmentNo;

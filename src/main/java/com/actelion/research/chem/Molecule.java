@@ -1986,11 +1986,20 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public double getAverageBondLength(int atoms, int bonds, double defaultBondLength) {
-		for (int bond=0; bond<bonds; bond++)
-			if ((mBondQueryFeatures[bond] & cBondQFBridge) != 0)
-				bonds--;
+		boolean considerMetalBonds = false;
 
-		if (bonds == 0) {
+		int consideredBonds = 0;
+		while (consideredBonds == 0 && !considerMetalBonds) {
+			for (int bond=0; bond<bonds; bond++)
+				if ((considerMetalBonds || mBondType[bond] != cBondTypeMetalLigand)
+				 && (mBondQueryFeatures[bond] & cBondQFBridge) == 0)
+					consideredBonds++;
+
+			if (consideredBonds == 0)
+				considerMetalBonds = true;
+			}
+
+		if (consideredBonds == 0) {
 				// since this function is used to get an idea about the scale
 				// of the molecule return as approximation the smallest atom distance
 			if (atoms < 2)
@@ -2009,10 +2018,11 @@ public class Molecule implements Serializable {
 
 		double avblSum = 0.0;
 		for (int bond=0; bond<bonds; bond++) {
-			if ((mBondQueryFeatures[bond] & cBondQFBridge) == 0)
+			if ((considerMetalBonds || mBondType[bond] != cBondTypeMetalLigand)
+			 && (mBondQueryFeatures[bond] & cBondQFBridge) == 0)
 				avblSum += mCoordinates[mBondAtom[1][bond]].distance(mCoordinates[mBondAtom[0][bond]]);
 			}
-		return avblSum / bonds;
+		return avblSum / consideredBonds;
 		}
 
 
