@@ -1544,8 +1544,8 @@ public class IntVec implements Comparable<IntVec> {
     }
 
     public double [] toDoubleBitWise() {
-        double [] arr = new double [size() * Integer.SIZE];
 
+        double [] arr = new double [size() * Integer.SIZE];
         int cc = 0;
         for (int ii = 0; ii < data.length; ii++) {
             int v = data[ii];
@@ -1563,6 +1563,7 @@ public class IntVec implements Comparable<IntVec> {
 
         return arr;
     }
+
     public int [] toIntByteWise() {
     	int [] arr = new int [size() * 4];
         
