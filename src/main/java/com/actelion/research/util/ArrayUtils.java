@@ -129,6 +129,15 @@ public class ArrayUtils {
 		return res;
 	}
 
+	public final static int max(int[] array) {
+		if(array.length==0) return 0;
+		int res = array[0];
+		for(int i=1; i<array.length; i++) {
+			res = Math.max(res, array[i]);
+		}
+		return res;
+	}
+
 	public final static float max(float [] array) {
 
 		if(array.length==0)
