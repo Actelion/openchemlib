@@ -1471,6 +1471,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 								// generate sorted list of ranks of neighbours
 			int neighbours = mMol.getConnAtoms(atom)+mMol.getMetalBondedConnAtoms(atom);
+			int neighbour = 0;
 			for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
 				if (i<mMol.getConnAtoms(atom) || i>=mMol.getAllConnAtoms(atom)) {
 					int rank = 2 * mCanRank[mMol.getConnAtom(atom, i)];
@@ -1479,12 +1480,13 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 						if (!mMol.isAromaticBond(connBond))
 							rank++;        // set a flag for non-aromatic double bond
 					int j;
-					for (j = 0; j < i; j++)
+					for (j = 0; j < neighbour; j++)
 						if (rank < connRank[j])
 							break;
-					for (int k = i; k > j; k--)
+					for (int k = neighbour; k > j; k--)
 						connRank[k] = connRank[k - 1];
 					connRank[j] = rank;
+					neighbour++;
 					}
 				}
 

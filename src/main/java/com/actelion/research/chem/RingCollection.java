@@ -434,6 +434,19 @@ public class RingCollection {
 		}
 
 
+	/**
+	 * brute force method to check, whether and which ring is shared by two bonds
+	 * @param bond1
+	 * @param bond2
+	 * @return -1 if bond1 and bond2 don't share a common ring
+	 */
+	public int getSharedRing(int bond1, int bond2) {
+		for (int i=0; i<mRingBondSet.size(); i++)
+			if (isBondMember(i, bond1) && isBondMember(i, bond2))
+				return i;
+		return -1;
+		}
+
 	private void updateRingSizes(int[] ringAtom, int[] ringBond) {
 		int ringSize = ringAtom.length;
 		for (int i=0; i<ringSize; i++)

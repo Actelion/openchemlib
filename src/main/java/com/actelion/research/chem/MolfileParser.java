@@ -57,7 +57,7 @@ public class MolfileParser
 	public static boolean debug = false;
 	private StereoMolecule mMol;
 	private TreeMap<Integer,Integer> mAtomIndexMap,mBondIndexMap;
-	private boolean mTreatAnyAsMetalBond;
+	private boolean mTreatAnyAsMetalBond,mDeduceMissingCharges;
 
 
 	/**
@@ -96,6 +96,7 @@ public class MolfileParser
 			}
 
 			mTreatAnyAsMetalBond = line.contains("From CSD data. Using bond type 'Any'");
+			mDeduceMissingCharges = line.contains("From CSD data.");
 
 			/*** Counts line ***/
 			if(null == (line = reader.readLine())){
@@ -400,6 +401,11 @@ public class MolfileParser
 			e.printStackTrace();
 			System.err.println("error reading molfile " + e);
 			return false;
+		}
+
+		if (mDeduceMissingCharges) {
+			introduceObviousMetalBonds();
+			deduceMissingCharges();
 		}
 
 		// needs to be done for molfiles with chiral=0 that have stereo
@@ -1035,5 +1041,93 @@ public class MolfileParser
 		if(debug){
 			System.out.println(s);
 		}
+	}
+
+	/**
+	 * If we have single atoms from a metal to an electronegative atom
+	 * that therefore exceeds its max valence, then reduce the bond to a
+	 * metal ligand bond.
+	 */
+	private void introduceObviousMetalBonds() {
+		int[] occupiedValence = new int[mMol.getAllAtoms()];
+
+		// initialize with 1 for all delocalized atoms
+		for (int bond=0; bond<mMol.getAllBonds(); bond++)
+			if (mMol.getBondType(bond) == Molecule.cBondTypeDelocalized)
+				for (int i=0; i<2; i++)
+					occupiedValence[mMol.getBondAtom(i, bond)] = 1;
+
+		// all bond orders
+		for (int bond=0; bond<mMol.getAllBonds(); bond++) {
+			int order = mMol.getBondOrder(bond);
+			for (int i=0; i<2; i++)
+				occupiedValence[mMol.getBondAtom(i, bond)] += order;
+		}
+
+		for (int bond=0; bond<mMol.getAllBonds(); bond++) {
+			if (mMol.getBondOrder(bond) == 1) {
+				for (int i=0; i<2; i++) {
+					int metalAtom = mMol.getBondAtom(1-i, bond);
+					if (mMol.isMetalAtom(metalAtom)) {
+						int atom = mMol.getBondAtom(i, bond);
+						if (mMol.isElectronegative(atom)
+						 && occupiedValence[atom] > mMol.getMaxValence(atom)) {
+							mMol.setBondType(bond, Molecule.cBondTypeMetalLigand);
+							continue;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * SD-Files exported from the CSD database contain aromatic bonds rather than single/double bonds.
+	 * Charges of aromatic systems are usually not given (e.g. in cyclopentadienyl(-) or pyridinium(+))
+	 * and counter ions carry reduced charges to compensate (e.g. Fe in ferrocene wrongly has no charge assigned).
+	 * To prevent valence problems and wrong idcode encoding we need to repair.
+	 */
+	private void deduceMissingCharges() {
+		int[] chargeChange = new int[mMol.getAllAtoms()];
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+			chargeChange[atom] = -mMol.getAtomCharge(atom);
+
+		new AromaticityResolver(mMol).locateDelocalizedDoubleBonds(null, true, false);
+
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+			chargeChange[atom] += mMol.getAtomCharge(atom);
+
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
+			if (chargeChange[atom] != 0) {
+				int chargeToDistribute = -chargeChange[atom];
+
+				for (int bond=0; bond<mMol.getAllBonds(); bond++) {
+					for (int i=0; i<2; i++) {
+						if (chargeToDistribute > 0
+						 && mMol.getBondType(bond) == Molecule.cBondTypeMetalLigand
+						 && mMol.getBondAtom(1-i, bond) == atom) {
+							int metal = mMol.getBondAtom(i, bond);
+							if (mMol.isMetalAtom(metal)) {
+								int maxCharge = getMaxOxidationState(metal);
+								int charge = mMol.getAtomCharge(metal);
+								if (charge < maxCharge) {
+									int dif = Math.min(chargeToDistribute, maxCharge - charge);
+									mMol.setAtomCharge(metal, charge + dif);
+									chargeToDistribute -= dif;
+								}
+							}
+						}
+					}
+				}
+
+			}
+		}
+	}
+
+	private int getMaxOxidationState(int metal) {
+		int atomicNo = mMol.getAtomicNo(metal);
+		byte[] os = (atomicNo < Molecule.cCommonOxidationState.length) ?
+				Molecule.cCommonOxidationState[atomicNo] : null;
+		return (os == null) ? 0 : os[os.length-1];
 	}
 }

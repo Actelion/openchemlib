@@ -379,6 +379,28 @@ public class Molecule implements Serializable {
 			{2}, {2}, {2}, {2}, {2}, {2}, {2}, {2}, {2}, {2},			// Leu to Val
 	};
 
+	// Taken from http://www.cabrillo.edu/~aromero/Common%20Files/Periodic%20Table%20(Common%20Ionic%20Charges).pdf
+	public static final byte cCommonOxidationState[][] = { null,
+			{1}, null, {1}, {2}, null, null,					//  H,  He, Li, Be, B,  C,
+			{-3}, {-2}, {-1}, null, {1}, {2},					//  N,  O,  F,  Ne, Na, Mg,
+			{3}, null, {-3}, {-2}, {-1}, null,					//  Al, Si, P,  S,  Cl, Ar,
+			{1}, {2}, {3}, {2,3,4}, {2,3,4,5}, {2,3,6},			//  K,  Ca, Sc, Ti, V,  Cr,
+			{2,3,4,7}, {2,3}, {2,3}, {2,3}, {1, 2}, {2},		//  Mn, Fe, Co, Ni, Cu, Zn,
+			{3}, {2, 4}, {-3,3,5}, {-2}, {-1}, null,			//  Ga, Ge, As, Se, Br, Kr,
+			{1}, {2}, {3}, {4}, {3,5}, {6},						//  Rb, Sr, Y,  Zr, Nb, Mo,
+			{4,6,7}, {3}, {3}, {2,4}, {1}, {2},					//  Tc, Ru, Rh, Pd, Ag, Cd,
+			{3}, {2,4}, {-3,3,5}, {-2,4,6}, {-1}, null,			//  In, Sn, Sb, Te, I,  Xe,
+			{1}, {2}, {3}, {3,4}, {3}, {3},						//  Cs, Ba, La ,Ce, Pr, Nd,
+			{3}, {2,3}, {2,3}, {3}, {3}, {3},					//  Pm, Sm, Eu, Gd, Tb, Dy,
+			{3}, {3}, {3}, {2,3}, {3}, {4},						//  Ho, Er, Tm, Yb, Lu, Hf,
+			{5}, {6}, {4,6,7}, {3, 4}, {3,4}, {2,4},			//  Ta, W,  Re, Os, Ir, Pt,
+			{1,3}, {1,2}, {1,3}, {2,4}, {3,5}, {-2,2,4},		//  Au, Hg, Tl, Pb, Bi, Po,
+			{-1,1}, null, {1}, {2}, {3}, {4},					//  At, Rn, Fr, Ra, Ac, Th,
+			{4,5}, {3,4,5,6}, {3,4,5,6}, {3,4,5,6}, {3,4,5,6},	//  Pa, U,  Np, Pu, Am,
+			{3}, {3,4}, {3}, {3}, {3}, {2,3},					//  Cm, Bk, Cf, Es, Fm, Md,
+			{2,3}, {3}											//  No, Lr
+		};
+
 	transient protected int mMaxAtoms;
 	transient protected int mMaxBonds;
 

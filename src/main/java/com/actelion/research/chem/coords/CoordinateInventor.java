@@ -34,7 +34,6 @@
 package com.actelion.research.chem.coords;
 
 import com.actelion.research.chem.*;
-import com.sun.prism.shader.FillRoundRect_LinearGradient_PAD_Loader;
 
 import java.util.*;
 
@@ -160,7 +159,7 @@ public class CoordinateInventor {
 
 
 	private void locateCoreFragment() {
-			// take every small ring whose atoms are not a superset of another small ring
+		// take every small ring whose atoms are not a superset of another small ring
 		int bondCount = 0;
 		double avbl = 0;
 		for (int bond=0; bond<mMol.getAllBonds(); bond++) {
@@ -209,7 +208,7 @@ public class CoordinateInventor {
 			}
 
 			// Find the largest core fragment and retain its orientation
-			// by adding it first to the fragment list 
+			// by adding it first to the fragment list
 		int maxFragment = -1;
 		int maxFragmentAtoms = 0;
 		for (int f=0; f<coreFragmentCount; f++) {
@@ -218,7 +217,7 @@ public class CoordinateInventor {
 				maxFragment = f;
 				}
 			}
-			
+
 		mFragmentList.add(fragment[maxFragment]);
 		for (int f=0; f<coreFragmentCount; f++)
 			if (f != maxFragment)
@@ -227,7 +226,7 @@ public class CoordinateInventor {
 
 
 	private void locateInitialFragments() {
-			// take every atom with more than 4 neighbours including first neighbour shell
+		// take every atom with more than 4 neighbours including first neighbour shell
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 			if (mMol.getAllConnAtoms(atom) > 4) {
 				InventorFragment f = new InventorFragment(mMol, 1+mMol.getAllConnAtoms(atom), mMode);
@@ -270,7 +269,7 @@ public class CoordinateInventor {
 						}
 					}
 				}
-			
+
 			if (!skipRing) {
 				boolean isElementaryRing = false;
 				for (int i=0; i<ringSize; i++) {
@@ -281,9 +280,9 @@ public class CoordinateInventor {
 					}
 				if (isElementaryRing) {
 					int[] ringBond = ringSet.getRingBonds(ringNo);
-	
+
 					addRingFragment(ringAtom, ringBond);
-	
+
 					for (int i=0; i<ringSize; i++) {
 						mAtomHandled[ringAtom[i]] = true;
 						mBondHandled[ringBond[i]] = true;
@@ -620,7 +619,7 @@ public class CoordinateInventor {
 		mFragmentList.add(f);
 		}
 
-	
+
 	private void createRegularRingFragment(InventorFragment f) {
 		double angleChange = Math.PI - (Math.PI * (f.size()-2))/f.size();
 		for (int i=1; i<f.size(); i++) {
@@ -629,8 +628,113 @@ public class CoordinateInventor {
 			}
 		}
 
+
+	private void createRegularRingFragment(InventorFragment f, int bondEConstraint, int bondZConstraint) {
+		if (bondEConstraint == 0) {
+			createRegularRingFragment(f);
+			return;
+			}
+
+		int startIndex = -1;
+		int startPriority = 0;
+		int bitMinus2 = 1 << (f.size()-2);
+		int bitMinus1 = 1 << (f.size()-1);
+		int currentBit = 1;
+		int bitPlus1 = 2;
+		for (int i=0; i<f.size(); i++) {
+			// if none of previous bond nor current bond are Z and at least one of them is E and the bond  before is not E
+			if ((bondZConstraint & (bitMinus1 | currentBit)) == 0
+			 && (bondEConstraint & (bitMinus1 | currentBit)) != 0
+			 && (bondEConstraint & bitMinus2) == 0) {
+				int priority = 0;
+				if ((bondZConstraint & bitMinus2) != 0)
+					priority += 4;
+				if ((bondEConstraint & bitMinus1) != 0)
+					priority += 2;
+				if ((bondEConstraint & currentBit) != 0)
+					priority += 1;
+				if (startPriority < priority) {
+					startPriority = priority;
+					startIndex = i;
+					}
+				}
+
+			bitMinus2 = bitMinus1;
+			bitMinus1 = currentBit;
+			currentBit = bitPlus1;
+			bitPlus1 = 1 << (i+1 < f.size() ? i+1 : i+1-f.size());
+			}
+
+		if (startIndex == -1) {
+			createRegularRingFragment(f);
+			return;
+			}
+
+		int moveToCenter = 0;   // bit mask marking atoms to be moved towards ring center to satisfy E/Z constraints
+		moveToCenter |= (1 << startIndex);
+		int offset=2;
+		while (offset<f.size()-1) {
+			int index = (startIndex + offset < f.size()) ? startIndex+offset : startIndex+offset-f.size();
+			bitMinus1 = 1 << (index==0 ? f.size()-1 : index-1);
+
+			if ((bondZConstraint & bitMinus1) != 0) {
+				offset++;
+				continue;
+				}
+
+			currentBit = 1 << index;
+			if ((bondEConstraint & bitMinus1) != 0) {
+				if ((bondZConstraint & currentBit) != 0) {
+					createRegularRingFragment(f);
+					return;
+					}
+				moveToCenter |= currentBit;
+				offset += 2;
+				continue;
+				}
+
+			bitPlus1 = 1 << (index+1 < f.size() ? index+1 : index+1-f.size());
+			if ((bondEConstraint & currentBit) != 0
+			 && (bondZConstraint & bitPlus1) != 0) {
+				moveToCenter |= currentBit;
+				offset += 3;
+				continue;
+				}
+			offset++;
+			}
+
+		if (moveToCenter == 0) {
+			createRegularRingFragment(f);
+			return;
+			}
+
+		double angleChange = Math.PI - (Math.PI * (f.size()-2))/f.size();
+		for (int i=1; i<f.size(); i++) {
+			f.mAtomX[i] = f.mAtomX[i-1] + Math.sin(angleChange*(i-1));
+			f.mAtomY[i] = f.mAtomY[i-1] + Math.cos(angleChange*(i-1));
+			}
+
+		currentBit = 1;
+		double shift = 2*Math.sin(angleChange/2);
+		for (int i=0; i<f.size(); i++) {
+			if ((moveToCenter & currentBit) != 0) {
+				f.mAtomX[i] += shift * Math.cos(angleChange * ((double) i - 0.5));
+				f.mAtomY[i] -= shift * Math.sin(angleChange * ((double) i - 0.5));
+				}
+			currentBit <<= 1;
+			}
+		}
+
+
 	private void createLargeRingFragment(InventorFragment f, int[] ringAtom, int[] ringBond) {
+		final int FIRST_RING_SIZE = 9;
+		final int LAST_RING_SIZE = 25;
+		final double[][] cAngleCorrection = { {-20}, null, null, null, null, null, {-4,12},
+				{0,0,7.5}, null, null, null, null, {60/7, -60/7}, null, null, null, {-2.4} };
 		final int[][] cBondZList = { // sequence of E/Z parities in rings (E=0, Z=1)
+				{   // 9-membered ring
+					0x00000092,  // 010010010 sym
+				},
 				{   // 10-membered ring
 					0x00000273,  // 1001110011 sym
 				},
@@ -644,10 +748,14 @@ public class CoordinateInventor {
 					0x000021C3,  // 10000111000011 sym
 					0x000009D7   // 00100111010111 sym
 				},
-				null,
+				{   // 15-membered rings
+					0x00002492,  // 010010010010010 sym
+					0x000039CE,  // 011100111001110 sym
+				},
 				{   // 16-membered rings
 					0x00008649,  // 1000011001001001 sym
-					0x80008759   // 1000011101011001 asy
+					0x80008759,  // 1000011101011001 asy
+					0x00006666,  // 0110011001100110 sym
 				},
 				null,
 				{   // 18-membered rings
@@ -660,7 +768,7 @@ public class CoordinateInventor {
 					0x00020703,  // 100000011100000011 sym
 					0x8002A753,  // 101010011101010011 asy
 					0x0000D649,  // 001101011001001001 sym
-					0x0000D759,  // 001101011101011001 sym 
+					0x0000D759,  // 001101011101011001 sym
 					0x80008753,  // 001000011101010011 asy
 					0x80008717   // 001000011100010111 asy
 				},
@@ -672,63 +780,66 @@ public class CoordinateInventor {
 					0x00021849,  // 00100001100001001001 sym
 					0x000A9959,  // 10101001100101011001 sym
 					0x80081D49,  // 10000001110101001001 asy
-					0x800819A3,  // 10000001100110100011 asy 
+					0x800819A3,  // 10000001100110100011 asy
 					0x80084ED9,  // 10000100111011011001 asy
-					0x80087475,  // 10000111010001110101 asy 
+					0x80087475,  // 10000111010001110101 asy
 					0x80087464,  // 10000111010001100100 asy
-					0x800D19A9,  // 11010001100110101001 asy 
-					0x80086BA9,  // 10000110101110101001 asy 
-					0x800849A9,  // 10000100100110101001 asy 
-					0x80086B21   // 10000110101100100001 asy 
+					0x800D19A9,  // 11010001100110101001 asy
+					0x80086BA9,  // 10000110101110101001 asy
+					0x800849A9,  // 10000100100110101001 asy
+					0x80086B21   // 10000110101100100001 asy
 				},
-				null,
+				{   // 21-membered rings
+					0x000F5EBD,  // 011110101111010111101 sym
+					0x00095263   // 010010101001010100101 sym
+				},
 				{   // 22-membered rings
 					0x00084909,  // 0010000100100100001001 sym
-					0x00021843,  // 0000100001100001000011 sym 
+					0x00021843,  // 0000100001100001000011 sym
 					0x00206121,  // 1000000110000100100001 sym
 					0x00081903,  // 0010000001100100000011 sym
-					0x0021AC35,  // 1000011010110000110101 sym 
-					0x802A4D49,  // 1010100100110101001001 asy 
-					0x00035849,  // 0000110101100001001001 sym 
-					0x002B5909,  // 1010110101100100001001 sym 
-					0x00021953,  // 0000100001100101010011 sym 
+					0x0021AC35,  // 1000011010110000110101 sym
+					0x802A4D49,  // 1010100100110101001001 asy
+					0x00035849,  // 0000110101100001001001 sym
+					0x002B5909,  // 1010110101100100001001 sym
+					0x00021953,  // 0000100001100101010011 sym
 					0x80095909,  // 0010010101100100001001 asy
 					0x80035959,  // 0000110101100101011001 asy
 					0x00095D49,  // 0010010101110101001001 sym
-					0x80206561,  // 1000000110010101100001 asy 
-					0x800D1909,  // 0011010001100100001001 asy 
-					0x000A9953,  // 0010101001100101010011 sym 
-					0x00257535,  // 1001010111010100110101 sym 
-					0x80207461,  // 1000000111010001100001 asy 
+					0x80206561,  // 1000000110010101100001 asy
+					0x800D1909,  // 0011010001100100001001 asy
+					0x000A9953,  // 0010101001100101010011 sym
+					0x00257535,  // 1001010111010100110101 sym
+					0x80207461,  // 1000000111010001100001 asy
 					0x80021D13,  // 0000100001110100010011 asy
-					0x800876C9,  // 0010000111011011001001 asy 
-					0x80086BA3,  // 0010000110101110100011 asy 
-					0x802B5D49,  // 1010110101110101001001 asy 
-					0x80081D43,  // 0010000001110101000011 asy 
-					0x800D192B,  // 0011010001100100101011 asy 
+					0x800876C9,  // 0010000111011011001001 asy
+					0x80086BA3,  // 0010000110101110100011 asy
+					0x802B5D49,  // 1010110101110101001001 asy
+					0x80081D43,  // 0010000001110101000011 asy
+					0x800D192B,  // 0011010001100100101011 asy
 					0x800D1D49,  // 0011010001110101001001 asy
-					0x002B5D6B,  // 1010110101110101101011 sym 
-					0x001066D9,  // 1000000110011011011001 sym 
+					0x002B5D6B,  // 1010110101110101101011 sym
+					0x001066D9,  // 1000000110011011011001 sym
 					0x800D19A3,  // 0011010001100110100011 asy
 					0x002AB953,  // 1010101011100101010011 sym
-					0x802A1D43,  // 1010100001110101000011 asy 
-					0x00021D57,  // 0000100001110101010111 sym 
-					0x000D1C59,  // 0011010001110001011001 sym 
+					0x802A1D43,  // 1010100001110101000011 asy
+					0x00021D57,  // 0000100001110101010111 sym
+					0x000D1C59,  // 0011010001110001011001 sym
 					0x8021DB35,  // 1000011101101100110101 asy
-					0x80229903,  // 1000101001100100000011 asy 
+					0x80229903,  // 1000101001100100000011 asy
 					0x800D1D6B,  // 0011010001110101101011 asy
-					0x802A76C9,  // 1010100111011011001001 asy 
+					0x802A76C9,  // 1010100111011011001001 asy
 					0x800876EB,  // 0010000111011011101011 asy
-					0x80369909,  // 1101101001100100001001 asy 
+					0x80369909,  // 1101101001100100001001 asy
 					0x80347535,  // 1101000111010100110101 asy
-					0x800A9917,  // 0010101001100100010111 asy 
-					0x0022EBA3,  // 1000101110101110100011 sym 
+					0x800A9917,  // 0010101001100100010111 asy
+					0x0022EBA3,  // 1000101110101110100011 sym
 					0x00084E97,  // 0010000100111010010111 sym
-					0x00201C03,  // 1000000001110000000011 sym 
-					0x8008B917,  // 0010001011100100010111 asy 
+					0x00201C03,  // 1000000001110000000011 sym
+					0x8008B917,  // 0010001011100100010111 asy
 					0x802DD753,  // 1011011101011101010011 asy
-					0x00377249,  // 1101110111001001001001 sym 
-					0x80095CB7,  // 0010010101110010110111 asy 
+					0x00377249,  // 1101110111001001001001 sym
+					0x80095CB7,  // 0010010101110010110111 asy
 					0x80081C17   // 0010000001110000010111 asy
 				},
 				null,
@@ -736,43 +847,49 @@ public class CoordinateInventor {
 					0x00818181,  // 100000011000000110000001 sym
 					0x002126D9,  // 001000010010011011011001 sym
 					0x00204C03,  // 001000000100110000000011 sym
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
-					0x00000000,  // 
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
+					0x00000000,  //
 
 					0x0086BB75   // 100001101011101101110101 sym
-				}
+				},
+				{   // 25-membered rings
+					0x00D6B5AD   // 0110101101011010110101101 sym
+				},
 			};
 
-		int ringIndex = f.size()-10;
-		if (f.size() >= 10 && f.size() <= 24 && cBondZList[ringIndex] != null) {
-			int maxBit = (1 << f.size());
-			int bondEConstraint = 0;
-			int bondZConstraint = 0;
+//		if (f.size() >= FIRST_RING_SIZE)
+//			printRingStats(f, ringAtom, ringBond);
+
+		int maxBit = (1 << f.size());
+		int bondEConstraint = 0;
+		int bondZConstraint = 0;
+		if (f.size() > 7) {
 			for (int i=0; i<f.size(); i++) {
-				if (mMol.getBondOrder(ringBond[i]) == 2) {
-					int bondParity = mMol.getBondParity(ringBond[i]);
-					if (bondParity == Molecule.cBondParityEor1)
-						bondEConstraint += maxBit;
-					if (bondParity == Molecule.cBondParityZor2)
-						bondZConstraint += maxBit;
-					}
+				int bondParity = getLargeRingBondParity(ringAtom, ringBond, i);
+				if (bondParity == Molecule.cBondParityEor1)
+					bondEConstraint += maxBit;
+				else if (bondParity == Molecule.cBondParityZor2)
+					bondZConstraint += maxBit;
 				bondEConstraint >>>= 1;
 				bondZConstraint >>>= 1;
 				}
+			}
 
+		int ringIndex = f.size()-FIRST_RING_SIZE;
+		if (f.size() >= FIRST_RING_SIZE && f.size() <= LAST_RING_SIZE && cBondZList[ringIndex] != null) {
 			for (int zList=0; zList<cBondZList[ringIndex].length; zList++) {
 				boolean isSymmetrical = ((0x80000000 & cBondZList[ringIndex][zList]) == 0);
 				int bondZList = (0x7FFFFFFF & cBondZList[ringIndex][zList]);
@@ -793,15 +910,17 @@ public class CoordinateInventor {
 						if ((bondZList & bondEConstraint) == 0
 						 && (~bondZList & bondZConstraint) == 0) {
 							// constraints are satisfied with current E/Z sequence
-		
 							double bondAngle = 0.0;
+							double correction = Math.PI / 180 * (cAngleCorrection[ringIndex] == null ?
+									0 : cAngleCorrection[ringIndex][zList]);
 							boolean wasRightTurn = true; // create a ring that closes with right turns
 							for (int i=1; i<f.size(); i++) {
 								f.mAtomX[i] = f.mAtomX[i-1] + Math.sin(bondAngle);
 								f.mAtomY[i] = f.mAtomY[i-1] + Math.cos(bondAngle);
 								if ((bondZList & 1) == 0) // is E-bond
 									wasRightTurn = !wasRightTurn;
-								bondAngle += wasRightTurn ? Math.PI/3.0 : -Math.PI/3.0;
+//								bondAngle += wasRightTurn ? (Math.PI/3.0 - correction) : (correction - Math.PI/3.0);
+								bondAngle += correction + (wasRightTurn ? Math.PI/3.0 : -Math.PI/3.0);
 								bondZList >>>= 1;
 								}
 							return;
@@ -815,8 +934,73 @@ public class CoordinateInventor {
 			}
 
 			// if not successful so far
-		createRegularRingFragment(f);
+		createRegularRingFragment(f, bondEConstraint, bondZConstraint);
 		}
+
+
+	private int getLargeRingBondParity(int[] ringAtom, int[] ringBond, int index) {
+		int higherIndex = (index == ringAtom.length-1) ? 0 : index+1;    // second ringAtom index
+		int lowerIndex = (index == 0) ? ringAtom.length-1 : index-1;
+		int highestIndex = (higherIndex == ringAtom.length-1) ? 0 : higherIndex+1;
+		if (mMol.getBondOrder(ringBond[index]) == 2) {
+			int bondParity = mMol.getBondParity(ringBond[index]);
+			if (bondParity == Molecule.cBondParityEor1
+			 || bondParity == Molecule.cBondParityZor2) {
+				// translate bond configuration from lowest atom index to ring members
+				if (isLowestIndexNeighbour(ringAtom[lowerIndex], ringAtom[index], ringAtom[higherIndex])
+				  ^ isLowestIndexNeighbour(ringAtom[highestIndex], ringAtom[higherIndex], ringAtom[index]))
+						bondParity = (bondParity == Molecule.cBondParityEor1) ?
+								Molecule.cBondParityZor2 : Molecule.cBondParityEor1;
+				return bondParity;
+				}
+			}
+
+		// if the bond is also a member of a small ring and if more than this one bond are shared
+		// then the first and the last shared bond are E and the ones between Z.
+		if (mMol.isSmallRingBond(ringBond[index])) {
+			int sharedRing1 = mMol.getRingSet().getSharedRing(ringBond[lowerIndex], ringBond[index]);
+			int sharedRing2 = mMol.getRingSet().getSharedRing(ringBond[higherIndex], ringBond[index]);
+			if (sharedRing1 != -1 || sharedRing2 != -1)
+				return sharedRing1 == sharedRing2 ? Molecule.cBondParityZor2 : Molecule.cBondParityEor1;
+			}
+
+		return Molecule.cBondParityNone;
+		}
+
+
+	/**
+	 * @param atom
+	 * @param rootAtom
+	 * @param excludeAtom
+	 * @return whether atom has the lowest atom index of rootAtom's neighbours not considering excludeAtom
+	 */
+	private boolean isLowestIndexNeighbour(int atom, int rootAtom, int excludeAtom) {
+		for (int i=0; i<mMol.getConnAtoms(rootAtom); i++) {
+			int connAtom = mMol.getConnAtom(rootAtom, i);
+			if (connAtom != excludeAtom && connAtom < atom)
+				return false;
+			}
+		return true;
+		}
+
+
+/*	private void printRingStats(InventorFragment f, int[] ringAtom, int[] ringBond) {
+		int maxBit = (1 << f.size());
+		int bondEConstraint = 0;
+		int bondZConstraint = 0;
+		for (int i = 0; i < f.size(); i++) {
+			int bondParity = getLargeRingBondParity(ringAtom, ringBond, i);
+			if (bondParity == Molecule.cBondParityEor1)
+				bondEConstraint += maxBit;
+			else if (bondParity == Molecule.cBondParityZor2)
+				bondZConstraint += maxBit;
+			bondEConstraint >>>= 1;
+			bondZConstraint >>>= 1;
+			}
+		System.out.println("ringSize:"+f.size()
+				+" E-list:"+Integer.toBinaryString(bondEConstraint)
+				+" Z-list:"+Integer.toBinaryString(bondZConstraint));
+		}*/
 
 
 	private InventorChain getSmallestRingFromBond(int bond) {
@@ -1141,8 +1325,11 @@ public class CoordinateInventor {
 				f.mAtomY[count++] = f2.mAtomY[i];
 				}
 			else {
-				if (f.mPriority[index] < f2.mPriority[i])
+				if (f.mPriority[index] < f2.mPriority[i]) {
 					f.mPriority[index] = f2.mPriority[i];
+					f.mAtomX[index] = f2.mAtomX[i];
+					f.mAtomY[index] = f2.mAtomY[i];
+					}
 				}
 			}
 		return f;
@@ -1453,7 +1640,7 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 		int current = 0;
 		int highest = 0;
 		while (current <= highest) {
-			for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(graphAtom[current]); i++) {
+			for (int i=0; i<mMol.getAllConnAtoms(graphAtom[current]); i++) {
 				int candidate = mMol.getConnAtom(graphAtom[current], i);
 				int theBond = mMol.getConnBond(graphAtom[current], i);
 
