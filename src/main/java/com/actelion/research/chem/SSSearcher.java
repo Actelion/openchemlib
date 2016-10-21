@@ -236,9 +236,9 @@ public class SSSearcher {
 				mFragmentGraphParentAtom[current] = -1;
 				int highest = current;
 				while (current <= highest) {
-					for (int i=0; i<mFragment.getConnAtoms(mFragmentGraphAtom[current]); i++) {
+					for (int i=0; i<mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++) {
 						int candidate = mFragment.getConnAtom(mFragmentGraphAtom[current], i);
-						if (!mIsExcludeAtom[candidate])
+						if (candidate < mFragment.getAtoms() && !mIsExcludeAtom[candidate])
 							highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed);
 						}
 					while (mFragmentGraphIsRingClosure[++current]);
@@ -252,9 +252,9 @@ public class SSSearcher {
 			int highest = current - 1;
 			current = 0;
 			while (current <= highest) {
-				for (int i = 0; i < mFragment.getConnAtoms(mFragmentGraphAtom[current]); i++) {
+				for (int i = 0; i < mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++) {
 					int candidate = mFragment.getConnAtom(mFragmentGraphAtom[current], i);
-					if (mIsExcludeAtom[candidate] || mIsExcludeAtom[mFragmentGraphAtom[current]])
+					if (candidate < mFragment.getAtoms() && (mIsExcludeAtom[candidate] || mIsExcludeAtom[mFragmentGraphAtom[current]]))
 						highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed);
 					}
 				while (mFragmentGraphIsRingClosure[++current]) ;
@@ -269,9 +269,10 @@ public class SSSearcher {
 					mFragmentGraphParentAtom[current] = -1;
 					highest = current;
 					while (current <= highest) {
-						for (int i = 0; i < mFragment.getConnAtoms(mFragmentGraphAtom[current]); i++) {
-							highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed);
-							}
+						for (int i = 0; i < mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++)
+							if (mFragment.getConnAtom(mFragmentGraphAtom[current], i) < mFragment.getAtoms())
+								highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed);
+
 						while (mFragmentGraphIsRingClosure[++current]) ;
 						}
 					}
@@ -448,9 +449,12 @@ System.out.print("  index:"); for (int i=0; i<mFragmentGraphSize; i++) System.ou
 System.out.print("		"); for (int i=0; i<current; i++) System.out.print("  "); System.out.println(" ^");
 System.out.println();
 */
+
+			int maxIndex = (mFragmentGraphParentAtom[current] == -1) ? mMolecule.getAtoms()
+					: mMolecule.getAllConnAtomsPlusMetalBonds(mMatchTable[mFragmentGraphParentAtom[current]]);
+
 			index[current]++;
-			int maxIndex = (mFragmentGraphParentAtom[current] == -1) ?
-					mMolecule.getAtoms() : mMolecule.getConnAtoms(mMatchTable[mFragmentGraphParentAtom[current]]);
+
 			if (index[current] == maxIndex) {
 				index[current] = -1;
 				if (current == 0)
@@ -470,22 +474,29 @@ System.out.println();
 						}
 					}
 				}
-			else if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor
+			else {
+				// skip plain hydrogens
+				if (mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]) >= mMolecule.getAtoms()) {
+					index[current]++;
+					continue;
+					}
+
 				int candidate = mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]);
-				if (!atomUsed[candidate]) {
-					if (areAtomsSimilar(candidate, mFragmentGraphAtom[current])
-					 && areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
-						atomUsed[candidate] = true;
-						mMatchTable[mFragmentGraphAtom[current]] = candidate;
-						current++;
+				if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor
+					if (!atomUsed[candidate]) {
+						if (areAtomsSimilar(candidate, mFragmentGraphAtom[current])
+								&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
+							atomUsed[candidate] = true;
+							mMatchTable[mFragmentGraphAtom[current]] = candidate;
+							current++;
+							}
 						}
 					}
-				}
-			else {	// current graph position is ringClosure
-				int candidate = mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]);
-				if (candidate == mMatchTable[mFragmentGraphAtom[current]]
-				 && areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
-					current++;
+				else {	// current graph position is ringClosure
+					if (candidate == mMatchTable[mFragmentGraphAtom[current]]
+							&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
+						current++;
+						}
 					}
 				}
 
@@ -580,13 +591,6 @@ System.out.println();
 		if (fragmentConnAtoms > moleculeConnAtoms)
 			return false;
 
-/* In order to explicitly search and match attachment points (e.g. used by search substructure and replace)
- * this behaviour was changed. TLS 29 Jan 2015
-		if (mFragment.getAtomicNo(fragmentAtom) == 0)	// attachment points match on any atom
-			return true;
-		if (mMolecule.getAtomicNo(moleculeAtom) == 0)	// real fragment atoms cannot match on attachment points in molecule
-			return false;
-*/
 		int moleculeQF = mMolecule.getAtomQueryFeatures(moleculeAtom);
 		int fragmentQF = mFragment.getAtomQueryFeatures(fragmentAtom);
 
@@ -929,9 +933,11 @@ System.out.print("  index:"); for (int i=0; i<mFragmentGraphSize; i++) System.ou
 System.out.print("		"); for (int i=0; i<current; i++) System.out.print("  "); System.out.println(" ^");
 System.out.println();
 */
+			int maxIndex = (mFragmentGraphParentAtom[current] == -1) ? mMolecule.getAtoms()
+					: mMolecule.getAllConnAtomsPlusMetalBonds(mMatchTable[mFragmentGraphParentAtom[current]]);
+
 			index[current]++;
-			int maxIndex = (mFragmentGraphParentAtom[current] == -1) ?
-					mMolecule.getAtoms() : mMolecule.getConnAtoms(mMatchTable[mFragmentGraphParentAtom[current]]);
+
 			if (index[current] == maxIndex) {
 				index[current] = -1;
 				if (current == mFragmentGraphSize)
@@ -942,7 +948,7 @@ System.out.println();
 					mMatchTable[mFragmentGraphAtom[current]] = -1;
 					}
 				continue;
-			}
+				}
 
 			if (mFragmentGraphParentAtom[current] == -1) {	// if current graph atom is sub fragment anchor atom
 				if (!atomUsed[index[current]]) {
@@ -953,24 +959,31 @@ System.out.println();
 					}
 				}
 			}
-			else if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor
+			else {
+				// skip plain hydrogens
+				if (mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]) >= mMolecule.getAtoms()) {
+					index[current]++;
+					continue;
+					}
+
 				int candidate = mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]);
-				if (!atomUsed[candidate]) {
-					if (areAtomsSimilar(candidate, mFragmentGraphAtom[current])
-					 && areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
-						atomUsed[candidate] = true;
-						mMatchTable[mFragmentGraphAtom[current]] = candidate;
+				if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor
+					if (!atomUsed[candidate]) {
+						if (areAtomsSimilar(candidate, mFragmentGraphAtom[current])
+								&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
+							atomUsed[candidate] = true;
+							mMatchTable[mFragmentGraphAtom[current]] = candidate;
+							current++;
+							}
+						}
+					}
+				else {	// current graph position is ringClosure
+					if (candidate == mMatchTable[mFragmentGraphAtom[current]]
+							&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
 						current++;
+						}
 					}
 				}
-			}
-			else {	// current graph position is ringClosure
-				int candidate = mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]);
-				if (candidate == mMatchTable[mFragmentGraphAtom[current]]
-				 && areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
-					current++;
-				}
-			}
 
 			if (current == mFragmentGraphSizeWithExcludeGroup) {
 				if (doTHParitiesMatch(true)
@@ -1409,6 +1422,9 @@ System.out.println();
 		 || mol.getBondType(bond) == Molecule.cBondTypeDelocalized)
 			queryDefaults |= Molecule.cBondQFDelocalized;
 		else switch (mol.getBondOrder(bond)) {
+			case 0:
+				queryDefaults |= Molecule.cBondTypeMetalLigand;
+				break;
 			case 1:
 				queryDefaults |= Molecule.cBondQFSingle;
 				break;

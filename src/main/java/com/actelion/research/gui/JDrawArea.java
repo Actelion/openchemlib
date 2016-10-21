@@ -1063,7 +1063,9 @@ public class JDrawArea extends JPanel
 					update(UPDATE_CHECK_COORDS);
 				}
 			} else {
-				boolean bondChanged = (ch == '1') ? changeHighlightedBond(Molecule.cBondTypeSingle)
+				boolean bondChanged =
+					  (ch == '0') ? changeHighlightedBond(Molecule.cBondTypeMetalLigand)
+					: (ch == '1') ? changeHighlightedBond(Molecule.cBondTypeSingle)
 					: (ch == '2') ? changeHighlightedBond(Molecule.cBondTypeDouble)
 					: (ch == '3') ? changeHighlightedBond(Molecule.cBondTypeTriple)
 					: (ch == 'u') ? changeHighlightedBond(Molecule.cBondTypeUp)

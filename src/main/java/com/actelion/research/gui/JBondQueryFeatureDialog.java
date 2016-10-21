@@ -46,7 +46,7 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 
     private ExtendedMolecule	mMol;
 	private int					mBond,mFirstSpanItem;
-	private JCheckBox			mCBSingle,mCBDouble,mCBTriple,mCBDelocalized,mCBIsBridge,mCBMatchStereo;
+	private JCheckBox			mCBSingle,mCBDouble,mCBTriple,mCBDelocalized,mCBMetalLigand,mCBIsBridge,mCBMatchStereo;
 	private JComboBox			mComboBoxRing,mComboBoxRingSize,mComboBoxMinAtoms,mComboBoxMaxAtoms;
 
 	protected JBondQueryFeatureDialog(Frame parent, ExtendedMolecule mol, int bond) {
@@ -58,7 +58,8 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 
 		JPanel p1 = new JPanel();
         double[][] size = { {8, TableLayout.FILL, TableLayout.PREFERRED, TableLayout.PREFERRED, 8},
-                            {8, TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.PREFERRED, 8,
+                            {8, TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.PREFERRED,
+								TableLayout.PREFERRED, TableLayout.PREFERRED, 8,
 								TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 16,
 								TableLayout.PREFERRED, 4, TableLayout.PREFERRED, 4, TableLayout.PREFERRED, 16} };
         p1.setLayout(new TableLayout(size));
@@ -75,6 +76,9 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 		mCBDelocalized = new JCheckBox("Delocalized");
 		p1.add(mCBDelocalized,"1,4,3,4");
 
+		mCBMetalLigand = new JCheckBox("Coordinate (0-order)");
+		p1.add(mCBMetalLigand,"1,5,3,5");
+
 		mComboBoxRing = new JComboBox();
 		mComboBoxRing.addItem("any ring state");
 		mComboBoxRing.addItem("is not in a ring");
@@ -82,7 +86,7 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 		mComboBoxRing.addItem("is non-aromatic ring bond");
 		mComboBoxRing.addItem("is aromatic bond");
 		mComboBoxRing.addActionListener(this);
-		p1.add(mComboBoxRing,"1,6,3,6");
+		p1.add(mComboBoxRing,"1,7,3,7");
 
 		mComboBoxRingSize = new JComboBox();
 		mComboBoxRingSize.addItem("any ring size");
@@ -91,28 +95,28 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 		mComboBoxRingSize.addItem("is in 5-membered ring");
 		mComboBoxRingSize.addItem("is in 6-membered ring");
 		mComboBoxRingSize.addItem("is in 7-membered ring");
-		p1.add(mComboBoxRingSize, "1,8,3,8");
+		p1.add(mComboBoxRingSize, "1,9,3,9");
 
 		mCBMatchStereo = new JCheckBox("Match Stereo Configuration", (mol.getBondQueryFeatures(bond) & Molecule.cBondQFMatchStereo) != 0);
 		mCBMatchStereo.addActionListener(this);
-		p1.add(mCBMatchStereo, "1,10,3,10");
+		p1.add(mCBMatchStereo, "1,11,3,11");
 
 		mCBIsBridge = new JCheckBox("Is atom bridge between");
         mCBIsBridge.addActionListener(this);
-        p1.add(mCBIsBridge,"1,12,3,12");
+        p1.add(mCBIsBridge,"1,13,3,13");
 
         mComboBoxMinAtoms = new JComboBox();
         int itemCount = (1 << Molecule.cBondQFBridgeMinBits);
         for (int i=0; i<itemCount; i++)
             mComboBoxMinAtoms.addItem(""+i);
-        p1.add(mComboBoxMinAtoms,"2,14");
-        p1.add(new JLabel(" and"),"3,14");
+        p1.add(mComboBoxMinAtoms,"2,15");
+        p1.add(new JLabel(" and"),"3,15");
         mComboBoxMinAtoms.addActionListener(this);
 
         mComboBoxMaxAtoms = new JComboBox();
         populateComboBoxMaxAtoms(0);
-        p1.add(mComboBoxMaxAtoms,"2,16");
-        p1.add(new JLabel(" atoms"),"3,16");
+        p1.add(mComboBoxMaxAtoms,"2,17");
+        p1.add(new JLabel(" atoms"),"3,17");
 
 		JPanel bp = new JPanel();
         bp.setBorder(BorderFactory.createEmptyBorder(12, 8, 8, 8));
@@ -173,18 +177,20 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 
 	private void setInitialStates() {
 		int queryFeatures = mMol.getBondQueryFeatures(mBond);
-		int bondType = (mMol.getBondType(mBond) == Molecule.cBondTypeDelocalized
-		             || mMol.isDelocalizedBond(mBond)) ?
-						0 : mMol.getBondOrder(mBond);
+		int bondOrder = (mMol.getBondType(mBond) == Molecule.cBondTypeDelocalized
+					  || mMol.isDelocalizedBond(mBond)) ?
+						4 : mMol.getBondOrder(mBond);
 
-		if ((queryFeatures & Molecule.cBondQFSingle) != 0 || bondType == 1)
+		if ((queryFeatures & Molecule.cBondQFSingle) != 0 || bondOrder == 1)
 			mCBSingle.setSelected(true);
-		if ((queryFeatures & Molecule.cBondQFDouble) != 0 || bondType == 2)
+		if ((queryFeatures & Molecule.cBondQFDouble) != 0 || bondOrder == 2)
 			mCBDouble.setSelected(true);
-		if ((queryFeatures & Molecule.cBondQFTriple) != 0 || bondType == 3)
+		if ((queryFeatures & Molecule.cBondQFTriple) != 0 || bondOrder == 3)
 			mCBTriple.setSelected(true);
-		if ((queryFeatures & Molecule.cBondQFDelocalized) != 0 || bondType == 0)
+		if ((queryFeatures & Molecule.cBondQFDelocalized) != 0 || bondOrder == 4)
 			mCBDelocalized.setSelected(true);
+		if ((queryFeatures & Molecule.cBondQFMetalLigand) != 0 || bondOrder == 0)
+			mCBMetalLigand.setSelected(true);
 		if ((queryFeatures & Molecule.cBondQFMatchStereo) != 0)
 			mCBMatchStereo.setSelected(true);
 
@@ -229,6 +235,7 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
         mCBDouble.setEnabled(!bridgeIsSelected);
         mCBTriple.setEnabled(!bridgeIsSelected);
         mCBDelocalized.setEnabled(!bridgeIsSelected);
+		mCBMetalLigand.setEnabled(!bridgeIsSelected);
         mCBMatchStereo.setEnabled(!bridgeIsSelected
         						&& mMol.getBondOrder(mBond) == 2	// exclude BINAP-type stereo bonds for now
         						&& mMol.getBondParity(mBond) != Molecule.cBondParityNone
@@ -263,33 +270,39 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
             queryFeatures &= ~Molecule.cBondQFBondTypes;
             }
         else {
-            int bondType = -1;
+            int bondOrder = -1;
             if (mCBSingle.isSelected()) {
                 mMol.setBondType(bond, Molecule.cBondTypeSingle);
-                bondType = 1;
+				bondOrder = 1;
                 }
             else if (mCBDouble.isSelected()) {
                 mMol.setBondType(bond, Molecule.cBondTypeDouble);
-                bondType = 2;
+				bondOrder = 2;
                 }
             else if (mCBTriple.isSelected()) {
                 mMol.setBondType(bond, Molecule.cBondTypeTriple);
-                bondType = 3;
+				bondOrder = 3;
                 }
             else if (mCBDelocalized.isSelected()) {
                 if (!mMol.isDelocalizedBond(bond))
                     mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
-                bondType = 0;
+				bondOrder = 4;
                 }
+			else if (mCBMetalLigand.isSelected()) {
+				mMol.setBondType(bond, Molecule.cBondTypeMetalLigand);
+				bondOrder = 0;
+				}
 
-            if (mCBSingle.isSelected() && bondType != 1)
+            if (mCBSingle.isSelected() && bondOrder != 1)
     			queryFeatures |= Molecule.cBondQFSingle;
-    		if (mCBDouble.isSelected() && bondType != 2)
+    		if (mCBDouble.isSelected() && bondOrder != 2)
     			queryFeatures |= Molecule.cBondQFDouble;
-    		if (mCBTriple.isSelected() && bondType != 3)
+    		if (mCBTriple.isSelected() && bondOrder != 3)
     			queryFeatures |= Molecule.cBondQFTriple;
-    		if (mCBDelocalized.isSelected() && bondType != 0)
+    		if (mCBDelocalized.isSelected() && bondOrder != 4)
     			queryFeatures |= Molecule.cBondQFDelocalized;
+			if (mCBMetalLigand.isSelected() && bondOrder != 0)
+				queryFeatures |= Molecule.cBondQFMetalLigand;
     		if (mCBMatchStereo.isSelected())
     			queryFeatures |= Molecule.cBondQFMatchStereo;
 

@@ -3274,7 +3274,7 @@ public class Molecule implements Serializable {
 		case cBondTypeTriple:
 			return maxBondOrder >= 3;
 		case cBondTypeMetalLigand:
-			return isMetalAtom(mBondAtom[0][bond]) ^ isMetalAtom(mBondAtom[1][bond]);
+			return true;
 		default:
 			return false;
 			}
