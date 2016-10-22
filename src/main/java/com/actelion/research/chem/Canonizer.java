@@ -2619,7 +2619,8 @@ System.out.println();
 System.out.print("BondOrders:");
 */
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
-			int bondOrder = ((mMol.getBondQueryFeatures(bond) & Molecule.cBondQFBridge) != 0) ?
+			int bondOrder = ((mMol.getBondQueryFeatures(mGraphBond[bond]) & Molecule.cBondQFBridge) != 0
+						  || mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeMetalLigand) ?
 							1 : (mMol.isDelocalizedBond(mGraphBond[bond])) ?
 							0 : mMol.getBondOrder(mGraphBond[bond]);
 			encodeBits(bondOrder, 2);
@@ -2933,6 +2934,20 @@ System.out.println();
 
 		if (mMol.isFragment())	// 27 = datatype 'part of an exclude-group'
 			isSecondFeatureBlock |= addAtomQueryFeatures(27, isSecondFeatureBlock, nbits, Molecule.cAtomQFExcludeGroup, 1, -1);
+
+		count = 0;
+		for (int bond=0; bond<mMol.getBonds(); bond++)
+			if (mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeMetalLigand)
+				count++;
+		if (count != 0) {
+			isSecondFeatureBlock = ensureSecondFeatureBlock(isSecondFeatureBlock);
+			encodeBits(1, 1);   //  more data to come
+			encodeBits(12, 4);   //  (28-offset) 28 = datatype 'coordinate bond'
+			encodeBits(count, nbits);
+			for (int bond=0; bond<mMol.getBonds(); bond++)
+				if (mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeMetalLigand)
+					encodeBits(bond, nbits);
+			}
 
 		encodeBits(0, 1);
 		mIDCode = encodeBitsEnd();

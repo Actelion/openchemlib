@@ -2966,32 +2966,60 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	private boolean[] findSimpleHydrogens() {
 		boolean[] isSimpleHydrogen = new boolean[mAllAtoms];
-		for (int bond=0; bond<mAllBonds; bond++)
-			for (int i=0; i<2; i++)
-				if (isSimpleHydrogen(mBondAtom[i][bond]) && !isSimpleHydrogen(mBondAtom[1-i][bond]))
-					isSimpleHydrogen[mBondAtom[i][bond]] = true;
+		for (int atom=0; atom<mAllAtoms; atom++)
+			isSimpleHydrogen[atom] = isSimpleHydrogen(atom);
 
-		// unflag simple hydrogens that have a bond with order != 1
-		for (int bond=0; bond<mAllBonds; bond++)
-			if (getBondOrder(bond) != 1)
-				for (int i=0; i<2; i++)
-					isSimpleHydrogen[mBondAtom[i][bond]] = false;
+		// unflag simple hydrogens that have a bond with order != 1 or that have more than one bond
+		boolean[] oneBondFound = new boolean[mAllAtoms];
+		for (int bond=0; bond<mAllBonds; bond++) {
+			int atom1 = mBondAtom[0][bond];
+			int atom2 = mBondAtom[1][bond];
+
+			if (getBondOrder(bond) != 1) {
+				isSimpleHydrogen[atom1] = false;
+				isSimpleHydrogen[atom2] = false;
+				continue;
+				}
+
+			if (oneBondFound[atom1])
+				isSimpleHydrogen[atom1] = false;
+			if (oneBondFound[atom2])
+				isSimpleHydrogen[atom2] = false;
+
+			oneBondFound[atom1] = true;
+			oneBondFound[atom2] = true;
+			}
+
+		// unflag simple hydrogens within an H2 molecule
+		for (int bond=0; bond<mAllBonds; bond++) {
+			if (isSimpleHydrogen[mBondAtom[0][bond]] && isSimpleHydrogen[mBondAtom[1][bond]]) {
+				isSimpleHydrogen[mBondAtom[0][bond]] = false;
+				isSimpleHydrogen[mBondAtom[1][bond]] = false;
+				}
+			}
+
+			// unflag simple hydrogens that have no connection to another atom
+		for (int atom=0; atom<mAllAtoms; atom++)
+			if (!oneBondFound[atom])
+				isSimpleHydrogen[atom] = false;
 
 		return isSimpleHydrogen;
 		}
 
 	/**
-	 * Hydrogen atoms with no specified isotop information nor with an attached custom labels
-	 * are considered simple and can usually suppressed, effectively converting them from an
+	 * Uncharged hydrogen atoms with no isotop information nor with an attached custom label
+	 * are considered simple and can usually be suppressed, effectively converting them from an
 	 * explicit to an implicit hydrogen atom.<br>
-	 * <b>Note:</b> This method returns true for natural abundance hydrogens without custom labels
-	 * even if they have a metal ligand bond to another atom. If metal ligand bonds need to be
-	 * considered, check for them independently from this method.
+	 * <b>Note:</b> This method returns true for uncharged, natural abundance hydrogens without
+	 * custom labels even if they have a non-standard bonding situation (everything being different
+	 * from having one single bonded non-simple-hydrogen neighbour, e.g. unbonded hydrogen, H2,
+	 * a metal ligand bond to another atom, two single bonds, etc.)
+	 * If unusual bonding needs to be considered, check for that independently from this method.
 	 * @param atom
 	 * @return
 	 */
 	public boolean isSimpleHydrogen(int atom) {
-		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0
+		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0 && mAtomCharge[atom] == 0
 			&& (mAtomCustomLabel == null || mAtomCustomLabel[atom] == null);
 		}
 

@@ -308,11 +308,7 @@ public class IDCodeParser {
 			int bondOrder = decodeBits(2);
 			switch (bondOrder) {
 			case 0:
-				if (mMol.isMetalAtom(mMol.getBondAtom(0, bond))
-				 || mMol.isMetalAtom(mMol.getBondAtom(1, bond)))
-					mMol.setBondType(bond, Molecule.cBondTypeMetalLigand);
-				else
-					isAromaticBond[bond] = true;
+				isAromaticBond[bond] = true;
 				break;
 			case 2:
 				mMol.setBondType(bond, Molecule.cBondTypeDouble);
@@ -618,6 +614,11 @@ public class IDCodeParser {
 					int atom = decodeBits(abits);
 					mMol.setAtomQueryFeature(atom, Molecule.cAtomQFExcludeGroup, true);
 					}
+				break;
+			case 28: //  datatype 'coordinate bond'
+				no = decodeBits(bbits);
+				for (int i=0; i<no; i++)
+					mMol.setBondType(decodeBits(bbits), Molecule.cBondTypeMetalLigand);
 				break;
 				}
 			}
@@ -1340,6 +1341,13 @@ public class IDCodeParser {
 				System.out.print("AtomQFExcludeGroup:");
 				for (int i=0; i<no; i++)
 					System.out.print(" "+decodeBits(abits)+":true");
+				System.out.println();
+				break;
+			case 28:	//	datatype 'coordinate bond'
+				no = decodeBits(bbits);
+				System.out.print("Coordinate Bonds:");
+				for (int i=0; i<no; i++)
+					System.out.print(" "+decodeBits(bbits));
 				System.out.println();
 				break;
 				}
