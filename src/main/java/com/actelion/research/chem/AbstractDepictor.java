@@ -152,6 +152,7 @@ public abstract class AbstractDepictor {
 	private double					mpBondSpacing,mpDotDiameter,mpLineWidth,mpQFDiameter,mpBondHiliteRadius,
 									mFactorTextSize,mpExcludeGroupRadius,mChiralTextSize;
 	private int						mpLabelSize, mStandardForegroundColor,mDisplayMode,mCurrentColor,mPreviousColor;
+	private boolean                 mIsValidatingView;
 	private ArrayList<Rectangle2D.Double> mpTabuZone;
     private ArrayList<DepictorDot>  mpDot;
 	private StereoMolecule     		mMol;
@@ -331,8 +332,10 @@ public abstract class AbstractDepictor {
 
 		setTextSize(mpLabelSize);
 
+		mIsValidatingView = true;
 		for (int i=0; i<mMol.getAllAtoms(); i++)
-	    	mpDrawAtom(i, false);
+	    	mpDrawAtom(i);
+		mIsValidatingView = false;
 
 		double avbl = mTransformation.getScaling() * mMol.getAverageBondLength();
 		expandBoundsByTabuZones(avbl);
@@ -569,12 +572,12 @@ public abstract class AbstractDepictor {
 		for (int i=0; i<mMol.getAllAtoms(); i++) {
 			if (isHighlightedAtom(i)) {
 				setColor(COLOR_HILITE_BOND_FG);
-	    		mpDrawAtom(i, true);
+	    		mpDrawAtom(i);
 				setColor(mStandardForegroundColor);
 				}
 			else if (mAtomColor[i] != 0) {
 				setColor(mAtomColor[i]);
-	    		mpDrawAtom(i, true);
+	    		mpDrawAtom(i);
 				setColor(mStandardForegroundColor);
 				}
 			else if (!explicitAtomColors
@@ -584,11 +587,11 @@ public abstract class AbstractDepictor {
 				  && mMol.getAtomList(i) == null
 				  && mMol.getAtomicNo(i) < ATOM_LABEL_COLOR.length) {
 				setRGBColor(getContrastColor(ATOM_LABEL_COLOR[mMol.getAtomicNo(i)]));
-	    		mpDrawAtom(i, true);
+	    		mpDrawAtom(i);
 				setColor(mStandardForegroundColor);
 				}
 			else {
-	    		mpDrawAtom(i, true);
+	    		mpDrawAtom(i);
 				}
 			}
 		mpDrawAllDots();
@@ -760,7 +763,7 @@ public abstract class AbstractDepictor {
 					double y = (getAtomY(atom1) + getAtomY(atom2)) / 2;
 					double dx = (getAtomX(atom1) - getAtomX(atom2)) / 3;
 					double dy = (getAtomY(atom1) - getAtomY(atom2)) / 3;
-					mpDrawString(x+dy,y-dx,cipStr,true,true);
+					mpDrawString(x+dy,y-dx,cipStr,true);
 					setColor(mStandardForegroundColor);
 					setTextSize(mpLabelSize);
 					}
@@ -777,7 +780,7 @@ public abstract class AbstractDepictor {
 							: mMol.isAromaticBond(i) ? "a" : "";
 				double x = (getAtomX(atom1) + getAtomX(atom2)) / 2;
 				double y = (getAtomY(atom1) + getAtomY(atom2)) / 2;
-				mpDrawString(x,y,type+String.valueOf(i),true,true);
+				mpDrawString(x,y,type+String.valueOf(i),true);
 				}
 			setColor(mStandardForegroundColor);
 			setTextSize(mpLabelSize);
@@ -1553,10 +1556,10 @@ public abstract class AbstractDepictor {
 		}
 
 
-	private void mpDrawAtom(int atom, boolean drawAtoms) {
+	private void mpDrawAtom(int atom) {
 		double chax,chay,xdiff,ydiff,x,y;
 
-        if (drawAtoms)
+        if (!mIsValidatingView)
             onDrawAtom(atom,mMol.getAtomLabel(atom), getAtomX(atom), getAtomY(atom));
 
 
@@ -1761,17 +1764,17 @@ public abstract class AbstractDepictor {
 
 		if (atomStr != null) {
 			labelWidth = getStringWidth(atomStr);
-			mpDrawString(getAtomX(atom),getAtomY(atom),atomStr,drawAtoms,true);
+			mpDrawString(getAtomX(atom),getAtomY(atom),atomStr,true);
 			mAtomLabelDisplayed[atom] = true;
 			}
 		else if (mpAlleneCenter(atom))
-			mpDrawDot(getAtomX(atom),getAtomY(atom),atom,drawAtoms);
+			mpDrawDot(getAtomX(atom),getAtomY(atom),atom);
 
 		if (propStr != null) {
 			setTextSize((mpLabelSize*2+1)/3);
 			x = getAtomX(atom) + ((labelWidth + getStringWidth(propStr)) / 2.0 + 1);
 			y = getAtomY(atom) - ((getTextSize()*4-4)/8);
-			mpDrawString(x,y,propStr,drawAtoms,true);
+			mpDrawString(x,y,propStr,true);
 			setTextSize(mpLabelSize);
 			}
 
@@ -1782,7 +1785,7 @@ public abstract class AbstractDepictor {
 			setTextSize((mpLabelSize*2+1)/3);
 			x = getAtomX(atom) - ((labelWidth + getStringWidth(isoStr)) / 2.0f);
 			y = getAtomY(atom) - ((getTextSize()*4-4)/8);
-			mpDrawString(x,y,isoStr,drawAtoms,true);
+			mpDrawString(x,y,isoStr,true);
 			setTextSize(mpLabelSize);
 			}
 
@@ -1792,7 +1795,7 @@ public abstract class AbstractDepictor {
 			y = getAtomY(atom) + ((getTextSize()*4+4)/8);
 			int theColor = mCurrentColor;
 			setColor(COLOR_CIP_LETTER);
-			mpDrawString(x,y,cipStr,drawAtoms,false);
+			mpDrawString(x,y,cipStr,false);
 			setColor(theColor);
 			setTextSize(mpLabelSize);
 			}
@@ -1803,7 +1806,7 @@ public abstract class AbstractDepictor {
 			y = getAtomY(atom) + ((getTextSize()*4+4)/8);
 			int theColor = mCurrentColor;
 			setColor(mMol.isAutoMappedAtom(atom) ? Molecule.cAtomColorDarkGreen : Molecule.cAtomColorDarkRed);
-			mpDrawString(x,y,mapStr,drawAtoms,true);
+			mpDrawString(x,y,mapStr,true);
 			setColor(theColor);
 			setTextSize(mpLabelSize);
 			}
@@ -1815,7 +1818,7 @@ public abstract class AbstractDepictor {
             y = getAtomY(atom) + 0.7*getTextSize()*Math.cos(angle);
             int theColor = mCurrentColor;
             setColor(getESRColor(atom));
-            mpDrawString(x,y,esrStr,drawAtoms,false);
+            mpDrawString(x,y,esrStr,false);
             setColor(theColor);
             setTextSize(mpLabelSize);
             }
@@ -1910,11 +1913,11 @@ public abstract class AbstractDepictor {
 			if (hNoWidth > 0) {
 				x = chax + ((hydrogenWidth + hNoWidth) / 2.0f);
 				y = chay + ((getTextSize()*4+4)/8);
-				mpDrawString(x,y,hNoStr,drawAtoms,true);
+				mpDrawString(x,y,hNoStr,true);
 				setTextSize(mpLabelSize);
 				}
 
-			mpDrawString(chax,chay,"H",drawAtoms,true);
+			mpDrawString(chax,chay,"H",true);
 			}
 
 		int bestSide = 0;
@@ -1956,7 +1959,7 @@ public abstract class AbstractDepictor {
 				}
 
 			if (unpairedElectrons == 1) {
-				mpDrawDot(chax,chay,atom,drawAtoms);
+				mpDrawDot(chax,chay,atom);
 				}
 			else {
 				switch (bestSide) {
@@ -1982,8 +1985,8 @@ public abstract class AbstractDepictor {
 					break;
 					}
 
-				mpDrawDot(chax, chay, atom, drawAtoms);
-				mpDrawDot(chax + xdiff, chay + ydiff, atom, drawAtoms);
+				mpDrawDot(chax, chay, atom);
+				mpDrawDot(chax + xdiff, chay + ydiff, atom);
 				}
 			}
 
@@ -2039,8 +2042,7 @@ public abstract class AbstractDepictor {
         return (a == null) ? b : a+","+b;
         }
 
-	private void mpDrawString(double x, double y, String str,
-							  boolean drawAtom,boolean withTabu) {
+	private void mpDrawString(double x, double y, String str, boolean withTabu) {
 		if (withTabu) {
 			double strWidth,xdiff,ydiff;
 
@@ -2053,16 +2055,16 @@ public abstract class AbstractDepictor {
 			mpTabuZone.add(new Rectangle2D.Double(x-xdiff, y-ydiff, 2*xdiff, 2*ydiff));
 			}
 
-		if (drawAtom)
+		if (!mIsValidatingView)
 			drawString(str,x,y);
 		}
 
 
-	private void mpDrawDot(double x, double y, int atm, boolean drawDot) {
+	private void mpDrawDot(double x, double y, int atm) {
 		mpTabuZone.add(new Rectangle2D.Double(x-mpDotDiameter, y-mpDotDiameter,
 											  2*mpDotDiameter, 2*mpDotDiameter));
 
-		if (drawDot) {
+		if (!mIsValidatingView) {
 			mpDot.add(new DepictorDot(x, y, isHighlightedAtom(atm) ? COLOR_HILITE_BOND_FG : mAtomColor[atm]));
 			}
 		}
@@ -2124,9 +2126,9 @@ public abstract class AbstractDepictor {
 	            double hh = 0.55 * getTextSize();
 	            if (d != 0) {
 	            	if (dx > 0)
-	            		mpDrawString(x+hw*dy/d, y-hh*dx/d, label, true, true);
+	            		mpDrawString(x+hw*dy/d, y-hh*dx/d, label, true);
 	            	else
-	            		mpDrawString(x-hw*dy/d, y+hh*dx/d, label, true, true);
+	            		mpDrawString(x-hw*dy/d, y+hh*dx/d, label, true);
 	            	}
             	}
             }
@@ -2328,6 +2330,9 @@ public abstract class AbstractDepictor {
 
 
 	public void setColor(int theColor) {
+		if (mIsValidatingView)
+			return;
+
 		if (theColor != COLOR_HILITE_BOND_BG
 		 && theColor != COLOR_EXCLUDE_GROUP_BG
 		 && mOverruleForeground != null)
