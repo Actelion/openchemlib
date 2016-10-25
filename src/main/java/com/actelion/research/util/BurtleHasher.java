@@ -39,7 +39,12 @@ public class BurtleHasher {
 		int v = 1<<(n);
 		return v;
 	}
-	
+
+	/**
+	 *
+	 * @param n number of bits set in mask.
+	 * @return
+	 */
 	public static int hashmask(int n)  {
 		int v = (hashsize(n)-1);
 		

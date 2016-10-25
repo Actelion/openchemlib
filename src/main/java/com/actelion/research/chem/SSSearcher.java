@@ -476,10 +476,8 @@ System.out.println();
 				}
 			else {
 				// skip plain hydrogens
-				if (mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]) >= mMolecule.getAtoms()) {
-					index[current]++;
+				if (mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]) >= mMolecule.getAtoms())
 					continue;
-					}
 
 				int candidate = mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]);
 				if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor

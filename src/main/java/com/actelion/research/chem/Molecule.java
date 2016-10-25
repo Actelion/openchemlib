@@ -892,11 +892,11 @@ public class Molecule implements Serializable {
 	 */
 	public boolean changeAtomCharge(int atom, boolean positive) {
 		if (positive) {
-			if (mAtomCharge[atom] > 3) return false;
+			if (mAtomCharge[atom] > 8) return false;
 			mAtomCharge[atom]++;
 			}
 		else {
-			if (mAtomCharge[atom] < -3) return false;
+			if (mAtomCharge[atom] < -8) return false;
 			mAtomCharge[atom]--;
 			}
 		mValidHelperArrays = cHelperNone;

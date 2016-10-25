@@ -1726,11 +1726,19 @@ public abstract class AbstractDepictor {
             }
 
 		int hydrogensToAdd = 0;
-		if (mMol.getAtomicNo(atom) != 6
-		 || !mAtomIsConnected[atom]
-		 || (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0
-		 || mMol.getAtomRadical(atom) != 0)
-			hydrogensToAdd = mMol.getImplicitHydrogens(atom);
+		if (mMol.isFragment()) {
+			if ((mMol.getAtomicNo(atom) != 6
+			  || !mAtomIsConnected[atom])
+			 && (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0
+			 && mMol.getAtomCharge(atom) != 0 || mMol.getAtomRadical(atom) != 0)
+				hydrogensToAdd = mMol.getImplicitHydrogens(atom);
+			}
+		else {
+			if (mMol.getAtomicNo(atom) != 6
+			 || !mAtomIsConnected[atom]
+			 || mMol.getAtomRadical(atom) != 0)
+				hydrogensToAdd = mMol.getImplicitHydrogens(atom);
+			}
 
 		String atomStr = mMol.getAtomCustomLabel(atom);
 		if (atomStr != null) {
