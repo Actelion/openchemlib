@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 
 
@@ -2213,25 +2214,57 @@ public class Molecule implements Serializable {
 		}
 
 
+
+	/**
+	 * Used instead of the 1.6 Features. Cartridge needs 1.5
+	 * @param a
+	 * @param newSize
+     * @return
+     */
+/*
+	private static int[] copyOf(int[] original, int newLength) {
+     int[] copy = new int[newLength];
+     System.arraycopy(original, 0, copy, 0,
+                      Math.min(original.length, newLength));
+     return copy;
+ }
+*/
+
+	/**
+	 * Used instead of the 1.6 Features. Cartridge needs 1.5
+	 * @param a
+	 * @param newSize
+     * @return
+     */
+	private final static Object copyOf(Object a, int newSize) {
+		Class cl = a.getClass();
+		if (!cl.isArray()) return null;
+		int size = Array.getLength(a);
+		Class componentType = a.getClass().getComponentType();
+		Object newArray = Array.newInstance(componentType, newSize);
+		System.arraycopy(a, 0, newArray, 0, Math.min(size, newSize));
+		return newArray;
+	}
+
 	/**
 	 * Usually called automatically and hardly needed to be called.
 	 * @param v
 	 */
 	public void setMaxAtoms(int v) {
-		mAtomicNo = Arrays.copyOf(mAtomicNo, v);
-		mAtomCharge = Arrays.copyOf(mAtomCharge, v);
-		mAtomMapNo = Arrays.copyOf(mAtomMapNo, v);
+		mAtomicNo = (int[])copyOf(mAtomicNo, v);		// CXR: Do not used Arrays.copyOf: It's a 1.6 Feature!!
+		mAtomCharge = (int[])copyOf(mAtomCharge, v);
+		mAtomMapNo = (int[])copyOf(mAtomMapNo, v);
 		int orig = mCoordinates.length;
-		mCoordinates = Arrays.copyOf(mCoordinates, v);
+		mCoordinates = (Coordinates[])copyOf(mCoordinates, v);
 		for (int i=orig; i<v; i++)
 			mCoordinates[i] = new Coordinates();
-		mAtomMass = Arrays.copyOf(mAtomMass, v);
-		mAtomFlags = Arrays.copyOf(mAtomFlags, v);
-		mAtomQueryFeatures = Arrays.copyOf(mAtomQueryFeatures, v);
+		mAtomMass = (int[])copyOf(mAtomMass, v);
+		mAtomFlags = (int[])copyOf(mAtomFlags, v);
+		mAtomQueryFeatures = (int[])copyOf(mAtomQueryFeatures, v);
 		if (mAtomList != null)
-			mAtomList = Arrays.copyOf(mAtomList, v);
+			mAtomList = (int[][])copyOf(mAtomList, v);
 		if (mAtomCustomLabel != null)
-			mAtomCustomLabel = Arrays.copyOf(mAtomCustomLabel, v);
+			mAtomCustomLabel = (byte[][])copyOf(mAtomCustomLabel, v);
 		mMaxAtoms = v;
 		}
 
@@ -2250,11 +2283,11 @@ public class Molecule implements Serializable {
 	 * @param v
 	 */
 	public void setMaxBonds(int v) {
-		mBondAtom[0] = Arrays.copyOf(mBondAtom[0], v);
-		mBondAtom[1] = Arrays.copyOf(mBondAtom[1], v);
-		mBondType = Arrays.copyOf(mBondType, v);
-		mBondFlags = Arrays.copyOf(mBondFlags, v);
-		mBondQueryFeatures = Arrays.copyOf(mBondQueryFeatures, v);
+		mBondAtom[0] = (int[])copyOf(mBondAtom[0], v);
+		mBondAtom[1] = (int[])copyOf(mBondAtom[1], v);
+		mBondType = (int[])copyOf(mBondType, v);
+		mBondFlags = (int[])copyOf(mBondFlags, v);
+		mBondQueryFeatures = (int[])copyOf(mBondQueryFeatures, v);
 		mMaxBonds = v;
 		}
 
