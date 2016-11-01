@@ -33,16 +33,10 @@
 
 package com.actelion.research.chem;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
 import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
+
+import java.util.*;
 
 /**
  *
@@ -473,13 +467,13 @@ public class ExtendedMoleculeFunctions {
 		StereoMolecule mol = new StereoMolecule();
 		new IDCodeParser(false).parse(mol, idCode);
 
-		ExtendedMolecule [] frags = mol.getFragments();
+		StereoMolecule [] frags = mol.getFragments();
 
 		String idBiggest = idCode;
 
 		if(frags.length > 1) {
 
-			ExtendedMolecule biggest = mol;
+			StereoMolecule biggest = mol;
 			int maxAtoms = 0;
 			for (int ii = 0; ii < frags.length; ii++) {
 				if (frags[ii].getAllAtoms() > maxAtoms) {

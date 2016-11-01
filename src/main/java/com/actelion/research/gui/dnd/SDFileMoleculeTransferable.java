@@ -33,14 +33,15 @@
  package com.actelion.research.gui.dnd;
 
 
-import com.actelion.research.chem.*;
-import java.io.IOException;
-import com.actelion.research.chem.ExtendedMolecule;
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.StructureInfo;
+import com.actelion.research.chem.StructureTransferData;
+
 import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-
-import java.awt.datatransfer.DataFlavor;
+import java.io.IOException;
 
 public class SDFileMoleculeTransferable extends MoleculeTransferable
 {
@@ -48,7 +49,7 @@ public class SDFileMoleculeTransferable extends MoleculeTransferable
 
     private DataFlavor FLAVORS[] = {DF_SERIALIZEDSTRUCTURETRANSFERDATA};
     StructureInfo  si_ = null;
-    public SDFileMoleculeTransferable(ExtendedMolecule mol, StructureInfo  si)
+    public SDFileMoleculeTransferable(StereoMolecule mol, StructureInfo  si)
     {
         super(mol);
         si_ = si;

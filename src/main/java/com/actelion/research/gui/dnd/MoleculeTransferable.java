@@ -43,9 +43,9 @@ import java.util.List;
 public class MoleculeTransferable implements Transferable,ClipboardOwner 
 {
         private static final List cFlavorList = Arrays.asList( MoleculeFlavors.FLAVORS );
-        protected ExtendedMolecule mMol;
+        protected StereoMolecule mMol;
 
-        public MoleculeTransferable(ExtendedMolecule mol) {
+        public MoleculeTransferable(StereoMolecule mol) {
                 mMol = mol;
                 }
         public synchronized DataFlavor[] getTransferDataFlavors() {

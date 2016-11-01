@@ -58,6 +58,7 @@ public class RingCollection {
 	private int[] mHeteroPosition;
 	private boolean[] mIsAromatic;
 	private boolean[] mIsDelocalized;
+	private int mMaxSmallRingSize;
 
 	/**
 	 * Generates the complete set of small rings, which contains all rings
@@ -69,7 +70,22 @@ public class RingCollection {
 	 * @param mode one of the public MODE_ options
 	 */
 	public RingCollection(ExtendedMolecule mol, int mode) {
+		this(mol, mode, MAX_SMALL_RING_SIZE);
+		}
+
+	/**
+	 * Generates the complete set of small rings, which contains all rings
+	 * up to maxSmallRingSize members.<br> If mode includes LARGE_RINGS, then it determines
+	 * for every atom and bond the size of the smallest ring, which they are
+	 * a member of.<br>If mode includes AROMATICITY then every small ring
+	 * is checked, whether it is aromatic.
+	 * @param mol
+	 * @param mode one of the public MODE_ options
+	 * @param maxSmallRingSize largest ring size considered a small ring
+	 */
+	public RingCollection(ExtendedMolecule mol, int mode, int maxSmallRingSize) {
 		mMol = mol;
+		mMaxSmallRingSize = maxSmallRingSize;
 		mRingAtomSet = new ArrayList<int[]>();
 		mRingBondSet = new ArrayList<int[]>();
 
@@ -237,8 +253,8 @@ public class RingCollection {
 
 
 	private void addSmallRingsToSet(int closureBond, boolean[] isConfirmedChainAtom) {
-		int[] graphAtom = new int[MAX_SMALL_RING_SIZE];
-		int[] connIndex = new int[MAX_SMALL_RING_SIZE];
+		int[] graphAtom = new int[mMaxSmallRingSize];
+		int[] connIndex = new int[mMaxSmallRingSize];
 		boolean[] isUsed = new boolean[mMol.getAtoms()];
 
 		int atom1 = mMol.getBondAtom(0, closureBond);
@@ -267,7 +283,7 @@ public class RingCollection {
 				continue;
 				}
 
-			if (current+1 < MAX_SMALL_RING_SIZE) {
+			if (current+1 < mMaxSmallRingSize) {
 				current++;
 				graphAtom[current] = candidate;
 				isUsed[candidate] = true;

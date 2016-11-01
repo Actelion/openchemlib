@@ -2725,6 +2725,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return -1;
 		}
 
+	public int getHelperArrayStatus() {
+		return mValidHelperArrays;
+		}
+
 	/**
 	 * While the Molecule class covers all primary molecule information, its derived class
 	 * ExtendedMolecule handles secondary, i.e. calculated molecule information, which is cached

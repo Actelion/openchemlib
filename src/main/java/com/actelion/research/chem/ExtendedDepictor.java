@@ -135,7 +135,7 @@ public class ExtendedDepictor {
         return mMolecule.length;
         }
 
-    public ExtendedMolecule getMolecule(int i) {
+    public StereoMolecule getMolecule(int i) {
         return mMolecule[i];
         }
 
