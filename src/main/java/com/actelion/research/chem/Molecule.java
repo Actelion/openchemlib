@@ -2056,6 +2056,34 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 * Calculates a signed torsion as an exterior spherical angle
+	 * from a valid 4-atom strand.
+	 * Looking along the central bond, the torsion angle is 0.0, if the
+	 * projection of front and rear bonds point in the same direction.
+	 * If the front bond is rotated in the clockwise direction, the angle
+	 * increases, i.e. has a positive value.
+	 * http://en.wikipedia.org/wiki/Dihedral_angle
+	 * @param atom 4 valid atom indices defining a connected atom sequence
+	 * @return torsion in the range: -pi <= torsion <= pi
+	 */
+	public double calculateTorsion(int[] atom) {
+		Coordinates c1 = mCoordinates[atom[0]];
+		Coordinates c2 = mCoordinates[atom[1]];
+		Coordinates c3 = mCoordinates[atom[2]];
+		Coordinates c4 = mCoordinates[atom[3]];
+
+		Coordinates v1 = c2.subC(c1);
+		Coordinates v2 = c3.subC(c2);
+		Coordinates v3 = c4.subC(c3);
+
+		Coordinates n1 = v1.cross(v2);
+		Coordinates n2 = v2.cross(v3);
+
+		return -Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2));
+		}
+
+
+	/**
 	 * @param no 0 or 1
 	 * @param bond
 	 * @return atom index
@@ -2686,7 +2714,7 @@ public class Molecule implements Serializable {
 	 * The atom parity is a calculated property available above/equal helper level cHelperParities.
 	 * It describes the stereo configuration of a chiral atom and is calculated either from
 	 * 2D-atom-coordinates and up/down-bonds or from 3D-atom-coordinates, whatever is available.
-	 * It depends on the atom indices of the neighbor atoms and their orientation is space.<br>
+	 * It depends on the atom indices of the neighbor atoms and their orientation in space.<br>
 	 * The parity is defined as follows: Look at the chiral atom such that its neighbor atom with the
 	 * highest atom index (or the hydrogen atom if it is implicit) is oriented to the back.
 	 * If the remaining three neighbors are in clockwise order (considering ascending atom indexes)

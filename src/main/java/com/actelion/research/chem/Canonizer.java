@@ -1932,7 +1932,7 @@ System.out.println("noOfRanks:"+canRank);
 		atom[1] = halfParity1.mCentralAxialAtom;
 		atom[2] = halfParity2.mCentralAxialAtom;
 		atom[3] = halfParity2.mHighConn;
-		double torsion = TorsionDB.calculateTorsion(mMol, atom);
+		double torsion = mMol.calculateTorsion(atom);
 		// if the torsion is not significant (less than ~10 degrees) then return cBondParityUnknown
 		if (Math.abs(torsion) < 0.3 || Math.abs(torsion) > Math.PI-0.3)
 			return Molecule.cBondParityUnknown;

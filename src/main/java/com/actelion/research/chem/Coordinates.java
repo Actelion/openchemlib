@@ -412,7 +412,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return pp;
 	}
 
-	public static final double getDihedral(Coordinates c1, Coordinates c2, Coordinates c3, Coordinates c4) {
+/*	public static final double getDihedral(Coordinates c1, Coordinates c2, Coordinates c3, Coordinates c4) {
 		//Coordinates c1 = this;
 		// Calculate the vectors between atoms
 		Coordinates r12 = new Coordinates(c1);
@@ -440,6 +440,32 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 
 		//  Get phi, assign the sign based on the sine value
 		return -Math.atan2(sin_phi, cos_phi);
+	}*/
+
+	/**
+	 * Calculates a signed torsion as an exterior spherical angle
+	 * from a valid sequence of 4 points in space.
+	 * Looking along the line from c2 to c3, the torsion angle is 0.0, if the
+	 * projection of c2->c1 and c3->c4 point in the same direction.
+	 * If the projection of vector c2-c1 is rotated in clockwise direction,
+	 * the angle increases, i.e. has a positive value.
+	 * http://en.wikipedia.org/wiki/Dihedral_angle
+	 * @param c1
+	 * @param c2
+	 * @param c3
+	 * @param c4
+	 * @return torsion in the range: -pi <= torsion <= pi
+	 */
+	public static final double getDihedral(Coordinates c1, Coordinates c2, Coordinates c3, Coordinates c4) {
+		// changed from above, because it seems a little more efficient; TLS 2-Nov-2016
+		Coordinates v1 = c2.subC(c1);
+		Coordinates v2 = c3.subC(c2);
+		Coordinates v3 = c4.subC(c3);
+
+		Coordinates n1 = v1.cross(v2);
+		Coordinates n2 = v2.cross(v3);
+
+		return -Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2));
 	}
 
 	@Override

@@ -442,7 +442,7 @@ public class TorsionDB {
 	 */
 	public static double calculateTorsionExtended(StereoMolecule mol, int[] atom) {
 		if (atom[0] != -1 && atom[3] != -1)
-			return calculateTorsion(mol, atom);
+			return mol.calculateTorsion(atom);
 
 		return calculateTorsionExtended(mol, null, atom);
 		}
@@ -458,7 +458,7 @@ public class TorsionDB {
 	 */
 	public static double calculateTorsionExtended(Conformer conformer, int[] atom) {
 		if (atom[0] != -1 && atom[3] != -1)
-			return calculateTorsion(conformer, atom);
+			return conformer.calculateTorsion(atom);
 
 		return calculateTorsionExtended(conformer.getMolecule(), conformer, atom);
 		}
@@ -487,9 +487,9 @@ public class TorsionDB {
 //					if (connAtom != atom[3-central]) {
 						atom[terminal] = connAtom;
 						if (conformer != null)
-							angle1[index++] = calculateTorsion(conformer, atom);
+							angle1[index++] = conformer.calculateTorsion(atom);
 						else
-							angle1[index++] = calculateTorsion(mol, atom);
+							angle1[index++] = mol.calculateTorsion(atom);
 						}
 					}
 				atom[terminal] = -1;   // restore value for virtual atom
@@ -515,9 +515,9 @@ public class TorsionDB {
 						assert(mol.getConnAtoms(atom[2]) == 3);
 						atom[3] = terminal2;
 						if (conformer != null)
-							angle2[index2++] = calculateTorsion(conformer, atom);
+							angle2[index2++] = conformer.calculateTorsion(atom);
 						else
-							angle2[index2++] = calculateTorsion(mol, atom);
+							angle2[index2++] = mol.calculateTorsion(atom);
 						}
 					}
 				angle1[index1++] = calculateVirtualTorsion(angle2);
@@ -582,62 +582,6 @@ public class TorsionDB {
 		if (angleDif > Math.PI)
 			return meanAngle;
 		return (meanAngle < 0) ? meanAngle + Math.PI : meanAngle - Math.PI;
-		}
-
-	/**
-	 * Calculates a signed torsion as an exterior spherical angle
-	 * from a valid 4-atom strand.
-	 * Looking along the central bond, the torsion angle is 0.0, if the
-	 * projection of front and rear bonds point in the same direction.
-	 * If the front bond is rotated in the clockwise direction, the angle
-	 * increases, i.e. has a positive value.
-	 * http://en.wikipedia.org/wiki/Dihedral_angle
-	 * @param mol
-	 * @param atom 4 valid atom indices defining a connected atom sequence
-	 * @return torsion in the range: -pi <= torsion <= pi
-	 */
-	public static double calculateTorsion(StereoMolecule mol, int[] atom) {
-		Coordinates c1 = getCoordinates(mol, atom[0]);
-		Coordinates c2 = getCoordinates(mol, atom[1]);
-		Coordinates c3 = getCoordinates(mol, atom[2]);
-		Coordinates c4 = getCoordinates(mol, atom[3]);
-
-		Coordinates v1 = c2.subC(c1);
-		Coordinates v2 = c3.subC(c2);
-		Coordinates v3 = c4.subC(c3);
-
-		Coordinates n1 = v1.cross(v2);
-		Coordinates n2 = v2.cross(v3);
-
-		return -Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2));
-		}
-
-	/**
-	 * Calculates a signed torsion as an exterior spherical angle
-	 * from a valid 4-atom strand.
-	 * Looking along the central bond, the torsion angle is 0.0, if the
-	 * projection of front and rear bonds point in the same direction.
-	 * If the front bond is rotated in the clockwise direction, the angle
-	 * increases, i.e. has a positive value.
-	 * http://en.wikipedia.org/wiki/Dihedral_angle
-	 * @param conformer
-	 * @param atom 4 valid atom indices defining a connected atom sequence
-	 * @return torsion in the range: -pi <= torsion <= pi
-	 */
-	public static double calculateTorsion(Conformer conformer, int[] atom) {
-		Coordinates c1 = conformer.getCoordinates(atom[0]);
-		Coordinates c2 = conformer.getCoordinates(atom[1]);
-		Coordinates c3 = conformer.getCoordinates(atom[2]);
-		Coordinates c4 = conformer.getCoordinates(atom[3]);
-
-		Coordinates v1 = c2.subC(c1);
-		Coordinates v2 = c3.subC(c2);
-		Coordinates v3 = c4.subC(c3);
-
-		Coordinates n1 = v1.cross(v2);
-		Coordinates n2 = v2.cross(v3);
-
-		return -Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2));
 		}
 
 	/**
@@ -706,10 +650,6 @@ public class TorsionDB {
 			}
 
 		return index;
-		}
-
-	private static Coordinates getCoordinates(Molecule mol, int atom) {
-		return new Coordinates(mol.getAtomX(atom), mol.getAtomY(atom), mol.getAtomZ(atom));
 		}
 	}
 
