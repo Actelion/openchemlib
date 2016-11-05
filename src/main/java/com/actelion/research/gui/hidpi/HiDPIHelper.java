@@ -62,26 +62,17 @@ public class HiDPIHelper {
 
 	/**
 	 * For Windows and Linux this method returns the user defined UI scaling factor.
-	 * On Windows this is done by judging by the size of the UIManager's Label.font
+	 * This is done by judging from the size of the UIManager's Label.font
 	 * and comparing it to the unscaled default (13). Typically this factor is larger
 	 * than 1.0 on HiDPI devices. For this method to work the Look&Feel must consider
-	 * the OS provided setting and scale its fonts accordingly. <br>
-	 * If a Java system property 'dpifactor' is defined, its value is used rather than
-	 * a font size derived one.<br>
+	 * the OS provided setting and scale its fonts accordingly (Substance LaF does).<br>
 	 * On the Macintosh this factor is usually 1.0, because HiDPI device support uses
-	 * a diffewrent mechanism (see getRetinaScaleFactor()).
+	 * a different mechanism (see getRetinaScaleFactor()).
 	 * @return typically 1.0 or 1.25, 1.5, ...
 	 */
 	public static float getUIScaleFactor() {
-		if (sUIScaleFactor == -1) {
-			sUIScaleFactor = Platform.isWindows() ? (float) UIManager.getFont("Label.font").getSize() / 13f : 1f;
-			if (System.getProperty("dpifactor") != null) {
-				try {
-					sUIScaleFactor = Float.parseFloat(System.getProperty("dpifactor"));
-					}
-				catch (NumberFormatException nfe) {}
-				}
-			}
+		if (sUIScaleFactor == -1)
+			sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 13f;
 
 		return sUIScaleFactor;
 		}

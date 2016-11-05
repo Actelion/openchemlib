@@ -742,7 +742,8 @@ public class IDCodeParser {
 					}
 				}
 			catch (Exception e) {
-				System.out.println("Faulty id-coordinates:"+e.getMessage());
+				e.printStackTrace();
+				System.out.println("Faulty id-coordinates:"+e.toString()+" "+new String(idcode)+" "+new String(coordinates));
 				coordinates = null;
 				coordsAre3D = false;
 				}
@@ -970,505 +971,529 @@ public class IDCodeParser {
 		}
 
 	public void printContent(byte[] idcode, byte[] coordinates) {
-		int version = Canonizer.cIDCodeVersion2;
+		try {
+			int version = Canonizer.cIDCodeVersion2;
 
-		System.out.println("IDCode: "+new String(idcode));
-		if (idcode==null || idcode.length==0)
-			return;
+			if (idcode == null || idcode.length == 0)
+				return;
 
-		decodeBitsStart(idcode, 0);
-		int abits = decodeBits(4);
-		int bbits = decodeBits(4);
+			System.out.println("idcode: " + new String(idcode));
+			if (coordinates != null)
+				System.out.println("coords: " + new String(coordinates));
 
-		if (abits > 8) {	// abits is the version number
-			version = abits;
-			abits = bbits;
+			decodeBitsStart(idcode, 0);
+			int abits = decodeBits(4);
+			int bbits = decodeBits(4);
+
+			if (abits > 8) {    // abits is the version number
+				version = abits;
+				abits = bbits;
 			}
 
-		System.out.println("version:"+version);
+			System.out.println("version:" + version);
 
-		int allAtoms = decodeBits(abits);
-		if (allAtoms == 0)
-			return;
+			int allAtoms = decodeBits(abits);
+			if (allAtoms == 0)
+				return;
 
-		int allBonds = decodeBits(bbits);
-		int nitrogens = decodeBits(abits);
-		int oxygens = decodeBits(abits);
-		int otherAtoms = decodeBits(abits);
-		int chargedAtoms = decodeBits(abits);
+			int allBonds = decodeBits(bbits);
+			int nitrogens = decodeBits(abits);
+			int oxygens = decodeBits(abits);
+			int otherAtoms = decodeBits(abits);
+			int chargedAtoms = decodeBits(abits);
 
-		System.out.println("allAtoms:"+allAtoms+" allBonds:"+allBonds);
-		if (nitrogens != 0) {
-			System.out.print("nitrogens:");
-			for (int i=0; i<nitrogens; i++)
-				System.out.print(" "+decodeBits(abits));
-			System.out.println();
+			System.out.println("allAtoms:" + allAtoms + " allBonds:" + allBonds);
+			if (nitrogens != 0) {
+				System.out.print("nitrogens:");
+				for (int i = 0; i < nitrogens; i++)
+					System.out.print(" " + decodeBits(abits));
+				System.out.println();
 			}
-		if (oxygens != 0) {
-			System.out.print("oxygens:");
-			for (int i=0; i<oxygens; i++)
-				System.out.print(" "+decodeBits(abits));
-			System.out.println();
+			if (oxygens != 0) {
+				System.out.print("oxygens:");
+				for (int i = 0; i < oxygens; i++)
+					System.out.print(" " + decodeBits(abits));
+				System.out.println();
 			}
-		if (otherAtoms != 0) {
-			System.out.print("otherAtoms:");
-			for (int i=0; i<otherAtoms; i++)
-				System.out.print(" "+decodeBits(abits)+":"+decodeBits(8));
-			System.out.println();
+			if (otherAtoms != 0) {
+				System.out.print("otherAtoms:");
+				for (int i = 0; i < otherAtoms; i++)
+					System.out.print(" " + decodeBits(abits) + ":" + decodeBits(8));
+				System.out.println();
 			}
-		if (chargedAtoms != 0) {
-			System.out.print("chargedAtoms:");
-			for (int i=0; i<chargedAtoms; i++)
-				System.out.print(" "+decodeBits(abits)+":"+(decodeBits(4)-8));
-			System.out.println();
+			if (chargedAtoms != 0) {
+				System.out.print("chargedAtoms:");
+				for (int i = 0; i < chargedAtoms; i++)
+					System.out.print(" " + decodeBits(abits) + ":" + (decodeBits(4) - 8));
+				System.out.println();
 			}
 
-		int closureBonds = 1 + allBonds - allAtoms;
-		int dbits = decodeBits(4);
-		int base = 0;
+			int closureBonds = 1 + allBonds - allAtoms;
+			int dbits = decodeBits(4);
+			int base = 0;
 
-		int[][] bondAtom = new int[2][allBonds];
-		int bondCount = 0;
-		for (int i=1; i<allAtoms; i++) {
-			int dif = decodeBits(dbits);
-			if (dif == 0) {
-				closureBonds++;
-				continue;
+			int[][] bondAtom = new int[2][allBonds];
+			int bondCount = 0;
+			for (int i = 1; i < allAtoms; i++) {
+				int dif = decodeBits(dbits);
+				if (dif == 0) {
+					closureBonds++;
+					continue;
 				}
-			base += dif - 1;
-			bondAtom[0][bondCount] = base;
-			bondAtom[1][bondCount++] = i;
+				base += dif - 1;
+				bondAtom[0][bondCount] = base;
+				bondAtom[1][bondCount++] = i;
 			}
 
-		for (int i=0; i<closureBonds; i++) {
-			bondAtom[0][bondCount] = decodeBits(abits);
-			bondAtom[1][bondCount++] = decodeBits(abits);
+			for (int i = 0; i < closureBonds; i++) {
+				bondAtom[0][bondCount] = decodeBits(abits);
+				bondAtom[1][bondCount++] = decodeBits(abits);
 			}
 
-		int[] bondOrder = new int[allBonds];
-		System.out.print("bonds:");
-		for (int bond=0; bond<allBonds; bond++) {
-			System.out.print(" "+bondAtom[0][bond]);
-			bondOrder[bond] = decodeBits(2);
-			System.out.print(bondOrder[bond]==0?".":bondOrder[bond]==1?"-":bondOrder[bond]==2?"=":"#");
-			System.out.print(""+bondAtom[1][bond]);
+			int[] bondOrder = new int[allBonds];
+			System.out.print("bonds:");
+			for (int bond = 0; bond < allBonds; bond++) {
+				System.out.print(" " + bondAtom[0][bond]);
+				bondOrder[bond] = decodeBits(2);
+				System.out.print(bondOrder[bond] == 0 ? "." : bondOrder[bond] == 1 ? "-" : bondOrder[bond] == 2 ? "=" : "#");
+				System.out.print("" + bondAtom[1][bond]);
 			}
-		System.out.println();
-
-		int THCount = decodeBits(abits);
-		if (THCount != 0) {
-			System.out.print("parities:");
-			for (int i=0; i<THCount; i++) {
-				int atom = decodeBits(abits);
-				if (version == Canonizer.cIDCodeVersion2) {
-					int parity = decodeBits(2);
-					if (parity == 3) {
-						// this was the old discontinued Molecule.cAtomParityMix
-						// version2 idcodes had never more than one center with parityMix
-						System.out.print(" "+atom+":1&0");
-						}
-					else {
-						System.out.print(" "+atom+":"+parity);
-						}
-					}
-				else {
-					int parity = decodeBits(3);
-					switch (parity) {
-					case Canonizer.cParity1And:
-						System.out.print(" "+atom+":1&"+decodeBits(3));
-						break;
-					case Canonizer.cParity2And:
-						System.out.print(" "+atom+":2&"+decodeBits(3));
-						break;
-					case Canonizer.cParity1Or:
-						System.out.print(" "+atom+":1|"+decodeBits(3));
-						break;
-					case Canonizer.cParity2Or:
-						System.out.print(" "+atom+":2|"+decodeBits(3));
-						break;
-					default:
-						System.out.print(" "+atom+":"+parity);
-						}
-					}
-				}
 			System.out.println();
-			}
 
-		if (version == Canonizer.cIDCodeVersion2)
-			if ((decodeBits(1) == 0))   // translate chiral flag
-				System.out.print("isRacemate");
-
-		int EZCount = decodeBits(bbits);
-		if (EZCount != 0) {
-			System.out.print("EZ:");
-			for (int i=0; i<EZCount; i++) {
-				int bond = decodeBits(bbits);
-				if (bondOrder[bond] == 1) {	// BINAP type of axial chirality
-					int parity = decodeBits(3);
-					switch (parity) {
-					case Canonizer.cParity1And:
-						System.out.print(" "+bond+":1&"+decodeBits(3));
-						break;
-					case Canonizer.cParity2And:
-						System.out.print(" "+bond+":2&"+decodeBits(3));
-						break;
-					case Canonizer.cParity1Or:
-						System.out.print(" "+bond+":1|"+decodeBits(3));
-						break;
-					case Canonizer.cParity2Or:
-						System.out.print(" "+bond+":2|"+decodeBits(3));
-						break;
-					default:
-						System.out.print(" "+bond+":"+parity);
-						}
-					}
-				else
-					System.out.print(" "+bond+":"+decodeBits(2));
-				}
-			System.out.println();
-			}
-		
-		if (decodeBits(1) == 1)
-			System.out.println("isFragment = true");
-
-		int offset = 0;
-		while (decodeBits(1) == 1) {
-			int dataType = offset + decodeBits(4);
-			switch (dataType) {
-			case 0: //  datatype 'AtomQFNoMoreNeighbours'
-				int no = decodeBits(abits);
-				System.out.print("noMoreNeighbours:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits));
-				System.out.println();
-				break;
-			case 1: //  datatype 'isotop'
-				no = decodeBits(abits);
-				System.out.print("mass:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(8));
-				System.out.println();
-				break;
-			case 2: //  datatype 'bond defined to be delocalized'
-				no = decodeBits(bbits);
-				System.out.print("delocalizedBonds:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(bbits));
-				System.out.println();
-				break;
-			case 3: //  datatype 'AtomQFMoreNeighbours'
-				no = decodeBits(abits);
-				System.out.print("moreNeighbours:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits));
-				System.out.println();
-				break;
-			case 4: //  datatype 'AtomQFRingState'
-				no = decodeBits(abits);
-				System.out.print("atomRingState:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(Molecule.cAtomQFRingStateBits));
-				System.out.println();
-				break;
-			case 5: //  datatype 'AtomQFAromState'
-				no = decodeBits(abits);
-				System.out.print("atomAromState:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(Molecule.cAtomQFAromStateBits));
-				System.out.println();
-				break;
-			case 6: //  datatype 'AtomQFAny'
-				no = decodeBits(abits);
-				System.out.print("atomAny:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits));
-				System.out.println();
-				break;
-			case 7: //  datatype 'AtomQFHydrogen'
-				no = decodeBits(abits);
-				System.out.print("atomHydrogen:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(Molecule.cAtomQFHydrogenBits));
-				System.out.println();
-				break;
-			case 8: //  datatype 'AtomList'
-				no = decodeBits(abits);
-				System.out.print("atomList:");
-				for (int i=0; i<no; i++) {
+			int THCount = decodeBits(abits);
+			if (THCount != 0) {
+				System.out.print("parities:");
+				for (int i = 0; i < THCount; i++) {
 					int atom = decodeBits(abits);
-					int atoms = decodeBits(4);
-					System.out.print(" "+atom);
-					for (int j=0; j<atoms; j++) {
-						System.out.print(j==0?":":",");
-						System.out.print(""+decodeBits(8)+",");
+					if (version == Canonizer.cIDCodeVersion2) {
+						int parity = decodeBits(2);
+						if (parity == 3) {
+							// this was the old discontinued Molecule.cAtomParityMix
+							// version2 idcodes had never more than one center with parityMix
+							System.out.print(" " + atom + ":1&0");
+						} else {
+							System.out.print(" " + atom + ":" + parity);
+						}
+					} else {
+						int parity = decodeBits(3);
+						switch (parity) {
+							case Canonizer.cParity1And:
+								System.out.print(" " + atom + ":1&" + decodeBits(3));
+								break;
+							case Canonizer.cParity2And:
+								System.out.print(" " + atom + ":2&" + decodeBits(3));
+								break;
+							case Canonizer.cParity1Or:
+								System.out.print(" " + atom + ":1|" + decodeBits(3));
+								break;
+							case Canonizer.cParity2Or:
+								System.out.print(" " + atom + ":2|" + decodeBits(3));
+								break;
+							default:
+								System.out.print(" " + atom + ":" + parity);
 						}
 					}
+				}
 				System.out.println();
-				break;
-			case 9: //  datatype 'BondQFRingState'
-				no = decodeBits(bbits);
-				System.out.print("bondRingState:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(bbits)+":"+decodeBits(Molecule.cBondQFRingStateBits));
+			}
+
+			if (version == Canonizer.cIDCodeVersion2)
+				if ((decodeBits(1) == 0))   // translate chiral flag
+					System.out.print("isRacemate");
+
+			int EZCount = decodeBits(bbits);
+			if (EZCount != 0) {
+				System.out.print("EZ:");
+				for (int i = 0; i < EZCount; i++) {
+					int bond = decodeBits(bbits);
+					if (bondOrder[bond] == 1) {    // BINAP type of axial chirality
+						int parity = decodeBits(3);
+						switch (parity) {
+							case Canonizer.cParity1And:
+								System.out.print(" " + bond + ":1&" + decodeBits(3));
+								break;
+							case Canonizer.cParity2And:
+								System.out.print(" " + bond + ":2&" + decodeBits(3));
+								break;
+							case Canonizer.cParity1Or:
+								System.out.print(" " + bond + ":1|" + decodeBits(3));
+								break;
+							case Canonizer.cParity2Or:
+								System.out.print(" " + bond + ":2|" + decodeBits(3));
+								break;
+							default:
+								System.out.print(" " + bond + ":" + parity);
+						}
+					} else
+						System.out.print(" " + bond + ":" + decodeBits(2));
+				}
 				System.out.println();
-				break;
-			case 10://  datatype 'BondQFBondTypes'
-				no = decodeBits(bbits);
-				System.out.print("bondTypes:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(bbits)+":"+decodeBits(Molecule.cBondQFBondTypesBits));
-				System.out.println();
-				break;
-			case 11:	//  datatype 'AtomQFMatchStereo'
-				no = decodeBits(abits);
-				System.out.print("atomMatchStereo:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits));
-				System.out.println();
-				break;
-			case 12:	//  datatype 'bond defined to be a bridge from n1 to n2 atoms'
-				no = decodeBits(bbits);
-				for (int i=0; i<no; i++) {
-					System.out.print("bridgeBond:"+decodeBits(bbits));
-					int min = decodeBits(Molecule.cBondQFBridgeMinBits);
-					int max = min + decodeBits(Molecule.cBondQFBridgeSpanBits);
-					System.out.println("("+min+"-"+max+")");
-					}
-				break;
-			case 13: //  datatype 'AtomQFPiElectrons'
-				no = decodeBits(abits);
-				System.out.print("atomPiElectrons:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(Molecule.cAtomQFPiElectronBits));
-				System.out.println();
-				break;
-			case 14: //  datatype 'AtomQFNeighbours'
-				no = decodeBits(abits);
-				System.out.print("AtomQFNeighbours:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(Molecule.cAtomQFNeighbourBits));
-				System.out.println();
-				break;
-			case 15: //  datatype 'start second feature set'
-				offset = 16;
-				System.out.println("<start second feature set>");
-				break;
-			case 16: //  datatype 'AtomQFRingSize'
-				no = decodeBits(abits);
-				System.out.print("AtomQFRingSize:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(Molecule.cAtomQFRingSizeBits));
-				System.out.println();
-				break;
-			case 17: //  datatype 'AtomAbnormalValence'
-				no = decodeBits(abits);
-				System.out.print("AtomAbnormalValence:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(4));
-				System.out.println();
-				break;
-			case 18: //  datatype 'AtomCustomLabel'
-				no = decodeBits(abits);
-				System.out.print("AtomCustomLabel:");
-				int lbits = decodeBits(4);
-				for (int i=0; i<no; i++) {
-					int atom = decodeBits(abits);
-					int count = decodeBits(lbits);
-					byte[] label = new byte[count];
-					for (int j=0; j<count; j++)
-						label[j] = (byte)decodeBits(7);
-					System.out.print(" "+atom+":"+new String(label));
-					}
-				System.out.println();
-				break;
-			case 19: //  datatype 'AtomQFCharge'
-				no = decodeBits(abits);
-				System.out.print("AtomQFCharge:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(Molecule.cAtomQFChargeBits));
-				System.out.println();
-				break;
-			case 20: //  datatype 'BondQFRingSize'
-				no = decodeBits(bbits);
-				System.out.print("BondQFRingSize:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(bbits)+":"+decodeBits(Molecule.cBondQFRingSizeBits));
-				System.out.println();
-				break;
-			case 21: //  datatype 'AtomRadicalState'
-				no = decodeBits(abits);
-				System.out.print("AtomRadicalState:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":"+decodeBits(2));
-				System.out.println();
-				break;
-			case 22:	//	datatype 'flat nitrogen'
-				no = decodeBits(abits);
-				System.out.print("AtomQFFlatNitrogen:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":true");
-				System.out.println();
-				break;
-			case 23:	//	datatype 'cBondQFMatchStereo'
-				no = decodeBits(bbits);
-				System.out.print("cBondQFMatchStereo:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":true");
-				System.out.println();
-				break;
-			case 24:	//	datatype 'cBondQFAromatic'
-				no = decodeBits(bbits);
-				System.out.print("BondQFAromState:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(bbits)+":"+decodeBits(Molecule.cBondQFAromStateBits));
-				System.out.println();
-				break;
-			case 25:	//	datatype 'atom selection'
-				System.out.print("AtomSelection:");
-				for (int i=0; i<allAtoms; i++)
-					if (decodeBits(1) == 1)
-						System.out.print(" "+i);
-				System.out.println();
-				break;
-			case 26:	//	datatype 'delocalized high order bond'
-				System.out.print("DelocalizedHigherOrderBonds:");
-				no = decodeBits(bbits);
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(bbits));
-				break;
-			case 27:	//	datatype 'part of an exclude group'
-				no = decodeBits(abits);
-				System.out.print("AtomQFExcludeGroup:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(abits)+":true");
-				System.out.println();
-				break;
-			case 28:	//	datatype 'coordinate bond'
-				no = decodeBits(bbits);
-				System.out.print("Coordinate Bonds:");
-				for (int i=0; i<no; i++)
-					System.out.print(" "+decodeBits(bbits));
-				System.out.println();
-				break;
+			}
+
+			if (decodeBits(1) == 1)
+				System.out.println("isFragment = true");
+
+			int offset = 0;
+			while (decodeBits(1) == 1) {
+				int dataType = offset + decodeBits(4);
+				switch (dataType) {
+					case 0: //  datatype 'AtomQFNoMoreNeighbours'
+						int no = decodeBits(abits);
+						System.out.print("noMoreNeighbours:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits));
+						System.out.println();
+						break;
+					case 1: //  datatype 'isotop'
+						no = decodeBits(abits);
+						System.out.print("mass:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(8));
+						System.out.println();
+						break;
+					case 2: //  datatype 'bond defined to be delocalized'
+						no = decodeBits(bbits);
+						System.out.print("delocalizedBonds:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(bbits));
+						System.out.println();
+						break;
+					case 3: //  datatype 'AtomQFMoreNeighbours'
+						no = decodeBits(abits);
+						System.out.print("moreNeighbours:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits));
+						System.out.println();
+						break;
+					case 4: //  datatype 'AtomQFRingState'
+						no = decodeBits(abits);
+						System.out.print("atomRingState:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFRingStateBits));
+						System.out.println();
+						break;
+					case 5: //  datatype 'AtomQFAromState'
+						no = decodeBits(abits);
+						System.out.print("atomAromState:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFAromStateBits));
+						System.out.println();
+						break;
+					case 6: //  datatype 'AtomQFAny'
+						no = decodeBits(abits);
+						System.out.print("atomAny:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits));
+						System.out.println();
+						break;
+					case 7: //  datatype 'AtomQFHydrogen'
+						no = decodeBits(abits);
+						System.out.print("atomHydrogen:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFHydrogenBits));
+						System.out.println();
+						break;
+					case 8: //  datatype 'AtomList'
+						no = decodeBits(abits);
+						System.out.print("atomList:");
+						for (int i = 0; i < no; i++) {
+							int atom = decodeBits(abits);
+							int atoms = decodeBits(4);
+							System.out.print(" " + atom);
+							for (int j = 0; j < atoms; j++) {
+								System.out.print(j == 0 ? ":" : ",");
+								System.out.print("" + decodeBits(8) + ",");
+							}
+						}
+						System.out.println();
+						break;
+					case 9: //  datatype 'BondQFRingState'
+						no = decodeBits(bbits);
+						System.out.print("bondRingState:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(bbits) + ":" + decodeBits(Molecule.cBondQFRingStateBits));
+						System.out.println();
+						break;
+					case 10://  datatype 'BondQFBondTypes'
+						no = decodeBits(bbits);
+						System.out.print("bondTypes:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(bbits) + ":" + decodeBits(Molecule.cBondQFBondTypesBits));
+						System.out.println();
+						break;
+					case 11:    //  datatype 'AtomQFMatchStereo'
+						no = decodeBits(abits);
+						System.out.print("atomMatchStereo:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits));
+						System.out.println();
+						break;
+					case 12:    //  datatype 'bond defined to be a bridge from n1 to n2 atoms'
+						no = decodeBits(bbits);
+						for (int i = 0; i < no; i++) {
+							System.out.print("bridgeBond:" + decodeBits(bbits));
+							int min = decodeBits(Molecule.cBondQFBridgeMinBits);
+							int max = min + decodeBits(Molecule.cBondQFBridgeSpanBits);
+							System.out.println("(" + min + "-" + max + ")");
+						}
+						break;
+					case 13: //  datatype 'AtomQFPiElectrons'
+						no = decodeBits(abits);
+						System.out.print("atomPiElectrons:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFPiElectronBits));
+						System.out.println();
+						break;
+					case 14: //  datatype 'AtomQFNeighbours'
+						no = decodeBits(abits);
+						System.out.print("AtomQFNeighbours:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFNeighbourBits));
+						System.out.println();
+						break;
+					case 15: //  datatype 'start second feature set'
+						offset = 16;
+						System.out.println("<start second feature set>");
+						break;
+					case 16: //  datatype 'AtomQFRingSize'
+						no = decodeBits(abits);
+						System.out.print("AtomQFRingSize:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFRingSizeBits));
+						System.out.println();
+						break;
+					case 17: //  datatype 'AtomAbnormalValence'
+						no = decodeBits(abits);
+						System.out.print("AtomAbnormalValence:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(4));
+						System.out.println();
+						break;
+					case 18: //  datatype 'AtomCustomLabel'
+						no = decodeBits(abits);
+						System.out.print("AtomCustomLabel:");
+						int lbits = decodeBits(4);
+						for (int i = 0; i < no; i++) {
+							int atom = decodeBits(abits);
+							int count = decodeBits(lbits);
+							byte[] label = new byte[count];
+							for (int j = 0; j < count; j++)
+								label[j] = (byte) decodeBits(7);
+							System.out.print(" " + atom + ":" + new String(label));
+						}
+						System.out.println();
+						break;
+					case 19: //  datatype 'AtomQFCharge'
+						no = decodeBits(abits);
+						System.out.print("AtomQFCharge:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFChargeBits));
+						System.out.println();
+						break;
+					case 20: //  datatype 'BondQFRingSize'
+						no = decodeBits(bbits);
+						System.out.print("BondQFRingSize:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(bbits) + ":" + decodeBits(Molecule.cBondQFRingSizeBits));
+						System.out.println();
+						break;
+					case 21: //  datatype 'AtomRadicalState'
+						no = decodeBits(abits);
+						System.out.print("AtomRadicalState:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(2));
+						System.out.println();
+						break;
+					case 22:    //	datatype 'flat nitrogen'
+						no = decodeBits(abits);
+						System.out.print("AtomQFFlatNitrogen:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":true");
+						System.out.println();
+						break;
+					case 23:    //	datatype 'cBondQFMatchStereo'
+						no = decodeBits(bbits);
+						System.out.print("cBondQFMatchStereo:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":true");
+						System.out.println();
+						break;
+					case 24:    //	datatype 'cBondQFAromatic'
+						no = decodeBits(bbits);
+						System.out.print("BondQFAromState:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(bbits) + ":" + decodeBits(Molecule.cBondQFAromStateBits));
+						System.out.println();
+						break;
+					case 25:    //	datatype 'atom selection'
+						System.out.print("AtomSelection:");
+						for (int i = 0; i < allAtoms; i++)
+							if (decodeBits(1) == 1)
+								System.out.print(" " + i);
+						System.out.println();
+						break;
+					case 26:    //	datatype 'delocalized high order bond'
+						System.out.print("DelocalizedHigherOrderBonds:");
+						no = decodeBits(bbits);
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(bbits));
+						break;
+					case 27:    //	datatype 'part of an exclude group'
+						no = decodeBits(abits);
+						System.out.print("AtomQFExcludeGroup:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":true");
+						System.out.println();
+						break;
+					case 28:    //	datatype 'coordinate bond'
+						no = decodeBits(bbits);
+						System.out.print("Coordinate Bonds:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(bbits));
+						System.out.println();
+						break;
 				}
 			}
 
-		if (coordinates != null) {
-			if (coordinates[0] == '!') {	// new coordinate format
-				decodeBitsStart(coordinates, 1);
-				boolean coordsAre3D = (decodeBits(1) == 1);
-				boolean coordsAreAbsolute = (decodeBits(1) == 1);
-				int resolutionBits = 2 * decodeBits(4);
-				int binCount = (1 << resolutionBits);
+			if (coordinates != null) {
+				if (coordinates[0] == '!' || coordinates[0] == '#') {    // new coordinate format
+					decodeBitsStart(coordinates, 1);
+					boolean coordsAre3D = (decodeBits(1) == 1);
+					boolean coordsAreAbsolute = (decodeBits(1) == 1);
+					int resolutionBits = 2 * decodeBits(4);
+					int binCount = (1 << resolutionBits);
 
-				double factor = 0.0;
-				double[][] coords = new double[coordsAre3D?3:2][allAtoms];
-				int from = 0;
-				int bond = 0;
-				for (int atom=1; atom<allAtoms; atom++) {
-					if (bond<allBonds && bondAtom[1][bond] == atom) {
-						from = bondAtom[0][bond++];
-						factor = 1.0;
-						}
-					else {
-						from = 0;
-						factor = 8.0;
-						}
-					coords[0][atom] = coords[0][from] + factor * (decodeBits(resolutionBits) - binCount/2);
-					coords[1][atom] = coords[1][from] + factor * (decodeBits(resolutionBits) - binCount/2);
-					if (coordsAre3D)
-						coords[2][atom] = coords[2][from] + factor * (decodeBits(resolutionBits) - binCount/2);
+					double factor = 0.0;
+
+					int hydrogenCount = 0;
+					int[] hCount = null;
+					if (coordinates[0] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
+						StereoMolecule mol = new IDCodeParser().getCompactMolecule(idcode);
+
+						// we need to cache hCount, because otherwise getImplicitHydrogens() would create helper arrays with every call
+						hCount = new int[allAtoms];
+						for (int atom = 0; atom < allAtoms; atom++)
+							hydrogenCount += (hCount[atom] = mol.getImplicitHydrogens(atom));
 					}
 
-				// with new format 2D and 3D coordinates are scaled to average bond lengths of 1.5 Angstrom
-				double avbl = 0;
-				if (allBonds != 0) {
-					for (bond=0; bond<allBonds; bond++)
-						avbl += getDistance(coords, bondAtom[0][bond], bondAtom[1][bond], coordsAre3D);
-					avbl /= allBonds;    // avbl without hydrogen atoms
-					}
-				else {
-					double defaultAVBL = coordsAre3D ? 1.5 : Molecule.getDefaultAverageBondLength();
-					if (allAtoms < 2) {
-						avbl = defaultAVBL;
+					double[][] coords = new double[coordsAre3D ? 3 : 2][allAtoms + hydrogenCount];
+					int from = 0;
+					int bond = 0;
+					System.out.print("Raw coords:");
+					for (int atom = 1; atom < allAtoms; atom++) {
+						if (bond < allBonds && bondAtom[1][bond] == atom) {
+							from = bondAtom[0][bond++];
+							factor = 1.0;
+						} else {
+							from = 0;
+							factor = 8.0;
 						}
-					else {
-						double lowDistance = Double.MAX_VALUE;
-						for (int atom1=1; atom1<allAtoms; atom1++) {
-							for (int atom2=0; atom2<atom1; atom2++) {
-								double distance = getDistance(coords, atom1, atom2, coordsAre3D);
-								if (distance > 0 && distance < lowDistance)
-									lowDistance = distance;
+						System.out.print(atom + " (");
+						coords[0][atom] = coords[0][from] + factor * (decodeBits(resolutionBits) - binCount / 2);
+						System.out.print((int) coords[0][atom] + ",");
+						coords[1][atom] = coords[1][from] + factor * (decodeBits(resolutionBits) - binCount / 2);
+						System.out.print((int) coords[1][atom]);
+						if (coordsAre3D) {
+							coords[2][atom] = coords[2][from] + factor * (decodeBits(resolutionBits) - binCount / 2);
+							System.out.print("," + (int) coords[0][atom]);
+						}
+						System.out.print("), ");
+						if ((atom & 3) == 3 || atom == allAtoms - 1)
+							System.out.println();
+					}
+
+					// with new format 2D and 3D coordinates are scaled to average bond lengths of 1.5 Angstrom
+					double avbl = 0;
+					if (allBonds != 0) {
+						for (bond = 0; bond < allBonds; bond++)
+							avbl += getDistance(coords, bondAtom[0][bond], bondAtom[1][bond], coordsAre3D);
+						avbl /= allBonds;    // avbl without hydrogen atoms
+					} else {
+						double defaultAVBL = coordsAre3D ? 1.5 : Molecule.getDefaultAverageBondLength();
+						if (allAtoms < 2) {
+							avbl = defaultAVBL;
+						} else {
+							double lowDistance = Double.MAX_VALUE;
+							for (int atom1 = 1; atom1 < allAtoms; atom1++) {
+								for (int atom2 = 0; atom2 < atom1; atom2++) {
+									double distance = getDistance(coords, atom1, atom2, coordsAre3D);
+									if (distance > 0 && distance < lowDistance)
+										lowDistance = distance;
 								}
 							}
-						avbl = (lowDistance == Double.MAX_VALUE) ? defaultAVBL : lowDistance;
+							avbl = (lowDistance == Double.MAX_VALUE) ? defaultAVBL : lowDistance;
 						}
 					}
 
-				int hydrogenCount = 0;
-				if (coordinates[0] == '#') {	// we have 3D-coordinates that include implicit hydrogen coordinates
+					if (coordinates[0] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
+						System.out.print("hydrogen coords (" + hydrogenCount + " expected): ");
+						for (int atom = 0; atom < allAtoms; atom++) {
+							if (hCount[atom] != 0)
+								System.out.print(atom);
+							for (int i = 0; i < hCount[atom]; i++) {
+								int hydrogen = allAtoms++;
+								allBonds++;
+								System.out.print(" (");
+								coords[0][hydrogen] = coords[0][atom] + (decodeBits(resolutionBits) - binCount / 2);
+								System.out.print((int) coords[0][hydrogen] + ",");
+								coords[1][hydrogen] = coords[1][atom] + (decodeBits(resolutionBits) - binCount / 2);
+								System.out.print((int) coords[1][hydrogen]);
+								if (coordsAre3D) {
+									coords[2][hydrogen] = coords[2][atom] + (decodeBits(resolutionBits) - binCount / 2);
+									System.out.print("," + (int) coords[2][hydrogen]);
+								}
+								System.out.print(")");
+							}
+						}
+						System.out.println();
+					}
 
-					StereoMolecule mol = new IDCodeParser().getCompactMolecule(idcode);
+					System.out.print(coordsAreAbsolute ? "absolute coords:" : "relative coords:");
+					if (hydrogenCount != 0)
+						System.out.println("Coordinates contain " + hydrogenCount + " hydrogen atoms!");
 
-					// we need to cache hCount, because otherwise getImplicitHydrogens() would create helper arrays with every call
-					int[] hCount = new int[allAtoms];
-					for (int atom=0; atom<allAtoms; atom++)
-						hydrogenCount += (hCount[atom] = mol.getImplicitHydrogens(atom));
+					if (coordsAreAbsolute) {
+						double targetAVBL = decodeAVBL(decodeBits(resolutionBits), binCount);
+						double xOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
+						double yOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
+						double zOffset = 0;
+						if (coordsAre3D)
+							zOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
+						System.out.println("Abs-coord transformation: targetAVBL:" + targetAVBL + " xOffset:" + xOffset + " yOffset:" + yOffset + " zOffset:" + zOffset);
 
-					for (int atom=0; atom<allAtoms; atom++) {
-						for (int i=0; i<hCount[atom]; i++) {
-							int hydrogen = allAtoms++;
-							allBonds++;
-							coords[0][hydrogen] = coords[0][atom] + (decodeBits(resolutionBits) - binCount/2);
-							coords[1][hydrogen] = coords[1][atom] + (decodeBits(resolutionBits) - binCount/2);
+						factor = targetAVBL / avbl;
+						for (int atom = 0; atom < allAtoms; atom++) {
+							coords[0][atom] = xOffset + factor * coords[0][atom];
+							coords[1][atom] = xOffset + factor * coords[1][atom];
 							if (coordsAre3D)
-								coords[2][hydrogen] = coords[2][atom] + (decodeBits(resolutionBits) - binCount/2);
+								coords[2][atom] = xOffset + factor * coords[2][atom];
+						}
+					} else {
+						double targetAVBL = 1.5;
+						factor = targetAVBL / avbl;
+						for (int atom = 0; atom < allAtoms; atom++) {
+							System.out.print(atom + " (");
+							coords[0][atom] = coords[0][atom] * factor;
+							System.out.print(DoubleFormat.toString(coords[0][atom]) + ",");
+							coords[1][atom] = coords[1][atom] * factor;
+							System.out.print(DoubleFormat.toString(coords[1][atom]));
+							if (coordsAre3D) {
+								coords[2][atom] = coords[2][atom] * factor;
+								System.out.print("," + DoubleFormat.toString(coords[2][atom]));
+							}
+							System.out.print("), ");
+							if ((atom & 3) == 3 || atom == allAtoms - 1)
+								System.out.println();
 						}
 					}
-				}
-
-				if (coordsAreAbsolute) {
-					double targetAVBL = decodeAVBL(decodeBits(resolutionBits), binCount);
-					double xOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
-					double yOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
-					double zOffset = 0;
-					if (coordsAre3D)
-						zOffset = targetAVBL * decodeShift(decodeBits(resolutionBits), binCount);
-					System.out.println("Abs-coord transformation: targetAVBL:"+targetAVBL+" xOffset:"+xOffset+" yOffset:"+yOffset+" zOffset:"+zOffset);
-
-					factor = targetAVBL / avbl;
-					for (int atom=0; atom<allAtoms; atom++) {
-						coords[0][atom] = xOffset + factor * coords[0][atom];
-						coords[1][atom] = xOffset + factor * coords[1][atom];
-						if (coordsAre3D)
-							coords[2][atom] = xOffset + factor * coords[2][atom];
-					}
-				}
-				else {
-					double targetAVBL = 1.5;
-					factor = targetAVBL / avbl;
-					for (int atom=0; atom<allAtoms; atom++) {
-						coords[0][atom] = coords[0][atom] * factor;
-						coords[1][atom] = coords[1][atom] * factor;
-						if (coordsAre3D)
-							coords[2][atom] = coords[2][atom] * factor;
-					}
-				}
-
-				System.out.print(coordsAreAbsolute ? "absolute coords:" : "relative coords:");
-				for (int atom=0; atom<allAtoms; atom++) {
-					System.out.print(DoubleFormat.toString(coords[0][atom])+","+DoubleFormat.toString(coords[1][atom]));
-					if (coordsAre3D)
-						System.out.print(","+DoubleFormat.toString(coords[2][atom]));
-					System.out.print(" ");
-					}
-				System.out.println();
-				if (hydrogenCount != 0)
-					System.out.println("Coordinates contain "+hydrogenCount+" hydrogen atoms!");
 				}
 			}
-		System.out.println();
+			System.out.println();
 		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	private double getDistance(double[][] coords, int atom1, int atom2, boolean coordsAre3D) {
 		double dx = coords[0][atom1] - coords[0][atom2];

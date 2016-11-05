@@ -605,11 +605,15 @@ public class AromaticityResolver {
 				return 2;
 			}
 		if (mMol.getAtomicNo(atom) == 8) {
-			return 4;
+			return 5;
 			}
-		if (mMol.getAtomicNo(atom) == 16) {
+		if (mMol.getAtomicNo(atom) == 15 || mMol.getAtomicNo(atom) == 33) {
+			if (mMol.getConnAtoms(atom) == 3)
+				return 4;
+			}
+		if (mMol.getAtomicNo(atom) == 16 || mMol.getAtomicNo(atom) == 34) {
 			if (mMol.getConnAtoms(atom) == 2)
-				return 5;
+				return 6;
 			}
 		if (mMol.getAtomicNo(atom) == 6) {
 			if (correctCharge)
