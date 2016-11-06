@@ -61,8 +61,8 @@ public class RingCollection {
 	private int mMaxSmallRingSize;
 
 	/**
-	 * Generates the complete set of small rings, which contains all rings
-	 * up to 7 members.<br> If mode includes LARGE_RINGS, then it determines
+	 * Generates the complete set of small rings, which don't contain metal atoms
+	 * and have up to 7 members.<br> If mode includes LARGE_RINGS, then it determines
 	 * for every atom and bond the size of the smallest ring, which they are
 	 * a member of.<br>If mode includes AROMATICITY then every small ring
 	 * is checked, whether it is aromatic.
@@ -74,8 +74,8 @@ public class RingCollection {
 		}
 
 	/**
-	 * Generates the complete set of small rings, which contains all rings
-	 * up to maxSmallRingSize members.<br> If mode includes LARGE_RINGS, then it determines
+	 * Generates the complete set of small rings, which don't contain metal atoms
+	 * and have up to 7 members.<br> If mode includes LARGE_RINGS, then it determines
 	 * for every atom and bond the size of the smallest ring, which they are
 	 * a member of.<br>If mode includes AROMATICITY then every small ring
 	 * is checked, whether it is aromatic.
@@ -107,7 +107,7 @@ public class RingCollection {
 						if (!isConfirmedChainAtom[mMol.getConnAtom(atom, i)])
 							potentialRingNeighbours++;
 	
-					if (potentialRingNeighbours < 2) {
+					if (potentialRingNeighbours < 2 || mMol.isMetalAtom(atom)) {
 						isConfirmedChainAtom[atom] = true;
 						for (int i=0; i<mMol.getConnAtoms(atom); i++)
 							isConfirmedChainBond[mMol.getConnBond(atom, i)] = true;
