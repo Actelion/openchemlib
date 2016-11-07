@@ -3212,27 +3212,37 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			int explicitHydrogens = getExplicitHydrogens(atom);
 			if (!mProtectHydrogen && explicitHydrogens > 0) {
 				if ((mAtomQueryFeatures[atom] & cAtomQFNoMoreNeighbours) == 0) {
-					if (getFreeValence(atom) == 0)
-						mAtomQueryFeatures[atom] |= cAtomQFNoMoreNeighbours;
-					else {
-							// add query feature hydrogen to explicit hydrogens
-						int queryFeatureHydrogens = 0;
-						if ((mAtomQueryFeatures[atom] & cAtomQFNot0Hydrogen) == cAtomQFNot0Hydrogen)
-							queryFeatureHydrogens++;
-						if ((mAtomQueryFeatures[atom] & cAtomQFHydrogen) == (cAtomQFNot0Hydrogen | cAtomQFNot1Hydrogen))
-							queryFeatureHydrogens++;
+						// add query feature hydrogen to explicit hydrogens
+					int queryFeatureHydrogens =
+						(mAtomQueryFeatures[atom] & cAtomQFHydrogen) == (cAtomQFNot0Hydrogen | cAtomQFNot1Hydrogen | cAtomQFNot2Hydrogen) ? 3
+					  : (mAtomQueryFeatures[atom] & cAtomQFHydrogen) == (cAtomQFNot0Hydrogen | cAtomQFNot1Hydrogen) ? 2
+					  : (mAtomQueryFeatures[atom] & cAtomQFNot0Hydrogen) == cAtomQFNot0Hydrogen ? 1 : 0;
+
+					// For atoms with no specific charge definition a potential charge is not considered by getFreeValence().
+					// Non-carbon atoms with a charge may have an increased valence. We need to consider that.
+					int freeValence = getFreeValence(atom);
+					if (mAtomCharge[atom] == 0
+					 && (mAtomQueryFeatures[atom] & cAtomQFCharge) == 0
+					 && mAtomicNo[atom] != 6)
+						freeValence++;
+
+					int queryFeatureShift = explicitHydrogens;
+					if (queryFeatureShift > 3 - queryFeatureHydrogens)
+						queryFeatureShift = 3 - queryFeatureHydrogens;
+					if (queryFeatureShift > freeValence + explicitHydrogens - queryFeatureHydrogens)
+						queryFeatureShift = freeValence + explicitHydrogens - queryFeatureHydrogens;
+
+					if (queryFeatureShift > 0) {
+						int queryFeatures = (queryFeatureHydrogens == 0) ?  // purge 'less than' options
+								0 : (mAtomQueryFeatures[atom] & cAtomQFHydrogen) << queryFeatureShift;
+						queryFeatures |= (queryFeatureShift == 3 ? 7 : explicitHydrogens == 2 ? 3 : 1) << cAtomQFHydrogenShift;
 
 						mAtomQueryFeatures[atom] &= ~cAtomQFHydrogen;
-						if (getFreeValence(atom) <= queryFeatureHydrogens)
-							mAtomQueryFeatures[atom] |= cAtomQFNoMoreNeighbours;
-						else if (queryFeatureHydrogens == 0)
-							mAtomQueryFeatures[atom] |= cAtomQFNot0Hydrogen;
-						else	// queryFeatureHydrogens > 1
-							mAtomQueryFeatures[atom] |= (cAtomQFNot0Hydrogen | cAtomQFNot1Hydrogen);
+						mAtomQueryFeatures[atom] |= (cAtomQFHydrogen & queryFeatures);
 						}
 					}
 
-				for (int i = mConnAtoms[atom]; i<mAllConnAtoms[atom]; i++) {
+				for (int i=mConnAtoms[atom]; i<mAllConnAtoms[atom]; i++) {
 					int connBond = mConnBond[atom][i];
 					if (mBondType[connBond] == cBondTypeSingle) {	// no stereo bond
 						mAtomicNo[mConnAtom[atom][i]] = -1;

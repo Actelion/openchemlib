@@ -1581,6 +1581,8 @@ public abstract class AbstractDepictor {
 				isoStr = append(isoStr, "!a");
 			if ((queryFeatures & Molecule.cAtomQFMoreNeighbours) != 0)
 				isoStr = append(isoStr, "s");
+			if ((queryFeatures & Molecule.cAtomQFNoMoreNeighbours) != 0)
+				isoStr = append(isoStr, "!s");
             if ((queryFeatures & Molecule.cAtomQFHydrogen) != 0) {
                 int hydrogens = (queryFeatures & Molecule.cAtomQFHydrogen);
     			if (hydrogens == Molecule.cAtomQFNot1Hydrogen+Molecule.cAtomQFNot2Hydrogen+Molecule.cAtomQFNot3Hydrogen)
@@ -1593,6 +1595,8 @@ public abstract class AbstractDepictor {
     				isoStr = append(isoStr, "h>0");
     			else if (hydrogens == Molecule.cAtomQFNot0Hydrogen+Molecule.cAtomQFNot1Hydrogen)
     				isoStr = append(isoStr, "h>1");
+			    else if (hydrogens == Molecule.cAtomQFNot0Hydrogen+Molecule.cAtomQFNot1Hydrogen+Molecule.cAtomQFNot2Hydrogen)
+				    isoStr = append(isoStr, "h>2");
                 else if (hydrogens == Molecule.cAtomQFNot3Hydrogen)
                     isoStr = append(isoStr, "h<3");
                 else if (hydrogens == Molecule.cAtomQFNot2Hydrogen+Molecule.cAtomQFNot3Hydrogen)
@@ -1640,7 +1644,7 @@ public abstract class AbstractDepictor {
             if ((queryFeatures & Molecule.cAtomQFRingState) != 0) {
                 int ringBonds = (queryFeatures & Molecule.cAtomQFRingState);
                 if (ringBonds == Molecule.cAtomQFNot2RingBonds+Molecule.cAtomQFNot3RingBonds+Molecule.cAtomQFNot4RingBonds)
-                    isoStr = append(isoStr, "c");
+                    isoStr = append(isoStr, "!r");
                 else if (ringBonds == Molecule.cAtomQFNotChain)
                     isoStr = append(isoStr, "r");
                 else if (ringBonds == Molecule.cAtomQFNotChain+Molecule.cAtomQFNot3RingBonds+Molecule.cAtomQFNot4RingBonds)
@@ -1651,10 +1655,10 @@ public abstract class AbstractDepictor {
                     isoStr = append(isoStr, "rb4");
                 }
             if ((queryFeatures & Molecule.cAtomQFRingSize) != 0) {
-                isoStr = append(isoStr, "rs"+((queryFeatures & Molecule.cAtomQFRingSize)>>Molecule.cAtomQFRingSizeShift));
+                isoStr = append(isoStr, "r"+((queryFeatures & Molecule.cAtomQFRingSize)>>Molecule.cAtomQFRingSizeShift));
                 }
             if ((queryFeatures & Molecule.cAtomQFFlatNitrogen) != 0) {
-                isoStr = append(isoStr, "sp2");
+                isoStr = append(isoStr, "f");
                 }
 			}
 		if (mMol.getAtomMass(atom) != 0) {

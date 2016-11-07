@@ -152,6 +152,7 @@ public class JAtomQueryFeatureDialog extends JDialog
         mChoiceHydrogen.addItem("exactly 2 hydrogens");
 		mChoiceHydrogen.addItem("at least 1 hydrogen");
 		mChoiceHydrogen.addItem("at least 2 hydrogens");
+		mChoiceHydrogen.addItem("at least 3 hydrogens");
         mChoiceHydrogen.addItem("less than 2 hydrogens");
         mChoiceHydrogen.addItem("less than 3 hydrogens");
 		p1.add(mChoiceHydrogen, "1,15,3,15");
@@ -337,11 +338,14 @@ public class JAtomQueryFeatureDialog extends JDialog
 			case Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen:
 				mChoiceHydrogen.setSelectedIndex(5);
 				break;
+			case Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen | Molecule.cAtomQFNot2Hydrogen:
+				mChoiceHydrogen.setSelectedIndex(6);
+				break;
             case Molecule.cAtomQFNot2Hydrogen | Molecule.cAtomQFNot3Hydrogen:
-                mChoiceHydrogen.setSelectedIndex(6);
+                mChoiceHydrogen.setSelectedIndex(7);
                 break;
             case Molecule.cAtomQFNot3Hydrogen:
-                mChoiceHydrogen.setSelectedIndex(7);
+                mChoiceHydrogen.setSelectedIndex(8);
                 break;
 			}
 
@@ -527,11 +531,16 @@ public class JAtomQueryFeatureDialog extends JDialog
 			queryFeatures |= (Molecule.cAtomQFNot0Hydrogen
 							| Molecule.cAtomQFNot1Hydrogen);
 			break;
-        case 6: // less than 2 hydrogens
+		case 6:	// at least 3 hydrogens
+			queryFeatures |= (Molecule.cAtomQFNot0Hydrogen
+							| Molecule.cAtomQFNot1Hydrogen
+							| Molecule.cAtomQFNot2Hydrogen);
+			break;
+        case 7: // less than 2 hydrogens
             queryFeatures |= (Molecule.cAtomQFNot2Hydrogen
                             | Molecule.cAtomQFNot3Hydrogen);
             break;
-        case 7: // less than 3 hydrogens
+        case 8: // less than 3 hydrogens
             queryFeatures |= (Molecule.cAtomQFNot3Hydrogen);
             break;
 			}
