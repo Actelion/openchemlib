@@ -60,7 +60,8 @@ public class Platform
 
     private static final String[][] MACINTOSH_APPLICATION_NAME = { { "orbit" , "Orbit Image Analysis" },
     															   { "datawarrior", "DataWarrior" },
-    															   { "actelion3d", "Actelion3D" } };
+    															   { "actelion3d", "Actelion3D" },
+                                                                   { "spirit", "Spirit Database" } };
 
     public static boolean isWindows()
     {
