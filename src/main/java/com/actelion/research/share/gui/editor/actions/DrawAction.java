@@ -234,11 +234,14 @@ public abstract class DrawAction implements Action
         double newAngle = Math.PI * 2 / 3;
         if (atom != -1) {
             double[] angle = new double[DrawAction.MAX_CONNATOMS + 1];
+            //angle[0] = Math.PI * 3 / 4;
             for (int i = 0; i < mol.getAllConnAtoms(atom); i++) {
                 angle[i] = mol.getBondAngle(atom, mol.getConnAtom(atom, i));
             }
 
-            if (mol.getAllConnAtoms(atom) == 1) {
+            if (mol.getAllConnAtoms(atom) == 0) {
+                newAngle = Math.PI * 2 /3 ;
+            } else if (mol.getAllConnAtoms(atom) == 1) {
                 if (angle[0] < -Math.PI * 5 / 6) {
                     newAngle = Math.PI / 3;
                 } else if (angle[0] < -Math.PI / 2) {

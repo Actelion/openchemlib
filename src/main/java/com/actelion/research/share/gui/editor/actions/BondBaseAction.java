@@ -120,7 +120,7 @@ public abstract class BondBaseAction extends BondHighlightAction
                 mol = model.getMolecule();
                 sourceAtom = mol.addAtom((float) evt.getX(), (float) evt.getY());
                 java.awt.geom.Point2D p = suggestNewX2AndY2(sourceAtom);
-                int t = mol.addAtom((float) p.getX() + mol.getAverageBondLength(), (float) pt.getY());
+                int t = mol.addAtom((float) p.getX() /*+ mol.getAverageBondLength()*/, (float) p.getY());
                 onAddBond(sourceAtom, t);
                 // This creates a new Fragment, so make sure scheme gets layouted (if in RXN mode)
                 if (model.isReaction())
