@@ -2546,8 +2546,7 @@ public class Molecule implements Serializable {
 	public void setAtomAbnormalValence(int atom, int valence) {
 		if (valence >= -1 && valence <= 14) {
 			mAtomFlags[atom] &= ~cAtomFlagsValence;
-			if (valence != getDefaultMaxValenceUncharged(atom))
-				mAtomFlags[atom] |= ((1+valence) << cAtomFlagsValenceShift);
+			mAtomFlags[atom] |= ((1+valence) << cAtomFlagsValenceShift);
 
 			if (mAtomicNo[atom] == 6) {
 				if (valence == -1 || valence == 0 || valence == 2 || valence == 4) {
@@ -3410,7 +3409,7 @@ public class Molecule implements Serializable {
 	 * or radical status, e.g. N+ -> 1; N- -> -1; Al+ -> -1; C+,C- -> -1.
 	 * In some cases, where the atomicNo can have multiple valences,
 	 * the influence of a charge depends on the atom's actual valence, e.g.
-	 * valence corrections for R3P(+) and R5p(+) are 1 and -1, respectively.
+	 * valence corrections for R3P(+) and R5P(+) are 1 and -1, respectively.
 	 * Criteria are:<br>
 	 * -in the given valence state is there a lone pair that can be protonated<br>
 	 * -can we introduce a negative substituent as in BH3 or PF5 vs. SF6<br>
