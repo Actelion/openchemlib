@@ -37,6 +37,7 @@ import java.util.ArrayList;
 
 public class RingCollection {
 	public static final int MAX_SMALL_RING_SIZE = 7;
+	private static final int MAX_SMALL_RING_COUNT = 256; // to prevent explosions with highly connected metal grids, etc.
 
 	private static final int MODE_SMALL_RINGS = 1;
 	private static final int MODE_LARGE_RINGS = 2;
@@ -107,7 +108,7 @@ public class RingCollection {
 						if (!isConfirmedChainAtom[mMol.getConnAtom(atom, i)])
 							potentialRingNeighbours++;
 	
-					if (potentialRingNeighbours < 2 || mMol.isMetalAtom(atom)) {
+					if (potentialRingNeighbours < 2) {
 						isConfirmedChainAtom[atom] = true;
 						for (int i=0; i<mMol.getConnAtoms(atom); i++)
 							isConfirmedChainBond[mMol.getConnBond(atom, i)] = true;
@@ -280,6 +281,11 @@ public class RingCollection {
 
 			if (candidate == atom1 && current > 1) {
 				addRingIfNew(graphAtom, current+1);
+
+				// if we have already such many rings, we only collect the smallest ring to avoid a combinatorial explosion
+				if (mRingAtomSet.size() >= MAX_SMALL_RING_COUNT)
+					return;
+
 				continue;
 				}
 

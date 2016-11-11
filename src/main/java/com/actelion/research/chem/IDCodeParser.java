@@ -770,10 +770,16 @@ public class IDCodeParser {
 
 		if (!coords2DAvailable && mEnsure2DCoordinates) {
 			mMol.setParitiesValid(0);
-			CoordinateInventor inventor = new CoordinateInventor();
-			inventor.setRandomSeed(0x1234567890L);  // create reproducible coordinates
-			inventor.invent(mMol);
-			coords2DAvailable = true;
+			try {
+				CoordinateInventor inventor = new CoordinateInventor();
+				inventor.setRandomSeed(0x1234567890L);  // create reproducible coordinates
+				inventor.invent(mMol);
+				coords2DAvailable = true;
+				}
+			catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("2D-coordinate creation failed:"+e.toString()+" "+new String(idcode));
+				}
 			}
 
 		if (coords2DAvailable) {
@@ -1427,12 +1433,11 @@ public class IDCodeParser {
 
 					if (coordinates[0] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
 						System.out.print("hydrogen coords (" + hydrogenCount + " expected): ");
+						int hydrogen = allAtoms;
 						for (int atom = 0; atom < allAtoms; atom++) {
 							if (hCount[atom] != 0)
 								System.out.print(atom);
 							for (int i = 0; i < hCount[atom]; i++) {
-								int hydrogen = allAtoms++;
-								allBonds++;
 								System.out.print(" (");
 								coords[0][hydrogen] = coords[0][atom] + (decodeBits(resolutionBits) - binCount / 2);
 								System.out.print((int) coords[0][hydrogen] + ",");
@@ -1443,6 +1448,7 @@ public class IDCodeParser {
 									System.out.print("," + (int) coords[2][hydrogen]);
 								}
 								System.out.print(")");
+								hydrogen++;
 							}
 						}
 						System.out.println();
