@@ -324,6 +324,10 @@ public class MolfileV3Creator
                     order = 4;
                     stereo = 0;
                     break;
+	            case Molecule.cBondTypeMetalLigand:
+		            order = 9;
+		            stereo = 0;
+		            break;
                 default:
                     order = 1;
                     stereo = 0;

@@ -934,6 +934,9 @@ public class MolfileParser
 						if (mTreatAnyAsMetalBond)
 							realBondType = Molecule.cBondTypeMetalLigand;
 						break;
+					case 9:
+						realBondType = Molecule.cBondTypeMetalLigand;
+						break;
 				}
 				break;
 		}

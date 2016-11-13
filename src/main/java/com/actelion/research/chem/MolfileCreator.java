@@ -210,6 +210,7 @@ public class MolfileCreator {
             case Molecule.cBondTypeUp:			order = 1; stereo = 1; break;
             case Molecule.cBondTypeCross:		order = 2; stereo = 3; break;
             case Molecule.cBondTypeDelocalized:	order = 4; stereo = 0; break;
+            case Molecule.cBondTypeMetalLigand:	order = 8; stereo = 0; break;
             default:							order = 1; stereo = 0; break; }
 
             if (isRacemic && (stereo == 1 || stereo == 6)) {
