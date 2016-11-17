@@ -54,13 +54,13 @@ public class Molecule implements Serializable {
 	public static final int cMaxAtomicNo = 190;
 
 		// parity based on atom positions in atom table (as MDL parity)
-	private static final int cAtomFlagsParity		= 0x000003;
+	protected static final int cAtomFlagsParity		= 0x000003;
 	public static final int cAtomParityNone			= 0x000000;
 	public static final int cAtomParity1			= 0x000001;
 	public static final int cAtomParity2			= 0x000002;
-	public static final int cAtomParityUnknown	  = 0x000003;
+	public static final int cAtomParityUnknown		= 0x000003;
 
-	public static final int cAtomParityIsPseudo	 = 0x000004;
+	public static final int cAtomParityIsPseudo		= 0x000004;
 	protected static final int cAtomFlagSmallRing	= 0x000008;
 
 	public static final int cAtomRadicalState		= 0x000030;
@@ -71,7 +71,7 @@ public class Molecule implements Serializable {
 	public static final int cAtomRadicalStateT		= 0x000030;
 
 	private static final int cAtomFlagsColor		= 0x0001C0;
-	public static final int cAtomColorNone = 0x000000;
+	public static final int cAtomColorNone			= 0x000000;
 	public static final int cAtomColorBlue			= 0x000040;
 	public static final int cAtomColorRed			= 0x000080;
 	public static final int cAtomColorGreen			= 0x0000C0;
@@ -95,10 +95,10 @@ public class Molecule implements Serializable {
 
 	private static final int cAtomFlagsCIPParity	= 0x018000;
 	private static final int cAtomFlagsCIPParityShift = 15;
-	public static final int cAtomCIPParityNone	  = 0x000000;
-	public static final int cAtomCIPParityRorM	  = 0x000001;
+	public static final int cAtomCIPParityNone		= 0x000000;
+	public static final int cAtomCIPParityRorM		= 0x000001;
 	public static final int cAtomCIPParitySorP		= 0x000002;
-	public static final int cAtomCIPParityProblem   = 0x000003;
+	public static final int cAtomCIPParityProblem	= 0x000003;
 
 	protected static final int cAtomFlagStereoProblem = 0x020000;
 	protected static final int cAtomFlagMarked		= 0x040000;
@@ -130,11 +130,11 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFRingStateShift	= 3;
 	public static final int cAtomQFHydrogenBits		= 4;
 	public static final int cAtomQFHydrogenShift	= 7;
-	public static final int cAtomQFPiElectronBits   = 3;
-	public static final int cAtomQFPiElectronShift  = 14;
+	public static final int cAtomQFPiElectronBits	= 3;
+	public static final int cAtomQFPiElectronShift	= 14;
 	public static final int cAtomQFNeighbourBits	= 5;
-	public static final int cAtomQFNeighbourShift   = 17;
-	public static final int cAtomQFRingSizeBits	 = 3;
+	public static final int cAtomQFNeighbourShift	= 17;
+	public static final int cAtomQFRingSizeBits		= 3;
 	public static final int cAtomQFRingSizeShift	= 22;
 	public static final int cAtomQFChargeBits		= 3;
 	public static final int cAtomQFChargeShift		= 25;
@@ -193,7 +193,7 @@ public class Molecule implements Serializable {
 	protected static final int cBondFlagsHelper3	= 0x0000003F;
 
 		// double bond E/Z parities based on atom positions in atom table
-	private static final int cBondFlagsParity		= 0x00000003;
+	protected static final int cBondFlagsParity		= 0x00000003;
 	public static final int cBondParityNone			= 0x00000000;
 	public static final int cBondParityEor1			= 0x00000001;
 	public static final int cBondParityZor2			= 0x00000002;
@@ -204,7 +204,7 @@ public class Molecule implements Serializable {
 	protected static final int cBondFlagsCIPParityShift = 4;
 	public static final int cBondCIPParityNone		= 0x00000000;
 	public static final int cBondCIPParityEorP		= 0x00000001;
-	public static final int cBondCIPParityZorM	  = 0x00000002;
+	public static final int cBondCIPParityZorM		= 0x00000002;
 	public static final int cBondCIPParityProblem   = 0x00000003;
 
 	protected static final int cBondFlagRing		= 0x00000040;
@@ -212,14 +212,14 @@ public class Molecule implements Serializable {
 	protected static final int cBondFlagAromatic	= 0x00000100;
 	protected static final int cBondFlagDelocalized	= 0x00000200;
 	protected static final int cBondFlagsESR		= 0x0001FC00;
-	private static final int cBondFlagsESRType	  = 0x00000C00;
+	private static final int cBondFlagsESRType		= 0x00000C00;
 	private static final int cBondFlagsESRTypeShift = 10;
-	private static final int cBondFlagsESRGroup	 = 0x0001F000;
+	private static final int cBondFlagsESRGroup		= 0x0001F000;
 	private static final int cBondFlagsESRGroupShift = 12;
 	private static final int cBondFlagBGHilited		= 0x00020000;
 	private static final int cBondFlagFGHilited		= 0x00040000;
 
-	private static final int cBondParityUnknownOrNone	= 0x1000000;
+	private static final int cBondParityUnknownOrNone = 0x1000000;
 	// This hint/flag is set by CoordinateInventor for double bonds without
 	// given EZ-parity because coordinates may imply a not intended EZ-parity.
 	// The setBondParity() method clears this flag. The Canonizer considers
@@ -261,16 +261,16 @@ public class Molecule implements Serializable {
 	public static final int cBondQFAromatic			= 0x00080000;
 	public static final int cBondQFNotAromatic		= 0x00100000;
 
-	public static final int cHelperNone = 0x0000;
-	public static final int cHelperBitNeighbours = 0x0001;
-	public static final int cHelperBitRings = 0x0002;
-	public static final int cHelperBitParities = 0x0004;
-	public static final int cHelperBitCIP = 0x0008;
+	public static final int cHelperNone				= 0x0000;
+	public static final int cHelperBitNeighbours	= 0x0001;
+	public static final int cHelperBitRings			= 0x0002;
+	public static final int cHelperBitParities		= 0x0004;
+	public static final int cHelperBitCIP			= 0x0008;
 
-	public static final int cHelperBitSymmetrySimple = 0x0010;
-	public static final int cHelperBitSymmetryDiastereotopic = 0x0020;
-	public static final int cHelperBitSymmetryEnantiotopic = 0x0040;
-	public static final int cHelperBitIncludeNitrogenParities = 0x0080;
+	public static final int cHelperBitSymmetrySimple			= 0x0010;
+	public static final int cHelperBitSymmetryDiastereotopic	= 0x0020;
+	public static final int cHelperBitSymmetryEnantiotopic		= 0x0040;
+	public static final int cHelperBitIncludeNitrogenParities	= 0x0080;
 
 	public static final int cHelperBitsStereo = 0x00FC;
 
@@ -286,12 +286,12 @@ public class Molecule implements Serializable {
 	public static final int cChiralityIsomerCountMask   = 0x00FFFF;
 	public static final int cChiralityUnknown		  	= 0x000000;
 	public static final int cChiralityNotChiral			= 0x010000;
-	public static final int cChiralityMeso			  = 0x020000; // this has added the number of meso isomers
+	public static final int cChiralityMeso				= 0x020000; // this has added the number of meso isomers
 	public static final int cChiralityRacemic			= 0x030000;
 	public static final int cChiralityKnownEnantiomer   = 0x040000;
 	public static final int cChiralityUnknownEnantiomer = 0x050000;
-	public static final int cChiralityEpimers		   = 0x060000;
-	public static final int cChiralityDiastereomers	 = 0x070000; // this has added the number of diastereomers
+	public static final int cChiralityEpimers		 	= 0x060000;
+	public static final int cChiralityDiastereomers		= 0x070000; // this has added the number of diastereomers
 
 	private static final double cDefaultAVBL = 24.0;
 	private static double sDefaultAVBL = cDefaultAVBL;
@@ -2345,7 +2345,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * @param atom
-	 * @return whether the atom's stereo configuration was explicitly deplared unknown
+	 * @return whether the atom's stereo configuration was explicitly declared unknown
 	 */
 	public boolean isAtomConfigurationUnknown(int atom) {
 		return ((mAtomFlags[atom] & cAtomFlagConfigurationUnknown) != 0);
@@ -3186,23 +3186,6 @@ public class Molecule implements Serializable {
 			mValidHelperArrays = cHelperNone;
 
 		return found;
-		}
-
-
-	/**
-	 * Removes all user supplied stereo information: up/down-bonds,
-	 * atom configuration unknown flags, atom and bond ESR assignments.
-	 * Removes parity and CIP flags from helper state, such that stereo calculation
-	 * is redone, if needed.
-	 */
-	public void stripStereoInformation() {
-		mIsRacemate = false;
-		for (int atom=0; atom<mAllAtoms; atom++)
-			mAtomFlags[atom] &= ~(cAtomFlagConfigurationUnknown | cAtomFlagsESR);
-		for (int bond=0; bond<mAllBonds; bond++)
-			mBondType[bond] &= ~cBondTypeMaskStereo;
-
-		mValidHelperArrays &= ~cHelperBitsStereo;
 		}
 
 

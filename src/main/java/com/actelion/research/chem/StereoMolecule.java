@@ -257,7 +257,35 @@ public class StereoMolecule extends ExtendedMolecule {
         return paritiesUpdated;
         }
 
-    /**
+	/**
+	 * Removes defined and implicit stereo information from the molecule.<br>
+	 * - up/down-bonds are converted to double bonds<br>
+	 * - stereo centers are flagged to be unknown<br>
+	 * - double bonds with implicit stereo configurations are converted into cross bonds<br>
+	 * - all atom and bond ESR assignments are removed<br>
+	 * - parity and CIP helper state is set to invalid, such that stereo calculation is redone, if needed.
+	 */
+	public void stripStereoInformation() {
+		ensureHelperArrays(cHelperParities);
+
+		mIsRacemate = false;
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			mAtomFlags[atom] &= ~cAtomFlagsESR;
+			if ((mAtomFlags[atom] & cAtomFlagsParity) != cAtomParityNone)
+				mAtomFlags[atom] |= cAtomFlagConfigurationUnknown;
+			else
+				mAtomFlags[atom] &= ~cAtomFlagConfigurationUnknown;
+			}
+		for (int bond=0; bond<mAllBonds; bond++)
+			if ((mBondFlags[bond] & cBondFlagsParity) != cBondParityNone && getBondOrder(bond) == 2)
+				mBondType[bond] = cBondTypeCross;
+			else
+				mBondType[bond] &= ~cBondTypeMaskStereo;
+
+		mValidHelperArrays &= ~cHelperBitsStereo;
+		}
+
+	/**
      * This returns the absolute(!) atom parity from the canonization procedure.
      * While the molecule's (relative) atom parity returned by getAtomParity() is
      * based on atom indices and therefore depends on the order of atoms,

@@ -2303,6 +2303,8 @@ public abstract class AbstractDepictor {
 		p2y[1] = p1y[1];
 
 		int color1,color2;
+		if (mMol.getBond(atom1, atom2) == -1)
+			System.out.println("tough luck");
 		if (mMol.isBondForegroundHilited(mMol.getBond(atom1, atom2))) {
 			color1 = COLOR_HILITE_BOND_FG;
 			color2 = COLOR_HILITE_BOND_FG;
