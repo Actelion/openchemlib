@@ -37,10 +37,7 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.TreeMap;
 
 public class TorsionDB {
@@ -68,9 +65,19 @@ public class TorsionDB {
 
 	private static TorsionDB sInstance;
 	private static String sDatabase;
+	private static String sExternalResourcePath;
 	private int mSupportedModes;
 	private int mMergeSpan;
 	private TreeMap<String,TorsionInfo> mTreeMap;
+
+	/**
+	 * Use this method before initializing the TorsionDB, if you want to open the resource
+	 * files from an external location in the file system rather than from the project resources.
+	 * @param path absolute path of resource file directory ending with a file separator
+	 */
+	public static void setResourcePath(String path) {
+		sExternalResourcePath = path;
+		}
 
 	/**
 	 * Initializes the in memory torsion database by reading torsion list,
@@ -277,6 +284,9 @@ public class TorsionDB {
 		}
 
 	protected static BufferedReader openReader(String resourceName) throws IOException {
+		if (sExternalResourcePath != null)
+			return new BufferedReader(new FileReader(sExternalResourcePath+resourceName));
+
 		if (sDatabase == null) {
 			InputStream is = TorsionDB.class.getResourceAsStream(cBasePath+DATABASE_CSD+resourceName);
 			if (is != null) {
