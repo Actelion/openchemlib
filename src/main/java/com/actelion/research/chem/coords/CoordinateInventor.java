@@ -630,7 +630,8 @@ public class CoordinateInventor {
 
 
 	private void createRegularRingFragment(InventorFragment f, int bondEConstraint, int bondZConstraint) {
-		if (bondEConstraint == 0) {
+		if (bondEConstraint == 0    // no E-bonds
+		 || (bondEConstraint & bondZConstraint) != 0) { // contradictory constraints
 			createRegularRingFragment(f);
 			return;
 			}
@@ -662,7 +663,7 @@ public class CoordinateInventor {
 			bitMinus2 = bitMinus1;
 			bitMinus1 = currentBit;
 			currentBit = bitPlus1;
-			bitPlus1 = 1 << (i+1 < f.size() ? i+1 : i+1-f.size());
+			bitPlus1 = 1 << (i+2 < f.size() ? i+2 : i+2-f.size());
 			}
 
 		if (startIndex == -1) {
