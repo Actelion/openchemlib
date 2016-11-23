@@ -1,6 +1,5 @@
 package com.actelion.research.chem.coords;
 
-import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
 import java.util.ArrayList;
@@ -480,8 +479,11 @@ public class InventorFragment {
 
 		int neighbourCount = CIRCULAR_BINS / 4;
 		double[] sin = new double[neighbourCount];
-		for (int i=1; i<neighbourCount; i++)
-			sin[i] = Math.sin(i*BIN_ANGLE);
+		double[] cos = new double[neighbourCount];
+		for (int i=1; i<neighbourCount; i++) {
+			sin[i] = Math.sin(i * BIN_ANGLE);
+			cos[i] = Math.cos(i * BIN_ANGLE);
+			}
 
 		double squareRadius = neighbourRadius * neighbourRadius;
 
@@ -495,23 +497,17 @@ public class InventorFragment {
 
 			// check, whether localMinDistance is compatible with adjacent bins and adapt, if needed
 			for (int i=1; i<neighbourCount; i++) {
-
 				for (int j=-1; j<=1; j+=2) {	// both sides
 					int neighbourBin = correctBin(bin + j*i);
 
-					if (distance[neighbourBin] <= localMinDistance)	// this does not conflict
+					if (distance[neighbourBin] * cos[i] <= localMinDistance)	// this does not conflict
 						continue;
 
-					// calculate how close we can move the neighbour fragment towards this fragment until it touches the most remote atom in a neighbour bin
-					double h = distance[neighbourBin] * sin[i];
-					if (h < neighbourRadius) {
-						double hSquare = h * h;
-						double d = Math.sqrt(squareRadius-hSquare) + Math.sqrt(distance[neighbourBin]*distance[neighbourBin]-hSquare) - neighbourRadius;
-						if (localMinDistance < d) {
-							localMinDistance = d;
-							if (minDistance <= localMinDistance)
-								break;
-							}
+					double d = cos[i] * Math.min(distance[neighbourBin], neighbourRadius / sin[i]);
+					if (localMinDistance < d) {
+						localMinDistance = d;
+						if (minDistance <= localMinDistance)
+							break;
 						}
 					}
 				if (minDistance <= localMinDistance)

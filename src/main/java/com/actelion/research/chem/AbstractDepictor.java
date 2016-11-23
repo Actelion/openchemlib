@@ -1842,7 +1842,7 @@ public abstract class AbstractDepictor {
 			}
 
 		double hindrance[] = new double[4];
-		for (int i=0; i<mMol.getAllConnAtoms(atom); i++) {
+		for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
 			int bnd = mMol.getConnBond(atom,i);
 			for (int j=0; j<2; j++) {
 				if (mMol.getBondAtom(j,bnd) == atom) {
