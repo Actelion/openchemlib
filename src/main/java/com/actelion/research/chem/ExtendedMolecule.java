@@ -125,15 +125,15 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			if (atom1<atomCount && atom2<atomCount) {
 				if (includeAtom[atom1] && includeAtom[atom2])
 					copyBond(destMol, bnd, 0, 0, atomMap, recognizeDelocalizedBonds);
-				// if we keep only one atom and have a bi-polar bonds, then we need to neutralize
+				// if we keep only one atom and have a bi-polar bond, then we need to neutralize
 				else if (mAtomCharge[atom1] != 0
 					  && mAtomCharge[atom2] != 0
 					  && (mAtomCharge[atom1] < 0
 						^ mAtomCharge[atom2] < 0)) {
 					if (includeAtom[atom1])
-						mAtomCharge[atom1] += (mAtomCharge[atom1] < 0) ? 1 : -1;
+						destMol.mAtomCharge[atomMap[atom1]] += (mAtomCharge[atom1] < 0) ? 1 : -1;
 					if (includeAtom[atom2])
-						mAtomCharge[atom2] += (mAtomCharge[atom2] < 0) ? 1 : -1;
+						destMol.mAtomCharge[atomMap[atom2]] += (mAtomCharge[atom2] < 0) ? 1 : -1;
 					}
 				}
 			}
@@ -2545,7 +2545,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperNeighbours);
 
 		for (int bond=0; bond<mAllBonds; bond++) {
-			if (getBondOrder(bond) < 3) {
+			int bondOrder = getBondOrder(bond);
+			if (bondOrder == 1 || bondOrder == 2) {
 				int atom1,atom2;
 				if (mAtomCharge[mBondAtom[0][bond]] > 0
 				 && mAtomCharge[mBondAtom[1][bond]] < 0) {
@@ -2564,13 +2565,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				 || isMetalAtom(atom2))
 					continue;
 
-				if (mAtomicNo[atom1] < 9)
-					if (getOccupiedValence(atom1) > 3)
+				if ((mAtomicNo[atom1] < 9 && getOccupiedValence(atom1) > 3)
+				 || (mAtomicNo[atom2] < 9 && getOccupiedValence(atom2) > 3))
 						continue;
 
 				mAtomCharge[atom1] -= 1;
 				mAtomCharge[atom2] += 1;
-				if (getBondOrder(bond) == 1)
+				if (bondOrder == 1)
 					mBondType[bond] = cBondTypeDouble;
 				else
 					mBondType[bond] = cBondTypeTriple;
