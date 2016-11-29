@@ -36,27 +36,43 @@ public interface VDWRadii {
 		2.71f,	2.82f,	2.81f,	2.83f,	// U,Np,Pu,Am
 		3.05f,	3.40f,	3.05f,	2.70f	// Cm,Bk,Cf,Es
 	};
-	
+
 	/**
-	 * Covalent Radii taken from the JMol program 
-	 * Originally taken from http://www.daylight.com/meetings/mug01/Sayle/m4xbondage.html, 
-	 * I found them to be inacurrate and incomplete
+	 * These covalent single bond radii values were taken from the
+	 * following source:
+	 * 'Molecular Double-Bond Covalent Radii for Elements Li–E112', 2009,
+	 * Pyykkö and Atsumi, doi: 10.1002/chem.200901472
 	 */
-	public static final float[] COVALENT_RADIUS = new float[]{
-		0.00f,	0.23f,	0.93f,	0.68f,	//0
-		0.35f,	0.83f,	0.77f,	0.75f,	//4
-		0.73f,	0.64f,	1.12f,	0.97f,	//8
-		1.10f,	1.35f,	1.12f,	0.75f,	//12
-		1.02f,	0.99f,	1.57f,	1.33f,	//16
-		0.99f,	1.44f,	1.47f,	1.33f,	//20
-		1.35f,	1.35f,	1.34f,	1.33f,	//24
-		1.50f,	1.52f,	1.45f,	1.22f,	//28
-		1.17f,	1.12f,	1.22f,	1.21f,	//32
-		1.91f,	1.47f,	1.12f,	1.78f,	//36
-		1.56f,	1.48f,	1.47f,	1.35f,	//40
-		1.40f,	1.45f,	1.50f,	1.59f,	//44
-		1.69f,	1.63f,	1.46f,	1.46f,	//48
-		1.47f,	1.40f,	1.98f,	1.67f,	//52
-		1.34f,	1.87f,	1.83f,	1.82f	//56		
+	public static final float[] COVALENT_RADIUS = new float[] {
+			0.00f, 0.32f, 0.46f, 1.33f, // ?,H,He,Li
+			1.02f, 0.85f, 0.75f, 0.71f, // Be,B,C,N
+			0.63f, 0.64f, 0.96f, 1.60f, // O,F,Ne,Na
+			1.39f, 1.26f, 1.16f, 1.11f, // Mg,Al,Si,P
+			1.03f, 0.99f, 1.07f, 1.96f, // S,Cl,Ar,K
+			1.71f, 1.48f, 1.36f, 1.34f, // Ca,Sc,Ti,V
+			1.22f, 1.19f, 1.16f, 1.11f, // Cr,Mn,Fe,Co
+			1.10f, 1.20f, 1.20f, 1.24f, // Ni,Cu,Zn,Ga
+			1.21f, 1.21f, 1.16f, 1.14f, // Ge,As,Se,Br
+			1.21f, 2.10f, 1.85f, 1.63f, // Kr,Rb,Sr,Y
+			1.54f, 1.47f, 1.38f, 1.28f, // Zr,Nb,Mo,Tc
+			1.25f, 1.25f, 1.20f, 1.39f, // Ru,Rh,Pd,Ag
+			1.44f, 1.46f, 1.40f, 1.40f, // Cd,In,Sn,Sb
+			1.36f, 1.33f, 1.35f, 2.32f, // Te,I,Xe,Cs
+			1.96f, 1.80f, 1.63f, 1.76f, // Ba,La,Ce,Pr
+			1.74f, 1.73f, 1.72f, 1.68f, // Nd,Pm,Sm,Eu
+			1.69f, 1.68f, 1.67f, 1.66f, // Gd,Tb,Dy,Ho
+			1.65f, 1.64f, 1.70f, 1.62f, // Er,Tm,Yb,Lu
+			1.52f, 1.46f, 1.37f, 1.31f, // Hf,Ta,W,Re
+			1.29f, 1.22f, 1.23f, 1.24f, // Os,Ir,Pt,Au
+			1.42f, 1.50f, 1.44f, 1.51f, // Hg,Tl,Pb,Bi
+			1.45f, 1.47f, 1.45f, 2.23f, // Po,At,Rn,Fr
+			2.01f, 1.86f, 1.75f, 1.69f, // Ra,Ac,Th,Pa
+			1.70f, 1.71f, 1.72f, 1.66f, // U,Np,Pu,Am
+			1.66f, 1.68f, 1.68f, 1.65f, // Cm,Bk,Cf,Es
+			1.67f, 1.73f, 1.76f, 1.61f, // Fm,Md,No,Lr
+			1.57f, 1.49f, 1.43f, 1.41f, // Rf,Db,Sg,Bh
+			1.34f, 1.29f, 1.28f, 1.21f, // Hs,Mt,Ds,Rg
+			1.37f, 1.36f, 1.43f, 1.62f, // Cn,Uut,Fl,Uup
+			1.75f, 1.65f, 1.57f         // Lv, Uus, Uuo
 	};
 }

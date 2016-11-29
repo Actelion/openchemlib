@@ -40,16 +40,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 public class BondLengthSet {
-	private static final String cBondIDFile = "bondID.txt";
-	private static final String cBondLengthFile = "bondLength.txt";
-	private static final String cBondStdDevFile = "bondStdDev.txt";
+	private static final String cBondDataFile = "bondLengthData.txt";
 
 	private static boolean isInitialized = false;
-	private static int[] BOND_ID;
-	private static float[] BOND_LENGTH;
-	private static float[] BOND_STDDEV;
+	private static int[] BOND_ID,BOND_COUNT;
+	private static float[] BOND_LENGTH,BOND_STDDEV;
 
-	public static final float DEFAULT_BOND_LENGTH = 2.0005f;	// must be different from any value above
+	public static final float DEFAULT_BOND_LENGTH = 2.0005f;
 	public static final float DEFAULT_BOND_STDDEV = 1.0000f;
 
 	private static final boolean CONSIDER_PI[] = { false,
@@ -85,38 +82,35 @@ public class BondLengthSet {
 		if (!isInitialized) {
 			synchronized (BondLengthSet.class) {
 				try {
-					BufferedReader tr = TorsionDB.openReader(cBondIDFile);
-					BufferedReader lr = TorsionDB.openReader(cBondLengthFile);
-					BufferedReader sr = TorsionDB.openReader(cBondStdDevFile);
+					BufferedReader bdr = TorsionDB.openReader(cBondDataFile);
 
-					String countString = tr.readLine();
+					String countString = bdr.readLine();
 					int count = (countString == null) ? 0 : Integer.parseInt(countString);
 
 					BOND_ID = new int[count];
 					BOND_LENGTH = new float[count];
 					BOND_STDDEV = new float[count];
+					BOND_COUNT = new int[count];
 
 					for (int i=0; i<count; i++) {
-						String tString = tr.readLine();
-						String lString = lr.readLine();
-						String sString = sr.readLine();
-
-						if (tString == null || lString == null || sString == null)
-							break;
-
-						try {
-							BOND_ID[i] = Integer.parseInt(tString);
-							BOND_LENGTH[i] = Float.parseFloat(lString);
-							BOND_STDDEV[i] = Float.parseFloat(sString);
-							}
-						catch (NumberFormatException nfe) {
-							break;
+						String line = bdr.readLine();
+						if (line != null) {
+							String[] item = line.split("\\t");
+							if (item.length == 4) {
+								try {
+									BOND_ID[i] = Integer.parseInt(item[0]);
+									BOND_LENGTH[i] = Float.parseFloat(item[1]);
+									BOND_STDDEV[i] = Float.parseFloat(item[2]);
+									BOND_COUNT[i] = Integer.parseInt(item[3]);
+									}
+								catch (NumberFormatException nfe) {
+									break;
+									}
+								}
 							}
 						}
 
-					tr.close();
-					lr.close();
-					sr.close();
+					bdr.close();
 					isInitialized = true;
 					}
 				catch (IOException e) {}
@@ -305,6 +299,10 @@ public class BondLengthSet {
 	public static float getBondLength(int index) {
 		return (index == -1) ? DEFAULT_BOND_LENGTH : BOND_LENGTH[index];
 		}
+
+	public static float getBondCount(int index) {
+		return (index == -1) ? 0 : BOND_COUNT[index];
+	}
 
 	/**
 	 * Returns an the standard deviation of bond lengths from bonds with similar
