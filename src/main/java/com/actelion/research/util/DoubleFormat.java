@@ -112,6 +112,9 @@ public class DoubleFormat {
 	private static String toString(long value, int exponent, int significantDigits, boolean skipTrailingZeros) {
 		int noOfCiphers = 1;
 
+		if (value == 0)
+			return (skipTrailingZeros || significantDigits==1) ? "0" : "0."+zeros(significantDigits-1);
+
 		if (value != 0) {
 			while (value % 10 == 0) {
 				value /= 10;
