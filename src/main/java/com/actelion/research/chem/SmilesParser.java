@@ -72,7 +72,7 @@ public class SmilesParser {
 
 		int[] ringClosureAtom = new int[MAX_RE_CONNECTIONS];
 		int[] ringClosurePosition = new int[MAX_RE_CONNECTIONS];
-		boolean[] ringClosureInUse = new boolean[MAX_RE_CONNECTIONS];
+		int[] ringClosureBondType = new int[MAX_RE_CONNECTIONS];
 		for (int i=0; i<MAX_RE_CONNECTIONS; i++)
 			ringClosureAtom[i] = -1;
 
@@ -245,6 +245,7 @@ public class SmilesParser {
 					atomMass = number;
 					}
 				else {
+					boolean hasBondType = (smiles[position-2] == '-' || smiles[position-2] == '=' || smiles[position-2] == '#' || smiles[position-2] == ':');
 					if (percentFound
 					 && position < smilesLength
 					 && Character.isDigit(smiles[position])) {
@@ -257,6 +258,7 @@ public class SmilesParser {
 					if (ringClosureAtom[number] == -1) {
 						ringClosureAtom[number] = baseAtom[bracketLevel];
 						ringClosurePosition[number] = position-1;
+						ringClosureBondType[number] = hasBondType ? bondType : -1;
 						}
 					else {
 						if (ringClosureAtom[number] == baseAtom[bracketLevel])
@@ -271,6 +273,8 @@ public class SmilesParser {
 								parity.addNeighbor(ringClosureAtom[number], position-1, false);
 							}
 
+						if (ringClosureBondType[number] != -1)
+							bondType = ringClosureBondType[number];
 						mMol.addBond(baseAtom[bracketLevel], ringClosureAtom[number], bondType);
 						ringClosureAtom[number] = -1;	// for number re-usage
 						}
