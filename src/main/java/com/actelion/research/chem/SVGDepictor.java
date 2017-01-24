@@ -200,7 +200,7 @@ public class SVGDepictor extends AbstractDepictor
     @Override
     protected void setLineWidth(double width)
     {
-        lineWidth = width;
+        lineWidth = Math.max(width,1);
     }
 
     @Override
