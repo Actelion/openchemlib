@@ -1,3 +1,18 @@
+package com.actelion.research.util;
+
+import java.awt.Point;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -30,26 +45,18 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-
-package com.actelion.research.util;
-
-import java.awt.Point;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class StringFunctions {
-	
+
+    // http://stackoverflow.com/questions/4731055/whitespace-matching-regex-java
+	public static final String PAT_WHITESPACE = "[\\s\\u0085\\p{Z}]";
+
+    // http://stackoverflow.com/questions/1805518/replacing-all-non-alphanumeric-characters-with-empty-strings
+	public static final String PAT_NOT_ALPHANUMERIC = "[^\\p{IsAlphabetic}^\\p{IsDigit}]";
+
+
 	public static final String [] REGEX_META_CHARACTERS = {"*","%","@","&","+", "(", ")"};
-	
+
+
 	public static String encodeHTML(String txt) {
 		
 	    StringBuilder sb = new StringBuilder();
