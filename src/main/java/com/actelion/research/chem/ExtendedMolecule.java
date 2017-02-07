@@ -1694,9 +1694,21 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			return;
 			}
 
+		int allConnAtoms = mAllConnAtoms[atom];
+
+		// We may have a rare case without any single bond (e.g. O=S(=NH)=NMe) with parities assigned from 3D-coords
+		boolean singleBondFound = false;
+		for (int i=0; i<allConnAtoms; i++) {
+			if (getBondOrder(mConnBond[atom][i]) == 1) {
+				singleBondFound = true;
+				break;
+				}
+			}
+		if (!singleBondFound)
+			return;
+
 		int[] sortedConnMap = getSortedConnMap(atom);
 
-		int allConnAtoms = mAllConnAtoms[atom];
 		double angle[] = new double[allConnAtoms];
 		for (int i=0; i<allConnAtoms; i++)
 			angle[i] = getBondAngle(mConnAtom[atom][sortedConnMap[i]], atom);
