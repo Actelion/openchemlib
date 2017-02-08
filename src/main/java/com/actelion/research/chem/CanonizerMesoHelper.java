@@ -223,7 +223,7 @@ public class CanonizerMesoHelper {
 				mesoFragmentList.remove(atomList);
 			}
 
-		mMesoFragmentAtom = mesoFragmentList.toArray(new int[0][0]);
+		mMesoFragmentAtom = (int[][])mesoFragmentList.toArray();//new int[0][0]);
 		Arrays.sort(mMesoFragmentAtom, new Comparator<int[]>() {
 			public int compare(int[] a1, int[] a2) {
 				if (a1.length != a2.length)
