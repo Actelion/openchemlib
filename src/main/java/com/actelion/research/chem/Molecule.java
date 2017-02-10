@@ -2908,7 +2908,7 @@ public class Molecule implements Serializable {
 			mBondQueryFeatures[bond] |= feature;
 		else
 			mBondQueryFeatures[bond] &= ~feature;
-		mValidHelperArrays = 0;	// there is an influence on occipied valence, bond order, etc.
+		mValidHelperArrays = cHelperNone;	// there is an influence on occipied valence, bond order, etc.
 		mIsFragment = true;
 		}
 
@@ -2962,6 +2962,20 @@ public class Molecule implements Serializable {
 	 */
 	public void setHydrogenProtection(boolean protectHydrogen) {
 		mProtectHydrogen = protectHydrogen;
+		}
+
+
+	/**
+	 * Use this method with extreme care. If you make a change to the molecule,
+	 * the validity of the helper arrays is typically set to cHelperNone.
+	 * If you make a small change to a molecule that doesn't change its topology,
+	 * you may override the automatic automatically cleared helper validity with
+	 * this method and avoid a new calculation of the neighbour arrays and ring
+	 * detection.
+	 * @param helperValidity cHelperNeighbours or cHelperRings
+	 */
+	public void setHelperValidity(int helperValidity) {
+		mValidHelperArrays = helperValidity;
 		}
 
 
@@ -3143,7 +3157,7 @@ public class Molecule implements Serializable {
 				}
 			}
 
-		mValidHelperArrays = 0;
+		mValidHelperArrays = cHelperNone;
 		}
 
 

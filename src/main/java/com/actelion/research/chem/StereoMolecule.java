@@ -92,7 +92,7 @@ public class StereoMolecule extends ExtendedMolecule {
 		// Otherwise parity is a perceived property from up/down bonds or 3D atom coords
 		// and should be freshly calculated. 
 		if (mCanonizer != null)
-			destMol.mValidHelperArrays = 0;
+			destMol.mValidHelperArrays = cHelperNone;
 		}
 
 	/**
