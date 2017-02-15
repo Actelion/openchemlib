@@ -167,15 +167,19 @@ public class DescriptorHandlerSkeletonSpheres implements DescriptorHandler<byte[
         return "1.1";
         }
 
-    public float getSimilarity(byte[] d1, byte[] d2) {
+    public float getSimilarity(final byte[] d1, final byte[] d2) {
         if (d1 == null || d2 == null)
             return Float.NaN;
 
         int total = 0;
         int matching = 0;
         for (int i=0; i<d1.length; i++) {
-            total += Math.max(d1[i], d2[i]);
-            matching += Math.min(d1[i], d2[i]);
+
+            final byte i1 = d1[i];
+            final byte i2 = d2[i];
+
+            total += Math.max(i1, i2);
+            matching += Math.min(i1, i2);
             }
 /*
 if (((double)matching/(double)total) > 0.8) {

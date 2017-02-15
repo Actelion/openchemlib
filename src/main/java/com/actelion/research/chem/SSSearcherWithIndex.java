@@ -756,12 +756,14 @@ public class SSSearcherWithIndex {
 		}
 
 
-	public static float getSimilarityTanimoto(int[] index1, int[] index2) {
+	public static float getSimilarityTanimoto(final int[] index1, final int[] index2) {
         int sharedKeys = 0;
         int allKeys = 0;
         for (int i=0; i<index1.length; i++) {
-            sharedKeys += bitCount(index1[i] & index2[i]);
-            allKeys += bitCount(index1[i] | index2[i]);
+            final int i1 = index1[i];
+            final int i2 = index2[i];
+            sharedKeys += bitCount(i1 & i2);
+            allKeys += bitCount(i1 | i2);
         	}
         return (float)sharedKeys/(float)allKeys;
         }
