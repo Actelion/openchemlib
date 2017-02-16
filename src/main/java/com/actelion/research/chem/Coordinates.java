@@ -468,7 +468,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return -Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2));
 	}
 
-	@Override
+	//@Override Annotation incompatible with 1.5
 	public int compareTo(Coordinates o) {
 		if(x!=o.x) return x<o.x?-1:1;
 		if(y!=o.y) return y<o.y?-1:1;

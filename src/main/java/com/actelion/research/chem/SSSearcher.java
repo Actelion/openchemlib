@@ -143,7 +143,7 @@ public class SSSearcher {
 
 	/**
 	 * Defines fragment and molecule before calling isFragmentInMolecule(...)
-	 * or findFragmentInMolecule(...). 
+	 * or findFragmentInMolecule(...).
 	 * @param fragment
 	 * @param molecule
 	 */
@@ -155,7 +155,7 @@ public class SSSearcher {
 
 	/**
 	 * Defines the molecule to be used in isFragmentInMolecule(...)
-	 * or findFragmentInMolecule(...). 
+	 * or findFragmentInMolecule(...).
 	 * @param molecule
 	 */
 	public void setMolecule(StereoMolecule molecule) {
@@ -172,7 +172,7 @@ public class SSSearcher {
 
 	/**
 	 * Defines the fragment to be used in isFragmentInMolecule(...)
-	 * or findFragmentInMolecule(...). 
+	 * or findFragmentInMolecule(...).
 	 * @param fragment
 	 */
 	public void setFragment(StereoMolecule fragment) {
@@ -516,7 +516,7 @@ System.out.println();
 						// Therefore we cannot return after the first match is found and must check
 						// every match, whether it can be extended to include the exclude group(s).
 						// In this case we call it an excluded match.
-						int[] sortedMatch = Arrays.copyOf(mMatchTable, mMatchTable.length);
+						int[] sortedMatch = copyOf(mMatchTable, mMatchTable.length);
 						Arrays.sort(sortedMatch);
 						if (mExcludedMatchSet.contains(sortedMatch)) {
 							isExcludedMatch = true;
@@ -549,13 +549,13 @@ System.out.println();
 					atomUsed[mMatchTable[mFragmentGraphAtom[current]]] = false;
 				}
 			}
-		
+
 		return mMatchList.size();
 		}
 
 
 	private void addMatchIfQualifies(int countMode) {
-		int[] match = Arrays.copyOf(mMatchTable, mMatchTable.length);
+		int[] match = copyOf(mMatchTable, mMatchTable.length);
 
 		if (countMode == cCountModeFirstMatch
 		 || countMode == cCountModeRigorous) {
@@ -569,7 +569,7 @@ System.out.println();
 			Arrays.sort(match);
 			if (!mSortedMatchSet.contains(match)) {
 				mSortedMatchSet.add(match);
-				mMatchList.add(Arrays.copyOf(mMatchTable, mMatchTable.length));
+				mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
 				}
 			return;
 			}
@@ -708,11 +708,11 @@ System.out.println();
 				int moleculeAtom = mMatchTable[fragmentAtom];
 				int fragmentParity = mFragment.getAtomParity(fragmentAtom);
 				int moleculeParity = mMolecule.getAtomParity(moleculeAtom);
-		
+
 					// always consider as match if fragment atom is no stereo center
 				if (fragmentParity == Molecule.cAtomParityNone)
 			   		continue;
-		
+
 				// consider as match if assymetric fragment atom matches on non-stereo-center
 				if (moleculeParity == Molecule.cAtomParityNone)
 			   		continue;
@@ -1265,7 +1265,7 @@ System.out.println();
 		}
 
 	/**
-	 * Generates inherent feature flags of a given atom. 
+	 * Generates inherent feature flags of a given atom.
 	 * @param mol molecule or fragment of the SSS
 	 * @param atom the atom of which to generate feature flags
 	 * @return atom features independent of query features
@@ -1408,7 +1408,7 @@ System.out.println();
 
 
 	/**
-	 * Generates inherent feature flags of a given bond. 
+	 * Generates inherent feature flags of a given bond.
 	 * @param mol molecule or fragment of the SSS
 	 * @param bond the bond of which to generate feature flags
 	 * @return bond features independent of query features
@@ -1467,4 +1467,12 @@ System.out.println();
 	private class BridgeBond {
 		int atom1,atom2,minBridgeSize,maxBridgeSize;
 		}
+
+	private static int[] copyOf(int[] original, int newLength) {
+     int[] copy = new int[newLength];
+     System.arraycopy(original, 0, copy, 0,
+                      Math.min(original.length, newLength));
+     return copy;
+ }
+
 	}

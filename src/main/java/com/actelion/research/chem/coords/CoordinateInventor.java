@@ -1905,7 +1905,7 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 				}
 			if (fragmentCharge != 0) {
 				Collections.sort(chargeList, new Comparator<InventorCharge>() {
-					@Override
+					//@Override Annotation incompatible with 1.5
 					public int compare(InventorCharge o1, InventorCharge o2) {
 						int c1 = Math.abs(o1.charge);
 						int c2 = Math.abs(o2.charge);
@@ -1929,7 +1929,7 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 
 		// with positive charges we have the large fragments first
 		Collections.sort(posChargeList, new Comparator<InventorCharge>() {
-			@Override
+			//@Override Annotation incompatible with 1.5
 			public int compare(InventorCharge o1, InventorCharge o2) {
 				int c1 = o1.fragment.size();
 				int c2 = o1.fragment.size();
@@ -1939,7 +1939,7 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 
 		// with negative charges we have the small o1.fragments first
 		Collections.sort(negChargeList, new Comparator<InventorCharge>() {
-			@Override
+			//@Override Annotation incompatible with 1.5
 			public int compare(InventorCharge o1, InventorCharge o2) {
 				int c1 = o1.fragment.size();
 				int c2 = o1.fragment.size();
