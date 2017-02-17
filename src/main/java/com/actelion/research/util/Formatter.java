@@ -18,23 +18,32 @@ import java.util.StringTokenizer;
  */
 public class Formatter {
 
-	public static final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yy");
-	private static final DateFormat timeFormat = new SimpleDateFormat("HH:mm");
+	public static enum LocaleFormat {
+		SWISS("dd.MM.yy", "HH:mm"),
+		EUROPEAN("dd/MM/yy", "HH:mm"),
+		AMERICAN("dd/MM/yy", "HH:mm");
+		private String localeDateFormat;
+		private String localeTimeFormat;
+		private LocaleFormat(String localeDateFormat, String localeTimeFormat) {
+			this.localeDateFormat = localeDateFormat;
+			this.localeTimeFormat = localeTimeFormat;
+		}
+		public String getLocaleDateFormat() {
+			return localeDateFormat;
+		}
+		public String getLocaleTimeFormat() {
+			return localeTimeFormat;
+		}
+	}
+	private LocaleFormat localeFormat = LocaleFormat.SWISS;
+	
+	private static DateFormat yyyyFormat = new SimpleDateFormat("yyyyMMdd");
 
-	private static final DateFormat[] dateTimeParsers = new SimpleDateFormat[] {		
-		new SimpleDateFormat("dd.MM.yy HH:mm:ss"),
-		new SimpleDateFormat("dd.MM.yy HH:mm"),
-		new SimpleDateFormat("dd.MM.yy"),
-		new SimpleDateFormat("MM.yy"),
-		new SimpleDateFormat("yy")};
-	private static final DateFormat[] dateTimeFormatters = new SimpleDateFormat[] {		
-		new SimpleDateFormat("dd.MM.yyyy HH:mm:ss"),
-		new SimpleDateFormat("dd.MM.yyyy HH:mm"),
-		new SimpleDateFormat("dd.MM.yyyy"),
-		new SimpleDateFormat("MM.yyyy"),
-		new SimpleDateFormat("yyyy")};
-//	private static final DateFormat dateTimeFormat2 = new SimpleDateFormat("dd.MM.yy HH:mm");
-//	private static final DateFormat dateTimeFormat3 = new SimpleDateFormat("dd.MM.yy");
+	private static DateFormat dateFormat;
+	private static DateFormat timeFormat;
+
+	private static DateFormat[] dateTimeParsers;
+	private static DateFormat[] dateTimeFormatters;
 
 	private static final DecimalFormat df0 = new DecimalFormat("0");
 	private static final DecimalFormat df1 = new DecimalFormat("0.0");
@@ -50,6 +59,9 @@ public class Formatter {
 	public static final DecimalFormat dfI3 = new DecimalFormat("000");
 
 	static {
+		//Set default format
+		setLocaleFormat(LocaleFormat.SWISS);
+		
 		//Decimal Format should round like Excel, i.e half up
 		df0.setRoundingMode(RoundingMode.HALF_UP);
 		df1.setRoundingMode(RoundingMode.HALF_UP);
@@ -60,6 +72,28 @@ public class Formatter {
 		df4.setRoundingMode(RoundingMode.HALF_UP);
 		df8.setRoundingMode(RoundingMode.HALF_UP);
 		dfE.setRoundingMode(RoundingMode.HALF_UP);
+	}
+	
+	public LocaleFormat getLocaleFormat() {
+		return localeFormat;
+	}
+	public static void setLocaleFormat(LocaleFormat localeFormat) {
+		assert localeFormat!=null;
+		dateFormat = new SimpleDateFormat(localeFormat.getLocaleDateFormat());
+		timeFormat = new SimpleDateFormat(localeFormat.getLocaleTimeFormat());
+
+		dateTimeParsers = new SimpleDateFormat[] {		
+			new SimpleDateFormat(localeFormat.getLocaleDateFormat() + " " + localeFormat.getLocaleTimeFormat() + ":ss"),
+			new SimpleDateFormat(localeFormat.getLocaleDateFormat() + " " + localeFormat.getLocaleTimeFormat()),
+			new SimpleDateFormat(localeFormat.getLocaleDateFormat()),
+			new SimpleDateFormat("MM.yy"),
+			new SimpleDateFormat("yy")};
+		dateTimeFormatters = new SimpleDateFormat[] {		
+			new SimpleDateFormat(localeFormat.getLocaleDateFormat() + "yy " + localeFormat.getLocaleTimeFormat() + ":ss"),
+			new SimpleDateFormat(localeFormat.getLocaleDateFormat() + "yy " + localeFormat.getLocaleTimeFormat()),
+			new SimpleDateFormat(localeFormat.getLocaleDateFormat() + "yy"),
+			new SimpleDateFormat("MM.yyyy"),
+			new SimpleDateFormat("yyyy")};
 	}
 	
 	public static final String format0(Double d) {
@@ -283,6 +317,10 @@ public class Formatter {
 		Date d = parseDateTime(s);
 		if(d==null) return "";
 		return formatDateTime(d);
+	}
+	
+	public static final String formatYYYYMMDD() {		
+		return yyyyFormat.format(new Date());
 	}
 	
 	public static void main(String[] args) {
