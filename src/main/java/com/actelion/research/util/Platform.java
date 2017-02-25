@@ -151,7 +151,13 @@ public class Platform
         if (isMacintosh()) {
         	for (String[] appKeyAndName:MACINTOSH_APPLICATION_NAME) {
         		if (appKeyAndName[0].equals(name)) {
-        			String path = "/Applications/"+appKeyAndName[1]+".app/Contents/MacOS/JavaApplicationStub";
+        		    // we assume that the name of the launcher is equal to parameter name
+                    String path = "/Applications/"+appKeyAndName[1]+".app/Contents/MacOS/"+name;
+                    if (new File(path).exists())
+                        return path;
+
+                    // if the JRE7+ way doesn's work, check if we still have a JRE6 based app
+        			path = "/Applications/"+appKeyAndName[1]+".app/Contents/MacOS/JavaApplicationStub";
         			return new File(path).exists() ? path : null;
         		}
         	}
