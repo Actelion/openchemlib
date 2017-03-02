@@ -403,7 +403,7 @@ public class Canonizer {
 				valence = (byte)explicitAbnormalValence;
 			}
 		else if (!mMol.supportsImplicitHydrogen(atom)
-			  && mMol.getImplicitHydrogens(atom) != 0) {
+			  && mMol.getExplicitHydrogens(atom) != 0) {
 			valence = mMol.getOccupiedValence(atom);
 			valence -= mMol.getElectronValenceCorrection(atom, valence);
 			}

@@ -983,6 +983,9 @@ public class IDCodeParser {
 			if (idcode == null || idcode.length == 0)
 				return;
 
+			if (coordinates != null && coordinates.length == 0)
+				coordinates = null;
+
 			System.out.println("idcode: " + new String(idcode));
 			if (coordinates != null)
 				System.out.println("coords: " + new String(coordinates));

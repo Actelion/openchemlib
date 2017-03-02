@@ -1294,7 +1294,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * @param atom
-	 * @return number of explicit plain hydrogen atoms (does not include D,T,cutom labelled H, etc)
+	 * @return number of explicit plain hydrogen atoms (does not include D,T,custom labelled H, etc)
 	 */
 	public int getExplicitHydrogens(int atom) {
 		return mAllConnAtoms[atom] - mConnAtoms[atom];
