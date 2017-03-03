@@ -2872,8 +2872,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * Usually explicit hydrogen atoms can be removed without changing a molecule,
 	 * because the removal just converts explicit into implicit hydrogen atoms.
 	 * Exceptions are hydrogen with isotop information, hydrogens not connected to a non-H atom,
-	 * hydrogens carrying a custom label and hydrogens whose existence implicitly defines a neighbour
-	 * atom to have an abnormal valence.<br>
+	 * hydrogens carrying a custom label, hydrogens whose existence implicitly defines a neighbour
+	 * atom to have an abnormal valence, hydrogens with a different bonding environment than exactly
+	 * one single bond, and hydrogen atoms connected to metal atoms.<br>
 	 * This method moves all simple hydrogen atoms and associated bonds to the end of the atom/bond tables.
 	 * It sets mAtoms to exclude simple hydrogen atoms and mBonds to exclude bonds leading to them.
 	 * Simple hydrogens are not deleted, though. They are always displayed and the stereo perception
@@ -2986,7 +2987,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		for (int atom=0; atom<mAllAtoms; atom++)
 			isSimpleHydrogen[atom] = isSimpleHydrogen(atom);
 
-		// unflag simple hydrogens that have a bond with order != 1 or that have more than one bond
+		// unflag simple hydrogens that have a bond with order != 1
+		// or that have more than one bond or that are connected to metal atoms
 		boolean[] oneBondFound = new boolean[mAllAtoms];
 		for (int bond=0; bond<mAllBonds; bond++) {
 			int atom1 = mBondAtom[0][bond];
@@ -3001,6 +3003,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			if (oneBondFound[atom1])
 				isSimpleHydrogen[atom1] = false;
 			if (oneBondFound[atom2])
+				isSimpleHydrogen[atom2] = false;
+
+			if (isSimpleHydrogen[atom1] && isMetalAtom(atom2))
+				isSimpleHydrogen[atom1] = false;
+			if (isSimpleHydrogen[atom2] && isMetalAtom(atom1))
 				isSimpleHydrogen[atom2] = false;
 
 			oneBondFound[atom1] = true;
