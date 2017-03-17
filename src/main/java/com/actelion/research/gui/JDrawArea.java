@@ -1597,7 +1597,7 @@ public class JDrawArea extends JPanel
 						break;
 					}
 				} else {
-					if (mMol.getAllConnAtoms(mAtom1) == MAX_CONNATOMS) {
+					if (mMol.getAllConnAtomsPlusMetalBonds(mAtom1) == MAX_CONNATOMS) {
 						return;
 					}
 					mX1 = mMol.getAtomX(mAtom1);
@@ -1610,7 +1610,7 @@ public class JDrawArea extends JPanel
 			case JDrawToolbar.cToolChain:
 				mAtom1 = mMol.findAtom(mX1, mY1);
 				if (mAtom1 != -1) {
-					if (mMol.getAllConnAtoms(mAtom1) == MAX_CONNATOMS) {
+					if (mMol.getAllConnAtomsPlusMetalBonds(mAtom1) == MAX_CONNATOMS) {
 						return;
 					}
 					mX1 = mMol.getAtomX(mAtom1);
@@ -1795,7 +1795,7 @@ public class JDrawArea extends JPanel
 
 				stopAtom = mMol.findAtom(mX2, mY2);
 				if (stopAtom != -1
-					&& mMol.getAllConnAtoms(stopAtom) == MAX_CONNATOMS) {
+					&& mMol.getAllConnAtomsPlusMetalBonds(stopAtom) == MAX_CONNATOMS) {
 					return;
 				}
 
@@ -2220,11 +2220,11 @@ public class JDrawArea extends JPanel
 		double newAngle = Math.PI * 2 / 3;
 		if (atom != -1) {
 			double angle[] = new double[MAX_CONNATOMS + 1];
-			for (int i = 0; i < mMol.getAllConnAtoms(atom); i++) {
+			for (int i = 0; i < mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
 				angle[i] = mMol.getBondAngle(atom, mMol.getConnAtom(atom, i));
 			}
 
-			if (mMol.getAllConnAtoms(atom) == 1) {
+			if (mMol.getAllConnAtomsPlusMetalBonds(atom) == 1) {
 				if (angle[0] < -Math.PI * 5 / 6) {
 					newAngle = Math.PI / 3;
 				} else if (angle[0] < -Math.PI / 2) {
@@ -2243,7 +2243,7 @@ public class JDrawArea extends JPanel
 					newAngle = -Math.PI / 3;
 				}
 			} else {
-				for (int i = mMol.getAllConnAtoms(atom) - 1; i > 0; i--) {	// bubble sort
+				for (int i = mMol.getAllConnAtomsPlusMetalBonds(atom) - 1; i > 0; i--) {	// bubble sort
 					for (int j = 0; j < i; j++) {
 						if (angle[j] > angle[j + 1]) {
 							double temp = angle[j];
@@ -2252,11 +2252,11 @@ public class JDrawArea extends JPanel
 						}
 					}
 				}
-				angle[mMol.getAllConnAtoms(atom)] = angle[0] + Math.PI * 2;
+				angle[mMol.getAllConnAtomsPlusMetalBonds(atom)] = angle[0] + Math.PI * 2;
 
 				int largestNo = 0;
 				double largestDiff = 0.0;
-				for (int i = 0; i < mMol.getAllConnAtoms(atom); i++) {
+				for (int i = 0; i < mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
 					double angleDiff = angle[i + 1] - angle[i];
 					if (largestDiff < angleDiff) {
 						largestDiff = angleDiff;

@@ -2013,19 +2013,25 @@ public class Molecule implements Serializable {
 		boolean considerMetalBonds = false;
 
 		int consideredBonds = 0;
-		while (consideredBonds == 0 && !considerMetalBonds) {
+
+		// count all non-metal bonds
+		for (int bond=0; bond<bonds; bond++)
+			if (mBondType[bond] != cBondTypeMetalLigand
+			 && (mBondQueryFeatures[bond] & cBondQFBridge) == 0)
+				consideredBonds++;
+
+		// if there are no non-metal bonds, then count all metal bonds
+		if (consideredBonds == 0) {
 			for (int bond=0; bond<bonds; bond++)
-				if ((considerMetalBonds || mBondType[bond] != cBondTypeMetalLigand)
-				 && (mBondQueryFeatures[bond] & cBondQFBridge) == 0)
+				if ((mBondQueryFeatures[bond] & cBondQFBridge) == 0)
 					consideredBonds++;
 
-			if (consideredBonds == 0)
-				considerMetalBonds = true;
+			considerMetalBonds = true;
 			}
 
+		// if we still have no bonds and since this function is used to get an idea about the scale
+		// of the molecule return as approximation 60% of the smallest atom distance
 		if (consideredBonds == 0) {
-				// since this function is used to get an idea about the scale
-				// of the molecule return as approximation the smallest atom distance
 			if (atoms < 2)
 				return defaultBondLength;
 
