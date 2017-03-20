@@ -1108,7 +1108,7 @@ public class IDCodeParser {
 
 			if (version == Canonizer.cIDCodeVersion2)
 				if ((decodeBits(1) == 0))   // translate chiral flag
-					System.out.print("isRacemate");
+					System.out.println("isRacemate");
 
 			int EZCount = decodeBits(bbits);
 			if (EZCount != 0) {
@@ -1211,7 +1211,7 @@ public class IDCodeParser {
 							System.out.print(" " + atom);
 							for (int j = 0; j < atoms; j++) {
 								System.out.print(j == 0 ? ":" : ",");
-								System.out.print("" + decodeBits(8) + ",");
+								System.out.print("" + decodeBits(8));
 							}
 						}
 						System.out.println();
