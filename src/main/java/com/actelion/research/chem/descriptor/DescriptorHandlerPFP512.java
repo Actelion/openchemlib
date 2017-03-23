@@ -36,8 +36,7 @@ package com.actelion.research.chem.descriptor;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.FingerPrintGenerator;
 
-public class DescriptorHandlerPFP512 extends AbstractDescriptorHandlerFP<StereoMolecule>
-		implements DescriptorConstants {
+public class DescriptorHandlerPFP512 extends AbstractDescriptorHandlerFP<StereoMolecule> implements DescriptorConstants {
     private static final double CORRECTION_FACTOR = 0.8;
 
     private static DescriptorHandlerPFP512 sDefaultInstance;
@@ -56,7 +55,7 @@ public class DescriptorHandlerPFP512 extends AbstractDescriptorHandlerFP<StereoM
 	}
 
 	public String getVersion() {
-		return "1.0";
+		return "1.1";
 	}
 
 	public int[] createDescriptor(StereoMolecule mol) {
@@ -72,7 +71,7 @@ public class DescriptorHandlerPFP512 extends AbstractDescriptorHandlerFP<StereoM
 		int mask = 1;
 		for (int i = 0; i < 32; i++) {
 			for (int j = 0; j < 16; j++)
-				if (bitset.get(32 * i + j))
+				if (bitset.get(16 * i + j))
 					fp[j] += mask;
 			mask <<= 1;
 		}
