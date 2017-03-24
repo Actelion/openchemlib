@@ -37,7 +37,7 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.FingerPrintGenerator;
 
 public class DescriptorHandlerPFP512 extends AbstractDescriptorHandlerFP<StereoMolecule> implements DescriptorConstants {
-    private static final double CORRECTION_FACTOR = 0.8;
+    private static final double CORRECTION_FACTOR = 0.85;
 
     private static DescriptorHandlerPFP512 sDefaultInstance;
 
