@@ -607,12 +607,10 @@ public abstract class Model
    				new CoordinateInventor(selectedOnly ? CoordinateInventor.MODE_KEEP_MARKED_ATOM_COORDS : 0).invent(mFragment[fragment]);
    				mFragment[fragment].setStereoBondsFromParity();
    			}
-            AbstractDepictor d = createDepictor(mFragment[fragment]);// new Depictor(mFragment[fragment]);
-//   			Depictor d = new Depictor(mFragment[fragment]);
+            AbstractDepictor d = createDepictor(mFragment[fragment]);
    			d.updateCoords(null, null, AbstractDepictor.cModeInflateToMaxAVBL);
    			boundingRect[fragment] = d.getBoundingRect();
-   //			fragmentWidth += boundingRect[fragment].width;
-   		}
+        }
 
    		double spacing = FRAGMENT_CLEANUP_DISTANCE * AbstractDepictor.cOptAvBondLen;
    		double avbl = mMol.getAverageBondLength();
@@ -652,7 +650,6 @@ public abstract class Model
    			int fragment = mFragmentNo[atom];
    			mMol.setAtomX(atom, mFragment[fragment].getAtomX(fragmentAtom[fragment]));
    			mMol.setAtomY(atom, mFragment[fragment].getAtomY(fragmentAtom[fragment]));
-
    			fragmentAtom[fragment]++;
    		}
 
