@@ -81,8 +81,13 @@ public class Matrix {
         this(ma.getArray());
     }
 
-    public Matrix(boolean bRow, double [] arr) {
-        if (bRow) {
+    /**
+     *
+     * @param row if true hte matrix has one row. If false the matrix has one comulmn.
+     * @param arr
+     */
+    public Matrix(boolean row, double [] arr) {
+        if (row) {
             data = new double[1][];
             data[0]=arr;
         }
@@ -94,8 +99,8 @@ public class Matrix {
         }
     }
     
-    public Matrix(boolean bRow, int [] dArray) {
-        if (bRow) {
+    public Matrix(boolean row, int [] dArray) {
+        if (row) {
             data = new double[1][dArray.length];
             for (int jj = 0; jj < getColDim(); jj++) {
                 data[0][jj] = dArray[jj];
@@ -183,6 +188,7 @@ public class Matrix {
             data[i] = arr;
         }
     }
+
     /**
      *
      * @param vecDoubleVec Vector with DoubleVec
@@ -402,6 +408,10 @@ public class Matrix {
         return arr;
     }
 
+    /**
+     *
+     * @return column wise centered matrix.
+     */
     public Matrix getCenteredMatrix() {
     	
     	final int cols = cols();
@@ -440,7 +450,7 @@ public class Matrix {
     public Matrix getCenteredMatrix(Matrix maMean) {
         Matrix ma = new Matrix(getRowDim(), getColDim());
         for (int i = 0; i < rows(); i++) {
-            for (int j = 0; j < getColDim(); j++) {
+            for (int j = 0; j < cols(); j++) {
                 ma.data[i][j] = data[i][j] - maMean.data[0][j];
             }
         }
@@ -2001,7 +2011,7 @@ public class Matrix {
             int maCols = ma.cols();
             
             if (n != ma.rows()) {
-                throw new RuntimeException("Error in Routine SMatrix::Mult(). Attempt to calculate the product of two incompatible matrices. Do nothing and return.");
+                throw new RuntimeException("Error in Routine Matrix.multiply(...). Attempt to calculate the product of two incompatible matrices. Do nothing and return.");
             }
 
             maResult = new Matrix(rows(), ma.cols());

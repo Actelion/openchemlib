@@ -2314,6 +2314,11 @@ System.out.println("noOfRanks:"+canRank);
 
 
 	public StereoMolecule getCanMolecule() {
+		return getCanMolecule(false);
+		}
+
+
+	public StereoMolecule getCanMolecule(boolean includeExplicitHydrogen) {
 		generateGraph();
 
 		StereoMolecule mol = new StereoMolecule(mMol.getAtoms(), mMol.getBonds());
@@ -2326,6 +2331,16 @@ System.out.println("noOfRanks:"+canRank);
 		for(int i=0; i<mMol.getBonds(); i++) {
 			mMol.copyBond(mol, mGraphBond[i], 0, 0, mGraphIndex, false);
 			mol.setBondESR(i, mEZESRType[mGraphBond[i]], mEZESRGroup[mGraphBond[i]]);
+			}
+
+		if (includeExplicitHydrogen) {
+			for (int i=0; i<mMol.getAtoms(); i++) {
+				int atom = mGraphAtom[i];
+				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++) {
+					int hydrogen = mMol.copyAtom(mol, mMol.getConnAtom(atom, j), 0, 0);
+					mMol.copyBond(mol, mMol.getConnBond(atom, j), 0, 0, mGraphIndex[atom], hydrogen, false);
+					}
+				}
 			}
 
 		mMol.copyMoleculeProperties(mol);

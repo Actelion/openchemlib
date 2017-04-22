@@ -1160,6 +1160,24 @@ public class Molecule implements Serializable {
 	 */
 	public int copyBond(Molecule destMol, int sourceBond, int esrGroupOffsetAND, int esrGroupOffsetOR,
 						int[] atomMap, boolean useBondTypeDelocalized) {
+		return copyBond(destMol, sourceBond, esrGroupOffsetAND, esrGroupOffsetOR,
+						(atomMap == null) ? mBondAtom[0][sourceBond] : atomMap[mBondAtom[0][sourceBond]],
+						(atomMap == null) ? mBondAtom[1][sourceBond] : atomMap[mBondAtom[1][sourceBond]],
+						useBondTypeDelocalized);
+		}
+
+	/**
+	 * @param destMol
+	 * @param sourceBond
+	 * @param esrGroupOffsetAND -1 to create new ESR group or destMol ESR group count from esrGroupCountAND()
+	 * @param esrGroupOffsetOR -1 to create new ESR group or destMol ESR group count from esrGroupCountOR()
+	 * @param destAtom1 first bond atom index in destination molecule
+	 * @param destAtom2 second bond atom index in destination molecule
+	 * @param useBondTypeDelocalized
+	 * @return
+	 */
+	public int copyBond(Molecule destMol, int sourceBond, int esrGroupOffsetAND, int esrGroupOffsetOR,
+						int destAtom1, int destAtom2, boolean useBondTypeDelocalized) {
 		int destBond = destMol.mAllBonds;
 		if (destBond >= destMol.mMaxBonds)
 			destMol.setMaxBonds(destMol.mMaxBonds * 2);
@@ -1181,9 +1199,8 @@ public class Molecule implements Serializable {
 				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetOR + getBondESRGroup(sourceBond));
 			}
 
-		for (int i=0; i<2; i++)
-			destMol.mBondAtom[i][destBond] = (atomMap == null) ?
-					mBondAtom[i][sourceBond] : atomMap[mBondAtom[i][sourceBond]];
+		destMol.mBondAtom[0][destBond] = destAtom1;
+		destMol.mBondAtom[1][destBond] = destAtom2;
 
 		int bondType = (useBondTypeDelocalized
 					 && (mBondFlags[sourceBond] & cBondFlagDelocalized) != 0) ?

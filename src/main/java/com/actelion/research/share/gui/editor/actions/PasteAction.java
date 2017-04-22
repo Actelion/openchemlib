@@ -72,7 +72,6 @@ public abstract class PasteAction extends CommandAction
                 return;
             }
         }
-
         pasteMolecule();
     }
 

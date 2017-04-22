@@ -2,6 +2,7 @@ package com.actelion.research.util;
 
 import java.awt.Point;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -723,7 +724,33 @@ public class StringFunctions {
 		 System.out.println(str);
 		 */
 	}
-	
+
+	public static String toString(double [] arr, NumberFormat nf){
+
+		StringBuilder sb = new  StringBuilder();
+
+
+		for (int i = 0; i < arr.length; i++) {
+
+			sb.append(nf.format(arr[i]));
+
+			if(i < arr.length-1){
+				sb.append(ConstantsDWAR.SEP_VALUE);
+			}
+
+		}
+
+		return sb.toString();
+	}
+
+	public static String toString(double [] arr){
+
+        NumberFormat nf = new DecimalFormat("0.000");
+
+		return toString(arr, nf);
+	}
+
+
 	public static String toString(int [][] arr, String seperator){
 		
 		StringBuilder sb = new  StringBuilder();

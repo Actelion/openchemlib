@@ -35,7 +35,6 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.share.gui.editor.Model;
-import com.actelion.research.share.gui.editor.chem.IArrow;
 
 /**
  * Project:
@@ -67,27 +66,24 @@ public abstract class CopyAction extends CommandAction
         boolean selectionFound = false;
         boolean isBothSideSelection = false;
         boolean isOnProductSide = false;
-        IArrow arrow = null;
 
-//        StereoMolecule mMol = model.getMolecule();
-//        for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
-//            if (mMol.isSelectedAtom(atom)) {
-//                if (!selectionFound) {
-//                    selectionFound = true;
-//                    if (!isReaction) {
-//                        break;
-//                    }
-//
-//                    arrow = (IArrow) model.getDrawingObjectList().get(0);
-//                    isOnProductSide = arrow.isOnProductSide(mMol.getAtomX(atom), mMol.getAtomY(atom));
-//                } else {
-//                    if (isOnProductSide != arrow.isOnProductSide(mMol.getAtomX(atom), mMol.getAtomY(atom))) {
-//                        isBothSideSelection = true;
-//                        break;
-//                    }
-//                }
-//            }
-//        }
+        StereoMolecule mMol = model.getMolecule();
+        for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+            if (mMol.isSelectedAtom(atom)) {
+                if (!selectionFound) {
+                    selectionFound = true;
+                    if (!isReaction) {
+                        break;
+                    }
+                    isOnProductSide = model.isOnProductSide(mMol.getAtomX(atom), mMol.getAtomY(atom));
+                } else {
+                    if (isOnProductSide != model.isOnProductSide(mMol.getAtomX(atom), mMol.getAtomY(atom))) {
+                        isBothSideSelection = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         if (isReaction) {
             if (isBothSideSelection) {
