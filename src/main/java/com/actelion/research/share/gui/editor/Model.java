@@ -61,6 +61,7 @@ import java.util.List;
  */
 public abstract class Model
 {
+
     public interface AtomHighlightCallback
     {
         void onHighlight(int atom, boolean selected);
@@ -469,7 +470,7 @@ public abstract class Model
 
         if (!multifragment) {
             AbstractDepictor depictor = createDepictor(getMolecule());
-            cleanupMoleculeCoordinates(depictor,invent, selectedOnly);
+            cleanupMoleculeCoordinates(depictor, invent, selectedOnly);
         } else {
             AbstractExtendedDepictor depictor = createExtendedDepictor();
             cleanupMultiFragmentCoordinates(depictor, selectedOnly, invent);
@@ -1034,6 +1035,27 @@ public abstract class Model
         }
         return null;
     }
+
+    private int getFragmentByAtom(int atom)
+    {
+        if (atom >= 0 && atom < getMolecule().getAllAtoms()) {
+            int idx = mFragmentNo[atom];
+            if (idx >= 0 && idx < mFragmentNo.length)
+                return idx;
+        }
+        return -1;
+    }
+
+    public void selectFragmentByAtom(int rootAtom)
+    {
+        int fragment = getFragmentByAtom(rootAtom);
+        for (int i = 0; fragment != -1 && i < mMol.getAllAtoms(); i++) {
+            if (mFragmentNo[i] == fragment) {
+                mMol.setAtomSelection(i, true);
+            }
+        }
+    }
+
 
     private boolean isPointOnAtomOrBond(StereoMolecule mol, Point2D pt, boolean includeBond)
     {

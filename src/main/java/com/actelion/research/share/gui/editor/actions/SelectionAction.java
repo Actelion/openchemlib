@@ -221,8 +221,12 @@ public class SelectionAction extends BondHighlightAction//DrawAction
                 if (rootAtom != -1 /*|| mCurrentHiliteObject != null*/) {
                     if (!mShiftIsDown) {
                         deselectAllAtoms();
-                        for (int i = 0; i < mol.getAllAtoms(); i++) {
-                            mol.setAtomSelection(i, true);
+                        if (model.isReaction()) {
+                            model.selectFragmentByAtom(rootAtom);
+                        } else {
+                            for (int i = 0; i < mol.getAllAtoms(); i++) {
+                                mol.setAtomSelection(i, true);
+                            }
                         }
 //                    if (mDrawingObjectList != null)
 //                        for (AbstractDrawingObject drawingObject : mDrawingObjectList)
