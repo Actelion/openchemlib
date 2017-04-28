@@ -743,6 +743,24 @@ public class StringFunctions {
 		return sb.toString();
 	}
 
+    public static String toString(List<Double> li, NumberFormat nf){
+
+        StringBuilder sb = new  StringBuilder();
+
+
+        for (int i = 0; i < li.size(); i++) {
+
+            sb.append(nf.format(li.get(i)));
+
+            if(i < li.size()-1){
+                sb.append(ConstantsDWAR.SEP_VALUE);
+            }
+
+        }
+
+        return sb.toString();
+    }
+
 	public static String toString(double [] arr){
 
         NumberFormat nf = new DecimalFormat("0.000");
