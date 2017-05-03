@@ -233,7 +233,11 @@ public class IntArray implements Serializable {
 		}
 		
 	}
-	
+
+	/**
+	 *
+	 * @return number of occupied fields.
+	 */
 	public int length(){
 		return size;
 	}
