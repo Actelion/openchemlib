@@ -2287,7 +2287,7 @@ public class Molecule implements Serializable {
 	 * @param newSize
      * @return
      */
-	private final static Object copyOf(Object a, int newSize) {
+	protected final static Object copyOf(Object a, int newSize) {
 		Class cl = a.getClass();
 		if (!cl.isArray()) return null;
 		int size = Array.getLength(a);
