@@ -148,6 +148,12 @@ public interface DescriptorConstants {
                                false,
                                false);
 
+    public static final DescriptorInfo DESCRIPTOR_BINARY_SKELETONSPHERES =
+            new DescriptorInfo("BinarySkeletonSpheres",
+                    "BinSkelSpheres",
+                    DescriptorConstants.DESCRIPTOR_TYPE_MOLECULE,
+                    true, true, false);
+
     public static final DescriptorInfo[] DESCRIPTOR_LIST = {
                                                 DESCRIPTOR_FFP512,
                                                 DESCRIPTOR_PFP512,
@@ -173,7 +179,8 @@ public interface DescriptorConstants {
                                                 DESCRIPTOR_ReactionIndex,
                                                 DESCRIPTOR_IntegerVector,
                                                 DESCRIPTOR_FULL_FRAGMENT_SET,
-                                                DESCRIPTOR_PhysicoChemicalProperties
+                                                DESCRIPTOR_PhysicoChemicalProperties,
+                                                DESCRIPTOR_BINARY_SKELETONSPHERES
                                                 };
     }
 
