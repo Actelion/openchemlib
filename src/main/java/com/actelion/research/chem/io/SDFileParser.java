@@ -41,7 +41,7 @@ import java.io.*;
 
 public class SDFileParser extends CompoundFileParser {
     private static final int DEFAULT_RECORDS_TO_INSPECT = 10240;
-    private static final String[] cIDFieldNames = { "Actelion No", "ID", "IDNUMBER", "COMPOUND_ID", "NAME", "COMPND" };
+    private static final String[] cIDFieldNames = { "Idorsia No", "Actelion No", "ID", "IDNUMBER", "COMPOUND_ID", "NAME", "COMPND" };
 	public static final String cNewLineString = "\n";
 
 	private StringBuilder		mMolfileBuffer,mDataBuffer;

@@ -33,7 +33,6 @@
 
 package com.actelion.research.chem.conf;
 
-import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 

@@ -3080,7 +3080,7 @@ public class Molecule implements Serializable {
 	 * are in the same group, i.e. within this group they have the defined (relative) stereo configuration.
 	 * @param atom
 	 * @param type one of cESRTypeAbs,cESRTypeAnd,cESRTypeOr
-	 * @param group index starting with 0
+	 * @param group index starting with 0 (not considered if type is cESRTypeAbs)
 	 */
 	public void setAtomESR(int atom, int type, int group) {
 		if (type == cESRTypeAbs) {

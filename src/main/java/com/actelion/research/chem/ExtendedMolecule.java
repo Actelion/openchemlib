@@ -1629,10 +1629,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * from up/down-bonds and atom coordinates, respectively. This is done during the helper
 	 * array calculation triggered by ensureHelperArrays(cHelperParities).<br>
 	 * This method tells the molecule that current atom/bond parities are valid, even if the
-	 * stereo perception not has been performed. In addition to the stereo parities on may
+	 * stereo perception not has been performed. In addition to the stereo parities one may
 	 * declare CIP parities and/or symmetry ranks also to be valid (helperStereoBits != 0).
-	 * This method should be called if no coordinates are available but the parities are valid
-	 * nevertheless, e.g. when the IDCodeParser parses an idcode without coordinates.
+	 * setParitiesValid(0) should be called if no coordinates are available but the parities are valid
+	 * nevertheless, e.g. after the IDCodeParser has parsed an idcode without coordinates.
 	 * (Note: After idcode parsing unknown stereo centers have parities cAtomParityNone
 	 * instead of cAtomParityUnknown. Thus, calling isStereoCenter(atom) returns false!!!)
 	 * Declaring parities valid prevents the Canonizer to run the stereo recognition again when

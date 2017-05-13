@@ -157,12 +157,33 @@ public class StereoMolecule extends ExtendedMolecule {
         }
 
     /**
-     * Call ensureHelperArrays(cHelperParities) only if either
-     * parities are available anyway (e.g. from idcode parsing)
-     * or if coordinates with stereo bonds are available.
-     * Call ensureHelperArrays(cHelperCIP) only if coordinates
-     * with stereo bonds are available.
-     */
+	 * ensureHelperArrays() is the essential method when working with
+	 * molecules. The Molecule class contains all primary information
+	 * about a molecule, i.e. the connectivity of atoms and bonds
+	 * and their properties. The ExtendedMolecule, which is derived from
+	 * the Molecule add functionality to keep track of direct neighbours
+	 * of atoms, rings and aromaticity. The StereoMolecule, which in turn
+	 * is derived from the ExtendedMolecule, is responsible for the stereo
+	 * recognition. It employs a Canonizer object to run a complete atom
+	 * symmetry evaluation and to locate all stereo centers and bonds.
+	 * It also checks the molecule for meso state.<br>
+	 * Whenever the molecule connectivity changes (e.g. through methods
+	 * like addAtom(), setAtomCharge() or deleteBond()), then the state
+	 * of the computed 'helper' data as neighbour aroms, ring information
+	 * or stereo information gets invalid. Therefore, after constructing or
+	 * changing a molecule and before accessing any of the helper data
+	 * (e.g. getConnAtoms(), isAromaticAtom(), or getAtomParity()) one must
+	 * ensure that the required information is in a valid state by calling
+	 * ensureHelperArrays() passing the required level of information:<br>
+	 * - cHelperNeighbours: neighbour atoms and bonds, pi-electrons for all atoms<br>
+	 * - cHelperRings: cHelperNeighbours plus rings,aromaticity/allylic/stabilized for non-H-atoms<br>
+	 * - cHelperParities: cHelperRings plus stereo parities for non-H-atoms/bonds<br>
+	 * - cHelperCIP: cHelperParities plus Cahn-Ingold-Prelog assignments for non-H-atoms/bonds<br>
+     * Call ensureHelperArrays(cHelperParities) only if either parities are available anyway
+	 * (e.g. from idcode parsing) or if coordinates with stereo bonds are available.
+     * Call ensureHelperArrays(cHelperCIP) only if coordinates with stereo bonds are available.
+	 * @param required typically one of cHelperNeighbours,cHelperRings,cHelperParities,cHelperCIP
+	 */
 	public void ensureHelperArrays(int required) {
         super.ensureHelperArrays(required);
 
