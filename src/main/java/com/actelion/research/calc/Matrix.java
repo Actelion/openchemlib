@@ -1736,6 +1736,34 @@ public class Matrix {
     }
 
     /**
+     * For a quadratic matrix only.
+     * @return
+     */
+    public double [] getUpperTriangle(){
+
+        int r = rows();
+        int c = cols();
+
+        if(r != c){
+            throw new RuntimeException("Not a quadratic matrix.");
+        }
+
+        int n = ((r * r) - r)/2;
+
+        double [] a = new double[n];
+
+        int cc = 0;
+        for (int i = 0; i < r; i++) {
+
+            for (int j = i+1; j < r; j++) {
+                a[cc++] = get(i,j);
+            }
+        }
+
+        return a;
+    }
+
+    /**
      *pythag computes sqrt(a^2 + b^2) without destructive underflow or overflow.
      * @param a length a
      * @param b length b

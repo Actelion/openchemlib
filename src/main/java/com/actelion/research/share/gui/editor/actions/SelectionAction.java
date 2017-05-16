@@ -65,7 +65,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     private GeomFactory factory ;
     int atom = -1;
     int bond = -1;
-    boolean shift = false, duplicate = false,rectangular = false;
+    boolean shift = false, duplicate = false,rectangular = false,changed = false;
 
     public SelectionAction(Model model) {
         super(model);
@@ -100,6 +100,9 @@ public class SelectionAction extends BondHighlightAction//DrawAction
 
         duplicate = false;
 
+        changed = false;
+        model.pushUndo();
+
         last = origin = new Point2D.Double(pt.getX(), pt.getY());
         atom = getAtomAt(mol, origin);
         bond = getBondAt(mol, origin);
@@ -128,6 +131,11 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         atom = bond = -1;
         origin = last = null;
         duplicate = false;
+        if (!changed) {
+            model.popUndo();
+            deselectAllAtoms();
+        }
+        changed = false;
         return true;
     }
 
@@ -136,6 +144,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         boolean ok = false;
         java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
         if (drag) {
+
             double dx = last.getX() - pt.getX();
             double dy = last.getY() - pt.getY();
             if (!shift || duplicate) {
@@ -149,9 +158,12 @@ public class SelectionAction extends BondHighlightAction//DrawAction
                 if (!ok) {
                     ok = selectItems(pt);
                 }
+                changed = ok;
             } else if (shift) {
                 duplicate = true;
                 duplicateSelected();
+                changed = true;
+
             }
         } else {
             ok = trackHighLight(pt);

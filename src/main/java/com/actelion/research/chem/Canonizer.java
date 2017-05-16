@@ -184,7 +184,7 @@ public class Canonizer {
 		mZCoordinatesAvailable = ((mode & COORDS_ARE_3D) != 0);
 
 		if (!mZCoordinatesAvailable) {
-			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 				if (mMol.getAtomZ(atom) != 0.0) {
 					mZCoordinatesAvailable = true;
 					break;
