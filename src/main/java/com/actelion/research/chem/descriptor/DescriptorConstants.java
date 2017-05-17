@@ -168,6 +168,7 @@ public interface DescriptorConstants {
                                                 DESCRIPTOR_PFP512,
                                                 DESCRIPTOR_HashedCFp,
                                                 DESCRIPTOR_SkeletonSpheres,
+												DESCRIPTOR_BINARY_SKELETONSPHERES,
                                                 DESCRIPTOR_CenteredSkeletonFragments,
                                                 DESCRIPTOR_FULL_FRAGMENT_SET,
                                                 DESCRIPTOR_MAX_COMMON_SUBSTRUCT,
