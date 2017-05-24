@@ -1,6 +1,9 @@
 package com.actelion.research.util;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /*
 * Copyright (c) 1997 - 2016
@@ -38,6 +41,11 @@ public class ConstantsDWAR {
 
 	// This date format is recognized by the DataWarrior
 	public static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
+
+	public static final DecimalFormat NF_DWAR4 = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.US));
+	public static final DecimalFormat NF_DWAR = new DecimalFormat("0.000#########", new DecimalFormatSymbols(Locale.US));
+
+
 
 	// Separator for values in DataWarrior file.
 	public static final String SEP_VALUE = "; ";
