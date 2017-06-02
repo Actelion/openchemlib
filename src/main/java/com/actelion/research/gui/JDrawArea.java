@@ -129,7 +129,8 @@ public class JDrawArea extends JPanel
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
 	private double mX1, mY1, mX2, mY2;
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
-	private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported;
+	private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown,
+					mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
 	private String[] mAtomText;
 	private ExtendedDepictor mDepictor;
@@ -171,6 +172,7 @@ public class JDrawArea extends JPanel
 		mOtherMass = 0;
 		mOtherValence = -1;
 		mOtherRadical = 0;
+		mAllowQueryFeatures = true;
 		mPendingRequest = cRequestNone;
 		mCurrentCursor = CursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
@@ -1418,26 +1420,30 @@ public class JDrawArea extends JPanel
 
 	private void showAtomQFDialog(int atom)
 	{
-		Component c = this;
-		while (c.getParent() != null) {
-			c = c.getParent();
+		if (mAllowQueryFeatures) {
+			Component c = this;
+			while (c.getParent() != null) {
+				c = c.getParent();
+			}
+			storeState();
+			new JAtomQueryFeatureDialog((Frame) c, mMol, atom);
+			fireMoleculeChanged();
+			update(UPDATE_REDRAW);
 		}
-		storeState();
-		new JAtomQueryFeatureDialog((Frame) c, mMol, atom);
-		fireMoleculeChanged();
-		update(UPDATE_REDRAW);
 	}
 
 	private void showBondQFDialog(int bond)
 	{
-		Component c = this;
-		while (c.getParent() != null) {
-			c = c.getParent();
+		if (mAllowQueryFeatures) {
+			Component c = this;
+			while (c.getParent() != null) {
+				c = c.getParent();
+			}
+			storeState();
+			new JBondQueryFeatureDialog((Frame) c, mMol, bond);
+			fireMoleculeChanged();
+			update(UPDATE_REDRAW);
 		}
-		storeState();
-		new JBondQueryFeatureDialog((Frame) c, mMol, bond);
-		fireMoleculeChanged();
-		update(UPDATE_REDRAW);
 	}
 
 	private void mousePressedButton1(MouseEvent e)
@@ -2835,6 +2841,20 @@ public class JDrawArea extends JPanel
 		mDisplayMode = dMode;
 		update(UPDATE_REDRAW);
 	}
+
+	/**
+	 * If set to false then any query features will be removed from the molecule
+	 * and any functionality that allows to define atom- or bond-query features
+	 * won't be available. This feature is only relevant if the molecule is a fragment.
+	 * @param allow
+	 */
+	public void setAllowQueryFeatures(boolean allow) {
+		if (mAllowQueryFeatures != allow) {
+			mAllowQueryFeatures = allow;
+			if (!allow)
+				mMol.removeQueryFeatures();
+			}
+		}
 
 	/**
 	 * Defines additional atom text to be displayed in top right

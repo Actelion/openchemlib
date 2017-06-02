@@ -3167,25 +3167,55 @@ public class Molecule implements Serializable {
 	 * @param isFragment if false, then all query features are removed
 	 */
 	public void setFragment(boolean isFragment) {
-		mIsFragment = isFragment;
+		if (mIsFragment != isFragment) {
+			mIsFragment = isFragment;
 
-		if (!isFragment) {
-			mAtomList = null;
-			for (int atom=0; atom<mAllAtoms; atom++)
-				mAtomQueryFeatures[atom] = 0;
-			for (int bond=0; bond<mAllBonds; bond++) {
-				mBondQueryFeatures[bond] = 0;
-				if (mBondType[bond] == cBondTypeDelocalized)
-					mBondType[bond] = cBondTypeSingle;
-				}
+			if (!isFragment)
+				removeQueryFeatures();
+
+			mValidHelperArrays = cHelperNone;
 			}
-
-		mValidHelperArrays = cHelperNone;
 		}
 
 
 	public void setName(String name) {
 		mName = name;
+		}
+
+
+	/**
+	 * Removes any query features from the molecule
+	 * @return whether any query features were removed
+	 */
+	public boolean removeQueryFeatures() {
+		boolean isChanged = false;
+
+		if (mAtomList != null) {
+			mAtomList = null;
+			isChanged = true;
+			}
+
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			if (mAtomQueryFeatures[atom] != 0) {
+				mAtomQueryFeatures[atom] = 0;
+				isChanged = true;
+				}
+			}
+		for (int bond=0; bond<mAllBonds; bond++) {
+			if (mBondQueryFeatures[bond] != 0) {
+				mBondQueryFeatures[bond] = 0;
+				isChanged = true;
+				}
+			if (mBondType[bond] == cBondTypeDelocalized) {
+				mBondType[bond] = cBondTypeSingle;
+				isChanged = true;
+				}
+			}
+
+		if (isChanged)
+			mValidHelperArrays = cHelperNone;
+
+		return isChanged;
 		}
 
 
