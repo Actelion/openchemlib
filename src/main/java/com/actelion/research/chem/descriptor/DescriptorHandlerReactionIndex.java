@@ -53,7 +53,7 @@ public class DescriptorHandlerReactionIndex extends AbstractDescriptorHandlerFP<
     }
 
     public String getVersion() {
-        return ReactionSearcher.cIndexVersion;
+        return DescriptorConstants.DESCRIPTOR_ReactionIndex.version;
     }
 
     public int[] createDescriptor(Reaction rxn) {

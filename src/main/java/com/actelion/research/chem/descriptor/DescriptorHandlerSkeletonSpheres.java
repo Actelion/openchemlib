@@ -164,7 +164,7 @@ public class DescriptorHandlerSkeletonSpheres implements DescriptorHandler<byte[
         }
 
     public String getVersion() {
-        return "1.1";
+        return DescriptorConstants.DESCRIPTOR_SkeletonSpheres.version;
         }
 
     public float getSimilarity(final byte[] d1, final byte[] d2) {

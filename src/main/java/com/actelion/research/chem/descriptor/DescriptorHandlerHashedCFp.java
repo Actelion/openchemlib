@@ -66,7 +66,7 @@ public class DescriptorHandlerHashedCFp extends AbstractDescriptorHandlerFP<Ster
     }
 
     public String getVersion() {
-        return "2.1";
+        return DescriptorConstants.DESCRIPTOR_HashedCFp.version;
     }
 
     /**

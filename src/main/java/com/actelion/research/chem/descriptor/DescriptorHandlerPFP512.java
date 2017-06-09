@@ -55,7 +55,7 @@ public class DescriptorHandlerPFP512 extends AbstractDescriptorHandlerFP<StereoM
 	}
 
 	public String getVersion() {
-		return "1.1";
+		return DescriptorConstants.DESCRIPTOR_PFP512.version;
 	}
 
 	public int[] createDescriptor(StereoMolecule mol) {

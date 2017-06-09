@@ -95,7 +95,7 @@ public class DescriptorHandlerFunctionalGroups implements DescriptorHandler<int[
         }
 
     public String getVersion() {
-        return "1.0";
+        return DescriptorConstants.DESCRIPTOR_OrganicFunctionalGroups.version;
         }
 
     public float getSimilarity(int[][] dl1, int[][] dl2) {
