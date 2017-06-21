@@ -44,6 +44,8 @@
  */
 package com.actelion.research.chem;
 
+import com.actelion.research.io.BOMSkipper;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -863,7 +865,9 @@ public class MolfileParser
 	{
 		mMol = mol;
 		try{
-			return readMoleculeFromBuffer(new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+			BOMSkipper.skip(reader);
+			return readMoleculeFromBuffer(reader);
 		} catch(IOException e){
 			System.err.println("Error reading file " + e);
 		}

@@ -36,6 +36,7 @@ package com.actelion.research.chem.io;
 import com.actelion.research.chem.MolfileParser;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.UniqueStringList;
+import com.actelion.research.io.BOMSkipper;
 
 import java.io.*;
 
@@ -61,6 +62,7 @@ public class SDFileParser extends CompoundFileParser {
 		
 		try {
 			mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+			BOMSkipper.skip(mReader);
 		} catch (IOException e) {}
 		
 		
@@ -78,6 +80,7 @@ public class SDFileParser extends CompoundFileParser {
 		mFieldName = fieldName;
 		try {
     		mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+			BOMSkipper.skip(mReader);
 		} catch (IOException e) {}
 		
 		init();
