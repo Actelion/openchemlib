@@ -102,7 +102,7 @@ public class StereoMolecule extends ExtendedMolecule {
 	 * int[] fragmentNo = new int[mol.getAllAtoms()];<br>
 	 * int fragmentCount = getFragmentNumbers(fragmentNo, boolean, boolean);<br>
 	 * if (fragmentCount > 1) {<br>
-	 *     StereoMolecule[] fragment = getFragments(int[] fragmentNo, fragmentCount);<br>
+	 *     StereoMolecule[] fragment = getUniqueFragmentsEstimated(int[] fragmentNo, fragmentCount);<br>
 	 *     ...<br>
 	 *     }<br>
 	 * @return

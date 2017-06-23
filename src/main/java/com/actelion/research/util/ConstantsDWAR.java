@@ -134,7 +134,7 @@ public class ConstantsDWAR {
 	
 	public static final String TAG_RECORD_NO = "Record No";
 	
-	public static final String TAG_ACTNO = "Actelion No";
+	public static final String TAG_ACTNO = "Idorsia No";
 
 	public static final String TAG_SOURCE = "Source";
 
