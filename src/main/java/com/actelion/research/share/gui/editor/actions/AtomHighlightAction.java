@@ -54,15 +54,18 @@ import java.awt.geom.Point2D;
  * Date: 2/1/13
  * Time: 4:13 PM
  */
-public abstract class AtomHighlightAction extends DrawAction {
+public abstract class AtomHighlightAction extends DrawAction
+{
 
-    AtomHighlightAction(Model model) {
+    AtomHighlightAction(Model model)
+    {
         super(model);
     }
 
     protected java.awt.geom.Point2D lastHightlightPoint = null;
 
-    boolean trackHighLight(java.awt.geom.Point2D pt) {
+    boolean trackHighLight(java.awt.geom.Point2D pt)
+    {
         StereoMolecule mol = model.getMolecule();
         int currentAtom = model.getSelectedAtom();
         int atom = findAtom(mol, pt);
@@ -90,19 +93,22 @@ public abstract class AtomHighlightAction extends DrawAction {
         return ok;
     }
 
-    void setHighlightAtom(StereoMolecule mol, int atom) {
+    void setHighlightAtom(StereoMolecule mol, int atom)
+    {
         model.setSelectedAtom(atom);
     }
 
 
     @Override
-    public boolean onMouseDown(IMouseEvent evt) {
+    public boolean onMouseDown(IMouseEvent evt)
+    {
         return false;
     }
 
 
     @Override
-    public boolean onMouseMove(IMouseEvent evt, boolean drag) {
+    public boolean onMouseMove(IMouseEvent evt, boolean drag)
+    {
         if (!drag) {
             java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
             boolean ok = trackHighLight(pt);
@@ -114,7 +120,8 @@ public abstract class AtomHighlightAction extends DrawAction {
     }
 
     @Override
-    public boolean paint(IDrawContext _ctx) {
+    public boolean paint(IDrawContext _ctx)
+    {
         boolean ok = false;
         int theAtom = model.getSelectedAtom();
         StereoMolecule mol = model.getMolecule();
@@ -128,7 +135,8 @@ public abstract class AtomHighlightAction extends DrawAction {
     }
 
     @Override
-    public boolean onKeyPressed(IKeyEvent evt) {
+    public boolean onKeyPressed(IKeyEvent evt)
+    {
         GeomFactory factory = model.getGeomFactory();
         if (evt.getCode().equals(factory.getDeleteKey())) {
             int theAtom = model.getSelectedAtom();
@@ -151,7 +159,8 @@ public abstract class AtomHighlightAction extends DrawAction {
         return false;
     }
 
-    private boolean handleCharacter(IKeyEvent evt) {
+    private boolean handleCharacter(IKeyEvent evt)
+    {
         int theAtom = model.getSelectedAtom();
         StereoMolecule mol = model.getMolecule();
         StringBuilder keyStrokeBuffer = model.getKeyStrokeBuffer();
@@ -175,7 +184,7 @@ public abstract class AtomHighlightAction extends DrawAction {
                         return true;
                     case ':':
                         newRadical = (mol.getAtomRadical(theAtom) == Molecule.cAtomRadicalStateT) ? Molecule.cAtomRadicalStateS
-                                : (mol.getAtomRadical(theAtom) == Molecule.cAtomRadicalStateS) ? 0 : Molecule.cAtomRadicalStateT;
+                            : (mol.getAtomRadical(theAtom) == Molecule.cAtomRadicalStateS) ? 0 : Molecule.cAtomRadicalStateT;
                         mol.setAtomRadical(theAtom, newRadical);
                         return true;
 
@@ -194,7 +203,8 @@ public abstract class AtomHighlightAction extends DrawAction {
         }
     }
 
-    private boolean handleCharsNonSelected(String code) {
+    private boolean handleCharsNonSelected(String code)
+    {
 
         if ("h".equals(code)) {
             model.flip(true);
@@ -206,7 +216,8 @@ public abstract class AtomHighlightAction extends DrawAction {
         return false;
     }
 
-    private void expandAtomKeyStrokes(StereoMolecule mol, int highliteAtom, String keyStrokes) {
+    private void expandAtomKeyStrokes(StereoMolecule mol, int highliteAtom, String keyStrokes)
+    {
 
         int atomicNo = Molecule.getAtomicNoFromLabel(keyStrokes);
         if (atomicNo != 0) {
@@ -249,7 +260,8 @@ public abstract class AtomHighlightAction extends DrawAction {
         }
     }
 
-    private boolean handleCharacter(StereoMolecule mol, int theAtom, IKeyEvent evt) {
+    private boolean handleCharacter(StereoMolecule mol, int theAtom, IKeyEvent evt)
+    {
         GeomFactory factory = model.getGeomFactory();
         StringBuilder keyStrokeBuffer = model.getKeyStrokeBuffer();
         boolean isFirst = (keyStrokeBuffer.length() == 0);
@@ -275,6 +287,9 @@ public abstract class AtomHighlightAction extends DrawAction {
             expandAtomKeyStrokes(mol, theAtom, keyStrokeBuffer.toString());
             keyStrokeBuffer.setLength(0);
             return true;
+        } else if (c > 48 && c <= 57) {
+            addChain(mol, theAtom, c-47);
+            return true;
         } else if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 48 && c <= 57) || (c == '-')) {
             keyStrokeBuffer.append(c);
             return true;
@@ -282,8 +297,27 @@ public abstract class AtomHighlightAction extends DrawAction {
         return false;
     }
 
+    private void addChain(StereoMolecule mol, int theAtom, int chainAtoms)
+    {
+        if (mol.getFreeValence(theAtom) > 0) {
+            int atom1 = theAtom;
+            int hydrogenCount = mol.getAllAtoms() - mol.getAtoms();
+            for (int i = 1; i < chainAtoms; i++) {
+                Point2D pt = suggestNewX2AndY2(atom1);
+                int atom2 = mol.addAtom(pt.getX(), pt.getY());
+                if (atom2 == -1) {
+                    break;
+                }
+                mol.addBond(atom1, atom2);
+                atom1 = atom2 - hydrogenCount;    // new atom was added behind all hydrogens and travels now to the front
+                mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+            }
+        }
+    }
 
-    private boolean showAtomQFDialog(int atom) {
+
+    private boolean showAtomQFDialog(int atom)
+    {
         GeomFactory factory = model.getGeomFactory();
         StereoMolecule mol = model.getMolecule();
         if (mol != null) {
@@ -293,7 +327,8 @@ public abstract class AtomHighlightAction extends DrawAction {
         return false;
     }
 
-    public int findAtom(StereoMolecule mol, Point2D pt) {
+    public int findAtom(StereoMolecule mol, Point2D pt)
+    {
         int foundAtom = -1;
         double pickx = pt.getX();
         double picky = pt.getY();
