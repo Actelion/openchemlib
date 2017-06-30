@@ -34,13 +34,33 @@
 package com.actelion.research.chem;
 
 public class AtomFunctionAnalyzer {
+	/**
+	 * @param mol
+	 * @param atom
+	 * @return number of double-bonded O
+	 */
 	private static int getOxoCount(StereoMolecule mol, int atom) {
 		int count = 0;
 		for (int i=0; i<mol.getConnAtoms(atom); i++)
 			if (mol.getConnBondOrder(atom, i) == 2
-			 && (mol.getAtomicNo(mol.getConnAtom(atom, i)) == 7
-			  || mol.getAtomicNo(mol.getConnAtom(atom, i)) == 8
-			  || mol.getAtomicNo(mol.getConnAtom(atom, i)) == 16))
+			 && mol.getAtomicNo(mol.getConnAtom(atom, i)) == 8)
+				count++;
+
+		return count;
+		}
+
+	/**
+	 * @param mol
+	 * @param atom
+	 * @return number of double-bonded N,O,S
+	 */
+	private static int getFakeOxoCount(StereoMolecule mol, int atom) {
+		int count = 0;
+		for (int i=0; i<mol.getConnAtoms(atom); i++)
+			if (mol.getConnBondOrder(atom, i) == 2
+					&& (mol.getAtomicNo(mol.getConnAtom(atom, i)) == 7
+					|| mol.getAtomicNo(mol.getConnAtom(atom, i)) == 8
+					|| mol.getAtomicNo(mol.getConnAtom(atom, i)) == 16))
 				count++;
 
 		return count;
@@ -77,8 +97,8 @@ public class AtomFunctionAnalyzer {
 			if (!mol.isAromaticBond(mol.getConnBond(atom, i)) && mol.getConnBondOrder(atom, i) == 1) {
 				int conn = mol.getConnAtom(atom, i);
 				if (!mol.isAromaticAtom(conn)
-				 && ((mol.getAtomicNo(conn) == 6 && getOxoCount(mol, conn) == 1)
-				  || (mol.getAtomicNo(conn) == 16 && getOxoCount(mol, conn) == 2))) {
+				 && ((mol.getAtomicNo(conn) == 6 && getFakeOxoCount(mol, conn) == 1)
+				  || (mol.getAtomicNo(conn) == 16 && getFakeOxoCount(mol, conn) == 2))) {
 					if (aleadyFound || !twice)
 						return true;
 					aleadyFound = true;
@@ -90,7 +110,7 @@ public class AtomFunctionAnalyzer {
 		}
 
 	public static boolean isAmide(StereoMolecule mol, int atom) {
-		if (mol.getAtomicNo(atom) != 7 || mol.getAtomPi(atom) != 0)
+		if (mol.getAtomicNo(atom) != 7 || mol.getAtomPi(atom) != 0 || mol.isAromaticAtom(atom))
 			return false;
 
 		boolean carbonylEquivalentFound = false;
@@ -453,14 +473,15 @@ public class AtomFunctionAnalyzer {
 								if (!mol.isAromaticBond(mol.getConnBond(mi[i], j)))
 									exoCyclicAtom = mol.getConnAtom(mi[i], j);
 
-							if (mol.getAtomicNo(mi[i]) == 7) {
-								if (mol.getAtomPi(mi[i]) == 0 && (exoCyclicAtom == -1 || getOxoCount(mol, exoCyclicAtom) == 0))	// imidazol type
-									enablerCount++;
-								continue;
+							if (mol.getAtomicNo(mi[i]) == 6) {
+								if (exoCyclicAtom != -1 && getFakeOxoCount(mol, exoCyclicAtom) != 0)
+									enablerCount--;
 								}
-							if (exoCyclicAtom != -1 && getOxoCount(mol, exoCyclicAtom) != 0) {
-								enablerCount--;
-								continue;
+							else if (mol.getAtomicNo(mi[i]) == 7) {
+								if (mol.getAtomPi(mi[i]) == 0
+								 && (exoCyclicAtom == -1
+								  || (!mol.isAromaticAtom(exoCyclicAtom) && getFakeOxoCount(mol, exoCyclicAtom) == 0)))	// imidazol type
+									enablerCount++;
 								}
 							}
 						return enablerCount > 0;
@@ -504,7 +525,7 @@ public class AtomFunctionAnalyzer {
 			for (int i=0; i<mol.getConnAtoms(imineC); i++) {
 				if (mol.getConnBondOrder(imineC, i) == 1) {
 					int conn = mol.getConnAtom(imineC, i);
-					if (getOxoCount(mol, conn) != 0)
+					if (getFakeOxoCount(mol, conn) != 0)
 						return false;
 
 					if (mol.isAromaticAtom(conn))
@@ -515,7 +536,7 @@ public class AtomFunctionAnalyzer {
 						supporterCount--;	// S-C=N or O-C=N mostly below pKa=7
 					}
 				}
-			if (aromaticNeighborCount == 2)	// two pheny substituents reduce pKa to 6
+			if (aromaticNeighborCount == 2)	// two phenyl substituents reduce pKa to 6
 				supporterCount--;
 
 			return (supporterCount >= 0);
@@ -530,23 +551,23 @@ public class AtomFunctionAnalyzer {
 			if (mol.getAtomicNo(conn) != 6)
 				return false;
 
-			if (getOxoCount(mol, conn) != 0)
+			if (getFakeOxoCount(mol, conn) != 0)
 				return false;
 
-			if (mol.getAtomPi(conn) != 0 && isVinylogOxo(mol, conn))
+			if (mol.getAtomPi(conn) != 0 && isVinylogFakeOxo(mol, conn))
 				return false;
 			}
 
 		return true;
 		}
 
-	private static boolean isVinylogOxo(StereoMolecule mol, int atom) {
+	private static boolean isVinylogFakeOxo(StereoMolecule mol, int atom) {
 		for (int i=0; i<mol.getConnAtoms(atom); i++) {
 			if (mol.getConnBondOrder(atom, i) != 1) {
 				int conn = mol.getConnAtom(atom, i);
 				for (int j=0; j<mol.getConnAtoms(conn); j++)
 					if (mol.getConnBondOrder(conn, j) == 1
-					 && getOxoCount(mol, mol.getConnAtom(conn, j)) != 0)
+					 && getFakeOxoCount(mol, mol.getConnAtom(conn, j)) != 0)
 						return true;
 				}
 			}
