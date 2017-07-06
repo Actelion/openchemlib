@@ -42,7 +42,7 @@ public class ConstantsDWAR {
 	// This date format is recognized by the DataWarrior
 	public static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
 
-	// NumberFormat is not htread save.
+	// NumberFormat is not thread save.
 	public static final String PATTERN_NF_DWAR4 ="0.0000";
 
 	public static final String PATTERN_NF_DWAR = "0.000############";
