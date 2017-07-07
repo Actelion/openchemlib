@@ -56,24 +56,44 @@ import java.util.TreeMap;
 
 public class MolfileParser
 {
+	public static final int MODE_KEEP_HYDROGEN_MAP = 1;
+
 	public static boolean debug = false;
 	private StereoMolecule mMol;
 	private TreeMap<Integer,Integer> mAtomIndexMap,mBondIndexMap;
 	private boolean mTreatAnyAsMetalBond,mDeduceMissingCharges;
-
+	private int mMode;
+	private int[] mHydrogenMap;
 
 	/**
 	 * Constructor of a MolFileParser, which will mirror Y,Z coordinates
 	 */
 	public MolfileParser() {
+		mMode = 0;
 	}
-	
+
+
+	public MolfileParser(int mode) {
+		mMode = mode;
+	}
+
+
+	/**
+	 * If this MoflileParser was instantiated with MODE_KEEP_HYDROGEN_MAP
+	 * @return
+	 */
+	public int[] getHandleHydrogenMap() {
+		return mHydrogenMap == null ? mMol.getHandleHydrogenMap() : mHydrogenMap;
+	}
+
 
 	private boolean readMoleculeFromBuffer(BufferedReader reader)
 	{
 		try{
 			String line;
 			int natoms,nbonds,nlists,chiral,version;
+
+			mHydrogenMap = null;
 
 			if(mMol != null){
 				mMol.deleteMolecule();
@@ -247,6 +267,8 @@ public class MolfileParser
 
 				if(chiral == 0){
 					// to run the racemization scheduled with mMol.setToRacemate()
+					if ((mMode & MODE_KEEP_HYDROGEN_MAP) != 0)
+						mHydrogenMap = mMol.getHandleHydrogenMap();
 					mMol.ensureHelperArrays(Molecule.cHelperParities);
 				}
 
@@ -412,6 +434,8 @@ public class MolfileParser
 
 		// needs to be done for molfiles with chiral=0 that have stereo
 		// centers which will be assigned to one ESR-AND group
+		if ((mMode & MODE_KEEP_HYDROGEN_MAP) != 0)
+			mHydrogenMap = mMol.getHandleHydrogenMap();
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
 
 		return true;
