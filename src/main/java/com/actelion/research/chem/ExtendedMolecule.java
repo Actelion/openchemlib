@@ -2954,28 +2954,28 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 */
 	public int[] getHandleHydrogenMap() {
 		int[] map = new int[mAllAtoms];
+		for (int i=0; i<mAllAtoms; i++)
+			map[i] = i;
 
 		boolean[] isSimpleHydrogen = findSimpleHydrogens();
 
-		int lastNonHAtom = mAllAtoms-1;
-		while (lastNonHAtom >= 0 && isSimpleHydrogen[lastNonHAtom]) {
-			map[lastNonHAtom] = lastNonHAtom;
-			lastNonHAtom--;
-			}
+		int lastNonHAtom = mAllAtoms;
+		do lastNonHAtom--;
+		while ((lastNonHAtom >= 0) && isSimpleHydrogen[lastNonHAtom]);
 
-		for (int atom=0; atom<=lastNonHAtom; atom++) {
+		for (int atom=0; atom<lastNonHAtom; atom++) {
 			if (isSimpleHydrogen[atom]) {
-				map[atom] = lastNonHAtom;
-				map[lastNonHAtom] = atom;
+				int tempIndex = map[atom];
+				map[atom] = map[lastNonHAtom];
+				map[lastNonHAtom] = tempIndex;
 
-				lastNonHAtom--;
-				while (lastNonHAtom >= 0 && isSimpleHydrogen[lastNonHAtom]) {
-					map[lastNonHAtom] = lastNonHAtom;
-					lastNonHAtom--;
-					}
-				}
-			else {
-				map[atom] = atom;
+				// swap simple H flags also
+				boolean temp = isSimpleHydrogen[atom];
+				isSimpleHydrogen[atom] = isSimpleHydrogen[lastNonHAtom];
+				isSimpleHydrogen[lastNonHAtom] = temp;
+
+				do lastNonHAtom--;
+				while (isSimpleHydrogen[lastNonHAtom]);
 				}
 			}
 
