@@ -191,7 +191,7 @@ public class DescriptorEncoder {
 
     /**
      * Decodes an int[] without upper limit.
-     * @param encoded String
+     * @param s String
      * @return int[] decoded int array
      */
     public int[] decodeIntArray(String s) {
@@ -285,7 +285,7 @@ public class DescriptorEncoder {
      * Decodes pairs of identifying integer with corresponding count values
      * in the form of an int[n][2], where n is the number of pairs, index=0
      * refers to the ID value and index=1 refers to the count value.
-     * @param bytes
+     * @param s
      * @return
      */
     public int[][] decodePairs(String s) {
