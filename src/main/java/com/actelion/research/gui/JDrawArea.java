@@ -1184,9 +1184,9 @@ public class JDrawArea extends JPanel
 			}
 
 			if (c instanceof Frame) {
-				mHelpDialog = new JDialog((Frame) c, "Actelion Structure Editor Help", false);
+				mHelpDialog = new JDialog((Frame) c, "Idorsia Structure Editor Help", false);
 			} else {
-				mHelpDialog = new JDialog((Dialog) c, "Actelion Structure Editor Help", false);
+				mHelpDialog = new JDialog((Dialog) c, "Idorsia Structure Editor Help", false);
 			}
 
 			mHelpDialog.setSize(HiDPIHelper.scale(520), HiDPIHelper.scale(440));

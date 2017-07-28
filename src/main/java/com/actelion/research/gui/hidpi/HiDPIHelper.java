@@ -72,7 +72,7 @@ public class HiDPIHelper {
 	 */
 	public static float getUIScaleFactor() {
 		if (sUIScaleFactor == -1)
-			sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 13f;
+			sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 12f;
 
 		return sUIScaleFactor;
 		}
