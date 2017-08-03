@@ -3340,7 +3340,7 @@ System.out.println();
 			encodeBits(encodeShift(mMol.getAtomY(mGraphAtom[0]) / avbl, binCount), resolutionBits);
 
 			if (mZCoordinatesAvailable)
-				encodeBits(encodeShift(mMol.getAtomZ(mGraphAtom[0]), binCount), resolutionBits);
+				encodeBits(encodeShift(mMol.getAtomZ(mGraphAtom[0]) / avbl, binCount), resolutionBits);
 			}
 
 		mCoordinates = encodeBitsEnd();
