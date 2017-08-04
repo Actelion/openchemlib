@@ -463,7 +463,7 @@ public class TorsionDB {
 	 * positions are occupied by two atoms that share the same symmetry rank.
 	 * @param conformer
 	 * @param atom valid 4-atom sequence with terminal atoms optionally set to -1
-	 * @return torsion in the range: -pi <= torsion <= pi
+	 * @return torsion in the range: -pi <= torsion <= pi (NaN, e.g. if 3 atoms on straight line)
 	 */
 	public static double calculateTorsionExtended(Conformer conformer, int[] atom) {
 		if (atom[0] != -1 && atom[3] != -1)
