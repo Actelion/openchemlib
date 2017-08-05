@@ -43,7 +43,7 @@ public class TorsionDB {
 	public static final int MODE_ANGLES = 1;
 	public static final int MODE_BINS = 2;
 
-	public static final int DEFAULT_MERGE_SPAN = 40;
+	public static final int DEFAULT_MERGE_SPAN = 15;
 
 	private static final String DATABASE_COD = "cod/";
 	private static final String DATABASE_CSD = "csd/";
