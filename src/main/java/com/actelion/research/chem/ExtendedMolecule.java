@@ -2596,10 +2596,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		int negativeAdjustableCharge = 0;
 		for (int atom=0; atom<mAllAtoms; atom++) {
 			overallCharge += mAtomCharge[atom];
-			if (mAtomCharge[atom] < 0) {
+			if (mAtomCharge[atom] < 0 && !hasPositiveNeighbour(atom)) {
 				negativeAtomCount++;
 				if (isElectronegative(atom))
-					negativeAdjustableCharge += mAtomCharge[atom];
+					negativeAdjustableCharge -= mAtomCharge[atom];
 				}
 			}
 
@@ -2613,8 +2613,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				if (!hasNegativeNeighbour(atom) && isElectronegative(atom)) {
 					int chargeReduction = Math.min(getImplicitHydrogens(atom), mAtomCharge[atom]);
 					if (chargeReduction != 0 && negativeAdjustableCharge >= chargeReduction) {
+						overallCharge -= chargeReduction;
 						overallChargeChange -= chargeReduction;
-						negativeAdjustableCharge += chargeReduction;
+						negativeAdjustableCharge -= chargeReduction;
 						mAtomCharge[atom] -= chargeReduction;
 						mValidHelperArrays &= cHelperNeighbours;
 						}
@@ -2626,13 +2627,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			int[] negativeAtom = new int[negativeAtomCount];
 			negativeAtomCount = 0;
 			for (int atom=0; atom<mAllAtoms; atom++) {
-				if (mAtomCharge[atom] < 0) {
-					if (!hasPositiveNeighbour(atom)) {
-						// Ideally priorities for negative atom protonation should
-						// be done based on atom priorities from Canonizer.
-						negativeAtom[negativeAtomCount++] = (mAtomicNo[atom] << 16)
-														  + atom;
-						}
+				if (mAtomCharge[atom] < 0 && !hasPositiveNeighbour(atom)) {
+					// Ideally priorities for negative atom protonation should
+					// be done based on atom priorities from Canonizer.
+					negativeAtom[negativeAtomCount++] = (mAtomicNo[atom] << 16)
+													  + atom;
 					}
 				}
 			java.util.Arrays.sort(negativeAtom);
@@ -2640,6 +2639,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				int atom = negativeAtom[i] & 0x0000FFFF;
 				if (isElectronegative(atom)) {
 					int chargeReduction = Math.min(-overallChargeChange, -mAtomCharge[atom]);
+					overallCharge += chargeReduction;
 					overallChargeChange += chargeReduction;
 					mAtomCharge[atom] += chargeReduction;
 					mValidHelperArrays &= cHelperNeighbours;
