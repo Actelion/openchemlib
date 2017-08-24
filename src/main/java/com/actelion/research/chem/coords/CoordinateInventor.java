@@ -38,9 +38,30 @@ import com.actelion.research.chem.*;
 import java.util.*;
 
 public class CoordinateInventor {
-	public static final int MODE_REMOVE_HYDROGEN = 1;
-	public static final int MODE_KEEP_MARKED_ATOM_COORDS = 2;
-	public static final int MODE_PREFER_MARKED_ATOM_COORDS = 4;
+	// Simple annelated rings, bi- or tri-cyclo compounds are typically generated reasonably well
+	// by the CoordinateInventor without using templates. More complex highly bridged polycylcic
+	// compounds gain from provided templates, which usually are optimized 2D-projections from the
+	// 3-dimensional molecule.
+	private static final String[] DEFAULT_TEMPLATE = {
+			// fullerene
+			"gkvt@@@@LddTTTrbTRTRTRRRRRRRRRRRRRrVRrIh\\IAaQxlY@gRHdJCJcRXlv_CfJx|A\\hRHejiLaQjTje^kSjtFcIhvXmVKMjt{lN{Kavy\\^wGjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjh@@vo@HBC@PhLN@bPhtFKCcpDbILaRhtzCIbsX\\nOO`JDbqDjSKdJeJmQjtz}Ahr[LVkMnpz\\nwGj{PBhBdBlBBBjBfBnBaBiBeBmBcBkBgBoB`bhbdblbbbjbfbnbabibebmbcbkbgbob`RhRdRlRbRjRfRnRaRiReRmRcRkRgRoR`rhrdrlrbrjrfrnrarirermrcrkrgror`JhJdJlJbJjJfJnJaJiJeJmJcJkJgJoJ`jhjdjljbjjjfjnjajijej` !BnkjyVwsVr|iQn|Q|goTZWPIJwbudnRkVYBez]siZymNJZUqNFBqZWxS~iCXVU]SeRjwrtSPAjkvXLpBAZauDPzq]PfMlecrMnkv|@\\SFD`m|mWiEoCXp`SIe_J[l|[XCbloTV`[Gc@FJGopyyoOlFQfUy^w\\Bgz|",
+			"gcrt@@@@LdbbbbTRbRbRbRRRRRRRRRRRRVRrVQIA`HtRGAaIxZAHfShTjCIbqylQGKgqdBaXeQJeruBiPitZmFoPZLFSYbvZlVGMnsZ]vWSmr{]UUUUUUUUUUUUUUUUUUUUUUUUUUUUUT@@[G`DAA`HTFG@QHTZCEaqxBQDfPiTZ]AdqYlNWGgpEBQXbUIerEReVhuZ]^`tYMfKUfwX]NW[jkPBhBdBlBbBjBfBnBaBiBeBmBcBkBgBoB`bhbdblbbbjbfbnbabibebmbcbkbgbob`RhRdRlRbRjRfRnRaRiReRmRcRkRgRoR`rhrdrlrbrjrfrnrarirermrcrkrgror`JhJdJlJbJjJfJnJaJiJeJmJcJkJgJoJ`jhjdjljbjjjfjnjajij` !B^cR]`]Fm]QkfljE\\p\u007FUVfgOmFXsQe_gXPyXis_wF|vUUX_XbxpzU]HUFgYViwFo~@uemc@}~T\u007FIEPioYVwr]JnM~[ZEC\\g}~o_pUfdo~irsklTLiyVJshnw^iVAsZ`_~}PYkckURH{FYMImFaRaccUlCZSHMfP",
+
+			// adamantane
+			"dml@@Dje^VGiyZjjjh@vtHSBinFU@ !BPTCTy[skMzUPF`AJbBixEZHS[Il",
+			"dml@@DjYVvGiyZjjjh@vtHSBinFU@ !BwLo~BJ~UquhXBinZ\\ykA@F_eMrT",
+			"dml@@LdfbbQX^fUZjjj`C[PaLJfxYT !BzxIHVc{OiJVRpprePho~]}y\u007FwLl",
+			"deL@@DjUYkfEijjjj@MeBDpj[ad !B\u007FaA\u007FMVr[AvkKzm_jKvVbD{sk",
+
+			// cubane
+			"dil@@LddTQRl[NX^Fjjjj@MiBDpj[a@ !BPfL@\u007Fox@M~T@\u007Fox@\u007F`C~@@",
+			"daL@@DjYtKJqjynjjjj@MaBDpj[` !B`bL@_gx@@Gy~@Gx@_`@",
+	};
+
+	public static final int MODE_NO_3D_TEMPLATES = 1;
+	public static final int MODE_REMOVE_HYDROGEN = 2;
+	public static final int MODE_KEEP_MARKED_ATOM_COORDS = 4;
+	public static final int MODE_PREFER_MARKED_ATOM_COORDS = 8;
 	protected static final int MODE_CONSIDER_MARKED_ATOMS = MODE_KEEP_MARKED_ATOM_COORDS | MODE_PREFER_MARKED_ATOM_COORDS;
 
 	private static final byte FLIP_AS_LAST_RESORT = 1;
@@ -51,24 +72,41 @@ public class CoordinateInventor {
 	private static final int  LAST_RESORT_FLIPS = 128;
 	private static final int  TOTAL_FLIPS = PREFERRED_FLIPS + POSSIBLE_FLIPS + LAST_RESORT_FLIPS;
 
+	private static volatile List<InventorTemplate> sDefaultTemplateList;
+
 	private StereoMolecule mMol;
 	private int[]		mFFP;
-	private ArrayList<InventorFragment>   mFragmentList;
 	private Random		mRandom;
 	private boolean[]	mAtomHandled;
 	private boolean[]	mBondHandled;
-	private boolean[]	mIsConsideredBond;
-	private boolean[]	mAtomIsPartOfTemplate;
+	private boolean[]	mAtomIsPartOfCustomTemplate;
 	private int[]		mUnPairedCharge;
 	private int			mMode;
-	private List<InventorTemplate> mTemplateList;
+	private List<InventorFragment> mFragmentList;
+	private List<InventorTemplate> mCustomTemplateList;
+
+	private static synchronized void buildDefaultTemplates() {
+		if (sDefaultTemplateList == null) {
+			SSSearcherWithIndex searcher = new SSSearcherWithIndex();
+			List<InventorTemplate> templateList = new ArrayList<InventorTemplate>();
+			for (String idcode:DEFAULT_TEMPLATE) {
+				StereoMolecule fragment = new IDCodeParser().getCompactMolecule(idcode);
+				int[] ffp = searcher.createIndex(fragment);
+				InventorTemplate template = new InventorTemplate(fragment, ffp);
+				template.normalizeCoordinates();
+				templateList.add(template);
+				}
+
+			sDefaultTemplateList = templateList;
+			}
+		}
 
 	/**
 	 * Creates an CoordinateInventor, which removes unneeded hydrogen atoms
 	 * and creates new atom coordinates for all(!) atoms.
 	 */
 	public CoordinateInventor () {
-		mMode = MODE_REMOVE_HYDROGEN;
+		this(MODE_REMOVE_HYDROGEN);
 		}
 
 
@@ -81,6 +119,8 @@ public class CoordinateInventor {
 	 */
 	public CoordinateInventor (int mode) {
 		mMode = mode;
+		if ((mMode & MODE_NO_3D_TEMPLATES) == 0 && sDefaultTemplateList == null)
+			buildDefaultTemplates();
 		}
 
 
@@ -90,7 +130,7 @@ public class CoordinateInventor {
 
 
 	/**
-	 * By providing a template list containing substructures with predefined atom
+	 * By providing a custom template list containing substructures with predefined atom
 	 * coordinates, any occurence of any of these substructures will receive the
 	 * relative atom coordinates of the provided template, unless the substructure
 	 * shares more than one atom with a previously found substructure or the substructure
@@ -98,8 +138,10 @@ public class CoordinateInventor {
 	 * MODE_????_MARKED_ATOM_COORDS.
 	 * @param templateList
 	 */
-	public void setTemplateList(List<InventorTemplate> templateList) {
-		mTemplateList = templateList;
+	public void setCustomTemplateList(List<InventorTemplate> templateList) {
+		mCustomTemplateList = templateList;
+		for (InventorTemplate template:templateList)
+			template.normalizeCoordinates();
 		}
 
 	/**
@@ -149,25 +191,18 @@ public class CoordinateInventor {
 		mAtomHandled = new boolean[mMol.getAllAtoms()];
 		mBondHandled = new boolean[mMol.getAllBonds()];
 
-		// we consider all bonds except metal bonds outside of the core fragment
-		mIsConsideredBond = new boolean[mMol.getAllBonds()];
-		for (int bond=0; bond<mMol.getAllBonds(); bond++)
-			mIsConsideredBond[bond] = mMol.getBondType(bond) != Molecule.cBondTypeMetalLigand;
-
 		mUnPairedCharge = new int[mMol.getAllAtoms()];
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
 			mUnPairedCharge[atom] = mMol.getAtomCharge(atom);
 
-		if ((mMode & MODE_CONSIDER_MARKED_ATOMS) != 0) {
-			for (int bond=0; bond<mMol.getAllBonds(); bond++)
-				mIsConsideredBond[bond] = !mIsConsideredBond[bond]
-						&& mMol.isMarkedAtom(mMol.getBondAtom(0, bond))
-						&& mMol.isMarkedAtom(mMol.getBondAtom(1, bond));
-			locateCoreFragments();
-			}
+		if ((mMode & MODE_CONSIDER_MARKED_ATOMS) != 0)
+			locateMarkedFragments();
 
-		if (mTemplateList != null)
-			locateTemplates();
+		if (mCustomTemplateList != null)
+			mAtomIsPartOfCustomTemplate = locateTemplateFragments(mCustomTemplateList, 512);
+
+		if ((mMode & MODE_NO_3D_TEMPLATES) == 0)
+			locateTemplateFragments(sDefaultTemplateList, 256);
 
 		locateInitialFragments();
 		joinOverlappingFragments();
@@ -201,13 +236,13 @@ public class CoordinateInventor {
 		}
 
 
-	public boolean[] getTemplateAtomMask() {
-		return mAtomIsPartOfTemplate;
+	public boolean[] getCustomTemplateAtomMask() {
+		return mAtomIsPartOfCustomTemplate;
 		}
 
 
-	private void locateTemplates() {
-		boolean useFFP = (mFFP != null && mTemplateList.size() != 0 && mTemplateList.get(0).getFFP() != null);
+	private boolean[] locateTemplateFragments(List<InventorTemplate> templateList, int priority) {
+		boolean useFFP = (mFFP != null && templateList.size() != 0 && templateList.get(0).getFFP() != null);
 
 		SSSearcher searcher = null;
 		SSSearcherWithIndex searcherWithIndex = null;
@@ -220,9 +255,9 @@ public class CoordinateInventor {
 			searcher.setMolecule(mMol);
 			}
 
-		mAtomIsPartOfTemplate = new boolean[mMol.getAtoms()];
+		boolean[] atomIsPartOfTemplate = new boolean[mMol.getAtoms()];
 
-		for (InventorTemplate template:mTemplateList) {
+		for (InventorTemplate template: templateList) {
 			ArrayList<int[]> matchList = null;
 			if (useFFP) {
 				searcherWithIndex.setFragment(template.getFragment(), template.getFFP());
@@ -239,16 +274,19 @@ public class CoordinateInventor {
 				for (int[] match:matchList) {
 					int templateAtomCount = 0;
 					for (int atom:match)
-						if (mAtomIsPartOfTemplate[atom])
+						if (atomIsPartOfTemplate[atom])
 							templateAtomCount++;
 					if (templateAtomCount <= 1) {
 						InventorFragment fragment = new InventorFragment(mMol, match.length, mMode);
 
 						for (int i=0; i<match.length; i++) {
-							fragment.mPriority[i] = 256;
-							fragment.mGlobalAtom[i] = match[i];
-							fragment.mAtomX[i] = template.getFragment().getAtomX(i);
-							fragment.mAtomY[i] = template.getFragment().getAtomY(i);
+							int atom = match[i];
+							fragment.mPriority[i] = priority;
+							fragment.mGlobalAtom[i] = atom;
+							fragment.mAtomX[i] = template.getNormalizedAtomX(i);
+							fragment.mAtomY[i] = template.getNormalizedAtomY(i);
+							atomIsPartOfTemplate[atom] = true;
+							mAtomHandled[atom] = true;
 							}
 
 						mFragmentList.add(fragment);
@@ -256,10 +294,11 @@ public class CoordinateInventor {
 					}
 				}
 			}
+		return atomIsPartOfTemplate;
 		}
 
 
-	private void locateCoreFragments() {
+	private void locateMarkedFragments() {
 		// take every small ring whose atoms are not a superset of another small ring
 		int bondCount = 0;
 		double avbl = 0;
@@ -300,7 +339,7 @@ public class CoordinateInventor {
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 			int f = fragmentNo[atom];
 			if (f != -1) {
-				fragment[f].mPriority[atomIndex[f]] = 512;
+				fragment[f].mPriority[atomIndex[f]] = 1024;
 				fragment[f].mGlobalAtom[atomIndex[f]] = atom;
 				fragment[f].mAtomX[atomIndex[f]] = mMol.getAtomX(atom) / avbl;
 				fragment[f].mAtomY[atomIndex[f]] = mMol.getAtomY(atom) / avbl;
