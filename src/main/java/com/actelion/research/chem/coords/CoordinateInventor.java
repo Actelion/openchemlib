@@ -38,27 +38,7 @@ import com.actelion.research.chem.*;
 import java.util.*;
 
 public class CoordinateInventor {
-	// Simple annelated rings, bi- or tri-cyclo compounds are typically generated reasonably well
-	// by the CoordinateInventor without using templates. More complex highly bridged polycylcic
-	// compounds gain from provided templates, which usually are optimized 2D-projections from the
-	// 3-dimensional molecule.
-	private static final String[] DEFAULT_TEMPLATE = {
-			// fullerene
-			"gkvt@@@@LddTTTrbTRTRTRRRRRRRRRRRRRrVRrIh\\IAaQxlY@gRHdJCJcRXlv_CfJx|A\\hRHejiLaQjTje^kSjtFcIhvXmVKMjt{lN{Kavy\\^wGjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjh@@vo@HBC@PhLN@bPhtFKCcpDbILaRhtzCIbsX\\nOO`JDbqDjSKdJeJmQjtz}Ahr[LVkMnpz\\nwGj{PBhBdBlBBBjBfBnBaBiBeBmBcBkBgBoB`bhbdblbbbjbfbnbabibebmbcbkbgbob`RhRdRlRbRjRfRnRaRiReRmRcRkRgRoR`rhrdrlrbrjrfrnrarirermrcrkrgror`JhJdJlJbJjJfJnJaJiJeJmJcJkJgJoJ`jhjdjljbjjjfjnjajijej` !BnkjyVwsVr|iQn|Q|goTZWPIJwbudnRkVYBez]siZymNJZUqNFBqZWxS~iCXVU]SeRjwrtSPAjkvXLpBAZauDPzq]PfMlecrMnkv|@\\SFD`m|mWiEoCXp`SIe_J[l|[XCbloTV`[Gc@FJGopyyoOlFQfUy^w\\Bgz|",
-			"gcrt@@@@LdbbbbTRbRbRbRRRRRRRRRRRRVRrVQIA`HtRGAaIxZAHfShTjCIbqylQGKgqdBaXeQJeruBiPitZmFoPZLFSYbvZlVGMnsZ]vWSmr{]UUUUUUUUUUUUUUUUUUUUUUUUUUUUUT@@[G`DAA`HTFG@QHTZCEaqxBQDfPiTZ]AdqYlNWGgpEBQXbUIerEReVhuZ]^`tYMfKUfwX]NW[jkPBhBdBlBbBjBfBnBaBiBeBmBcBkBgBoB`bhbdblbbbjbfbnbabibebmbcbkbgbob`RhRdRlRbRjRfRnRaRiReRmRcRkRgRoR`rhrdrlrbrjrfrnrarirermrcrkrgror`JhJdJlJbJjJfJnJaJiJeJmJcJkJgJoJ`jhjdjljbjjjfjnjajij` !B^cR]`]Fm]QkfljE\\p\u007FUVfgOmFXsQe_gXPyXis_wF|vUUX_XbxpzU]HUFgYViwFo~@uemc@}~T\u007FIEPioYVwr]JnM~[ZEC\\g}~o_pUfdo~irsklTLiyVJshnw^iVAsZ`_~}PYkckURH{FYMImFaRaccUlCZSHMfP",
-
-			// adamantane
-			"dml@@Dje^VGiyZjjjh@vtHSBinFU@ !BPTCTy[skMzUPF`AJbBixEZHS[Il",
-			"dml@@DjYVvGiyZjjjh@vtHSBinFU@ !BwLo~BJ~UquhXBinZ\\ykA@F_eMrT",
-			"dml@@LdfbbQX^fUZjjj`C[PaLJfxYT !BzxIHVc{OiJVRpprePho~]}y\u007FwLl",
-			"deL@@DjUYkfEijjjj@MeBDpj[ad !B\u007FaA\u007FMVr[AvkKzm_jKvVbD{sk",
-
-			// cubane
-			"dil@@LddTQRl[NX^Fjjjj@MiBDpj[a@ !BPfL@\u007Fox@M~T@\u007Fox@\u007F`C~@@",
-			"daL@@DjYtKJqjynjjjj@MaBDpj[` !B`bL@_gx@@Gy~@Gx@_`@",
-	};
-
-	public static final int MODE_NO_3D_TEMPLATES = 1;
+	public static final int MODE_SKIP_DEFAULT_TEMPLATES = 1;
 	public static final int MODE_REMOVE_HYDROGEN = 2;
 	public static final int MODE_KEEP_MARKED_ATOM_COORDS = 4;
 	public static final int MODE_PREFER_MARKED_ATOM_COORDS = 8;
@@ -85,25 +65,18 @@ public class CoordinateInventor {
 	private List<InventorFragment> mFragmentList;
 	private List<InventorTemplate> mCustomTemplateList;
 
-	private static synchronized void buildDefaultTemplates() {
-		if (sDefaultTemplateList == null) {
-			SSSearcherWithIndex searcher = new SSSearcherWithIndex();
-			List<InventorTemplate> templateList = new ArrayList<InventorTemplate>();
-			for (String idcode:DEFAULT_TEMPLATE) {
-				StereoMolecule fragment = new IDCodeParser().getCompactMolecule(idcode);
-				int[] ffp = searcher.createIndex(fragment);
-				InventorTemplate template = new InventorTemplate(fragment, ffp);
-				template.normalizeCoordinates();
-				templateList.add(template);
-				}
+	private static synchronized void buildDefaultTemplateList() {
+		if (sDefaultTemplateList == null)
+			sDefaultTemplateList = new InventorDefaultTemplateList();
+	}
 
-			sDefaultTemplateList = templateList;
-			}
-		}
 
 	/**
 	 * Creates an CoordinateInventor, which removes unneeded hydrogen atoms
 	 * and creates new atom coordinates for all(!) atoms.
+	 * If setDefaultTemplates(new InventorDefaultTemplateList()) was called,
+	 * then these templates are used to create 3D-projection kind of coordinates
+	 * for polycyclic structures from these templates (adamantanes, cubane, etc.).
 	 */
 	public CoordinateInventor () {
 		this(MODE_REMOVE_HYDROGEN);
@@ -115,12 +88,15 @@ public class CoordinateInventor {
 	 * MODE_REMOVE_HYDROGEN. If mode includes MODE_KEEP_MARKED_ATOM_COORDS, then marked atoms
 	 * keep their coordinates. If mode includes MODE_PREFER_MARKED_ATOM_COORDS, then coordinates
 	 * of marked atoms are changed only, if perfect coordinates are not possible without.
+	 * If setDefaultTemplates(new InventorDefaultTemplateList()) was called and mode does not
+	 * include MODE_SKIP_DEFAULT_TEMPLATES, then these templates are used to create 3D-projection
+	 * kind of coordinates for polycyclic structures from these templates (adamantanes, cubane, etc.).
 	 * @param mode
 	 */
 	public CoordinateInventor (int mode) {
 		mMode = mode;
-		if ((mMode & MODE_NO_3D_TEMPLATES) == 0 && sDefaultTemplateList == null)
-			buildDefaultTemplates();
+		if ((mode & MODE_SKIP_DEFAULT_TEMPLATES) == 0 && sDefaultTemplateList == null)
+			buildDefaultTemplateList();
 		}
 
 
@@ -201,7 +177,7 @@ public class CoordinateInventor {
 		if (mCustomTemplateList != null)
 			mAtomIsPartOfCustomTemplate = locateTemplateFragments(mCustomTemplateList, 512);
 
-		if ((mMode & MODE_NO_3D_TEMPLATES) == 0)
+		if ((mMode & MODE_SKIP_DEFAULT_TEMPLATES) == 0 && sDefaultTemplateList != null)
 			locateTemplateFragments(sDefaultTemplateList, 256);
 
 		locateInitialFragments();
