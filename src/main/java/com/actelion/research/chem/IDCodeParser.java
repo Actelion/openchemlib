@@ -3,6 +3,7 @@ package com.actelion.research.chem;
 import com.actelion.research.chem.coords.CoordinateInventor;
 
 public class IDCodeParser extends IDCodeParserWithoutCoordinateInvention {
+	private boolean mEnsure2DCoordinates;
 
 	/**
 	 * This default constructor creates molecules guaranteed to have 2D-atom-coordinates.
@@ -10,7 +11,7 @@ public class IDCodeParser extends IDCodeParserWithoutCoordinateInvention {
 	 * then new 2D-coordinates are created on the fly.
 	 */
 	public IDCodeParser(){
-		super();
+		this(true);
 	}
 
 	/**
@@ -28,7 +29,13 @@ public class IDCodeParser extends IDCodeParserWithoutCoordinateInvention {
 	 * If you supply encoded 3D-coordinates, then use IDCodeParser(false).
 	 */
 	public IDCodeParser(boolean ensure2DCoordinates) {
-		super(ensure2DCoordinates);
+		super();
+		mEnsure2DCoordinates = ensure2DCoordinates;
+		}
+
+	@Override
+	protected boolean ensure2DCoordinates() {
+		return mEnsure2DCoordinates;
 		}
 
 	@Override

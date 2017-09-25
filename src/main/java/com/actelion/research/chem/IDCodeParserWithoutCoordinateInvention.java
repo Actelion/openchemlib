@@ -49,14 +49,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 	private StereoMolecule	mMol;
 	private byte[]			mDecodingBytes;
 	private	int				mIDCodeBitsAvail,mIDCodeTempData,mIDCodeBufferIndex;
-	private boolean			mEnsure2DCoordinates;
 
-	public IDCodeParserWithoutCoordinateInvention() {
-		this(true);
-		}
-
-	public IDCodeParserWithoutCoordinateInvention(boolean ensure2DCoordinates) {
-		mEnsure2DCoordinates = ensure2DCoordinates;
+	protected boolean ensure2DCoordinates() {
+		return false;
 		}
 
 	/**
@@ -258,7 +253,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 			}
 
 		// don't use 3D coordinates, if we need 2D
-		if (mEnsure2DCoordinates && coordsAre3D) {
+		if (ensure2DCoordinates() && coordsAre3D) {
 			coordinates = null;
 			decodeOldCoordinates = false;
 			}
@@ -733,7 +728,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 				}
 			catch (Exception e) {
 				e.printStackTrace();
-				System.out.println("Faulty id-coordinates:"+e.toString()+" "+new String(idcode)+" "+new String(coordinates));
+				System.err.println("Faulty id-coordinates:"+e.toString()+" "+new String(idcode)+" "+new String(coordinates));
 				coordinates = null;
 				coordsAre3D = false;
 				}
@@ -749,7 +744,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		// during the next stereo recognition with atom coordinates to assign an unknown configuration rather
 		// than E or Z based on created or given coordinates.
 		// In a next step these double bonds are converted into cross bonds by
-		if (coords2DAvailable || mEnsure2DCoordinates) {
+		if (coords2DAvailable || ensure2DCoordinates()) {
 			mMol.ensureHelperArrays(Molecule.cHelperRings);
 			for (int bond=0; bond<mMol.getBonds(); bond++)
 				if (mMol.getBondOrder(bond) == 2
@@ -758,7 +753,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 					mMol.setBondParityUnknownOrNone(bond);
 			}
 
-		if (!coords2DAvailable && mEnsure2DCoordinates) {
+		if (!coords2DAvailable && ensure2DCoordinates()) {
 			mMol.setParitiesValid(0);
 			try {
 				inventCoordinates(mMol);
@@ -766,7 +761,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 				}
 			catch (Exception e) {
 				e.printStackTrace();
-				System.out.println("2D-coordinate creation failed:"+e.toString()+" "+new String(idcode));
+				System.err.println("2D-coordinate creation failed:"+e.toString()+" "+new String(idcode));
 				}
 			}
 
@@ -1369,7 +1364,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 					int hydrogenCount = 0;
 					int[] hCount = null;
 					if (coordinates[0] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
-						StereoMolecule mol = new IDCodeParser().getCompactMolecule(idcode);
+						StereoMolecule mol = new IDCodeParserWithoutCoordinateInvention().getCompactMolecule(idcode);
 
 						// we need to cache hCount, because otherwise getImplicitHydrogens() would create helper arrays with every call
 						hCount = new int[allAtoms];
@@ -1442,7 +1437,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 									coords[2][hydrogen] = coords[2][atom] + (decodeBits(resolutionBits) - binCount / 2);
 									System.out.print("," + (int) coords[2][hydrogen]);
 								}
-								System.out.print(")");
+								System.out.print("), ");
 								hydrogen++;
 							}
 						}

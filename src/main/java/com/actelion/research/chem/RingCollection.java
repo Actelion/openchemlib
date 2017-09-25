@@ -648,6 +648,8 @@ public class RingCollection {
 						heteroPosition[ringNo] = position;
 						break;
 					case 16:
+					case 34:
+					case 52:
 						if (mMol.getConnAtoms(ringAtom[position]) == 2) {
 							isAromatic[ringNo] = true;
 							heteroPosition[ringNo] = position;

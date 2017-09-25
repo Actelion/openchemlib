@@ -328,7 +328,7 @@ public class MolfileParser
 					}
 				}
 
-				if(line.startsWith("M  RBD")){
+				if(line.startsWith("M  RBC") || line.startsWith("M  RBD")){
 					int j = Integer.parseInt(line.substring(6,9).trim());
 					if(j > 0){
 						int aaa = 10;

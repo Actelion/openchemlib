@@ -246,7 +246,7 @@ public class SmilesCreator
          case 15:                     // P
          case 16:                     // S
          case 17:                     // Cl
-         case 36:                     // Br
+         case 35:                     // Br
          case 53: return (true);      // I
          default: return (false);     // non-organic atoms in Daylight
       }

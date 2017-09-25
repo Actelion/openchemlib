@@ -184,21 +184,29 @@ public class AromaticityResolver {
 
 
 	private void protectObviousDelocalizationLeaks(RingCollection ringSet) {
-		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (isAromaticAtom(atom)) {
-				if (ringSet.getAtomRingSize(atom) == 3 || ringSet.getAtomRingSize(atom) == 7) {
-					// B,C+ in tropylium
-					if ((mMol.getAtomicNo(atom) == 5 && mMol.getAtomCharge(atom) == 0 && mMol.getAllConnAtoms(atom) == 3)
-							|| (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == 1))
-						protectAtom(atom);
-					}
-				if (ringSet.getAtomRingSize(atom) == 5) {
-					// C-,N,O,S in cyclopentadienyl, furan, pyrrol, etc.
-					if ((mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == -1 && mMol.getAllConnAtoms(atom) == 3)
-							|| (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 0 && mMol.getAllConnAtoms(atom) == 3)
-							|| (mMol.getAtomicNo(atom) == 8 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2)
-							|| (mMol.getAtomicNo(atom) == 16 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2))
-						protectAtom(atom);
+		for (int r=0; r<ringSet.getSize(); r++) {
+			int ringSize = ringSet.getRingSize(r);
+			if (ringSize == 3 || ringSize == 5 || ringSize == 7) {
+				int[] ringAtom = ringSet.getRingAtoms(r);
+				for (int i=0; i<ringSize; i++) {
+					int atom = ringAtom[i];
+					if (isAromaticAtom(atom)) {
+						if (ringSize == 5) {
+							// C(-),N,O,S in cyclopentadienyl, furan, pyrrol, etc.
+							if ((mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == -1 && mMol.getAllConnAtoms(atom) == 3)
+							 || (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 0 && mMol.getAllConnAtoms(atom) == 3)
+							 || (mMol.getAtomicNo(atom) == 8 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2)
+							 || (mMol.getAtomicNo(atom) == 16 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2)
+							 || (mMol.getAtomicNo(atom) == 34 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2))
+								protectAtom(atom);
+							}
+						else {
+							// B,C+ in tropylium
+							if ((mMol.getAtomicNo(atom) == 5 && mMol.getAtomCharge(atom) == 0 && mMol.getAllConnAtoms(atom) == 3)
+							 || (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == 1))
+								protectAtom(atom);
+							}
+						}
 					}
 				}
 			}
@@ -784,6 +792,14 @@ public class AromaticityResolver {
 				if (correctCharge)
 					mMol.setAtomCharge(atom, -1);
 				return hasMetalNeighbour(atom) ? 5 : 2;
+				}
+
+			if (mMol.getAtomicNo(atom) == 34) {
+				if (mMol.getOccupiedValence(atom) != 1)
+					return 0;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, -1);
+				return hasMetalNeighbour(atom) ? 4 : 1;
 				}
 			}
 		else {

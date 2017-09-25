@@ -163,8 +163,8 @@ public abstract class AbstractDepictor {
 	private String[]				mAtomText;
 	private Point2D.Double[]		mAlternativeCoords;
 	private Color					mOverruleForeground,mOverruleBackground,mBondBGHiliteColor,mBondFGHiliteColor,
-									mExcludeGroupFGColor,mExcludeGroupBGColor,mCustomForeground,mCustomBackground;
-
+									mExcludeGroupFGColor,mExcludeGroupBGColor,mCustomForeground,mCustomBackground,
+									mRGBColor;
 	protected Object				mG;
 
 	public AbstractDepictor(StereoMolecule mol) {
@@ -2337,6 +2337,7 @@ public abstract class AbstractDepictor {
 			}
 
 		mCurrentColor = COLOR_RGB;
+		mRGBColor = rgbColor;
 		setColor(rgbColor);
 		}
 
@@ -2391,6 +2392,9 @@ public abstract class AbstractDepictor {
 			break;
 		case COLOR_EXCLUDE_GROUP_FG:
 			setColor(mExcludeGroupFGColor);
+			break;
+		case COLOR_RGB:
+			setColor(mRGBColor);
 			break;
 		case Molecule.cAtomColorBlue:
 		    setColor(COLOR_BLUE);

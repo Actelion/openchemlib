@@ -425,9 +425,15 @@ public class SmilesParser {
 						if (!compatibleValenceFound)
 							mMol.setAtomAbnormalValence(atom, usedValence+explicitHydrogen);
 						}
+					else {
+						for (int i=0; i<explicitHydrogen; i++)
+							mol.addBond(atom, mol.addAtom(1), 1);
+						}
 					}
 				}
 			}
+
+		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 
 		correctValenceExceededNitrogen();	// convert pyridine oxides and nitro into polar structures with valid nitrogen valences
 
@@ -710,8 +716,14 @@ public class SmilesParser {
 
 
 	private boolean qualifiesForPi(int atom) {
-		if ((mMol.getAtomicNo(atom) == 16 && mMol.getAtomCharge(atom) <= 0)
-		 || (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) != 0)
+		if (mMol.getAtomicNo(atom) == 16
+		 || mMol.getAtomicNo(atom) == 34
+		 || mMol.getAtomicNo(atom) == 52) {
+			if (mMol.getConnAtoms(atom) == 2 && mMol.getAtomCharge(atom) <= 0)
+				return false;
+			}
+
+		if ((mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) != 0)
 		 || !mMol.isMarkedAtom(atom))	// already marked as hetero-atom of another ring
 			return false;
 
@@ -834,8 +846,9 @@ public class SmilesParser {
 					for (int j=0; j<mMol.getConnAtoms(atom); j++) {
 						int connBond = mMol.getConnBond(atom, j);
 						if (connBond != bond) {
-							if (mMol.getBondType(connBond) == Molecule.cBondTypeUp
-							 || mMol.getBondType(connBond) == Molecule.cBondTypeDown) {
+							if (refAtom[i] == -1
+							 && (mMol.getBondType(connBond) == Molecule.cBondTypeUp
+							  || mMol.getBondType(connBond) == Molecule.cBondTypeDown)) {
 								refAtom[i] = mMol.getConnAtom(atom, j);
 								refBond[i] = connBond;
 								}

@@ -186,7 +186,7 @@ public class Molecule implements Serializable {
 	public static final int cBondTypeDeleted		= 0x00000080;
 	public static final int cBondTypeIncreaseOrder  = 0x0000007F;
 
-	private static final int cBondTypeMaskSimple	= 0x00000067;	// masks
+	protected static final int cBondTypeMaskSimple	= 0x00000067;	// masks
 	protected static final int cBondTypeMaskStereo	= 0x00000018;
 
 	protected static final int cBondFlagsHelper2	= 0x000003C0;

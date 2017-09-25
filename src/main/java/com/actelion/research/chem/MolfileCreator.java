@@ -250,10 +250,13 @@ public class MolfileCreator {
                 no++;
 
         if (no != 0) {
-            mBuilder.append("M  CHG");
-            appendThreeDigitInt(no);
+            int count = 0;
             for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                 if (mol.getAtomCharge(atom) != 0) {
+                    if (count == 0) {
+                        mBuilder.append("M  CHG");
+                        appendThreeDigitInt(Math.min(8, no));
+                        }
                     mBuilder.append(" ");
                     appendThreeDigitInt(atom + 1);
                     int charge = mol.getAtomCharge(atom);
@@ -264,41 +267,54 @@ public class MolfileCreator {
                     else
                         mBuilder.append("   ");
                     mBuilder.append((char)('0' + charge));
+                    no--;
+                    if (++count == 8 || no == 0) {
+                        count = 0;
+                        mBuilder.append("\n");
+                        }
                     }
                 }
-            mBuilder.append("\n");
             }
 
         no = 0;
         for (int atom=0; atom<mol.getAllAtoms(); atom++)
             if (!mol.isNaturalAbundance(atom))
                 no++;
-        if (no != 0) {
-            mBuilder.append("M  ISO");
-            appendThreeDigitInt(no);
 
+        if (no != 0) {
+            int count = 0;
             for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                 if (!mol.isNaturalAbundance(atom)) {
+                    if (count == 0) {
+                        mBuilder.append("M  ISO");
+                        appendThreeDigitInt(Math.min(8, no));
+                        }
                     mBuilder.append(" ");
                     appendThreeDigitInt(atom + 1);
                     mBuilder.append(" ");
                     appendThreeDigitInt(mol.getAtomMass(atom));
+                    no--;
+                    if (++count == 8 || no == 0) {
+                        count = 0;
+                        mBuilder.append("\n");
+                        }
                     }
                 }
-
-            mBuilder.append("\n");
             }
 
         no = 0;
         for (int atom=0; atom<mol.getAllAtoms(); atom++)
             if (mol.getAtomRadical(atom) != 0)
                 no++;
-        if (no != 0) {
-            mBuilder.append("M  RAD");
-            appendThreeDigitInt(no);
 
+        if (no != 0) {
+            int count = 0;
             for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                 if (mol.getAtomRadical(atom) != 0) {
+                    if (count == 0) {
+                        mBuilder.append("M  RAD");
+                        appendThreeDigitInt(Math.min(8, no));
+                        }
                     mBuilder.append(" ");
                     appendThreeDigitInt(atom + 1);
                     switch (mol.getAtomRadical(atom)) {
@@ -312,10 +328,13 @@ public class MolfileCreator {
                         mBuilder.append("   3");
                         break;
                         }
+                    no--;
+                    if (++count == 8 || no == 0) {
+                        count = 0;
+                        mBuilder.append("\n");
+                        }
                     }
                 }
-
-            mBuilder.append("\n");
             }
 
         if (mol.isFragment()) {
@@ -323,13 +342,16 @@ public class MolfileCreator {
             for (int atom=0; atom<mol.getAllAtoms(); atom++)
                 if ((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFRingState) != 0)
                     no++;
-            if (no != 0) {
-                mBuilder.append("M  RBD");
-                appendThreeDigitInt(no);
 
+            if (no != 0) {
+                int count = 0;
                 for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                     int ringFeatures = mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFRingState;
                     if (ringFeatures != 0) {
+                        if (count == 0) {
+                            mBuilder.append("M  RBC");
+                            appendThreeDigitInt(Math.min(8, no));
+                            }
                         mBuilder.append(" ");
                         appendThreeDigitInt(atom + 1);
                         switch (ringFeatures) {
@@ -349,9 +371,13 @@ public class MolfileCreator {
                                 mBuilder.append("   4");
                                 break;
                             }
+                        no--;
+                        if (++count == 8 || no == 0) {
+                            count = 0;
+                            mBuilder.append("\n");
+                            }
                         }
                     }
-                mBuilder.append("\n");
                 }
 
             for (int atom=0; atom<mol.getAllAtoms(); atom++) {
@@ -386,22 +412,29 @@ public class MolfileCreator {
             for (int atom=0; atom<mol.getAllAtoms(); atom++)
                 if ((mol.getAtomQueryFeatures(atom) & (Molecule.cAtomQFMoreNeighbours | Molecule.cAtomQFNoMoreNeighbours)) != 0)
                     no++;
-            if (no != 0) {
-                mBuilder.append("M  SUB");
-                appendThreeDigitInt(no);
 
+            if (no != 0) {
+                int count = 0;
                 for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                     int substitution = mol.getAtomQueryFeatures(atom) & (Molecule.cAtomQFMoreNeighbours | Molecule.cAtomQFNoMoreNeighbours);
                     if (substitution != 0) {
+                        if (count == 0) {
+                            mBuilder.append("M  SUB");
+                            appendThreeDigitInt(Math.min(8, no));
+                            }
                         mBuilder.append(" ");
                         appendThreeDigitInt(atom + 1);
                         if ((substitution & Molecule.cAtomQFMoreNeighbours) != 0)
                             mBuilder.append("   "+(mol.getAllConnAtoms(atom)+1));
                         else
                             mBuilder.append("  -2");
+                        no--;
+                        if (++count == 8 || no == 0) {
+                            count = 0;
+                            mBuilder.append("\n");
+                            }
                         }
                     }
-                mBuilder.append("\n");
                 }
             }
 

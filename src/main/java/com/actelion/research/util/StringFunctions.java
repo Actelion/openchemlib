@@ -58,6 +58,32 @@ public class StringFunctions {
 	public static final String [] REGEX_META_CHARACTERS = {"*","%","@","&","+", "(", ")"};
 
 
+
+	public static boolean equal(byte [] b1, byte [] b2) {
+
+		if(b1 == null && b2==null) {
+			return true;
+		}
+
+		if(b1 != null && b2==null) {
+			return false;
+		}
+
+		if(b1 == null && b2!=null) {
+			return false;
+		}
+
+		String s1 = new String(b1);
+		String s2 = new String(b2);
+
+		if(!s1.equals(s2)) {
+			return false;
+		}
+
+		return true;
+	}
+
+
 	public static String encodeHTML(String txt) {
 		
 	    StringBuilder sb = new StringBuilder();
@@ -75,7 +101,9 @@ public class StringFunctions {
 	    
 	    return sb.toString();
 	}
-	
+
+
+
 	public static DecimalFormat getDecimalFormat(int precision){
 		
 		StringBuilder sbFormPat = new StringBuilder("0");

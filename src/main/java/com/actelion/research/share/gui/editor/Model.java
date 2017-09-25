@@ -1377,8 +1377,7 @@ public abstract class Model
 
     public String getSmiles()
     {
-        SmilesCreator c = new SmilesCreator();
-        return c.generateSmiles(mMol);
+        return new IsomericSmilesCreator(mMol).getSmiles();
     }
 
     public void setSmiles(String smiles)
