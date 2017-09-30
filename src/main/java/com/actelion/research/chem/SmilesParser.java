@@ -390,6 +390,11 @@ public class SmilesParser {
 				continue;	// encode backslash temporarily in bondType
 				}
 
+			if (theChar <= ' ') {	// we stop reading at whitespace
+				position = smilesLength;
+				continue;
+			}
+
 			throw new Exception("SmilesParser: unexpected character found: '"+theChar+"'");
 			}
 
