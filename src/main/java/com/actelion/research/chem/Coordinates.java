@@ -32,8 +32,6 @@
 */
 package com.actelion.research.chem;
 
-import com.actelion.research.chem.conf.Coordinate;
-
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.Random;
@@ -125,7 +123,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	 * @param c
 	 * @return -PI < angle < PI
 	 */
-	public double getAngleXY(Coordinate c) {
+	public double getAngleXY(Coordinates c) {
 		double dx = c.x - x;
 		double dy = c.y - y;
 

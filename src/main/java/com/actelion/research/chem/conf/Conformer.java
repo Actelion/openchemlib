@@ -39,7 +39,9 @@ import com.actelion.research.chem.StereoMolecule;
 public class Conformer {
 	private Coordinates[] mCoordinates;
 	private StereoMolecule mMol;
+	private String mName;
 	private short[] mBondTorsion;
+	private double mEnergy;
 
 	/**
 	 * Creates a Conformer, i.e. basically a new set of atom coordinates for the given Molecule.
@@ -51,6 +53,8 @@ public class Conformer {
 		mCoordinates = new Coordinates[mol.getAllAtoms()];
 		for (int atom=0; atom<mol.getAllAtoms(); atom++)
 			mCoordinates[atom] = new Coordinates(mol.getCoordinates(atom));
+
+		mEnergy = Double.NaN;
 		}
 
 	/**
@@ -69,6 +73,25 @@ public class Conformer {
 			for (int i=0; i<c.mBondTorsion.length; i++)
 				mBondTorsion[i] = c.mBondTorsion[i];
 			}
+
+		mEnergy = Double.NaN;
+		}
+
+	/**
+	 * Translate this conformer's coordinates such that its center of gravity
+	 * is moved to P(0,0,0) assuming all atoms have the same mass.
+	 * @return this conformer with centered coordinates
+	 */
+	public Conformer center() {
+		Coordinates cog = new Coordinates();
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+			cog.add(mCoordinates[atom]);
+		cog.scale(1.0 / mMol.getAllAtoms());
+
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+			mCoordinates[atom].sub(cog);
+
+		return this;
 		}
 
 	public int getSize() {
@@ -177,7 +200,16 @@ public class Conformer {
 	 */
 	public void copyFrom(StereoMolecule mol) {
 		for (int atom=0; atom<mol.getAllAtoms(); atom++)
-			mCoordinates[atom].set(mol.getAtomX(atom), mol.getAtomY(atom), mol.getAtomZ(atom));
+			mCoordinates[atom].set(mol.getCoordinates(atom));
+		}
+
+	/**
+	 * Copies this conformer's atom coordinates to mol.
+	 * @param mol molecule identical to the original molecule passed in the Constructor
+	 */
+	public void copyTo(StereoMolecule mol) {
+		for (int atom=0; atom<mol.getAllAtoms(); atom++)
+			mol.getCoordinates(atom).set(mCoordinates[atom]);
 		}
 
 	/**
@@ -186,7 +218,24 @@ public class Conformer {
 	 */
 	public void copyFrom(Conformer conformer) {
 		for (int atom=0; atom<conformer.getSize(); atom++)
-			mCoordinates[atom].set(conformer.getX(atom), conformer.getY(atom), conformer.getZ(atom));
+			mCoordinates[atom].set(conformer.mCoordinates[atom]);
+		if (conformer.mName != null)
+			mName = createNameCopy(conformer.mName);
+		}
+
+	private String createNameCopy(String originalName) {
+		int index = originalName.lastIndexOf(' ');
+		if (index != -1) {
+			if (originalName.substring(index+1).equals("copy"))
+				return originalName.concat(" 2");
+
+			try {
+				int no = Integer.parseInt(originalName.substring(index+1));
+				return originalName.substring(0, index+1).concat(Integer.toString(no+1));
+				}
+			catch (NumberFormatException nfe) {}
+			}
+		return originalName.concat(" copy");
 		}
 
 	/**
@@ -201,6 +250,24 @@ public class Conformer {
 			mol = mMol.getCompactCopy();
 		for (int atom=0; atom<mol.getAllAtoms(); atom++)
 			mol.getCoordinates(atom).set(mCoordinates[atom]);
+		if (mName != null)
+			mol.setName(mName);
 		return mol;
+		}
+
+	public double getEnergy() {
+		return mEnergy;
+		}
+
+	public void setEnergy(double energy) {
+		mEnergy = energy;
+		}
+
+	public String getName() {
+		return mName == null ? mMol.getName() : mName;
+		}
+
+	public void setName(String name) {
+		mName = name;
 		}
 	}
