@@ -1086,6 +1086,18 @@ public class StringFunctions {
 	    return true;
 	}
 
+	public static boolean isAllLowerCase(String s) {
+
+	    for(char c : s.toCharArray()) {
+
+	       if(Character.isLetter(c) && Character.isUpperCase(c)) {
+	           return false;
+	        }
+	    }
+
+	    return true;
+	}
+
 	public static boolean containsUpperCase(String s) {
 
 		for(char c : s.toCharArray()) {
