@@ -108,7 +108,24 @@ public class Platform
         Runtime.getRuntime().exec(arguments.toArray(new String[0]));
     }
 
-    /**
+	/**
+	 * Start an executable with parameters. In non-windows environment this is searching the PATH
+	 * In the windows environment @Actelion this first checks the standard locations where applications
+	 * are installed usually \\actelch02\pgm. This is achieved by consulting the ApplicationDatabase.db file
+	 * located under \\actelch02\pgm\ActelionResearch. The file format is a standard Java properties file
+	 * where the key contains the name of the application and the value the respective absolute path of the executable
+	 * e.g.
+	 * datawarrior=//actelch02/pgm/Datawarrior/DataWarrior.exe
+	 * @param programAndArgs
+	 * @throws IOException
+	 */
+	public static void execute(String[] programAndArgs) throws IOException
+	{
+		programAndArgs[0] = findExecutable(programAndArgs[0]);
+		Runtime.getRuntime().exec(programAndArgs);
+	}
+
+	/**
      * Given a filename, open this file with the default application
      * @param doc File name to open
      * @throws IOException if the file is unavailable
@@ -158,7 +175,7 @@ public class Platform
 
                     // if the JRE7+ way doesn's work, check if we still have a JRE6 based app
         			path = "/Applications/"+appKeyAndName[1]+".app/Contents/MacOS/JavaApplicationStub";
-        			return new File(path).exists() ? path : null;
+        			return new File(path).exists() ? path : res;
         		}
         	}
         }
@@ -169,10 +186,11 @@ public class Platform
         	path = "/opt/"+name+"/"+name;
         	if (new File(path).exists())
         		return path;
-        	return null;
+        	return res;
         }
         return res;
     }
+
 
 /*
     public static void main(String args[]) throws Exception
@@ -190,5 +208,5 @@ public class Platform
         	
         }
     }
-*/
+     */
 }
