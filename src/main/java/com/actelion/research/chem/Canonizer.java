@@ -81,10 +81,19 @@ public class Canonizer {
 	// The Canonizer normalizes pseudo stereo parities within any rigid fragments, where
 	// two representations of relative stereo features encode equal stereo configurations
 	// (e.g. cis-1,4-dimethyl-cyclohexane). If the CREATE_PSEUDO_STEREO_GROUPS bit is set,
-	// then one can use getPseudoTHGroups() and getPseudoEZGroups() return stereo feature
-	// group numbers, which is shared among all related relative stereo features
+	// then one can use getPseudoTHGroups() and getPseudoEZGroups(), which return stereo
+	// feature group numbers that are shared among all related relative stereo features
 	// (tetrahedral and E/Z-bonds).
 	public static final int CREATE_PSEUDO_STEREO_GROUPS = 128;
+
+	// If two molecules are identical except for an inverted configuration of stereo centers
+	// within one OR group, then they receive the same idcode, because 'this or the other'
+	// and 'the other or this' are effectively the same. If we know, however, that we have
+	// both enantiomers, but cannot assign which is which, we may want to create different
+	// idcodes for either enantiomer. If the mode includes DISTINGUISH_RACEMIC_OR_GROUPS,
+	// then the normalization of tetrahedral stereo centers is skipped for OR groups retaining
+	// the given configuration within all OR groups.
+	public static final int DISTINGUISH_RACEMIC_OR_GROUPS = 256;
 
 	protected static final int cIDCodeVersion2 = 8;
 		// productive version till May 2006 based on the molfile version 2
@@ -1043,7 +1052,8 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 	private void canMarkESRGroupsForParityNormalization() {
 		int count = 0;
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			if (mTHESRType[atom] != Molecule.cESRTypeAbs)
+			if (mTHESRType[atom] != Molecule.cESRTypeAbs
+			 && (mTHESRType[atom] != Molecule.cESRTypeOr || (mMode & DISTINGUISH_RACEMIC_OR_GROUPS) == 0))
 				count++;
 
 		if (count == 0)
@@ -1052,7 +1062,8 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 		int[] parity = new int[count];
 		count = 0;
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (mTHESRType[atom] != Molecule.cESRTypeAbs) {
+			if (mTHESRType[atom] != Molecule.cESRTypeAbs
+			 && (mTHESRType[atom] != Molecule.cESRTypeOr || (mMode & DISTINGUISH_RACEMIC_OR_GROUPS) == 0)) {
 				parity[count] = (mTHESRType[atom] << 29)
 							  | (mTHESRGroup[atom] << 24)
 							  | (mCanRank[atom] << 12)
