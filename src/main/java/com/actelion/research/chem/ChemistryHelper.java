@@ -146,6 +146,21 @@ public class ChemistryHelper
             return 0;
     }
 
+
+
+    public static  void setAverageBondLength(Reaction rxn, double bndlen)
+    {
+        double dx = 0;
+        int len = rxn.getMolecules();
+        for (int fragment=0; fragment<len; fragment++) {
+            ExtendedMolecule m = rxn.getMolecule(fragment);
+            dx = m.getAverageBondLength();
+            double scale = bndlen / dx;
+            ChemistryHelper.transformMolecule(m,0,0,scale);
+
+        }
+    }
+
     public static Rectangle2D.Double getReactantsBoundingRect(Reaction r)
     {
         if (r == null)
@@ -374,6 +389,64 @@ public class ChemistryHelper
         if (r == null)
             r = new Rectangle2D.Double(0,0,0,0);
         return r;
+    }
+
+
+
+    public static void arrangeReaction(Reaction rxn,Dimension size)
+    {
+        double cx = 0,cy=0;
+        if (rxn != null) {
+            int len = rxn.getMolecules();
+            if (len > 0) {
+                double avBndLen = getAverageBondLength(rxn);
+                setAverageBondLength(rxn,avBndLen);
+
+                for (int fragment=0; fragment<len; fragment++) {
+                    ExtendedMolecule m = rxn.getMolecule(fragment);
+                    java.awt.geom.Rectangle2D.Double rc = ChemistryHelper.getBoundingRect(m);
+                    if (rc != null) {
+                        cx += rc.width;
+                        cy += rc.height;
+                    }
+                }
+                Rectangle2D rxnBounding = ChemistryHelper.getArrowBoundingRect(rxn);
+
+                int plus = Math.max(0,len-2);
+                double plusWidth = size.width / (len + plus + 1) / 2;
+                double dx = cx / len;
+                cx = cx + plus * dx / 2 + rxnBounding.getWidth();
+                cx += (cx/len);
+                double avY = cy / len;
+                java.awt.geom.Rectangle2D.Double rb = new java.awt.geom.Rectangle2D.Double(0,0,(double)size.width,(double)size.height);
+                double scalex = rb.width / cx;
+                double scaley = rb.height / avY;
+                double scale = Math.min(scalex,scaley);
+                double offsetx = 0;
+                for (int fragment=0; fragment<len; fragment++) {
+                    ExtendedMolecule m = rxn.getMolecule(fragment);
+                    // make the same scale
+                    ChemistryHelper.transformMolecule(m,0,0,scale);
+
+                    java.awt.geom.Rectangle2D.Double rectBefore = ChemistryHelper.getBoundingRect(m);
+                    // calculate the offset
+                    if (rectBefore != null && rb != null) {
+                        double offsety = (rb.height - rectBefore.height) / 2;
+                        double moveX =  -rectBefore.x + offsetx;
+                        double moveY =  -rectBefore.y + offsety;
+
+                        ChemistryHelper.transformMolecule(m,moveX,moveY,1);
+                        java.awt.geom.Rectangle2D.Double db = ChemistryHelper.getBoundingRect(m);
+
+                        if (fragment == rxn.getReactants()-1) {
+                            offsetx += (db.width + plusWidth * 2);
+                        } else {
+                            offsetx += (db.width + plusWidth);
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }
