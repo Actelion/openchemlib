@@ -518,23 +518,20 @@ public class StringFunctions {
     	Matcher ma = pa.matcher(str);
     	
     	if(ma.find()) {
-			
+
 			MatchResult mr = ma.toMatchResult();
-					
+
 			int start = mr.start();
-			
+
 			int end = mr.end();
-			
+
 			String rest1 = str.substring(0, start);
-			
+
 			String rest2 = str.substring(end);
-			
+
 			substring = rest1 + rest2;
-    	}
-    	
-    	
-    	
-    	
+		}
+
     	return substring;
 	}
 
