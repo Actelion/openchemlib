@@ -712,24 +712,30 @@ public class RingCollection {
 			 || mMol.getBondType(bond) == Molecule.cBondTypeDelocalized);
 		}
 
+	/**
+	 * Checks, whether this bond may contribute pi-electrons from an amide-resonance
+	 * to an aromatic ring. According to M J Cook, A R Katritzky, P Linda, R D Tack
+	 * J. Chem. Soc., Perkin Trans. 2, 1972, 1295-1301
+	 * 2-pyridone and 2-pyridinethione retain most of the aromatic resonance
+	 * energy of pyridine unless the nitrogen atom is methylated.
+	 * @param bond
+	 * @return
+	 */
 	public boolean qualifiesAsAmideTypeBond(int bond) {
-		// According to M J Cook, A R Katritzky, P Linda, R D Tack
-		// J. Chem. Soc., Perkin Trans. 2, 1972, 1295-1301
-		// 2-pyridone and 2-pyridinethione retain most of the aromatic resonance
-		// energy of pyridine unless the nitrogen atom is methylated.
-
 		for (int i=0; i<2; i++) {
 			int atom1 = mMol.getBondAtom(i, bond);
 			if (mMol.getAtomicNo(atom1) == 7
 			 && mMol.getConnAtoms(atom1) == 2) {
 				int atom2 = mMol.getBondAtom(1-i, bond);
-				for (int j=0; j<mMol.getConnAtoms(atom2); j++) {
-					int connAtom = mMol.getConnAtom(atom2, j);
-					int connBond = mMol.getConnBond(atom2, j);
-					if ((mMol.getAtomicNo(connAtom) == 8 || mMol.getAtomicNo(connAtom) == 16)
-					 && mMol.getBondOrder(connBond) == 2
-					 && mMol.getConnAtoms(connAtom) == 1)
-					return true;
+				if (mMol.getAtomicNo(atom2) == 6) {
+					for (int j=0; j<mMol.getConnAtoms(atom2); j++) {
+						int connAtom = mMol.getConnAtom(atom2, j);
+						int connBond = mMol.getConnBond(atom2, j);
+						if ((mMol.getAtomicNo(connAtom) == 8 || mMol.getAtomicNo(connAtom) == 16)
+						 && mMol.getBondOrder(connBond) == 2
+						 && mMol.getConnAtoms(connAtom) == 1)
+						return true;
+						}
 					}
 				}
 			}

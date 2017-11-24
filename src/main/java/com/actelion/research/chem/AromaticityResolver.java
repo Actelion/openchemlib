@@ -442,11 +442,13 @@ public class AromaticityResolver {
 			if (mMol.getBondOrder(bond) == 2) {
 				for (int i=0; i<2; i++) {
 					int atom = mMol.getBondAtom(i, bond);
-					for (int j=0; j<mMol.getConnAtoms(atom); j++) {
-						int connBond = mMol.getConnBond(atom, j);
-						if (mIsDelocalizedBond[connBond]) {
-							protectAtom(atom);
-							break;
+					if (mMol.getAtomicNo(atom) <= 8) {
+						for (int j=0; j<mMol.getConnAtoms(atom); j++) {
+							int connBond = mMol.getConnBond(atom, j);
+							if (mIsDelocalizedBond[connBond]) {
+								protectAtom(atom);
+								break;
+								}
 							}
 						}
 					}
