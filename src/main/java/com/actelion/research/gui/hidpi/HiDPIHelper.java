@@ -57,6 +57,22 @@ public class HiDPIHelper {
 			}
 		catch (Throwable e) {}
 
+/*	the above code gives WARNING under Java 9:
+ 			WARNING: An illegal reflective access operation has occurred
+ 			WARNING: All illegal access operations will be denied in a future release
+
+			If we know, we are on a Mac, we could do something like:
+
+		if (device instanceof CGraphicsDevice) {	// apple.awt.CGraphicsDevice
+			final CGraphicsDevice cgd = (CGraphicsDevice)device;
+
+			// this is the missing correction factor, it's equal to 2 on HiDPI a.k.a. Retina displays
+			final int scaleFactor = cgd.getScaleFactor();
+
+			// now we can compute the real DPI of the screen
+			final double realDPI = scaleFactor * (cgd.getXResolution() + cgd.getYResolution()) / 2;
+			}*/
+
 		return sRetinaFactor;
 		}
 
