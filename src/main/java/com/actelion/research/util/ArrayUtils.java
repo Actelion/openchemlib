@@ -87,14 +87,29 @@ public class ArrayUtils {
 		}
 		return -1;		
 	}
-	
+
 	public final static int indexOf(int[] array, int obj) {
-		for (int i = 0; i < array.length; i++) {
+		return indexOf(array, obj, 0);
+	}
+
+	public final static int indexOf(int[] array, int obj, int startIndex) {
+		for (int i = startIndex; i < array.length; i++) {
 			if(array[i] == obj) return i;
 		}
 		return -1;		
 	}
-	
+
+	public final static int indexOf(byte[] array, byte obj) {
+		return indexOf(array, obj, 0);
+	}
+
+	public final static int indexOf(byte[] array, byte obj, int startIndex) {
+		for (int i = startIndex; i < array.length; i++) {
+			if(array[i] == obj) return i;
+		}
+		return -1;
+	}
+
 	public final static int sum(int[] array) {
 		int res = 0;
 		for(int i=0; i<array.length; i++) {

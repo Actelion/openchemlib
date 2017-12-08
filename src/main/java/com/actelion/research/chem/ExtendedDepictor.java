@@ -41,13 +41,12 @@ import java.awt.geom.Rectangle2D;
 
 
 
-
 public class ExtendedDepictor {
-    private StereoMolecule[]		mMolecule;
-    private AbstractDepictor[]		mDepictor;
+    private StereoMolecule[]		mMolecule,mCatalyst;
+    private AbstractDepictor[]		mDepictor,mCatalystDepictor;
     private DrawingObjectList		mDrawingObjectList;
     private int						mDisplayMode,mReactantOrCoreCount;
-    private boolean					mUseGraphics2D,mDoLayoutMolecules,mIsMarkushStructure;
+    private boolean					mUseGraphics2D,mReactionLayoutNeeded,mIsMarkushStructure;
     private DepictorTransformation	mTransformation;
     private Color                   mFragmentNoColor;
 
@@ -98,7 +97,10 @@ public class ExtendedDepictor {
             for (int i=0; i<reaction.getMolecules(); i++)
                 mMolecule[i] = reaction.getMolecule(i);
             mReactantOrCoreCount = reaction.getReactants();
-            mDoLayoutMolecules = layoutReaction;
+			mCatalyst = new StereoMolecule[reaction.getCatalysts()];
+	        for (int i=0; i<reaction.getCatalysts(); i++)
+                mCatalyst[i] = reaction.getCatalyst(i);
+            mReactionLayoutNeeded = layoutReaction;
             }
         mIsMarkushStructure = false;
         mDrawingObjectList = drawingObjectList;
@@ -120,6 +122,15 @@ public class ExtendedDepictor {
                     mDepictor[i] = new Depictor(mMolecule[i]);
                 }
             }
+		if (mCatalyst != null) {
+			mCatalystDepictor = new AbstractDepictor[mCatalyst.length];
+			for (int i=0; i<mCatalyst.length; i++) {
+				if (mUseGraphics2D)
+					mCatalystDepictor[i] = new Depictor2D(mCatalyst[i]);
+				else
+					mCatalystDepictor[i] = new Depictor(mCatalyst[i]);
+			}
+		}
         }
 
     public void setDisplayMode(int displayMode) {
@@ -147,11 +158,19 @@ public class ExtendedDepictor {
         if (mDepictor != null)
             for (AbstractDepictor d:mDepictor)
                 d.setForegroundColor(foreGround, background);
+
+		if (mCatalystDepictor != null)
+			for (AbstractDepictor d:mCatalystDepictor)
+				d.setForegroundColor(foreGround, background);
         }
 
 	public void setOverruleColor(Color foreGround, Color background) {
 		if (mDepictor != null)
 			for (AbstractDepictor d:mDepictor)
+				d.setOverruleColor(foreGround, background);
+
+		if (mCatalystDepictor != null)
+			for (AbstractDepictor d:mCatalystDepictor)
 				d.setOverruleColor(foreGround, background);
 		}
 
@@ -219,6 +238,18 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);
 }*/
                 }
             }
+		if (mCatalystDepictor != null) {
+			for (int i=0; i<mCatalystDepictor.length; i++) {
+//				mCatalystDepictor[i].setDisplayMode(mDisplayMode);
+				mCatalystDepictor[i].paint(g);
+/*
+Rectangle2D.Float r = mCatalystDepictor[i].getBoundingRect();
+if (r != null) {
+g.setColor(Color.magenta);
+g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);
+}*/
+				}
+			}
         }
 
     public void paintDrawingObjects(Graphics g) {
@@ -258,7 +289,11 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
                 for (int i=0; i<mDepictor.length; i++)
                     mDepictor[i].getTransformation().clear();
 
-            DepictorTransformation t = mTransformation;
+			if (mCatalystDepictor != null)
+				for (int i=0; i<mCatalystDepictor.length; i++)
+					mCatalystDepictor[i].getTransformation().clear();
+
+			DepictorTransformation t = mTransformation;
             mTransformation = new DepictorTransformation();
             return t;
             }
@@ -266,8 +301,8 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
 
     public DepictorTransformation validateView(Object g, Rectangle2D.Double viewRect, int mode) {
     // returns incremental transformation that moves/scales already transformed molecules/objects into viewRect
-        if (mDoLayoutMolecules)
-            doLayoutMolecules(g);
+        if (mReactionLayoutNeeded)
+            layoutReaction(g);
 
         Rectangle2D.Double boundingRect = null;
         if (mDepictor != null) {
@@ -277,6 +312,13 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
                             : (Rectangle2D.Double)boundingRect.createUnion(mDepictor[i].getBoundingRect());
                 }
             }
+		if (mCatalystDepictor != null) {
+			for (int i=0; i<mCatalystDepictor.length; i++) {
+				mCatalystDepictor[i].validateView(g, null, 0);
+				boundingRect = (boundingRect == null) ? mCatalystDepictor[i].getBoundingRect()
+						: (Rectangle2D.Double)boundingRect.createUnion(mCatalystDepictor[i].getBoundingRect());
+				}
+			}
         if (mDrawingObjectList != null) {
             for (int i=0; i<mDrawingObjectList.size(); i++) {
                 Rectangle2D.Double objectBounds = mDrawingObjectList.get(i).getBoundingRect();
@@ -300,7 +342,11 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
                 for (int i=0; i<mDepictor.length; i++)
                     mDepictor[i].applyTransformation(t);
 
-            return t;
+			if (mCatalystDepictor != null)
+				for (int i=0; i<mCatalystDepictor.length; i++)
+					mCatalystDepictor[i].applyTransformation(t);
+
+			return t;
             }
 
         return null;
@@ -329,7 +375,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
                                 : mTransformation.getScaling() * averageBondLength / bondCount;
         }
 
-    private void doLayoutMolecules(Object g) {
+    private void layoutReaction(Object g) {
         Rectangle2D.Double[] boundingRect = new Rectangle2D.Double[mMolecule.length];
         double totalWidth = 0.0;
         double totalHeight = 0.0;
@@ -340,10 +386,24 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             totalHeight = Math.max(totalHeight, boundingRect[i].height);
             }
 
-        double spacing = 1.5 * AbstractDepictor.cOptAvBondLen;
-        double arrowWidth = 2 * AbstractDepictor.cOptAvBondLen;
+        final double catalystScale = 0.7;
+		double catalystSpacing = 0.5 * AbstractDepictor.cOptAvBondLen;
+		Rectangle2D.Double[] catalystBoundingRect = new Rectangle2D.Double[mCatalyst.length];
+		double totalCatalystWidth = 0.0;
+		double totalCatalystHeight = 0.0;
+		for (int i=0; i<mCatalyst.length; i++) {
+			mCatalystDepictor[i].validateView(g, null, AbstractDepictor.cModeInflateToMaxAVBL+(int)(catalystScale*AbstractDepictor.cOptAvBondLen));
+			catalystBoundingRect[i] = mCatalystDepictor[i].getBoundingRect();
+			totalCatalystWidth = Math.max(totalCatalystWidth, catalystBoundingRect[i].width);
+			totalCatalystHeight += catalystBoundingRect[i].height + catalystSpacing;
+			}
 
-        int arrow = -1;
+		double spacing = 1.5 * AbstractDepictor.cOptAvBondLen;
+        double arrowWidth = Math.max(2 * AbstractDepictor.cOptAvBondLen, totalCatalystWidth + AbstractDepictor.cOptAvBondLen);
+
+		totalHeight = Math.max(totalHeight, AbstractDepictor.cOptAvBondLen + 2 * totalCatalystHeight);
+
+		int arrow = -1;
         if (mDrawingObjectList == null) {
             mDrawingObjectList = new DrawingObjectList();
             mDrawingObjectList.add(new ReactionArrow());
@@ -367,6 +427,17 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             if (i == mReactantOrCoreCount) {
                 ((ReactionArrow)mDrawingObjectList.get(arrow)).setCoordinates(
                         rawX-spacing/2, totalHeight/2, rawX-spacing/2+arrowWidth, totalHeight/2);
+
+                double catX = rawX + 0.5 * (AbstractDepictor.cOptAvBondLen - spacing);
+                double catY = 0.5 * (totalHeight - catalystSpacing) - totalCatalystHeight;
+                for (int j=0; j<mCatalyst.length; j++) {
+					double dx = catX + 0.5 * (totalCatalystWidth - catalystBoundingRect[j].width) - catalystBoundingRect[j].x;
+					double dy = catY - catalystBoundingRect[j].y;
+					mCatalystDepictor[j].applyTransformation(new DepictorTransformation(1.0, dx, dy));
+
+					catY += catalystSpacing + catalystBoundingRect[j].height;
+					}
+
                 rawX += arrowWidth;
                 }
 
@@ -377,6 +448,6 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             rawX += spacing + boundingRect[i].width;
             }
 
-        mDoLayoutMolecules = false;
+        mReactionLayoutNeeded = false;
         }
     }

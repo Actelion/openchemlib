@@ -43,6 +43,7 @@ public class Reaction implements java.io.Serializable {
 
 	private ArrayList<StereoMolecule> mReactant;
 	private ArrayList<StereoMolecule> mProduct;
+	private ArrayList<StereoMolecule> mCatalyst;
 	private DrawingObjectList mDrawingObjectList;
 	private String mName;
 	private boolean mReactionLayoutRequired;
@@ -50,6 +51,7 @@ public class Reaction implements java.io.Serializable {
 	public Reaction() {
 		mReactant = new ArrayList<StereoMolecule>();
 		mProduct = new ArrayList<StereoMolecule>();
+		mCatalyst = new ArrayList<StereoMolecule>();
 		}
 
 	public Reaction(String name) {
@@ -82,26 +84,32 @@ public class Reaction implements java.io.Serializable {
 		return mReactant.get(no);
 		}
 
-
 	public int getReactants() {
 		return mReactant.size();
 		}
-
 
 	public StereoMolecule getProduct(int no) {
 		return mProduct.get(no);
 		}
 
-
 	public int getProducts() {
 		return mProduct.size();
 		}
 
+	public StereoMolecule getCatalyst(int no) {
+		return mCatalyst.get(no);
+	}
 
+	public int getCatalysts() {
+		return mCatalyst.size();
+	}
+
+	/**
+	 * @return count of reactants and products
+	 */
 	public int getMolecules() {
 		return mReactant.size() + mProduct.size();
 		}
-
 
 	public StereoMolecule getMolecule(int no) {
 		return (no < mReactant.size()) ?
@@ -109,51 +117,49 @@ public class Reaction implements java.io.Serializable {
 			: mProduct.get(no - mReactant.size());
 		}
 
-
 	public void addReactant(StereoMolecule reactant) {
 		mReactant.add(reactant);
 		}
-
 
 	public void addReactant(StereoMolecule reactant, int position) {
 		mReactant.add(position, reactant);
 		}
 
-
 	public void addProduct(StereoMolecule product) {
 		mProduct.add(product);
 		}
-
 
 	public void addProduct(StereoMolecule product, int position) {
 		mProduct.add(position, product);
 		}
 
+	public void addCatalyst(StereoMolecule catalyst) {
+		mCatalyst.add(catalyst);
+	}
+
+	public void addCatalyst(StereoMolecule catalyst, int position) {
+		mCatalyst.add(position, catalyst);
+	}
 
 	public String getName() {
 		return (mName == null) ? "Unknown Reaction" : mName;
 		}
 
-	
 	public void setName(String name) {
 		mName = name;
 		}
-
 
 	public DrawingObjectList getDrawingObjects() {
 		return mDrawingObjectList;
 		}
 
-
 	public void setDrawingObjects(DrawingObjectList l) {
 		mDrawingObjectList = l;
 		}
 
-
 	public boolean isReactionLayoutRequired() {
 		return mReactionLayoutRequired;
 		}
-
 
 	public void setReactionLayoutRequired(boolean b) {
 		mReactionLayoutRequired = b;
@@ -183,7 +189,6 @@ public class Reaction implements java.io.Serializable {
 				return true;
 		return false;
 		}	*/
-
 
 	public void validateMapping() throws Exception {
 		StereoMolecule reactant, product;

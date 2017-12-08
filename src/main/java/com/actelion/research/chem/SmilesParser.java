@@ -34,6 +34,9 @@
 package com.actelion.research.chem;
 
 import com.actelion.research.chem.coords.CoordinateInventor;
+import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.util.ArrayUtils;
+import com.actelion.research.util.ByteArray;
 
 import java.util.TreeMap;
 
@@ -45,6 +48,35 @@ public class SmilesParser {
 	private StereoMolecule mMol;
 	private boolean[] mIsAromaticBond;
 	private int mAromaticAtoms,mAromaticBonds;
+
+	public Reaction parseReaction(byte[] smiles) throws Exception {
+		int index1 = ArrayUtils.indexOf(smiles, (byte)'>');
+		int index2 = (index1 == -1) ? -1 : ArrayUtils.indexOf(smiles, (byte)'>', index1+1);
+		if (index2 == -1)
+			throw new Exception("Missing one or both separators ('>').");
+		if (ArrayUtils.indexOf(smiles, (byte)'>', index2+1) != -1)
+			throw new Exception("Found more than 2 separators ('>').");
+
+		StereoMolecule reactants = new StereoMolecule();
+		parse(reactants, smiles, 0, index1);
+
+		StereoMolecule products = new StereoMolecule();
+		parse(products, smiles, index2+1, smiles.length);
+
+		StereoMolecule catalysts = null;
+		if (index2 - index1 > 1) {
+			catalysts = new StereoMolecule();
+			parse(catalysts, smiles, index1+1, index2);
+			}
+
+		Reaction rxn = new Reaction();
+		rxn.addReactant(reactants);
+		rxn.addProduct(products);
+		if (catalysts != null)
+			rxn.addCatalyst(catalysts);
+
+		return rxn;
+		}
 
 	/**
 	 * Parses the given smiles into the molecule, creates proper atom coordinates
@@ -62,7 +94,15 @@ public class SmilesParser {
 		parse(mol, smiles, true, true);
 		}
 
+	public void parse(StereoMolecule mol, byte[] smiles, int position, int endIndex) throws Exception {
+		parse(mol, smiles, position, endIndex, true, true);
+		}
+
 	public void parse(StereoMolecule mol, byte[] smiles, boolean createCoordinates, boolean readStereoFeatures) throws Exception {
+		parse(mol, smiles, 0, smiles.length, createCoordinates, readStereoFeatures);
+		}
+
+	public void parse(StereoMolecule mol, byte[] smiles, int position, int endIndex, boolean createCoordinates, boolean readStereoFeatures) throws Exception {
 		mMol = mol;
 		mMol.deleteMolecule();
 
@@ -77,20 +117,18 @@ public class SmilesParser {
 		for (int i=0; i<MAX_RE_CONNECTIONS; i++)
 			ringClosureAtom[i] = -1;
 
-		int position = 0;
 		int atomMass = 0;
 		int fromAtom = -1;
 		boolean squareBracketOpen = false;
 		boolean percentFound = false;
 		boolean smartsFeatureFound = false;
 		int bracketLevel = 0;
-		int smilesLength = smiles.length;
 		int bondType = Molecule.cBondTypeSingle;
 
 		while (smiles[position] <= 32)
 			position++;
 
-		while (position < smilesLength) {
+		while (position < endIndex) {
 			char theChar = (char)smiles[position++];
 
 			if (Character.isLetter(theChar) || theChar == '*') {
@@ -137,7 +175,7 @@ public class SmilesParser {
 				else {
 					switch (Character.toUpperCase(theChar)) {
 					case 'B':
-						if (position < smilesLength && smiles[position] == 'r') {
+						if (position < endIndex && smiles[position] == 'r') {
 							atomicNo = 35;
 							position++;
 							}
@@ -145,7 +183,7 @@ public class SmilesParser {
 							atomicNo = 5;
 						break;
 					case 'C':
-						if (position < smilesLength && smiles[position] == 'l') {
+						if (position < endIndex && smiles[position] == 'l') {
 							atomicNo = 17;
 							position++;
 							}
@@ -244,7 +282,7 @@ public class SmilesParser {
 			if (Character.isDigit(theChar)) {
 				int number = theChar - '0';
 				if (squareBracketOpen) {
-					while (position < smilesLength
+					while (position < endIndex
 					 && Character.isDigit(smiles[position])) {
 						number = 10 * number + smiles[position] - '0';
 						position++;
@@ -254,7 +292,7 @@ public class SmilesParser {
 				else {
 					boolean hasBondType = (smiles[position-2] == '-' || smiles[position-2] == '=' || smiles[position-2] == '#' || smiles[position-2] == ':');
 					if (percentFound
-					 && position < smilesLength
+					 && position < endIndex
 					 && Character.isDigit(smiles[position])) {
 						number = 10 * number + smiles[position] - '0';
 						position++;
@@ -391,7 +429,7 @@ public class SmilesParser {
 				}
 
 			if (theChar <= ' ') {	// we stop reading at whitespace
-				position = smilesLength;
+				position = endIndex;
 				continue;
 			}
 
@@ -866,16 +904,25 @@ public class SmilesParser {
 						break;
 					}
 				if (refAtom[0] != -1 && refAtom[1] != -1) {
-					boolean isZ = mMol.getBondType(refBond[0]) != mMol.getBondType(refBond[1]);
-					boolean inversion = false;
-					for (int i=0; i<2; i++) {
+					boolean isZ = mMol.getBondType(refBond[0]) == mMol.getBondType(refBond[1]);
+
+					// We need to correct, because slash or backslash refer to the double bonded
+					// atom and not to the double bond itself as explained in opensmiles.org:
+					//     F/C=C/F and C(\F)=C/F are both E
+					// bondAtom[1] is always the parent in graph to bondAtom[0]. We use this to correct:
+					for (int i=0; i<2; i++)
+						if (refAtom[i] == mMol.getBondAtom(0, refBond[i]))
+							isZ = !isZ;
+
+					// E/Z configuration in the StereoMolecule refer to those neighbors with
+					// lower atom index. Thus, we adapt for this:
+					for (int i=0; i<2; i++)
 						if (otherAtom[i] != -1
 						 && otherAtom[i] < refAtom[i])
-							inversion = !inversion;
-						}
+							isZ = !isZ;
 
-					mMol.setBondParity(bond, isZ ^ inversion ? Molecule.cBondParityZor2
-															 : Molecule.cBondParityEor1, false);
+					mMol.setBondParity(bond, isZ ? Molecule.cBondParityZor2
+												 : Molecule.cBondParityEor1, false);
 					paritiesFound = true;
 					}
 				}

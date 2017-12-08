@@ -99,10 +99,14 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @return
 	 */
 	public StereoMolecule getCompactMolecule(byte[] idcode, byte[] coordinates) {
+		return getCompactMolecule(idcode, coordinates, 0, 0);
+		}
+
+	public StereoMolecule getCompactMolecule(byte[] idcode, byte[] coordinates, int idcodeStart, int coordsStart) {
 		if (idcode == null)
 			return null;
 
-		decodeBitsStart(idcode, 0);
+		decodeBitsStart(idcode, idcodeStart);
 		int abits = decodeBits(4);
 		int bbits = decodeBits(4);
 
@@ -113,7 +117,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		int allBonds = decodeBits(bbits);
 
 		StereoMolecule mol = new StereoMolecule(allAtoms, allBonds);
-		parse(mol, idcode, coordinates);
+		parse(mol, idcode, coordinates, idcodeStart, coordsStart);
 		return mol;
 		}
 
@@ -140,8 +144,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	/**
 	 * Parses the idcode and populates the given molecule to represent the passed idcode.
 	 * @param mol molecule object to be filled with the idcode content
-	 * @param idcode may be null
-	 * @return
+	 * @param idcode null or valid idcode optionally concatenates with SPACE and encoded coordinates
 	 */
 	public void parse(StereoMolecule mol, byte[] idcode) {
 		parse(mol, idcode, null);
@@ -152,7 +155,6 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @param mol molecule object to be filled with the idcode content
 	 * @param idcode may be null
 	 * @param coordinates may be null
-	 * @return
 	 */
 	public void parse(StereoMolecule mol, String idcode, String coordinates) {
 		byte[] idcodeBytes = (idcode == null) ? null : idcode.getBytes();
@@ -165,20 +167,37 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @param mol molecule object to be filled with the idcode content
 	 * @param idcode may be null
 	 * @param coordinates may be null
-	 * @return
 	 */
 	public void parse(StereoMolecule mol, byte[] idcode, byte[] coordinates) {
-		int version = Canonizer.cIDCodeVersion2;
-		mMol = mol;
-		mMol.deleteMolecule();
+		if (idcode == null || idcode.length == 0) {
+			mol.deleteMolecule();
+			return;
+			}
 
-		if (idcode==null || idcode.length==0)
+		parse(mol, idcode, coordinates, 0, 0);
+		}
+
+	/**
+	 * Parses the idcode and populates the given molecule to represent the passed idcode.
+	 * @param mol molecule object to be filled with the idcode content
+	 * @param idcode may be null
+	 * @param coordinates may be null
+	 * @param idcodeStart first byte index of idcode
+	 * @param coordsStart first byte indexif coordinates
+	 */
+	public void parse(StereoMolecule mol, byte[] idcode, byte[] coordinates, int idcodeStart, int coordsStart) {
+		mol.deleteMolecule();
+
+		if (idcode==null || idcodeStart >= idcode.length)
 			return;
 
-		if (coordinates != null && coordinates.length == 0)
+		mMol = mol;
+		int version = Canonizer.cIDCodeVersion2;
+
+		if (coordinates != null && coordsStart >= coordinates.length)
 			coordinates = null;
 
-		decodeBitsStart(idcode, 0);
+		decodeBitsStart(idcode, idcodeStart);
 		int abits = decodeBits(4);
 		int bbits = decodeBits(4);
 
@@ -615,18 +634,17 @@ public class IDCodeParserWithoutCoordinateInvention {
 				mMol.setBondType(bond, mMol.getBondType(bond) == Molecule.cBondTypeDouble ?
 						Molecule.cBondTypeTriple : Molecule.cBondTypeDouble);
 
-		int coordinateIndex = 0;
 		if (coordinates == null
 		 && idcode.length > mIDCodeBufferIndex+1
 		 && (idcode[mIDCodeBufferIndex+1] == ' ' || idcode[mIDCodeBufferIndex+1] == '\t')) {
 			coordinates = idcode;
-			coordinateIndex = mIDCodeBufferIndex+2;
+			coordsStart = mIDCodeBufferIndex+2;
 			}
 
 		if (coordinates != null) {
 			try {
-				if (coordinates[coordinateIndex] == '!' || coordinates[coordinateIndex] == '#') {    // new coordinate format
-					decodeBitsStart(coordinates, coordinateIndex + 1);
+				if (coordinates[coordsStart] == '!' || coordinates[coordsStart] == '#') {    // new coordinate format
+					decodeBitsStart(coordinates, coordsStart + 1);
 					coordsAre3D = (decodeBits(1) == 1);
 					coordsAreAbsolute = (decodeBits(1) == 1);
 					int resolutionBits = 2 * decodeBits(4);
@@ -653,7 +671,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 					double avblDefault = coordsAre3D ? 1.5 : Molecule.getDefaultAverageBondLength();
 					double avbl = mMol.getAverageBondLength(allAtoms, allBonds, avblDefault);
 
-					if (coordinates[coordinateIndex] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
+					if (coordinates[coordsStart] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
 						int hydrogenCount = 0;
 
 						// we need to cache hCount, because otherwise getImplicitHydrogens() would create helper arrays with every call

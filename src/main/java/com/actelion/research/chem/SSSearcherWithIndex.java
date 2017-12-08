@@ -657,11 +657,19 @@ public class SSSearcherWithIndex {
 	    }
 
 
-	public boolean isFragmentInMolecule() {
+	/**
+	 * @return whether the fragment fingerprint bits are all present in the molecule bits
+	 */
+	public boolean isFragmentIndexInMoleculeIndex() {
 		for (int i=0; i<mMoleculeIndex.length; i++)
 			if ((mFragmentIndex[i] & ~mMoleculeIndex[i]) != 0)
 				return false;
 
+		return true;
+		}
+
+
+	public boolean isFragmentInMoleculeWithoutIndex() {
 		if (mMolecule == null)
 			mMolecule = (new IDCodeParser(false)).getCompactMolecule(mMoleculeIDCode);
 		if (mFragment == null)
@@ -670,6 +678,15 @@ public class SSSearcherWithIndex {
 		mSSSearcher.setMolecule(mMolecule);
 		mSSSearcher.setFragment(mFragment);
 		return mSSSearcher.isFragmentInMolecule();
+		}
+
+
+	public boolean isFragmentInMolecule() {
+		for (int i=0; i<mMoleculeIndex.length; i++)
+			if ((mFragmentIndex[i] & ~mMoleculeIndex[i]) != 0)
+				return false;
+
+		return isFragmentInMoleculeWithoutIndex();
 		}
 
 
