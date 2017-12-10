@@ -55,7 +55,7 @@ public class CleanAction extends CommandAction
     {
         model.pushUndo();
         if (model.isReaction()) {
-            model.cleanReaction(true,true);
+            model.cleanReaction(true);
         } else {
             model.cleanMolecule(true,true);
         }

@@ -49,7 +49,8 @@ public class NativeClipboardAccessor
 
     static {
         try {
-            System.loadLibrary("actelionclip");
+            String arch = System.getProperty("sun.arch.data.model");
+            System.loadLibrary("actelionclip" + (arch.equals("32") ? ""  : arch));
             System.out.println("actelionclip loaded");
         } catch (UnsatisfiedLinkError e) {
             e.printStackTrace();

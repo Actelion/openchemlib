@@ -82,8 +82,7 @@ public class ArrowAction extends DrawAction
             java.awt.geom.Rectangle2D r = new java.awt.geom.Rectangle2D.Double(
                 (int) Math.min(last.getX(), origin.getX()),
                  (int) last.getY(),
-                 (int) Math.abs(last.getX() - origin.getX()),
-                 2);
+                 (int) Math.abs(last.getX() - origin.getX()),0);
 //            IRectangle2D r = builder.createRectangle(
 //                (int) Math.min(last.getX(), origin.getX()),
 //                (int) last.getY(),

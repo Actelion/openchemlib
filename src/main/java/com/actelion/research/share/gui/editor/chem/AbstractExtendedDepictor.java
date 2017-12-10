@@ -86,6 +86,7 @@ public abstract class AbstractExtendedDepictor<T, C>
 
     public AbstractExtendedDepictor(Reaction reaction, java.util.List<IDrawingObject> drawingObjectList, boolean layoutReaction, boolean useGraphics2D, DrawConfig cfg)
     {
+//        System.out.printf("AED ctor %s\n",reaction.getReactants());
         StereoMolecule[] mol = null;
         if (reaction != null) {
             mol = new StereoMolecule[reaction.getMolecules()];
