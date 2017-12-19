@@ -22,6 +22,10 @@ public class HiDPIIcon extends ImageIcon {
 				x++;
 				y++;
 				}
+			else if (LookAndFeelHelper.isNewSubstance()) {
+				x--;
+				y--;
+				}
 
 			Image image = getImage();
 			int width = image.getWidth(null);
@@ -34,6 +38,10 @@ public class HiDPIIcon extends ImageIcon {
 			if (LookAndFeelHelper.isQuaQua()) {
 				x++;
 				y++;
+				}
+			else if (LookAndFeelHelper.isNewSubstance()) {
+				x--;
+				y--;
 				}
 
 			Image image = getImage();

@@ -114,11 +114,11 @@ public class HiDPIHelper {
 		}
 
 	public static Icon createIcon(String fileName, int rotation) {
-		return new HiDPIIcon(scale(rotate(createLaFCompatibleImage(fileName), rotation)));
+		return new HiDPIIcon(scale(capCorners(rotate(createLaFCompatibleImage(fileName), rotation))));
 		}
 
 	public static Icon createDisabledIcon(String fileName, int rotation) {
-		return new HiDPIIcon(scale(rotate(createDisabledImage(fileName), rotation)));
+		return new HiDPIIcon(scale(capCorners(rotate(createDisabledImage(fileName), rotation))));
 		}
 
 	private static String getDoubleResolutionFileName(String fileName) {
@@ -223,6 +223,22 @@ public class HiDPIHelper {
 										   Math.round(0.5f * scale * image.getHeight()), Image.SCALE_SMOOTH);
 		else
 			return image;
+	}
+
+	private static BufferedImage capCorners(BufferedImage image) {
+		image.setRGB(0, 0, 0x00000000);
+		image.setRGB(1, 0, 0x00000000);
+		image.setRGB(0, 1, 0x00000000);
+		image.setRGB(image.getWidth()-2, 0, 0x00000000);
+		image.setRGB(image.getWidth()-1, 0, 0x00000000);
+		image.setRGB(image.getWidth()-1, 1, 0x00000000);
+		image.setRGB(0, image.getHeight()-1, 0x00000000);
+		image.setRGB(1, image.getHeight()-1, 0x00000000);
+		image.setRGB(0, image.getHeight()-2, 0x00000000);
+		image.setRGB(image.getWidth()-2, image.getHeight()-1, 0x00000000);
+		image.setRGB(image.getWidth()-1, image.getHeight()-1, 0x00000000);
+		image.setRGB(image.getWidth()-1, image.getHeight()-2, 0x00000000);
+		return image;
 	}
 
 	private static void brightenImage(BufferedImage image) {

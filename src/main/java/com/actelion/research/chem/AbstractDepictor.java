@@ -581,6 +581,7 @@ public abstract class AbstractDepictor {
 				setColor(mStandardForegroundColor);
 				}
 			else if (!explicitAtomColors
+				  && mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral
 				  && mMol.getAtomicNo(i) != 1
 				  && mMol.getAtomicNo(i) != 6
 				  && ((mDisplayMode & cDModeNoImplicitAtomLabelColors) == 0)
@@ -652,7 +653,8 @@ public abstract class AbstractDepictor {
 				}
 
 			setTextSize((int)mChiralTextSize);
-			setColor(COLOR_CHIRALITY_TEXT);
+			if (mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral)
+				setColor(COLOR_CHIRALITY_TEXT);
 			drawString(chiralText, mChiralTextLocation.x, mChiralTextLocation.y+0.3f*mChiralTextSize);
 			}
 		}
@@ -756,7 +758,9 @@ public abstract class AbstractDepictor {
 						break;
 						}
 					setTextSize((mpLabelSize*2+1)/3);
-					setColor(mMol.isBondForegroundHilited(i) ? COLOR_HILITE_BOND_FG : COLOR_CIP_LETTER);
+					setColor(mMol.isBondForegroundHilited(i) ? COLOR_HILITE_BOND_FG :
+							 mMol.getMoleculeColor() == Molecule.cMoleculeColorNeutral ?
+										mStandardForegroundColor : COLOR_CIP_LETTER);
 					int atom1 = mMol.getBondAtom(0,i);
 					int atom2 = mMol.getBondAtom(1,i);
 					double x = (getAtomX(atom1) + getAtomX(atom2)) / 2;
@@ -1744,7 +1748,13 @@ public abstract class AbstractDepictor {
 				hydrogensToAdd = mMol.getImplicitHydrogens(atom);
 			}
 
+		boolean largeIsoString = false;
 		String atomStr = mMol.getAtomCustomLabel(atom);
+		if (atomStr != null && atomStr.startsWith("]")) {
+			isoStr = append(atomStr.substring(1), isoStr);
+			atomStr = null;
+			largeIsoString = true;
+			}
 		if (atomStr != null) {
 		    hydrogensToAdd = 0;
 		    }
@@ -1794,7 +1804,8 @@ public abstract class AbstractDepictor {
             isoStr = String.valueOf(atom);
 
 		if (isoStr != null) {
-			setTextSize((mpLabelSize*2+1)/3);
+			if (!largeIsoString)
+				setTextSize((mpLabelSize*2+1)/3);
 			x = getAtomX(atom) - ((labelWidth + getStringWidth(isoStr)) / 2.0f);
 			y = getAtomY(atom) - ((getTextSize()*4-4)/8);
 			mpDrawString(x,y,isoStr,true);
@@ -1806,7 +1817,8 @@ public abstract class AbstractDepictor {
 			x = getAtomX(atom) - ((labelWidth + getStringWidth(cipStr)) / 2.0f);
 			y = getAtomY(atom) + ((getTextSize()*4+4)/8);
 			int theColor = mCurrentColor;
-			setColor(COLOR_CIP_LETTER);
+			if (mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral)
+				setColor(COLOR_CIP_LETTER);
 			mpDrawString(x,y,cipStr,false);
 			setColor(theColor);
 			setTextSize(mpLabelSize);
@@ -1829,7 +1841,8 @@ public abstract class AbstractDepictor {
             x = getAtomX(atom) + 0.7*getTextSize()*Math.sin(angle);
             y = getAtomY(atom) + 0.7*getTextSize()*Math.cos(angle);
             int theColor = mCurrentColor;
-            setColor(getESRColor(atom));
+			if (mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral)
+	            setColor(getESRColor(atom));
             mpDrawString(x,y,esrStr,false);
             setColor(theColor);
             setTextSize(mpLabelSize);
@@ -2051,7 +2064,7 @@ public abstract class AbstractDepictor {
         }
 
     private String append(String a, String b) {
-        return (a == null) ? b : a+","+b;
+        return (a == null) ? b : (b == null) ? a : a+","+b;
         }
 
 	private void mpDrawString(double x, double y, String str, boolean withTabu) {
@@ -2309,9 +2322,12 @@ public abstract class AbstractDepictor {
 			}
 		else {
 			color1 = mAtomColor[atom1];
-	        color2 = getESRColor(atom1);
-	        if (color1 == mMol.getAtomColor(atom1))	// if it is not selected or stereo error
-	            color1 = color2;
+			color2 = mAtomColor[atom2];
+			if (mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral) {
+				color2 = getESRColor(atom1);
+				if (color1 == mMol.getAtomColor(atom1))    // if it is not selected or stereo error
+					color1 = color2;
+				}
 			}
 
         setColor(color1);
