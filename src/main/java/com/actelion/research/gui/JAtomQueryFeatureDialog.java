@@ -563,10 +563,14 @@ public class JAtomQueryFeatureDialog extends JDialog
             break;
             }
 
-		if (mCBBlocked.isSelected() && mMol.getFreeValence(atom) > 0)
+		if (mCBBlocked.isSelected()
+		 && (mMol.getFreeValence(atom) > 0
+		  || (mMol.getAtomCharge(atom)==0 && (mMol.getAtomicNo(atom)==5 || mMol.isNitrogenFamily(atom) || mMol.isChalcogene(atom)))))
 			queryFeatures |= Molecule.cAtomQFNoMoreNeighbours;
 
-		if (mCBSubstituted.isSelected() && mMol.getFreeValence(atom) > 0)
+		if (mCBSubstituted.isSelected()
+		 && (mMol.getFreeValence(atom) > 0
+		  || (mMol.getAtomCharge(atom)==0 && (mMol.getAtomicNo(atom)==5 || mMol.isNitrogenFamily(atom) || mMol.isChalcogene(atom)))))
 			queryFeatures |= Molecule.cAtomQFMoreNeighbours;
 
 		if (mCBMatchStereo.isSelected())

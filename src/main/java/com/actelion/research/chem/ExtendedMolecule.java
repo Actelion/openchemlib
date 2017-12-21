@@ -2505,7 +2505,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			for (int i=0; i<2; i++) {
 				if (isElectronegative(mBondAtom[i][bond])) {
 					int atom = mBondAtom[1-i][bond];
-					if (isGroupAlkaliOrEarthAlkaliMetal(atom)) {
+					if (isAlkaliMetal(atom) || isEarthAlkaliMetal(atom)) {
 						if (getBondOrder(bond) == 1) {
 							mAtomCharge[atom]++;
 							mAtomCharge[mBondAtom[i][bond]]--;
@@ -2532,17 +2532,64 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return found;
 		}
 
-	private boolean isGroupAlkaliOrEarthAlkaliMetal(int atom) {
+	/**
+	 * @param atom
+	 * @return whether atom is one of Li,Na,K,Rb,Cs
+	 */
+	public boolean isAlkaliMetal(int atom) {
 		int atomicNo = mAtomicNo[atom];
 		return atomicNo == 3	 // Li
 			|| atomicNo == 11	// Na
-			|| atomicNo == 12	// Mg
 			|| atomicNo == 19	// K
-			|| atomicNo == 20	// Ca
 			|| atomicNo == 37	// Rb
+			|| atomicNo == 55;	// Cs
+		}
+
+	/**
+	 * @param atom
+	 * @return whether atom is one of Mg,Ca,Sr,Ba
+	 */
+	public boolean isEarthAlkaliMetal(int atom) {
+		int atomicNo = mAtomicNo[atom];
+		return atomicNo == 12	// Mg
+			|| atomicNo == 20	// Ca
 			|| atomicNo == 38	// Sr
-			|| atomicNo == 55	// Cs
 			|| atomicNo == 56;	// Ba
+		}
+
+	/**
+	 * @param atom
+	 * @return whether atom is one of N,P,As
+	 */
+	public boolean isNitrogenFamily(int atom) {
+		int atomicNo = mAtomicNo[atom];
+		return atomicNo == 7	// N
+			|| atomicNo == 15	// P
+			|| atomicNo == 33;	// As
+		}
+
+	/**
+	 * @param atom
+	 * @return whether atom is one of O,S,Se,Te
+	 */
+	public boolean isChalcogene(int atom) {
+		int atomicNo = mAtomicNo[atom];
+		return atomicNo == 8	// O
+			|| atomicNo == 16	// S
+			|| atomicNo == 34	// Se
+			|| atomicNo == 52;	// Te
+		}
+
+	/**
+	 * @param atom
+	 * @return whether atom is one of F,Cl,Br,I
+	 */
+	public boolean isHalogene(int atom) {
+		int atomicNo = mAtomicNo[atom];
+		return atomicNo == 9	// F
+			|| atomicNo == 17	// Cl
+			|| atomicNo == 35	// Br
+			|| atomicNo == 53;	// I
 		}
 
 	/**
@@ -3219,11 +3266,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if (!mIsFragment)
 			return false;
 
-			// if an atom has no free valence then cAtomQFNoMoreNeighbours is not necessary
-			// and cAtomQFMoreNeighbours is not possible
-		for (int atom=0; atom<mAllAtoms; atom++)
-			if (getOccupiedValence(atom) >= getMaxValence(atom))
+		// if an atom has no free valence then cAtomQFNoMoreNeighbours is not necessary
+		// and cAtomQFMoreNeighbours is not possible
+		// unless it is an uncharged N- or O-family atom that could be e.g. methylated
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			if (getFreeValence(atom) <= 0
+			 && !(mAtomCharge[atom]==0 && (mAtomicNo[atom]==5 || isNitrogenFamily(atom) || isChalcogene(atom))))
 				mAtomQueryFeatures[atom] &= ~(cAtomQFNoMoreNeighbours | cAtomQFMoreNeighbours);
+			}
 
 			// approximate explicit hydrogens by query features
 			// and remove explicit hydrogens except those with stereo bonds

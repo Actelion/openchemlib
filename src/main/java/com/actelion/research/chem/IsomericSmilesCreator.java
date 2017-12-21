@@ -335,8 +335,7 @@ public class IsomericSmilesCreator {
 		int isotop = mMol.getAtomMass(atom);
 
 		boolean useBrackets = !isOrganic(mMol.getAtomicNo(atom))
-				|| mMol.getAtomParity(atom) == Molecule.cAtomParity1
-				|| mMol.getAtomParity(atom) == Molecule.cAtomParity2
+				|| qualifiesForAtomParity(atom)
 				|| charge != 0
 				|| isotop != 0
 				|| (mMol.isAromaticAtom(atom) && mMol.getAtomPi(atom)==0 && mMol.getImplicitHydrogens(atom)!=0);
@@ -349,8 +348,7 @@ public class IsomericSmilesCreator {
 
 		builder.append(label);
 
-		if (mMol.getAtomParity(atom) == Molecule.cAtomParity1
-		 || mMol.getAtomParity(atom) == Molecule.cAtomParity2)
+		if (qualifiesForAtomParity(atom))
 			builder.append(getAtomParitySymbol(atom, parent));
 
 		if (useBrackets) {
@@ -375,6 +373,18 @@ public class IsomericSmilesCreator {
 
 		if (smilesAtom.isSideChainEnd)
 			builder.append(')');
+	}
+
+	/**
+	 * Don't store nitrogen parities in SMILES unless we have a quarternary nitrogen.
+	 * Some software packages seem to have promblems when decoding parities on nitrogen atoms.
+	 * @param atom
+	 * @return
+	 */
+	private boolean qualifiesForAtomParity(int atom) {
+		return (mMol.getAtomParity(atom) == Molecule.cAtomParity1
+			 || mMol.getAtomParity(atom) == Molecule.cAtomParity2)
+			&& (mMol.getAtomicNo(atom) != 7 || mMol.getAtomCharge(atom) > 0);
 	}
 
 	private void appendClosureBonds(SmilesAtom smilesAtom, StringBuilder builder) {
