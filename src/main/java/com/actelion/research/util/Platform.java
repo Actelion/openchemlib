@@ -83,6 +83,7 @@ public class Platform
         return isUnix;
     }
 
+	public static boolean is64BitJRE() { return System.getProperty("os.arch").indexOf("64")!=-1; }
 
     /**
      * Start an executable with parameters. In non-windows environment this is searching the PATH
