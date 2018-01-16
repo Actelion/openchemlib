@@ -562,24 +562,35 @@ public class IntVec implements Comparable<IntVec> {
     
     
     /**
-     * Vectors have to be normed!
-     * @param dVec1 normed vector1
-     * @param dVec2 normed vector2
+     *
+     * @param iv1 normed vector1
+     * @param iv2 normed vector2
      * @return Cosine
      */
-    static public double Cosine(IntVec dVec1, IntVec dVec2) {
-        double cosine = 0;
-        for (int ii = 0; ii < dVec1.data.length; ii++) {
-            cosine += dVec1.data[ii] * dVec2.data[ii];
+    static public double getCosine(IntVec iv1, IntVec iv2) {
+
+        double ab = 0;
+
+        double a=0;
+        double b=0;
+
+        for (int i = 0; i < iv1.data.length; i++) {
+            ab += iv1.data[i] * iv2.data[i];
+
+            a += iv1.data[i] * iv1.data[i];
+            b += iv2.data[i] * iv2.data[i];
         }
-        return cosine;
+
+        double c = Math.sqrt(ab)/(Math.sqrt(a)*Math.sqrt(b));
+
+        return c;
     }
 
     static public double cubicDistance(IntVec dVec1, IntVec dVec2) {
 
         double dSum = 0;
-        for (int ii = 0; ii < dVec1.data.length; ii++) {
-            double dDist = Math.abs( (dVec1.data[ii] - dVec2.data[ii]));
+        for (int i = 0; i < dVec1.data.length; i++) {
+            double dDist = Math.abs( (dVec1.data[i] - dVec2.data[i]));
             dSum += dDist * dDist * dDist;
         }
 
@@ -1358,11 +1369,12 @@ public class IntVec implements Comparable<IntVec> {
 
 	/**
 	 * (sum bits set common) / (sum bits set in both)  
-	 * @param query
-	 * @param base
+	 *
+	 *
 	 * @return
 	 */
     public static double getScoreFracBitsInCommonBitWise(IntVec v1, IntVec v2) {
+
     	double sc = 0;
     	
     	double cc=0;
