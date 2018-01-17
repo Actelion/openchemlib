@@ -3,13 +3,7 @@ package com.actelion.research.util;
 import java.awt.Point;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -100,6 +94,26 @@ public class StringFunctions {
 	    }
 	    
 	    return sb.toString();
+	}
+
+
+	public static Comparator<String> getComparatorLength(){
+
+		return new Comparator<String>() {
+			@Override
+			public int compare(String o1, String o2) {
+
+				int cmp = 0;
+
+				if(o1.length() > o2.length()){
+					cmp = 1;
+				}else if(o1.length() < o2.length()){
+					cmp = -1;
+				}
+
+				return cmp;
+			}
+		};
 	}
 
 
