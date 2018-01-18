@@ -139,6 +139,9 @@ public class ConstantsDWAR {
 	public static final String TAG_SOURCE = "Source";
 
 
+	public static final String ATTR_YES = "Y";
+	public static final String ATTR_NO = "N";
+
 
 
 	public static final String [] TAG_NAMES = {TAG_NAME, TAG_ACTNO, TAG_RECORD_NO};
