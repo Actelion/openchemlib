@@ -642,7 +642,7 @@ public class Molecule implements Serializable {
 	 * @param radical
 	 * @return
 	 */
-	public boolean addOrChangeAtom(double x, double y, int atomicNo, int mass, int abnormalValence, int radical) {
+	public boolean addOrChangeAtom(double x, double y, int atomicNo, int mass, int abnormalValence, int radical, String customLabel) {
 		int atom = findAtom(x,y);
 		if (atom == -1) {
 			if (mAllAtoms >= mMaxAtoms)
@@ -653,10 +653,13 @@ public class Molecule implements Serializable {
 			mAtomMass[atom] = mass;
 			setAtomAbnormalValence(atom, abnormalValence);
 			setAtomRadical(atom, radical);
+			setAtomCustomLabel(atom, customLabel);
 			return true;
 			}
 
-		return changeAtom(atom, atomicNo, mass, abnormalValence, radical);
+		boolean changed = changeAtom(atom, atomicNo, mass, abnormalValence, radical);
+		setAtomCustomLabel(atom, customLabel);
+		return changed;
 		}
 
 

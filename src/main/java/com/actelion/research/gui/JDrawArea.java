@@ -132,6 +132,7 @@ public class JDrawArea extends JPanel
 	private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown,
 					mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
+	private String mOtherLabel;
 	private String[] mAtomText;
 	private ExtendedDepictor mDepictor;
 	private StereoMolecule mMol;		// molecule being modified directly by the drawing editor
@@ -172,6 +173,7 @@ public class JDrawArea extends JPanel
 		mOtherMass = 0;
 		mOtherValence = -1;
 		mOtherRadical = 0;
+		mOtherLabel = null;
 		mAllowQueryFeatures = true;
 		mPendingRequest = cRequestNone;
 		mCurrentCursor = CursorHelper.cPointerCursor;
@@ -537,7 +539,7 @@ public class JDrawArea extends JPanel
 	public void toolChanged(int newTool)
 	{
 		if (mCurrentTool != newTool) {
-			setOtherAtom(-1, 0, -1, 0);
+			setOtherAtom(-1, 0, -1, 0, null);
 			if (mCurrentTool == JDrawToolbar.cToolMapper
 				|| newTool == JDrawToolbar.cToolMapper) {
 				update(UPDATE_REDRAW);
@@ -547,12 +549,13 @@ public class JDrawArea extends JPanel
 		}
 	}
 
-	private void setOtherAtom(int atomicNo, int mass, int valence, int radical)
+	private void setOtherAtom(int atomicNo, int mass, int valence, int radical, String customLabel)
 	{
 		mOtherAtom = atomicNo;
 		mOtherMass = mass;
 		mOtherValence = valence;
 		mOtherRadical = radical;
+		mOtherLabel = customLabel;
 	}
 
 	public void actionPerformed(ActionEvent e)
@@ -1356,21 +1359,6 @@ public class JDrawArea extends JPanel
 					update(UPDATE_REDRAW);
 				}
 			}
-		} else if (mCurrentTool == JDrawToolbar.cToolAtomOther) {
-			if (atom != -1) {
-				Component c = this;
-				while (c.getParent() != null) {
-					c = c.getParent();
-				}
-				storeState();
-				new JAtomLabelDialog((Frame) c, mMol, atom);
-				mOtherAtom = mMol.getAtomicNo(atom);
-				mOtherMass = mMol.getAtomMass(atom);
-				mOtherValence = mMol.getAtomAbnormalValence(atom);
-				mOtherRadical = mMol.getAtomRadical(atom);
-				fireMoleculeChanged();
-				update(UPDATE_REDRAW);
-			}
 		} else if (mCurrentTool == JDrawToolbar.cToolZoom) {
 			int fragment = -2;
 			if ((mMode & MODE_MULTIPLE_FRAGMENTS) != 0) {
@@ -1415,6 +1403,12 @@ public class JDrawArea extends JPanel
 				fireMoleculeChanged();
 				update(UPDATE_REDRAW);
 			}
+		} else if (mCurrentTool == JDrawToolbar.cToolAtomOther) {
+			Component c = this;
+			while (c.getParent() != null) {
+				c = c.getParent();
+			}
+			JOptionPane.showMessageDialog((Frame)c, "Please hold 'Ctrl' while pressing the left mouse button\nto open the atom property dialog.");
 		}
 	}
 
@@ -1683,85 +1677,103 @@ public class JDrawArea extends JPanel
 				break;
 			case JDrawToolbar.cToolAtomH:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 1, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 1, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomC:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 6, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 6, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomN:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 7, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 7, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomO:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 8, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 8, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomSi:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 14, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 14, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomP:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 15, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 15, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomS:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 16, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 16, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomF:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 9, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 9, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomCl:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 17, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 17, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomBr:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 35, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 35, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomI:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 53, 0, -1, 0)) {
+				if (mMol.addOrChangeAtom(mX1, mY1, 53, 0, -1, 0, null)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAtomOther:
-				if (mOtherAtom != -1) {
+				if (mOtherAtom == -1 || e.isControlDown()) {
+					int atom = mMol.findAtom(mX1, mY1);
+					if (atom != -1) {
+						Component c = this;
+						while (c.getParent() != null) {
+							c = c.getParent();
+						}
+						storeState();
+						new JAtomLabelDialog((Frame) c, mMol, atom);
+						mOtherAtom = mMol.getAtomicNo(atom);
+						mOtherMass = mMol.getAtomMass(atom);
+						mOtherValence = mMol.getAtomAbnormalValence(atom);
+						mOtherRadical = mMol.getAtomRadical(atom);
+						mOtherLabel = mMol.getAtomCustomLabel(atom);
+						fireMoleculeChanged();
+						update(UPDATE_REDRAW);
+					}
+				}
+				else {
 					storeState();
-					if (mMol.addOrChangeAtom(mX1, mY1, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical)) {
+					if (mMol.addOrChangeAtom(mX1, mY1, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical, mOtherLabel)) {
 						fireMoleculeChanged();
 						update(UPDATE_CHECK_COORDS);
 					}
