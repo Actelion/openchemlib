@@ -881,17 +881,19 @@ public class StringFunctions {
 		return toString(li, " ");
 	}
 	
-	public static String toString(List<String> li, String sep) {
+	public static String toString(Collection<String> li, String sep) {
+
 		StringBuilder sb = new StringBuilder();
-		
-		for (int i = 0; i < li.size(); i++) {
-			sb.append(li.get(i));
-			
-			if(i < li.size()-1){
+
+		for (String s : li) {
+
+			if(sb.length() > 0){
 				sb.append(sep);
 			}
+
+			sb.append(s);
 		}
-		
+
 		return sb.toString();
 	}
 	

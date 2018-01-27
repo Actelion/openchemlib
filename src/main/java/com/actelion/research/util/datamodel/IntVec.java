@@ -132,7 +132,6 @@ public class IntVec implements Comparable<IntVec> {
     /**
      * Puts an boolean array into an int array.
      * @param arr
-     * @param binary
      * @throws Exception
      */
     public IntVec(boolean [] arr) {
@@ -283,7 +282,6 @@ public class IntVec implements Comparable<IntVec> {
     
     /**
      * Makes an logical OR and calculates the hash code.
-     * @param col
      * @return
      */
     static public IntVec OR(IntVec iv1, IntVec iv2) {
@@ -445,7 +443,6 @@ public class IntVec implements Comparable<IntVec> {
 			}
 		}
     	
-    	
     	return n;
     }
     
@@ -559,7 +556,6 @@ public class IntVec implements Comparable<IntVec> {
     		hash = BurtleHasher.hashlittle(data, 13);	
     	}
     }
-    
     
     /**
      *
@@ -1004,42 +1000,6 @@ public class IntVec implements Comparable<IntVec> {
     	
     }
     
-    public static void incrementByte(int data[], int i) {
-    	
-        int ind = i / LEN_INTEGER_BYTES;
-        
-        int indInInt = i % LEN_INTEGER_BYTES;
-
-        int valOld = 0;
-        int increment = 1;
-        
-        int maskInverse = 0;
-     
-        switch(indInInt) {
-            case 3:
-            	maskInverse = MASK_INVERSE_FIRST_BYTE;
-            	valOld = data[ind] & MASK_FIRST_BYTE;
-                break;
-            case 2:
-            	maskInverse = MASK_INVERSE_SEC_BYTE;
-            	valOld = data[ind] & MASK_SEC_BYTE;
-            	increment = increment << 8;
-                break;
-            case 1:
-            	maskInverse = MASK_INVERSE_THIRD_BYTE;
-            	valOld = data[ind] & MASK_THIRD_BYTE;
-            	increment = increment << 16;
-                break;
-            case 0:
-            	maskInverse = MASK_INVERSE_FOURTH_BYTE;
-            	valOld = data[ind] & MASK_FOURTH_BYTE;
-            	increment = increment << 24;
-                break;
-        }
-
-        data[ind] = (data[ind]&maskInverse) | (valOld+increment);
-    	
-    }
 
     public List<Integer> getIndicesBitsSet(){
     	List<Integer> li = new ArrayList<Integer>();
@@ -1066,32 +1026,6 @@ public class IntVec implements Comparable<IntVec> {
             return false;
     }
 
-    public static boolean isBitSet(int [] a, int i) {
-        int ind = a.length - (i / Integer.SIZE) - 1;
-        int indInInt = i % Integer.SIZE;
-        int mask = 1;
-        mask = mask << indInInt;
-        if((a[ind] & mask) != 0)
-            return true;
-        else
-            return false;
-    }
-
-    /**
-     * 
-     * @param val
-     * @param index
-     * @return
-     */
-    public static boolean isBitSet(int val, int index) {
-        int indInInt = index % Integer.SIZE;
-        int mask = 1;
-        mask = mask << indInInt;
-        if((val & mask) != 0)
-            return true;
-        else
-            return false;
-    }
 
     public void switchBit(int i) {
         int ind = data.length - (i / Integer.SIZE) - 1;
@@ -1173,298 +1107,7 @@ public class IntVec implements Comparable<IntVec> {
         return ret;
     }
 
-    /**
-     * Calculates the Tanimoto coefficient
-     * @param iv1 vector1
-     * @param iv2 vector2
-     * @return Tanimoto: 1.0: identical bits are set. 0.0 no matching bits are set.
-     * Calculation according http://www.pnylab.com/pny/papers/nmet/nmet/
-     * Congruent with DoubleVec
-     */
-    static public double getTanimotoDistBitWise(IntVec iv1, IntVec iv2) {
 
-        int bitsOR = 0, bitsAND = 0;
-        
-        for (int ii = 0; ii < iv1.data.length; ii++) {
-        	
-            bitsOR += BitUtils.bitCount(iv1.data[ii] | iv2.data[ii]);
-            
-            bitsAND += BitUtils.bitCount(iv1.data[ii] & iv2.data[ii]);
-        }
-
-        if(bitsAND == 0)
-            return 0;
-
-        double sum = (double)(bitsAND) / (double)(bitsOR);
-
-        return sum;
-    }
-    
-    /**
-     * 
-     * @param arr1
-     * @param arr2
-     * @return Tanimoto: 1: identical bits are set. 0 no matching bits are set.
-     */
-    static public final double getTanimotoDistBitWise(int [] arr1, int [] arr2) {
-
-        int bitsOR = 0, bitsAND = 0;
-        for (int ii = 0; ii < arr1.length; ii++) {
-            bitsOR += BitUtils.bitCount(arr1[ii] | arr2[ii]);
-            bitsAND += BitUtils.bitCount(arr1[ii] & arr2[ii]);
-        }
-
-        if(bitsAND == 0)
-            return 0;
-
-        double dSum = (double)(bitsAND) / (double)(bitsOR);
-
-        return dSum;
-    }
-    /**
-     * Calculates the Inverse Tanimoto coefficient
-     * @param iv1 vector1
-     * @param iv2 vector2
-     * @return Inverse Tanimoto: 0: identical bits are set. 1 no matching bits are set.
-     * Calculation according Duda, Hart, Stork; Pattern Classification;
-     * Wiley 2001 p188.
-     *
-     */
-    static public double getTanimotoDistInvBitWise(IntVec iv1, IntVec iv2) {
-    	return 1.0 - getTanimotoDistBitWise(iv1, iv2);
-    }
-    static public double getTanimotoDistInvBitWise(int [] arr1, int [] arr2) {
-    	return 1.0 - getTanimotoDistBitWise(arr1, arr2);
-    }
-
-    /**
-     * Calculates the Inverse Tanimoto coefficient
-     * @param iv1 vector1
-     * @param iv2 vector2
-     * @return Tanimoto: 1: identical bits are set. 0 no matching bits are set.
-     *
-     */
-    static public double getTanimotoDist(IntVec iv1, IntVec iv2) {
-
-        double sum = 0;
-        double dAtB = mult(iv1, iv2);
-        double dAtA = mult(iv1, iv1);
-        double dBtB = mult(iv2, iv2);
-
-        sum = dAtB / (dAtA + dBtB - dAtB);
-
-        return sum;
-    }
-    
-    /**
-     * 
-     * @param iv1
-     * @param iv2
-     * @return Inverse Tanimoto: 0: identical bits are set. 1 no matching bits are set.
-     */
-    static final public double getTanimotoDistInv(IntVec iv1, IntVec iv2) {
-
-        double sum = 0;
-        double dAtB = mult(iv1, iv2);
-        double dAtA = mult(iv1, iv1);
-        double dBtB = mult(iv2, iv2);
-
-        sum = 1.0 - (dAtB / (dAtA + dBtB - dAtB));
-
-        return sum;
-    }
-    public static double getScoreQueryInBaseByteWise(IntVec query, IntVec base) {
-
-        double dSumPosDiff = 0.0;
-        double denominator = 0;
-
-        int b11,b12,b21,b22,b31,b32,b41,b42;
-        for (int ii = 0; ii < query.data.length; ii++) {
-            b11 = query.data[ii] & MASK_FIRST_BYTE;
-            b12 = base.data[ii] & MASK_FIRST_BYTE;
-
-            denominator += b11;
-            int diff = b11 - b12;
-			if(diff > 0) {
-				dSumPosDiff += diff;
-			}
-
-            b21 = (query.data[ii] & MASK_SEC_BYTE) >> 8;
-            b22 = (base.data[ii] & MASK_SEC_BYTE) >> 8;
-
-			denominator += b21;
-            diff = b21 - b22;
-			if(diff > 0) {
-				dSumPosDiff += diff;
-			}
-
-			b31 = (query.data[ii] & MASK_THIRD_BYTE) >> 16;
-            b32 = (base.data[ii] & MASK_THIRD_BYTE) >> 16;
-
-			denominator += b31;
-            diff = b31 - b32;
-			if(diff > 0) {
-				dSumPosDiff += diff;
-			}
-
-            b41 = (query.data[ii] & MASK_FOURTH_BYTE) >> 24;
-            b42 = (base.data[ii] & MASK_FOURTH_BYTE) >> 24;
-
-			denominator += b41;
-            diff = b41 - b42;
-			if(diff > 0) {
-				dSumPosDiff += diff;
-			}
-            
-        }
-        if(denominator > 0)
-        	dSumPosDiff /= denominator;
-
-        return dSumPosDiff;
-    }
-
-    static public double getScoreQueryInBase(IntVec query, IntVec base) {
-
-        double dSumPosDiff = 0;
-        double denominator = 0;
-        for (int i = 0; i < query.size(); i++) {
-        	int diff = query.get(i) - base.get(i);
-        	denominator += query.get(i);
-			if(diff > 0) {
-				dSumPosDiff += diff;
-				
-			}
-		}
-        if(denominator > 0)
-        	dSumPosDiff /= denominator;
-        return dSumPosDiff;
-    }
-    public static double getScoreQueryInBaseBitWise(IntVec query, IntVec base) {
-        return getScoreQueryInBaseBitWise(query.data, base.data);
-    }
-
-	/**
-	 * (sum bits set only in query) / (sum bits set in query)  
-	 * @param query
-	 * @param base
-	 * @return
-	 */
-    public static double getScoreQueryInBaseBitWise(int[] query, int[] base) {
-    	double sc = 0;
-    	
-        for (int i = 0; i < query.length; i++) {
-        	
-        	int bitsCommon = 0;
-        	int bitsOnlyInQuery = 0;
-        	
-        	bitsCommon = query[i] | base[i];
-        	bitsOnlyInQuery = bitsCommon ^ base[i];
-        	
-        	sc += (double) BitUtils.bitCount(bitsOnlyInQuery) / (double) BitUtils.bitCount(query[i]);
-        }
-        sc /= (double)query.length;
-    	
-        return sc;
-    }
-
-	/**
-	 * (sum bits set common) / (sum bits set in both)  
-	 *
-	 *
-	 * @return
-	 */
-    public static double getScoreFracBitsInCommonBitWise(IntVec v1, IntVec v2) {
-
-    	double sc = 0;
-    	
-    	double cc=0;
-        for (int i = 0; i < v1.data.length; i++) {
-        	
-        	int bitsCommon = v1.data[i] & v2.data[i];
-        	int bitsTotalInV1 = v1.data[i] | v2.data[i];
-
-        	if(bitsTotalInV1 != 0) {
-        		sc += (double) BitUtils.bitCount(bitsCommon) / (double) BitUtils.bitCount(bitsTotalInV1);
-        	}
-    		cc++;
-        }
-        
-        sc /= cc;
-    	
-        return 1.0-sc;
-    }
-
-	/**
-	 * (sum bits set common) / (sum bits set in query)  
-	 * @param query
-	 * @param base
-	 * @return
-	 */
-    public static double getScoreFracBitsCommonQuery(IntVec query, IntVec base) {
-    	double sc = 0;
-    	
-        for (int i = 0; i < query.data.length; i++) {
-        	
-        	int bitsCommon = query.data[i] & base.data[i];
-
-        	if(query.data[i] != 0) {
-        		sc += (double) BitUtils.bitCount(bitsCommon) / (double) BitUtils.bitCount(query.data[i]);
-        	}
-        }
-        
-        sc /= (double)query.data.length;
-    	
-        return 1.0-sc;
-    }
-    
-    /**
-     * 
-     * @param iv1
-     * @param iv2
-     * @return number of overlapping bits.
-     */
-    static public int getOverlap(IntVec iv1, IntVec iv2) {
-
-        IntVec iv = IntVec.AND(iv1, iv2);
-
-        return iv.getBitsSet();
-    }
-
-    /**
-     * 
-     * @param iv1
-     * @param iv2
-     * @return Inverse Tanimoto: 0: identical bits are set. 1 no matching bits are set.
-     */
-    static public double getTanimotoDistInvByteWise(IntVec iv1, IntVec iv2) {
-
-        double sum = 0;
-        double dAtB = multByteWise(iv1, iv2);
-        double dAtA = multByteWise(iv1, iv1);
-        double dBtB = multByteWise(iv2, iv2);
-
-        sum = 1.0 - (dAtB / (dAtA + dBtB - dAtB));
-
-        return sum;
-    }
-
-    /**
-     * 
-     * @param iv1
-     * @param iv2
-     * @return Inverse Tanimoto: 0: identical bits are set. 1 no matching bits are set.
-     */
-    static public double getTanimotoDistInvByteWise(int[] iv1, int[] iv2) {
-
-        double sum = 0;
-        double dAtB = multByteWise(iv1, iv2);
-        double dAtA = multByteWise(iv1, iv1);
-        double dBtB = multByteWise(iv2, iv2);
-
-        sum = 1.0 - (dAtB / (dAtA + dBtB - dAtB));
-
-        return sum;
-    }
 
     public String toString() {
     	
@@ -1520,30 +1163,6 @@ public class IntVec implements Comparable<IntVec> {
         return sb.toString().trim();
     }
    
-	public static String toStringBinary(int v) {
-
-		return toStringBinary(v, true);
-	}
-	
-	public static String toStringBinary(int v, boolean space) {
-		StringBuilder sb = new StringBuilder();
-		
-		int len = Integer.SIZE;
-
-		for (int i = 0; i < len; i++) {
-			if ((v & 1) == 1) {
-				sb.insert(0, "1");
-			} else {
-				sb.insert(0, "0");
-			}
-			if(space)
-				sb.insert(0, " ");
-			
-			v = v >> 1;
-		}
-
-		return sb.toString().trim();
-	}
 
     public String toStringBytes() {
     	StringBuilder str = new StringBuilder();
@@ -1611,11 +1230,359 @@ public class IntVec implements Comparable<IntVec> {
         return str.toString();
     }
 
-    public int[] toArray() {
+    public String write2String() throws IOException{
 
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(data.length);
+        sb.append(" ");
+        sb.append(hash);
+        sb.append(" ");
+        sb.append(toString());
+
+        return sb.toString();
+    }
+
+
+    public int[] toArray() {
         return data;
     }
-    
+
+
+    /**
+     * Calculates the Tanimoto coefficient
+     * @param iv1 vector1
+     * @param iv2 vector2
+     * @return Tanimoto: 1.0: identical bits are set. 0.0 no matching bits are set.
+     * Calculation according http://www.pnylab.com/pny/papers/nmet/nmet/
+     * Congruent with DoubleVec
+     */
+    static public double getTanimotoDistBitWise(IntVec iv1, IntVec iv2) {
+
+        int bitsOR = 0, bitsAND = 0;
+
+        for (int ii = 0; ii < iv1.data.length; ii++) {
+
+            bitsOR += BitUtils.bitCount(iv1.data[ii] | iv2.data[ii]);
+
+            bitsAND += BitUtils.bitCount(iv1.data[ii] & iv2.data[ii]);
+        }
+
+        if(bitsAND == 0)
+            return 0;
+
+        double sum = (double)(bitsAND) / (double)(bitsOR);
+
+        return sum;
+    }
+
+    /**
+     *
+     * @param arr1
+     * @param arr2
+     * @return Tanimoto: 1: identical bits are set. 0 no matching bits are set.
+     */
+    static public final double getTanimotoDistBitWise(int [] arr1, int [] arr2) {
+
+        int bitsOR = 0, bitsAND = 0;
+        for (int ii = 0; ii < arr1.length; ii++) {
+            bitsOR += BitUtils.bitCount(arr1[ii] | arr2[ii]);
+            bitsAND += BitUtils.bitCount(arr1[ii] & arr2[ii]);
+        }
+
+        if(bitsAND == 0)
+            return 0;
+
+        double dSum = (double)(bitsAND) / (double)(bitsOR);
+
+        return dSum;
+    }
+    /**
+     * Calculates the Inverse Tanimoto coefficient
+     * @param iv1 vector1
+     * @param iv2 vector2
+     * @return Inverse Tanimoto: 0: identical bits are set. 1 no matching bits are set.
+     * Calculation according Duda, Hart, Stork; Pattern Classification;
+     * Wiley 2001 p188.
+     *
+     */
+    static public double getTanimotoDistInvBitWise(IntVec iv1, IntVec iv2) {
+        return 1.0 - getTanimotoDistBitWise(iv1, iv2);
+    }
+    static public double getTanimotoDistInvBitWise(int [] arr1, int [] arr2) {
+        return 1.0 - getTanimotoDistBitWise(arr1, arr2);
+    }
+
+    /**
+     * Calculates the Inverse Tanimoto coefficient
+     * @param iv1 vector1
+     * @param iv2 vector2
+     * @return Tanimoto: 1: identical bits are set. 0 no matching bits are set.
+     *
+     */
+    static public double getTanimotoDist(IntVec iv1, IntVec iv2) {
+
+        double sum = 0;
+        double dAtB = mult(iv1, iv2);
+        double dAtA = mult(iv1, iv1);
+        double dBtB = mult(iv2, iv2);
+
+        sum = dAtB / (dAtA + dBtB - dAtB);
+
+        return sum;
+    }
+
+    /**
+     *
+     * @param iv1
+     * @param iv2
+     * @return Inverse Tanimoto: 0: identical bits are set. 1 no matching bits are set.
+     */
+    static final public double getTanimotoDistInv(IntVec iv1, IntVec iv2) {
+
+        double sum = 0;
+        double dAtB = mult(iv1, iv2);
+        double dAtA = mult(iv1, iv1);
+        double dBtB = mult(iv2, iv2);
+
+        sum = 1.0 - (dAtB / (dAtA + dBtB - dAtB));
+
+        return sum;
+    }
+
+    public static double getScoreQueryInBaseByteWise(IntVec query, IntVec base) {
+
+        double dSumPosDiff = 0.0;
+        double denominator = 0;
+
+        int b11,b12,b21,b22,b31,b32,b41,b42;
+        for (int ii = 0; ii < query.data.length; ii++) {
+            b11 = query.data[ii] & MASK_FIRST_BYTE;
+            b12 = base.data[ii] & MASK_FIRST_BYTE;
+
+            denominator += b11;
+            int diff = b11 - b12;
+            if(diff > 0) {
+                dSumPosDiff += diff;
+            }
+
+            b21 = (query.data[ii] & MASK_SEC_BYTE) >> 8;
+            b22 = (base.data[ii] & MASK_SEC_BYTE) >> 8;
+
+            denominator += b21;
+            diff = b21 - b22;
+            if(diff > 0) {
+                dSumPosDiff += diff;
+            }
+
+            b31 = (query.data[ii] & MASK_THIRD_BYTE) >> 16;
+            b32 = (base.data[ii] & MASK_THIRD_BYTE) >> 16;
+
+            denominator += b31;
+            diff = b31 - b32;
+            if(diff > 0) {
+                dSumPosDiff += diff;
+            }
+
+            b41 = (query.data[ii] & MASK_FOURTH_BYTE) >> 24;
+            b42 = (base.data[ii] & MASK_FOURTH_BYTE) >> 24;
+
+            denominator += b41;
+            diff = b41 - b42;
+            if(diff > 0) {
+                dSumPosDiff += diff;
+            }
+
+        }
+        if(denominator > 0)
+            dSumPosDiff /= denominator;
+
+        return dSumPosDiff;
+    }
+
+    static public double getScoreQueryInBase(IntVec query, IntVec base) {
+
+        double dSumPosDiff = 0;
+        double denominator = 0;
+        for (int i = 0; i < query.size(); i++) {
+            int diff = query.get(i) - base.get(i);
+            denominator += query.get(i);
+            if(diff > 0) {
+                dSumPosDiff += diff;
+
+            }
+        }
+        if(denominator > 0)
+            dSumPosDiff /= denominator;
+        return dSumPosDiff;
+    }
+    public static double getScoreQueryInBaseBitWise(IntVec query, IntVec base) {
+        return getScoreQueryInBaseBitWise(query.data, base.data);
+    }
+
+    /**
+     * (sum bits set only in query) / (sum bits set in query)
+     * @param query
+     * @param base
+     * @return
+     */
+    public static double getScoreQueryInBaseBitWise(int[] query, int[] base) {
+        double sc = 0;
+
+        for (int i = 0; i < query.length; i++) {
+
+            int bitsCommon = 0;
+            int bitsOnlyInQuery = 0;
+
+            bitsCommon = query[i] | base[i];
+            bitsOnlyInQuery = bitsCommon ^ base[i];
+
+            sc += (double) BitUtils.bitCount(bitsOnlyInQuery) / (double) BitUtils.bitCount(query[i]);
+        }
+        sc /= (double)query.length;
+
+        return sc;
+    }
+
+    /**
+     * (sum bits set common) / (sum bits set in both)
+     *
+     *
+     * @return
+     */
+    public static double getScoreFracBitsInCommonBitWise(IntVec v1, IntVec v2) {
+
+        double sc = 0;
+
+        double cc=0;
+        for (int i = 0; i < v1.data.length; i++) {
+
+            int bitsCommon = v1.data[i] & v2.data[i];
+            int bitsTotalInV1 = v1.data[i] | v2.data[i];
+
+            if(bitsTotalInV1 != 0) {
+                sc += (double) BitUtils.bitCount(bitsCommon) / (double) BitUtils.bitCount(bitsTotalInV1);
+            }
+            cc++;
+        }
+
+        sc /= cc;
+
+        return 1.0-sc;
+    }
+
+
+
+
+    /**
+     *
+     * @param iv1
+     * @param iv2
+     * @return Inverse Tanimoto: 0: identical bits are set. 1 no matching bits are set.
+     */
+    static public double getTanimotoDistInvByteWise(IntVec iv1, IntVec iv2) {
+
+        double sum = 0;
+        double dAtB = multByteWise(iv1, iv2);
+        double dAtA = multByteWise(iv1, iv1);
+        double dBtB = multByteWise(iv2, iv2);
+
+        sum = 1.0 - (dAtB / (dAtA + dBtB - dAtB));
+
+        return sum;
+    }
+
+    /**
+     *
+     * @param iv1
+     * @param iv2
+     * @return Inverse Tanimoto: 0: identical bits are set. 1 no matching bits are set.
+     */
+    static public double getTanimotoDistInvByteWise(int[] iv1, int[] iv2) {
+
+        double sum = 0;
+        double dAtB = multByteWise(iv1, iv2);
+        double dAtA = multByteWise(iv1, iv1);
+        double dBtB = multByteWise(iv2, iv2);
+
+        sum = 1.0 - (dAtB / (dAtA + dBtB - dAtB));
+
+        return sum;
+    }
+
+    /**
+     * (sum bits set common) / (sum bits set in query)
+     * @param query
+     * @param base
+     * @return
+     */
+    public static double getScoreFracBitsCommonQuery(IntVec query, IntVec base) {
+        double sc = 0;
+
+        for (int i = 0; i < query.data.length; i++) {
+
+            int bitsCommon = query.data[i] & base.data[i];
+
+            if(query.data[i] != 0) {
+                sc += (double) BitUtils.bitCount(bitsCommon) / (double) BitUtils.bitCount(query.data[i]);
+            }
+        }
+
+        sc /= (double)query.data.length;
+
+        return 1.0-sc;
+    }
+
+    /**
+     *
+     * @param iv1
+     * @param iv2
+     * @return number of overlapping bits.
+     */
+    static public int getOverlap(IntVec iv1, IntVec iv2) {
+
+        IntVec iv = IntVec.AND(iv1, iv2);
+
+        return iv.getBitsSet();
+    }
+
+    public static void incrementByte(int data[], int i) {
+
+        int ind = i / LEN_INTEGER_BYTES;
+
+        int indInInt = i % LEN_INTEGER_BYTES;
+
+        int valOld = 0;
+        int increment = 1;
+
+        int maskInverse = 0;
+
+        switch(indInInt) {
+            case 3:
+                maskInverse = MASK_INVERSE_FIRST_BYTE;
+                valOld = data[ind] & MASK_FIRST_BYTE;
+                break;
+            case 2:
+                maskInverse = MASK_INVERSE_SEC_BYTE;
+                valOld = data[ind] & MASK_SEC_BYTE;
+                increment = increment << 8;
+                break;
+            case 1:
+                maskInverse = MASK_INVERSE_THIRD_BYTE;
+                valOld = data[ind] & MASK_THIRD_BYTE;
+                increment = increment << 16;
+                break;
+            case 0:
+                maskInverse = MASK_INVERSE_FOURTH_BYTE;
+                valOld = data[ind] & MASK_FOURTH_BYTE;
+                increment = increment << 24;
+                break;
+        }
+
+        data[ind] = (data[ind]&maskInverse) | (valOld+increment);
+
+    }
+
     public static void writeBitStringDense(File fi, List<IntVec> li) throws IOException{
     	
     	BufferedWriter bw = new BufferedWriter(new FileWriter(fi));
@@ -1658,7 +1625,6 @@ public class IntVec implements Comparable<IntVec> {
     	return li;
     }
 
-    
     public static IntVec read(InputStream s) throws IOException{
     	    	
     	int size = IntArray.parseInteger(s);
@@ -1681,20 +1647,66 @@ public class IntVec implements Comparable<IntVec> {
     	
     }
     
-    public String write2String() throws IOException{
-    	
-    	StringBuilder sb = new StringBuilder();
-
-    	sb.append(data.length);
-    	sb.append(" ");
-    	sb.append(hash);
-    	sb.append(" ");
-    	sb.append(toString());
-    	
-    	return sb.toString();
-    	
+    public static boolean isBitSet(int [] a, int i) {
+        int ind = a.length - (i / Integer.SIZE) - 1;
+        int indInInt = i % Integer.SIZE;
+        int mask = 1;
+        mask = mask << indInInt;
+        if((a[ind] & mask) != 0)
+            return true;
+        else
+            return false;
     }
-    
+
+    /**
+     *
+     * @param val
+     * @param index
+     * @return
+     */
+    public static boolean isBitSet(int val, int index) {
+        int indInInt = index % Integer.SIZE;
+        int mask = 1;
+        mask = mask << indInInt;
+        if((val & mask) != 0)
+            return true;
+        else
+            return false;
+    }
+
+    public static void setBit(int [] data, int i) {
+        int ind = data.length - (i / Integer.SIZE) - 1;
+        int indInInt = i % Integer.SIZE;
+        int mask = 1;
+        mask = mask << indInInt;
+        data[ind] = data[ind] | mask;
+
+    }
+
+    public static String toStringBinary(int v) {
+
+        return toStringBinary(v, true);
+    }
+
+    public static String toStringBinary(int v, boolean space) {
+        StringBuilder sb = new StringBuilder();
+
+        int len = Integer.SIZE;
+
+        for (int i = 0; i < len; i++) {
+            if ((v & 1) == 1) {
+                sb.insert(0, "1");
+            } else {
+                sb.insert(0, "0");
+            }
+            if(space)
+                sb.insert(0, " ");
+
+            v = v >> 1;
+        }
+
+        return sb.toString().trim();
+    }
 
 }
 
