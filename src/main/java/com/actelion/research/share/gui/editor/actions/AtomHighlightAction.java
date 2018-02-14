@@ -218,7 +218,6 @@ public abstract class AtomHighlightAction extends DrawAction
 
     private void expandAtomKeyStrokes(StereoMolecule mol, int highliteAtom, String keyStrokes)
     {
-
         int atomicNo = Molecule.getAtomicNoFromLabel(keyStrokes);
         if (atomicNo != 0) {
             if (mol.changeAtom(highliteAtom, atomicNo, 0, -1, 0)) {
@@ -287,10 +286,10 @@ public abstract class AtomHighlightAction extends DrawAction
             expandAtomKeyStrokes(mol, theAtom, keyStrokeBuffer.toString());
             keyStrokeBuffer.setLength(0);
             return true;
-        } else if (c > 48 && c <= 57) {
+        } else if (isFirst && c > 48 && c <= 57) {
             addChain(mol, theAtom, c-47);
             return true;
-        } else if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 48 && c <= 57) || (c == '-')) {
+        } else if ((c > 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 48 && c <= 57) || (c == '-')) {
             keyStrokeBuffer.append(c);
             return true;
         }

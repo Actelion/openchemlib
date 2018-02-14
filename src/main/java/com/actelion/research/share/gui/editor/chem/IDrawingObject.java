@@ -51,4 +51,5 @@ public interface IDrawingObject
     void setRect(float x,float y, float w, float h);
     void scale(float scaling);
     void draw(IDrawContext ctx,DepictorTransformation t);
+    boolean isMovable();
 }

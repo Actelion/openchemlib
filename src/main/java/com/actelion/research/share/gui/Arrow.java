@@ -149,6 +149,12 @@ public class Arrow implements IDrawingObject
 */
     }
 
+    @Override
+    public boolean isMovable()
+    {
+        return false;
+    }
+
     public boolean isOnProductSide(float x, float y) {
 //        System.out.printf("ISOnProductSide %f %f %s\n",x,y,rect);
         return x > rect.getX() + rect.getWidth()/2;

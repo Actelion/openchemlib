@@ -205,6 +205,7 @@ public class ExtendedDepictor {
                     cog.x = (int)mDepictor[i].getTransformation().transformX(cog.x);
                     cog.y = (int)mDepictor[i].getTransformation().transformY(cog.y);
 
+
                     String str = (mReactantOrCoreCount == -1) ? "F"+(i+1)
                                  : (i < mReactantOrCoreCount) ? ""+(char)('A'+i)
                                  : (mIsMarkushStructure) ? "R"+(i+1-mReactantOrCoreCount)

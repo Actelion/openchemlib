@@ -35,6 +35,8 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.share.gui.editor.Model;
 
+import java.awt.*;
+
 
 /**
  * Project:
@@ -52,6 +54,7 @@ public abstract class PasteAction extends CommandAction
         super(model);
         this.bounds = bounds;
     }
+
     @Override
     public void onCommand()
     {
@@ -61,6 +64,11 @@ public abstract class PasteAction extends CommandAction
 ////                model.addMolecule(mol, new Rectangle2D(0, 0,bounds.getWidth(), bounds.getHeight()));
 //        }
         paste();
+    }
+
+    public Dimension getBounds()
+    {
+        return bounds;
     }
 
     private void paste()

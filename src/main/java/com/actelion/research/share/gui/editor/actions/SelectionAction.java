@@ -152,7 +152,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
                 if (ok) {
                     moveSelectedDrawItems(dx, dy);
                 } else if (model.getSelectedDrawingObject() != null) {
-                    model.getSelectedDrawingObject().move((float) -dx, (float) -dy);
+                    moveSelectedDrawItem(dx, dy);
                     ok = true;
                 }
                 if (!ok) {
@@ -171,6 +171,14 @@ public class SelectionAction extends BondHighlightAction//DrawAction
 
         last = pt;
         return ok;
+    }
+
+    private void moveSelectedDrawItem(double dx, double dy)
+    {
+
+        IDrawingObject sel = model.getSelectedDrawingObject();
+        if (sel != null && sel.isMovable())
+            sel.move((float) -dx, (float) -dy);
     }
 
     @Override
@@ -380,7 +388,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     private boolean moveSelectedDrawItems(double dx, double dy) {
         boolean ok = false;
         for (IDrawingObject selectedOne : model.getDrawingObjects()) {
-            if (selectedOne.isSelected()) {
+            if (selectedOne.isSelected() && selectedOne.isMovable()) {
                 selectedOne.move((float) -dx, (float) -dy);
                 ok = true;
             }
@@ -416,6 +424,54 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         }
     }
 
+    private void duplicateSelectedOl()
+    {
+        StereoMolecule mMol = model.getMolecule();
+        int atomCount = 0;
+        for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+            if (mMol.isSelectedAtom(atom)) {
+                atomCount++;
+            }
+        }
+        int originalAtoms = mMol.getAllAtoms();
+        int originalBonds = mMol.getAllBonds();
+
+//        double[] mX, mY;
+//        mX = Arrays.copyOf(mX, mX.length + atomCount);
+//        mY = Arrays.copyOf(mY, mY.length + atomCount);
+        int[] atomMap = new int[mMol.getAllAtoms()];
+        int esrGroupCountAND = mMol.renumberESRGroups(Molecule.cESRTypeAnd);
+        int esrGroupCountOR = mMol.renumberESRGroups(Molecule.cESRTypeOr);
+        for (int atom = 0; atom < originalAtoms; atom++) {
+            if (mMol.isSelectedAtom(atom)) {
+                int newAtom = mMol.getAllAtoms();
+//                mX[newAtom] = mX[atom];
+//                mY[newAtom] = mY[atom];
+                atomMap[atom] = newAtom;
+                mMol.copyAtom(mMol, atom, esrGroupCountAND, esrGroupCountOR);
+            }
+        }
+        for (int bond = 0; bond < originalBonds; bond++) {
+            if (mMol.isSelectedBond(bond)) {
+                mMol.copyBond(mMol, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
+            }
+        }
+        for (int atom = 0; atom < originalAtoms; atom++) {
+            mMol.setAtomSelection(atom, false);
+        }
+        for (int atom = originalAtoms; atom < mMol.getAllAtoms(); atom++) {
+            mMol.setAtomMapNo(atom, 0, false);
+        }
+
+//        if (mDrawingObjectList != null) {
+//            for (int i = mDrawingObjectList.size() - 1; i >= 0; i--) {
+//                AbstractDrawingObject object = (AbstractDrawingObject) mDrawingObjectList.get(i);
+//                if (object.isSelected() && !(object instanceof ReactionArrow)) {
+//                    mDrawingObjectList.add(object.clone());
+//                }
+//            }
+//        }
+    }
 
     private boolean selectPolygonRegion(StereoMolecule m, java.awt.geom.Point2D pt) {
         if (polygon.size() > 1 && Math.abs(pt.getX() - polygon.get(polygon.size() - 1).getX()) < 10

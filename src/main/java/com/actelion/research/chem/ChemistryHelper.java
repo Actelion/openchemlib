@@ -120,7 +120,9 @@ public class ChemistryHelper
             return null;
 
         int na = m.getAllAtoms();
-        double bl = m.getAverageBondLength();
+        double bl = 0;
+//        if (na > 1)
+            bl = m.getAverageBondLength();
         for (int i = 0; i < na; i++) {
             xmax = Math.max(xmax, m.getAtomX(i));
             xmin = Math.min(xmin, m.getAtomX(i));
@@ -138,7 +140,9 @@ public class ChemistryHelper
         double avg = 0;
         double t = 0;
         for (int i = 0; i < rn; i++) {
-            t += r.getMolecule(i).getAverageBondLength();
+            StereoMolecule molecule = r.getMolecule(i);
+            if (molecule.getAllAtoms() > 1)
+                t += molecule.getAverageBondLength();
         }
         if (rn > 0)
             return t / rn;
@@ -277,6 +281,7 @@ public class ChemistryHelper
         }
     }
 
+/*
     public static void scaleInto(Reaction reaction, double x, double y, double w, double h)
     {
         Rectangle2D bounds = getBoundingRect(reaction, false);
@@ -299,8 +304,100 @@ public class ChemistryHelper
         transformReaction(reaction, dx, dy, 1);
 
     }
+*/
+    public static void scaleIntoF(Reaction reaction, double x, double y, double width, double height, double arrowSize)
+    {
+        Rectangle2D rr = getBoundingRect(reaction,true);
+        if (rr != null) {
+            double cx = -rr.getMinX();
+            double cy = -rr.getMinY();
+            ChemistryHelper.transformReaction(reaction, cx, cy, 1);
+            rr = ChemistryHelper.getBoundingRect(reaction, true);
+
+            double sumWidth = rr.getWidth(), sumHeight = rr.getHeight();
+
+            double scH = width / sumWidth;
+            double scV = height / sumHeight;
+
+            double scale = scH;
+            if (scH > scV)
+                scale = scV;
+
+//            System.out.printf("Scaleinto scale %s\n",scale);
+            ChemistryHelper.transformReaction(reaction, 0, 0, scH);
+        }
+    }
 
     public static void scaleInto(Reaction reaction, double x, double y, double width, double height, double arrowSize)
+    {
+
+        if (width > arrowSize * 2) {
+
+
+            ExtendedMolecule[] reactants = getReactants(reaction);
+            ExtendedMolecule[] products = getProducts(reaction);
+
+            double sumWidth = 0, sumHeight = 0;
+            int numMols = reaction.getMolecules();
+            for (int i = 0; i < numMols; i++) {
+                ExtendedMolecule m = reaction.getMolecule(i);
+                if (m.getAllAtoms() > 1)
+                {
+                    Rectangle2D.Double r = ChemistryHelper.getBoundingRect(m);
+                    if (r != null) {
+                        //                    System.out.printf("MoleculeID %s bounds: %s\n",System.identityHashCode(m),r);
+                        sumHeight += r.getHeight();
+                        sumWidth += r.getWidth();
+                    }
+                }
+            }
+
+            if (sumHeight == 0 || sumWidth == 0)
+                return;
+
+            double scH = width/sumWidth;
+            double scV = height/sumHeight;
+
+            double scale = scH;
+            if  (scH > scV)
+                scale = scV;
+
+            double avbl = getAverageBondLength(reaction);
+         //   setAverageBondLength(reaction,avbl);
+
+            double w = (width - arrowSize) / 2;
+            double h = height;
+//            System.out.printf("Scale = %s vs %s\n",AbstractDepictor.cOptAvBondLen/avbl,scale);
+            scale = Math.min(AbstractDepictor.cOptAvBondLen/avbl,scale);
+//            if (reactants.length <= 1 && products.length <= 1)
+//                scale /= 4;
+            {
+
+                Rectangle2D rb = getBoundingRect(reactants);
+//                System.out.printf("W/h before scaling prods %s\n",rb);
+                transformMolecules(reactants, 0, 0, scale);
+                rb = getBoundingRect(reactants);
+                double dx = x - rb.getMinX() + (w - rb.getWidth()) / 2;
+                double dy = y - rb.getMinY() + (h - rb.getHeight()) / 2;
+//                System.out.printf("W/h after scaling reactants %s,%s $s\n",dx,dy,rb);
+                transformMolecules(reactants, dx, dy, 1);
+            }
+
+            {
+                Rectangle2D pb = getBoundingRect(products);
+//                System.out.printf("W/h before scaling prods %s\n",pb);
+                transformMolecules(products, 0, 0, scale);
+                pb = getBoundingRect(products);
+                double dx = x + w + arrowSize - pb.getMinX() + (w - pb.getWidth()) / 2;
+                double dy = y - pb.getMinY() + (h - pb.getHeight()) / 2;
+//                System.out.printf("W/h after scaling prods %s,%s %s\n",dx,dy,pb);
+                transformMolecules(products, dx, dy, 1);
+            }
+
+        }
+    }
+
+    public static void scaleIntoOld(Reaction reaction, double x, double y, double width, double height, double arrowSize)
     {
 
         if (width > arrowSize * 2) {
@@ -310,12 +407,15 @@ public class ChemistryHelper
             Rectangle2D rb = getBoundingRect(reactants);
             Rectangle2D pb = getBoundingRect(products);
 
+            System.out.printf("Reactants bounds %s %s %s\n",width,rb.getWidth(),reactants.length);
+            System.out.printf("Product bounds %s %s\n",height,pb.getHeight());
+
             // left and right space
             double w = (width - arrowSize) / 2;
             double h = height;
             double scaleHorizontal = w / Math.max(rb.getWidth(), pb.getWidth());
             double scaleVertical = h / Math.max(rb.getHeight(), pb.getHeight());
-            //        System.out.printf("Scaling %f vs %f\n", scaleHorizontal, scaleVertical);
+                    System.out.printf("Scaling %f vs %f\n", scaleHorizontal, scaleVertical);
 
             double scale;
             if (scaleHorizontal < scaleVertical) {   // scale on x-dimension
@@ -329,6 +429,8 @@ public class ChemistryHelper
             double avbl = getAverageBondLength(reaction);
 //            double sc = AbstractDepictor.cOptAvBondLen/avbl;
             scale = Math.min(AbstractDepictor.cOptAvBondLen/avbl,scale);
+//            scale *=  10;
+//            System.out.printf("Scale = %s\n",scale);
 //            if (reactants.length <= 1 && products.length <= 1)
 //                scale /= 4;
             {

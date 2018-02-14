@@ -76,13 +76,14 @@ public class ZoomRotateAction extends DrawAction {
     public boolean onMouseMove(IMouseEvent ev, boolean drag) {
         if (drag) {
             boolean selectedOnly = false;
-            if (model.getSelectedAtom() != -1) {
-                selectedOnly = true;
+            StereoMolecule mol = model.getMolecule();
+            for (int i = 0; i < mol.getAllAtoms(); i++) {
+                if (mol.isSelectedAtom(i))
+                    selectedOnly = true;
             }
             java.awt.geom.Point2D pt = new Point2D.Double(ev.getX(), ev.getY());
             float magnification = (Math.abs(pt.getY() - origin.getY()) < 20 ? 1.0f : (float) Math.exp((pt.getY() - origin.getY()) / 100f));
             float angleChange = (Math.abs(pt.getX() - origin.getX()) < 20 ? 0.0f : (float) (pt.getX() - origin.getX()) / 50.0f);
-            StereoMolecule mol = model.getMolecule();
             mol.zoomAndRotate(magnification, angleChange, selectedOnly);
             return true;
         }

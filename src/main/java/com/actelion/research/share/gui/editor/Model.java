@@ -823,10 +823,12 @@ public abstract class Model
                     }
                 }
 
-                return (cog[fragmentDescriptor1[0]].x
-                    + cog[fragmentDescriptor1[0]].y
-                    < cog[fragmentDescriptor2[0]].x
-                    + cog[fragmentDescriptor2[0]].y) ? -1 : 1;
+                return cog[fragmentDescriptor1[0]].x < cog[fragmentDescriptor2[0]].x ? -1 : 1;
+
+//                return (cog[fragmentDescriptor1[0]].x
+//                    + cog[fragmentDescriptor1[0]].y
+//                    < cog[fragmentDescriptor2[0]].x
+//                    + cog[fragmentDescriptor2[0]].y) ? -1 : 1;
             }
         });
 
@@ -1008,7 +1010,7 @@ public abstract class Model
     {
         if (!Double.isInfinite(scale)) {
             if (scale != 1 && scale > 0) {
-                System.out.printf("Scale %f\n",scale);
+//                System.out.printf("Scale %f\n",scale);
                 AbstractDepictor d = createDepictor(mMol);
                 DepictorTransformation dt = d.simpleValidateView(new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()),
                     AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
@@ -1551,36 +1553,42 @@ public abstract class Model
     }
 
 
-    public void addMolecule(StereoMolecule mol)
+    public void addMolecule(StereoMolecule mol,double x ,double y)
     {
         if (mol != null && mol.getAllAtoms() != 0) {
             if (mMol.getAllAtoms() == 0) {
                 int avbl = 0;
                 boolean isFragment = mMol.isFragment();
-                scaleIntoView(mol, avbl);
+                scaleIntoView(mol, avbl,0,0);
                 mol.copyMolecule(mMol);
                 mMol.setFragment(isFragment);
                 notifyChange();
             } else {
                 int avbl = (int) mMol.getAverageBondLength();
-                scaleIntoView(mol, avbl);
+                scaleIntoView(mol, avbl,x,y);
                 int originalAtoms = mMol.getAllAtoms();
+                boolean isFragment = mMol.isFragment();
                 mMol.addMolecule(mol);
                 for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
                     mMol.setAtomSelection(atom, atom >= originalAtoms);
                 }
+                mMol.setFragment(isFragment);
                 notifyChange();
             }
         }
 
     }
 
-    private void scaleIntoView(StereoMolecule mol, int avbl)
+    private void scaleIntoView(StereoMolecule mol, int avbl,double cx,double cy)
     {
         AbstractDepictor d = createDepictor(mol);
         DepictorTransformation dt = d.simpleValidateView(new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()), AbstractDepictor.cModeInflateToMaxAVBL + avbl);
-        if (dt != null)
+
+        if (dt != null) {
+            dt.move(cx,cy);
+            System.out.printf("Transform %s %s\n",dt.getOffsetX(),cx);
             dt.applyTo(mol);
+        }
     }
 
     public IDrawingObject getSelectedDrawingObject()
@@ -1627,9 +1635,9 @@ public abstract class Model
 
     public abstract boolean copyReaction(boolean selected);
 
-    public abstract StereoMolecule pasteMolecule();
+    public abstract StereoMolecule pasteMolecule(double cx,double cy);
 
-    public abstract Reaction pasteReaction();
+    public abstract Reaction pasteReaction(double cx,double cy);
 
     public ImageProvider getImageProvider()
     {
