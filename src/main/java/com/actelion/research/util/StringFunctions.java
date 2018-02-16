@@ -51,6 +51,51 @@ public class StringFunctions {
 
 	public static final String [] REGEX_META_CHARACTERS = {"*","%","@","&","+", "(", ")"};
 
+	public static int countIntegerInText(String txt) {
+
+		int nInt = 0;
+
+		boolean started=false;
+
+		for(int i=0; i<txt.length(); i++) {
+
+			char c = txt.charAt(i);
+
+			if(Character.isDigit(c)){
+				if(!started){
+					nInt++;
+					started=true;
+				}
+			} else {
+				started=false;
+			}
+		}
+
+		return nInt;
+	}
+
+	public static int countWordInText(String txt) {
+
+		int nWords = 0;
+
+		boolean started=false;
+
+		for(int i=0; i<txt.length(); i++) {
+
+			char c = txt.charAt(i);
+
+			if(Character.isLetter(c)){
+				if(!started){
+					nWords++;
+					started=true;
+				}
+			} else {
+				started=false;
+			}
+		}
+
+		return nWords;
+	}
 
 
 	public static boolean equal(byte [] b1, byte [] b2) {
@@ -743,27 +788,6 @@ public class StringFunctions {
 	
 	
 	
-	public static void main(String[] args) {
-
-		String sLine = toStringBinary(1);
-
-		System.out.println(sLine);
-
-		/*
-		 String sLine = "Position: 8 15 StartName:XXXEndName";
-
-		 sLine.replaceAll("\\s", "");
-
-		 System.out.println(sLine);
-
-		 String sStart = "StartName:";
-		 String sEnd = "EndName";
-
-		 String str = getString(sLine, sStart, sEnd);
-		 System.out.println(str);
-		 */
-	}
-
 	public static String toString(double [] arr, NumberFormat nf){
 
 		StringBuilder sb = new  StringBuilder();
@@ -1234,6 +1258,27 @@ public class StringFunctions {
 		
 		return true;
 	}
-	
+
+	public static void main(String[] args) {
+
+		String sLine = "Pos3ition: 8 15 StartName:XXXEn7890dName0";
+
+		System.out.println(countWordInText(sLine));
+
+		/*
+		 String sLine = "Position: 8 15 StartName:XXXEndName";
+
+		 sLine.replaceAll("\\s", "");
+
+		 System.out.println(sLine);
+
+		 String sStart = "StartName:";
+		 String sEnd = "EndName";
+
+		 String str = getString(sLine, sStart, sEnd);
+		 System.out.println(str);
+		 */
+	}
+
 
 }
