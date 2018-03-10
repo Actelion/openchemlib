@@ -846,7 +846,7 @@ public class CoordinateInventor {
 	private void createLargeRingFragment(InventorFragment f, int[] ringAtom, int[] ringBond) {
 		final int FIRST_RING_SIZE = 9;
 		final int LAST_RING_SIZE = 25;
-		final double[][] cAngleCorrection = { {-20}, null, null, null, null, null, {-4,12},
+		final double[][] cAngleCorrection = { {20}, null, null, null, null, null, {-4,12},
 				{0,0,7.5}, null, null, null, null, {60/7, -60/7}, null, null, null, {-2.4} };
 		final int[][] cBondZList = { // sequence of E/Z parities in rings (E=0, Z=1)
 				{   // 9-membered ring
@@ -1030,13 +1030,28 @@ public class CoordinateInventor {
 							double bondAngle = 0.0;
 							double correction = Math.PI / 180 * (cAngleCorrection[ringIndex] == null ?
 									0 : cAngleCorrection[ringIndex][zList]);
-							boolean wasRightTurn = true; // create a ring that closes with right turns
+
+							// we determine whether we have more right or left turns if we start with a right turn
+							int rightTurns = 0;
+							int tempZList = bondZList;
+							boolean isRightTurn = true;
+							for (int i=0; i<f.size(); i++) {
+								if (isRightTurn)
+									rightTurns++;
+								if ((tempZList & 1) == 0) // is E-bond
+									isRightTurn = !isRightTurn;
+								tempZList >>>= 1;
+								}
+
+							// We choose the starting turn direction such that we end up
+							// with more right turns and, thus, close the ring in clockwise direction.
+							boolean wasRightTurn = (rightTurns > f.size() / 2); // create a ring that closes with right turns
+
 							for (int i=1; i<f.size(); i++) {
 								f.mAtomX[i] = f.mAtomX[i-1] + Math.sin(bondAngle);
 								f.mAtomY[i] = f.mAtomY[i-1] + Math.cos(bondAngle);
 								if ((bondZList & 1) == 0) // is E-bond
 									wasRightTurn = !wasRightTurn;
-//								bondAngle += wasRightTurn ? (Math.PI/3.0 - correction) : (correction - Math.PI/3.0);
 								bondAngle += correction + (wasRightTurn ? Math.PI/3.0 : -Math.PI/3.0);
 								bondZList >>>= 1;
 								}

@@ -67,7 +67,11 @@ public class TautomerHelper {
 	 * of double bonds and D and T atoms. The returned molecule has the fragment bit set.
 	 * Canonicalizing the returned molecule with Canonizer mode ENCODE_ATOM_CUSTOM_LABELS
 	 * produces the same idcode from any tautomer.
-	 * @param keepStereoCenters
+	 * If keepStereoCenters is true, then stereo centers with parity 1 or 2, if they are
+	 * absolute or if they are part of an AND/OR group with more than are member,
+	 * are considered stable (non racemising) and, thus, their proton is not considered
+	 * being able to take part in a atutomeric transition.
+	 * @param keepStereoCenters if true, then defined (non-racemising) stereo centers cannot be part of tautomeric regions
 	 * @return generic tautomer with normalized tautomer regions and custom label to encode pi,D,T counts
 	 */
 	public StereoMolecule createGenericTautomer(boolean keepStereoCenters) {
@@ -311,8 +315,7 @@ public class TautomerHelper {
 		// protect stereo centers with defined parity
 		if (keepStereoCenters)
 			for (int atom=0; atom<mMol.getAtoms(); atom++)
-				if (mMol.getAtomParity(atom) == Molecule.cAtomParity1
-				 || mMol.getAtomParity(atom) == Molecule.cAtomParity2)
+				if (isNonRacemisingStereoCenter(atom))
 					isProtectedAtom[atom] = true;
 
 		// protected delocalized 6-membered-ring without hetero-atoms in ring our first shell,
@@ -346,6 +349,31 @@ public class TautomerHelper {
 			}
 
 		return isProtectedAtom;
+		}
+
+	/**
+	 * Determines whether this atom is a non-racemizing stereo center,
+	 * i.e. it has an assigned parity and it is either absolute or has
+	 * a given relative parity towards other atom(s).
+	 * @param atom
+	 * @return
+	 */
+	private boolean isNonRacemisingStereoCenter(int atom) {
+		if (mMol.getAtomParity(atom) != Molecule.cAtomParity1
+		 && mMol.getAtomParity(atom) != Molecule.cAtomParity2)
+			return false;
+
+		if (mMol.getAtomESRType(atom) == Molecule.cESRTypeAbs)
+			return true;
+
+		int type = mMol.getAtomESRType(atom);
+		int group = mMol.getAtomESRGroup(atom);
+		for (int i=0; i<mMol.getAtoms(); i++)
+			if (mMol.getAtomESRType(i) == type
+			 && mMol.getAtomESRGroup(i) == group)
+				return true;
+
+		return false;
 		}
 
 	private boolean isValidHeteroAtom(int atom) {
