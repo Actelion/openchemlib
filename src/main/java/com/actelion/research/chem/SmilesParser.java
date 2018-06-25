@@ -36,7 +36,6 @@ package com.actelion.research.chem;
 import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.util.ArrayUtils;
-import com.actelion.research.util.ByteArray;
 
 import java.util.TreeMap;
 
@@ -485,10 +484,10 @@ public class SmilesParser {
 		mMol.removeAtomCustomLabels();
 		mMol.setHydrogenProtection(false);
 
-		if (readStereoFeatures) {
-			if (resolveStereoBonds())
-				mMol.setParitiesValid(0);
-			}
+		if (readStereoFeatures)
+			assignKnownEZBondParities();
+
+		mMol.setParitiesValid(0);
 
 		if (createCoordinates || readStereoFeatures) {
 			new CoordinateInventor().invent(mMol);
@@ -759,20 +758,23 @@ public class SmilesParser {
 
 
 	private boolean qualifiesForPi(int atom) {
-		if (mMol.getAtomicNo(atom) == 16
-		 || mMol.getAtomicNo(atom) == 34
-		 || mMol.getAtomicNo(atom) == 52) {
-			if (mMol.getConnAtoms(atom) == 2 && mMol.getAtomCharge(atom) <= 0)
-				return false;
-			}
-
 		if ((mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) != 0)
 		 || !mMol.isMarkedAtom(atom))	// already marked as hetero-atom of another ring
 			return false;
 
 		int explicitHydrogens = (mMol.getAtomCustomLabel(atom) == null) ? 0 : mMol.getAtomCustomLabelBytes(atom)[0];
-		if (mMol.getFreeValence(atom) - explicitHydrogens < 1)
+		int freeValence = mMol.getFreeValence(atom) - explicitHydrogens;
+		if (freeValence < 1)
 			return false;
+
+		if (mMol.getAtomicNo(atom) == 16
+		 || mMol.getAtomicNo(atom) == 34
+		 || mMol.getAtomicNo(atom) == 52) {
+			if (mMol.getConnAtoms(atom) == 2 && mMol.getAtomCharge(atom) <= 0)
+				return false;
+			if (freeValence == 2)
+				return false;	// e.g. -S(=O)- correction to account for tetravalent S,Se
+			}
 
 		if (mMol.getAtomicNo(atom) != 5
 		 && mMol.getAtomicNo(atom) != 6
@@ -872,7 +874,7 @@ public class SmilesParser {
 			}
 		}
 
-	private boolean resolveStereoBonds() {
+	private boolean assignKnownEZBondParities() {
 		mMol.ensureHelperArrays(Molecule.cHelperRings);
 
 		boolean paritiesFound = false;

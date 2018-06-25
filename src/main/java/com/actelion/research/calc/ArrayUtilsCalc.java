@@ -1148,6 +1148,15 @@ public class ArrayUtilsCalc {
         sb.append("]");
 		return sb.toString();
 	}
+
+	public final static String toStringPure(double[] v) {
+		StringBuilder sb = new StringBuilder();
+		for(int i=0; i<v.length; i++) {
+			sb.append((i>0?"\t":"") + v[i]);
+		}
+		return sb.toString();
+	}
+
 	public final static String toString(double[] v, NumberFormat nf) {
 		StringBuilder sb = new StringBuilder("[");
 		for(int i=0; i<v.length; i++) {

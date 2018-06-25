@@ -50,11 +50,11 @@ public class DescriptorHandlerStandard2DFactory implements DescriptorConstants,D
 	public DescriptorHandler getDefaultDescriptorHandler(String shortName) {
 
 		if (DESCRIPTOR_FFP512.shortName.equals(shortName))
-			return DescriptorHandlerFFP512.getDefaultInstance();
+			return DescriptorHandlerLongFFP512.getDefaultInstance();
 		if (DESCRIPTOR_PFP512.shortName.equals(shortName))
-			return DescriptorHandlerPFP512.getDefaultInstance();
+			return DescriptorHandlerLongPFP512.getDefaultInstance();
 		if (DESCRIPTOR_HashedCFp.shortName.equals(shortName))
-			return DescriptorHandlerHashedCFp.getDefaultInstance();
+			return DescriptorHandlerLongCFP.getDefaultInstance();
 		if (DESCRIPTOR_SkeletonSpheres.shortName.equals(shortName))
 			return DescriptorHandlerSkeletonSpheres.getDefaultInstance();
 		if (DESCRIPTOR_OrganicFunctionalGroups.shortName.equals(shortName))

@@ -51,6 +51,7 @@ public class DescriptorEncoder {
 
     private byte[]  mBytes;
     private int     mByteIndex,mAvailableBits,mTempData,mByteMask;
+	private int     mTempDataLong;
 
     public DescriptorEncoder() {
     	if (sDecode == null) {
@@ -85,8 +86,23 @@ public class DescriptorEncoder {
         return mBytes;
 		}
 
-    /**
-     * Decodes a binary fingerprint from a byte sequence into an int[].
+	/**
+	 * Encodes a binary fingerprint stored as long[].
+	 * @param data binary fingerprint
+	 * @return byte[] of encoded character sequence
+	 */
+	public byte[] encodeLong(long[] data) {
+		encodeStart(64 * data.length);
+		for (int i=0; i<data.length; i++)
+			encodeBits(data[i], 64);
+
+		encodeBitsEnd();
+		encodeDuplicateBytes();
+		return mBytes;
+	}
+
+	/**
+     * Decodes a binary fingerprint from a String into an int[].
      * @param s encoded binary fingerprint
      * @return int[] binary fingerprint
      */
@@ -111,7 +127,34 @@ public class DescriptorEncoder {
         return data;
         }
 
-    /**
+	/**
+	 * Decodes a binary fingerprint from a String into a long[].
+	 * @param s encoded binary fingerprint
+	 * @return int[] binary fingerprint
+	 */
+	public long[] decodeLong(String s) {
+		return decodeLong(s.getBytes());
+	}
+
+	/**
+	 * Decodes a binary fingerprint from a String into a long[].
+	 * @param bytes encoded binary fingerprint as byte sequence
+	 * @return long[] binary fingerprint
+	 */
+	public long[] decodeLong(byte[] bytes) {
+		if (bytes.length == 0)
+			return null;
+
+		bytes = decodeDuplicateBytes(bytes);
+		decodeStart(bytes);
+		long[] data = new long[BITS * bytes.length / 64];
+		for (int i=0; i<data.length; i++)
+			data[i] = decodeBitsLong(64);
+
+		return data;
+		}
+
+	/**
      * Encodes a fragment/hash-value count list. Count values must not
      * exceed MAX_COUNT_VALUE in order to get encoded correctly.
      * @param data list of fragment counts or hash-value counts
@@ -323,7 +366,23 @@ public class DescriptorEncoder {
             }
         }
 
-    private void encodeBitsEnd() {
+	private void encodeBits(long data, int bits) {
+		long mask = (bits == 0) ? 0L : 1L << (bits - 1);
+		while (mask != 0) {
+			if (mAvailableBits == 0) {
+				mBytes[mByteIndex] = sCode[mBytes[mByteIndex]];
+				mByteIndex++;
+				mAvailableBits = BITS;
+			}
+			mBytes[mByteIndex] <<= 1;
+			if ((data & mask) != 0)
+				mBytes[mByteIndex] |= 1;
+			mask >>>= 1;
+			mAvailableBits--;
+			}
+		}
+
+	private void encodeBitsEnd() {
         mBytes[mByteIndex] <<= mAvailableBits;
         mBytes[mByteIndex] = sCode[mBytes[mByteIndex]];
         }
@@ -352,7 +411,24 @@ public class DescriptorEncoder {
         return data;
         }
 
-    private byte[] decodeDuplicateBytes(byte[] bytes) {
+	private long decodeBitsLong(int bits) {
+		long data = 0L;
+		while (bits != 0) {
+			if (mByteMask == 0) {
+				mByteIndex++;
+				mTempDataLong = sDecode[mBytes[mByteIndex]];
+				mByteMask = 1 << (BITS - 1);
+			}
+			data <<= 1;
+			if ((mTempDataLong & (long)mByteMask) != 0)
+				data |= 1L;
+			mByteMask >>>= 1;
+			bits--;
+			}
+		return data;
+		}
+
+	private byte[] decodeDuplicateBytes(byte[] bytes) {
         int length = bytes.length;
         for (int i=0; i<bytes.length; i++) {
             if (sDecodeMultiple[bytes[i]] != 0)

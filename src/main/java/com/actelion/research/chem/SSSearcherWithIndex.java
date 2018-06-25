@@ -757,6 +757,23 @@ public class SSSearcherWithIndex {
 		}
 
 
+	public long[] createLongIndex(StereoMolecule mol) {
+		if (mol == null)
+			return null;
+
+		long[] index = new long[(cKeyIDCode.length+63)/64];
+		mol = removeExcludeGroups(mol);
+		mSSSearcher.setMolecule(mol);
+		for (int i=0; i<cKeyIDCode.length; i++) {
+			mSSSearcher.setFragment(sKeyFragment[i]);
+			if (mSSSearcher.isFragmentInMolecule(SSSearcher.cIndexMatchMode))
+				index[i/64] |= (1L << (63-i%64));
+			}
+
+		return index;
+		}
+
+
 	private StereoMolecule removeExcludeGroups(StereoMolecule mol) {
 		if (mol.isFragment()) {
 			for (int atom=0; atom<mol.getAllAtoms(); atom++) {
@@ -779,11 +796,24 @@ public class SSSearcherWithIndex {
         for (int i=0; i<index1.length; i++) {
             final int i1 = index1[i];
             final int i2 = index2[i];
-            sharedKeys += bitCount(i1 & i2);
-            allKeys += bitCount(i1 | i2);
+            sharedKeys += Integer.bitCount(i1 & i2);
+            allKeys += Integer.bitCount(i1 | i2);
         	}
         return (float)sharedKeys/(float)allKeys;
         }
+
+
+	public static float getSimilarityTanimoto(final long[] index1, final long[] index2) {
+		int sharedKeys = 0;
+		int allKeys = 0;
+		for (int i=0; i<index1.length; i++) {
+			final long i1 = index1[i];
+			final long i2 = index2[i];
+			sharedKeys += Long.bitCount(i1 & i2);
+			allKeys += Long.bitCount(i1 | i2);
+			}
+		return (float)sharedKeys/(float)allKeys;
+		}
 
 
     public static float getSimilarityAngleCosine(int[] index1, int[] index2) {
@@ -791,9 +821,9 @@ public class SSSearcherWithIndex {
         int index1Keys = 0;
         int index2Keys = 0;
         for (int i=0; i<index1.length; i++) {
-            sharedKeys += bitCount(index1[i] & index2[i]);
-            index1Keys += bitCount(index1[i]);
-            index2Keys += bitCount(index2[i]);
+            sharedKeys += Integer.bitCount(index1[i] & index2[i]);
+            index1Keys += Integer.bitCount(index1[i]);
+            index2Keys += Integer.bitCount(index2[i]);
         	}
         return (float)sharedKeys/(float)Math.sqrt(index1Keys*index2Keys);
     	}
@@ -835,6 +865,42 @@ public class SSSearcherWithIndex {
 		}
 
 
+	public static long[] getLongIndexFromHexString(String hex) {
+		if (hex.length() == 0 || (hex.length() & 15) != 0)
+			return null;
+
+		long[] index = new long[hex.length()/16];
+		for (int i=0; i<hex.length(); i++) {
+			int j = i/16;
+			long code = hex.charAt(i) - '0';
+			if (code > 16)
+				code -= 7;
+			index[j] <<= 4;
+			index[j] += code;
+			}
+
+		return index;
+		}
+
+
+	public static long[] getLongIndexFromHexString(byte[] bytes) {
+		if (bytes==null || bytes.length==0 || (bytes.length & 15) != 0)
+			return null;
+
+		long[] index = new long[bytes.length/16];
+		for (int i=0; i<bytes.length; i++) {
+			int j = i/16;
+			long code = (long)bytes[i] - '0';
+			if (code > 16)
+				code -= 7;
+			index[j] <<= 4;
+			index[j] += code;
+			}
+
+		return index;
+		}
+
+
 	public static String getHexStringFromIndex(int[] index) {
 	    if (index == null)
 	        return null;
@@ -855,6 +921,8 @@ public class SSSearcherWithIndex {
 		}
 
 	
+/*  use Integer.bitCount() instead, which is supposed to use the POPCNT processor command on x86
+
     public static int bitCount(int x) {
         int temp;
 
@@ -868,7 +936,7 @@ public class SSSearcherWithIndex {
         x = (x & temp) + (x >>> 8 & temp);
 
         return (x & 0x1F) + (x >>> 16);
-    	}
+    	}   */
 
 
 	private void init() {

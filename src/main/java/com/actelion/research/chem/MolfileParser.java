@@ -146,7 +146,7 @@ public class MolfileParser
 			if(mMol == null){
 				mMol = new StereoMolecule(natoms,nbonds);
 			}
-			
+
 			mMol.setName(name);
 
 			if(chiral == 0){

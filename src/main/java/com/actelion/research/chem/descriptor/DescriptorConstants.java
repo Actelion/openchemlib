@@ -113,7 +113,17 @@ public interface DescriptorConstants {
         									   false,
         									   false,
         									   false);
-    public static final DescriptorInfo DESCRIPTOR_ReactionIndex = 
+
+    public static final DescriptorInfo DESCRIPTOR_ShapeAlign =
+        					new DescriptorInfo("ShapeAlign",
+        									   "Shape",
+												"1.0",
+        									   DESCRIPTOR_TYPE_MOLECULE,
+        									   false,
+        									   false,
+        									   false);
+
+    public static final DescriptorInfo DESCRIPTOR_ReactionIndex =
                             new DescriptorInfo("ReactionIndex",
                                                "RxnIdx",
 											   ReactionSearcher.cIndexVersion,

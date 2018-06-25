@@ -37,31 +37,31 @@ import java.util.Arrays;
 
 import com.actelion.research.chem.*;
 
-abstract public class AbstractDescriptorHandlerFP<U> implements DescriptorHandler<int[], U> {
-    protected static final int[] FAILED_OBJECT = new int[0];
+abstract public class AbstractDescriptorHandlerLongFP<U> implements DescriptorHandler<long[], U> {
+    protected static final long[] FAILED_OBJECT = new long[0];
 
-    public String encode(int[] o) {
+    public String encode(long[] o) {
         return calculationFailed(o) ? FAILED_STRING
-                                    : new String(new DescriptorEncoder().encode(o));
+                                    : new String(new DescriptorEncoder().encodeLong(o));
     	}
 
-    public int[] decode(String s) {
+    public long[] decode(String s) {
         return s == null ?               null
              : s.equals(FAILED_STRING) ? FAILED_OBJECT
-             :                           new DescriptorEncoder().decode(s);
+             :                           new DescriptorEncoder().decodeLong(s);
     	}
 
-    public int[] decode(byte[] bytes) {
+    public long[] decode(byte[] bytes) {
         return bytes == null ?           			null
              : Arrays.equals(bytes, FAILED_BYTES) ? FAILED_OBJECT
-             :                        				new DescriptorEncoder().decode(bytes);
+             :                        				new DescriptorEncoder().decodeLong(bytes);
     	}
 
-    public boolean calculationFailed(int[] o) {
+    public boolean calculationFailed(long[] o) {
         return o==null || o.length == 0;
     	}
 
-    public float getSimilarity(int[] o1, int[] o2) {
+    public float getSimilarity(long[] o1, long[] o2) {
         return o1 == null
             || o2 == null
             || o1.length == 0

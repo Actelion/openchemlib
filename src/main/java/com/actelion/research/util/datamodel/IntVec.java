@@ -877,6 +877,34 @@ public class IntVec implements Comparable<IntVec> {
         data = arr;
     }
 
+    public void resize(int newlen){
+
+        if(data.length == newlen){
+            return;
+        }
+
+        int intNewlen = 0;
+
+        long max = Integer.MAX_VALUE;
+
+        if(newlen >= max) {
+
+            intNewlen = Integer.MAX_VALUE;
+
+            new RuntimeException("Warning! Maximum length of integer array reached.").printStackTrace();
+
+        } else {
+            intNewlen = newlen;
+        }
+
+        int [] arr = new int [intNewlen];
+
+        System.arraycopy(data, 0, arr, 0, Math.min(data.length, intNewlen));
+
+        data = arr;
+
+    }
+
     public static IntVec plus(IntVec dVec1, IntVec dVec2) {
 
         IntVec dVecSum = new IntVec(dVec1.data.length);

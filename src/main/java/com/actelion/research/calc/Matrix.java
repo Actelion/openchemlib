@@ -1,3 +1,26 @@
+package com.actelion.research.calc;
+
+import java.awt.Point;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
+
+import com.actelion.research.util.DoubleVec;
+import com.actelion.research.util.convert.String2DoubleArray;
+import com.actelion.research.util.datamodel.ScorePoint;
+
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -30,31 +53,6 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-
-package com.actelion.research.calc;
-
-
-import java.awt.Point;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
-
-import com.actelion.research.util.DoubleVec;
-import com.actelion.research.util.convert.String2DoubleArray;
-import com.actelion.research.util.datamodel.ScorePoint;
-
 public class Matrix {
 
     public static String OUT_SEPARATOR_COL = "\t";
@@ -83,7 +81,7 @@ public class Matrix {
 
     /**
      *
-     * @param row if true hte matrix has one row. If false the matrix has one comulmn.
+     * @param row if true the matrix has one row. If false the matrix has one comulmn.
      * @param arr
      */
     public Matrix(boolean row, double [] arr) {
@@ -133,7 +131,17 @@ public class Matrix {
             data[i] = arr;
         }
     }
-    
+
+    public Matrix(double [][]arrArr, boolean flat) {
+
+        if(!flat){
+            throw new RuntimeException("Only flat constructor!");
+        }
+
+        data = arrArr;
+
+    }
+
     public Matrix(float [][]arrArr) {
     	
         data = new double[arrArr.length][arrArr[0].length];
@@ -253,6 +261,12 @@ public class Matrix {
         for (int ii = 0; ii < getColDim(); ii++)
           data[row][ii] += ma2.data[row2][ii];
     }
+
+    public void addToElement(int i, int j, double value) {
+        data[i][j]+=value;
+
+    }
+
     /**
      * The value in the col from the input matrix is
      * added to all values in the corresponding col in the matrix.
@@ -669,6 +683,90 @@ public class Matrix {
         return li;
     }
 
+    public Matrix getMatrix (int i0, int i1, int j0, int j1) {
+        Matrix X = new Matrix(i1-i0+1,j1-j0+1);
+        double[][] B = X.getArray();
+        try {
+            for (int i = i0; i <= i1; i++) {
+                for (int j = j0; j <= j1; j++) {
+                    B[i-i0][j-j0] = data[i][j];
+                }
+            }
+        } catch(ArrayIndexOutOfBoundsException e) {
+            throw new ArrayIndexOutOfBoundsException("Submatrix indices");
+        }
+        return X;
+    }
+
+    /** Get a submatrix.
+     @param r    Array of row indices.
+     @param c    Array of column indices.
+     @return     A(r(:),c(:))
+     @exception  ArrayIndexOutOfBoundsException Submatrix indices
+     */
+
+    public Matrix getMatrix (int[] r, int[] c) {
+        Matrix X = new Matrix(r.length,c.length);
+        double[][] B = X.getArray();
+        try {
+            for (int i = 0; i < r.length; i++) {
+                for (int j = 0; j < c.length; j++) {
+                    B[i][j] = data[r[i]][c[j]];
+                }
+            }
+        } catch(ArrayIndexOutOfBoundsException e) {
+            throw new ArrayIndexOutOfBoundsException("Submatrix indices");
+        }
+        return X;
+    }
+
+    /** Get a submatrix.
+     @param i0   Initial row index
+     @param i1   Final row index
+     @param c    Array of column indices.
+     @return     A(i0:i1,c(:))
+     @exception  ArrayIndexOutOfBoundsException Submatrix indices
+     */
+
+    public Matrix getMatrix (int i0, int i1, int[] c) {
+        Matrix X = new Matrix(i1-i0+1,c.length);
+        double[][] B = X.getArray();
+        try {
+            for (int i = i0; i <= i1; i++) {
+                for (int j = 0; j < c.length; j++) {
+                    B[i-i0][j] = data[i][c[j]];
+                }
+            }
+        } catch(ArrayIndexOutOfBoundsException e) {
+            throw new ArrayIndexOutOfBoundsException("Submatrix indices");
+        }
+        return X;
+    }
+
+    /** Get a submatrix.
+     @param r    Array of row indices.
+     @param j0   Initial column index
+     @param j1   Final column index
+     @return     A(r(:),j0:j1)
+     @exception  ArrayIndexOutOfBoundsException Submatrix indices
+     */
+
+    public Matrix getMatrix (int[] r, int j0, int j1) {
+        Matrix X = new Matrix(r.length,j1-j0+1);
+        double[][] B = X.getArray();
+        try {
+            for (int i = 0; i < r.length; i++) {
+                for (int j = j0; j <= j1; j++) {
+                    B[i][j-j0] = data[r[i]][j];
+                }
+            }
+        } catch(ArrayIndexOutOfBoundsException e) {
+            throw new ArrayIndexOutOfBoundsException("Submatrix indices");
+        }
+        return X;
+    }
+
+
     public int getNumElements() {
         return cols() * rows();
     }
@@ -726,12 +824,11 @@ public class Matrix {
             for (int i = 0; i < maResult.rows(); i++) {
                 maResult.data[i][i] = data[i][0];
             }
-        }
-        else if((cols() > 1) && (rows() == 1)) {
+        } else if((cols() > 1) && (rows() == 1)) {
             maResult.resize(cols() , cols());
             for (int i = 0; i < maResult.cols(); i++) {
                 maResult.data[i][i] = data[0][i];
-                }
+            }
         }
 
         return maResult;
@@ -819,7 +916,7 @@ public class Matrix {
      * Householder reduction according num rec 11.2.
      * Followed from an Eigen value decomposition with the calculation of the
      * Eigen vectors according num rec 11.3.
-     * @param A input matrix
+     * @param A intercept input matrix
      * @param n number of considered eigen values
      * @param D
      * @param E
@@ -2418,6 +2515,31 @@ public class Matrix {
         }
         return ma;
     }
+
+    /** Matrix determinant
+     @return     determinant
+     */
+
+    public double det () {
+        return new LUDecomposition(this).det();
+    }
+
+    /** Matrix rank
+     @return     effective numerical rank, obtained from SVD.
+     */
+
+
+
+    /** Matrix condition (2 norm)
+     @return     ratio of largest to smallest singular value.
+     */
+
+
+
+    /** Matrix trace.
+     @return     sum of the diagonal elements.
+     */
+
 
     /**
      * Resizes the matrix, the old data are written to the new matrix, if

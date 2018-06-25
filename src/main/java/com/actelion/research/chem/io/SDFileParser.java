@@ -273,8 +273,8 @@ public class SDFileParser extends CompoundFileParser {
 
 
     public String getMoleculeName() {
-        return (mIDFieldIndex == -1 || mFieldData == null) ?
-                    null : mFieldData[mIDFieldIndex];
+        return (mIDFieldIndex != -1 && mFieldData != null) ?
+                mFieldData[mIDFieldIndex] : (mMol != null) ? mMol.getName() : null;
         }
 
 

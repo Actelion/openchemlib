@@ -97,6 +97,7 @@ public interface CompoundTableConstants {
     String cDetailIndexSeparator = ":";
     String cTextMultipleCategories = "<multiple categories>";
 
+    String cColumnPropertyGroupName = "groupName";
     String cColumnPropertyUseThumbNail = "useThumbNail";
     String cColumnPropertyImagePath = "imagePath";
     String cColumnPropertySpecialType = "specialType";

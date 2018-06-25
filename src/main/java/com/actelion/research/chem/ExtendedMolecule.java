@@ -1661,6 +1661,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		for (int bond=0; bond<mBonds; bond++)
 			setStereoBondFromBondParity(bond);
+
+		for (int bond=0; bond<mBonds; bond++)
+			if (mBondType[bond] == cBondTypeDouble
+			 && getBondParity(bond) == Molecule.cBondParityUnknown)
+				mBondType[bond] = cBondTypeCross;
 		}
 
 
