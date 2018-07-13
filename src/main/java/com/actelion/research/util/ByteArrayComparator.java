@@ -1,15 +1,3 @@
-
-
-package com.actelion.research.util.datamodel;
-
-import java.awt.Point;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-
-
-import com.actelion.research.util.Formatter;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -42,77 +30,26 @@ import com.actelion.research.util.Formatter;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-public class ScorePoint extends Point {
 
-	private static final long serialVersionUID = 24052013;
-	
-	private double score;
-	
-	public ScorePoint() {
-		super(-1,-1);
-	}
+package com.actelion.research.util;
 
-	public ScorePoint(Point p) {
-		super(p);
-	}
-	
-	public ScorePoint(Point p, double value) {
-		super(p);
-		score = value;
-	}
-	
-	public ScorePoint(int x, int y, double value) {
-		super(x,y);
-		score = value;
-	}
+import java.io.Serializable;
+import java.util.Comparator;
 
-	public ScorePoint(int x, int y) {
-		super(x,y);
-	}
-
-	public double getScore() {
-		return score;
-	}
-
-	public void setScore(double score) {
-		this.score = score;
-	}
-	
-	
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append("x " + x);
-		sb.append(" y " + y);
-		sb.append(" " + Formatter.format3(score));
-		
-		return sb.toString();
-	}
-
-
-	public static List<ScorePoint> read(File fiTxt) throws IOException {
-
-		List<ScorePoint> li = new ArrayList<ScorePoint>();
-
-		BufferedReader br = new BufferedReader(new FileReader(fiTxt));
-
-		String line = null;
-
-		while((line = br.readLine())!= null) {
-
-			String [] arr = line.split("\\t");
-
-			int x = Integer.parseInt(arr[0].trim());
-			int y = Integer.parseInt(arr[1].trim());
-			double v = java.lang.Double.parseDouble(arr[2].trim());
-
-			li.add(new ScorePoint(x,y,v));
-
+public class ByteArrayComparator implements Comparator<byte[]>,Serializable {
+    static final long serialVersionUID = 0x20120809;
+ 
+    public int compare(byte[] b1, byte[] b2) {
+        if (b1 == null)
+            return (b2 == null) ? 0 : 1;
+        if (b2 == null)
+            return -1;
+        for (int i=0; i<b1.length; i++) {
+            if (b2.length == i)
+                return 1;
+            if (b1[i] != b2[i])
+                return (b1[i] < b2[i]) ? -1 : 1;
+            }
+        return (b2.length > b1.length) ? -1 : 0;
 		}
-
-		br.close();
-
-		return li;
 	}
-	
-}

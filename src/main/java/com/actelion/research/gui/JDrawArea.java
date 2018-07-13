@@ -2979,7 +2979,7 @@ public class JDrawArea extends JPanel
 			}
 
 			new CoordinateInventor(selectedOnly ? CoordinateInventor.MODE_KEEP_MARKED_ATOM_COORDS : 0).invent(mMol);
-			mMol.setStereoBondsFromParity();
+//			mMol.setStereoBondsFromParity(); not needed anymore
 		}
 
 		depictor.updateCoords(g, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());

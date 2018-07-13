@@ -68,15 +68,19 @@ public class BitUtils {
 	}
 
 	/**
+	 *
 	 * The fastest Method (by Thomas Sander)
 	 * @param x
 	 * @return
+	 * @deprecated use Integer.bitCount() instead.
 	 */
 	public static int bitCount(int x) {
 
 		int t1 = (0xFFFF0000 & x) >>> 16;
 		int t2 = 0x0000FFFF & x;
 		return BIT_COUNTS[t1] + BIT_COUNTS[t2];
+
+
 	}
 	
 	public static int bitCount(long x) {
@@ -86,4 +90,45 @@ public class BitUtils {
 		int t4 = (int)((MASK_FIRST_SHORT & x));
 		return BIT_COUNTS[t1] + BIT_COUNTS[t2] + BIT_COUNTS[t3] + BIT_COUNTS[t4];
 	}
+
+	public static void setBit(int [] data, int i) {
+		int ind = i / Integer.SIZE;
+		int indInInt = i % Integer.SIZE;
+		int mask = 1;
+		mask = mask << indInInt;
+		data[ind] = data[ind] | mask;
+	}
+
+	public static void unsetBit(int [] data, int i) {
+		int ind = i / Integer.SIZE;
+		int indInInt = i % Integer.SIZE;
+		int mask = 1;
+		mask = mask << indInInt;
+		data[ind] = data[ind] & ~mask;
+	}
+
+	public static boolean isBitSet(int [] a, int i) {
+		int ind = i / Integer.SIZE;
+		int indInInt = i % Integer.SIZE;
+		int mask = 1;
+		mask = mask << indInInt;
+		if((a[ind] & mask) != 0)
+			return true;
+		else
+			return false;
+	}
+
+	public static boolean isValidBitIndex(int [] data, int i) {
+
+		boolean valid = false;
+
+		int ind = (i / Integer.SIZE);
+
+		if(ind < data.length){
+			valid=true;
+		}
+
+		return valid;
+	}
+
 }

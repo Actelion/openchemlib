@@ -484,25 +484,25 @@ public class SmilesParser {
 		mMol.removeAtomCustomLabels();
 		mMol.setHydrogenProtection(false);
 
-		if (readStereoFeatures)
+		if (readStereoFeatures) {
 			assignKnownEZBondParities();
 
+			if (parityMap != null) {
+				for (THParity parity:parityMap.values())
+					mMol.setAtomParity(parity.mCentralAtom, parity.calculateParity(handleHydrogenAtomMap), false);
+
+				mMol.setParitiesValid(0);
+				}
+			}
+
+		// defines unknown EZ parities as such, i.e. prevent coordinate generation to create implicit EZ-parities
 		mMol.setParitiesValid(0);
 
-		if (createCoordinates || readStereoFeatures) {
+		if (createCoordinates) {
 			new CoordinateInventor().invent(mMol);
 
-			if (readStereoFeatures) {
-				if (parityMap != null) {
-					for (THParity parity:parityMap.values())
-						mMol.setAtomParity(parity.mCentralAtom, parity.calculateParity(handleHydrogenAtomMap), false);
-
-					mMol.setParitiesValid(0);
-					}
-
-				mMol.setStereoBondsFromParity();
+			if (readStereoFeatures)
 				mMol.setUnknownParitiesToExplicitlyUnknown();
-				}
 			}
 
 		if (smartsFeatureFound)

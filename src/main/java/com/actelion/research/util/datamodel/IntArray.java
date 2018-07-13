@@ -447,7 +447,25 @@ public class IntArray implements Serializable {
     	
     	return ia;
     }
-    
+
+    public static boolean equals(int [] a, int [] b){
+
+		boolean eq = true;
+		if(a.length != b.length){
+			return false;
+		}
+
+		for (int i = 0; i < a.length; i++) {
+			if(a[i] != b[i]) {
+				eq = false;
+				break;
+			}
+		}
+
+		return eq;
+
+	}
+
 	public static List<Integer> toList(int [] a) {
 		List<Integer> li = new ArrayList<Integer>(a.length);
 
@@ -456,6 +474,35 @@ public class IntArray implements Serializable {
 		}
 		
 		return li;
+	}
+
+	public static int [] resize(int [] data, int newlen){
+		int [] arr = null;
+
+		if(data.length == newlen){
+			return arr;
+		}
+
+		int intNewlen = 0;
+
+		long max = Integer.MAX_VALUE;
+
+		if(newlen >= max) {
+
+			intNewlen = Integer.MAX_VALUE;
+
+			new RuntimeException("Warning! Maximum length of integer array reached.").printStackTrace();
+
+		} else {
+			intNewlen = newlen;
+		}
+
+		arr = new int [intNewlen];
+
+		System.arraycopy(data, 0, arr, 0, Math.min(data.length, intNewlen));
+
+		return arr;
+
 	}
 
 }

@@ -975,6 +975,18 @@ public class IntVec implements Comparable<IntVec> {
     	hash = -1;
     }
 
+    public boolean isValidBitIndex(int i) {
+        boolean valid = false;
+
+        int ind = (i / Integer.SIZE);
+
+        if(ind < data.length){
+            valid=true;
+        }
+
+        return valid;
+    }
+
      
     
     /**

@@ -142,7 +142,7 @@ public class CoordinateInventor {
 	 * Creates new atom 2D-coordinates for a molecule or a part of a molecule.
 	 * Typically, the molecule has defined TH- and EZ-parities (even if unknown or none), which were not
 	 * calculated, but taken from a SMILES or from an IDCode. In these cases setParitiesValid() should have
-	 * been called to indicate that a parioty calculation is not needed and even would destroy given parities.
+	 * been called to indicate that a parity calculation is not needed and even would destroy given parities.
 	 * New coordinates will correctly reflect E/Z double bond parities, unless the double bond is in a ring.
 	 * If atom parities are available, this call is typically followed by calling mol.setStereoBondsFromParity();
 	 * Unneeded explicit hydrogens are removed, if mode includes MODE_REMOVE_HYDROGEN.
@@ -155,6 +155,8 @@ public class CoordinateInventor {
 	 * @parem ffp null or fragment fingerprint of the molecule, which is used (if available) for faster template location
 	 */
 	public void invent(StereoMolecule mol, int[] ffp) {
+		boolean paritiesPresent = ((mol.getHelperArrayStatus() & Molecule.cHelperParities) != 0);
+
 		if (mRandom == null)
 			mRandom = new Random();
 
@@ -212,6 +214,9 @@ public class CoordinateInventor {
 				mMol.setAtomZ(f.mGlobalAtom[j], 0.0);
 				}
 			}
+
+		if (paritiesPresent)
+			mMol.setStereoBondsFromParity();
 		}
 
 

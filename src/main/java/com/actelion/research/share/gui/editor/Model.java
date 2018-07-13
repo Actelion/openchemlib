@@ -518,7 +518,7 @@ public abstract class Model
             }
 
             new CoordinateInventor(selectedOnly ? CoordinateInventor.MODE_KEEP_MARKED_ATOM_COORDS : 0).invent(mMol);
-            mMol.setStereoBondsFromParity();
+//			mMol.setStereoBondsFromParity(); not needed anymore
         }
 
         DepictorTransformation dt = depictor.simpleValidateView(new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()), AbstractDepictor.cModeInflateToMaxAVBL);
@@ -634,7 +634,7 @@ public abstract class Model
         for (int fragment = 0; fragment < mFragment.length; fragment++) {
             if (invent) {
                 new CoordinateInventor(selectedOnly ? CoordinateInventor.MODE_KEEP_MARKED_ATOM_COORDS : 0).invent(mFragment[fragment]);
-                mFragment[fragment].setStereoBondsFromParity();
+//              mFragment[fragment].setStereoBondsFromParity(); not needed anymore
             }
             AbstractDepictor d = createDepictor(mFragment[fragment]);
             d.updateCoords(null, null, AbstractDepictor.cModeInflateToMaxAVBL);
