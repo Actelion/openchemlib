@@ -31,7 +31,7 @@ public class InventorDefaultTemplateList extends ArrayList<InventorTemplate> {
 		SSSearcherWithIndex searcher = new SSSearcherWithIndex();
 		for (String idcode:DEFAULT_TEMPLATE) {
 			StereoMolecule fragment = new IDCodeParserWithoutCoordinateInvention().getCompactMolecule(idcode);
-			int[] ffp = searcher.createIndex(fragment);
+			long[] ffp = searcher.createLongIndex(fragment);
 			InventorTemplate template = new InventorTemplate(fragment, ffp);
 			template.normalizeCoordinates();
 			add(template);

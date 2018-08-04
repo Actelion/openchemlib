@@ -55,7 +55,7 @@ public class CoordinateInventor {
 	private static volatile List<InventorTemplate> sDefaultTemplateList;
 
 	private StereoMolecule mMol;
-	private int[]		mFFP;
+	private long[]		mFFP;
 	private Random		mRandom;
 	private boolean[]	mAtomHandled;
 	private boolean[]	mBondHandled;
@@ -154,7 +154,7 @@ public class CoordinateInventor {
 	 * @param mol the molecule that gets new 2D coordinates in place
 	 * @parem ffp null or fragment fingerprint of the molecule, which is used (if available) for faster template location
 	 */
-	public void invent(StereoMolecule mol, int[] ffp) {
+	public void invent(StereoMolecule mol, long[] ffp) {
 		boolean paritiesPresent = ((mol.getHelperArrayStatus() & Molecule.cHelperParities) != 0);
 
 		if (mRandom == null)

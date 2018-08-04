@@ -4,10 +4,10 @@ import com.actelion.research.chem.StereoMolecule;
 
 public class InventorTemplate {
 	private StereoMolecule mFragment;
-	private int[] mFFP;
+	private long[] mFFP;
 	private double mAVBL;
 
-	public InventorTemplate(StereoMolecule fragment, int[] ffp) {
+	public InventorTemplate(StereoMolecule fragment, long[] ffp) {
 		mFragment = fragment;
 		mFFP = ffp;
 		}
@@ -28,7 +28,7 @@ public class InventorTemplate {
 		return  mFragment;
 		}
 
-	public int[] getFFP() {
+	public long[] getFFP() {
 		return mFFP;
 		}
 	}
