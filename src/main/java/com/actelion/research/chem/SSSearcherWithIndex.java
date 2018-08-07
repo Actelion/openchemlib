@@ -902,10 +902,8 @@ public class SSSearcherWithIndex {
         int sharedKeys = 0;
         int allKeys = 0;
         for (int i=0; i<index1.length; i++) {
-            final int i1 = index1[i];
-            final int i2 = index2[i];
-            sharedKeys += Integer.bitCount(i1 & i2);
-            allKeys += Integer.bitCount(i1 | i2);
+            sharedKeys += Integer.bitCount(index1[i] & index2[i]);
+            allKeys += Integer.bitCount(index1[i] | index2[i]);
         	}
         return (float)sharedKeys/(float)allKeys;
         }
@@ -915,10 +913,8 @@ public class SSSearcherWithIndex {
 		int sharedKeys = 0;
 		int allKeys = 0;
 		for (int i=0; i<index1.length; i++) {
-			final long i1 = index1[i];
-			final long i2 = index2[i];
-			sharedKeys += Long.bitCount(i1 & i2);
-			allKeys += Long.bitCount(i1 | i2);
+			sharedKeys += Long.bitCount(index1[i] & index2[i]);
+			allKeys += Long.bitCount(index1[i] | index2[i]);
 			}
 		return (float)sharedKeys/(float)allKeys;
 		}
