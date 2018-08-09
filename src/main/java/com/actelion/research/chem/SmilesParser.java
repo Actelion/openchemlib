@@ -237,7 +237,7 @@ public class SmilesParser {
 
 				fromAtom = baseAtom[bracketLevel];
 				if (baseAtom[bracketLevel] != -1 && bondType != Molecule.cBondTypeDeleted) {
-					mMol.addBond(atom, baseAtom[bracketLevel], bondType);
+					mMol.addBond(baseAtom[bracketLevel], atom, bondType);
 					}
 				bondType = Molecule.cBondTypeSingle;
 				baseAtom[bracketLevel] = atom;
@@ -264,6 +264,7 @@ public class SmilesParser {
 				}
 
 			if (theChar == '.') {
+				baseAtom[bracketLevel] = -1;
 				bondType = Molecule.cBondTypeDeleted;
 				continue;
 				}
@@ -289,7 +290,12 @@ public class SmilesParser {
 					atomMass = number;
 					}
 				else {
-					boolean hasBondType = (smiles[position-2] == '-' || smiles[position-2] == '=' || smiles[position-2] == '#' || smiles[position-2] == ':');
+					boolean hasBondType = (smiles[position-2] == '-'
+										|| smiles[position-2] == '/'
+										|| smiles[position-2] == '\\'
+										|| smiles[position-2] == '='
+										|| smiles[position-2] == '#'
+										|| smiles[position-2] == ':');
 					if (percentFound
 					 && position < endIndex
 					 && Character.isDigit(smiles[position])) {
@@ -319,7 +325,12 @@ public class SmilesParser {
 
 						if (ringClosureBondType[number] != -1)
 							bondType = ringClosureBondType[number];
-						mMol.addBond(baseAtom[bracketLevel], ringClosureAtom[number], bondType);
+						else if (bondType == Molecule.cBondTypeUp)	// interpretation inverts, if we have the slash bond at the second closure digit rather than at the first
+							bondType = Molecule.cBondTypeDown;
+						else if (bondType == Molecule.cBondTypeDown)
+							bondType = Molecule.cBondTypeUp;
+						// ringClosureAtom is the parent atom, i.e. the baseAtom of the first occurrence of the closure digit
+						mMol.addBond(ringClosureAtom[number], baseAtom[bracketLevel], bondType);
 						ringClosureAtom[number] = -1;	// for number re-usage
 						}
 					bondType = Molecule.cBondTypeSingle;
@@ -906,12 +917,14 @@ public class SmilesParser {
 						break;
 					}
 				if (refAtom[0] != -1 && refAtom[1] != -1) {
+					// if both bonds connected to the double bond atoms have the same slash direction, we have Z
+					// (assuming that the parent atom (i.e. bondAtom[0]) in both cases is the double bond atom)
 					boolean isZ = mMol.getBondType(refBond[0]) == mMol.getBondType(refBond[1]);
 
 					// We need to correct, because slash or backslash refer to the double bonded
 					// atom and not to the double bond itself as explained in opensmiles.org:
 					//     F/C=C/F and C(\F)=C/F are both E
-					// bondAtom[1] is always the parent in graph to bondAtom[0]. We use this to correct:
+					// bondAtom[0] is always the parent in graph to bondAtom[1]. We use this to correct:
 					for (int i=0; i<2; i++)
 						if (refAtom[i] == mMol.getBondAtom(0, refBond[i]))
 							isZ = !isZ;
@@ -1103,7 +1116,49 @@ System.out.println("parity:"+parity);
 			}
 		}
 
+	private static void testStereo() {
+		final String[][] data = { { "F/C=C/I", "F/C=C/I" },
+								  { "F/C=C\\I", "F/C=C\\I" },
+								  { "C(=C/I)/F", "F/C=C\\I" },
+								  { "[H]C(/F)=C/I", "F/C=C\\I" },
+								  { "C(=C\\1)/I.F1", "F/C=C/I" },
+								  { "C(=C1)/I.F/1", "F/C=C/I" },
+								  { "C(=C\\F)/1.I1", "F/C=C/I" },
+								  { "C(=C\\F)1.I\\1", "F/C=C/I" },
+								  { "C\\1=C/I.F1", "F/C=C/I" },
+								  { "C1=C/I.F/1", "F/C=C/I" },
+								  { "C(=C\\1)/2.F1.I2", "F/C=C/I" },
+								  { "C/2=C\\1.F1.I2", "F/C=C/I" },
+								  { "C/1=C/C=C/F.I1", "F/C=C/C=C\\I" },
+								  { "C1=C/C=C/F.I\\1", "F/C=C/C=C\\I" },
+								  { "C(/I)=C/C=C/1.F1", "F/C=C/C=C\\I" },
+								  { "C(/I)=C/C=C1.F\\1", "F/C=C/C=C\\I" },
+
+								  { "[C@](Cl)(F)(I)1.Br1", "F[C@](Cl)(Br)I" },
+								  { "Br[C@](Cl)(I)1.F1", "F[C@](Cl)(Br)I" },
+								  { "[C@H](F)(I)1.Br1", "F[C@H](Br)I" },
+								  { "Br[C@@H](F)1.I1", "F[C@H](Br)I" } };
+		StereoMolecule mol = new StereoMolecule();
+		for (String[] test:data) {
+			try {
+				new SmilesParser().parse(mol, test[0]);
+				String smiles = new IsomericSmilesCreator(mol).getSmiles();
+				System.out.print(test[0]+" "+smiles);
+				if (!test[1].equals(smiles))
+					System.out.println(" should be: "+test[1]);
+				else
+					System.out.println(" OK");
+				}
+			catch (Exception e) {
+				if (!test[2].equals("error"))
+					System.out.println("ERROR! "+test[1]+" smiles:"+test[0]+" exception:"+e.getMessage());
+				}
+			}
+		}
+
 	public static void main(String[] args) {
+		testStereo();
+
 		System.out.println("ID-code equivalence test:");
 		final String[][] data = { {	"N[C@@]([H])(C)C(=O)O",	"S-alanine",		"gGX`BDdwMUM@@" },
 								  { "N[C@@H](C)C(=O)O",		"S-alanine",		"gGX`BDdwMUM@@" },
