@@ -380,7 +380,7 @@ public class DescriptorEncoder {
 			mask >>>= 1;
 			mAvailableBits--;
 			}
-		}
+    	}
 
 	private void encodeBitsEnd() {
         mBytes[mByteIndex] <<= mAvailableBits;
@@ -391,6 +391,7 @@ public class DescriptorEncoder {
         mBytes = bytes;
         mByteIndex = 0;
         mTempData = sDecode[mBytes[0]];
+		mTempDataLong = sDecode[mBytes[0]];
         mByteMask = 1 << (BITS - 1);
         }
 
