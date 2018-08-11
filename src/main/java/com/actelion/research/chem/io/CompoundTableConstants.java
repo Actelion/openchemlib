@@ -52,6 +52,11 @@ public interface CompoundTableConstants {
     String cColumnTypeAtomColorInfo = "atomColorInfo";
         // in addition to these all DescriptorHandler.SHORT_NAMEs are valid column types
 
+	String cReactionPartReaction = "reaction";
+    String cReactionPartReactants = "reactants";
+    String cReactionPartCatalysts = "catalysts";
+    String cReactionPartProducts = "products";
+
     int cTextExclusionTypeContains = 1;
     int cTextExclusionTypeStartsWith = 2;
     int cTextExclusionTypeEquals = 3;
@@ -102,6 +107,7 @@ public interface CompoundTableConstants {
     String cColumnPropertyImagePath = "imagePath";
     String cColumnPropertySpecialType = "specialType";
     String cColumnPropertyParentColumn = "parent";
+    String cColumnPropertyReactionPart = "reactionPart";
     String cColumnPropertyIdentifierColumn = "idColumn";
     String cColumnPropertyIsClusterNo = "isClusterNo";
     String cColumnPropertyDataMin = "dataMin";
