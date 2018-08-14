@@ -9,7 +9,7 @@ public class DescriptorHandlerLongFFP512 extends AbstractDescriptorHandlerLongFP
 	private static final int sLongCount = (SSSearcherWithIndex.getNoOfKeys() + 63) / 64;
 
 	public static DescriptorHandlerLongFFP512 getDefaultInstance() {
-		synchronized(DescriptorHandlerFFP512.class) {
+		synchronized(DescriptorHandlerLongFFP512.class) {
 			if (sDefaultInstance == null)
 				sDefaultInstance = new DescriptorHandlerLongFFP512();
 		}

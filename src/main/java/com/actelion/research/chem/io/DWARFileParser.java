@@ -34,7 +34,7 @@
 package com.actelion.research.chem.io;
 
 import com.actelion.research.chem.descriptor.DescriptorConstants;
-import com.actelion.research.chem.descriptor.DescriptorHandlerFFP512;
+import com.actelion.research.chem.descriptor.DescriptorHandlerLongFFP512;
 import com.actelion.research.chem.descriptor.DescriptorHandlerStandard2DFactory;
 import com.actelion.research.chem.descriptor.DescriptorHelper;
 import com.actelion.research.io.BOMSkipper;
@@ -330,7 +330,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
             for (SpecialField specialColumn:mSpecialFieldMap.values()) {
                 if (idcodeColumn.name.equals(specialColumn.parent)) {
                     if (DESCRIPTOR_FFP512.shortName.equals(specialColumn.type)
-                     && DescriptorHandlerFFP512.VERSION.equals(specialColumn.version))
+                     && DescriptorHandlerLongFFP512.VERSION.equals(specialColumn.version))
                         mFragFpColumn = specialColumn.fieldIndex;
 					else if (cColumnType2DCoordinates.equals(specialColumn.type))
 						mCoordinate2DColumn = specialColumn.fieldIndex;

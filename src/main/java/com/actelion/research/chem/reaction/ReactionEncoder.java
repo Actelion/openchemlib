@@ -478,17 +478,21 @@ public class ReactionEncoder
 	/**
 	 * Generates an array of all products of the encoded reaction string as bytes.
 	 * If the string includes atom coordinates, these are used.
+	 * At least one of includeReactants and includeProducts must be true.
 	 * @param rxnBytes
-	 * @return null or StereoMolecule array with at least one molecule
+	 * @param includeReactants
+	 * @param includeProducts
+	 * @return null (if reactants or products are missing) or StereoMolecule array with at least one molecule
 	 */
-	public static StereoMolecule[] decodeProducts(byte[] rxnBytes) {
+	public static StereoMolecule[] decodeMolecules(byte[] rxnBytes, boolean includeReactants, boolean includeProducts) {
 		if (rxnBytes == null || rxnBytes.length == 0)
 			return null;
 
-		int productIndex = 1+ ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.PRODUCT_IDENTIFIER);
-		if (productIndex == 0)
+		int reactantEnd = ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.PRODUCT_IDENTIFIER);
+		if (reactantEnd <= 0)
 			return null;
 
+		int productIndex = reactantEnd + 1;
 		int productEnd = ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.OBJECT_DELIMITER, productIndex);
 		if (productEnd == -1)
 			productEnd = rxnBytes.length;
@@ -499,25 +503,76 @@ public class ReactionEncoder
 		byte[] coords = null;
 		int coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.OBJECT_DELIMITER, productEnd+1);
 		if (coordsIndex != 0) {
-			int reactantIndex = 0;
-			while (reactantIndex < productIndex) {	// advance coordinate index one step for every reactant
-				reactantIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, reactantIndex);
-				coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
+			if (!includeReactants) {
+				int reactantIndex = 0;
+				while (reactantIndex < productIndex) {    // advance coordinate index one step for every reactant
+					reactantIndex = 1 + ArrayUtils.indexOf(rxnBytes, (byte) ReactionEncoder.MOLECULE_DELIMITER, reactantIndex);
+					coordsIndex = 1 + ArrayUtils.indexOf(rxnBytes, (byte) ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
+				}
 			}
 			coords = rxnBytes;
 		}
 
+		ArrayList<StereoMolecule> moleculeList = new ArrayList<StereoMolecule>();
+		if (includeReactants) {
+			int reactantIndex = 0;
+			do {
+				StereoMolecule reactant = new IDCodeParser().getCompactMolecule(rxnBytes, coords, reactantIndex, coordsIndex);
+				if (reactant.getAllAtoms() != 0)
+					moleculeList.add(reactant);
 
-		ArrayList<StereoMolecule> productList = new ArrayList<StereoMolecule>();
-		while (productIndex != -1 && productIndex < productEnd) {
-			StereoMolecule product = new IDCodeParser().getCompactMolecule(rxnBytes, coords, productIndex, coordsIndex);
-			if (product.getAllAtoms() != 0)
-				productList.add(product);
+				reactantIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, reactantIndex);
+				coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
+			} while (reactantIndex != 0 && reactantIndex < reactantEnd);
+		}
+		if (includeProducts) {
+			do {
+				StereoMolecule product = new IDCodeParser().getCompactMolecule(rxnBytes, coords, productIndex, coordsIndex);
+				if (product.getAllAtoms() != 0)
+					moleculeList.add(product);
 
-			productIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, productIndex);
-			coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
+				productIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, productIndex);
+				coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
+			} while (productIndex != 0 && productIndex < productEnd);
 		}
 
-		return productList.size() == 0 ? null : productList.toArray(new StereoMolecule[0]);
+		return moleculeList.size() == 0 ? null : moleculeList.toArray(new StereoMolecule[0]);
+	}
+
+	/**
+	 * Generates an array of all products of the encoded reaction string as bytes.
+	 * If the string includes atom coordinates, these are used.
+	 * @param rxnBytes
+	 * @return null or StereoMolecule array with at least one molecule
+	 */
+	public static StereoMolecule[] decodeCatalysts(byte[] rxnBytes) {
+		if (rxnBytes == null || rxnBytes.length == 0)
+			return null;
+
+		int index = 0;
+		for (int i=0; i<4; i++) {
+			index = 1 + ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.OBJECT_DELIMITER, index);
+			if (index == 0)
+				return null;
+		}
+
+		if (index == rxnBytes.length)
+			return null;
+
+		ArrayList<StereoMolecule> catalystList = new ArrayList<StereoMolecule>();
+		while (index != 0 && index < rxnBytes.length) {
+			int nextIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.CATALYST_DELIMITER, index);
+			int coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)' ', index);
+
+			StereoMolecule catalyst = (coordsIndex != 0 && (nextIndex == 0 || nextIndex > coordsIndex)) ?
+					  new IDCodeParser().getCompactMolecule(rxnBytes, rxnBytes, index, coordsIndex)
+					: new IDCodeParser().getCompactMolecule(rxnBytes, null, index, -1);
+			if (catalyst.getAllAtoms() != 0)
+				catalystList.add(catalyst);
+
+			index = nextIndex;
+		}
+
+		return catalystList.size() == 0 ? null : catalystList.toArray(new StereoMolecule[0]);
 	}
 }

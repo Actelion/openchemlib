@@ -51,7 +51,7 @@ public class StructureSearch {
 				mDescriptorHandler = factory.getDefaultDescriptorHandler(specification.getDescriptorShortName());
 				}
 			else if (mSpecification.isSubstructureSearch()) {
-				mDescriptorHandler = DescriptorHandlerFFP512.getDefaultInstance();
+				mDescriptorHandler = DescriptorHandlerLongFFP512.getDefaultInstance();
 				}
 			}
 		}
