@@ -30,7 +30,7 @@ public class StructureSearchSpecification implements Serializable {
 	 * with one or more query fragments or molecules.
 	 * @param searchType one of TYPE_... + optionally MODE_...
 	 * @param idcode list of query fragments/molecules
-	 * @param descriptor null or list descriptors (in case of substructure search this should be the FFP512)
+	 * @param descriptor null or list descriptors (in case of substructure search this should be the long FFP512)
 	 * @param descriptorShortName in case of TYPE_SIMILARITY
 	 * @param similarityThreshold in case of TYPE_SIMILARITY
 	 */

@@ -102,6 +102,10 @@ public class IDCodeParserWithoutCoordinateInvention {
 		return getCompactMolecule(idcode, coordinates, 0, 0);
 		}
 
+	public StereoMolecule getCompactMolecule(byte[] idcode, int idcodeStart) {
+		return getCompactMolecule(idcode, null, idcodeStart, -1);
+		}
+
 	public StereoMolecule getCompactMolecule(byte[] idcode, byte[] coordinates, int idcodeStart, int coordsStart) {
 		if (idcode == null)
 			return null;
@@ -175,6 +179,16 @@ public class IDCodeParserWithoutCoordinateInvention {
 			}
 
 		parse(mol, idcode, coordinates, 0, 0);
+		}
+
+	/**
+	 * Parses the idcode and populates the given molecule to represent the passed idcode.
+	 * @param mol molecule object to be filled with the idcode content
+	 * @param idcode may be null
+	 * @param idcodeStart first byte index of idcode
+	 */
+	public void parse(StereoMolecule mol, byte[] idcode, int idcodeStart) {
+		parse(mol, idcode, null, idcodeStart, -1);
 		}
 
 	/**
@@ -797,10 +811,14 @@ public class IDCodeParserWithoutCoordinateInvention {
 		}
 
 	public void parseMapping(byte[] mapping) {
-		if (mapping == null || mapping.length == 0)
+		parseMapping(mapping, 0);
+		}
+
+	public void parseMapping(byte[] mapping, int mappingStart) {
+		if (mapping == null || mapping.length <= mappingStart)
 			return;
 
-		decodeBitsStart(mapping, 0);
+		decodeBitsStart(mapping, mappingStart);
 		int nbits = decodeBits(4);
 		boolean autoMappingFound = (decodeBits(1) == 1);
 		boolean manualMappingFound = (decodeBits(1) == 1);
@@ -838,16 +856,20 @@ public class IDCodeParserWithoutCoordinateInvention {
 		}
 
 	public boolean coordinatesAreAbsolute(byte[] coordinates) {
-		if (coordinates == null || coordinates.length == 0)
+		return coordinatesAreAbsolute(coordinates, 0);
+		}
+
+	public boolean coordinatesAreAbsolute(byte[] coordinates, int coordStart) {
+		if (coordinates == null || coordinates.length <= coordStart)
 			return false;
 
-		if (coordinates[0] >= '\'') {	// old format uses ACSII 39 and higher
-			for (int i=0; i<coordinates.length; i++)
+		if (coordinates[coordStart] >= '\'') {	// old format uses ACSII 39 and higher
+			for (int i=coordStart; i<coordinates.length; i++)
 				if (coordinates[i] == '\'' || coordinates[i] == '&')
 					return true;
 			}
-		else if (coordinates[0] == '!') {	// current version starts with '!' (ASC 33), further versions may start with ASC 34 to 38
-			decodeBitsStart(coordinates, 1);
+		else if (coordinates[coordStart] == '!') {	// current version starts with '!' (ASC 33), further versions may start with ASC 34 to 38
+			decodeBitsStart(coordinates, coordStart+1);
 			decodeBits(1);	// skip 3D information
 			return (decodeBits(1) == 1);
 			}

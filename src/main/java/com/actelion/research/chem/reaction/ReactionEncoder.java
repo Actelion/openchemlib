@@ -73,7 +73,7 @@ public class ReactionEncoder
 	 * If there are drawing objects assigned to this reaction
 	 * then these are encoded in a 4th string.
 	 *
-	 * @return String[4] with reaction code, coordinates, mapping, drawing objects
+	 * @return String[5] with reaction code, mapping, coordinates, drawing objects, catalysts
 	 */
 	public static String[] encode(Reaction reaction, boolean keepAbsoluteCoordinates) {
 		return encode(reaction, keepAbsoluteCoordinates, true);
@@ -93,7 +93,7 @@ public class ReactionEncoder
 	 * @param reaction
 	 * @param keepAbsoluteCoordinates
 	 * @param sortByIDCode
-	 * @return String[5] with reaction code, coordinates, mapping, drawing objects, catalysts
+	 * @return String[5] with reaction code, mapping, coordinates, drawing objects, catalysts
 	 */
 	private static String[] encode(Reaction reaction, boolean keepAbsoluteCoordinates, boolean sortByIDCode) {
 		if (reaction == null
@@ -372,6 +372,123 @@ public class ReactionEncoder
 		rxn.setReactionLayoutRequired(reactionLayoutRequired);
 
 		return rxn;
+	}
+
+	/**
+	 * Creates a Reaction object by interpreting a reaction code,
+	 * mapping, coordinates and drawing objects that were earlier created
+	 * by this class.
+	 * If rxnCoords are relative or null, and if ensureCoordinates==true
+	 * then all reactants and products are placed automatically along a
+	 * horizontal line.
+	 *
+	 * @return Reaction
+	 */
+	public static Reaction decode(byte[] rxnCode, byte[] rxnMapping, byte[] rxnCoords,
+								  String rxnObjects, byte[] rxnCatalysts, boolean ensureCoordinates) {
+		if (rxnCode == null || rxnCode.length == 0) {
+			return null;
+		}
+
+		boolean isProduct = false;
+		int idcodeIndex = 0;
+		int mappingIndex = 0;
+		int coordsIndex = 0;
+		boolean reactionLayoutRequired = false;
+
+		int productIndex = indexOf(rxnCode, PRODUCT_IDENTIFIER);
+		if (productIndex == -1) {
+			return null;
+		}
+
+		Reaction rxn = new Reaction();
+		while (idcodeIndex != -1) {
+			if (idcodeIndex > productIndex) {
+				isProduct = true;
+			}
+
+			int delimiterIndex = indexOf(rxnCode, MOLECULE_DELIMITER, idcodeIndex);
+			if (!isProduct && (delimiterIndex > productIndex || delimiterIndex == -1)) {
+				delimiterIndex = productIndex;
+			}
+
+			int idcodeStart = idcodeIndex;
+			idcodeIndex = (delimiterIndex == -1) ? -1 : delimiterIndex + 1;
+
+			int mappingStart = -1;
+			if (rxnMapping != null && rxnMapping.length != 0) {
+				mappingStart = mappingIndex;
+				delimiterIndex = indexOf(rxnMapping, MOLECULE_DELIMITER, mappingIndex);
+				if (delimiterIndex != -1)
+					mappingIndex = delimiterIndex + 1;
+			}
+
+			int coordsStart = -1;
+			if (rxnCoords != null && rxnCoords.length != 0) {
+				coordsStart = coordsIndex;
+				delimiterIndex = indexOf(rxnCoords, MOLECULE_DELIMITER, coordsIndex);
+				if (delimiterIndex != -1)
+					coordsIndex = delimiterIndex + 1;
+			}
+
+			IDCodeParser parser = new IDCodeParser(ensureCoordinates);
+			StereoMolecule mol = null;
+			try {
+				mol = parser.getCompactMolecule(rxnCode, rxnCoords, idcodeStart, coordsStart);
+			} catch (Exception e) {
+System.out.println("rxnCode:"+new String(rxnCode)+" rxnCoords:"+new String(rxnCoords)+" "+idcodeStart+" "+coordsStart);
+System.exit(0);
+			}
+
+			if (!reactionLayoutRequired && (coordsStart == -1 || !parser.coordinatesAreAbsolute(rxnCoords, coordsStart)))
+				reactionLayoutRequired = true;
+
+			if (mappingStart != -1) {
+				parser.parseMapping(rxnMapping, mappingStart);
+			}
+
+			if (isProduct) {
+				rxn.addProduct(mol);
+			} else {
+				rxn.addReactant(mol);
+			}
+		}
+
+		if (rxnObjects != null && rxnObjects.length() != 0) {
+			rxn.setDrawingObjects(new DrawingObjectList(rxnObjects));
+		}
+
+		if (rxnCatalysts != null && rxnCatalysts.length != 0) {
+			IDCodeParser parser = new IDCodeParser(ensureCoordinates);
+			int index1 = 0;
+			int index2 = indexOf(rxnCatalysts, CATALYST_DELIMITER);
+			while (index2 != -1) {
+				rxn.addCatalyst(parser.getCompactMolecule(rxnCatalysts, index1));
+				index1 = index2+1;
+				index2 = indexOf(rxnCatalysts, CATALYST_DELIMITER, index1);
+			}
+			rxn.addCatalyst(parser.getCompactMolecule(rxnCatalysts, index1));
+		}
+
+		rxn.setReactionLayoutRequired(reactionLayoutRequired);
+
+		return rxn;
+	}
+
+	private static int indexOf(byte[] bytes, char ch) {
+		for (int i=0; i<bytes.length; i++)
+			if (bytes[i] == ch)
+				return i;
+
+		return -1;
+		}
+
+	private static int indexOf(byte[] bytes, char ch, int start) {
+		for (int i=start; i<bytes.length; i++)
+			if (bytes[i] == ch)
+				return i;
+
+		return -1;
 	}
 
 	/**

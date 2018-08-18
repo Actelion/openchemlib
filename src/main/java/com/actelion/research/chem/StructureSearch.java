@@ -221,9 +221,9 @@ public class StructureSearch {
 						if (mMaxSSSMatches != 0 && mMatchCount.get() > mMaxSSSMatches)
 							break;
 
-						mSSSearcher.setMolecule(mDataSource.getIDCode(row, false), (int[])mDataSource.getDescriptor(mDescriptorColumn, row, false));
+						mSSSearcher.setMolecule(mDataSource.getIDCode(row, false), (long[])mDataSource.getDescriptor(mDescriptorColumn, row, false));
 						for (int i=0; i<mQueryFragment.length; i++) {
-							mSSSearcher.setFragment(mQueryFragment[i], (int[])mQueryDescriptor[i]);
+							mSSSearcher.setFragment(mQueryFragment[i], (long[])mQueryDescriptor[i]);
 							if (mSSSearcher.isFragmentInMolecule()) {
 								isMatch = true;
 								break;
