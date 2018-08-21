@@ -1879,7 +1879,7 @@ public class FunctionalGroupClassifier {
 	private int classHal(int atm, int halType) {
 		int[] hetAtm = new int[3];
 		
-		if (mMol.getConnAtoms( atm ) == 0)	// HHal not classified
+		if (mMol.getConnAtoms( atm ) != 1)	// HHal not classified
 			return -2;
 		
 		int connAtm = mMol.getConnAtom( atm, 0 );
@@ -1977,11 +1977,11 @@ public class FunctionalGroupClassifier {
 		
 		if (mMol.getAtomicNo( connAtm ) == 8) {		// halogene at oxygen
 			int nextConn = getNextConn(connAtm,atm);
-		
-			if (mMol.getAtomicNo( nextConn ) != 6)
-				return 25;						// Hal-O-X  X=Met,Het
+
+			if (nextConn == -1 || mMol.getAtomicNo( nextConn ) == 6)
+				return 26;						// Hal-O-C, Hal-OH
 			else
-				return 26;						// Hal-O-C
+				return 25;						// Hal-O-X  X=Met,Het
 			}
 		
 		if (mMol.getAtomicNo( connAtm ) == 5)
