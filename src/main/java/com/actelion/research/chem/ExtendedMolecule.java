@@ -99,7 +99,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @param includeAtom defines atoms to be copied; its size may be this.getAtoms() or this.getAllAtoms()
 	 * @param recognizeDelocalizedBonds defines whether disconnected delocalized bonds will keep their
 	 * single/double bond status or whether the query feature 'delocalized bond' will be set
-	 * @param atomMap null or int[] not smaller than includeAtom.length; receives atom indices of dest molecule
+	 * @param atomMap null or int[] not smaller than includeAtom.length; receives atom indices of dest molecule or -1 if not copied
 	 */
 	public void copyMoleculeByAtoms(ExtendedMolecule destMol, boolean[] includeAtom, boolean recognizeDelocalizedBonds, int[] atomMap) {
 		if (recognizeDelocalizedBonds)

@@ -432,13 +432,7 @@ public class ReactionEncoder
 			}
 
 			IDCodeParser parser = new IDCodeParser(ensureCoordinates);
-			StereoMolecule mol = null;
-			try {
-				mol = parser.getCompactMolecule(rxnCode, rxnCoords, idcodeStart, coordsStart);
-			} catch (Exception e) {
-System.out.println("rxnCode:"+new String(rxnCode)+" rxnCoords:"+new String(rxnCoords)+" "+idcodeStart+" "+coordsStart);
-System.exit(0);
-			}
+			StereoMolecule mol = parser.getCompactMolecule(rxnCode, rxnCoords, idcodeStart, coordsStart);
 
 			if (!reactionLayoutRequired && (coordsStart == -1 || !parser.coordinatesAreAbsolute(rxnCoords, coordsStart)))
 				reactionLayoutRequired = true;

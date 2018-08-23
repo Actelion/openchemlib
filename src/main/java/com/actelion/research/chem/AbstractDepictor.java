@@ -1585,8 +1585,8 @@ public abstract class AbstractDepictor {
 				isoStr = append(isoStr, "!a");
 			if ((queryFeatures & Molecule.cAtomQFMoreNeighbours) != 0)
 				isoStr = append(isoStr, "s");
-			if ((queryFeatures & Molecule.cAtomQFNoMoreNeighbours) != 0)
-				isoStr = append(isoStr, "!s");
+//			if ((queryFeatures & Molecule.cAtomQFNoMoreNeighbours) != 0)
+//				isoStr = append(isoStr, "!s");
             if ((queryFeatures & Molecule.cAtomQFHydrogen) != 0) {
                 int hydrogens = (queryFeatures & Molecule.cAtomQFHydrogen);
     			if (hydrogens == Molecule.cAtomQFNot1Hydrogen+Molecule.cAtomQFNot2Hydrogen+Molecule.cAtomQFNot3Hydrogen)
@@ -1735,10 +1735,12 @@ public abstract class AbstractDepictor {
 
 		int hydrogensToAdd = 0;
 		if (mMol.isFragment()) {
-			if ((mMol.getAtomicNo(atom) != 6
-			  || !mAtomIsConnected[atom])
-			 && (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0
-			 && mMol.getAtomCharge(atom) != 0 || mMol.getAtomRadical(atom) != 0)
+/*			if ((mMol.getAtomicNo(atom) != 6
+			  || !mAtomIsConnected[atom]
+			  || mMol.getAtomCharge(atom) != 0
+			  || mMol.getAtomRadical(atom) != 0)
+			 && (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)*/
+			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)
 				hydrogensToAdd = mMol.getImplicitHydrogens(atom);
 			}
 		else {
