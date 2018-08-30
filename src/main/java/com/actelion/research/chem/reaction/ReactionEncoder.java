@@ -45,7 +45,7 @@ public class ReactionEncoder
 {
 	public static final char MOLECULE_DELIMITER = ' ';
 	public static final char PRODUCT_IDENTIFIER = '!';
-	public static final char CATALYST_DELIMITER = '!';
+	public static final char CATALYST_DELIMITER = '+';	// character must not collide with idcode or coordinate encodings
 	public static final char OBJECT_DELIMITER = '#';
 
 	public static final int INCLUDE_MAPPING = 1;
@@ -588,14 +588,15 @@ public class ReactionEncoder
 
 	/**
 	 * Generates an array of all products of the encoded reaction string as bytes.
-	 * If the string includes atom coordinates, these are used.
+	 * If the string includes atom coordinates or if they are explicitly, these are used.
 	 * At least one of includeReactants and includeProducts must be true.
-	 * @param rxnBytes
+	 * @param rxnBytes may contain atom coordinates
+	 * @param coords may be null
 	 * @param includeReactants
 	 * @param includeProducts
 	 * @return null (if reactants or products are missing) or StereoMolecule array with at least one molecule
 	 */
-	public static StereoMolecule[] decodeMolecules(byte[] rxnBytes, boolean includeReactants, boolean includeProducts) {
+	public static StereoMolecule[] decodeMolecules(byte[] rxnBytes, byte[] coords, boolean includeReactants, boolean includeProducts) {
 		if (rxnBytes == null || rxnBytes.length == 0)
 			return null;
 
@@ -611,17 +612,25 @@ public class ReactionEncoder
 		if (productIndex == productEnd)
 			return null;
 
-		byte[] coords = null;
-		int coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.OBJECT_DELIMITER, productEnd+1);
-		if (coordsIndex != 0) {
+		int coordsIndex = 0;
+		if (coords == null) {
+			coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte) ReactionEncoder.OBJECT_DELIMITER, productEnd + 1);
+			if (coordsIndex != 0)
+				coords = rxnBytes;
+		}
+		if (coords != null) {
 			if (!includeReactants) {
-				int reactantIndex = 0;
-				while (reactantIndex < productIndex) {    // advance coordinate index one step for every reactant
-					reactantIndex = 1 + ArrayUtils.indexOf(rxnBytes, (byte) ReactionEncoder.MOLECULE_DELIMITER, reactantIndex);
-					coordsIndex = 1 + ArrayUtils.indexOf(rxnBytes, (byte) ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
+				int reactantCount = 1;
+				for (int i=0; i<reactantEnd; i++)
+					if (rxnBytes[i] == ReactionEncoder.MOLECULE_DELIMITER)
+						reactantCount++;
+				for (int i=0; reactantCount != 0 && i<coords.length; i++) {
+					if (coords[i] == ReactionEncoder.MOLECULE_DELIMITER) {
+						coordsIndex = i + 1;
+						reactantCount--;
+					}
 				}
 			}
-			coords = rxnBytes;
 		}
 
 		ArrayList<StereoMolecule> moleculeList = new ArrayList<StereoMolecule>();
@@ -633,7 +642,8 @@ public class ReactionEncoder
 					moleculeList.add(reactant);
 
 				reactantIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, reactantIndex);
-				coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
+				if (coords != null)
+					coordsIndex = 1+ArrayUtils.indexOf(coords, (byte)ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
 			} while (reactantIndex != 0 && reactantIndex < reactantEnd);
 		}
 		if (includeProducts) {
@@ -643,7 +653,8 @@ public class ReactionEncoder
 					moleculeList.add(product);
 
 				productIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, productIndex);
-				coordsIndex = 1+ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
+				if (coords != null)
+					coordsIndex = 1+ArrayUtils.indexOf(coords, (byte)ReactionEncoder.MOLECULE_DELIMITER, coordsIndex);
 			} while (productIndex != 0 && productIndex < productEnd);
 		}
 
@@ -651,7 +662,7 @@ public class ReactionEncoder
 	}
 
 	/**
-	 * Generates an array of all products of the encoded reaction string as bytes.
+	 * Generates an array of all catalysts of the encoded reaction string as bytes.
 	 * If the string includes atom coordinates, these are used.
 	 * @param rxnBytes
 	 * @return null or StereoMolecule array with at least one molecule

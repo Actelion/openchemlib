@@ -52,6 +52,7 @@ public interface CompoundTableConstants {
     String cColumnTypeAtomColorInfo = "atomColorInfo";
     String cColumnTypeReactionMapping = "atomMapping";
     String cColumnTypeReactionCatalysts = "Catalysts";
+    String cColumnTypeReactionObjects = "reactionObjects";
         // in addition to these all DescriptorHandler.SHORT_NAMEs are valid column types
 
     String cReactionPartReaction = "reaction";
