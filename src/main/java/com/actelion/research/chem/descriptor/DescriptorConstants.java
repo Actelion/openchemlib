@@ -123,9 +123,9 @@ public interface DescriptorConstants {
         									   false,
         									   false);
 
-    public static final DescriptorInfo DESCRIPTOR_ReactionIndex =
-                            new DescriptorInfo("ReactionIndex",
-                                               "RxnIdx",
+    public static final DescriptorInfo DESCRIPTOR_ReactionFP =
+                            new DescriptorInfo("ReactionFingerprint",
+                                               "RxnFP",
 											   ReactionSearcher.cIndexVersion,
                                                DESCRIPTOR_TYPE_REACTION,
                                                false,
@@ -208,7 +208,7 @@ public interface DescriptorConstants {
                                                 DESCRIPTOR_OrganicFunctionalGroups,
                                                 DESCRIPTOR_Flexophore,
                                                 DESCRIPTOR_Flexophore_HighRes,
-                                                DESCRIPTOR_ReactionIndex,
+			DESCRIPTOR_ReactionFP,
                                                 DESCRIPTOR_IntegerVector,
                                                 DESCRIPTOR_FULL_FRAGMENT_SET,
                                                 DESCRIPTOR_PhysicoChemicalProperties,

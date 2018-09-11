@@ -60,8 +60,8 @@ public class DescriptorHandlerStandard2DFactory implements DescriptorConstants,D
 		if (DESCRIPTOR_OrganicFunctionalGroups.shortName.equals(shortName))
 			return DescriptorHandlerFunctionalGroups.getDefaultInstance();
 
-        if (DESCRIPTOR_ReactionIndex.shortName.equals(shortName))
-            return DescriptorHandlerReactionIndex.getDefaultInstance();
+        if (DESCRIPTOR_ReactionFP.shortName.equals(shortName))
+            return DescriptorHandlerReactionFP.getDefaultInstance();
 
 		return null;
 		}
@@ -80,8 +80,8 @@ public class DescriptorHandlerStandard2DFactory implements DescriptorConstants,D
 		if (DESCRIPTOR_OrganicFunctionalGroups.shortName.equals(shortName))
 			return new DescriptorHandlerFunctionalGroups();
 
-        if (DESCRIPTOR_ReactionIndex.shortName.equals(shortName))
-            return new DescriptorHandlerReactionIndex();
+        if (DESCRIPTOR_ReactionFP.shortName.equals(shortName))
+            return new DescriptorHandlerReactionFP();
 
 		return null;
 		}

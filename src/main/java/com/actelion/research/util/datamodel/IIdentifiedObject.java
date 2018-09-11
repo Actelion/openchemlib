@@ -1,3 +1,8 @@
+package com.actelion.research.util.datamodel;
+
+import java.util.HashMap;
+import java.util.List;
+
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -30,42 +35,16 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+public interface IIdentifiedObject<T> {
+	
+	public T getData();
 
-package com.actelion.research.chem.descriptor;
+	public void setData(T data);
 
-import com.actelion.research.chem.reaction.Reaction;
-import com.actelion.research.chem.reaction.ReactionSearcher;
+	public long getId();
 
-public class DescriptorHandlerReactionIndex extends AbstractDescriptorHandlerFP<Reaction> {
-    private static DescriptorHandlerReactionIndex sDefaultInstance;
+	public void setId(long id);
 
-    public static DescriptorHandlerReactionIndex getDefaultInstance() {
-        if (sDefaultInstance == null) {
-        	synchronized(DescriptorHandlerReactionIndex.class) {
-        		sDefaultInstance = new DescriptorHandlerReactionIndex();
-        	}
-        }
-        return sDefaultInstance;
-    }
 
-    public DescriptorInfo getInfo() {
-        return DescriptorConstants.DESCRIPTOR_ReactionIndex;
-    }
-
-    public String getVersion() {
-        return DescriptorConstants.DESCRIPTOR_ReactionIndex.version;
-    }
-
-    public int[] createDescriptor(Reaction rxn) {
-	    if (rxn ==null)
-		    return null;
-
-        int[] descriptor = new ReactionSearcher().createIndex(rxn);
-        return (descriptor == null) ? FAILED_OBJECT : descriptor;
-    }
-    
-	public DescriptorHandler<int[], Reaction> getThreadSafeCopy() {
-		return this;
-	}
 
 }

@@ -55,10 +55,11 @@ public interface CompoundTableConstants {
     String cColumnTypeReactionObjects = "reactionObjects";
         // in addition to these all DescriptorHandler.SHORT_NAMEs are valid column types
 
-    String cReactionPartReaction = "reaction";
+    String cReactionPartReaction = "reaction";  // this may only be used, if a molecule type descriptor is calculated from all merged reaction molecules
     String cReactionPartReactants = "reactants";
     String cReactionPartCatalysts = "catalysts";
     String cReactionPartProducts = "products";
+    String cReactionPartDelimiter = " of ";
 
     int cTextExclusionTypeContains = 1;
     int cTextExclusionTypeStartsWith = 2;
