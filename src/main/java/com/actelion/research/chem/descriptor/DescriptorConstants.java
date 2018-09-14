@@ -126,7 +126,7 @@ public interface DescriptorConstants {
     public static final DescriptorInfo DESCRIPTOR_ReactionFP =
                             new DescriptorInfo("ReactionFingerprint",
                                                "RxnFP",
-											   ReactionSearcher.cIndexVersion,
+												DescriptorHandlerReactionFP.cVersion,
                                                DESCRIPTOR_TYPE_REACTION,
                                                false,
                                                false,

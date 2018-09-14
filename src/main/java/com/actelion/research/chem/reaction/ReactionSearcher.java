@@ -36,7 +36,7 @@ package com.actelion.research.chem.reaction;
 
 // TODO Implement Index!
 public class ReactionSearcher {
-	public static final String cIndexVersion = "1.0.0";
+//	public static final String cIndexVersion = "1.0.0";
 
 	private String      mQueryString,mReactionString;
     private Reaction    mQuery,mReaction;

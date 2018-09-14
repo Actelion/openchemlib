@@ -33,10 +33,24 @@
 
 package com.actelion.research.chem.descriptor;
 
+import com.actelion.research.chem.Canonizer;
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionSearcher;
+import com.actelion.research.util.BurtleHasher;
+import com.actelion.research.util.datamodel.IntVec;
 
-public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerFP<Reaction> {
+import java.util.Arrays;
+
+public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP<Reaction> {
+	public static final String cVersion = "0.9.0";
+
+	private static final int SPHERE_COUNT = 5;
+	private static final int HASH_BITS = 10;
+	private static final int HASH_INIT = 13;
+	private static final int DESCRIPTOR_SIZE = (1 << HASH_BITS);
+
     private static DescriptorHandlerReactionFP sDefaultInstance;
 
     public static DescriptorHandlerReactionFP getDefaultInstance() {
@@ -56,16 +70,109 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerFP<Rea
         return DescriptorConstants.DESCRIPTOR_ReactionFP.version;
     }
 
-    public int[] createDescriptor(Reaction rxn) {
-	    if (rxn ==null)
+    public long[] createDescriptor(Reaction rxn) {
+	    if (rxn == null)
 		    return null;
 
-        int[] descriptor = new ReactionSearcher().createIndex(rxn);
-        return (descriptor == null) ? FAILED_OBJECT : descriptor;
+	    boolean[] isReactionCenterMapNo = rxn.getReactionCenterMapNos();
+		if (isReactionCenterMapNo == null)
+			return null;
+
+		final int len = DESCRIPTOR_SIZE / Long.SIZE;
+		long[] data = new long[len];
+
+		for (int m=0; m<rxn.getMolecules(); m++) {
+			StereoMolecule mol = rxn.getMolecule(m);
+			mol.ensureHelperArrays(Molecule.cHelperRings);
+			boolean[] isReactionCenterAtom = new boolean[mol.getAllAtoms()];
+			int reactionCenterAtomCount = rxn.getReactionCenterAtoms(m, isReactionCenterMapNo, isReactionCenterAtom, null);
+
+			StereoMolecule fragment = new StereoMolecule(mol.getAllAtoms(), mol.getAllBonds());
+
+			int[] atomList = new int[mol.getAllAtoms()];
+			boolean[] atomMask = new boolean[mol.getAllAtoms()];
+			for (int rootAtom=0; rootAtom<mol.getAtoms(); rootAtom++) {
+				if (rootAtom != 0)
+					Arrays.fill(atomMask, false);
+
+				int min = 0;
+				int max = 0;
+				for (int sphere=0; sphere<SPHERE_COUNT && max<mol.getAtoms(); sphere++) {
+					if (max == 0) {
+						atomList[0] = rootAtom;
+						atomMask[rootAtom] = true;
+						max = 1;
+					}
+					else {
+						int newMax = max;
+						for (int i=min; i<max; i++) {
+							int atom = atomList[i];
+							for (int j=0; j<mol.getConnAtoms(atom); j++) {
+								int connAtom = mol.getConnAtom(atom, j);
+								if (!atomMask[connAtom]) {
+									atomMask[connAtom] = true;
+									atomList[newMax++] = connAtom;
+								}
+							}
+						}
+						min = max;
+						max = newMax;
+					}
+
+					mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
+
+					// take fragment as it is
+					String idcode = new Canonizer(fragment).getIDCode();
+
+					// we want product fragments to create a different set of hash codes
+					if (m >= rxn.getProducts())
+						idcode = idcode.concat("P");
+
+					int h = BurtleHasher.hashlittle(idcode, HASH_INIT);
+					h = (h & BurtleHasher.hashmask(HASH_BITS-1));		// '-1' divides the full bit span into two equal parts for reaction center and non-reaction center
+
+					// we put the non-reaction-center bits at the end
+					if (!isReactionCenterAtom[rootAtom])
+						h += (1 << (HASH_BITS-1));
+
+					int index = len - h / Long.SIZE - 1;
+					int bitNo = h % 32;
+					if (h % 64 >= 32)
+						bitNo += 32;
+					data[index] |= (1L << bitNo);
+	//System.out.println("atom:"+rootAtom+"\tsphere:"+sphere+"\thash:"+h+"\t"+idcode);
+				}
+			}
+		}
+
+		return data;
+//		return (descriptor == null) ? FAILED_OBJECT : descriptor;
     }
-    
-	public DescriptorHandler<int[], Reaction> getThreadSafeCopy() {
-		return this;
+
+	public float getSimilarity(long[] o1, long[] o2) {
+		if (o1 == null
+		 || o2 == null
+		 || o1.length == 0
+		 || o2.length == 0)
+			return 0.0f;
+
+		int size = o1.length / 2;
+		float reactionCenterSimilarity = getSimilarityTanimoto(o1, o2, 0, size);
+		float nonReactionCenterSimilarity = getSimilarityTanimoto(o1, o2, size, o1.length);
+		return 0.8f * reactionCenterSimilarity + 0.2f*nonReactionCenterSimilarity;
 	}
 
+	public static float getSimilarityTanimoto(final long[] index1, final long[] index2, int i1, int i2) {
+		int sharedKeys = 0;
+		int allKeys = 0;
+		for (int i=i1; i<i2; i++) {
+			sharedKeys += Long.bitCount(index1[i] & index2[i]);
+			allKeys += Long.bitCount(index1[i] | index2[i]);
+		}
+		return (float)sharedKeys/(float)allKeys;
+	}
+
+	public DescriptorHandler<long[], Reaction> getThreadSafeCopy() {
+		return this;
+	}
 }

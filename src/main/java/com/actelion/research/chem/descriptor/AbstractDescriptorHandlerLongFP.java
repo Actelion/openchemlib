@@ -69,7 +69,7 @@ abstract public class AbstractDescriptorHandlerLongFP<U> implements DescriptorHa
                : SSSearcherWithIndex.getSimilarityTanimoto(o1, o2);
     	}
 
-	public long[][] invertDescriptors(long[][] descriptorList) {
+/*	public long[][] invertDescriptors(long[][] descriptorList) {
     	if (descriptorList == null || descriptorList.length == 0)
     		return null;
 
@@ -80,5 +80,5 @@ abstract public class AbstractDescriptorHandlerLongFP<U> implements DescriptorHa
 
 
     	return invertedDescriptors;
-		}
+		}*/
 	}

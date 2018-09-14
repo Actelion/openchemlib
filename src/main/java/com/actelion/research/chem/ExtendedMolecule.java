@@ -631,7 +631,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return Math.max(valence, occupiedValence);
 		}
 
-
 	/**
 	 * Calculates for every non-H atom the mean value of all shortest routes (bonds in between)
 	 * to any other atom of the same fragment.
