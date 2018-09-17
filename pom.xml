@@ -20,18 +20,21 @@
     <developers>
         <developer>
             <name>Thomas Sander</name>
-            <email>thomas.sander@actelion.com</email>
-            <organization>Actelion Pharmaceuticals Ltd.</organization>
+            <email>thomas.sander@idorsia.com</email>
+            <organization>Idorsia Pharmaceuticals Ltd.</organization>
         </developer>
         <developer>
             <name>Christian Rufener</name>
-            <email>christian.rufener@actelion.com</email>
-            <organization>Actelion Pharmaceuticals Ltd.</organization>
         </developer>
         <developer>
             <name>Roman Bär</name>
-            <email>roman.baer@actelion.com</email>
-            <organization>Actelion Pharmaceuticals Ltd.</organization>
+            <email>roman.baer@idorsia.com</email>
+            <organization>Idorsia Pharmaceuticals Ltd.</organization>
+        </developer>
+        <developer>
+            <name>Modest von Korff</name>
+            <email>modest.korff@idorsia.com</email>
+            <organization>Idorsia Pharmaceuticals Ltd.</organization>
         </developer>
     </developers>
 
