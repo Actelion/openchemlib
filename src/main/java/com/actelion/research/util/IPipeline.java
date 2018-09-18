@@ -1,5 +1,3 @@
-package com.actelion.research.util;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -32,6 +30,15 @@ package com.actelion.research.util;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util;
+
+/**
+ * IPipeline
+ * Interface to connect several Runable in a pipeline
+ * Mar 27, 2012 MvK: Start implementation
+ * Oct 9 2012 MvK: wereAllDataFetched() added.
+ */
 public interface IPipeline<T> {
 	
 	public boolean isAllDataIn();

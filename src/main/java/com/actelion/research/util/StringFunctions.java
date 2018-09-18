@@ -1,13 +1,3 @@
-package com.actelion.research.util;
-
-import java.awt.Point;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.*;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -40,6 +30,17 @@ import java.util.regex.Pattern;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util;
+
+import java.awt.Point;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class StringFunctions {
 
     // http://stackoverflow.com/questions/4731055/whitespace-matching-regex-java

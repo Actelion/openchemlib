@@ -1,19 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.mcs.ExhaustiveFragmentGeneratorBonds;
-import com.actelion.research.chem.mcs.RunBondVector2IdCode;
-import com.actelion.research.util.Pipeline;
-import com.actelion.research.util.datamodel.ByteVec;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -46,6 +30,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.mcs.ExhaustiveFragmentGeneratorBonds;
+import com.actelion.research.chem.mcs.RunBondVector2IdCode;
+import com.actelion.research.util.Pipeline;
+import com.actelion.research.util.datamodel.ByteVec;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class ExhaustiveFragmentsStatistics {
 	
 	private static boolean ELUSIVE = false; 

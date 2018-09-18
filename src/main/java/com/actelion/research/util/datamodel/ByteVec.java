@@ -1,16 +1,3 @@
-package com.actelion.research.util.datamodel;
-
-
-import java.io.Serializable;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Vector;
-
-import com.actelion.research.util.BitUtils;
-import com.actelion.research.util.BurtleHasher;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -43,6 +30,26 @@ import com.actelion.research.util.BurtleHasher;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util.datamodel;
+
+
+import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Vector;
+
+import com.actelion.research.util.BitUtils;
+import com.actelion.research.util.BurtleHasher;
+
+/**
+ * <p>ByteVec: </p>
+ * <p>Description: Vector with byte values </p>
+ * @author Modest von Korff
+ * 05.04.2005 start implementation
+ */
 public class ByteVec implements Comparable<ByteVec>, Serializable {
 
 	private static final long serialVersionUID = 27052009;

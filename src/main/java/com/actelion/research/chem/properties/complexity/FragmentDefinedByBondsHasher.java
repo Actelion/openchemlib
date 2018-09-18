@@ -1,9 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import com.actelion.research.util.BurtleHasher;
-import com.actelion.research.util.BurtleHasherABC;
-
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -36,6 +30,13 @@ import com.actelion.research.util.BurtleHasherABC;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import com.actelion.research.util.BurtleHasher;
+import com.actelion.research.util.BurtleHasherABC;
+
+
 public class FragmentDefinedByBondsHasher {
 
 	BurtleHasherABC abc;

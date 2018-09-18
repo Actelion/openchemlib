@@ -1,15 +1,5 @@
 
 
-package com.actelion.research.util.datamodel;
-
-import java.awt.Point;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-
-
-import com.actelion.research.util.Formatter;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -42,6 +32,17 @@ import com.actelion.research.util.Formatter;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util.datamodel;
+
+import java.awt.Point;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+
+import com.actelion.research.util.Formatter;
+
 public class ScorePoint extends Point {
 
 	private static final long serialVersionUID = 24052013;

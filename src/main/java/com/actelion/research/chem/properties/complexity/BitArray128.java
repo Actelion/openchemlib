@@ -1,8 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import java.io.IOException;
-import java.io.InputStream;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -35,6 +30,12 @@ import java.io.InputStream;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import java.io.IOException;
+import java.io.InputStream;
+
 public class BitArray128 extends IndexHash implements IBitArray {
 
 	// Two long

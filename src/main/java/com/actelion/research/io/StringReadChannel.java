@@ -1,15 +1,3 @@
-package com.actelion.research.io;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.Arrays;
-
-import com.actelion.research.util.ConstantsDWAR;
-import com.actelion.research.util.Pipeline;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -42,6 +30,29 @@ import com.actelion.research.util.Pipeline;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.io;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
+
+import com.actelion.research.util.ConstantsDWAR;
+import com.actelion.research.util.Pipeline;
+
+/**
+ *
+ * StringReadChannel
+ * 2007 MvK: Start implementation
+ * 25.06.2009 MvK: implementation changed
+ * 12.02.2014 MvK: added charset encoding to handle Umlaute.
+ * 24.04.2014 MvK: Pipeline replaced simple LinkedList because of needed concurrent access.
+ * 29.01.2015 MvK: Increased capacity CAPACITY_LINE_BUFFER to 10,000,000 because of overflow when reading PubMed records.
+ * 03.06.2015 MvK: Increased capacity CAPACITY_LINE_BUFFER to 50,000,000 because of overflow when reading g2dDiseasePublicationSlope.dwar
+ */
 public class StringReadChannel {
 
 	private static final int CAPACITY_LINE_BUFFER = 50000000;

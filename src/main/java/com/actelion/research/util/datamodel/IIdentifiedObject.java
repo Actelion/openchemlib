@@ -1,8 +1,3 @@
-package com.actelion.research.util.datamodel;
-
-import java.util.HashMap;
-import java.util.List;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -35,6 +30,15 @@ import java.util.List;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util.datamodel;
+
+/**
+ * 
+ * 
+ * IIdentifiedObject
+ * Nov 4, 2011 MvK: Start implementation
+ */
 public interface IIdentifiedObject<T> {
 	
 	public T getData();

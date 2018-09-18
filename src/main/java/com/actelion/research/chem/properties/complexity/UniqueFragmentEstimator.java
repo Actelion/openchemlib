@@ -1,16 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-
-import com.actelion.research.chem.ExtendedMolecule;
-import com.actelion.research.chem.mcs.ContainerListWithIntVec;
-import com.actelion.research.chem.mcs.ListWithIntVec;
-import com.actelion.research.util.SizeOf;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -43,6 +30,20 @@ import com.actelion.research.util.SizeOf;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
+import com.actelion.research.chem.ExtendedMolecule;
+import com.actelion.research.chem.mcs.ContainerListWithIntVec;
+import com.actelion.research.chem.mcs.ListWithIntVec;
+import com.actelion.research.util.SizeOf;
+
 public class UniqueFragmentEstimator {
 	
 	private static final int SIZE_SUBSET_SOLUTIONS = 10000;

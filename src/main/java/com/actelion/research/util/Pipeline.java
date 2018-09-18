@@ -1,11 +1,3 @@
-package com.actelion.research.util;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -38,6 +30,24 @@ import java.util.concurrent.atomic.AtomicLong;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * 
+ * 
+ * Pipeline
+ * Enables concurrent access to a queue.
+ * @author Modest von Korff
+ * Mar 27, 2012 MvK: Start implementation
+ * Oct 9 2012 MvK: bug fix, added reset()
+ */
 public class Pipeline<T> implements IPipeline<T> {
 
 	private AtomicBoolean allDataIn;

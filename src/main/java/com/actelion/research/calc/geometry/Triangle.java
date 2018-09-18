@@ -1,5 +1,3 @@
-package com.actelion.research.calc.geometry;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -32,6 +30,13 @@ package com.actelion.research.calc.geometry;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.calc.geometry;
+
+/**
+ * Triangle
+ * Created by korffmo1 on 04.06.17.
+ */
 public class Triangle {
 
 

@@ -1,10 +1,3 @@
-package com.actelion.research.util;
-
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -37,6 +30,17 @@ import java.util.Locale;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util;
+
+import java.text.SimpleDateFormat;
+
+/**
+ * 
+ * ConstantsDWAR
+ * @author Modest von Korff
+ * Jan 15, 2013 MvK Start implementation
+ */
 public class ConstantsDWAR {
 
 	// This date format is recognized by the DataWarrior

@@ -1,19 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import com.actelion.research.calc.Logarithm;
-import com.actelion.research.util.Formatter;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -46,6 +30,23 @@ import com.actelion.research.util.Formatter;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import com.actelion.research.calc.Logarithm;
+import com.actelion.research.util.Formatter;
+
 public class ModelExhaustiveStatistics {
 	
 	public static final String TAG_ModelExhaustiveStatistics = "ModelExhaustiveStatistics";

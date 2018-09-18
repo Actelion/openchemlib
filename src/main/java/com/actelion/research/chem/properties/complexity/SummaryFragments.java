@@ -1,16 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import com.actelion.research.calc.geometry.Triangle;
-import com.actelion.research.calc.linearregression.LinearRegression;
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.properties.symmetry.SymmetryCalculator;
-import com.actelion.research.util.ConstantsDWAR;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -43,6 +30,20 @@ import java.util.List;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import com.actelion.research.calc.geometry.Triangle;
+import com.actelion.research.calc.linearregression.LinearRegression;
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.properties.symmetry.SymmetryCalculator;
+import com.actelion.research.util.ConstantsDWAR;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+
 public class SummaryFragments {
 
 	public static final String TAG_SUM_UNIQUE_FRAGMENTS_UNTIL_MAX = "SumUniqueFragmentsUntilMaxFrags";

@@ -1,9 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -36,6 +30,13 @@ import java.util.List;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 public class ContainerFragBondsSolutions {
 	
 	public static boolean ELUSIVE = false; 

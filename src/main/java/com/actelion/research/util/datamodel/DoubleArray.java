@@ -1,7 +1,3 @@
-package com.actelion.research.util.datamodel;
-
-import com.actelion.research.calc.INumericalDataColumn;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -34,6 +30,16 @@ import com.actelion.research.calc.INumericalDataColumn;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util.datamodel;
+
+import com.actelion.research.calc.INumericalDataColumn;
+
+/**
+ * 
+ * DoubleArray
+ * 26 Jun 2010 MvK: Start implementation
+ */
 public class DoubleArray implements INumericalDataColumn {
 	
 	private static final int START_CAPACITY = 32;

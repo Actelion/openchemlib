@@ -1,16 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import java.util.List;
-
-import com.actelion.research.calc.CorrelationCalculator;
-import com.actelion.research.calc.Logarithm;
-import com.actelion.research.calc.linearregression.LinearRegression;
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.properties.symmetry.SymmetryCalculator;
-import com.actelion.research.util.Formatter;
-import com.actelion.research.util.datamodel.DoubleArray;
-
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -43,6 +30,20 @@ import com.actelion.research.util.datamodel.DoubleArray;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import java.util.List;
+
+import com.actelion.research.calc.CorrelationCalculator;
+import com.actelion.research.calc.Logarithm;
+import com.actelion.research.calc.linearregression.LinearRegression;
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.properties.symmetry.SymmetryCalculator;
+import com.actelion.research.util.Formatter;
+import com.actelion.research.util.datamodel.DoubleArray;
+
+
 public class ObjectiveExhaustiveStatistics {
 
 

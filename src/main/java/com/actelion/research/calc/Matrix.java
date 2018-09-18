@@ -1,26 +1,3 @@
-package com.actelion.research.calc;
-
-import java.awt.Point;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
-
-import com.actelion.research.util.DoubleVec;
-import com.actelion.research.util.convert.String2DoubleArray;
-import com.actelion.research.util.datamodel.ScorePoint;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -53,6 +30,30 @@ import com.actelion.research.util.datamodel.ScorePoint;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.calc;
+
+import java.awt.Point;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
+
+import com.actelion.research.util.DoubleVec;
+import com.actelion.research.util.convert.String2DoubleArray;
+import com.actelion.research.util.datamodel.ScorePoint;
+
 public class Matrix {
 
     public static String OUT_SEPARATOR_COL = "\t";

@@ -1,12 +1,3 @@
-package com.actelion.research.calc.linearregression;
-
-import java.awt.Point;
-import java.util.List;
-import java.util.Vector;
-
-import com.actelion.research.util.datamodel.DoubleArray;
-import com.actelion.research.util.datamodel.PointDouble;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -39,6 +30,20 @@ import com.actelion.research.util.datamodel.PointDouble;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.calc.linearregression;
+
+import java.awt.Point;
+import java.util.List;
+import java.util.Vector;
+
+import com.actelion.research.util.datamodel.DoubleArray;
+import com.actelion.research.util.datamodel.PointDouble;
+
+/**
+ * LinearRegression
+ * 2009 MvK: Start implementation
+ */
 public class LinearRegression {
 	
 	private double intercept; // Intercept

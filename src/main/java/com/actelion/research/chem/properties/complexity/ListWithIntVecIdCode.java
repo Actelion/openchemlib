@@ -1,11 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import java.io.IOException;
-import java.io.InputStream;
-
-import com.actelion.research.chem.mcs.ListWithIntVec;
-import com.actelion.research.util.datamodel.IntArray;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -38,6 +30,15 @@ import com.actelion.research.util.datamodel.IntArray;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import com.actelion.research.chem.mcs.ListWithIntVec;
+import com.actelion.research.util.datamodel.IntArray;
+
 public class ListWithIntVecIdCode extends ListWithIntVec {
 	
 	private String idcode;

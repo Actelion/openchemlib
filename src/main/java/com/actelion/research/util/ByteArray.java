@@ -1,7 +1,3 @@
-package com.actelion.research.util;
-
-import java.io.*;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -34,6 +30,9 @@ import java.io.*;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util;
+
 public class ByteArray
 {
     private byte data[];

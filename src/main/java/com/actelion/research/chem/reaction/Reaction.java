@@ -61,6 +61,22 @@ public class Reaction implements java.io.Serializable {
 		mName = name;
 		}
 
+	public boolean isEmpty() {
+		for (StereoMolecule mol:mReactant)
+			if (mol.getAllAtoms() != 0)
+				return false;
+
+		for (StereoMolecule mol:mProduct)
+			if (mol.getAllAtoms() != 0)
+				return false;
+
+		for (StereoMolecule mol:mCatalyst)
+			if (mol.getAllAtoms() != 0)
+				return false;
+
+		return true;
+		}
+
 	public Reaction(Reaction rxn) {
 		this();
 		int r = (rxn == null) ? 0 : (rxn.mReactant == null ? 0 : rxn.mReactant.size());

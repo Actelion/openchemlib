@@ -1,5 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -32,6 +30,9 @@ package com.actelion.research.chem.properties.complexity;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
 public class ResultObjective {
 
 	private static final double DEFAULT_FACTOR = -1;

@@ -1,5 +1,3 @@
-package com.actelion.research.calc;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -32,12 +30,19 @@ package com.actelion.research.calc;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.calc;
+
+/**
+ * Logarithm
+ * Mar 14, 2013 MvK Start implementation
+ */
 public class Logarithm {
 
 	
 	public static double get(double value, double base){
 		
-		return Math.log(value)/Math.log(Math.E);
+		return Math.log(value)/Math.log(base);
 		
 	}
 

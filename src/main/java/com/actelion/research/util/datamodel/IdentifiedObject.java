@@ -1,9 +1,3 @@
-package com.actelion.research.util.datamodel;
-
-import java.util.HashMap;
-import java.util.List;
-
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -36,6 +30,19 @@ import java.util.List;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util.datamodel;
+
+import java.util.HashMap;
+import java.util.List;
+
+
+/**
+ * 
+ * 
+ * IdentifiedObject
+ * Nov 2, 2011 MvK: Start implementation
+ */
 public class IdentifiedObject<T> implements IIdentifiedObject<T>, Comparable<IdentifiedObject<T>> {
 	
 	

@@ -1,10 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import com.actelion.research.util.datamodel.IntArray;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -37,6 +30,14 @@ import com.actelion.research.util.datamodel.IntArray;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.actelion.research.util.datamodel.IntArray;
+
 public class ContainerBitArray {
 	
 	private static boolean ELUSIVE = false;

@@ -1,11 +1,3 @@
-package com.actelion.research.util;
-
-import com.actelion.research.chem.AtomComparator;
-
-import java.awt.*;
-import java.util.*;
-import java.util.List;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -38,6 +30,13 @@ import java.util.List;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util;
+
+import java.awt.*;
+import java.util.*;
+import java.util.List;
+
 public class PointUtils {
 
 

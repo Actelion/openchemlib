@@ -1,21 +1,3 @@
-package com.actelion.research.chem.properties.complexity;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.actelion.research.util.datamodel.IntVec;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -48,6 +30,25 @@ import com.actelion.research.util.datamodel.IntVec;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.properties.complexity;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.actelion.research.util.datamodel.IntVec;
+
 public class MultipleNonOverlapSolution {
 	
 	public static final String TAG_MultipleNonOverlapSolution = "MultipleNonOverlapSolution";

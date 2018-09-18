@@ -1,6 +1,4 @@
 
-package com.actelion.research.util.datamodel;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -33,6 +31,13 @@ package com.actelion.research.util.datamodel;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util.datamodel;
+
+/**
+ * IDCodeCoord
+ * Apr 12, 2012 MvK: Start implementation
+ */
 public class IDCodeCoord {
 	
 	public int index;

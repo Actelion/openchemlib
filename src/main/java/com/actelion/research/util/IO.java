@@ -1,24 +1,3 @@
-package com.actelion.research.util;
-
-
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Vector;
-
-import com.actelion.research.io.StringReadChannel;
-import com.actelion.research.util.datamodel.DoubleArray;
-import com.actelion.research.util.datamodel.IntArray;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -51,6 +30,32 @@ import com.actelion.research.util.datamodel.IntArray;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util;
+
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Vector;
+
+import com.actelion.research.io.StringReadChannel;
+import com.actelion.research.util.datamodel.DoubleArray;
+import com.actelion.research.util.datamodel.IntArray;
+
+/**
+ * IO
+ * 2003 MvK: Start implementation
+ */
 public class IO {
 
 	// private static final NumberFormat NF = new DecimalFormat("000");

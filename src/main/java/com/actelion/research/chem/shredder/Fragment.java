@@ -1,8 +1,3 @@
-package com.actelion.research.chem.shredder;
-
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.util.datamodel.IDCodeCoord;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -35,6 +30,16 @@ import com.actelion.research.util.datamodel.IDCodeCoord;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.chem.shredder;
+
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.util.datamodel.IDCodeCoord;
+
+/**
+ * Fragment
+ * Jan 18, 2013 MvK Start implementation
+ */
 public class Fragment extends IDCodeCoord {
 	
     public static final String TAG_FREQUENCY_ONE_PER_MOLECULE = "FrequencyOnePerMolecule";

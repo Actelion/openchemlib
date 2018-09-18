@@ -1,11 +1,3 @@
-package com.actelion.research.util;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -38,6 +30,21 @@ import java.util.List;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+package com.actelion.research.util;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+
+/**
+ * 
+ * ErrorHashMap
+ * 2005 MvK: Start implementation
+
+ */
 public class ErrorHashMap implements Serializable {
 
 	private static final long serialVersionUID = 20122011;

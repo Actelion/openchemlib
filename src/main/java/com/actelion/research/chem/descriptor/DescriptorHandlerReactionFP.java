@@ -50,6 +50,8 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 	private static final int HASH_BITS = 10;
 	private static final int HASH_INIT = 13;
 	private static final int DESCRIPTOR_SIZE = (1 << HASH_BITS);
+	private static final int PERIPHERY_LONG_COUNT = 8;
+	private static final int REACTION_CENTER_LONG_COUNT = 8;
 
     private static DescriptorHandlerReactionFP sDefaultInstance;
 
@@ -156,11 +158,30 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 		 || o2.length == 0)
 			return 0.0f;
 
-		int size = o1.length / 2;
-		float reactionCenterSimilarity = getSimilarityTanimoto(o1, o2, 0, size);
-		float nonReactionCenterSimilarity = getSimilarityTanimoto(o1, o2, size, o1.length);
+		float reactionCenterSimilarity = getSimilarityTanimoto(o1, o2, 0, REACTION_CENTER_LONG_COUNT);
+		float nonReactionCenterSimilarity = getSimilarityTanimoto(o1, o2, REACTION_CENTER_LONG_COUNT, o1.length);
 		return 0.8f * reactionCenterSimilarity + 0.2f*nonReactionCenterSimilarity;
 	}
+
+	public float getReactionCenterSimilarity(long[] o1, long[] o2) {
+		if (o1 == null
+		 || o2 == null
+		 || o1.length == 0
+		 || o2.length == 0)
+			return 0.0f;
+
+		return getSimilarityTanimoto(o1, o2, 0, REACTION_CENTER_LONG_COUNT);
+		}
+
+	public float getPeripherySimilarity(long[] o1, long[] o2) {
+		if (o1 == null
+		 || o2 == null
+		 || o1.length == 0
+		 || o2.length == 0)
+			return 0.0f;
+
+		return getSimilarityTanimoto(o1, o2, REACTION_CENTER_LONG_COUNT, o1.length);
+		}
 
 	public static float getSimilarityTanimoto(final long[] index1, final long[] index2, int i1, int i2) {
 		int sharedKeys = 0;
