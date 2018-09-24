@@ -239,6 +239,14 @@ public class Conformer {
 		}
 
 	/**
+	 * Copies this Conformer's atom coordinates to the associated molecule.
+	 * @return this conformer's associated StereoMolecule with updated coordinates
+	 */
+	public StereoMolecule toMolecule() {
+		return toMolecule(mMol);
+		}
+
+	/**
 	 * Copies this Conformer's atom coordinates to the given molecule.
 	 * If no molecule is given, then a compact copy of this conformer's
 	 * molecule is created and returned with this conformer's coordinates.

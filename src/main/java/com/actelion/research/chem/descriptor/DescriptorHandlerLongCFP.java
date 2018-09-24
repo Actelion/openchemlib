@@ -126,7 +126,7 @@ public class DescriptorHandlerLongCFP extends AbstractDescriptorHandlerLongFP<St
                 h = (h & BurtleHasher.hashmask(HASH_BITS));
 
 	            int index = len - h / Long.SIZE - 1;
-	            int bitNo = h % 32;
+	            int bitNo = h % 32;     // we need this strange 32 bit block handling to be compatible with the older 32-bit version
 	            if (h % 64 >= 32)
 	            	bitNo += 32;
 	            data[index] |= (1L << bitNo);

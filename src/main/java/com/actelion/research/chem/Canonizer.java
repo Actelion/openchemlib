@@ -3180,6 +3180,10 @@ System.out.println();
 		return (index < limit) ? index : index - limit;
 		}
 
+	public void invalidateCoordinates() {
+		mCoordinates = null;
+		}
+
 	/**
 	 * Encodes the molecule's atom coordinates into a compact String. Together with the
 	 * idcode the coordinate string can be passed to the IDCodeParser to recreate the

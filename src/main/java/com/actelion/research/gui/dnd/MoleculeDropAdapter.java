@@ -34,6 +34,7 @@
 package com.actelion.research.gui.dnd;
 
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.dnd.ChemistryFlavors;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -125,20 +126,20 @@ public class MoleculeDropAdapter implements DropTargetListener
 
     public DataFlavor[] getFlavors()
     {
-        return MoleculeFlavors.FLAVORS;
+        return ChemistryFlavors.MOLECULE_FLAVORS;
     }
 
 
     protected StereoMolecule createFromDataFlavor(DataFlavor chosen, Object o) throws Exception
     {
         StereoMolecule mol = null;
-        if (chosen.equals(MoleculeFlavors.DF_SERIALIZEDOBJECT) && o instanceof Molecule) {
+        if (chosen.equals(ChemistryFlavors.DF_SERIALIZED_MOLECULE) && o instanceof Molecule) {
             mol = new StereoMolecule((Molecule)o);
-        } else if (chosen.equals(MoleculeFlavors.DF_MDLMOLFILE)
+        } else if (chosen.equals(ChemistryFlavors.DF_MDLMOLFILE)
                    && o instanceof String) {
             mol = new StereoMolecule();
             new MolfileParser().parse(mol, (String)o);
-        } else if (chosen.equals(MoleculeFlavors.DF_SMILES) && o instanceof String) {
+        } else if (chosen.equals(ChemistryFlavors.DF_SMILES) && o instanceof String) {
             mol = new StereoMolecule();
             new SmilesParser().parse(mol, ((String)o).getBytes());
         } else if (chosen.equals(DataFlavor.stringFlavor) && o instanceof String) {
@@ -159,8 +160,8 @@ public class MoleculeDropAdapter implements DropTargetListener
             
     protected boolean isDragFlavorSupported(DropTargetDragEvent e)
     {
-        for (int i=0; i<MoleculeFlavors.FLAVORS.length; i++) {
-            if (e.isDataFlavorSupported(MoleculeFlavors.FLAVORS[i])) {
+        for (int i=0; i<ChemistryFlavors.MOLECULE_FLAVORS.length; i++) {
+            if (e.isDataFlavorSupported(ChemistryFlavors.MOLECULE_FLAVORS[i])) {
                 return true;
             }
         }
@@ -169,9 +170,9 @@ public class MoleculeDropAdapter implements DropTargetListener
 
     protected DataFlavor chooseDropFlavor(DropTargetDropEvent e)
     {
-        for (int i=0; i<MoleculeFlavors.FLAVORS.length; i++) {
-            if (e.isDataFlavorSupported(MoleculeFlavors.FLAVORS[i])) {
-                return MoleculeFlavors.FLAVORS[i];
+        for (int i=0; i<ChemistryFlavors.MOLECULE_FLAVORS.length; i++) {
+            if (e.isDataFlavorSupported(ChemistryFlavors.MOLECULE_FLAVORS[i])) {
+                return ChemistryFlavors.MOLECULE_FLAVORS[i];
             }
         }
         return null;

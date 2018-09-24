@@ -36,6 +36,7 @@ package com.actelion.research.gui.dnd;
 import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.Depictor2D;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.dnd.ChemistryFlavors;
 
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
@@ -191,7 +192,7 @@ public abstract class MoleculeDragAdapter implements DragSourceListener//,DragSo
         if (transferable instanceof MoleculeTransferable) {
             try {
                 MoleculeTransferable t = (MoleculeTransferable) transferable;
-                Object o = t.getTransferData(MoleculeFlavors.DF_SERIALIZEDOBJECT);
+                Object o = t.getTransferData(ChemistryFlavors.DF_SERIALIZED_MOLECULE);
                 if (o instanceof StereoMolecule) {
                     StereoMolecule mol = (StereoMolecule) o;
                     Depictor2D depict = new Depictor2D(mol);

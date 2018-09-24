@@ -191,7 +191,8 @@ public interface DescriptorConstants {
                                                 DESCRIPTOR_HashedCFp,
                                                 DESCRIPTOR_SkeletonSpheres,
                                                 DESCRIPTOR_OrganicFunctionalGroups,
-                                                DESCRIPTOR_Flexophore
+                                                DESCRIPTOR_Flexophore,
+												DESCRIPTOR_ReactionFP
                                                 };
 
     public static final DescriptorInfo[] DESCRIPTOR_EXTENDED_LIST = {

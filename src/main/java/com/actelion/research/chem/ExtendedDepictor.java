@@ -42,11 +42,16 @@ import java.awt.geom.Rectangle2D;
 
 
 public class ExtendedDepictor {
+	public static final int TYPE_MOLECULES = 0;
+	public static final int TYPE_REACTION = 1;
+	public static final int TYPE_MARKUSH = 2;
+
     private StereoMolecule[]		mMolecule,mCatalyst;
+    private Reaction				mReaction;
     private AbstractDepictor[]		mDepictor,mCatalystDepictor;
     private DrawingObjectList		mDrawingObjectList;
-    private int						mDisplayMode,mReactantOrCoreCount;
-    private boolean					mUseGraphics2D,mReactionLayoutNeeded,mIsMarkushStructure;
+    private int						mDisplayMode,mReactantCount,mMarkushCoreCount,mChemistryType;
+    private boolean					mUseGraphics2D,mReactionLayoutNeeded;
     private DepictorTransformation	mTransformation;
     private Color                   mFragmentNoColor;
 
@@ -55,19 +60,17 @@ public class ExtendedDepictor {
             mMolecule = new StereoMolecule[1];
             mMolecule[0] = mol;
             }
-        mIsMarkushStructure = false;
+		mChemistryType = TYPE_MOLECULES;
         mDrawingObjectList = drawingObjectList;
         mUseGraphics2D = useGraphics2D;
-        mReactantOrCoreCount = -1;
         initialize();
         }
 
     public ExtendedDepictor(StereoMolecule[] mol, DrawingObjectList drawingObjectList, boolean useGraphics2D) {
         mMolecule = mol;
-        mIsMarkushStructure = false;
+		mChemistryType = TYPE_MOLECULES;
         mDrawingObjectList = drawingObjectList;
         mUseGraphics2D = useGraphics2D;
-        mReactantOrCoreCount = -1;
         initialize();
         }
 
@@ -84,29 +87,34 @@ public class ExtendedDepictor {
      */
     public ExtendedDepictor(StereoMolecule[] mol, int markushCoreCount, DrawingObjectList drawingObjectList, boolean useGraphics2D) {
         mMolecule = mol;
-        mIsMarkushStructure = true;
+		mChemistryType = TYPE_MARKUSH;
         mDrawingObjectList = drawingObjectList;
         mUseGraphics2D = useGraphics2D;
-        mReactantOrCoreCount = markushCoreCount;
+        mMarkushCoreCount = markushCoreCount;
         initialize();
         }
 
     public ExtendedDepictor(Reaction reaction, DrawingObjectList drawingObjectList, boolean layoutReaction, boolean useGraphics2D) {
+		mReaction = reaction;
         if (reaction != null) {
             mMolecule = new StereoMolecule[reaction.getMolecules()];
             for (int i=0; i<reaction.getMolecules(); i++)
                 mMolecule[i] = reaction.getMolecule(i);
-            mReactantOrCoreCount = reaction.getReactants();
+            mReactantCount = reaction.getReactants();
 			mCatalyst = new StereoMolecule[reaction.getCatalysts()];
 	        for (int i=0; i<reaction.getCatalysts(); i++)
                 mCatalyst[i] = reaction.getCatalyst(i);
             mReactionLayoutNeeded = layoutReaction;
             }
-        mIsMarkushStructure = false;
+		mChemistryType = TYPE_REACTION;
         mDrawingObjectList = drawingObjectList;
         mUseGraphics2D = useGraphics2D;
         initialize();
         }
+
+    public boolean isFragment() {
+    	return mMolecule == null || mMolecule.length == 0 ? false : mMolecule[0].isFragment();
+		}
 
     private void initialize() {
             // for reactions and sets of molecules the availability of coordinates
@@ -149,6 +157,11 @@ public class ExtendedDepictor {
     public StereoMolecule getMolecule(int i) {
         return mMolecule[i];
         }
+
+    public Reaction getReaction() {
+    	// as long as we don't change the input reaction, we can just buffer it and return it
+		return mReaction;
+		}
 
     public AbstractDepictor getMoleculeDepictor(int i) {
         return mDepictor[i];
@@ -206,10 +219,9 @@ public class ExtendedDepictor {
                     cog.y = (int)mDepictor[i].getTransformation().transformY(cog.y);
 
 
-                    String str = (mReactantOrCoreCount == -1) ? "F"+(i+1)
-                                 : (i < mReactantOrCoreCount) ? ""+(char)('A'+i)
-                                 : (mIsMarkushStructure) ? "R"+(i+1-mReactantOrCoreCount)
-                                 :                        "P"+(i+1-mReactantOrCoreCount);
+                    String str = (mChemistryType == TYPE_MOLECULES) ? "F"+(i+1)
+                               : (mChemistryType == TYPE_MARKUSH) ? ((i < mMarkushCoreCount) ? ""+(char)('A'+i) : "R"+(i+1-mMarkushCoreCount))
+                               : (mChemistryType == TYPE_REACTION) ? ((i < mReactantCount) ? ""+(char)('A'+i) : "P"+(i+1-mReactantCount)) : "?"+(i+1);
                     int width = g.getFontMetrics().stringWidth(str);
                     g.drawString(str, cog.x-width/2, cog.y+(int)(0.3*g.getFontMetrics().getHeight()));
 
@@ -425,7 +437,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
 
         double rawX = 0.5 * spacing;
         for (int i=0; i<mMolecule.length; i++) {
-            if (i == mReactantOrCoreCount) {
+            if (i == mReactantCount) {
                 ((ReactionArrow)mDrawingObjectList.get(arrow)).setCoordinates(
                         rawX-spacing/2, totalHeight/2, rawX-spacing/2+arrowWidth, totalHeight/2);
 

@@ -91,9 +91,15 @@ public interface CompoundTableConstants {
     int cStructureHiliteModeCurrentRow = 1;
     int cStructureHiliteModeNone = 2;
     String[] cStructureHiliteModeText = { "Most Recent Filter", "Current Row Similarity", "No Highlighting" };
-    String[] cHiliteModeCode = { "hiliteFilter", "hiliteCurrent", "hiliteNone" };
+    String[] cStructureHiliteModeCode = { "hiliteFilter", "hiliteCurrent", "hiliteNone" };
 
-	String NEWLINE_REGEX = "\\r?\\n|\\r";	// regex for platform independent new line char(s)
+    // highlight mode for part-of-reaction highlighting depending on current record similarity
+    int cReactionHiliteModeReactionCenter = 0;
+    int cReactionHiliteModeNone = 2;
+    String[] cReactionHiliteModeText = { "Reaction Center", "No Highlighting" };
+    String[] cReactionHiliteModeCode = { "hiliteReactionCenter", "hiliteNone" };
+
+    String NEWLINE_REGEX = "\\r?\\n|\\r";	// regex for platform independent new line char(s)
 	String NEWLINE_STRING = "<NL>";	// used in .dwar, .txt and .cvs files to indicate next line within a cell
 	String TAB_STRING = "<TAB>";	// used in .dwar, .txt and .cvs files to indicate a tabulator within a cell
     String cEntrySeparator = "; ";

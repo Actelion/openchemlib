@@ -50,7 +50,6 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 	private static final int HASH_BITS = 10;
 	private static final int HASH_INIT = 13;
 	private static final int DESCRIPTOR_SIZE = (1 << HASH_BITS);
-	private static final int PERIPHERY_LONG_COUNT = 8;
 	private static final int REACTION_CENTER_LONG_COUNT = 8;
 
     private static DescriptorHandlerReactionFP sDefaultInstance;
@@ -83,6 +82,7 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 		final int len = DESCRIPTOR_SIZE / Long.SIZE;
 		long[] data = new long[len];
 
+//System.out.println("mol\tisProduct\tatom\tsphere\tisRC\thash\tindex\tbit\tidcode");
 		for (int m=0; m<rxn.getMolecules(); m++) {
 			StereoMolecule mol = rxn.getMolecule(m);
 			mol.ensureHelperArrays(Molecule.cHelperRings);
@@ -127,22 +127,22 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 					String idcode = new Canonizer(fragment).getIDCode();
 
 					// we want product fragments to create a different set of hash codes
-					if (m >= rxn.getProducts())
+					if (m >= rxn.getReactants())
 						idcode = idcode.concat("P");
 
-					int h = BurtleHasher.hashlittle(idcode, HASH_INIT);
-					h = (h & BurtleHasher.hashmask(HASH_BITS-1));		// '-1' divides the full bit span into two equal parts for reaction center and non-reaction center
+					int weight = SPHERE_COUNT - sphere;	// Smaller fragments have higher weights, which is achieved by a higher number of representing bits
+					for (int i=0; i<weight; i++) {
+						int h = BurtleHasher.hashlittle(idcode.concat(Integer.toString(i)), HASH_INIT);
+						h = (h & BurtleHasher.hashmask(HASH_BITS-1));		// '-1' divides the full bit span into two equal parts for reaction center and non-reaction center
 
-					// we put the non-reaction-center bits at the end
-					if (!isReactionCenterAtom[rootAtom])
-						h += (1 << (HASH_BITS-1));
+						// we put the non-reaction-center bits at the end; high h values translate into low indexes
+						if (isReactionCenterAtom[rootAtom])
+							h += (1 << (HASH_BITS-1));
 
-					int index = len - h / Long.SIZE - 1;
-					int bitNo = h % 32;
-					if (h % 64 >= 32)
-						bitNo += 32;
-					data[index] |= (1L << bitNo);
-	//System.out.println("atom:"+rootAtom+"\tsphere:"+sphere+"\thash:"+h+"\t"+idcode);
+						int index = len - h / Long.SIZE - 1;
+						data[index] |= (1L << (h % Long.SIZE));
+//System.out.println(""+m+"\t"+Boolean.toString(m >= rxn.getReactants())+"\t"+rootAtom+"\t"+sphere+"\t"+isReactionCenterAtom[rootAtom]+"\t"+h+"\t"+index+"\t"+(h % Long.SIZE)+"\t"+idcode);
+					}
 				}
 			}
 		}

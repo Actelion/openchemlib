@@ -35,7 +35,7 @@ package com.actelion.research.chem.dnd;
 
 import java.awt.datatransfer.DataFlavor;
 
-public class MoleculeFlavors
+public class ChemistryFlavors
 {
     static class MyFlavor extends DataFlavor
     {
@@ -52,16 +52,23 @@ public class MoleculeFlavors
         }
     }
 
-    public static final DataFlavor DF_SERIALIZEDOBJECT = new MyFlavor(com.actelion.research.chem.Molecule.class, "Actelion Molecule Class");
+    public static final DataFlavor DF_SERIALIZED_MOLECULE = new MyFlavor(com.actelion.research.chem.Molecule.class, "Native OpenChemLib Molecule");
     public static final DataFlavor DF_MDLMOLFILE = new DataFlavor("chemical/x-mdl-molfile;class=java.lang.String", "MDL Molfile");
     public static final DataFlavor DF_MDLMOLFILEV3 = new DataFlavor("chemical/x-mdl-molfilev3;class=java.lang.String", "MDL Molfile V3");
     public static final DataFlavor DF_SMILES = new DataFlavor("chemical/x-daylight-smiles;class=java.lang.String", "Daylight Smiles");
-    public static final DataFlavor[] FLAVORS = {
-//                DF_SERIALIZEDSTRUCTURETRANSFERDATA,
-        DF_SERIALIZEDOBJECT,
+    public static final DataFlavor[] MOLECULE_FLAVORS = {
+        DF_SERIALIZED_MOLECULE,
         DF_MDLMOLFILE,
         DF_MDLMOLFILEV3,
         DF_SMILES,
+        DataFlavor.stringFlavor
+    };
+
+    public static final DataFlavor DF_SERIALIZED_REACTION = new MyFlavor(com.actelion.research.chem.reaction.Reaction.class, "Native OpenChemLib Reaction");
+    public static final DataFlavor DF_REACTION_SMILES = new DataFlavor("chemical/x-daylight-smiles;class=java.lang.String", "Daylight Reaction Smiles");
+    public static final DataFlavor[] REACTION_FLAVORS = {
+        DF_SERIALIZED_REACTION,
+        DF_REACTION_SMILES,
         DataFlavor.stringFlavor
     };
 }

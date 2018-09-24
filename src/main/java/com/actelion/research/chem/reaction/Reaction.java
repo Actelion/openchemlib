@@ -61,6 +61,21 @@ public class Reaction implements java.io.Serializable {
 		mName = name;
 		}
 
+	public void clear() {
+		mReactant.clear();
+		mProduct.clear();
+		mCatalyst.clear();
+		mDrawingObjectList = null;
+		}
+
+	public void removeCatalysts() {
+		mCatalyst.clear();
+		}
+
+	public void removeDrawingObjects() {
+		mDrawingObjectList = null;
+		}
+
 	public boolean isEmpty() {
 		for (StereoMolecule mol:mReactant)
 			if (mol.getAllAtoms() != 0)
@@ -77,15 +92,34 @@ public class Reaction implements java.io.Serializable {
 		return true;
 		}
 
+	/**
+	 * Sets all reactants and products of this reaction to the given fragment state, i.e. whether they are considered
+	 * molecules with all valences satisfied with hydrogens or whether they are substructure fragments that can have query features.
+	 * @param f
+	 */
+	public void setFragment(boolean f) {
+		for (StereoMolecule mol:mReactant)
+			mol.setFragment(f);
+
+		for (StereoMolecule mol:mProduct)
+			mol.setFragment(f);
+		}
+
 	public Reaction(Reaction rxn) {
 		this();
 		int r = (rxn == null) ? 0 : (rxn.mReactant == null ? 0 : rxn.mReactant.size());
 		int p = (rxn == null) ? 0 : (rxn.mProduct == null ? 0 : rxn.mProduct.size());
+		int c = (rxn == null) ? 0 : (rxn.mCatalyst == null ? 0 : rxn.mCatalyst.size());
 		for (int i = 0; i < r; i++)
 			mReactant.add(new StereoMolecule(rxn.getReactant(i)));
 		for (int i = 0; i < p; i++)
 			mProduct.add(new StereoMolecule(rxn.getProduct(i)));
+		for (int i = 0; i < c; i++)
+			mCatalyst.add(new StereoMolecule(rxn.getCatalyst(i)));
 		mDrawingObjectList = new DrawingObjectList(rxn.getDrawingObjects());
+		if (rxn.mName != null)
+			mName = new String(rxn.mName);
+		mReactionLayoutRequired = rxn.mReactionLayoutRequired;
 		}
 
 	public Reaction(StereoMolecule[] mol, int reactantCount) {

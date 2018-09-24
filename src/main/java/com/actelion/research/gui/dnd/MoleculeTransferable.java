@@ -34,6 +34,7 @@
 package com.actelion.research.gui.dnd;
 
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.dnd.ChemistryFlavors;
 
 import java.awt.datatransfer.*;
 import java.io.IOException;
@@ -42,7 +43,7 @@ import java.util.List;
 
 public class MoleculeTransferable implements Transferable,ClipboardOwner 
 {
-        private static final List cFlavorList = Arrays.asList( MoleculeFlavors.FLAVORS );
+        private static final List cFlavorList = Arrays.asList( ChemistryFlavors.MOLECULE_FLAVORS);
         protected StereoMolecule mMol;
 
         public MoleculeTransferable(StereoMolecule mol) {
@@ -50,30 +51,28 @@ public class MoleculeTransferable implements Transferable,ClipboardOwner
                 }
         public synchronized DataFlavor[] getTransferDataFlavors() {
 //            System.out.println("Moleculetransferable getTransferFlavors");
-                return MoleculeFlavors.FLAVORS;
+                return ChemistryFlavors.MOLECULE_FLAVORS;
                 }
 
         public boolean isDataFlavorSupported( DataFlavor flavor ) {
 //            System.out.println("Moleculetransferable  isdataflavor supported : " + flavor);
 //                return (cFlavorList.contains(flavor));
-            for (int i = 0; i<MoleculeFlavors.FLAVORS.length;i++) {
-                if (MoleculeFlavors.FLAVORS.equals(flavor))
-                return true;
-            }
-            return false;
-                }
+            for (DataFlavor f:ChemistryFlavors.MOLECULE_FLAVORS)
+                if (f.equals(flavor))
+                    return true;
 
-        public synchronized Object getTransferData(DataFlavor flavor)
-                                        throws UnsupportedFlavorException,IOException 
-    {
+            return false;
+            }
+
+        public synchronized Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException,IOException {
 //        System.out.println("MoleculeTransferable flavor " + flavor);
-        if (flavor.equals(MoleculeFlavors.DF_SERIALIZEDOBJECT)) {
+        if (flavor.equals(ChemistryFlavors.DF_SERIALIZED_MOLECULE)) {
             return new StereoMolecule(mMol);
-        } else if (flavor.equals(MoleculeFlavors.DF_MDLMOLFILEV3)) {
+        } else if (flavor.equals(ChemistryFlavors.DF_MDLMOLFILEV3)) {
             return new MolfileV3Creator(mMol).getMolfile();
-        } else if (flavor.equals(MoleculeFlavors.DF_MDLMOLFILE)) {
+        } else if (flavor.equals(ChemistryFlavors.DF_MDLMOLFILE)) {
             return new MolfileCreator(mMol).getMolfile();
-        } else if (flavor.equals(MoleculeFlavors.DF_SMILES)) {
+        } else if (flavor.equals(ChemistryFlavors.DF_SMILES)) {
             return new IsomericSmilesCreator(mMol).getSmiles();
         } else if (flavor.equals(DataFlavor.stringFlavor)) {
             return new Canonizer(mMol).getIDCode();
