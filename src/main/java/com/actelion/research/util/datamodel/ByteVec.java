@@ -547,8 +547,8 @@ public class ByteVec implements Comparable<ByteVec>, Serializable {
 
         int bitsOR = 0, bitsXOR = 0;
         for (int i = 0; i < bv1.data.length; i++) {
-            bitsOR += BitUtils.bitCount(bv1.data[i] | bv2.data[i]);
-            bitsXOR += BitUtils.bitCount(bv1.data[i] & bv2.data[i]);
+            bitsOR += Integer.bitCount(bv1.data[i] | bv2.data[i]);
+            bitsXOR += Integer.bitCount(bv1.data[i] & bv2.data[i]);
         }
 
         if(bitsXOR == 0)
@@ -565,7 +565,7 @@ public class ByteVec implements Comparable<ByteVec>, Serializable {
     	
     	for (int i = 0; i < data.length; i++) {
     		int t = data[i];
-    		n += BitUtils.bitCount(t);
+    		n += Integer.bitCount(t);
 		}
     	
     	return n;

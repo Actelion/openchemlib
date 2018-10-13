@@ -220,6 +220,9 @@ public class MCS
 	
 	/**
 	 * Checks first fragment for being sub structure of molecule. If true, frag is returned.
+	 * The returned IntVec contains the bond information of frag. The IntVec is used bit wise. Each bit corresponds to
+	 * one bond in the fragment. The information for the matching substructure in the molecule is not contained in the
+	 * IntVec.
      *
 	 * @return
 	 */
@@ -228,7 +231,9 @@ public class MCS
 		sss.setMolecule(mol);
 		frag.setFragment(true);
 		sss.setFragment(frag);
+		//
 		// The MCS is the complete fragment.
+		//
 		try {
             if (sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cMatchDBondToDelocalized, excluded) > 0) {
 				molMCS = frag;
@@ -243,13 +248,13 @@ public class MCS
 				}
             }
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		int maxSizeCandidates = 0;
 		while(!hsIndexFragCandidates.isEmpty()){
 			List<IntVec> liIndexFragCandidates = new ArrayList<IntVec>(hsIndexFragCandidates);
 			Collections.sort(liIndexFragCandidates, comparatorBitsSet);
+			// Get largest mcs.
 			IntVec iv = liIndexFragCandidates.get(liIndexFragCandidates.size()-1);
 			hsIndexFragCandidates.remove(iv);
 			if(DEBUG) {
@@ -339,12 +344,13 @@ public class MCS
     public boolean[][] getMCSBondArray(boolean[] arrBondMCSMol, boolean[] arrBondFrag)
     {
 		boolean [][] arrBondMol_Result = new boolean [2][];
-		List<IntVec> liIndexFragSolution = getAllSolutionsForCommonSubstructures ();
+		List<IntVec> liIndexFragSolution = getAllSolutionsForCommonSubstructures();
 		if(liIndexFragSolution==null){
 			return null;
 		}
 		Collections.sort(liIndexFragSolution, comparatorBitsSet);
-		IntVec ivMCS = liIndexFragSolution.get(liIndexFragSolution.size()-1);
+		// Get largest mcs.
+		IntVec ivMCSLargest = liIndexFragSolution.get(liIndexFragSolution.size()-1);
 		int bonds = frag.getBonds();
 		if(arrBondFrag == null){
 			arrBondFrag = new boolean [bonds];
@@ -352,12 +358,15 @@ public class MCS
 			Arrays.fill(arrBondFrag, false);
 		}
 		for (int i = 0; i < bonds; i++) {
-			if(ivMCS.isBitSet(i)){
+			if(ivMCSLargest.isBitSet(i)){
 				arrBondFrag[i]=true;
 			}
 		}		
-		StereoMolecule fragSub = getSubFrag(frag, ivMCS);
+		StereoMolecule fragSub = getSubFrag(frag, ivMCSLargest);
 		sss.setFragment(fragSub);
+		//
+		// The substructure has to be searched in the molecule because the mapping indices are not contained in the
+		// IntVec that is the solution from the MCS search.
 		if(sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cDefaultMatchMode,excluded)>0){
 			ArrayList<int[]> liMatchSubFrag2Mol = sss.getMatchList();
 			int [] arrMatchListFrag2Mol = getMappedMatchListFrag2Mol(fragSub, liMatchSubFrag2Mol.get(0));

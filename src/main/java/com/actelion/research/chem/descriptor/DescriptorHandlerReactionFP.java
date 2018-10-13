@@ -77,7 +77,7 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 
 	    boolean[] isReactionCenterMapNo = rxn.getReactionCenterMapNos();
 		if (isReactionCenterMapNo == null)
-			return null;
+			return FAILED_OBJECT;
 
 		final int len = DESCRIPTOR_SIZE / Long.SIZE;
 		long[] data = new long[len];

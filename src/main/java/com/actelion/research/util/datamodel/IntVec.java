@@ -251,7 +251,7 @@ public class IntVec implements Comparable<IntVec> {
     static public double getEuclidDistBitWise(IntVec iv1, IntVec iv2) {
         int bitsXOR = 0;
         for (int ii = 0; ii < iv1.data.length; ii++) {
-            bitsXOR += BitUtils.bitCount(iv1.data[ii] ^ iv2.data[ii]);
+            bitsXOR += Integer.bitCount(iv1.data[ii] ^ iv2.data[ii]);
         }
         return Math.sqrt(bitsXOR);
     }
@@ -469,7 +469,7 @@ public class IntVec implements Comparable<IntVec> {
     public int getBitsSet(){
     	int sum = 0;
 	    for (int i = 0; i < data.length; i++) {
-	        sum += BitUtils.bitCount(data[i]);
+	        sum += Integer.bitCount(data[i]);
 	    }
 	    return sum;
     }
@@ -1303,9 +1303,9 @@ public class IntVec implements Comparable<IntVec> {
 
         for (int ii = 0; ii < iv1.data.length; ii++) {
 
-            bitsOR += BitUtils.bitCount(iv1.data[ii] | iv2.data[ii]);
+            bitsOR += Integer.bitCount(iv1.data[ii] | iv2.data[ii]);
 
-            bitsAND += BitUtils.bitCount(iv1.data[ii] & iv2.data[ii]);
+            bitsAND += Integer.bitCount(iv1.data[ii] & iv2.data[ii]);
         }
 
         if(bitsAND == 0)
@@ -1326,8 +1326,8 @@ public class IntVec implements Comparable<IntVec> {
 
         int bitsOR = 0, bitsAND = 0;
         for (int ii = 0; ii < arr1.length; ii++) {
-            bitsOR += BitUtils.bitCount(arr1[ii] | arr2[ii]);
-            bitsAND += BitUtils.bitCount(arr1[ii] & arr2[ii]);
+            bitsOR += Integer.bitCount(arr1[ii] | arr2[ii]);
+            bitsAND += Integer.bitCount(arr1[ii] & arr2[ii]);
         }
 
         if(bitsAND == 0)
@@ -1477,7 +1477,7 @@ public class IntVec implements Comparable<IntVec> {
             bitsCommon = query[i] | base[i];
             bitsOnlyInQuery = bitsCommon ^ base[i];
 
-            sc += (double) BitUtils.bitCount(bitsOnlyInQuery) / (double) BitUtils.bitCount(query[i]);
+            sc += (double) Integer.bitCount(bitsOnlyInQuery) / (double) Integer.bitCount(query[i]);
         }
         sc /= (double)query.length;
 
@@ -1501,7 +1501,7 @@ public class IntVec implements Comparable<IntVec> {
             int bitsTotalInV1 = v1.data[i] | v2.data[i];
 
             if(bitsTotalInV1 != 0) {
-                sc += (double) BitUtils.bitCount(bitsCommon) / (double) BitUtils.bitCount(bitsTotalInV1);
+                sc += (double) Integer.bitCount(bitsCommon) / (double) Integer.bitCount(bitsTotalInV1);
             }
             cc++;
         }
@@ -1564,7 +1564,7 @@ public class IntVec implements Comparable<IntVec> {
             int bitsCommon = query.data[i] & base.data[i];
 
             if(query.data[i] != 0) {
-                sc += (double) BitUtils.bitCount(bitsCommon) / (double) BitUtils.bitCount(query.data[i]);
+                sc += (double) Integer.bitCount(bitsCommon) / (double) Integer.bitCount(query.data[i]);
             }
         }
 
