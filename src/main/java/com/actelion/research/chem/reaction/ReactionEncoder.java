@@ -416,8 +416,8 @@ public class ReactionEncoder
 			idcodeIndex = (delimiterIndex == -1) ? -1 : delimiterIndex + 1;
 
 			int mappingStart = -1;
-			if (rxnMapping != null && rxnMapping.length != 0) {
-				mappingStart = mappingIndex;
+			if (rxnMapping != null && mappingIndex < rxnMapping.length) {
+				mappingStart = (rxnMapping[mappingIndex] == MOLECULE_DELIMITER) ? -1 : mappingIndex;
 				delimiterIndex = indexOf(rxnMapping, MOLECULE_DELIMITER, mappingIndex);
 				if (delimiterIndex != -1)
 					mappingIndex = delimiterIndex + 1;

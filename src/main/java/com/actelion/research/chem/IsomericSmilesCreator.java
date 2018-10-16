@@ -339,6 +339,7 @@ public class IsomericSmilesCreator {
 				|| qualifiesForAtomParity(atom)
 				|| charge != 0
 				|| isotop != 0
+				|| mMol.getAtomAbnormalValence(atom) != -1
 				|| (mMol.isAromaticAtom(atom) && mMol.getAtomPi(atom)==0 && mMol.getImplicitHydrogens(atom)!=0);
 
 		if (useBrackets)
