@@ -34,7 +34,6 @@
 package com.actelion.research.chem.descriptor;
 
 import com.actelion.research.chem.SSSearcherWithIndex;
-import com.actelion.research.chem.reaction.ReactionSearcher;
 
 public interface DescriptorConstants {
     public static final int DESCRIPTOR_TYPE_UNKNOWN = -1;

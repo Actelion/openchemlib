@@ -184,6 +184,9 @@ public class Platform
         	String path = "/opt/actelion/"+name+"/"+name;
         	if (new File(path).exists())
         		return path;
+			path = "/opt/idorsia/"+name+"/"+name;
+			if (new File(path).exists())
+				return path;
         	path = "/opt/"+name+"/"+name;
         	if (new File(path).exists())
         		return path;

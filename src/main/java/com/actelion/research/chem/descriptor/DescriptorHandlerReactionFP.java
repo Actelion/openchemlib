@@ -37,9 +37,7 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
-import com.actelion.research.chem.reaction.ReactionSearcher;
 import com.actelion.research.util.BurtleHasher;
-import com.actelion.research.util.datamodel.IntVec;
 
 import java.util.Arrays;
 

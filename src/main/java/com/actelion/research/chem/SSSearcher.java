@@ -159,7 +159,7 @@ public class SSSearcher {
 	 * @param molecule
 	 */
 	public void setMolecule(StereoMolecule molecule) {
-		if (molecule.getAllAtoms() == 0) {
+		if (molecule == null || molecule.getAllAtoms() == 0) {
 			mMolecule = null;
 			return;
 			}
@@ -176,7 +176,7 @@ public class SSSearcher {
 	 * @param fragment
 	 */
 	public void setFragment(StereoMolecule fragment) {
-		if (fragment.getAllAtoms() == 0 || !fragment.isFragment()) {
+		if (fragment == null || fragment.getAllAtoms() == 0 || !fragment.isFragment()) {
 			mFragment = null;
 			return;
 			}
@@ -582,7 +582,7 @@ System.out.println();
 		}
 
 
-	protected boolean areAtomsSimilar(int moleculeAtom, int fragmentAtom) {
+	public boolean areAtomsSimilar(int moleculeAtom, int fragmentAtom) {
 		int moleculeConnAtoms = mMolecule.getConnAtoms(moleculeAtom);
 		int fragmentConnAtoms = mFragmentConnAtoms[fragmentAtom];
 
@@ -1046,7 +1046,7 @@ System.out.println();
 	 * @param fragmentBond flag list of molecule bond features (features allowed)
 	 * @return true if all molecule bond features are present in fragment bond
 	 */
-	protected boolean areBondsSimilar(int moleculeBond, int fragmentBond) {
+	public boolean areBondsSimilar(int moleculeBond, int fragmentBond) {
 		if ((mMoleculeBondFeatures[moleculeBond] & ~mFragmentBondFeatures[fragmentBond]) != 0)
 			return false;
 
@@ -1123,7 +1123,7 @@ System.out.println();
 		}
 
 
-	private void setupAtomAndBondFeatures(int matchMode) {
+	public void setupAtomAndBondFeatures(int matchMode) {
 		if (!mMoleculeFeaturesValid) {
 			setupMoleculeFeatures(matchMode);
 			mMoleculeFeaturesValid = true;
