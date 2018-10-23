@@ -312,9 +312,9 @@ public class Molecule implements Serializable {
 		"Ta" ,"W"  ,"Re" ,"Os" ,"Ir" ,"Pt" ,"Au" ,"Hg" ,
 		"Tl" ,"Pb" ,"Bi" ,"Po" ,"At" ,"Rn" ,"Fr" ,"Ra" ,
 		"Ac" ,"Th" ,"Pa" ,"U"  ,"Np" ,"Pu" ,"Am" ,"Cm" ,
-		"Bk" ,"Cf" ,"Es" ,"Fm" ,"Md" ,"No" ,"Lr" ,"??" ,
-		"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,
-		"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,
+		"Bk" ,"Cf" ,"Es" ,"Fm" ,"Md" ,"No" ,"Lr" ,"Rf" ,
+		"Db" ,"Sg" ,"Bh" ,"Hs" ,"Mt" ,"Ds" ,"Rg" ,"Cn" ,
+		"Nh" ,"Fl" ,"Mc" ,"Lv" ,"Ts" ,"Og" ,"??" ,"??" ,
 		"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,"??" ,
 		"R4" ,"R5" ,"R6" ,"R7" ,"R8" ,"R9" ,"R10","R11",	// R4 to R16 do not belong to the MDL set
 		"R12","R13","R14","R15","R16","R1" ,"R2" ,"R3" ,
@@ -339,13 +339,13 @@ public class Molecule implements Serializable {
 	   0,	152,	153,	158,	159,	164,   //  Pm ,Sm ,Eu ,Gd ,Tb ,Dy ,
 	 165,	166,	169,	174,	175,	180,   //  Ho ,Er ,Tm ,Yb ,Lu ,Hf ,
 	 181,	184,	187,	192,	193,	195,   //  Ta ,W , Re ,Os ,Ir ,Pt ,
-	 197,	202,	205,	208,	209,	  0,   //  Au ,Hg ,Tl ,Pb ,Bi ,Po ,
-	   0,	  0,	  0,	  0,	  0,	232,   //  At ,Rn ,Fr ,Ra ,Ac ,Th ,
-	   0,	238,	  0,	  0,	  0,	  0,   //  Pa ,U , Np ,Pu ,Am ,Cm ,
-	   0,	  0,	  0,	  0,	  0,	  0,   //  Bk ,Cf ,Es ,Fm ,Md ,No ,
-	   0,	  0,	  0,	  0,	  0,	  0,   //  Lr ,?? ,?? ,?? ,?? ,?? ,
-	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
-	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
+	 197,	202,	205,	208,	209,	209,   //  Au ,Hg ,Tl ,Pb ,Bi ,Po ,
+	 210,	222,	223,	226,	227,	232,   //  At ,Rn ,Fr ,Ra ,Ac ,Th ,
+	 231,	238,	237,	244,	243,	247,   //  Pa ,U , Np ,Pu ,Am ,Cm ,
+	 247,	251,	252,	257,	258,	259,   //  Bk ,Cf ,Es ,Fm ,Md ,No ,
+	 262,	267,	268,	271,	270,	277,   //  Lr ,Rf ,Db ,Sg ,Bh ,Hs ,
+	 276,	281,	281,	283,	285,	289,   //  Mt ,Ds ,Rg ,Cn ,Nh ,Fl ,
+	 289,	293,	294,	294,	  0,	  0,   //  Mc ,Lv ,Ts ,Og ,?? ,?? ,
 	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,?? ,?? ,?? ,?? ,
 	   0,	  0,	  0,	  0,	  0,	  0,   //  ?? ,?? ,R4 ,R5 ,R6 ,R7 ,
 	   0,	  0,	  0,	  0,	  0,	  0,   //  R8 ,R9 ,R10,R11,R12,R13,
@@ -374,7 +374,7 @@ public class Molecule implements Serializable {
 			null, null, null, null, null, null, null, null, null, null, // Fr to Cm
 			null, null, null, null, null, null, null, null, null, null, // Bk to Sg
 			null, null, null, null, null, null, null, null, null, null, // Bh to Lv
-			null, null, null, null, null, null, null, null, null, null, // Uus to 126
+			null, null, null, null, null, null, null, null, null, null, // Ts to 126
 			null, null, null, null, null, null, null, null, null, null,	// 127 to R5
 			null, null, null, null, null, null, null, null, null, null, // R6 to R15
 			null, null, null, null, null, null, null, null, null, null,	// R16 to 156
