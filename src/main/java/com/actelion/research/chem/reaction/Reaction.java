@@ -108,6 +108,20 @@ public class Reaction implements java.io.Serializable {
 			mol.setFragment(f);
 		}
 
+	/**
+	 * The naming of this method is in analogy to the corresponding method of the Molecule class.
+	 * @return whether at least one of the reactants or products is marked as substructure fragment.
+	 */
+	public boolean isFragment() {
+		for (StereoMolecule mol:mReactant)
+			if (mol.isFragment())
+				return true;
+		for (StereoMolecule mol:mProduct)
+			if (mol.isFragment())
+				return true;
+		return false;
+		}
+
 	public Reaction(Reaction rxn) {
 		this();
 		int r = (rxn == null) ? 0 : (rxn.mReactant == null ? 0 : rxn.mReactant.size());
@@ -477,13 +491,24 @@ public class Reaction implements java.io.Serializable {
 		}
 
 	/**
-	 * Merges all reactants of this reaction into one reactant molecule and merges all product molecules the same way into one molecule.
+	 * Merges all reactants into one molecule and all rpoducts into another ad creates a new Reaction object from those.
+	 * @return new reaction from merged reactants and merged products
 	 */
-	public void merge() {
-		while (mReactant.size() > 1)
-			mReactant.get(0).copyMolecule(mReactant.remove(1));
-		while (mProduct.size() > 1)
-			mProduct.get(0).copyMolecule(mProduct.remove(1));
+	public Reaction getMergedCopy() {
+		Reaction mergedReaction = new Reaction();
+		if (mReactant.size() != 0) {
+			StereoMolecule reactant = new StereoMolecule(mReactant.get(0));
+			for (int i=1; i<mReactant.size(); i++)
+				mReactant.get(i).copyMolecule(reactant);
+			mergedReaction.addReactant(reactant);
+			}
+		if (mProduct.size() != 0) {
+			StereoMolecule product = new StereoMolecule(mProduct.get(0));
+			for (int i=1; i<mProduct.size(); i++)
+				mProduct.get(i).copyMolecule(product);
+			mergedReaction.addProduct(product);
+			}
+		return mergedReaction;
 		}
 
 	/*	public void removeEmptyMolecules() {

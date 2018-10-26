@@ -397,20 +397,17 @@ public class ReactionEncoder
 		boolean reactionLayoutRequired = false;
 
 		int productIndex = indexOf(rxnCode, PRODUCT_IDENTIFIER);
-		if (productIndex == -1) {
+		if (productIndex == -1)
 			return null;
-		}
 
 		Reaction rxn = new Reaction();
 		while (idcodeIndex != -1) {
-			if (idcodeIndex > productIndex) {
+			if (idcodeIndex > productIndex)
 				isProduct = true;
-			}
 
 			int delimiterIndex = indexOf(rxnCode, MOLECULE_DELIMITER, idcodeIndex);
-			if (!isProduct && (delimiterIndex > productIndex || delimiterIndex == -1)) {
+			if (!isProduct && (delimiterIndex > productIndex || delimiterIndex == -1))
 				delimiterIndex = productIndex;
-			}
 
 			int idcodeStart = idcodeIndex;
 			idcodeIndex = (delimiterIndex == -1) ? -1 : delimiterIndex + 1;
@@ -437,15 +434,13 @@ public class ReactionEncoder
 			if (!reactionLayoutRequired && (coordsStart == -1 || !parser.coordinatesAreAbsolute(rxnCoords, coordsStart)))
 				reactionLayoutRequired = true;
 
-			if (mappingStart != -1) {
+			if (mappingStart != -1)
 				parser.parseMapping(rxnMapping, mappingStart);
-			}
 
-			if (isProduct) {
+			if (isProduct)
 				rxn.addProduct(mol);
-			} else {
+			else
 				rxn.addReactant(mol);
-			}
 		}
 
 		if (rxnObjects != null && rxnObjects.length() != 0) {
@@ -587,7 +582,7 @@ public class ReactionEncoder
 	}
 
 	/**
-	 * Generates an array of all products of the encoded reaction string as bytes.
+	 * Generates an array of all reactants and/or products of the encoded reaction string as bytes.
 	 * If the string includes atom coordinates or if they are explicitly, these are used.
 	 * At least one of includeReactants and includeProducts must be true.
 	 * @param rxnBytes may contain atom coordinates
