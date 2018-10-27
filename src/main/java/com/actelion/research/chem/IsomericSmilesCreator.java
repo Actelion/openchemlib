@@ -41,6 +41,7 @@ public class IsomericSmilesCreator {
 	private StereoMolecule mMol;
 	private Canonizer mCanonizer;
 	private String mSmiles;
+	private boolean mIncludeMapping;
 	private int[] mAtomRank;
 	private int[] mClosureNumber;
 	private int[] mSmilesIndex;
@@ -52,8 +53,22 @@ public class IsomericSmilesCreator {
 	private boolean[] mPseudoStereoGroupInversion;
 	private boolean[] mPseudoStereoGroupInitialized;
 
+	/**
+	 * Creates an IsomericSmilesCreator, which doesn't include atom mapping into generated smiles.
+	 * @param mol
+	 */
 	public IsomericSmilesCreator(StereoMolecule mol) {
+		this(mol, false);
+	}
+
+	/**
+	 * Creates an IsomericSmilesCreator, which may include atom mapping numbers into generated smiles.
+	 * @param mol
+	 * @param includeAtomMapping
+	 */
+	public IsomericSmilesCreator(StereoMolecule mol, boolean includeAtomMapping) {
 		mMol = mol;
+		mIncludeMapping = includeAtomMapping;
 	}
 
 	public String getSmiles() {
@@ -334,11 +349,13 @@ public class IsomericSmilesCreator {
 
 		int charge = mMol.getAtomCharge(atom);
 		int isotop = mMol.getAtomMass(atom);
+		int mapNo = mIncludeMapping ? mMol.getAtomMapNo(atom) : 0;
 
 		boolean useBrackets = !isOrganic(mMol.getAtomicNo(atom))
 				|| qualifiesForAtomParity(atom)
 				|| charge != 0
 				|| isotop != 0
+				|| mapNo != 0
 				|| mMol.getAtomAbnormalValence(atom) != -1
 				|| (mMol.isAromaticAtom(atom) && mMol.getAtomPi(atom)==0 && mMol.getImplicitHydrogens(atom)!=0);
 
@@ -366,6 +383,11 @@ public class IsomericSmilesCreator {
 			builder.append(charge > 0 ? '+' : '-');
 			if (Math.abs(charge) > 1)
 				builder.append(Integer.toString(Math.abs(charge)));
+		}
+
+		if (mapNo != 0) {
+			builder.append(':');
+			builder.append(Integer.toString(mapNo));
 		}
 
 		if (useBrackets)

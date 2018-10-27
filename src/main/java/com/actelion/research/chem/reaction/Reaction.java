@@ -79,6 +79,9 @@ public class Reaction implements java.io.Serializable {
 		mDrawingObjectList = null;
 		}
 
+	/**
+	 * @return true, if neither of reactants, products, or catalysts contain any atoms
+	 */
 	public boolean isEmpty() {
 		for (StereoMolecule mol:mReactant)
 			if (mol.getAllAtoms() != 0)
