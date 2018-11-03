@@ -40,7 +40,6 @@ public class TautomerHelper {
 	private boolean[] mChainNeedsDoubleBond;
 	private boolean[] mChainNeedsDonorAtom;
 	private boolean[] mIsTautomerBond;
-	private int[] mAtomRegionNo;
 	private int[] mRegionPiCount;
 	private int[] mRegionDCount;
 	private int[] mRegionTCount;
@@ -53,6 +52,22 @@ public class TautomerHelper {
 		mChainNeedsDoubleBond = new boolean[mMol.getAtoms()];
 		mChainNeedsDonorAtom = new boolean[mMol.getAtoms()];
 		mIsTautomerBond = new boolean[mMol.getBonds()];
+		}
+
+	/**
+	 * Identifies connected tautomeric regions and assign region numbers to all atoms.
+	 * Atoms sharing the same region share the same number.<br>
+	 * 0: not member of a tautomer region; 1 and above: region number
+	 * @param atomRegionNo int[mol.getAtoms()] filled with 0
+	 * @param keepStereoCenters
+	 * @return region count
+	 */
+	public int getAtomRegionNumbers(int[] atomRegionNo, boolean keepStereoCenters) {
+		if (!findTautomericBonds(keepStereoCenters))
+			return 0;
+
+		int regionCount = assignRegionNumbers(atomRegionNo);
+		return regionCount;
 		}
 
 	/**
@@ -87,15 +102,16 @@ public class TautomerHelper {
 			    }
 		    }
 
-		int regionCount = assignRegionNumbers();
+		int[] atomRegionNo = new int[mMol.getAtoms()];
+		int regionCount = assignRegionNumbers(atomRegionNo);
 
 		// find highest ranking atom in every region
 		int[] maxAtom = new int[regionCount];
 		int[] maxRank = new int[regionCount];
 		int[] atomRank = new Canonizer(genericTautomer).getFinalRank();
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (mAtomRegionNo[atom] != 0) {
-				int regionIndex = mAtomRegionNo[atom]-1;
+			if (atomRegionNo[atom] != 0) {
+				int regionIndex = atomRegionNo[atom]-1;
 				if (maxRank[regionIndex] < atomRank[atom]) {
 					maxRank[regionIndex] = atomRank[atom];
 					maxAtom[regionIndex] = atom;
@@ -104,7 +120,7 @@ public class TautomerHelper {
 			}
 
 		// attach label with region counts to highest ranking atoms
-		compileRegionCounts(regionCount);
+		compileRegionCounts(atomRegionNo, regionCount);
 		for (int i=0; i<regionCount; i++) {
 			String label = ""+mRegionPiCount[i]+"|"+mRegionDCount[i]+"|"+mRegionTCount[i];
 			genericTautomer.setAtomCustomLabel(maxAtom[i], label);
@@ -118,11 +134,10 @@ public class TautomerHelper {
 	 * All independent tautomer regions are located and member atoms assigned to them.
 	 * mAtomRegionNo[] is set accordingly.
 	 * 0: not member of a tautomer region; 1 and above: region number
+	 * @param atomRegionNo int[mol.getAtoms()] filled with 0
 	 * @return number of found tautomer regions
 	 */
-	private int assignRegionNumbers() {
-		mAtomRegionNo = new int[mMol.getAtoms()];
-
+	private int assignRegionNumbers(int[] atomRegionNo) {
 		int[] graphAtom = new int[mMol.getAtoms()];
 		boolean[] bondWasSeen = new boolean[mMol.getBonds()];
 		int region = 0;
@@ -130,12 +145,12 @@ public class TautomerHelper {
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			if (!bondWasSeen[bond] && mIsTautomerBond[bond]) {
 				region++;
-				mAtomRegionNo[mMol.getBondAtom(0, bond)] = region;
-				mAtomRegionNo[mMol.getBondAtom(1, bond)] = region;
+				atomRegionNo[mMol.getBondAtom(0, bond)] = region;
+				atomRegionNo[mMol.getBondAtom(1, bond)] = region;
 				bondWasSeen[bond] = true;
 				for (int i=0; i<2; i++) {
 					int atom = mMol.getBondAtom(i, bond);
-					mAtomRegionNo[atom] = region;
+					atomRegionNo[atom] = region;
 					int current = 0;
 					int highest = 0;
 					graphAtom[0] = atom;
@@ -145,8 +160,8 @@ public class TautomerHelper {
 							if (!bondWasSeen[connBond] && mIsTautomerBond[connBond]) {
 								bondWasSeen[connBond] = true;
 								int connAtom = mMol.getConnAtom(graphAtom[current], j);
-								if (mAtomRegionNo[connAtom] == 0) {
-									mAtomRegionNo[connAtom] = region;
+								if (atomRegionNo[connAtom] == 0) {
+									atomRegionNo[connAtom] = region;
 									graphAtom[++highest] = connAtom;
 									}
 								}
@@ -163,15 +178,16 @@ public class TautomerHelper {
 	/**
 	 * Counts for every region: pi-electrons, deuterium atoms, tritium atoms.
 	 * Must be called after assignRegionNumbers().
+	 * @param atomRegionNo array with valid region numbers
 	 */
-	private void compileRegionCounts(int regionCount) {
+	private void compileRegionCounts(int[] atomRegionNo, int regionCount) {
 		mRegionPiCount = new int[regionCount];
 		mRegionDCount = new int[regionCount];
 		mRegionTCount = new int[regionCount];
 		
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (mAtomRegionNo[atom] != 0) {
-				int regionIndex = mAtomRegionNo[atom]-1;
+			if (atomRegionNo[atom] != 0) {
+				int regionIndex = atomRegionNo[atom]-1;
 				for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 					int connAtom = mMol.getConnAtom(atom, i);
 					if (mMol.getAtomicNo(connAtom) == 1) {
@@ -186,7 +202,7 @@ public class TautomerHelper {
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			if (mIsTautomerBond[bond]
 			 && mMol.getBondOrder(bond) == 2) {
-				mRegionPiCount[mAtomRegionNo[mMol.getBondAtom(0, bond)]-1] += 2;
+				mRegionPiCount[atomRegionNo[mMol.getBondAtom(0, bond)]-1] += 2;
 				}
 			}
 		}
@@ -212,8 +228,23 @@ public class TautomerHelper {
 					if ((mMol.getAtomPi(atom) == 0 || connBondOrder == 2)
 					 && mMol.getAtomPi(connAtom) == 1
 					 && !isProtectedAtom[connAtom]) {
-						if (findTautomerTreeDepthFirst(atom, connAtom, mMol.getConnBond(atom, i), isProtectedAtom))
+						if (findTautomerTreeDepthFirst(atom, connAtom, mMol.getConnBond(atom, i), isProtectedAtom)) {
 							tautomerFound = true;
+							if (connBondOrder == 2) {
+								// in case we have a double bond from the hetero atom, the we need to process other single bonded neighbours
+								// of the hereo atom separately in case, the first tree search finds a (vinylog) donor atom.
+								for (int j=0; j<mMol.getConnAtoms(atom); j++) {
+									if (j != i) {
+										int otherConn = mMol.getConnAtom(atom, j);
+										int otherBondOrder = mMol.getConnBondOrder(atom, i);
+										if (!isProtectedAtom[otherConn]
+										 && otherBondOrder == 1
+										 && mMol.getAtomPi(otherConn) == 1)
+											findTautomerTreeDepthFirst(atom, otherConn, mMol.getConnBond(atom, j), isProtectedAtom);
+										}
+									}
+								}
+							}
 						}
 					}
 				}

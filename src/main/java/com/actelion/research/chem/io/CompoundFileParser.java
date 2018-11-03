@@ -143,6 +143,21 @@ public abstract class CompoundFileParser {
         }
 
     /**
+     * @param fieldName
+     * @return index of the field with the given name, -1 if fieldName doesn't exist
+     */
+    public int getFieldIndex(String fieldName) {
+        String[] name = getFieldNames();
+
+        if (name != null)
+            for (int i=0; i<name.length; i++)
+                if (fieldName.equals(name[i]))
+                    return i;
+
+        return -1;
+        }
+
+    /**
      * If the file source contains encoded descriptors, then overwrite this method
      * to save the calculation time.
      * @param shortName
