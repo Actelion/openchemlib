@@ -79,7 +79,7 @@ public class IsomericSmilesCreator {
 	}
 
 	private String createSmiles() {
-		if (mMol == null || mMol.getAtoms() == 0)
+		if (mMol == null || mMol.getAllAtoms() == 0)
 			return "";
 
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
