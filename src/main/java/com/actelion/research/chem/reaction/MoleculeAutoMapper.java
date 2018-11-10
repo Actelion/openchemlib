@@ -39,28 +39,7 @@ import com.actelion.research.chem.StereoMolecule;
 
 import java.util.Arrays;
 
-public class MoleculeAutoMapper  {
-
-    AutoMapper mapper = null;
-
-    public MoleculeAutoMapper(StereoMolecule mol)
-    {
-        mapper = new DefaultMoleculeAutoMapper(mol);
-    }
-
-//    public MoleculeAutoMapper(AutoMapper mapper,StereoMolecule mol)
-//    {
-//        this.mapper = mapper;
-//    }
-
-    public void autoMap()
-    {
-        mapper.autoMap();
-    }
-
-}
-
-class DefaultMoleculeAutoMapper implements AutoMapper {
+public class MoleculeAutoMapper implements AutoMapper {
 	private static final int MASK_ATOM_INDEX = 0x0000FFFF;
 	private static final int MASK_ATOM_TYPE = 0xFFFF0000;
 
@@ -70,7 +49,7 @@ class DefaultMoleculeAutoMapper implements AutoMapper {
 	private int[]				mCounterAtom;
 	private boolean[]			mMapNoInUse,mMatchHandled;
 
-	public DefaultMoleculeAutoMapper(StereoMolecule mol) {
+	public MoleculeAutoMapper(StereoMolecule mol) {
 		mMol = mol;
 		}
 

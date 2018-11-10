@@ -37,6 +37,6 @@ import com.actelion.research.chem.SSSearcher;
 
 public interface IReactionMapper
 {
-    Reaction matchReaction(Reaction r, SSSearcher sss);
+    Reaction mapReaction(Reaction r, SSSearcher sss);
 
 }

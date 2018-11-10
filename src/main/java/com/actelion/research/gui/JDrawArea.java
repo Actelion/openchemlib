@@ -35,10 +35,7 @@ package com.actelion.research.gui;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
-import com.actelion.research.chem.reaction.IReactionMapper;
-import com.actelion.research.chem.reaction.MoleculeAutoMapper;
-import com.actelion.research.chem.reaction.Reaction;
-import com.actelion.research.chem.reaction.ReactionArrow;
+import com.actelion.research.chem.reaction.*;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
@@ -218,7 +215,7 @@ public class JDrawArea extends JPanel
 		repaint();
 	}
 
-	public void setMapper(IReactionMapper mapper)
+	public void setReactionMapper(IReactionMapper mapper)
 	{
 		mMapper = mapper;
 	}
@@ -1994,35 +1991,33 @@ public class JDrawArea extends JPanel
 		for (int i = 0; i < rxn.getMolecules(); i++) {
 			StereoMolecule mol = rxn.getMolecule(i);
 			for (int a = 0; a < mol.getAtoms(); a++) {
-				if (mol.getAtomMapNo(a) > 0) {
+				if (mol.getAtomMapNo(a) != 0 && !mol.isAutoMappedAtom(a)) {
 					mol.setAtomicNo(a, FAKE_ATOM_NO + mol.getAtomMapNo(a));
 				}
 			}
 		}
-		rxn = mMapper.matchReaction(rxn, sss);
+		rxn = mMapper.mapReaction(rxn, sss);
 		if (rxn != null) {
 			int offset = 0;
+
 			// Sync the display molecule with the reaction fragments
-			{
-				int[] fragmentAtom = new int[mFragment.length];
-				for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
-					int fragment = mFragmentNo[atom];
-					if (mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) > FAKE_ATOM_NO) {
-						mMol.setAtomMapNo(atom, mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) - FAKE_ATOM_NO, false);
-						offset = Math.max(mMol.getAtomMapNo(atom), offset);
-					}
-					fragmentAtom[fragment]++;
+			int[] fragmentAtom = new int[mFragment.length];
+			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+				int fragment = mFragmentNo[atom];
+				if (mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) > FAKE_ATOM_NO) {
+					mMol.setAtomMapNo(atom, mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) - FAKE_ATOM_NO, false);
+					offset = Math.max(mMol.getAtomMapNo(atom), offset);
 				}
+				fragmentAtom[fragment]++;
 			}
-			{
-				int[] fragmentAtom = new int[mFragment.length];
-				for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
-					int fragment = mFragmentNo[atom];
-					if (mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]) > 0 && (mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) <= FAKE_ATOM_NO)) {
-						mMol.setAtomMapNo(atom, mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]) + offset, true);
-					}
-					fragmentAtom[fragment]++;
+
+			fragmentAtom = new int[mFragment.length];
+			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+				int fragment = mFragmentNo[atom];
+				if (mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]) > 0 && (mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) <= FAKE_ATOM_NO)) {
+					mMol.setAtomMapNo(atom, mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]) + offset, true);
 				}
+				fragmentAtom[fragment]++;
 			}
 		}
 		syncFragments();

@@ -1387,7 +1387,7 @@ public abstract class Model
                 }
             }
         }
-        rxn = mapper.matchReaction(rxn, sss);
+        rxn = mapper.mapReaction(rxn, sss);
         if (rxn != null) {
             int offset = 0;
             // Sync the display molecule with the reaction fragments
