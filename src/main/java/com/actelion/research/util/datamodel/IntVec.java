@@ -203,8 +203,8 @@ public class IntVec implements Comparable<IntVec> {
 
         IntVec dVecDev = new IntVec(iv1.data.length);
 
-        for (int ii = 0; ii < iv1.data.length; ii++) {
-            dVecDev.data[ii] = (int)(iv1.data[ii] / iv2.data[ii]);
+        for (int i = 0; i < iv1.data.length; i++) {
+            dVecDev.data[i] = (int)(iv1.data[i] / iv2.data[i]);
         }
 
         return dVecDev;
@@ -238,9 +238,9 @@ public class IntVec implements Comparable<IntVec> {
         double dDist = 0;
 
         double dSum = 0;
-        for (int ii = 0; ii < iv1.data.length; ii++) {
-            dSum += (iv1.data[ii] - iv2.data[ii]) *
-                (iv1.data[ii] - iv2.data[ii]);
+        for (int i = 0; i < iv1.data.length; i++) {
+            dSum += (iv1.data[i] - iv2.data[i]) *
+                (iv1.data[i] - iv2.data[i]);
         }
 
         dDist = Math.sqrt(dSum);
@@ -250,8 +250,8 @@ public class IntVec implements Comparable<IntVec> {
 
     static public double getEuclidDistBitWise(IntVec iv1, IntVec iv2) {
         int bitsXOR = 0;
-        for (int ii = 0; ii < iv1.data.length; ii++) {
-            bitsXOR += Integer.bitCount(iv1.data[ii] ^ iv2.data[ii]);
+        for (int i = 0; i < iv1.data.length; i++) {
+            bitsXOR += Integer.bitCount(iv1.data[i] ^ iv2.data[i]);
         }
         return Math.sqrt(bitsXOR);
     }
@@ -272,9 +272,9 @@ public class IntVec implements Comparable<IntVec> {
         }
 
         double dSum = 0;
-        for (int ii = 0; ii < dVec1.data.length; ii++) {
-            dSum += (dVec1.data[ii] - dVec2.data[ii]) *
-                (dVec1.data[ii] - dVec2.data[ii]);
+        for (int i = 0; i < dVec1.data.length; i++) {
+            dSum += (dVec1.data[i] - dVec2.data[i]) *
+                (dVec1.data[i] - dVec2.data[i]);
         }
 
         return dSum;
@@ -533,21 +533,6 @@ public class IntVec implements Comparable<IntVec> {
     	
     	return hash;
     }
-    
-//    public void calculateHashCode(){
-//    	int h = 0;
-//    	
-//    	int l = size()*4;
-//    	
-//    	byte [] a = new byte[l];
-//    	for (int i = 0; i < l; i++) {
-//			a[i] = (byte)getByte(i);
-//		}
-//    	
-//    	h = BurtleHasher.hashlittle(a, 13);
-//    	
-//    	hash = h;
-//    }
     
     public void calculateHashCode(){
     	if(data.length==1){
@@ -1082,30 +1067,24 @@ public class IntVec implements Comparable<IntVec> {
     }
 
     public void setBits(int iStart, int num) {
-        for (int ii = iStart; ii < iStart + num; ii++) {
-            setBit(ii);
+        for (int i = iStart; i < iStart + num; i++) {
+            setBit(i);
         }
     }
 
     public void setBytes(int iStart, int num, int val) {
-        for (int ii = iStart; ii < iStart + num; ii++) {
-            setByte(ii, val);
+        for (int i = iStart; i < iStart + num; i++) {
+            setByte(i, val);
         }
     	hash = -1;
     }
 
 
-/*
-    public void set(int iSize, double dVal) {
-        data = new double[iSize];
-        set(dVal);
-    }
-*/
     public void setRNDvalue(double dCenter, double dRange) {
         double dMin = dCenter - (dRange / 2);
-        for (int ii = 0; ii < data.length; ii++) {
+        for (int i = 0; i < data.length; i++) {
             double dVal = dRange * Math.random();
-            data[ii] = (int)(dMin + dVal);
+            data[i] = (int)(dMin + dVal);
         }
     	hash = -1;
     }
@@ -1124,10 +1103,10 @@ public class IntVec implements Comparable<IntVec> {
 
 
     public void setRNDvalue(double dRange) {
-        for (int ii = 0; ii < data.length; ii++) {
-            double dMin = data[ii] - (dRange / 2);
+        for (int i = 0; i < data.length; i++) {
+            double dMin = data[i] - (dRange / 2);
             double dVal = dRange * Math.random();
-            data[ii] = (int)(dMin + dVal);
+            data[i] = (int)(dMin + dVal);
         }
     	hash = -1;
     }
@@ -1140,8 +1119,8 @@ public class IntVec implements Comparable<IntVec> {
     public IntVec sub(IntVec dvSub) {
 
         IntVec ret = new IntVec(data.length);
-        for (int ii = 0; ii < ret.data.length; ii++) {
-            ret.data[ii] = (int)(data[ii] - dvSub.data[ii]);
+        for (int i = 0; i < ret.data.length; i++) {
+            ret.data[i] = (int)(data[i] - dvSub.data[i]);
         }
 
         return ret;
@@ -1218,10 +1197,10 @@ public class IntVec implements Comparable<IntVec> {
 
         double [] arr = new double [size() * Integer.SIZE];
         int cc = 0;
-        for (int ii = 0; ii < data.length; ii++) {
-            int v = data[ii];
+        for (int i = 0; i < data.length; i++) {
+            int v = data[i];
             int mask = 1;
-            for (int jj = 0; jj < Integer.SIZE; jj++) {
+            for (int j = 0; j < Integer.SIZE; j++) {
                 if((v & mask) != 0) {
                     arr[cc] = 1;
                 } else {
@@ -1256,14 +1235,14 @@ public class IntVec implements Comparable<IntVec> {
         StringBuffer str = new StringBuffer();
 
         String sFormat = "0";
-        for (int ii = 0; ii < iNumDigits; ii++) {
+        for (int i = 0; i < iNumDigits; i++) {
             sFormat = sFormat + "0";
         }
 
         DecimalFormat nf = new DecimalFormat(sFormat);
 
-        for (int ii = 0; ii < data.length; ii++) {
-            String sVal = nf.format(data[ii]);
+        for (int i = 0; i < data.length; i++) {
+            String sVal = nf.format(data[i]);
             str.append(sVal + " ");
         }
 
@@ -1301,11 +1280,11 @@ public class IntVec implements Comparable<IntVec> {
 
         int bitsOR = 0, bitsAND = 0;
 
-        for (int ii = 0; ii < iv1.data.length; ii++) {
+        for (int i = 0; i < iv1.data.length; i++) {
 
-            bitsOR += Integer.bitCount(iv1.data[ii] | iv2.data[ii]);
+            bitsOR += Integer.bitCount(iv1.data[i] | iv2.data[i]);
 
-            bitsAND += Integer.bitCount(iv1.data[ii] & iv2.data[ii]);
+            bitsAND += Integer.bitCount(iv1.data[i] & iv2.data[i]);
         }
 
         if(bitsAND == 0)
@@ -1325,9 +1304,9 @@ public class IntVec implements Comparable<IntVec> {
     static public final double getTanimotoDistBitWise(int [] arr1, int [] arr2) {
 
         int bitsOR = 0, bitsAND = 0;
-        for (int ii = 0; ii < arr1.length; ii++) {
-            bitsOR += Integer.bitCount(arr1[ii] | arr2[ii]);
-            bitsAND += Integer.bitCount(arr1[ii] & arr2[ii]);
+        for (int i = 0; i < arr1.length; i++) {
+            bitsOR += Integer.bitCount(arr1[i] | arr2[i]);
+            bitsAND += Integer.bitCount(arr1[i] & arr2[i]);
         }
 
         if(bitsAND == 0)
@@ -1396,9 +1375,9 @@ public class IntVec implements Comparable<IntVec> {
         double denominator = 0;
 
         int b11,b12,b21,b22,b31,b32,b41,b42;
-        for (int ii = 0; ii < query.data.length; ii++) {
-            b11 = query.data[ii] & MASK_FIRST_BYTE;
-            b12 = base.data[ii] & MASK_FIRST_BYTE;
+        for (int i = 0; i < query.data.length; i++) {
+            b11 = query.data[i] & MASK_FIRST_BYTE;
+            b12 = base.data[i] & MASK_FIRST_BYTE;
 
             denominator += b11;
             int diff = b11 - b12;
@@ -1406,8 +1385,8 @@ public class IntVec implements Comparable<IntVec> {
                 dSumPosDiff += diff;
             }
 
-            b21 = (query.data[ii] & MASK_SEC_BYTE) >> 8;
-            b22 = (base.data[ii] & MASK_SEC_BYTE) >> 8;
+            b21 = (query.data[i] & MASK_SEC_BYTE) >> 8;
+            b22 = (base.data[i] & MASK_SEC_BYTE) >> 8;
 
             denominator += b21;
             diff = b21 - b22;
@@ -1415,8 +1394,8 @@ public class IntVec implements Comparable<IntVec> {
                 dSumPosDiff += diff;
             }
 
-            b31 = (query.data[ii] & MASK_THIRD_BYTE) >> 16;
-            b32 = (base.data[ii] & MASK_THIRD_BYTE) >> 16;
+            b31 = (query.data[i] & MASK_THIRD_BYTE) >> 16;
+            b32 = (base.data[i] & MASK_THIRD_BYTE) >> 16;
 
             denominator += b31;
             diff = b31 - b32;
@@ -1424,8 +1403,8 @@ public class IntVec implements Comparable<IntVec> {
                 dSumPosDiff += diff;
             }
 
-            b41 = (query.data[ii] & MASK_FOURTH_BYTE) >> 24;
-            b42 = (base.data[ii] & MASK_FOURTH_BYTE) >> 24;
+            b41 = (query.data[i] & MASK_FOURTH_BYTE) >> 24;
+            b42 = (base.data[i] & MASK_FOURTH_BYTE) >> 24;
 
             denominator += b41;
             diff = b41 - b42;
