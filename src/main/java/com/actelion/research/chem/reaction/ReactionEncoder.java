@@ -339,9 +339,6 @@ public class ReactionEncoder
 			IDCodeParser parser = new IDCodeParser(ensureCoordinates);
 			StereoMolecule mol = parser.getCompactMolecule(idcode, coords);
 
-			if (!reactionLayoutRequired && (coords == null || !parser.coordinatesAreAbsolute(coords)))
-				reactionLayoutRequired = true;
-
 			if (mapping != null) {
 				parser.parseMapping(mapping.getBytes());
 			}
@@ -369,8 +366,6 @@ public class ReactionEncoder
 			rxn.addCatalyst(parser.getCompactMolecule(rxnCatalysts.substring(index1)));
 		}
 
-		rxn.setReactionLayoutRequired(reactionLayoutRequired);
-
 		return rxn;
 	}
 
@@ -394,7 +389,6 @@ public class ReactionEncoder
 		int idcodeIndex = 0;
 		int mappingIndex = 0;
 		int coordsIndex = 0;
-		boolean reactionLayoutRequired = false;
 
 		int productIndex = indexOf(rxnCode, PRODUCT_IDENTIFIER);
 		if (productIndex == -1)
@@ -431,9 +425,6 @@ public class ReactionEncoder
 			IDCodeParser parser = new IDCodeParser(ensureCoordinates);
 			StereoMolecule mol = parser.getCompactMolecule(rxnCode, rxnCoords, idcodeStart, coordsStart);
 
-			if (!reactionLayoutRequired && (coordsStart == -1 || !parser.coordinatesAreAbsolute(rxnCoords, coordsStart)))
-				reactionLayoutRequired = true;
-
 			if (mappingStart != -1)
 				parser.parseMapping(rxnMapping, mappingStart);
 
@@ -458,8 +449,6 @@ public class ReactionEncoder
 			}
 			rxn.addCatalyst(parser.getCompactMolecule(rxnCatalysts, index1));
 		}
-
-		rxn.setReactionLayoutRequired(reactionLayoutRequired);
 
 		return rxn;
 	}

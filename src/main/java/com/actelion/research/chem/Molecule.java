@@ -33,6 +33,7 @@
 
 package com.actelion.research.chem;
 
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -1982,6 +1983,39 @@ public class Molecule implements Serializable {
 
 	public double getAtomZ(int atom) {
 		return mCoordinates[atom].z;
+		}
+
+	public Rectangle2D.Double getBounds(Rectangle2D.Double r) {
+		if (mAllAtoms == 0)
+			return null;
+
+		double x1 = mCoordinates[0].x;
+		double y1 = mCoordinates[0].y;
+		double x2 = mCoordinates[0].x;
+		double y2 = mCoordinates[0].y;
+		for (int atom=1; atom<mAllAtoms; atom++) {
+			if (x1 > mCoordinates[atom].x)
+				x1 = mCoordinates[atom].x;
+			else if (x2 < mCoordinates[atom].x)
+				x2 = mCoordinates[atom].x;
+
+			if (y1 > mCoordinates[atom].y)
+				y1 = mCoordinates[atom].y;
+			else if (y2 < mCoordinates[atom].y)
+				y2 = mCoordinates[atom].y;
+			}
+
+		if (r == null) {
+			r = new Rectangle2D.Double(x1, y1, x2 - x1, y2 - y1);
+			}
+		else {
+			r.x = x1;
+			r.y = y1;
+			r.width = x2-x1;
+			r.height = y2-y1;
+			}
+
+		return r;
 		}
 
 	public static double getDefaultAverageBondLength() {

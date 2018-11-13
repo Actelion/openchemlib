@@ -3094,7 +3094,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean isSimpleHydrogen(int atom) {
-		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0 && mAtomCharge[atom] == 0
+		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0 && mAtomCharge[atom] == 0 && mAtomMapNo[atom] == 0
 			&& (mAtomCustomLabel == null || mAtomCustomLabel[atom] == null);
 		}
 

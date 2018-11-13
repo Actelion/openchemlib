@@ -153,8 +153,8 @@ public class VerticalFlowLayout implements LayoutManager, java.io.Serializable {
 
 	/**
 	 *  Sets the Hfill attribute of the VerticalFlowLayout object
-	 * 
-	 *@return    The Hfill value
+	 *
+	 * @param hfill
 	 */
 	public void setHorizontalFill(boolean hfill) {
 		_hfill = hfill;
@@ -162,8 +162,8 @@ public class VerticalFlowLayout implements LayoutManager, java.io.Serializable {
 
 	/**
 	 *  Gets the Hfill attribute of the VerticalFlowLayout object
-	 * 
-	 * @param hfill
+	 *
+	 *@return    The Hfill value
 	 */
 	public boolean getHorizontalFill() {
 		return _hfill;

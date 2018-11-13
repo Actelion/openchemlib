@@ -33,6 +33,7 @@
 
 package com.actelion.research.chem.reaction;
 
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -48,7 +49,7 @@ public class Reaction implements java.io.Serializable {
 	private ArrayList<StereoMolecule> mCatalyst;
 	private DrawingObjectList mDrawingObjectList;
 	private String mName;
-	private boolean mReactionLayoutRequired;
+//	private boolean mReactionLayoutRequired;
 	private int mMaxMapNo;
 
 	public Reaction() {
@@ -139,7 +140,7 @@ public class Reaction implements java.io.Serializable {
 		mDrawingObjectList = new DrawingObjectList(rxn.getDrawingObjects());
 		if (rxn.mName != null)
 			mName = new String(rxn.mName);
-		mReactionLayoutRequired = rxn.mReactionLayoutRequired;
+//		mReactionLayoutRequired = rxn.mReactionLayoutRequired;
 		}
 
 	public Reaction(StereoMolecule[] mol, int reactantCount) {
@@ -233,13 +234,35 @@ public class Reaction implements java.io.Serializable {
 		mDrawingObjectList = l;
 		}
 
+	/**
+	 * @return whether the molecule's atom coordinate bounds touch or overlap
+	 */
 	public boolean isReactionLayoutRequired() {
-		return mReactionLayoutRequired;
+		if (getMolecules() <= 1)
+			return false;
+
+		Rectangle2D.Double[] r = new Rectangle2D.Double[getMolecules()];
+
+		for (int i=0; i<getMolecules(); i++) {
+			r[i] = getMolecule(i).getBounds(null);
+			if (r[i] != null) {
+				for (int j=0; j<i; j++) {
+					if (r[j] != null) {
+						if (r[i].x + r[i].width >= r[j].x && r[i].x <= r[j].x + r[j].width)
+							return true;
+						if (r[i].y + r[i].height >= r[j].y && r[i].y <= r[j].y + r[j].height)
+							return true;
+						}
+					}
+				}
+			}
+
+		return false;
 		}
 
-	public void setReactionLayoutRequired(boolean b) {
+/*	public void setReactionLayoutRequired(boolean b) {
 		mReactionLayoutRequired = b;
-		}
+		}*/
 
 	/**
 	 * Checks, whether all non-hydrogen atoms are mapped and whether every reactant atom has exactly one assigned product atom.

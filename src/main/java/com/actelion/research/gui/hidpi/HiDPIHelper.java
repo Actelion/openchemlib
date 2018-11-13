@@ -13,11 +13,11 @@ import java.lang.reflect.Field;
 import java.net.URL;
 
 public class HiDPIHelper {
-	private static final int COLOR1_BRIGHT_LAF = 0x00503CB4;	// main button color in supplied images
-	private static final int COLOR2_BRIGHT_LAF = 0x00000000;	// second button color in supplied images
+	private static final int THEME_COLOR1_BRIGHT_LAF = 0x00503CB4;	// main button color in supplied images
+	private static final int THEME_COLOR2_BRIGHT_LAF = 0x00000000;	// second button color in supplied images
 
-	private static final int COLOR1_DARK_LAF = 0x00B4A0FF;	// main button color in supplied images
-	private static final int COLOR2_DARK_LAF = 0x00E0E0E0;	// second button color in supplied images
+	private static final int THEME_COLOR1_DARK_LAF = 0x00B4A0FF;	// main button color in supplied images
+	private static final int THEME_COLOR2_DARK_LAF = 0x00E0E0E0;	// second button color in supplied images
 
 	private static final float ICON_SCALE_LIMIT = 1.2f; // custom dpi scale factors smaller than this will be neglected
 
@@ -111,6 +111,13 @@ public class HiDPIHelper {
 	 */
 	public static int scaleRetinaAndUI(int value) {
 		return Math.round(getUIScaleFactor() * getRetinaScaleFactor() * value);
+		}
+
+	public static Color getThemeColor(int no) {
+		int c = (no == 0) ?
+				(LookAndFeelHelper.isDarkLookAndFeel() ? THEME_COLOR1_DARK_LAF : THEME_COLOR1_BRIGHT_LAF)
+			  : (LookAndFeelHelper.isDarkLookAndFeel() ? THEME_COLOR2_DARK_LAF : THEME_COLOR2_BRIGHT_LAF);
+		return new Color(c);
 		}
 
 	public static Icon createIcon(String fileName, int rotation) {
@@ -246,8 +253,8 @@ public class HiDPIHelper {
 			for (int y=0; y<image.getHeight(); y++) {
 				int argb = image.getRGB(x, y);
 				int rgb = argb & 0x00FFFFFF;
-				int color = (rgb == COLOR1_BRIGHT_LAF) ? COLOR1_DARK_LAF
-						: (rgb == COLOR2_BRIGHT_LAF) ? COLOR2_DARK_LAF : rgb;
+				int color = (rgb == THEME_COLOR1_BRIGHT_LAF) ? THEME_COLOR1_DARK_LAF
+						: (rgb == THEME_COLOR2_BRIGHT_LAF) ? THEME_COLOR2_DARK_LAF : rgb;
 				image.setRGB(x, y, (0xFF000000 & argb) + color);
 			}
 		}

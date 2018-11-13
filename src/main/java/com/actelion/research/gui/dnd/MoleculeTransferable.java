@@ -49,11 +49,14 @@ public class MoleculeTransferable implements Transferable,ClipboardOwner
         public MoleculeTransferable(StereoMolecule mol) {
                 mMol = mol;
                 }
+
+        @Override
         public synchronized DataFlavor[] getTransferDataFlavors() {
 //            System.out.println("Moleculetransferable getTransferFlavors");
                 return ChemistryFlavors.MOLECULE_FLAVORS;
                 }
 
+        @Override
         public boolean isDataFlavorSupported( DataFlavor flavor ) {
 //            System.out.println("Moleculetransferable  isdataflavor supported : " + flavor);
 //                return (cFlavorList.contains(flavor));
@@ -64,6 +67,7 @@ public class MoleculeTransferable implements Transferable,ClipboardOwner
             return false;
             }
 
+        @Override
         public synchronized Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException,IOException {
 //        System.out.println("MoleculeTransferable flavor " + flavor);
         if (flavor.equals(ChemistryFlavors.DF_SERIALIZED_MOLECULE)) {
