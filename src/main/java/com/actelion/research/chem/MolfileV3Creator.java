@@ -62,82 +62,136 @@ public class MolfileV3Creator
      * then all coordinates are scaled to achieve an average bond length of 1.5.
      * @param mol
      */
-    public MolfileV3Creator(ExtendedMolecule mol) {
+    public MolfileV3Creator(StereoMolecule mol) {
         this(mol, true);
     	}
 
     /**
      * This creates a new molfile version 3 from the given molecule.
-     * If scale==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * If allowScaling==true and the average bond length is smaller than 1.0 or larger than 3.0,
      * then all coordinates are scaled to achieve an average bond length of 1.5.
      * @param mol
-     * @param scale
+     * @param allowScaling
      */
-    public MolfileV3Creator(ExtendedMolecule mol, boolean scale) {
-        this(mol, scale, new StringBuilder(32768));
+    public MolfileV3Creator(StereoMolecule mol, boolean allowScaling) {
+        this(mol, allowScaling, 0.0, new StringBuilder(32768));
     	}
+
+	/**
+	 * This creates a new molfile version 3 from the given molecule.
+	 * If allowScaling==true and the average bond length is smaller than 1.0 or larger than 3.0,
+	 * then all coordinates are scaled to achieve an average bond length of 1.5.
+	 * If a StringBuilder is given, then the molfile will be appended to that.
+	 * @param mol
+	 * @param allowScaling
+	 * @param builder null or StringBuilder to append to
+	 */
+	public MolfileV3Creator(StereoMolecule mol, boolean allowScaling, StringBuilder builder) {
+		this(mol, allowScaling, 0.0, builder);
+		}
 
     /**
      * This creates a new molfile version 3 from the given molecule.
-     * If scale==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * If allowScaling==true and the average bond length is smaller than 1.0 or larger than 3.0,
      * then all coordinates are scaled to achieve an average bond length of 1.5.
      * If a StringBuilder is given, then the molfile will be appended to that.
      * @param mol
-     * @param scale
+     * @param allowScaling
      * @param builder null or StringBuilder to append to
      */
-    public MolfileV3Creator(ExtendedMolecule mol, boolean scale, StringBuilder builder) {
-        mol.ensureHelperArrays(Molecule.cHelperParities);
+    public MolfileV3Creator(StereoMolecule mol, boolean allowScaling, double scalingFactor, StringBuilder builder) {
+		mol.ensureHelperArrays(Molecule.cHelperParities);
 
-        mMolfile = builder;
-        String name = (mol.getName() != null) ? mol.getName() : "";
-        mMolfile.append(name + "\n");
-        mMolfile.append("Actelion Java MolfileCreator 2.0\n\n");
-        mMolfile.append("  0  0  0  0  0  0              0 V3000\n");
+		mMolfile = (builder == null) ? new StringBuilder() : builder;
 
-        boolean hasCoordinates = (mol.getAllAtoms() == 1);
-        for(int atom=1; atom<mol.getAllAtoms(); atom++) {
-            if (mol.getAtomX(atom) != mol.getAtomX(0)
-             || mol.getAtomY(atom) != mol.getAtomY(0)
-             || mol.getAtomZ(atom) != mol.getAtomZ(0)) {
-                hasCoordinates = true;
-                break;
-            }
-        }
+		String name = (mol.getName() != null) ? mol.getName() : "";
+		mMolfile.append(name + "\n");
+		mMolfile.append("Actelion Java MolfileCreator 2.0\n\n");
+		mMolfile.append("  0  0  0  0  0  0              0 V3000\n");
 
-        mScalingFactor = 1.0;
+		mScalingFactor = 1.0;
 
-        if (hasCoordinates && scale) {
-        	// Calculate a reasonable molecule size for ISIS-Draw default settings.
-	        double avbl = mol.getAverageBondLength();
-            if (avbl != 0.0) {
-            	// 0.84 seems to be the average bond distance in ISIS Draw 2.5 with the default setting of 0.7 cm standard bond length.
-                // grafac = 0.84 / mol.getAverageBondLength();
+		boolean hasCoordinates = hasCoordinates(mol);
+		if (hasCoordinates) {
+			if (scalingFactor != 0)
+				mScalingFactor = scalingFactor;
+			else if (allowScaling)
+				mScalingFactor = calculateScalingFactor(mol);
+			}
 
-            	if (avbl < 1.0 || avbl > 3.0)
-            		mScalingFactor = TARGET_AVBL / avbl;
-            	}
-            else { // make the minimum distance between any two atoms twice as long as TARGET_AVBL
-	            double minDistance = Float.MAX_VALUE;
-                for (int atom1=1; atom1<mol.getAllAtoms(); atom1++) {
-                    for (int atom2=0; atom2<atom1; atom2++) {
-	                    double dx = mol.getAtomX(atom2) - mol.getAtomX(atom1);
-	                    double dy = mol.getAtomY(atom2) - mol.getAtomY(atom1);
-	                    double dz = mol.getAtomZ(atom2) - mol.getAtomZ(atom1);
-	                    double distance = dx*dx + dy*dy + dz*dz;
-                        if (minDistance > distance)
-                            minDistance = distance;
-                        }
-                    }
-                mScalingFactor = 2.0 * TARGET_AVBL / minDistance;
-	            }
-	        }
+		writeBody(mol, hasCoordinates);
+		mMolfile.append("M  END\n");
+		}
 
-        writeBody(mol, hasCoordinates);
-        mMolfile.append("M  END\n");
+	private static boolean hasCoordinates(StereoMolecule mol) {
+		if (mol.getAllAtoms() == 1)
+			return true;	// we can only assume
+
+		for(int atom=1; atom<mol.getAllAtoms(); atom++) {
+			if (mol.getAtomX(atom) != mol.getAtomX(0)
+					|| mol.getAtomY(atom) != mol.getAtomY(0)
+					|| mol.getAtomZ(atom) != mol.getAtomZ(0)) {
+				return true;
+				}
+			}
+
+		return false;
+		}
+
+	/**
+	 *
+	 * @param mol
+	 * @return
+	 */
+	private static double calculateScalingFactor(StereoMolecule mol) {
+        double scalingFactor = 1.0;
+
+		// Calculate a reasonable molecule size for ISIS-Draw default settings.
+		double avbl = mol.getAverageBondLength();
+		if (avbl != 0.0) {
+			// 0.84 seems to be the average bond distance in ISIS Draw 2.5 with the default setting of 0.7 cm standard bond length.
+			// grafac = 0.84 / mol.getAverageBondLength();
+
+			if (avbl < 1.0 || avbl > 3.0)
+				scalingFactor = TARGET_AVBL / avbl;
+			}
+		else { // make the minimum distance between any two atoms twice as long as TARGET_AVBL
+			double minDistance = Float.MAX_VALUE;
+			for (int atom1=1; atom1<mol.getAllAtoms(); atom1++) {
+				for (int atom2=0; atom2<atom1; atom2++) {
+					double dx = mol.getAtomX(atom2) - mol.getAtomX(atom1);
+					double dy = mol.getAtomY(atom2) - mol.getAtomY(atom1);
+					double dz = mol.getAtomZ(atom2) - mol.getAtomZ(atom1);
+					double distance = dx*dx + dy*dy + dz*dz;
+					if (minDistance > distance)
+						minDistance = distance;
+					}
+				}
+			scalingFactor = 2.0 * TARGET_AVBL / minDistance;
+			}
+
+		return scalingFactor;
     	}
 
-    public static String writeCTAB(ExtendedMolecule mol, boolean hasCoordinates) {
+	/**
+	 * @param mol
+	 * @param scalingFactor
+	 * @return a CTAB V3 with scaled atom coordinates
+	 */
+	public static String writeCTAB(StereoMolecule mol, double scalingFactor) {
+		MolfileV3Creator mf = new MolfileV3Creator();
+		mf.mScalingFactor = scalingFactor;
+		mol.ensureHelperArrays(Molecule.cHelperParities);
+		mf.writeBody(mol, true);
+		return mf.getMolfile();
+	}
+
+	/**
+	 * @param mol
+	 * @param hasCoordinates
+	 * @return a CTAB V3 without any coordinate scaling
+	 */
+	private static String writeCTAB(StereoMolecule mol, boolean hasCoordinates) {
         MolfileV3Creator mf = new MolfileV3Creator();
         mol.ensureHelperArrays(Molecule.cHelperParities);
         mf.writeBody(mol, hasCoordinates);
@@ -148,7 +202,7 @@ public class MolfileV3Creator
         mMolfile = new StringBuilder(32768);
     	}
 
-    private void writeBody(ExtendedMolecule mol, boolean hasCoordinates) {
+    private void writeBody(StereoMolecule mol, boolean hasCoordinates) {
         mMolfile.append("M  V30 BEGIN CTAB\n");
         mMolfile.append("M  V30 COUNTS " + mol.getAllAtoms() + " " + mol.getAllBonds() + " 0 0 0\n");
         mMolfile.append("M  V30 BEGIN ATOM\n");

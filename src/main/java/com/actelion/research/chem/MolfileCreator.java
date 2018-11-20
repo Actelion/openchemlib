@@ -40,8 +40,9 @@ import java.util.Locale;
 
 public class MolfileCreator {
     private static final float TARGET_AVBL = 1.5f;
-	
+
     private StringBuilder mBuilder;
+    private DecimalFormat mDoubleFormat;
 
     /**
      * This creates a new molfile version 2 from the given molecule.
@@ -52,28 +53,45 @@ public class MolfileCreator {
     public MolfileCreator(ExtendedMolecule mol) {
         this(mol, true);
         }
-    
+
     /**
      * This creates a new molfile version 2 from the given molecule.
-     * If scale==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * If allowScaling==true and the average bond length is smaller than 1.0 or larger than 3.0,
      * then all coordinates are scaled to achieve an average bond length of 1.5.
      * @param mol
-     * @param scale
+     * @param allowScaling
      */
-    public MolfileCreator(ExtendedMolecule mol, boolean scale) {
-        this(mol, scale, new StringBuilder(32768));
+    public MolfileCreator(ExtendedMolecule mol, boolean allowScaling) {
+        this(mol, allowScaling, new StringBuilder(32768));
         }
-    
+
     /**
      * This creates a new molfile version 2 from the given molecule.
-     * If scale==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * If allowScaling==true and the average bond length is smaller than 1.0 or larger than 3.0,
      * then all coordinates are scaled to achieve an average bond length of 1.5.
      * If a StringBuilder is given, then the molfile will be appended to that.
      * @param mol
-     * @param scale
+     * @param allowScaling
      * @param builder null or StringBuilder to append to
      */
-    public MolfileCreator(ExtendedMolecule mol, boolean scale, StringBuilder builder) {
+    public MolfileCreator(ExtendedMolecule mol, boolean allowScaling, StringBuilder builder) {
+        this(mol, allowScaling, 0.0, builder);
+    }
+
+    /**
+     * This creates a new molfile version 2 from the given molecule.
+     * If allowScaling==true and the average bond length is smaller than 1.0 or larger than 3.0,
+     * then all coordinates are scaled to achieve an average bond length of 1.5.
+     * If scalingFactor is given, then the molecule is scaled accordingly independent of the average bond length.
+     * If a StringBuilder is given, then the molfile will be appended to that.
+     * @param mol
+     * @param allowScaling if false, then no scaling is performed
+     * @param scalingFactor if not 0.0 then the molecule is scaled by this factor
+     * @param builder null or StringBuilder to append to
+     */
+    public MolfileCreator(ExtendedMolecule mol, boolean allowScaling, double scalingFactor, StringBuilder builder) {
+		mDoubleFormat = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.ENGLISH)); //English local ('.' for the dot)
+
         mol.ensureHelperArrays(Molecule.cHelperParities);
 
         boolean isRacemic = true;
@@ -103,8 +121,9 @@ public class MolfileCreator {
                     }
                 }
             }
-        
-        mBuilder = builder;
+
+        mBuilder = (builder == null) ? new StringBuilder() : builder;
+
         String name = (mol.getName() != null) ? mol.getName() : "";
         mBuilder.append(name+"\n");
         mBuilder.append("Actelion Java MolfileCreator 1.0\n\n");
@@ -127,27 +146,32 @@ public class MolfileCreator {
 
         double grafac = 1.0;
 
-        if (hasCoordinates && scale) {
-            double avbl = mol.getAverageBondLength();
-            if (avbl != 0.0f) {
-            	if (avbl < 1.0f || avbl > 3.0f)
-            		grafac = TARGET_AVBL / avbl;
-            	}
-            else { // make the minimum distance between any two atoms twice as long as TARGET_AVBL
-                double minDistance = Double.MAX_VALUE;
-                for (int atom1=1; atom1<mol.getAllAtoms(); atom1++) {
-                    for (int atom2=0; atom2<atom1; atom2++) {
-                        double dx = mol.getAtomX(atom2) - mol.getAtomX(atom1);
-                        double dy = mol.getAtomY(atom2) - mol.getAtomY(atom1);
-                        double dz = mol.getAtomZ(atom2) - mol.getAtomZ(atom1);
-                        double distance = dx*dx + dy*dy + dz*dz;
-                        if (minDistance > distance)
-                            minDistance = distance;
-                        }
+        if (hasCoordinates) {
+        	if (scalingFactor != 0) {
+                grafac = scalingFactor;
+                }
+            else if (allowScaling) {
+                double avbl = mol.getAverageBondLength();
+                if (avbl != 0.0f) {
+                    if (avbl < 1.0f || avbl > 3.0f)
+                        grafac = TARGET_AVBL / avbl;
                     }
-                grafac = 2.0f * TARGET_AVBL / minDistance;
-	            }
-	        }
+                else { // make the minimum distance between any two atoms twice as long as TARGET_AVBL
+                    double minDistance = Double.MAX_VALUE;
+                    for (int atom1=1; atom1<mol.getAllAtoms(); atom1++) {
+                        for (int atom2=0; atom2<atom1; atom2++) {
+                            double dx = mol.getAtomX(atom2) - mol.getAtomX(atom1);
+                            double dy = mol.getAtomY(atom2) - mol.getAtomY(atom1);
+                            double dz = mol.getAtomZ(atom2) - mol.getAtomZ(atom1);
+                            double distance = dx*dx + dy*dy + dz*dz;
+                            if (minDistance > distance)
+                                minDistance = distance;
+                            }
+                        }
+                    grafac = 2.0f * TARGET_AVBL / minDistance;
+                    }
+                }
+            }
 
         for (int atom=0; atom<mol.getAllAtoms(); atom++) {
             if (hasCoordinates) {
@@ -480,11 +504,10 @@ public class MolfileCreator {
             }
         }
 
-    DecimalFormat df = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.ENGLISH)); //English local ('.' for the dot)
     private void appendTenDigitDouble(double theDouble) {
-    	String val = df.format(theDouble);  
-    	for(int i=val.length(); i<10; i++) mBuilder.append(' ');   
-    	mBuilder.append(val);  
+    	String val = mDoubleFormat.format(theDouble);
+    	for(int i=val.length(); i<10; i++) mBuilder.append(' ');
+    	mBuilder.append(val);
         }
 	}
 

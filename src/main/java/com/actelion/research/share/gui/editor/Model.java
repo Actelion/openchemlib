@@ -1318,8 +1318,8 @@ public abstract class Model
         } else {
             Reaction rxn = getReaction();
             String idc = ReactionEncoder.encode(rxn, true, ReactionEncoder.INCLUDE_DEFAULT);
-            if (idc != null)
-                ReactionEncoder.decode(idc, ReactionEncoder.INCLUDE_DEFAULT);
+//            if (idc != null)
+//                ReactionEncoder.decode(idc, ReactionEncoder.INCLUDE_DEFAULT, null);
             return idc;
         }
         return null;

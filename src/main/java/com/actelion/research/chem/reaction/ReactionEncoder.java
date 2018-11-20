@@ -277,7 +277,7 @@ public class ReactionEncoder
 	 * @return Reaction
 	 */
 	public static Reaction decode(String rxnCode, String rxnMapping, String rxnCoords,
-								  String rxnObjects, String rxnCatalysts, boolean ensureCoordinates) {
+								  String rxnObjects, String rxnCatalysts, boolean ensureCoordinates, Reaction rxn) {
 		if (rxnCode == null || rxnCode.length() == 0) {
 			return null;
 		}
@@ -286,14 +286,17 @@ public class ReactionEncoder
 		int idcodeIndex = 0;
 		int mappingIndex = 0;
 		int coordsIndex = 0;
-		boolean reactionLayoutRequired = false;
 
 		int productIndex = rxnCode.indexOf(PRODUCT_IDENTIFIER);
 		if (productIndex == -1) {
 			return null;
 		}
 
-		Reaction rxn = new Reaction();
+		if (rxn == null)
+			rxn = new Reaction();
+		else
+			rxn.clear();
+
 		while (idcodeIndex != -1) {
 			if (idcodeIndex > productIndex) {
 				isProduct = true;
@@ -395,6 +398,7 @@ public class ReactionEncoder
 			return null;
 
 		Reaction rxn = new Reaction();
+
 		while (idcodeIndex != -1) {
 			if (idcodeIndex > productIndex)
 				isProduct = true;
@@ -469,6 +473,10 @@ public class ReactionEncoder
 		return -1;
 	}
 
+	public static Reaction decode(String s, boolean ensureCoordinates) {
+		return decode(s, ensureCoordinates, null);
+		}
+
 	/**
 	 * Creates a Reaction object by interpreting a reaction code,
 	 * mapping, coordinates and drawing objects that were earlier created
@@ -480,7 +488,7 @@ public class ReactionEncoder
 	 *
 	 * @return Reaction
 	 */
-	public static Reaction decode(String s, boolean ensureCoordinates) {
+	public static Reaction decode(String s, boolean ensureCoordinates, Reaction rxn) {
 		if (s == null)
 			return null;
 
@@ -515,7 +523,7 @@ public class ReactionEncoder
 			}
 		}
 
-		return decode(rxnCode, rxnMapping, rxnCoords, rxnObjects, rxnCatalysts, ensureCoordinates);
+		return decode(rxnCode, rxnMapping, rxnCoords, rxnObjects, rxnCatalysts, ensureCoordinates, rxn);
 	}
 
 
@@ -527,7 +535,7 @@ public class ReactionEncoder
 	 * @param includeOptions
 	 * @return Reaction
 	 */
-	public static Reaction decode(String s, int includeOptions) {
+	public static Reaction decode(String s, int includeOptions, Reaction rxn) {
 		if (s == null)
 			return null;
 
@@ -567,7 +575,7 @@ public class ReactionEncoder
 			(includeOptions & INCLUDE_COORDS) != 0 ? rxnCoords : null,
 			(includeOptions & INCLUDE_DRAWING_OBJECTS) != 0 ? rxnObjects : null,
 			(includeOptions & INCLUDE_CATALYSTS) != 0 ? rxnCatalysts : null,
-			false);
+			false, rxn);
 	}
 
 	/**
