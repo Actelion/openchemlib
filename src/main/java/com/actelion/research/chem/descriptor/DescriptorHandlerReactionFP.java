@@ -44,11 +44,14 @@ import java.util.Arrays;
 public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP<Reaction> {
 	public static final String cVersion = "0.9.0";
 
+	public static final int REACTION_CENTER_LONG_COUNT = 8;
+	public static final float REACTION_CENTER_WEIGHT = 0.8f;	// the percentage of reaction center similarity to contribute to the total similarity
+	public static final float PERIPHERY_WEIGHT = 1f - REACTION_CENTER_WEIGHT;
+
 	private static final int SPHERE_COUNT = 5;
 	private static final int HASH_BITS = 10;
 	private static final int HASH_INIT = 13;
 	private static final int DESCRIPTOR_SIZE = (1 << HASH_BITS);
-	private static final int REACTION_CENTER_LONG_COUNT = 8;
 
     private static DescriptorHandlerReactionFP sDefaultInstance;
 
@@ -158,7 +161,7 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 
 		float reactionCenterSimilarity = getSimilarityTanimoto(o1, o2, 0, REACTION_CENTER_LONG_COUNT);
 		float nonReactionCenterSimilarity = getSimilarityTanimoto(o1, o2, REACTION_CENTER_LONG_COUNT, o1.length);
-		return 0.8f * reactionCenterSimilarity + 0.2f*nonReactionCenterSimilarity;
+		return REACTION_CENTER_WEIGHT * reactionCenterSimilarity + PERIPHERY_WEIGHT * nonReactionCenterSimilarity;
 	}
 
 	public float getReactionCenterSimilarity(long[] o1, long[] o2) {

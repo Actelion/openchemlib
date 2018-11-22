@@ -234,12 +234,28 @@ public class Reaction implements java.io.Serializable {
 		mDrawingObjectList = l;
 		}
 
+	public double getAverageBondLength() {
+		int bondCount = 0;
+		double avbl = 0.0;
+		for (int i=0; i<getMolecules(); i++) {
+			StereoMolecule mol = getMolecule(i);
+			if (mol.getAllBonds() != 0) {
+				bondCount += mol.getAllBonds();
+				avbl += mol.getAverageBondLength() * mol.getAllBonds();
+				}
+			}
+
+		return bondCount == 0 ? Molecule.getDefaultAverageBondLength() : avbl / bondCount;
+		}
+
 	/**
 	 * @return whether the molecule's atom coordinate bounds touch or overlap
 	 */
 	public boolean isReactionLayoutRequired() {
 		if (getMolecules() <= 1)
 			return false;
+
+		double avbl = getAverageBondLength();
 
 		Rectangle2D.Double[] r = new Rectangle2D.Double[getMolecules()];
 
@@ -248,11 +264,20 @@ public class Reaction implements java.io.Serializable {
 			if (r[i] != null) {
 				for (int j=0; j<i; j++) {
 					if (r[j] != null) {
+						// make new layout, if molecule bounds overlap
 						if (r[i].x + r[i].width >= r[j].x && r[i].x <= r[j].x + r[j].width)
 							return true;
 						if (r[i].y + r[i].height >= r[j].y && r[i].y <= r[j].y + r[j].height)
 							return true;
 						}
+					}
+
+				// make new layout, molecule bounds are unreasonably far from each other
+				if (i != 0 && r[i-1] != null) {
+					if (r[i].x - r[i-1].x - r[i].width > 5 * avbl)
+						return true;
+					if (r[i].y - r[i-1].y - r[i].height > 5 * avbl)
+						return true;
 					}
 				}
 			}
