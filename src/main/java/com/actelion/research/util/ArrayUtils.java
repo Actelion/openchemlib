@@ -34,6 +34,7 @@
 package com.actelion.research.util;
 
 import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class ArrayUtils {
@@ -191,6 +192,20 @@ public class ArrayUtils {
 		return res + "]";
 	}
 	
+	public final static String toString(double[] v, DecimalFormat df) {
+		StringBuilder sb =  new StringBuilder();
+		sb.append("[");
+
+		for(int i=0; i<v.length; i++) {
+			sb.append(df.format(v[i]));
+			if(i<v.length-1){
+				sb.append(", ");
+			}
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+
 	public final static String toString(Object[] v) {
 		String res = "[";
 		for(int i=0; i<v.length; i++) {

@@ -151,7 +151,7 @@ public class ExtendedDepictor {
         }
 
     public int getMoleculeCount() {
-        return mMolecule.length;
+        return mMolecule == null ? 0 : mMolecule.length;
         }
 
     public StereoMolecule getMolecule(int i) {

@@ -191,7 +191,7 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 			sharedKeys += Long.bitCount(index1[i] & index2[i]);
 			allKeys += Long.bitCount(index1[i] | index2[i]);
 		}
-		return (float)sharedKeys/(float)allKeys;
+		return allKeys == 0 ? 1f : (float)sharedKeys/(float)allKeys;
 	}
 
 	public DescriptorHandler<long[], Reaction> getThreadSafeCopy() {
