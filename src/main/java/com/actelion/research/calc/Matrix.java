@@ -82,7 +82,7 @@ public class Matrix {
 
     /**
      *
-     * @param row if true the matrix has one row. If false the matrix has one comulmn.
+     * @param row if true the matrix has one row. If false the matrix has one column.
      * @param arr
      */
     public Matrix(boolean row, double [] arr) {

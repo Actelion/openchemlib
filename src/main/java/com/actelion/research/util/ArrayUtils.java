@@ -33,6 +33,8 @@
 
 package com.actelion.research.util;
 
+import com.actelion.research.util.datamodel.IntArray;
+
 import java.lang.reflect.Array;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -220,6 +222,31 @@ public class ArrayUtils {
 		System.arraycopy(copy, 0, v, 0, v.length);
 	}
 
+	public static void shuffle(int [] arr){
+
+		Random rnd = new Random();
+
+		int cycles = 7;
+
+		int size = arr.length;
+
+		for (int i = 0; i < cycles; i++) {
+
+			for (int j = 0; j < size; j++) {
+				int dest = rnd.nextInt(size);
+
+				if(dest==j){
+					continue;
+				}
+
+				int v = arr[j];
+
+				arr[j] = arr[dest];
+
+				arr[dest] = v;
+			}
+		}
+	}
 
 	
 	/**
