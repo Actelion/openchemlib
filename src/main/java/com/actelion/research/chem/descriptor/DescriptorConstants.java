@@ -127,7 +127,7 @@ public interface DescriptorConstants {
                                                "RxnFP",
 												DescriptorHandlerReactionFP.cVersion,
                                                DESCRIPTOR_TYPE_REACTION,
-                                               false,
+                                               false,	// it is a binary, but similarity calculations have a bias on reaction center bits
                                                false,
                                                false);
     public static final DescriptorInfo DESCRIPTOR_IntegerVector = 
@@ -161,7 +161,7 @@ public interface DescriptorConstants {
 							new DescriptorInfo("FullFragmentSet",
 											   "FullFragSet",
 											   "1.0",
-											   DescriptorConstants.DESCRIPTOR_TYPE_MOLECULE,
+											   DESCRIPTOR_TYPE_MOLECULE,
 											   true,
 											   true,
 											   false);
@@ -170,7 +170,7 @@ public interface DescriptorConstants {
 							new DescriptorInfo("DescriptorPhysicoChemicalProperties",
 											   "PhysChem",
 												"version",
-											   DescriptorConstants.DESCRIPTOR_TYPE_MOLECULE,
+											   DESCRIPTOR_TYPE_MOLECULE,
 											   false,
 											   false,
 											   false);
@@ -179,7 +179,7 @@ public interface DescriptorConstants {
 							new DescriptorInfo("BinarySkeletonSpheres",
 												"BinSkelSpheres",
 												"10052017",
-												DescriptorConstants.DESCRIPTOR_TYPE_MOLECULE,
+												DESCRIPTOR_TYPE_MOLECULE,
 												true,
 												true,
 												false);
