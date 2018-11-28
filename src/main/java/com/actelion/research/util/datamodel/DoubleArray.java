@@ -59,7 +59,19 @@ public class DoubleArray implements INumericalDataColumn {
 	public DoubleArray(int capacity) {
 		init(capacity);
 	}
-	
+
+	/**
+	 * Deep constructor
+	 * @param a
+	 */
+	public DoubleArray(double[] a) {
+		init(a.length);
+		System.arraycopy(a,0, data, 0, a.length);
+		size = a.length;
+	}
+
+
+
 	private void init(int capacity){
 		data = new double[capacity];
 		delta_capacity = capacity/2;
@@ -71,7 +83,10 @@ public class DoubleArray implements INumericalDataColumn {
 	}
 	
 	public double [] get(){
-		resize(size);
+
+		if(size != data.length) {
+			resize(size);
+		}
 		return data;
 	}
 	
@@ -128,6 +143,7 @@ public class DoubleArray implements INumericalDataColumn {
 	}
 	
 	private void resize(int newlen){
+
 		double [] arr = new double [newlen];
 		
 		System.arraycopy(data, 0, arr, 0, Math.min(data.length, newlen));
