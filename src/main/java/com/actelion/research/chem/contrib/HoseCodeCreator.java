@@ -105,9 +105,10 @@ public class HoseCodeCreator {
 		for (int i=0; i<molecule.getAllAtoms(); i++) {
 			// we need to find the marked atom
 			String atomCustomLabel=molecule.getAtomCustomLabel(i);
-			if (atomCustomLabel!=null && atomCustomLabel.endsWith("*"));
-			atomID=i;
-			break;
+			if (atomCustomLabel!=null && atomCustomLabel.endsWith("*")) {
+				atomID=i;
+				break;
+			};
 		}
 		if (atomID>=0) {
 			return HoseCodeCreator.getHoseCodesForAtom(molecule, atomID, maxSphereSize, type);
