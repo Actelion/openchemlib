@@ -122,11 +122,11 @@ public class Depictor2D extends AbstractDepictor {
 		}
 
 
-	protected void fillCircle(double x, double y, double r) {
+	protected void fillCircle(double x, double y, double d) {
 		if (isMacintosh())
-			((Graphics2D)mG).fill(new Ellipse2D.Double(x-0.5f, y-0.5f, r, r));
+			((Graphics2D)mG).fill(new Ellipse2D.Double(x-0.5f, y-0.5f, d, d));
 		else
-			((Graphics2D)mG).fill(new Ellipse2D.Double(x, y, r, r));
+			((Graphics2D)mG).fill(new Ellipse2D.Double(x, y, d, d));
 		}
 
 
