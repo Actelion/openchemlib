@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.chem.reaction.Reaction;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,6 +54,28 @@ public class IsomericSmilesCreator {
 	private boolean[] mClosureOpened;
 	private boolean[] mPseudoStereoGroupInversion;
 	private boolean[] mPseudoStereoGroupInitialized;
+
+	public static String createReactionSmiles(Reaction rxn) {
+		StringBuilder sb = new StringBuilder();
+		for (int i=0; i<rxn.getReactants(); i++) {
+			if (i != 0)
+				sb.append('.');
+			sb.append(new IsomericSmilesCreator(rxn.getReactant(i), true).getSmiles());
+		}
+		sb.append('>');
+		for (int i=0; i<rxn.getCatalysts(); i++) {
+			if (i != 0)
+				sb.append('.');
+			sb.append(new IsomericSmilesCreator(rxn.getProduct(i)).getSmiles());
+		}
+		sb.append('>');
+		for (int i=0; i<rxn.getProducts(); i++) {
+			if (i != 0)
+				sb.append('.');
+			sb.append(new IsomericSmilesCreator(rxn.getProduct(i), true).getSmiles());
+		}
+		return sb.toString();
+	}
 
 	/**
 	 * Creates an IsomericSmilesCreator, which doesn't include atom mapping into generated smiles.

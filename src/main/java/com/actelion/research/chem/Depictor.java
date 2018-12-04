@@ -101,8 +101,8 @@ public class Depictor extends AbstractDepictor {
 		}
 
 
-	protected void fillCircle(double x, double y, double r) {
-	    ((Graphics)mG).fillOval((int)Math.round(x), (int)Math.round(y), (int)Math.round(r), (int)Math.round(r));
+	protected void fillCircle(double x, double y, double d) {
+	    ((Graphics)mG).fillOval((int)Math.round(x), (int)Math.round(y), (int)Math.round(d), (int)Math.round(d));
 		}
 
 

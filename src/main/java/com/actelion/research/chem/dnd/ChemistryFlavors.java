@@ -65,10 +65,9 @@ public class ChemistryFlavors
     };
 
     public static final DataFlavor DF_SERIALIZED_REACTION = new MyFlavor(com.actelion.research.chem.reaction.Reaction.class, "Native OpenChemLib Reaction");
-    public static final DataFlavor DF_REACTION_SMILES = new DataFlavor("chemical/x-daylight-smiles;class=java.lang.String", "Daylight Reaction Smiles");
+    public static final DataFlavor DF_REACTION_SMILES = new DataFlavor("chemical/x-daylight-reactionsmiles;class=java.lang.String", "Daylight Reaction Smiles");
     public static final DataFlavor[] REACTION_FLAVORS = {
         DF_SERIALIZED_REACTION,
         DF_REACTION_SMILES,
-        DataFlavor.stringFlavor
     };
 }

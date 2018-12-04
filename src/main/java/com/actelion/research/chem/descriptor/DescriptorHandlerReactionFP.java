@@ -42,7 +42,7 @@ import com.actelion.research.util.BurtleHasher;
 import java.util.Arrays;
 
 public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP<Reaction> {
-	public static final String cVersion = "0.9.0";
+	public static final String cVersion = "1.0.0";
 
 	public static final int REACTION_CENTER_LONG_COUNT = 8;
 	public static final float REACTION_CENTER_WEIGHT = 0.8f;	// the percentage of reaction center similarity to contribute to the total similarity
@@ -105,22 +105,27 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 						atomList[0] = rootAtom;
 						atomMask[rootAtom] = true;
 						max = 1;
-					}
+						}
 					else {
 						int newMax = max;
 						for (int i=min; i<max; i++) {
 							int atom = atomList[i];
 							for (int j=0; j<mol.getConnAtoms(atom); j++) {
 								int connAtom = mol.getConnAtom(atom, j);
-								if (!atomMask[connAtom]) {
+								if (!atomMask[connAtom]
+								 && (isReactionCenterAtom[rootAtom] || !isReactionCenterAtom[connAtom])) {
 									atomMask[connAtom] = true;
 									atomList[newMax++] = connAtom;
+									}
 								}
 							}
-						}
+
+						if (max == newMax)
+							break;
+
 						min = max;
 						max = newMax;
-					}
+						}
 
 					mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
 
@@ -131,7 +136,8 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 					if (m >= rxn.getReactants())
 						idcode = idcode.concat("P");
 
-					int weight = SPHERE_COUNT - sphere;	// Smaller fragments have higher weights, which is achieved by a higher number of representing bits
+					// For reaction center atoms smaller fragments have higher weights, which is achieved by a higher number of representing bits
+					int weight = isReactionCenterAtom[rootAtom] ? SPHERE_COUNT - sphere : 1;
 					for (int i=0; i<weight; i++) {
 						int h = BurtleHasher.hashlittle(idcode.concat(Integer.toString(i)), HASH_INIT);
 						h = (h & BurtleHasher.hashmask(HASH_BITS-1));		// '-1' divides the full bit span into two equal parts for reaction center and non-reaction center
@@ -143,14 +149,14 @@ public class DescriptorHandlerReactionFP extends AbstractDescriptorHandlerLongFP
 						int index = len - h / Long.SIZE - 1;
 						data[index] |= (1L << (h % Long.SIZE));
 //System.out.println(""+m+"\t"+Boolean.toString(m >= rxn.getReactants())+"\t"+rootAtom+"\t"+sphere+"\t"+isReactionCenterAtom[rootAtom]+"\t"+h+"\t"+index+"\t"+(h % Long.SIZE)+"\t"+idcode);
+						}
 					}
 				}
 			}
-		}
 
 		return data;
 //		return (descriptor == null) ? FAILED_OBJECT : descriptor;
-    }
+        }
 
 	public float getSimilarity(long[] o1, long[] o2) {
 		if (o1 == null

@@ -2544,7 +2544,7 @@ public abstract class AbstractDepictor {
     protected abstract void drawDottedLine(DepictorLine theLine);
 	protected abstract void drawPolygon(double[] x, double[] y, int count);
 	protected abstract void drawString(String theString,double x,double y);
-	protected abstract void fillCircle(double x, double y, double r);
+	protected abstract void fillCircle(double x, double y, double d);
 	protected abstract double getLineWidth();
 	protected abstract double getStringWidth(String theString);
     protected abstract int getTextSize();
