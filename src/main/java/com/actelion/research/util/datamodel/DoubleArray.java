@@ -77,6 +77,10 @@ public class DoubleArray implements INumericalDataColumn {
 		delta_capacity = capacity/2;
 		size = 0;
 	}
+
+	public void clear(){
+		size=0;
+	}
 	
 	public double get(int i){
 		return data[i];

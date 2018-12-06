@@ -66,7 +66,7 @@ public class IsomericSmilesCreator {
 		for (int i=0; i<rxn.getCatalysts(); i++) {
 			if (i != 0)
 				sb.append('.');
-			sb.append(new IsomericSmilesCreator(rxn.getProduct(i)).getSmiles());
+			sb.append(new IsomericSmilesCreator(rxn.getCatalyst(i)).getSmiles());
 		}
 		sb.append('>');
 		for (int i=0; i<rxn.getProducts(); i++) {
