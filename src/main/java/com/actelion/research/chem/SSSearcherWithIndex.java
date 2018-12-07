@@ -768,6 +768,18 @@ public class SSSearcherWithIndex {
 		}
 
 
+	public int findFragmentInMoleculeWithoutIndex(int countMode) {
+		if (mMolecule == null)
+			mMolecule = (new IDCodeParser(false)).getCompactMolecule(mMoleculeIDCode);
+		if (mFragment == null)
+			mFragment = (new IDCodeParser(false)).getCompactMolecule(mFragmentIDCode);
+
+		mSSSearcher.setMolecule(mMolecule);
+		mSSSearcher.setFragment(mFragment);
+		return mSSSearcher.findFragmentInMolecule(countMode, SSSearcher.cDefaultMatchMode);
+		}
+
+
 	public boolean isFragmentInMolecule() {
 		if (mMoleculeIndexInt == null) {
 			for (int i=0; i<mMoleculeIndexLong.length; i++)
