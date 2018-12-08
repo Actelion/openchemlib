@@ -72,17 +72,15 @@ public class LinuxNativeClipboardAccessor implements ClipboardOwner
 					return o.toString().getBytes();
 				}
 			}
-			DataFlavor df[] = {MOLFLAVOUR,REACTIONFLAVOUR};
-			for (int i = 0; i < df.length; i++) {
-				try{
-					Object o = t.getTransferData(df[i]);
-                    System.out.println("GetClipboardData Data: " + o);
-					if(o instanceof byte[]){
-						return(byte[])o;
-					}
-				} catch(Exception e){
-                    System.out.println("Exception in getClipboardData: " + e);
+			DataFlavor df = format.equalsIgnoreCase(NativeClipboardHandler.NC_SERIALIZEREACTION) ? REACTIONFLAVOUR : MOLFLAVOUR;
+			try{
+				Object o = t.getTransferData(df);
+				System.out.println("GetClipboardData Data: " + o);
+				if(o instanceof byte[]){
+					return(byte[])o;
 				}
+			} catch(Exception e){
+				System.out.println("Exception in getClipboardData: " + e);
 			}
 
 		} catch (Exception e) {
