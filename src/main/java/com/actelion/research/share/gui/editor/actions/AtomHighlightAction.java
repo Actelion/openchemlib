@@ -46,7 +46,6 @@ import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
 
 import java.awt.geom.Point2D;
-import java.util.function.Consumer;
 
 
 /**
@@ -268,15 +267,20 @@ public abstract class AtomHighlightAction extends DrawAction
         String code = evt.getText();
         char c = code != null && code.length() > 0 ? code.charAt(0) : 0;
         if (evt.getCode().equals(factory.getDeleteKey())) {
-            return removeAtoms(mol, theAtom);
+            if (theAtom != -1) {
+                mol.deleteAtom(theAtom);
+                setHighlightAtom(mol, -1);
+                return true;
+            } else {
+                if (mol.deleteSelectedAtoms()) {
+                    return true;
+                }
+            }
         } else if (!isFirst && evt.getCode().equals(factory.getEscapeKey())) {
             keyStrokeBuffer.setLength(0);
             return true;
-        } else if (evt.getCode().equals(factory.getBackSpaceKey())) {
-            if (isFirst)
-                return removeAtoms(mol,theAtom);
-            else
-                keyStrokeBuffer.setLength(keyStrokeBuffer.length() - 1);
+        } else if (!isFirst && evt.getCode().equals(factory.getBackSpaceKey())) {
+            keyStrokeBuffer.setLength(keyStrokeBuffer.length() - 1);
             return true;
         } else if (evt.getCode().equals(factory.getEnterKey())) {
             expandAtomKeyStrokes(mol, theAtom, keyStrokeBuffer.toString());
@@ -288,19 +292,6 @@ public abstract class AtomHighlightAction extends DrawAction
         } else if ((c > 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 48 && c <= 57) || (c == '-')) {
             keyStrokeBuffer.append(c);
             return true;
-        }
-        return false;
-    }
-
-    private boolean removeAtoms(StereoMolecule mol, int theAtom) {
-        if (theAtom != -1) {
-            mol.deleteAtom(theAtom);
-            setHighlightAtom(mol, -1);
-            return true;
-        } else {
-            if (mol.deleteSelectedAtoms()) {
-                return true;
-            }
         }
         return false;
     }
@@ -330,18 +321,6 @@ public abstract class AtomHighlightAction extends DrawAction
         StereoMolecule mol = model.getMolecule();
         if (mol != null) {
             IAtomQueryFeaturesDialog dlg = factory.createAtomQueryFeatureDialog(/*new AtomQueryFeaturesDialog*/mol, atom);
-            dlg.setResultHandler(new Consumer<DialogResult>()
-            {
-                @Override
-                public void accept(DialogResult res)
-                {
-                    if (res == DialogResult.IDOK) {
-                        model.setSelectedAtom(-1);
-                        model.changed();
-                    }
-                }
-            });
-
             return dlg.doModalAt(lastHightlightPoint.getX(), lastHightlightPoint.getY()) == DialogResult.IDOK;
         }
         return false;

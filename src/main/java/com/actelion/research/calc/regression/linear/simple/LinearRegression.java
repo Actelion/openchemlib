@@ -31,7 +31,7 @@
 *
 */
 
-package com.actelion.research.calc.linearregression;
+package com.actelion.research.calc.regression.linear.simple;
 
 import java.awt.Point;
 import java.util.List;

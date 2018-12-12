@@ -34,7 +34,7 @@
 package com.actelion.research.chem.properties.complexity;
 
 import com.actelion.research.calc.geometry.Triangle;
-import com.actelion.research.calc.linearregression.LinearRegression;
+import com.actelion.research.calc.regression.linear.simple.LinearRegression;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.properties.symmetry.SymmetryCalculator;
 import com.actelion.research.util.ConstantsDWAR;

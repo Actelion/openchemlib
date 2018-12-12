@@ -2864,7 +2864,12 @@ public class Matrix {
         for (int i = 0; i < data[0].length; i++)
             data[iRow][i] = v;
     }
-    
+
+    /**
+     * Deep copy
+     * @param iRow
+     * @param arr
+     */
     public void setRow(int iRow, double [] arr) {
         for (int i = 0; i < data[0].length; i++)
             data[iRow][i] = arr[i];

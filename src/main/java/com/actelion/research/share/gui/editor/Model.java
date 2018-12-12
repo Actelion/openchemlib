@@ -195,7 +195,7 @@ public abstract class Model
     public void cleanReaction(boolean cleanAll)
     {
         Reaction reaction = getReaction();
-//        // System.out.print("cleanreaction %s\n",reaction.getReactants());
+//        System.out.printf("cleanreaction %s\n",reaction.getReactants());
         Dimension dim = getDisplaySize();
         double w = dim.getWidth();
         double h = dim.getHeight();
@@ -349,7 +349,7 @@ public abstract class Model
         }
 //        for (int i = 0; i < mFragment.length; i++) {
 //            for (int j = 0; j < mFragment[i].getAllAtoms(); j++) {
-//                // System.out.print("getReaction Fragment[%s] atom[%s]=%s\n",i,j,mFragment[i].getAtomicNo(j));
+//                System.out.printf("getReaction Fragment[%s] atom[%s]=%s\n",i,j,mFragment[i].getAtomicNo(j));
 //            }
 //        }
 //
@@ -361,7 +361,7 @@ public abstract class Model
     {
 
         Dimension displaySize = getDisplaySize();
-//        // System.out.print("SetReaction %s\n", displaySize);
+//        System.out.printf("SetReaction %s\n", displaySize);
 
         mMol = new StereoMolecule();
         mFragment = new StereoMolecule[rxn.getMolecules()];
@@ -378,7 +378,7 @@ public abstract class Model
             mMol.addMolecule(mFragment[i]);
         }
 
-//        // System.out.print("SetReaction %s mols = %d\n", rxn.getReactants(),rxn.getMolecules());
+//        System.out.printf("SetReaction %s mols = %d\n", rxn.getReactants(),rxn.getMolecules());
 
 //        ChemistryHelper.scaleInto(rxn,0,0,(double)displaySize.width,(double)displaySize.height);
 
@@ -402,7 +402,7 @@ public abstract class Model
 
 //        for (int i = 0; i < mFragment.length; i++) {
 //            for (int j = 0; j < mFragment[i].getAllAtoms(); j++) {
-//                // System.out.print("setReaction Fragment[%s] atom[%s]=%s\n",i,j,mFragment[i].getAtomicNo(j));
+//                System.out.printf("setReaction Fragment[%s] atom[%s]=%s\n",i,j,mFragment[i].getAtomicNo(j));
 //            }
 //        }
 
@@ -792,7 +792,7 @@ public abstract class Model
         if (isReactionMode()) {
             mReactantCount = 0;
 //            Arrow arrow = ((mMode & MODE_REACTION) != 0) ? (Arrow) mDrawingObjectList.get(0) : null;
-//            // System.out.print("Arrow placement %s\n",arrow.getBoundingRect());
+//            System.out.printf("Arrow placement %s\n",arrow.getBoundingRect());
             for (int fragment = 0; fragment < fragments; fragment++) {
                 fragmentDescriptor[fragment][1] =
                     isOnProductSide(fragmentCOG[fragment].x,fragmentCOG[fragment].y)
@@ -845,7 +845,7 @@ public abstract class Model
             fragmentNo[atom1] = newFragmentIndex[fragmentNo[atom1]];
         }
 
-//        // System.out.print("SortFragments Count %s\n",mReactantCount);
+//        System.out.printf("SortFragments Count %s\n",mReactantCount);
 
     }
 
@@ -858,7 +858,7 @@ public abstract class Model
     {
 //        Arrow arrow = ((mMode & MODE_REACTION) != 0) ? (Arrow) mDrawingObjectList.get(0) : null;
 //        if (arrow != null) {
-//            // System.out.print("Arrow determines product side");
+//            System.out.printf("Arrow determines product side");
 //            return arrow.isOnProductSide((float) x, (float) y);
 //        }
         if (isReactionMode()) {
@@ -1010,7 +1010,7 @@ public abstract class Model
     {
         if (!Double.isInfinite(scale)) {
             if (scale != 1 && scale > 0) {
-//                // System.out.print("Scale %f\n",scale);
+//                System.out.printf("Scale %f\n",scale);
                 AbstractDepictor d = createDepictor(mMol);
                 DepictorTransformation dt = d.simpleValidateView(new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()),
                     AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
@@ -1281,7 +1281,7 @@ public abstract class Model
     {
         needslayout = set;
 //        if (set)
-//            // System.out.print("NeedsLayout %s\n",set);
+//            System.out.printf("NeedsLayout %s\n",set);
     }
 
     public boolean needsLayout()
@@ -1427,7 +1427,6 @@ public abstract class Model
 
     public void setMolFile(String molFile)
     {
-        pushUndo();
         try {
             MolfileParser p = new MolfileParser();
             StereoMolecule mol = new StereoMolecule();
@@ -1458,7 +1457,7 @@ public abstract class Model
 
     public int getReactantCount()
     {
-//        // System.out.print("getReactantCount Count %s\n",mReactantCount);
+//        System.out.printf("getReactantCount Count %s\n",mReactantCount);
         return mReactantCount;
     }
 
@@ -1587,7 +1586,7 @@ public abstract class Model
 
         if (dt != null) {
             dt.move(cx,cy);
-            // System.out.print("Transform %s %s\n",dt.getOffsetX(),cx);
+            System.out.printf("Transform %s %s\n",dt.getOffsetX(),cx);
             dt.applyTo(mol);
         }
     }

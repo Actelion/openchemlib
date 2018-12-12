@@ -1745,6 +1745,7 @@ public abstract class AbstractDepictor {
 			}
 		else {
 			if (mMol.getAtomicNo(atom) != 6
+			 || mMol.getAtomMass(atom) != 0
 			 || !mAtomIsConnected[atom]
 			 || mMol.getAtomRadical(atom) != 0)
 				hydrogensToAdd = mMol.getImplicitHydrogens(atom);
@@ -1904,6 +1905,7 @@ public abstract class AbstractDepictor {
 		if (hydrogensToAdd != 0) {
 			double hydrogenWidth = getStringWidth("H");
 			double hNoWidth = 0.0;
+			double hHeight = getTextSize();
 			if (hydrogensToAdd == -1) {
 				hNoStr = "n";
 				mpSetSmallLabelSize();
@@ -1931,11 +1933,11 @@ public abstract class AbstractDepictor {
 				chax = getAtomX(atom);
 				if (hindrance[0] < hindrance[2]) {
 					hindrance[0] += 10;
-					chay = getAtomY(atom) - getTextSize();
+					chay = getAtomY(atom) - hHeight;
 					}
 				else {
 					hindrance[2] += 10;
-					chay = getAtomY(atom) + getTextSize();
+					chay = getAtomY(atom) + hHeight;
 					}
 				}
 
