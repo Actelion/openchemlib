@@ -1,3 +1,4 @@
+package com.actelion.research.chem.contrib;
 
 import java.io.IOException;
 import java.util.TreeMap;
@@ -18,8 +19,8 @@ public class DiastereoIDTest {
         // we need to testDiaID if the diastereotopic protons generation works
         // starting from a 2D molecule without hydrogen and from a 3D molecule generate by Moloc (with added hydrogen)
 
-        String sdf2d="./src/main/java/testDiaID/testDiaID-diastereo.sdf";
-        String sdf3d="./src/main/java/testDiaID/testDiaID-diastereo-3d.sdf";
+        String sdf2d="./src/main/java/com/actelion/research/chem/contrib/test/test-diastereo.sdf";
+        String sdf3d="./src/main/java/com/actelion/research/chem/contrib/test/test-diastereo-3d.sdf";
 
         TreeMap<String,StereoMolecule> mol2d=new TreeMap<String,StereoMolecule>();
         TreeMap<String,StereoMolecule> mol2dh=new TreeMap<String,StereoMolecule>();

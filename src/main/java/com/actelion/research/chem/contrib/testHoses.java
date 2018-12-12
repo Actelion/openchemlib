@@ -1,4 +1,4 @@
-
+package com.actelion.research.chem.contrib;
 
 import com.actelion.research.chem.SmilesParser;
 import com.actelion.research.chem.StereoMolecule;
