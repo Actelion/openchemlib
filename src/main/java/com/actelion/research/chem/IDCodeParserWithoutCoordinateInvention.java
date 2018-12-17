@@ -439,7 +439,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 				no = decodeBits(bbits);
 				for (int i=0; i<no; i++) {
 					int bond = decodeBits(bbits);
-					mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
+					mMol.setBondType(bond, Molecule.cBondQFDelocalized);
 					}
 				break;
 			case 3:	//	datatype 'AtomQFMoreNeighbours'

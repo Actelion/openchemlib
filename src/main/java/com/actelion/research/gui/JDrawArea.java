@@ -2820,13 +2820,11 @@ public class JDrawArea extends JPanel
 		mMol.deleteMolecule();
 		mFragment = new StereoMolecule[rxn.getMolecules()];
 		mReactantCount = rxn.getReactants();
-		boolean isFragment = false;
 		for (int i = 0; i < rxn.getMolecules(); i++) {
-			isFragment |= rxn.getMolecule(i).isFragment();
 			mFragment[i] = rxn.getMolecule(i);
 			mMol.addMolecule(mFragment[i]);
 		}
-		mMol.setFragment(isFragment);
+		mMol.setFragment(rxn.isFragment());
 		storeState();
 
 		mFragmentNo = new int[mMol.getAllAtoms()];

@@ -49,14 +49,15 @@ public class Reaction implements java.io.Serializable {
 	private ArrayList<StereoMolecule> mCatalyst;
 	private DrawingObjectList mDrawingObjectList;
 	private String mName;
-//	private boolean mReactionLayoutRequired;
 	private int mMaxMapNo;
+	private boolean mIsFragment;	// if there are molecules, then there fragment status takes precedence over this flag
 
 	public Reaction() {
 		mReactant = new ArrayList<StereoMolecule>();
 		mProduct = new ArrayList<StereoMolecule>();
 		mCatalyst = new ArrayList<StereoMolecule>();
 		mMaxMapNo = -1;
+		mIsFragment = false;
 		}
 
 	public Reaction(String name) {
@@ -105,6 +106,8 @@ public class Reaction implements java.io.Serializable {
 	 * @param f
 	 */
 	public void setFragment(boolean f) {
+		mIsFragment = f;
+
 		for (StereoMolecule mol:mReactant)
 			mol.setFragment(f);
 
@@ -114,15 +117,25 @@ public class Reaction implements java.io.Serializable {
 
 	/**
 	 * The naming of this method is in analogy to the corresponding method of the Molecule class.
-	 * @return whether at least one of the reactants or products is marked as substructure fragment.
+	 * Returns whether at least one of the reactants or products is marked as substructure fragment.
+	 * Only if there are no molecules, then the reaction's explicit fragment status is returned.
+	 * @return fragment status of molecules or reaction
 	 */
 	public boolean isFragment() {
+		return getMolecules() == 0 ? mIsFragment : determineFragment();
+		}
+
+	/**
+	 * @return whether at least one of the reactants or products is marked as substructure fragment.
+	 */
+	private boolean determineFragment() {
 		for (StereoMolecule mol:mReactant)
 			if (mol.isFragment())
 				return true;
 		for (StereoMolecule mol:mProduct)
 			if (mol.isFragment())
 				return true;
+
 		return false;
 		}
 
@@ -139,8 +152,8 @@ public class Reaction implements java.io.Serializable {
 			mCatalyst.add(new StereoMolecule(rxn.getCatalyst(i)));
 		mDrawingObjectList = new DrawingObjectList(rxn.getDrawingObjects());
 		if (rxn.mName != null)
-			mName = new String(rxn.mName);
-//		mReactionLayoutRequired = rxn.mReactionLayoutRequired;
+			mName = rxn.mName;
+		mIsFragment = rxn.mIsFragment;
 		}
 
 	public Reaction(StereoMolecule[] mol, int reactantCount) {
@@ -151,6 +164,7 @@ public class Reaction implements java.io.Serializable {
 			for (int i = reactantCount; i < mol.length; i++)
 				mProduct.add(mol[i]);
 			}
+		mIsFragment = determineFragment();
 		}
 
 	public StereoMolecule getReactant(int no) {
@@ -284,10 +298,6 @@ public class Reaction implements java.io.Serializable {
 
 		return false;
 		}
-
-/*	public void setReactionLayoutRequired(boolean b) {
-		mReactionLayoutRequired = b;
-		}*/
 
 	/**
 	 * Checks, whether all non-hydrogen atoms are mapped and whether every reactant atom has exactly one assigned product atom.

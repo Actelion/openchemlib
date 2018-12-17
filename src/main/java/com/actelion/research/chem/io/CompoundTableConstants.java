@@ -116,6 +116,7 @@ public interface CompoundTableConstants {
     String cColumnPropertyUseThumbNail = "useThumbNail";
     String cColumnPropertyImagePath = "imagePath";
     String cColumnPropertySpecialType = "specialType";
+    String cColumnPropertyIsFragment = "isFragment";    // specifies for structure & reaction columns, whether the fragment bit is set, when editing a new object
     String cColumnPropertyParentColumn = "parent";
     String cColumnPropertyReactionPart = "reactionPart";
     String cColumnPropertyIdentifierColumn = "idColumn";

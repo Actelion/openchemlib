@@ -33,8 +33,6 @@
 
 package com.actelion.research.gui.clipboard;
 
-import com.actelion.research.util.Platform;
-
 public class NativeClipboardAccessor
 {
 

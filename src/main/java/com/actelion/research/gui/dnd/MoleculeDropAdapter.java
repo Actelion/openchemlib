@@ -35,6 +35,7 @@ package com.actelion.research.gui.dnd;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.dnd.ChemistryFlavors;
+import com.actelion.research.chem.name.StructureNameResolver;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -147,11 +148,12 @@ public class MoleculeDropAdapter implements DropTargetListener
                 mol = new StereoMolecule();
                new IDCodeParser(true).parse(mol, ((String) o).getBytes());
             } catch(Throwable t) {
-                System.err.println("Unable to instantiate from text flavor " + o);
-                mol = null;
+                mol = StructureNameResolver.resolve((String) o);
             }
+            if (mol == null)
+                System.err.println("Unable to instantiate from text flavor: " + o);
         } else {
-            System.err.println("Unable to instantiate flavor " + chosen);
+            System.err.println("Unable to instantiate flavor: " + chosen);
 //            throw new InstantiationException("Unable to instantiate flavor " + chosen);
         }
         return mol;
