@@ -84,6 +84,16 @@ public class ArrayUtils {
 		return res;
 	}
 	
+	public final static String[] toStringArray(List<String> list) {
+		String[] res = new String[list.size()];
+		int index = 0;
+		Iterator<String> iter = list.iterator();
+		while(iter.hasNext()) {
+			res[index++] = iter.next();
+		}
+		return res;
+	}
+
 	public final static int indexOf(Object[] array, Object obj) {
 		for (int i = 0; i < array.length; i++) {
 			if(array[i].equals(obj)) return i;

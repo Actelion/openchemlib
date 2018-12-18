@@ -560,13 +560,13 @@ public class Reaction implements java.io.Serializable {
 		if (mReactant.size() != 0) {
 			StereoMolecule reactant = new StereoMolecule(mReactant.get(0));
 			for (int i=1; i<mReactant.size(); i++)
-				mReactant.get(i).copyMolecule(reactant);
+				reactant.addMolecule(mReactant.get(i));
 			mergedReaction.addReactant(reactant);
 			}
 		if (mProduct.size() != 0) {
 			StereoMolecule product = new StereoMolecule(mProduct.get(0));
 			for (int i=1; i<mProduct.size(); i++)
-				mProduct.get(i).copyMolecule(product);
+				product.addMolecule(mProduct.get(i));
 			mergedReaction.addProduct(product);
 			}
 		return mergedReaction;
