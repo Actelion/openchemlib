@@ -194,15 +194,17 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 		if ((queryFeatures & Molecule.cBondQFMatchStereo) != 0)
 			mCBMatchStereo.setSelected(true);
 
-		if ((queryFeatures & Molecule.cBondQFNotRing) != 0)
+		int ringState = queryFeatures & Molecule.cBondQFRingState;
+		int aromState = queryFeatures & Molecule.cBondQFAromState;
+		if (ringState == Molecule.cBondQFNotRing)
 			mComboBoxRing.setSelectedIndex(1);
-		else if ((queryFeatures & Molecule.cBondQFRing) != 0) {
-			if ((queryFeatures & Molecule.cBondQFNotAromatic) != 0)
-				mComboBoxRing.setSelectedIndex(3);
-			else if ((queryFeatures & Molecule.cBondQFAromatic) != 0)
-				mComboBoxRing.setSelectedIndex(4);
-			else
+		else if (aromState == Molecule.cBondQFAromatic)
+			mComboBoxRing.setSelectedIndex(4);
+		else if (ringState == Molecule.cBondQFRing) {
+			if (aromState == 0)
 				mComboBoxRing.setSelectedIndex(2);
+			else if (aromState == Molecule.cBondQFNotAromatic)
+				mComboBoxRing.setSelectedIndex(3);
 			}
 
 		int ringSize = (queryFeatures & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift;
@@ -306,23 +308,32 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
     		if (mCBMatchStereo.isSelected())
     			queryFeatures |= Molecule.cBondQFMatchStereo;
 
-    		if (!mMol.isAromaticBond(bond)) {
-    			if (mComboBoxRing.getSelectedIndex() == 4)
-    				queryFeatures |= Molecule.cBondQFAromatic;
-    			else if (mComboBoxRing.getSelectedIndex() == 3)
-    				queryFeatures |= Molecule.cBondQFNotAromatic | Molecule.cBondQFRing;
-
-	    		if (!mMol.isRingBond(bond)) {
-	    			if (mComboBoxRing.getSelectedIndex() == 2)
-	    				queryFeatures |= Molecule.cBondQFRing;
-	    			else if (mComboBoxRing.getSelectedIndex() == 1)
-	    				queryFeatures |= Molecule.cBondQFNotRing;
-	    			}
+			if (mComboBoxRing.getSelectedIndex() != 0) {
+				if (mComboBoxRing.getSelectedIndex() == 1) {
+					if (!mMol.isRingBond(bond))
+						queryFeatures |= Molecule.cBondQFNotRing;
+					}
+				else if (mComboBoxRing.getSelectedIndex() == 2) {
+					if (!mMol.isRingBond(bond))
+						queryFeatures |= Molecule.cBondQFRing;
+					}
+				else if (mComboBoxRing.getSelectedIndex() == 3) {
+					if (!mMol.isAromaticBond(bond))
+						queryFeatures |= Molecule.cBondQFNotAromatic | Molecule.cBondQFRing;
+					}
+				else if (mComboBoxRing.getSelectedIndex() == 4) {
+					if (!mMol.isAromaticBond(bond))
+						queryFeatures |= Molecule.cBondQFAromatic;
+					}
     			}
-            }
 
-        if (mComboBoxRingSize.getSelectedIndex() != 0)
-            queryFeatures |= ((mComboBoxRingSize.getSelectedIndex()+2) << Molecule.cBondQFRingSizeShift);
+			if (mComboBoxRingSize.getSelectedIndex() != 0) {
+				int ringSize = mComboBoxRingSize.getSelectedIndex() + 2;
+				int implicitSize = mMol.getBondRingSize(bond);
+				if (ringSize != implicitSize)
+					queryFeatures |= (ringSize << Molecule.cBondQFRingSizeShift);
+				}
+            }
 
 		mMol.setBondQueryFeature(bond, Molecule.cBondQFAllFeatures, false);
 		mMol.setBondQueryFeature(bond, queryFeatures, true);

@@ -320,13 +320,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 			mMol.addBond(decodeBits(abits),
 						 decodeBits(abits), Molecule.cBondTypeSingle);
 
-		boolean[] isAromaticBond = new boolean[allBonds];
+		boolean[] isDelocalizedBond = new boolean[allBonds];
 
 		for (int bond=0; bond<allBonds; bond++) {
 			int bondOrder = decodeBits(2);
 			switch (bondOrder) {
 			case 0:
-				isAromaticBond[bond] = true;
+				isDelocalizedBond[bond] = true;
 				break;
 			case 2:
 				mMol.setBondType(bond, Molecule.cBondTypeDouble);
@@ -439,7 +439,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 				no = decodeBits(bbits);
 				for (int i=0; i<no; i++) {
 					int bond = decodeBits(bbits);
-					mMol.setBondType(bond, Molecule.cBondQFDelocalized);
+					mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
 					}
 				break;
 			case 3:	//	datatype 'AtomQFMoreNeighbours'
@@ -641,7 +641,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 				}
 			}
 
-		new AromaticityResolver(mMol).locateDelocalizedDoubleBonds(isAromaticBond);
+		new AromaticityResolver(mMol).locateDelocalizedDoubleBonds(isDelocalizedBond);
 
 		if (aromaticSPBond != null)
 			for (int bond:aromaticSPBond)
