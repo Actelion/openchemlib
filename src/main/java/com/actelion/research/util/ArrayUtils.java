@@ -258,6 +258,32 @@ public class ArrayUtils {
 		}
 	}
 
+	public static <T> void shuffle(T [] arr){
+
+		Random rnd = new Random();
+
+		int cycles = 7;
+
+		int size = arr.length;
+
+		for (int i = 0; i < cycles; i++) {
+
+			for (int j = 0; j < size; j++) {
+				int dest = rnd.nextInt(size);
+
+				if(dest==j){
+					continue;
+				}
+
+				T v = arr[j];
+
+				arr[j] = arr[dest];
+
+				arr[dest] = v;
+			}
+		}
+	}
+
 	
 	/**
 	 * Copy an array 
