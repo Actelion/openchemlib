@@ -33,26 +33,15 @@
 
 package com.actelion.research.calc;
 
-import java.awt.Point;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
-
 import com.actelion.research.util.DoubleVec;
 import com.actelion.research.util.convert.String2DoubleArray;
 import com.actelion.research.util.datamodel.ScorePoint;
+
+import java.awt.*;
+import java.io.*;
+import java.text.DecimalFormat;
+import java.util.*;
+import java.util.List;
 
 public class Matrix {
 
@@ -512,23 +501,26 @@ public class Matrix {
      * @deprecated use getColumns(List<Integer> vecIndices) instead
      */
     public Matrix getColumns(Vector<Integer> vecIndices) {
-      Matrix maReduced = new Matrix(getRowDim(),vecIndices.size());
-      for(int ii = 0; ii < vecIndices.size(); ii++) {
-        int iIndex = ((Integer) vecIndices.get(ii)).intValue();
-        maReduced.assignCol(ii,this,iIndex);
-      }
-
-      return maReduced;
-    }
-    public Matrix getColumns(List<Integer> vecIndices) {
-        Matrix maReduced = new Matrix(getRowDim(),vecIndices.size());
-        for(int ii = 0; ii < vecIndices.size(); ii++) {
-          int iIndex = ((Integer) vecIndices.get(ii)).intValue();
-          maReduced.assignCol(ii,this,iIndex);
+        Matrix maReduced = new Matrix(getRowDim(), vecIndices.size());
+        for (int i = 0; i < vecIndices.size(); i++) {
+            int col= vecIndices.get(i);
+            maReduced.assignCol(i, this, col);
         }
 
         return maReduced;
-      }
+    }
+
+    public Matrix getColumns(List<Integer> liIndex) {
+
+        Matrix maReduced = new Matrix(getRowDim(), liIndex.size());
+
+        for (int i = 0; i < liIndex.size(); i++) {
+            int col = liIndex.get(i);
+            maReduced.assignCol(i, this, col);
+        }
+
+        return maReduced;
+    }
 
     public int getColDim() {
         return data[0].length;
@@ -1612,7 +1604,7 @@ public class Matrix {
     }
     
     /**
-     * @param row row
+     * @param col
      * @return the row index of the largest value in the col.
      */
     public int getMaxRowIndex(int col) {
@@ -1886,6 +1878,26 @@ public class Matrix {
     public static double getPythag2(double a, double b)
     {
         return Math.sqrt((a * a) + (b * b));
+    }
+
+
+    public boolean areRowsEqual(int row1, int row2) {
+
+        boolean equal = true;
+
+        int cols = cols();
+
+        for (int i = 0; i < cols; i++) {
+
+            double diff = Math.abs(data[row1][i]-data[row2][i]);
+
+            if(diff>TINY){
+                equal=false;
+                break;
+            }
+        }
+
+        return equal;
     }
 
     public boolean equal(Matrix ma) {

@@ -52,6 +52,8 @@ public class StringFunctions {
 
 	public static final String [] REGEX_META_CHARACTERS = {"*","%","@","&","+", "(", ")"};
 
+	public static final String SEP = "; ";
+
 	public static int countIntegerInText(String txt) {
 
 		int nInt = 0;
@@ -935,7 +937,24 @@ public class StringFunctions {
 		
 		return sb.toString();
 	}
-	
+	public static String toStringInt(List<Integer> li, String sep) {
+
+		StringBuilder sb = new StringBuilder();
+
+		for (int i = 0; i < li.size(); i++) {
+			sb.append(li.get(i));
+
+			if(i < li.size()-1){
+				sb.append(sep);
+			}
+		}
+
+		return sb.toString();
+	}
+	public static String toStringInt(List<Integer> li) {
+		return toStringInt(li, SEP);
+	}
+
 	public static String toSortedString(List<String> li) {
 		StringBuilder sb = new StringBuilder();
 		
