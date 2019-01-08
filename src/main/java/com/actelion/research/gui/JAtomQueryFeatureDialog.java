@@ -49,7 +49,7 @@ public class JAtomQueryFeatureDialog extends JDialog
 					 implements ActionListener,ItemListener {
     static final long serialVersionUID = 0x20060720;
 
-	private Frame               mParentFrame;
+	private Component           mParent;
     private ExtendedMolecule	mMol;
 	private int					mAtom;
 	private JCheckBox			mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo,mCBExcludeGroup;
@@ -58,9 +58,18 @@ public class JAtomQueryFeatureDialog extends JDialog
 	private JTextField			mTFAtomList;
 	private JLabel				mLabelAtomList;
 
+	protected JAtomQueryFeatureDialog(Dialog parent, ExtendedMolecule mol, int atom) {
+		super(parent, (mol.isSelectedAtom(atom)) ? "Multiple Atom Properties" : "Atom Properties", true);
+		init(parent, mol, atom);
+		}
+
 	protected JAtomQueryFeatureDialog(Frame parent, ExtendedMolecule mol, int atom) {
 		super(parent, (mol.isSelectedAtom(atom)) ? "Multiple Atom Properties" : "Atom Properties", true);
-		mParentFrame = parent;
+		init(parent, mol, atom);
+		}
+
+	private void init(Component parent, ExtendedMolecule mol, int atom) {
+		mParent = parent;
 		mMol = mol;
 		mAtom = atom;
 		boolean opaque = false;
@@ -607,7 +616,7 @@ public class JAtomQueryFeatureDialog extends JDialog
 			int atomicNo = Molecule.getAtomicNoFromLabel(label);
 			if (atomicNo != 0) {
 				if (atomicNo == 1) {
-					JOptionPane.showMessageDialog(mParentFrame, "'H' cannot be part of an atom list and is removed.");
+					JOptionPane.showMessageDialog(mParent, "'H' cannot be part of an atom list and is removed.");
 					}
                 else if (list == null) {
                     list = new int[1];

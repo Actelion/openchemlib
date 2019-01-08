@@ -141,6 +141,37 @@ public class Conformer {
 		}
 
 	/**
+	 * Removes atoms Coordinates objects from those atoms that are marked in the given array.
+	 * Make sure to also remove those atoms from the underlying Molecule.
+	 * @param isToBeDeleted
+	 * @return
+	 */
+	public int deleteAtoms(boolean[] isToBeDeleted) {
+		int count = 0;
+		for (int i=0; i<mCoordinates.length; i++)
+			if (isToBeDeleted[i])
+				count++;
+
+		if (count != 0) {
+			Coordinates[] newCoords = new Coordinates[mCoordinates.length - count];
+			short[] newBondTorsion = (mBondTorsion == null) ? null : new short[mCoordinates.length - count];
+			int newIndex = 0;
+			for (int i=0; i<mCoordinates.length; i++) {
+				if (!isToBeDeleted[i]) {
+					newCoords[newIndex] = mCoordinates[i];
+					if (newBondTorsion != null)
+						newBondTorsion[newIndex] = mBondTorsion[i];
+					newIndex++;
+					}
+				}
+			mCoordinates = newCoords;
+			mBondTorsion = newBondTorsion;
+			}
+
+		return count;
+		}
+
+	/**
 	 * Calculates a signed torsion as an exterior spherical angle
 	 * from a valid 4-atom strand.
 	 * Looking along the central bond, the torsion angle is 0.0, if the

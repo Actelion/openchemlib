@@ -1413,11 +1413,14 @@ public class JDrawArea extends JPanel
 	{
 		if (mAllowQueryFeatures) {
 			Component c = this;
-			while (c.getParent() != null) {
+			while (!(c instanceof Frame || c instanceof Dialog) && c.getParent() != null) {
 				c = c.getParent();
 			}
 			storeState();
-			new JAtomQueryFeatureDialog((Frame) c, mMol, atom);
+			if (c instanceof Dialog)
+				new JAtomQueryFeatureDialog((Dialog) c, mMol, atom);
+			else
+				new JAtomQueryFeatureDialog((Frame) c, mMol, atom);
 			fireMoleculeChanged();
 			update(UPDATE_REDRAW);
 		}
@@ -1427,11 +1430,14 @@ public class JDrawArea extends JPanel
 	{
 		if (mAllowQueryFeatures) {
 			Component c = this;
-			while (c.getParent() != null) {
+			while (!(c instanceof Frame || c instanceof Dialog) && c.getParent() != null) {
 				c = c.getParent();
 			}
 			storeState();
-			new JBondQueryFeatureDialog((Frame) c, mMol, bond);
+			if (c instanceof Dialog)
+				new JBondQueryFeatureDialog((Dialog) c, mMol, bond);
+			else
+				new JBondQueryFeatureDialog((Frame) c, mMol, bond);
 			fireMoleculeChanged();
 			update(UPDATE_REDRAW);
 		}
