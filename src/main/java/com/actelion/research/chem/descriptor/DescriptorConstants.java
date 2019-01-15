@@ -114,8 +114,8 @@ public interface DescriptorConstants {
         									   false);
 
     public static final DescriptorInfo DESCRIPTOR_ShapeAlign =
-        					new DescriptorInfo("ShapeAlign",
-        									   "Shape",
+        					new DescriptorInfo("PharmacophoreEnhancedShapeAlignment",
+        									   "PheSA",
 												"1.0",
         									   DESCRIPTOR_TYPE_MOLECULE,
         									   false,
@@ -184,6 +184,7 @@ public interface DescriptorConstants {
 												true,
 												false);
 
+
     public static final DescriptorInfo[] DESCRIPTOR_LIST = {
                                                 DESCRIPTOR_FFP512,
                                                 DESCRIPTOR_PFP512,
@@ -208,7 +209,8 @@ public interface DescriptorConstants {
                                                 DESCRIPTOR_OrganicFunctionalGroups,
                                                 DESCRIPTOR_Flexophore,
                                                 DESCRIPTOR_Flexophore_HighRes,
-			DESCRIPTOR_ReactionFP,
+												DESCRIPTOR_ShapeAlign,
+												DESCRIPTOR_ReactionFP,
                                                 DESCRIPTOR_IntegerVector,
                                                 DESCRIPTOR_FULL_FRAGMENT_SET,
                                                 DESCRIPTOR_PhysicoChemicalProperties,

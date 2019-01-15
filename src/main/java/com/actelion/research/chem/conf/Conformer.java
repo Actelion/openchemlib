@@ -94,6 +94,18 @@ public class Conformer {
 		return this;
 		}
 
+	/**
+	 * Translate this conformer's coordinates by adding the dx,dy,dz shifts
+	 * to all atom coordinates.
+	 * @return this conformer with translated coordinates
+	 */
+	public Conformer translate(double dx, double dy, double dz) {
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+			mCoordinates[atom].add(dx, dy, dz);
+
+		return this;
+		}
+
 	public int getSize() {
 		return mCoordinates.length;
 		}

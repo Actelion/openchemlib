@@ -33,8 +33,6 @@
 
 package com.actelion.research.util;
 
-import com.actelion.research.util.datamodel.IntArray;
-
 import java.lang.reflect.Array;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -83,7 +81,19 @@ public class ArrayUtils {
 		}
 		return res;
 	}
-	
+
+	public final static<T> List<T> toList(T [] arr) {
+		List<T> li = new ArrayList<T>(arr.length);
+
+		for (T t : arr) {
+			li.add(t);
+		}
+
+		return li;
+	}
+
+
+
 	public final static String[] toStringArray(List<String> list) {
 		String[] res = new String[list.size()];
 		int index = 0;

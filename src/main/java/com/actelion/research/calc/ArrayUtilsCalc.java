@@ -124,7 +124,7 @@ public class ArrayUtilsCalc {
 		return true;
 	}
 	
-	public static final double getCovarianceCentered(double [] a, double [] b) {
+	public static double getCovarianceCentered(double [] a, double [] b) {
 		
 		double sum = 0;
 		for (int i = 0; i < a.length; i++) {
@@ -136,9 +136,9 @@ public class ArrayUtilsCalc {
 		return covXY;
 	}
 
-	public static final double [] getCentered(double [] arr) {
+	public static double [] getCentered(double [] arr) {
 		
-		final double [] arrCent = new double [arr.length];
+		double [] arrCent = new double [arr.length];
 		
 		final double mean = getMean(arr);
 		

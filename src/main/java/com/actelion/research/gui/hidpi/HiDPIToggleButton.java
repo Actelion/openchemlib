@@ -18,7 +18,7 @@ public class HiDPIToggleButton extends JToggleButton {
 	 * For Retina displays (Mac) it expects double resolution images named 'originalName@2x.png'.
 	 *
 	 * @param imageName1 initial appearance
-	 * @param imageName2 toggled appearance
+	 * @param imageName2 toggled appearance (may be null)
 	 * @param tooltip may be null
 	 * @param command action command to be used for action listeners (may be null)
 	 */
@@ -42,9 +42,9 @@ public class HiDPIToggleButton extends JToggleButton {
 	private void updateIconSet() {
 		if (mImageName1 != null) {
 			setIcon(HiDPIHelper.createIcon(mImageName1, 0));
-			setSelectedIcon(HiDPIHelper.createIcon(mImageName2, 0));
+			setSelectedIcon(HiDPIHelper.createIcon(mImageName2 != null ? mImageName2 : mImageName1, 0));
 			setDisabledIcon(HiDPIHelper.createDisabledIcon(mImageName1, 0));
-			setDisabledSelectedIcon(HiDPIHelper.createDisabledIcon(mImageName2, 0));
+			setDisabledSelectedIcon(HiDPIHelper.createDisabledIcon(mImageName2 != null ? mImageName2 : mImageName1, 0));
 
 			Icon icon = getIcon();
 			int w = icon.getIconWidth() / (int)HiDPIHelper.getRetinaScaleFactor() + 2;
