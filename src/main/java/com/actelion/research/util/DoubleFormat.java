@@ -41,7 +41,6 @@ public class DoubleFormat {
 	 * Double values that are effectively integers are turned into the scientific
 	 * format only, if they consist of more than 8 digits.
 	 * @param theDouble
-	 * @param significantDigits
 	 * @return
 	 */
 	public static String toString(double theDouble) {
@@ -66,9 +65,10 @@ public class DoubleFormat {
 	 * rounded to a definable number of digits, e.g. 1.2345e-6.
 	 * Double values that are effectively integers are turned into the scientific
 	 * format only, if they consist of more than significantDigits+3 digits.
+	 * If skipTrailingZeros is true, then integer output is not rounded: 7173 instead of 7200.
 	 * @param value
 	 * @param significantDigits
-	 * @param skipTrailingZeros if true then trailing zeros after a decimal point are not shown
+	 * @param skipTrailingZeros if true then trailing zeros after a decimal point are not shown and integers are not rounded
 	 * @return
 	 */
 	public static String toString(double value, int significantDigits, boolean skipTrailingZeros) {
@@ -94,6 +94,10 @@ public class DoubleFormat {
 			value /= 10.0;
 			exponent++;
 			}
+
+		// if we display as integer and skipTrailingZeros
+		if (skipTrailingZeros && (significantDigits < exponent+1))
+			significantDigits = exponent+1;
 
 		return toString((long)(value+(value < 0 ? -0.5 : 0.5)), exponent, significantDigits, skipTrailingZeros);
 		}
