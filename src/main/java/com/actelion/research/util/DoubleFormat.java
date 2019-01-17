@@ -80,6 +80,13 @@ public class DoubleFormat {
 		if (value == 0.0)
 			return (skipTrailingZeros || significantDigits==1) ? "0" : "0."+zeros(significantDigits-1);
 
+		// determine cipher count of integer fraction in excess of significant digits.
+		// For those cases, where the number is not expressed in scientific notation,
+		// the increase significant digits to prevent trailing zeros through rounding.
+		int cipherExcess = Long.toString(Math.round(value)).length() - significantDigits;
+		if (cipherExcess > 0 && cipherExcess <= 4)
+			significantDigits += cipherExcess;
+
 		double limit1 = 1;
 		for (int i=1; i<significantDigits; i++)
 			limit1 *=10;
@@ -94,10 +101,6 @@ public class DoubleFormat {
 			value /= 10.0;
 			exponent++;
 			}
-
-		// if we display as integer and skipTrailingZeros
-		if (skipTrailingZeros && (significantDigits < exponent+1))
-			significantDigits = exponent+1;
 
 		return toString((long)(value+(value < 0 ? -0.5 : 0.5)), exponent, significantDigits, skipTrailingZeros);
 		}
