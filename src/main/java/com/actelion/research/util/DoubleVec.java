@@ -171,7 +171,7 @@ public class DoubleVec implements Comparable<DoubleVec> {
 
     /**
      *
-     * @param obj DoubleVec
+     *
      * @return -1 if the first different value is smaller than the corresponding
      * value in dv. 0 if bot vectors are equal. 1 if the first different value
      * is bigger than the corresponding value in dv.
@@ -211,10 +211,10 @@ public class DoubleVec implements Comparable<DoubleVec> {
             dDist = getEuclideanDistanceFast(dVec1, dVec2);
         }
         else if (metric == DoubleVec.TANIMOTO) {
-            dDist = getTanimotoDistance(dVec1, dVec2);
+            dDist = getTanimotoSimilarity(dVec1, dVec2);
         }
         else if (metric == DoubleVec.TANIMOTO_INV) {
-            dDist = getTanimotoDistInvDotProd(dVec1, dVec2);
+            dDist = getTanimotoDistanceDotProd(dVec1, dVec2);
         }
         else {
             throw new Exception("Unknown distance metric.");
@@ -591,13 +591,14 @@ public class DoubleVec implements Comparable<DoubleVec> {
 
     /**
      * Calculates the Tanimoto coefficient according
-     * http://www.pnylab.com/pny/papers/nmet/nmet/
+     * broken link 22.01.2019 http://www.pnylab.com/pny/papers/nmet/nmet/
+     *
      * @param dVec1 vector1
      * @param dVec2 vector2
      * @return Tanimoto: 1.0: maximum similarity, 0: maximum dissimilarity.
      *
      */
-    static public double getTanimotoDistance(DoubleVec dVec1, DoubleVec dVec2) {
+    static public double getTanimotoSimilarity(DoubleVec dVec1, DoubleVec dVec2) {
 
         double dSum = 0;
         double dAtB = mult(dVec1, dVec2);
@@ -609,7 +610,7 @@ public class DoubleVec implements Comparable<DoubleVec> {
         return dSum;
     }
 
-    static public double getTanimotoDistance(double[] d1, double[] d2) {
+    static public double getTanimotoSimilarity(double[] d1, double[] d2) {
 
         double dSum = 0;
         double dAtB = mult(d1, d2);
@@ -628,7 +629,7 @@ public class DoubleVec implements Comparable<DoubleVec> {
      * @return Tanimoto: 0.0: maximum similarity, 1.0: maximum dissimilarity.
      *
      */
-    static public double getTanimotoDistInv(DoubleVec dVec1, DoubleVec dVec2) {
+    static public double getTanimotoDistance(DoubleVec dVec1, DoubleVec dVec2) {
 
         double dSum = 0;
         double dAtB = mult(dVec1, dVec2);
@@ -640,11 +641,11 @@ public class DoubleVec implements Comparable<DoubleVec> {
         return dSum;
     }
     
-    static public double getTanimotoDistInv(double[] d1, double[] d2) {
-    	return 1.0 - getTanimotoDistance(d1,d2);
+    static public double getTanimotoDistance(double[] d1, double[] d2) {
+    	return 1.0 - getTanimotoSimilarity(d1,d2);
     }
 
-    static public double getTanimotoDistInvDotProd(DoubleVec dVec1, DoubleVec dVec2) {
+    static public double getTanimotoDistanceDotProd(DoubleVec dVec1, DoubleVec dVec2) {
 
         double dSum = 0;
         double dAtB = mult(dVec1, dVec2);
