@@ -223,7 +223,7 @@ public class HiDPIHelper {
 		return image;
 	}
 
-	private static Image scale(BufferedImage image) {
+	public static Image scale(BufferedImage image) {
 		float scale = getUIScaleFactor();
 		if (scale > ICON_SCALE_LIMIT)   // in this case we have double size images
 			return image.getScaledInstance(Math.round(0.5f * scale * image.getWidth()),
