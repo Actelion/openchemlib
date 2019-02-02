@@ -78,6 +78,14 @@ public abstract class CompoundFileParser {
     abstract protected boolean advanceToNext();
 
     /**
+     *
+     * @return whether the file was found and open to accept next() calls
+     */
+    public boolean isOpen() {
+        return mReader != null;
+        }
+
+    /**
      * Advances the row counter to the next row
      * @return false if there is no next row
      */

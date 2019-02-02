@@ -63,7 +63,9 @@ public class SDFileParser extends CompoundFileParser {
 		try {
 			mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
 			BOMSkipper.skip(mReader);
-		} catch (IOException e) {}
+		} catch (IOException e) {
+			mReader = null;
+		}
 		
 		
 		init();
@@ -81,7 +83,9 @@ public class SDFileParser extends CompoundFileParser {
 		try {
     		mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 			BOMSkipper.skip(mReader);
-		} catch (IOException e) {}
+		} catch (IOException e) {
+			mReader = null;
+		}
 		
 		init();
 	}
@@ -95,7 +99,7 @@ public class SDFileParser extends CompoundFileParser {
 	public SDFileParser(Reader reader, String[] fieldName) {
         mNoOfRecords = -1;
 		mFieldName = fieldName;
-		mReader = new BufferedReader(reader);
+		mReader = (reader instanceof BufferedReader) ? (BufferedReader)reader : new BufferedReader(reader);
 		
 		init();
 		}

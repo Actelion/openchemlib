@@ -107,7 +107,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
      */
 	public DWARFileParser(Reader reader) {
         try {
-    		mReader = new BufferedReader(reader);
+			mReader = (reader instanceof BufferedReader) ? (BufferedReader)reader : new BufferedReader(reader);
             mMode = MODE_COORDINATES_PREFER_2D;
             init();
             }
@@ -157,7 +157,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
      */
     public DWARFileParser(Reader reader, int mode) {
         try {
-            mReader = new BufferedReader(reader);
+			mReader = (reader instanceof BufferedReader) ? (BufferedReader)reader : new BufferedReader(reader);
             mMode = mode;
             init();
             }
