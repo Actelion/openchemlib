@@ -352,8 +352,22 @@ public class MolecularFormula {
 		for (int i=0; i<mAtomCount.length; i++) {
 			formula.append(Molecule.cAtomLabel[mAtomicNo[i]]);
 			if (mAtomCount[i] > 1)
-				formula.append(Integer.toString(mAtomCount[i]));
+				formula.append(mAtomCount[i]);
 			}
 		return formula.toString();
+		}
+
+	@Override
+	public boolean equals(Object f) {
+		if (f == this)
+			return true;
+		if (!(f instanceof MolecularFormula))
+			return false;
+
+		for (int i=0; i<mAtomCount.length; i++)
+			if (mAtomCount[i] != ((MolecularFormula)f).mAtomCount[i])
+				return false;
+
+		return true;
 		}
 	}
