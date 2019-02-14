@@ -1465,6 +1465,39 @@ public class Matrix {
 		return median;
     }
 
+    public Matrix getMedianCols() {
+
+        Matrix maMedian = new Matrix(1, cols());
+
+    	int rows = rows();
+    	int cols = cols();
+
+    	double [] arr = new double [rows];
+
+        for (int i = 0; i < cols; i++) {
+
+            for (int j = 0; j < rows; j++) {
+                arr[j]=get(j,i);
+            }
+
+            Arrays.sort(arr);
+
+            double median = 0;
+            int len = arr.length;
+            if(len % 2 != 0) {
+                median = arr[len / 2];
+            } else {
+                int ind = (int)(((double)len / 2.0)+0.5);
+                median = (arr[ind] + arr[ind-1]) / 2.0;
+            }
+
+            maMedian.set(0, i, median);
+
+        }
+
+		return maMedian;
+    }
+
     public Matrix getMergeRows(Matrix ma) {
 
         Matrix maMerge = new Matrix(getRowDim() + ma.getRowDim(), getColDim());
