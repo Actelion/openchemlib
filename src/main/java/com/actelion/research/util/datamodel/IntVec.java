@@ -169,6 +169,10 @@ public class IntVec implements Comparable<IntVec> {
         return ret;
     }
 
+    public void copy(IntVec ivOrigin){
+        System.arraycopy(ivOrigin.data, 0, data, 0, data.length);
+    }
+
     public void clear() {
         for (int ii = 0; ii < data.length; ii++)
             data[ii] = 0;

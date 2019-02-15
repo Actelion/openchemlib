@@ -42,6 +42,9 @@ public class CorrelationCalculator {
     public static final int TYPE_BRAVAIS_PEARSON = 0;
     public static final int TYPE_SPEARMAN = 1;
 
+    private int mValueCount;
+    private int[][] mValueCountMatrix;
+
     /**
      * Calculates the correlation coefficient between two columns of data.
      * Use the TYPE_BRAVAIS_PEARSON for normal distributed data and the
@@ -55,7 +58,7 @@ public class CorrelationCalculator {
      * @param correlationType
      * @return
      */
-    public static double calculateCorrelation(INumericalDataColumn column1,
+    public double calculateCorrelation(INumericalDataColumn column1,
                                               INumericalDataColumn column2,
                                               int correlationType) {
         int valueCount = column1.getValueCount();
@@ -66,7 +69,7 @@ public class CorrelationCalculator {
 
         if (correlationType == TYPE_BRAVAIS_PEARSON) {
             // http://de.wikibooks.org/wiki/Mathematik:_Statistik:_Korrelationsanalyse
-            int realValueCount = 0;
+            mValueCount = 0;
             double xMean = 0;
             double yMean = 0;
             for (int i=0; i<valueCount; i++) {
@@ -75,15 +78,15 @@ public class CorrelationCalculator {
                 if (!Double.isNaN(x) && !Double.isNaN(y)) {
                     xMean += x;
                     yMean += y;
-                    realValueCount++;
+                    mValueCount++;
                     }
                 }
 
-            if (realValueCount < 2)
+            if (mValueCount < 2)
                 return Double.NaN;
 
-            xMean /= realValueCount;
-            yMean /= realValueCount;
+            xMean /= mValueCount;
+            yMean /= mValueCount;
 
             double sumdxdx = 0;
             double sumdxdy = 0;
@@ -114,15 +117,15 @@ public class CorrelationCalculator {
             java.util.Arrays.sort(xValue);
             java.util.Arrays.sort(yValue);
 
-            int realCount = valueCount;
-            while (realCount > 0
-            	&& (Double.isNaN(xValue[realCount-1]) || Double.isNaN(yValue[realCount-1])))
-            	realCount--;
+            mValueCount = valueCount;
+            while (mValueCount > 0
+            	&& (Double.isNaN(xValue[mValueCount-1]) || Double.isNaN(yValue[mValueCount-1])))
+                mValueCount--;
 
             double sumdxdx = 0;
             double sumdxdy = 0;
             double sumdydy = 0;
-            double mean = ((double)realCount) / 2;
+            double mean = ((double)mValueCount) / 2;
             for (int i=0; i<valueCount; i++) {
             	if (!Double.isNaN(column1.getValueAt(i)) && !Double.isNaN(column2.getValueAt(i))) {
 	                double xPosition = getPosition(xValue, column1.getValueAt(i));
@@ -141,22 +144,37 @@ public class CorrelationCalculator {
         }
 
     /**
+     * @return number of non-null values used for calculation
+     */
+    public int getValueCount() {
+        return mValueCount;
+        }
+
+    public int[][] getValueCountMatrix() {
+        return mValueCountMatrix;
+    }
+
+    /**
      * Calculates a half correlation matrix of all passed numerical columns
      * @param numericalColumn
      * @param type
      * @return half matrix with matrix.length=numericalColumn.length and matrix[i].length=i
      */
-    public static double[][] calculateMatrix(final INumericalDataColumn[] numericalColumn, int type) {
+    public double[][] calculateMatrix(final INumericalDataColumn[] numericalColumn, int type) {
         double[][] matrix = new double[numericalColumn.length][];
+        mValueCountMatrix = new int[numericalColumn.length][];
         for (int i=1; i<numericalColumn.length; i++) {
             matrix[i] = new double[i];
-            for (int j=0; j<i; j++)
-                matrix[i][j] = CorrelationCalculator.calculateCorrelation(numericalColumn[i], numericalColumn[j], type);
+            mValueCountMatrix[i] = new int[i];
+            for (int j=0; j<i; j++) {
+                matrix[i][j] = calculateCorrelation(numericalColumn[i], numericalColumn[j], type);
+                mValueCountMatrix[i][j] = mValueCount;
+                }
             }
         return matrix;
         }
 
-    private static double getPosition(double[] array, double value) {
+    private double getPosition(double[] array, double value) {
         int position = java.util.Arrays.binarySearch(array, value);
         int position1 = position;
         while (position1 > 0 && array[position1-1] == value)

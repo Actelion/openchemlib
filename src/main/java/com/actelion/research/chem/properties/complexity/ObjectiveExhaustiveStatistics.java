@@ -200,7 +200,7 @@ public class ObjectiveExhaustiveStatistics {
 		
 		DoubleArray arrY =  linearRegressionUnique.getValuesAsArrayY();
 		
-		double r = CorrelationCalculator.calculateCorrelation(arrX, arrY, CorrelationCalculator.TYPE_BRAVAIS_PEARSON);
+		double r = new CorrelationCalculator().calculateCorrelation(arrX, arrY, CorrelationCalculator.TYPE_BRAVAIS_PEARSON);
 		
 		double r2 = r*r;
 		
