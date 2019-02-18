@@ -213,7 +213,15 @@ public class ArrayUtils {
 		}
 		return res + "]";
 	}
-	
+
+	public final static String toString(float[] v) {
+		String res = "[";
+		for(int i=0; i<v.length; i++) {
+			res += (i>0?", ":"") + v[i] ;
+		}
+		return res + "]";
+	}
+
 	public final static String toString(double[] v, DecimalFormat df) {
 		StringBuilder sb =  new StringBuilder();
 		sb.append("[");

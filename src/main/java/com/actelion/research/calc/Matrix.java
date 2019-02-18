@@ -346,15 +346,15 @@ public class Matrix {
 
     /**
      * Copies a matrix ma into this, the pointer to ma1 is not changed.
-     * @param ma 
+     * @param maSource
      */
-    public void copy(Matrix ma) {
-		int rows = ma.rows();
-		int cols = ma.cols();
+    public void copy(Matrix maSource) {
+		int rows = maSource.rows();
+		int cols = maSource.cols();
 
 		if (rows() == rows && cols() == cols) {
 			for (int i = 0; i < rows; i++) {
-				System.arraycopy(ma.data[i], 0, data[i], 0, cols);
+				System.arraycopy(maSource.data[i], 0, data[i], 0, cols);
 			}
 		} else {
 			data = new double[rows][];
@@ -362,11 +362,18 @@ public class Matrix {
 
 				double[] a = new double[cols];
 
-				System.arraycopy(ma.data[i], 0, a, 0, cols);
+				System.arraycopy(maSource.data[i], 0, a, 0, cols);
 
 				data[i] = a;
 			}
 		}
+    }
+
+    public void copyColumn(Matrix maSource, int colSource, int colDestination) {
+		int rows = maSource.rows();
+        for (int i = 0; i < rows; i++) {
+            data[i][colDestination] = maSource.get(i, colSource);
+        }
     }
 
     final public double get(final int row, final int col) {

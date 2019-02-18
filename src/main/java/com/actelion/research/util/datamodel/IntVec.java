@@ -500,6 +500,32 @@ public class IntVec implements Comparable<IntVec> {
     	return arr;
     	
     }
+
+    /**
+     * Converts the IntVec into an array. Each field in the array contains a value that was derived with the given
+     * resolution from IntVec.
+     * @param iv
+     * @param nValues so many values are encoded in IntVec.
+     * @param bitsResolution So many bits were used to encode a single value.
+     * @return
+     */
+    public static int [] extractForGivenResolution(IntVec iv, int nValues, int bitsResolution){
+
+        int [] a = new int[nValues];
+
+        int indexIntVec = 0;
+        for (int i = 0; i < nValues; i++) {
+
+            int v = 0;
+            for (int j = 0; j < bitsResolution; j++) {
+                if(iv.isBitSet(indexIntVec++)){
+                    v |= 1 << j;
+                }
+            }
+            a[i]=v;
+        }
+        return a;
+    }
     
     public boolean allFieldsEquals(int v){
     	boolean b = true;
@@ -1697,6 +1723,8 @@ public class IntVec implements Comparable<IntVec> {
             return false;
     }
 
+
+
     public static void setBit(int [] data, int i) {
         int ind = data.length - (i / Integer.SIZE) - 1;
         int indInInt = i % Integer.SIZE;
@@ -1710,6 +1738,8 @@ public class IntVec implements Comparable<IntVec> {
 
         return toStringBinary(v, true);
     }
+
+
 
     public static String toStringBinary(int v, boolean space) {
         StringBuilder sb = new StringBuilder();
