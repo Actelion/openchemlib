@@ -34,6 +34,8 @@
 package com.actelion.research.calc;
 
 
+import com.actelion.research.util.DoubleFormat;
+
 public class CorrelationCalculator {
     public static final String[] TYPE_LONG_NAME = { "Bravais-Pearson (linear correlation)", "Spearman (correlation of ranks)" };
     public static final String[] TYPE_NAME = { "Bravais-Pearson", "Spearman" };
@@ -108,24 +110,26 @@ public class CorrelationCalculator {
             if (valueCount < 2)
                 return Double.NaN;
 
+            mValueCount = 0;
             double[] xValue = new double[valueCount];
             double[] yValue = new double[valueCount];
             for (int i=0; i<valueCount; i++) {
-                xValue[i] = column1.getValueAt(i);
-                yValue[i] = column2.getValueAt(i);
+                xValue[mValueCount] = column1.getValueAt(i);
+                yValue[mValueCount] = column2.getValueAt(i);
+                if (!Double.isNaN(xValue[mValueCount]) && !Double.isNaN(yValue[mValueCount]))
+                    mValueCount++;
+                }
+            for (int i=mValueCount; i<valueCount; i++) {
+                xValue[i] = Double.NaN;
+                yValue[i] = Double.NaN;
                 }
             java.util.Arrays.sort(xValue);
             java.util.Arrays.sort(yValue);
 
-            mValueCount = valueCount;
-            while (mValueCount > 0
-            	&& (Double.isNaN(xValue[mValueCount-1]) || Double.isNaN(yValue[mValueCount-1])))
-                mValueCount--;
-
             double sumdxdx = 0;
             double sumdxdy = 0;
             double sumdydy = 0;
-            double mean = ((double)mValueCount) / 2;
+            double mean = (double)(mValueCount + 1) / 2;
             for (int i=0; i<valueCount; i++) {
             	if (!Double.isNaN(column1.getValueAt(i)) && !Double.isNaN(column2.getValueAt(i))) {
 	                double xPosition = getPosition(xValue, column1.getValueAt(i));
@@ -182,6 +186,6 @@ public class CorrelationCalculator {
         int position2 = position;
         while (position2 < array.length-1 && array[position2+1] == value)
             position2++;
-        return ((double)(position1+position2))/2;
+        return ((double)(position1+position2))/2 + 1;
         }
     }
