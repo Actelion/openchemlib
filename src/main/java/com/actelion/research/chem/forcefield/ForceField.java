@@ -2,6 +2,8 @@ package com.actelion.research.chem.forcefield;
 
 public interface ForceField {
 	public double getTotalEnergy(double[] pos);
+	
+	public double getTotalEnergy();
 
 	/**
 	 * updates the gradient of the ForceField and returns the gradient scale
@@ -10,8 +12,6 @@ public interface ForceField {
 	public double updateGradient();
 
 	public double[] getCurrentPositions();
-
-	public double[] getCurrentPositionsMapped(); //remaps the order of the coordinates to originally submitted ones, before the reordering by ensureHelperArrays
 
 	public void addListener(ForceFieldChangeListener listener);
 

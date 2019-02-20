@@ -19,6 +19,7 @@ public abstract class AbstractForceField implements ForceField {
 	protected double[] mGrad;
 	protected double mTotalEnergy;
 	protected boolean mIsInterrupted;
+	protected long mTimeInterval; //time interval for 
 
 	public AbstractForceField(StereoMolecule mol) {
 		mMol = mol;
@@ -27,6 +28,7 @@ public abstract class AbstractForceField implements ForceField {
         mPos = new double[mDim];
         mNewpos = new double[mDim];
         mIsInterrupted = false;
+        mTimeInterval = 2;
 
         // get the atom positions to be placed in the pos array.
         for (int i=0; i<mol.getAllAtoms(); i++) {
@@ -149,7 +151,8 @@ public abstract class AbstractForceField implements ForceField {
 		
 		     // pick a max step size:
 	     maxStep = MAXSTEP * Math.max(Math.sqrt(sum), mDim);
-	
+	     long timePassed;
+	     long t0 = System.currentTimeMillis();
 	     for (int iter=1; iter<=maxIts; iter++) {
 	         // do the line search:
 	    	 if(mIsInterrupted) {
@@ -235,10 +238,13 @@ public abstract class AbstractForceField implements ForceField {
 	             for (int j=0; j<mDim; j++)
 	                 xi[i] -= invHessian[itab+j]*mGrad[j];
 	         }
-	         if(iter%10==0) {
+	         long t1 = System.currentTimeMillis();
+	         timePassed = t1-t0;
+	         if(timePassed>=mTimeInterval) {
 	        	 for(ForceFieldChangeListener listener: listeners) {
 	        		 listener.stateChanged();
 	        	 }
+	        	 t0=t1;
 	         }
 	     }
 	     return 1;

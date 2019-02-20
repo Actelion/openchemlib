@@ -69,18 +69,25 @@ import com.actelion.research.chem.forcefield.AbstractForceField;
  *  - "van der waals": A boolean, default True, for whether to include the
  *      nonbonded van der Waals energy terms.
  */
+/**
+ * @author joel
+ *
+ */
+/**
+ * @author joel
+ *
+ */
 public final class ForceFieldMMFF94 extends AbstractForceField {
 	public static final String MMFF94 = "MMFF94";
 	public static final String MMFF94S = "MMFF94s";
     public static final String MMFF94SPLUS = "MMFF94s+";
 
 
+    //protected final ExtendedMolecule mol;
     private final MMFFMolecule mMMFFMol;
     public static Map<String, Tables> mTables = new HashMap<String, Tables>();
     private List<EnergyTerm> mEnergies = new ArrayList<EnergyTerm>();
-    private RingBoolean[] mRingArom;
-    private int[] mAtomTypes;
-    private int[] mHydrogenMap;
+
     
     /**
      * Forcefield constructor.
@@ -199,12 +206,9 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
         return gradScale;
     }
 
-    /**
-     * Gets the total energy of the molecule as the sum of the energy terms.
-     *  @return The total force field energy.
-     */
+    
     @Override
-    public double[] getCurrentPositionsMapped() {
+    public double[] getCurrentPositions() {
     	int[] atomMap = mMMFFMol.getHydrogenMap();
     	double[] pos = Arrays.copyOf(mPos, mPos.length);
     	for(int i=0;i<atomMap.length;i++) {
@@ -217,12 +221,14 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
     	
     }
     
-    @Override
-    public double[] getCurrentPositions() {
-    	return Arrays.copyOf(mPos, mPos.length);
-    }
-    
-    
+    /**
+     * Gets the total energy of the molecule as the sum of the energy
+     * terms.
+     *  @param pos The positions array representing the atoms positions in
+     *      space.
+     *  @return The total force field energy.
+     */
+        
     
     public double getTotalEnergy(double[] pos) {
         double total = 0.0;
