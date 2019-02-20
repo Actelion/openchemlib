@@ -250,9 +250,7 @@ public class ArrayUtils {
 		System.arraycopy(copy, 0, v, 0, v.length);
 	}
 
-	public static void shuffle(int [] arr){
-
-		Random rnd = new Random();
+	public static void shuffle(int [] arr, Random random){
 
 		int cycles = 7;
 
@@ -261,7 +259,7 @@ public class ArrayUtils {
 		for (int i = 0; i < cycles; i++) {
 
 			for (int j = 0; j < size; j++) {
-				int dest = rnd.nextInt(size);
+				int dest = random.nextInt(size);
 
 				if(dest==j){
 					continue;
@@ -274,6 +272,13 @@ public class ArrayUtils {
 				arr[dest] = v;
 			}
 		}
+	}
+
+	public static void shuffle(int [] arr){
+
+		Random rnd = new Random();
+
+		shuffle(arr, rnd);
 	}
 
 	public static <T> void shuffle(T [] arr){
