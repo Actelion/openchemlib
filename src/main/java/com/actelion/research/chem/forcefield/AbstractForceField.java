@@ -18,8 +18,8 @@ public abstract class AbstractForceField implements ForceField {
 	protected double[] mNewpos;
 	protected double[] mGrad;
 	protected double mTotalEnergy;
-	protected boolean mIsInterrupted;
-	protected long mTimeInterval; //time interval for 
+	protected long mTimeInterval; //time interval for
+	protected volatile boolean mIsInterrupted;
 
 	public AbstractForceField(StereoMolecule mol) {
 		mMol = mol;
@@ -28,7 +28,7 @@ public abstract class AbstractForceField implements ForceField {
         mPos = new double[mDim];
         mNewpos = new double[mDim];
         mIsInterrupted = false;
-        mTimeInterval = 2;
+        mTimeInterval = 20;
 
         // get the atom positions to be placed in the pos array.
         for (int i=0; i<mol.getAllAtoms(); i++) {
@@ -89,40 +89,27 @@ public abstract class AbstractForceField implements ForceField {
      *  @return Return code, 0 on success.
      */
     public int minimise(int maxIts, double gradTol, double funcTol) {
-        // get the atom positions to be placed in the pos array.
+
         int res = 1;
-        int at = 0;
-        int minVarCoord = -1;
-        final int MAX_ATTEMPTS = 10;
-        double [] delta = new double[3];
-        double [] ctd = new double[3];
-        while ((res > 0) && (at < MAX_ATTEMPTS)) {
-            if (at > 0 && minVarCoord == -1) {
-                double minVar = 0.0;
-                for (int c=0; c<3; c++) {
-                    double v = coordVariance(c);
-                    if (minVarCoord == -1 || v < minVar) {
-                        minVarCoord = c;
-                        minVar = v;
-                    }
-                }
-            }
-            for (int i=0; i<mMol.getAllAtoms(); i++) {
-                if (at > 0)
-                    delta[minVarCoord] = Math.random() - 0.5;
-                mPos[3*i    ] = mMol.getAtomX(i) + delta[0];
-                mPos[3*i + 1] = mMol.getAtomY(i) + delta[1];
-                mPos[3*i + 2] = mMol.getAtomZ(i) + delta[2];
-            }
-            res = run_minimiser(maxIts, gradTol, funcTol);
-            at++;
+
+
+        for (int i=0; i<mMol.getAllAtoms(); i++) {
+    	    mPos[3*i    ] = mMol.getAtomX(i); //+ delta[0];
+    	    mPos[3*i + 1] = mMol.getAtomY(i); //+ delta[1];
+    	    mPos[3*i + 2] = mMol.getAtomZ(i); //+ delta[2];
         }
-        if (res == 0)
+        res = run_minimiser(maxIts, gradTol, funcTol);
+
+        if (res == 0) {
             for (int i=0; i<mMol.getAllAtoms(); i++) {
                 mMol.setAtomX(i, mPos[3*i  ]);
                 mMol.setAtomY(i, mPos[3*i+1]);
                 mMol.setAtomZ(i, mPos[3*i+2]);
             }
+        }
+   	    for(ForceFieldChangeListener listener: listeners) {
+		    listener.stateChanged();
+	    }
         return res;
     }
     
@@ -153,13 +140,9 @@ public abstract class AbstractForceField implements ForceField {
 	     maxStep = MAXSTEP * Math.max(Math.sqrt(sum), mDim);
 	     long timePassed;
 	     long t0 = System.currentTimeMillis();
-	     for (int iter=1; iter<=maxIts; iter++) {
+	     for (int iter=1; iter<=maxIts && !mIsInterrupted; iter++) {
 	         // do the line search:
-	    	 if(mIsInterrupted) {
-	    		 break;
-	    	 }
 	         int status = linearSearch(mPos,fp,xi,newPos,maxStep);
-	
 	         if (status < 0)
 	             return 2;
 	

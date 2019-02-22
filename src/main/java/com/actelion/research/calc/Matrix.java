@@ -45,6 +45,8 @@ import java.util.List;
 
 public class Matrix {
 
+    public static final double TINY08 = 0.00000001;
+    public static final double TINY16 = Math.pow(10, -16);
     public static String OUT_SEPARATOR_COL = "\t";
     
     public static String OUT_SEPARATOR_ROW = "\n";

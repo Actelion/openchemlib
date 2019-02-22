@@ -148,13 +148,13 @@ public class ArrayUtilsCalc {
 		
 		return arrCent;
 	}
-	
+
 	public static final double [] getNormalized(double [] arr) {
 		
 		final double [] arrNorm = new double [arr.length];
 		
-		final double sdv = getStandardDeviation(arr);
-		
+		double sdv = getStandardDeviation(arr);
+
 		for (int i = 0; i < arr.length; i++) {
 			arrNorm[i] = arr[i]/sdv;
 		}
