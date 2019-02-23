@@ -38,6 +38,7 @@ package com.actelion.research.util.datamodel;
 import java.awt.Point;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -115,5 +116,68 @@ public class ScorePoint extends Point {
 
 		return li;
 	}
-	
+
+	public static int [] extractX(List<ScorePoint> li){
+
+		int [] a = new int[li.size()];
+
+		for (int i = 0; i < li.size(); i++) {
+			a[i]=li.get(i).x;
+		}
+
+		return a;
+	}
+
+	public static Comparator<ScorePoint> getComparatorScore(){
+
+		return new Comparator<ScorePoint>() {
+
+			public int compare(ScorePoint sp1, ScorePoint sp2) {
+
+				if(sp1.score>sp2.score){
+					return 1;
+				}else if(sp1.score<sp2.score){
+					return -1;
+				}
+
+				return 0;
+			}
+		};
+	}
+
+	public static Comparator<ScorePoint> getComparatorX(){
+
+		return new Comparator<ScorePoint>() {
+
+			public int compare(ScorePoint sp1, ScorePoint sp2) {
+
+				if(sp1.x>sp2.x){
+					return 1;
+				}else if(sp1.x<sp2.x){
+					return -1;
+				}
+
+				return 0;
+			}
+		};
+	}
+
+	public static Comparator<ScorePoint> getComparatorY(){
+
+		return new Comparator<ScorePoint>() {
+
+			public int compare(ScorePoint sp1, ScorePoint sp2) {
+
+				if(sp1.y>sp2.y){
+					return 1;
+				}else if(sp1.y<sp2.y){
+					return -1;
+				}
+
+				return 0;
+			}
+		};
+	}
+
+
 }
