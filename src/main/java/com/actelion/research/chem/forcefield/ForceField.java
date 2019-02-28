@@ -14,6 +14,15 @@ public interface ForceField {
 	public double[] getCurrentPositions();
 
 	public void addListener(ForceFieldChangeListener listener);
+	
+	public void setFixedAtoms(int[] atoms);
+	
+	
+	/**
+	 * zeroes out gradient for fixed atoms
+	 */
+	
+	public void zeroGradient();
 
 	public int minimise();
 

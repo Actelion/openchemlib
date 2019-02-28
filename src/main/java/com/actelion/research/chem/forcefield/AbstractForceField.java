@@ -17,6 +17,7 @@ public abstract class AbstractForceField implements ForceField {
 	protected double[] mPos;
 	protected double[] mNewpos;
 	protected double[] mGrad;
+	protected int[] mFixedAtoms;
 	protected double mTotalEnergy;
 	protected long mTimeInterval; //time interval for
 	protected volatile boolean mIsInterrupted;
@@ -79,6 +80,21 @@ public abstract class AbstractForceField implements ForceField {
         return minimise(200, 1e-4, 1e-6);
     }
     
+   @Override 
+   public void setFixedAtoms(int[] fixedAtoms) {
+	   mFixedAtoms = fixedAtoms;
+   }
+   
+ 
+  public void zeroGradient() {
+	   if (mFixedAtoms!=null) {
+	   for (int i:mFixedAtoms) {
+		   mGrad[3*i] = 0.0;
+		   mGrad[3*i+1] = 0.0;
+		   mGrad[3*i+2] = 0.0;
+	   }
+   }
+   }
 
 	
     /**
@@ -126,6 +142,7 @@ public abstract class AbstractForceField implements ForceField {
 		// evaluate the function and gradient in our current position:
 		fp = getTotalEnergy(mPos);
 		updateGradient();
+		zeroGradient();
 		sum = 0.0;
 		//memset(invHessian,0,dim*dim*sizeof(double));
 		for (int i=0; i<mDim; i++) {
@@ -166,7 +183,7 @@ public abstract class AbstractForceField implements ForceField {
 	
 	         // update the gradient:
 	         double gradScale = updateGradient();
-	
+	         zeroGradient();
 	         // is the gradient converged?
 	         test = 0.0;
 	         double term = Math.max(mTotalEnergy*gradScale, 1.0);

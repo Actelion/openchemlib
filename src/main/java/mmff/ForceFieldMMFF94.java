@@ -205,25 +205,44 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
         }
         return gradScale;
     }
+    
+    @Override 
+    public void zeroGradient() {
+ 	   if (mFixedAtoms!=null) {
+ 		  int[] hydrogenMap = mMMFFMol.getHydrogenMap();
+ 		  for (int i:mFixedAtoms) {
+ 			  int mappedIndex = hydrogenMap[i];
+ 			  mGrad[3*mappedIndex] = 0.0;
+ 			  mGrad[3*mappedIndex+1] = 0.0;
+ 			  mGrad[3*mappedIndex+2] = 0.0;
+ 	   }
+    }
+    }
 
     
     @Override
     public double[] getCurrentPositions() {
-    	int[] atomMap = mMMFFMol.getHydrogenMap();
     	double[] pos = Arrays.copyOf(mPos, mPos.length);
+
+    	return getMappedPositions(pos);
+    	
+    }
+    
+    private double[] getMappedPositions(double[] pos) {
+    	int[] atomMap = mMMFFMol.getHydrogenMap();
+    	double[] mappedPos = Arrays.copyOf(pos, pos.length);
     	for(int i=0;i<atomMap.length;i++) {
-    		pos[3*i] = mPos[3*atomMap[i]];
-    		pos[3*i+1] = mPos[3*atomMap[i]+1];
-    		pos[3*i+2] = mPos[3*atomMap[i]+2];
-    		
+    		mappedPos[3*i] = pos[3*atomMap[i]];
+    		mappedPos[3*i+1] = pos[3*atomMap[i]+1];
+    		mappedPos[3*i+2] = pos[3*atomMap[i]+2];
     	}
-    	return pos;
+    	return mappedPos;
     	
     }
     
     /**
      * Gets the total energy of the molecule as the sum of the energy
-     * terms.
+     * terms.Requires the atomic positions to be in the correct order.
      *  @param pos The positions array representing the atoms positions in
      *      space.
      *  @return The total force field energy.
@@ -234,9 +253,14 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
         double total = 0.0;
         for (EnergyTerm term : mEnergies)
             total += term.getEnergy(pos);
-
         return total;
     }
+    
+    
+
+    
+
+
 
     /**
      * Gets the total energy of the molecule as the sum of the energy
@@ -245,7 +269,7 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
      *  @return The total force field energy.
      */
     public double getTotalEnergy() {
-        return getTotalEnergy(mPos);
+    	return getTotalEnergy(mPos);
     }
 
     public static void initialize(String tableSet) {
