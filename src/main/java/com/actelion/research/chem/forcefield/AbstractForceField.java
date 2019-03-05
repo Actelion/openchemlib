@@ -23,6 +23,13 @@ public abstract class AbstractForceField implements ForceField {
 	protected volatile boolean mIsInterrupted;
 
 	public AbstractForceField(StereoMolecule mol) {
+		int implicitHydrogens = 0;
+		for(int at=0;at<mol.getAtoms();at++) {
+			implicitHydrogens += mol.getImplicitHydrogens(at);
+		}
+		if(implicitHydrogens>0) {
+			throw new IllegalArgumentException("molecule needs explicit hydrogen atoms for force field calculations");
+		}
 		mMol = mol;
 		mDim = 3*mol.getAllAtoms();
         mGrad = new double[mDim];
