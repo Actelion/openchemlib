@@ -830,6 +830,10 @@ public class ByteVec implements Comparable<ByteVec>, Serializable {
 
     }
 
+    public static String toString(byte [] a) {
+		return toString(a, " ");
+    }
+
     static public ByteVec testS1() {
        byte [] arr = {0,0,0,0,1,0,0,1,1,0,0,0,0,2,1,0,1,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,3,2,3,4,1,2,3,3,3,3,2,16,4,4,1,2,1,1,3,3,2,3,2,4,10,8,8,6,7,7,6,7,7,6,7,26,0,2,4,5,7,8,7,4,3,4,4,6,0,1,4,7,8,7,5,3,1,0,0,0,5,15,24,29,27,23,18,13,10,7,7,92,18,18,9,0,1,4,9,15,20,22,19,18};
        ByteVec dv = new ByteVec(arr);

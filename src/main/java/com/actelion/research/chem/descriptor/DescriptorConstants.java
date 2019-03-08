@@ -96,7 +96,7 @@ public interface DescriptorConstants {
                                                false,
                                                false,
                                                false);
-    public static final DescriptorInfo DESCRIPTOR_Flexophore = 
+    public static final DescriptorInfo DESCRIPTOR_Flexophore =
                             new DescriptorInfo("Flexophore",
                                                "Flexophore",
 											   "4.4",
