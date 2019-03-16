@@ -218,7 +218,24 @@ public class Matrix {
             }
         }
     }
-    
+
+
+    public Matrix add(double v) {
+
+        int r = rows();
+        int c = cols();
+
+        Matrix A = new Matrix(r,c);
+
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                double s = get(i,j) + v;
+                A.set(i,j,s);
+            }
+        }
+        return A;
+    }
+
     /**
      *
      * @param arr adds a row at the end of the matrix.
@@ -478,7 +495,28 @@ public class Matrix {
         }
         return ma;
     }
-    
+
+    public Matrix removeCol(int col2Remove) {
+
+        int r = rows();
+        int c = cols();
+
+        Matrix ma = new Matrix(r,c);
+
+        for(int i=0; i < r; i++){
+
+            int ccColNew=0;
+
+            for (int j = 0; j < c; j++) {
+                if(j!=col2Remove) {
+                    ma.data[i][ccColNew++] = data[i][j];
+                }
+            }
+        }
+
+        return ma;
+    }
+
     public double [] getColAsDouble(int col) {
     	double [] arr = new double [rows()];
         for(int i=0; i < rows(); i++){
@@ -1326,9 +1364,24 @@ public class Matrix {
 
     public double getEuclideanDistanceFastRows(int iRow, Matrix A, int iRowA) {
         double distance = 0;
-        for (int i = 0; i < data[0].length; i++) {
+
+        int cols = cols();
+
+        for (int i = 0; i < cols; i++) {
           distance += (data[iRow][i] - A.data[iRowA][i]) * (data[iRow][i] - A.data[iRowA][i]);
         }
+        return distance;
+    }
+
+    public double getEuclideanDistanceFastRows(int row1, int row2) {
+        double distance = 0;
+
+        int cols = cols();
+
+        for (int i = 0; i < cols; i++) {
+          distance += (data[row1][i] - data[row2][i]) * (data[row1][i] - data[row2][i]);
+        }
+
         return distance;
     }
 
@@ -1946,9 +1999,9 @@ public class Matrix {
         boolean bEQ = true;
 
         if(equalDimension(ma) == true) {
-            for (int ii = 0; ii < getRowDim(); ii++) {
-                for (int jj = 0; jj < getColDim(); jj++) {
-                    if(data[ii][jj] != ma.data[ii][jj]) {
+            for (int i = 0; i < getRowDim(); i++) {
+                for (int j = 0; j < getColDim(); j++) {
+                    if(data[i][j] != ma.data[i][j]) {
                         bEQ = false;
                         break;
                     }
@@ -1965,9 +2018,9 @@ public class Matrix {
         boolean bEQ = true;
 
         if(equalDimension(ma) == true) {
-            for (int ii = 0; ii < getRowDim(); ii++) {
-                for (int jj = 0; jj < getColDim(); jj++) {
-                    double dDiff = Math.abs(data[ii][jj] - ma.data[ii][jj]);
+            for (int i = 0; i < getRowDim(); i++) {
+                for (int j = 0; j < getColDim(); j++) {
+                    double dDiff = Math.abs(data[i][j] - ma.data[i][j]);
                     if(dDiff > dLimit) {
                         bEQ = false;
                         break;
@@ -2020,9 +2073,9 @@ public class Matrix {
     public Matrix multCols(Matrix maMuiltiplicant) {
         Matrix maResult = new Matrix(getRowDim(), getColDim());
 
-        for (int ii = 0; ii < getRowDim(); ii++) {
-            for (int jj = 0; jj < getColDim(); jj++) {
-                maResult.data[ii][jj] = data[ii][jj] * maMuiltiplicant.get(0,jj);
+        for (int i = 0; i < getRowDim(); i++) {
+            for (int j = 0; j < getColDim(); j++) {
+                maResult.data[i][j] = data[i][j] * maMuiltiplicant.get(0,j);
             }
         }
         return maResult;
@@ -2031,9 +2084,9 @@ public class Matrix {
     public Matrix multiply(double dScalar) {
         Matrix maResult = new Matrix(getRowDim(), getColDim());
 
-        for (int ii = 0; ii < getRowDim(); ii++) {
-            for (int jj = 0; jj < getColDim(); jj++) {
-                maResult.data[ii][jj] = data[ii][jj] * dScalar;
+        for (int i = 0; i < getRowDim(); i++) {
+            for (int j = 0; j < getColDim(); j++) {
+                maResult.data[i][j] = data[i][j] * dScalar;
             }
         }
 
@@ -3312,6 +3365,43 @@ public class Matrix {
         return sb.toString();
     }
 
+    public String toStringRow(int row, int iDigits) {
+        int iRequireDigits = 20;
+
+        String sFormat = "";
+
+        sFormat += "0";
+        int iCounter = 0;
+        if(iDigits > 0)
+            sFormat += ".";
+
+        while(iCounter < iDigits) {
+          sFormat += "0";
+          iCounter++;
+        }
+
+        DecimalFormat nf = new DecimalFormat(sFormat);
+
+        int len = getRowDim() * getColDim() * iRequireDigits;
+        StringBuilder sb = new StringBuilder(len);
+
+
+        for (int j = 0; j < data[0].length; j++) {
+
+            String sVal = nf.format(data[row][j]);
+            if(data[row][j]==Double.MAX_VALUE)
+                sVal = "Max";
+
+            sb.append(sVal);
+
+            if(j<data[0].length-1)
+                sb.append(OUT_SEPARATOR_COL);
+        }
+
+
+        return sb.toString();
+    }
+
     public String toStringRowNumber(int iDigits, String sSeparatorCol) {
         int iRequireDigits = 20;
 
@@ -3344,16 +3434,6 @@ public class Matrix {
                 sb.append(OUT_SEPARATOR_ROW);
         }
 
-        return sb.toString();
-    }
-
-    public static String toString(int [] arr) {
-
-        int iRequireDigits = 20;
-        StringBuilder sb = new StringBuilder(arr.length * iRequireDigits);
-        for (int ii = 0; ii < arr.length; ii++) {
-            sb.append(arr[ii] + OUT_SEPARATOR_COL);
-        }
         return sb.toString();
     }
 
