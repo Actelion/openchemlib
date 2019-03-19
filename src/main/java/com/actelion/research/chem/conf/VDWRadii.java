@@ -10,7 +10,7 @@ public interface VDWRadii {
 	 * (in a few cases no value was given (marked ??), where we use estimated values)
 	 */
 	public static final float[] VDW_RADIUS = new float[]{
-		0.0f,	1.20f,	1.43f,	2.12f,	// ??,H,He,Li
+		1.00f,	1.20f,	1.43f,	2.12f,	// ??,H,He,Li
 		1.98f,	1.91f,	1.77f,	1.66f,	// Be,B,C,N
 		1.50f,	1.46f,	1.58f,	2.50f,	// O,F,Ne,Na
 		2.51f,	2.25f,	2.19f,	1.90f,	// Mg,Al,Si,P

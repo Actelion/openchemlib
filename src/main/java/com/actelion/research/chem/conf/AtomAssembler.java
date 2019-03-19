@@ -22,6 +22,9 @@ public class AtomAssembler {
 		}
 
 	public int addImplicitHydrogens(int atom) {
+		if (mMol.getAtomicNo(atom) == 0)
+			return 0;
+
 		int count = mMol.getImplicitHydrogens(atom);
 		if (count == 0)
 			return 0;
@@ -120,9 +123,9 @@ public class AtomAssembler {
 
 		if (count == 1 && sp == mMol.getConnAtoms(atom)) {
 			// simple case, where we can just invert the sum of all neighbor bond vectors
-			Coordinates v = new Coordinates(croot);
+			Coordinates v = new Coordinates();
 			for (int i=0; i<mMol.getConnAtoms(atom); i++)
-				v.sub(mMol.getCoordinates(mMol.getConnAtom(atom, i)));
+				v.add(croot.subC(mMol.getCoordinates(mMol.getConnAtom(atom, i))).unit());
 			v.unit();
 			int hydrogen = mMol.addAtom(1);
 			mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
