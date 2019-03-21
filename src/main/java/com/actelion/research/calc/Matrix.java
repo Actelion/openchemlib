@@ -1362,6 +1362,13 @@ public class Matrix {
         return identifier;
     }
 
+    /**
+     * Skipping the sqrt.
+     * @param iRow
+     * @param A
+     * @param iRowA
+     * @return
+     */
     public double getEuclideanDistanceFastRows(int iRow, Matrix A, int iRowA) {
         double distance = 0;
 
@@ -1373,6 +1380,12 @@ public class Matrix {
         return distance;
     }
 
+    /**
+     * Skipping the sqrt.
+     * @param row1
+     * @param row2
+     * @return
+     */
     public double getEuclideanDistanceFastRows(int row1, int row2) {
         double distance = 0;
 
@@ -1386,22 +1399,21 @@ public class Matrix {
     }
 
     public double getMaximumValue() {
-        double dMax = Double.MIN_VALUE;
+        double max = Double.MIN_VALUE;
 
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < data[0].length; j++) {
-                if(dMax < data[i][j])
-                    dMax = data[i][j];
+                if(max < data[i][j])
+                    max = data[i][j];
             }
         }
-        return dMax;
+        return max;
     }
 
     public double getMean() {
-        double mean = 0;
         int cols = getColDim();
         int rows = getRowDim();
-        mean = getSum() / (cols * rows);
+        double mean = getSum() / (cols * rows);
         return mean;
     }
 
@@ -2051,7 +2063,7 @@ public class Matrix {
 
     /**
      * Value by value multiplication
-     * Matrices may have the same dimensions.
+     * Matrices must have the same dimensions.
      * @param ma
      * @return
      */
@@ -2616,9 +2628,9 @@ public class Matrix {
 
     public Matrix pow(double exp) {
         Matrix ma = new Matrix(getRowDim(), getColDim());
-        for (int ii = 0; ii < getRowDim(); ii++) {
-            for (int jj = 0; jj < getColDim(); jj++) {
-                ma.data[ii][jj] = Math.pow(data[ii][jj], exp);
+        for (int i = 0; i < getRowDim(); i++) {
+            for (int j = 0; j < getColDim(); j++) {
+                ma.data[i][j] = Math.pow(data[i][j], exp);
             }
         }
         return ma;

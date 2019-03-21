@@ -3004,11 +3004,20 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return
 	 */
 	public int[] getHandleHydrogenMap() {
+		return getHandleHydrogenAtomMap(findSimpleHydrogens());
+		}
+
+		/**
+		 * If ensureHelperArrays() (and with it handleHydrogens()) was not called yet
+		 * on a fresh molecule and if the molecule contains simple hydrogen atoms within
+		 * non-hydrogens atoms, then this function returns a map from current atom indexes
+		 * to those new atom indexes that would result from a call to handleHydrogens.
+		 * @return
+		 */
+	public int[] getHandleHydrogenAtomMap(boolean[] isSimpleHydrogen) {
 		int[] map = new int[mAllAtoms];
 		for (int i=0; i<mAllAtoms; i++)
 			map[i] = i;
-
-		boolean[] isSimpleHydrogen = findSimpleHydrogens();
 
 		int lastNonHAtom = mAllAtoms;
 		do lastNonHAtom--;
@@ -3031,6 +3040,17 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			}
 
 		return map;
+		}
+
+	/**
+	 * If ensureHelperArrays() (and with it handleHydrogens()) was not called yet
+	 * on a fresh molecule and if the molecule contains simple hydrogen atoms within
+	 * non-hydrogens atoms, then this function returns a map from current bond indexes
+	 * to those new bond indexes that would result from a call to handleHydrogens.
+	 * @return
+	 */
+	public int[] getHandleHydrogenBondMap(boolean[] isSimpleHydrogen) {
+		return null;
 		}
 
 	private boolean[] findSimpleHydrogens() {
