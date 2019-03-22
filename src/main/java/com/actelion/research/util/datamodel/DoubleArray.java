@@ -35,6 +35,8 @@ package com.actelion.research.util.datamodel;
 
 import com.actelion.research.calc.INumericalDataColumn;
 
+import java.util.Arrays;
+
 /**
  * 
  * DoubleArray
@@ -121,7 +123,42 @@ public class DoubleArray implements INumericalDataColumn {
 		
 		return avr/size;
 	}
-	
+
+	public double median(){
+
+		double [] arr = get();
+
+		double [] arrNew = new double[arr.length];
+
+		System.arraycopy(arr, 0, arrNew, 0, arr.length);
+
+		Arrays.sort(arrNew);
+
+		double median = 0;
+
+		if(arrNew.length % 2 > 0){
+			median = arrNew[arrNew.length/2];
+		} else {
+			int i = arrNew.length/2;
+			median = (arrNew[i-1] + arrNew[i])/2.0;
+		}
+
+		return median;
+	}
+
+
+
+	public double sum(){
+
+		double sum = 0;
+
+		for (int i = 0; i < size; i++) {
+			sum += data[i];
+		}
+
+		return sum;
+	}
+
 	public double max(){
 		
 		double max = Double.MAX_VALUE * -1;

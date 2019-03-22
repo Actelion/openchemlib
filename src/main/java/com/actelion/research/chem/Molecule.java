@@ -436,6 +436,7 @@ public class Molecule implements Serializable {
 	transient private double mOriginalAngle[];
 	transient private double mOriginalDistance[];
 	transient private String mName;
+	transient private Object mUserData;
 
     public static int getAtomicNoFromLabel(String atomLabel) {
 		for (int i=1; i<cAtomLabel.length; i++)
@@ -2180,6 +2181,31 @@ public class Molecule implements Serializable {
 		return -Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2));
 		}
 
+	/**
+	 * Translate this molecule's 3D-coordinates such that its center of gravity
+	 * is moved to P(0,0,0) assuming all atoms have the same mass.
+	 * @return this conformer with centered coordinates
+	 */
+	public void center() {
+		Coordinates cog = new Coordinates();
+		for (int atom=0; atom<mAllAtoms; atom++)
+			cog.add(mCoordinates[atom]);
+		cog.scale(1.0 / mAllAtoms);
+
+		for (int atom=0; atom<mAllAtoms; atom++)
+			mCoordinates[atom].sub(cog);
+		}
+
+	/**
+	 * Translate this molecule's 3D-coordinates by adding the dx,dy,dz shifts
+	 * to all atom coordinates.
+	 * @return this conformer with translated coordinates
+	 */
+	public void translate(double dx, double dy, double dz) {
+		for (int atom=0; atom<mAllAtoms; atom++)
+			mCoordinates[atom].add(dx, dy, dz);
+		}
+
 
 	/**
 	 * @param no 0 or 1
@@ -3282,6 +3308,16 @@ public class Molecule implements Serializable {
 
 	public void setName(String name) {
 		mName = name;
+		}
+
+
+	public Object getUserData() {
+		return mUserData;
+		}
+
+
+	public void setUserData(Object userData) {
+		mUserData = userData;
 		}
 
 
