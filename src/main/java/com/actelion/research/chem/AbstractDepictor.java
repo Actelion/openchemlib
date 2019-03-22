@@ -231,7 +231,7 @@ public abstract class AbstractDepictor {
 	    updateBondHiliteColor();
 		}
 
-	
+
 	public void setTransformation(DepictorTransformation t) {
 		mTransformation = t;
 		}
@@ -2380,15 +2380,15 @@ public abstract class AbstractDepictor {
 		if (mIsValidatingView)
 			return;
 
-		if (theColor != COLOR_HILITE_BOND_BG
-		 && theColor != COLOR_EXCLUDE_GROUP_BG
-		 && mOverruleForeground != null)
-			theColor = COLOR_OVERRULED;
-
 		if (theColor == COLOR_INITIALIZE) {
 			mCurrentColor = -999;
 			theColor = mStandardForegroundColor;
 			}
+
+		if (theColor != COLOR_HILITE_BOND_BG
+		 && theColor != COLOR_EXCLUDE_GROUP_BG
+		 && mOverruleForeground != null)
+			theColor = COLOR_OVERRULED;
 
 		if (theColor == mCurrentColor)
 			return;

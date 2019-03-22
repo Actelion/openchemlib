@@ -3049,8 +3049,39 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * to those new bond indexes that would result from a call to handleHydrogens.
 	 * @return
 	 */
-	public int[] getHandleHydrogenBondMap(boolean[] isSimpleHydrogen) {
-		return null;
+	public int[] getHandleHydrogenBondMap() {
+		boolean[] isSimpleHydrogen = findSimpleHydrogens();
+		int[] map = new int[mAllBonds];
+		for (int i=0; i<mAllBonds; i++)
+			map[i] = i;
+		
+		boolean isHydrogenBond[] = new boolean[mAllBonds];
+		for (int bond=0; bond<mAllBonds; bond++) {	// mark all bonds to hydrogen
+			int atom1 = mBondAtom[0][bond];
+			int atom2 = mBondAtom[1][bond];
+			if (isSimpleHydrogen[atom1]
+			 || isSimpleHydrogen[atom2])
+				isHydrogenBond[bond] = true;
+			}
+
+		int lastNonHBond = mAllBonds;
+		do lastNonHBond--; while ((lastNonHBond >= 0) && isHydrogenBond[lastNonHBond]);
+
+		for (int bond=0; bond<lastNonHBond; bond++) {
+			if (isHydrogenBond[bond]) {
+				int tempIndex = map[bond];
+				map[bond] = map[lastNonHBond];
+				map[lastNonHBond] = tempIndex;
+
+				boolean temp = isHydrogenBond[bond];
+				isHydrogenBond[bond] = isHydrogenBond[lastNonHBond];
+				isHydrogenBond[lastNonHBond] = temp;
+				do lastNonHBond--;
+					while (isHydrogenBond[lastNonHBond]);
+				}
+			}
+		
+		return map;
 		}
 
 	private boolean[] findSimpleHydrogens() {

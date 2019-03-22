@@ -1534,6 +1534,40 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 * @param deleteAtom
+	 * @return mapping array from old to new bond indexes resulting from a deletion of flagged atoms
+	 */
+	public int[] getDeleteAtomsBondMap(boolean[] deleteAtom) {
+		boolean[] deleteBond = new boolean[mAllBonds];
+
+		for (int bond=0; bond<mAllBonds; bond++)
+			if (deleteAtom[mBondAtom[0][bond]]
+			 || deleteAtom[mBondAtom[1][bond]])
+				deleteBond[bond] = true;
+
+		int bondDest = 0;
+		int[] bondMap = new int[mAllBonds];
+		for (int bnd=0; bnd<mAllBonds; bnd++)
+			bondMap[bnd] = deleteBond[bnd] ? -1 : bondDest++;
+
+		return bondMap;
+		}
+
+
+	/**
+	 * @param atomList
+	 * @return mapping array from old to new bond indexes resulting from a deletion of flagged atoms
+	 */
+	public int[] getDeleteAtomsBondMap(int[] atomList) {
+		boolean[] deleteAtom = new boolean[mAllAtoms];
+		for (int atom:atomList)
+			deleteAtom[atom] = true;
+
+		return getDeleteAtomsBondMap(deleteAtom);
+		}
+
+
+	/**
 	 * High level function for constructing a molecule.
 	 * Delete all selected atoms and all bonds attached to them.
 	 * After the deletion the original order of atom and bond indexes is retained.
