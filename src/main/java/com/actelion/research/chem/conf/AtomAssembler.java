@@ -20,6 +20,8 @@ public class AtomAssembler {
 
 		return total;
 		}
+	
+
 
 	public int addImplicitHydrogens(int atom) {
 		if (mMol.getAtomicNo(atom) == 0)
@@ -40,7 +42,7 @@ public class AtomAssembler {
 
 		if (sp == 1) {	// simple case, where we need to extend linearly
 			Coordinates cconn = mMol.getCoordinates(mMol.getConnAtom(atom, 0));
-			Coordinates cnew = croot.add(croot.subC(cconn).unit().scale(length));
+			Coordinates cnew = croot.addC(croot.subC(cconn).unit().scale(length));
 			int newAtom = mMol.addAtom(1);
 			mMol.setAtomX(newAtom, cnew.x);
 			mMol.setAtomY(newAtom, cnew.y);
@@ -218,7 +220,6 @@ public class AtomAssembler {
 	private int addHydrogensToSingleAtom(int atom, int count) {
 		Coordinates p = mMol.getCoordinates(atom);
 		double length = BondLengthSet.getBondLength(BondLengthSet.getBondIndex(1, false, false, mMol.getAtomicNo(atom), 1, 0, 0));
-
 		switch (count) {
 		case 1:
 			int hydrogen = mMol.addAtom(1);
@@ -341,7 +342,6 @@ public class AtomAssembler {
 		m[2][0] = axisZ.x;
 		m[2][1] = axisZ.y;
 		m[2][2] = axisZ.z;
-
 		Coordinates p = new Coordinates(x, y, z).rotate(m).add(c3);
 		int hydrogen = mMol.addAtom(atomicNo);
 		mMol.addBond(rootAtom, hydrogen, Molecule.cBondTypeSingle);
