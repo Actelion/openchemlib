@@ -39,7 +39,7 @@ public class AtomTypeCalculator {
 	public static final int cPropertiesForSolubility			= 0x00000860;
 	public static final int cPropertiesForCLogPCharges			= 0x00001861;
 	public static final int cPropertiesForCLogP					= 0x00000861;
-	public static final int cPropertiesForMutator               = 0x000028BE;
+	public static final int cPropertiesForMutator               = 0x00002CBE;
 	public static final int cPropertiesBasicType				= 0x0000003C;
 	
 	public static final int cPropertiesAtomSmallRing			= 0x00000001;
@@ -69,7 +69,7 @@ public class AtomTypeCalculator {
 									// is neighbour aromatic
 	public static final int cPropertiesAtomCharged			    = 0x00001000;
 									// is atom charged and atom is ampholytic
-	public static final int cPropertiesAtomRingBondCount	    = 0x00002000;
+	public static final int cPropertiesAtomRingCount		    = 0x00002000;
 	// is atom charged
 
 
@@ -217,8 +217,8 @@ public class AtomTypeCalculator {
 		if ((mode & cPropertiesAtomCharged) != 0)
 			sb.append("\tCharged\tAmpholytic");
 
-		if ((mode & cPropertiesAtomRingBondCount) != 0)
-			sb.append("\tRingBonds");
+		if ((mode & cPropertiesAtomRingCount) != 0)
+			sb.append("\tRingCount");
 
 		for (int i=1; i<=4; i++) {
 			if ((mode & cPropertiesConnBondOrder) != 0)
@@ -268,11 +268,9 @@ public class AtomTypeCalculator {
 			sb.append("\t" + (((type & 0x0008000000000000L) != 0) ? "yes" : "no"));
 			}
 
-		if ((mode & cPropertiesAtomRingBondCount) != 0) {
-			long ringBondCount = (type & 0x0030000000000000L) >> 52;
-			if (ringBondCount != 0)
-				ringBondCount++;
-			sb.append("\t" + ringBondCount);
+		if ((mode & cPropertiesAtomRingCount) != 0) {
+			long ringCount = (type & 0x0070000000000000L) >> 52;
+			sb.append("\t" + ringCount);
 			}
 
 		for (int i=1; i<=4; i++) {
@@ -322,17 +320,15 @@ public class AtomTypeCalculator {
 				sb.append("Amp");
 			}
 
-		if ((mode & cPropertiesAtomRingBondCount) != 0) {
-			long ringBondCount = (type & 0x0030000000000000L) >> 52;
-			if (ringBondCount != 0)
-				ringBondCount++;
-			sb.append("Rb"+ringBondCount);
+		if ((mode & cPropertiesAtomRingCount) != 0) {
+			long ringCount = (type & 0x0070000000000000L) >> 52;
+			sb.append("Rc"+ringCount);
 			}
 
 		if ((mode & cPropertiesAtomRingSize) != 0) {
 			long ringSize = ((type & 112) >> 4);
 			if (ringSize != 0) ringSize += 2;
-			sb.append("R" + ringSize);
+			sb.append("Rs" + ringSize);
 			}
 
 		if ((mode & cPropertiesAtomAromatic) != 0 && (type & 128) != 0)
@@ -409,7 +405,7 @@ public class AtomTypeCalculator {
 
 			if ((mode & cPropertiesConnBondOrder) != 0) {
 				long connBondOrder = mol.getConnBondOrder(atom, i);
-				if (connBondOrder < 3 && mol.isAromaticBond(mol.getConnBond(atom, i)))
+				if (connBondOrder < 3 && mol.isDelocalizedBond(mol.getConnBond(atom, i)) && mol.getAtomPi(atom) == 1)
 					connBondOrder = 0;
 				connBondType += connBondOrder;
 				}
@@ -509,11 +505,9 @@ public class AtomTypeCalculator {
 				}
 			}
 
-		if ((mode & cPropertiesAtomRingBondCount) != 0) {
-			long ringBondCount = mol.getAtomRingBondCount(atom);
-			if (ringBondCount != 0)
-				ringBondCount--;
-			atomType |= (ringBondCount << 52);	// ampholytic
+		if ((mode & cPropertiesAtomRingCount) != 0) {
+			long ringCount = mol.getAtomRingCount(atom, 10);
+			atomType |= (ringCount << 52);	// ampholytic
 			}
 
 			return atomType;

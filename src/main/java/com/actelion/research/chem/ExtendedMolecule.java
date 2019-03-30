@@ -1435,7 +1435,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		boolean[] neglectBond = new boolean[mBonds];
 		int[] ringAtom = new int[mAtoms];
 		int count = 0;
-		for (int i = 1; i< mConnAtoms[atom]; i++) {
+		for (int i=1; i<mConnAtoms[atom]; i++) {
 			int bond1 = mConnBond[atom][i];
 			if (isRingBond(bond1)) {
 				for (int j=0; j<i; j++) {
