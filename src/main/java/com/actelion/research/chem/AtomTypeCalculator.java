@@ -39,7 +39,7 @@ public class AtomTypeCalculator {
 	public static final int cPropertiesForSolubility			= 0x00000860;
 	public static final int cPropertiesForCLogPCharges			= 0x00001861;
 	public static final int cPropertiesForCLogP					= 0x00000861;
-	public static final int cPropertiesForMutator               = 0x00002CBE;
+	public static final int cPropertiesForMutator               = 0x00002DBE;
 	public static final int cPropertiesBasicType				= 0x0000003C;
 	
 	public static final int cPropertiesAtomSmallRing			= 0x00000001;
