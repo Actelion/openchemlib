@@ -78,7 +78,11 @@ public class IntArray implements Serializable {
 		calculateHashCode();
 		
 	}
-	
+
+	/**
+	 * Deep constructor.
+	 * @param ia
+	 */
 	public IntArray(IntArray ia) {
 		init(ia.data.length);
 		
