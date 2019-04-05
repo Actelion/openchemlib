@@ -84,7 +84,7 @@ public abstract class AbstractForceField implements ForceField {
 
     @Override
     public int minimise() {
-        return minimise(200, 1e-4, 1e-6);
+        return minimise(4000, 1e-4, 1e-6);
     }
     
    @Override 
