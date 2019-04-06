@@ -152,9 +152,13 @@ public class ConstantsDWAR {
 
 	public static final String ODE_EXTENSION = ".ode";
 
+	// DataWarrior file
 	public static final String DWAR_EXTENSION = ".dwar";
 
 	public static final String REGEX_FILE_EXTENSION = "(.*\\"+ODE_EXTENSION+")|(.*\\"+DWAR_EXTENSION+")";
+
+	// DataWarrior query file
+	public static final String DWAQ_EXTENSION = ".dwaq";
 
 	public static final String SDF_EXTENSION = ".sdf";
 
