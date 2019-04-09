@@ -423,6 +423,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
 	 * 3. non-plain-hydrogen atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
+	 * Orders of delocalized bonds, i.e. bonds in an aromatic 6-membered ring, are returned as 1.
 	 * @param atom
 	 * @param i index into sorted neighbour list
 	 * @return order of bond connecting atom with its i-th neighbor
@@ -3223,9 +3224,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mConnAtoms[atom]++;	// non-H and non-metal-bonded neighbours
 				if (atom < mAtoms) {
 					if (order > 1)
-						mPi[atom] += order + order - 2;
+						mPi[atom] += order - 1;
 					else if (mBondType[bnd] == cBondTypeDelocalized)
-						mPi[atom] = 2;
+						mPi[atom] = 1;
 					}
 				}
 			}
@@ -3267,9 +3268,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 					}
 				}
 			}
-
-		for(int atom=0; atom<mAtoms; atom++)
-			mPi[atom] /= 2;
 		}
 
 

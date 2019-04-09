@@ -39,7 +39,7 @@ public class AtomTypeCalculator {
 	public static final int cPropertiesForSolubility			= 0x00000860;
 	public static final int cPropertiesForCLogPCharges			= 0x00001861;
 	public static final int cPropertiesForCLogP					= 0x00000861;
-	public static final int cPropertiesForMutator               = 0x00002DBE;
+	public static final int cPropertiesForMutator               = 0x00006DBE;
 	public static final int cPropertiesBasicType				= 0x0000003C;
 	
 	public static final int cPropertiesAtomSmallRing			= 0x00000001;
@@ -52,6 +52,12 @@ public class AtomTypeCalculator {
 									// consider also whether the atom is in allylic/benzylic position
 	public static final int cPropertiesAtomStabilized			= 0x00000010;
 									// consider also whether the atom is stabilized by a neighbour carbonyl or similar
+	public static final int cPropertiesAtomCharged			    = 0x00001000;
+									// is atom charged and atom is ampholytic
+	public static final int cPropertiesAtomRingCount		    = 0x00002000;
+									// ring count of atoms
+	public static final int cPropertiesAtomVinylogousStabilized	= 0x00004000;
+									// consider also whether the atom is vinylogously (via non-aromatic bonds) stabilized
 
 	public static final int cPropertiesConnBondOrder			= 0x00000020;
 									// bond order (arom=0) to neighbours
@@ -67,10 +73,6 @@ public class AtomTypeCalculator {
 									// is neighbour in small ring
 	public static final int cPropertiesConnAtomAromatic			= 0x00000800;
 									// is neighbour aromatic
-	public static final int cPropertiesAtomCharged			    = 0x00001000;
-									// is atom charged and atom is ampholytic
-	public static final int cPropertiesAtomRingCount		    = 0x00002000;
-	// is atom charged
 
 
 	private static final short cAtomicNoCode[] = {-1,
@@ -214,6 +216,9 @@ public class AtomTypeCalculator {
 		if ((mode & cPropertiesAtomStabilized) != 0)
 			sb.append("\tStabilized");
 
+		if ((mode & cPropertiesAtomVinylogousStabilized) != 0)
+			sb.append("\tVinylogouslyStabilized");
+
 		if ((mode & cPropertiesAtomCharged) != 0)
 			sb.append("\tCharged\tAmpholytic");
 
@@ -262,6 +267,9 @@ public class AtomTypeCalculator {
 
 		if ((mode & cPropertiesAtomStabilized) != 0)
 			sb.append("\t"+(((type & 512) != 0) ? "yes" : "no"));
+
+		if ((mode & cPropertiesAtomVinylogousStabilized) != 0)
+			sb.append("\t"+(((type & 0x0080000000000000L) != 0) ? "yes" : "no"));
 
 		if ((mode & cPropertiesAtomCharged) != 0) {
 			sb.append("\t" + (((type & 0x0004000000000000L) != 0) ? "yes" : "no"));
@@ -339,6 +347,9 @@ public class AtomTypeCalculator {
 
 		if ((mode & cPropertiesAtomStabilized) != 0 && (type & 512) != 0)
 			sb.append("St");
+
+		if ((mode & cPropertiesAtomVinylogousStabilized) != 0 && (type & 0x0080000000000000L) != 0)
+			sb.append("Vst");
 
 		for (int j=0; j<4; j++) {
 			type >>= 10;
@@ -491,6 +502,10 @@ public class AtomTypeCalculator {
 			if (mol.isStabilizedAtom(atom))
 				atomType |= 512;
 
+		if ((mode & cPropertiesAtomVinylogousStabilized) != 0)
+			if (isVinylogouslyStabilized(mol, atom))
+				atomType |= 0x0080000000000000L;
+
 		if ((mode & cPropertiesAtomCharged) != 0) {
 			if(AtomFunctionAnalyzer.hasUnbalancedAtomCharge(mol, atom))
 				atomType |= 0x0004000000000000L;
@@ -510,6 +525,25 @@ public class AtomTypeCalculator {
 			atomType |= (ringCount << 52);	// ampholytic
 			}
 
-			return atomType;
+		return atomType;
+		}
+
+	private static boolean isVinylogouslyStabilized(StereoMolecule mol, int atom) {
+		for (int i=0; i<mol.getConnAtoms(atom); i++) {
+			int connBond = mol.getConnBond(atom, i);
+			if (!mol.isAromaticBond(connBond)
+			 && mol.getBondOrder(connBond) == 1) {
+				int connAtom = mol.getConnAtom(atom, i);
+				for (int j=0; j<mol.getConnAtoms(connAtom); j++) {
+					int connBond2 = mol.getConnBond(connAtom, j);
+					if (!mol.isAromaticBond(connBond2)
+					 && mol.getBondOrder(connBond2) > 1) {
+						if (mol.isStabilizedAtom(mol.getConnAtom(connAtom, j)))
+							return true;
+						}
+					}
+				}
+			}
+		return false;
 		}
 	}
