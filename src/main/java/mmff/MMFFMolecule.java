@@ -34,11 +34,9 @@ public final class MMFFMolecule extends StereoMolecule  {
     public MMFFMolecule(StereoMolecule mol) throws BadAtomTypeException,
                                                  BadRingAromException
     {
-        super(mol);
-        mHydrogenMap = mol.getHandleHydrogenMap();
-        mol.ensureHelperArrays(StereoMolecule.cHelperRings);
-
-        RingCollection rings = mol.getRingSet();
+    	super(mol);
+        mHydrogenMap = getHandleHydrogenMap();
+        RingCollection rings = getRingSet();
         mRingArom = new RingBoolean[rings.getSize()];
         for (int i=0; i<mRingArom.length; i++)
             mRingArom[i] = RingBoolean.NOT_SET;
@@ -64,8 +62,9 @@ public final class MMFFMolecule extends StereoMolecule  {
             throw new BadRingAromException();
 
         // Assign the atom types to the atom type cache.
-        mAtomTypes = new int[mol.getAllAtoms()];
+        mAtomTypes = new int[getAllAtoms()];
         for (int i=0; i<mAtomTypes.length; i++) {
+
         	mAtomTypes[i] = -1;
         	mAtomTypes[i] = mmff.type.Atom.getType(this, i);
 

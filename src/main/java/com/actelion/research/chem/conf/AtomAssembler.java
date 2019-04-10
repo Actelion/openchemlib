@@ -267,7 +267,7 @@ public class AtomAssembler {
 			dz = length*Math.sin(angle);
 			hydrogen = mMol.addAtom(1);
 			mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
-			mMol.setAtomX(hydrogen, p.x+dx);
+			mMol.setAtomX(hydrogen, p.x-dx);
 			mMol.setAtomY(hydrogen, p.y);
 			mMol.setAtomZ(hydrogen, p.z+dz);
 			hydrogen = mMol.addAtom(1);

@@ -103,6 +103,7 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
             Map<String, Object> options) {
     	super(m);
     	mMMFFMol = new mmff.MMFFMolecule(m);
+    	mMol.ensureHelperArrays(StereoMolecule.cHelperRings);
         Tables table = mTables.get(tablename);
 
         double nonBondedThresh = options.containsKey("nonbonded cutoff")
@@ -176,9 +177,6 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
      * the number of iterations, energy tolerance and gradient tolerance.
      *  @return Return code, 0 on success.
      */
-    public int minimise() {
-        return minimise(200, 1e-4, 1e-6);
-    }
     
     
 
