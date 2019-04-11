@@ -51,6 +51,8 @@ public class ConstantsDWAR {
 
 	public static final String PATTERN_NF_DWAR = "0.000############";
 
+	public static final String PACKAGE_DATAWARRIOR_IDORSIA = "com.actelion.research.datawarrior.DataWarriorActelionLinux";
+
 	//
 //	public static final DecimalFormat NF_DWAR4 = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.US));
 //
