@@ -50,6 +50,22 @@ public abstract class CompoundFileParser {
 	protected BufferedReader mReader;
 
     /**
+     * Creates the proper parser for the given type of compound file (currently SD or DWAR).
+     * @param fileName
+     * @return parser or null, if the file doesn't exist or cannot be accessed
+     */
+	public static CompoundFileParser createParser(String fileName) {
+        CompoundFileParser parser = null;
+        int fileType = CompoundFileHelper.getFileType(fileName);
+        if (fileType == CompoundFileHelper.cFileTypeDataWarrior)
+            parser = new DWARFileParser(fileName);
+        else if (fileType == CompoundFileHelper.cFileTypeSD)
+            parser = new SDFileParser(fileName);
+
+        return parser.mReader == null ? null : parser;
+        }
+
+    /**
      * Compiles all column names that contain alpha-numerical information.
      * Columns containing chemistry objects, coordinates or descriptors don't
      * appear in the list.
