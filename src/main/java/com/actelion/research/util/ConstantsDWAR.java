@@ -51,6 +51,9 @@ public class ConstantsDWAR {
 
 	public static final String PATTERN_NF_DWAR = "0.000############";
 
+	// Program name for the class Platform
+	public static final String PLATFORM_NAME_DATAWARRIOR = "datawarrior";
+
 	public static final String PACKAGE_DATAWARRIOR_IDORSIA = "com.actelion.research.datawarrior.DataWarriorActelionLinux";
 
 	//

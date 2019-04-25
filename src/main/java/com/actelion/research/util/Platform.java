@@ -97,7 +97,7 @@ public class Platform
      * @param args
      * @throws IOException
      */
-    public static void execute(String program, String... args) throws IOException
+    public static Process execute(String program, String... args) throws IOException
     {
         String executable = findExecutable(program);
         List<String> arguments = new ArrayList<String>();
@@ -106,7 +106,9 @@ public class Platform
             for (String a : args)
                 arguments.add(a);
         }
-        Runtime.getRuntime().exec(arguments.toArray(new String[0]));
+        final Process command = Runtime.getRuntime().exec(arguments.toArray(new String[0]));
+
+        return command;
     }
 
 	/**
