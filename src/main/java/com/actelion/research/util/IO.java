@@ -65,7 +65,22 @@ public class IO {
 	public static final String SEP = System.getProperty("file.separator");
 
 
-	
+
+	public static boolean canWriteAndDeleteInPath(File dir) throws IOException {
+		boolean w = false;
+
+		File f = File.createTempFile("test", ".txt", dir);
+
+		if(f.canWrite()){
+			w=true;
+		}
+
+		w = f.delete();
+
+		return w;
+	}
+
+
 	/**
 	 * Do not forget to close BufferedReader
 	 * 
