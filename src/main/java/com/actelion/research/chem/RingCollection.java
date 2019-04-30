@@ -371,7 +371,7 @@ public class RingCollection {
 	/**
 	 * Return whether the ring is considered aromatic.
 	 * If the mode parameter passed to the constructor didn't include AROMATICITY, then
-	 * then false is returned.
+	 * a NullPointerException is raised.
 	 * @param ringNo
 	 * @return
 	 */
@@ -385,7 +385,7 @@ public class RingCollection {
 	 * aromatic rings with no preference concerning where the double bonds are located.
 	 * Pyrrole bonds are not considered delocalized.
 	 * If the mode parameter passed to the constructor didn't include AROMATICITY, then
-	 * then false is returned.
+	 * a NullPointerException is raised.
 	 * @param ringNo
 	 * @return
 	 */

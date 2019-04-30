@@ -48,6 +48,7 @@ public class IsomericSmilesCreator {
 	private int[] mClosureNumber;
 	private int[] mSmilesIndex;
 	private int[] mClosureBuffer;
+	private int[][] mKnownTHCountInESRGroup;
 	private List<SmilesAtom> mGraphAtomList;
 	private boolean[] mAtomUsed;
 	private boolean[] mBondUsed;
@@ -113,6 +114,13 @@ public class IsomericSmilesCreator {
 		int groupCount = mCanonizer.getPseudoStereoGroupCount();
 		mPseudoStereoGroupInversion = new boolean[groupCount+1];
 		mPseudoStereoGroupInitialized = new boolean[groupCount+1];
+
+		mKnownTHCountInESRGroup = new int[2][Molecule.cESRMaxGroups];
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			int type = mMol.getAtomESRType(atom) - 1;
+			if (type != -1)
+				mKnownTHCountInESRGroup[type][mMol.getAtomESRGroup(atom)]++;
+		}
 
 		generateCanonicalTree();
 		findRingClosures();
@@ -432,7 +440,13 @@ public class IsomericSmilesCreator {
 	private boolean qualifiesForAtomParity(int atom) {
 		return (mMol.getAtomParity(atom) == Molecule.cAtomParity1
 			 || mMol.getAtomParity(atom) == Molecule.cAtomParity2)
+			&& !isSingleKnownStereoCenterInESRGroup(atom)
 			&& (mMol.getAtomicNo(atom) != 7 || mMol.getAtomCharge(atom) > 0);
+	}
+
+	private boolean isSingleKnownStereoCenterInESRGroup(int atom) {
+		int type = mMol.getAtomESRType(atom) - 1;
+		return type == -1 ? false : mKnownTHCountInESRGroup[type][mMol.getAtomESRGroup(atom)] <= 1;
 	}
 
 	private void appendClosureBonds(SmilesAtom smilesAtom, StringBuilder builder) {

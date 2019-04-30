@@ -163,13 +163,13 @@ public class Canonizer {
 	private int[] mGraphFrom;
 	private int[] mGraphClosure;
 
-	private String		  mIDCode,mCoordinates,mMapping;
+	private String		    mIDCode,mCoordinates,mMapping;
 	private StringBuilder	mEncodingBuffer;
 	private	int				mEncodingBitsAvail,mEncodingTempData,mMaxConnAtoms;
 
 	/**
-	 * Runs a canonicalization process molecule creating a unique atom ranking
-	 * taking stereo features, ESR settings and query features into account.
+	 * Runs a canonicalization procedure for the given molecule that creates unique atom ranks,
+	 * which takes stereo features, ESR settings and query features into account.
 	 * @param mol
 	 */
 	public Canonizer(StereoMolecule mol) {
@@ -178,13 +178,13 @@ public class Canonizer {
 
 
 	/**
-	 * Runs a canonicalization process molecule creating a unique atom ranking
-	 * taking stereo features, ESR settings and query features into account.
+	 * Runs a canonicalization procedure for the given molecule that creates unique atom ranks,
+	 * which takes stereo features, ESR settings and query features into account.
 	 * If mode includes ENCODE_ATOM_CUSTOM_LABELS, than custom atom labels are
-	 * used for atom ranking and are encoded into the idcode.<br>
+	 * considered for the atom ranking and are encoded into the idcode.<br>
 	 * If mode includes COORDS_ARE_3D, then getEncodedCoordinates() always returns
 	 * a 3D-encoding even if all z-coordinates are 0.0. Otherwise coordinates are
-	 * encoded in 3 dimensions only, if at least one of the z-coords is not 0.0.
+	 * encoded in 3D only, if at least one of the z-coords is not 0.0.
 	 * @param mol
 	 * @param mode 0 or one or more of CONSIDER...TOPICITY, CREATE..., ENCODE_ATOM_CUSTOM_LABELS, ASSIGN_PARITIES_TO_TETRAHEDRAL_N, COORDS_ARE_3D
 	 */

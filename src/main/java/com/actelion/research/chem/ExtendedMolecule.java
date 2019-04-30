@@ -1474,7 +1474,19 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperRings);
 		return mRingSet;
 		}
+	/**
+	 * 
+	 * @return a RingCollection object without aromaticity information
+	 */
+	
+	public RingCollection getRingSetSimple() {
+		ensureHelperArrays(cHelperRingsSimple);
+		return mRingSet;
+		}
 
+	
+	
+	
 	/**
 	 * Locates that single bond which is the preferred one to be converted into up/down bond
 	 * in order to define the atom chirality.
@@ -2844,13 +2856,20 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if ((required & ~mValidHelperArrays) == 0)
 			return;
 
-		if ((mValidHelperArrays & cHelperBitRings) == 0) {
-			for (int atom=0; atom<mAtoms; atom++)
+		if ((mValidHelperArrays & ~(cHelperBitRingsSimple | cHelperBitRings)) != 0) {
+			for (int atom = 0; atom < mAtoms; atom++)
 				mAtomFlags[atom] &= ~cAtomFlagsHelper2;
-			for (int bond=0; bond<mBonds; bond++)
+			for (int bond = 0; bond < mBonds; bond++)
 				mBondFlags[bond] &= ~cBondFlagsHelper2;
 
-			findRings();
+			// if we are asked to only detect small rings and skip aromaticity, allylic and stabilized detection
+			if ((required & cHelperBitRings) == 0) {
+				findRings(RingCollection.MODE_SMALL_RINGS_ONLY);
+				mValidHelperArrays |= cHelperBitRingsSimple;
+				return;
+				}
+
+			findRings(RingCollection.MODE_SMALL_AND_LARGE_RINGS_AND_AROMATICITY);
 
 				// set aromaticity flags of explicitly defined delocalized bonds
 			for(int bond=0; bond<mBonds; bond++) {
@@ -2874,7 +2893,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 							continue;
 
 						if (mConnBondOrder[connAtom][j] > 1) {
-						 	if (mAtomicNo[mConnAtom[connAtom][j]] == 6)
+							if (mAtomicNo[mConnAtom[connAtom][j]] == 6)
 								mAtomFlags[atom] |= cAtomFlagAllylic;
 							else {
 								if (!isAromaticBond(mConnBond[connAtom][j])
@@ -2893,7 +2912,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 						 // for non-aromatic stabilized atoms with pi-electrons
 					if (mPi[atom] > 0
 					 && ((cAtomFlagStabilized | cAtomFlagAromatic)
-					 		& mAtomFlags[atom]) == cAtomFlagStabilized) {
+							& mAtomFlags[atom]) == cAtomFlagStabilized) {
 						for (int i = 0; i< mConnAtoms[atom]; i++) {
 							if (mConnBondOrder[atom][i] > 1) {
 								int connAtom = mConnAtom[atom][i];
@@ -2914,9 +2933,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				if (!found)
 					break;
 				}
-
-			mValidHelperArrays |= cHelperBitRings;
 			}
+
+		mValidHelperArrays |= (cHelperBitRingsSimple | cHelperBitRings);
 		}
 
 
@@ -3271,8 +3290,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
-	private void findRings() {
-		mRingSet = new RingCollection(this, RingCollection.MODE_SMALL_AND_LARGE_RINGS_AND_AROMATICITY);
+	private void findRings(int mode) {
+		mRingSet = new RingCollection(this, mode);
 
 		int[] atomRingBondCount = new int[mAtoms];
 		for (int bond=0; bond<mBonds; bond++) {
@@ -3291,6 +3310,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomFlags[atom] |= cAtomFlags4RingBonds;
 			}
 
+		// the aromaticity flag is not public. Thus, generate it:
+		boolean includeAromaticity = (((mode & RingCollection.MODE_SMALL_RINGS_AND_AROMATICITY) & ~RingCollection.MODE_SMALL_RINGS_ONLY) != 0);
+
 		for (int ringNo=0; ringNo<mRingSet.getSize(); ringNo++) {
 			int ringAtom[] = mRingSet.getRingAtoms(ringNo);
 			int ringBond[] = mRingSet.getRingBonds(ringNo);
@@ -3299,13 +3321,15 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomFlags[ringAtom[i]] |= cAtomFlagSmallRing;
 				mBondFlags[ringBond[i]] |= cBondFlagSmallRing;
 
-				if (mRingSet.isAromatic(ringNo)) {
-					mAtomFlags[ringAtom[i]] |= cAtomFlagAromatic;
-					mBondFlags[ringBond[i]] |= cBondFlagAromatic;
-					}
+				if (includeAromaticity) {
+					if (mRingSet.isAromatic(ringNo)) {
+						mAtomFlags[ringAtom[i]] |= cAtomFlagAromatic;
+						mBondFlags[ringBond[i]] |= cBondFlagAromatic;
+						}
 
-				if (mRingSet.isDelocalized(ringNo))
-					mBondFlags[ringBond[i]] |= cBondFlagDelocalized;
+					if (mRingSet.isDelocalized(ringNo))
+						mBondFlags[ringBond[i]] |= cBondFlagDelocalized;
+					}
 
 				if (mBondType[ringBond[i]] == cBondTypeCross)
 					mBondType[ringBond[i]] = cBondTypeDouble;

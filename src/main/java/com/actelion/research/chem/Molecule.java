@@ -264,19 +264,21 @@ public class Molecule implements Serializable {
 
 	public static final int cHelperNone				= 0x0000;
 	public static final int cHelperBitNeighbours	= 0x0001;
-	public static final int cHelperBitRings			= 0x0002;
-	public static final int cHelperBitParities		= 0x0004;
-	public static final int cHelperBitCIP			= 0x0008;
+	public static final int cHelperBitRingsSimple	= 0x0002;	// small rings only, no aromaticity, no allylic nor stabilized flags
+	public static final int cHelperBitRings			= 0x0004;
+	public static final int cHelperBitParities		= 0x0008;
+	public static final int cHelperBitCIP			= 0x0010;
 
-	public static final int cHelperBitSymmetrySimple			= 0x0010;
-	public static final int cHelperBitSymmetryDiastereotopic	= 0x0020;
-	public static final int cHelperBitSymmetryEnantiotopic		= 0x0040;
-	public static final int cHelperBitIncludeNitrogenParities	= 0x0080;
+	public static final int cHelperBitSymmetrySimple			= 0x0020;
+	public static final int cHelperBitSymmetryDiastereotopic	= 0x0040;
+	public static final int cHelperBitSymmetryEnantiotopic		= 0x0080;
+	public static final int cHelperBitIncludeNitrogenParities	= 0x0100;
 
-	public static final int cHelperBitsStereo = 0x00FC;
+	public static final int cHelperBitsStereo = 0x01F8;
 
 	public static final int cHelperNeighbours = cHelperBitNeighbours;
-	public static final int cHelperRings = cHelperNeighbours | cHelperBitRings;
+	public static final int cHelperRingsSimple = cHelperNeighbours | cHelperBitRingsSimple;
+	public static final int cHelperRings = cHelperRingsSimple | cHelperBitRings;
 	public static final int cHelperParities = cHelperRings | cHelperBitParities;
 	public static final int cHelperCIP = cHelperParities | cHelperBitCIP;
 
