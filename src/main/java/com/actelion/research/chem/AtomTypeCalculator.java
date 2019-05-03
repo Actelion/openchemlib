@@ -442,8 +442,15 @@ public class AtomTypeCalculator {
 
 			if ((mode & cPropertiesConnBondOrder) != 0) {
 				long connBondOrder = mol.getConnBondOrder(atom, i);
-				if (connBondOrder < 3 && mol.isDelocalizedBond(mol.getConnBond(atom, i)) && mol.getAtomPi(atom) == 1)
-					connBondOrder = 0;
+				if (mode == cPropertiesForMutator) {	// for the Mutator this distinction is more appropriate
+					if (connBondOrder < 3 && mol.isDelocalizedBond(mol.getConnBond(atom, i)) && mol.getAtomPi(atom) == 1)
+						connBondOrder = 0;
+					}
+				else {
+					if (connBondOrder < 3 && mol.isAromaticBond(mol.getConnBond(atom, i)))
+						connBondOrder = 0;
+				}
+
 				connType |= (connBondOrder << CONN_SHIFT_BONDORDER);
 				}
 				
