@@ -382,7 +382,7 @@ public abstract class AbstractDepictor {
 		}
 
     // This might be overridden by subclasses (e.g. SVG Depictor)
-    protected void onDrawBond(int atom1, int atom2, double x1, double y1, double x2, double y2)
+    protected void onDrawBond(int bond, double x1, double y1, double x2, double y2)
     {
         // NOOP
     }
@@ -806,7 +806,7 @@ public abstract class AbstractDepictor {
 								 | mMol.getAtomQueryFeatures(atom2))
 								  & Molecule.cAtomQFExcludeGroup) != 0;
 
-        onDrawBond(atom1,atom2,getAtomX(atom1),getAtomY(atom1),getAtomX(atom2),getAtomY(atom2));
+        onDrawBond(bnd,getAtomX(atom1),getAtomY(atom1),getAtomX(atom2),getAtomY(atom2));
 
 		// if one of the bond atoms is part of an exclude group
 		if (!mMol.isSelectedAtom(atom1)

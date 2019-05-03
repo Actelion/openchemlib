@@ -210,10 +210,10 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void onDrawBond(int atom1, int atom2, double x1, double y1, double x2, double y2)
+    protected void onDrawBond(int bond, double x1, double y1, double x2, double y2)
     {
         String s = "<line " +
-                "id=\"" + getId() + ":Bond:" + atom1 + "-" + atom2 + "\" " +
+                "id=\"" + getId() + ":Bond:" + bond + "\" " +
                 "class=\"event\" " +	// class to respond to the mouse event
                 "x1=\"" + (int) (x1) + "\" " +
                 "y1=\"" + (int) (y1) + "\" " +
