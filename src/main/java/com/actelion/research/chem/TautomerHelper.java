@@ -83,9 +83,9 @@ public class TautomerHelper {
 	 * Canonicalizing the returned molecule with Canonizer mode ENCODE_ATOM_CUSTOM_LABELS
 	 * produces the same idcode from any tautomer.
 	 * If keepStereoCenters is true, then stereo centers with parity 1 or 2, if they are
-	 * absolute or if they are part of an AND/OR group with more than are member,
+	 * absolute or if they are part of an AND/OR group with more than one member,
 	 * are considered stable (non racemising) and, thus, their proton is not considered
-	 * being able to take part in a atutomeric transition.
+	 * being able to take part in a tautomeric transition.
 	 * @param keepStereoCenters if true, then defined (non-racemising) stereo centers cannot be part of tautomeric regions
 	 * @return generic tautomer with normalized tautomer regions and custom label to encode pi,D,T counts
 	 */
