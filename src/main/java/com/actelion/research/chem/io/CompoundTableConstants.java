@@ -147,6 +147,8 @@ public interface CompoundTableConstants {
     String cColumnPropertyLaunchOption = "launchOption";
     String cColumnPropertyLaunchDecoration = "launchDecoration";
 	String cColumnPropertyLaunchAllowMultiple = "launchAllowMultiple";
+    String cColumnPropertyOpenExternalName = "openExternalName";
+    String cColumnPropertyOpenExternalPath = "openExternalPath";
     String cColumnPropertyReferencedColumn = "refColumn";
     String cColumnPropertyReferenceStrengthColumn = "refStrengthColumn";
     String cColumnPropertyReferenceType = "refType";
