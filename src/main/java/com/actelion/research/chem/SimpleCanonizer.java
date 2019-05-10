@@ -457,8 +457,6 @@ public class SimpleCanonizer {
         if (mMol.isFragment()) {    // QueryFeatures and fragment specific properties
             addAtomQueryFeatures(0, false, nbits, Molecule.cAtomQFNoMoreNeighbours, 1, -1);
 
-            addBondQueryFeatures(2, false, nbits, Molecule.cBondTypeDelocalized, 1, -1);
-
             addAtomQueryFeatures(3, false, nbits, Molecule.cAtomQFMoreNeighbours, 1, -1);
 
             addAtomQueryFeatures(4, false, nbits,

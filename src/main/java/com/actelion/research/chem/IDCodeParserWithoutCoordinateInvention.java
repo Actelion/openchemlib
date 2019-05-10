@@ -439,7 +439,10 @@ public class IDCodeParserWithoutCoordinateInvention {
 				no = decodeBits(bbits);
 				for (int i=0; i<no; i++) {
 					int bond = decodeBits(bbits);
-					mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
+// This used to be Molecule.cBondTypeDelocalized, which is redundant to the bond order encoding
+// Then it was wrongly fixed to cBondQFDelocalized, which is part of cBondQFBondTypes and encoded as type 10
+// We can take it out entirely without sacrifycing idcode compatibility
+//					mMol.setBondQueryFeature(bond, Molecule.cBondQFDelocalized, true);
 					}
 				break;
 			case 3:	//	datatype 'AtomQFMoreNeighbours'
@@ -1189,7 +1192,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 						break;
 					case 2: //  datatype 'bond defined to be delocalized'
 						no = decodeBits(bbits);
-						System.out.print("delocalizedBonds:");
+						System.out.print("delocalizedBonds (outdated, redundant and wrong):");
 						for (int i = 0; i < no; i++)
 							System.out.print(" " + decodeBits(bbits));
 						System.out.println();

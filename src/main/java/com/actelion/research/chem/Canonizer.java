@@ -2831,19 +2831,6 @@ System.out.println();
 		if (mMol.isFragment()) {	// QueryFeatures and fragment specific properties
 			addAtomQueryFeatures(0, false, nbits, Molecule.cAtomQFNoMoreNeighbours, 1, -1);
 
-			count = 0;
-			for (int bond=0; bond<mMol.getBonds(); bond++)
-				if (mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeDelocalized)
-					count++;
-			if (count != 0) {
-				encodeBits(1, 1);   //  more data to come
-				encodeBits(2, 4);   //  2 = datatype 'cBondTypeDelocalized'
-				encodeBits(count, nbits);
-				for (int bond=0; bond<mMol.getBonds(); bond++)
-					if (mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeDelocalized)
-						encodeBits(bond, nbits);
-				}
-
 			addAtomQueryFeatures(3, false, nbits, Molecule.cAtomQFMoreNeighbours, 1, -1);
 
 			addAtomQueryFeatures(4, false, nbits,
