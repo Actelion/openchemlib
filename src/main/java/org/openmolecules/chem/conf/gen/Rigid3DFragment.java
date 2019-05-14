@@ -32,7 +32,7 @@ public class Rigid3DFragment {
 	private ConformationSelfOrganizer mSelfOrganizer;
 	private SelfOrganizedConformer[] mConformerList;
 
-private StereoMolecule[] mFragment;   // TODO remove this
+private StereoMolecule[] mFragment;	// TODO remove
 public StereoMolecule[] getFragment() { return mFragment; };
 
 	public static void setRandomSeed(long seed) {

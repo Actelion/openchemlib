@@ -36,12 +36,15 @@ package com.actelion.research.chem.conf;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 
-public class Conformer {
+import java.util.concurrent.ConcurrentSkipListSet;
+
+public class Conformer implements Comparable<Conformer> {
 	private Coordinates[] mCoordinates;
 	private StereoMolecule mMol;
 	private String mName;
 	private short[] mBondTorsion;
 	private double mEnergy;
+	private TorsionDescriptor mTorsionDescriptor;
 
 	/**
 	 * Creates a Conformer, i.e. basically a new set of atom coordinates for the given Molecule.
@@ -320,5 +323,23 @@ public class Conformer {
 
 	public void setName(String name) {
 		mName = name;
+		}
+
+	public boolean equals(Conformer c) {
+		if (mTorsionDescriptor == null)
+			mTorsionDescriptor = new TorsionDescriptor(this);
+		if (c.mTorsionDescriptor == null)
+			c.mTorsionDescriptor = new TorsionDescriptor(this);
+
+		return mTorsionDescriptor.equals(c.mTorsionDescriptor);
+		}
+
+	@Override public int compareTo(Conformer c) {
+		if (mTorsionDescriptor == null)
+			mTorsionDescriptor = new TorsionDescriptor(this);
+		if (c.mTorsionDescriptor == null)
+			c.mTorsionDescriptor = new TorsionDescriptor(this);
+
+		return mTorsionDescriptor.compareTo(c.mTorsionDescriptor);
 		}
 	}

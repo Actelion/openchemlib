@@ -38,7 +38,7 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.Angle;
 import com.actelion.research.util.DoubleFormat;
 
-public class TorsionDescriptor {
+public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 	private static final float TORSION_EQUIVALENCE_TOLERANCE = (float)Math.PI / 12f;
 
 	private float[] mTorsion;
@@ -90,7 +90,28 @@ public class TorsionDescriptor {
 		}
 
 	/**
-	 * Creates a TorsionDescriptor the coordinates of the passed molecule.
+	 * Creates a TorsionDescriptor the coordinates of the passed molecule using the default method to detect rotatable bonds.
+	 * The torsion descriptor is not canonical, unless the passed molecule is canonical.
+	 * Rotatable bonds need to carry at least one external non-hydrogen neighbor on each side.
+	 * @param mol
+	 */
+	public TorsionDescriptor(StereoMolecule mol) {
+		this(mol, getRotatableBonds(mol));
+		}
+
+	/**
+	 * Creates a TorsionDescriptor from conformer's coordinates drawing atom connectivity from the conformer's molecule
+	 * and using the default method to detect rotatable bonds.
+	 * The torsion descriptor is not canonical, unless the passed molecule is canonical.
+	 * Rotatable bonds need to carry at least one external non-hydrogen neighbor on each side.
+	 * @param conformer
+	 */
+	public TorsionDescriptor(Conformer conformer) {
+		this(conformer, getRotatableBonds(conformer.getMolecule()));
+		}
+
+	/**
+	 * Creates a TorsionDescriptor from the coordinates of the passed molecule.
 	 * The torsion descriptor is not canonical, unless the passed molecule is canonical.
 	 * Rotatable bonds need to carry at least one external non-hydrogen neighbor on each side.
 	 * @param mol
@@ -150,6 +171,23 @@ public class TorsionDescriptor {
 				return false;
 			}
 		return true;
+		}
+
+	/**
+	 * Returns 0, if none of the torsion angles are more different than TORSION_EQUIVALENCE_TOLERANCE;
+	 * Returns -1 if the first non-equivalent torsion angle is smaller for this than for the passed TorsionDescriptor td.
+	 * @param td
+	 * @return
+	 */
+	@Override
+	public int compareTo(TorsionDescriptor td) {
+		for (int i=0; i<mTorsion.length; i++) {
+			float dif = Math.abs(mTorsion[i] - td.mTorsion[i]);
+			if (dif > TORSION_EQUIVALENCE_TOLERANCE
+			 && dif < 2*(float)Math.PI - TORSION_EQUIVALENCE_TOLERANCE)
+				return (dif < Math.PI) ^ (mTorsion[i] < td.mTorsion[i]) ? 1 : -1;
+			}
+		return 0;
 		}
 
 	/**
