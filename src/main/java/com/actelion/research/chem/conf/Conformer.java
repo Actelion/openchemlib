@@ -329,7 +329,7 @@ public class Conformer implements Comparable<Conformer> {
 		if (mTorsionDescriptor == null)
 			mTorsionDescriptor = new TorsionDescriptor(this);
 		if (c.mTorsionDescriptor == null)
-			c.mTorsionDescriptor = new TorsionDescriptor(this);
+			c.mTorsionDescriptor = new TorsionDescriptor(c);
 
 		return mTorsionDescriptor.equals(c.mTorsionDescriptor);
 		}
@@ -338,7 +338,7 @@ public class Conformer implements Comparable<Conformer> {
 		if (mTorsionDescriptor == null)
 			mTorsionDescriptor = new TorsionDescriptor(this);
 		if (c.mTorsionDescriptor == null)
-			c.mTorsionDescriptor = new TorsionDescriptor(this);
+			c.mTorsionDescriptor = new TorsionDescriptor(c);
 
 		return mTorsionDescriptor.compareTo(c.mTorsionDescriptor);
 		}
