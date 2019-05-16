@@ -53,6 +53,8 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 	 * @param mol the molecule behind multiple conformers
 	 */
 	public static int[] getRotatableBonds(StereoMolecule mol) {
+		mol.ensureHelperArrays(Molecule.cHelperRings);
+
 		int count = 0;
 		for (int bond=0; bond<mol.getBonds(); bond++)
 			if (qualifiesAsDescriptorBond(mol, bond))
@@ -73,6 +75,16 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 			int bondAtom = mol.getBondAtom(i, bond);
 			if (mol.isMarkedAtom(bondAtom))
 				return false;
+
+			if (mol.getAtomPi(bondAtom) == 2) {
+				int otherBondAtom = mol.getBondAtom(1-i, bond);
+				if (mol.getAtomPi(otherBondAtom) == 2)
+					return false;
+				bondAtom = getFirstNonSPAtom(mol, otherBondAtom, bondAtom);
+				if (bondAtom == -1 || bondAtom < otherBondAtom) // we only take one bond (that with the lower atom index)
+					return false;
+				}
+
 			int connAtoms = mol.getConnAtoms(bondAtom);
 			if (connAtoms == 1)
 				return false;
@@ -87,6 +99,21 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 			}
 
 		return true;
+		}
+
+	private static int getFirstNonSPAtom(StereoMolecule mol, int rearAtom, int atom) {
+		if (mol.getConnAtoms(atom) == 2) {
+			for (int i=0; i<2; i++) {
+				int nextAtom = mol.getConnAtom(atom, i);
+				if (nextAtom != rearAtom) {
+					if (mol.getAtomPi(nextAtom) == 2)
+						return getFirstNonSPAtom(mol, atom, nextAtom);
+					else
+						return nextAtom;
+					}
+				}
+			}
+		return -1;
 		}
 
 	/**
@@ -123,9 +150,21 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 		int[] atom = new int[4];
 		for (int i=0; i<rotatableBond.length; i++) {
 			atom[1] = mol.getBondAtom(0, rotatableBond[i]);
+			if (mol.getAtomPi(atom[1]) == 2) {
+				atom[1] = getFirstNonSPAtom(mol, atom[2], atom[1]);
+				atom[0] = mol.getConnAtom(atom[1], mol.getAtomPi(mol.getConnAtom(atom[1], 0)) == 2 ? 1 : 0);
+				}
+			else {
+				atom[0] = mol.getConnAtom(atom[1], mol.getConnAtom(atom[1], 0) == atom[2] ? 1 : 0);
+				}
 			atom[2] = mol.getBondAtom(1, rotatableBond[i]);
-			atom[0] = mol.getConnAtom(atom[1], mol.getConnAtom(atom[1], 0) == atom[2] ? 1 : 0);
-			atom[3] = mol.getConnAtom(atom[2], mol.getConnAtom(atom[2], 0) == atom[1] ? 1 : 0);
+			if (mol.getAtomPi(atom[1]) == 2) {
+				atom[2] = getFirstNonSPAtom(mol, atom[1], atom[2]);
+				atom[3] = mol.getConnAtom(atom[2], mol.getAtomPi(mol.getConnAtom(atom[2], 0)) == 2 ? 1 : 0);
+				}
+			else {
+				atom[3] = mol.getConnAtom(atom[2], mol.getConnAtom(atom[2], 0) == atom[1] ? 1 : 0);
+				}
 			mTorsion[i] = (float)mol.calculateTorsion(atom);
 			}
 		}
