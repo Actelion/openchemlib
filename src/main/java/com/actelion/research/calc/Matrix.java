@@ -2062,6 +2062,27 @@ public class Matrix {
         return bEqual;
     }
 
+    public boolean hasOnlyFinite() {
+
+        boolean finite = true;
+
+        int r = rows();
+
+        int c = cols();
+
+        ma:
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                if(!Double.isFinite(data[i][j])){
+                    finite = false;
+                    break ma;
+                }
+            }
+        }
+
+        return finite;
+
+    }
     /**
      * Value by value multiplication
      * Matrices must have the same dimensions.
