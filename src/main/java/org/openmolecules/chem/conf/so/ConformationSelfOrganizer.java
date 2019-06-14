@@ -18,10 +18,7 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.BondAngleSet;
-import com.actelion.research.chem.conf.BondLengthSet;
-import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.conf.TorsionDescriptor;
+import com.actelion.research.chem.conf.*;
 import com.actelion.research.util.DoubleFormat;
 
 import java.io.BufferedWriter;
@@ -312,7 +309,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 
 	private boolean addConformerIfNew(SelfOrganizedConformer conformer) {
 		if (mRotatableBondForDescriptor == null)
-			mRotatableBondForDescriptor = TorsionDescriptor.getRotatableBonds(getMolecule());
+			mRotatableBondForDescriptor = TorsionDescriptorHelper.findRotatableBonds(getMolecule());
 
 		conformer.calculateDescriptor(mRotatableBondForDescriptor);
 		boolean isNew = true;

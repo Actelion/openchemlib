@@ -443,7 +443,7 @@ public class TorsionDetail {
         return true;
 		}
 
-    /**
+	/**
      * Tries to uniquely determine one of the terminal neighbor's of atom in mFragment
      * to serve as reference atom that any torsion angles are assigned to.
      * The logic is as follows: If we have one terminal neighbor, this is selected.

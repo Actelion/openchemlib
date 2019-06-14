@@ -17,6 +17,7 @@ package org.openmolecules.chem.conf.so;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.conf.TorsionDescriptor;
+import com.actelion.research.chem.conf.TorsionDescriptorHelper;
 
 import java.util.ArrayList;
 
@@ -113,7 +114,7 @@ public class SelfOrganizedConformer extends Conformer {
 	 * @param rotatableBond set of rotatable bonds to be considered
 	 */
 	public void calculateDescriptor(int[] rotatableBond) {
-		mTorsionDescriptor = new TorsionDescriptor(this, rotatableBond);
+		mTorsionDescriptor = new TorsionDescriptorHelper(getMolecule(), rotatableBond).getTorsionDescriptor(this);
 		}
 
 	/**
