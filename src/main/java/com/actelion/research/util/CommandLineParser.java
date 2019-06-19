@@ -33,6 +33,7 @@
 
 package com.actelion.research.util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,6 +56,11 @@ public class CommandLineParser {
         hmCommandValue=new HashMap<String,String>();
     }
 
+    public CommandLineParser(String args[]) {
+        hmCommandValue=new HashMap<String,String>();
+        parse(args);
+    }
+
     public void add(String command, String value) {
 
         if(hmCommandValue.containsKey(command)){
@@ -66,6 +72,14 @@ public class CommandLineParser {
 
     public String get(String command) {
         return hmCommandValue.get(command);
+    }
+
+    public File getAsFile(String command) {
+        return new File(get(command));
+    }
+
+    public int getAsInt(String command) {
+        return Integer.parseInt(get(command));
     }
 
     public boolean contains(String command) {
@@ -104,9 +118,6 @@ public class CommandLineParser {
 
             String s1 = null;
             if(index<args.length-1){
-
-
-
                 if(!args[index+1].startsWith("-")){
                     s1 = args[index+1];
                     index++;
@@ -114,7 +125,6 @@ public class CommandLineParser {
             }
 
             index++;
-
 
             hmCommandValue.put(s0, s1);
 
