@@ -14,7 +14,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 
 	public static final int INFO_DESCRIPTION = 0;
 	public static final int INFO_ATOMSEQUENCE = 1;
-	public static final int INFO_MM2ATOMDESCRIPTION = 2;
+	public static final int INFO_INTERACTION_ATOM_TYPE = 2;
 	public static final int INFO_ATOMNAME = 3;
 	public static final int INFO_AMINO = 4;
 	public static final int INFO_PPP = 5;
@@ -276,8 +276,12 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		return obj==this;
 	}
 
-	public final void setMM2AtomDescription(int atm, String desc) {
-		infos[atm][INFO_MM2ATOMDESCRIPTION] = desc;
+	public final void setInteractionAtomType(int atm, int type) {
+		infos[atm][INFO_INTERACTION_ATOM_TYPE] = type;
+	}
+	
+	public final int getInteractionAtomType(int atm) {
+		return (int) infos[atm][INFO_INTERACTION_ATOM_TYPE];
 	}
 
 	@Override

@@ -40,8 +40,6 @@
 
 package com.actelion.research.chem;
 
-import com.actelion.research.chem.conf.TorsionDB;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -4360,7 +4358,7 @@ System.out.println("");
 				rankObject[parent].parentIndex = parentIndex;
 				rankObject[parent].parentRank = graphRank[parentIndex];
 				rankObject[parent].parentHCount = graphIsPseudo[parentIndex] ? 0
-												: mMol.getAllHydrogens(graphAtom[parentIndex]);
+												: mMol.getPlainHydrogens(graphAtom[parentIndex]);
 				rankObject[parent].childRank = new int[nextBaseIndex-baseIndex];
 				for (int i=baseIndex; i<nextBaseIndex; i++)
 					rankObject[parent].childRank[i-baseIndex] = graphRank[i];

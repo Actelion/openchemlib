@@ -226,9 +226,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The neighbours (connected atoms) of any atom are sorted by their relevance:<br>
-	 * 1. non-plain-hydrogen atoms (bond order 1 and above)<br>
+	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non natural abundance isotops, custom labelled hydrogen, etc.)<br>
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
-	 * 3. non-plain-hydrogen atoms (bond order 0, i.e. metall ligand bond)<br>
+	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * @param atom
 	 * @return count of category 1 & 2 neighbour atoms (excludes neighbours connected with zero bond order)
@@ -240,10 +240,19 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * @param atom
-	 * @return the number of connected plain explicit and implicit hydrogen atoms
+	 * @return the number of connected plain explicit and implicit hydrogen atoms (does not include 2H,3H, custom labelled H)
+	 */
+	public int getPlainHydrogens(int atom) {
+		return getExplicitHydrogens(atom) + getImplicitHydrogens(atom);
+		}
+
+
+	/**
+	 * @param atom
+	 * @return the number of connected explicit and implicit hydrogen atoms (includes 2H,3H, custom labelled H)
 	 */
 	public int getAllHydrogens(int atom) {
-		return getExplicitHydrogens(atom) + getImplicitHydrogens(atom);
+		return mAllConnAtoms[atom] - getNonHydrogenNeighbourCount(atom) + getImplicitHydrogens(atom);
 		}
 
 
@@ -255,7 +264,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * custom label, if they are connected to another atom with bond order different from 1, or
 	 * if they are connected to another neglegible hydrogen.<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
-	 * @return the number relevant atoms not including neglegible hydrogen atoms
+	 * @return the number of relevant atoms not including neglegible hydrogen atoms
 	 */
 	public int getAtoms() {
 		return mAtoms;
@@ -361,9 +370,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The neighbours (connected atoms) of any atom are sorted by their relevance:<br>
-	 * 1. non-plain-hydrogen atoms (bond order 1 and above)<br>
+	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non natural abundance isotops, custom labelled hydrogen, etc.)<br>
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
-	 * 3. non-plain-hydrogen atoms (bond order 0, i.e. metall ligand bond)<br>
+	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * @param atom
 	 * @param i index into sorted neighbour list
@@ -376,9 +385,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The neighbours (connected atoms) of any atom are sorted by their relevance:<br>
-	 * 1. non-plain-hydrogen atoms (bond order 1 and above)<br>
+	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non natural abundance isotops, custom labelled hydrogen, etc.)<br>
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
-	 * 3. non-plain-hydrogen atoms (bond order 0, i.e. metall ligand bond)<br>
+	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * @param atom
 	 * @return count of category 1 neighbour atoms (excludes plain H and bond zero orders)
@@ -390,9 +399,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The neighbours (connected atoms) of any atom are sorted by their relevance:<br>
-	 * 1. non-plain-hydrogen atoms (bond order 1 and above)<br>
+	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non natural abundance isotops, custom labelled hydrogen, etc.)<br>
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
-	 * 3. non-plain-hydrogen atoms (bond order 0, i.e. metall ligand bond)<br>
+	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * @param atom
 	 * @return count of category 1 & 2 & 3 neighbour atoms (excludes neighbours connected with zero bond order)
@@ -404,9 +413,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The neighbours (connected atoms) of any atom are sorted by their relevance:<br>
-	 * 1. non-plain-hydrogen atoms (bond order 1 and above)<br>
+	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non natural abundance isotops, custom labelled hydrogen, etc.)<br>
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
-	 * 3. non-plain-hydrogen atoms (bond order 0, i.e. metall ligand bond)<br>
+	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * @param atom
 	 * @param i index into sorted neighbour list
@@ -419,9 +428,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The neighbours (connected atoms) of any atom are sorted by their relevance:<br>
-	 * 1. non-plain-hydrogen atoms (bond order 1 and above)<br>
+	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non natural abundance isotops, custom labelled hydrogen, etc.)<br>
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
-	 * 3. non-plain-hydrogen atoms (bond order 0, i.e. metall ligand bond)<br>
+	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * Orders of delocalized bonds, i.e. bonds in an aromatic 6-membered ring, are returned as 1.
 	 * @param atom
@@ -1294,7 +1303,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * @param atom
-	 * @return number of explicit plain hydrogen atoms (does not include D,T,custom labelled H, etc)
+	 * @return number of explicit plain hydrogen atoms (does not include 2H, 3H, custom labelled H, etc)
 	 */
 	public int getExplicitHydrogens(int atom) {
 		return mAllConnAtoms[atom] - mConnAtoms[atom];
@@ -2951,30 +2960,33 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * Simple hydrogens are not deleted, though. They are always displayed and the stereo perception
 	 * still considers up/down bonds leading to hydrogen atoms. Most other functions, however, can
 	 * happily neglect them.<br>
+	 * If non-simple hydrogen atoms (D,T and custom labelled hydrogen) exist, then these are positioned
+	 * after the non-hydrogen atoms and just before the simple hydrogen atoms. mAtoms and mBonds include
+	 * these atoms.<br>
 	 * mConnAtoms/mConnBonds/mConnBondOrder are neither used nor updated.<br>
 	 * <b>Note:</b> This method changes the order among the non-hydrogen atoms. To translate to the original
 	 * order use getHandleHydrogenMap() before calling ensureHelperArrays() if the original atom order is relevant.
 	 */
 	private void handleHydrogens() {
 		// find all hydrogens that are connected to a non-H atom and therefore can be implicit		
-		boolean[] isSimpleHydrogen = findSimpleHydrogens();
+		boolean[] isHydrogen = findSimpleHydrogens();
 
 					// move all hydrogen atoms to end of atom table
 		int lastNonHAtom = mAllAtoms;
 		do lastNonHAtom--;
-			while ((lastNonHAtom >= 0) && isSimpleHydrogen[lastNonHAtom]);
+			while ((lastNonHAtom >= 0) && isHydrogen[lastNonHAtom]);
 
 		for (int atom=0; atom<lastNonHAtom; atom++) {
-			if (isSimpleHydrogen[atom]) {
+			if (isHydrogen[atom]) {
 				swapAtoms(atom, lastNonHAtom);
 
 				// swap simple H flags also
-				boolean temp = isSimpleHydrogen[atom];
-				isSimpleHydrogen[atom] = isSimpleHydrogen[lastNonHAtom];
-				isSimpleHydrogen[lastNonHAtom] = temp;
+				boolean temp = isHydrogen[atom];
+				isHydrogen[atom] = isHydrogen[lastNonHAtom];
+				isHydrogen[lastNonHAtom] = temp;
 
 				do lastNonHAtom--;
-					while (isSimpleHydrogen[lastNonHAtom]);
+					while (isHydrogen[lastNonHAtom]);
 				}
 			}
 		mAtoms = lastNonHAtom + 1;
@@ -2989,8 +3001,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		for (int bond=0; bond<mAllBonds; bond++) {	// mark all bonds to hydrogen
 			int atom1 = mBondAtom[0][bond];
 			int atom2 = mBondAtom[1][bond];
-			if (isSimpleHydrogen[atom1]
-			 || isSimpleHydrogen[atom2])
+			if (isHydrogen[atom1]
+			 || isHydrogen[atom2])
 				isHydrogenBond[bond] = true;
 			}
 
@@ -3043,16 +3055,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		do lastNonHAtom--;
 		while ((lastNonHAtom >= 0) && isSimpleHydrogen[lastNonHAtom]);
 
-		for (int atom=0; atom<lastNonHAtom; atom++) {
-			if (isSimpleHydrogen[atom]) {
-				int tempIndex = map[atom];
-				map[atom] = map[lastNonHAtom];
+		for (int i=0; i<lastNonHAtom; i++) {
+			if (isSimpleHydrogen[map[i]]) {
+				int tempIndex = map[i];
+				map[i] = map[lastNonHAtom];
 				map[lastNonHAtom] = tempIndex;
-
-				// swap simple H flags also
-				boolean temp = isSimpleHydrogen[atom];
-				isSimpleHydrogen[atom] = isSimpleHydrogen[lastNonHAtom];
-				isSimpleHydrogen[lastNonHAtom] = temp;
 
 				do lastNonHAtom--;
 				while (isSimpleHydrogen[lastNonHAtom]);
@@ -3076,31 +3083,24 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			map[i] = i;
 		
 		boolean isHydrogenBond[] = new boolean[mAllBonds];
-		for (int bond=0; bond<mAllBonds; bond++) {	// mark all bonds to hydrogen
-			int atom1 = mBondAtom[0][bond];
-			int atom2 = mBondAtom[1][bond];
-			if (isSimpleHydrogen[atom1]
-			 || isSimpleHydrogen[atom2])
-				isHydrogenBond[bond] = true;
-			}
+		for (int bond=0; bond<mAllBonds; bond++)	// mark all bonds to hydrogen
+			isHydrogenBond[bond] = isSimpleHydrogen[mBondAtom[0][bond]]
+								|| isSimpleHydrogen[mBondAtom[1][bond]];
 
 		int lastNonHBond = mAllBonds;
 		do lastNonHBond--; while ((lastNonHBond >= 0) && isHydrogenBond[lastNonHBond]);
 
-		for (int bond=0; bond<lastNonHBond; bond++) {
-			if (isHydrogenBond[bond]) {
-				int tempIndex = map[bond];
-				map[bond] = map[lastNonHBond];
+		for (int i=0; i<lastNonHBond; i++) {
+			if (isHydrogenBond[map[i]]) {
+				int tempIndex = map[i];
+				map[i] = map[lastNonHBond];
 				map[lastNonHBond] = tempIndex;
 
-				boolean temp = isHydrogenBond[bond];
-				isHydrogenBond[bond] = isHydrogenBond[lastNonHBond];
-				isHydrogenBond[lastNonHBond] = temp;
 				do lastNonHBond--;
-					while (isHydrogenBond[lastNonHBond]);
+					while (isHydrogenBond[map[lastNonHBond]]);
 				}
 			}
-		
+
 		return map;
 		}
 

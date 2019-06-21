@@ -437,7 +437,14 @@ public class AtomTypeCalculator {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 
 		long[] neighbourType = new long[mol.getConnAtoms(atom)];
+		int neighbourCount = 0;
+
 		for (int i=0; i<mol.getConnAtoms(atom); i++) {
+			int connAtom = mol.getConnAtom(atom, i);
+
+			if (mol.getAtomicNo(connAtom) == 1)	// skip explicit hydrogen
+				continue;
+
 			long connType = 0;
 
 			if ((mode & cPropertiesConnBondOrder) != 0) {
@@ -454,8 +461,6 @@ public class AtomTypeCalculator {
 				connType |= (connBondOrder << CONN_SHIFT_BONDORDER);
 				}
 				
-			int connAtom = mol.getConnAtom(atom, i);
-
 			if ((mode & cPropertiesConnAtomType) != 0) {
 				if (cAtomicNoCode[mol.getAtomicNo(connAtom)] == -1)
 					throw new Exception("unsupported atomicNo:"+mol.getAtomicNo(connAtom));
@@ -499,11 +504,15 @@ public class AtomTypeCalculator {
 				neighbourType[j] = neighbourType[j-1];
 
 			neighbourType[index] = connType;
+
+			neighbourCount++;
 			}
 
-		int neighbours = (mol.getConnAtoms(atom) < 4) ? mol.getConnAtoms(atom) : 4;
+		if (neighbourCount > 4)
+			neighbourCount = 4;
+
 		long atomType = 0;
-		for (int i=0; i<neighbours; i++) {
+		for (int i=0; i<neighbourCount; i++) {
 			atomType <<= CONN_FLAG_COUNT;
 			atomType |= neighbourType[i];
 			}
