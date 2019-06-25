@@ -36,115 +36,128 @@ package com.actelion.research.chem.descriptor;
 import com.actelion.research.chem.SSSearcherWithIndex;
 
 public interface DescriptorConstants {
-    public static final int DESCRIPTOR_TYPE_UNKNOWN = -1;
-    public static final int DESCRIPTOR_TYPE_MOLECULE = 1;
-    public static final int DESCRIPTOR_TYPE_REACTION = 2;
+	public static final int DESCRIPTOR_TYPE_UNKNOWN = -1;
+	public static final int DESCRIPTOR_TYPE_MOLECULE = 1;
+	public static final int DESCRIPTOR_TYPE_REACTION = 2;
 
-    public static final DescriptorInfo DESCRIPTOR_FFP512 = 
+	public static final DescriptorInfo DESCRIPTOR_FFP512 =
                             new DescriptorInfo("FragmentFingerprint512",
-                                               "FragFp",
-											   SSSearcherWithIndex.cIndexVersion,
-                                               DESCRIPTOR_TYPE_MOLECULE,
-                                               true,
-                                               true,
-                                               false);
-    public static final DescriptorInfo DESCRIPTOR_PFP512 = 
+												"FragFp",
+												SSSearcherWithIndex.cIndexVersion,
+												DESCRIPTOR_TYPE_MOLECULE,
+												true,
+												true,
+												true,
+												false);
+	public static final DescriptorInfo DESCRIPTOR_PFP512 =
                             new DescriptorInfo("PathFingerprint512",
-                                               "PathFp",
-											   "1.1",
-                                               DESCRIPTOR_TYPE_MOLECULE,
-                                               true,
-                                               true,
-                                               false);
-    public static final DescriptorInfo DESCRIPTOR_HashedCFp = 
+												"PathFp",
+												"1.1",
+												DESCRIPTOR_TYPE_MOLECULE,
+												true,
+												true,
+												true,
+												false);
+	public static final DescriptorInfo DESCRIPTOR_HashedCFp =
                             new DescriptorInfo("HashedSphericalFingerprint512",
-                                               "SphereFp",
-											   "2.1",
-                                               DESCRIPTOR_TYPE_MOLECULE,
-                                               true,
-                                               true,
-                                               true);	// for the creation of up/down bonds
-    public static final DescriptorInfo DESCRIPTOR_SkeletonSpheres = 
-                                               new DescriptorInfo("HashedSkeletonSphereCount1024",
-                                               "SkelSpheres",
-											   "1.1",
-                                               DESCRIPTOR_TYPE_MOLECULE,
-                                               false,
-                                               true,
-                                               true);	// for the creation of up/down bonds
-    public static final DescriptorInfo DESCRIPTOR_OrganicFunctionalGroups = 
-    										   new DescriptorInfo("FunctionalGroupTreeCount1024",
-    										   "OrgFunctions",
-											   "1.0",
-    										   DESCRIPTOR_TYPE_MOLECULE,
-    										   false,
-    										   false,
-    										   true);	// for the creation of up/down bonds
-    public static final DescriptorInfo DESCRIPTOR_CenteredSkeletonFragments = 
-										        new DescriptorInfo("CenteredSkeletonFragments",
-										        "CentSkelFrags",
+												"SphereFp",
+												"2.1",
+												DESCRIPTOR_TYPE_MOLECULE,
+												true,
+												true,
+												true,
+												true);	// for the creation of up/down bonds
+	public static final DescriptorInfo DESCRIPTOR_SkeletonSpheres =
+							new DescriptorInfo("HashedSkeletonSphereCount1024",
+												"SkelSpheres",
+												"1.1",
+												DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												true,
+												true,
+												true);	// for the creation of up/down bonds
+	public static final DescriptorInfo DESCRIPTOR_OrganicFunctionalGroups =
+												new DescriptorInfo("FunctionalGroupTreeCount1024",
+												"OrgFunctions",
 												"1.0",
-										        DESCRIPTOR_TYPE_MOLECULE,
-										        false,
-										        true,
-										        true);	// for the creation of up/down bonds
+												DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												false,
+												false,
+												true);	// for the creation of up/down bonds
+    public static final DescriptorInfo DESCRIPTOR_CenteredSkeletonFragments = 
+												new DescriptorInfo("CenteredSkeletonFragments",
+												"CentSkelFrags",
+												"1.0",
+												DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												false,
+												true,
+												true);	// for the creation of up/down bonds
     public static final DescriptorInfo DESCRIPTOR_TopoPPHistDist = 
                             new DescriptorInfo("TopologicalPharmacophoreHistograms",
-                                               "TopPPHist",
-                                               "version",
-                                               DESCRIPTOR_TYPE_MOLECULE,
-                                               false,
-                                               false,
-                                               false);
+												"TopPPHist",
+												"version",
+												DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												false,
+												false,
+												false);
     public static final DescriptorInfo DESCRIPTOR_Flexophore =
-                            new DescriptorInfo("Flexophore",
-                                               "Flexophore",
-											   "4.4",
-                                               DESCRIPTOR_TYPE_MOLECULE,
-                                               false,
-                                               false,
-                                               false);
+							new DescriptorInfo("Flexophore",
+												"Flexophore",
+												"4.4",
+												DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												false,
+												false,
+												false);
     public static final DescriptorInfo DESCRIPTOR_Flexophore_HighRes =
         					new DescriptorInfo("FlexophoreHighResolution",
-        									   "FlexophoreHighRes",
+												"FlexophoreHighRes",
 												"version",
-        									   DESCRIPTOR_TYPE_MOLECULE,
-        									   false,
-        									   false,
-        									   false);
+        										DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												false,
+												false,
+											   false);
 
     public static final DescriptorInfo DESCRIPTOR_ShapeAlign =
         					new DescriptorInfo("PharmacophoreEnhancedShapeAlignment",
         									   "PheSA",
 												"1.1",
-        									   DESCRIPTOR_TYPE_MOLECULE,
-        									   false,
-        									   false,
-        									   false);
+												DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												false,
+												false,
+												false);
 
     public static final DescriptorInfo DESCRIPTOR_ShapeAlignSingleConf =
         					new DescriptorInfo("PharmacophoreEnhancedShapeAlignmentSingleConfQuery",
         									   "PheSASingleConf",
 												"1.1",
-        									   DESCRIPTOR_TYPE_MOLECULE,
+												DESCRIPTOR_TYPE_MOLECULE,
         									   false,
-        									   false,
-        									   false);
+												false,
+												false,
+												false);
 
-    public static final DescriptorInfo DESCRIPTOR_ReactionFP =
-                            new DescriptorInfo("ReactionFingerprint",
-                                               "RxnFP",
+	public static final DescriptorInfo DESCRIPTOR_ReactionFP =
+							new DescriptorInfo("ReactionFingerprint",
+												"RxnFP",
 												DescriptorHandlerReactionFP.cVersion,
-                                               DESCRIPTOR_TYPE_REACTION,
-                                               false,	// it is a binary, but similarity calculations have a bias on reaction center bits
-                                               false,
-                                               false);
+												DESCRIPTOR_TYPE_REACTION,
+												false,	// it is a binary, but similarity calculations have a bias on reaction center bits
+												false,
+												false,
+												false);
     public static final DescriptorInfo DESCRIPTOR_IntegerVector = 
     						new DescriptorInfo("IntegerVector",
     											"IntVec",
 												"1.0",
     											DESCRIPTOR_TYPE_UNKNOWN,
     											false,
+												true,
     											false,
     											false);
    
@@ -154,6 +167,7 @@ public interface DescriptorConstants {
 												"1.0",
         										DESCRIPTOR_TYPE_MOLECULE,
         										false,
+												false,
         										true,
         										false);
 
@@ -163,32 +177,36 @@ public interface DescriptorConstants {
 												"1.0",
 												DESCRIPTOR_TYPE_MOLECULE,
 												false,
+												false,
 												false, // ??? TODO check
 												false);
     
     public static final DescriptorInfo DESCRIPTOR_FULL_FRAGMENT_SET = 
 							new DescriptorInfo("FullFragmentSet",
-											   "FullFragSet",
-											   "1.0",
-											   DESCRIPTOR_TYPE_MOLECULE,
-											   true,
-											   true,
-											   false);
+												"FullFragSet",
+												"1.0",
+												DESCRIPTOR_TYPE_MOLECULE,
+												true,
+												true,
+												true,
+												false);
     
     public static final DescriptorInfo DESCRIPTOR_PhysicoChemicalProperties = 
 							new DescriptorInfo("DescriptorPhysicoChemicalProperties",
-											   "PhysChem",
+												"PhysChem",
 												"version",
-											   DESCRIPTOR_TYPE_MOLECULE,
-											   false,
-											   false,
-											   false);
+												DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												true,
+												false,
+												false);
 
     public static final DescriptorInfo DESCRIPTOR_BINARY_SKELETONSPHERES =
 							new DescriptorInfo("BinarySkeletonSpheres",
 												"BinSkelSpheres",
 												"10052017",
 												DESCRIPTOR_TYPE_MOLECULE,
+												true,
 												true,
 												true,
 												false);
