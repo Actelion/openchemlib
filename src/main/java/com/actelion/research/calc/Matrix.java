@@ -3589,7 +3589,7 @@ public class Matrix {
         write(os, nf);
     }
 
-    public String writeToString() {
+    public String write2String() {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
