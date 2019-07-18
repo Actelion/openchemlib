@@ -3589,13 +3589,19 @@ public class Matrix {
         write(os, nf);
     }
 
-    public String write2String() {
+    public String writeAsLineBase64Encoded() {
+
+        NumberFormat nf = new DecimalFormat("#.###############");
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        write(baos);
+        write(baos, nf);
 
-        return baos.toString();
+        Base64.Encoder encoder = Base64.getEncoder();
+
+        byte [] arr64 = encoder.encode(baos.toByteArray());
+
+        return new String(arr64);
     }
 
 
@@ -3627,8 +3633,6 @@ public class Matrix {
 			throw new RuntimeException(e);
 		}
     }
-
-
 
 
     public String toStringWithColTags(List<String> liColTags, DecimalFormat nf, String separator) {
