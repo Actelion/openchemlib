@@ -415,7 +415,7 @@ if (WRITE_DW_FRAGMENT_FILE) {
 	 * @param mol null or molecule used during initialization or a copy of it
 	 * @return conformer or null, if all/maximum torsion permutations have been tried
 	 */
-	public StereoMolecule getNextConformer(StereoMolecule mol) {
+	public StereoMolecule getNextConformerAsMolecule(StereoMolecule mol) {
 		Conformer conformer = getNextConformer();
 		return (conformer == null) ? null : conformer.toMolecule(mol);
 		}
