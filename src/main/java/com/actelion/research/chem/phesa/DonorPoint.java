@@ -6,11 +6,11 @@ import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 public class DonorPoint implements IPharmacophorePoint {
-	int donorAtom;
-	int donorHydrogen;
-	Coordinates directionality;
-	int interactionClass;
-	Coordinates center;
+	private int donorAtom;
+	private int donorHydrogen;
+	private Coordinates directionality;
+	private int interactionClass;
+	private Coordinates center;
 
 	
 	public DonorPoint(StereoMolecule mol, int d, int h, int interactionClass) {
@@ -37,13 +37,6 @@ public class DonorPoint implements IPharmacophorePoint {
 	}
 	
 
-	@Override
-	public void updateCoordinates(Conformer conf) {
-		center = new Coordinates(conf.getX(donorHydrogen),conf.getY(donorHydrogen),conf.getZ(donorHydrogen));
-		directionality = conf.getCoordinates(donorHydrogen).subC(conf.getCoordinates(donorAtom));
-		directionality.scale(1.0/directionality.getLength());
-		
-	}
 
 	@Override
 	public Coordinates getCenter() {

@@ -11,7 +11,6 @@ public interface IPharmacophorePoint {
 	
 	public void updateCoordinates(StereoMolecule mol);
 	
-	public void updateCoordinates(Conformer conf);
 	
 	public Coordinates getDirectionality();
 	

@@ -1,5 +1,6 @@
 package com.actelion.research.chem.phesa;
 
+import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
@@ -147,8 +148,20 @@ public class MolecularVolume {
 						if(interactionClass<0) {
 							continue;
 						}
+						if(mol.getAtomicNo(i)==8 && neighbours==1 && (mol.getConnBondOrder(i, 0)==2 || AtomFunctionAnalyzer.isAcidicOxygen(mol, i) )) {
+							int aa1 = mol.getConnAtom(mol.getConnAtom(i,0),0);
+							if(aa1==i) 
+								aa1 = mol.getConnAtom(mol.getConnAtom(i,0),1);
+							neighbourList.add(aa1);
+							AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,1);
+							this.ppGaussians.add(new PPGaussian(6,ap));
+							ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,2);
+							this.ppGaussians.add(new PPGaussian(6,ap));
+						}
+						else {
 						AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
 						this.ppGaussians.add(new PPGaussian(6,ap));	
+						}
 				}
 			}
 
@@ -194,36 +207,26 @@ public class MolecularVolume {
 					return false; //is in aromatic ring and has at least 3 bonded atoms -> no acceptor 
 				}
 			}
-			else { // atom is not aromatic
+			else if (mol.getAtomicNo(a)==7){ // atom is not aromatic
+				if (mol.isFlatNitrogen(a)) 
+					return false;
 				for(int i=0;i<mol.getAllConnAtoms(a);i++) {
 					int aa = mol.getConnAtom(a, i);
-					if (mol.isAromaticAtom(aa) && mol.getAllConnAtoms(aa)>2) { //atom is adjacent to an aromatic ring and has more than two bonded atoms -> no acceptor
-						return false;
-					}
 					if (mol.getAtomicNo(aa)==6) {
 						for(int j=0;j<mol.getAllConnAtoms(aa);j++) {
 							int aaa = mol.getConnAtom(aa,j);
 							if(a==aaa) continue;
-							if (mol.getBondOrder(mol.getBond(aa,aaa))==2) {
-								if (mol.getAtomicNo(aaa)==7) return false;
+							if (mol.getBondOrder(mol.getBond(aa,aaa))==2) { 
+								if (mol.getAtomicNo(aaa)==7) return false; //amide structure
 								if (mol.getAtomicNo(aaa)==8) return false;
 								if (mol.getAtomicNo(aaa)==16) return false;
 							}
 						}
 					}
-					else if(mol.getAtomicNo(aa)==16) {
-						for(int j=0;j<mol.getAllConnAtoms(aa);j++) {
-							int aaa = mol.getConnAtom(aa,j);
-							if(a==aaa) continue;
-							if (mol.getBondOrder(mol.getBond(aa,aaa))==2) {
-								if (mol.getAtomicNo(aaa)==8) return false;
-								
-							}
+
 				}
 			}
-				
-			}
-		}
+
 		return true;
 		}
 		else return false;

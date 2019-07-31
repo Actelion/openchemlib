@@ -4,20 +4,24 @@ import java.util.ArrayList;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.Conformer;
-
 
 public class AcceptorPoint implements IPharmacophorePoint {
-	int acceptorAtom;
-	ArrayList<Integer> neighbours;
-	Coordinates directionality;
-	int interactionClass;
-	Coordinates center;
+	private int acceptorAtom;
+	private ArrayList<Integer> neighbours;
+	private Coordinates directionality;
+	private int interactionClass;
+	private Coordinates center;
+	private int acceptorID; //necessary to assign different directionalities to two acceptor points in sp2 oxygen
 	
 	public AcceptorPoint(StereoMolecule mol, int a, ArrayList<Integer> neighbours, int interactionClass) {
+		this(mol, a, neighbours, interactionClass, 0);
+	}
+	
+	public AcceptorPoint(StereoMolecule mol, int a, ArrayList<Integer> neighbours, int interactionClass, int acceptorID) {
 		acceptorAtom = a;
 		this.neighbours = neighbours;
 		this.interactionClass = interactionClass;
+		this.acceptorID = acceptorID;
 		updateCoordinates(mol);
 	}
 	
@@ -34,36 +38,45 @@ public class AcceptorPoint implements IPharmacophorePoint {
 		center = new Coordinates(mol.getAtomX(acceptorAtom),mol.getAtomY(acceptorAtom),mol.getAtomZ(acceptorAtom));
 		if(neighbours.size()==1) {
 			int aa1 = neighbours.get(0);
-			directionality = center.subC(mol.getCoordinates(aa1));}
+			directionality = center.subC(mol.getCoordinates(aa1));
+		}
+			
+			
+		else if(neighbours.size()==2 && acceptorID!=0) {
+			int aa1 = neighbours.get(0);
+			Coordinates v1 = center.subC(mol.getCoordinates(aa1));
+			int aa2 = neighbours.get(1);
+			Coordinates v2 = mol.getCoordinates(aa2).subC(center);
+			Coordinates rotAxis = v1.cross(v2).unit();
+			double theta = acceptorID == 1 ? 45.0/180.0*Math.PI :  -45.0/180.0*Math.PI;
+			directionality = v1.rotate(rotAxis, theta);
+		}
+		
+		
+		else if(neighbours.size()==3) {
+			int aa1 = neighbours.get(0);
+			int aa2 = neighbours.get(1);
+			int aa3 = neighbours.get(2);
+			Coordinates v1 = center.subC(mol.getCoordinates(aa1)).unit();
+			Coordinates v2 = center.subC(mol.getCoordinates(aa2)).unit();
+			Coordinates v3 = center.subC(mol.getCoordinates(aa3)).unit();
+			directionality = v3.add(v2).add(v1);
+		}
+		
+		
 		else {
 			int aa1 = neighbours.get(0);
 			int aa2 = neighbours.get(1);
-			Coordinates v1 = center.subC(mol.getCoordinates(aa1));
-			Coordinates v2 = center.subC(mol.getCoordinates(aa2));
+			Coordinates v1 = center.subC(mol.getCoordinates(aa1)).unit();
+			Coordinates v2 = center.subC(mol.getCoordinates(aa2)).unit();
 			directionality = v1.addC(v2);
 		}
-		directionality.scale(1.0/directionality.getLength());
+		directionality.unit();
 		// TODO Auto-generated method stub
 		
 	}
 	
-	@Override
-	public void updateCoordinates(Conformer conf) {
-		center = new Coordinates(conf.getX(acceptorAtom),conf.getY(acceptorAtom),conf.getZ(acceptorAtom));
-		if(neighbours.size()==1) {
-			int aa1 = neighbours.get(0);
-			directionality = center.subC(conf.getCoordinates(aa1));}
-		else {
-			int aa1 = neighbours.get(0);
-			int aa2 = neighbours.get(1);
-			Coordinates v1 = center.subC(conf.getCoordinates(aa1));
-			Coordinates v2 = center.subC(conf.getCoordinates(aa2));
-			directionality = v1.addC(v2);
-		}
-		directionality.scale(1.0/directionality.getLength());
-		// TODO Auto-generated method stub
-		
-	}
+
 
 	@Override
 	public Coordinates getCenter() {
@@ -84,6 +97,8 @@ public class AcceptorPoint implements IPharmacophorePoint {
 		molVolString.append(" ");
 		molVolString.append(Integer.toString(interactionClass));
 		molVolString.append(" ");
+		molVolString.append(Integer.toString(acceptorID));
+		molVolString.append(" ");
 		//molVolString.append(Integer.toString(neighbours.size()));
 		//molVolString.append(" ");
 		for(Integer neighbour : neighbours) {
@@ -98,8 +113,9 @@ public class AcceptorPoint implements IPharmacophorePoint {
 		String[] strings = ppString.split(" ");
 		acceptorAtom = Integer.decode(strings[1]);
 		interactionClass = Integer.decode(strings[2]);
+		acceptorID = Integer.decode(strings[3]);
 		neighbours = new ArrayList<Integer>();
-		for(int i=3;i<strings.length;i++) {
+		for(int i=4;i<strings.length;i++) {
 			neighbours.add(Integer.decode(strings[i]));
 		}
 		updateCoordinates(mol);
@@ -127,6 +143,10 @@ public class AcceptorPoint implements IPharmacophorePoint {
 	public void setDirectionality(Coordinates directionality) {
 		this.directionality = directionality;
 		
+	}
+	
+	public int getAcceptorID() {
+		return acceptorID;
 	}
 
 
