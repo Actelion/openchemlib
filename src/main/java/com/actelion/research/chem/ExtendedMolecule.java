@@ -2654,6 +2654,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				 || (mAtomicNo[atom2] < 9 && getOccupiedValence(atom2) > 3))
 						continue;
 
+				// don't destroy stereo centers like sulfoxides
+				if ((mAtomicNo[atom1] >= 14 && mConnAtoms[atom1] >= 3)
+				 || (mAtomicNo[atom1] >= 14 && mConnAtoms[atom1] >= 3))
+					continue;
+
 				mAtomCharge[atom1] -= 1;
 				mAtomCharge[atom2] += 1;
 				if (bondOrder == 1)
