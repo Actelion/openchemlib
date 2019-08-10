@@ -368,7 +368,7 @@ public class Molecule implements Serializable {
 			{1}, {2}, {3}, {4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0},	// Na to Ar
 			{1}, {2}, null, null, null, null, null, null, null, null,	// K to Ni
 			null, null, {2, 3}, {2, 4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0, 2}, // Cu to Kr
-			{1, 2, 3, 4}, {2}, null, null, null, null, null, null, null, null, // Rb to Pd
+			{1}, {2}, null, null, null, null, null, null, null, null,	// Rb to Pd
 			null, null, {1, 2, 3}, {2, 4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, // Ag to I
 			{0, 2, 4, 6}, {1}, {2},										// Xe to Ba
 			null, null, null, null, null, null, null, null, null, null, // La to Dy

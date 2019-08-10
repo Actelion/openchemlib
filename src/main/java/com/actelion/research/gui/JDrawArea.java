@@ -3007,11 +3007,30 @@ public class JDrawArea extends JPanel
 		}
 		boolean selectedOnly = (selectedAtomCount != 0 && selectedAtomCount != mMol.getAllAtoms());
 
-		if ((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) {
-			cleanupMoleculeCoordinates(g, depictor, selectedOnly);
-		} else {
+		boolean cleanFragmentsIndependently = false;
+		if ((mMode & MODE_MULTIPLE_FRAGMENTS) != 0) {
+			cleanFragmentsIndependently = true;
+			if (selectedOnly) {
+				int fragmentNo = -1;
+				for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+					if (!mMol.isSelectedAtom(atom)) {
+						if (fragmentNo == -1) {
+							fragmentNo = mFragmentNo[atom];
+							}
+						else if (fragmentNo != mFragmentNo[atom]) {
+							// we have atoms from multiple fragments, which need to keep their relative coordinates
+							cleanFragmentsIndependently = false;
+							break;
+							}
+						}
+					}
+				}
+			}
+
+		if (cleanFragmentsIndependently)
 			cleanupMultiFragmentCoordinates(g, depictor, selectedOnly);
-		}
+		else
+			cleanupMoleculeCoordinates(g, depictor, selectedOnly);
 
 		if (selectedOnly)
 			mMol.removeAtomMarkers();
