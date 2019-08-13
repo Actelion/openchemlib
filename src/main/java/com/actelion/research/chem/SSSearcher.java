@@ -89,7 +89,7 @@ public class SSSearcher {
 
 	private int mFragmentExcludeAtoms,mFragmentExcludeBonds;
 	private int mFragmentGraphSize;	// the number of wanted atoms & ring closures in fragment graph
-	private int mFragmentGraphSizeWithExcludeGroup;	// total number of atoms & ring closures in fragment graph
+	private int mFragmentGraphSizeWithExcludeGroups;	// total number of atoms & ring closures in fragment graph
 	private int[] mFragmentGraphAtom;
 	private int[] mFragmentGraphParentAtom;
 	private int[] mFragmentGraphParentBond;
@@ -97,6 +97,8 @@ public class SSSearcher {
 	private boolean[] mIsExcludeAtom;
 	private int[] mFragmentConnAtoms;	// in case of exclude atoms, these are not part of this
 	private int[] mMatchTable;
+	private int[] mExcludeGroupNo;
+	private int[] mExcludeGroupGraphIndex;
 
 	// depending on the fragment count mode this may contain atom lists
 	// of all till now located matching sub-fragments
@@ -107,6 +109,7 @@ public class SSSearcher {
 	private boolean mMoleculeFeaturesValid;
 	private boolean mFragmentFeaturesValid;
 	private int mRequiredHelperLevel;
+	private int mExcludeGroupCount;
 
 	/**
 	 * Instantiates a SSSearcher object for running sub-structure searches
@@ -204,11 +207,20 @@ public class SSSearcher {
 				mFragmentExcludeAtoms++;
 			}
 
-		mFragmentExcludeBonds = 0;
-		if (mFragmentExcludeAtoms != 0)
-			for (int bond = 0; bond < mFragment.getBonds(); bond++)
-				if (mIsExcludeAtom[mFragment.getBondAtom(0, bond)] || mIsExcludeAtom[mFragment.getBondAtom(1, bond)])
-					mFragmentExcludeBonds++;
+		if (mFragmentExcludeAtoms != 0) {
+			mFragmentExcludeBonds = 0;
+			if (mFragmentExcludeAtoms != 0)
+				for (int bond = 0; bond < mFragment.getBonds(); bond++)
+					if (mIsExcludeAtom[mFragment.getBondAtom(0, bond)] || mIsExcludeAtom[mFragment.getBondAtom(1, bond)])
+						mFragmentExcludeBonds++;
+
+			// find all independent exclude groups
+			for (int atom=0; atom<mFragment.getAllAtoms(); atom++)
+				mFragment.setAtomMarker(atom, mIsExcludeAtom[atom]);
+
+			mExcludeGroupNo = new int[mFragment.getAllAtoms()];
+			mExcludeGroupCount = mFragment.getFragmentNumbers(mExcludeGroupNo, true, false);
+			}
 		}
 
 
@@ -262,8 +274,7 @@ public class SSSearcher {
 
 			// there may still be exclude groups as separated fragments
 			for (int atom = 0; atom < mFragment.getAtoms(); atom++) {
-				if (mIsExcludeAtom[atom]
-						&& !fragmentAtomUsed[atom]) {
+				if (mIsExcludeAtom[atom] && !fragmentAtomUsed[atom]) {
 					mFragmentGraphAtom[current] = atom;
 					mFragmentGraphParentBond[current] = -1;
 					mFragmentGraphParentAtom[current] = -1;
@@ -277,9 +288,18 @@ public class SSSearcher {
 						}
 					}
 				}
+
+			mExcludeGroupGraphIndex = new int[mExcludeGroupCount];
+			for (int i=0; i<mExcludeGroupCount; i++)
+				mExcludeGroupGraphIndex[i] = -1;
+			for (int i=mFragmentGraphSize; i<current; i++) {
+				int excludeGroupNo = mExcludeGroupNo[mFragmentGraphAtom[i]];
+				if (mExcludeGroupGraphIndex[excludeGroupNo] == -1)
+					mExcludeGroupGraphIndex[excludeGroupNo] = i;
+				}
 			}
 
-		mFragmentGraphSizeWithExcludeGroup = current;	// this is the real size of the graph
+		mFragmentGraphSizeWithExcludeGroups = current;	// this is the real size of the graph
 /*
 System.out.print("			"); for (int i=0; i<mFragmentGraphSize; i++) System.out.print(" "+(mFragmentGraphAtom[i]==-1?"-":Molecule.cAtomLabel[mFragment.getAtomicNo(mFragmentGraphAtom[i])])); System.out.println();
 System.out.print("  graphAtom:"); for (int i=0; i<mFragmentGraphSize; i++) System.out.print(" "+(mFragmentGraphAtom[i]==-1?"-":""+mFragmentGraphAtom[i])); System.out.println();
@@ -436,7 +456,7 @@ System.out.println();
 		mMatchTable = new int[mFragment.getAtoms()];
 		Arrays.fill(mMatchTable, -1);	// to mark exclude group atoms
 
-		int[] index = new int[mFragmentGraphSizeWithExcludeGroup];
+		int[] index = new int[mFragmentGraphSizeWithExcludeGroups];
 		Arrays.fill(index, -1);
 		// contains current molecule atom pointer for graph matching,
 		// - in case of sub fragment anchor atom: the current molecule atom index matched to the anchor
@@ -499,47 +519,26 @@ System.out.println();
 				}
 
 			if (current == mFragmentGraphSize) {
-				if (doTHParitiesMatch(false)
-				 && doEZParitiesMatch(false)
-				 && doBridgeBondsMatch(atomUsed, false)) {
-					// we currently have a match
-					if (countMode == cCountModeExistance && mFragmentExcludeAtoms == 0)
-						return 1;
+				if (doTHParitiesMatch(-1)
+				 && doEZParitiesMatch(-1)
+				 && doBridgeBondsMatch(atomUsed, -1)) {
+					// we currently have a match not considering exclude groups
 
 					boolean isExcludedMatch = false;
-					if (mFragmentExcludeAtoms != 0) {
-						// If we have (an) exclude group(s) then we need to check all permutations
-						// of symmetrical matches (those covering the same atoms), whether the graph
-						// matching of one of those can be extended to match the exclude group also.
-						// If at least one permutations has the exclude group attached, then we need
-						// to eliminate all matches on the same atom list off the match list.
-						// Therefore we cannot return after the first match is found and must check
-						// every match, whether it can be extended to include the exclude group(s).
-						// In this case we call it an excluded match.
-						int[] sortedMatch = copyOf(mMatchTable, mMatchTable.length);
-						Arrays.sort(sortedMatch);
-						if (mExcludedMatchSet.contains(sortedMatch)) {
+					for (int excludeGroup=0; excludeGroup<mExcludeGroupCount; excludeGroup++) {
+						if (isExcludeGroupMatch(atomUsed, index, excludeGroup)) {
 							isExcludedMatch = true;
-							}
-						else if (doExcludeGroupsMatch(atomUsed, index)) {
-							mExcludedMatchSet.add(sortedMatch);
-							Comparator<int[]> comparator = new IntArrayComparator();
-							int[] tempMatch = new int[sortedMatch.length];
-							for (int i=mMatchList.size()-1; i>=0; i--) {
-								int[] match = mMatchList.get(i);
-								System.arraycopy(match, 0, tempMatch, 0, tempMatch.length);
-								Arrays.sort(tempMatch);
-								if (comparator.compare(tempMatch, sortedMatch) == 0)
-									mMatchList.remove(i);
-								}
-							isExcludedMatch = true;
+							break;
 							}
 						}
+
+					if (countMode == cCountModeExistance && !isExcludedMatch)
+						return 1;
 
 					if (!isExcludedMatch) {
 						addMatchIfQualifies(countMode);
 
-						if (countMode == cCountModeFirstMatch && mFragmentExcludeAtoms == 0)
+						if (countMode == cCountModeFirstMatch)
 							return 1;
 						}
 					}
@@ -700,10 +699,10 @@ System.out.println();
 	 * relative configurations.
 	 * @return true if all tetrahedral parities match
 	 */
-	private boolean doTHParitiesMatch(boolean isExcludeGroup) {
+	private boolean doTHParitiesMatch(int excludeGroupNo) {
 		int esrGroupAtomCount = 0;
 		for (int fragmentAtom=0; fragmentAtom<mFragment.getAtoms(); fragmentAtom++) {
-			if (mIsExcludeAtom[fragmentAtom] == isExcludeGroup
+			if (mExcludeGroupNo == null || mExcludeGroupNo[fragmentAtom] == excludeGroupNo
 			 && (mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFMatchStereo) != 0) {
 				int moleculeAtom = mMatchTable[fragmentAtom];
 				int fragmentParity = mFragment.getAtomParity(fragmentAtom);
@@ -753,7 +752,7 @@ System.out.println();
 			int[] esrAtom = new int[esrGroupAtomCount];
 			int esrAtomIndex = 0;
 			for (int fragmentAtom=0; fragmentAtom<mFragment.getAtoms(); fragmentAtom++) {
-				if (mIsExcludeAtom[fragmentAtom] == isExcludeGroup
+				if (mExcludeGroupNo[fragmentAtom] == excludeGroupNo
 				 && (mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFMatchStereo) != 0) {
 					int fragmentParity = mFragment.getAtomParity(fragmentAtom);
 					if (fragmentParity != Molecule.cAtomParityNone
@@ -831,7 +830,7 @@ System.out.println();
 	 * with a match.
 	 * @return true if all E/Z parities match
 	 */
-	private boolean doEZParitiesMatch(boolean isExcludeGroup) {
+	private boolean doEZParitiesMatch(int excludeGroupNo) {
 		for (int fragmentBond=0; fragmentBond<mFragment.getBonds(); fragmentBond++) {
 			if ((mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFMatchStereo) != 0) {
 				int fragmentParity = mFragment.getBondParity(fragmentBond);
@@ -843,7 +842,9 @@ System.out.println();
 				int fragmentAtom1 = mFragment.getBondAtom(0, fragmentBond);
 				int fragmentAtom2 = mFragment.getBondAtom(1, fragmentBond);
 
-				if ((mIsExcludeAtom[fragmentAtom1] || mIsExcludeAtom[fragmentAtom2]) == isExcludeGroup) {
+				if ((excludeGroupNo == -1 && mExcludeGroupNo[fragmentAtom1] == -1 && mExcludeGroupNo[fragmentAtom2] == -1)
+				 || (excludeGroupNo != -1 && (mExcludeGroupNo[fragmentAtom1] == excludeGroupNo || mExcludeGroupNo[fragmentAtom2] == excludeGroupNo))) {
+//				if ((mIsExcludeAtom[fragmentAtom1] || mIsExcludeAtom[fragmentAtom2]) == isExcludeGroup) {
 					int moleculeAtom1 = mMatchTable[fragmentAtom1];
 					int moleculeAtom2 = mMatchTable[fragmentAtom2];
 					int moleculeBond = mMolecule.getBond(moleculeAtom1, moleculeAtom2);
@@ -913,17 +914,22 @@ System.out.println();
 
 
 	/**
-	 * Starting from a full match of the fragment without exclude groups, this method
-	 * continues the graph matching to find, whether the attached exclude group(s) can
-	 * also be matched.
+	 * Starting from a full match of the fragment without exclude groups, this method continues
+	 * the graph matching to find, whether the specified exclude group can also be matched.
 	 * @param atomUsed
 	 * @return
 	 */
-	private boolean doExcludeGroupsMatch(boolean[] atomUsed, int[] index) {
-		for (int i=mFragmentGraphSize; i<mFragmentGraphSizeWithExcludeGroup; i++)
+	private boolean isExcludeGroupMatch(boolean[] atomUsed, int[] index, int excludeGroupNo) {
+		int excludeGroupGraphBase = mExcludeGroupGraphIndex[excludeGroupNo];
+		int excludeGroupGraphMax = excludeGroupGraphBase + 1;
+		while (excludeGroupGraphMax < mFragmentGraphSizeWithExcludeGroups
+		 && mExcludeGroupNo[mFragmentGraphAtom[excludeGroupGraphMax]] == excludeGroupNo)
+			excludeGroupGraphMax++;
+
+		for (int i=excludeGroupGraphBase; i<excludeGroupGraphMax; i++)
 			index[i] = -1;
 
-		int current = mFragmentGraphSize;
+		int current = excludeGroupGraphBase;
 
 		while (true) {
 /*
@@ -938,7 +944,7 @@ System.out.println();
 
 			if (index[current] == maxIndex) {
 				index[current] = -1;
-				if (current == mFragmentGraphSize)
+				if (current == excludeGroupGraphBase)
 					break;
 				current--;
 				if (!mFragmentGraphIsRingClosure[current]) {
@@ -983,14 +989,14 @@ System.out.println();
 					}
 				}
 
-			if (current == mFragmentGraphSizeWithExcludeGroup) {
-				if (doTHParitiesMatch(true)
-				 && doEZParitiesMatch(true)
-				 && doBridgeBondsMatch(atomUsed, true)) {
+			if (current == excludeGroupGraphMax) {
+				if (doTHParitiesMatch(excludeGroupNo)
+				 && doEZParitiesMatch(excludeGroupNo)
+				 && doBridgeBondsMatch(atomUsed, excludeGroupNo)) {
 
 					// remove match table entries for exclude atoms
 					for (int atom=0; atom<mFragment.getAtoms(); atom++) {
-						if (mIsExcludeAtom[atom]) {
+						if (mExcludeGroupNo[atom] == excludeGroupNo) {
 							atomUsed[mMatchTable[atom]] = false;
 							mMatchTable[atom] = -1;
 							}
@@ -1023,12 +1029,15 @@ System.out.println();
 	 * If we have multiple bridge bonds in fragment and partially overlapping bridge matches
 	 * in the molecule, it would get very nasty...
 	 * @param moleculeAtomUsed
+	 * @param excludeGroupNo
 	 * @return
 	 */
-	private boolean doBridgeBondsMatch(boolean[] moleculeAtomUsed, boolean isExcludeFragment) {
+	private boolean doBridgeBondsMatch(boolean[] moleculeAtomUsed, int excludeGroupNo) {
 		if (mBridgeBondList != null) {
 			for (BridgeBond bb:mBridgeBondList) {
-				if ((mIsExcludeAtom[bb.atom1] || mIsExcludeAtom[bb.atom2]) == isExcludeFragment) {
+				if ((excludeGroupNo == -1 && mExcludeGroupNo[bb.atom1] == -1 && mExcludeGroupNo[bb.atom2] == -1)
+				 || (excludeGroupNo != -1 && (mExcludeGroupNo[bb.atom1] == excludeGroupNo || mExcludeGroupNo[bb.atom2] == excludeGroupNo))) {
+//				if ((mIsExcludeAtom[bb.atom1] || mIsExcludeAtom[bb.atom2]) == isExcludeFragment) {
 					int bridgeSize = mMolecule.getPathLength(mMatchTable[bb.atom1], mMatchTable[bb.atom2], bb.maxBridgeSize+1, moleculeAtomUsed) - 1;
 					if (bridgeSize < bb.minBridgeSize
 					 || bridgeSize > bb.maxBridgeSize)
