@@ -20,6 +20,7 @@ import com.actelion.research.chem.Coordinates;
 */
 
 public abstract class Gaussian3D {
+	public static final double DIST_CUTOFF = 10.0;
 	protected int atomId;
 	protected int atomicNo;
 	protected Coordinates center;
@@ -30,13 +31,13 @@ public abstract class Gaussian3D {
 
 	
 	public Gaussian3D(int atomId, int atomicNo, Coordinates center){
+		this.weight = 1.0;
 		this.atomId = atomId;
 		this.atomicNo = atomicNo;
 		this.center=center;
 		this.coeff = calculateHeight();
 		this.alpha = calculateWidth();
 		this.volume = calculateVolume();
-		this.weight = 1.0;
 	}
 	
 	public Gaussian3D(Gaussian3D original){
@@ -133,20 +134,9 @@ public abstract class Gaussian3D {
 	
 
 		
-	public double getVolumeOverlap(Gaussian3D g2, Coordinates c2) {
-		double alphaSum = this.getWidth() + g2.getWidth();
-		double distSq = this.getCenter().distanceSquared(c2);
-		double Vij = 0.0;
-		if(distSq<10.0) {
-			double Kij = this.getHeight()*g2.getHeight()*Math.exp(-( this.getWidth() * g2.getWidth()*  distSq)/alphaSum);
-			double factor = Math.pow((Math.PI/alphaSum), 1.5); 
-			Vij = factor*Kij;
-		}
-		return Vij;
-		
-	}
+
 	
-	public double getQuickVolumeOverlap(Gaussian3D g2,Coordinates c2, double distCutoff) {
+	public double getVolumeOverlap(Gaussian3D g2,Coordinates c2, double distCutoff) {
 		double alphaSum = getWidth() + g2.getWidth();
 		double Vij = 0.0;
 		double Kij=0.0;
@@ -165,14 +155,12 @@ public abstract class Gaussian3D {
 		return Vij;
 	}
 		
-	
-	
 	public double getVolumeOverlap(Gaussian3D g2) {
-		return getVolumeOverlap(g2,g2.getCenter());
+		return getVolumeOverlap(g2,DIST_CUTOFF);
 	}
 	
-	public double getQuickVolumeOverlap(Gaussian3D g2, double distCutoff) {
-		return getQuickVolumeOverlap(g2,g2.getCenter(),distCutoff);
+	public double getVolumeOverlap(Gaussian3D g2, double distCutoff) {
+		return getVolumeOverlap(g2,g2.getCenter(),distCutoff);
 	}
 	
 	public void updateCoordinates(StereoMolecule mol) {

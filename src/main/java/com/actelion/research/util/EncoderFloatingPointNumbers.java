@@ -107,12 +107,15 @@ public class EncoderFloatingPointNumbers {
         // If we do not correct for the minimum and the maximum value we run into rounding problems with the extreme
         // values.
         double rangeValue = Math.abs(maxValue-minValue);
+        int exponent;
+        if(rangeValue<1E-06) 
+        	exponent = (int)TINY_FACTOR_EXPONENT;
+        else
+        	exponent = (int)(Math.log10(rangeValue) + TINY_FACTOR_EXPONENT);
 
-        int exponent = (int)(Math.log10(rangeValue) + TINY_FACTOR_EXPONENT);
-
-        if(exponent <= Double.MIN_EXPONENT) {
-            throw new RuntimeException("Minimum value out of range!");
-        }
+        //if(exponent <= Double.MIN_EXPONENT) {
+        //   throw new RuntimeException("Minimum value out of range!");
+        //}
 
         tiny = rangeValue * TINY_FACTOR;
 

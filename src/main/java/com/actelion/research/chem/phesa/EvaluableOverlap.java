@@ -3,6 +3,7 @@ package com.actelion.research.chem.phesa;
 import java.util.Arrays;
 import java.util.ArrayList;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 
 
 
@@ -15,16 +16,9 @@ import com.actelion.research.chem.Coordinates;
 
 
 public class EvaluableOverlap  {
-	private static final int ATOM_ALIGNMENT = 0;
-	private static final int ATOM_ALIGNMENT2 = 1;
-	private static final int COMBO_ALIGNMENT = 2;
-	private static final int PP_ALIGNMENT = 3;
+
 	private static final int PENALTY = 80; 
-	private static final int VERSION_INTERACTION_TABLE = 2;
-	private static final double DIST_CUTOFF_2 = 10;
-	private static final double DIST_CUTOFF = Math.sqrt(DIST_CUTOFF_2);
-	private int mode;
-	
+
 	private ShapeAlignment shapeAlign;
 	private double[] transform;
     private double [][] qDersAt;
@@ -37,7 +31,6 @@ public class EvaluableOverlap  {
     private double [][] uDersPP;
     private double[] gradient;
     private double[][] results;
-    private Coordinates[][] coordinatesResults;
     private Coordinates[] fitAtGaussModCoords;
     private Coordinates[] fitPPGaussModCoords;
     private Coordinates[] fitPPDirectionalityMod;
@@ -46,7 +39,6 @@ public class EvaluableOverlap  {
     public EvaluableOverlap(ShapeAlignment shapeAlign, double[] transform) {
 		this.shapeAlign = shapeAlign; 
 		this.transform = transform;
-		this.mode = ATOM_ALIGNMENT;
 	    this.gradient = new double[7];
 	    this.fitAtGaussModCoords = new Coordinates[shapeAlign.getMolGauss().getAtomicGaussians().size()];
 	    this.fitPPGaussModCoords = new Coordinates[shapeAlign.getMolGauss().getPPGaussians().size()];
@@ -60,7 +52,7 @@ public class EvaluableOverlap  {
 	    this.uDersPP = new double[fitPPGaussModCoords.length][3];
 	    this.fitPPDirectionalityMod = new Coordinates[shapeAlign.getMolGauss().getPPGaussians().size()];
 		this.results = new double[shapeAlign.getRefMolGauss().getAtomicGaussians().size()][shapeAlign.getRefMolGauss().getAtomicGaussians().size()];
-		this.coordinatesResults = new Coordinates[shapeAlign.getRefMolGauss().getAtomicGaussians().size()][shapeAlign.getRefMolGauss().getAtomicGaussians().size()];
+		
 	}
 	
 	public EvaluableOverlap(EvaluableOverlap e) {
@@ -113,7 +105,7 @@ public class EvaluableOverlap  {
 		double value = 0.0;
 
 		double[] atomGrad = new double[grad.length];
-		value += this.getFGValueOverlap(atomGrad,refMolGauss.getAtomicGaussians(),fitMolGauss.getAtomicGaussians(),
+		value += this.getFGValueOverlap(atomGrad,refMolGauss.getAtomicGaussians(),fitMolGauss.getAtomicGaussians(), refMolGauss.getExclusionGaussians(),
 						qDersAt,rDersAt,sDersAt,uDersAt,fitAtGaussModCoords);
 			
 
@@ -130,8 +122,6 @@ public class EvaluableOverlap  {
 	}
 	
 	
-
-	
 	public void getQuatGradient(double[][] qDers, double[][] rDers, double[][] sDers, double[][] uDers, ArrayList<? extends Gaussian3D> refMolGauss,ArrayList<? extends Gaussian3D> fitMolGauss,Coordinates[] fitModCoords,
 			double q, double r, double s, double u, double invnorm2) {
 
@@ -140,9 +130,7 @@ public class EvaluableOverlap  {
 		     * the final gradient has 7 elements, the first four elements are the gradients for the quaternion (rotation),
 		     * the last three elements are for the translation
 		     */
-
-		
-		
+	
 			int i=0;
 		    for(Coordinates fitCenterModCoord:fitModCoords){
 		        double xk=fitCenterModCoord.x;
@@ -210,7 +198,7 @@ public class EvaluableOverlap  {
 	 * @param grad 
 	 */
 	
-	public double getFGValueOverlap(double[] grad,ArrayList<AtomicGaussian> refMolGauss,ArrayList<AtomicGaussian> fitMolGauss,
+	public double getFGValueOverlap(double[] grad,ArrayList<AtomicGaussian> refMolGauss,ArrayList<AtomicGaussian> fitMolGauss,ArrayList<ExclusionGaussian> exclusionGaussians,
 			double[][] qDers,double[][] rDers,double[][] sDers,double[][] uDers, Coordinates[] fitGaussModCoords) {
 		double q=transform[0];
 	    double r=transform[1];
@@ -260,7 +248,7 @@ public class EvaluableOverlap  {
 				double dz = refAt.getCenter().z-fitCenterModCoord.z;
 				double Rij2 = dx*dx + dy*dy + dz*dz;
 
-				if(Rij2>=DIST_CUTOFF_2) 
+				if(Rij2>=Gaussian3D.DIST_CUTOFF) 
 					continue;
 				atomOverlap = refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refAt.getAtomicNo(),fitAt.getAtomicNo());
@@ -285,8 +273,46 @@ public class EvaluableOverlap  {
 
 
 				}
+		}
+			for(int k=0; k<exclusionGaussians.size();k++){
+				ExclusionGaussian refEx = exclusionGaussians.get(k);
+				for(int j=0; j<fitMolGauss.size();j++){
+					double atomOverlap = 0.0;
+					Gaussian3D fitAt = fitMolGauss.get(j);
+					fitCenterModCoord = fitGaussModCoords[j];
+					double alphaSum = refEx.getWidth() + fitAt.getWidth();
+
+					double dx = refEx.getCenter().x-fitCenterModCoord.x;
+					double dy = refEx.getCenter().y-fitCenterModCoord.y;
+					double dz = refEx.getCenter().z-fitCenterModCoord.z;
+					double Rij2 = dx*dx + dy*dy + dz*dz;
+
+					if(Rij2>=Gaussian3D.DIST_CUTOFF) 
+						continue;
+					atomOverlap = -1*refEx.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refEx.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
+								QuickMathCalculator.getInstance().getPrefactor(refEx.getAtomicNo(),fitAt.getAtomicNo());
+						
+					
+					if (atomOverlap>0.0) {
+						totalOverlap += atomOverlap;
+						double gradientPrefactor = atomOverlap*-2*refEx.getWidth()*fitAt.getWidth()/(refEx.getWidth()+fitAt.getWidth());
+						double qder = qDers[j][0]*dx+qDers[j][1]*dy+qDers[j][2]*dz; 
+						double rder = rDers[j][0]*dx+rDers[j][1]*dy+rDers[j][2]*dz; 
+						double sder = sDers[j][0]*dx+sDers[j][1]*dy+sDers[j][2]*dz; 
+						double uder = uDers[j][0]*dx+uDers[j][1]*dy+uDers[j][2]*dz; 
+
+						gradient[0] += gradientPrefactor*qder;
+						gradient[1] += gradientPrefactor*rder;
+						gradient[2] += gradientPrefactor*sder;
+						gradient[3] += gradientPrefactor*uder;
+						gradient[4] += gradientPrefactor*dx;
+						gradient[5] += gradientPrefactor*dy;
+						gradient[6] += gradientPrefactor*dz;
+					    }
 
 
+					}
+				
 			}
 
 		grad[0] = gradient[0]+PENALTY*(1-invnorm)*this.transform[0]; //penalty term to force quaternion into unity
@@ -347,7 +373,7 @@ public class EvaluableOverlap  {
 					double dz = refAt.getCenter().z-fitCenterModCoord.z;
 					double Rij2 = dx*dx + dy*dy + dz*dz;
 
-					if(Rij2>=DIST_CUTOFF_2) {
+					if(Rij2>=Gaussian3D.DIST_CUTOFF) {
 						continue;
 					}
 					atomOverlap = refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
@@ -371,11 +397,7 @@ public class EvaluableOverlap  {
 						gradient[6] += vectorSim*gradientPrefactor*dz+atomOverlap*zi;
 								    	
 					    }
-
-
 					}
-
-
 				}
 
 			grad[0] = gradient[0]+PENALTY*(1-invnorm)*this.transform[0]; //penalty term to force quaternion into unity
@@ -387,19 +409,11 @@ public class EvaluableOverlap  {
 			grad[6] = gradient[6];
 
 			return (-1.0*totalOverlap+0.5*PENALTY*(norm-1)*(norm-1)); //the negative overlap is returned as the objective, since we minimize the objective in the optimization algorithm
-
-
 			
 		
 		}
 
-	
-	
 
-	
-
-
-	@Override
 	public EvaluableOverlap clone() {
 		return new EvaluableOverlap(this);
 	}

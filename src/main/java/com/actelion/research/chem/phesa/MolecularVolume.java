@@ -4,6 +4,11 @@ import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.phesa.pharmacophore.AcceptorPoint;
+import com.actelion.research.chem.phesa.pharmacophore.DonorPoint;
+import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
+import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
+
 import java.util.ArrayList;
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
@@ -30,10 +35,11 @@ public class MolecularVolume {
 	private Coordinates com;
 	private ArrayList<AtomicGaussian> atomicGaussians;
 	private ArrayList<PPGaussian> ppGaussians;
+	private ArrayList<ExclusionGaussian> exclusionGaussians;
 	private ArrayList<Coordinates> hydrogens;
 
 	
-	public MolecularVolume(ArrayList<AtomicGaussian> atomicGaussiansInp,ArrayList<PPGaussian> ppGaussiansInp, ArrayList<Coordinates> hydrogenCoords) {
+	public MolecularVolume(ArrayList<AtomicGaussian> atomicGaussiansInp,ArrayList<PPGaussian> ppGaussiansInp, ArrayList<ExclusionGaussian> exclusionGaussians, ArrayList<Coordinates> hydrogenCoords) {
 		this.volume = 0.0;
 		this.atomicGaussians = new ArrayList<AtomicGaussian>();
 		for(AtomicGaussian ag : atomicGaussiansInp) {
@@ -48,6 +54,9 @@ public class MolecularVolume {
 			this.hydrogens.add(hydrogen);
 			
 		}
+		
+		this.exclusionGaussians = new ArrayList<ExclusionGaussian>();
+		
 
 		this.calcCOM();
 
@@ -62,6 +71,7 @@ public class MolecularVolume {
 	public MolecularVolume(StereoMolecule mol) {
 		this.volume = 0.0;
 		this.hydrogens = new ArrayList<Coordinates>();
+		this.exclusionGaussians = new ArrayList<ExclusionGaussian>();
 		this.calc(mol);
 		this.calcPPVolume(mol);
 		this.calcCOM();
@@ -76,6 +86,7 @@ public class MolecularVolume {
 		this.volume = new Double(original.volume);
 		this.atomicGaussians = new ArrayList<AtomicGaussian>();
 		this.ppGaussians = new ArrayList<PPGaussian>();
+		this.exclusionGaussians = new ArrayList<ExclusionGaussian>();
 		for(AtomicGaussian ag : original.getAtomicGaussians()) {
 			this.atomicGaussians.add(new AtomicGaussian(ag));
 		}
@@ -88,6 +99,11 @@ public class MolecularVolume {
 			this.hydrogens.add(hydrogen);
 			
 		}
+		
+		for(ExclusionGaussian eg : original.exclusionGaussians) {
+			this.exclusionGaussians.add(new ExclusionGaussian(eg));
+		}
+		
 		this.com = original.com;
 		
 	}
@@ -124,7 +140,8 @@ public class MolecularVolume {
 	private void calcPPVolume(StereoMolecule mol) {
 		this.ppGaussians = new ArrayList<PPGaussian>();
 
-
+		IonizableGroupDetector detector = new IonizableGroupDetector(mol);
+		ppGaussians.addAll(detector.detect());
 		for(int i=0;i<mol.getAllAtoms();i++) {
 				if (mol.getAtomicNo(i)==1) {
 					if(isDonorHydrogen(mol,i)) {
@@ -149,14 +166,21 @@ public class MolecularVolume {
 							continue;
 						}
 						if(mol.getAtomicNo(i)==8 && neighbours==1 && (mol.getConnBondOrder(i, 0)==2 || AtomFunctionAnalyzer.isAcidicOxygen(mol, i) )) {
-							int aa1 = mol.getConnAtom(mol.getConnAtom(i,0),0);
-							if(aa1==i) 
-								aa1 = mol.getConnAtom(mol.getConnAtom(i,0),1);
-							neighbourList.add(aa1);
-							AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,1);
-							this.ppGaussians.add(new PPGaussian(6,ap));
-							ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,2);
-							this.ppGaussians.add(new PPGaussian(6,ap));
+							int a1 = mol.getConnAtom(i,0);
+							if(!(mol.getAtomicNo(a1)==16 || mol.getAtomicNo(a1)==15)) {		
+								int aa1 = mol.getConnAtom(a1,0);
+								if(aa1==i) 
+									aa1 = mol.getConnAtom(a1,1);
+								neighbourList.add(aa1);
+								AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,1);
+								this.ppGaussians.add(new PPGaussian(6,ap));
+								ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,2);
+								this.ppGaussians.add(new PPGaussian(6,ap));}
+							else { 
+								AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
+								this.ppGaussians.add(new PPGaussian(6,ap));	
+							}
+		
 						}
 						else {
 						AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
@@ -164,8 +188,6 @@ public class MolecularVolume {
 						}
 				}
 			}
-
-		
 		
 	}
 	}
@@ -208,6 +230,8 @@ public class MolecularVolume {
 				}
 			}
 			else if (mol.getAtomicNo(a)==7){ // atom is not aromatic
+				if(mol.getConnBondOrder(a, 0)==3) //nitrile
+					return true;
 				if (mol.isFlatNitrogen(a)) 
 					return false;
 				for(int i=0;i<mol.getAllConnAtoms(a);i++) {
@@ -252,6 +276,10 @@ public class MolecularVolume {
 		return this.ppGaussians;
 	}
 	
+	public ArrayList<ExclusionGaussian> getExclusionGaussians() {
+		return this.exclusionGaussians;
+	}
+	
 
 
 	public ArrayList<Coordinates> getHydrogens() {
@@ -294,9 +322,20 @@ public class MolecularVolume {
 		}
 
 		molVolString.append(Integer.toString(ppGaussians.size()));
+		
 		molVolString.append("  ");
 		for(PPGaussian pg : ppGaussians) {
 			molVolString.append(pg.encode().trim());
+			molVolString.append("  ");
+
+		}
+		
+		molVolString.append(Integer.toString(exclusionGaussians.size()));
+		
+		molVolString.append("  ");
+		
+		for(ExclusionGaussian eg : exclusionGaussians) {
+			molVolString.append(eg.encode());
 			molVolString.append("  ");
 
 		}
@@ -348,6 +387,24 @@ public class MolecularVolume {
 		molVolString.append(EncoderFloatingPointNumbers.encode(coords, 13));
 		molVolString.append("  ");
 		
+		coords = new double[3*exclusionGaussians.size()];
+		for(int i=0;i<exclusionGaussians.size();i++) {
+			coords[3*i]=exclusionGaussians.get(i).getReferenceVector().x;
+			coords[3*i+1]=exclusionGaussians.get(i).getReferenceVector().y;
+			coords[3*i+2]=exclusionGaussians.get(i).getReferenceVector().z;
+		}
+		molVolString.append(EncoderFloatingPointNumbers.encode(coords, 13));
+		molVolString.append("  ");
+		
+		coords = new double[3*exclusionGaussians.size()];
+		for(int i=0;i<exclusionGaussians.size();i++) {
+			coords[3*i]=exclusionGaussians.get(i).getShiftVector().x;
+			coords[3*i+1]=exclusionGaussians.get(i).getShiftVector().y;
+			coords[3*i+2]=exclusionGaussians.get(i).getShiftVector().z;
+		}
+		molVolString.append(EncoderFloatingPointNumbers.encode(coords, 13));
+		molVolString.append("  ");
+
 
 
 		double[] hydrogenCoords = new double[3*hydrogens.size()];
@@ -367,20 +424,25 @@ public class MolecularVolume {
 	public static MolecularVolume decodeCoordsOnly(String string, MolecularVolume reference)  {
 		ArrayList<AtomicGaussian> referenceAtomicGaussians = reference.getAtomicGaussians(); 
 		ArrayList<PPGaussian> referencePPGaussians = reference.getPPGaussians(); 
+		ArrayList<ExclusionGaussian> referenceExclusionGaussians = reference.getExclusionGaussians();
 		
 		String[] splitString = string.split("  ");
 		double[] atomicGaussiansCoords = EncoderFloatingPointNumbers.decode(splitString[0]);
 		double[] ppGaussiansCoords = EncoderFloatingPointNumbers.decode(splitString[1]);
 		double[] ppGaussiansDirectionalities = EncoderFloatingPointNumbers.decode(splitString[2]);
-		double[] hydrogensCoords = EncoderFloatingPointNumbers.decode(splitString[3]);
+		double[] exclusionGaussiansRefCoords = EncoderFloatingPointNumbers.decode(splitString[3]);
+		double[] exclusionGaussiansShiftCoords = EncoderFloatingPointNumbers.decode(splitString[4]);
+		double[] hydrogensCoords = EncoderFloatingPointNumbers.decode(splitString[5]);
 		
 		ArrayList<AtomicGaussian> atomicGaussians = new ArrayList<AtomicGaussian>();
 		ArrayList<PPGaussian> ppGaussians = new ArrayList<PPGaussian>();
+		ArrayList<ExclusionGaussian> exclusionGaussians = new ArrayList<ExclusionGaussian>();
 		ArrayList<Coordinates> hydrogens = new ArrayList<Coordinates>();
 		
 		int nrOfAtomicGaussians = atomicGaussiansCoords.length/3;
 		int nrOfHydrogens = hydrogensCoords.length/3;
 		int nrOfPPGaussians = ppGaussiansCoords.length/3;
+		int nrOfExclusionGaussians = exclusionGaussiansRefCoords.length/3;
 		
 		for(int i=0;i<nrOfAtomicGaussians;i++) {
 			Coordinates coords = new Coordinates(atomicGaussiansCoords[i*3],atomicGaussiansCoords[i*3+1],atomicGaussiansCoords[i*3+2]);
@@ -398,6 +460,15 @@ public class MolecularVolume {
 			ppGaussians.add(pp);
 		}
 		
+		for(int i=0;i<nrOfExclusionGaussians;i++) {
+			Coordinates coords = new Coordinates(exclusionGaussiansRefCoords[i*3],exclusionGaussiansRefCoords[i*3+1],exclusionGaussiansRefCoords[i*3+2]);
+			ExclusionGaussian eg = new ExclusionGaussian(referenceExclusionGaussians.get(i));
+			eg.setReferenceVector(new Coordinates(coords.x, coords.y, coords.z));
+			Coordinates shift = new Coordinates(exclusionGaussiansShiftCoords[i*3],exclusionGaussiansShiftCoords[i*3+1],exclusionGaussiansShiftCoords[i*3+2]);
+			eg.setShiftVector(shift);
+			exclusionGaussians.add(eg);
+		}
+		
 
 
 		for(int i=0;i<nrOfHydrogens;i++) {
@@ -406,7 +477,7 @@ public class MolecularVolume {
 
 
 
-		return new MolecularVolume(atomicGaussians,ppGaussians,hydrogens);
+		return new MolecularVolume(atomicGaussians,ppGaussians, exclusionGaussians,hydrogens);
 	}
 	
 	
@@ -417,6 +488,7 @@ public class MolecularVolume {
 		int lastIndex = 1+nrOfAtomicGaussians;
 		ArrayList<AtomicGaussian> atomicGaussians = new ArrayList<AtomicGaussian>();
 		ArrayList<PPGaussian> ppGaussians = new ArrayList<PPGaussian>();
+		ArrayList<ExclusionGaussian> exclusionGaussians = new ArrayList<ExclusionGaussian>();
 		ArrayList<Coordinates> hydrogens = new ArrayList<Coordinates>();
 		
 		for(int i=firstIndex;i<lastIndex;i++) {
@@ -430,6 +502,13 @@ public class MolecularVolume {
 			ppGaussians.add(PPGaussian.fromString(splitString[i],refMol));
 		}
 		
+		int nrOfExclusionGaussians = Integer.decode(splitString[lastIndex]);
+		firstIndex = lastIndex+1;
+		lastIndex = firstIndex + nrOfExclusionGaussians;
+		for(int i=firstIndex;i<lastIndex;i++) {
+			exclusionGaussians.add(ExclusionGaussian.fromString(splitString[i]));
+		}
+		
 
 		
 		double[] coords = EncoderFloatingPointNumbers.decode(splitString[splitString.length-1]);
@@ -440,7 +519,7 @@ public class MolecularVolume {
 		}
 
 
-		return new MolecularVolume(atomicGaussians,ppGaussians,hydrogens);
+		return new MolecularVolume(atomicGaussians,ppGaussians,exclusionGaussians,hydrogens);
 	}
 }
 

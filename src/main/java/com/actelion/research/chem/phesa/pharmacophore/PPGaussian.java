@@ -1,14 +1,19 @@
-package com.actelion.research.chem.phesa;
+package com.actelion.research.chem.phesa.pharmacophore;
 
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
-import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
+import com.actelion.research.chem.phesa.EncodeFunctions;
+import com.actelion.research.chem.phesa.Gaussian3D;
+import com.actelion.research.chem.phesa.MolecularVolume;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 /** 
  * @version: 1.0, February 2018
@@ -58,21 +63,16 @@ public class PPGaussian extends Gaussian3D {
 	}
 	
 	public double getVectorSimilarity(PPGaussian ppGauss2,Coordinates directionalityMod) {
+		
 		double vectorSim = 0.0;
-		double baseSimilarity = ppGauss2.pp.getSimilarity(this.pp);
-		if (baseSimilarity==0) {
-			return 0.0;
+		vectorSim = this.pp.getDirectionality().dot(directionalityMod);
+		if (vectorSim<0.0) {
+			vectorSim = 0.0;
 		}
-		else {
-			vectorSim = this.pp.getDirectionality().dot(directionalityMod);
-			if (vectorSim<0.0) {
-				vectorSim = 0.0;
-			}
-			return vectorSim;
-		}
+		return vectorSim;
 		
 	}
-	
+
 	public double getVectorSimilarity(PPGaussian ppGauss2) {
 		return getVectorSimilarity(ppGauss2,ppGauss2.getPharmacophorePoint().getDirectionality());
 		
@@ -87,7 +87,7 @@ public class PPGaussian extends Gaussian3D {
 		double ppSimilarity = getInteractionSimilarity(ppGauss2);
 		double vectorSim = getVectorSimilarity(ppGauss2,directionality);
 		double similarity = (Math.max(0, vectorSim)+2*ppSimilarity)/3.0;
-		similarity = 1.0;
+		similarity *= ppGauss2.getWeight()*this.getWeight();
 		return similarity;
 	}
 	
@@ -99,15 +99,18 @@ public class PPGaussian extends Gaussian3D {
 	
 	public double getInteractionSimilarity(PPGaussian ppGauss2) {
 
-		return (1.0-InteractionSimilarityTable.getInstance().getEquivalence(pp.getInteractionClass(), 
-				ppGauss2.getPharmacophorePoint().getInteractionClass()));
+		return pp.getSimilarity(ppGauss2.pp);
 	}
 	
 
+
 	@Override
 	public String encode() { //encodes all information of an atomicGaussian using the Base64 encoder
+		Encoder encoder = Base64.getEncoder();
 		StringBuilder molVolString = new StringBuilder();
 		molVolString.append(Integer.toString(atomicNo));
+		molVolString.append(" ");
+		molVolString.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(weight)));
 		molVolString.append(" ");
 		molVolString.append(pp.encode());
 
@@ -116,18 +119,24 @@ public class PPGaussian extends Gaussian3D {
 	
 
 	public void decode(String string64, StereoMolecule mol)  {
+		Decoder decoder = Base64.getDecoder();
 		String[] strings = string64.split(" ");
 		if(strings.length==1) { // no pharmacophore information encoded
 			return;
 		}
 		atomicNo = Integer.decode(strings[0]);
+		weight = EncodeFunctions.byteArrayToDouble(decoder.decode(strings[1].getBytes()));
 		StringBuilder sb = new StringBuilder();
-		for(int i=1;i<strings.length;i++) {
+		for(int i=2;i<strings.length;i++) {
 			sb.append(strings[i]);
 			sb.append(" ");
 		}
 		pp = PharmacophorePointFactory.fromString(sb.toString(), mol);
 		center = pp.getCenter();
+		alpha = calculateWidth(); //the width of the Gaussian depends on the atomic radius of the atom
+		volume = calculateVolume();
+		coeff = calculateHeight();
+		this.atomId = pp.getCenterID();
 	}
 
 	@Override

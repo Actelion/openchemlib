@@ -1,8 +1,9 @@
-package com.actelion.research.chem.phesa;
+package com.actelion.research.chem.phesa.pharmacophore;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 public class DonorPoint implements IPharmacophorePoint {
@@ -73,12 +74,12 @@ public class DonorPoint implements IPharmacophorePoint {
 	@Override
 	public double getSimilarity(IPharmacophorePoint pp) {
 		if(pp instanceof DonorPoint) {
-			return 1.0;
+			return 1.0*(1.0-InteractionSimilarityTable.getInstance().getEquivalence(((DonorPoint)pp).getInteractionClass(), 
+					getInteractionClass()));
 		}
 		return 0.0;
 	}
 
-	@Override
 	public int getInteractionClass() {
 		return interactionClass;
 	}

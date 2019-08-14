@@ -50,6 +50,8 @@ public class AtomicGaussian extends Gaussian3D {
 		molVolString.append(" ");
 		molVolString.append(Integer.toString(atomId));
 		molVolString.append(" ");
+		molVolString.append(EncoderFloatingPointNumbers.encode(new double[]{weight},13));
+		molVolString.append(" ");
 		molVolString.append(EncoderFloatingPointNumbers.encode(coords,13));
 		return molVolString.toString();
 	}
@@ -58,12 +60,13 @@ public class AtomicGaussian extends Gaussian3D {
 		String[] strings = string64.split(" ");
 		atomicNo = Integer.decode(strings[0]);
 		atomId = Integer.decode(strings[1]);
-		double [] coords = EncoderFloatingPointNumbers.decode(strings[2]);
+		double [] w = EncoderFloatingPointNumbers.decode(strings[2]);
+		double [] coords = EncoderFloatingPointNumbers.decode(strings[3]);
 		alpha = calculateWidth(); //the width of the Gaussian depends on the atomic radius of the atom
 		volume = calculateVolume();
 		coeff = calculateHeight();
 		center = new Coordinates(coords[0],coords[1],coords[2]);
-		
+		weight = w[0];
 		
 	}
 

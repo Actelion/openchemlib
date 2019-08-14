@@ -1,9 +1,10 @@
-package com.actelion.research.chem.phesa;
+package com.actelion.research.chem.phesa.pharmacophore;
 
 import java.util.ArrayList;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
 
 public class AcceptorPoint implements IPharmacophorePoint {
 	private int acceptorAtom;
@@ -124,12 +125,12 @@ public class AcceptorPoint implements IPharmacophorePoint {
 	@Override
 	public double getSimilarity(IPharmacophorePoint pp) {
 		if(pp instanceof AcceptorPoint) {
-			return 1.0;
+			return 1.0*(1.0-InteractionSimilarityTable.getInstance().getEquivalence(((AcceptorPoint)pp).getInteractionClass(), 
+					getInteractionClass()));
 		}
 		return 0.0;
 	}
-	
-	@Override
+
 	public int getInteractionClass() {
 		return interactionClass;
 	}

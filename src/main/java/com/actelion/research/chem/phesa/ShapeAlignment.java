@@ -2,6 +2,7 @@ package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
+import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
 import java.util.Arrays;
@@ -197,17 +198,25 @@ public class ShapeAlignment {
 		double normFactor = 1/(transform[0]*transform[0]+transform[1]*transform[1]+transform[2]*transform[2]+transform[3]*transform[3]);
 		for(int k=0;k<atomicGaussians.size();k++) {
     			fitCenterModCoords[k] = atomicGaussians.get(k).getRotatedCenter(rotMatrix, normFactor, new double[] {transform[4], transform[5], transform[6]}); //we operate on the transformed coordinates of the molecule to be fitted
-
-
 		}
 
 		for(AtomicGaussian refAt:refMolGauss.getAtomicGaussians()){
 			int index = 0;
 			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()){
-				Vtot += refAt.getQuickVolumeOverlap(fitAt, fitCenterModCoords[index],10.0);
+				Vtot += refAt.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
 				index+=1;	
 			}
 		}
+		
+		for(ExclusionGaussian refEx:refMolGauss.getExclusionGaussians()){
+			int index = 0;
+			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()){
+				Vtot -= refEx.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
+				index+=1;	
+			}
+		}
+		if(Vtot<0)
+			Vtot = 0.0;
 		
 		return Vtot;
 
@@ -217,7 +226,7 @@ public class ShapeAlignment {
 		double Vtot = 0.0;
 		for(AtomicGaussian refAt:refMolGauss.getAtomicGaussians()){
 			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()) {
-					Vtot+=refAt.getQuickVolumeOverlap(fitAt,10.0);
+					Vtot+=refAt.getVolumeOverlap(fitAt,Gaussian3D.DIST_CUTOFF);
 			}
 						
 			}				
@@ -227,7 +236,6 @@ public class ShapeAlignment {
 	}
 	
 	
-
 	
 	
 	public double getTotalPPOverlap(double[] transform){
@@ -246,7 +254,7 @@ public class ShapeAlignment {
 		for(PPGaussian refPP:refMolGauss.getPPGaussians()){
 			int index = 0;
 			for(PPGaussian fitPP:molGauss.getPPGaussians()){
-				Vtot+=refPP.getSimilarity(fitPP, fitDirectionalityMod[index])* refPP.getVolumeOverlap(fitPP, fitCenterModCoords[index]);
+				Vtot+=refPP.getSimilarity(fitPP, fitDirectionalityMod[index])* refPP.getVolumeOverlap(fitPP, fitCenterModCoords[index],10.0);
 				index+=1;
 			
 		}
@@ -275,7 +283,6 @@ public class ShapeAlignment {
 	
 			return Vtot;
 		}
-
 
 
 
