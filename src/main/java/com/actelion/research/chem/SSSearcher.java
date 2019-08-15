@@ -102,7 +102,7 @@ public class SSSearcher {
 
 	// depending on the fragment count mode this may contain atom lists
 	// of all till now located matching sub-fragments
-	private TreeSet<int[]> mSortedMatchSet,mExcludedMatchSet;
+	private TreeSet<int[]> mSortedMatchSet;
 	private ArrayList<int[]> mMatchList;
 	private ArrayList<BridgeBond> mBridgeBondList;
 
@@ -123,7 +123,6 @@ public class SSSearcher {
 		mDefaultMatchMode = cDefaultMatchMode;
 		mMatchList = new ArrayList<int[]>();
 		mSortedMatchSet = new TreeSet<int[]>(new IntArrayComparator());
-		mExcludedMatchSet = new TreeSet<int[]>(new IntArrayComparator());
 		}
 
 
@@ -140,7 +139,6 @@ public class SSSearcher {
 		mDefaultMatchMode = matchMode;
 		mMatchList = new ArrayList<int[]>();
 		mSortedMatchSet = new TreeSet<int[]>(new IntArrayComparator());
-		mExcludedMatchSet = new TreeSet<int[]>(new IntArrayComparator());
 		}
 
 
@@ -423,7 +421,6 @@ System.out.println();
 	public int findFragmentInMolecule(int countMode, int matchMode, final boolean[] atomExcluded) {
 		mMatchList = new ArrayList<int[]>();
 		mSortedMatchSet.clear();
-		mExcludedMatchSet.clear();
 
 		if (mMolecule == null
    		 || mFragment == null)
@@ -433,7 +430,7 @@ System.out.println();
 		 || mFragment.getBonds() - mFragmentExcludeBonds > mMolecule.getBonds())
 			return 0;
 
-		if (mFragment.getAtoms() - mFragmentExcludeAtoms == 0)
+		if (mFragment.getAtoms() == 0)
 			return 0;
 
 /*
@@ -470,50 +467,52 @@ System.out.print("		"); for (int i=0; i<current; i++) System.out.print("  "); Sy
 System.out.println();
 */
 
-			int maxIndex = (mFragmentGraphParentAtom[current] == -1) ? mMolecule.getAtoms()
-					: mMolecule.getAllConnAtomsPlusMetalBonds(mMatchTable[mFragmentGraphParentAtom[current]]);
+			if (mFragmentGraphSize != 0) {	// we may have exclude groups only
+				int maxIndex = (mFragmentGraphParentAtom[current] == -1) ? mMolecule.getAtoms()
+						: mMolecule.getAllConnAtomsPlusMetalBonds(mMatchTable[mFragmentGraphParentAtom[current]]);
 
-			index[current]++;
+				index[current]++;
 
-			if (index[current] == maxIndex) {
-				index[current] = -1;
-				if (current == 0)
-					break;
-				current--;
-				if (!mFragmentGraphIsRingClosure[current])
-					atomUsed[mMatchTable[mFragmentGraphAtom[current]]] = false;
-				continue;
-				}
-
-			if (mFragmentGraphParentAtom[current] == -1) {	// if current graph atom is sub fragment anchor atom
-				if (!atomUsed[index[current]]) {
-					if (areAtomsSimilar(index[current], mFragmentGraphAtom[current])) {
-						mMatchTable[mFragmentGraphAtom[current]] = index[current];
-						atomUsed[index[current]] = true;
-						current++;
-						}
-					}
-				}
-			else {
-				// skip plain hydrogens
-				if (mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]) >= mMolecule.getAtoms())
+				if (index[current] == maxIndex) {
+					index[current] = -1;
+					if (current == 0)
+						break;
+					current--;
+					if (!mFragmentGraphIsRingClosure[current])
+						atomUsed[mMatchTable[mFragmentGraphAtom[current]]] = false;
 					continue;
+					}
 
-				int candidate = mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]);
-				if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor
-					if (!atomUsed[candidate]) {
-						if (areAtomsSimilar(candidate, mFragmentGraphAtom[current])
-								&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
-							atomUsed[candidate] = true;
-							mMatchTable[mFragmentGraphAtom[current]] = candidate;
+				if (mFragmentGraphParentAtom[current] == -1) {	// if current graph atom is sub fragment anchor atom
+					if (!atomUsed[index[current]]) {
+						if (areAtomsSimilar(index[current], mFragmentGraphAtom[current])) {
+							mMatchTable[mFragmentGraphAtom[current]] = index[current];
+							atomUsed[index[current]] = true;
 							current++;
 							}
 						}
 					}
-				else {	// current graph position is ringClosure
-					if (candidate == mMatchTable[mFragmentGraphAtom[current]]
-							&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
-						current++;
+				else {
+					// skip plain hydrogens
+					if (mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]) >= mMolecule.getAtoms())
+						continue;
+
+					int candidate = mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]);
+					if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor
+						if (!atomUsed[candidate]) {
+							if (areAtomsSimilar(candidate, mFragmentGraphAtom[current])
+									&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
+								atomUsed[candidate] = true;
+								mMatchTable[mFragmentGraphAtom[current]] = candidate;
+								current++;
+								}
+							}
+						}
+					else {	// current graph position is ringClosure
+						if (candidate == mMatchTable[mFragmentGraphAtom[current]]
+								&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
+							current++;
+							}
 						}
 					}
 				}
@@ -542,6 +541,9 @@ System.out.println();
 							return 1;
 						}
 					}
+
+				if (current == 0)	// if all fragment atoms are part of an exclude group
+					break;
 
 				current--;
 				if (!mFragmentGraphIsRingClosure[current])
@@ -995,8 +997,9 @@ System.out.println();
 				 && doBridgeBondsMatch(atomUsed, excludeGroupNo)) {
 
 					// remove match table entries for exclude atoms
-					for (int atom=0; atom<mFragment.getAtoms(); atom++) {
-						if (mExcludeGroupNo[atom] == excludeGroupNo) {
+					for (int i=excludeGroupGraphBase; i<excludeGroupGraphMax; i++) {
+						if (!mFragmentGraphIsRingClosure[i]) {
+							int atom = mFragmentGraphAtom[i];
 							atomUsed[mMatchTable[atom]] = false;
 							mMatchTable[atom] = -1;
 							}

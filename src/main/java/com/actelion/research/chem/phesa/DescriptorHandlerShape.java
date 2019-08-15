@@ -210,6 +210,8 @@ public class DescriptorHandlerShape implements DescriptorHandler {
 					if(shapeAlign.getRefMolGauss().getPPGaussians().size()==0 && shapeAlign.getMolGauss().getPPGaussians().size()==0 )
 						ppSimilarity = 1.0f;
 					else ppSimilarity=(float)(ppOverlap/(ppOaa+ppObb-ppOverlap));
+					if(ppSimilarity>1.0) //can happen because of weights
+						ppSimilarity = 1.0f;
 					similarity = (1.0f/(1+(float)ppScaling))* (atomSimilarity + (float)ppScaling*ppSimilarity) ;
 					if (similarity>maxSimilarity) {
 						maxSimilarity = similarity;

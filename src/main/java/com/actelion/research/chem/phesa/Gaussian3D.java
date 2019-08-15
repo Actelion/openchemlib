@@ -149,7 +149,7 @@ public abstract class Gaussian3D {
 			double c = -( getWidth() * g2.getWidth()* Rij2)/alphaSum;
 			Kij = getHeight()*g2.getHeight()*QuickMathCalculator.getInstance().quickExp(c); 
 			double factor = QuickMathCalculator.getInstance().getPrefactor(getAtomicNo(),g2.getAtomicNo());
-			Vij = factor*Kij;
+			Vij = weight*factor*Kij;
 			
 		}
 		return Vij;
@@ -164,7 +164,8 @@ public abstract class Gaussian3D {
 	}
 	
 	public void updateCoordinates(StereoMolecule mol) {
-		center = mol.getCoordinates(atomId);
+		center = new Coordinates(mol.getCoordinates(atomId));
+
 	}
 	
 	abstract public String encode();

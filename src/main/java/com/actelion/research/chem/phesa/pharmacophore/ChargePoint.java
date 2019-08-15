@@ -11,9 +11,9 @@ public class ChargePoint implements IPharmacophorePoint {
 	private List<Integer> neighbours;
 	private int charge;
 	private Coordinates center;
+	private Coordinates directionality = new Coordinates(1.0,1.0,1.0);
 	
 	public ChargePoint(StereoMolecule mol, int a, List<Integer> neighbours, int charge) {
-		System.out.println(mol.getAtomicNo(a));
 		if(charge!=1 && charge!=-1) 
 			throw new IllegalArgumentException("charge should be +1 or -1");
 		chargeAtom = a;
@@ -39,11 +39,12 @@ public class ChargePoint implements IPharmacophorePoint {
 
 		center = com;
 	}
+	
 
 	@Override
 	public Coordinates getDirectionality() {
 		// TODO Auto-generated method stub
-		return null;
+		return directionality;
 	}
 	
 	private ChargePoint(String ppString, StereoMolecule mol) {
@@ -86,11 +87,11 @@ public class ChargePoint implements IPharmacophorePoint {
 
 	@Override
 	public double getSimilarity(IPharmacophorePoint pp) {
-		double result;
+		double result = 0.0;
 		if(pp instanceof ChargePoint) {
-			return result = charge*((ChargePoint)pp).charge > 0 ? 1.0 : 0.0;
+			result = charge*((ChargePoint)pp).charge > 0 ? 1.0 : 0.0;
 		}
-		return 0.0;
+		return result;
 	}
 
 	@Override

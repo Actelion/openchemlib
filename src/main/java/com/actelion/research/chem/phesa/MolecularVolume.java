@@ -64,7 +64,9 @@ public class MolecularVolume {
 	}
 	
 
-	
+	public void updateCOM() {
+		this.calcCOM();
+	}
 
 
 	
@@ -76,7 +78,6 @@ public class MolecularVolume {
 		this.calcPPVolume(mol);
 		this.calcCOM();
 
-		
 	}
 	
 	

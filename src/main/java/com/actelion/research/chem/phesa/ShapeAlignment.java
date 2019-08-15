@@ -70,6 +70,8 @@ public class ShapeAlignment {
 		for (PPGaussian pg : molVol.getPPGaussians()){
 			pg.getCenter().sub(COM);  //translate atomicGaussians. Moves center of mass to the origin.
 		}
+		
+
 		return initialOrientation(mol,molVol);
 	}
 
@@ -83,7 +85,6 @@ public class ShapeAlignment {
 	 */
 	
 	public static Matrix initialOrientation(StereoMolecule mol,MolecularVolume molGauss) {
-		
 		Matrix massMatrix = new Matrix(3,3); 
 		double volume = 0.0;
 		for (AtomicGaussian ag : molGauss.getAtomicGaussians()){
@@ -128,13 +129,8 @@ public class ShapeAlignment {
 
 		}
 
-		
-		int nrOfAtoms = mol.getAllAtoms();	
-		for (int i=0;i<nrOfAtoms;i++) {
-			Coordinates coords1 = mol.getCoordinates(i);
-			coords1.rotate(u.getArray());
-		}
-		
+
+		rotateMol(mol,u);
 		return u;
 		
 	}
@@ -211,7 +207,10 @@ public class ShapeAlignment {
 		for(ExclusionGaussian refEx:refMolGauss.getExclusionGaussians()){
 			int index = 0;
 			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()){
+				System.out.println("exclusion");
+				System.out.println(Vtot);
 				Vtot -= refEx.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
+				System.out.println(Vtot);
 				index+=1;	
 			}
 		}
@@ -241,6 +240,7 @@ public class ShapeAlignment {
 	public double getTotalPPOverlap(double[] transform){
 		Quaternion quat = new Quaternion(transform[0],transform[1],transform[2],transform[3]);
 		double Vtot = 0.0;
+		double correctionFactor = refMolGauss.getPPGaussians().size()/refMolGauss.getPPGaussians().stream().mapToDouble(g -> g.getWeight()).sum();
 		double[][] rotMatrix = quat.getRotMatrix().getArray();
 		ArrayList<PPGaussian> ppGaussians = molGauss.getPPGaussians();
 		Coordinates[] fitCenterModCoords = new Coordinates[ppGaussians.size()];
@@ -254,7 +254,7 @@ public class ShapeAlignment {
 		for(PPGaussian refPP:refMolGauss.getPPGaussians()){
 			int index = 0;
 			for(PPGaussian fitPP:molGauss.getPPGaussians()){
-				Vtot+=refPP.getSimilarity(fitPP, fitDirectionalityMod[index])* refPP.getVolumeOverlap(fitPP, fitCenterModCoords[index],10.0);
+				Vtot+=refPP.getSimilarity(fitPP, fitDirectionalityMod[index])* refPP.getVolumeOverlap(fitPP, fitCenterModCoords[index],10.0)*correctionFactor;
 				index+=1;
 			
 		}
@@ -287,10 +287,11 @@ public class ShapeAlignment {
 
 
 	public double getSelfPPOverlap(MolecularVolume molGauss){
+		double correctionFactor = molGauss.getPPGaussians().size()/molGauss.getPPGaussians().stream().mapToDouble(g -> g.getWeight()).sum();
 		double Vtot = 0.0;
 		for(PPGaussian pp:molGauss.getPPGaussians()){
 			for(PPGaussian pp2:molGauss.getPPGaussians()){
-				Vtot+=pp.getSimilarity(pp2)* pp.getVolumeOverlap(pp2);
+				Vtot+=pp.getSimilarity(pp2)* pp.getVolumeOverlap(pp2)*correctionFactor;
 			}
 		}
 		return Vtot;
@@ -369,17 +370,28 @@ public class ShapeAlignment {
 			if(getRefMolGauss().getPPGaussians().size()==0 && getMolGauss().getPPGaussians().size()==0 )
 				ppSimilarity = 1.0f;
 			else ppSimilarity=(float)(ppOverlap/(ppOaa+ppObb-ppOverlap));
+			if(ppSimilarity>1.0) //can happen because of weights
+				ppSimilarity = 1.0f;
 			similarity = (1.0f/(1+(float)ppScaling))* (atomSimilarity + (float)ppScaling*ppSimilarity) ;
 			if (similarity>maxSimilarity) {
 				maxSimilarity = similarity;
 				alignment = bestTransform;
 			}
 		}
-			
 			return DoubleStream.concat(Arrays.stream(new double[] {maxSimilarity}), Arrays.stream(alignment)).toArray();
 		}
 		
 		
+	
+	public static void rotateMol(StereoMolecule mol, Matrix rotMat) {
+		int nrOfAtoms = mol.getAllAtoms();	
+		for (int i=0;i<nrOfAtoms;i++) {
+			Coordinates coords1 = mol.getCoordinates(i);
+			coords1.rotate(rotMat.getArray());
+		}
+
+	}
+	
 	
 	
 	public static void rotateMol(StereoMolecule mol, double[] transform) {

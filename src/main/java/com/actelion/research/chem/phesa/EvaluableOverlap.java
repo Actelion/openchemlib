@@ -376,7 +376,7 @@ public class EvaluableOverlap  {
 					if(Rij2>=Gaussian3D.DIST_CUTOFF) {
 						continue;
 					}
-					atomOverlap = refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
+					atomOverlap = refAt.getWeight()*fitAt.getWeight()*refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refAt.getAtomicNo(),fitAt.getAtomicNo());
 					if (atomOverlap>0.0) {
 						double vectorSim = refAt.getVectorSimilarity(fitAt, fitPPDirectionalityVector);

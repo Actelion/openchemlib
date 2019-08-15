@@ -87,7 +87,6 @@ public class PPGaussian extends Gaussian3D {
 		double ppSimilarity = getInteractionSimilarity(ppGauss2);
 		double vectorSim = getVectorSimilarity(ppGauss2,directionality);
 		double similarity = (Math.max(0, vectorSim)+2*ppSimilarity)/3.0;
-		similarity *= ppGauss2.getWeight()*this.getWeight();
 		return similarity;
 	}
 	
