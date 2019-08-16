@@ -499,7 +499,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The sum of bond orders of explicitly connected neighbour atoms including explicit hydrogen.
-	 * The occupied valence includes bonds to atoms with set cAtomQFExcludeGroup flags.
+	 * In case of a fragment the occupied valence does not include bonds to atoms of which the cAtomQFExcludeGroup flag is set.
 	 * @param atom
 	 * @return explicitly used valence
 	 */
@@ -508,27 +508,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		int valence = 0;
 		for (int i=0; i<mAllConnAtoms[atom]; i++)
-			valence += mConnBondOrder[atom][i];
-
-		return valence;
-		}
-
-
-	/**
-	 * The sum of bond orders of explicitly connected neighbour atoms with the cAtomQFExcludeGroup flag set to true.
-	 * @param atom
-	 * @return occupied valence caused by exclude group atoms
-	 */
-	public int getExcludeGroupValence(int atom) {
-		ensureHelperArrays(cHelperNeighbours);
-
-		int valence = 0;
-		for (int i=0; i<mAllConnAtoms[atom]; i++)
-			if (mIsFragment && (mAtomQueryFeatures[mConnAtom[atom][i]] & cAtomQFExcludeGroup) != 0)
+			if (!mIsFragment || (mAtomQueryFeatures[mConnAtom[atom][i]] & cAtomQFExcludeGroup) == 0)
 				valence += mConnBondOrder[atom][i];
 
 		return valence;
-	}
+		}
 
 
 	/**

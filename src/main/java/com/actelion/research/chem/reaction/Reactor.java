@@ -83,7 +83,7 @@ public class Reactor {
                         StereoMolecule product = reaction.getProduct(k);
 						for (int l=0; l<product.getAtoms(); l++) {
 							if (product.getAtomMapNo(l) == mapNo) {
-								int dif = reactant.getFreeValence(j) + reactant.getExcludeGroupValence(j) - product.getFreeValence(l);
+								int dif = reactant.getFreeValence(j) - product.getFreeValence(l);
 								mMinFreeValence[i][j] = (dif > 0) ? dif : 0;
 								}
 							}
