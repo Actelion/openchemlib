@@ -198,6 +198,8 @@ public class SSSearcher {
 			mMolecule.ensureHelperArrays(mRequiredHelperLevel);
 
 		mFragmentExcludeAtoms = 0;
+		mFragmentExcludeBonds = 0;
+
 		mIsExcludeAtom = new boolean[mFragment.getAtoms()];
 		for (int atom=0; atom<mFragment.getAtoms(); atom++) {
 			mIsExcludeAtom[atom] = ((mFragment.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0);
@@ -205,8 +207,10 @@ public class SSSearcher {
 				mFragmentExcludeAtoms++;
 			}
 
+		mExcludeGroupCount = 0;
+		mExcludeGroupNo = null;
+
 		if (mFragmentExcludeAtoms != 0) {
-			mFragmentExcludeBonds = 0;
 			if (mFragmentExcludeAtoms != 0)
 				for (int bond = 0; bond < mFragment.getBonds(); bond++)
 					if (mIsExcludeAtom[mFragment.getBondAtom(0, bond)] || mIsExcludeAtom[mFragment.getBondAtom(1, bond)])
@@ -246,11 +250,8 @@ public class SSSearcher {
 				mFragmentGraphParentAtom[current] = -1;
 				int highest = current;
 				while (current <= highest) {
-					for (int i=0; i<mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++) {
-						int candidate = mFragment.getConnAtom(mFragmentGraphAtom[current], i);
-						if (candidate < mFragment.getAtoms() && !mIsExcludeAtom[candidate])
-							highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed);
-						}
+					for (int i=0; i<mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++)
+						highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed, -1);
 					while (mFragmentGraphIsRingClosure[++current]);
 					}
 				}
@@ -258,30 +259,28 @@ public class SSSearcher {
 		mFragmentGraphSize = current;	// this is the real size of the graph not considering exclude atoms
 
 		if (mFragmentExcludeAtoms != 0) {
-			// append all exclude atoms and ring closures to non-exclude atom tree
-			int highest = current - 1;
-			current = 0;
-			while (current <= highest) {
-				for (int i = 0; i < mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++) {
-					int candidate = mFragment.getConnAtom(mFragmentGraphAtom[current], i);
-					if (candidate < mFragment.getAtoms() && (mIsExcludeAtom[candidate] || mIsExcludeAtom[mFragmentGraphAtom[current]]))
-						highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed);
+			// append all exclude groups including ring closures, one after another, to non-excluded atom tree
+			int highest = mFragmentGraphSize - 1;
+			for (int excludeGroupNo=0; excludeGroupNo<mExcludeGroupCount; excludeGroupNo++) {
+				current = 0;
+				while (current <= highest) {
+					for (int i=0; i<mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++)
+						highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed, excludeGroupNo);
+					while (mFragmentGraphIsRingClosure[++current]) ;
 					}
-				while (mFragmentGraphIsRingClosure[++current]) ;
 				}
 
 			// there may still be exclude groups as separated fragments
-			for (int atom = 0; atom < mFragment.getAtoms(); atom++) {
+			for (int atom=0; atom<mFragment.getAtoms(); atom++) {
 				if (mIsExcludeAtom[atom] && !fragmentAtomUsed[atom]) {
 					mFragmentGraphAtom[current] = atom;
 					mFragmentGraphParentBond[current] = -1;
 					mFragmentGraphParentAtom[current] = -1;
 					highest = current;
 					while (current <= highest) {
-						for (int i = 0; i < mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++)
+						for (int i=0; i<mFragment.getAllConnAtomsPlusMetalBonds(mFragmentGraphAtom[current]); i++)
 							if (mFragment.getConnAtom(mFragmentGraphAtom[current], i) < mFragment.getAtoms())
-								highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed);
-
+								highest = tryAddCandidate(current, highest, i, fragmentAtomUsed, fragmentBondUsed, mExcludeGroupNo[atom]);
 						while (mFragmentGraphIsRingClosure[++current]) ;
 						}
 					}
@@ -322,9 +321,10 @@ System.out.println();
 	 * @param fragmentBondUsed
 	 * @return
 	 */
-	private int tryAddCandidate(int current, int highest, int i, boolean[] fragmentAtomUsed, boolean[] fragmentBondUsed) {
+	private int tryAddCandidate(int current, int highest, int i, boolean[] fragmentAtomUsed, boolean[] fragmentBondUsed, int excludeGroupNo) {
 		int candidate = mFragment.getConnAtom(mFragmentGraphAtom[current], i);
-		if (candidate != mFragmentGraphParentAtom[current]) {
+		if ((!mIsExcludeAtom[candidate] || mExcludeGroupNo[candidate] == excludeGroupNo)	// always allow non-exclude atoms, because it may be a ring closure from exclude group to main fragment
+		 && candidate != mFragmentGraphParentAtom[current]) {
 			int candidateBond = mFragment.getConnBond(mFragmentGraphAtom[current], i);
 
 			if (!fragmentBondUsed[candidateBond]	// if it is a ring closure make sure it is added only once

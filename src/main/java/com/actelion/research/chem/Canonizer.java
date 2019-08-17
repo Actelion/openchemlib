@@ -152,6 +152,7 @@ public class Canonizer {
 	private boolean mIsOddParityRound;
 	private boolean mZCoordinatesAvailable;
 	private boolean mCIPParityNoDistinctionProblem;
+	private boolean mEncodeAvoid127;
 
 	private boolean mGraphGenerated;
 	private int mGraphRings;
@@ -2564,7 +2565,7 @@ System.out.println("noOfRanks:"+canRank);
 
 
 	private void idCodeCreate() {
-		encodeBitsStart();
+		encodeBitsStart(false);
 		encodeBits(cIDCodeVersion3, 4);
 		int nbits = Math.max(idGetNeededBits(mMol.getAtoms()),
 							 idGetNeededBits(mMol.getBonds()));
@@ -3337,7 +3338,7 @@ System.out.println();
 			}
 
 		int resolutionBits = mZCoordinatesAvailable ? 16 : 8;	// must be an even number
-		encodeBitsStart();
+		encodeBitsStart(true);
 		mEncodingBuffer.append(includeHydrogenCoordinates ? '#' : '!');
 		encodeBits(mZCoordinatesAvailable ? 1 : 0, 1);
 		encodeBits(keepPositionAndScale ? 1 : 0, 1);
@@ -3485,7 +3486,7 @@ System.out.println();
 			}
 
 		int nbits = idGetNeededBits(maxMapNo);
-		encodeBitsStart();
+		encodeBitsStart(true);
 		encodeBits(nbits, 4);
 		encodeBits(autoMappingFound ? 1 : 0, 1);
 		encodeBits(manualMappingFound ? 1 : 0, 1);
@@ -3713,10 +3714,11 @@ System.out.println();
 		}
 
 
-	private void encodeBitsStart() {
+	private void encodeBitsStart(boolean avoid127) {
 		mEncodingBuffer = new StringBuilder();
 		mEncodingBitsAvail = 6;
 		mEncodingTempData = 0;
+		mEncodeAvoid127 = avoid127;
 		}
 
 
@@ -3724,7 +3726,9 @@ System.out.println();
 //System.out.println(bits+" bits:"+data+"  mode="+mode);
 		while (bits != 0) {
 			if (mEncodingBitsAvail == 0) {
-				mEncodingBuffer.append((char)(mEncodingTempData + 64));
+				if (!mEncodeAvoid127 || mEncodingTempData != 63)
+					mEncodingTempData += 64;
+				mEncodingBuffer.append((char)mEncodingTempData);
 				mEncodingBitsAvail = 6;
 				mEncodingTempData = 0;
 				}
@@ -3739,7 +3743,9 @@ System.out.println();
 
 	private String encodeBitsEnd() {
 		mEncodingTempData <<= mEncodingBitsAvail;
-		mEncodingBuffer.append((char)(mEncodingTempData + 64));
+		if (!mEncodeAvoid127 || mEncodingTempData != 63)
+			mEncodingTempData += 64;
+		mEncodingBuffer.append((char)mEncodingTempData);
 		return mEncodingBuffer.toString();
 		}
 
