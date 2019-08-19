@@ -174,7 +174,7 @@ public class InteractionDistanceStatistics {
 	public void readFromFile() throws IOException {
 		try {
 			//String file = "/home/joel/PL_stat_no_neighbours.txt";
-			String file = BASE_PATH + "/InteractionStatistics.txt";
+			String file = BASE_PATH + "InteractionStatistics.txt";
 			URL url =  InteractionDistanceStatistics.class.getResource(file);
 			if(url==null) {
 				throw new RuntimeException("Could not find the interactions parameter file in the classpath: " + file);
