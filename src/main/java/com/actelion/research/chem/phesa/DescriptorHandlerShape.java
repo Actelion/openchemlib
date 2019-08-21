@@ -5,6 +5,8 @@ import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.conf.ConformerSet;
+import com.actelion.research.chem.conf.ConformerSetGenerator;
 import com.actelion.research.chem.descriptor.DescriptorConstants;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
 import com.actelion.research.chem.descriptor.DescriptorInfo;
@@ -30,7 +32,7 @@ import java.util.ArrayList;
 */
 
 
-public class DescriptorHandlerShape implements DescriptorHandler {
+public class DescriptorHandlerShape implements DescriptorHandler<ShapeMolecule,StereoMolecule> {
 
 		
 	private static final long SEED = 123456789;
@@ -55,11 +57,11 @@ public class DescriptorHandlerShape implements DescriptorHandler {
 	
 
 	
-	private double[][] precalcPowArray;// = precalculatePrefactors();
-	private double[] precalcExp;// = precalculateExp();
-
+	private ConformerSetGenerator conformerGenerator;
 	
-	private ConformerGenerator conformerGenerator;
+	public DescriptorHandlerShape() {
+		this(false);
+	}
 	
 	public DescriptorHandlerShape(boolean useSingleBaseConformation) {
 		singleBaseConformation = useSingleBaseConformation;
@@ -67,86 +69,16 @@ public class DescriptorHandlerShape implements DescriptorHandler {
 
 	}
 	
-	public DescriptorHandlerShape() {
+	public ShapeMolecule createDescriptor(ConformerSet fullSet) {
+		ConformerSet confSet = fullSet.getSubset(CONFORMATIONS);
 		init();
-
-	}
-	
-	public void init() {
-		transforms = ShapeAlignment.initialTransform(2);
-		previousAlignment = new StereoMolecule[2];
-		conformerGenerator = new ConformerGenerator(SEED);
 		
-	}
-	
-
-	
-	/**
-	 * the ShapeDescriptor consists of a whole ensemble of MolecularVolumes (MolecularGaussians),
-	 * obtained from a conformational search algorithm
-	*/
-	
-	public ShapeMolecule createDescriptor(Object mol) {
-		StereoMolecule m = (StereoMolecule) mol;
-		StereoMolecule shapeMolecule = new StereoMolecule(m);
-		boolean has3Dcoordinates = false;
-		for (int atom=0; atom<shapeMolecule.getAllAtoms(); atom++) {
-			if (shapeMolecule.getAtomZ(atom) != 0.0) {
-				has3Dcoordinates = true;
-				break;
-				}
-		}
-		shapeMolecule.stripSmallFragments();
-		new Canonizer(shapeMolecule);
-		shapeMolecule.ensureHelperArrays(StereoMolecule.cHelperCIP);
-
-
 		ArrayList<MolecularVolume> molecularVolumes = new ArrayList<MolecularVolume>(); 
-		int nConformations = 0;
-		Conformer conformer;
-		StereoMolecule conf;
-		if (!singleBaseConformation || (singleBaseConformation & !has3Dcoordinates)) {
 		
-			conformerGenerator.initializeConformers(shapeMolecule, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
-
-			if(!singleBaseConformation) {
-				nConformations = CONFORMATIONS;
-			}
-			
-			conformer = conformerGenerator.getNextConformer();
-        
-
-			if(conformer==null){
-				return FAILED_OBJECT;
-			}
-			else {
-				try {
-					conf = conformer.toMolecule(null);
-
-				}
-				catch(Exception e) {
-					return FAILED_OBJECT;
-				}
-		}
-		}
-			
-		else {
-			if(shapeMolecule.getAllAtoms()-shapeMolecule.getAtoms()>0) {
-				ConformerGenerator.addHydrogenAtoms(shapeMolecule);
-			}
-			conf = shapeMolecule; //take input conformation
-			nConformations = 0;
-			}
-
-			new Canonizer(conf);
-			conf.ensureHelperArrays(StereoMolecule.cHelperCIP);
-			MolecularVolume molVol = new MolecularVolume(conf);
-			ShapeAlignment.preProcess(conf, molVol); //move center of mass of molecule to origin and align coordinate axis with principal moments of inertia of the molecule
-            molecularVolumes.add(molVol);
-        
-
-        for (int i = 1; i < nConformations; i++) {
-            conformer = conformerGenerator.getNextConformer();
+		StereoMolecule conf = confSet.first().toMolecule();
+		MolecularVolume molVol;
+		
+		for(Conformer conformer : confSet) {
 
             if(conformer==null) {
 
@@ -164,17 +96,64 @@ public class DescriptorHandlerShape implements DescriptorHandler {
  
         return new ShapeMolecule(conf,molecularVolumes);
 	}
+
+	
+	public void init() {
+		transforms = ShapeAlignment.initialTransform(2);
+		previousAlignment = new StereoMolecule[2];
+		conformerGenerator = new ConformerSetGenerator(20,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,SEED);
+		
+	}
+	
+
+	
+	/**
+	 * the ShapeDescriptor consists of a whole ensemble of MolecularVolumes (MolecularGaussians),
+	 * obtained from a conformational search algorithm
+	*/
+	
+	public ShapeMolecule createDescriptor(StereoMolecule mol) {
+		StereoMolecule shapeMolecule = new StereoMolecule(mol);
+		boolean has3Dcoordinates = false;
+		for (int atom=0; atom<shapeMolecule.getAllAtoms(); atom++) {
+			if (shapeMolecule.getAtomZ(atom) != 0.0) {
+				has3Dcoordinates = true;
+				break;
+				}
+		}
+		shapeMolecule.stripSmallFragments();
+		new Canonizer(shapeMolecule);
+		shapeMolecule.ensureHelperArrays(StereoMolecule.cHelperCIP);
+
+		ConformerSet confSet = new ConformerSet();
+		if (!singleBaseConformation) {
+			confSet = conformerGenerator.generateConformerSet(mol);
+		}
+		
+		else if(!has3Dcoordinates) {
+			return FAILED_OBJECT;
+		}
+			
+		else {
+			if(shapeMolecule.getAllAtoms()-shapeMolecule.getAtoms()>0) {
+				ConformerGenerator.addHydrogenAtoms(shapeMolecule);
+			}
+			confSet.add(new Conformer(shapeMolecule)); //take input conformation
+			
+			}
+
+		return this.createDescriptor(confSet);
+
+	}
 	/**
 	 * calculates the Shape- and/or Pharmacophore similarity of a query molecule with a base molecule
 	 * 
 	 */
 	
-	public float getSimilarity(Object query, Object base) {
+	public float getSimilarity(ShapeMolecule query, ShapeMolecule base) {
 		StereoMolecule[] bestPair = new StereoMolecule[2];
-		ShapeMolecule shapeMolQuery = (ShapeMolecule) query;
-		ShapeMolecule shapeMolBase = (ShapeMolecule) base;
-		ArrayList<MolecularVolume>  molVolQuery = shapeMolQuery.getVolumes();
-		ArrayList<MolecularVolume>  molVolBase = shapeMolBase.getVolumes();
+		ArrayList<MolecularVolume>  molVolQuery = query.getVolumes();
+		ArrayList<MolecularVolume>  molVolBase = base.getVolumes();
 		float maxSimilarity=0.0f;
 		double Oaa = 0.0;
 		double Obb = 0.0;
@@ -216,8 +195,8 @@ public class DescriptorHandlerShape implements DescriptorHandler {
 					if (similarity>maxSimilarity) {
 						maxSimilarity = similarity;
 						alignment = bestTransform;
-						bestPair[1] = shapeMolBase.getConformer(baseVol);
-						bestPair[0] = shapeMolQuery.getConformer(queryVol);
+						bestPair[1] = base.getConformer(baseVol);
+						bestPair[0] = query.getConformer(queryVol);
 				}
 				}
 				
@@ -259,7 +238,7 @@ public class DescriptorHandlerShape implements DescriptorHandler {
 	
 
 	
-	public String encode(Object o) {
+	public String encode(ShapeMolecule o) {
 
 		if(calculationFailed(o)){
 			return FAILED_STRING;
@@ -329,10 +308,6 @@ public class DescriptorHandlerShape implements DescriptorHandler {
 			
 		}
 
-		//for(MolecularVolume molVol:molVols) {
-		//	StereoMolecule conf = molVol.getConformer(mol);
-		//	conf.ensureHelperArrays(Molecule.cHelperCIP);
-		//}
 		ShapeMolecule shapeMol = new ShapeMolecule(mol,molVols);
 		return shapeMol;
 		
@@ -344,14 +319,11 @@ public class DescriptorHandlerShape implements DescriptorHandler {
 		
 	}
 	
-	public boolean calculationFailed(Object o) {
+	public boolean calculationFailed(ShapeMolecule o) {
 
-		if(o instanceof ShapeMolecule) {
-			ShapeMolecule shapeMol = (ShapeMolecule)o;
-			return shapeMol.getVolumes().size()==0;
-		}
-		
-		return true;
+
+			return o.getVolumes().size()==0;
+	
 	}
 	
 	public DescriptorHandlerShape getThreadSafeCopy() {

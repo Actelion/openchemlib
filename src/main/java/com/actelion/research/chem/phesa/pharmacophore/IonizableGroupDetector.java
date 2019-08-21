@@ -62,7 +62,7 @@ public class IonizableGroupDetector {
 						if(alreadyDetected(aaa)) continue;
 						ionizableGroup.add(aaa);
 						ionizableGroups.add(ionizableGroup);
-						ChargePoint cp = new ChargePoint(mol,aa,null,-1);
+						ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),-1);
 						chargePoints.add(new PPGaussian(6,cp));
 						continue;
 					}
@@ -79,7 +79,7 @@ public class IonizableGroupDetector {
 							
 						}
 						ionizableGroups.add(ionizableGroup);
-						ChargePoint cp = new ChargePoint(mol,aa,null,-1);
+						ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),-1);
 						chargePoints.add(new PPGaussian(15,cp));
 						continue;					
 					}
@@ -96,7 +96,7 @@ public class IonizableGroupDetector {
 							
 						}
 						ionizableGroups.add(ionizableGroup);
-						ChargePoint cp = new ChargePoint(mol,aa,null,-1);
+						ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),-1);
 						chargePoints.add(new PPGaussian(16,cp));
 						continue;					
 					}
@@ -107,7 +107,7 @@ public class IonizableGroupDetector {
 						ionizableGroup = new ArrayList<Integer>();
 						ionizableGroup.add(a);
 						ionizableGroups.add(ionizableGroup);
-						ChargePoint cp = new ChargePoint(mol,a,null,1);
+						ChargePoint cp = new ChargePoint(mol,a,new ArrayList<Integer>(),1);
 						chargePoints.add(new PPGaussian(7,cp));
 						continue;
 					}
@@ -133,7 +133,7 @@ public class IonizableGroupDetector {
 												ionizableGroup = new ArrayList<Integer>();
 												ionizableGroup.add(a);
 												ionizableGroup.add(aa);
-												ChargePoint cp = new ChargePoint(mol,aa,null,1);
+												ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),1);
 												chargePoints.add(new PPGaussian(6,cp));
 												found = true;
 											}
@@ -152,7 +152,7 @@ public class IonizableGroupDetector {
 				int charge = mol.getAtomCharge(a);
 				if(charge!=0 && !hasCounterChargedNeighbour(a)) {
 					charge = charge>0 ? 1 : -1;
-					ChargePoint cp = new ChargePoint(mol,a,null,charge);
+					ChargePoint cp = new ChargePoint(mol,a,new ArrayList<Integer>(),charge);
 					chargePoints.add(new PPGaussian(mol.getAtomicNo(a),cp));
 				}
 			}
