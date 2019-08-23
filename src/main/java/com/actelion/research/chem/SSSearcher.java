@@ -704,7 +704,7 @@ System.out.println();
 	private boolean doTHParitiesMatch(int excludeGroupNo) {
 		int esrGroupAtomCount = 0;
 		for (int fragmentAtom=0; fragmentAtom<mFragment.getAtoms(); fragmentAtom++) {
-			if (mExcludeGroupNo == null || mExcludeGroupNo[fragmentAtom] == excludeGroupNo
+			if ((mExcludeGroupNo == null || mExcludeGroupNo[fragmentAtom] == excludeGroupNo)
 			 && (mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFMatchStereo) != 0) {
 				int moleculeAtom = mMatchTable[fragmentAtom];
 				int fragmentParity = mFragment.getAtomParity(fragmentAtom);
@@ -754,7 +754,7 @@ System.out.println();
 			int[] esrAtom = new int[esrGroupAtomCount];
 			int esrAtomIndex = 0;
 			for (int fragmentAtom=0; fragmentAtom<mFragment.getAtoms(); fragmentAtom++) {
-				if (mExcludeGroupNo[fragmentAtom] == excludeGroupNo
+				if ((mExcludeGroupNo == null || mExcludeGroupNo[fragmentAtom] == excludeGroupNo)
 				 && (mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFMatchStereo) != 0) {
 					int fragmentParity = mFragment.getAtomParity(fragmentAtom);
 					if (fragmentParity != Molecule.cAtomParityNone
@@ -844,7 +844,8 @@ System.out.println();
 				int fragmentAtom1 = mFragment.getBondAtom(0, fragmentBond);
 				int fragmentAtom2 = mFragment.getBondAtom(1, fragmentBond);
 
-				if ((excludeGroupNo == -1 && mExcludeGroupNo[fragmentAtom1] == -1 && mExcludeGroupNo[fragmentAtom2] == -1)
+				if (mExcludeGroupNo == null
+				 ||	(excludeGroupNo == -1 && mExcludeGroupNo[fragmentAtom1] == -1 && mExcludeGroupNo[fragmentAtom2] == -1)
 				 || (excludeGroupNo != -1 && (mExcludeGroupNo[fragmentAtom1] == excludeGroupNo || mExcludeGroupNo[fragmentAtom2] == excludeGroupNo))) {
 //				if ((mIsExcludeAtom[fragmentAtom1] || mIsExcludeAtom[fragmentAtom2]) == isExcludeGroup) {
 					int moleculeAtom1 = mMatchTable[fragmentAtom1];
