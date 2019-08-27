@@ -3330,6 +3330,15 @@ public class Molecule implements Serializable {
 	public boolean removeQueryFeatures() {
 		boolean isChanged = false;
 
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFExcludeGroup) != 0) {
+				markAtomForDeletion(atom);
+				isChanged = true;
+				}
+			}
+		if (isChanged)
+			deleteMarkedAtomsAndBonds();
+
 		if (mAtomList != null) {
 			mAtomList = null;
 			isChanged = true;
