@@ -1108,14 +1108,14 @@ public class Molecule implements Serializable {
 				esrGroup = destMol.renumberESRGroups(esrType);
 			else	// take existing group and add offset that should be the
 					// ESR group member count of destMol before starting to add atoms
-				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetAND + getAtomESRGroup(sourceAtom));
+				esrGroup = Math.min(cESRMaxGroups-1, esrGroupOffsetAND + getAtomESRGroup(sourceAtom));
 			}
 		else if (esrType == cESRTypeOr) {
 			if (esrGroupOffsetOR == -1)   // create a new ESR group for this atom
 				esrGroup = destMol.renumberESRGroups(esrType);
 			else	// take existing group and add offset that should be the
 					// ESR group member count of destMol before starting to add atoms
-				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetOR + getAtomESRGroup(sourceAtom));
+				esrGroup = Math.min(cESRMaxGroups-1, esrGroupOffsetOR + getAtomESRGroup(sourceAtom));
 			}
 
 		destMol.mAtomicNo[destAtom] = mAtomicNo[sourceAtom];

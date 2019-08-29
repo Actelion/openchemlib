@@ -2303,6 +2303,17 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * @param atom
+	 * @return whether this atom is the central atom of an allene
+	 */
+	public boolean isCentralAlleneAtom(int atom) {
+		return mConnAtoms[atom] == 2
+			&& mConnBondOrder[atom][0] == 2
+			&& mConnBondOrder[atom][1] == 2;
+		}
+
+
+	/**
 	 * Checks whether this nitrogen atom is flat, because it has a double bond,
 	 * is member of an aromatic ring or is part of amide, an enamine or
 	 * in resonance with an aromatic ring. It is also checked that ortho

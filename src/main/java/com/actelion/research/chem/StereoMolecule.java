@@ -427,8 +427,51 @@ public class StereoMolecule extends ExtendedMolecule {
     	mValidHelperArrays &= ~(cHelperParities | cHelperBitIncludeNitrogenParities);
     	}
 
+	/**
+	 * This method translates the parity of a stereo center, if its neighbour atoms are assigned new atom indexes,
+	 * or are assigned to a matching fragment or molecule with different atom indexes.
+	 * Since the tetrahedral stereo parity is based on atom indexes, we need to translate when atom indexes change.
+	 * Assumes helper array state: cHelperParities.
+	 * @param atom
+	 * @param targetAtomIndex mapping from this molecule's atom index to the target molecule's
+	 * @return translated atom parity
+	 */
+	public int translateTHParity(int atom, int[] targetAtomIndex) {
+		int parity = getAtomParity(atom);
+		if (parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2) {
+			boolean inversion = false;
+			if (isCentralAlleneAtom(atom)) {
+				for (int i=0; i<getConnAtoms(atom); i++) {
+					int connAtom = getConnAtom(atom,i);
+					int neighbours = 0;
+					int[] neighbour = new int[3];
+					for (int j=0; j<getConnAtoms(connAtom); j++) {
+						neighbour[neighbours] = getConnAtom(connAtom,j);
+						if (neighbour[neighbours] != atom)
+							neighbours++;
+						}
+					if (neighbours == 2
+					 && ((neighbour[0] < neighbour[1]))
+						^(targetAtomIndex[neighbour[0]] < targetAtomIndex[neighbour[1]]))
+						inversion = !inversion;
+					}
+				}
+			else {
+				for (int i=1; i<getConnAtoms(atom); i++) {
+					for (int j=0; j<i; j++) {
+						int connAtom1 = getConnAtom(atom,i);
+						int connAtom2 = getConnAtom(atom,j);
+						if ((connAtom1 < connAtom2) ^ (targetAtomIndex[connAtom1] < targetAtomIndex[connAtom2]))
+							inversion = !inversion;
+					}
+				}
+			}
+		}
+	return parity;
+	}
 
-    public void validate() throws Exception {
+
+	public void validate() throws Exception {
 		super.validate();
 
 		ensureHelperArrays(cHelperCIP);

@@ -1591,7 +1591,7 @@ System.out.println("noOfRanks:"+canRank);
 			return false;
 
 		if (mMol.getAtomPi(atom) != 0) {
-			if (isCentralAlleneAtom(atom))
+			if (mMol.isCentralAlleneAtom(atom))
 				return canCalcAlleneParity(atom, calcProParity);
 
 			if (mMol.getAtomicNo(atom) != 15
@@ -2089,13 +2089,6 @@ System.out.println("noOfRanks:"+canRank);
 			}
 
 		return true;
-		}
-
-
-	private boolean isCentralAlleneAtom(int atom) {
-		return mMol.getConnAtoms(atom) == 2
-			&& mMol.getConnBondOrder(atom,0) == 2
-			&& mMol.getConnBondOrder(atom,1) == 2;
 		}
 
 
@@ -3512,7 +3505,7 @@ System.out.println();
 			if (mTHParity[atom] == Molecule.cAtomParity1
 			 || mTHParity[atom] == Molecule.cAtomParity2) {
 				boolean inversion = false;
-				if (isCentralAlleneAtom(atom)) {
+				if (mMol.isCentralAlleneAtom(atom)) {
 					for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 						int connAtom = mMol.getConnAtom(atom,i);
 						int neighbours = 0;
