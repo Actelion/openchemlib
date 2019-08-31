@@ -158,7 +158,7 @@ public class ImageClipboardHandler {
 	public static void main(String args[])
 	{
 		Image img = pasteImage();
-		System.out.println("PAsted image is " + img);
+		System.out.println("Pasted image is " + img);
 		copyImage(img);
 		System.out.println("Copied image...");
 	}
