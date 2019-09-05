@@ -1039,7 +1039,8 @@ System.out.println();
 	private boolean doBridgeBondsMatch(boolean[] moleculeAtomUsed, int excludeGroupNo) {
 		if (mBridgeBondList != null) {
 			for (BridgeBond bb:mBridgeBondList) {
-				if ((excludeGroupNo == -1 && mExcludeGroupNo[bb.atom1] == -1 && mExcludeGroupNo[bb.atom2] == -1)
+				if (mExcludeGroupNo == null
+				 ||	(excludeGroupNo == -1 && mExcludeGroupNo[bb.atom1] == -1 && mExcludeGroupNo[bb.atom2] == -1)
 				 || (excludeGroupNo != -1 && (mExcludeGroupNo[bb.atom1] == excludeGroupNo || mExcludeGroupNo[bb.atom2] == excludeGroupNo))) {
 //				if ((mIsExcludeAtom[bb.atom1] || mIsExcludeAtom[bb.atom2]) == isExcludeFragment) {
 					int bridgeSize = mMolecule.getPathLength(mMatchTable[bb.atom1], mMatchTable[bb.atom2], bb.maxBridgeSize+1, moleculeAtomUsed) - 1;

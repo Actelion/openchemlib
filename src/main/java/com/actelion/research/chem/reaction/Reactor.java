@@ -393,8 +393,60 @@ public class Reactor {
 			}
 
 		// copy all bonds of generic product
-		for (int j=0; j<genericProduct.getBonds(); j++)
-			genericProduct.copyBond(product, j, esrGroupCountAND, esrGroupCountOR, newAtomNo, false);
+		for (int gpBond=0; gpBond<genericProduct.getBonds(); gpBond++) {
+			int productBond = genericProduct.copyBond(product, gpBond, esrGroupCountAND, esrGroupCountOR, newAtomNo, false);
+
+			// If we have multiple allowed bond types on generic product bond, then we need to calculate
+			// the new bond order from reactant bond order and generic reaction bond order change.
+			int productQFBondType = genericProduct.getBondQueryFeatures(gpBond) & Molecule.cBondQFBondTypes;
+			if (productQFBondType != 0) {
+				boolean found = false;
+				product.setBondQueryFeature(productBond, Molecule.cBondQFBondTypes, false);
+				int gpMapNo1 = genericProduct.getAtomMapNo(genericProduct.getBondAtom(0, gpBond));
+				int gpMapNo2 = genericProduct.getAtomMapNo(genericProduct.getBondAtom(1, gpBond));
+				for (int i=0; !found && i<mGenericReaction.getReactants(); i++) {
+					StereoMolecule genericReactant = mGenericReaction.getReactant(i);
+					for (int grBond=0; !found && grBond<genericReactant.getBonds(); grBond++) {
+						int grAtom1 = genericReactant.getBondAtom(0, grBond);
+						int grAtom2 = genericReactant.getBondAtom(1, grBond);
+						int grMapNo1 = genericReactant.getAtomMapNo(grAtom1);
+						int grMapNo2 = genericReactant.getAtomMapNo(grAtom2);
+						if (grMapNo1 != 0 && grMapNo2 != 0
+						 && ((grMapNo1 == gpMapNo1 && grMapNo2 == gpMapNo2) || (grMapNo1 == gpMapNo2 && grMapNo2 == gpMapNo1))) {
+							found = true;
+
+							int reactantQFBondType = genericReactant.getBondQueryFeatures(grBond) & Molecule.cBondQFBondTypes;
+							if (reactantQFBondType != 0) {
+								int[] matchingAtom = matchList[i].get(matchListIndex[i]);
+								int rAtom1 = matchingAtom[grAtom1];
+								int rAtom2 = matchingAtom[grAtom2];
+								int rBond = mReactant[i].getBond(rAtom1, rAtom2);
+								int rBondType = mReactant[i].getBondType(rBond);
+								int rBondOrder = mReactant[i].getBondOrder(rBond);
+
+								// only consider simple bond order features
+								reactantQFBondType &= Molecule.cBondQFSingle | Molecule.cBondQFDouble | Molecule.cBondQFTriple;
+								productQFBondType &= Molecule.cBondQFSingle | Molecule.cBondQFDouble | Molecule.cBondQFTriple;
+
+								// increase in bond order
+								if (reactantQFBondType == (Molecule.cBondQFSingle | Molecule.cBondQFDouble)
+								 && productQFBondType == (Molecule.cBondQFDouble | Molecule.cBondQFTriple)) {
+									product.setBondType(productBond, rBondOrder <= 1 ? Molecule.cBondTypeDouble : Molecule.cBondTypeTriple);
+									}
+								// decrease in bond order
+								else if (reactantQFBondType == (Molecule.cBondQFDouble | Molecule.cBondQFTriple)
+								 && productQFBondType == (Molecule.cBondQFSingle | Molecule.cBondQFDouble)) {
+									product.setBondType(productBond, rBondOrder == 3 ? Molecule.cBondTypeDouble : Molecule.cBondTypeSingle);
+									}
+								else {
+									product.setBondType(productBond, rBondType);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 
 		if (esrGroupsChanged) {
 			esrGroupCountAND = product.renumberESRGroups(Molecule.cESRTypeAnd);
