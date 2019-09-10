@@ -2149,8 +2149,8 @@ System.out.println("noOfRanks:"+canRank);
 	private void flagStereoProblems() {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			// if stereo center is declared unknown and no recognized as such; or vice versa
-			if (mMol.isAtomConfigurationUnknown(atom)
-			  ^ mTHParity[atom] == Molecule.cAtomParityUnknown)
+			if (mTHParity[atom] == Molecule.cAtomParityUnknown
+			 && !mMol.isAtomConfigurationUnknown(atom))
 				mMol.setStereoProblem(atom);
 
 			// if no parity found, but atom was assigned to AND or OR group
@@ -2158,6 +2158,11 @@ System.out.println("noOfRanks:"+canRank);
 			  || mMol.getAtomESRType(atom) == Molecule.cESRTypeOr)
 			 && (!mIsStereoCenter[atom]
 			  || mTHParity[atom] == Molecule.cAtomParityUnknown))
+				mMol.setStereoProblem(atom);
+
+			if (mMol.isAtomConfigurationUnknown(atom)
+			 && mTHParity[atom] != Molecule.cAtomParityUnknown
+			 && !isUnknownBINAPBondAtom(atom))
 				mMol.setStereoProblem(atom);
 			}
 
@@ -2187,7 +2192,9 @@ System.out.println("noOfRanks:"+canRank);
 				}
 
 			if (mMol.getBondType(bond) == Molecule.cBondTypeSingle
-			 && mEZParity[bond] == Molecule.cBondParityUnknown) {
+			 && mEZParity[bond] == Molecule.cBondParityUnknown
+			 && !mMol.isAtomConfigurationUnknown(mMol.getBondAtom(0, bond))
+			 && !mMol.isAtomConfigurationUnknown(mMol.getBondAtom(1, bond))) {
 				mMol.setStereoProblem(mMol.getBondAtom(0, bond));
 				mMol.setStereoProblem(mMol.getBondAtom(1, bond));
 				}
@@ -2201,6 +2208,16 @@ System.out.println("noOfRanks:"+canRank);
 				mMol.setStereoProblem(mMol.getBondAtom(1, bond));
 				}
 			}
+		}
+
+
+	private boolean isUnknownBINAPBondAtom(int atom) {
+		for (int i=0; i<mMol.getConnAtoms(atom); i++)
+			if (mEZParity[mMol.getConnBond(atom, i)] == Molecule.cBondParityUnknown
+			 && mMol.getConnBondOrder(atom, i) == 1)
+				return true;
+
+		return false;
 		}
 
 
@@ -2387,6 +2404,7 @@ System.out.println("noOfRanks:"+canRank);
 	/**
 	 * Sets all atoms with TH-parity 'unknown' to explicitly defined 'unknown'.
 	 * Sets all double bonds with EZ-parity 'unknown' to cross bonds.
+	 * Sets the first bond atom of all BINAP type bonds with parity 'unknown' to explicitly defined 'unknown' parity.
 	 */
 	public void setUnknownParitiesToExplicitlyUnknown() {
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
@@ -2395,10 +2413,13 @@ System.out.println("noOfRanks:"+canRank);
 				mMol.setAtomConfigurationUnknown(atom, true);
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			if (mEZParity[bond] == Molecule.cBondParityUnknown) {
-				if (mMol.getBondOrder(bond) == 2) {
+				int order = mMol.getBondOrder(bond);
+				if (order == 1) {
+					mMol.setAtomConfigurationUnknown(mMol.getBondAtom(0, bond), true);
+					}
+				else if (order == 2) {
 			   		mMol.setBondType(bond, Molecule.cBondTypeCross);
 					}
-				// TODO once there is a BINAP config unknown, adapt here
 				}
 			}
 		}

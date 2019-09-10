@@ -237,8 +237,14 @@ public class StereoMolecule extends ExtendedMolecule {
              || getAtomParity(atom) == cAtomParityUnknown)
                 mAtomFlags[atom] &= ~cAtomFlagsESR;
 
-        if (mIsRacemate) {
-                // mIsRacemate is set if molecule was decoded from source that
+		for (int bond=0; bond<getBonds(); bond++)
+			if (getBondOrder(bond) != 1
+			 || getBondParity(bond) == cBondParityNone
+			 || getBondParity(bond) == cBondParityUnknown)
+				mBondFlags[bond] &= ~cBondFlagsESR;
+
+		if (mIsRacemate) {
+                // mIsRacemate is set if molecule was decoded from a source that
                 // contains a non-set chiral flag to indicate that the molecule
                 // is actually a racemate of the drawn structure
 
@@ -403,10 +409,52 @@ public class StereoMolecule extends ExtendedMolecule {
         return scCount;
         }
 
+	public int[][] getERSGroupMemberCounts() {
+		ensureHelperArrays(cHelperParities);
+
+		int[] maxESRGroup = new int[3];
+		for (int atom=0; atom<getAtoms(); atom++) {
+			if (isAtomStereoCenter(atom)) {
+				int type = getAtomESRType(atom);
+				if (type != Molecule.cESRTypeAbs)
+					maxESRGroup[type] = Math.max(maxESRGroup[type], getAtomESRGroup(atom));
+				}
+			}
+		for (int bond=0; bond<getBonds(); bond++) {
+			if ((getBondParity(bond) == Molecule.cBondParityEor1 || getBondParity(bond) == Molecule.cBondParityZor2)
+					&& getBondType(bond) == Molecule.cBondTypeSingle) {
+				int type = getBondESRType(bond);
+				if (type != Molecule.cESRTypeAbs)
+					maxESRGroup[type] = Math.max(maxESRGroup[type], getBondESRGroup(bond));
+				}
+			}
+
+		int[][] esrGroupMembers = new int[3][];
+		esrGroupMembers[Molecule.cESRTypeAnd] = new int[1+maxESRGroup[Molecule.cESRTypeAnd]];
+		esrGroupMembers[Molecule.cESRTypeOr] = new int[1+maxESRGroup[Molecule.cESRTypeOr]];
+		for (int atom=0; atom<getAtoms(); atom++) {
+			if (isAtomStereoCenter(atom)) {
+				int type = getAtomESRType(atom);
+				if (type != Molecule.cESRTypeAbs)
+					esrGroupMembers[type][getAtomESRGroup(atom)]++;
+				}
+			}
+		for (int bond=0; bond<getBonds(); bond++) {
+			if ((getBondParity(bond) == Molecule.cBondParityEor1 || getBondParity(bond) == Molecule.cBondParityZor2)
+					&& getBondType(bond) == Molecule.cBondTypeSingle) {
+				int type = getBondESRType(bond);
+				if (type != Molecule.cESRTypeAbs)
+					esrGroupMembers[type][getBondESRGroup(bond)]++;
+				}
+			}
+
+		return esrGroupMembers;
+		}
 
 	/**
 	 * Sets all atoms with TH-parity 'unknown' to explicitly defined 'unknown'.
 	 * Sets all double bonds with EZ-parity 'unknown' to cross bonds.
+	 * Sets the first bond atom of all BINAP type bonds with parity 'unknown' to explicitly defined 'unknown' parity.
 	 */
 	public void setUnknownParitiesToExplicitlyUnknown() {
 		ensureHelperArrays(cHelperCIP);
