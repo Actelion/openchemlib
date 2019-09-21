@@ -155,6 +155,7 @@ public interface CompoundTableConstants {
     String cColumnPropertyReferenceTypeRedundant = "redundant";	// a connection is always referenced on both records
     String cColumnPropertyReferenceTypeTopDown = "topdown";	// a connection is only referenced from top record
     String cColumnPropertyReferenceMolecule = "refMol";	// idcode+coords to be displayed in every cell
+    String cColumnPropertyFormula = "formula";
 
     String cNativeFileHeaderStart = "<datawarrior-fileinfo>";
     String cNativeFileHeaderEnd = "</datawarrior-fileinfo>";
