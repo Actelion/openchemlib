@@ -247,6 +247,13 @@ public class MolfileParser
 				int bondType = Integer.parseInt(line.substring(6,9).trim());
 				int stereo = (line.length() < 12) ? 0 : parseIntOrSpaces(line.substring(9,12).trim());
 				int topology = (line.length() < 18) ? 0 : parseIntOrSpaces(line.substring(15,18).trim());
+
+				if (bondType == 8
+				 && (mTreatAnyAsMetalBond
+				  || mMol.isMetalAtom(atom1)
+				  || mMol.isMetalAtom(atom2)))
+					bondType = 9;      // metal ligand bond doesn't exist in molfile version 2
+
 				buildBond(atom1,atom2,bondType,stereo,topology);
 			}
 
@@ -958,11 +965,7 @@ public class MolfileParser
 					case 4:
 						realBondType = Molecule.cBondTypeDelocalized;
 						break;
-					case 8:
-						if (mTreatAnyAsMetalBond)
-							realBondType = Molecule.cBondTypeMetalLigand;
-						break;
-					case 9:
+					case 9: // exists in version 3 only
 						realBondType = Molecule.cBondTypeMetalLigand;
 						break;
 				}
@@ -988,7 +991,7 @@ public class MolfileParser
 					queryFeatures |= Molecule.cBondQFDouble | Molecule.cBondQFDelocalized;
 					break;
 				case 8:
-					if (!mTreatAnyAsMetalBond)
+					if (realBondType != Molecule.cBondTypeMetalLigand)
 						queryFeatures |= Molecule.cBondQFBondTypes;
 					break;
 			}

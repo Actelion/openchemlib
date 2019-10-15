@@ -39,6 +39,33 @@ import java.util.*;
 
 public class ArrayUtils {
 
+
+	public static boolean equals(int [] a, int [] b){
+
+		boolean eq = true;
+
+		if(a==null && b==null){
+			return true;
+		} else if(a==null){
+			return false;
+		} else if(b==null){
+			return false;
+		}
+
+		if(a.length!=b.length){
+			return false;
+		}
+
+		for (int i = 0; i < a.length; i++) {
+			if(a[i]!=b[i]){
+				eq=false;
+				break;
+			}
+		}
+
+		return eq;
+	}
+
 	/**
 	 * Resize an array 
 	 */
