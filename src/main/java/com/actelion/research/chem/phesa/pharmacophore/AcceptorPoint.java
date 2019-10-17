@@ -1,7 +1,6 @@
 package com.actelion.research.chem.phesa.pharmacophore;
 
 import java.util.ArrayList;
-
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
@@ -16,6 +15,19 @@ public class AcceptorPoint implements IPharmacophorePoint {
 	
 	public AcceptorPoint(StereoMolecule mol, int a, ArrayList<Integer> neighbours, int interactionClass) {
 		this(mol, a, neighbours, interactionClass, 0);
+	}
+	
+	public AcceptorPoint(AcceptorPoint aP) {
+		acceptorAtom = aP.acceptorAtom;
+		neighbours = new ArrayList<Integer>();
+		for(int neighbour : aP.neighbours) {
+			neighbours.add(neighbour);
+		}
+		
+		directionality = new Coordinates(aP.directionality);
+		interactionClass = aP.interactionClass;
+		center = new Coordinates(aP.center);
+		acceptorID = aP.acceptorID;
 	}
 	
 	public AcceptorPoint(StereoMolecule mol, int a, ArrayList<Integer> neighbours, int interactionClass, int acceptorID) {
@@ -148,6 +160,24 @@ public class AcceptorPoint implements IPharmacophorePoint {
 	
 	public int getAcceptorID() {
 		return acceptorID;
+	}
+
+	@Override
+	public void updateAtomIndeces(int[] map) {
+		acceptorAtom = map[acceptorAtom];
+		if(acceptorID==2)
+			return; //only update list once for atoms with two acceptors
+		for(int i=0;i<neighbours.size();i++) {
+			int neighbour = map[neighbours.get(i)];
+			neighbours.set(i, neighbour);
+		}
+
+		
+	}
+
+	@Override
+	public IPharmacophorePoint copyPharmacophorePoint() {
+		return new AcceptorPoint(this);
 	}
 
 

@@ -21,6 +21,17 @@ public class ChargePoint implements IPharmacophorePoint {
 		this.charge = charge;
 		updateCoordinates(mol);
 	}
+	
+	public ChargePoint(ChargePoint cP) {
+		chargeAtom = cP.chargeAtom;
+		charge = cP.charge;
+		directionality = new Coordinates(cP.directionality);
+		center = new Coordinates(cP.center);
+		neighbours = new ArrayList<Integer>();
+		for(int neighbour : cP.neighbours) {
+			neighbours.add(neighbour);
+		}
+	}
 
 	@Override
 	public Coordinates getCenter() {
@@ -107,6 +118,18 @@ public class ChargePoint implements IPharmacophorePoint {
 	
 	public int getCharge() {
 		return charge;
+	}
+	
+	@Override
+	public void updateAtomIndeces(int[] map) {
+		chargeAtom = map[chargeAtom];
+		
+	}
+
+	@Override
+	public IPharmacophorePoint copyPharmacophorePoint() {
+		// TODO Auto-generated method stub
+		return new ChargePoint(this);
 	}
 
 }

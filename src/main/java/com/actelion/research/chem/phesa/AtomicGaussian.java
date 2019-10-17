@@ -23,11 +23,11 @@ public class AtomicGaussian extends Gaussian3D {
 
 	
 	public AtomicGaussian(int atomId,int atomicNo,Coordinates center){
-		super(atomId,atomicNo,center);
+		super(atomId,atomicNo,center,1.0);
 	}
 	
 	public AtomicGaussian(AtomicGaussian original){
-		super(original.atomId,original.atomicNo,original.center);
+		super(original.atomId,original.atomicNo,original.center, original.weight);
 
 	}
 	

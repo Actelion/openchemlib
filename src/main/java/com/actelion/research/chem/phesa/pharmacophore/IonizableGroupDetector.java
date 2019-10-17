@@ -129,7 +129,7 @@ public class IonizableGroupDetector {
 										if(mol.getAtomicNo(aaa)==7 && mol.getConnAtoms(a)<=2) {
 											if(mol.getBondOrder(mol.getBond(aa, aaa))==2)nDBs++;
 											if(nDBs==2) { //Amidine
-												System.out.println("amidine");
+
 												ionizableGroup = new ArrayList<Integer>();
 												ionizableGroup.add(a);
 												ionizableGroup.add(aa);
@@ -163,8 +163,8 @@ public class IonizableGroupDetector {
 
 	
 	private boolean hasCounterChargedNeighbour(int a) {
-		for(int aa=0;aa<mol.getAtoms();aa++) {
-			if(mol.getAtomCharge(a)*mol.getAtomCharge(aa)<0)
+		for(int aa=0;aa<mol.getConnAtoms(a);aa++) {
+			if(mol.getAtomCharge(a)*mol.getAtomCharge(mol.getConnAtom(a,aa))<0)
 				return true;
 		}
 		return false;

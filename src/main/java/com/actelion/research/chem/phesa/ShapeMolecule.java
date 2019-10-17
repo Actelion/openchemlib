@@ -25,6 +25,12 @@ public class ShapeMolecule {
 		this.shape = new ArrayList<MolecularVolume>();
 	}
 	
+	public ShapeMolecule(StereoMolecule mol, MolecularVolume shape) {
+		this.mol = new StereoMolecule();
+		this.shape = new ArrayList<MolecularVolume>();
+		this.shape.add(shape);
+	}
+	
 	public ShapeMolecule(StereoMolecule mol, ArrayList<MolecularVolume> shape) {
 		this.mol = mol;
 		this.shape = shape;

@@ -120,20 +120,21 @@ public class ShapeAlignment {
 			u.set(2,2,-u.get(2, 2));
 		}
 		
-		for (AtomicGaussian ag : molGauss.getAtomicGaussians()){
-			ag.getCenter().rotate(u.getArray());
-		}
+		//for (AtomicGaussian ag : molGauss.getAtomicGaussians()){
+		//	ag.getCenter().rotate(u.getArray());
+		//}
 		
-		for (PPGaussian pg : molGauss.getPPGaussians()){
-			pg.getCenter().rotate(u.getArray());
+		//for (PPGaussian pg : molGauss.getPPGaussians()){
+		//	pg.getCenter().rotate(u.getArray());
 
-		}
-
-
+		//}
 		rotateMol(mol,u);
+		molGauss.update(mol);
 		return u;
 		
 	}
+	
+	
 	
 	
 	/**
@@ -207,10 +208,7 @@ public class ShapeAlignment {
 		for(ExclusionGaussian refEx:refMolGauss.getExclusionGaussians()){
 			int index = 0;
 			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()){
-				System.out.println("exclusion");
-				System.out.println(Vtot);
 				Vtot -= refEx.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
-				System.out.println(Vtot);
 				index+=1;	
 			}
 		}

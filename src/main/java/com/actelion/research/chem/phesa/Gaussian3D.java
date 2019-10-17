@@ -30,11 +30,11 @@ public abstract class Gaussian3D {
 	protected double weight;
 
 	
-	public Gaussian3D(int atomId, int atomicNo, Coordinates center){
-		this.weight = 1.0;
+	public Gaussian3D(int atomId, int atomicNo, Coordinates center, double weight){
+		this.weight = weight;
 		this.atomId = atomId;
 		this.atomicNo = atomicNo;
-		this.center=center;
+		this.center  = center;
 		this.coeff = calculateHeight();
 		this.alpha = calculateWidth();
 		this.volume = calculateVolume();
@@ -166,6 +166,10 @@ public abstract class Gaussian3D {
 	public void updateCoordinates(StereoMolecule mol) {
 		center = new Coordinates(mol.getCoordinates(atomId));
 
+	}
+	
+	public void updateAtomIndeces(int[] map) {
+		atomId = map[atomId];
 	}
 	
 	abstract public String encode();

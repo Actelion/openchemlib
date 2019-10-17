@@ -114,15 +114,16 @@ public class TorsionDescriptorHelper {
 			if (mol.isMarkedAtom(bondAtom))
 				return false;
 
-			if (mol.getAtomPi(bondAtom) == 2) {
+			if (mol.getConnAtoms(bondAtom) == 2 && mol.getAtomPi(bondAtom) == 2) {
 				int otherBondAtom = mol.getBondAtom(1-i, bond);
-				if (mol.getAtomPi(otherBondAtom) == 2)
+				if (mol.getConnAtoms(otherBondAtom) == 2 && mol.getAtomPi(otherBondAtom) == 2)
 					return false;
 				int[] atom = new int[2];
 				atom[0] = otherBondAtom;
 				atom[1] = bondAtom;
-				bondAtom = getFirstNonSPAtom(mol, atom);
-				if (bondAtom == -1 || bondAtom < otherBondAtom) // we only take one bond (that with the lower atom index)
+				if (!getFirstNonSPAtom(mol, atom))
+					return false;
+				if (atom[1] < otherBondAtom) // we only take one bond (that with the lower atom index)
 					return false;
 				}
 
@@ -142,23 +143,30 @@ public class TorsionDescriptorHelper {
 		return true;
 		}
 
-	private static int getFirstNonSPAtom(StereoMolecule mol, int[] atom) {
-		if (mol.getConnAtoms(atom[1]) == 2) {
-			for (int i=0; i<2; i++) {
-				int nextAtom = mol.getConnAtom(atom[1], i);
-				if (nextAtom != atom[0]) {
-					if (mol.getAtomPi(nextAtom) == 2) {
-						atom[0] = atom[1];
-						atom[1] = nextAtom;
-						return getFirstNonSPAtom(mol, atom);
-						}
-					else {
-						return nextAtom;
-						}
-					}
+	/**
+	 * Stepwise walks along the sp-atom chain starting from the connected atoms in the atom array
+	 * away from atom[0] and updates the atom[] array with the atom indexes of the neighbor bond
+	 * until atom[1] is a non-sp-atom and atom[0] is the last sp-atom seen of the chain,
+	 * (which, of course, is a direct neighbor of atom[1]).
+	 * @param mol
+	 * @param atom contains two connected atoms, of which atom[1] is sp-hybridized
+	 * @return false if the end of the chain is a sp-hybridized atom
+	 */
+	private static boolean getFirstNonSPAtom(StereoMolecule mol, int[] atom) {
+		for (int i=0; i<2; i++) {
+			int nextAtom = mol.getConnAtom(atom[1], i);
+			if (nextAtom != atom[0]) {
+				atom[0] = atom[1];
+				atom[1] = nextAtom;
+				if (mol.getConnAtoms(nextAtom) > 2 || mol.getAtomPi(nextAtom) != 2)
+					return true;
+				if (mol.getConnAtoms(nextAtom) == 1)
+					return false;
+
+				return getFirstNonSPAtom(mol, atom);
 				}
 			}
-		return -1;
+		return false;	// should never happen
 		}
 
 	private void findAtomSequences() {
@@ -169,16 +177,14 @@ public class TorsionDescriptorHelper {
 		int[] atom = new int[2];	// rear bond atom, front bond atom, first conn atom
 		for (int i=0; i<mRotatableBond.length; i++) {
 			for (int j=0; j<2; j++) {
-				mAtomSequence[i][1+j] = mMol.getBondAtom(j, mRotatableBond[i]);
-				if (mMol.getAtomPi(mAtomSequence[i][1+j]) == 2) {
-					atom[0] = mMol.getBondAtom(1-j, mRotatableBond[i]);
-					atom[1] = mMol.getBondAtom(j, mRotatableBond[i]);
-					mAtomSequence[i][1+j] = getFirstNonSPAtom(mMol, atom);
-					mRearAtom[i][j] = atom[0];
-					}
-				else {
-					mRearAtom[i][j] = mMol.getBondAtom(1-j, mRotatableBond[i]);
-					}
+				atom[0] = mMol.getBondAtom(1-j, mRotatableBond[i]);
+				atom[1] = mMol.getBondAtom(j, mRotatableBond[i]);
+
+				if (mMol.getConnAtoms(atom[1]) == 2 && mMol.getAtomPi(atom[1]) == 2)
+					getFirstNonSPAtom(mMol, atom);
+
+				mAtomSequence[i][1+j] = atom[1];
+				mRearAtom[i][j] = atom[0];
 				}
 
 			int halfSymmetry1 = getHalfSymmetry(mAtomSequence[i][1], mRearAtom[i][0]);

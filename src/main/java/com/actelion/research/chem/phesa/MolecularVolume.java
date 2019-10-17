@@ -10,6 +10,8 @@ import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 
 import java.util.ArrayList;
+import java.util.List;
+
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 
@@ -56,6 +58,9 @@ public class MolecularVolume {
 		}
 		
 		this.exclusionGaussians = new ArrayList<ExclusionGaussian>();
+		for(ExclusionGaussian eg : exclusionGaussians) {
+			this.exclusionGaussians.add(new ExclusionGaussian(eg));
+		}
 		
 
 		this.calcCOM();
@@ -67,6 +72,18 @@ public class MolecularVolume {
 	public void updateCOM() {
 		this.calcCOM();
 	}
+	
+	private void updateAtomIndeces(List<? extends Gaussian3D> gaussians,int[] map) {
+		for(Gaussian3D gaussian:gaussians)
+			gaussian.updateAtomIndeces(map);
+	}
+	
+	public void updateAtomIndeces(int[] map) {
+		updateAtomIndeces(ppGaussians,map);
+		updateAtomIndeces(atomicGaussians,map);
+		updateAtomIndeces(exclusionGaussians,map);
+	}
+	
 
 
 	
@@ -105,7 +122,7 @@ public class MolecularVolume {
 			this.exclusionGaussians.add(new ExclusionGaussian(eg));
 		}
 		
-		this.com = original.com;
+		this.com = new Coordinates(original.com);
 		
 	}
 	
@@ -266,6 +283,7 @@ public class MolecularVolume {
 	}
 
 	public Coordinates getCOM() {
+		this.calcCOM();
 		return this.com;
 	}
 
@@ -307,6 +325,18 @@ public class MolecularVolume {
 		}
 
 		return conformer;
+	}
+	
+	public void update(StereoMolecule mol) {
+		updateCoordinates(getAtomicGaussians(),mol);
+		updateCoordinates(getPPGaussians(),mol);
+	}
+	
+	private void updateCoordinates(ArrayList<? extends Gaussian3D> gaussians, StereoMolecule mol) {
+		for(Gaussian3D gaussian : gaussians) {
+			gaussian.updateCoordinates(mol);
+		}
+		
 	}
 
 	
@@ -518,7 +548,6 @@ public class MolecularVolume {
 			hydrogens.add(new Coordinates(coords[i*3],coords[i*3+1],coords[i*3+2]));
 			
 		}
-
 
 		return new MolecularVolume(atomicGaussians,ppGaussians,exclusionGaussians,hydrogens);
 	}

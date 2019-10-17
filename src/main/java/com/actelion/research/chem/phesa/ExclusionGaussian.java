@@ -11,15 +11,15 @@ public class ExclusionGaussian extends Gaussian3D {
 	private Coordinates referenceVector;
 	
 	public ExclusionGaussian(int atomId,int atomicNo,Coordinates center, Coordinates shiftVector){
-		super(atomId,atomicNo,center.addC(shiftVector));
+		super(atomId,atomicNo,center.addC(shiftVector),1.0);
 		this.shiftVector = shiftVector;
 		this.referenceVector = center;
 	}
 	
 	public ExclusionGaussian(ExclusionGaussian original){
-		super(original.atomId,original.atomicNo,original.center);
-		this.shiftVector = original.shiftVector;
-		this.referenceVector = original.referenceVector;
+		super(original.atomId,original.atomicNo,original.center, original.weight);
+		this.shiftVector = new Coordinates(original.shiftVector);
+		this.referenceVector = new Coordinates(original.referenceVector);
 	}
 	
 	private ExclusionGaussian(String encodedGaussian) {
@@ -58,6 +58,7 @@ public class ExclusionGaussian extends Gaussian3D {
 		referenceVector = new Coordinates(coords[0],coords[1],coords[2]);
 		shiftVector = new Coordinates(shift[0],shift[1],shift[2]);
 		center = referenceVector.addC(shiftVector);
+		weight = 1.0;
 		
 	}
 

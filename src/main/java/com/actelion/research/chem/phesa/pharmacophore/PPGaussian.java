@@ -29,15 +29,15 @@ public class PPGaussian extends Gaussian3D {
 
 	
 	public PPGaussian(int atomicNo,IPharmacophorePoint pp){
-		super(pp.getCenterID(),atomicNo,pp.getCenter());
+		super(pp.getCenterID(),atomicNo,pp.getCenter(), 1.0);
 		this.pp = pp;
 
 		
 	}
 	
 	public PPGaussian(PPGaussian original){
-		super(original.atomId,original.atomicNo,original.center);
-		this.pp = original.pp;
+		super(original.atomId,original.atomicNo,original.center,original.weight);
+		this.pp = original.pp.copyPharmacophorePoint();
 		
 
 	}
@@ -147,6 +147,12 @@ public class PPGaussian extends Gaussian3D {
 	public void updateCoordinates(StereoMolecule mol) {
 		pp.updateCoordinates(mol);
 		center = pp.getCenter();
+	}
+	
+	@Override
+	public void updateAtomIndeces(int[] map) {
+		atomId = map[atomId];
+		pp.updateAtomIndeces(map);
 	}
 
 	@Override

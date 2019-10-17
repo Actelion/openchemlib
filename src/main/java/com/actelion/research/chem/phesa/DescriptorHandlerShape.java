@@ -115,12 +115,12 @@ public class DescriptorHandlerShape implements DescriptorHandler<ShapeMolecule,S
 	public ShapeMolecule createDescriptor(StereoMolecule mol) {
 		StereoMolecule shapeMolecule = new StereoMolecule(mol);
 		boolean has3Dcoordinates = false;
-		for (int atom=0; atom<shapeMolecule.getAllAtoms(); atom++) {
-			if (shapeMolecule.getAtomZ(atom) != 0.0) {
+		for (int atom=1; atom<mol.getAllAtoms(); atom++) {
+			if (Math.abs(mol.getAtomZ(atom) - mol.getAtomZ(0)) > 0.1) {
 				has3Dcoordinates = true;
 				break;
 				}
-		}
+			}
 		shapeMolecule.stripSmallFragments();
 		new Canonizer(shapeMolecule);
 		shapeMolecule.ensureHelperArrays(StereoMolecule.cHelperCIP);
@@ -151,7 +151,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<ShapeMolecule,S
 	 */
 	
 	public float getSimilarity(ShapeMolecule query, ShapeMolecule base) {
-		StereoMolecule[] bestPair = new StereoMolecule[2];
+		StereoMolecule[] bestPair = {base.getMolecule(),query.getMolecule()};
 		ArrayList<MolecularVolume>  molVolQuery = query.getVolumes();
 		ArrayList<MolecularVolume>  molVolBase = base.getVolumes();
 		float maxSimilarity=0.0f;
@@ -291,7 +291,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<ShapeMolecule,S
 		}
 	}
 	
-	public ShapeMolecule getDecodedObject(String string64)  {
+	private ShapeMolecule getDecodedObject(String string64)  {
 		String[] splitted = string64.split("   ");
 		String idcode = splitted[splitted.length-2];
 		String idcoords = splitted[splitted.length-1];

@@ -2,9 +2,7 @@ package com.actelion.research.chem.phesa.pharmacophore;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
-import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 public class DonorPoint implements IPharmacophorePoint {
 	private int donorAtom;
@@ -23,6 +21,14 @@ public class DonorPoint implements IPharmacophorePoint {
 	
 	private DonorPoint(String ppString, StereoMolecule mol) {
 		decode(ppString,mol);
+	}
+	
+	public DonorPoint(DonorPoint dP) {
+		donorAtom = dP.donorAtom;
+		donorHydrogen = dP.donorHydrogen;
+		directionality = new Coordinates(dP.directionality);
+		interactionClass = dP.interactionClass;
+		center = new Coordinates(dP.center);
 	}
 	
 	public static DonorPoint fromString(String ppString, StereoMolecule mol) {
@@ -95,6 +101,19 @@ public class DonorPoint implements IPharmacophorePoint {
 	public void setDirectionality(Coordinates directionality) {
 		this.directionality = directionality;
 		
+	}
+	
+	@Override
+	public void updateAtomIndeces(int[] map) {
+		donorAtom = map[donorAtom];
+		donorHydrogen = map[donorHydrogen];
+		
+	}
+
+	@Override
+	public IPharmacophorePoint copyPharmacophorePoint() {
+		// TODO Auto-generated method stub
+		return new DonorPoint(this);
 	}
 	
 
