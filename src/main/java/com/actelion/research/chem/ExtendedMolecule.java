@@ -2309,7 +2309,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	public boolean isCentralAlleneAtom(int atom) {
 		return mConnAtoms[atom] == 2
 			&& mConnBondOrder[atom][0] == 2
-			&& mConnBondOrder[atom][1] == 2;
+			&& mConnBondOrder[atom][1] == 2
+			&& mAtomicNo[atom] <= 7;
 		}
 
 

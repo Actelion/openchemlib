@@ -2,6 +2,7 @@ package com.actelion.research.chem.conf;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.sun.javafx.collections.ListListenerHelper;
 
 public class TorsionDescriptorHelper {
 	private static final int SYMMETRY_360 = 0;  // 0 -> 359 degrees
@@ -83,56 +84,78 @@ public class TorsionDescriptorHelper {
 	 * Calculates an array of all rotatable bonds that can be used
 	 * multiple times as parameter to calculateDescriptor().
 	 * If the molecule contains marked atoms, these are not considered
-	 * part of the molecule, when detecting rotatable bonds. Any non-aromatic
-	 * single bond with at least one non-H, non-marked neighbor to either side
+	 * part of the molecule, when detecting rotatable bonds. Any non-aromatic,
+	 * non-3-ring single bond with at least one non-H, non-marked neighbor to either side
 	 * is considered a rotatable bond, if none of the bond atoms is marked.
+	 * An exception are linear chains of sp-hybridized atoms, of which not more than one
+	 * bond is considered rotatable.
 	 */
 	public static int[] findRotatableBonds(StereoMolecule mol) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 
+		boolean[] isRotatableBond = new boolean[mol.getBonds()];
 		int count = 0;
-		for (int bond=0; bond<mol.getBonds(); bond++)
-			if (qualifiesAsDescriptorBond(mol, bond))
+		for (int bond=0; bond<mol.getBonds(); bond++) {
+			if (qualifiesAsDescriptorBond(mol, bond)) {
+				isRotatableBond[bond] = true;
 				count++;
+				}
+			}
 
 		int[] rotatableBond = new int[count];
 
 		count = 0;
 		for (int bond=0; bond<mol.getBonds(); bond++)
-			if (qualifiesAsDescriptorBond(mol, bond))
+			if (isRotatableBond[bond])
 				rotatableBond[count++] = bond;
 
 		return rotatableBond;
 		}
 
 	private static boolean qualifiesAsDescriptorBond(StereoMolecule mol, int bond) {
-		if (mol.getBondOrder(bond) != 1 || mol.isAromaticBond(bond))
+		if (mol.getBondOrder(bond) != 1
+		 || mol.isAromaticBond(bond)
+		 || mol.getBondRingSize(bond) == 3
+		 || mol.isMarkedAtom(mol.getBondAtom(0, bond))
+		 || mol.isMarkedAtom(mol.getBondAtom(1, bond)))
 			return false;
 
-		for (int i=0; i<2; i++) {
-			int bondAtom = mol.getBondAtom(i, bond);
-			if (mol.isMarkedAtom(bondAtom))
-				return false;
+		int[] bondAtom = new int[2];
+		for (int i=0; i<2; i++)
+			bondAtom[i] = mol.getBondAtom(i, bond);
 
-			if (mol.getConnAtoms(bondAtom) == 2 && mol.getAtomPi(bondAtom) == 2) {
-				int otherBondAtom = mol.getBondAtom(1-i, bond);
-				if (mol.getConnAtoms(otherBondAtom) == 2 && mol.getAtomPi(otherBondAtom) == 2)
-					return false;
-				int[] atom = new int[2];
-				atom[0] = otherBondAtom;
-				atom[1] = bondAtom;
-				if (!getFirstNonSPAtom(mol, atom))
-					return false;
-				if (atom[1] < otherBondAtom) // we only take one bond (that with the lower atom index)
-					return false;
+		if (isLinearAtom(mol, bondAtom[0])
+		 || isLinearAtom(mol, bondAtom[1])) {
+			int[] maxBond = new int[1];
+			maxBond[0] = bond;
+
+			int[][] chainEndAtom = new int[2][];
+			for (int i=0; i<2; i++) {
+				if (isLinearAtom(mol, bondAtom[i])) {
+					chainEndAtom[i] = new int[2];
+					chainEndAtom[i][0] = bondAtom[1-i];
+					chainEndAtom[i][1] = bondAtom[i];
+					if (!getFirstNonSPAtom(mol, chainEndAtom[i], maxBond))
+						return false;
+					}
 				}
 
-			int connAtoms = mol.getConnAtoms(bondAtom);
+			if (maxBond != null && bond != maxBond[0])	// in case of linear chains, we only consider the bond with the highest index rotatable
+				return false;
+
+			// now we replace the bondAtom by the end-of-chain atom
+			for (int i=0; i<2; i++)
+				if (chainEndAtom[i] != null)
+					bondAtom[i] = chainEndAtom[i][1];
+			}
+
+		for (int i=0; i<2; i++) {
+			int connAtoms = mol.getConnAtoms(bondAtom[i]);
 			if (connAtoms == 1)
 				return false;
 			int qualifiedConnAtoms = 0;
 			for (int j=0; j<connAtoms; j++) {
-				int connAtom = mol.getConnAtom(bondAtom, j);
+				int connAtom = mol.getConnAtom(bondAtom[i], j);
 				if (!mol.isMarkedAtom(connAtom))
 					qualifiedConnAtoms++;
 				}
@@ -144,26 +167,43 @@ public class TorsionDescriptorHelper {
 		}
 
 	/**
+	 * @param mol
+	 * @param atom
+	 * @return whether the atom is a sp-hybridized atom with exactly two non-hydrogen neighbours
+	 */
+	private static boolean isLinearAtom(StereoMolecule mol, int atom) {
+		return mol.getConnAtoms(atom) == 2 && mol.getAtomPi(atom) == 2 && mol.getAtomicNo(atom) <= 7;
+	}
+
+	/**
 	 * Stepwise walks along the sp-atom chain starting from the connected atoms in the atom array
 	 * away from atom[0] and updates the atom[] array with the atom indexes of the neighbor bond
 	 * until atom[1] is a non-sp-atom and atom[0] is the last sp-atom seen of the chain,
 	 * (which, of course, is a direct neighbor of atom[1]).
 	 * @param mol
 	 * @param atom contains two connected atoms, of which atom[1] is sp-hybridized
+	 * @param maxBond null or contains the highest non-marked rotatable bond in the chain
 	 * @return false if the end of the chain is a sp-hybridized atom
 	 */
-	private static boolean getFirstNonSPAtom(StereoMolecule mol, int[] atom) {
+	private static boolean getFirstNonSPAtom(StereoMolecule mol, int[] atom, int[] maxBond) {
 		for (int i=0; i<2; i++) {
 			int nextAtom = mol.getConnAtom(atom[1], i);
 			if (nextAtom != atom[0]) {
+				int nextBond = mol.getConnBond(atom[1], i);
+
 				atom[0] = atom[1];
 				atom[1] = nextAtom;
-				if (mol.getConnAtoms(nextAtom) > 2 || mol.getAtomPi(nextAtom) != 2)
-					return true;
+
 				if (mol.getConnAtoms(nextAtom) == 1)
 					return false;
 
-				return getFirstNonSPAtom(mol, atom);
+				if (maxBond != null && !mol.isMarkedAtom(atom[0]) && !mol.isMarkedAtom(atom[1]))
+					maxBond[0] = Math.max(maxBond[0], nextBond);
+
+				if (!isLinearAtom(mol, nextAtom))
+					return true;
+
+				return getFirstNonSPAtom(mol, atom, maxBond);
 				}
 			}
 		return false;	// should never happen
@@ -180,8 +220,8 @@ public class TorsionDescriptorHelper {
 				atom[0] = mMol.getBondAtom(1-j, mRotatableBond[i]);
 				atom[1] = mMol.getBondAtom(j, mRotatableBond[i]);
 
-				if (mMol.getConnAtoms(atom[1]) == 2 && mMol.getAtomPi(atom[1]) == 2)
-					getFirstNonSPAtom(mMol, atom);
+				if (isLinearAtom(mMol, atom[1]))
+					getFirstNonSPAtom(mMol, atom, null);
 
 				mAtomSequence[i][1+j] = atom[1];
 				mRearAtom[i][j] = atom[0];

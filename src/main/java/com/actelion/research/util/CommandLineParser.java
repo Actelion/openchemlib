@@ -113,7 +113,7 @@ public class CommandLineParser {
             String s0 = args[index];
 
             if(!s0.startsWith("-")){
-                throw new RuntimeException("Wrong command line argument");
+                throw new RuntimeException("Wrong command line argument '" + s0 + "'");
             }
 
             String s1 = null;
