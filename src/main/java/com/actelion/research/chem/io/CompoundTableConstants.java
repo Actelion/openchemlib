@@ -154,11 +154,15 @@ public interface CompoundTableConstants {
     String cColumnPropertyReferenceType = "refType";
     String cColumnPropertyReferenceTypeRedundant = "redundant";	// a connection is always referenced on both records
     String cColumnPropertyReferenceTypeTopDown = "topdown";	// a connection is only referenced from top record
-    String cColumnPropertyReferenceMolecule = "refMol";	// idcode+coords to be displayed in every cell
     String cColumnPropertyFormula = "formula";
-    String cColumnPropertySuperpose = "superpose";  // "reference" or null
+    String cColumnPropertySuperposeMolecule = "superposeMol";	// idcode+coords to be displayed in every cell
+    String cColumnPropertySuperpose = "superpose";  // cSuperposeValueReferenceRow or null
+    String cColumnPropertySuperposeAlign = "align";  // cSuperposeAlignValueShape or null
     String cColumnPropertyCommentUploadStatus = "commentUploadStatus";
     String cColumnPropertyCommentDepartment = "commentDepartment";
+
+    String cSuperposeValueReferenceRow = "refRow";  // "reference" or null
+    String cSuperposeAlignValueShape = "shape";  // "reference" or null
 
     String cNativeFileHeaderStart = "<datawarrior-fileinfo>";
     String cNativeFileHeaderEnd = "</datawarrior-fileinfo>";
