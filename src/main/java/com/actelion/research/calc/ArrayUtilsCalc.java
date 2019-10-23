@@ -397,6 +397,14 @@ public class ArrayUtilsCalc {
         return b;
     }
 
+	public final static int sum(long [] a) {
+        int b = 0;
+        for (int ii = 0; ii < a.length; ii++) {
+          b += a[ii];
+        }
+        return b;
+    }
+
 	public final static int sum(byte [] a) {
         int b = 0;
         for (int ii = 0; ii < a.length; ii++) {
