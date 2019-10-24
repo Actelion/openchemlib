@@ -44,22 +44,53 @@ import com.actelion.research.chem.StereoMolecule;
 
 public class Reactor {
 	private Reaction			mGenericReaction;
+	private SSSearcher			mSSSearcher;
 	private	StereoMolecule[]	mReactant;
 	private ArrayList<StereoMolecule>[] mProductList;
 	private SortedStringList[]	mIDCodeList;
 	private int[][]				mMinFreeValence;	// minimum required free valence on reactant atoms
 	private boolean[][]			mIsReactionCenter;	// reaction center flags on product atoms
-	private boolean			 mRetainCoordinates;
-	
+	private boolean				mRetainCoordinates, mFullyMapReactions;
+	private int					mMaxGenericMapNo;
+	private int[][][]			mReactantMapNo;
+	private int[]				mFirstMapNo;
+	private ArrayList<int[]>[]	mMatchList;
+	private ArrayList<int[][]>	mReactantMapNoList;
+
+	/**
+	 * Constructs a Reactor that is able to construct products from a generic reaction (transformation)
+	 * and a list of real world reactants. Reactors built with this constructor will not use product
+	 * atom coordinates from the generic products, nor will they be able to generate fully mapped reactions.
+	 * @param reaction generic reactions consisting of reactant substructures with optional query features
+	 */
 	public Reactor(Reaction reaction) {
-		this(reaction, false);
+		this(reaction, false, false);
 		}
 
+	/**
+	 * Constructs a Reactor that is able to construct products from a generic reaction (transformation)
+	 * and a list of real world reactants. Reactors built with this constructor will be able to generate
+	 * fully mapped reactions.
+	 * @param reaction generic reactions consisting of reactant substructures with optional query features
+	 * @param retainCoordinates if true, then atom coordinates from the generic products are taken into the real world products
+	 */
 	public Reactor(Reaction reaction, boolean retainCoordinates) {
+		this(reaction, retainCoordinates, false);
+		}
+
+	/**
+	 * Constructs a Reactor that is able to construct products from a generic reaction (transformation)
+	 * and a list of real world reactants.
+	 * @param reaction generic reactions consisting of reactant substructures with optional query features
+	 * @param retainCoordinates if true, then atom coordinates from the generic products are taken into the real world products
+	 * @param fullyMapReactions if true, then real world reactants and products will have valid mapping numbers after product generation
+	 */
+	public Reactor(Reaction reaction, boolean retainCoordinates, boolean fullyMapReactions) {
 		// If retainCoordinates is true, then the relative orientation of the
 		// generic product's atom coordinates are retained in the real products.
 		mGenericReaction = reaction;
 		mRetainCoordinates = retainCoordinates;
+		mFullyMapReactions = fullyMapReactions;
 		mReactant = new StereoMolecule[reaction.getReactants()];
 
 					// for sub-structure-search all generic reactants must be fragments
@@ -88,6 +119,8 @@ public class Reactor {
 								}
 							}
 						}
+					if (mMaxGenericMapNo < mapNo)
+						mMaxGenericMapNo = mapNo;
 					}
 				}
 			}
@@ -155,6 +188,25 @@ public class Reactor {
 					}
 				}
 			}
+
+		mSSSearcher = new SSSearcher();
+		mMatchList = new ArrayList[mReactant.length];
+
+		if (mFullyMapReactions) {
+			mReactantMapNo = new int[mReactant.length][][];
+			mFirstMapNo = new int[mReactant.length];
+			mFirstMapNo[0] = mMaxGenericMapNo+1;
+			for (int i=1; i<mReactant.length; i++) {
+				StereoMolecule gr = mGenericReaction.getReactant(i-1);
+				mFirstMapNo[i] = mFirstMapNo[i-1] + mReactant[i-1].getAtoms();
+				for (int atom=0; atom<gr.getAtoms(); atom++)
+					if (gr.getAtomMapNo(atom) != 0 && (gr.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0)
+						mFirstMapNo[i]--;
+				}
+
+			// TODO map product atoms from generic rxn and reactants
+			// TODO create getFullyMappedReaction(productIndex)
+			}
 		}
 
 
@@ -164,6 +216,33 @@ public class Reactor {
 		mReactant[no] = reactant;
 		mProductList = new ArrayList[mGenericReaction.getProducts()];
 		mIDCodeList = new SortedStringList[mGenericReaction.getProducts()];
+
+		mSSSearcher.setMol(mGenericReaction.getReactant(no), mReactant[no]);
+		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cMatchAtomCharge) == 0) {
+			mMatchList[no] = new ArrayList<>();
+			return;
+			}
+
+		// eliminate matches where reaction would exceed an atom valence
+		mMatchList[no] = mSSSearcher.getMatchList();
+		for (int j=mMatchList[no].size()-1; j>=0; j--) {
+			int[] matchingAtom = mMatchList[no].get(j);
+			for (int k=0; k<matchingAtom.length; k++) {
+				if (matchingAtom[k] != -1) {
+					if (mMinFreeValence[no][k] > 0
+							&& mMinFreeValence[no][k] > mReactant[no].getFreeValence(matchingAtom[k])) {
+						mMatchList[no].remove(j);
+						break;
+						}
+					}
+				}
+			}
+
+		if (mFullyMapReactions) {
+			mReactantMapNo[no] = new int[mMatchList[no].size()][];
+			for (int i=0; i<mReactantMapNo.length; i++)
+				mReactantMapNo[no][i] = getReactantMapNos(no, mMatchList[no].get(i), mFirstMapNo[no]);
+			}
 		}
 
 
@@ -203,56 +282,67 @@ public class Reactor {
 	public void generateProducts(int genericProductNo) {
 		mProductList[genericProductNo] = new ArrayList<StereoMolecule>();
 		mIDCodeList[genericProductNo] = new SortedStringList();
-		SSSearcher theSSSearcher = new SSSearcher();
-		@SuppressWarnings("unchecked")
-		ArrayList<int[]>[] matchList = new ArrayList[mReactant.length];
 
-		for (int i=0; i<mReactant.length; i++) {
-			theSSSearcher.setMol(mGenericReaction.getReactant(i), mReactant[i]);
-			if (theSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous,
-													 SSSearcher.cMatchAtomCharge) == 0)
+		for (int i=0; i<mReactant.length; i++)
+			if (mMatchList[i].size() == 0)
 				return;
-
-			// eliminate matches where reaction would exceed an atom valence
-			matchList[i] = theSSSearcher.getMatchList();
-			for (int j=matchList[i].size()-1; j>=0; j--) {
-				int[] matchingAtom = matchList[i].get(j);
-				for (int k=0; k<matchingAtom.length; k++) {
-					if (matchingAtom[k] != -1) {
-						if (mMinFreeValence[i][k] > 0
-						 && mMinFreeValence[i][k] > mReactant[i].getFreeValence(matchingAtom[k])) {
-							matchList[i].remove(j);
-							break;
-							}
-						}
-					}
-				}
-			if (matchList[i].size() == 0)
-				return;
-			}
 
 		int[] matchListIndex = new int[mReactant.length];
 
-		boolean newMatchListCombinationAvailable;
 		do {
-			StereoMolecule product = generateProduct(matchList, matchListIndex, genericProductNo);
+			StereoMolecule product = generateProduct(mMatchList, matchListIndex, genericProductNo);
 			String idcode = (new Canonizer(product).getIDCode());
-			if (mIDCodeList[genericProductNo].addString(idcode) != -1)
+			if (mIDCodeList[genericProductNo].addString(idcode) != -1) {
 				mProductList[genericProductNo].add(product);
 
-			newMatchListCombinationAvailable = false;
-			for (int i=0; i<matchListIndex.length; i++) {
-				if (matchListIndex[i] < matchList[i].size() - 1) {
-					matchListIndex[i]++;
-					newMatchListCombinationAvailable = true;
-					break;
-					}
-				else {
-					matchListIndex[i] = 0;
-					continue;
+				if (mFullyMapReactions) {
+					int[][] mapNo = new int[mReactant.length][];
+					for (int i=0; i<mReactant.length; i++)
+						mapNo[i] = mReactantMapNo[i][matchListIndex[i]];
+					mReactantMapNoList.add(mapNo);
 					}
 				}
-			} while (newMatchListCombinationAvailable);
+
+			} while (nextMatchListCombination(matchListIndex));
+		}
+
+
+	private boolean nextMatchListCombination(int[] matchListIndex) {
+		for (int i=0; i<matchListIndex.length; i++) {
+			if (matchListIndex[i] < mMatchList[i].size() - 1) {
+				matchListIndex[i]++;
+				return true;
+				}
+			matchListIndex[i] = 0;
+			}
+		return false;
+		}
+
+
+	/**
+	 * Constructs an array of real reactant atoms mapping numbers matchin atom indexes.
+	 * Copies generic reactant's mapping numbers first by considering the matchList.
+	 * Then assigns new unused mapping numbers to the remaining reactant atoms.
+	 * @param reactant
+	 * @param matchList
+	 * @param firstMapNo
+	 * @return
+	 */
+	private int[] getReactantMapNos(int reactant, int[] matchList, int firstMapNo) {
+		int[] reactantMapNo = new int[mReactant[reactant].getAtoms()];
+		for (int i=0; i<reactantMapNo.length; i++)
+			reactantMapNo[i] = -1;
+
+		StereoMolecule genericReactant = mGenericReaction.getReactant(reactant);
+		for (int atom=0; atom<genericReactant.getAtoms(); atom++)
+			if (matchList[atom] != -1)
+				reactantMapNo[matchList[atom]] = genericReactant.getAtomMapNo(atom);
+
+		for (int i=0; i<reactantMapNo.length; i++)
+			if (reactantMapNo[i] == -1)
+				reactantMapNo[i] = firstMapNo++;
+
+		return reactantMapNo;
 		}
 
 
