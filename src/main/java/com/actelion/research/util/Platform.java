@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -106,7 +107,7 @@ public class Platform
             for (String a : args)
                 arguments.add(a);
         }
-        final Process command = Runtime.getRuntime().exec(arguments.toArray(new String[0]));
+        final Process command = systemExec(arguments.toArray(new String[0]));
 
         return command;
     }
@@ -125,8 +126,28 @@ public class Platform
 	public static void execute(String[] programAndArgs) throws IOException
 	{
 		programAndArgs[0] = findExecutable(programAndArgs[0]);
-		Runtime.getRuntime().exec(programAndArgs);
+        systemExec(programAndArgs);
 	}
+
+    /**
+     * Wrapper for Runtime.exec() that allows different handling by platform
+     * This method fixes forking issues in Windows when starting Mercury (by default new processes do not seem to be forked correctly)
+     * @param programAndArgs
+     * @return
+     * @throws IOException
+     */
+	public static Process systemExec(String[] programAndArgs) throws IOException {
+	    if(isWindows()) {
+	        // prepend command args with "cmd /c start"
+	        String[] modifiedProgramAndArgs = new String[programAndArgs.length+3];
+	        modifiedProgramAndArgs[0] = "cmd";
+	        modifiedProgramAndArgs[1] = "/c";
+	        modifiedProgramAndArgs[2] = "start";
+	        System.arraycopy(programAndArgs, 0, modifiedProgramAndArgs, 3, programAndArgs.length);
+	        programAndArgs = modifiedProgramAndArgs;
+        }
+        return Runtime.getRuntime().exec(programAndArgs);
+    }
 
 	/**
      * Given a filename, open this file with the default application
