@@ -33,6 +33,7 @@
 
 package com.actelion.research.util.datamodel;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -111,7 +112,23 @@ public class IdentifiedObject<T> implements IIdentifiedObject<T>, Comparable<Ide
 		
 		return hmId_Descriptor;
 	}
-	
-	
+
+	public static Comparator<IdentifiedObject> getComparatorId() {
+
+		return new Comparator<IdentifiedObject>() {
+
+			public int compare(IdentifiedObject o1, IdentifiedObject o2) {
+
+				if(o1.id > o2.id) {
+					return 1;
+				} else if(o2.id > o1.id) {
+					return -1;
+				}
+
+				return o2.compareTo(o1);
+			}
+		};
+	}
+
 
 }

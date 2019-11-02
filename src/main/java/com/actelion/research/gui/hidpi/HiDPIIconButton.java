@@ -94,8 +94,8 @@ public class HiDPIIconButton extends JButton {
 			setDisabledIcon(HiDPIHelper.createDisabledIcon(mImageName, mRotation));
 
 			Icon icon = getIcon();
-			int w = icon.getIconWidth() / (int)HiDPIHelper.getRetinaScaleFactor() + 2;
-			int h = icon.getIconHeight() / (int)HiDPIHelper.getRetinaScaleFactor() + 2;
+			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getRetinaScaleFactor()) + 2;
+			int h = Math.round(icon.getIconHeight() / HiDPIHelper.getRetinaScaleFactor()) + 2;
 			if (LookAndFeelHelper.isQuaQua()) {
 				w += 2;
 				h += 2;

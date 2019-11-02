@@ -47,8 +47,8 @@ public class HiDPIToggleButton extends JToggleButton {
 			setDisabledSelectedIcon(HiDPIHelper.createDisabledIcon(mImageName2 != null ? mImageName2 : mImageName1, 0));
 
 			Icon icon = getIcon();
-			int w = icon.getIconWidth() / (int)HiDPIHelper.getRetinaScaleFactor() + 2;
-			int h = icon.getIconHeight() / (int)HiDPIHelper.getRetinaScaleFactor() + 2;
+			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getRetinaScaleFactor()) + 2;
+			int h = Math.round(icon.getIconHeight() / HiDPIHelper.getRetinaScaleFactor()) + 2;
 			if (LookAndFeelHelper.isQuaQua()) {
 				w += 2;
 				h += 2;

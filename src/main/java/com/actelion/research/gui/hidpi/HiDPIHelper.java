@@ -35,46 +35,49 @@ public class HiDPIHelper {
 		Object sContentScaleFactorObject = Toolkit.getDefaultToolkit().getDesktopProperty("apple.awt.contentScaleFactor");
 		private static final float sRetinaFactor = (sContentScaleFactorObject == null) ? 1f : ((Float)sContentScaleFactorObject).floatValue();
 		*/
-		if (sRetinaFactor != -1f)
-			return sRetinaFactor;
+		if (Platform.isMacintosh()) {
+			if (sRetinaFactor != -1f)
+				return sRetinaFactor;
 
-		sRetinaFactor = 1f;
+			sRetinaFactor = 1f;
 
-		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		final GraphicsDevice device = env.getDefaultScreenDevice();
+			GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			final GraphicsDevice device = env.getDefaultScreenDevice();
 
-		try {
-			Field field = device.getClass().getDeclaredField("scale");
-			if (field != null) {
-				field.setAccessible(true);
-				Object scale = field.get(device);
+			try {
+				Field field = device.getClass().getDeclaredField("scale");
+				if (field != null) {
+					field.setAccessible(true);
+					Object scale = field.get(device);
 
-				if (scale instanceof Integer)
-					sRetinaFactor = (Integer) scale;
-				else
-					System.out.println("Unexpected content scale (not 1 nor 2): "+scale.toString());
+					if (scale instanceof Integer)
+						sRetinaFactor = (Integer) scale;
+					else
+						System.out.println("Unexpected content scale (not 1 nor 2): " + scale.toString());
 				}
+			} catch (Throwable e) {
 			}
-		catch (Throwable e) {}
+	/*	the above code gives WARNING under Java 9:
+				WARNING: An illegal reflective access operation has occurred
+				WARNING: All illegal access operations will be denied in a future release
 
-/*	the above code gives WARNING under Java 9:
- 			WARNING: An illegal reflective access operation has occurred
- 			WARNING: All illegal access operations will be denied in a future release
+				If we know, we are on a Mac, we could do something like:
 
-			If we know, we are on a Mac, we could do something like:
+			if (device instanceof CGraphicsDevice) {	// apple.awt.CGraphicsDevice
+				final CGraphicsDevice cgd = (CGraphicsDevice)device;
 
-		if (device instanceof CGraphicsDevice) {	// apple.awt.CGraphicsDevice
-			final CGraphicsDevice cgd = (CGraphicsDevice)device;
+				// this is the missing correction factor, it's equal to 2 on HiDPI a.k.a. Retina displays
+				final int scaleFactor = cgd.getScaleFactor();
 
-			// this is the missing correction factor, it's equal to 2 on HiDPI a.k.a. Retina displays
-			final int scaleFactor = cgd.getScaleFactor();
-
-			// now we can compute the real DPI of the screen
-			final double realDPI = scaleFactor * (cgd.getXResolution() + cgd.getYResolution()) / 2;
-			}*/
-
-		return sRetinaFactor;
+				// now we can compute the real DPI of the screen
+				final double realDPI = scaleFactor * (cgd.getXResolution() + cgd.getYResolution()) / 2;
+				}*/
+		} else {
+			GraphicsDevice sd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+			sRetinaFactor = (float) sd.getDefaultConfiguration().getDefaultTransform().getScaleX();
 		}
+		return sRetinaFactor;
+	}
 
 	/**
 	 * For Windows and Linux this method returns the user defined UI scaling factor.
@@ -87,8 +90,14 @@ public class HiDPIHelper {
 	 * @return typically 1.0 or 1.25, 1.5, ...
 	 */
 	public static float getUIScaleFactor() {
-		if (sUIScaleFactor == -1)
-			sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 12f;
+		if (sUIScaleFactor == -1) {
+			if (getRetinaScaleFactor() != 1f)
+				sUIScaleFactor = 1f;
+			else
+				sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 12f;
+
+System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"+sUIScaleFactor);
+			}
 
 		return sUIScaleFactor;
 		}
@@ -178,7 +187,7 @@ public class HiDPIHelper {
 	 * @return
 	 */
 	public static BufferedImage createImage(String fileName) {
-		if (getRetinaScaleFactor() == 2 || getUIScaleFactor() > ICON_SCALE_LIMIT)
+		if (getRetinaScaleFactor() * getUIScaleFactor() > ICON_SCALE_LIMIT)
 			fileName = getDoubleResolutionFileName(fileName);
 
 		URL url = HiDPIIconButton.class.getResource("/images/" + fileName);
@@ -224,7 +233,7 @@ public class HiDPIHelper {
 	}
 
 	public static Image scale(BufferedImage image) {
-		float scale = getUIScaleFactor();
+		float scale = getUIScaleFactor() * getRetinaScaleFactor();
 		if (scale > ICON_SCALE_LIMIT)   // in this case we have double size images
 			return image.getScaledInstance(Math.round(0.5f * scale * image.getWidth()),
 										   Math.round(0.5f * scale * image.getHeight()), Image.SCALE_SMOOTH);

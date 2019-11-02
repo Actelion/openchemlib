@@ -15,17 +15,20 @@ public class HiDPIIcon extends ImageIcon {
 	}
 
 	public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-		if (HiDPIHelper.getRetinaScaleFactor() == 2) {
+		if (HiDPIHelper.getRetinaScaleFactor() != 1.0) {
 			Image image = getImage();
-			int width = image.getWidth(null) / 2;
-			int height = image.getHeight(null) / 2;
+			int width = Math.round(image.getWidth(null) / HiDPIHelper.getRetinaScaleFactor());
+			int height = Math.round(image.getHeight(null) / HiDPIHelper.getRetinaScaleFactor());
 
 			// because of double size image, x and y are too small and need to be corrected
 			// (in case of aqua x & y are 1 - size/2, in case of new substance x & y are 0)
-			x += width / 2;
-			y += height / 2;
 
-			if (LookAndFeelHelper.isNewSubstance()) {
+System.out.println("HiDPIIcon.paintIcon() x:"+x+" y:"+y);
+			if (LookAndFeelHelper.isAqua()) {
+				x += Math.round(width / HiDPIHelper.getRetinaScaleFactor());
+				y += Math.round(height / HiDPIHelper.getRetinaScaleFactor());
+				}
+			else if (LookAndFeelHelper.isNewSubstance()) {
 				// for some reason y needs to be adjusted by 1
 				y++;
 				}
@@ -33,6 +36,11 @@ public class HiDPIIcon extends ImageIcon {
 			g.drawImage(image, x, y, width, height, null);
 			}
 		else {
+			if (LookAndFeelHelper.isNewSubstance()) {
+				// for some reason y needs to be adjusted by 1
+				y++;
+				}
+
 			Image image = getImage();
 			g.drawImage(image, x, y, null);
 			}
