@@ -8,6 +8,7 @@ import java.util.Arrays;
 
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.Coordinates;
 
 /** 
@@ -128,7 +129,7 @@ public abstract class Gaussian3D {
 		centerModCoords.z = centerCoords.x*rotMatrix[2][0] + centerCoords.y*rotMatrix[2][1] + centerCoords.z*rotMatrix[2][2];
 		//centerModCoords = this.getCenter().rotateC(rotMatrix); //we operate on the transformed coordinates of the molecule to be fitted
 		centerModCoords.scale(scaleFactor); // scale by the inverse squared norm of the quaternion, necessary if quaternion is not a unit quaternion
-		centerModCoords.add(translation[0], translation[2], translation[2]);
+		centerModCoords.add(translation[0], translation[1], translation[2]);
 		return centerModCoords;
 	}
 	
@@ -165,6 +166,11 @@ public abstract class Gaussian3D {
 	
 	public void updateCoordinates(StereoMolecule mol) {
 		center = new Coordinates(mol.getCoordinates(atomId));
+
+	}
+	
+	public void updateCoordinates(Conformer conf) {
+		center = new Coordinates(conf.getCoordinates(atomId));
 
 	}
 	

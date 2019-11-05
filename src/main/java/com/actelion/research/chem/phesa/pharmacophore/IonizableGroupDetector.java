@@ -103,18 +103,8 @@ public class IonizableGroupDetector {
 				}
 				}
 				else if(mol.getAtomicNo(a)==7) {
-					if(AtomFunctionAnalyzer.isBasicNitrogen(mol, a)) {
-						ionizableGroup = new ArrayList<Integer>();
-						ionizableGroup.add(a);
-						ionizableGroups.add(ionizableGroup);
-						ChargePoint cp = new ChargePoint(mol,a,new ArrayList<Integer>(),1);
-						chargePoints.add(new PPGaussian(7,cp));
-						continue;
-					}
-
-						
-					else { 
-						if(mol.getConnAtoms(a)<=2) { //HNR2 or H2NR
+					
+					if(mol.getConnAtoms(a)<=2) { //HNR2 or H2NR
 							int nDBs = 0;
 							boolean found=false;
 							for(int i=0;i<mol.getConnAtoms(a) && !found;i++) { //search for amidine
@@ -126,13 +116,14 @@ public class IonizableGroupDetector {
 										int aaa = mol.getConnAtom(aa, j);
 										if(aaa==a) continue;
 										if(alreadyDetected(aaa)) continue;
-										if(mol.getAtomicNo(aaa)==7 && mol.getConnAtoms(a)<=2) {
+										if(mol.getAtomicNo(aaa)==7 && mol.getConnAtoms(aaa)<=2) {;
 											if(mol.getBondOrder(mol.getBond(aa, aaa))==2)nDBs++;
-											if(nDBs==2) { //Amidine
-
+											if(nDBs==1) { //Amidine
 												ionizableGroup = new ArrayList<Integer>();
 												ionizableGroup.add(a);
 												ionizableGroup.add(aa);
+												ionizableGroup.add(aaa);
+												ionizableGroups.add(ionizableGroup);
 												ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),1);
 												chargePoints.add(new PPGaussian(6,cp));
 												found = true;
@@ -142,10 +133,19 @@ public class IonizableGroupDetector {
 									
 								}
 							}
-							}
+							
 					}
 					
 				}
+					if(alreadyDetected(a))continue;
+					if(AtomFunctionAnalyzer.isBasicNitrogen(mol, a)) {
+						ionizableGroup = new ArrayList<Integer>();
+						ionizableGroup.add(a);
+						ionizableGroups.add(ionizableGroup);
+						ChargePoint cp = new ChargePoint(mol,a,new ArrayList<Integer>(),1);
+						chargePoints.add(new PPGaussian(7,cp));
+						continue;
+					}
 			}
 			if(alreadyDetected(a))continue;
 			else {

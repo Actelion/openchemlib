@@ -2,6 +2,7 @@ package com.actelion.research.chem.phesa.pharmacophore;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
 
 public class DonorPoint implements IPharmacophorePoint {
@@ -39,6 +40,14 @@ public class DonorPoint implements IPharmacophorePoint {
 	public void updateCoordinates(StereoMolecule mol) {
 		center = new Coordinates(mol.getAtomX(donorHydrogen),mol.getAtomY(donorHydrogen),mol.getAtomZ(donorHydrogen));
 		directionality = mol.getCoordinates(donorHydrogen).subC(mol.getCoordinates(donorAtom));
+		directionality.scale(1.0/directionality.getLength());
+		
+	}
+	
+	@Override
+	public void updateCoordinates(Conformer conf) {
+		center = new Coordinates(conf.getX(donorHydrogen),conf.getY(donorHydrogen),conf.getZ(donorHydrogen));
+		directionality = conf.getCoordinates(donorHydrogen).subC(conf.getCoordinates(donorAtom));
 		directionality.scale(1.0/directionality.getLength());
 		
 	}
@@ -114,6 +123,22 @@ public class DonorPoint implements IPharmacophorePoint {
 	public IPharmacophorePoint copyPharmacophorePoint() {
 		// TODO Auto-generated method stub
 		return new DonorPoint(this);
+	}
+
+	@Override
+	public void getDirectionalityDerivativeCartesian(double[] grad, double[] v, Coordinates di, double sim) {
+		grad[3*donorHydrogen] = sim*di.x/3.0;
+		grad[3*donorHydrogen+1] = sim*di.y/3.0;
+		grad[3*donorHydrogen+2] = sim*di.z/3.0;
+		grad[3*donorAtom] = sim*-di.x/3.0;
+		grad[3*donorAtom+1] = sim*-di.y/3.0;
+		grad[3*donorAtom+2] = sim*-di.z/3.0;
+		
+	}
+	
+	@Override
+	public int getFunctionalityIndex() {
+		return IPharmacophorePoint.functionality.DONOR.getIndex();
 	}
 	
 

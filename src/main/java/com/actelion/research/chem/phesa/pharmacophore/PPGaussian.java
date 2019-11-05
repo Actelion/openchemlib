@@ -8,6 +8,7 @@ import java.util.List;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.EncodeFunctions;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;
@@ -64,12 +65,8 @@ public class PPGaussian extends Gaussian3D {
 	
 	public double getVectorSimilarity(PPGaussian ppGauss2,Coordinates directionalityMod) {
 		
-		double vectorSim = 0.0;
-		vectorSim = this.pp.getDirectionality().dot(directionalityMod);
-		if (vectorSim<0.0) {
-			vectorSim = 0.0;
-		}
-		return vectorSim;
+		return this.pp.getVectorSimilarity(ppGauss2.getPharmacophorePoint(),directionalityMod);
+
 		
 	}
 
@@ -99,6 +96,15 @@ public class PPGaussian extends Gaussian3D {
 	public double getInteractionSimilarity(PPGaussian ppGauss2) {
 
 		return pp.getSimilarity(ppGauss2.pp);
+	}
+	
+	@Override 
+	
+	public void setCenter(Coordinates center) {
+		this.center = center;
+		this.pp.getCenter().x = center.x;
+		this.pp.getCenter().y = center.y;
+		this.pp.getCenter().z = center.z;
 	}
 	
 
@@ -140,12 +146,18 @@ public class PPGaussian extends Gaussian3D {
 
 	@Override
 	public double calculateHeight() {
-		return MolecularVolume.pPP;
+		return MolecularVolume.p;
 	}
 	
 	@Override
 	public void updateCoordinates(StereoMolecule mol) {
 		pp.updateCoordinates(mol);
+		center = pp.getCenter();
+	}
+	
+	@Override
+	public void updateCoordinates(Conformer conf) {
+		pp.updateCoordinates(conf);
 		center = pp.getCenter();
 	}
 	
@@ -158,7 +170,7 @@ public class PPGaussian extends Gaussian3D {
 	@Override
 	public double calculateWidth() {
 		double vdwR = PeriodicTable.getElement(atomicNo).getVDWRadius();
-		return MolecularVolume.alpha_prefPP/(vdwR*vdwR);
+		return MolecularVolume.alpha_pref/(vdwR*vdwR);
 	}
 }
 

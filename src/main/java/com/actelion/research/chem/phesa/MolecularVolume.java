@@ -3,6 +3,7 @@ package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.AcceptorPoint;
 import com.actelion.research.chem.phesa.pharmacophore.DonorPoint;
@@ -28,8 +29,7 @@ import com.actelion.research.util.EncoderFloatingPointNumbers;
 public class MolecularVolume {
 	static public final double p = 2.82842712475; // height of Atomic Gaussian, 2*sqrt(2), commonly used in the literature: Haque and Pande, DOI 10.1002/jcc.11307 
 	static public final double alpha_pref = 2.41798793102; // taken from DOI 10.1002/jcc.11307
-	static public final double pPP = 4.242640687125; // height of Pharmacophore-Gaussian, 1.5 times height of atomic gaussian
-	static public final double alpha_prefPP = 3.11495261034551579; // chosen in a way that the Volume of a Pharmacophore Point coincides with Volume of a Carbon Atom
+
 	
 	
 
@@ -97,6 +97,13 @@ public class MolecularVolume {
 
 	}
 	
+	public MolecularVolume(MolecularVolume original, Conformer conf) {
+		this(original);
+		update(conf);
+
+	}
+	
+	
 	
 	
 	
@@ -114,7 +121,7 @@ public class MolecularVolume {
 
 		this.hydrogens = new ArrayList<Coordinates>();
 		for(Coordinates hydrogen : original.hydrogens) {
-			this.hydrogens.add(hydrogen);
+			this.hydrogens.add(new Coordinates(hydrogen));
 			
 		}
 		
@@ -141,7 +148,7 @@ public class MolecularVolume {
 		for (int i=0;i<nrOfAtoms;i++) {
 			
 			if(mol.getAtomicNo(i)==1){ //hydrogens don't contribute to the molecular volume
-				this.hydrogens.add(mol.getCoordinates(i));
+				this.hydrogens.add(new Coordinates(mol.getCoordinates(i)));
 				continue;
 			}
 			Coordinates coords = new Coordinates(mol.getCoordinates(i));
@@ -175,7 +182,7 @@ public class MolecularVolume {
 				else if (mol.getAtomicNo(i)==7 || mol.getAtomicNo(i)==8) {
 					if(isAcceptor(mol,i)) {
 						int neighbours = mol.getAllConnAtoms(i);
-						ArrayList<Integer> neighbourList= new ArrayList<Integer>();
+						List<Integer> neighbourList= new ArrayList<Integer>();
 						for(int j=0;j<neighbours;j++) 
 							neighbourList.add(mol.getConnAtom(i,j));
 						
@@ -192,7 +199,11 @@ public class MolecularVolume {
 								neighbourList.add(aa1);
 								AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,1);
 								this.ppGaussians.add(new PPGaussian(6,ap));
-								ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,2);
+								List<Integer> neighbourList2 = new ArrayList<Integer>();
+								for(int neighbour : neighbourList) {
+									neighbourList2.add(neighbour);
+								}
+								ap = new AcceptorPoint(mol,i,neighbourList2,interactionClass,2);
 								this.ppGaussians.add(new PPGaussian(6,ap));}
 							else { 
 								AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
@@ -305,31 +316,38 @@ public class MolecularVolume {
 		return this.hydrogens;
 	}
 	
-	public StereoMolecule getConformer(StereoMolecule mol) {
-		int nrOfAtoms = mol.getAllAtoms();
-		StereoMolecule conformer = new StereoMolecule(mol);
-		int hydrogenCounter = 0;
-		ArrayList<Coordinates> hydrogens = this.getHydrogens();
-		for(int i=0;i<nrOfAtoms;i++) {
-			if(mol.getAtomicNo(i)==1){
-				conformer.getCoordinates(i).set(hydrogens.get(hydrogenCounter));
-				hydrogenCounter+=1;
-			} 
-			//else {
-			//	conformer.getCoordinates(i).set(molVol.getAtomicGaussians().get(i).getCenter());
-			//}
-		for(int j=0;j<this.getAtomicGaussians().size();j++) {
-			int atomId =this.getAtomicGaussians().get(j).getAtomId();
-			conformer.getCoordinates(atomId).set(this.getAtomicGaussians().get(j).getCenter());
+	private void updateHydrogens(StereoMolecule mol) {
+		int h = 0;
+		for(int i = mol.getAtoms();i<mol.getAllAtoms();i++) {
+			hydrogens.get(h).set(new Coordinates(mol.getCoordinates(i)));
+			h++;
 		}
-		}
-
-		return conformer;
+			
 	}
+	
+	private void updateHydrogens(Conformer conf) {
+		int h = 0;
+		for(int i = conf.getMolecule().getAtoms();i<conf.getMolecule().getAllAtoms();i++) {
+			hydrogens.get(h).set(new Coordinates(conf.getCoordinates(i)));
+			h++;
+		}
+			
+	}
+	
+
 	
 	public void update(StereoMolecule mol) {
 		updateCoordinates(getAtomicGaussians(),mol);
 		updateCoordinates(getPPGaussians(),mol);
+		updateCoordinates(getExclusionGaussians(),mol);
+		updateHydrogens(mol);
+	}
+	
+	public void update(Conformer conf) {
+		updateCoordinates(getAtomicGaussians(),conf);
+		updateCoordinates(getPPGaussians(),conf);
+		updateCoordinates(getExclusionGaussians(),conf);
+		updateHydrogens(conf);
 	}
 	
 	private void updateCoordinates(ArrayList<? extends Gaussian3D> gaussians, StereoMolecule mol) {
@@ -337,6 +355,34 @@ public class MolecularVolume {
 			gaussian.updateCoordinates(mol);
 		}
 		
+	}
+	
+	private void updateCoordinates(ArrayList<? extends Gaussian3D> gaussians, Conformer conf) {
+		for(Gaussian3D gaussian : gaussians) {
+			gaussian.updateCoordinates(conf);
+		}
+		
+	}
+	
+	public void translateToCOM(Coordinates com) {
+
+
+		for (AtomicGaussian ag : getAtomicGaussians()){
+			ag.getCenter().sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
+		}
+
+		
+		for (PPGaussian pg : getPPGaussians()){
+			pg.getCenter().sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
+		}
+		
+		for (ExclusionGaussian eg : getExclusionGaussians()){
+			eg.getCenter().sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
+		}
+		
+		for (Coordinates hydrogen : getHydrogens()){
+			hydrogen.sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
+		}
 	}
 
 	
@@ -525,7 +571,6 @@ public class MolecularVolume {
 		for(int i=firstIndex;i<lastIndex;i++) {
 			atomicGaussians.add(AtomicGaussian.fromString(splitString[i].trim()));
 		}
-		
 		int nrOfPPGaussians = Integer.decode(splitString[lastIndex]);
 		firstIndex = lastIndex+1;
 		lastIndex = firstIndex + nrOfPPGaussians;

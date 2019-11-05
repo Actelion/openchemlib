@@ -42,14 +42,14 @@ import java.util.Arrays;
  * taken from DD_chem3d, small changes necessary because a different output structure is needed
  * it returns not only a value (the objective function), but the transformation array for achieving the best alignment
  */
-public class ShapeOptimizerLBFGS   {
+public class OptimizerLBFGS   {
 
 	int maxIterations;	
 	double minRMS;
 	
 
 	
-	public ShapeOptimizerLBFGS(int maxIterations, double minRMS){
+	public OptimizerLBFGS(int maxIterations, double minRMS){
 		this.maxIterations = maxIterations;
 		this.minRMS = minRMS;
 		
@@ -62,7 +62,7 @@ public class ShapeOptimizerLBFGS   {
 	 * algorithm
 	 */
 
-	public synchronized double[] optimize(EvaluableOverlap eval) {
+	public synchronized double[] optimize(Evaluable eval) {
 	//public synchronized double optimize(AbstractEvaluable eval) {
 		//System.out.println("new opti");
 		double[] initial = eval.getState();

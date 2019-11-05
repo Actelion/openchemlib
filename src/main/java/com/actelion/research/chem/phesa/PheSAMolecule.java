@@ -3,6 +3,7 @@ package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.StereoMolecule;
 import java.util.ArrayList;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
 
 /** 
  * @version: 1.0, February 2018
@@ -12,7 +13,7 @@ import com.actelion.research.chem.Coordinates;
  * the heavy atom coordinates are implicitly given as the centers of the atomic gaussians 
  * 
 */
-public class ShapeMolecule {
+public class PheSAMolecule {
 	private StereoMolecule mol;
 
 	// As many objects as conformers.
@@ -20,18 +21,18 @@ public class ShapeMolecule {
 
 	
 	
-	public ShapeMolecule() {
+	public PheSAMolecule() {
 		this.mol = new StereoMolecule();
 		this.shape = new ArrayList<MolecularVolume>();
 	}
 	
-	public ShapeMolecule(StereoMolecule mol, MolecularVolume shape) {
-		this.mol = new StereoMolecule();
+	public PheSAMolecule(StereoMolecule mol, MolecularVolume shape) {
+		this.mol = mol;
 		this.shape = new ArrayList<MolecularVolume>();
 		this.shape.add(shape);
 	}
 	
-	public ShapeMolecule(StereoMolecule mol, ArrayList<MolecularVolume> shape) {
+	public PheSAMolecule(StereoMolecule mol, ArrayList<MolecularVolume> shape) {
 		this.mol = mol;
 		this.shape = shape;
 
@@ -59,7 +60,7 @@ public class ShapeMolecule {
 			conformer.getCoordinates(atomId).set(molVol.getAtomicGaussians().get(j).getCenter());
 		}
 		}
-
+		conformer.ensureHelperArrays(Molecule.cHelperNeighbours);
 		return conformer;
 	}
 	

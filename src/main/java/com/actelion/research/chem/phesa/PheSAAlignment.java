@@ -1,13 +1,13 @@
 package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
+import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
 import java.util.Arrays;
-import java.util.Random;
 import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 import java.util.ArrayList;
 
 /** 
@@ -18,20 +18,22 @@ import java.util.ArrayList;
 */
 
 
-public class ShapeAlignment {
+public class PheSAAlignment {
 
 	private MolecularVolume refMolGauss;
 	private MolecularVolume molGauss;
+	public enum axis {X,Y,Z};
+
 
 	
 	
 	
-	public ShapeAlignment(StereoMolecule refMol, StereoMolecule mol) {
-		this.refMolGauss= new MolecularVolume(refMol);
+	public PheSAAlignment(StereoMolecule refMol, StereoMolecule mol) {
+		this.refMolGauss = new MolecularVolume(refMol);
 		this.molGauss = new MolecularVolume(mol);
 	}
 	
-	public ShapeAlignment(MolecularVolume refMolGauss, MolecularVolume molGauss) {
+	public PheSAAlignment(MolecularVolume refMolGauss, MolecularVolume molGauss) {
 		this.refMolGauss= refMolGauss;
 		this.molGauss = molGauss;
 	}
@@ -52,39 +54,116 @@ public class ShapeAlignment {
 	 * @param mol
 	 * @param molVol
 	 */
-	public static Matrix preProcess(StereoMolecule mol, MolecularVolume molVol) {
+	public static Matrix preProcess(Conformer conf, MolecularVolume molVol) {
 		Coordinates COM = molVol.getCOM();
-		int nrOfAtoms = mol.getAllAtoms();	
+		int nrOfAtoms = conf.getSize();
 
 		
 		for (int i=0;i<nrOfAtoms;i++) {
-			Coordinates coords1 = mol.getCoordinates(i);
+			Coordinates coords1 = conf.getCoordinates(i);
 			coords1.sub(COM);
 		}
 
-		for (AtomicGaussian ag : molVol.getAtomicGaussians()){
-			ag.getCenter().sub(COM);  //translate atomicGaussians. Moves center of mass to the origin.
-		}
-
-		
-		for (PPGaussian pg : molVol.getPPGaussians()){
-			pg.getCenter().sub(COM);  //translate atomicGaussians. Moves center of mass to the origin.
-		}
+		molVol.translateToCOM(COM);
 		
 
-		return initialOrientation(mol,molVol);
+		return createCanonicalOrientation(conf,molVol);
 	}
-
-
-	/**
-	 * 
-	 * Calculate singular value decomposition of the covariance matrix of volume-weighted atomic coordinates by
-	 * applying a singular value decomposition, we obtain the principal moments of inertia. The molecule is aligned
-	 * so that the axis of the lab-frames coincide with the principal moments of intertia.
-	 * @return
-	 */
 	
-	public static Matrix initialOrientation(StereoMolecule mol,MolecularVolume molGauss) {
+	
+	
+	
+
+
+	
+	public static Matrix createCanonicalOrientation(Conformer conf,MolecularVolume molGauss) {
+		Matrix m = PheSAAlignment.getCovarianceMatrix(molGauss);
+		SingularValueDecomposition svd = new SingularValueDecomposition(m.getArray(),null,null);
+		Matrix u = new Matrix(svd.getU());
+		double det = u.det();
+		if(det<0) {
+			u.set(0,1,-u.get(0, 1));
+			u.set(1,1,-u.get(1, 1));
+			u.set(2,1,-u.get(2, 1));
+		}
+		rotateMol(conf,u);
+		molGauss.update(conf);
+		Matrix rotMat = u;
+		
+		if(!isCanonicalOrientation(molGauss)) {
+			rotateMolAroundAxis180(conf,axis.X);
+			molGauss.update(conf);
+			if(isCanonicalOrientation(molGauss)) {
+				u.set(0,1,-u.get(0, 1));
+				u.set(1,1,-u.get(1, 1));
+				u.set(2,1,-u.get(2, 1));
+				u.set(0,2,-u.get(0, 2));
+				u.set(1,2,-u.get(1, 2));
+				u.set(2,2,-u.get(2, 2));
+				rotMat = u;
+			}
+			else {
+				rotateMolAroundAxis180(conf,axis.X); // rotate back
+				molGauss.update(conf);
+				rotateMolAroundAxis180(conf,axis.Y);
+				molGauss.update(conf);
+				if(isCanonicalOrientation(molGauss)) {
+					u.set(0,0,-u.get(0, 0));
+					u.set(1,0,-u.get(1, 0));
+					u.set(2,0,-u.get(2, 0));
+					u.set(0,2,-u.get(0, 2));
+					u.set(1,2,-u.get(1, 2));
+					u.set(2,2,-u.get(2, 2));
+					rotMat = u;
+				}
+				else {
+					rotateMolAroundAxis180(conf,axis.Y);
+					molGauss.update(conf);
+					rotateMolAroundAxis180(conf,axis.Z);
+					molGauss.update(conf);
+					if(isCanonicalOrientation(molGauss)) {
+						u.set(0,0,-u.get(0, 0));
+						u.set(1,0,-u.get(1, 0));
+						u.set(2,0,-u.get(2, 0));
+						u.set(0,1,-u.get(0, 1));
+						u.set(1,1,-u.get(1, 1));
+						u.set(2,1,-u.get(2, 1));
+						rotMat = u;
+					}
+				}
+			}
+		}
+		
+		return rotMat;
+	}
+	
+	private static void rotateMolAroundAxis180(Conformer conf,axis a) {
+		if (a == axis.X) {
+			IntStream.range(0,conf.getSize()).forEach(i -> {
+				Coordinates coords = conf.getCoordinates(i);
+				coords.y = -coords.y;
+				coords.z = -coords.z;
+			});
+		}
+		else if (a == axis.Y) {
+			IntStream.range(0,conf.getSize()).forEach(i -> {
+				Coordinates coords = conf.getCoordinates(i);
+				coords.x = -coords.x;
+				coords.z = -coords.z;
+			});
+		}
+		
+		else  {
+			IntStream.range(0,conf.getSize()).forEach(i -> {
+				Coordinates coords = conf.getCoordinates(i);
+				coords.x = -coords.x;
+				coords.y = -coords.y;
+			});
+		}
+
+	}
+	
+	private static Matrix getCovarianceMatrix(MolecularVolume molGauss) {
 		Matrix massMatrix = new Matrix(3,3); 
 		double volume = 0.0;
 		for (AtomicGaussian ag : molGauss.getAtomicGaussians()){
@@ -111,28 +190,56 @@ public class ShapeAlignment {
 		massMatrix.set(1,0,massMatrix.get(0,1));
 		massMatrix.set(2,0,massMatrix.get(0,2));
 		massMatrix.set(2,1,massMatrix.get(1,2));
-		SingularValueDecomposition svd = new SingularValueDecomposition(massMatrix.getArray(),null,null);
-		Matrix u= new Matrix(svd.getU());
-		double det = u.det();
-		if(det<0) {
-			u.set(0,2,-u.get(0, 2));
-			u.set(1,2,-u.get(1, 2));
-			u.set(2,2,-u.get(2, 2));
+		
+		return massMatrix;
+	}
+	
+	private static boolean isCanonicalOrientation(MolecularVolume molGauss) {
+		double xxPos = 0;
+		double xxNeg = 0;
+		double yyPos = 0;
+		double yyNeg = 0;
+		int nXPos = 0;
+		int nXNeg = 0;
+		int nYPos = 0;
+		int nYNeg = 0;
+		
+		for (AtomicGaussian ag : molGauss.getAtomicGaussians()){
+			double x = ag.center.x;
+			double y = ag.center.y;
+						
+			if(x>0) {
+				xxPos += x*x;
+				nXPos++;
+			}
+			else { 
+				xxNeg += x*x;
+				nXNeg++;
+			}
+			
+			if(y>0) {
+				yyPos += y*y;
+				nYPos++;
+			}
+			else { 
+				yyNeg += y*y;
+				nYNeg++;
+			}
+
 		}
 		
-		//for (AtomicGaussian ag : molGauss.getAtomicGaussians()){
-		//	ag.getCenter().rotate(u.getArray());
-		//}
+		xxPos/=nXPos;
+		yyPos/=nYPos;	
+		xxNeg/=nXNeg;
+		yyNeg/=nYNeg;	
 		
-		//for (PPGaussian pg : molGauss.getPPGaussians()){
-		//	pg.getCenter().rotate(u.getArray());
-
-		//}
-		rotateMol(mol,u);
-		molGauss.update(mol);
-		return u;
+		if(xxPos>xxNeg && yyPos>yyNeg)
+			return true;
+		else
+			return false;
 		
 	}
+	
 	
 	
 	
@@ -149,12 +256,7 @@ public class ShapeAlignment {
 	 */
 	public static double[][] initialTransform(int mode) {
 		
-		double cos45 = Math.cos(Math.toRadians(45.0));
-		double cos90 = Math.cos(Math.toRadians(90.0));
-		double cos135 = Math.cos(Math.toRadians(135));
-		double sin45 = Math.sin(Math.toRadians(45.0));
-		double sin90 = Math.sin(Math.toRadians(90.0));
-		double sin135 = Math.sin(Math.toRadians(135));
+		double c = 0.707106781;
 	
 		switch(mode){
 		case 1:
@@ -162,9 +264,17 @@ public class ShapeAlignment {
 					{0.0,0.0,0.0,1.0,0.0,0.0,0.0}};
 			return transforms1;
 		case 2:
-			double[][] transforms2 = {{1.0,0.0,0.0,0.0,0.0,0.0,0.0},{cos45,sin45,0.0,0.0,0.0,0.0,0.0},{0.0,1.0,0.0,0.0,0.0,0.0,0.0},{cos135,sin135,0.0,0.0,0.0,0.0,0.0},
-					{cos45,0.0,sin45,0.0,0.0,0.0,0.0},{0.0,0.0,1.0,0.0,0.0,0.0,0.0},{cos135,0.0,sin135,0.0,0.0,0.0,0.0},
-					{cos45,0.0,0.0,sin45,0.0,0.0,0.0},{0.0,0.0,0.0,1.0,0.0,0.0,0.0},{cos135,0.0,0.0,sin135,0.0,0.0,0.0}};
+			double[][] transforms2 = {{1,0,0,0,0,0,0},{0,1,0,0,0,0,0},{0,0,1,0,0,0,0},
+					{0,0,0,1,0,0,0},
+					{c,c,0,0,0,0,0},
+					{c,0,c,0,0,0,0},
+					{c,0,0,c,0,0,0},
+					{-0.5,0.5,0.5,-0.5,0,0,0},
+					{0.5,-0.5,0.5,-0.5,0,0,0},
+					{0.5,0.5,0.5,-0.5,0,0,0},
+					{0.5,-0.5,-0.5,-0.5,0,0,0},
+					{0.5,0.5,-0.5,-0.5,0,0,0}
+					};
 			return transforms2;
 		
 			
@@ -321,6 +431,29 @@ public class ShapeAlignment {
 
 	
 	
+	public static void rotateMol(Conformer conf,Quaternion rotor, double[] transl) {
+
+		double normFactor = 1/rotor.normSquared();
+
+		
+		int nrOfAtoms = conf.getSize();
+		for (int i=0;i<nrOfAtoms;i++) {
+			Coordinates coords = conf.getCoordinates(i);
+			double[][] m = rotor.getRotMatrix().getArray();
+			double x0 = coords.x;
+			double y0 = coords.y;
+			double z0 = coords.z;
+			coords.x = x0*m[0][0]+y0*m[0][1]+z0*m[0][2];
+			coords.y = x0*m[1][0]+y0*m[1][1]+z0*m[1][2];
+			coords.z = x0*m[2][0]+y0*m[2][1]+z0*m[2][2];
+			
+			coords.scale(normFactor);
+			coords.add(transl[0],transl[1],transl[2]);
+
+		}
+		
+	}
+	
 	public static void rotateMol(StereoMolecule mol,Quaternion rotor, double[] transl) {
 
 		double normFactor = 1/rotor.normSquared();
@@ -344,33 +477,125 @@ public class ShapeAlignment {
 		
 	}
 	
+	public static void rotateMol(StereoMolecule mol,double[][] m) {
+		int nrOfAtoms = mol.getAllAtoms();
+		for (int i=0;i<nrOfAtoms;i++) {
+			Coordinates coords = mol.getCoordinates(i);
+			double x0 = coords.x;
+			double y0 = coords.y;
+			double z0 = coords.z;
+			coords.x = x0*m[0][0]+y0*m[0][1]+z0*m[0][2];
+			coords.y = x0*m[1][0]+y0*m[1][1]+z0*m[1][2];
+			coords.z = x0*m[2][0]+y0*m[2][1]+z0*m[2][2];
+		}
+		
+	}
+	
+	public static void rotateCoords(Coordinates coords,double[][] m) {
+		double x0 = coords.x;
+		double y0 = coords.y;
+		double z0 = coords.z;
+		coords.x = x0*m[0][0]+y0*m[0][1]+z0*m[0][2];
+		coords.y = x0*m[1][0]+y0*m[1][1]+z0*m[1][2];
+		coords.z = x0*m[2][0]+y0*m[2][1]+z0*m[2][2];
+		
+	}
+	
+	public static void translateMol(StereoMolecule mol,double[] translate) {
+		int nrOfAtoms = mol.getAllAtoms();
+		for (int i=0;i<nrOfAtoms;i++) {
+			Coordinates coords = mol.getCoordinates(i);
+			coords.x += translate[0];
+			coords.y += translate[1];
+			coords.z += translate[2];
+		}
+		
+	}
+	
+	public static void multiplyMatrix(double[][] r, double[][] s, double[][] rs) {
+		rs[0][0] = r[0][0]*s[0][0] + r[0][1]*s[1][0] + r[0][2]*s[2][0];
+		rs[0][1] = r[0][0]*s[0][1] + r[0][1]*s[1][1] + r[0][2]*s[2][1];
+		rs[0][2] = r[0][0]*s[0][2] + r[0][1]*s[1][2] + r[0][2]*s[2][2];
+		
+		rs[1][0] = r[1][0]*s[0][0] + r[1][1]*s[1][0] + r[1][2]*s[2][0];
+		rs[1][1] = r[1][0]*s[0][1] + r[1][1]*s[1][1] + r[1][2]*s[2][1];
+		rs[1][2] = r[1][0]*s[0][2] + r[1][1]*s[1][2] + r[1][2]*s[2][2];
+		
+		rs[2][0] = r[2][0]*s[0][0] + r[2][1]*s[1][0] + r[2][2]*s[2][0];
+		rs[2][1] = r[2][0]*s[0][1] + r[2][1]*s[1][1] + r[2][2]*s[2][1];
+		rs[2][2] = r[2][0]*s[0][2] + r[2][1]*s[1][2] + r[2][2]*s[2][2];
+	}
+	
+	public static void multiplyInverseMatrix(double[][] r, double[][] s, double[][] rs) {
+		rs[0][0] = r[0][0]*s[0][0] + r[0][1]*s[0][1] + r[0][2]*s[0][2];
+		rs[0][1] = r[0][0]*s[1][0] + r[0][1]*s[1][1] + r[0][2]*s[1][2];
+		rs[0][2] = r[0][0]*s[2][0] + r[0][1]*s[2][1] + r[0][2]*s[2][2];
+		
+		rs[1][0] = r[1][0]*s[0][0] + r[1][1]*s[0][1] + r[1][2]*s[0][2];
+		rs[1][1] = r[1][0]*s[1][0] + r[1][1]*s[1][1] + r[1][2]*s[1][2];
+		rs[1][2] = r[1][0]*s[2][0] + r[1][1]*s[2][1] + r[1][2]*s[2][2];
+		
+		rs[2][0] = r[2][0]*s[0][0] + r[2][1]*s[0][1] + r[2][2]*s[0][2];
+		rs[2][1] = r[2][0]*s[1][0] + r[2][1]*s[1][1] + r[2][2]*s[1][2];
+		rs[2][2] = r[2][0]*s[2][0] + r[2][1]*s[2][1] + r[2][2]*s[2][2];
+	}
+	
+	public static void getRotationMatrix(double theta, Coordinates axis, double[][] r) {
+		double x = axis.x;
+		double y = axis.y;
+		double z = axis.z;
+		double c = Math.cos(theta);
+		double s = Math.sin(theta);
+		double t = 1-c;
+		r[0][0] = c+x*x*t;
+		r[0][1] = x*y*t-z*s;
+		r[0][2] = x*z*t+y*s;
+		r[1][0] = x*y*t+z*s;
+		r[1][1] = c+y*y*t;
+		r[1][2] = y*z*t-x*s;
+		r[2][0] = z*x*t-y*s;
+		r[2][1] = z*y*t+x*s;
+		r[2][2] = c+z*z*t;
+
+	}
+	
 	
 	public double[] findAlignment(double[][] transforms) {
+		return findAlignment(transforms,true);
+	}
+	
+	public double[] findAlignment(double[][] transforms, boolean optimize) {
 		double [] alignment = {1.0,0.0,0.0,0.0,0.0,0.0,0.0};
 		double Oaa = getSelfAtomOverlapRef();
 		double Obb = getSelfAtomOverlapFit();
 		double ppOaa = getSelfPPOverlapRef();
 		double ppObb = getSelfPPOverlapFit();
 		EvaluableOverlap eval = new EvaluableOverlap(this, new double[7]);
-		ShapeOptimizerLBFGS opt = new ShapeOptimizerLBFGS(200,0.001);
+		OptimizerLBFGS opt = new OptimizerLBFGS(200,0.001);
 		double maxSimilarity = 0.0;
 		double ppScaling = 1.0;
 		for(double [] transform:transforms) { //iterate over all initial alignments (necessary since optimizer just finds next local minimum, so we need different initial guesses
 			eval.setState(transform);
-			double[] bestTransform = opt.optimize(eval);
+			double[] bestTransform;
+			if(optimize)
+				bestTransform = opt.optimize(eval);
+			else
+				bestTransform = transform;
 			double atomOverlap = 0.0;
 			double ppOverlap = 0.0;
 			float similarity = 0.0f;
-			atomOverlap = getTotalAtomOverlap(bestTransform);
 			ppOverlap = getTotalPPOverlap(bestTransform);
-			float atomSimilarity = (float)(atomOverlap/(Oaa+Obb-atomOverlap));
 			float ppSimilarity = 0.0f;
 			if(getRefMolGauss().getPPGaussians().size()==0 && getMolGauss().getPPGaussians().size()==0 )
 				ppSimilarity = 1.0f;
 			else ppSimilarity=(float)(ppOverlap/(ppOaa+ppObb-ppOverlap));
 			if(ppSimilarity>1.0) //can happen because of weights
 				ppSimilarity = 1.0f;
+			atomOverlap = getTotalAtomOverlap(bestTransform);
+			float atomSimilarity = (float)(atomOverlap/(Oaa+Obb-atomOverlap));
+
 			similarity = (1.0f/(1+(float)ppScaling))* (atomSimilarity + (float)ppScaling*ppSimilarity) ;
+
 			if (similarity>maxSimilarity) {
 				maxSimilarity = similarity;
 				alignment = bestTransform;
@@ -381,10 +606,10 @@ public class ShapeAlignment {
 		
 		
 	
-	public static void rotateMol(StereoMolecule mol, Matrix rotMat) {
-		int nrOfAtoms = mol.getAllAtoms();	
+	public static void rotateMol(Conformer conf, Matrix rotMat) {
+		int nrOfAtoms = conf.getSize();
 		for (int i=0;i<nrOfAtoms;i++) {
-			Coordinates coords1 = mol.getCoordinates(i);
+			Coordinates coords1 = conf.getCoordinates(i);
 			coords1.rotate(rotMat.getArray());
 		}
 
@@ -395,7 +620,25 @@ public class ShapeAlignment {
 	public static void rotateMol(StereoMolecule mol, double[] transform) {
 		Quaternion rotor = new Quaternion(transform[0],transform[1], transform [2], transform[3]);
 		double[] translate =  {transform[4], transform[5], transform[6]};
-		ShapeAlignment.rotateMol(mol, rotor, translate);
+		PheSAAlignment.rotateMol(mol, rotor, translate);
+
+	}
+	
+	public static void rotateMol(StereoMolecule mol, Matrix rotMat) {
+		int nrOfAtoms = mol.getAllAtoms();
+		for (int i=0;i<nrOfAtoms;i++) {
+			Coordinates coords1 = mol.getCoordinates(i);
+			coords1.rotate(rotMat.getArray());
+		}
+
+	}
+	
+	
+	
+	public static void rotateMol(Conformer conf, double[] transform) {
+		Quaternion rotor = new Quaternion(transform[0],transform[1], transform [2], transform[3]);
+		double[] translate =  {transform[4], transform[5], transform[6]};
+		PheSAAlignment.rotateMol(conf, rotor, translate);
 
 	}
 	

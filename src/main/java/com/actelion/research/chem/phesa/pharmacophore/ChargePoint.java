@@ -5,13 +5,14 @@ import java.util.List;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.conf.Conformer;
 
 public class ChargePoint implements IPharmacophorePoint {
 	private int chargeAtom;
 	private List<Integer> neighbours;
 	private int charge;
 	private Coordinates center;
-	private Coordinates directionality = new Coordinates(1.0,1.0,1.0);
+	private Coordinates directionality = new Coordinates(0.0,0.0,0.0);
 	
 	public ChargePoint(StereoMolecule mol, int a, List<Integer> neighbours, int charge) {
 		if(charge!=1 && charge!=-1) 
@@ -44,6 +45,19 @@ public class ChargePoint implements IPharmacophorePoint {
 		if(neighbours!=null) {
 			for(int neighbour:neighbours) {
 				com.add(mol.getCoordinates(neighbour));
+			}
+			com.scale(1.0/(neighbours.size()+1));
+		}
+
+		center = com;
+	}
+	
+	@Override
+	public void updateCoordinates(Conformer conf) {
+		Coordinates com = new Coordinates(conf.getCoordinates(chargeAtom));
+		if(neighbours!=null) {
+			for(int neighbour:neighbours) {
+				com.add(conf.getCoordinates(neighbour));
 			}
 			com.scale(1.0/(neighbours.size()+1));
 		}
@@ -130,6 +144,31 @@ public class ChargePoint implements IPharmacophorePoint {
 	public IPharmacophorePoint copyPharmacophorePoint() {
 		// TODO Auto-generated method stub
 		return new ChargePoint(this);
+	}
+
+	@Override
+	public void getDirectionalityDerivativeCartesian(double[] grad, double[] v, Coordinates di, double sim) {
+		return; //no directionality 
+		
+	}
+	
+	@Override 
+	
+	public double getVectorSimilarity(IPharmacophorePoint pp2,Coordinates directionalityMod) {
+		return 1.0;
+	}
+		
+	@Override
+	 public double getVectorSimilarity(IPharmacophorePoint pp2) {
+		return 1.0;
+	}
+	
+	@Override
+	public int getFunctionalityIndex() {
+		if(charge<0)
+			return IPharmacophorePoint.functionality.NEG_CHARGE.getIndex();
+		else
+			return IPharmacophorePoint.functionality.POS_CHARGE.getIndex();
 	}
 
 }

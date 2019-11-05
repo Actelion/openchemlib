@@ -63,25 +63,25 @@ public class Quaternion {
 	public Matrix getRotMatrix(){ 
 		Matrix rotMat = new Matrix(3,3);
 		double[][] data = rotMat.getArray();
-		double e2 = q1*q1;
-		double n2 = q2*q2;
-		double s2 = q3*q3;
-		double x2 = q0*q0;
-		double xe = q0*q1;
-		double ne = q1*q2;
-		double xs = q0*q3;
-		double es = q1*q3;
-		double nx = q0*q2;
-		double ns = q2*q3;
-		data[0][0] = e2-n2-s2+x2;
-		data[0][1] = 2*(ne+xs);
-		data[0][2] = 2*(es-nx);
-		data[1][0] = 2*(ne-xs);
-		data[1][1] = -e2+n2-s2+x2;
-		data[1][2] = 2*(ns+xe);
-		data[2][0] = 2*(es+nx);
-		data[2][1] = 2*(ns-xe);
-		data[2][2] = -e2-n2+s2+x2;
+		double q1q1 = q1*q1;
+		double q2q2 = q2*q2;
+		double q3q3 = q3*q3;
+		double q0q0 = q0*q0;
+		double q0q1 = q0*q1;
+		double q1q2 = q1*q2;
+		double q0q3 = q0*q3;
+		double q1q3 = q1*q3;
+		double q0q2 = q0*q2;
+		double q2q3 = q2*q3;
+		data[0][0] = q0q0+q1q1-q2q2-q3q3;
+		data[0][1] = 2*(q1q2-q0q3);
+		data[0][2] = 2*(q1q3+q0q2);
+		data[1][0] = 2*(q1q2+q0q3);
+		data[1][1] = q0q0-q1q1+q2q2-q3q3;
+		data[1][2] = 2*(q2q3-q0q1);
+		data[2][0] = 2*(q1q3-q0q2);
+		data[2][1] = 2*(q2q3+q0q1);
+		data[2][2] = q0q0-q1q1-q2q2+q3q3;
 		
 		
 		return rotMat;

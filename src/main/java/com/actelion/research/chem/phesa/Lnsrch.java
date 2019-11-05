@@ -27,7 +27,7 @@ class Lnsrch{
 	 * @param fMove
 	 * @return
 	 */
-	public static final Object[] minimizeEnergyAroundDirection(final EvaluableOverlap function, double f0, final double[] grad, final double[] dir, final double fMove) {
+	public static final Object[] minimizeEnergyAroundDirection(final Evaluable function, double f0, final double[] grad, final double[] dir, final double fMove) {
 		final double CAPPA = .9;
 		final double STPMIN = 1e-6;
 		final double STPMAX = .1;
@@ -36,7 +36,7 @@ class Lnsrch{
 		double cube = 0;
 		//Compute length of Gradient
 		final double len = grad.length;
-		final double sNorm = ShapeOptimizerLBFGS.getNorm(dir);
+		final double sNorm = OptimizerLBFGS.getNorm(dir);
 				
 		//Normalize the search vector and find the projected gradient
 		double slope = 0;
@@ -197,7 +197,7 @@ class Lnsrch{
 		}
 	}	
 
-	private final static void move(EvaluableOverlap eval, double[] dir, double lambda, double[] transformOld, double[] transform) {
+	private final static void move(Evaluable eval, double[] dir, double lambda, double[] transformOld, double[] transform) {
 		for(int i=0;i<transform.length;i++){
 			transform[i] = transformOld[i] + lambda*dir[i];
 

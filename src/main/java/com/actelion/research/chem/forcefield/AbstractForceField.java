@@ -56,7 +56,30 @@ public abstract class AbstractForceField implements ForceField {
 	public void addListener(ForceFieldChangeListener listener) {
 		listeners.add(listener);
 	}
+	
+	public void addGradient(double[] grad) {
+		assert grad.length==mGrad.length;
+		updateGradient();
+		for(int i=0;i<mGrad.length;i++) {
+			grad[i] += mGrad[i];
+		}
+	}
+	
+	public void getState(double[] pos) {
+		assert pos.length==mPos.length;
+		for(int i=0;i<mPos.length;i++) {
+			pos[i] = mPos[i];
+		}
+	}
 
+	public void setState(double[] pos) {
+		assert pos.length==mPos.length;
+		for(int i=0;i<mPos.length;i++) {
+			mPos[i] = pos[i];
+		}
+	}
+	
+	
 	public double coordVariance(int c) {
         double m = 0.0;
         double s = 0.0;

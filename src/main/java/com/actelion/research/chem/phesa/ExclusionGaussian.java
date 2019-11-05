@@ -3,6 +3,7 @@ package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 public class ExclusionGaussian extends Gaussian3D {
@@ -75,6 +76,11 @@ public class ExclusionGaussian extends Gaussian3D {
 	
 	public void updateCoordinates(StereoMolecule mol) {
 		referenceVector = mol.getCoordinates(atomId);
+		center = referenceVector.addC(shiftVector);
+	}
+	
+	public void updateCoordinates(Conformer conf) {
+		referenceVector = conf.getCoordinates(atomId);
 		center = referenceVector.addC(shiftVector);
 	}
 	
