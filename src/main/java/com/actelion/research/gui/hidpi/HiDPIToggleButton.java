@@ -49,12 +49,6 @@ public class HiDPIToggleButton extends JToggleButton {
 			Icon icon = getIcon();
 			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getRetinaScaleFactor()) + 2;
 			int h = Math.round(icon.getIconHeight() / HiDPIHelper.getRetinaScaleFactor()) + 2;
-			if (LookAndFeelHelper.isQuaQua()) {
-				w += 2;
-				h += 2;
-				putClientProperty("Quaqua.Component.visualMargin", new Insets(1, 1, 1, 1));
-				putClientProperty("Quaqua.Button.style", "bevel");
-				}
 			setPreferredSize(new Dimension(w, h));
 			}
 		}

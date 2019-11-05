@@ -19,7 +19,9 @@ public class HiDPIHelper {
 	private static final int THEME_COLOR1_DARK_LAF = 0x00B4A0FF;	// main button color in supplied images
 	private static final int THEME_COLOR2_DARK_LAF = 0x00E0E0E0;	// second button color in supplied images
 
-	private static final float ICON_SCALE_LIMIT = 1.2f; // custom dpi scale factors smaller than this will be neglected
+	private static final float ICON_SCALE_LIMIT_1 = 1.1f; // custom dpi scale factors smaller than this will be neglected
+	private static final float ICON_SCALE_LIMIT_2 = 1.9f; // custom dpi scale factors between ICON_SCALE_LIMIT_2 and ICON_SCALE_LIMIT_3
+	private static final float ICON_SCALE_LIMIT_3 = 2.1f; // use larger image, but won't be scaled
 
 	// This is an Apple only solution and needs to be adapted to support high-res displays of other vendors
 	private static float sRetinaFactor = -1f;
@@ -95,8 +97,7 @@ public class HiDPIHelper {
 				sUIScaleFactor = 1f;
 			else
 				sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 12f;
-
-System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"+sUIScaleFactor);
+//System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"+sUIScaleFactor);
 			}
 
 		return sUIScaleFactor;
@@ -130,11 +131,15 @@ System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"
 		}
 
 	public static Icon createIcon(String fileName, int rotation) {
-		return new HiDPIIcon(scale(capCorners(rotate(createLaFCompatibleImage(fileName), rotation))));
+		BufferedImage image = capCorners(rotate(createLaFCompatibleImage(fileName), rotation));
+		boolean isScaled = mustScale();
+		return new HiDPIIcon(isScaled ? scale(image) : image, isScaled);
 		}
 
 	public static Icon createDisabledIcon(String fileName, int rotation) {
-		return new HiDPIIcon(scale(capCorners(rotate(createDisabledImage(fileName), rotation))));
+		BufferedImage image = capCorners(rotate(createDisabledImage(fileName), rotation));
+		boolean isScaled = mustScale();
+		return new HiDPIIcon(isScaled ? scale(image) : image, isScaled);
 		}
 
 	private static String getDoubleResolutionFileName(String fileName) {
@@ -187,7 +192,7 @@ System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"
 	 * @return
 	 */
 	public static BufferedImage createImage(String fileName) {
-		if (getRetinaScaleFactor() * getUIScaleFactor() > ICON_SCALE_LIMIT)
+		if (useDoubleImage())
 			fileName = getDoubleResolutionFileName(fileName);
 
 		URL url = HiDPIIconButton.class.getResource("/images/" + fileName);
@@ -232,14 +237,32 @@ System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"
 		return image;
 	}
 
-	public static Image scale(BufferedImage image) {
+	private static boolean useDoubleImage() {
+		return getUIScaleFactor() * getRetinaScaleFactor() > ICON_SCALE_LIMIT_1;
+		}
+
+	private static boolean mustScale() {
+		return (getUIScaleFactor() * getRetinaScaleFactor() > ICON_SCALE_LIMIT_1
+			 && getUIScaleFactor() * getRetinaScaleFactor() < ICON_SCALE_LIMIT_2)
+			|| getUIScaleFactor() * getRetinaScaleFactor() < ICON_SCALE_LIMIT_3;
+		}
+
+	public static float getIconScaleFactor() {
+		if (!mustScale())
+			return 1f;
+
 		float scale = getUIScaleFactor() * getRetinaScaleFactor();
-		if (scale > ICON_SCALE_LIMIT)   // in this case we have double size images
-			return image.getScaledInstance(Math.round(0.5f * scale * image.getWidth()),
-										   Math.round(0.5f * scale * image.getHeight()), Image.SCALE_SMOOTH);
-		else
-			return image;
-	}
+		if (useDoubleImage())
+			scale *= 0.5f;
+
+		return scale;
+		}
+
+	public static Image scale(BufferedImage image) {
+		float scale = getIconScaleFactor();
+		return image.getScaledInstance(Math.round(scale * image.getWidth()),
+									   Math.round(scale * image.getHeight()), Image.SCALE_SMOOTH);
+		}
 
 	private static BufferedImage capCorners(BufferedImage image) {
 		image.setRGB(0, 0, 0x00000000);
