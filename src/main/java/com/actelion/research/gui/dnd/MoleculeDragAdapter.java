@@ -87,7 +87,7 @@ public abstract class MoleculeDragAdapter implements DragSourceListener//,DragSo
 
     }
 
-    public final void dragDropEnd(DragSourceDropEvent e)
+    public void dragDropEnd(DragSourceDropEvent e)
     {
     }
 
@@ -180,6 +180,7 @@ public abstract class MoleculeDragAdapter implements DragSourceListener//,DragSo
                     } else {
                         e.startDrag(cursor, transferable, this);
                     }
+                    dragIsValidAndStarts();
                 } catch (InvalidDnDOperationException idoe) {
                     System.err.println(idoe);
                 }
@@ -212,6 +213,9 @@ public abstract class MoleculeDragAdapter implements DragSourceListener//,DragSo
         }
         return null;
     }
+
+    // may be overridden
+    public void dragIsValidAndStarts() {}
 
 
 //    final Window w = new Window() {

@@ -14,13 +14,14 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 
 	public static final int INFO_DESCRIPTION = 0;
 	public static final int INFO_ATOMSEQUENCE = 1;
-	public static final int INFO_MM2ATOMDESCRIPTION = 2;
+	public static final int INFO_INTERACTION_ATOM_TYPE = 2;
 	public static final int INFO_ATOMNAME = 3;
 	public static final int INFO_AMINO = 4;
 	public static final int INFO_PPP = 5;
 	public static final int INFO_CHAINID = 6;
+	public static final int INFO_BFACTOR = 7;
 
-	private static final int MAX_INFOS = 7;
+	private static final int MAX_INFOS = 8;
 
 	//Molecule information
 	private int nMovables = -1;
@@ -58,7 +59,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		for(int atom=0; atom<mol.getAllAtoms(); atom++) {
 			atomFlags[atom] = mol.atomFlags[atom];
 			partialCharges[atom] = mol.partialCharges[atom];
-			for (int i=0; i<7; i++)
+			for (int i=0; i<MAX_INFOS; i++)
 				infos[atom][i] = mol.infos[atom][i];
 		}
 
@@ -203,6 +204,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	public final void setAtomName(int atm, String a) {
 		infos[atm][INFO_ATOMNAME] = a;
 	}
+	
 
 	public final String getAtomName(int atm) {
 		return (String) infos[atm][INFO_ATOMNAME];
@@ -214,6 +216,14 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 
 	public final String getAtomAmino(int atm) {
 		return (String) infos[atm][INFO_AMINO];
+	}
+	
+	public final double getAtomBfactor(int atm) {
+		return (double) infos[atm][INFO_BFACTOR];
+	}
+	
+	public final void setAtomBfactor(int atm, double bfactor) {
+		infos[atm][INFO_BFACTOR] = bfactor;
 	}
 
 	public final int getBond(int a1, int a2) {
@@ -266,8 +276,12 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		return obj==this;
 	}
 
-	public final void setMM2AtomDescription(int atm, String desc) {
-		infos[atm][INFO_MM2ATOMDESCRIPTION] = desc;
+	public final void setInteractionAtomType(int atm, int type) {
+		infos[atm][INFO_INTERACTION_ATOM_TYPE] = type;
+	}
+	
+	public final int getInteractionAtomType(int atm) {
+		return (int) infos[atm][INFO_INTERACTION_ATOM_TYPE];
 	}
 
 	@Override

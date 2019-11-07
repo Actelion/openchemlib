@@ -368,7 +368,7 @@ public class Molecule implements Serializable {
 			{1}, {2}, {3}, {4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0},	// Na to Ar
 			{1}, {2}, null, null, null, null, null, null, null, null,	// K to Ni
 			null, null, {2, 3}, {2, 4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0, 2}, // Cu to Kr
-			{1, 2, 3, 4}, {2}, null, null, null, null, null, null, null, null, // Rb to Pd
+			{1}, {2}, null, null, null, null, null, null, null, null,	// Rb to Pd
 			null, null, {1, 2, 3}, {2, 4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, // Ag to I
 			{0, 2, 4, 6}, {1}, {2},										// Xe to Ba
 			null, null, null, null, null, null, null, null, null, null, // La to Dy
@@ -1108,14 +1108,14 @@ public class Molecule implements Serializable {
 				esrGroup = destMol.renumberESRGroups(esrType);
 			else	// take existing group and add offset that should be the
 					// ESR group member count of destMol before starting to add atoms
-				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetAND + getAtomESRGroup(sourceAtom));
+				esrGroup = Math.min(cESRMaxGroups-1, esrGroupOffsetAND + getAtomESRGroup(sourceAtom));
 			}
 		else if (esrType == cESRTypeOr) {
 			if (esrGroupOffsetOR == -1)   // create a new ESR group for this atom
 				esrGroup = destMol.renumberESRGroups(esrType);
 			else	// take existing group and add offset that should be the
 					// ESR group member count of destMol before starting to add atoms
-				esrGroup = Math.min(cESRMaxGroups, esrGroupOffsetOR + getAtomESRGroup(sourceAtom));
+				esrGroup = Math.min(cESRMaxGroups-1, esrGroupOffsetOR + getAtomESRGroup(sourceAtom));
 			}
 
 		destMol.mAtomicNo[destAtom] = mAtomicNo[sourceAtom];
@@ -3329,6 +3329,15 @@ public class Molecule implements Serializable {
 	 */
 	public boolean removeQueryFeatures() {
 		boolean isChanged = false;
+
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFExcludeGroup) != 0) {
+				markAtomForDeletion(atom);
+				isChanged = true;
+				}
+			}
+		if (isChanged)
+			deleteMarkedAtomsAndBonds();
 
 		if (mAtomList != null) {
 			mAtomList = null;

@@ -334,7 +334,7 @@ public abstract class AbstractDepictor {
 
 		mIsValidatingView = true;
 		for (int i=0; i<mMol.getAllAtoms(); i++)
-	    	mpDrawAtom(i);
+	    	mpDrawAtom(i, null);
 		mIsValidatingView = false;
 
 		double avbl = mTransformation.getScaling() * mMol.getAverageBondLength();
@@ -541,6 +541,8 @@ public abstract class AbstractDepictor {
 		mG = g;
 		calculateParameters();
 
+		int[][] esrGroupMemberCount = mMol.getERSGroupMemberCounts();
+
 		boolean explicitAtomColors = false;
 		mAtomColor = new int[mMol.getAllAtoms()];
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
@@ -572,12 +574,12 @@ public abstract class AbstractDepictor {
 		for (int i=0; i<mMol.getAllAtoms(); i++) {
 			if (isHighlightedAtom(i)) {
 				setColor(COLOR_HILITE_BOND_FG);
-	    		mpDrawAtom(i);
+	    		mpDrawAtom(i, esrGroupMemberCount);
 				setColor(mStandardForegroundColor);
 				}
 			else if (mAtomColor[i] != 0) {
 				setColor(mAtomColor[i]);
-	    		mpDrawAtom(i);
+	    		mpDrawAtom(i, esrGroupMemberCount);
 				setColor(mStandardForegroundColor);
 				}
 			else if (!explicitAtomColors
@@ -588,16 +590,16 @@ public abstract class AbstractDepictor {
 				  && mMol.getAtomList(i) == null
 				  && mMol.getAtomicNo(i) < ATOM_LABEL_COLOR.length) {
 				setRGBColor(getContrastColor(ATOM_LABEL_COLOR[mMol.getAtomicNo(i)]));
-	    		mpDrawAtom(i);
+	    		mpDrawAtom(i, esrGroupMemberCount);
 				setColor(mStandardForegroundColor);
 				}
 			else {
-	    		mpDrawAtom(i);
+	    		mpDrawAtom(i, esrGroupMemberCount);
 				}
 			}
 		mpDrawAllDots();
         mpDrawBondQueryFeatures();
-		mpDrawAllBonds();
+		mpDrawAllBonds(esrGroupMemberCount);
 		}
 
 
@@ -726,7 +728,7 @@ public abstract class AbstractDepictor {
 		}
 
 
-	private void mpDrawAllBonds() {
+	private void mpDrawAllBonds(int[][] esrGroupMemberCount) {
 		mAlternativeCoords = new Point2D.Double[mMol.getAllAtoms()];
 
     		// add all double bonds first because they may set alternative coords for single bonds
@@ -745,31 +747,38 @@ public abstract class AbstractDepictor {
 		if ((mDisplayMode & cDModeSuppressCIPParity) == 0) {
 			for (int i=0; i<mMol.getAllBonds(); i++) {
 				if (mMol.getBondCIPParity(i) != 0) {
-					String cipStr;
-					switch (mMol.getBondCIPParity(i)) {
-					case Molecule.cBondCIPParityEorP:
-						cipStr = (mMol.getBondOrder(i) == 2) ? "E" : mMol.isBondParityPseudo(i) ? "p" : "P";
-						break;
-					case Molecule.cBondCIPParityZorM:
-						cipStr = (mMol.getBondOrder(i) == 2) ? "Z" : mMol.isBondParityPseudo(i) ? "m" : "M";
-						break;
-					default:
-						cipStr = "?";
-						break;
+					String cipStr = null;
+
+					if (mMol.getBondCIPParity(i) == Molecule.cBondCIPParityEorP
+					 || mMol.getBondCIPParity(i) == Molecule.cBondCIPParityZorM) {
+						if (mMol.getBondOrder(i) == 2
+						 || mMol.getBondESRType(i) == Molecule.cESRTypeAbs
+						 || esrGroupMemberCount == null
+						 || esrGroupMemberCount[mMol.getBondESRType(i)][mMol.getBondESRGroup(i)] > 1) {
+							if (mMol.getBondCIPParity(i) == Molecule.cBondCIPParityEorP)
+								cipStr = (mMol.getBondOrder(i) == 2) ? "E" : mMol.isBondParityPseudo(i) ? "p" : "P";
+							else
+								cipStr = (mMol.getBondOrder(i) == 2) ? "Z" : mMol.isBondParityPseudo(i) ? "m" : "M";
+							}
 						}
-					mpSetSmallLabelSize();
-					setColor(mMol.isBondForegroundHilited(i) ? COLOR_HILITE_BOND_FG :
-							 mMol.getMoleculeColor() == Molecule.cMoleculeColorNeutral ?
-										mStandardForegroundColor : COLOR_CIP_LETTER);
-					int atom1 = mMol.getBondAtom(0,i);
-					int atom2 = mMol.getBondAtom(1,i);
-					double x = (getAtomX(atom1) + getAtomX(atom2)) / 2;
-					double y = (getAtomY(atom1) + getAtomY(atom2)) / 2;
-					double dx = (getAtomX(atom1) - getAtomX(atom2)) / 3;
-					double dy = (getAtomY(atom1) - getAtomY(atom2)) / 3;
-					mpDrawString(x+dy,y-dx,cipStr,true);
-					setColor(mStandardForegroundColor);
-					mpSetNormalLabelSize();
+					else {
+						cipStr = "?";
+						}
+
+					if (cipStr != null) {
+						mpSetSmallLabelSize();
+						setColor(mMol.isBondForegroundHilited(i) ? COLOR_HILITE_BOND_FG :
+								 mMol.getMoleculeColor() == Molecule.cMoleculeColorNeutral ? mStandardForegroundColor : COLOR_CIP_LETTER);
+						int atom1 = mMol.getBondAtom(0,i);
+						int atom2 = mMol.getBondAtom(1,i);
+						double x = (getAtomX(atom1) + getAtomX(atom2)) / 2;
+						double y = (getAtomY(atom1) + getAtomY(atom2)) / 2;
+						double dx = (getAtomX(atom1) - getAtomX(atom2)) / 3;
+						double dy = (getAtomY(atom1) - getAtomY(atom2)) / 3;
+						mpDrawString(x+dy,y-dx, cipStr,true);
+						setColor(mStandardForegroundColor);
+						mpSetNormalLabelSize();
+						}
 					}
 				}
 			}
@@ -1560,7 +1569,7 @@ public abstract class AbstractDepictor {
 		}
 
 
-	private void mpDrawAtom(int atom) {
+	private void mpDrawAtom(int atom, int[][] esrGroupMemberCount) {
 		double chax,chay,xdiff,ydiff,x,y;
 
         if (!mIsValidatingView)
@@ -1689,30 +1698,34 @@ public abstract class AbstractDepictor {
 			if (mMol.isAtomConfigurationUnknown(atom))
 				cipStr = "?";
 			else if (mMol.getAtomCIPParity(atom) != 0) {
-				if (mMol.getConnAtoms(atom) == 2) {
-					switch (mMol.getAtomCIPParity(atom)) {
-					case Molecule.cAtomCIPParitySorP:
-						cipStr = mMol.isAtomParityPseudo(atom) ? "p" : "P";
-						break;
-					case Molecule.cAtomCIPParityRorM:
-						cipStr = mMol.isAtomParityPseudo(atom) ? "m" : "M";
-						break;
-					default:
-						cipStr = "*";
-						break;
+				if (mMol.getAtomESRType(atom) == Molecule.cESRTypeAbs
+				 || esrGroupMemberCount == null
+				 || esrGroupMemberCount[mMol.getAtomESRType(atom)][mMol.getAtomESRGroup(atom)] > 1) {
+					if (mMol.getConnAtoms(atom) == 2) {
+						switch (mMol.getAtomCIPParity(atom)) {
+						case Molecule.cAtomCIPParitySorP:
+							cipStr = mMol.isAtomParityPseudo(atom) ? "p" : "P";
+							break;
+						case Molecule.cAtomCIPParityRorM:
+							cipStr = mMol.isAtomParityPseudo(atom) ? "m" : "M";
+							break;
+						default:
+							cipStr = "*";
+							break;
+							}
 						}
-					}
-				else {
-					switch (mMol.getAtomCIPParity(atom)) {
-					case Molecule.cAtomCIPParityRorM:
-						cipStr = mMol.isAtomParityPseudo(atom) ? "r" : "R";
-						break;
-					case Molecule.cAtomCIPParitySorP:
-						cipStr = mMol.isAtomParityPseudo(atom) ? "s" : "S";
-						break;
-					default:
-						cipStr = "*";
-						break;
+					else {
+						switch (mMol.getAtomCIPParity(atom)) {
+						case Molecule.cAtomCIPParityRorM:
+							cipStr = mMol.isAtomParityPseudo(atom) ? "r" : "R";
+							break;
+						case Molecule.cAtomCIPParitySorP:
+							cipStr = mMol.isAtomParityPseudo(atom) ? "s" : "S";
+							break;
+						default:
+							cipStr = "*";
+							break;
+							}
 						}
 					}
 				}

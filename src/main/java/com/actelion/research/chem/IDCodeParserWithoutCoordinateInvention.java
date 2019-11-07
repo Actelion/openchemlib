@@ -444,6 +444,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 // Then it was wrongly fixed to cBondQFDelocalized, which is part of cBondQFBondTypes and encoded as type 10
 // We can take it out entirely without sacrifycing idcode compatibility
 //					mMol.setBondQueryFeature(bond, Molecule.cBondQFDelocalized, true);
+//System.out.println("wrong outdated 'delocalized bond'; idcode:"+new String(mDecodingBytes));
 					}
 				break;
 			case 3:	//	datatype 'AtomQFMoreNeighbours'

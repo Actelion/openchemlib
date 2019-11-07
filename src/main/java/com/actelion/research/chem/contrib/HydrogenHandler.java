@@ -291,7 +291,7 @@ public class HydrogenHandler {
 			if (molecule.getAtomicNo(iAtom) == 1)
 				nbHydrogens++;
 			else
-				nbHydrogens += molecule.getAllHydrogens(iAtom);
+				nbHydrogens += molecule.getPlainHydrogens(iAtom);
 		}
 		return nbHydrogens;
 	}

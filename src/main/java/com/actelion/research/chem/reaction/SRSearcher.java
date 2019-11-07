@@ -362,9 +362,17 @@ public class SRSearcher {
 
 		for (int atom=0; atom<reactantToProductAtom.length; atom++)
 			if (reactantToProductAtom[atom] != -1)
-				neighborDelta[atom] = product.getConnAtoms(reactantToProductAtom[atom]) - reactant.getConnAtoms(atom);
+				neighborDelta[atom] = getNonExcludedNeighbours(product, reactantToProductAtom[atom]) - getNonExcludedNeighbours(reactant, atom);
 
 		return neighborDelta;
+		}
+
+	private int getNonExcludedNeighbours(StereoMolecule mol, int atom) {
+		int count = 0;
+		for (int i=0; i<mol.getConnAtoms(atom); i++)
+			if ((mol.getAtomQueryFeatures(mol.getConnAtom(atom, i)) & Molecule.cAtomQFExcludeGroup) == 0)
+				count++;
+		return count;
 		}
 
 	private boolean productAtomMatches(int reactantAtom, int reactantQueryAtom) {

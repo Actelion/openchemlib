@@ -56,12 +56,6 @@ public class ConstantsDWAR {
 
 	public static final String PACKAGE_DATAWARRIOR_IDORSIA = "com.actelion.research.datawarrior.DataWarriorActelionLinux";
 
-	//
-//	public static final DecimalFormat NF_DWAR4 = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.US));
-//
-//	public static final DecimalFormat NF_DWAR = new DecimalFormat("0.0", new DecimalFormatSymbols(Locale.US));
-
-
 
 	// Separator for values in DataWarrior file.
 	public static final String SEP_VALUE = "; ";
@@ -121,6 +115,9 @@ public class ConstantsDWAR {
 
 	public static final String TAG_COOR2 = "idcoordinates2D";
 
+	/**
+	 * Can be one or multiple sets of 3D coordinates.
+	 */
 	public static final String TAG_COOR3D = "idcoordinates3D";
 
 	public static final String TAG_COOR = "idcoordinates";
@@ -146,7 +143,6 @@ public class ConstantsDWAR {
 	public static final String TAG_ACTNO = "Idorsia No";
 
 	public static final String TAG_SOURCE = "Source";
-
 
 	public static final String ATTR_YES = "Y";
 	public static final String ATTR_NO = "N";

@@ -40,6 +40,8 @@ import java.util.ArrayList;
 public class SSSearcherWithIndex {
 	public static final String cIndexVersion = "1.2.1";
 
+	// Outcommented and replaced idcodes are fragments, which originally used datatype==2 (wrongly encoded delocalized bond).
+	// They were replaced by fragments with bonds explicitly defined as delocalized, which should be compatible with original FFPs.
 	public static final String[] cKeyIDCode = {
         "QM@HzAmdqjF@",
         "RF@Q``",
@@ -322,7 +324,7 @@ public class SSSearcherWithIndex {
         "KAx@@IVsMUPAlHPfES\\",
         "qCp@AIj`ODl",
         "HiD@@DkeUjj`AmHPfES\\H",
-        "HeT@@DjU[kjjjh@ZLDXSSYPaLJfxY@",
+        "deT@@DjU[k``b`@vTHSBinFP"/* "HeT@@DjU[kjjjh@ZLDXSSYPaLJfxY@" */,
         "sJP@DkVdAmQEcFRF@",
         "HiD@@LdbJTjjh@[RDIaTwCFDa`@",
         "HiD@@DkYyjj`AmHPfES\\H",
@@ -340,7 +342,7 @@ public class SSSearcherWithIndex {
         "Hid@@DjU^nBBH@D",
         "Hed@@DjuvZjj@FraBXUMpr",
         "sJP@DiVhHKZbKFLtL@",
-        "Hmt@@DjU_Zzjjj`AhpQaLmmBDpj[aeXplL@",
+        "dmt@@DjU_ZxHHj@C[PaLJfxYVLKC@" /* "Hmt@@DjU_Zzjjj`AhpQaLmmBDpj[aeXplL@" */,
         "sNp@DjuZj@[\\QXuqca`@",
         "sJP@DkfhAmQEcFJF@",
         "sNp@LdbJZj@[\\QXu`",
@@ -379,7 +381,7 @@ public class SSSearcherWithIndex {
         "sNp@DjyZj@[\\QXuqaa`@",
         "HaD@@DjUZxHH@AyD@",
         "qC`@Qv`H",
-        "Hmt@@DjU_Zzjjj`AhpQaLmmBDpj[aeXqdL@",
+        "dmt@@DjU_ZxHHj@C[PaLJfxYVLYC@" /* "Hmt@@DjU_Zzjjj`AhpQaLmmBDpj[aeXqdL@" */,
         "sGP@Dkej`FsDVMcMC@",
         "Hed@@DjUUjjj@FraBXUMpsFHa`@",
         "HeT@@LdbbRkBDQD@CYPaLJfxY@",
@@ -448,7 +450,7 @@ public class SSSearcherWithIndex {
         "HeT@@DjYYZPbJ@@[JDIaTwCH",
         "sNp@DkfZj@[\\QXuqea`@",
         "Hid@@DjU^nBAHAEVtaBXUMp`",
-        "Hmt@@DjYU^Vjjj`AhtISRmmBDpj[aeP",
+        "dmt@@DjUgZDHJJ@C[PaLJfxYT" /* "Hmt@@DjYU^Vjjj`AhtISRmmBDpj[aeP" */,
         "sGP@DkejPFsDVM@",
         "sNx@@eJmUPB",
         "qCb@AIf`H",
@@ -475,7 +477,7 @@ public class SSSearcherWithIndex {
         "sNp@DjyZj@[\\QXuqca`@",
         "QM@HuAmd`",
         "sNp@LddUjj@[\\QXuqea`@",
-        "HaD@@DkeVyjj`AhrXUMuaBDpj[hpDL@",
+        "daD@@DjUZxHD@CXPaLJfzLYC@" /* "HaD@@DkeVyjj`AhrXUMuaBDpj[hpDL@" */,
         "qCb@AIZPH",
         "HiD@@LdbJTjjh@[RDIaTwCF@a`@",
         "Hmt@@DjU_ZxHHi@AmhPfES\\Lj",
@@ -487,7 +489,7 @@ public class SSSearcherWithIndex {
         "KAx@@IVkMUPAlHPfES]FJa`@",
         "qCr@XIKTAy@",
         "HmT@@Dj{uVjjh@[ZDIaTwCJqaXX@",
-        "Hmt@@DjYWVFjjj`AhpQe\\mmBDpj[aeP",
+        "dmt@@DjYWVDHbJ@C[PaLJfxYT" /* "Hmt@@DjYWVFjjj`AhpQe\\mmBDpj[aeP" */,
         "Hif@@@RUe^Fh@@@P",
         "HaDH@@Rfu[j@@@GdH",
         "KAx@@IVsMUPAlHPfES]FDa`@",
@@ -496,7 +498,7 @@ public class SSSearcherWithIndex {
         "HeT@@DjU^k``b`@[JDIaTwCLXFF@",
         "Hmt@@LdbbRJXPbHh@FvaBXUMprh",
         "sJP@DjvhAmQEcFBF@",
-        "Hmt@@LdbbRNXZjjj@FcAFUrvtHSBinFUcBpp@",
+        "dmt@@LdbbRNXPbHh@MmBDpj[aeXplL@" /* "Hmt@@LdbbRNXZjjj@FcAFUrvtHSBinFUcBpp@" */,
         "sJP`@dfvhAyD",
         "sGP@Di^V`dmfHl[FVF@",
         "KAx@@IVsmUPAlHPfES]FBa`@",
@@ -512,21 +514,21 @@ public class SSSearcherWithIndex {
         "sJY@BDfZhA@",
         "HeT@@DjUghP`hP@[JDIaTwCH",
         "Hed@@Dj{uZjj@FraBXUMpsFIa`@",
-        "Hmt@@LdbbRUXZjjj@FcAFUrvtHSBinFUcFPp@",
+        "dmt@@DjYUvDHbJ@C[PaLJfxYVLUC@" /* "Hmt@@LdbbRUXZjjj@FcAFUrvtHSBinFUcFPp@" */,
         "sNp`@dfuZj@P",
         "sJQ@@dmU@OH@",
         "sJX@@dmU@H",
         "HeT@@DjU]k``b`@[JDIaTwCLXZF@",
         "HiD@@LdfbJZjh@[RDIaTwCFAa`@",
         "sOx@@drm\\@@@|a@",
-        "HeT@@LdbbQgCUUU@CQhRfz[JDIaTwCH",
-        "Hmt@@DjU]Zzjjj`AhpQaLmmBDpj[aeXplL@",
+        "deT@@DjUfhP`h`@vTHSBinFP" /* "HeT@@LdbbQgCUUU@CQhRfz[JDIaTwCH" */,
+        "dmt@@DjU]ZxHHj@C[PaLJfxYVLKC@" /* "Hmt@@DjU]Zzjjj`AhpQaLmmBDpj[aeXplL@" */,
         "sOp@DjWkjj`FwDVM\\XHX@",
         "HcL@@LdbbRNSBDQEP@McBDpj[ae]cFpp@",
         "HiD@@Dj}Yji`AmHPfES\\H",
         "HaDH@@RYe[hB@@D",
         "Hid@@DjU^njjj@FtaBXUMpq`XX@",
-        "HeT@@DkYeFVjjh@ZMaUpsYPaLJfxY@",
+        "deT@@LdbbRKBDQB@FraBXUMpr" /* "HeT@@DkYeFVjjh@ZMaUpsYPaLJfxY@" */,
         "QMPARZA@",
         "sOq@@drm\\@@@|QX",
         "HaD@@DjYvxH`@A@",
@@ -552,7 +554,7 @@ public class SSSearcherWithIndex {
 		"QMDARVA}L@",
 		"RFPDXMj}D@",
 		"sKP@Di\\YZ@[TQXqaa`@",
-		"RG@DXMH" };
+		"eF`BHD" /* "RG@DXMH" */ };
 
 	private static StereoMolecule[]  sKeyFragment;
 	private SSSearcher			mSSSearcher;

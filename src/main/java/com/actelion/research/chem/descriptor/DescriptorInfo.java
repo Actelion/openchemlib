@@ -38,16 +38,18 @@ public class DescriptorInfo extends SimilarityCalculatorInfo {
     public String version;
     public int type;
     public boolean isBinary;
+    public boolean isVector;
     public boolean isGraphSimilarity;
     public boolean needsCoordinates;
 
     public DescriptorInfo(String name, String shortName, String version, int type,
-                          boolean isBinary, boolean isGraphSimilarity, boolean needsCoordinates) {
+                          boolean isBinary, boolean isVector, boolean isGraphSimilarity, boolean needsCoordinates) {
     	super(name,shortName);
 
         this.version = version;
         this.type = type;
         this.isBinary = isBinary;
+        this.isVector = isVector;
         this.isGraphSimilarity = isGraphSimilarity;
         this.needsCoordinates = needsCoordinates;
     }

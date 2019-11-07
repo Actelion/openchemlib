@@ -88,8 +88,8 @@ public class JDrawToolbar extends JComponent
 	protected static final int cToolAtomOther = 33;
 
     private static final int cESRMenuBorder = 4;
-    private static final int cESRMenuX = HiDPIHelper.scale(10);
-    private static final int cESRMenuY = HiDPIHelper.scale(54);
+    private static final int cESRMenuX = HiDPIHelper.scale(20);
+    private static final int cESRMenuY = HiDPIHelper.scale(64);
 	private static final float cButtonBorder = HiDPIHelper.getUIScaleFactor()*3f;
 	private static final float cButtonSize = HiDPIHelper.getUIScaleFactor()*21f;
     protected static final int cToolESRAbs = 101;
@@ -202,10 +202,10 @@ public class JDrawToolbar extends JComponent
             }
 
         if (mESRMenuVisible) {
-            g.drawImage(mESRImageUp, cESRMenuX-cESRMenuBorder, cESRMenuY-cESRMenuBorder, this);
+            g.drawImage(mESRImageUp, cESRMenuX-cESRMenuBorder, Math.round(cESRMenuY-cESRMenuBorder-cButtonSize*mESRSelected), this);
             if (mESRHilited != -1) {
-                g.setClip(cESRMenuX, Math.round(cESRMenuY+cButtonSize*mESRHilited), Math.round(cButtonSize-1), Math.round(cButtonSize-1));
-                g.drawImage(mESRImageDown, cESRMenuX-cESRMenuBorder, cESRMenuY-cESRMenuBorder, this);
+                g.setClip(cESRMenuX, Math.round(cESRMenuY-cButtonSize*mESRSelected+cButtonSize*mESRHilited), Math.round(cButtonSize-1), Math.round(cButtonSize-1));
+                g.drawImage(mESRImageDown, cESRMenuX-cESRMenuBorder, Math.round(cESRMenuY-cESRMenuBorder-cButtonSize*mESRSelected), this);
                 g.setClip(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
                }
             }
@@ -302,10 +302,11 @@ public class JDrawToolbar extends JComponent
     private void validateESRHiliting(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
-        if (x>cESRMenuX && x<cESRMenuX+cButtonSize) {
-            mESRHilited = Math.round((y-cESRMenuY) / cButtonSize);
-            if (mESRHilited < 0 || mESRHilited > 2)
-                mESRHilited = -1;
+		mESRHilited = -1;
+        if (x>=cESRMenuX && x<cESRMenuX+cButtonSize) {
+            int b = (int)((y-cESRMenuY+cButtonSize*mESRSelected) / cButtonSize);
+            if (b >= 0 && b <= 2)
+                mESRHilited = b;
             }
         }
 

@@ -19,7 +19,9 @@ public class HiDPIHelper {
 	private static final int THEME_COLOR1_DARK_LAF = 0x00B4A0FF;	// main button color in supplied images
 	private static final int THEME_COLOR2_DARK_LAF = 0x00E0E0E0;	// second button color in supplied images
 
-	private static final float ICON_SCALE_LIMIT = 1.2f; // custom dpi scale factors smaller than this will be neglected
+	private static final float ICON_SCALE_LIMIT_1 = 1.1f; // custom dpi scale factors smaller than this will be neglected
+	private static final float ICON_SCALE_LIMIT_2 = 1.9f; // custom dpi scale factors between ICON_SCALE_LIMIT_2 and ICON_SCALE_LIMIT_3
+	private static final float ICON_SCALE_LIMIT_3 = 2.1f; // use larger image, but won't be scaled
 
 	// This is an Apple only solution and needs to be adapted to support high-res displays of other vendors
 	private static float sRetinaFactor = -1f;
@@ -35,46 +37,49 @@ public class HiDPIHelper {
 		Object sContentScaleFactorObject = Toolkit.getDefaultToolkit().getDesktopProperty("apple.awt.contentScaleFactor");
 		private static final float sRetinaFactor = (sContentScaleFactorObject == null) ? 1f : ((Float)sContentScaleFactorObject).floatValue();
 		*/
-		if (sRetinaFactor != -1f)
-			return sRetinaFactor;
+		if (Platform.isMacintosh()) {
+			if (sRetinaFactor != -1f)
+				return sRetinaFactor;
 
-		sRetinaFactor = 1f;
+			sRetinaFactor = 1f;
 
-		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		final GraphicsDevice device = env.getDefaultScreenDevice();
+			GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			final GraphicsDevice device = env.getDefaultScreenDevice();
 
-		try {
-			Field field = device.getClass().getDeclaredField("scale");
-			if (field != null) {
-				field.setAccessible(true);
-				Object scale = field.get(device);
+			try {
+				Field field = device.getClass().getDeclaredField("scale");
+				if (field != null) {
+					field.setAccessible(true);
+					Object scale = field.get(device);
 
-				if (scale instanceof Integer)
-					sRetinaFactor = (Integer) scale;
-				else
-					System.out.println("Unexpected content scale (not 1 nor 2): "+scale.toString());
+					if (scale instanceof Integer)
+						sRetinaFactor = (Integer) scale;
+					else
+						System.out.println("Unexpected content scale (not 1 nor 2): " + scale.toString());
 				}
+			} catch (Throwable e) {
 			}
-		catch (Throwable e) {}
+	/*	the above code gives WARNING under Java 9:
+				WARNING: An illegal reflective access operation has occurred
+				WARNING: All illegal access operations will be denied in a future release
 
-/*	the above code gives WARNING under Java 9:
- 			WARNING: An illegal reflective access operation has occurred
- 			WARNING: All illegal access operations will be denied in a future release
+				If we know, we are on a Mac, we could do something like:
 
-			If we know, we are on a Mac, we could do something like:
+			if (device instanceof CGraphicsDevice) {	// apple.awt.CGraphicsDevice
+				final CGraphicsDevice cgd = (CGraphicsDevice)device;
 
-		if (device instanceof CGraphicsDevice) {	// apple.awt.CGraphicsDevice
-			final CGraphicsDevice cgd = (CGraphicsDevice)device;
+				// this is the missing correction factor, it's equal to 2 on HiDPI a.k.a. Retina displays
+				final int scaleFactor = cgd.getScaleFactor();
 
-			// this is the missing correction factor, it's equal to 2 on HiDPI a.k.a. Retina displays
-			final int scaleFactor = cgd.getScaleFactor();
-
-			// now we can compute the real DPI of the screen
-			final double realDPI = scaleFactor * (cgd.getXResolution() + cgd.getYResolution()) / 2;
-			}*/
-
-		return sRetinaFactor;
+				// now we can compute the real DPI of the screen
+				final double realDPI = scaleFactor * (cgd.getXResolution() + cgd.getYResolution()) / 2;
+				}*/
+		} else {
+			GraphicsDevice sd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+			sRetinaFactor = (float) sd.getDefaultConfiguration().getDefaultTransform().getScaleX();
 		}
+		return sRetinaFactor;
+	}
 
 	/**
 	 * For Windows and Linux this method returns the user defined UI scaling factor.
@@ -87,8 +92,13 @@ public class HiDPIHelper {
 	 * @return typically 1.0 or 1.25, 1.5, ...
 	 */
 	public static float getUIScaleFactor() {
-		if (sUIScaleFactor == -1)
-			sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 12f;
+		if (sUIScaleFactor == -1) {
+			if (getRetinaScaleFactor() != 1f)
+				sUIScaleFactor = 1f;
+			else
+				sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 12f;
+//System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"+sUIScaleFactor);
+			}
 
 		return sUIScaleFactor;
 		}
@@ -121,11 +131,15 @@ public class HiDPIHelper {
 		}
 
 	public static Icon createIcon(String fileName, int rotation) {
-		return new HiDPIIcon(scale(capCorners(rotate(createLaFCompatibleImage(fileName), rotation))));
+		BufferedImage image = capCorners(rotate(createLaFCompatibleImage(fileName), rotation));
+		boolean isScaled = mustScale();
+		return new HiDPIIcon(isScaled ? scale(image) : image, isScaled);
 		}
 
 	public static Icon createDisabledIcon(String fileName, int rotation) {
-		return new HiDPIIcon(scale(capCorners(rotate(createDisabledImage(fileName), rotation))));
+		BufferedImage image = capCorners(rotate(createDisabledImage(fileName), rotation));
+		boolean isScaled = mustScale();
+		return new HiDPIIcon(isScaled ? scale(image) : image, isScaled);
 		}
 
 	private static String getDoubleResolutionFileName(String fileName) {
@@ -178,7 +192,7 @@ public class HiDPIHelper {
 	 * @return
 	 */
 	public static BufferedImage createImage(String fileName) {
-		if (getRetinaScaleFactor() == 2 || getUIScaleFactor() > ICON_SCALE_LIMIT)
+		if (useDoubleImage())
 			fileName = getDoubleResolutionFileName(fileName);
 
 		URL url = HiDPIIconButton.class.getResource("/images/" + fileName);
@@ -223,14 +237,32 @@ public class HiDPIHelper {
 		return image;
 	}
 
+	private static boolean useDoubleImage() {
+		return getUIScaleFactor() * getRetinaScaleFactor() > ICON_SCALE_LIMIT_1;
+		}
+
+	private static boolean mustScale() {
+		return (getUIScaleFactor() * getRetinaScaleFactor() > ICON_SCALE_LIMIT_1
+			 && getUIScaleFactor() * getRetinaScaleFactor() < ICON_SCALE_LIMIT_2)
+			|| getUIScaleFactor() * getRetinaScaleFactor() < ICON_SCALE_LIMIT_3;
+		}
+
+	public static float getIconScaleFactor() {
+		if (!mustScale())
+			return 1f;
+
+		float scale = getUIScaleFactor() * getRetinaScaleFactor();
+		if (useDoubleImage())
+			scale *= 0.5f;
+
+		return scale;
+		}
+
 	public static Image scale(BufferedImage image) {
-		float scale = getUIScaleFactor();
-		if (scale > ICON_SCALE_LIMIT)   // in this case we have double size images
-			return image.getScaledInstance(Math.round(0.5f * scale * image.getWidth()),
-										   Math.round(0.5f * scale * image.getHeight()), Image.SCALE_SMOOTH);
-		else
-			return image;
-	}
+		float scale = getIconScaleFactor();
+		return image.getScaledInstance(Math.round(scale * image.getWidth()),
+									   Math.round(scale * image.getHeight()), Image.SCALE_SMOOTH);
+		}
 
 	private static BufferedImage capCorners(BufferedImage image) {
 		image.setRGB(0, 0, 0x00000000);

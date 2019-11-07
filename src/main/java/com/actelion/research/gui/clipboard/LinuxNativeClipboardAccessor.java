@@ -38,8 +38,8 @@ import java.awt.datatransfer.*;
 
 public class LinuxNativeClipboardAccessor implements ClipboardOwner
 {
-	static public DataFlavor MOLFLAVOUR = new DataFlavor(com.actelion.research.chem.StereoMolecule.class,"Actelion Molecule");
-	static public DataFlavor REACTIONFLAVOUR = new DataFlavor(com.actelion.research.chem.reaction.Reaction.class,"Actelion Reaction");
+	static public DataFlavor MOLFLAVOUR = new DataFlavor(com.actelion.research.chem.StereoMolecule.class,"OpenChemLib-Molecule");
+	static public DataFlavor REACTIONFLAVOUR = new DataFlavor(com.actelion.research.chem.reaction.Reaction.class,"OpenChemLib-Reaction");
 
 
 	public static boolean copyMoleculeToClipboard(String filname,byte[] sketch,byte[] serializedObject)

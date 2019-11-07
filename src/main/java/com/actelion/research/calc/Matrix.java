@@ -40,8 +40,10 @@ import com.actelion.research.util.datamodel.ScorePoint;
 import java.awt.*;
 import java.io.*;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Matrix {
 
@@ -2062,6 +2064,27 @@ public class Matrix {
         return bEqual;
     }
 
+    public boolean hasOnlyFinite() {
+
+        boolean finite = true;
+
+        int r = rows();
+
+        int c = cols();
+
+        ma:
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                if(!Double.isFinite(data[i][j])){
+                    finite = false;
+                    break ma;
+                }
+            }
+        }
+
+        return finite;
+
+    }
     /**
      * Value by value multiplication
      * Matrices must have the same dimensions.
@@ -3553,34 +3576,64 @@ public class Matrix {
     public void write(File fiMa, DecimalFormat nf, boolean apppend) {
 
         try {
-			BufferedWriter bw = new BufferedWriter(new FileWriter(fiMa, apppend));
-			
-			for (int i = 0; i < data.length; i++) {
-				
-			    StringBuilder sb =  new StringBuilder();
-			    
-			    for (int j = 0; j < data[0].length; j++) {
-			    	
-			    	sb.append(nf.format(data[i][j]));
-			    	
-			    	if(j<data[0].length-1){
-			    		sb.append(OUT_SEPARATOR_COL);
-			    	}
-			    }
-			    
-			    bw.write(sb.toString());
-			    // No line break after the last line
-			    if(i < data.length - 1) {
-				    bw.write(OUT_SEPARATOR_ROW);
-			    }
-			}
-			
-			bw.flush();
-			bw.close();
+            FileOutputStream os = new FileOutputStream(fiMa, apppend);
+            write(os, nf);
+            os.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
     }
+
+    public void write(OutputStream os) {
+        NumberFormat nf = new DecimalFormat("#.###############");
+        write(os, nf);
+    }
+
+    public String writeAsLineBase64Encoded() {
+
+        NumberFormat nf = new DecimalFormat("#.###############");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        write(baos, nf);
+
+        Base64.Encoder encoder = Base64.getEncoder();
+
+        byte [] arr64 = encoder.encode(baos.toByteArray());
+
+        return new String(arr64);
+    }
+
+
+    public void write(OutputStream os, NumberFormat nf) {
+
+        try {
+			for (int i = 0; i < data.length; i++) {
+
+			    StringBuilder sb =  new StringBuilder();
+
+			    for (int j = 0; j < data[0].length; j++) {
+
+			    	sb.append(nf.format(data[i][j]));
+
+			    	if(j<data[0].length-1){
+			    		sb.append(OUT_SEPARATOR_COL);
+			    	}
+			    }
+
+			    os.write(sb.toString().getBytes());
+			    // No line break after the last line
+			    if(i < data.length - 1) {
+                    os.write(OUT_SEPARATOR_ROW.getBytes());
+			    }
+			}
+
+			os.flush();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+    }
+
 
     public String toStringWithColTags(List<String> liColTags, DecimalFormat nf, String separator) {
     	    	

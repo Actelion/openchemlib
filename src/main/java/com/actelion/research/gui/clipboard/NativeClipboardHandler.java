@@ -34,16 +34,10 @@
 package com.actelion.research.gui.clipboard;
 
 
+import com.actelion.research.util.Platform;
+
 public class NativeClipboardHandler
 {
-
-    private static boolean isWin = (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0);
-    private static boolean isMac = (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0);
-    private static boolean isLinux = (System.getProperty("os.name").toLowerCase().indexOf("nux") >= 0);
-    private static boolean isUnix = (System.getProperty("os.name").toLowerCase().indexOf("nix") >= 0);
-
-
-
     public static final String NC_SKETCH	= "MDLSK";
     public static final String NC_CTAB		= "MDLCT";
     public static final String NC_MOLFILE	= "MDL_MOL";
@@ -58,34 +52,11 @@ public class NativeClipboardHandler
     public static final String NC_IDCODE		= "IDCODE";
 
 
-
-    static boolean isWindows()
-    {
-        return isWin;
-    }
-
-    static boolean isMacintosh()
-    {
-        return isMac;
-    }
-
-    static boolean isLinux()
-    {
-        return isLinux;
-    }
-
-    static boolean isUnix()
-    {
-        return isUnix;
-    }
-
-
-
     public static boolean copyMoleculeToClipboard(String filename,byte[] sketch, byte[] serializedObject)
     {
-        if (isWindows()) {
+        if (Platform.isWindows()) {
             return NativeClipboardAccessor.copyMoleculeToClipboard(filename,sketch,serializedObject);
-        } else if (isLinux() || isMacintosh()) {
+        } else if (Platform.isLinux() || Platform.isMacintosh()) {
             return LinuxNativeClipboardAccessor.copyMoleculeToClipboard(filename,sketch,serializedObject);
         } else
             return false;
@@ -93,9 +64,9 @@ public class NativeClipboardHandler
 
     public static boolean copyReactionToClipboard(String filename,byte[] sketch, byte[] serializedObject)
     {
-        if (isWindows()) {
+        if (Platform.isWindows()) {
             return NativeClipboardAccessor.copyReactionToClipboard(filename,sketch,serializedObject);
-        } else if (isLinux() || isMacintosh()) {
+        } else if (Platform.isLinux() || Platform.isMacintosh()) {
             return LinuxNativeClipboardAccessor.copyReactionToClipboard(filename,sketch,serializedObject);
         } else
             return false;
@@ -106,9 +77,9 @@ public class NativeClipboardHandler
         /* Formats are "MDLSK","MDLCT","MDL_MOL","CF_METAFILEPICT","CF_DIB" "ACT_MOLECULE" */
     public static byte[] getClipboardData(String format)
     {
-        if (isWindows()) {
+        if (Platform.isWindows()) {
             return NativeClipboardAccessor.getClipboardData(format);
-        } else if (isLinux() || isMacintosh()) {
+        } else if (Platform.isLinux() || Platform.isMacintosh()) {
             return LinuxNativeClipboardAccessor.getClipboardData(format);
         } else
             return null;
@@ -116,14 +87,12 @@ public class NativeClipboardHandler
 
     public static boolean setClipBoardData(String format, byte[] buffer)
     {
-        if (isWindows()) {
+        if (Platform.isWindows()) {
             return NativeClipboardAccessor.setClipBoardData(format,buffer);
-        } else if (isLinux() || isMacintosh()) {
+        } else if (Platform.isLinux() || Platform.isMacintosh()) {
             return LinuxNativeClipboardAccessor.setClipBoardData(format,buffer);
         } else
             return false;
-
-
     }
 
     /**

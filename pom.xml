@@ -8,7 +8,7 @@
     Please follow the naming scheme YEAR.MONTH.RELEASE_NO_OF_MONTH
     (eg. 2016.4.1 for second release in Apr 2016)
     -->
-    <version>2019.5.1-SNAPSHOT</version>
+    <version>2019.11.1-SNAPSHOT</version>
 
     <name>OpenChemLib</name>
     <description>Open Source Chemistry Library</description>
@@ -76,8 +76,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.0</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
             <plugin>

@@ -40,8 +40,6 @@
 
 package com.actelion.research.chem;
 
-import com.actelion.research.chem.conf.TorsionDB;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -154,6 +152,7 @@ public class Canonizer {
 	private boolean mIsOddParityRound;
 	private boolean mZCoordinatesAvailable;
 	private boolean mCIPParityNoDistinctionProblem;
+	private boolean mEncodeAvoid127;
 
 	private boolean mGraphGenerated;
 	private int mGraphRings;
@@ -1592,7 +1591,7 @@ System.out.println("noOfRanks:"+canRank);
 			return false;
 
 		if (mMol.getAtomPi(atom) != 0) {
-			if (isCentralAlleneAtom(atom))
+			if (mMol.isCentralAlleneAtom(atom))
 				return canCalcAlleneParity(atom, calcProParity);
 
 			if (mMol.getAtomicNo(atom) != 15
@@ -2093,13 +2092,6 @@ System.out.println("noOfRanks:"+canRank);
 		}
 
 
-	private boolean isCentralAlleneAtom(int atom) {
-		return mMol.getConnAtoms(atom) == 2
-			&& mMol.getConnBondOrder(atom,0) == 2
-			&& mMol.getConnBondOrder(atom,1) == 2;
-		}
-
-
 	private byte canCalcEZParity2D(EZHalfParity halfParity1, EZHalfParity halfParity2) {
 		if (halfParity1.getValue() == -1 || halfParity2.getValue() == -1)
 			return Molecule.cBondParityUnknown;
@@ -2157,8 +2149,8 @@ System.out.println("noOfRanks:"+canRank);
 	private void flagStereoProblems() {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			// if stereo center is declared unknown and no recognized as such; or vice versa
-			if (mMol.isAtomConfigurationUnknown(atom)
-			  ^ mTHParity[atom] == Molecule.cAtomParityUnknown)
+			if (mTHParity[atom] == Molecule.cAtomParityUnknown
+			 && !mMol.isAtomConfigurationUnknown(atom))
 				mMol.setStereoProblem(atom);
 
 			// if no parity found, but atom was assigned to AND or OR group
@@ -2166,6 +2158,11 @@ System.out.println("noOfRanks:"+canRank);
 			  || mMol.getAtomESRType(atom) == Molecule.cESRTypeOr)
 			 && (!mIsStereoCenter[atom]
 			  || mTHParity[atom] == Molecule.cAtomParityUnknown))
+				mMol.setStereoProblem(atom);
+
+			if (mMol.isAtomConfigurationUnknown(atom)
+			 && mTHParity[atom] != Molecule.cAtomParityUnknown
+			 && !isUnknownBINAPBondAtom(atom))
 				mMol.setStereoProblem(atom);
 			}
 
@@ -2195,7 +2192,9 @@ System.out.println("noOfRanks:"+canRank);
 				}
 
 			if (mMol.getBondType(bond) == Molecule.cBondTypeSingle
-			 && mEZParity[bond] == Molecule.cBondParityUnknown) {
+			 && mEZParity[bond] == Molecule.cBondParityUnknown
+			 && !mMol.isAtomConfigurationUnknown(mMol.getBondAtom(0, bond))
+			 && !mMol.isAtomConfigurationUnknown(mMol.getBondAtom(1, bond))) {
 				mMol.setStereoProblem(mMol.getBondAtom(0, bond));
 				mMol.setStereoProblem(mMol.getBondAtom(1, bond));
 				}
@@ -2209,6 +2208,16 @@ System.out.println("noOfRanks:"+canRank);
 				mMol.setStereoProblem(mMol.getBondAtom(1, bond));
 				}
 			}
+		}
+
+
+	private boolean isUnknownBINAPBondAtom(int atom) {
+		for (int i=0; i<mMol.getConnAtoms(atom); i++)
+			if (mEZParity[mMol.getConnBond(atom, i)] == Molecule.cBondParityUnknown
+			 && mMol.getConnBondOrder(atom, i) == 1)
+				return true;
+
+		return false;
 		}
 
 
@@ -2395,6 +2404,7 @@ System.out.println("noOfRanks:"+canRank);
 	/**
 	 * Sets all atoms with TH-parity 'unknown' to explicitly defined 'unknown'.
 	 * Sets all double bonds with EZ-parity 'unknown' to cross bonds.
+	 * Sets the first bond atom of all BINAP type bonds with parity 'unknown' to explicitly defined 'unknown' parity.
 	 */
 	public void setUnknownParitiesToExplicitlyUnknown() {
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
@@ -2403,10 +2413,13 @@ System.out.println("noOfRanks:"+canRank);
 				mMol.setAtomConfigurationUnknown(atom, true);
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			if (mEZParity[bond] == Molecule.cBondParityUnknown) {
-				if (mMol.getBondOrder(bond) == 2) {
+				int order = mMol.getBondOrder(bond);
+				if (order == 1) {
+					mMol.setAtomConfigurationUnknown(mMol.getBondAtom(0, bond), true);
+					}
+				else if (order == 2) {
 			   		mMol.setBondType(bond, Molecule.cBondTypeCross);
 					}
-				// TODO once there is a BINAP config unknown, adapt here
 				}
 			}
 		}
@@ -2566,7 +2579,7 @@ System.out.println("noOfRanks:"+canRank);
 
 
 	private void idCodeCreate() {
-		encodeBitsStart();
+		encodeBitsStart(false);
 		encodeBits(cIDCodeVersion3, 4);
 		int nbits = Math.max(idGetNeededBits(mMol.getAtoms()),
 							 idGetNeededBits(mMol.getBonds()));
@@ -3339,7 +3352,7 @@ System.out.println();
 			}
 
 		int resolutionBits = mZCoordinatesAvailable ? 16 : 8;	// must be an even number
-		encodeBitsStart();
+		encodeBitsStart(true);
 		mEncodingBuffer.append(includeHydrogenCoordinates ? '#' : '!');
 		encodeBits(mZCoordinatesAvailable ? 1 : 0, 1);
 		encodeBits(keepPositionAndScale ? 1 : 0, 1);
@@ -3487,7 +3500,7 @@ System.out.println();
 			}
 
 		int nbits = idGetNeededBits(maxMapNo);
-		encodeBitsStart();
+		encodeBitsStart(true);
 		encodeBits(nbits, 4);
 		encodeBits(autoMappingFound ? 1 : 0, 1);
 		encodeBits(manualMappingFound ? 1 : 0, 1);
@@ -3513,7 +3526,7 @@ System.out.println();
 			if (mTHParity[atom] == Molecule.cAtomParity1
 			 || mTHParity[atom] == Molecule.cAtomParity2) {
 				boolean inversion = false;
-				if (isCentralAlleneAtom(atom)) {
+				if (mMol.isCentralAlleneAtom(atom)) {
 					for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 						int connAtom = mMol.getConnAtom(atom,i);
 						int neighbours = 0;
@@ -3715,10 +3728,11 @@ System.out.println();
 		}
 
 
-	private void encodeBitsStart() {
+	private void encodeBitsStart(boolean avoid127) {
 		mEncodingBuffer = new StringBuilder();
 		mEncodingBitsAvail = 6;
 		mEncodingTempData = 0;
+		mEncodeAvoid127 = avoid127;
 		}
 
 
@@ -3726,7 +3740,9 @@ System.out.println();
 //System.out.println(bits+" bits:"+data+"  mode="+mode);
 		while (bits != 0) {
 			if (mEncodingBitsAvail == 0) {
-				mEncodingBuffer.append((char)(mEncodingTempData + 64));
+				if (!mEncodeAvoid127 || mEncodingTempData != 63)
+					mEncodingTempData += 64;
+				mEncodingBuffer.append((char)mEncodingTempData);
 				mEncodingBitsAvail = 6;
 				mEncodingTempData = 0;
 				}
@@ -3741,7 +3757,9 @@ System.out.println();
 
 	private String encodeBitsEnd() {
 		mEncodingTempData <<= mEncodingBitsAvail;
-		mEncodingBuffer.append((char)(mEncodingTempData + 64));
+		if (!mEncodeAvoid127 || mEncodingTempData != 63)
+			mEncodingTempData += 64;
+		mEncodingBuffer.append((char)mEncodingTempData);
 		return mEncodingBuffer.toString();
 		}
 
@@ -4360,7 +4378,7 @@ System.out.println("");
 				rankObject[parent].parentIndex = parentIndex;
 				rankObject[parent].parentRank = graphRank[parentIndex];
 				rankObject[parent].parentHCount = graphIsPseudo[parentIndex] ? 0
-												: mMol.getAllHydrogens(graphAtom[parentIndex]);
+												: mMol.getPlainHydrogens(graphAtom[parentIndex]);
 				rankObject[parent].childRank = new int[nextBaseIndex-baseIndex];
 				for (int i=baseIndex; i<nextBaseIndex; i++)
 					rankObject[parent].childRank[i-baseIndex] = graphRank[i];

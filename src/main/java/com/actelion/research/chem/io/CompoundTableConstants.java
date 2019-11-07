@@ -67,7 +67,7 @@ public interface CompoundTableConstants {
     int cTextExclusionTypeRegEx = 4;
 
     int cMaxTextCategoryCount = 65536;
-    int cMaxDateOrDoubleCategoryCount = 256;
+    int cMaxDateOrDoubleCategoryCount = 16384;
 
     // summary mode for displaying values.
     int cSummaryModeNormal = 0;
@@ -154,6 +154,15 @@ public interface CompoundTableConstants {
     String cColumnPropertyReferenceType = "refType";
     String cColumnPropertyReferenceTypeRedundant = "redundant";	// a connection is always referenced on both records
     String cColumnPropertyReferenceTypeTopDown = "topdown";	// a connection is only referenced from top record
+    String cColumnPropertyFormula = "formula";
+    String cColumnPropertySuperposeMolecule = "superposeMol";	// idcode+coords to be displayed in every cell
+    String cColumnPropertySuperpose = "superpose";  // cSuperposeValueReferenceRow or null
+    String cColumnPropertySuperposeAlign = "align";  // cSuperposeAlignValueShape or null
+    String cColumnPropertyCommentUploadStatus = "commentUploadStatus";
+    String cColumnPropertyCommentDepartment = "commentDepartment";
+
+    String cSuperposeValueReferenceRow = "refRow";  // "reference" or null
+    String cSuperposeAlignValueShape = "shape";  // "reference" or null
 
     String cNativeFileHeaderStart = "<datawarrior-fileinfo>";
     String cNativeFileHeaderEnd = "</datawarrior-fileinfo>";

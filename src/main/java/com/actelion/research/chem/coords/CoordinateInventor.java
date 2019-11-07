@@ -122,7 +122,7 @@ public class CoordinateInventor {
 
 	/**
 	 * Creates new atom 2D-coordinates for a molecule or a part of a molecule.
-	 * Coordinates will correctly reflect E/Z double bond parities, unless the double bond is in a ring.
+	 * Coordinates will correctly reflect E/Z double bond parities, unless the double bond is in a small ring.
 	 * If atom parities are available, this call is typically followed by calling mol.setStereoBondsFromParity();
 	 * Unneeded explicit hydrogens are removed, if mode includes MODE_REMOVE_HYDROGEN.
 	 * The relative orientation of all marked atoms is retained, if mode includes MODE_KEEP_MARKED_ATOM_COORDS.
@@ -143,7 +143,7 @@ public class CoordinateInventor {
 	 * Typically, the molecule has defined TH- and EZ-parities (even if unknown or none), which were not
 	 * calculated, but taken from a SMILES or from an IDCode. In these cases setParitiesValid() should have
 	 * been called to indicate that a parity calculation is not needed and even would destroy given parities.
-	 * New coordinates will correctly reflect E/Z double bond parities, unless the double bond is in a ring.
+	 * New coordinates will correctly reflect E/Z double bond parities, unless the double bond is in a small ring.
 	 * If atom parities are available, this call is typically followed by calling mol.setStereoBondsFromParity();
 	 * Unneeded explicit hydrogens are removed, if mode includes MODE_REMOVE_HYDROGEN.
 	 * The relative orientation of all marked atoms is retained, if mode includes MODE_KEEP_MARKED_ATOM_COORDS.
@@ -283,29 +283,42 @@ public class CoordinateInventor {
 
 
 	private void locateMarkedFragments() {
-		// take every small ring whose atoms are not a superset of another small ring
+		int atomCount = 0;
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+			if (mMol.isMarkedAtom(atom))
+				atomCount++;
+
+		// there are no relative coordinates with less than 2 points
+		if (atomCount < 2)
+			return;
+
 		int bondCount = 0;
 		double avbl = 0;
 		for (int bond=0; bond<mMol.getAllBonds(); bond++) {
-			if (mMol.isMarkedAtom(mMol.getBondAtom(0, bond))
-			 && mMol.isMarkedAtom(mMol.getBondAtom(1, bond))) {
+			int atom1 = mMol.getBondAtom(0, bond);
+			int atom2 = mMol.getBondAtom(1, bond);
+			if (mMol.isMarkedAtom(atom1)
+			 && mMol.isMarkedAtom(atom2)) {
 				mBondHandled[bond] = true;
+				mAtomHandled[atom1] = true;
+				mAtomHandled[atom2] = true;
 				avbl += mMol.getBondLength(bond);
 				bondCount++;
 				}
 			}
-		if (bondCount == 0 || avbl == 0.0)
-			return;
-		avbl /= bondCount;
 
-		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
-			if (mMol.isMarkedAtom(atom)) {
-				if (mMol.getAllConnAtomsPlusMetalBonds(atom) == 0)
-					mMol.setAtomMarker(atom, false);
-				else
-					mAtomHandled[atom] = true;
-				}
+		if (bondCount != 0 && avbl != 0.0)
+			avbl /= bondCount;
+		else {	// if we don't have an avbl from the marked bonds, we take it from all bonds
+			avbl = mMol.getAverageBondLength();
 			}
+
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+			if (mMol.isMarkedAtom(atom) && !mAtomHandled[atom])
+				atomCount--;
+
+		if (atomCount < 2)
+			return;
 
 		int[] fragmentNo = new int[mMol.getAllAtoms()];
 		int coreFragmentCount = mMol.getFragmentNumbers(fragmentNo, true, true);
@@ -712,7 +725,7 @@ public class CoordinateInventor {
 
 	private void locateSingleAtoms() {
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
-			if (!mMol.isMarkedAtom(atom) && mMol.getAllConnAtoms(atom) == 0) {
+			if (!mAtomHandled[atom] && mMol.getAllConnAtoms(atom) == 0) {
 				InventorFragment f = new InventorFragment(mMol, 1, mMode);
 				mAtomHandled[atom] = true;
 				f.mGlobalAtom[0] = atom;
@@ -1782,7 +1795,7 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 		int current = 0;
 		int highest = 0;
 		while (current <= highest) {
-			for (int i=0; i<mMol.getAllConnAtoms(graphAtom[current]); i++) {
+			for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(graphAtom[current]); i++) {
 				int candidate = mMol.getConnAtom(graphAtom[current], i);
 				int theBond = mMol.getConnBond(graphAtom[current], i);
 

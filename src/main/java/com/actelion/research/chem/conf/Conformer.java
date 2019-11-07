@@ -326,20 +326,22 @@ public class Conformer implements Comparable<Conformer> {
 		}
 
 	public boolean equals(Conformer c) {
-		if (mTorsionDescriptor == null)
-			mTorsionDescriptor = new TorsionDescriptor(this);
-		if (c.mTorsionDescriptor == null)
-			c.mTorsionDescriptor = new TorsionDescriptor(c);
-
+		ensureDescriptors(c);
 		return mTorsionDescriptor.equals(c.mTorsionDescriptor);
 		}
 
 	@Override public int compareTo(Conformer c) {
-		if (mTorsionDescriptor == null)
-			mTorsionDescriptor = new TorsionDescriptor(this);
-		if (c.mTorsionDescriptor == null)
-			c.mTorsionDescriptor = new TorsionDescriptor(c);
-
+		ensureDescriptors(c);
 		return mTorsionDescriptor.compareTo(c.mTorsionDescriptor);
+		}
+
+	private void ensureDescriptors(Conformer c) {
+		if (mTorsionDescriptor == null || c.mTorsionDescriptor == null) {
+			TorsionDescriptorHelper tdh = new TorsionDescriptorHelper(mMol);
+			if (mTorsionDescriptor == null)
+				mTorsionDescriptor = tdh.getTorsionDescriptor(this);
+			if (c.mTorsionDescriptor == null)
+				c.mTorsionDescriptor = tdh.getTorsionDescriptor(c);
+			}
 		}
 	}

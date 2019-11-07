@@ -164,16 +164,16 @@ public class PolarSurfaceAreaPredictor {
 		}
 
 
-	protected int getPolarAtomType(StereoMolecule mol, int atom) {
+	private int getPolarAtomType(StereoMolecule mol, int atom) {
 		switch (mol.getAtomicNo(atom)) {
 		case 7:
 			if (mol.isAromaticAtom(atom)) {
 				if (mol.getAtomCharge(atom) == 0) {
 					if (mol.getAllHydrogens(atom) == 0) {
-						if (mol.getConnAtoms(atom) == 2)
+						if (mol.getNonHydrogenNeighbourCount(atom) == 2)
 							return 18;
 						else {
-							for (int i=0; i<mol.getConnAtoms(atom); i++)
+							for (int i=0; i<mol.getNonHydrogenNeighbourCount(atom); i++)
 								if (!mol.isAromaticBond(mol.getConnBond(atom, i)))
 									return 20;
 							return 19;
@@ -184,7 +184,7 @@ public class PolarSurfaceAreaPredictor {
 					}
 				else if (mol.getAtomCharge(atom) == 1) {
 					if (mol.getAllHydrogens(atom) == 0) {
-						for (int i=0; i<mol.getConnAtoms(atom); i++)
+						for (int i=0; i<mol.getNonHydrogenNeighbourCount(atom); i++)
 							if (!mol.isAromaticBond(mol.getConnBond(atom, i)))
 								return (mol.getAtomCharge(mol.getConnAtom(atom, i)) < 0) ? 21 : 24;
 						return 23;
@@ -264,14 +264,14 @@ public class PolarSurfaceAreaPredictor {
 				if (mol.getAtomCharge(atom) == 0) {
 					if (mol.getAtomPi(atom) > 0)
 						return 28;
-					if (mol.getConnAtoms(atom) == 1)
+					if (mol.getNonHydrogenNeighbourCount(atom) == 1)
 						return 29;
 					if (mol.getAtomRingSize(atom) == 3)
 						return 27;
 					return 26;
 					}
 				else if (mol.getAtomCharge(atom) == -1) {
-					if (mol.getConnAtoms(atom) == 1
+					if (mol.getNonHydrogenNeighbourCount(atom) == 1
 					 && mol.getAtomCharge(mol.getConnAtom(atom, 0)) > 0)
 						return 28;	// return -[O-] of nitro as =O
 					return 30;
@@ -281,18 +281,18 @@ public class PolarSurfaceAreaPredictor {
 		case 15:
 			if (mol.getAtomCharge(atom) == 0) {
 				if (mol.getAllHydrogens(atom) == 0) {
-					if (mol.getConnAtoms(atom) == 3
+					if (mol.getNonHydrogenNeighbourCount(atom) == 3
 					 && mol.getAtomPi(atom) == 0)
 						return 39;
-					if (mol.getConnAtoms(atom) == 2
+					if (mol.getNonHydrogenNeighbourCount(atom) == 2
 					 && mol.getAtomPi(atom) == 1)
 						return 40;
-					if (mol.getConnAtoms(atom) == 4
+					if (mol.getNonHydrogenNeighbourCount(atom) == 4
 					 && mol.getAtomPi(atom) == 1)
 						return 41;
 					}
 				else if (mol.getAllHydrogens(atom) == 1) {
-					if (mol.getConnAtoms(atom) == 3
+					if (mol.getNonHydrogenNeighbourCount(atom) == 3
 					 && mol.getAtomPi(atom) == 1)
 						return 42;
 					}
@@ -301,28 +301,28 @@ public class PolarSurfaceAreaPredictor {
 		case 16:
 			if (mol.getAtomCharge(atom) == 0) {
 				if (mol.isAromaticAtom(atom)) {
-					if (mol.getConnAtoms(atom) == 2)
+					if (mol.getNonHydrogenNeighbourCount(atom) == 2)
 						return 37;
 					else
 						return 38;
 					}
 				else {
 					if (mol.getAllHydrogens(atom) == 0) {
-						if (mol.getConnAtoms(atom) == 2
+						if (mol.getNonHydrogenNeighbourCount(atom) == 2
 						 && mol.getAtomPi(atom) == 0)
 							return 32;
-						if (mol.getConnAtoms(atom) == 1
+						if (mol.getNonHydrogenNeighbourCount(atom) == 1
 						 && mol.getAtomPi(atom) == 1)
 							return 33;
-						if (mol.getConnAtoms(atom) == 3
+						if (mol.getNonHydrogenNeighbourCount(atom) == 3
 						 && mol.getAtomPi(atom) == 1)
 							return 34;
-						if (mol.getConnAtoms(atom) == 4
+						if (mol.getNonHydrogenNeighbourCount(atom) == 4
 						 && mol.getAtomPi(atom) == 2)
 							return 35;
 						}
 					else if (mol.getAllHydrogens(atom) == 1) {
-						if (mol.getConnAtoms(atom) == 1)
+						if (mol.getNonHydrogenNeighbourCount(atom) == 1)
 							return 36;
 						}
 					}
