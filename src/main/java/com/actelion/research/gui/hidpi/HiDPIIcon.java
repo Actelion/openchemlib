@@ -35,6 +35,11 @@ public class HiDPIIcon extends ImageIcon {
 			g.drawImage(image, x, y, width, height, null);
 			}
 		else {
+			if (LookAndFeelHelper.isNewSubstance()) {
+				// for some reason y needs to be adjusted by 1
+				y++;
+				}
+
 			Image image = getImage();
 			g.drawImage(image, x, y, null);
 			}
