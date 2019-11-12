@@ -55,6 +55,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.TreeMap;
 
 public class JDrawArea extends JPanel
 	implements ActionListener, KeyListener, MouseListener, MouseMotionListener
@@ -2004,6 +2005,10 @@ public class JDrawArea extends JPanel
 
 		Reaction rxn = getReaction();//new Reaction(reaction);
 
+		// manual mapNos a put as negative keys!!!
+		TreeMap<Integer,Integer> oldToNewMapNo = new TreeMap<>();
+		int nextMapNo = 1;
+
 		// Mark the manually mapped atoms such that the mapper uses them first priority and
 		// to be able to re-assign them later as manually mapped.
 		int[] fragmentAtom = new int[mFragment.length];
@@ -2011,7 +2016,14 @@ public class JDrawArea extends JPanel
 			int fragment = mFragmentNo[atom];
 			mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], 0, false);
 			if (mMol.getAtomMapNo(atom) != 0 && !mMol.isAutoMappedAtom(atom)) {
-				mFragment[fragment].setAtomicNo(fragmentAtom[fragment], FAKE_ATOM_NO + mMol.getAtomMapNo(atom));
+				int manualMapNo = mMol.getAtomMapNo(atom);
+
+				// make sure that negative manual mapNo is in TreeMap
+				Integer newMapNo = oldToNewMapNo.get(-manualMapNo);
+				if (newMapNo == null)
+					oldToNewMapNo.put(-manualMapNo, newMapNo = new Integer(nextMapNo++));
+
+				mFragment[fragment].setAtomicNo(fragmentAtom[fragment], FAKE_ATOM_NO + newMapNo);
 			}
 			fragmentAtom[fragment]++;
 		}
@@ -2019,59 +2031,49 @@ public class JDrawArea extends JPanel
 		rxn = mMapper.mapReaction(rxn, sss);
 
 		if (rxn != null) {
-			// copy mapping numbers from reaction back to the editor's display molecule
-			int[] mapperMapNoToUsedMapNo = new int[mMol.getAllAtoms()+1];
-			boolean[] isUsedMapNo = new boolean[mMol.getAllAtoms()+1];
+			// assign new mapping numbers: manually mapped atom starting from 1. Automapped atoms follow.
 
-			// first locate all manually mapped atoms and copy their original mapping numbers
+			// write manually mapped atoms' mapping number from rxn (i.e. fragments) into display molecule
 			fragmentAtom = new int[mFragment.length];
 			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
 				int fragment = mFragmentNo[atom];
-				int atomicNo = mFragment[fragment].getAtomicNo(fragmentAtom[fragment]);
-				if (atomicNo > FAKE_ATOM_NO) {
-					int mapperMapNo = mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]);
-					int usedMapNo = atomicNo - FAKE_ATOM_NO;
-					isUsedMapNo[usedMapNo] = true;
-					mMol.setAtomMapNo(atom, usedMapNo, false);
-					mapperMapNoToUsedMapNo[mapperMapNo] = usedMapNo;
-				}
-				fragmentAtom[fragment]++;
-			}
+				boolean hasFakeAtomicNo = (mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) > FAKE_ATOM_NO);
+				if (hasFakeAtomicNo) {
+					// rescue new mapNo
+					int newMapNo = mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) - FAKE_ATOM_NO;
 
-			fragmentAtom = new int[mFragment.length];
-			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
-				int fragment = mFragmentNo[atom];
-				int atomicNo = mFragment[fragment].getAtomicNo(fragmentAtom[fragment]);
-				if (atomicNo <= FAKE_ATOM_NO) {
-					int usedMapNo = 0;
-					int mapperMapNo = mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]);
-					if (mapperMapNo != 0) {
-						usedMapNo = mapperMapNoToUsedMapNo[mapperMapNo];
-						if (usedMapNo == 0) {
-							// find first free mapNo
-							for (int i=1; i<isUsedMapNo.length; i++) {
-								if (!isUsedMapNo[i]) {
-									usedMapNo = i;
-									break;
-								}
-							}
-							isUsedMapNo[usedMapNo] = true;
-							mapperMapNoToUsedMapNo[mapperMapNo] = usedMapNo;
-						}
+					// repair atomicNo
+					mFragment[fragment].setAtomicNo(fragmentAtom[fragment], mMol.getAtomicNo(atom));
+
+					mMol.setAtomMapNo(atom, newMapNo, false);
+					mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], newMapNo, false);
 					}
-					mMol.setAtomMapNo(atom, usedMapNo, true);
+				else {
+					// take generated mapNo from reaction
+					int generatedMapNo = mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]);
+
+					Integer newMapNo = 0;
+					if (generatedMapNo != 0) {
+						newMapNo = oldToNewMapNo.get(generatedMapNo);
+						if (newMapNo == null)
+							oldToNewMapNo.put(generatedMapNo, newMapNo = new Integer(nextMapNo++));
+					}
+
+					mMol.setAtomMapNo(atom, newMapNo, true);
+					mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], newMapNo, true);
 				}
 				fragmentAtom[fragment]++;
 			}
 		}
-
-		// restore original atomic numbers in fragments and copy display molecule's mapping number int o fragments
-		fragmentAtom = new int[mFragment.length];
-		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
-			int fragment = mFragmentNo[atom];
-			mFragment[fragment].setAtomicNo(fragmentAtom[fragment], mMol.getAtomicNo(atom));
-			mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], mMol.getAtomMapNo(atom), mMol.isAutoMappedAtom(atom));
-			fragmentAtom[fragment]++;
+		else {
+			// restore original atomic numbers in fragments and copy display molecule's mapping number into fragments
+			fragmentAtom = new int[mFragment.length];
+			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+				int fragment = mFragmentNo[atom];
+				mFragment[fragment].setAtomicNo(fragmentAtom[fragment], mMol.getAtomicNo(atom));
+				mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], mMol.getAtomMapNo(atom), mMol.isAutoMappedAtom(atom));
+				fragmentAtom[fragment]++;
+			}
 		}
 
 
