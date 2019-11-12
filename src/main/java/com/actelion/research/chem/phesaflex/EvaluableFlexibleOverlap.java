@@ -16,7 +16,7 @@ import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 
 
 /**
- * @author J.Wahl, Oktober 2019
+ * @author JW, Oktober 2019
  * functionality for optimizing PheSA overlap (Pharmacophore+Shape) allowing for molecular flexibility
  */
 
@@ -36,21 +36,21 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
     private double oAApp;
     private ForceFieldMMFF94 ff;
 
-	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule fitMol, boolean[] isHydrogen,double[] v) {
+	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule refMol, StereoMolecule fitMol, boolean[] isHydrogen,double[] v) {
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		ff = new ForceFieldMMFF94(fitMol, ForceFieldMMFF94.MMFF94SPLUS);
-		this.shapeAlign = shapeAlign; 
+		this.shapeAlign = shapeAlign;
 		this.fitMol = fitMol;
 		this.isHydrogen = isHydrogen;
 		this.v = v;
-		for(int a=0,i=0;i<fitMol.getAllAtoms();i++) {
-			v[a++]=fitMol.getAtomX(i);
-			v[a++]=fitMol.getAtomY(i);
-			v[a++]=fitMol.getAtomZ(i);
+		for(int i=0;i<fitMol.getAllAtoms();i++) {
+			v[3*i]=fitMol.getAtomX(i);
+			v[3*i+1]=fitMol.getAtomY(i);
+			v[3*i+2]=fitMol.getAtomZ(i);
 		}
 
-		this.oAA = this.getFGValueShapeSelf(new double[v.length], shapeAlign.getRefMolGauss(),true);
-		this.oAApp = this.getFGValueShapeSelfPP(new double[v.length], shapeAlign.getRefMolGauss(),true);
+		this.oAA = this.getFGValueShapeSelf(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
+		this.oAApp = this.getFGValueShapeSelfPP(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
 		
 	}
 	
@@ -70,6 +70,12 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		//System.out.println(Arrays.toString(v));
 		this.v=v;
 		ff.setState(v);
+		for(int a=0,i=0;i<fitMol.getAllAtoms();i++) {
+			fitMol.setAtomX(i,v[a++]);
+			fitMol.setAtomY(i,v[a++]);
+			fitMol.setAtomZ(i,v[a++]);
+		}
+		shapeAlign.getMolGauss().update(fitMol);
 	}
 	
 	public double[] getState(double[] v){
@@ -111,6 +117,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double oABpp = this.getFGValueShapePP(overlapGradPP);
 		ff.addGradient(energyGrad);
 		ePot = ff.getTotalEnergy();
+
 		double[] dOBB = selfOverlapGradFit;
 		double[] dOAB = overlapGrad;
 		double[] dOBB_dOAB = new double[grad.length];
@@ -118,9 +125,6 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double[] dOABpp = overlapGradPP;
 		double[] dOBBpp_dOABpp = new double[grad.length];
 		T = 0.5*(oAB/(oBB+oAA-oAB))+0.5*(oABpp/(oBBpp+oAApp-oABpp));
-		System.out.println("new round");
-		System.out.println(0.5*(oAB/(oBB+oAA-oAB)));
-		System.out.println(0.5*(oABpp/(oBBpp+oAApp-oABpp)));
 		double value = -SCALE*Math.exp(DELTA*(ePot-e0))*T + (ePot-e0);
 		for(int i=0;i<grad.length;i++) {
 			dOBB_dOAB[i] = dOBB[i]-dOAB[i];
@@ -131,11 +135,9 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 			dT[j] = dOAB[j]*(1/(oAA+oBB-oAB))-oAB*Math.pow(oAA+oBB-oAB,-2)*dOBB_dOAB[j] + 
 					dOABpp[j]*(1/(oAApp+oBBpp-oABpp))-oAB*Math.pow(oAApp+oBBpp-oABpp,-2)*dOBBpp_dOABpp[j];
 		}
-		
 		for(int k=0;k<grad.length;k++) {
 			grad[k] = energyGrad[k]-(dT[k]*SCALE*Math.exp(DELTA*(ePot-e0))+T*SCALE*DELTA*Math.exp(DELTA*(ePot-e0))*energyGrad[k]);
 		}
-
 
 		return value;
 		
@@ -143,33 +145,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	}
 
 	/**
-	 * calculates the gradient of the overlap function with respect to the three components of translation (dx,dy,dz)
-	 * and the quaternion with elements q,r,s,u composing the rotation q,r,s,u
-     * derivatives are described in: Griewank, Markey and Evans, The Journal of Chemical Physics, 71, 3449, 1979
-     * the intersection volume of two Atomic Gaussians is given by (Grant, Gallardo and Pickup, Journal of Computational Chemistry,16,1653,1996 
-     * 
-     *                                pi           3/2                 alpha_i*alpha_j*Rij(T)**2
-     * equation 1: Vij = p_i*p_j*(---------------)        * exp( - -------------------- )      
-     *                            alpha_i + alpha_j                     alpha_i + alpha_j 
-     * 
-     * Rij is the distance between the two atomic Gaussians and depends on the transformation T (orientation, translation) of the molecule to be fitted
-     * we can use the chain rule:
-     * dVij/dT = dVij/dRij * dRij/dT 
-     *  
-     * dVij/dRij = 2*(alpha_i*alpha_j)/(alpha_i + alpha_j) * Rij * Vij
-     * 
-     * Rij = T(j) - i  the transformation T consists of a rotation R and a translation t, the rotation is described by a rotation matrix R(q) that can be expressed 
-     * by means of a quaternion q(q,r,s,u)
-     * Rij=(Xi-R(q)*Xj-t)   Xi are the coordinates of Atomic Gaussian i  
-     * dRij/dt = -1
-     * for the rotational part, we need the derivation of the rotational Matrix R(q) with respect to q,r,s and u  
-     * dRij/dq = -dR(q)/dq *Xj  and accordingly for r,s,u
-     * dR(q)/dq yields a 3x3 matrix, multiplied by a vector with 3 elements (Xj), therefore every derivative of the rotation with respect to the elements of the quaternion has three elements:
-     * dxdq,dydq,dzdq usw. 
-     * the total derivative is then the sum over all pairs of overlapping Atomic Gaussians
-     * 
-     * to force the quaternions into unity, a penalty term is added for deviation from unity
-	 * @param grad 
+	 * calculates the gradient of the overlap function with respect to the cartesian coordinates of the atoms
 	 */
 	
 	public double getFGValueShape(double[] grad) {
