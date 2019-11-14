@@ -2,6 +2,7 @@ package com.actelion.research.chem.phesaflex;
 
 
 import java.util.Arrays;
+import java.util.Map;
 
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
@@ -23,8 +24,9 @@ import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 
 public class EvaluableFlexibleOverlap implements Evaluable  {
 
-	private static final double SCALE = 250;
-	private static final double DELTA = -0.01;
+	//private static final double SCALE = -250;
+	//private static final double DELTA = -0.01;
+	private static final double LAMBDA = 0.0625;
 	private double e0 = 0.0;
 	private StereoMolecule fitMol;
 	private PheSAAlignment shapeAlign;
@@ -35,10 +37,12 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
     private double oAA;
     private double oAApp;
     private ForceFieldMMFF94 ff;
-
-	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule refMol, StereoMolecule fitMol, boolean[] isHydrogen,double[] v) {
+    private Map<String, Object> ffOptions;
+    
+	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule refMol, StereoMolecule fitMol, boolean[] isHydrogen,double[] v, Map<String, Object> ffOptions) {
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
-		ff = new ForceFieldMMFF94(fitMol, ForceFieldMMFF94.MMFF94SPLUS);
+		this.ffOptions = ffOptions;
+		ff = new ForceFieldMMFF94(fitMol, ForceFieldMMFF94.MMFF94SPLUS, this.ffOptions);
 		this.shapeAlign = shapeAlign;
 		this.fitMol = fitMol;
 		this.isHydrogen = isHydrogen;
@@ -117,7 +121,6 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double oABpp = this.getFGValueShapePP(overlapGradPP);
 		ff.addGradient(energyGrad);
 		ePot = ff.getTotalEnergy();
-
 		double[] dOBB = selfOverlapGradFit;
 		double[] dOAB = overlapGrad;
 		double[] dOBB_dOAB = new double[grad.length];
@@ -125,7 +128,9 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double[] dOABpp = overlapGradPP;
 		double[] dOBBpp_dOABpp = new double[grad.length];
 		T = 0.5*(oAB/(oBB+oAA-oAB))+0.5*(oABpp/(oBBpp+oAApp-oABpp));
-		double value = -SCALE*Math.exp(DELTA*(ePot-e0))*T + (ePot-e0);
+		//double value = SCALE*Math.exp(DELTA*(ePot-e0))*T + (ePot-e0);
+		double strainPrefactor = (ePot<e0 || (ePot-e0)<FlexibleShapeAlignment.ENERGY_CUTOFF) ? 0.0 : 1.0;
+		double value = -T + LAMBDA*strainPrefactor*(ePot-e0)*(ePot-e0);
 		for(int i=0;i<grad.length;i++) {
 			dOBB_dOAB[i] = dOBB[i]-dOAB[i];
 			dOBBpp_dOABpp[i] = dOBBpp[i]-dOABpp[i];
@@ -136,7 +141,8 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 					dOABpp[j]*(1/(oAApp+oBBpp-oABpp))-oAB*Math.pow(oAApp+oBBpp-oABpp,-2)*dOBBpp_dOABpp[j];
 		}
 		for(int k=0;k<grad.length;k++) {
-			grad[k] = energyGrad[k]-(dT[k]*SCALE*Math.exp(DELTA*(ePot-e0))+T*SCALE*DELTA*Math.exp(DELTA*(ePot-e0))*energyGrad[k]);
+
+			grad[k] = -dT[k] + strainPrefactor*2*LAMBDA*(ePot-e0)*energyGrad[k];
 		}
 
 		return value;
@@ -386,8 +392,6 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 				}
 
 				}
-
-
 			
 		}
 

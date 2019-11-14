@@ -314,4 +314,8 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
 	public MMFFMolecule getMMFFMolecule() {
 		return mMMFFMol;
 	}
+	
+	public void addEnergyTerm(EnergyTerm term) {
+		mEnergies.add(term);
+	}
 }
