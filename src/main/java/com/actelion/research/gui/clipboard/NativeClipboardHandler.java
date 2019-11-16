@@ -62,12 +62,12 @@ public class NativeClipboardHandler
             return false;
     }
 
-    public static boolean copyReactionToClipboard(String filename,byte[] sketch, byte[] serializedObject)
+    public static boolean copyReactionToClipboard(byte[] serializedObject)
     {
         if (Platform.isWindows()) {
-            return NativeClipboardAccessor.copyReactionToClipboard(filename,sketch,serializedObject);
+            return NativeClipboardAccessor.copyReactionToClipboard(serializedObject);
         } else if (Platform.isLinux() || Platform.isMacintosh()) {
-            return LinuxNativeClipboardAccessor.copyReactionToClipboard(filename,sketch,serializedObject);
+            return LinuxNativeClipboardAccessor.copyReactionToClipboard(serializedObject);
         } else
             return false;
 

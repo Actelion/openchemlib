@@ -332,29 +332,12 @@ public class ClipboardHandler implements IClipboardHandler
         return ok;
     }
 
-    private boolean copyReactionToClipboard(Reaction m, String molfile) throws IOException
+    private boolean copyReactionToClipboard(Reaction rxn, String ctab) throws IOException
     {
         boolean ok = false;
-        byte buffer[] = Sketch.createSketchFromReaction(m);
-        File temp = File.createTempFile("actnca", ".wmf");
-        temp.deleteOnExit();
-        // This is currently not used
-        //if (writeRXN2Metafile(temp, buffer, m))
-        {
-            ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
-            byte[] cdbuffer = cdx.getChemDrawBuffer(m);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream out = new ObjectOutputStream(bos);
-            out.writeObject(m);
-            out.close();
-            bos.close();
-            byte t[] = bos.toByteArray();
-            System.out.println("Reaction copy with serialized object " + (t != null) + " " + (t != null ? t.length : 0));
-
-//            ok = NativeClipboardHandler.copyReactionToClipboard(temp.getAbsolutePath(),buffer,bos.toByteArray());
-            ok = NativeClipboardHandler.copyReactionToClipboard(temp.getAbsolutePath(), cdbuffer, bos.toByteArray());
-            temp.delete();
-        }
+        byte buffer[] = Sketch.createSketchFromReaction(rxn);
+        System.out.println("Reaction copy with serialized object " + (buffer != null) + " " + (buffer != null ? buffer.length : 0));
+        ok = NativeClipboardHandler.copyReactionToClipboard(buffer);
         return ok;
     }
 

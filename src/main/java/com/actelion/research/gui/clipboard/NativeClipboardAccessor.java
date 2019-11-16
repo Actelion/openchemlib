@@ -36,16 +36,12 @@ package com.actelion.research.gui.clipboard;
 public class NativeClipboardAccessor
 {
 
-    public static native boolean copyMoleculeToClipboard(String filname,byte[] sketch, byte[] serializedObject);
+    public static native boolean copyMoleculeToClipboard(String filname, byte[] sketch, byte[] serializedObject);
+	public static native boolean copyReactionToClipboard(byte[] serializedObject);
 	public static native boolean copySizedMoleculeToClipboard(String filname, byte[] sketch, byte[] serializedObject, int cx,int cy);
 	/* Formats are "MDLSK","MDLCT","MDL_MOL","CF_METAFILEPICT","CF_DIB" "ACT_MOLECULE" */
     public static native byte[] getClipboardData(String format);
     public static native boolean setClipBoardData(String format, byte[] buffer);
-
-	public static boolean copyReactionToClipboard(String filname,byte[] sketch, byte[] serializedObject)
-	{
-		return copyMoleculeToClipboard(filname,sketch,serializedObject);
-	}
 
     static {
         try {

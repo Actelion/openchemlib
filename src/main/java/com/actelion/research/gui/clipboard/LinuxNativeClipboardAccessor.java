@@ -48,7 +48,7 @@ public class LinuxNativeClipboardAccessor implements ClipboardOwner
 		return true;
 	}
 
-	public static boolean copyReactionToClipboard(String filname,byte[] sketch, byte[] serializedObject)
+	public static boolean copyReactionToClipboard(byte[] serializedObject)
 	{
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new SerializedObjectSelection(serializedObject,REACTIONFLAVOUR),new LinuxNativeClipboardAccessor());
 		return true;
