@@ -34,6 +34,8 @@
 package com.actelion.research.util;
 
 import java.awt.Point;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -904,10 +906,20 @@ public class StringFunctions {
 	}
 
 
+	public static String toString(Exception ex) {
+
+		StringWriter sw = new StringWriter();
+		ex.printStackTrace(new PrintWriter(sw));
+		String exceptionAsString = sw.toString();
+
+		return exceptionAsString;
+	}
+
+
 	public static String toString(List<String> li) {
 		return toString(li, " ");
 	}
-	
+
 	public static String toString(Collection<String> li, String sep) {
 
 		StringBuilder sb = new StringBuilder();
