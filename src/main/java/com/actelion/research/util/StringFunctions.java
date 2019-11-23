@@ -790,8 +790,33 @@ public class StringFunctions {
 		
 		return li;
 	}
-	
-	
+
+	/**
+	 * https://stackoverflow.com/questions/4385623/bytes-of-a-string-in-java
+	 * sizeof(string) =
+	 * 8 + // object header used by the VM
+	 * 8 + // 64-bit reference to char array (value)
+	 * 8 + string.length() * 2 + // character array itself (object header + 16-bit chars)
+	 * 4 + // offset integer
+	 * 4 + // count integer
+	 * 4 + // cached hash code
+	 * @param s
+	 * @return
+	 */
+	public static int sizeOf(String s) {
+		return 36 + s.length() * 2;
+	}
+
+	public static int sizeOf(List<String> l) {
+		int n = 0;
+
+		for (String s : l) {
+			n+=sizeOf(s);
+		}
+
+		return n;
+	}
+
 	
 	public static String toString(double [] arr, NumberFormat nf){
 
