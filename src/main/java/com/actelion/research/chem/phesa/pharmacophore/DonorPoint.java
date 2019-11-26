@@ -138,7 +138,7 @@ public class DonorPoint implements IPharmacophorePoint {
 	
 	@Override
 	public int getFunctionalityIndex() {
-		return IPharmacophorePoint.functionality.DONOR.getIndex();
+		return IPharmacophorePoint.Functionality.DONOR.getIndex();
 	}
 	
 

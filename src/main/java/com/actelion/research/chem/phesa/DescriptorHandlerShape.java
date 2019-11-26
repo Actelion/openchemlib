@@ -69,7 +69,9 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	}
 	
 	public PheSAMolecule createDescriptor(ConformerSet fullSet) {
-		ConformerSet confSet = fullSet.getSubset(CONFORMATIONS);
+		try {
+			ConformerSet confSet = fullSet.getSubset(CONFORMATIONS);
+		
 		init();
 		
 		ArrayList<MolecularVolume> molecularVolumes = new ArrayList<MolecularVolume>(); 
@@ -90,8 +92,11 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 				molecularVolumes.add(molVol);
             }
         }
- 
         return new PheSAMolecule(mol,molecularVolumes);
+		}
+		catch(Exception e) {
+			return FAILED_OBJECT;
+		}
 	}
 
 	

@@ -394,7 +394,7 @@ public class AcceptorPoint implements IPharmacophorePoint {
 
 	@Override
 	public int getFunctionalityIndex() {
-		return IPharmacophorePoint.functionality.ACCEPTOR.getIndex();
+		return IPharmacophorePoint.Functionality.ACCEPTOR.getIndex();
 	}
 
 

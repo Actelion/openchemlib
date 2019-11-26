@@ -7,9 +7,10 @@ import com.actelion.research.chem.conf.Conformer;
 
 public interface IPharmacophorePoint {
 	
-	public enum functionality {ACCEPTOR(1), DONOR(2), NEG_CHARGE(3), POS_CHARGE(4);
+	
+	public enum Functionality {ACCEPTOR(1), DONOR(2), NEG_CHARGE(3), POS_CHARGE(4);
 		private final int index;
-		functionality(int index) {
+		Functionality(int index) {
 			this.index = index;
 		}
 		public int getIndex() {
@@ -17,6 +18,7 @@ public interface IPharmacophorePoint {
 		}
 		
 	}
+	
 	
 	public Coordinates getCenter();
 	
@@ -40,8 +42,8 @@ public interface IPharmacophorePoint {
 	
 	public void getDirectionalityDerivativeCartesian(double[] grad, double[] v, Coordinates di, double sim);
 	
-	
 	public int getFunctionalityIndex();
+	
 	
 	default public double getVectorSimilarity(IPharmacophorePoint pp2,Coordinates directionalityMod) {
 		double vectorSim = 0.0;
@@ -56,6 +58,8 @@ public interface IPharmacophorePoint {
 	default public double getVectorSimilarity(IPharmacophorePoint pp2) {
 		return getVectorSimilarity(pp2, pp2.getDirectionality());
 	}
+	
+	
 	
 	
 }

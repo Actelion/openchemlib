@@ -22,8 +22,8 @@ public class IonizableGroupDetector {
 		ringCollection = mol.getRingSet();
 	}
 	
-	public ArrayList<PPGaussian> detect() {
-		ArrayList<PPGaussian> chargePoints = new ArrayList<PPGaussian>();
+	public ArrayList<IPharmacophorePoint> detect() {
+		ArrayList<IPharmacophorePoint> chargePoints = new ArrayList<IPharmacophorePoint>();
 		ArrayList<Integer> ionizableGroup;
 		//detect tetrazoles
 		for(int r=0;r<ringCollection.getSize();r++) {
@@ -38,7 +38,7 @@ public class IonizableGroupDetector {
 				ionizableGroups.add(tetrazole);
 				ChargePoint cp = new ChargePoint(mol,tetrazole.get(0),Arrays.asList(tetrazole.get(1),
 						tetrazole.get(2),tetrazole.get(3)),-1);
-				chargePoints.add(new PPGaussian(7,cp));
+				chargePoints.add(cp);
 			}
 			
 			
@@ -63,7 +63,7 @@ public class IonizableGroupDetector {
 						ionizableGroup.add(aaa);
 						ionizableGroups.add(ionizableGroup);
 						ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),-1);
-						chargePoints.add(new PPGaussian(6,cp));
+						chargePoints.add(cp);
 						continue;
 					}
 					else if (mol.getAtomicNo(aa)==15) {//POO3H2
@@ -80,7 +80,7 @@ public class IonizableGroupDetector {
 						}
 						ionizableGroups.add(ionizableGroup);
 						ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),-1);
-						chargePoints.add(new PPGaussian(15,cp));
+						chargePoints.add(cp);
 						continue;					
 					}
 					else if (mol.getAtomicNo(aa)==16) {//SOO3H
@@ -97,13 +97,14 @@ public class IonizableGroupDetector {
 						}
 						ionizableGroups.add(ionizableGroup);
 						ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),-1);
-						chargePoints.add(new PPGaussian(16,cp));
+						chargePoints.add(cp);
 						continue;					
 					}
 				}
 				}
 				else if(mol.getAtomicNo(a)==7) {
-					
+					if(mol.isAromaticAtom(a))
+						continue;
 					if(mol.getConnAtoms(a)<=2) { //HNR2 or H2NR
 							int nDBs = 0;
 							boolean found=false;
@@ -114,6 +115,8 @@ public class IonizableGroupDetector {
 									if(mol.getBondOrder(mol.getBond(a, aa))==2)nDBs++;
 									for(int j=0;j<mol.getConnAtoms(aa) && !found;j++) {
 										int aaa = mol.getConnAtom(aa, j);
+										if(mol.isAromaticAtom(aaa))
+											continue;
 										if(aaa==a) continue;
 										if(alreadyDetected(aaa)) continue;
 										if(mol.getAtomicNo(aaa)==7 && mol.getConnAtoms(aaa)<=2) {;
@@ -125,7 +128,7 @@ public class IonizableGroupDetector {
 												ionizableGroup.add(aaa);
 												ionizableGroups.add(ionizableGroup);
 												ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),1);
-												chargePoints.add(new PPGaussian(6,cp));
+												chargePoints.add(cp);
 												found = true;
 											}
 												
@@ -143,7 +146,7 @@ public class IonizableGroupDetector {
 						ionizableGroup.add(a);
 						ionizableGroups.add(ionizableGroup);
 						ChargePoint cp = new ChargePoint(mol,a,new ArrayList<Integer>(),1);
-						chargePoints.add(new PPGaussian(7,cp));
+						chargePoints.add(cp);
 						continue;
 					}
 			}
@@ -153,7 +156,7 @@ public class IonizableGroupDetector {
 				if(charge!=0 && !hasCounterChargedNeighbour(a)) {
 					charge = charge>0 ? 1 : -1;
 					ChargePoint cp = new ChargePoint(mol,a,new ArrayList<Integer>(),charge);
-					chargePoints.add(new PPGaussian(mol.getAtomicNo(a),cp));
+					chargePoints.add(cp);
 				}
 			}
 		}

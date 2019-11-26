@@ -170,7 +170,7 @@ class Lnsrch{
 				if(fL>f0) {
 					move(function, dir, lambda, initial,v);
 					f0 = function.getFGValue(grad);
-					System.err.println("ERR fL>f0");
+					//System.err.println("ERR fL>f0");
 					return new Object[]{f0, grad, Boolean.FALSE};
 				}
 				f0 = fL;

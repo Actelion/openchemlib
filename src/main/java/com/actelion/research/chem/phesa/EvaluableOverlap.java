@@ -160,9 +160,9 @@ public class EvaluableOverlap implements Evaluable  {
 		        q2Ders[i][0] = dxdq2;
 		        q2Ders[i][1] = dydq2;
 		        q2Ders[i][2] = dzdq2;
-		        q2Ders[i][0] = dxdq3;
-		        q2Ders[i][1] = dydq3;
-		        q2Ders[i][2] = dzdq3;
+		        q3Ders[i][0] = dxdq3;
+		        q3Ders[i][1] = dydq3;
+		        q3Ders[i][2] = dzdq3;
 		        i+=1;
 		    }
 		

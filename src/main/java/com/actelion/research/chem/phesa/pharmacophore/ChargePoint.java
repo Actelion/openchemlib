@@ -166,9 +166,9 @@ public class ChargePoint implements IPharmacophorePoint {
 	@Override
 	public int getFunctionalityIndex() {
 		if(charge<0)
-			return IPharmacophorePoint.functionality.NEG_CHARGE.getIndex();
+			return IPharmacophorePoint.Functionality.NEG_CHARGE.getIndex();
 		else
-			return IPharmacophorePoint.functionality.POS_CHARGE.getIndex();
+			return IPharmacophorePoint.Functionality.POS_CHARGE.getIndex();
 	}
 
 }

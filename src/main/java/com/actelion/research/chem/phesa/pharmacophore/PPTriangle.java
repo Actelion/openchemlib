@@ -151,68 +151,40 @@ public class PPTriangle {
 	}
 	
 	
-	public double getMatchingTransform(PPTriangle fitTriangle, double[][] usr) {
+	public double getMatchingTransform(PPTriangle fitTriangle, double[][] ur) {
 		if(initialRot==null && initialTranslate==null)
 			preAlign();
 		if(fitTriangle.initialRot==null && fitTriangle.initialTranslate==null)
 			fitTriangle.preAlign();
-		double cosBeta12, cosBeta13, r1,r2 ,r3;
 		Coordinates a1 = c[0];
 		Coordinates a2 = c[1];
 		Coordinates a3 = c[2];
 		Coordinates b1 = fitTriangle.c[0];
 		Coordinates b2 = fitTriangle.c[1];
 		Coordinates b3 = fitTriangle.c[2];
-		r1 = b1.dist();
-		r2 = b2.dist();
-		r3 = b3.dist();
-		cosBeta12 = (b1.dot(b2)/(b1.dist()*b2.dist()));
-		//beta12 = Math.acos((c[0].dot(c[1])/(c[0].dist()*c[1].dist())));
-		//beta13 = Math.acos((c[0].dot(c[2])/(c[0].dist()*c[2].dist())));
-		cosBeta13 = (b1.dot(b3)/(b1.dist()*b3.dist()));
-		double sinBeta12 = Math.sqrt(1-cosBeta12*cosBeta12);
-		double sinBeta13 = Math.sqrt(1-cosBeta13*cosBeta13);
-		double y = r1*a1.y-r2*(a2.x*sinBeta12-a2.y*cosBeta12) -
-				r3*(a3.x*sinBeta13-a3.y*cosBeta13);
-		
-		double x = r1*a1.x+r2*(a2.x*cosBeta12+a2.y*sinBeta13) +
-				r3*(a3.x*cosBeta13+a3.y*sinBeta13);
-		// make sure that both are aligned first
-		
-		double beta = Math.atan(y/x);
-		
-		PheSAAlignment.getRotationMatrix(beta, new Coordinates(0,0,1),s);
-		
-		//move triangle coordinates and compare with reference
-		
-		Coordinates b1New = new Coordinates(b1);
-		PheSAAlignment.rotateCoords(b1New, s);
-		Coordinates b2New = new Coordinates(b2);
-		PheSAAlignment.rotateCoords(b2New, s);
-		Coordinates b3New = new Coordinates(b3);
-		PheSAAlignment.rotateCoords(b3New, s);
 
-		double ppFit = ((4-2*Math.min(a1.subC(b1New).dist(),2)) + 
-				(4-2*Math.min(a2.subC(b2New).dist(),2)) + 
-					(4-2*Math.min(a3.subC(b3New).dist(),2)))/12.0;
+		
+		double ppFit = ((4-2*Math.min(a1.subC(b1).dist(),2)) + 
+				(4-2*Math.min(a2.subC(b2).dist(),2)) + 
+					(4-2*Math.min(a3.subC(b3).dist(),2)))/12.0;
 		
 		
 		Matrix mu = new Matrix(initialRot);
 		
 		u = mu.getTranspose().getArray();
 		
-		PheSAAlignment.multiplyMatrix(u, s, us);
+
 		
-		PheSAAlignment.multiplyMatrix(us, fitTriangle.initialRot, usr);
+		PheSAAlignment.multiplyMatrix(u, fitTriangle.initialRot, ur);
 		
 
-		usr[3][0] = fitTriangle.initialTranslate[0];  
-		usr[3][1] = fitTriangle.initialTranslate[1];  
-		usr[3][2] = fitTriangle.initialTranslate[2];  
+		ur[3][0] = fitTriangle.initialTranslate[0];  
+		ur[3][1] = fitTriangle.initialTranslate[1];  
+		ur[3][2] = fitTriangle.initialTranslate[2];  
 		
-		usr[4][0] = -initialTranslate[0];  
-		usr[4][1] = -initialTranslate[1];  
-		usr[4][2] = -initialTranslate[2];  
+		ur[4][0] = -initialTranslate[0];  
+		ur[4][1] = -initialTranslate[1];  
+		ur[4][2] = -initialTranslate[2];  
 		
 		
 		//first move com to origin
@@ -224,17 +196,17 @@ public class PPTriangle {
 		
 		Coordinates fitComNewRot = new Coordinates();
 		//rotate
-		fitComNewRot.x = usr[0][0]*(fitComNew.x)+
-				usr[0][1]*(fitComNew.y)+
-				usr[0][2]*(fitComNew.z);
+		fitComNewRot.x = ur[0][0]*(fitComNew.x)+
+				ur[0][1]*(fitComNew.y)+
+				ur[0][2]*(fitComNew.z);
 		
-		fitComNewRot.y = usr[1][0]*(fitComNew.x)+
-				usr[1][1]*(fitComNew.y)+
-				usr[1][2]*(fitComNew.z);
+		fitComNewRot.y = ur[1][0]*(fitComNew.x)+
+				ur[1][1]*(fitComNew.y)+
+				ur[1][2]*(fitComNew.z);
 		
-		fitComNewRot.z = usr[2][0]*(fitComNew.x)+
-				usr[2][1]*(fitComNew.y)+
-				usr[2][2]*(fitComNew.z);
+		fitComNewRot.z = ur[2][0]*(fitComNew.x)+
+				ur[2][1]*(fitComNew.y)+
+				ur[2][2]*(fitComNew.z);
 		
 		//move to refTriangle
 		
@@ -254,9 +226,9 @@ public class PPTriangle {
 		Coordinates fitDir1 = new Coordinates(fitTriangle.dirs[0]);
 		Coordinates fitDir2 = new Coordinates(fitTriangle.dirs[1]);
 		Coordinates fitDir3 = new Coordinates(fitTriangle.dirs[2]);
-		PheSAAlignment.rotateCoords(fitDir1, usr);
-		PheSAAlignment.rotateCoords(fitDir2, usr);
-		PheSAAlignment.rotateCoords(fitDir3, usr);
+		PheSAAlignment.rotateCoords(fitDir1, ur);
+		PheSAAlignment.rotateCoords(fitDir2, ur);
+		PheSAAlignment.rotateCoords(fitDir3, ur);
 		double dirScore = 0.33333*(Math.max(0,fitDir1.dot(dirs[0])) + Math.max(0,fitDir2.dot(dirs[1])) + Math.max(0,fitDir3.dot(dirs[2])));
 		return ppFit*dirScore*comScore;
 	
