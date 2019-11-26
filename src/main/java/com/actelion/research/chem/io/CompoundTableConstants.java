@@ -184,8 +184,11 @@ public interface CompoundTableConstants {
     String cDetailDataEnd = "</detail data>";
     String cDetailID = "detailID";
 
-    String cPropertiesStart = "<datawarrior properties>";
-    String cPropertiesEnd = "</datawarrior properties>";
+    String cTemplateTagName = "datawarrior properties";
+    String cPropertiesStart = "<"+cTemplateTagName+">";
+    String cPropertiesEnd ="</"+cTemplateTagName+">";
+
+    String cViewConfigTagName = "view configuration";
 
     String cDataDependentPropertiesStart = "<data dependent properties type=\"";
     String cDataDependentPropertiesEnd = "</data dependent properties>";
