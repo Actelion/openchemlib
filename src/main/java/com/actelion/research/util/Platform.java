@@ -138,12 +138,14 @@ public class Platform
      */
 	public static Process systemExec(String[] programAndArgs) throws IOException {
 	    if(isWindows()) {
-	        // prepend command args with "cmd /c start"
-	        String[] modifiedProgramAndArgs = new String[programAndArgs.length+3];
+	        // prepend command args with: cmd /c start ""
+	        String[] modifiedProgramAndArgs = new String[programAndArgs.length+4];
 	        modifiedProgramAndArgs[0] = "cmd";
 	        modifiedProgramAndArgs[1] = "/c";
 	        modifiedProgramAndArgs[2] = "start";
-	        System.arraycopy(programAndArgs, 0, modifiedProgramAndArgs, 3, programAndArgs.length);
+            // window title
+	        modifiedProgramAndArgs[3] = "";
+	        System.arraycopy(programAndArgs, 0, modifiedProgramAndArgs, 4, programAndArgs.length);
 	        programAndArgs = modifiedProgramAndArgs;
         }
         return Runtime.getRuntime().exec(programAndArgs);
