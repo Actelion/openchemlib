@@ -188,7 +188,6 @@ public class ClipboardHandler implements IClipboardHandler
         byte[] buffer = null;
         Reaction rxn = null;
 
-
         if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_SERIALIZEREACTION)) != null) {
             try {
                 ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
@@ -199,10 +198,9 @@ public class ClipboardHandler implements IClipboardHandler
                 is.close();
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("NativeClipboardAccessor.pasteMolecule(): Exception " + e);
+                System.out.println("NativeClipboardAccessor.pasteReaction(): Exception " + e);
             }
-        } else if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_CTAB)) != null
-                || (buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_MOLFILE)) != null) {
+        } else if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_CTAB)) != null) {
             RXNFileParser p = new RXNFileParser();
             rxn = new Reaction();
             try {
@@ -212,8 +210,7 @@ public class ClipboardHandler implements IClipboardHandler
                 System.err.println("Error parsing Reaction Buffer " + e);
                 rxn = null;
             }
-        } else if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_SKETCH)) != null
-                || (buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_EMBEDDEDSKETCH)) != null) {
+        } else if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_SKETCH)) != null) {
             try {
                 rxn = new Reaction();
                 if (!Sketch.createReactionFromSketchBuffer(rxn, buffer)) {
@@ -254,26 +251,28 @@ public class ClipboardHandler implements IClipboardHandler
             File temp = File.createTempFile("actnca", ".wmf");
             temp.deleteOnExit();
 
-            if (writeMol2Metafile(temp, m, buffer)) {
-                // Serialize to a byte array
-                System.out.println("CopyMolecule");
-                com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
-                byte[] cdbuffer = cdx.getChemDrawBuffer(m);
+            String path = null;
+            if (writeMol2Metafile(temp, m, buffer))
+                path = temp.getAbsolutePath();
 
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                ObjectOutputStream out = new ObjectOutputStream(bos);
+            // Serialize to a byte array
+            System.out.println("CopyMolecule");
+            com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
+            byte[] cdbuffer = cdx.getChemDrawBuffer(m);
 
-	            // Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
-	            // which is unacceptable for 3D molecules.
-	            // If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
-                out.writeObject(mol);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream out = new ObjectOutputStream(bos);
+            // Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
+            // which is unacceptable for 3D molecules.
+            // If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
+            out.writeObject(mol);
+            out.close();
+            bos.close();
 
-                out.close();
-                bos.close();
 //				ok = NativeClipboardHandler.copyMoleculeToClipboard(temp.getAbsolutePath(),buffer,bos.toByteArray());
-                ok = NativeClipboardHandler.copyMoleculeToClipboard(temp.getAbsolutePath(), cdbuffer, bos.toByteArray());
-                temp.delete();
-            }
+            ok = NativeClipboardHandler.copyMoleculeToClipboard(path, cdbuffer, bos.toByteArray());
+
+            temp.delete();
         } catch (IOException e) {
             System.err.println("Error copying Molecule " + e);
         }
@@ -282,8 +281,7 @@ public class ClipboardHandler implements IClipboardHandler
 
 
     /**
-     * Copies a molecule to the clipboard in various formats:
-     * ENHMETAFILE with an embedded sketch
+     * Copies a reaction to the clipboard in various formats:
      * MDLSK Sketch
      * MDLCT MDL molfile
      */
@@ -291,10 +289,7 @@ public class ClipboardHandler implements IClipboardHandler
     {
         boolean ok = false;
         try {
-            Reaction rxn = makeRXNCopy(r);
-            RXNFileCreator mc = new RXNFileCreator(rxn);
-            String ctab = mc.getRXNfile();
-            ok = copyReactionToClipboard(rxn, ctab);
+            ok = copyReactionToClipboard(null, r);
         } catch (IOException e) {
             System.err.println("Error Copying Reaction " + e);
         }
@@ -310,11 +305,12 @@ public class ClipboardHandler implements IClipboardHandler
         }
         return rxn;
     }
+
     /**
-     * Copies a molecule to the clipboard in various formats:
-     * ENHMETAFILE with an embedded sketch
+     * Copies a reaction to the clipboard in various formats:
+     * CTAB with an embedded sketch
      * MDLSK Sketch
-     * MDLCT MDL molfile
+     * serialized
      */
     public boolean copyReaction(String ctab)
     {
@@ -323,7 +319,7 @@ public class ClipboardHandler implements IClipboardHandler
             Reaction rxn = new Reaction();
             RXNFileParser p = new RXNFileParser();
             p.parse(rxn, ctab);
-            ok = copyReactionToClipboard(rxn, ctab);
+            ok = copyReactionToClipboard(ctab, rxn);
         } catch (IOException e) {
             System.err.println("Error copy reaction " + e);
         } catch (Exception e) {
@@ -332,13 +328,24 @@ public class ClipboardHandler implements IClipboardHandler
         return ok;
     }
 
-    private boolean copyReactionToClipboard(Reaction rxn, String ctab) throws IOException
-    {
-        boolean ok = false;
-        byte buffer[] = Sketch.createSketchFromReaction(rxn);
-        System.out.println("Reaction copy with serialized object " + (buffer != null) + " " + (buffer != null ? buffer.length : 0));
-        ok = NativeClipboardHandler.copyReactionToClipboard(buffer);
-        return ok;
+    private boolean copyReactionToClipboard(String ctab, Reaction rxn) throws IOException {
+        if (ctab == null) {
+            RXNFileCreator mc = new RXNFileCreator(rxn);
+            ctab = mc.getRXNfile();
+        }
+
+        byte sketch[] = Sketch.createSketchFromReaction(makeRXNCopy(rxn));
+
+        // Serialize to a byte array
+        System.out.println("copyReactionToClipboard");
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(bos);
+        out.writeObject(rxn);
+        out.close();
+        bos.close();
+
+        return NativeClipboardHandler.copyReactionToClipboard(ctab.getBytes(), sketch, bos.toByteArray());
     }
 
     private boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch)

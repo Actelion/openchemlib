@@ -62,19 +62,19 @@ public class NativeClipboardHandler
             return false;
     }
 
-    public static boolean copyReactionToClipboard(byte[] serializedObject)
+    public static boolean copyReactionToClipboard(byte[] ctab, byte[] sketch, byte[] serializedObject)
     {
         if (Platform.isWindows()) {
-            return NativeClipboardAccessor.copyReactionToClipboard(serializedObject);
+            return NativeClipboardAccessor.copyReactionToClipboard(ctab, sketch, serializedObject);
         } else if (Platform.isLinux() || Platform.isMacintosh()) {
-            return LinuxNativeClipboardAccessor.copyReactionToClipboard(serializedObject);
+            return LinuxNativeClipboardAccessor.copyReactionToClipboard(ctab, sketch, serializedObject);
         } else
             return false;
 
     }
 
     // public static native boolean copyMoleculeToClipboard(String filname,byte[] sketch, byte[] serializedObject);
-        /* Formats are "MDLSK","MDLCT","MDL_MOL","CF_METAFILEPICT","CF_DIB" "ACT_MOLECULE" */
+        /* Formats are "MDLSK","MDLCT","MDL_MOL","CF_METAFILEPICT","CF_DIB" "ACT_MOLECULE" "ACT_REACTION" */
     public static byte[] getClipboardData(String format)
     {
         if (Platform.isWindows()) {

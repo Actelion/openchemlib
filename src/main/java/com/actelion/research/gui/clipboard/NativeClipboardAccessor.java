@@ -37,9 +37,9 @@ public class NativeClipboardAccessor
 {
 
     public static native boolean copyMoleculeToClipboard(String filname, byte[] sketch, byte[] serializedObject);
-	public static native boolean copyReactionToClipboard(byte[] serializedObject);
+	public static native boolean copyReactionToClipboard(byte[] ctab, byte[] sketch, byte[] serializedObject);
 	public static native boolean copySizedMoleculeToClipboard(String filname, byte[] sketch, byte[] serializedObject, int cx,int cy);
-	/* Formats are "MDLSK","MDLCT","MDL_MOL","CF_METAFILEPICT","CF_DIB" "ACT_MOLECULE" */
+	/* Formats are "MDLSK","MDLCT","MDL_MOL","CF_METAFILEPICT","CF_DIB","ACT_MOLECULE","ACT_REACTION" */
     public static native byte[] getClipboardData(String format);
     public static native boolean setClipBoardData(String format, byte[] buffer);
 
