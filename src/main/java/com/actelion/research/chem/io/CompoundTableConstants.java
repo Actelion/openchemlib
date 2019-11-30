@@ -57,7 +57,7 @@ public interface CompoundTableConstants {
 
     String cReactionPartReaction = "reaction";  // this may only be used, if a molecule type descriptor is calculated from all merged reaction molecules
     String cReactionPartReactants = "reactants";
-    String cReactionPartCatalysts = "catalysts";
+    String cReactionPartPseudoCatalysts = "catalysts";
     String cReactionPartProducts = "products";
     String cReactionPartDelimiter = " of ";
 
