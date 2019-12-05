@@ -51,13 +51,12 @@ public interface CompoundTableConstants {
     String cColumnType3DCoordinates = "idcoordinates3D";
     String cColumnTypeAtomColorInfo = "atomColorInfo";
     String cColumnTypeReactionMapping = "atomMapping";
-    String cColumnTypeReactionCatalysts = "Catalysts";
     String cColumnTypeReactionObjects = "reactionObjects";
         // in addition to these all DescriptorHandler.SHORT_NAMEs are valid column types
 
     String cReactionPartReaction = "reaction";  // this may only be used, if a molecule type descriptor is calculated from all merged reaction molecules
     String cReactionPartReactants = "reactants";
-    String cReactionPartPseudoCatalysts = "catalysts";
+//    String cReactionPartPseudoCatalysts = "catalysts";
     String cReactionPartProducts = "products";
     String cReactionPartDelimiter = " of ";
 
@@ -112,14 +111,17 @@ public interface CompoundTableConstants {
     String cDetailIndexSeparator = ":";
     String cTextMultipleCategories = "<multiple categories>";
 
+    String cColumnPropertySpecialType = "specialType";
+    String cColumnPropertyParentColumn = "parent";
+    String cColumnPropertyRelatedIdentifierColumn = "idColumn";
+    String cColumnPropertyRelatedCatalystColumn = "catalystColumn";    // one could think of coupling solvent, condition, etc as well
+    String[] cColumnRelationTypes = {cColumnPropertyRelatedIdentifierColumn, cColumnPropertyRelatedCatalystColumn};
+
     String cColumnPropertyGroupName = "groupName";
     String cColumnPropertyUseThumbNail = "useThumbNail";
     String cColumnPropertyImagePath = "imagePath";
-    String cColumnPropertySpecialType = "specialType";
     String cColumnPropertyIsFragment = "isFragment";    // specifies for structure & reaction columns, whether the fragment bit is set, when editing a new object
-    String cColumnPropertyParentColumn = "parent";
     String cColumnPropertyReactionPart = "reactionPart";
-    String cColumnPropertyIdentifierColumn = "idColumn";
     String cColumnPropertyIsClusterNo = "isClusterNo";
     String cColumnPropertyDataMin = "dataMin";
     String cColumnPropertyDataMax = "dataMax";

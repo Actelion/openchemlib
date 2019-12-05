@@ -255,7 +255,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
         				columnName,
         				specialType,
         				properties.getProperty(cColumnPropertyParentColumn),
-        				properties.getProperty(cColumnPropertyIdentifierColumn),
+        				properties.getProperty(cColumnPropertyRelatedIdentifierColumn),
         				properties.getProperty(cColumnPropertyDescriptorVersion)
         				));
         	}
