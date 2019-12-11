@@ -135,7 +135,9 @@ public class ConstantsDWAR {
 	public static final String TAG_BONDS = "Bonds";
 	
 	public static final String TAG_ATOMS = "Atoms";
-	
+
+	public static final String TAG_MW = "Total Molweight";
+
 	public static final String TAG_NAME = "Name";
 	
 	public static final String TAG_RECORD_NO = "Record No";
