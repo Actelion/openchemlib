@@ -35,14 +35,14 @@ package com.actelion.research.chem.descriptor;
 
 public interface ISimilarityCalculator<T extends Object> {
 	
-    public abstract float getSimilarity(T d1, T d2);
+    float getSimilarity(T d1, T d2);
     
-    public abstract SimilarityCalculatorInfo getInfo();
+    SimilarityCalculatorInfo getInfo();
 
     /**
      * 
      * @return a deep copy for parallel computing.
      */
-    public abstract ISimilarityCalculator<T> getThreadSafeCopy();
+    ISimilarityCalculator<T> getThreadSafeCopy();
 
 }
