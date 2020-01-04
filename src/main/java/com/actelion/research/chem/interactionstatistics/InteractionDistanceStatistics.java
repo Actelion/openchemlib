@@ -1,6 +1,7 @@
 package com.actelion.research.chem.interactionstatistics;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -110,13 +111,13 @@ public class InteractionDistanceStatistics {
 		return new int[] {a,b};
 	}
 	
-	//private boolean isGenericAtomPair(int a, int b) {
-	//	return (isGenericAtomType(a) && isGenericAtomType(b));
-	//}
+	private boolean isGenericAtomPair(int a, int b) {
+		return (isGenericAtomType(a) && isGenericAtomType(b));
+	}
 	
-	//private boolean isGenericAtomType(int a) {
-	//	return Integer.toBinaryString(a).length()<=InteractionAtomTypeCalculator.AtomFlagCount.BASIC_ATOM_FLAG_COUNT.getCount();
-	//}
+	private boolean isGenericAtomType(int a) {
+		return Integer.toBinaryString(a).length()<=InteractionAtomTypeCalculator.AtomFlagCount.BASIC_ATOM_FLAG_COUNT.getCount();
+	}
 	
 	//private boolean isExtendedAtomType(int a) {
 	//	return Integer.toBinaryString(a).length()<=InteractionAtomTypeCalculator.AtomFlagCount.EXTENDED_ATOM_FLAG_COUNT.getCount();
@@ -133,10 +134,10 @@ public class InteractionDistanceStatistics {
 		else return atomType;
 	}
 	
-	//private boolean isGenericAtomPair(long l) {
-	//	int[] pair = splitLongToInts(l);
-	//	return isGenericAtomPair(pair[0], pair[1]);
-	//}
+	private boolean isGenericAtomPair(long l) {
+		int[] pair = splitLongToInts(l);
+		return isGenericAtomPair(pair[0], pair[1]);
+	}
 
  	
 	public void addInteraction(int atom1, int atom2, double dist) {
@@ -211,7 +212,7 @@ public class InteractionDistanceStatistics {
 		private void splineCalculation() {
 			pairPotentials = new HashMap<Long,DistanceDependentPairPotential>();
 
-			int[] referenceSum = new int[(int)(CUTOFF_RADIUS/BIN_SIZE)];
+			double[] referenceSum = new double[(int)(CUTOFF_RADIUS/BIN_SIZE)];
 
 
 			
@@ -226,18 +227,22 @@ public class InteractionDistanceStatistics {
 			Map<Long, double[]> discreteFunctions = interactionStatistics.entrySet().stream()
 				    .collect(Collectors.toMap(e -> e.getKey(), e -> distanceNormalization(e.getValue()))); //check this line
 			
-			interactionStatistics.entrySet().stream().//filter(e -> isGenericAtomPair(e.getKey())).
-			forEach(statistics -> {
+			AtomicInteger runCount = new AtomicInteger(0);
+			discreteFunctions.entrySet().stream().filter(e -> isGenericAtomPair(e.getKey())).
+			forEach(statistics -> { 
+				runCount.getAndIncrement();
 				IntStream.range(0,statistics.getValue().length).forEach(i -> {
 					referenceSum[i]+=statistics.getValue()[i];
 				}
 				);
 				
 			});
-			
+			for(int i=0;i<referenceSum.length;i++) {
+				referenceSum[i]/=runCount.get();
+			}
+			//double[] refSum = distanceNormalization(referenceSum);
 
-			double[] refSum = distanceNormalization(referenceSum);
-			discreteFunctions.replaceAll((k,v)-> normalize(v,refSum));
+			discreteFunctions.replaceAll((k,v)-> normalize(v,referenceSum));
 			double[] X = new double[referenceSum.length];
 			IntStream.range(0, X.length).forEach(i-> X[i]= (i+0.5)*BIN_SIZE);
 			//System.out.println(Arrays.toString(X));
@@ -269,7 +274,7 @@ public class InteractionDistanceStatistics {
 				/*
 				 * add repulsive part for short distances
 				 */
-				/*
+				
 				int globalMinIndex = -1;
 				int firstMaxIndex = -1;
 				for(int i=1;i<Y.length-1;i++) {
@@ -294,9 +299,10 @@ public class InteractionDistanceStatistics {
 					}
 					ff = interpolator.interpolate(X, Y);
 				}
-				*/
+				
 				DistanceDependentPairPotential potential = pairPotentials.get(l);
 				potential.setSplineFunction(ff);
+				potential.setDiscreteFunction(discreteFunctions.get(l));
 
 			}
 		}

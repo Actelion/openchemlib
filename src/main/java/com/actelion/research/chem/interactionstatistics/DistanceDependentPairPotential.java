@@ -43,7 +43,7 @@ public class DistanceDependentPairPotential {
 	
 	private int[] occurencesArray;
 	private FastSpline spline, derivate;	
-
+	private double[] discreteFunction;
 
 
 	public int[] getOccurencesArray() {
@@ -52,6 +52,10 @@ public class DistanceDependentPairPotential {
 	
 	public void setOccurencesArray(int[] occurencesArray) {
 		this.occurencesArray = occurencesArray;
+	}
+	
+	public void setDiscreteFunction(double[] discreteFunction) {
+		this.discreteFunction = discreteFunction;
 	}
 	
 	public void setSplineFunction(FastSpline spline) {
@@ -73,6 +77,11 @@ public class DistanceDependentPairPotential {
 			e.printStackTrace();
 			throw new IllegalArgumentException("no spline available");
 		}
+	}
+	
+	public double getDiscreteValue(double d) {
+		int index = (int) (0.5+d/InteractionDistanceStatistics.BIN_SIZE);
+		return discreteFunction[index];
 	}
 	
 	public FastSpline getSpline() {

@@ -20,8 +20,9 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	public static final int INFO_PPP = 5;
 	public static final int INFO_CHAINID = 6;
 	public static final int INFO_BFACTOR = 7;
+	public static final int INFO_RESSEQUENCE = 8;
 
-	private static final int MAX_INFOS = 8;
+	private static final int MAX_INFOS = 9;
 
 	//Molecule information
 	private int nMovables = -1;
@@ -33,19 +34,8 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	private double[] partialCharges;
 
 	//Molecule properties (calculated during the first call at getRings)
-	private List<Integer>[] mAtomToRings = null;
-//	private List<int[]> allRings = null;
+	//private List<Integer>[] mAtomToRings = null;
 
-	//Molecule properties (calculated during the first call at isAromatic)
-//	private boolean aromaticComputed;
-//	private boolean[] aromaticAtoms;
-//	private boolean[] aromaticRing;
-
-	//Set by the force field in TermList.prepareMolecule
-//	private int[] classIds;
-//	private int[] mm2AtomTypes;
-//	private int[] mmffAtomTypes;
-//	private Boolean[] mmffRingAtoms;
 
 	public Molecule3D(Molecule3D mol) {
 		super(mol);
@@ -62,10 +52,13 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 			for (int i=0; i<MAX_INFOS; i++)
 				infos[atom][i] = mol.infos[atom][i];
 		}
-
-//		System.arraycopy(mol.mm2AtomTypes, 0, mm2AtomTypes, 0, mol.getAllAtoms());
-//		System.arraycopy(mol.mmffAtomTypes, 0, mmffAtomTypes, 0, mol.getAllAtoms());
-//		System.arraycopy(mol.classIds, 0, classIds, 0, mol.getAllAtoms());
+	}
+	
+	public Molecule3D(StereoMolecule mol) {
+		super(mol);
+		atomFlags = new int[mol.getAllAtoms()];
+		partialCharges = new double[mol.getAllAtoms()];
+		infos = new Object[mol.getAllAtoms()][MAX_INFOS];
 	}
 
 	public Molecule3D() {
@@ -79,7 +72,6 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		atomFlags   = new int[a];
 		partialCharges = new double[a];
 		infos = new Object[a][MAX_INFOS];
-
 //		mm2AtomTypes = new int[a];
 //		mmffAtomTypes = new int[a];
 //		classIds = new int[a];
@@ -188,7 +180,15 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	public final void setAtomSequence(int atm, int a) {
 		infos[atm][INFO_ATOMSEQUENCE] = a;
 	}
+	
+	public final void setResSequence(int atm, int a) {
+		infos[atm][INFO_RESSEQUENCE] = a;
+	}
 
+	public final int getResSequence(int atm) {
+		return infos[atm][INFO_RESSEQUENCE]==null?-1 : (Integer) infos[atm][INFO_RESSEQUENCE];
+	}
+	
 	public final int getAtomSequence(int atm) {
 		return infos[atm][INFO_ATOMSEQUENCE]==null?-1 : (Integer) infos[atm][INFO_ATOMSEQUENCE];
 	}
@@ -217,6 +217,8 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	public final String getAtomAmino(int atm) {
 		return (String) infos[atm][INFO_AMINO];
 	}
+	
+
 	
 	public final double getAtomBfactor(int atm) {
 		return (double) infos[atm][INFO_BFACTOR];
@@ -301,26 +303,36 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		if (destMol instanceof Molecule3D) {
 			((Molecule3D) destMol).atomFlags[destAtom] = atomFlags[sourceAtom];
 			((Molecule3D) destMol).partialCharges[destAtom] = partialCharges[sourceAtom];
-			((Molecule3D) destMol).infos[destAtom] = infos[sourceAtom] = new Object[MAX_INFOS];
-			for (int i = 0; i < infos[sourceAtom].length; i++)
+			((Molecule3D) destMol).infos[destAtom] = new Object[MAX_INFOS];//;= infos[sourceAtom];// = new Object[MAX_INFOS];
+			for (int i = 0; i < infos[sourceAtom].length; i++) {
 				((Molecule3D) destMol).infos[destAtom][i] = clone(infos[sourceAtom][i]);
+			}
 		}
 		return destAtom;
 	}
 
 	private Object clone(Object o) {	// since Object.clone() has protected access
-
+		Object newObject = null;
+		if(o!=null) {
+		
+			//System.out.println(o.getClass());
 /*		if (o instanceof Cloneable) {	causes thousands of warning during obfuscation
 			try {
 				return o.getClass().getMethod("clone").invoke(o);
 			} catch (Exception e) {}
 		}*/
 
-		if (o instanceof String)
-			return new String((String)o);
-
-		System.out.println("ERROR: unexpected Object type. Add support for new type: "+o.toString());
-		return null;
+			if (o instanceof String)
+				newObject = new String((String)o);
+			else if(o instanceof Integer)
+				newObject = new Integer((Integer)o);
+			else if(o instanceof Double)
+				newObject = new Double((Double)o);
+			else {
+				System.out.println("ERROR: unexpected Object type. Add support for new type: "+o.toString());
+			}
+		}
+		return newObject;
 	}
 
 	public void compact() {
@@ -382,6 +394,94 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 //		nMovables = -1;
 		return a;
 	}
+	
+	/**
+	 * High level function for constructing a molecule.
+	 * After the deletion the original order of atom and bond indexes is retained.
+	 * @param atom
+	 */
+	@Override
+	public void deleteAtom(int atom) {
+		super.deleteAtom(atom);
+		compressMolTable();
+		mValidHelperArrays = cHelperNone;
+		}
+	
+	@Override 
+	
+	protected int[] compressMolTable() {
+		// neutralize charges, if after deletion of a bi-polar bond one atom remains
+		for (int bnd=0; bnd<mAllBonds; bnd++) {
+			if (mBondType[bnd] == cBondTypeDeleted) {
+				int atom1 = mBondAtom[0][bnd];
+				int atom2 = mBondAtom[1][bnd];
+				if (mAtomicNo[atom1] == -1
+				  ^ mAtomicNo[atom2] == -1) {
+					if (mAtomCharge[atom1] != 0
+					 && mAtomCharge[atom2] != 0) {
+						if (mAtomCharge[atom1] < 0
+						  ^ mAtomCharge[atom2] < 0) {
+							if (mAtomCharge[atom1] < 0) {
+								mAtomCharge[atom1]++;
+								mAtomCharge[atom2]--;
+								}
+							else {
+								mAtomCharge[atom1]--;
+								mAtomCharge[atom2]++;
+								}
+							}
+						}
+					}
+				}
+			}
+		
+		int newAtmNo[] = new int[mAllAtoms];
+		int atomDest = 0;
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			if (mAtomicNo[atom] == -1) {
+				newAtmNo[atom] = -1;
+				continue;
+				}
+			if (atomDest < atom) {
+				mAtomicNo[atomDest] = mAtomicNo[atom];
+				mAtomCharge[atomDest] = mAtomCharge[atom];
+				mAtomMass[atomDest] = mAtomMass[atom];
+				mAtomFlags[atomDest] = mAtomFlags[atom];
+				mAtomQueryFeatures[atomDest] = mAtomQueryFeatures[atom];
+				mAtomMapNo[atomDest] = mAtomMapNo[atom];
+				mCoordinates[atomDest].set(mCoordinates[atom]);
+				atomFlags[atomDest] = atomFlags[atom];
+				if(infos[atomDest]==null) {
+					infos[atomDest] = new Object[MAX_INFOS];
+				}
+				for (int i = 0; i < infos[atom].length; i++) {
+					infos[atomDest][i] = clone(infos[atom][i]);
+				}
+				partialCharges[atomDest] = partialCharges[atom];
+				if (mAtomList != null)
+					mAtomList[atomDest] = mAtomList[atom];
+				if (mAtomCustomLabel != null)
+					mAtomCustomLabel[atomDest] = mAtomCustomLabel[atom];
+				}
+			newAtmNo[atom] = atomDest;
+			atomDest++;
+			}
+		mAllAtoms = atomDest;
+
+		int bondDest = 0;
+		for (int bnd=0; bnd<mAllBonds; bnd++) {
+			if (mBondType[bnd] == cBondTypeDeleted) continue;
+			mBondType[bondDest] = mBondType[bnd];
+			mBondFlags[bondDest] = mBondFlags[bnd];
+			mBondQueryFeatures[bondDest] = mBondQueryFeatures[bnd];
+			mBondAtom[0][bondDest] = newAtmNo[mBondAtom[0][bnd]];
+			mBondAtom[1][bondDest] = newAtmNo[mBondAtom[1][bnd]];
+			bondDest++;
+			}
+		mAllBonds = bondDest;
+
+		return newAtmNo;
+		}
 
 	///////////////////// UTILITY FUNCTIONS ////////////////////////////////////
 	/**
@@ -414,7 +514,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 
 		return changed;
 	}
-
+	/*
 	@Override
 	public void ensureHelperArrays(int level) {
 		boolean doRings = (level & Molecule.cHelperBitRings) != 0 && (mValidHelperArrays & Molecule.cHelperBitRings) == 0;
@@ -436,6 +536,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	public List<Integer>[] getAtomToRings() {
 		return mAtomToRings;
 	}
+	*/
 
 	/**
 	 * @return the number of movable atoms (after reorderatoms has been called)

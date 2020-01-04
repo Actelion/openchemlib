@@ -193,9 +193,11 @@ public class InteractionSimilarityTable {
 	
 
 	
+	/*
+	 * 
+	 */
 	
-	
-	public double getEquivalence(int type1, int type2) {
+	public double getDissimilarity(int type1, int type2) {
 		
 		
 //		return getDistance(type1, type2);
@@ -219,7 +221,7 @@ public class InteractionSimilarityTable {
 		type = InteractionDistanceStatistics.getInstance().getKey(type);
 		List<Integer> res = new ArrayList<Integer>();
 		for (int type2 : atomKeys) {			
-			if(getEquivalence(type, type2)<maxDist) {
+			if(getDissimilarity(type, type2)<maxDist) {
 				res.add(type2);
 			}
 		}

@@ -89,7 +89,7 @@ public class DonorPoint implements IPharmacophorePoint {
 	@Override
 	public double getSimilarity(IPharmacophorePoint pp) {
 		if(pp instanceof DonorPoint) {
-			return 1.0*(1.0-InteractionSimilarityTable.getInstance().getEquivalence(((DonorPoint)pp).getInteractionClass(), 
+			return 1.0*(1.0-InteractionSimilarityTable.getInstance().getDissimilarity(((DonorPoint)pp).getInteractionClass(), 
 					getInteractionClass()));
 		}
 		return 0.0;
