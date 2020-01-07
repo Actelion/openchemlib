@@ -2559,6 +2559,17 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 * @return true if at least one z-coordinate is different from 0.0
+	 */
+	public boolean is3D() {
+		for (int atom=0; atom<mAllAtoms; atom++)
+			if (mCoordinates[atom].z != 0.0)
+				return true;
+		return false;
+		}
+
+
+	/**
 	 * @param atom
 	 * @return whether the atom has the natural isotop distribution
 	 */
