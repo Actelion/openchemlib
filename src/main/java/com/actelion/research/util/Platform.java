@@ -144,7 +144,7 @@ public class Platform
 	        modifiedProgramAndArgs[1] = "/c";
 	        modifiedProgramAndArgs[2] = "start";
             // window title
-	        modifiedProgramAndArgs[3] = "";
+	        modifiedProgramAndArgs[3] = "\"\"";
 	        System.arraycopy(programAndArgs, 0, modifiedProgramAndArgs, 4, programAndArgs.length);
 	        programAndArgs = modifiedProgramAndArgs;
         }
