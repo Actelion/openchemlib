@@ -112,7 +112,18 @@ public class DoubleArray implements INumericalDataColumn {
 		
 		return index;
 	}
-	
+
+	public int add(DoubleArray d){
+
+		int index = size-1;
+
+		for (int i = 0; i < d.size; i++) {
+			index = add(d.get(i));
+		}
+
+		return index;
+	}
+
 	public double avr(){
 		
 		double avr = 0;
@@ -205,5 +216,15 @@ public class DoubleArray implements INumericalDataColumn {
 	@Override
 	public double getValueAt(int i) {
 		return data[i];
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder("DoubleArray{");
+		sb.append("data=").append(Arrays.toString(get()));
+		sb.append(", size=").append(size);
+		sb.append(", delta_capacity=").append(delta_capacity);
+		sb.append('}');
+		return sb.toString();
 	}
 }
