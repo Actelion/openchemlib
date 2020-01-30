@@ -8,7 +8,8 @@ import com.actelion.research.chem.conf.Conformer;
 public interface IPharmacophorePoint {
 	
 	
-	public enum Functionality {ACCEPTOR(1), DONOR(2), NEG_CHARGE(3), POS_CHARGE(4);
+	public enum Functionality {ACCEPTOR(PharmacophoreCalculator.ACCEPTOR_ID), DONOR(PharmacophoreCalculator.DONOR_ID), 
+		NEG_CHARGE(PharmacophoreCalculator.CHARGE_NEG_ID), POS_CHARGE(PharmacophoreCalculator.CHARGE_POS_ID);
 		private final int index;
 		Functionality(int index) {
 			this.index = index;

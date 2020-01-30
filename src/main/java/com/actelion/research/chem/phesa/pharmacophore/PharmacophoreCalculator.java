@@ -9,7 +9,16 @@ import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalcu
 
 public class PharmacophoreCalculator {
 	
+	public static final int ACCEPTOR_ID = 0;
+	public static final int DONOR_ID = 1;
+	public static final int CHARGE_NEG_ID = 2;
+	public static final int CHARGE_POS_ID = 3;
+	public static final int AROM_ID = 4;
+	public static final int LIPO_ID = 5;
+	public static final int MAX_ID = 5;
+	
 	private PharmacophoreCalculator() {}
+	
 	
 	public static List<IPharmacophorePoint> getPharmacophorePoints(StereoMolecule mol) {
 		List<IPharmacophorePoint> ppPoints = new ArrayList<IPharmacophorePoint>();
