@@ -37,7 +37,7 @@ import java.util.ArrayList;
 
 public class RingCollection {
 	public static final int MAX_SMALL_RING_SIZE = 7;
-	private static final int MAX_SMALL_RING_COUNT = 256; // to prevent explosions with highly connected metal grids, etc.
+	private static final int MAX_SMALL_RING_COUNT = 1024; // to prevent explosions with highly connected metal grids, etc.
 
 	private static final int MODE_SMALL_RINGS = 1;
 	private static final int MODE_LARGE_RINGS = 2;
