@@ -256,6 +256,7 @@ public class Reactor {
 		mSSSearcher.setMol(mGenericReaction.getReactant(no), mReactant[no]);
 		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cMatchAtomCharge) == 0) {
 			mMatchList[no] = new ArrayList<>();
+			mReactantMatchCombinationCount = 0;
 			return;
 			}
 
