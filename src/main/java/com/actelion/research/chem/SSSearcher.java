@@ -64,8 +64,9 @@ public class SSSearcher {
 
 	public final static int cCountModeExistance		= 1;
 	public final static int cCountModeFirstMatch	= 2;
-	public final static int cCountModeOverlapping	= 3;
-	public final static int cCountModeRigorous		= 4;
+	public final static int cCountModeSeparated		= 3;
+	public final static int cCountModeOverlapping	= 4;
+	public final static int cCountModeRigorous		= 5;
 
 	// default behaviour for unusual atom masses and atom charges is that
 	// - if no atom charge/mass is specified in the query then all charges/masses match
@@ -566,22 +567,67 @@ System.out.println();
 			}
 
 		if (mFragmentExcludeAtoms != 0	// store matches as indication that we have found something
-		 || countMode == cCountModeOverlapping) {
-			Arrays.sort(match);
-			if (!mSortedMatchSet.contains(match)) {
-				mSortedMatchSet.add(match);
-				mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+		 || countMode == cCountModeOverlapping
+		 || countMode == cCountModeSeparated) {
+			match = getSortedMatch(match);
+			if (countMode == cCountModeOverlapping) {
+				if (!mSortedMatchSet.contains(match)) {
+					mSortedMatchSet.add(match);
+					mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+					}
+				}
+			else if (countMode == cCountModeSeparated) {
+				if (!mSortedMatchSet.contains(match)) {
+					boolean found = false;
+					for (int[] existing:mSortedMatchSet) {
+						int existingIndex = 0;
+						for (int atom:match) {
+							while (existingIndex < existing.length && existing[existingIndex] < atom)
+								existingIndex++;
+							if (existingIndex < existing.length) {
+								if (atom == existing[existingIndex]) {
+									found = true;
+									break;
+									}
+								}
+							}
+						if (found)
+							break;
+						}
+					if (!found) {
+						mSortedMatchSet.add(match);
+						mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+						}
+					}
 				}
 			return;
 			}
 
-//		if (cCountModeSeparated) {
-//	not yet supported
-//			}
-
 		return;
 		}
 
+
+	/**
+	 * @return sorted match atoms without excluded atoms
+	 */
+	private int[] getSortedMatch(int[] match) {
+		int count = 0;
+		for (int atom:match)
+			if (atom == -1)
+				count++;
+
+		if (count != 0) {
+			int[] oldMatch = match;
+			match = new int[oldMatch.length - count];
+			int index = 0;
+			for (int atom:oldMatch)
+				if (atom != -1)
+					match[index++] = atom;
+			}
+
+		Arrays.sort(match);
+		return match;
+		}
 
 	public boolean areAtomsSimilar(int moleculeAtom, int fragmentAtom) {
 		int moleculeConnAtoms = mMolecule.getConnAtoms(moleculeAtom);
@@ -1483,10 +1529,8 @@ System.out.println();
 		}
 
 	private static int[] copyOf(int[] original, int newLength) {
-     int[] copy = new int[newLength];
-     System.arraycopy(original, 0, copy, 0,
-                      Math.min(original.length, newLength));
-     return copy;
- }
-
+		int[] copy = new int[newLength];
+		System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
+		return copy;
+		}
 	}
