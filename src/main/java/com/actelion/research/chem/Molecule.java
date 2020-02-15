@@ -1037,18 +1037,39 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 * Adds and connects the substituent molecule to the connectionAtom of this molecule.
+	 * Substituent atoms with atomicNo=0 are not copied and considered to represent the connectionAtom.
+	 * Bonds leading to them, however, are copied and connected to the connectionAtom.
 	 * High level function for constructing a molecule.
 	 * @param substituent
 	 * @param connectionAtom
 	 * @return atom mapping from substituent to this molecule after addition of substituent
 	 */
 	public int[] addSubstituent(Molecule substituent, int connectionAtom) {
+		return addSubstituent(substituent, connectionAtom, false);
+		}
+
+	/**
+	 * Adds and connects the substituent molecule to the connectionAtom of this molecule.
+	 * Substituent atoms with atomicNo=0 are not copied and considered to represent the connectionAtom.
+	 * Bonds leading to them, however, are copied and connected to the connectionAtom.
+	 * If encodeRingClosuresInMapNo==true, then connections (ring closures) to atoms other than connectionAtom
+	 * are allowed and encoded in the substituents atomMapNo as closureAtomIndex = atomicNo-1.
+	 * High level function for constructing a molecule.
+	 * @param substituent
+	 * @param connectionAtom
+	 * @param encodeRingClosuresInMapNo for ring closures set atomicNo to 0 and atomMapNo to thsi Molecule's atom index+1
+	 * @return atom mapping from substituent to this molecule after addition of substituent
+	 */
+	public int[] addSubstituent(Molecule substituent, int connectionAtom, boolean encodeRingClosuresInMapNo) {
 		int[] atomMap = new int[substituent.mAllAtoms];
 		int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
 		int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
 		for (int atom=0; atom<substituent.mAllAtoms; atom++) {
 			if (substituent.getAtomicNo(atom) != 0)
 				atomMap[atom] = substituent.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
+			else if (encodeRingClosuresInMapNo && substituent.getAtomMapNo(atom) != 0)
+				atomMap[atom] = substituent.getAtomMapNo(atom) - 1;
 			else
 				atomMap[atom] = connectionAtom;
 			}

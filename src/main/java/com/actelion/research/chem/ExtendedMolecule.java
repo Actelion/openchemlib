@@ -461,6 +461,20 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * This method returns the count of atom neighbours which are marked as being an exclude group.
+	 * @param atom
+	 * @return the number of non-hydrogen neighbor atoms
+	 */
+	public int getExcludedNeighbourCount(int atom) {
+		int count = 0;
+		for (int i=0; i<mConnAtoms[atom]; i++)
+			if ((mAtomQueryFeatures[i] & Molecule.cAtomQFExcludeGroup) != 0)
+				count++;
+		return count;
+		}
+
+
+	/**
 	 * Calculates and returns the mean bond length of all bonds including or not
 	 * including hydrogen bonds.
 	 * If there are no bonds, then the average distance between unconnected atoms is
