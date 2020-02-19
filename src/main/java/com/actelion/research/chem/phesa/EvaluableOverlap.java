@@ -17,6 +17,8 @@ import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 public class EvaluableOverlap implements Evaluable  {
 
 	private static final int PENALTY = 80; 
+	
+	private double ppWeight;
 
 	private PheSAAlignment shapeAlign;
 	private double[] transform;
@@ -35,6 +37,11 @@ public class EvaluableOverlap implements Evaluable  {
 
     
     public EvaluableOverlap(PheSAAlignment shapeAlign, double[] transform) {
+    	this(shapeAlign, transform, 0.5);
+    }
+    
+    public EvaluableOverlap(PheSAAlignment shapeAlign, double[] transform, double ppWeight) {
+    	this.ppWeight = ppWeight;
 		this.shapeAlign = shapeAlign; 
 		this.transform = transform;
 	    this.fitAtGaussModCoords = new Coordinates[shapeAlign.getMolGauss().getAtomicGaussians().size()];
@@ -101,16 +108,16 @@ public class EvaluableOverlap implements Evaluable  {
 		MolecularVolume fitMolGauss = shapeAlign.getMolGauss();
 		double value = 0.0;
 		double[] atomGrad = new double[grad.length];
-		value += this.getFGValueOverlap(atomGrad,refMolGauss.getAtomicGaussians(),fitMolGauss.getAtomicGaussians(), refMolGauss.getExclusionGaussians(),
+		value += (1.0-ppWeight)*this.getFGValueOverlap(atomGrad,refMolGauss.getAtomicGaussians(),fitMolGauss.getAtomicGaussians(), refMolGauss.getVolumeGaussians(),
 						qDersAt,rDersAt,sDersAt,uDersAt,fitAtGaussModCoords);
 			
 		
 		double[] ppGrad = new double[grad.length];
-		value += this.getFGValueOverlapPP(ppGrad,refMolGauss.getPPGaussians(),fitMolGauss.getPPGaussians(),
+		value += ppWeight*this.getFGValueOverlapPP(ppGrad,refMolGauss.getPPGaussians(),fitMolGauss.getPPGaussians(),
 						qDersPP,rDersPP,sDersPP,uDersPP,fitPPGaussModCoords,fitPPDirectionalityMod);
 
 		for(int i=0;i<grad.length;i++) 
-			grad[i] = atomGrad[i]+ ppGrad[i];
+			grad[i] = (1.0-ppWeight)*atomGrad[i]+ ppWeight*ppGrad[i];
 				
 
 		return value;
@@ -200,7 +207,7 @@ public class EvaluableOverlap implements Evaluable  {
 	 * @param grad 
 	 */
 	
-	private double getFGValueOverlap(double[] grad,ArrayList<AtomicGaussian> refMolGauss,ArrayList<AtomicGaussian> fitMolGauss,ArrayList<ExclusionGaussian> exclusionGaussians,
+	private double getFGValueOverlap(double[] grad,ArrayList<AtomicGaussian> refMolGauss,ArrayList<AtomicGaussian> fitMolGauss,ArrayList<VolumeGaussian> volGaussians,
 			double[][] qDers,double[][] rDers,double[][] sDers,double[][] uDers, Coordinates[] fitGaussModCoords) {
 		double q=transform[0];
 	    double r=transform[1];
@@ -277,28 +284,28 @@ public class EvaluableOverlap implements Evaluable  {
 
 				}
 		}
-			for(int k=0; k<exclusionGaussians.size();k++){
-				ExclusionGaussian refEx = exclusionGaussians.get(k);
+			for(int k=0; k<volGaussians.size();k++){
+				VolumeGaussian refVol = volGaussians.get(k);
 				for(int j=0; j<fitMolGauss.size();j++){
 					double atomOverlap = 0.0;
 					Gaussian3D fitAt = fitMolGauss.get(j);
 					fitCenterModCoord = fitGaussModCoords[j];
-					double alphaSum = refEx.getWidth() + fitAt.getWidth();
+					double alphaSum = refVol.getWidth() + fitAt.getWidth();
 
-					double dx = refEx.getCenter().x-fitCenterModCoord.x;
-					double dy = refEx.getCenter().y-fitCenterModCoord.y;
-					double dz = refEx.getCenter().z-fitCenterModCoord.z;
+					double dx = refVol.getCenter().x-fitCenterModCoord.x;
+					double dy = refVol.getCenter().y-fitCenterModCoord.y;
+					double dz = refVol.getCenter().z-fitCenterModCoord.z;
 					double Rij2 = dx*dx + dy*dy + dz*dz;
 
 					if(Rij2>=Gaussian3D.DIST_CUTOFF) 
 						continue;
-					atomOverlap = -1*refEx.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refEx.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
-								QuickMathCalculator.getInstance().getPrefactor(refEx.getAtomicNo(),fitAt.getAtomicNo());
+					atomOverlap = refVol.getRole()*refVol.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refVol.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
+								QuickMathCalculator.getInstance().getPrefactor(refVol.getAtomicNo(),fitAt.getAtomicNo());
 						
 					
 					if (atomOverlap>0.0) {
 						totalOverlap += atomOverlap;
-						double gradientPrefactor = atomOverlap*-2*refEx.getWidth()*fitAt.getWidth()/(refEx.getWidth()+fitAt.getWidth());
+						double gradientPrefactor = atomOverlap*-2*refVol.getWidth()*fitAt.getWidth()/(refVol.getWidth()+fitAt.getWidth());
 						double qder = qDers[j][0]*dx+qDers[j][1]*dy+qDers[j][2]*dz; 
 						double rder = rDers[j][0]*dx+rDers[j][1]*dy+rDers[j][2]*dz; 
 						double sder = sDers[j][0]*dx+sDers[j][1]*dy+sDers[j][2]*dz; 

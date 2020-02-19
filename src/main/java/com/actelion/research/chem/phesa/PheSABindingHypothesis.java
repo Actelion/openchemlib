@@ -67,7 +67,7 @@ public class PheSABindingHypothesis {
 					PheSAMolecule fitModel = phesaModels.get(molIndex);
 					MolecularVolume fitVol = fitModel.getVolumes().get(confIndex);
 					StereoMolecule fitMol = fitModel.getConformer(fitVol);
-					PheSAAlignmentOptimizer.align(fitModel, refVol, fitVol, fitMol);
+					PheSAAlignmentOptimizer.align(fitModel, refVol, fitVol, fitMol,0.5);
 					alignment[i] = fitMol;
 				
 				}
@@ -152,7 +152,7 @@ public class PheSABindingHypothesis {
 							index2+=nConfs[n];
 						index2+=l;
 						StereoMolecule fitMol = phesaModels.get(k).getConformer(fitVol); 
-						similarityMatrix[index1][index2] = PheSAAlignmentOptimizer.align(phesaModels.get(k), refVol, fitVol, fitMol);
+						similarityMatrix[index1][index2] = PheSAAlignmentOptimizer.align(phesaModels.get(k), refVol, fitVol, fitMol,0.5);
 						similarityMatrix[index2][index1] = similarityMatrix[index1][index2];
 					}
 				}
@@ -200,7 +200,7 @@ public class PheSABindingHypothesis {
 					index2+=nConfs[n];
 				index2+=l;
 				StereoMolecule fitMol = phesaModels.get(k).getConformer(fitVol); 
-				similarityMatrix[confIndex][index2] = PheSAAlignmentOptimizer.align(phesaModels.get(k), refVol, fitVol, fitMol);
+				similarityMatrix[confIndex][index2] = PheSAAlignmentOptimizer.align(phesaModels.get(k), refVol, fitVol, fitMol,0.5);
 				similarityMatrix[index2][confIndex] = similarityMatrix[confIndex][index2];
 			}
 		}

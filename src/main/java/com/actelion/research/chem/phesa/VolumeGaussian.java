@@ -6,29 +6,33 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
-public class ExclusionGaussian extends Gaussian3D {
-	
+public class VolumeGaussian extends Gaussian3D {
+	private static final int INCLUSION = 1;
+	private static final int EXCLUSION = -1;
 	private Coordinates shiftVector;
 	private Coordinates referenceVector;
+	private int role; //-1 for exclusion, +1 for inclusion
 	
-	public ExclusionGaussian(int atomId,int atomicNo,Coordinates center, Coordinates shiftVector){
+	public VolumeGaussian(int atomId,int atomicNo,Coordinates center, Coordinates shiftVector, int role){
 		super(atomId,atomicNo,center.addC(shiftVector),1.0);
 		this.shiftVector = shiftVector;
 		this.referenceVector = center;
+		this.role = role;
 	}
 	
-	public ExclusionGaussian(ExclusionGaussian original){
+	public VolumeGaussian(VolumeGaussian original){
 		super(original.atomId,original.atomicNo,original.center, original.weight);
 		this.shiftVector = new Coordinates(original.shiftVector);
 		this.referenceVector = new Coordinates(original.referenceVector);
+		this.role = original.role;
 	}
 	
-	private ExclusionGaussian(String encodedGaussian) {
+	private VolumeGaussian(String encodedGaussian) {
 		decode(encodedGaussian);
 	}
 	
-	public static ExclusionGaussian fromString(String encodedGaussian) {
-		return new ExclusionGaussian(encodedGaussian);
+	public static VolumeGaussian fromString(String encodedGaussian) {
+		return new VolumeGaussian(encodedGaussian);
 	}
 
 
@@ -44,6 +48,8 @@ public class ExclusionGaussian extends Gaussian3D {
 		molVolString.append(EncoderFloatingPointNumbers.encode(coords,13));
 		molVolString.append(" ");
 		molVolString.append(EncoderFloatingPointNumbers.encode(shift,13));
+		molVolString.append(" ");
+		molVolString.append(Integer.toString(role));
 		return molVolString.toString();
 	}
 	
@@ -53,6 +59,7 @@ public class ExclusionGaussian extends Gaussian3D {
 		atomId = Integer.decode(strings[1]);
 		double [] coords = EncoderFloatingPointNumbers.decode(strings[2]);
 		double [] shift = EncoderFloatingPointNumbers.decode(strings[3]);
+		role = Integer.decode(strings[4]);
 		alpha = calculateWidth(); //the width of the Gaussian depends on the atomic radius of the atom
 		volume = calculateVolume();
 		coeff = calculateHeight();
@@ -100,6 +107,9 @@ public class ExclusionGaussian extends Gaussian3D {
 		this.referenceVector = referenceVector;
 	}
 	
+	public int getRole() {
+		return role;
+	}
 	
 	
 	

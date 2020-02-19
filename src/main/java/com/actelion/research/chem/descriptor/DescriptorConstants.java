@@ -210,6 +210,16 @@ public interface DescriptorConstants {
 												true,
 												true,
 												false);
+    
+    public static final DescriptorInfo DESCRIPTOR_PTREE =
+			new DescriptorInfo("PharmacophoreTree",
+							   "PTree",
+								"1.0",
+								DESCRIPTOR_TYPE_MOLECULE,
+								false,
+								false,
+								false,
+								false);
 
 
     public static final DescriptorInfo[] DESCRIPTOR_LIST = {

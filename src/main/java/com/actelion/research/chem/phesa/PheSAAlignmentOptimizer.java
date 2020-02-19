@@ -23,6 +23,10 @@ public class PheSAAlignmentOptimizer {
 	
 	
 	public static double alignTwoMolsInPlace(StereoMolecule refMol, StereoMolecule fitMol) {
+		return alignTwoMolsInPlace(refMol,fitMol,0.5);
+	}
+	
+	public static double alignTwoMolsInPlace(StereoMolecule refMol, StereoMolecule fitMol, double ppWeight) {
 		double similarity = 0.0;
 		MolecularVolume refVol = new MolecularVolume(refMol);
 		MolecularVolume fitVol = new MolecularVolume(fitMol);
@@ -65,7 +69,7 @@ public class PheSAAlignmentOptimizer {
 				PheSAAlignment.rotateMol(fitMol2, rotate);
 				PheSAAlignment.translateMol(fitMol2, bestTransform[4]);
 				fitVol2.update(fitMol2);
-				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol2,fitVol2);
+				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol2,fitVol2,ppWeight);
 				double[] r = shapeAlignment.findAlignment(alignments);
 				if(r[0]>bestScoreTriangle) {
 					bestScoreTriangle = r[0];
@@ -80,7 +84,7 @@ public class PheSAAlignmentOptimizer {
 				}
 			}
 		}
-		PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol);
+		PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol, ppWeight);
 		double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(2),true);
 		if(r[0]>bestScoreTriangle) { //alignment found by PMI initial alignment is better
 			similarity = r[0];
@@ -114,10 +118,10 @@ public class PheSAAlignmentOptimizer {
 	}
 	
 	
-	public static double align(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestAlignment) {
+	public static double align(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestAlignment, double ppWeight) {
 		StereoMolecule[] bestPairTriangle = new StereoMolecule[2];
 		double[] bestTransformTriangle = new double[7];
-		double bestScoreTriangle = getBestTriangleAlignment(refShape,fitShape,bestPairTriangle,bestTransformTriangle);
+		double bestScoreTriangle = getBestTriangleAlignment(refShape,fitShape,bestPairTriangle,bestTransformTriangle,ppWeight);
 		double bestScorePMI = 0.0; 
 		double[] bestTransformPMI = new double[7];
 		MolecularVolume[] bestPairPMI = new MolecularVolume[2];
@@ -125,7 +129,7 @@ public class PheSAAlignmentOptimizer {
 			MolecularVolume refVol = new MolecularVolume(refShape.getVolumes().get(i));
 			for(int j=0;j<fitShape.getVolumes().size();j++) {
 				MolecularVolume fitVol = new MolecularVolume(fitShape.getVolumes().get(j));
-				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol);
+				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol, ppWeight);
 				double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(1),false);
 				if(r[0]>bestScorePMI) {
 					bestScorePMI = r[0];
@@ -138,7 +142,7 @@ public class PheSAAlignmentOptimizer {
 		}
 		//optimize best PMI alignment
 		double similarity = 0.0;
-		PheSAAlignment shapeAlignment = new PheSAAlignment(bestPairPMI[0],bestPairPMI[1]);
+		PheSAAlignment shapeAlignment = new PheSAAlignment(bestPairPMI[0],bestPairPMI[1],ppWeight);
 		double[] r = shapeAlignment.findAlignment(new double[][] {bestTransformPMI},true);
 		if(r[0]>bestScoreTriangle) { //alignment found by PMI initial alignment is better
 			similarity = r[0];
@@ -156,14 +160,14 @@ public class PheSAAlignmentOptimizer {
 	return similarity;
 	}
 	
-	public static double align(PheSAMolecule fitShape, MolecularVolume refVol, MolecularVolume fitVol, StereoMolecule aligned) {
+	public static double align(PheSAMolecule fitShape, MolecularVolume refVol, MolecularVolume fitVol, StereoMolecule aligned, double ppWeight) {
 		Coordinates[] origCoords = new Coordinates[aligned.getAllAtoms()];
 		IntStream.range(0,aligned.getAllAtoms()).forEach(i -> origCoords[i] = new Coordinates(aligned.getCoordinates(i)));
 		double[] bestTransformTriangle = new double[7];
-		double bestScoreTriangle = getTriangleAlignment(fitShape,new MolecularVolume(refVol),new MolecularVolume(fitVol),bestTransformTriangle,aligned);
+		double bestScoreTriangle = getTriangleAlignment(fitShape,new MolecularVolume(refVol),new MolecularVolume(fitVol),bestTransformTriangle,aligned,ppWeight);
 		double bestScorePMI = 0.0; 
 		double[] bestTransformPMI = new double[7];
-		PheSAAlignment shapeAlignment = new PheSAAlignment(new MolecularVolume(refVol),new MolecularVolume(fitVol));
+		PheSAAlignment shapeAlignment = new PheSAAlignment(new MolecularVolume(refVol),new MolecularVolume(fitVol), ppWeight);
 		double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(2),true);
 		bestScorePMI = r[0];
 		bestTransformPMI = new double[] {r[1],r[2], r[3], r[4], r[5], r[6], r[7]};
@@ -188,7 +192,7 @@ public class PheSAAlignmentOptimizer {
 		return similarity;
 	}
 	
-	private static double getBestTriangleAlignment(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestPairTriangle, double[] bestTransformTriangle) {
+	private static double getBestTriangleAlignment(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestPairTriangle, double[] bestTransformTriangle, double ppWeight) {
 		List<AlignmentResult> results = new ArrayList<AlignmentResult>();
 		for(int i=0;i<refShape.getVolumes().size();i++) {
 			MolecularVolume refVol = refShape.getVolumes().get(i);
@@ -222,7 +226,7 @@ public class PheSAAlignmentOptimizer {
 				PheSAAlignment.rotateMol(fitMol, rotate);
 				PheSAAlignment.translateMol(fitMol, bestTransform[4]);
 				fitVol.update(fitMol);
-				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol);
+				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol,ppWeight);
 				double[] r = shapeAlignment.findAlignment(alignments);
 				if(r[0]>bestScoreTriangle) {
 					bestScoreTriangle = r[0];
@@ -244,7 +248,7 @@ public class PheSAAlignmentOptimizer {
 		return bestScoreTriangle;
 	}
 	
-	private static double getTriangleAlignment(PheSAMolecule fitShape,MolecularVolume refVol_, MolecularVolume fitVol_, double[] bestTransformTriangle, StereoMolecule aligned) {
+	private static double getTriangleAlignment(PheSAMolecule fitShape,MolecularVolume refVol_, MolecularVolume fitVol_, double[] bestTransformTriangle, StereoMolecule aligned, double ppWeight) {
 		MolecularVolume refVol = new MolecularVolume(refVol_);
 		MolecularVolume fitVol = new MolecularVolume(fitVol_);
 		List<AlignmentResult> results = new ArrayList<AlignmentResult>();
@@ -273,7 +277,7 @@ public class PheSAAlignmentOptimizer {
 				PheSAAlignment.rotateMol(fitMol, rotate);
 				PheSAAlignment.translateMol(fitMol, transform[4]);
 				fitVol.update(fitMol);
-				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol);
+				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol,ppWeight);
 				double[] r = shapeAlignment.findAlignment(alignments);
 				if(r[0]>bestScoreTriangle) {
 					bestTransform = transform;

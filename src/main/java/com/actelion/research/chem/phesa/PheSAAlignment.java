@@ -22,18 +22,29 @@ public class PheSAAlignment {
 
 	private MolecularVolume refMolGauss;
 	private MolecularVolume molGauss;
+	private double ppWeight;
 	public enum axis {X,Y,Z};
 
 
 	
 	
 	
-	public PheSAAlignment(StereoMolecule refMol, StereoMolecule mol) {
+	public PheSAAlignment(StereoMolecule refMol, StereoMolecule mol,double ppWeight) {
+		this.ppWeight = ppWeight;
 		this.refMolGauss = new MolecularVolume(refMol);
 		this.molGauss = new MolecularVolume(mol);
 	}
 	
+	public PheSAAlignment(StereoMolecule refMol, StereoMolecule mol) {
+		this(refMol,mol,0.5);
+	}
+	
 	public PheSAAlignment(MolecularVolume refMolGauss, MolecularVolume molGauss) {
+		this(refMolGauss,molGauss,0.5);
+	}
+	
+	public PheSAAlignment(MolecularVolume refMolGauss, MolecularVolume molGauss,double ppWeight) {
+		this.ppWeight = ppWeight;
 		this.refMolGauss= refMolGauss;
 		this.molGauss = molGauss;
 	}
@@ -315,7 +326,7 @@ public class PheSAAlignment {
 			}
 		}
 		
-		for(ExclusionGaussian refEx:refMolGauss.getExclusionGaussians()){
+		for(VolumeGaussian refEx:refMolGauss.getVolumeGaussians()){
 			int index = 0;
 			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()){
 				Vtot -= refEx.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
@@ -570,10 +581,10 @@ public class PheSAAlignment {
 		double Obb = getSelfAtomOverlapFit();
 		double ppOaa = getSelfPPOverlapRef();
 		double ppObb = getSelfPPOverlapFit();
-		EvaluableOverlap eval = new EvaluableOverlap(this, new double[7]);
+		EvaluableOverlap eval = new EvaluableOverlap(this, new double[7],ppWeight);
 		OptimizerLBFGS opt = new OptimizerLBFGS(200,0.001);
 		double maxSimilarity = 0.0;
-		double ppScaling = 1.0;
+
 		for(double [] transform:transforms) { //iterate over all initial alignments (necessary since optimizer just finds next local minimum, so we need different initial guesses
 			eval.setState(transform);
 			double[] bestTransform;
@@ -594,7 +605,7 @@ public class PheSAAlignment {
 			atomOverlap = getTotalAtomOverlap(bestTransform);
 			float atomSimilarity = (float)(atomOverlap/(Oaa+Obb-atomOverlap));
 
-			similarity = (1.0f/(1+(float)ppScaling))* (atomSimilarity + (float)ppScaling*ppSimilarity) ;
+			similarity = (1.0f-(float)ppWeight)*atomSimilarity + (float)ppWeight*ppSimilarity;
 
 			if (similarity>maxSimilarity) {
 				maxSimilarity = similarity;

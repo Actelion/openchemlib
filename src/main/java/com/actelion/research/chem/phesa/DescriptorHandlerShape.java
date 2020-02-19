@@ -37,7 +37,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		
 	private static final long SEED = 123456789;
 	
-	private static final int CONFORMATIONS = 50;
+	private static final int CONFORMATIONS = 100;
 
 
 	private static DescriptorHandlerShape INSTANCE;
@@ -51,6 +51,10 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	private StereoMolecule[] previousAlignment;// = new StereoMolecule[2];
 
+	private int maxConfs;
+	
+	private double ppWeight;
+	
 	// Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
 	
 	
@@ -59,19 +63,30 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	private ConformerSetGenerator conformerGenerator;
 	
 	public DescriptorHandlerShape() {
-		this(false);
+		this(false,CONFORMATIONS,0.5);
 	}
 	
 	public DescriptorHandlerShape(boolean useSingleBaseConformation) {
+		this(useSingleBaseConformation,CONFORMATIONS,0.5);
+	}
+	
+	public DescriptorHandlerShape(int maxConfs,double ppWeight) {
+		this(false,maxConfs,ppWeight);
+	}
+	
+	public DescriptorHandlerShape(boolean useSingleBaseConformation,int maxConfs, double ppWeight) {
 		singleBaseConformation = useSingleBaseConformation;
+		this.maxConfs = maxConfs;
+		this.ppWeight = ppWeight;
 		init();
 
 	}
+		
 	
 	public PheSAMolecule createDescriptor(ConformerSet fullSet) {
 		try {
-			ConformerSet confSet = fullSet.getSubset(CONFORMATIONS);
-		
+			ConformerSet confSet = fullSet.getSubset(maxConfs);
+
 		init();
 		
 		ArrayList<MolecularVolume> molecularVolumes = new ArrayList<MolecularVolume>(); 
@@ -103,7 +118,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	public void init() {
 		transforms = PheSAAlignment.initialTransform(2);
 		previousAlignment = new StereoMolecule[2];
-		conformerGenerator = new ConformerSetGenerator(CONFORMATIONS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,SEED);
+		conformerGenerator = new ConformerSetGenerator(maxConfs,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,SEED);
 		
 	}
 	
@@ -154,7 +169,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	public float getSimilarity(PheSAMolecule query, PheSAMolecule base) {
 		StereoMolecule[] bestPair = {query.getMolecule(),base.getMolecule()};
-		double similarity = PheSAAlignmentOptimizer.align(query,base,bestPair);
+		double similarity = PheSAAlignmentOptimizer.align(query,base,bestPair,ppWeight);
 		this.setPreviousAlignment(bestPair);
 		return (float)similarity;
 	}
@@ -290,6 +305,11 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		}
 
 		return INSTANCE;
+	}
+	
+	public void setMaxConfs(int maxConfs) {
+		this.maxConfs = maxConfs;
+		init();
 	}
 
 }

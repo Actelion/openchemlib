@@ -23,7 +23,11 @@ public class DescriptorHandlerShapeOneConf extends DescriptorHandlerShape {
 
 	public DescriptorHandlerShapeOneConf() {
 		super(true);
+	}
+	
 
+	public DescriptorHandlerShapeOneConf(int maxConfs,double ppWeight) {
+		super(true,maxConfs,ppWeight);
 	}
 	
 	@Override
