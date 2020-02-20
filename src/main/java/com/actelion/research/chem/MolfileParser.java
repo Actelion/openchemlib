@@ -46,12 +46,7 @@ package com.actelion.research.chem;
 
 import com.actelion.research.io.BOMSkipper;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.TreeMap;
 
 public class MolfileParser
@@ -927,8 +922,23 @@ public class MolfileParser
 	public StereoMolecule getCompactMolecule(String molFile)
 	{
 		mMol = null;
-		return (readMoleculeFromBuffer(new BufferedReader(new StringReader(molFile)))) ?
-			mMol : null;
+		return (readMoleculeFromBuffer(new BufferedReader(new StringReader(molFile)))) ? mMol : null;
+	}
+
+	public StereoMolecule getCompactMolecule(BufferedReader reader)
+	{
+		mMol = null;
+		return (readMoleculeFromBuffer(reader)) ? mMol : null;
+	}
+
+	public StereoMolecule getCompactMolecule(File file)
+	{
+		mMol = null;
+		try {
+			return (readMoleculeFromBuffer(new BufferedReader(new FileReader(file)))) ? mMol : null;
+		} catch (FileNotFoundException fnfe) {
+			return null;
+		}
 	}
 
 	private int buildBond(int atom1,int atom2,int bondType,
