@@ -56,12 +56,13 @@ public class ChemistryFlavors
     public static final DataFlavor DF_MDLMOLFILE = new DataFlavor("chemical/x-mdl-molfile;class=java.lang.String", "MDL Molfile");
     public static final DataFlavor DF_MDLMOLFILEV3 = new DataFlavor("chemical/x-mdl-molfilev3;class=java.lang.String", "MDL Molfile V3");
     public static final DataFlavor DF_SMILES = new DataFlavor("chemical/x-daylight-smiles;class=java.lang.String", "Daylight Smiles");
+    public static final DataFlavor DF_IDCODE = new DataFlavor("chemical/x-openmolecules-idcode;class=java.lang.String", "Openmolecules ID-Code");
     public static final DataFlavor[] MOLECULE_FLAVORS = {
         DF_SERIALIZED_MOLECULE,
         DF_MDLMOLFILE,
         DF_MDLMOLFILEV3,
         DF_SMILES,
-        DataFlavor.stringFlavor
+        DF_IDCODE
     };
 
     public static final DataFlavor DF_SERIALIZED_REACTION = new MyFlavor(com.actelion.research.chem.reaction.Reaction.class, "Native OpenChemLib Reaction");
@@ -70,4 +71,6 @@ public class ChemistryFlavors
         DF_SERIALIZED_REACTION,
         DF_REACTION_SMILES,
     };
+
+
 }

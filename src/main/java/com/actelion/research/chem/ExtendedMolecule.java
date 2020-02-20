@@ -2465,7 +2465,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			for (int atom2=0; atom2<atom1; atom2++) {
 				double xdif = mCoordinates[atom2].x - mCoordinates[atom1].x;
 				double ydif = mCoordinates[atom2].y - mCoordinates[atom1].y;
-				if ((xdif*xdif + ydif*ydif) < minDistanceSquare)
+				double zdif = mCoordinates[atom2].z - mCoordinates[atom1].z;
+				if ((xdif*xdif + ydif*ydif + zdif*zdif) < minDistanceSquare)
 					throw new Exception("The distance between two atoms is too close.");
 				}
 			}

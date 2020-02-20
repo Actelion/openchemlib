@@ -143,6 +143,9 @@ public class MoleculeDropAdapter implements DropTargetListener
         } else if (chosen.equals(ChemistryFlavors.DF_SMILES) && o instanceof String) {
             mol = new StereoMolecule();
             new SmilesParser().parse(mol, ((String)o).getBytes());
+        } else if (chosen.equals(ChemistryFlavors.DF_IDCODE) && o instanceof String) {
+            mol = new StereoMolecule();
+            new IDCodeParser(true).parse(mol, ((String) o).getBytes());
         } else if (chosen.equals(DataFlavor.stringFlavor) && o instanceof String) {
             try {
                 mol = new StereoMolecule();
