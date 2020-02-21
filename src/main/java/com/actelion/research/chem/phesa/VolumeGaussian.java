@@ -1,5 +1,6 @@
 package com.actelion.research.chem.phesa;
 
+import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
@@ -7,8 +8,8 @@ import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 public class VolumeGaussian extends Gaussian3D {
-	private static final int INCLUSION = 1;
-	private static final int EXCLUSION = -1;
+	public static final int INCLUSION = 1;
+	public static final int EXCLUSION = -1;
 	private Coordinates shiftVector;
 	private Coordinates referenceVector;
 	private int role; //-1 for exclusion, +1 for inclusion
@@ -82,12 +83,12 @@ public class VolumeGaussian extends Gaussian3D {
 	}
 	
 	public void updateCoordinates(StereoMolecule mol) {
-		referenceVector = mol.getCoordinates(atomId);
+		referenceVector = new Coordinates(mol.getCoordinates(atomId));
 		center = referenceVector.addC(shiftVector);
 	}
 	
 	public void updateCoordinates(Conformer conf) {
-		referenceVector = conf.getCoordinates(atomId);
+		referenceVector = new Coordinates(conf.getCoordinates(atomId));
 		center = referenceVector.addC(shiftVector);
 	}
 	
@@ -97,6 +98,21 @@ public class VolumeGaussian extends Gaussian3D {
 	
 	public Coordinates getShiftVector() {
 		return this.shiftVector;
+	}
+	
+	public void addShift(Coordinates shift) {
+		shiftVector.add(shift);
+		center = referenceVector.addC(shiftVector);
+	}
+	
+	public void translateRef(Coordinates trans) {
+		referenceVector.add(trans);
+		center = referenceVector.addC(shiftVector);
+	}
+	
+	public void rotateShift(Matrix rotMat) {
+		shiftVector.rotate(rotMat.getArray());
+		center = referenceVector.addC(shiftVector);
 	}
 	
 	public Coordinates getReferenceVector() {

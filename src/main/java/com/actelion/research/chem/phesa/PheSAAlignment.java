@@ -87,7 +87,7 @@ public class PheSAAlignment {
 
 
 	
-	public static Matrix createCanonicalOrientation(Conformer conf,MolecularVolume molGauss) {
+	public static Matrix createCanonicalOrientation(Conformer conf, MolecularVolume molGauss) {
 		Matrix m = PheSAAlignment.getCovarianceMatrix(molGauss);
 		SingularValueDecomposition svd = new SingularValueDecomposition(m.getArray(),null,null);
 		Matrix u = new Matrix(svd.getU());
@@ -144,7 +144,8 @@ public class PheSAAlignment {
 				}
 			}
 		}
-		
+		for(VolumeGaussian vg : molGauss.getVolumeGaussians())
+			vg.rotateShift(rotMat);
 		return rotMat;
 	}
 	
@@ -190,6 +191,21 @@ public class PheSAAlignment {
 			value = ag.getVolume()*ag.getCenter().y*ag.getCenter().z;
 			massMatrix.addToElement(1,2,value);
 			value = ag.getVolume()*ag.getCenter().z*ag.getCenter().z;
+			massMatrix.addToElement(2,2,value);	
+		}
+		for (VolumeGaussian vg : molGauss.getVolumeGaussians()){
+			volume += vg.getRole()*vg.getVolume();
+			double value = vg.getRole()*vg.getVolume()*vg.getCenter().x*vg.getCenter().x;
+			massMatrix.addToElement(0,0,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().x*vg.getCenter().y;
+			massMatrix.addToElement(0,1,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().x*vg.getCenter().z;
+			massMatrix.addToElement(0,2,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().y*vg.getCenter().y;
+			massMatrix.addToElement(1,1,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().y*vg.getCenter().z;
+			massMatrix.addToElement(1,2,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().z*vg.getCenter().z;
 			massMatrix.addToElement(2,2,value);	
 		}
 		massMatrix.set(0,0,massMatrix.get(0,0)/volume);
@@ -326,10 +342,10 @@ public class PheSAAlignment {
 			}
 		}
 		
-		for(VolumeGaussian refEx:refMolGauss.getVolumeGaussians()){
+		for(VolumeGaussian refVol:refMolGauss.getVolumeGaussians()){
 			int index = 0;
 			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()){
-				Vtot -= refEx.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
+				Vtot += refVol.getRole()*refVol.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
 				index+=1;	
 			}
 		}
@@ -339,23 +355,9 @@ public class PheSAAlignment {
 		return Vtot;
 
 	}
-	
-	public double getTotalAtomOverlap(){
-		double Vtot = 0.0;
-		for(AtomicGaussian refAt:refMolGauss.getAtomicGaussians()){
-			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()) {
-					Vtot+=refAt.getVolumeOverlap(fitAt,Gaussian3D.DIST_CUTOFF);
-			}
-						
-			}				
-		
-		return Vtot;
 
-	}
 	
-	
-	
-	
+		
 	public double getTotalPPOverlap(double[] transform){
 		Quaternion quat = new Quaternion(transform[0],transform[1],transform[2],transform[3]);
 		double Vtot = 0.0;
@@ -396,7 +398,20 @@ public class PheSAAlignment {
 			for(AtomicGaussian at:molGauss.getAtomicGaussians()){
 				for(AtomicGaussian at2:molGauss.getAtomicGaussians()){
 					Vtot += at.getVolumeOverlap(at2);
-	
+				}
+				for(VolumeGaussian vg : molGauss.getVolumeGaussians()) {
+					Vtot += vg.getRole()*at.getVolumeOverlap(vg);
+				}
+			}
+			
+			for(VolumeGaussian vg:molGauss.getVolumeGaussians()){
+				if(vg.getRole()!=VolumeGaussian.INCLUSION)
+					continue;
+				for(VolumeGaussian vg2 : molGauss.getVolumeGaussians()) {
+					//only consider self-overlap of inclusion spheres
+					if(vg2.getRole()!=VolumeGaussian.INCLUSION)
+						continue;
+					Vtot += vg2.getVolumeOverlap(vg);
 				}
 			}
 	
@@ -604,7 +619,6 @@ public class PheSAAlignment {
 				ppSimilarity = 1.0f;
 			atomOverlap = getTotalAtomOverlap(bestTransform);
 			float atomSimilarity = (float)(atomOverlap/(Oaa+Obb-atomOverlap));
-
 			similarity = (1.0f-(float)ppWeight)*atomSimilarity + (float)ppWeight*ppSimilarity;
 
 			if (similarity>maxSimilarity) {
@@ -625,6 +639,8 @@ public class PheSAAlignment {
 		}
 
 	}
+	
+
 	
 	
 	
@@ -653,12 +669,7 @@ public class PheSAAlignment {
 
 	}
 	
-	public double getShapeSimilarityWithoutOptimization() {
-		double Oaa = getSelfAtomOverlapRef();
-		double Obb = getSelfAtomOverlapFit();
-		double Oab = getTotalAtomOverlap();
-		return (Oab)/(Oaa+Obb-Oab);
-	}
+
 	
 }
 

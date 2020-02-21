@@ -301,7 +301,7 @@ public class EvaluableOverlap implements Evaluable  {
 						continue;
 					atomOverlap = refVol.getRole()*refVol.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refVol.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
 								QuickMathCalculator.getInstance().getPrefactor(refVol.getAtomicNo(),fitAt.getAtomicNo());
-						
+					
 					
 					if (atomOverlap>0.0) {
 						totalOverlap += atomOverlap;

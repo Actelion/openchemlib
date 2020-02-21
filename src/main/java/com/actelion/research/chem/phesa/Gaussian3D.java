@@ -76,18 +76,12 @@ public abstract class Gaussian3D {
 	public double getWidth() {
 		return this.alpha;
 	}
-	
-	public void setWidth(double width) {
-		this.alpha = width;
-	}
+
 	
 	public double getVolume() {
 		return this.volume;
 	}
 	
-	public void setVolume(double volume) {
-		this.volume = volume;
-	}
 	
 	public Coordinates getCenter() {
 		return this.center;
@@ -103,6 +97,9 @@ public abstract class Gaussian3D {
 	
 	public void setAtomicNo(int atomicNo) {
 		this.atomicNo = atomicNo;
+		this.coeff = calculateHeight();
+		this.alpha = calculateWidth();
+		this.volume = calculateVolume();
 	}
 	
 	public int getAtomId() {

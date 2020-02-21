@@ -289,7 +289,7 @@ public class MolecularVolume {
 		}
 		
 		for (VolumeGaussian vg : getVolumeGaussians()){
-			vg.getCenter().sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
+			vg.translateRef(com.scaleC(-1.0));  //translate atomicGaussians. Moves center of mass to the origin.
 		}
 		
 
@@ -508,7 +508,6 @@ public class MolecularVolume {
 			hydrogens.add(new Coordinates(coords[i*3],coords[i*3+1],coords[i*3+2]));
 			
 		}
-
 		return new MolecularVolume(atomicGaussians,ppGaussians,volumeGaussians,hydrogens);
 	}
 }
