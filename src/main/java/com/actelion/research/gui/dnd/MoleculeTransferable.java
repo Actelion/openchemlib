@@ -78,7 +78,7 @@ public class MoleculeTransferable implements Transferable,ClipboardOwner
             return new MolfileCreator(mMol).getMolfile();
         } else if (flavor.equals(ChemistryFlavors.DF_SMILES)) {
             return new IsomericSmilesCreator(mMol).getSmiles();
-        } else if (flavor.equals(DataFlavor.stringFlavor)) {
+        } else if (flavor.equals(ChemistryFlavors.DF_IDCODE)) {
             return new Canonizer(mMol).getIDCode();
         } else
             throw new UnsupportedFlavorException(flavor);
