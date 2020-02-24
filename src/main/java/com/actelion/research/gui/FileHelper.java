@@ -39,6 +39,7 @@ import com.actelion.research.gui.hidpi.HiDPIHelper;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -69,6 +70,17 @@ public class FileHelper extends CompoundFileHelper {
 		return new FileHelper(parent).selectFileToOpen(title, filetypes);
 		}
 
+	public static ArrayList<File> getCompatibleFileList(File directory, int filetypes) {
+		ArrayList<File> list = new ArrayList<>();
+		if (fileExists(directory, 1000)) {
+			javax.swing.filechooser.FileFilter ff = FileHelper.createFileFilter(filetypes, false);
+			for (File file:directory.listFiles((File pathname) -> ff.accept(pathname) ))
+				list.add(file);
+			}
+
+		return list;
+		}
+
 	public File selectFileToOpen(String title, int filetypes) {
 		return selectFileToOpen(title, filetypes, null);
 		}
@@ -90,7 +102,10 @@ public class FileHelper extends CompoundFileHelper {
 
 		fileChooser.setDialogTitle(title);
 		fileChooser.setCurrentDirectory(getCurrentDirectory());
-		fileChooser.setFileFilter(createFileFilter(filetypes, false));
+		if (filetypes == cFileTypeDirectory)
+			fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		else if (filetypes != cFileTypeUnknown)
+			fileChooser.setFileFilter(createFileFilter(filetypes, false));
 		if (initialFileName != null) {
 			int index = initialFileName.lastIndexOf(File.separatorChar);
 			if (index == -1) {
@@ -111,7 +126,7 @@ public class FileHelper extends CompoundFileHelper {
 		File selectedFile = fileChooser.getSelectedFile();
 		if (selectedFile.exists())
 			return selectedFile;
-		if (selectedFile.getName().contains("."))
+		if (selectedFile.getName().contains(".") || filetypes == cFileTypeDirectory)
 			return selectedFile;
 		ArrayList<String> list = getExtensionList(filetypes);
 		for (String extension:list) {
