@@ -34,8 +34,6 @@
 package com.actelion.research.calc;
 
 
-import com.actelion.research.util.DoubleFormat;
-
 public class CorrelationCalculator {
     public static final String[] TYPE_LONG_NAME = { "Bravais-Pearson (linear correlation)", "Spearman (correlation of ranks)" };
     public static final String[] TYPE_NAME = { "Bravais-Pearson", "Spearman" };
@@ -45,6 +43,7 @@ public class CorrelationCalculator {
     public static final int TYPE_SPEARMAN = 1;
 
     private int mValueCount;
+
     private int[][] mValueCountMatrix;
 
     /**
