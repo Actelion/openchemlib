@@ -1334,11 +1334,11 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Swaps two atoms' indexes/locations in the atom table. This is used to move hydrogen atoms
-	 * to the end of the table and for some testsing purposes.
+	 * to the end of the table and for some testing purposes.
 	 * @param atom1
 	 * @param atom2
 	 */
-	protected void swapAtoms(int atom1, int atom2) {
+	public void swapAtoms(int atom1, int atom2) {
 		int tempInt = mAtomicNo[atom1];
 		mAtomicNo[atom1] = mAtomicNo[atom2];
 		mAtomicNo[atom2] = tempInt;
@@ -1386,11 +1386,11 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Swaps two bonds' indexes/locations in the atom table. This is used to move hydrogen atoms
-	 * to the end of the table and for some testsing purposes.
+	 * to the end of the table and for some testing purposes.
 	 * @param bond1
 	 * @param bond2
 	 */
-	protected void swapBonds(int bond1, int bond2) {
+	public void swapBonds(int bond1, int bond2) {
 		int temp = mBondAtom[0][bond1];
 		mBondAtom[0][bond1] = mBondAtom[0][bond2];
 		mBondAtom[0][bond2] = temp;
