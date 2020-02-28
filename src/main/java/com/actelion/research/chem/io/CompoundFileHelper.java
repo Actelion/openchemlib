@@ -67,6 +67,7 @@ public abstract class CompoundFileHelper {
     public static final int cFileTypeRDV2 = 0x00004000;
     public static final int cFileTypeRD = cFileTypeRDV3 | cFileTypeRDV2;
     public static final int cFileTypeUnknown = -1;
+	public static final int cFileTypeDirectory = -2;
 
 	private static File sCurrentDirectory;
 	private int mRecordCount,mErrorCount;
@@ -240,6 +241,14 @@ public abstract class CompoundFileHelper {
 	    }
 	
 	public static CompoundFileFilter createFileFilter(int filetypes, boolean isSaving) {
+		if (filetypes == cFileTypeDirectory)
+			return new CompoundFileFilter() {
+				@Override
+				public boolean accept(File f) {
+					return f.isDirectory();
+				}
+			};
+
 		CompoundFileFilter filter = new CompoundFileFilter();
 		if ((filetypes & cFileTypeDataWarrior) != 0) {
             filter.addExtension("dwar");

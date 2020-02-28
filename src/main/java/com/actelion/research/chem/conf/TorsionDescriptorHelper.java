@@ -2,7 +2,6 @@ package com.actelion.research.chem.conf;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
-import com.sun.javafx.collections.ListListenerHelper;
 
 public class TorsionDescriptorHelper {
 	private static final int SYMMETRY_360 = 0;  // 0 -> 359 degrees
