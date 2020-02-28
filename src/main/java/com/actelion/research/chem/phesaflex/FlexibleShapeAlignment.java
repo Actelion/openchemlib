@@ -41,13 +41,19 @@ public class FlexibleShapeAlignment {
 	private StereoMolecule fitMol;
 	private MolecularVolume refVol;
 	private MolecularVolume fitVol;
+	private double ppWeight;
 	Map<String, Object> ffOptions;
 	
 	public FlexibleShapeAlignment(StereoMolecule refMol, StereoMolecule fitMol) {
-		this(refMol, fitMol, new MolecularVolume(refMol), new MolecularVolume(fitMol));
+		this(refMol, fitMol, new MolecularVolume(refMol), new MolecularVolume(fitMol),0.5);
 	}
 	
-	public FlexibleShapeAlignment(StereoMolecule refMol,StereoMolecule fitMol, MolecularVolume refVol, MolecularVolume fitVol) {
+	public FlexibleShapeAlignment(StereoMolecule refMol, StereoMolecule fitMol, double ppWeight) {
+		this(refMol, fitMol, new MolecularVolume(refMol), new MolecularVolume(fitMol),ppWeight);
+	}
+	
+	public FlexibleShapeAlignment(StereoMolecule refMol,StereoMolecule fitMol, MolecularVolume refVol, MolecularVolume fitVol, double ppWeight) {
+		this.ppWeight = ppWeight;
 		this.refMol = refMol;
 		this.fitMol = fitMol;
 		this.refVol = refVol;
@@ -75,7 +81,7 @@ public class FlexibleShapeAlignment {
 			
 			isHydrogen[at] = fitMol.getAtomicNo(at)==1 ? true : false;
 		}
-		EvaluableFlexibleOverlap eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, isHydrogen, v, ffOptions);
+		EvaluableFlexibleOverlap eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, ppWeight, isHydrogen, v, ffOptions);
 		eval.setE0(e0);
 		OptimizerLBFGS opt = new OptimizerLBFGS(200,0.001);
 		opt.optimize(eval);
@@ -87,7 +93,7 @@ public class FlexibleShapeAlignment {
 		for(int i=0;i<MC_STEPS;i++) {
 			double [] vold = Arrays.stream(v).toArray(); // now copy v
 			mcHelper.step();
-			eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, isHydrogen, v, ffOptions);
+			eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, ppWeight, isHydrogen, v, ffOptions);
 			eval.setE0(e0);
 			opt = new OptimizerLBFGS(200,0.001);
 			opt.optimize(eval);
@@ -100,16 +106,29 @@ public class FlexibleShapeAlignment {
 				eval.getState(v);
 				told = tnew;
 			}
-			ForceFieldMMFF94 forceField = new ForceFieldMMFF94(fitMol, ForceFieldMMFF94.MMFF94SPLUS,ffOptions);
+
 		}
 		return getTanimoto(eval,shapeAlign);
 	}
 	
 	private double getTanimoto(EvaluableFlexibleOverlap eval, PheSAAlignment shapeAlign) { 
 		double Obb = eval.getFGValueShapeSelf(new double[3*fitMol.getAllAtoms()], shapeAlign.getMolGauss(),false);
-		double Oaa = eval.getFGValueShapeSelf(new double[3*fitMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
+		double Oaa = eval.getFGValueShapeSelf(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
 		double Oab = eval.getFGValueShape(new double[3*fitMol.getAllAtoms()]);
-		return (Oab/(Oaa+Obb-Oab));
+		double Tshape = Oab/(Oaa+Obb-Oab);
+		double correctionFactor = shapeAlign.getRefMolGauss().getPPGaussians().size()/shapeAlign.getRefMolGauss().getPPGaussians().stream().mapToDouble(g -> g.getWeight()).sum();
+		double ObbPP = eval.getFGValueSelfPP(new double[3*fitMol.getAllAtoms()], shapeAlign.getMolGauss(),false);
+		double OaaPP = eval.getFGValueSelfPP(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
+		double OabPP = eval.getFGValuePP(new double[3*fitMol.getAllAtoms()]);
+		double Tpp = OabPP/(OaaPP+ObbPP-OabPP);
+		Tpp*=correctionFactor;
+		if(Tshape>1.0) //can happen because of weights
+			Tshape = 1.0f;
+		if(Tpp>1.0) //can happen because of weights
+			Tpp = 1.0f;
+		double T = (1.0f-(float)ppWeight)*Tshape + (float)ppWeight*Tpp;
+
+		return T;
 	}
 	
 	public double calcMin(StereoMolecule fitMol) {

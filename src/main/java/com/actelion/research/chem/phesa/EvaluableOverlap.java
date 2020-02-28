@@ -303,7 +303,7 @@ public class EvaluableOverlap implements Evaluable  {
 								QuickMathCalculator.getInstance().getPrefactor(refVol.getAtomicNo(),fitAt.getAtomicNo());
 					
 					
-					if (atomOverlap>0.0) {
+					if (Math.abs(atomOverlap)>0.0) {
 						totalOverlap += atomOverlap;
 						double gradientPrefactor = atomOverlap*-2*refVol.getWidth()*fitAt.getWidth()/(refVol.getWidth()+fitAt.getWidth());
 						double qder = qDers[j][0]*dx+qDers[j][1]*dy+qDers[j][2]*dz; 

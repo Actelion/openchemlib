@@ -88,7 +88,7 @@ public class PheSAAlignmentOptimizer {
 		double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(2),true);
 		if(r[0]>bestScoreTriangle) { //alignment found by PMI initial alignment is better
 			similarity = r[0];
-			bestTransformPMI = new double[] {r[1],r[2], r[3], r[4], r[5], r[6], r[7]};
+			bestTransformPMI = new double[] {r[3],r[4], r[5], r[6], r[7], r[8], r[9]};
 			bestMatch = fitConf.toMolecule();
 			PheSAAlignment.rotateMol(bestMatch, bestTransformPMI);
 			for(int a=0;a<fitMol.getAllAtoms();a++) {
@@ -118,7 +118,8 @@ public class PheSAAlignmentOptimizer {
 	}
 	
 	
-	public static double align(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestAlignment, double ppWeight) {
+	public static double[] align(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestAlignment, double ppWeight) {
+		double[] result = new double[3]; //overall sim, ppSimilarity and additional volume similarity contribution
 		StereoMolecule[] bestPairTriangle = new StereoMolecule[2];
 		double[] bestTransformTriangle = new double[7];
 		double bestScoreTriangle = getBestTriangleAlignment(refShape,fitShape,bestPairTriangle,bestTransformTriangle,ppWeight);
@@ -133,7 +134,9 @@ public class PheSAAlignmentOptimizer {
 				double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(1),false);
 				if(r[0]>bestScorePMI) {
 					bestScorePMI = r[0];
-					bestTransformPMI = new double[] {r[1],r[2], r[3], r[4], r[5], r[6], r[7]};
+					result[1] = r[1];
+					result[2] = r[2];
+					bestTransformPMI = new double[] {r[3],r[4], r[5], r[6], r[7], r[8], r[9]};
 					bestPairPMI[0] = refVol;
 					bestPairPMI[1] = fitVol;
 				}
@@ -146,6 +149,9 @@ public class PheSAAlignmentOptimizer {
 		double[] r = shapeAlignment.findAlignment(new double[][] {bestTransformPMI},true);
 		if(r[0]>bestScoreTriangle) { //alignment found by PMI initial alignment is better
 			similarity = r[0];
+			result[0] = similarity;
+			result[1] = r[1];
+			result[2] = r[2];
 			bestAlignment[0] = refShape.getConformer(bestPairPMI[0]);
 			bestAlignment[1] = fitShape.getConformer(bestPairPMI[1]);
 			PheSAAlignment.rotateMol(bestAlignment[1], bestTransformPMI);
@@ -153,11 +159,12 @@ public class PheSAAlignmentOptimizer {
 		
 		else { 
 			similarity = bestScoreTriangle;
+			result[0] = similarity;
 			bestAlignment[0] = bestPairTriangle[0];
 			bestAlignment[1] = bestPairTriangle[1];
 		}
 			
-	return similarity;
+	return result;
 	}
 	
 	public static double align(PheSAMolecule fitShape, MolecularVolume refVol, MolecularVolume fitVol, StereoMolecule aligned, double ppWeight) {
@@ -170,7 +177,7 @@ public class PheSAAlignmentOptimizer {
 		PheSAAlignment shapeAlignment = new PheSAAlignment(new MolecularVolume(refVol),new MolecularVolume(fitVol), ppWeight);
 		double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(2),true);
 		bestScorePMI = r[0];
-		bestTransformPMI = new double[] {r[1],r[2], r[3], r[4], r[5], r[6], r[7]};
+		bestTransformPMI = new double[] {r[3],r[4], r[5], r[6], r[7], r[8], r[9]};
 
 				
 		double similarity = 0.0;
@@ -230,13 +237,13 @@ public class PheSAAlignmentOptimizer {
 				double[] r = shapeAlignment.findAlignment(alignments);
 				if(r[0]>bestScoreTriangle) {
 					bestScoreTriangle = r[0];
-					bestTransformTriangle[0] = r[1];
-					bestTransformTriangle[1] = r[2];
-					bestTransformTriangle[2] = r[3];
-					bestTransformTriangle[3] = r[4];
-					bestTransformTriangle[4] = r[5];
-					bestTransformTriangle[5] = r[6];
-					bestTransformTriangle[6] = r[7];
+					bestTransformTriangle[0] = r[3];
+					bestTransformTriangle[1] = r[4];
+					bestTransformTriangle[2] = r[5];
+					bestTransformTriangle[3] = r[6];
+					bestTransformTriangle[4] = r[7];
+					bestTransformTriangle[5] = r[8];
+					bestTransformTriangle[6] = r[9];
 					bestPairTriangle[1] = fitShape.getConformer(fitVol);
 					bestPairTriangle[0] = refShape.getConformer(refVol);
 			}
@@ -282,13 +289,13 @@ public class PheSAAlignmentOptimizer {
 				if(r[0]>bestScoreTriangle) {
 					bestTransform = transform;
 					bestScoreTriangle = r[0];
-					bestTransformTriangle[0] = r[1];
-					bestTransformTriangle[1] = r[2];
-					bestTransformTriangle[2] = r[3];
-					bestTransformTriangle[3] = r[4];
-					bestTransformTriangle[4] = r[5];
-					bestTransformTriangle[5] = r[6];
-					bestTransformTriangle[6] = r[7];
+					bestTransformTriangle[0] = r[3];
+					bestTransformTriangle[1] = r[4];
+					bestTransformTriangle[2] = r[5];
+					bestTransformTriangle[3] = r[6];
+					bestTransformTriangle[4] = r[7];
+					bestTransformTriangle[5] = r[8];
+					bestTransformTriangle[6] = r[9];
 
 			}
 			}

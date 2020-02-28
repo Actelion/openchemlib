@@ -50,6 +50,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	private double[][] transforms;// = ShapeAlignment.initialTransform(2);
 	
 	private StereoMolecule[] previousAlignment;// = new StereoMolecule[2];
+	
+	private double[] previousPhesaResult;
 
 	private int maxConfs;
 	
@@ -169,9 +171,11 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	public float getSimilarity(PheSAMolecule query, PheSAMolecule base) {
 		StereoMolecule[] bestPair = {query.getMolecule(),base.getMolecule()};
-		double similarity = PheSAAlignmentOptimizer.align(query,base,bestPair,ppWeight);
+		double[] result = PheSAAlignmentOptimizer.align(query,base,bestPair,ppWeight);
 		this.setPreviousAlignment(bestPair);
-		return (float)similarity;
+		this.setPreviousPheSAResult(result);
+		
+		return (float)result[0];
 	}
 
 
@@ -180,15 +184,17 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		return this.previousAlignment;
 	}
 	
+	public double[] getPreviousPheSAResult() {
+		return this.previousPhesaResult;
+	}
+	
 	public void setPreviousAlignment(StereoMolecule[] previousAlignment) {
 		this.previousAlignment = previousAlignment;
 	}
 	
-	
-
-	
-
-	
+	public void setPreviousPheSAResult(double[] previousPhesaResult) {
+		this.previousPhesaResult = previousPhesaResult;
+	}
 
 	
 	public String getVersion() {

@@ -11,6 +11,7 @@ import com.actelion.research.chem.phesa.Evaluable;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.QuickMathCalculator;
+import com.actelion.research.chem.phesa.VolumeGaussian;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 
@@ -38,14 +39,16 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
     private double oAApp;
     private ForceFieldMMFF94 ff;
     private Map<String, Object> ffOptions;
+    private double ppWeight;
     
-	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule refMol, StereoMolecule fitMol, boolean[] isHydrogen,double[] v, Map<String, Object> ffOptions) {
+	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule refMol, StereoMolecule fitMol, double ppWeight, boolean[] isHydrogen,double[] v, Map<String, Object> ffOptions) {
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		this.ffOptions = ffOptions;
 		ff = new ForceFieldMMFF94(fitMol, ForceFieldMMFF94.MMFF94SPLUS, this.ffOptions);
 		this.shapeAlign = shapeAlign;
 		this.fitMol = fitMol;
 		this.isHydrogen = isHydrogen;
+		this.ppWeight = ppWeight;
 		this.v = v;
 		for(int i=0;i<fitMol.getAllAtoms();i++) {
 			v[3*i]=fitMol.getAtomX(i);
@@ -54,8 +57,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		}
 
 		this.oAA = this.getFGValueShapeSelf(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
-		this.oAApp = this.getFGValueShapeSelfPP(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
-		
+		this.oAApp = this.getFGValueSelfPP(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
 	}
 	
 	public EvaluableFlexibleOverlap(EvaluableFlexibleOverlap e) {
@@ -117,8 +119,8 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double[] selfOverlapGradFitPP = new double[grad.length];
 		double oBB = this.getFGValueShapeSelf(selfOverlapGradFit, shapeAlign.getMolGauss(),false);
 		double oAB = this.getFGValueShape(overlapGrad);
-		double oBBpp = this.getFGValueShapeSelfPP(selfOverlapGradFitPP, shapeAlign.getMolGauss(),false);
-		double oABpp = this.getFGValueShapePP(overlapGradPP);
+		double oBBpp = this.getFGValueSelfPP(selfOverlapGradFitPP, shapeAlign.getMolGauss(),false);
+		double oABpp = this.getFGValuePP(overlapGradPP);
 		ff.addGradient(energyGrad);
 		ePot = ff.getTotalEnergy();
 		double[] dOBB = selfOverlapGradFit;
@@ -127,7 +129,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double[] dOBBpp = selfOverlapGradFitPP;
 		double[] dOABpp = overlapGradPP;
 		double[] dOBBpp_dOABpp = new double[grad.length];
-		T = 0.5*(oAB/(oBB+oAA-oAB))+0.5*(oABpp/(oBBpp+oAApp-oABpp));
+		T = (1.0-ppWeight)*(oAB/(oBB+oAA-oAB))+ppWeight*(oABpp/(oBBpp+oAApp-oABpp));
 		//double value = SCALE*Math.exp(DELTA*(ePot-e0))*T + (ePot-e0);
 		double strainPrefactor = (ePot<e0 || (ePot-e0)<FlexibleShapeAlignment.ENERGY_CUTOFF) ? 0.0 : 1.0;
 		double value = -T + LAMBDA*strainPrefactor*(ePot-e0)*(ePot-e0);
@@ -137,8 +139,8 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		}
 		double[] dT = new double[grad.length];
 		for(int j=0;j<grad.length;j++) {
-			dT[j] = dOAB[j]*(1/(oAA+oBB-oAB))-oAB*Math.pow(oAA+oBB-oAB,-2)*dOBB_dOAB[j] + 
-					dOABpp[j]*(1/(oAApp+oBBpp-oABpp))-oAB*Math.pow(oAApp+oBBpp-oABpp,-2)*dOBBpp_dOABpp[j];
+			dT[j] = (1.0-ppWeight)*dOAB[j]*(1/(oAA+oBB-oAB))-(1.0-ppWeight)*oAB*Math.pow(oAA+oBB-oAB,-2)*dOBB_dOAB[j] + 
+					ppWeight*dOABpp[j]*(1/(oAApp+oBBpp-oABpp))-ppWeight*oAB*Math.pow(oAApp+oBBpp-oABpp,-2)*dOBBpp_dOABpp[j];
 		}
 		for(int k=0;k<grad.length;k++) {
 
@@ -202,12 +204,47 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 
 		
 		}
+		
+		for(VolumeGaussian refVG:refMolGauss.getVolumeGaussians()){
+			double xi = refVG.getCenter().x;
+			double yi = refVG.getCenter().y;
+			double zi = refVG.getCenter().z;
+			for(AtomicGaussian fitAt:molGauss.getAtomicGaussians()){
+				int a = fitAt.getAtomId();
+				double atomOverlap = 0.0;
+				double xj = v[3*a];
+				double yj = v[3*a+1];
+				double zj = v[3*a+2];
+				double dx = xi-xj;
+				double dy = yi-yj;
+				double dz = zi-zj;
+				double Rij2 = dx*dx + dy*dy + dz*dz;
+				double alphaSum = refVG.getWidth() + fitAt.getWidth();
+				double gradientPrefactor=0.0;
+				if(Rij2<Gaussian3D.DIST_CUTOFF) {
+					atomOverlap = refVG.getRole()*refVG.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refVG.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
+							QuickMathCalculator.getInstance().getPrefactor(refVG.getAtomicNo(),fitAt.getAtomicNo());
+					
+					if (Math.abs(atomOverlap)>0.0) {
+						totalOverlap += atomOverlap;
+						gradientPrefactor = atomOverlap*-2*refVG.getWidth()*fitAt.getWidth()/(refVG.getWidth()+fitAt.getWidth());
+					}
+
+				}
+				grad[3*a] += (2*xj-2*xi)*gradientPrefactor;
+				grad[3*a+1] += (2*yj-2*yi)*gradientPrefactor;
+				grad[3*a+2] += (2*zj-2*zi)*gradientPrefactor;
+				}
+
+		
+		}
+
 
 		return totalOverlap; 
 	
 	}
 	
-	public double getFGValueShapePP(double[] grad) {
+	public double getFGValuePP(double[] grad) {
 		
 		MolecularVolume molGauss = shapeAlign.getMolGauss();
 
@@ -239,7 +276,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 				double alphaSum = refPP.getWidth() + fitPP.getWidth();
 				double gradientPrefactor=0.0;
 				if(Rij2<Gaussian3D.DIST_CUTOFF) {
-					atomOverlap = refPP.getHeight()*fitPP.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refPP.getWidth() * fitPP.getWidth()* Rij2)/alphaSum) *
+					atomOverlap = refPP.getWeight()*refPP.getHeight()*fitPP.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refPP.getWidth() * fitPP.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refPP.getAtomicNo(),fitPP.getAtomicNo());
 					
 					if (atomOverlap>0.0) {
@@ -263,8 +300,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 	}
 	
-	public double getFGValueShapeSelf(double[] grad, MolecularVolume molVol,boolean rigid) {
-		double xi,yi,zi,xj,yj,zj;
+	public double getFGValueShapeSelf(double[] grad, MolecularVolume molGauss,boolean rigid) {
 		
 		for(int i=0;i<grad.length;i++) {
 			grad[i] = 0;
@@ -274,64 +310,83 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		 * derivative of ShapeOverlap with respect to Cartesian coordinates
 		 */ 
 	    double totalOverlap = 0.0;
-	    for(AtomicGaussian refAt:molVol.getAtomicGaussians()){
-	    	int a = refAt.getAtomId();
-			if(rigid) {
-				xi = refAt.getCenter().x;
-				yi = refAt.getCenter().y;
-				zi = refAt.getCenter().z;
+	    for(AtomicGaussian refAt:molGauss.getAtomicGaussians()){
+			for(AtomicGaussian  fitAt:molGauss.getAtomicGaussians()){
+				totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
 			}
-			else {
-				xi = v[3*a];
-				yi = v[3*a+1];
-				zi = v[3*a+2];
+			for(VolumeGaussian fitAt:molGauss.getVolumeGaussians()){
+				totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
 			}
-			for(AtomicGaussian fitAt:molVol.getAtomicGaussians()){
-				int b = fitAt.getAtomId();
-				double atomOverlap = 0.0;
-
-				if(rigid) {
-					xj = fitAt.getCenter().x;
-					yj = fitAt.getCenter().y;
-					zj = fitAt.getCenter().z;
-				}
-				else {
-					xj = v[3*b];
-					yj = v[3*b+1];
-					zj = v[3*b+2];
-				}
-				double dx = xi-xj;
-				double dy = yi-yj;
-				double dz = zi-zj;
-				double Rij2 = dx*dx + dy*dy + dz*dz;
-				double alphaSum = refAt.getWidth() + fitAt.getWidth();
-				double gradientPrefactor = 0.0;
-				
-				if(Rij2<Gaussian3D.DIST_CUTOFF) {
-					atomOverlap = refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
-							QuickMathCalculator.getInstance().getPrefactor(refAt.getAtomicNo(),fitAt.getAtomicNo());
-					
-					if (atomOverlap>0.0) {
-						totalOverlap += atomOverlap;
-						gradientPrefactor = atomOverlap*-2*refAt.getWidth()*fitAt.getWidth()/(refAt.getWidth()+fitAt.getWidth());
-					}
-
-				}
-					grad[3*b] += (2*xj-2*xi)*gradientPrefactor;
-					grad[3*b+1] += (2*yj-2*yi)*gradientPrefactor;
-					grad[3*b+2] += (2*zj-2*zi)*gradientPrefactor;
-				}
-
-			
-		}
-
+	    }
+	    for(AtomicGaussian refAt:molGauss.getAtomicGaussians()){
+	    	for(VolumeGaussian fitAt:molGauss.getVolumeGaussians()){
+	    		totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
+	    	}
+	    }
 
 		return totalOverlap; 
 		
 	
 	}
 	
-	public double getFGValueShapeSelfPP(double[] grad, MolecularVolume molVol,boolean rigid) {
+	public double getGradientContribution(Gaussian3D refAt, Gaussian3D fitAt, double[] grad,boolean rigid) {
+		double xi,yi,zi,xj,yj,zj;
+		int b = fitAt.getAtomId();
+		double atomOverlap = 0.0;
+		int a = refAt.getAtomId();
+		if(rigid) {
+			xi = refAt.getCenter().x;
+			yi = refAt.getCenter().y;
+			zi = refAt.getCenter().z;
+		}
+		else {
+			xi = v[3*a];
+			yi = v[3*a+1];
+			zi = v[3*a+2];
+		}
+
+		if(rigid) {
+			xj = fitAt.getCenter().x;
+			yj = fitAt.getCenter().y;
+			zj = fitAt.getCenter().z;
+		}
+		else {
+			xj = v[3*b];
+			yj = v[3*b+1];
+			zj = v[3*b+2];
+		}
+		double dx = xi-xj;
+		double dy = yi-yj;
+		double dz = zi-zj;
+		double Rij2 = dx*dx + dy*dy + dz*dz;
+		double alphaSum = refAt.getWidth() + fitAt.getWidth();
+		double gradientPrefactor = 0.0;
+		double d = 1.0;
+		if(refAt instanceof VolumeGaussian) 
+			d*= ((VolumeGaussian)refAt).getRole();
+		if(fitAt instanceof VolumeGaussian) 
+			d*= ((VolumeGaussian)fitAt).getRole();
+		
+		if(Rij2<Gaussian3D.DIST_CUTOFF) {
+			atomOverlap = d*refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
+					QuickMathCalculator.getInstance().getPrefactor(refAt.getAtomicNo(),fitAt.getAtomicNo());
+			
+			if (atomOverlap>0.0) {
+				gradientPrefactor = atomOverlap*-2*refAt.getWidth()*fitAt.getWidth()/(refAt.getWidth()+fitAt.getWidth());
+			}
+
+		}
+			grad[3*b] += (2*xj-2*xi)*gradientPrefactor;
+			grad[3*b+1] += (2*yj-2*yi)*gradientPrefactor;
+			grad[3*b+2] += (2*zj-2*zi)*gradientPrefactor;
+			
+			return atomOverlap;
+		}
+	
+
+	
+	
+	public double getFGValueSelfPP(double[] grad, MolecularVolume molVol,boolean rigid) {
 		double xi,yi,zi,xj,yj,zj;
 		
 		for(int i=0;i<grad.length;i++) {
@@ -376,7 +431,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 				double gradientPrefactor = 0.0;
 				
 				if(Rij2<Gaussian3D.DIST_CUTOFF) {
-					atomOverlap = refPP.getHeight()*fitPP.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refPP.getWidth() * fitPP.getWidth()* Rij2)/alphaSum) *
+					atomOverlap = refPP.getWeight()*refPP.getHeight()*fitPP.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refPP.getWidth() * fitPP.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refPP.getAtomicNo(),fitPP.getAtomicNo());
 					
 					if (atomOverlap>0.0) {
