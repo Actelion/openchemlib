@@ -126,44 +126,52 @@ public class PheSAAlignmentOptimizer {
 		double bestScorePMI = 0.0; 
 		double[] bestTransformPMI = new double[7];
 		MolecularVolume[] bestPairPMI = new MolecularVolume[2];
-		for(int i=0;i<refShape.getVolumes().size();i++) {
-			MolecularVolume refVol = new MolecularVolume(refShape.getVolumes().get(i));
-			for(int j=0;j<fitShape.getVolumes().size();j++) {
-				MolecularVolume fitVol = new MolecularVolume(fitShape.getVolumes().get(j));
-				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol, ppWeight);
-				double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(1),false);
-				if(r[0]>bestScorePMI) {
-					bestScorePMI = r[0];
-					result[1] = r[1];
-					result[2] = r[2];
-					bestTransformPMI = new double[] {r[3],r[4], r[5], r[6], r[7], r[8], r[9]};
-					bestPairPMI[0] = refVol;
-					bestPairPMI[1] = fitVol;
-				}
-				
-			}
-		}
-		//optimize best PMI alignment
 		double similarity = 0.0;
-		PheSAAlignment shapeAlignment = new PheSAAlignment(bestPairPMI[0],bestPairPMI[1],ppWeight);
-		double[] r = shapeAlignment.findAlignment(new double[][] {bestTransformPMI},true);
-		if(r[0]>bestScoreTriangle) { //alignment found by PMI initial alignment is better
-			similarity = r[0];
-			result[0] = similarity;
-			result[1] = r[1];
-			result[2] = r[2];
-			bestAlignment[0] = refShape.getConformer(bestPairPMI[0]);
-			bestAlignment[1] = fitShape.getConformer(bestPairPMI[1]);
-			PheSAAlignment.rotateMol(bestAlignment[1], bestTransformPMI);
-		}
-		
-		else { 
+		if(bestScoreTriangle>0.0) {
 			similarity = bestScoreTriangle;
 			result[0] = similarity;
 			bestAlignment[0] = bestPairTriangle[0];
 			bestAlignment[1] = bestPairTriangle[1];
 		}
-			
+		else {
+			for(int i=0;i<refShape.getVolumes().size();i++) {
+				MolecularVolume refVol = new MolecularVolume(refShape.getVolumes().get(i));
+				for(int j=0;j<fitShape.getVolumes().size();j++) {
+					MolecularVolume fitVol = new MolecularVolume(fitShape.getVolumes().get(j));
+					PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol, ppWeight);
+					double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(1),false);
+					if(r[0]>bestScorePMI) {
+						bestScorePMI = r[0];
+						result[1] = r[1];
+						result[2] = r[2];
+						bestTransformPMI = new double[] {r[3],r[4], r[5], r[6], r[7], r[8], r[9]};
+						bestPairPMI[0] = refVol;
+						bestPairPMI[1] = fitVol;
+					}
+					
+				}
+			}
+			//optimize best PMI alignment
+			PheSAAlignment shapeAlignment = new PheSAAlignment(bestPairPMI[0],bestPairPMI[1],ppWeight);
+			double[] r = shapeAlignment.findAlignment(new double[][] {bestTransformPMI},true);
+		
+			if(r[0]>bestScoreTriangle) { //alignment found by PMI initial alignment is better
+				similarity = r[0];
+				result[0] = similarity;
+				result[1] = r[1];
+				result[2] = r[2];
+				bestAlignment[0] = refShape.getConformer(bestPairPMI[0]);
+				bestAlignment[1] = fitShape.getConformer(bestPairPMI[1]);
+				PheSAAlignment.rotateMol(bestAlignment[1], bestTransformPMI);
+			}
+		
+			else { 
+				similarity = bestScoreTriangle;
+				result[0] = similarity;
+				bestAlignment[0] = bestPairTriangle[0];
+				bestAlignment[1] = bestPairTriangle[1];
+			}
+		}			
 	return result;
 	}
 	

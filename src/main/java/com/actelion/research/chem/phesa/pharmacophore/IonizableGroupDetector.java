@@ -103,9 +103,7 @@ public class IonizableGroupDetector {
 				}
 				}
 				else if(mol.getAtomicNo(a)==7) {
-					if(mol.isAromaticAtom(a))
-						continue;
-					if(mol.getConnAtoms(a)<=2) { //HNR2 or H2NR
+					if(!mol.isAromaticAtom(a) && mol.getConnAtoms(a)<=2) { //HNR2 or H2NR
 							int nDBs = 0;
 							boolean found=false;
 							for(int i=0;i<mol.getConnAtoms(a) && !found;i++) { //search for amidine

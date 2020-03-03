@@ -406,6 +406,8 @@ public class PheSAAlignment {
 					Vtot += at.getVolumeOverlap(at2);
 				}
 				for(VolumeGaussian vg : molGauss.getVolumeGaussians()) {
+					if(vg.getRole()!=VolumeGaussian.INCLUSION)
+						continue;
 					Vtot += vg.getRole()*at.getVolumeOverlap(vg);
 				}
 			}

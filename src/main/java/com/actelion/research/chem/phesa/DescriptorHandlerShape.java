@@ -37,7 +37,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		
 	private static final long SEED = 123456789;
 	
-	private static final int CONFORMATIONS = 100;
+	private static final int CONFORMATIONS = 50;
 
 
 	private static DescriptorHandlerShape INSTANCE;

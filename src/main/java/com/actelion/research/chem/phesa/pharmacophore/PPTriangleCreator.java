@@ -10,6 +10,7 @@ import com.actelion.research.chem.Coordinates;
 
 public class PPTriangleCreator {
 	
+	private static final double SIDE_LENGTH_CUTOFF = 3.0;
 
 	
 	private PPTriangleCreator() {
@@ -53,7 +54,7 @@ public class PPTriangleCreator {
 					double d12 =  distMat[i][j];
 					double d13 = distMat[i][k];
 					double d23 = distMat[j][k];
-					if(d12<2.0 || d13<2.0 || d23<2.0)
+					if(d12<SIDE_LENGTH_CUTOFF  || d13<SIDE_LENGTH_CUTOFF  || d23<SIDE_LENGTH_CUTOFF )
 						continue; //skip triangles with very short sides
 					triangle = new PPTriangle(pp1,pp2,pp3,d12,d13,d23,com);
 					int key = triangle.getHash();

@@ -137,6 +137,12 @@ public class ChargePoint implements IPharmacophorePoint {
 	@Override
 	public void updateAtomIndeces(int[] map) {
 		chargeAtom = map[chargeAtom];
+
+		for(int i=0;i<neighbours.size();i++) {
+			int neighbour = map[neighbours.get(i)];
+			neighbours.set(i, neighbour);
+		}
+
 		
 	}
 

@@ -12,6 +12,8 @@ public class PharmacophorePointFactory {
 			return DonorPoint.fromString(ppString, mol);
 		else if(type.equals("i"))
 			return ChargePoint.fromString(ppString, mol);
+		else if(type.equals("r"))
+			return AromRingPoint.fromString(ppString, mol);
 		
 		else 
 			return null;

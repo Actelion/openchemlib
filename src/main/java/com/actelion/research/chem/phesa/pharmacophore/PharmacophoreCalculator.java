@@ -1,9 +1,12 @@
 package com.actelion.research.chem.phesa.pharmacophore;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.actelion.research.chem.AtomFunctionAnalyzer;
+import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 
@@ -15,15 +18,24 @@ public class PharmacophoreCalculator {
 	public static final int CHARGE_POS_ID = 3;
 	public static final int AROM_ID = 4;
 	public static final int LIPO_ID = 5;
-	public static final int MAX_ID = 5;
+	public static final int AROM_RING_ID = 6;
+	public static final int MAX_ID = 6;
 	
 	private PharmacophoreCalculator() {}
 	
 	
 	public static List<IPharmacophorePoint> getPharmacophorePoints(StereoMolecule mol) {
 		List<IPharmacophorePoint> ppPoints = new ArrayList<IPharmacophorePoint>();
-		IonizableGroupDetector detector = new IonizableGroupDetector(mol);
-		ppPoints.addAll(detector.detect());
+		RingCollection rc = mol.getRingSet();
+		for(int r=0;r<rc.getSize();r++) {
+			if(!rc.isAromatic(r))
+				continue;
+			int[] ringAtoms = rc.getRingAtoms(r);
+			AromRingPoint arp = new AromRingPoint(mol,ringAtoms[0],Arrays.stream(ringAtoms)
+				      .boxed()
+				      .collect(Collectors.toList()));
+			ppPoints.add(arp);
+		}
 		for(int i=0;i<mol.getAllAtoms();i++) {
 			if (mol.getAtomicNo(i)==1) {
 				if(isDonorHydrogen(mol,i)) {

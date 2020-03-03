@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class PPTriangleMatcher {
 	
-	private static final double CUTOFF = 2.5; //if lengths of edges of two triangles differ by more than 2.5A, it is
+	private static final double CUTOFF = 2.0; //if lengths of edges of two triangles differ by more than 2.5A, it is
 											  // not considered as a match
 	
 	private PPTriangleMatcher() {}
@@ -15,20 +15,21 @@ public class PPTriangleMatcher {
 			Map<Integer,ArrayList<PPTriangle>> triangleSetFit, int refConformerId, int conformerId) {
 		List<AlignmentResult> results = new ArrayList<AlignmentResult>();
 		for(int tHash : triangleSetRef.keySet())  {
+			if(!triangleSetFit.containsKey(tHash))
+				continue;
 			List<PPTriangle> fitTriangles = triangleSetFit.get(tHash);
-			if(fitTriangles!=null) {
-				List<PPTriangle> refTriangles = triangleSetRef.get(tHash);
-				for(PPTriangle refTriangle : refTriangles) {
-					for(PPTriangle fitTriangle : fitTriangles) {
-						if(doEdgeLengthsMatch(refTriangle,fitTriangle)) {
-							double[][] transform = new double[5][3];
-							double score = refTriangle.getMatchingTransform(fitTriangle, transform);
-							results.add(new AlignmentResult(score, transform,refConformerId,conformerId));
-						}
+			List<PPTriangle> refTriangles = triangleSetRef.get(tHash);
+			for(PPTriangle refTriangle : refTriangles) {
+				for(PPTriangle fitTriangle : fitTriangles) {
+					if(doEdgeLengthsMatch(refTriangle,fitTriangle)) {
+						double[][] transform = new double[5][3];
+						double score = refTriangle.getMatchingTransform(fitTriangle, transform);
+						results.add(new AlignmentResult(score, transform,refConformerId,conformerId));
 					}
 				}
 			}
 		}
+	
 		return results;
 		
 	}
