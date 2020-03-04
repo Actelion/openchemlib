@@ -201,7 +201,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	public StereoMolecule[] getPreviousAlignment() {
 		return this.previousAlignment;
 	}
-	
+	// additional output: element 0: total similarity; element 1: pharmacophore similarity
+	// element 2: contribution to similarity that originates from additional volumes (incl/excl)
 	public double[] getPreviousPheSAResult() {
 		return this.previousPhesaResult;
 	}
