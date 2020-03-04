@@ -55,11 +55,11 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	private double[] previousPhesaResult;
 
-	private int maxConfs;
+	protected int maxConfs;
 	
-	private double ppWeight;
+	protected double ppWeight;
 	
-	private boolean flexible;
+	protected boolean flexible;
 	
 	// Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
 	
@@ -319,6 +319,9 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	public DescriptorHandlerShape getThreadSafeCopy() {
 
 		DescriptorHandlerShape dhs = new DescriptorHandlerShape();
+		dhs.ppWeight = ppWeight;
+		dhs.flexible = flexible;
+		dhs.maxConfs = maxConfs;
 
 		return dhs;
 	}

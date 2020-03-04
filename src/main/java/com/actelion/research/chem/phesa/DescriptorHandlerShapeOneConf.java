@@ -38,7 +38,9 @@ public class DescriptorHandlerShapeOneConf extends DescriptorHandlerShape {
 	public DescriptorHandlerShape getThreadSafeCopy() {
 
 		DescriptorHandlerShape dhs = new DescriptorHandlerShapeOneConf();
-
+		dhs.ppWeight = ppWeight;
+		dhs.flexible = flexible;
+		dhs.maxConfs = maxConfs;
 		return dhs;
 	}
 
