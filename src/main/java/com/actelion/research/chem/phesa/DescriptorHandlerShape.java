@@ -10,6 +10,8 @@ import com.actelion.research.chem.conf.ConformerSetGenerator;
 import com.actelion.research.chem.descriptor.DescriptorConstants;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
 import com.actelion.research.chem.descriptor.DescriptorInfo;
+import com.actelion.research.chem.phesaflex.FlexibleShapeAlignment;
+
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 import java.util.ArrayList;
 
@@ -57,6 +59,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	private double ppWeight;
 	
+	private boolean flexible;
+	
 	// Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
 	
 	
@@ -72,11 +76,20 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this(useSingleBaseConformation,CONFORMATIONS,0.5);
 	}
 	
+	public DescriptorHandlerShape(boolean useSingleBaseConformation, double ppWeight) {
+		this(useSingleBaseConformation,CONFORMATIONS,ppWeight);
+	}
+	
 	public DescriptorHandlerShape(int maxConfs,double ppWeight) {
 		this(false,maxConfs,ppWeight);
 	}
 	
+	public DescriptorHandlerShape(double ppWeight) {
+		this(false,CONFORMATIONS,ppWeight);
+	}
+	
 	public DescriptorHandlerShape(boolean useSingleBaseConformation,int maxConfs, double ppWeight) {
+		flexible = false;
 		singleBaseConformation = useSingleBaseConformation;
 		this.maxConfs = maxConfs;
 		this.ppWeight = ppWeight;
@@ -174,6 +187,11 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		double[] result = PheSAAlignmentOptimizer.align(query,base,bestPair,ppWeight);
 		this.setPreviousAlignment(bestPair);
 		this.setPreviousPheSAResult(result);
+		if(flexible) {
+			FlexibleShapeAlignment fsa = new FlexibleShapeAlignment(bestPair[0],bestPair[1]);
+			result = fsa.align();
+			this.setPreviousPheSAResult(result);
+		}
 		
 		return (float)result[0];
 	}
@@ -316,6 +334,10 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	public void setMaxConfs(int maxConfs) {
 		this.maxConfs = maxConfs;
 		init();
+	}
+	
+	public void setFlexible(boolean flexible) {
+		this.flexible = flexible;
 	}
 
 }

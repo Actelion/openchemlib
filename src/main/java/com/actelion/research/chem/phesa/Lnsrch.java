@@ -37,7 +37,7 @@ class Lnsrch{
 		//Compute length of Gradient
 		final double len = grad.length;
 		final double sNorm = OptimizerLBFGS.getNorm(dir);
-				
+
 		//Normalize the search vector and find the projected gradient
 		double slope = 0;
 		for(int i=0; i<len; i++) {
@@ -51,6 +51,7 @@ class Lnsrch{
 		
 		double lambda = 0;
 		double[] initial = function.getState();
+		double initialF = f0;
 		double[] v = new double[initial.length];
 		try {
 			for(int reSearch=0; reSearch<2; reSearch++) {
@@ -127,7 +128,7 @@ class Lnsrch{
 	
 					if(Math.abs(slopeC/slope)<=CAPPA) {
 						//Success
-						return new Object[]{fC, grad, Boolean.TRUE};
+						return new Object[]{fB, grad, Boolean.TRUE};
 					}
 					if(fC<=fA || fC<=fB) {
 						double cubStep = Math.min(Math.abs(cube), Math.abs(step-cube));
@@ -165,7 +166,6 @@ class Lnsrch{
 					sgL = slopeC;
 				}
 
-			
 				//try to restart from best point with smaller stepsize
 				if(fL>f0) {
 					move(function, dir, lambda, initial,v);
@@ -187,6 +187,8 @@ class Lnsrch{
 			//Already restarted, return best current point
 			move(function, dir, lambda, initial,v);
 			f0 = function.getFGValue(grad);
+			if(f0>initialF)
+				move(function, dir, 0, initial,v);
 			return new Object[]{f0, grad, Boolean.FALSE};
 
 		} catch(Exception e) {

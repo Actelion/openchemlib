@@ -73,8 +73,10 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 	@Override
 	public void setState(double[] v){
-		//System.out.println(Arrays.toString(v));
-		this.v=v;
+		assert this.v.length==v.length;
+		for(int i=0;i<v.length;i++) {
+			this.v[i] = v[i];
+		}
 		ff.setState(v);
 		for(int a=0,i=0;i<fitMol.getAllAtoms();i++) {
 			fitMol.setAtomX(i,v[a++]);
@@ -131,8 +133,10 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double[] dOBBpp_dOABpp = new double[grad.length];
 		T = (1.0-ppWeight)*(oAB/(oBB+oAA-oAB))+ppWeight*(oABpp/(oBBpp+oAApp-oABpp));
 		//double value = SCALE*Math.exp(DELTA*(ePot-e0))*T + (ePot-e0);
-		double strainPrefactor = (ePot<e0 || (ePot-e0)<FlexibleShapeAlignment.ENERGY_CUTOFF) ? 0.0 : 1.0;
-		double value = -T + LAMBDA*strainPrefactor*(ePot-e0)*(ePot-e0);
+		double strainEnergy = ePot-e0;
+		double strainPrefactor = strainEnergy < FlexibleShapeAlignment.ENERGY_CUTOFF ? 0.0 : strainEnergy-FlexibleShapeAlignment.ENERGY_CUTOFF;
+		double value = -T + LAMBDA*strainPrefactor*strainPrefactor;
+
 		for(int i=0;i<grad.length;i++) {
 			dOBB_dOAB[i] = dOBB[i]-dOAB[i];
 			dOBBpp_dOABpp[i] = dOBBpp[i]-dOABpp[i];
@@ -144,8 +148,9 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		}
 		for(int k=0;k<grad.length;k++) {
 
-			grad[k] = -dT[k] + strainPrefactor*2*LAMBDA*(ePot-e0)*energyGrad[k];
+			grad[k] = -dT[k] + strainPrefactor*2*LAMBDA*energyGrad[k];
 		}
+
 
 		return value;
 		

@@ -26,6 +26,10 @@ public class DescriptorHandlerShapeOneConf extends DescriptorHandlerShape {
 	}
 	
 
+	public DescriptorHandlerShapeOneConf(double ppWeight) {
+		super(ppWeight);
+	}
+	
 	public DescriptorHandlerShapeOneConf(int maxConfs,double ppWeight) {
 		super(true,maxConfs,ppWeight);
 	}

@@ -1,6 +1,7 @@
 package com.actelion.research.chem.phesa;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -122,7 +123,8 @@ public class PheSAAlignmentOptimizer {
 		double[] result = new double[3]; //overall sim, ppSimilarity and additional volume similarity contribution
 		StereoMolecule[] bestPairTriangle = new StereoMolecule[2];
 		double[] bestTransformTriangle = new double[7];
-		double bestScoreTriangle = getBestTriangleAlignment(refShape,fitShape,bestPairTriangle,bestTransformTriangle,ppWeight);
+		double[] triangleRes = getBestTriangleAlignment(refShape,fitShape,bestPairTriangle,bestTransformTriangle,ppWeight);
+		double bestScoreTriangle = triangleRes[0];
 		double bestScorePMI = 0.0; 
 		double[] bestTransformPMI = new double[7];
 		MolecularVolume[] bestPairPMI = new MolecularVolume[2];
@@ -130,6 +132,8 @@ public class PheSAAlignmentOptimizer {
 		if(bestScoreTriangle>0.0) {
 			similarity = bestScoreTriangle;
 			result[0] = similarity;
+			result[1] = triangleRes[1];
+			result[2] = triangleRes[2];
 			bestAlignment[0] = bestPairTriangle[0];
 			bestAlignment[1] = bestPairTriangle[1];
 		}
@@ -142,8 +146,6 @@ public class PheSAAlignmentOptimizer {
 					double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(1),false);
 					if(r[0]>bestScorePMI) {
 						bestScorePMI = r[0];
-						result[1] = r[1];
-						result[2] = r[2];
 						bestTransformPMI = new double[] {r[3],r[4], r[5], r[6], r[7], r[8], r[9]};
 						bestPairPMI[0] = refVol;
 						bestPairPMI[1] = fitVol;
@@ -166,8 +168,6 @@ public class PheSAAlignmentOptimizer {
 			}
 		
 			else { 
-				similarity = bestScoreTriangle;
-				result[0] = similarity;
 				bestAlignment[0] = bestPairTriangle[0];
 				bestAlignment[1] = bestPairTriangle[1];
 			}
@@ -207,8 +207,9 @@ public class PheSAAlignmentOptimizer {
 		return similarity;
 	}
 	
-	private static double getBestTriangleAlignment(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestPairTriangle, double[] bestTransformTriangle, double ppWeight) {
+	private static double[] getBestTriangleAlignment(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestPairTriangle, double[] bestTransformTriangle, double ppWeight) {
 		List<AlignmentResult> results = new ArrayList<AlignmentResult>();
+		double[] res = new double[3];
 		for(int i=0;i<refShape.getVolumes().size();i++) {
 			MolecularVolume refVol = refShape.getVolumes().get(i);
 			Map<Integer,ArrayList<PPTriangle>> refTriangles = PPTriangleCreator.create(refVol.getPPGaussians(), refVol.getCOM());
@@ -245,6 +246,7 @@ public class PheSAAlignmentOptimizer {
 				double[] r = shapeAlignment.findAlignment(alignments);
 				if(r[0]>bestScoreTriangle) {
 					bestScoreTriangle = r[0];
+					res = new double[] {r[0],r[1],r[2]};
 					bestTransformTriangle[0] = r[3];
 					bestTransformTriangle[1] = r[4];
 					bestTransformTriangle[2] = r[5];
@@ -260,7 +262,7 @@ public class PheSAAlignmentOptimizer {
 		if(bestScoreTriangle>0.0)
 			PheSAAlignment.rotateMol(bestPairTriangle[1], bestTransformTriangle);
 	
-		return bestScoreTriangle;
+		return res;
 	}
 	
 	private static double getTriangleAlignment(PheSAMolecule fitShape,MolecularVolume refVol_, MolecularVolume fitVol_, double[] bestTransformTriangle, StereoMolecule aligned, double ppWeight) {

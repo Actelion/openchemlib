@@ -78,7 +78,10 @@ public class EvaluableOverlap implements Evaluable  {
 	
 	@Override
 	public void setState(double[] transform){
-		this.transform=transform;
+		assert this.transform.length==transform.length;
+		for(int i=0;i<transform.length;i++) {
+			this.transform[i] = transform[i];
+		}
 	}
 	
 	public double[] getState(double[] v){

@@ -62,14 +62,14 @@ public class FlexibleShapeAlignment {
 		ffOptions.put("dielectric constant", 4.0);
 	}
 	
-	public double align() {
-		
+	public double[] align() {
+		double[] result = new double[3];
 		PheSAAlignment shapeAlign = new PheSAAlignment(refVol,fitVol);
 		
 		double e0 = calcMin(fitMol);
 		if(Double.isNaN(e0)) {
 			System.err.print("no force field parameters for this structure");
-			return 0.0;
+			return result;
 		}
 		
 		restrainedRelaxation(fitMol,e0);
@@ -108,7 +108,9 @@ public class FlexibleShapeAlignment {
 			}
 
 		}
-		return getTanimoto(eval,shapeAlign);
+		result = getResult();
+		
+		return result;
 	}
 	
 	private double getTanimoto(EvaluableFlexibleOverlap eval, PheSAAlignment shapeAlign) { 
@@ -129,6 +131,14 @@ public class FlexibleShapeAlignment {
 		double T = (1.0f-(float)ppWeight)*Tshape + (float)ppWeight*Tpp;
 
 		return T;
+	}
+	
+	
+	
+	private double[] getResult() { 
+		PheSAAlignment pa = new PheSAAlignment(fitMol,refMol, ppWeight);
+		double[] r = pa.findAlignment(new double[][] {{1.0,0.0,0.0,0.0,0.0,0.0,0.0}},false);
+		return new double[] {r[0],r[1],r[2]};
 	}
 	
 	public double calcMin(StereoMolecule fitMol) {
@@ -155,6 +165,7 @@ public class FlexibleShapeAlignment {
 			double e = forceField.getTotalEnergy();
 			notRelaxed = e-e0>ENERGY_CUTOFF;
 			init += 0.2;
+
 		}
 		
 	}

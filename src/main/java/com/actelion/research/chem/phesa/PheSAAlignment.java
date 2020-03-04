@@ -606,10 +606,11 @@ public class PheSAAlignment {
 		EvaluableOverlap eval = new EvaluableOverlap(this, new double[7],ppWeight);
 		OptimizerLBFGS opt = new OptimizerLBFGS(200,0.001);
 		double maxSimilarity = 0.0;
-		double volSimilarity = 0.0;
-		double ppSimilarity = 0.0;
-
-		for(double [] transform:transforms) { //iterate over all initial alignments (necessary since optimizer just finds next local minimum, so we need different initial guesses
+		double maxPPSimilarity = 0.0;
+		double maxVolSimilarity = 0.0;
+		for(double [] transform:transforms) { 
+			double ppSimilarity = 0.0;//iterate over all initial alignments (necessary since optimizer just finds next local minimum, so we need different initial guesses
+			double volSimilarity = 0.0;
 			eval.setState(transform);
 			double[] bestTransform;
 			if(optimize)
@@ -635,15 +636,16 @@ public class PheSAAlignment {
 				atomSimilarity = 1.0f;
 			volSimilarity = (additionalVolOverlap/(Oaa+Obb-additionalVolOverlap));
 			similarity = (1.0-ppWeight)*atomSimilarity + ppWeight*ppSimilarity;
-
 			if (similarity>maxSimilarity) {
 				maxSimilarity = similarity;
+				maxVolSimilarity = volSimilarity;
+				maxPPSimilarity = ppSimilarity;
 				alignment = bestTransform;
 			}
 		}
 			if(maxSimilarity>1.0) // can happen because of manually placed inclusion spheres
 				maxSimilarity = 1.0;
-			return DoubleStream.concat(Arrays.stream(new double[] {maxSimilarity,ppSimilarity,volSimilarity}), Arrays.stream(alignment)).toArray();
+			return DoubleStream.concat(Arrays.stream(new double[] {maxSimilarity,maxPPSimilarity,maxVolSimilarity}), Arrays.stream(alignment)).toArray();
 		}
 		
 		
