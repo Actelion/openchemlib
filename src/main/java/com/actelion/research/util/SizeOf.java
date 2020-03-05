@@ -93,7 +93,8 @@ public class SizeOf
     public static long usedMemoryMB () {
         return (long)((RUNTIME.totalMemory () - RUNTIME.freeMemory ())/1000000.0 + 0.5);
     }
-    
+
+
 
 
 } // End of class
