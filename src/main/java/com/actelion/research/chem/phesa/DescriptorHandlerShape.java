@@ -354,4 +354,11 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this.flexible = flexible;
 	}
 
+	public boolean isFlexible() {
+		return flexible;
+	}
+
+	public double getPpWeight() {
+		return ppWeight;
+	}
 }
