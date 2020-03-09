@@ -221,7 +221,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 
 	
 	public final double getAtomBfactor(int atm) {
-		return (double) infos[atm][INFO_BFACTOR];
+		return (Double) infos[atm][INFO_BFACTOR];
 	}
 	
 	public final void setAtomBfactor(int atm, double bfactor) {
@@ -283,7 +283,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	}
 	
 	public final int getInteractionAtomType(int atm) {
-		return (int) infos[atm][INFO_INTERACTION_ATOM_TYPE];
+		return (Integer) infos[atm][INFO_INTERACTION_ATOM_TYPE];
 	}
 
 	@Override
