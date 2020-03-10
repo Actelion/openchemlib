@@ -1,5 +1,6 @@
 package com.actelion.research.chem.interactionstatistics;
 import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
 
@@ -344,7 +345,13 @@ public class InteractionAtomTypeCalculator {
 		
 	}
 
-		
 
+
+	public static void setInteractionTypes(Molecule3D mol) {
+		for (int i = 0; i < mol.getAtoms(); i++) {
+			int atomType = getAtomType(mol, i);
+			mol.setInteractionAtomType(i, atomType);
+		}
+	}
 }
 	
