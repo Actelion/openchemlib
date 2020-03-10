@@ -1,5 +1,6 @@
 package com.actelion.research.chem.interactionstatistics;
 import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
 
@@ -8,7 +9,7 @@ public class InteractionAtomTypeCalculator {
 	
 	
 	
-	private enum FunctionalGroup {NITRO("NO2",1),ESTER("COOR",2),CARBOXYL("COO",3),
+	public enum FunctionalGroup {NITRO("NO2",1),ESTER("COOR",2),CARBOXYL("COO",3),
 			SULFONAMIDE("HNSO2R",4),SULFONATE("SO3",5), PHOSPHONATE("PO3",6),SULFOXIDE("SO",7),
 			SULFONE("SO2",8),AMIDE("HNCO",9),AMIDINE("N=C-N",10),GUANIDINE("N-C(-N)=N",11),N_SP2_TAUT("N=C-N(Ar)",12),
 			SP2_AMINE("C=CNX2",13),ENOL("C=COH",14);
@@ -24,7 +25,15 @@ public class InteractionAtomTypeCalculator {
 			public String getString() {return s;}
 			
 			public int getId() {return id;}
-	
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder("FunctionalGroup{");
+			sb.append("s='").append(s).append('\'');
+			sb.append(", id=").append(id);
+			sb.append('}');
+			return sb.toString();
+		}
 	}
 	
 
@@ -336,7 +345,13 @@ public class InteractionAtomTypeCalculator {
 		
 	}
 
-		
 
+
+	public static void setInteractionTypes(Molecule3D mol) {
+		for (int i = 0; i < mol.getAtoms(); i++) {
+			int atomType = getAtomType(mol, i);
+			mol.setInteractionAtomType(i, atomType);
+		}
+	}
 }
 	

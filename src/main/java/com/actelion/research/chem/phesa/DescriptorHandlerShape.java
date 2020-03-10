@@ -83,7 +83,11 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	public DescriptorHandlerShape(int maxConfs,double ppWeight) {
 		this(false,maxConfs,ppWeight);
 	}
-	
+
+	/**
+	 *
+	 * @param ppWeight similarity weight for the pharmacophore in total similarity.
+	 */
 	public DescriptorHandlerShape(double ppWeight) {
 		this(false,CONFORMATIONS,ppWeight);
 	}
@@ -197,12 +201,18 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	}
 
 
-	
+
 	public StereoMolecule[] getPreviousAlignment() {
 		return this.previousAlignment;
 	}
-	// additional output: element 0: total similarity; element 1: pharmacophore similarity
-	// element 2: contribution to similarity that originates from additional volumes (incl/excl)
+
+	/***
+	 * additional output:
+	 * element 0: total similarity (identical to getSimilarity(...))
+	 * element 1: pharmacophore similarity
+	 * element 2: contribution to similarity that originates from additional volumes (incl/excl)
+	 * @return
+	 */
 	public double[] getPreviousPheSAResult() {
 		return this.previousPhesaResult;
 	}
@@ -344,4 +354,11 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this.flexible = flexible;
 	}
 
+	public boolean isFlexible() {
+		return flexible;
+	}
+
+	public double getPpWeight() {
+		return ppWeight;
+	}
 }

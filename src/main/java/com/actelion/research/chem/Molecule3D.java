@@ -514,6 +514,15 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 
 		return changed;
 	}
+
+
+	public void setCoordinates(int atom, Coordinates c){
+
+		setAtomX(atom, c.x);
+		setAtomY(atom, c.y);
+		setAtomZ(atom, c.z);
+	}
+
 	/*
 	@Override
 	public void ensureHelperArrays(int level) {
