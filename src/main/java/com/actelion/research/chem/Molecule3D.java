@@ -42,9 +42,9 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 
 		auxiliaryInfos.putAll(mol.auxiliaryInfos);
 
-		atomFlags = new int[mol.getAllAtoms()];
-		partialCharges = new double[mol.getAllAtoms()];
-		infos = new Object[mol.getAllAtoms()][MAX_INFOS];
+		atomFlags = new int[mol.getMaxAtoms()];
+		partialCharges = new double[mol.getMaxAtoms()];
+		infos = new Object[mol.getMaxAtoms()][MAX_INFOS];
 
 		for(int atom=0; atom<mol.getAllAtoms(); atom++) {
 			atomFlags[atom] = mol.atomFlags[atom];
@@ -301,11 +301,24 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	public int copyAtom(Molecule destMol, int sourceAtom, int esrGroupOffsetAND, int esrGroupOffsetOR) {
 		int destAtom = super.copyAtom(destMol, sourceAtom, esrGroupOffsetAND, esrGroupOffsetOR);
 		if (destMol instanceof Molecule3D) {
-			((Molecule3D) destMol).atomFlags[destAtom] = atomFlags[sourceAtom];
-			((Molecule3D) destMol).partialCharges[destAtom] = partialCharges[sourceAtom];
-			((Molecule3D) destMol).infos[destAtom] = new Object[MAX_INFOS];//;= infos[sourceAtom];// = new Object[MAX_INFOS];
-			for (int i = 0; i < infos[sourceAtom].length; i++) {
-				((Molecule3D) destMol).infos[destAtom][i] = clone(infos[sourceAtom][i]);
+
+			//
+			// If copy atom is called via the copy constructor the following arrays are not initialized.
+			// They are filled later in the constructor.
+			//
+			if(((Molecule3D) destMol).atomFlags!=null) {
+				((Molecule3D) destMol).atomFlags[destAtom] = atomFlags[sourceAtom];
+			}
+
+			if(((Molecule3D) destMol).partialCharges!=null){
+				((Molecule3D) destMol).partialCharges[destAtom] = partialCharges[sourceAtom];
+			}
+
+			if(((Molecule3D) destMol).infos!=null) {
+				((Molecule3D) destMol).infos[destAtom] = new Object[MAX_INFOS];//;= infos[sourceAtom];// = new Object[MAX_INFOS];
+				for (int i = 0; i < infos[sourceAtom].length; i++) {
+					((Molecule3D) destMol).infos[destAtom][i] = clone(infos[sourceAtom][i]);
+				}
 			}
 		}
 		return destAtom;
@@ -358,6 +371,10 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	 * Add an atom with the given atomicNo
 	 */
 	public int addAtom(int atomicNo) {
+		if(mAllAtoms > mMaxAtoms){
+			setMaxAtoms(mMaxAtoms*2);
+		}
+
 		int atom = super.addAtom(atomicNo);
 
 		atomFlags[atom] = 0;
