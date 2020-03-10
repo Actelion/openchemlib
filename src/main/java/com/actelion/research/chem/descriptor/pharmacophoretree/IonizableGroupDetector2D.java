@@ -1,0 +1,188 @@
+package com.actelion.research.chem.descriptor.pharmacophoretree;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.actelion.research.chem.AtomFunctionAnalyzer;
+import com.actelion.research.chem.RingCollection;
+import com.actelion.research.chem.StereoMolecule;
+
+
+public class IonizableGroupDetector2D {
+	
+	private StereoMolecule mol;
+	private List<ArrayList<Integer>> ionizableGroups;
+	private Set<Integer> positivelyIonizableAtoms;
+	private Set<Integer> negativelyIonizableAtoms;
+	
+	public IonizableGroupDetector2D(StereoMolecule mol) {
+		this.mol = mol;
+		ionizableGroups = new ArrayList<ArrayList<Integer>>();
+		positivelyIonizableAtoms = new HashSet<Integer>();
+		negativelyIonizableAtoms = new HashSet<Integer>();
+	}
+	
+	public void detect() {
+		ArrayList<Integer> ionizableGroup;
+		RingCollection ringCollection = mol.getRingSet();
+		//detect tetrazoles
+		for(int r=0;r<ringCollection.getSize();r++) {
+			ArrayList<Integer> tetrazole = new ArrayList<Integer>();
+			int[] ringAtoms = ringCollection.getRingAtoms(r);
+			for(Integer atom : ringAtoms) {
+				if(alreadyDetected(atom)) continue;
+				if(mol.getAtomicNo(atom)==7 && mol.isAromaticAtom(atom) && mol.getConnAtoms(atom)<=2)
+					tetrazole.add(atom);
+			}
+			if(tetrazole.size()==4) {
+				ionizableGroups.add(tetrazole);
+				negativelyIonizableAtoms.add(tetrazole.get(0));
+			}
+			
+			
+		}
+		for(int a=0;a<mol.getAtoms();a++) {
+			if(alreadyDetected(a)) continue;
+			if(mol.getAtomicNo(a)==8) { //oxygen
+				int aa = mol.getConnAtom(a,0);
+				if(alreadyDetected(aa)) continue;
+				if(AtomFunctionAnalyzer.isAcidicOxygen(mol, a)) { //COOH,SO3H,PO3H2, N(+)-OH
+					if(mol.getAtomicNo(aa)==6) { //COOH
+						ionizableGroup = new ArrayList<Integer>();
+						ionizableGroup.add(a);
+						ionizableGroup.add(aa);
+						int aaa1 = mol.getConnAtom(aa, 0);
+						int aaa2 = mol.getConnAtom(aa, 1);
+						int aaa3 = mol.getConnAtom(aa, 2);
+						int aaa = (aaa1!=a && mol.getAtomicNo(aaa1)==8) ? aaa1 : 
+							(aaa2!=a && mol.getAtomicNo(aaa2)==8) ? aaa2 : 
+								aaa3;
+						if(alreadyDetected(aaa)) continue;
+						ionizableGroup.add(aaa);
+						ionizableGroups.add(ionizableGroup);
+						negativelyIonizableAtoms.add(aa);
+						continue;
+					}
+					else if (mol.getAtomicNo(aa)==15) {//POO3H2
+						ionizableGroup = new ArrayList<Integer>();
+						ionizableGroup.add(a);
+						ionizableGroup.add(aa);
+						for(int i=0;i<mol.getConnAtoms(aa);i++) {
+							int aaa = mol.getConnAtom(aa, i);
+							if(mol.getAtomicNo(aaa) ==8 && aaa!=a) {
+								if(alreadyDetected(aaa)) continue;
+								ionizableGroup.add(aaa);
+							}
+							
+						}
+						ionizableGroups.add(ionizableGroup);
+						negativelyIonizableAtoms.add(aa);
+						continue;					
+					}
+					else if (mol.getAtomicNo(aa)==16) {//SOO3H
+						ionizableGroup = new ArrayList<Integer>();
+						ionizableGroup.add(a);
+						ionizableGroup.add(aa);
+						for(int i=0;i<mol.getConnAtoms(aa);i++) {
+							int aaa = mol.getConnAtom(aa, i);
+							if(mol.getAtomicNo(aaa) ==8 && aaa!=a) {
+								if(alreadyDetected(aaa)) continue;
+								ionizableGroup.add(aaa);
+							}
+							
+						}
+						ionizableGroups.add(ionizableGroup);
+						negativelyIonizableAtoms.add(aa);
+						continue;					
+					}
+				}
+				}
+				else if(mol.getAtomicNo(a)==7) {
+					if(mol.isAromaticAtom(a))
+						continue;
+					if(mol.getConnAtoms(a)<=2) { //HNR2 or H2NR
+							int nDBs = 0;
+							boolean found=false;
+							for(int i=0;i<mol.getConnAtoms(a) && !found;i++) { //search for amidine
+								int aa = mol.getConnAtom(a, i);
+								if(alreadyDetected(aa)) continue;
+								if(mol.getAtomicNo(aa)==6) {
+									if(mol.getBondOrder(mol.getBond(a, aa))==2)nDBs++;
+									for(int j=0;j<mol.getConnAtoms(aa) && !found;j++) {
+										int aaa = mol.getConnAtom(aa, j);
+										if(mol.isAromaticAtom(aaa))
+											continue;
+										if(aaa==a) continue;
+										if(alreadyDetected(aaa)) continue;
+										if(mol.getAtomicNo(aaa)==7 && mol.getConnAtoms(aaa)<=2) {;
+											if(mol.getBondOrder(mol.getBond(aa, aaa))==2)nDBs++;
+											if(nDBs==1) { //Amidine
+												ionizableGroup = new ArrayList<Integer>();
+												ionizableGroup.add(a);
+												ionizableGroup.add(aa);
+												ionizableGroup.add(aaa);
+												ionizableGroups.add(ionizableGroup);
+												positivelyIonizableAtoms.add(aa);
+												found = true;
+											}
+												
+										}
+									
+								}
+							}
+							
+					}
+					
+				}
+					if(alreadyDetected(a))continue;
+					if(AtomFunctionAnalyzer.isBasicNitrogen(mol, a)) {
+						ionizableGroup = new ArrayList<Integer>();
+						ionizableGroup.add(a);
+						ionizableGroups.add(ionizableGroup);
+						positivelyIonizableAtoms.add(a);
+						continue;
+					}
+			}
+			if(alreadyDetected(a))continue;
+			else {
+				int charge = mol.getAtomCharge(a);
+				if(charge!=0 && !hasCounterChargedNeighbour(a)) {
+					if(charge>0)
+						positivelyIonizableAtoms.add(a);
+					else
+						negativelyIonizableAtoms.add(a);
+
+				}
+			}
+		}
+	}
+		
+
+	
+	private boolean hasCounterChargedNeighbour(int a) {
+		for(int aa=0;aa<mol.getConnAtoms(a);aa++) {
+			if(mol.getAtomCharge(a)*mol.getAtomCharge(mol.getConnAtom(a,aa))<0)
+				return true;
+		}
+		return false;
+	}
+	
+	private boolean alreadyDetected(int a) {
+		boolean isDetected = ionizableGroups.stream().flatMap(List::stream).collect(Collectors.toList()).contains(a) ? true : false;
+		return isDetected;
+	}
+	
+	public Set<Integer> getPosIonizableAtoms() {
+		return positivelyIonizableAtoms;
+	}
+	
+	public Set<Integer> getNegIonizableAtoms() {
+		return negativelyIonizableAtoms;
+	}
+
+
+}

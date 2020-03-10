@@ -157,14 +157,17 @@ public class FlexibleShapeAlignment {
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		double init = 0.2;
 		boolean notRelaxed = true;
-		while(notRelaxed) {
+		int maxCycles = 10;
+		int cycles = 0;
+		while(notRelaxed && cycles<maxCycles) {
 			ForceFieldMMFF94 forceField = new ForceFieldMMFF94(fitMol, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 			PositionConstraint constraint = new PositionConstraint(fitMol,50,init);
 			forceField.addEnergyTerm(constraint);
 			forceField.minimise();
 			double e = forceField.getTotalEnergy();
-			notRelaxed = e-e0>ENERGY_CUTOFF;
+			notRelaxed = (e<e0) && (e-e0>ENERGY_CUTOFF);
 			init += 0.2;
+			cycles++;
 
 		}
 		

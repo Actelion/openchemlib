@@ -91,7 +91,7 @@ public class PharmacophoreCalculator {
 		return ppPoints;
 	}
 	
-	private static boolean isAcceptor(StereoMolecule mol, int a) {
+	public static boolean isAcceptor(StereoMolecule mol, int a) {
 		if (mol.getAtomCharge(a)<=0) { //charge is not positive -> no acceptor
 			if (mol.isAromaticAtom(a)) { 
 				if (mol.getAllConnAtoms(a)<3) {
@@ -128,12 +128,21 @@ public class PharmacophoreCalculator {
 		else return false;
 	}
 	
-	private static boolean isDonorHydrogen(StereoMolecule mol, int h) {
+	public static boolean isDonorHydrogen(StereoMolecule mol, int h) {
 		int dh = mol.getConnAtom(h, 0);
 		if (mol.getAtomCharge(dh)>=0 && (mol.getAtomicNo(dh)==7 || mol.getAtomicNo(dh)==8) ) { //charge is not positive -> no acceptor
 			return true;
 		}
 		else return false;
+	}
+	
+	public static boolean isDonorHeavyAtom(StereoMolecule mol, int d) {
+		boolean isDonor = false;
+		if (mol.getAtomCharge(d)>=0 && (mol.getAtomicNo(d)==7 || mol.getAtomicNo(d)==8) ) {
+			if(mol.getAllHydrogens(d)>0)
+			isDonor = true;
+		}
+		return isDonor;
 	}
 	
 

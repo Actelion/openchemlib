@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
@@ -15,6 +16,7 @@ public class ConformerSetGenerator {
 	private int mStrategy;
 	private boolean mUseFF;
 	private ConformerGenerator mConfGen;
+	private static  long DEFAULT_SEED = 12345L;
 	
 	public ConformerSetGenerator(int maxNrConfs, int strategy, boolean useFF, long seed) {
 		mMaxNrConfs = maxNrConfs;
@@ -26,15 +28,16 @@ public class ConformerSetGenerator {
 	/**
 	 * STRATEGY_LIKELY_RANDOM was evaluated to be the best strategy for reproducing bioactive
 	 * conformers (J.W. 05/19)
+	 * 
 	 */
 	
 	public ConformerSetGenerator() {
-		this(200,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,0L);
+		this(200,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,DEFAULT_SEED);
 		
 	}
 	
 	public ConformerSetGenerator(boolean useFF) {
-		this(200,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,0L);
+		this(200,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,DEFAULT_SEED);
 		
 	}
 	
@@ -45,6 +48,8 @@ public class ConformerSetGenerator {
 	
 	public ConformerSet generateConformerSet(StereoMolecule mol) {   
 		StereoMolecule m = new StereoMolecule(mol);
+		m.stripSmallFragments();
+		new Canonizer(m);
 		m.ensureHelperArrays(Molecule.cHelperCIP);
 		if(mUseFF) {
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);

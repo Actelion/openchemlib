@@ -133,7 +133,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	public void init() {
 		transforms = PheSAAlignment.initialTransform(2);
 		previousAlignment = new StereoMolecule[2];
-		conformerGenerator = new ConformerSetGenerator(maxConfs,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,SEED);
+		conformerGenerator = new ConformerSetGenerator();
 		
 	}
 	
