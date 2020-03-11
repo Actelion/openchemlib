@@ -266,9 +266,10 @@ public class InteractionAtomTypeCalculator {
 	/**
 	* get connected atoms of specified element that are bonded to the atom of interest with the specific bond order
 	* -1 for any bond order
-	* @param at
-	* @param neighbourAtomicNo
-	* @param bondOrder
+	* @param mol
+	* @param a
+	* @param aaAtomicNo
+	* @param aaBondOrder
 	* @return
 	*/
 	private static int getNeighbours(StereoMolecule mol,int a, int aaAtomicNo, int aaBondOrder) { 
@@ -345,6 +346,18 @@ public class InteractionAtomTypeCalculator {
 		
 	}
 
+	public static int getAtomicNumber(int atomType){
+		return atomType & AtomPropertyMask.ATOMIC_NO.getMask();
+	}
+
+	public static boolean isCarbonInteraction(int atomType){
+		int atNo = getAtomicNumber(atomType);
+		return (atNo==6)?true:false;
+	}
+
+	public static boolean isAromatic(int atomType){
+		return ((atomType & AtomPropertyMask.AROM.getMask()) > 0) ? true : false;
+	}
 
 
 	public static void setInteractionTypes(Molecule3D mol) {
