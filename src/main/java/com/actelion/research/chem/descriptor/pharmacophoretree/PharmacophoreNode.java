@@ -151,10 +151,16 @@ public class PharmacophoreNode {
 				functionalities2[i]+=node.functionalities[i];
 			}
 		}
-		sterSim = 0.5*calcStericSim(size1,size2)+0.5*calcStericSim(vol1,vol2);
-		chemSim = calcFeatureSim(functionalities1,functionalities2);
+		if(size1/size2 > TreeMatcher.SIZE_RATIO || size1/size2 < (1.0/TreeMatcher.SIZE_RATIO )) {
+			sterSim = 0.0;
+			chemSim = 0.0;
+		}
+		else{
+			sterSim = 0.5*calcStericSim(size1,size2)+0.5*calcStericSim(vol1,vol2);
+			chemSim = calcFeatureSim(functionalities1,functionalities2);
+		}
 		if(nodes1.size() == 1 && nodes2.size()==1) { //matching link Nodes have similarity of 1;
-			if(((PharmacophoreNode)nodes1.toArray()[0]).isLinkNode() == ((PharmacophoreNode)nodes2.toArray()[0]).isLinkNode())
+			if(((PharmacophoreNode)nodes1.toArray()[0]).isLinkNode() && ((PharmacophoreNode)nodes2.toArray()[0]).isLinkNode())
 				sterSim = 1.0;
 				chemSim = 1.0;
 		}

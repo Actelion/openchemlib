@@ -35,13 +35,14 @@ public class TreeMatcher {
 	
 	public static final int EXTENSION_MATCHES = 3; //number of explicitly considered extension matches at every recursion step
 	public static final double ALPHA = 0.8; //weighting of source-tree match vs extension-tree match, takes values from 0 to 1
-	public static final double NULL_MATCH_SCALING = 0.3; 
+	public static final double NULL_MATCH_SCALING = 0.5; 
 	public static final double SIMILARITY_SCALING_SPLIT_SCORE = 0.6;
 	public static final double MATCH_BALANCE = 2.0; //named beta in the original publication
 	public static final double MATCH_SIZE_LIMIT = 3.0;
 	public static final int MATCH_NODE_NR_LIMIT = 2;
 	public static final int EXTENSION_MATCH_NODE_NR_LIMIT = 3;
 	public static final int INITIAL_SPLITS = 5;
+	public static final double SIZE_RATIO = 2.0; //if ratio of sizes (nr of atoms) of two matches differs by more than that, the similarity is zero 
 	private TreeMatching[][] dpMatchMatrix;
 	private PharmacophoreTree queryTree;
 	private PharmacophoreTree baseTree;
@@ -59,11 +60,11 @@ public class TreeMatcher {
 	 * algorithm
 	 * @return
 	 */
-	public double matchSearch() {
+	public TreeMatching matchSearch() {
 		// search for initial splits
 		double bestScore = 0.0;
-		int[][] splits = findInitialSplits();
 		TreeMatching bestMatch = new TreeMatching();
+		int[][] splits = findInitialSplits();
 		for(int[] split : splits) {
 			int index1 = split[0];
 			int cut1 = PharmacophoreTree.CUT_LEFT;
@@ -107,7 +108,7 @@ public class TreeMatcher {
 		}
 		bestMatch.calculate();
 
-		return bestScore;
+		return bestMatch;
 		}
 		
 		public int[][] findInitialSplits() {
@@ -217,7 +218,7 @@ public class TreeMatcher {
 					int[][] bestCuts = new int[cuts1.size()*cuts2.size()][2];
 					double[] bestScores = new double[cuts1.size()*cuts2.size()];
 					TreeUtils.retrieveHighestValuesFrom2DArray(scores, bestScores, bestCuts);
-					double bestScore = 0.0;
+					double bestScore = -Double.MAX_VALUE;
 					TreeMatching bestMatching = null;
 					int counter = 0;
 					for(int[] cut:bestCuts) {
@@ -322,7 +323,7 @@ public class TreeMatcher {
 						
 						extensionMatching.calculate();
 						double extensionScore = extensionMatching.sim;
-						if(extensionScore>bestScore) { 
+						if(extensionScore>=bestScore) { 
 							bestScore = extensionScore;
 							bestMatching = extensionMatching;
 						}
@@ -542,9 +543,10 @@ public class TreeMatcher {
 				}
 				// Formula for similarity taken from Langer and Hoffmann: Pharmacophores and Pharmacophore Searches, p. 86
 				// replacing the formula from the original publication
-				sim = 0.5*sim/
-						((NULL_MATCH_SCALING*Math.max(size1, size2)+(1.0-NULL_MATCH_SCALING)*Math.min(size1, size2)));
-
+				double nom = 0.5*sim;
+				double denom = ((NULL_MATCH_SCALING*Math.max(size1, size2)+(1.0-NULL_MATCH_SCALING)*Math.min(size1, size2)));
+				sim = nom/denom;
+				
 			}
 			
 			public List<FeatureMatch> getMatches() {
