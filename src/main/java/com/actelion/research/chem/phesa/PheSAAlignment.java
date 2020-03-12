@@ -634,7 +634,7 @@ public class PheSAAlignment {
 			double atomSimilarity = atomOverlap/(Oaa+Obb-atomOverlap);
 			if(atomSimilarity>1.0) //can happen because of weights
 				atomSimilarity = 1.0f;
-			volSimilarity = (additionalVolOverlap/(Oaa+Obb-additionalVolOverlap));
+			volSimilarity = (additionalVolOverlap/atomOverlap);
 			similarity = (1.0-ppWeight)*atomSimilarity + ppWeight*ppSimilarity;
 			if (similarity>maxSimilarity) {
 				maxSimilarity = similarity;

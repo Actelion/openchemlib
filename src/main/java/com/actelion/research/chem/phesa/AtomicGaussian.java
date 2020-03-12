@@ -27,7 +27,7 @@ public class AtomicGaussian extends Gaussian3D {
 	}
 	
 	public AtomicGaussian(AtomicGaussian original){
-		super(original.atomId,original.atomicNo,original.center, original.weight);
+		super(original);
 
 	}
 	
