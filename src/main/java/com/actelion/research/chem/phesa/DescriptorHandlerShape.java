@@ -187,7 +187,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	 */
 	
 	public float getSimilarity(PheSAMolecule query, PheSAMolecule base) {
-		StereoMolecule[] bestPair = {query.getMolecule(),base.getMolecule()};
+ 		StereoMolecule[] bestPair = {query.getMolecule(),base.getMolecule()};
 		double[] result = PheSAAlignmentOptimizer.align(query,base,bestPair,ppWeight);
 		this.setPreviousAlignment(bestPair);
 		this.setPreviousPheSAResult(result);
