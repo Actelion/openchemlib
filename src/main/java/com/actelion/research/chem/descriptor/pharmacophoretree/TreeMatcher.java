@@ -46,12 +46,15 @@ public class TreeMatcher {
 	private TreeMatching[][] dpMatchMatrix;
 	private PharmacophoreTree queryTree;
 	private PharmacophoreTree baseTree;
-	
+	private List<PharmacophoreNode> queryNodes;
+	private List<PharmacophoreNode> baseNodes;
 
 	public TreeMatcher(PharmacophoreTree queryTree, PharmacophoreTree baseTree) {
 		
 		this.queryTree = queryTree;
 		this.baseTree = baseTree;
+		queryNodes = queryTree.getNodes();
+		baseNodes = baseTree.getNodes();
 		dpMatchMatrix = new TreeMatching[2*queryTree.getEdges().size()][2*baseTree.getEdges().size()];
 		
 	}
@@ -407,7 +410,7 @@ public class TreeMatcher {
 				match[0] = new int[0];
 				match[1] = nodes2.stream().mapToInt(x -> x).toArray();
 				m = new FeatureMatch(match);
-				m.calculate(queryTree, baseTree);
+				m.calculate(queryNodes,baseNodes);
 			}
 			else if(headNode2==-1) {
 				Collection<Integer> nodes1 = queryTree.getNodesFromEdges(subTreeEdgeIndeces1);
@@ -415,7 +418,7 @@ public class TreeMatcher {
 				match[1] = new int[0];
 				match[0] = nodes1.stream().mapToInt(x -> x).toArray();
 				m = new FeatureMatch(match);
-				m.calculate(queryTree,baseTree);
+				m.calculate(queryNodes,baseNodes);
 			}
 			else {	
 				Collection<Integer> nodes1 = queryTree.getNodesFromEdges(subTreeEdgeIndeces1);
@@ -425,7 +428,7 @@ public class TreeMatcher {
 				match[0] = nodes1.stream().mapToInt(x -> x).toArray();
 				match[1] = nodes2.stream().mapToInt(x -> x).toArray();
 				m = new FeatureMatch(match);
-				m.calculate(queryTree,baseTree);
+				m.calculate(queryNodes,baseNodes);
 			}
 
 			
@@ -440,7 +443,7 @@ public class TreeMatcher {
 			match[0] = nodes1.stream().mapToInt(x -> x).toArray();
 			match[1] = nodes2.stream().mapToInt(x -> x).toArray();
 			m = new FeatureMatch(match);
-			m.calculate(queryTree, baseTree);
+			m.calculate(queryNodes,baseNodes);
 				
 			return m;
 				
@@ -450,8 +453,8 @@ public class TreeMatcher {
 		
 		private double scoreExtensionMatch(PharmacophoreTree pTree1, PharmacophoreTree pTree2, Set<Integer> extensionNodes1, 
 				Set<Integer> extensionNodes2, Set<Integer> sourceNodes1, Set<Integer> sourceNodes2) {
-			double extensionScore = PharmacophoreNode.getSimilarity(pTree1.getNodes(extensionNodes1), pTree2.getNodes(extensionNodes2));
-			double sourceScore = PharmacophoreNode.getSimilarity(pTree1.getNodes(sourceNodes1),pTree2.getNodes(sourceNodes2));
+			double extensionScore = PharmacophoreNode.getSimilarity(extensionNodes1, extensionNodes2, queryNodes, baseNodes);
+			double sourceScore = PharmacophoreNode.getSimilarity(sourceNodes1, sourceNodes2, queryNodes, baseNodes);
 
 			return ALPHA*extensionScore+(1-ALPHA)*sourceScore;
 		}
@@ -574,7 +577,7 @@ public class TreeMatcher {
 			}
 		
 
-			public void calculate(PharmacophoreTree pTree1, PharmacophoreTree pTree2) {
+			public void calculate(List<PharmacophoreNode> treeNodes1, List<PharmacophoreNode> treeNodes2) {
 				sim = 0.0;
 				sizes[0] = 0.0;
 				sizes[1] = 0.0;
@@ -582,21 +585,33 @@ public class TreeMatcher {
 	
 				List<PharmacophoreNode> nodes1 = new ArrayList<PharmacophoreNode>();
 				List<PharmacophoreNode> nodes2 = new ArrayList<PharmacophoreNode>();
-				if(match[0].length!=0)
-					nodes1 = Arrays.stream(match[0]).mapToObj(i -> pTree1.getNodes().get(i)).collect(Collectors.toList());
-				if(match[1].length!=0)
-					nodes2 = Arrays.stream(match[1]).mapToObj(i -> pTree2.getNodes().get(i)).collect(Collectors.toList());
+				if(match[0].length!=0) {
+					for(Integer node: match[0]) {
+						nodes1.add(treeNodes1.get(node));
+					}
+				}
+				if(match[1].length!=0) {
+					for(Integer node: match[1]) {
+						nodes2.add(treeNodes2.get(node));
+					}
+				}
 				if(nodes1.size()==0 || nodes2.size()==0 ) 
 					sim = 0.0;
 				
 				else 
 					sim = PharmacophoreNode.getSimilarity(nodes1, nodes2);
-				if(nodes1.size()>0)
-					sizes[0] = nodes1.stream().map(e -> e.getSize()).reduce(Double::sum).get();
-				if(nodes2.size()>0)
-					sizes[1] = nodes2.stream().map(e -> e.getSize()).reduce(Double::sum).get();
+				if(nodes1.size()>0) {
+					for(PharmacophoreNode pn : nodes1) {
+						sizes[0]+=pn.getSize();
+					}
+				}
+				
+				if(nodes2.size()>0) {
+					for(PharmacophoreNode pn : nodes2) {
+						sizes[1]+=pn.getSize();
+					}
+				}
 				size = sizes[0]+sizes[1];
-	
 			}
 			
 			public double[] getSizes() {

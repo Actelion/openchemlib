@@ -275,6 +275,8 @@ public class PharmacophoreTree {
 		return nodes;
 	}
 	
+	
+	
 	/**
 	 * get an array representing the next extension-cut from a previous one
 	 * adapt from: 
@@ -330,7 +332,11 @@ public class PharmacophoreTree {
 	}
 	
 	public List<PharmacophoreNode> getNodes(Collection<Integer> indeces) {
-		return indeces.stream().map(e -> nodes.get(e)).collect(Collectors.toList());
+		List<PharmacophoreNode> nodeList = new ArrayList<PharmacophoreNode>();
+		for(int i : indeces) {
+			 nodeList.add(nodes.get(i));
+		}
+		return nodeList;
 	}
 	
 	public List<PharmacophoreNode> getNodes() {

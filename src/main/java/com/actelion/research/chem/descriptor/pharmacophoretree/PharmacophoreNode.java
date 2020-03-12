@@ -126,6 +126,58 @@ public class PharmacophoreNode {
 		return sim;	
 	}
 	
+	
+	public static double getSimilarity(Collection<Integer> nodes1,Collection<Integer> nodes2, List<PharmacophoreNode> allNodes1,
+			List<PharmacophoreNode> allNodes2) {
+		double size1 = 0.0;
+		double vol1 = 0.0;
+		double sterSim = 0.0;
+		double chemSim = 0.0;
+		int[] functionalities1 = new int[FUNCTIONALITY_WEIGHTS.length];
+
+		for(int n : nodes1) {
+			PharmacophoreNode node = allNodes1.get(n);
+			size1+=node.size;
+			vol1+=node.vol;
+			for(int i=0;i<functionalities1.length;i++) {
+				functionalities1[i]+=node.functionalities[i];
+			}
+				
+		}
+		double size2 = 0.0;
+		double vol2 = 0.0;
+		int[] functionalities2 = new int[FUNCTIONALITY_WEIGHTS.length];
+		for(int n : nodes2) {
+			PharmacophoreNode node = allNodes2.get(n);
+			size2+=node.size;
+			vol2+=node.vol;
+			for(int i=0;i<functionalities2.length;i++) {
+				functionalities2[i]+=node.functionalities[i];
+			}
+		}
+		if(size1/size2 > TreeMatcher.SIZE_RATIO || size1/size2 < (1.0/TreeMatcher.SIZE_RATIO )) {
+			sterSim = 0.0;
+			chemSim = 0.0;
+		}
+		else{
+			sterSim = 0.5*calcStericSim(size1,size2)+0.5*calcStericSim(vol1,vol2);
+			chemSim = calcFeatureSim(functionalities1,functionalities2);
+		}
+		if(nodes1.size() == 1 && nodes2.size()==1) { //matching link Nodes have similarity of 1;
+			PharmacophoreNode n1 = allNodes1.get((Integer)nodes1.toArray()[0]);
+			PharmacophoreNode n2 = allNodes2.get((Integer)nodes2.toArray()[0]);
+			if(n1.isLinkNode() && n2.isLinkNode())
+				sterSim = 1.0;
+				chemSim = 1.0;
+		}
+	
+		return (1.0-CHEM_SIM_WEIGHT)*sterSim+CHEM_SIM_WEIGHT*chemSim;	
+		
+	}
+	
+	
+	
+	
 	public static double getSimilarity(Collection<PharmacophoreNode> nodes1,Collection<PharmacophoreNode> nodes2) {
 		double size1 = 0.0;
 		double vol1 = 0.0;
