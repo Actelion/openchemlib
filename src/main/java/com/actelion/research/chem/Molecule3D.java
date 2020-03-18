@@ -56,9 +56,9 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	
 	public Molecule3D(StereoMolecule mol) {
 		super(mol);
-		atomFlags = new int[mol.getAllAtoms()];
-		partialCharges = new double[mol.getAllAtoms()];
-		infos = new Object[mol.getAllAtoms()][MAX_INFOS];
+		atomFlags = new int[mol.getMaxAtoms()];
+		partialCharges = new double[mol.getMaxAtoms()];
+		infos = new Object[mol.getMaxAtoms()][MAX_INFOS];
 	}
 
 	public Molecule3D() {
