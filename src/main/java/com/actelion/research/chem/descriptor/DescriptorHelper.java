@@ -91,6 +91,10 @@ public class DescriptorHelper implements DescriptorConstants {
 		return TAG_SIMILARITY + dh.getInfo().shortName;
 		}
 
+	public static String getTagDescriptorSimilarity(String shortName) {
+		return TAG_SIMILARITY + shortName;
+		}
+
 	public static String getTagDescriptorSimilarity(SimilarityCalculatorInfo info) {
 		return TAG_SIMILARITY + info.shortName;
 		}
