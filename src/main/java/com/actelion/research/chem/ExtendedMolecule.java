@@ -2359,12 +2359,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 					if (isAromaticAtom(connAtom)) {
 						if (getAtomRingSize(connAtom) >= 5) {
 							int orthoSubstituentCount = 0;
-							for (int j = 0; j< mConnAtoms[connAtom]; j++) {
+							for (int j=0; j<mConnAtoms[connAtom]; j++) {
+								// to be more exact, one might not count ortho-oxygen in case of 5-membered rings
 								int ortho = mConnAtom[connAtom][j];
 								if (ortho != atom && mConnAtoms[ortho] >= 3)
 									orthoSubstituentCount++;
 								}
-							if (orthoSubstituentCount == 2
+							if ((orthoSubstituentCount == 2 && mConnAtoms[atom] >= 2)
 							 || (orthoSubstituentCount == 1 && mConnAtoms[atom] == 3))
 								continue;  // the nitrogen is rotated out of PI-plane
 							}
