@@ -171,8 +171,12 @@ public class BondRotationHelper {
 	public boolean isRotatableBond(int bond) {
 		return mIsRotatableBond[bond];
 	}
-	
-	public void rotateSmallerSide(int bond,double alpha) {
+
+	public int[] getRotatableBonds() {
+		return mRotatableBonds;
+	}
+
+	public void rotateSmallerSide(int bond, double alpha) {
 		if(!isRotatableBond(bond))
 			return;
 		int bondIndex=-1;
