@@ -239,6 +239,19 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 
 	////////////////////////////// UTILITIES ////////////////////////////////////////
 
+
+	public final Coordinates[] getCoordinates() {
+
+		Coordinates [] coords = new Coordinates[getAtoms()];
+
+		for (int i = 0; i < getAtoms(); i++) {
+			coords[i]=getCoordinates(i);
+		}
+
+		return coords;
+	}
+
+
 	public final void deleteAtoms(List<Integer> atomsToBeDeleted) {
 		Collections.sort(atomsToBeDeleted);
 		for (int i = atomsToBeDeleted.size()-1; i>=0; i--) {
