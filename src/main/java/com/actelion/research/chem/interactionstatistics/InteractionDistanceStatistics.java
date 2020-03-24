@@ -1,5 +1,6 @@
 package com.actelion.research.chem.interactionstatistics;
 
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -16,12 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 public class InteractionDistanceStatistics {
 	
@@ -51,7 +46,22 @@ public class InteractionDistanceStatistics {
 	public int getInteractionClasses() {
 		return pairPotentials.keySet().size();
 	}
-	
+
+	public Map<Long, DistanceDependentPairPotential> getPairPotentials() {
+		return pairPotentials;
+	}
+
+	public List<Integer> getAtomTypes(){
+		HashSet<Integer> hs = new HashSet<>();
+
+		for (long pair : pairPotentials.keySet()) {
+			int [] a = splitLongToInts(pair);
+			hs.add(a[0]);
+			hs.add(a[1]);
+		}
+		return new ArrayList<>(hs);
+	}
+
 	public Set<Integer> getAtomKeySet() {
 		Set<Integer> atomKeySet = new HashSet<Integer>();
 		for(long l : pairPotentials.keySet()) {
@@ -63,7 +73,8 @@ public class InteractionDistanceStatistics {
 		}
 		return atomKeySet;
 	}
-	
+
+
 	
 	private synchronized void calculatePotentials() {
 		splineCalculation();

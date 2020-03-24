@@ -186,21 +186,11 @@ public class InteractionSimilarityTable {
 	
 	/**
 	 * D(LigandType_1, LigandType_2) = Sum( d( F(ProteinType_i, LigandType_1), F(ProteinType_i, LigandType_2)), i) 
-	 * @param l1
-	 * @param l2
+	 * @param type1
+	 * @param type2
 	 * @return
 	 */
-	
-
-	
-	/*
-	 * 
-	 */
-	
 	public double getDissimilarity(int type1, int type2) {
-		
-		
-//		return getDistance(type1, type2);
 		int a = keyToId.get(InteractionDistanceStatistics.getInstance().getKey(type1));
 		int b = keyToId.get(InteractionDistanceStatistics.getInstance().getKey(type2));
 
@@ -213,8 +203,8 @@ public class InteractionSimilarityTable {
 	}
 	/**
 	 * Compare similarity values of 2 types (across all lines)
-	 * @param type1
-	 * @param maxAvg
+	 * @param type
+	 * @param maxDist
 	 * @return
 	 */
 	public List<Integer> getEquivalentTypes(int type, double maxDist) {
