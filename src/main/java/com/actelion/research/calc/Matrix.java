@@ -3359,18 +3359,28 @@ public class Matrix {
 
         return sb.toString();
     }
+    public String toString(int digits) {
+        return toString(rows(), cols(), digits);
+    }
 
-    public String toString(int iDigits) {
+    /**
+     *
+     * @param rowEnd exclusive
+     * @param colEnd exclusive
+     * @param digits
+     * @return
+     */
+    public String toString(int rowEnd, int colEnd, int digits) {
         int iRequireDigits = 20;
 
         String sFormat = "";
 
         sFormat += "0";
         int iCounter = 0;
-        if(iDigits > 0)
+        if(digits > 0)
             sFormat += ".";
 
-        while(iCounter < iDigits) {
+        while(iCounter < digits) {
           sFormat += "0";
           iCounter++;
         }
@@ -3381,8 +3391,8 @@ public class Matrix {
         StringBuilder sb = new StringBuilder(len);
 
         
-        for (int i = 0; i < data.length; i++) {
-            for (int j = 0; j < data[0].length; j++) {
+        for (int i = 0; i < rowEnd; i++) {
+            for (int j = 0; j < colEnd; j++) {
             	
             	String sVal = nf.format(data[i][j]);
             	if(data[i][j]==Double.MAX_VALUE)
