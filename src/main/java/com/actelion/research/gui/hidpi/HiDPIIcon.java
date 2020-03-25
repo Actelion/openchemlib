@@ -1,6 +1,7 @@
 package com.actelion.research.gui.hidpi;
 
 import com.actelion.research.gui.LookAndFeelHelper;
+import com.actelion.research.util.Platform;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +16,7 @@ public class HiDPIIcon extends ImageIcon {
 		}
 
 	public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-		if (HiDPIHelper.getRetinaScaleFactor() != 1) {
+		if (HiDPIHelper.getRetinaScaleFactor() != 1f) {
 			Image image = getImage();
 			int width = Math.round(image.getWidth(null) / HiDPIHelper.getRetinaScaleFactor());
 			int height = Math.round(image.getHeight(null) / HiDPIHelper.getRetinaScaleFactor());
@@ -24,21 +25,25 @@ public class HiDPIIcon extends ImageIcon {
 
 			// because of double size image, x and y are too small and need to be corrected
 			// (in case of aqua x & y are 1 - size/2, in case of new substance and Windows x & y are 0)
-			x += Math.round(width / HiDPIHelper.getRetinaScaleFactor());
-			y += Math.round(height / HiDPIHelper.getRetinaScaleFactor());
-
-			if (LookAndFeelHelper.isNewSubstance()) {
-				// for some reason y needs to be adjusted by 1
-				y++;
+			if (Platform.isMacintosh()) {
+				x += Math.round(width / HiDPIHelper.getRetinaScaleFactor());
+				y += Math.round(height / HiDPIHelper.getRetinaScaleFactor());
 				}
+			else {
+				x += (image.getWidth(null) - width) / 2;
+				y += (image.getHeight(null) - height) / 2;
+				}
+
+			// for some reason y needs to be adjusted by 1 in new substance
+			if (LookAndFeelHelper.isNewSubstance())
+				y++;
 
 			g.drawImage(image, x, y, width, height, null);
 			}
 		else {
-			if (LookAndFeelHelper.isNewSubstance()) {
-				// for some reason y needs to be adjusted by 1
+			// for some reason y needs to be adjusted by 1 in new substance
+			if (LookAndFeelHelper.isNewSubstance())
 				y++;
-				}
 
 			Image image = getImage();
 			g.drawImage(image, x, y, null);
