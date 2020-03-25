@@ -59,11 +59,12 @@ public class PharmacophoreNode {
 	}
 	
 	public PharmacophoreNode(List<Integer> atoms, int[] functionalities, List<Double> volumes,
-			List<Double> weights) {
+			List<Double> weights, int role) {
 		this.atoms = atoms;
 		this.functionalities = functionalities;
 		this.volumes = volumes;
 		this.weights = weights;
+		this.role = role;
 		calculate();
 		
 	}
@@ -250,6 +251,7 @@ public class PharmacophoreNode {
 				mapToDouble(i -> i.doubleValue()).toArray()));
 		String s4 =  Base64.getEncoder().encodeToString(EncodeFunctions.doubleArrayToByteArray(node.weights.stream().
 				mapToDouble(i -> i.doubleValue()).toArray()));
+		String s5 = Integer.toString(node.role);
 		StringBuilder sb = new StringBuilder();
 		sb.append(s1);
 		sb.append(","); //comma is not part of base64 encoding chars
@@ -258,6 +260,8 @@ public class PharmacophoreNode {
 		sb.append(s3);
 		sb.append(",");
 		sb.append(s4);
+		sb.append(",");
+		sb.append(s5);
 		sb.append(",");
 		return sb.toString();
 	}
@@ -271,8 +275,8 @@ public class PharmacophoreNode {
 				.boxed().collect(Collectors.toList());
 		List<Double> weights = Arrays.stream(EncodeFunctions.byteArrayToDoubleArray(Base64.getDecoder().decode(strings[3])))
 				.boxed().collect(Collectors.toList());
-		
-		return new PharmacophoreNode(atoms,functionalities,volumes,weights);
+		int role = Integer.parseInt(strings[4]);
+		return new PharmacophoreNode(atoms,functionalities,volumes,weights,role);
 	}
 	
 	
