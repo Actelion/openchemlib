@@ -3371,6 +3371,7 @@ public class Matrix {
      * @return
      */
     public String toString(int rowEnd, int colEnd, int digits) {
+
         int iRequireDigits = 20;
 
         String sFormat = "";
