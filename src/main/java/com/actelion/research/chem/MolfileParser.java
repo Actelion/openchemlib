@@ -82,8 +82,11 @@ public class MolfileParser
 	}
 
 
-	private boolean readMoleculeFromBuffer(BufferedReader reader)
-	{
+	private boolean readMoleculeFromBuffer(BufferedReader reader) {
+		int[] valence = null;   // Some toolkit (RDKit) set vvv (valence) for charge atoms with normal valence
+								// Thus, we must check, whether we just have a charged normal valence atom
+								// before setting an abnormal valence for the atom.
+
 		try{
 			String line;
 			int natoms,nbonds,nlists,chiral,version;
@@ -216,17 +219,12 @@ public class MolfileParser
 					mMol.setAtomQueryFeature(atom,Molecule.cAtomQFMatchStereo,true);
 				}
 
-                int valence = (line.length() < 51) ? 0 : parseIntOrSpaces(line.substring(48,51).trim());
-                switch (valence) {
-                case 0:
-                    break;
-                case 15:
-                    mMol.setAtomAbnormalValence(atom, 0);
-                    break;
-                default:
-                    mMol.setAtomAbnormalValence(atom, valence);
-                    break;
-                }
+                int v = (line.length() < 51) ? 0 : parseIntOrSpaces(line.substring(48,51).trim());
+				if (v != 0) {
+					if (valence == null)
+						valence = new int[natoms];
+					valence[atom] = v;
+				}
 			}
 
 			// Loop all the bonds , read the bond record and generate
@@ -267,12 +265,14 @@ public class MolfileParser
 			if(null == (line = reader.readLine())){
 				TRACE("Error ReadMoleculeFromBuffer Missing M END or $$$$\n");
 
-				if(chiral == 0){
-					// to run the racemization scheduled with mMol.setToRacemate()
-					if ((mMode & MODE_KEEP_HYDROGEN_MAP) != 0)
-						mHydrogenMap = mMol.getHandleHydrogenMap();
+				if ((mMode & MODE_KEEP_HYDROGEN_MAP) != 0)
+					mHydrogenMap = mMol.getHandleHydrogenMap();
+
+				handleValences(valence);
+
+				// to run the racemization scheduled with mMol.setToRacemate()
+				if(chiral == 0)
 					mMol.ensureHelperArrays(Molecule.cHelperParities);
-				}
 
 				return true;
 			}
@@ -438,9 +438,31 @@ public class MolfileParser
 		// centers which will be assigned to one ESR-AND group
 		if ((mMode & MODE_KEEP_HYDROGEN_MAP) != 0)
 			mHydrogenMap = mMol.getHandleHydrogenMap();
+
+		handleValences(valence);
+
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
 
 		return true;
+	}
+
+	private void handleValences(int[] valence) {
+		if (valence != null) {
+			mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+				if (valence[atom] != 0) {
+					int chargeCorrection = mMol.getElectronValenceCorrection(atom, mMol.getOccupiedValence(atom));
+					if (valence[atom] == 15 ) {
+						if (chargeCorrection >= 0)
+							mMol.setAtomAbnormalValence(atom, 0);
+					}
+					else {
+						if (valence[atom] != mMol.getMaxValence(atom))
+							mMol.setAtomAbnormalValence(atom, valence[atom] - chargeCorrection);
+					}
+				}
+			}
+		}
 	}
 
 	private boolean readMoleculeV3FromBuffer(BufferedReader reader) throws IOException
