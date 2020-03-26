@@ -18,21 +18,17 @@
 
 package com.actelion.research.gui;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.ArrayList;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
-
-import com.actelion.research.chem.*;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.MCSReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.gui.clipboard.ClipboardHandler;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
 
 public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
     static final long serialVersionUID = 0x20061019;
@@ -106,7 +102,6 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
 		}
 
 	private void initialize(Component owner, int mode) {
-//		addWindowListener(this);
         addKeyListener(this);
 
 		mArea = new JDrawArea(mMolecule, mode);
@@ -139,6 +134,8 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
         mArea.setReactionMapper(new MCSReactionMapper());
 		pack();
 		setLocationRelativeTo(owner);
+
+		mIsCancelled = true;
 		}
 
 	public void addStructureListener(StructureListener listener) {
@@ -186,11 +183,11 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
             return;
             }
 
-        if (e.getActionCommand().equals("OK"))
-	        for (StructureListener sl:mListener)
-	            sl.structureChanged(mMolecule);
-        else
-            mIsCancelled = true;
+        if (e.getActionCommand().equals("OK")) {
+	        for (StructureListener sl : mListener)
+		        sl.structureChanged(mMolecule);
+	        mIsCancelled = false;
+            }
 
 	    dispose();
 	    }
