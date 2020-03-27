@@ -116,7 +116,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		TorsionRule.calculateRules(mRuleList, mol);
 		mRuleCount[ConformationRule.RULE_TYPE_TORSION] += mRuleList.size();
 
-//		listRules();
+		listRules();
 		}
 
 	public ArrayList<ConformationRule> getRuleList() {
@@ -130,7 +130,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		return mMol;
 		}
 
-/*	private void listRules() {
+	private void listRules() {
 		System.out.println("---------------------------------------------------------------------");
 		for (int i=0; i<mMol.getAllAtoms(); i++) {
 			System.out.print(""+i+" "+Molecule.cAtomLabel[mMol.getAtomicNo(i)]);
@@ -174,7 +174,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		for (ConformationRule rule:mRuleList)
 			System.out.println(rule.toString());
 		}
-*/
+
 	/**
 	 * This convenience method returns the StereoMolecule that has been passed
 	 * to the constructor after modifying its atom coordinates

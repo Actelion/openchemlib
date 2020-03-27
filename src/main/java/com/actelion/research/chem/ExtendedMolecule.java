@@ -2374,8 +2374,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 					// vinyloge amides, etc.
 					for (int j = 0; j< mConnAtoms[connAtom]; j++) {
-						if ((mConnBondOrder[connAtom][j] == 2 || isAromaticBond(mConnBond[connAtom][j]))
-						 && isStabilizedAtom(mConnAtom[connAtom][j]))
+						if ((mConnBondOrder[connAtom][j] == 2 || isAromaticBond(mConnBond[connAtom][j])))
 							return true;
 						}
 					}

@@ -105,56 +105,63 @@ System.out.println();
 				for (int i=0; i<2; i++) {
 					int heteroAtom = mol.getBondAtom(i, bond);
 					int atomicNo = mol.getAtomicNo(heteroAtom);
-					if (atomicNo > 6
-					 && mol.getConnAtoms(heteroAtom) == 1) {
-						int hCount = mol.getAllConnAtoms(heteroAtom) - 1;
-						if (hCount != 0) {	// hetero atom with hydrogen(s) and one non-H neighbor
-							int piAtom = mol.getBondAtom(1-i, bond);
-							if (mol.getAtomPi(piAtom) == 1) {
-								int piNeighbour = -1;
-								for (int j=0; j<mol.getConnAtoms(piAtom); j++)
-									if (mol.getConnBondOrder(piAtom, j) == 2)
-										piNeighbour = mol.getConnAtom(piAtom, j);
+					if (atomicNo > 6) {
+						int nonHNeighbours = mol.getNonHydrogenNeighbourCount(heteroAtom);
+						if (nonHNeighbours == 1) {
+							int hCount = mol.getAllConnAtoms(heteroAtom) - nonHNeighbours;
+							if (hCount != 0) {	// hetero atom with hydrogen(s) and one non-H neighbor
+								int piAtom = mol.getBondAtom(1-i, bond);
+								if (mol.getAtomPi(piAtom) == 1) {
+									int piNeighbour = -1;
+									for (int j=0; j<mol.getConnAtoms(piAtom); j++)
+										if (mol.getConnBondOrder(piAtom, j) == 2)
+											piNeighbour = mol.getConnAtom(piAtom, j);
 
-								int[] torsionAtom = new int[4];
-								torsionAtom[0] = piNeighbour;
-								torsionAtom[1] = piAtom;
-								torsionAtom[2] = heteroAtom;
-								torsionAtom[3] = mol.getConnAtom(heteroAtom, 1);	// first H-neighbor
+									int[] atomToRotate = new int[hCount];
+									int[] torsionAtom = new int[4];
+									torsionAtom[0] = piNeighbour;
+									torsionAtom[1] = piAtom;
+									torsionAtom[2] = heteroAtom;
+									int hIndex = 0;
+									for (int j=0; j<mol.getAllConnAtoms(heteroAtom); j++) {
+										int connAtom = mol.getConnAtom(heteroAtom, j);
+										if (mol.getAtomicNo(connAtom) == 1) {
+											if (hIndex == 0)
+												torsionAtom[3] = connAtom;    // first H-neighbor
+											atomToRotate[hIndex++] = connAtom;
+											}
+										}
 
-								int[] atomToRotate = new int[hCount];
-								for (int j=0; j<hCount; j++)
-									atomToRotate[j] = mol.getConnAtom(heteroAtom, mol.getConnAtoms(heteroAtom) + j);
+									// carboxylic acid or similar are only in Z-conformation
+									int stateCount = (!mol.isAromaticAtom(piAtom) && hCount == 1) ? 1 : 2;
 
-								// carboxylic acid or similar are only in Z-conformation
-								int stateCount = (!mol.isAromaticAtom(piAtom) && hCount == 1) ? 1 : 2;
+									short[] torsion = new short[stateCount];
+									short[] frequency = new short[stateCount];
+									short[][] range = new short[stateCount][2];
 
-								short[] torsion = new short[stateCount];
-								short[] frequency = new short[stateCount];
-								short[][] range = new short[stateCount][2];
+									if (!mol.isAromaticAtom(piAtom) && hCount == 1) {
+										torsion[0] = 0;
 
-								if (!mol.isAromaticAtom(piAtom) && hCount == 1) {
-									torsion[0] = 0;
+										frequency[0] = 100;
 
-									frequency[0] = 100;
+										range[0][0] = -15;
+										range[0][1] = 15;
+										}
+									else {
+										torsion[0] = 0;
+										torsion[1] = 180;
 
-									range[0][0] = -15;
-									range[0][1] = 15;
+										frequency[0] = 50;
+										frequency[1] = 50;
+
+										range[0][0] = -15;
+										range[0][1] = 15;
+										range[1][0] = 165;
+										range[1][1] = 195;
+										}
+
+									ruleList.add(new TorsionRule(torsion, frequency, range, torsionAtom, atomToRotate, 1));
 									}
-								else {
-									torsion[0] = 0;
-									torsion[1] = 180;
-
-									frequency[0] = 50;
-									frequency[1] = 50;
-
-									range[0][0] = -15;
-									range[0][1] = 15;
-									range[1][0] = 165;
-									range[1][1] = 195;
-									}
-
-								ruleList.add(new TorsionRule(torsion, frequency, range, torsionAtom, atomToRotate, 1));
 								}
 							}
 						}
