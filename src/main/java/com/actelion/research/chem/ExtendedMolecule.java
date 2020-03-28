@@ -2362,11 +2362,12 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 							for (int j=0; j<mConnAtoms[connAtom]; j++) {
 								// to be more exact, one might not count ortho-oxygen in case of 5-membered rings
 								int ortho = mConnAtom[connAtom][j];
-								if (ortho != atom && mConnAtoms[ortho] >= 3)
+								if (ortho != atom && getNonHydrogenNeighbourCount(ortho) >= 3)
 									orthoSubstituentCount++;
 								}
-							if ((orthoSubstituentCount == 2 && mConnAtoms[atom] >= 2)
-							 || (orthoSubstituentCount == 1 && mConnAtoms[atom] == 3))
+							int nitrogenNeighbourCount = getNonHydrogenNeighbourCount(atom);
+							if ((orthoSubstituentCount == 2 && nitrogenNeighbourCount >= 2)
+							 || (orthoSubstituentCount == 1 && nitrogenNeighbourCount == 3))
 								continue;  // the nitrogen is rotated out of PI-plane
 							}
 						return true;
