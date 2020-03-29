@@ -121,7 +121,7 @@ public class DistanceRule extends ConformationRule {
 			}
 
 					// distances with 3 bonds between both atoms (special cases only)
-		int[] bondRingSize = calculateBondRingSizes(mol);
+//		int[] bondRingSize = calculateBondRingSizes(mol);
 		for (int bond=0; bond<mol.getAllBonds(); bond++) {
 			if (mol.isAromaticBond(bond)
 			 || (mol.isRingBond(bond) && mol.getBondRingSize(bond) <= 5))

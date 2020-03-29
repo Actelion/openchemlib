@@ -141,8 +141,8 @@ public class TorsionDB {
 		for (int bond=0; bond<mol.getBonds(); bond++) {
 			if (mol.getBondOrder(bond) == 1
 			 && !mol.isAromaticBond(bond)
-			 && mol.getConnAtoms(mol.getBondAtom(0, bond)) > 1
-			 && mol.getConnAtoms(mol.getBondAtom(1, bond)) > 1
+			 && mol.getNonHydrogenNeighbourCount(mol.getBondAtom(0, bond)) > 1
+			 && mol.getNonHydrogenNeighbourCount(mol.getBondAtom(1, bond)) > 1
 			 && !(skipAllRingBonds && mol.isRingBond(bond))
 			 && !(mol.isSmallRingBond(bond) && mol.getBondRingSize(bond) <= 5)) {
 				isRotatableBond[bond] = true;
@@ -167,7 +167,7 @@ public class TorsionDB {
 		
 					// walk along sp-chains to first sp2 or sp3 atom
 					while (mol.getAtomPi(centralAtom[i]) == 2
-						&& mol.getConnAtoms(centralAtom[i]) == 2
+						&& mol.getNonHydrogenNeighbourCount(centralAtom[i]) == 2
 						&& mol.getAtomicNo(centralAtom[i]) < 10) {
 						for (int j=0; j<2; j++) {
 							int connAtom = mol.getConnAtom(centralAtom[i], j);
@@ -190,8 +190,8 @@ public class TorsionDB {
 				if (alkyneAtomCount != 0) {
 					isRotatableBond[bond] = false;
 					count--;
-					if (mol.getConnAtoms(centralAtom[0]) > 1
-					 && mol.getConnAtoms(centralAtom[1]) > 1) {
+					if (mol.getNonHydrogenNeighbourCount(centralAtom[0]) > 1
+					 && mol.getNonHydrogenNeighbourCount(centralAtom[1]) > 1) {
 						int substituentSize0 = mol.getSubstituentSize(rearAtom[0], centralAtom[0]);
 						int substituentSize1 = mol.getSubstituentSize(rearAtom[1], centralAtom[1]);
 						int i = (substituentSize0 < substituentSize1) ? 0 : 1;
