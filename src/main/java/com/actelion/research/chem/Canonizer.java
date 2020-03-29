@@ -2365,6 +2365,8 @@ System.out.println("noOfRanks:"+canRank);
 
 		StereoMolecule mol = new StereoMolecule(mMol.getAtoms(), mMol.getBonds());
 
+		mol.setFragment(mMol.isFragment());	// to allow copying of atom/bond query features
+
 		for(int i=0; i<mMol.getAtoms(); i++) {
 			mMol.copyAtom(mol, mGraphAtom[i], 0, 0);
 			mol.setAtomESR(i, mTHESRType[mGraphAtom[i]], mTHESRGroup[mGraphAtom[i]]);
