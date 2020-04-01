@@ -332,7 +332,7 @@ public class PharmacophoreTreeGenerator {
 			int bond = mol.getBond(a, b);
 			double d = BondLengthSet.lookupBondLength(mol, bond);
 			//x coordinate of intersection:
-			double x = (d*d-r1*r1+r2*r2)/2*d;
+			double x = (d*d-r1*r1+r2*r2)/(2*d);
 			// distance of sphere centers to cap bases of intersection:
 			double d1 = x;
 			double d2 = d-x;

@@ -33,15 +33,21 @@ public class PharmacophoreTree {
 	private List<int[]> edges;
 	private List<PharmacophoreNode> nodes;
 	private Map<Integer,List<Integer>> adjacencyList;
+	private int linkerNodes;
 
 	
 	public PharmacophoreTree(List<PharmacophoreNode> nodes, List<int[]> edges) {
 		this.nodes = nodes;
 		this.edges = edges;
-		constructAdjacencyList();
+		linkerNodes = 0;
+		update();
 	}
 	
-	private void constructAdjacencyList() {
+	private void update() {
+		for(PharmacophoreNode node : nodes) {
+			if(node.isLinkNode())
+				linkerNodes++;
+		}
 		adjacencyList = new HashMap<Integer,List<Integer>>();
 		for(int i=0;i<nodes.size();i++) {
 			adjacencyList.putIfAbsent(i, new ArrayList<Integer>());
@@ -347,6 +353,10 @@ public class PharmacophoreTree {
 		return edges;
 	}
 	
+	public int getLinkNodes() {
+		return linkerNodes;
+	}
+	
 	public void removeNode(PharmacophoreNode node) {
 
 		int nodeIndex = nodes.indexOf(node);
@@ -375,8 +385,30 @@ public class PharmacophoreTree {
 		for(int edgeToDelete : edgesToBeDeleted) {
 			edges.remove(edgeToDelete);
 		}
-		constructAdjacencyList();
+		update();
 
+	}
+	
+	public double getSize() {
+		double size = nodes.stream().mapToDouble(i -> i.getSize()).
+				reduce((a,b) -> a+b).getAsDouble();
+		
+		return size;
+	}
+	
+	public double getSubTreeSize(List<Integer> edges, int headNode) {
+		Collection<Integer> indeces = getNodesFromEdges(edges);
+		Collection<PharmacophoreNode> n = getNodes(indeces);
+		n.add(nodes.get(headNode));
+		double size = n.stream().mapToDouble(i -> i.getSize()).
+				reduce((a,b) -> a+b).getAsDouble();
+
+		
+		return size;
+	}
+	
+	public double getDirectSim(PharmacophoreTree pTree2) {
+		return PharmacophoreNode.getSimilarity(nodes, pTree2.getNodes());
 	}
 	
 
