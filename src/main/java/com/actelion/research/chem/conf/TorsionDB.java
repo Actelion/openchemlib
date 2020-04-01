@@ -141,8 +141,8 @@ public class TorsionDB {
 		for (int bond=0; bond<mol.getBonds(); bond++) {
 			if (mol.getBondOrder(bond) == 1
 			 && !mol.isAromaticBond(bond)
-			 && mol.getConnAtoms(mol.getBondAtom(0, bond)) > 1
-			 && mol.getConnAtoms(mol.getBondAtom(1, bond)) > 1
+			 && mol.getNonHydrogenNeighbourCount(mol.getBondAtom(0, bond)) > 1
+			 && mol.getNonHydrogenNeighbourCount(mol.getBondAtom(1, bond)) > 1
 			 && !(skipAllRingBonds && mol.isRingBond(bond))
 			 && !(mol.isSmallRingBond(bond) && mol.getBondRingSize(bond) <= 5)) {
 				isRotatableBond[bond] = true;
@@ -167,7 +167,7 @@ public class TorsionDB {
 		
 					// walk along sp-chains to first sp2 or sp3 atom
 					while (mol.getAtomPi(centralAtom[i]) == 2
-						&& mol.getConnAtoms(centralAtom[i]) == 2
+						&& mol.getNonHydrogenNeighbourCount(centralAtom[i]) == 2
 						&& mol.getAtomicNo(centralAtom[i]) < 10) {
 						for (int j=0; j<2; j++) {
 							int connAtom = mol.getConnAtom(centralAtom[i], j);
@@ -190,8 +190,8 @@ public class TorsionDB {
 				if (alkyneAtomCount != 0) {
 					isRotatableBond[bond] = false;
 					count--;
-					if (mol.getConnAtoms(centralAtom[0]) > 1
-					 && mol.getConnAtoms(centralAtom[1]) > 1) {
+					if (mol.getNonHydrogenNeighbourCount(centralAtom[0]) > 1
+					 && mol.getNonHydrogenNeighbourCount(centralAtom[1]) > 1) {
 						int substituentSize0 = mol.getSubstituentSize(rearAtom[0], centralAtom[0]);
 						int substituentSize1 = mol.getSubstituentSize(rearAtom[1], centralAtom[1]);
 						int i = (substituentSize0 < substituentSize1) ? 0 : 1;
@@ -487,12 +487,12 @@ public class TorsionDB {
 			if (atom[3*i] != -1) {
 				int central = 2-i;
 				int terminal = 3-3*i;
-				assert(mol.getConnAtoms(atom[central]) == 3);
+				assert(mol.getNonHydrogenNeighbourCount(atom[central]) == 3);
 	
 				int index = 0;
 				for (int j=0; j<3; j++) {
 					int connAtom = mol.getConnAtom(atom[central], j);
-		   			if (connAtom != rearAtom[1-i]) {
+		   			if (connAtom != rearAtom[1-i] && mol.getAtomicNo(connAtom) != 1) {
 //					if (connAtom != atom[3-central]) {
 						atom[terminal] = connAtom;
 						if (conformer != null)
@@ -509,19 +509,18 @@ public class TorsionDB {
 		double[] angle2 = new double[2];
 
 		int index1 = 0;
-		assert(mol.getConnAtoms(atom[1]) == 3);
+		assert(mol.getNonHydrogenNeighbourCount(atom[1]) == 3);
 		for (int i=0; i<3; i++) {
 			int terminal1 = mol.getConnAtom(atom[1], i);
-			if (terminal1 != rearAtom[0]) {
+			if (terminal1 != rearAtom[0] && mol.getAtomicNo(terminal1) != 1) {
 //			if (terminal1 != atom[2]) {
-				assert(mol.getConnAtoms(atom[2]) == 3);
+				assert(mol.getNonHydrogenNeighbourCount(atom[2]) == 3);
 				atom[0] = terminal1;
 				int index2 = 0;
 				for (int j=0; j<3; j++) {
 					int terminal2 = mol.getConnAtom(atom[2], j);
-					if (terminal2 != rearAtom[1]) {
+					if (terminal2 != rearAtom[1] && mol.getAtomicNo(terminal2) != 1) {
 //				  if (terminal2 != atom[1]) {
-						assert(mol.getConnAtoms(atom[2]) == 3);
 						atom[3] = terminal2;
 						if (conformer != null)
 							angle2[index2++] = conformer.calculateTorsion(atom);

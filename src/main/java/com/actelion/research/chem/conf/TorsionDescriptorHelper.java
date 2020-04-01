@@ -114,14 +114,16 @@ public class TorsionDescriptorHelper {
 	private static boolean qualifiesAsDescriptorBond(StereoMolecule mol, int bond) {
 		if (mol.getBondOrder(bond) != 1
 		 || mol.isAromaticBond(bond)
-		 || mol.getBondRingSize(bond) == 3
-		 || mol.isMarkedAtom(mol.getBondAtom(0, bond))
-		 || mol.isMarkedAtom(mol.getBondAtom(1, bond)))
+		 || mol.getBondRingSize(bond) == 3)
 			return false;
 
 		int[] bondAtom = new int[2];
-		for (int i=0; i<2; i++)
+		for (int i=0; i<2; i++) {
 			bondAtom[i] = mol.getBondAtom(i, bond);
+			if (mol.isMarkedAtom(bondAtom[i])
+			 || mol.getNonHydrogenNeighbourCount(bondAtom[i]) <= 1)
+				return false;
+			}
 
 		if (isLinearAtom(mol, bondAtom[0])
 		 || isLinearAtom(mol, bondAtom[1])) {

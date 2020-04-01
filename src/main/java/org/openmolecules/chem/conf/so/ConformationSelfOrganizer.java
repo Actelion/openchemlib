@@ -119,17 +119,6 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 //		listRules();
 		}
 
-	public ArrayList<ConformationRule> getRuleList() {
-		return mRuleList;
-		}
-
-	/**
-	 * @return returns the molecule that was passed to the constructor.
-	 */
-	public StereoMolecule getMolecule() {
-		return mMol;
-		}
-
 /*	private void listRules() {
 		System.out.println("---------------------------------------------------------------------");
 		for (int i=0; i<mMol.getAllAtoms(); i++) {
@@ -175,6 +164,18 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 			System.out.println(rule.toString());
 		}
 */
+
+	public ArrayList<ConformationRule> getRuleList() {
+		return mRuleList;
+	}
+
+	/**
+	 * @return returns the molecule that was passed to the constructor.
+	 */
+	public StereoMolecule getMolecule() {
+		return mMol;
+	}
+
 	/**
 	 * This convenience method returns the StereoMolecule that has been passed
 	 * to the constructor after modifying its atom coordinates
@@ -258,8 +259,8 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			if (!mMol.isAromaticBond(bond)
 			 && mMol.getBondOrder(bond) == 1
-			 && mMol.getConnAtoms(mMol.getBondAtom(0, bond)) > 1
-			 && mMol.getConnAtoms(mMol.getBondAtom(1, bond)) > 1) {
+			 && mMol.getAllConnAtoms(mMol.getBondAtom(0, bond)) > 1
+			 && mMol.getAllConnAtoms(mMol.getBondAtom(1, bond)) > 1) {
 				if (!mMol.isRingBond(bond))
 					freeBondCount++;
 				else if (mMol.getBondRingSize(bond) > 4)
