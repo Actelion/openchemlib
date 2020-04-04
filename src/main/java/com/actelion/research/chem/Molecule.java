@@ -302,7 +302,7 @@ public class Molecule implements Serializable {
 	public static final int cMoleculeColorDefault = 0;
 	public static final int cMoleculeColorNeutral = 1;
 
-	public static final String cAtomLabel[] = { "?",
+	public static final String[] cAtomLabel = { "?",
 		"H"  ,"He" ,"Li" ,"Be" ,"B"  ,"C"  ,"N"  ,"O"  ,
 		"F"  ,"Ne" ,"Na" ,"Mg" ,"Al" ,"Si" ,"P"  ,"S"  ,
 		"Cl" ,"Ar" ,"K"  ,"Ca" ,"Sc" ,"Ti" ,"V"  ,"Cr" ,
@@ -328,7 +328,7 @@ public class Molecule implements Serializable {
 		"Glu","Gly","His","Ile","Leu","Lys","Met","Phe",
 		"Pro","Ser","Thr","Trp","Tyr","Val" };
 
-	public static final short cRoundedMass[] = { 0,
+	public static final short[] cRoundedMass = { 0,
 	   1,	  4,	  7,	  9,	 11,	 12,   //  H  ,He ,Li ,Be ,B  ,C  ,
 	  14,	 16,	 19,	 20,	 23,	 24,   //  N , O  ,F  ,Ne ,Na ,Mg ,
 	  27,	 28,	 31,	 32,	 35,	 40,   //  Al ,Si ,P  ,S  ,Cl ,Ar ,
@@ -363,7 +363,7 @@ public class Molecule implements Serializable {
 	 101,	186,	163,	 99 };					//  Thr,Trp,Tyr,Val,
 
 	public static final int cDefaultAtomValence = 6;
-	public static final byte cAtomValence[][] = {null,
+	public static final byte[][] cAtomValence = {null,
 			{1}, {0}, {1}, {2}, {3}, {4}, {3}, {2}, {1}, {0},			// H to Ne
 			{1}, {2}, {3}, {4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0},	// Na to Ar
 			{1}, {2}, null, null, null, null, null, null, null, null,	// K to Ni
@@ -388,7 +388,7 @@ public class Molecule implements Serializable {
 	};
 
 	// Taken from http://www.cabrillo.edu/~aromero/Common%20Files/Periodic%20Table%20(Common%20Ionic%20Charges).pdf
-	public static final byte cCommonOxidationState[][] = { null,
+	public static final byte[][] cCommonOxidationState = { null,
 			{1}, null, {1}, {2}, null, null,					//  H,  He, Li, Be, B,  C,
 			{-3}, {-2}, {-1}, null, {1}, {2},					//  N,  O,  F,  Ne, Na, Mg,
 			{3}, null, {-3}, {-2}, {-1}, null,					//  Al, Si, P,  S,  Cl, Ar,
@@ -415,16 +415,16 @@ public class Molecule implements Serializable {
 	transient protected int mValidHelperArrays;
 	transient protected int mAllAtoms;
 	transient protected int mAllBonds;
-	transient protected int mAtomicNo[];
-	transient protected int mAtomCharge[];
-	transient protected int mAtomMapNo[];
-	transient protected int mAtomMass[];
-	transient protected int mAtomFlags[];
-	transient protected int mAtomQueryFeatures[];
-	transient protected int mBondAtom[][];
-	transient protected int mBondType[];
-	transient protected int mBondFlags[];
-	transient protected int mBondQueryFeatures[];
+	transient protected int[] mAtomicNo;
+	transient protected int[] mAtomCharge;
+	transient protected int[] mAtomMapNo;
+	transient protected int[] mAtomMass;
+	transient protected int[] mAtomFlags;
+	transient protected int[] mAtomQueryFeatures;
+	transient protected int[][] mBondAtom;
+	transient protected int[] mBondType;
+	transient protected int[] mBondFlags;
+	transient protected int[] mBondQueryFeatures;
 	transient protected Coordinates[] mCoordinates;
 	transient protected boolean mIsFragment;
 	transient protected boolean mIsRacemate;	 	// to indicate a molfileV2's chiral flat to be 0
@@ -435,8 +435,8 @@ public class Molecule implements Serializable {
 
 	transient private int mMoleculeColor;
 	transient private double mZoomRotationX,mZoomRotationY;
-	transient private double mOriginalAngle[];
-	transient private double mOriginalDistance[];
+	transient private double[] mOriginalAngle;
+	transient private double[] mOriginalDistance;
 	transient private String mName;
 	transient private Object mUserData;
 
@@ -741,7 +741,7 @@ public class Molecule implements Serializable {
 			return false;
 
 		int angles = 0;
-		double angle[] = new double[4];
+		double[] angle = new double[4];
 		for (int i=0; i<mAllBonds; i++) {
 			for (int j=0; j<2; j++) {
 				if (mBondAtom[j][i] == atom) {
@@ -778,15 +778,15 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean addRingToBond(int bond, int ringSize, boolean aromatic) {
-		int bondAtom[] = new int[2];
-		double bondAngle[] = new double[2];
+		int[] bondAtom = new int[2];
+		double[] bondAngle = new double[2];
 
 		bondAtom[0] = mBondAtom[0][bond];
 		bondAtom[1] = mBondAtom[1][bond];
 		if (getOccupiedValence(bondAtom[0]) > 3) return false;
 		if (getOccupiedValence(bondAtom[1]) > 3) return false;
 		int angles = 0;
-		double angle[] = new double[4];
+		double[] angle = new double[4];
 		for (int i=0; i<mAllBonds; i++) {
 			if (i == bond) continue;
 			for (int j=0; j<2; j++) {
@@ -892,7 +892,7 @@ public class Molecule implements Serializable {
 	 */
 	public boolean changeAtomCharge(double x, double y, boolean positive) {
 		int atom = findAtom(x,y);
-		return (atom == -1) ? false : changeAtomCharge(atom, positive);
+		return atom != -1 && changeAtomCharge(atom, positive);
 		}
 
 
@@ -1153,9 +1153,7 @@ public class Molecule implements Serializable {
 			if (destMol.mAtomList == null)
 				destMol.mAtomList = new int[destMol.mAtomicNo.length][];
 
-			destMol.mAtomList[destAtom] = new int[mAtomList[sourceAtom].length];
-			for (int i=0; i<mAtomList[sourceAtom].length; i++)
-				destMol.mAtomList[destAtom][i] = mAtomList[sourceAtom][i];
+			destMol.mAtomList[destAtom] = Arrays.copyOf(mAtomList[sourceAtom], mAtomList[sourceAtom].length);
 			}
 
 		if (destMol.mAtomCustomLabel != null)
@@ -1164,9 +1162,7 @@ public class Molecule implements Serializable {
 			if (destMol.mAtomCustomLabel == null)
 				destMol.mAtomCustomLabel = new byte[destMol.mAtomicNo.length][];
 
-			destMol.mAtomCustomLabel[destAtom] = new byte[mAtomCustomLabel[sourceAtom].length];
-			for (int i=0; i<mAtomCustomLabel[sourceAtom].length; i++)
-				destMol.mAtomCustomLabel[destAtom][i] = mAtomCustomLabel[sourceAtom][i];
+			destMol.mAtomCustomLabel[destAtom] = Arrays.copyOf(mAtomCustomLabel[sourceAtom], mAtomCustomLabel[sourceAtom].length);
 			}
 
 		if (esrGroup != -1) {
@@ -1265,7 +1261,7 @@ public class Molecule implements Serializable {
 		destMol.mIsRacemate = mIsRacemate;
 		destMol.mProtectHydrogen = mProtectHydrogen;
 		destMol.mChirality = mChirality;
-		destMol.mName = (mName == null) ? null : new String(mName);
+		destMol.mName = mName;
 		destMol.mValidHelperArrays = (mValidHelperArrays & (cHelperBitParities | cHelperBitCIP));
 		}
 
@@ -1550,8 +1546,8 @@ public class Molecule implements Serializable {
 		if (atomList.length == 0)
 			return null;
 
-		for (int i=0; i<atomList.length; i++)
-			markAtomForDeletion(atomList[i]);
+		for (int atom:atomList)
+			markAtomForDeletion(atom);
 
 		return deleteMarkedAtomsAndBonds();
 		}
@@ -1606,7 +1602,7 @@ public class Molecule implements Serializable {
 				}
 			}
 
-		return found ? deleteMarkedAtomsAndBonds() != null : false;
+		return found && deleteMarkedAtomsAndBonds() != null;
 		}
 
 
@@ -1859,6 +1855,12 @@ public class Molecule implements Serializable {
 		return mAtomFlags[atom] & cAtomFlagsColor;
 		}
 
+	/**
+	 * @return the entire atom coordinate array
+	 */
+	public Coordinates[] getAtomCoordinates() {
+		return mCoordinates;
+		}
 
 	/**
 	 * This is MDL's enhanced stereo representation (ESR).
@@ -2411,7 +2413,7 @@ public class Molecule implements Serializable {
 	 * @param newSize
      * @return
      */
-	protected final static Object copyOf(Object a, int newSize) {
+	protected static Object copyOf(Object a, int newSize) {
 		Class cl = a.getClass();
 		if (!cl.isArray()) return null;
 		int size = Array.getLength(a);
@@ -3825,7 +3827,7 @@ public class Molecule implements Serializable {
 				}
 			}
 		
-		int newAtmNo[] = new int[mAllAtoms];
+		int[] newAtmNo = new int[mAllAtoms];
 		int atomDest = 0;
 		for (int atom=0; atom<mAllAtoms; atom++) {
 			if (mAtomicNo[atom] == -1) {
@@ -3871,7 +3873,6 @@ public class Molecule implements Serializable {
 		int actlAtm,remoteAtm,bnd;
 		double bondLength,xdiff,ydiff,newx,newy;
 
-		bondLength = 0.0f;
 		if (atom == endAtm) {
 			bondLength = getAverageBondLength();
 			}

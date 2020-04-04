@@ -162,7 +162,7 @@ public class Canonizer {
 	private int[] mGraphFrom;
 	private int[] mGraphClosure;
 
-	private String		    mIDCode,mCoordinates,mMapping;
+	private String		    mIDCode, mEncodedCoords,mMapping;
 	private StringBuilder	mEncodingBuffer;
 	private	int				mEncodingBitsAvail,mEncodingTempData,mMaxConnAtoms;
 
@@ -432,9 +432,7 @@ public class Canonizer {
 	private void canRankStereo() {
 		// Store ranking state before considering stereo information
 		int noOfRanksWithoutStereo = mNoOfRanks;
-		int[] canRankWithoutStereo = new int[mMol.getAtoms()];
-		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			canRankWithoutStereo[atom] = mCanRank[atom];
+		int[] canRankWithoutStereo = Arrays.copyOf(mCanRank, mMol.getAtoms());
 
 		// Calculate the Cahn-Ingold-Prelog stereo assignments based
 		// on drawn stereo bonds neglecting any ESR group assignments
@@ -517,7 +515,7 @@ System.out.println();
 		// concerning their parities, in order to be able to consider the
 		// parities for ranking and ,thus, for recursive parity determination.
 		mTHParityNeedsNormalization = new boolean[mMol.getAtoms()];
-		mTHParityNormalizationGroupList = new ArrayList<int[]>();
+		mTHParityNormalizationGroupList = new ArrayList<>();
 		canMarkESRGroupsForParityNormalization();
 
 		// rollback stereo information
@@ -569,11 +567,8 @@ System.out.println();
 			// considered symmetrical considering their connectivity
 			// and stereo features.
 		if ((mMode & CREATE_SYMMETRY_RANK) != 0) {
-			mCanRankBeforeTieBreaking = new int[mMol.getAtoms()];
-			for (int atom=0; atom<mMol.getAtoms(); atom++)
-				mCanRankBeforeTieBreaking[atom] = mCanRank[atom];
+			mCanRankBeforeTieBreaking = Arrays.copyOf(mCanRank, mMol.getAtoms());
 			}
-
 
 			// ############### begin tie breaking ##############
 			// i.e. if not all atoms have a different rank yet, then
@@ -1019,8 +1014,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 				}
 			if (allParitiesDetermined
 			 && maxRank != -1) {
-				for (int j=0; j<groupAtom.length; j++) {
-					int atom = groupAtom[j];
+				for (int atom:groupAtom) {
 					if (invertParities) {
 						if (mTHParity[atom] == Molecule.cAtomParity1)
 							mTHParity[atom] = Molecule.cAtomParity2;
@@ -1274,8 +1268,8 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 		}
 	
 	private boolean canFindPseudoParities() {
-		boolean isFreshPseudoParityAtom[] = new boolean[mMol.getAtoms()];
-		boolean isFreshPseudoParityBond[] = new boolean[mMol.getBonds()];
+		boolean[] isFreshPseudoParityAtom = new boolean[mMol.getAtoms()];
+		boolean[] isFreshPseudoParityBond = new boolean[mMol.getBonds()];
 		int anyPseudoParityCount = 0;
 		boolean pseudoParity1Or2Found = false;
 
@@ -1449,7 +1443,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 		if (mFragmentList != null)
 			return;
 
-		mFragmentList = new ArrayList<CanonizerFragment>();
+		mFragmentList = new ArrayList<>();
 
 		int fragmentCount = 0;
 		int[] fragmentNo = new int[mMol.getAtoms()];
@@ -1462,7 +1456,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 				int fragmentAtoms = 1;
 				int fragmentBonds = 0;
 				fragmentNo[atom] = ++fragmentCount;
-				boolean bondHandled[] = new boolean[mMol.getBonds()];
+				boolean[] bondHandled = new boolean[mMol.getBonds()];
 				for (int current=0; current<fragmentAtoms; current++) {
 					for (int i=0; i<mMol.getConnAtoms(fragmentAtom[current]); i++) {
 						int connBond = mMol.getConnBond(fragmentAtom[current],i);
@@ -1507,7 +1501,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 
 
 	private void canCalcNextBaseValues() {
-		int	connRank[] = new int[mMaxConnAtoms];
+		int[] connRank = new int[mMaxConnAtoms];
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 								// generate sorted list of ranks of neighbours
 			int neighbours = mMol.getConnAtoms(atom)+mMol.getMetalBondedConnAtoms(atom);
@@ -1607,9 +1601,9 @@ System.out.println("noOfRanks:"+canRank);
 			return false;
 
 				// create array to remap connAtoms according to canRank order
-		int remappedConn[] = new int[4];
-		int remappedRank[] = new int[4];
-		boolean neighbourUsed[] = new boolean[4];
+		int[] remappedConn = new int[4];
+		int[] remappedRank = new int[4];
+		boolean[] neighbourUsed = new boolean[4];
 		for (int i=0; i<mMol.getAllConnAtoms(atom); i++) {
 			int highestRank = -1;
 			int highestConn = 0;
@@ -1691,7 +1685,7 @@ System.out.println("noOfRanks:"+canRank);
 								  { 2,2,1,1 },	// second dimension: number of
 								  { 1,2,1,2 } };// mMol.getConnAtom that has stereobond
 
-		double angle[] = new double[mMol.getAllConnAtoms(atom)];
+		double[] angle = new double[mMol.getAllConnAtoms(atom)];
 		for (int i=0; i<mMol.getAllConnAtoms(atom); i++)
 			angle[i] = mMol.getBondAngle(mMol.getConnAtom(atom, remappedConn[i]),atom);
 
@@ -2253,8 +2247,8 @@ System.out.println("noOfRanks:"+canRank);
 			if (mCanRank[atom] > mCanRank[startAtom])
 				startAtom = atom;
 
-		boolean atomHandled[] = new boolean[mMol.getAtoms()];
-		boolean bondHandled[] = new boolean[mMol.getBonds()];
+		boolean[] atomHandled = new boolean[mMol.getAtoms()];
+		boolean[] bondHandled = new boolean[mMol.getBonds()];
 		mGraphIndex = new int[mMol.getAtoms()];
 		mGraphAtom = new int[mMol.getAtoms()];
 		mGraphFrom = new int[mMol.getAtoms()];
@@ -2869,8 +2863,8 @@ System.out.println();
 					if (atomList != null) {
 						encodeBits(atom, nbits);
 						encodeBits(atomList.length, 4);
-						for (int i=0; i<atomList.length; i++)
-							encodeBits(atomList[i], 8);
+						for (int a:atomList)
+							encodeBits(a, 8);
 						}
 					}
 				}
@@ -3185,7 +3179,7 @@ System.out.println();
 		}
 
 	public void invalidateCoordinates() {
-		mCoordinates = null;
+		mEncodedCoords = null;
 		}
 
 	/**
@@ -3220,113 +3214,41 @@ System.out.println();
 	 * @return
 	 */
 	public String getEncodedCoordinates(boolean keepPositionAndScale) {
-		if (mCoordinates == null) {
+		if (mEncodedCoords == null) {
 			generateGraph();
-			encodeCoordinates(keepPositionAndScale);
+			encodeCoordinates(keepPositionAndScale, mMol.getAtomCoordinates());
 			}
 
-		return mCoordinates;
+		return mEncodedCoords;
 		}
 
+	/**
+	 * Encodes the molecule's atom coordinates into a compact String. Together with the
+	 * idcode the coordinate string can be passed to the IDCodeParser to recreate the
+	 * original molecule including coordinates.<br>
+	 * If keepPositionAndScale==false, then coordinate encoding will be relative,
+	 * i.e. scale and absolute positions get lost during the encoding.
+	 * Otherwise the encoding retains scale and absolute positions.<br>
+	 * If the molecule has 3D-coordinates and if there are no implicit hydrogen atoms,
+	 * i.e. all hydrogen atoms are explicitly available with their coordinates, then
+	 * hydrogen 3D-coordinates are also encoded despite the fact that the idcode itself does
+	 * not contain hydrogen atoms, because it must be canonical.
+	 * @param keepPositionAndScale if false, then coordinates are scaled to an average bond length of 1.5 units
+	 * @param atomCoordinates external atom coordinate set for the same molecule, e.g. from a Conformer
+	 * @return
+	 */
+	public String getEncodedCoordinates(boolean keepPositionAndScale, Coordinates[] atomCoordinates) {
+		if (mEncodedCoords == null) {
+			generateGraph();
+			encodeCoordinates(keepPositionAndScale, atomCoordinates);
+			}
 
-/*	private void encodeCoordinates(boolean keepAbsoluteValues) {
+		return mEncodedCoords;
+		}
+
+	private void encodeCoordinates(boolean keepPositionAndScale, Coordinates[] coords) {
 		if (mMol.getAtoms() == 0) {
-			mCoordinates = "";
-			return;
-			}
-
-		float maxDelta = 0.0f;
-		for (int i=1; i<mMol.getAtoms(); i++) {
-			int atom = mGraphAtom[i];
-			int from = (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]];
-
-			float deltaX = (from == -1) ?
-							Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0f
-						  : Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(from));
-			if (maxDelta < deltaX)
-				maxDelta = deltaX;
-
-			float deltaY = (from == -1) ?
-							Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0f
-						  : Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(from));
-			if (maxDelta < deltaY)
-				maxDelta = deltaY;
-
-			if (mZCoordinatesAvailable) {
-				float deltaZ = (from == -1) ?
-								Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0f
-							  : Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(from));
-				if (maxDelta < deltaZ)
-					maxDelta = deltaZ;
-				}
-			}
-
-		if (maxDelta == 0.0) {
-			mCoordinates = "";
-			return;
-			}
-
-		float increment = maxDelta / 43.0f;
-		float halfIncrement = increment / 2.0f;
-
-		StringBuilder coordinateBuffer = new StringBuilder();
-
-		for (int i=1; i<mMol.getAtoms(); i++) {
-			int atom = mGraphAtom[i];
-			int from = (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]];
-
-			float deltaX = (from == -1) ?
-							(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0f
-						   : mMol.getAtomX(atom) - mMol.getAtomX(from);
-
-							float deltaY = (from == -1) ?
-							(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0f
-						   : mMol.getAtomY(atom) - mMol.getAtomY(from);
-
-			coordinateBuffer.append((char)(40 + (int)((maxDelta + deltaX + halfIncrement) / increment)));
-			coordinateBuffer.append((char)(40 + (int)((maxDelta + deltaY + halfIncrement) / increment)));
-			}
-
-		if (mZCoordinatesAvailable) {
-			for (int i=1; i<mMol.getAtoms(); i++) {
-				int atom = mGraphAtom[i];
-				int from = (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]];
-
-				float deltaZ = (from == -1) ?
-								(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0f
-							   : mMol.getAtomZ(atom) - mMol.getAtomZ(from);
-
-				coordinateBuffer.append((char)(40 + (int)((maxDelta + deltaZ + halfIncrement) / increment)));
-				}
-			}
-
-		if (keepAbsoluteValues) {
-			coordinateBuffer.append('&');	// old faulty encoding started with "'"
-
-			int avblInt = encodeABVL(mMol.getAverageBondLength(), 7396);
-			coordinateBuffer.append((char)(40 + avblInt/86));
-			coordinateBuffer.append((char)(40 + avblInt%86));
-
-			int xInt = encodeShift(mMol.getAtomX(mGraphAtom[0]), 7396);
-			coordinateBuffer.append((char)(40 + xInt/86));
-			coordinateBuffer.append((char)(40 + xInt%86));
-
-			int yInt = encodeShift(mMol.getAtomY(mGraphAtom[0]), 7396);
-			coordinateBuffer.append((char)(40 + yInt/86));
-			coordinateBuffer.append((char)(40 + yInt%86));
-			if (mZCoordinatesAvailable) {
-				int zInt = encodeShift(mMol.getAtomZ(mGraphAtom[0]), 7396);
-				coordinateBuffer.append((char)(40 + zInt/86));
-				coordinateBuffer.append((char)(40 + zInt%86));
-				}
-			}
-		
-		mCoordinates = coordinateBuffer.toString();
-		}	*/
-
-	private void encodeCoordinates(boolean keepPositionAndScale) {
-		if (mMol.getAtoms() == 0) {
-			mCoordinates = "";
+			mEncodedCoords = "";
 			return;
 			}
 
@@ -3353,17 +3275,17 @@ System.out.println();
 
 		double maxDelta = 0.0;
 		for (int i=1; i<mMol.getAtoms(); i++)
-			maxDelta = getMaxDelta(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDelta);
+			maxDelta = getMaxDelta(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDelta, coords);
 		if (includeHydrogenCoordinates) {
 			for (int i=0; i<mMol.getAtoms(); i++) {
 				int atom = mGraphAtom[i];
 				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++)
-					maxDelta = getMaxDelta(mMol.getConnAtom(atom, j), atom, maxDelta);
+					maxDelta = getMaxDelta(mMol.getConnAtom(atom, j), atom, maxDelta, coords);
 				}
 			}
 
-		if (maxDelta == 0.0) {
-			mCoordinates = "";
+		if (mMol.getAtoms() > 1 && maxDelta == 0.0) {
+			mEncodedCoords = "";
 			return;
 			}
 
@@ -3372,12 +3294,12 @@ System.out.println();
 		double maxDeltaPlusHalfIncrement = maxDelta + increment / 2.0;
 
 		for (int i=1; i<mMol.getAtoms(); i++)
-			encodeAtomCoords(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDeltaPlusHalfIncrement, increment, resolutionBits);
+			encodeCoords(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDeltaPlusHalfIncrement, increment, resolutionBits, coords);
 		if (includeHydrogenCoordinates) {
 			for (int i=0; i<mMol.getAtoms(); i++) {
 				int atom = mGraphAtom[i];
 				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++)
-					encodeAtomCoords(mMol.getConnAtom(atom, j), atom, maxDeltaPlusHalfIncrement, increment, resolutionBits);
+					encodeCoords(mMol.getConnAtom(atom, j), atom, maxDeltaPlusHalfIncrement, increment, resolutionBits, coords);
 				}
 			}
 
@@ -3386,33 +3308,33 @@ System.out.println();
 			double avbl = mMol.getAverageBondLength(mMol.getAtoms(), mMol.getBonds(), avblDefault);
 			encodeBits(encodeABVL(avbl, binCount), resolutionBits);
 
-			encodeBits(encodeShift(mMol.getAtomX(mGraphAtom[0]) / avbl, binCount), resolutionBits);
-			encodeBits(encodeShift(mMol.getAtomY(mGraphAtom[0]) / avbl, binCount), resolutionBits);
+			encodeBits(encodeShift(coords[mGraphAtom[0]].x / avbl, binCount), resolutionBits);
+			encodeBits(encodeShift(coords[mGraphAtom[0]].y / avbl, binCount), resolutionBits);
 
 			if (mZCoordinatesAvailable)
-				encodeBits(encodeShift(mMol.getAtomZ(mGraphAtom[0]) / avbl, binCount), resolutionBits);
+				encodeBits(encodeShift(coords[mGraphAtom[0]].z / avbl, binCount), resolutionBits);
 			}
 
-		mCoordinates = encodeBitsEnd();
+		mEncodedCoords = encodeBitsEnd();
 		}
 
-	private double getMaxDelta(int atom, int from, double maxDelta) {
+	private double getMaxDelta(int atom, int from, double maxDelta, Coordinates[] coords) {
 		double deltaX = (from == -1) ?
-						Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0
-					  : Math.abs(mMol.getAtomX(atom) - mMol.getAtomX(from));
+						Math.abs(coords[atom].x - coords[mGraphAtom[0]].x) / 8.0
+					  : Math.abs(coords[atom].x - coords[from].x);
 		if (maxDelta < deltaX)
 			maxDelta = deltaX;
 
 		double deltaY = (from == -1) ?
-						Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0
-					  : Math.abs(mMol.getAtomY(atom) - mMol.getAtomY(from));
+						Math.abs(coords[atom].y - coords[mGraphAtom[0]].y) / 8.0
+					  : Math.abs(coords[atom].y - coords[from].y);
 		if (maxDelta < deltaY)
 			maxDelta = deltaY;
 
 		if (mZCoordinatesAvailable) {
 			double deltaZ = (from == -1) ?
-							Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0
-						  : Math.abs(mMol.getAtomZ(atom) - mMol.getAtomZ(from));
+							Math.abs(coords[atom].z - coords[mGraphAtom[0]].z) / 8.0
+						  : Math.abs(coords[atom].z - coords[from].z);
 			if (maxDelta < deltaZ)
 				maxDelta = deltaZ;
 			}
@@ -3420,22 +3342,22 @@ System.out.println();
 		return maxDelta;
 		}
 
-	private void encodeAtomCoords(int atom, int from, double maxDeltaPlusHalfIncrement, double increment, int resolutionBits) {
+	private void encodeCoords(int atom, int from, double maxDeltaPlusHalfIncrement, double increment, int resolutionBits, Coordinates[] coords) {
 		double deltaX = (from == -1) ?
-						(mMol.getAtomX(atom) - mMol.getAtomX(mGraphAtom[0])) / 8.0
-					   : mMol.getAtomX(atom) - mMol.getAtomX(from);
+						(coords[atom].x - coords[mGraphAtom[0]].x) / 8.0
+					   : coords[atom].x - coords[from].x;
 
 		double deltaY = (from == -1) ?
-						(mMol.getAtomY(atom) - mMol.getAtomY(mGraphAtom[0])) / 8.0
-					   : mMol.getAtomY(atom) - mMol.getAtomY(from);
+						(coords[atom].y - coords[mGraphAtom[0]].y) / 8.0
+					   : coords[atom].y - coords[from].y;
 
 		encodeBits((int)((maxDeltaPlusHalfIncrement + deltaX) / increment), resolutionBits);
 		encodeBits((int)((maxDeltaPlusHalfIncrement + deltaY) / increment), resolutionBits);
 
 		if (mZCoordinatesAvailable) {
 			double deltaZ = (from == -1) ?
-							(mMol.getAtomZ(atom) - mMol.getAtomZ(mGraphAtom[0])) / 8.0
-						   : mMol.getAtomZ(atom) - mMol.getAtomZ(from);
+							(coords[atom].z - coords[mGraphAtom[0]].z) / 8.0
+						   : coords[atom].z - coords[from].z;
 
 			encodeBits((int)((maxDeltaPlusHalfIncrement + deltaZ) / increment), resolutionBits);
 			}
@@ -3931,7 +3853,7 @@ System.out.println();
 					for (int i=0; i<2; i++) {
 						int alleneAtom = mMol.getConnAtom(atom,i);
 						if (mMol.getConnAtoms(alleneAtom) == 3) {
-							int connAtom[] = new int[2];
+							int[] connAtom = new int[2];
 							int count = 0;
 							for (int j=0; j<mMol.getConnAtoms(alleneAtom); j++)
 								if (mMol.getConnBondOrder(alleneAtom,j) == 1)
@@ -3980,7 +3902,7 @@ System.out.println();
 				for (int i=0; i<2; i++) {
 					int bondAtom = mMol.getBondAtom(i,bond);
 					if (mMol.getConnAtoms(bondAtom) == 3) {
-						int connAtom[] = new int[2];
+						int[] connAtom = new int[2];
 						int count = 0;
 						for (int j=0; j<mMol.getConnAtoms(bondAtom); j++)
 							if (mMol.getConnBond(bondAtom,j) != bond)
@@ -4006,7 +3928,7 @@ System.out.println();
 
 	private int[] cipGetOrderedConns(int atom) throws Exception {
 		int noOfConns = mMol.getAllConnAtoms(atom);
-		int orderedConn[] = new int[noOfConns];
+		int[] orderedConn = new int[noOfConns];
 		for (int i=0; i<noOfConns; i++)
 			orderedConn[i] = mMol.getConnAtom(atom,i);
 		for (int i=noOfConns; i>1; i--) {
@@ -4045,12 +3967,12 @@ System.out.println();
 
 		int graphSize = mMol.getAtoms();
 
-		int graphAtom[] = new int[graphSize];
-		int graphParent[] = new int[graphSize];
-		int graphRank[] = new int[graphSize];
-		boolean graphIsPseudo[] = new boolean[graphSize];
+		int[] graphAtom = new int[graphSize];
+		int[] graphParent = new int[graphSize];
+		int[] graphRank = new int[graphSize];
+		boolean[] graphIsPseudo = new boolean[graphSize];
 
-		boolean atomUsed[] = new boolean[mMol.getAllAtoms()];
+		boolean[] atomUsed = new boolean[mMol.getAllAtoms()];
 
 		graphAtom[0] = rootAtom;
 		graphAtom[1] = atom1;
@@ -4286,7 +4208,7 @@ System.out.println("");
 		throw new Exception("no distinction applying CIP rules");
 		}
 
-	private boolean cipTryDistinguishBranches(boolean graphIsPseudo[],
+	private boolean cipTryDistinguishBranches(boolean[] graphIsPseudo,
 											  int[] graphRank,
 											  int[] graphParent,
 											  int[] graphAtom,
@@ -4344,7 +4266,7 @@ System.out.println("");
 		return copy;
 		}
 
-	private void cipUpdateParentRanking(boolean graphIsPseudo[],
+	private void cipUpdateParentRanking(boolean[] graphIsPseudo,
 										int[] graphRank,
 										int[] graphParent,
 										int[] graphAtom,
@@ -4515,7 +4437,7 @@ class EZHalfParity {
 	boolean	mRanksEqual;
 	boolean mInSameFragment;
 
-	protected EZHalfParity(ExtendedMolecule mol, int rank[], int atom1, int atom2) {
+	protected EZHalfParity(ExtendedMolecule mol, int[] rank, int atom1, int atom2) {
 		mMol = mol;
 		mRemoteAxialAtom = atom1;
 		mCentralAxialAtom = atom2;
@@ -4540,7 +4462,6 @@ class EZHalfParity {
 				mLowConn = connAtom;	// two symmetrical atoms connected to one double bond atom
 				mRanksEqual = true;
 				mInSameFragment = mMol.isRingBond(connBond);
-				continue;
 				}
 			else if (highRank < rank[connAtom]) {
 				highRank = rank[connAtom];
@@ -4600,16 +4521,12 @@ class EZHalfParity {
 
 
 class CanonizerFragment {
-	int		atom[];
-	int		bond[];
+	int[] atom;
+	int[] bond;
 
 	protected CanonizerFragment(int[] atom, int atoms, int[] bond, int bonds) {
-		this.atom = new int[atoms];
-		this.bond = new int[bonds];
-		for (int a=0; a<atoms; a++)
-			this.atom[a] = atom[a];
-		for (int b=0; b<bonds; b++)
-			this.bond[b] = bond[b];
+		this.atom = Arrays.copyOf(atom, atoms);
+		this.bond = Arrays.copyOf(bond, bonds);
 		}
 	}
 

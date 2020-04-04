@@ -47,7 +47,7 @@ public class RotatableBond {
 	private static final short[] SIXTY_DEGREE_FREQUENCY = { 17, 17, 17, 17, 17, 17};
 	private static final short[][] SIXTY_DEGREE_RANGE = { {-20,20},{40,80},{100,140},{160,200},{220,260},{280,320}};
 
-	private Rigid3DFragment mFragment1,mFragment2;
+	private RigidFragment mFragment1,mFragment2;
 	private Random mRandom;
 	private int mRotationCenter,mBond,mFragmentNo1,mFragmentNo2;
 	private boolean mBondAtomsInFragmentOrder;
@@ -59,12 +59,12 @@ public class RotatableBond {
 	private int[] mTorsionAtom,mRearAtom,mSmallerSideAtomList;
 
 	public RotatableBond(StereoMolecule mol, int bond, int[] fragmentNo, int[] disconnectedFragmentNo,
-	                     int disconnectedFragmentSize, Rigid3DFragment[] fragment, Random random) {
+	                     int disconnectedFragmentSize, RigidFragment[] fragment, Random random) {
 		this(mol, bond, fragmentNo, disconnectedFragmentNo, disconnectedFragmentSize, fragment, random, false);
 		}
 
 	public RotatableBond(StereoMolecule mol, int bond, int[] fragmentNo, int[] disconnectedFragmentNo,
-						 int disconnectedFragmentSize, Rigid3DFragment[] fragment, Random random, boolean use60degreeSteps) {
+	                     int disconnectedFragmentSize, RigidFragment[] fragment, Random random, boolean use60degreeSteps) {
 		mBond = bond;
 		mRandom = random;
 		mTorsionAtom = new int[4];
@@ -109,7 +109,7 @@ public class RotatableBond {
 		findSmallerSideAtomList(mol, disconnectedFragmentNo, disconnectedFragmentSize);
 		}
 
-	public Rigid3DFragment getFragment(int i) {
+	public RigidFragment getFragment(int i) {
 		return (i == 0) ? mFragment1 : mFragment2;
 		}
 
@@ -288,7 +288,7 @@ public class RotatableBond {
 	 */
 	public void connectFragments(Conformer conformer, boolean[] isAttached, int[] fragmentPermutation) {
 		if (!isAttached[mFragmentNo1] && !isAttached[mFragmentNo2]) {
-			Rigid3DFragment largerFragment = (mFragment1.getCoreSize() > mFragment2.getCoreSize()) ? mFragment1 : mFragment2;
+			RigidFragment largerFragment = (mFragment1.getCoreSize() > mFragment2.getCoreSize()) ? mFragment1 : mFragment2;
             int largerFragmentNo = (mFragment1.getCoreSize() > mFragment2.getCoreSize()) ? mFragmentNo1 : mFragmentNo2;
 			isAttached[largerFragmentNo] = true;
 			int fragmentConformer = (fragmentPermutation == null) ? 0 : fragmentPermutation[largerFragmentNo];
@@ -301,7 +301,7 @@ public class RotatableBond {
 		assert(isAttached[mFragmentNo1] ^ isAttached[mFragmentNo2]);
 
 		int rootAtom,rearAtom,fragmentNo,bondAtomIndex;
-		Rigid3DFragment fragment = null;
+		RigidFragment fragment;
 		if (isAttached[mFragmentNo1]) {
             fragmentNo = mFragmentNo2;
 			fragment = mFragment2;

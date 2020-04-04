@@ -32,7 +32,7 @@ public class TorsionSetStrategyAdaptiveRandom extends TorsionSetStrategyRandom {
 	 * @param seed
 	 * @return
 	 */
-	public TorsionSetStrategyAdaptiveRandom(RotatableBond[] rotatableBond, Rigid3DFragment[] fragment, boolean preferLikelyTorsions, boolean startWithMostProbable, long seed) {
+	public TorsionSetStrategyAdaptiveRandom(RotatableBond[] rotatableBond, RigidFragment[] fragment, boolean preferLikelyTorsions, boolean startWithMostProbable, long seed) {
 		super(rotatableBond, fragment, preferLikelyTorsions, seed);
 		mStartWithMostProbable = startWithMostProbable;
 		}
@@ -66,8 +66,8 @@ public class TorsionSetStrategyAdaptiveRandom extends TorsionSetStrategyRandom {
 					collisionIntensitySum[index] += collisionIntensitySum[index-1];
 				index++;
 				}
-			for (int i=0; i<mRigidFragment.length; i++) {
-				if (indexTried[index] || mRigidFragment[i].getConformerCount() == 1)
+			for (RigidFragment rigidFragment:mRigidFragment) {
+				if (indexTried[index] || rigidFragment.getConformerCount() == 1)
 					collisionIntensitySum[index] = collisionIntensitySum[index-1];
 				else
 					collisionIntensitySum[index] += collisionIntensitySum[index-1];
