@@ -2125,9 +2125,25 @@ public class Molecule implements Serializable {
 	 * If we have less than 2 atoms, defaultBondLength is returned.
 	 * @param atoms atom indexes >= this are not considered
 	 * @param bonds bond indexes >= this are not considered
+	 * @param defaultBondLength
 	 * @return
 	 */
 	public double getAverageBondLength(int atoms, int bonds, double defaultBondLength) {
+		return getAverageBondLength(atoms, bonds, defaultBondLength, mCoordinates);
+	}
+
+	/**
+	 * Calculates and returns the mean bond length of all bonds 0...bonds.
+	 * If there are no bonds, then the smallest distance between unconnected atoms is
+	 * determined and a reasonable potential bond length derived from that is returned.
+	 * If we have less than 2 atoms, defaultBondLength is returned.
+	 * @param atoms atom indexes >= this are not considered
+	 * @param bonds bond indexes >= this are not considered
+	 * @param defaultBondLength
+	 * @param coords may be a second set of the molecule's coordinates, e.g. from a Conformer
+	 * @return
+	 */
+	public double getAverageBondLength(int atoms, int bonds, double defaultBondLength, Coordinates[] coords) {
 		boolean considerMetalBonds = false;
 
 		int consideredBonds = 0;
@@ -2156,7 +2172,7 @@ public class Molecule implements Serializable {
 			double lowDistance = Double.MAX_VALUE;
 			for (int atom1=1; atom1<atoms; atom1++) {
 				for (int atom2=0; atom2<atom1; atom2++) {
-					double distance = mCoordinates[atom1].distance(mCoordinates[atom2]);
+					double distance = coords[atom1].distance(coords[atom2]);
 					if (distance > 0 && distance < lowDistance)
 						lowDistance = distance;
 					}
@@ -2168,7 +2184,7 @@ public class Molecule implements Serializable {
 		for (int bond=0; bond<bonds; bond++) {
 			if ((considerMetalBonds || mBondType[bond] != cBondTypeMetalLigand)
 			 && (mBondQueryFeatures[bond] & cBondQFBridge) == 0)
-				avblSum += mCoordinates[mBondAtom[1][bond]].distance(mCoordinates[mBondAtom[0][bond]]);
+				avblSum += coords[mBondAtom[1][bond]].distance(coords[mBondAtom[0][bond]]);
 			}
 		return avblSum / consideredBonds;
 		}
