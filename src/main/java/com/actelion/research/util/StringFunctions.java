@@ -836,6 +836,20 @@ public class StringFunctions {
 		return sb.toString();
 	}
 
+	public static String toString(boolean [] arr){
+
+		StringBuilder sb = new  StringBuilder();
+		for (int i = 0; i < arr.length; i++) {
+			if(arr[i]) {
+				sb.append(1);
+			} else {
+				sb.append(0);
+			}
+		}
+
+		return sb.toString();
+	}
+
     public static String toString(List<Double> li, NumberFormat nf){
 
         StringBuilder sb = new  StringBuilder();

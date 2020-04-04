@@ -358,12 +358,12 @@ public class TreeMatcher {
 			double size1 = getSizeOfNodeCollection(nodes1,queryTree);
 			double size2 = getSizeOfNodeCollection(nodes2,baseTree);
 			boolean balanced = isMatchBalanced(size1,size2);
-			if(nodes1.size()==0 || nodes2.size()==0) {
-				matches = new ArrayList<FeatureMatch>();
-				matches.add(getMatch(nodes1, nodes2));
-			}
+			//if(nodes1.size()==0 || nodes2.size()==0) {
+			//	matches = new ArrayList<FeatureMatch>();
+			//	matches.add(getMatch(nodes1, nodes2));
+			//}
 			
-			else if ((size1<MATCH_SIZE_LIMIT || size2<MATCH_SIZE_LIMIT) ||
+			 if ((size1<MATCH_SIZE_LIMIT || size2<MATCH_SIZE_LIMIT) ||
 					(nodes1.size()<MATCH_NODE_NR_LIMIT || nodes2.size()<MATCH_NODE_NR_LIMIT)) {
 				if(balanced) {
 					matches = new ArrayList<FeatureMatch>();
@@ -470,8 +470,10 @@ public class TreeMatcher {
 		}
 		
 		private double getSizeOfNodeCollection(Collection<Integer> nodes, PharmacophoreTree pTree) {
-			double size = pTree.getNodes(nodes).stream().mapToDouble(i -> i.getSize()).
-					reduce((a,b) -> a+b).getAsDouble();
+			double size = 0;
+			List<PharmacophoreNode> n = pTree.getNodes(nodes);
+			for(PharmacophoreNode node : n)
+				size += node.getSize();
 			
 			return size;
 			

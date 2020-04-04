@@ -62,7 +62,13 @@ public class ErrorHashMap implements Serializable {
 			add(exceptFreq.get());
 		}
 	}
-	
+
+	public void addAll(List<Exception> li){
+		for (Exception exception : li) {
+			add(exception);
+		}
+	}
+
 	public void add(Exception ex){
 		
 		StackTraceElement [] arrSTr = ex.getStackTrace();
