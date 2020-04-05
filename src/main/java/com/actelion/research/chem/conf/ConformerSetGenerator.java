@@ -1,14 +1,13 @@
 package com.actelion.research.chem.conf;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.openmolecules.chem.conf.gen.ConformerGenerator;
-
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
+import org.openmolecules.chem.conf.gen.ConformerGenerator;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ConformerSetGenerator {
 	
@@ -22,7 +21,7 @@ public class ConformerSetGenerator {
 		mMaxNrConfs = maxNrConfs;
 		mStrategy = strategy;
 		mUseFF = useFF;
-		mConfGen = new ConformerGenerator(seed);
+		mConfGen = new ConformerGenerator(seed, useFF);
 	}
 	
 	/**
