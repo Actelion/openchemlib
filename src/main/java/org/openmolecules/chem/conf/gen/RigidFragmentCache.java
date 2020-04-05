@@ -9,12 +9,16 @@ import com.actelion.research.gui.FileHelper;
 import com.actelion.research.util.DoubleFormat;
 
 import java.io.*;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipInputStream;
 
 public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentCache.CacheEntry> implements Serializable {
+	private static final String DEFAULT_CACHE_FILE = "/resources/defaultRigidFragments.zip";
 	private static RigidFragmentCache sInstance;
 	private int mHitCount,mGetCount;
+	private boolean mDefaultCacheLoaded;
+	private TreeSet<String> mSetOfLoadedCacheFiles;
 
 	public static RigidFragmentCache getDefaultInstance() {
 		if (sInstance != null)
@@ -96,26 +100,56 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	}
 
 	/**
+	 * This loads the default cache file
+	 */
+	public synchronized void loadDefaultCache() {
+		if (!mDefaultCacheLoaded) {
+			try {
+				InputStream is = RigidFragmentCache.class.getResourceAsStream(DEFAULT_CACHE_FILE);
+				if (is != null) {
+					ZipInputStream zipStream = new ZipInputStream(is);
+					zipStream.getNextEntry();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(zipStream));
+					loadCache(reader);
+					reader.close();
+					mDefaultCacheLoaded = true;
+					}
+				}
+			catch (Exception e) {
+				e.printStackTrace();
+				}
+			}
+		}
+
+	/**
 	 * Loads pre-calculated rigid fragment coordinates from a cache file, which is either a text file
 	 * created by the createCacheFiles() method, or a zip archive of the text file.
+	 * This method can be called multiple times to add conformer data from multiple sources.
+	 * If the method is called with a cacheFileNam, which was loaded before, then it is not loaded a second time.
 	 * @param cacheFileName text file or zipped text file with extension .zip
 	 */
 	public void loadCache(String cacheFileName) {
-		try {
-			BufferedReader reader;
-			if (cacheFileName.endsWith(".zip")) {
-				ZipInputStream zipStream = new ZipInputStream(new FileInputStream(cacheFileName));
-				zipStream.getNextEntry();
-				reader = new BufferedReader(new InputStreamReader(zipStream));
+		if (mSetOfLoadedCacheFiles == null)
+			mSetOfLoadedCacheFiles = new TreeSet();
+
+		if (!mSetOfLoadedCacheFiles.contains(cacheFileName)) {
+			try {
+				BufferedReader reader;
+				if (cacheFileName.endsWith(".zip")) {
+					ZipInputStream zipStream = new ZipInputStream(new FileInputStream(cacheFileName));
+					zipStream.getNextEntry();
+					reader = new BufferedReader(new InputStreamReader(zipStream));
+				}
+				else {
+					reader = new BufferedReader(new FileReader(cacheFileName));
+				}
+				loadCache(reader);
+				reader.close();
 			}
-			else {
-				reader = new BufferedReader(new FileReader(cacheFileName));
+			catch (Exception e) {
+				e.printStackTrace();
 			}
-			loadCache(reader);
-			reader.close();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
+			mSetOfLoadedCacheFiles.add(cacheFileName);
 		}
 	}
 

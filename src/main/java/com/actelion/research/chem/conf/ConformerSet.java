@@ -25,7 +25,6 @@ public class ConformerSet extends TreeSet<Conformer> {
 				Conformer firstConformer = new Conformer(mol);
 				add(firstConformer);
 
-				int[] atomAndBondCount = parser.getAtomAndBondCounts(confString[0], null);
 				for(int i=2; i<confString.length;i++) {
 					Conformer conf = new Conformer(firstConformer);
 					try {
@@ -36,7 +35,6 @@ public class ConformerSet extends TreeSet<Conformer> {
 			}
 		}
 	}
-	
 	
 	public ConformerSet getSubset(int size) {
 		ConformerSet treeSet = new ConformerSet();
