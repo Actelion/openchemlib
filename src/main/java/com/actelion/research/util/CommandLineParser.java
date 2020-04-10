@@ -64,7 +64,7 @@ public class CommandLineParser {
     /**
      *
      * @param parameterLine i.e. width=234; color=233,0,0; resolution="super high"; blur=false
-     * @param separatorRegEx ;
+     * @param separatorRegEx i.e. ;
      */
 
     public CommandLineParser(String parameterLine, String separatorRegEx) {
