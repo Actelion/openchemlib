@@ -38,30 +38,38 @@ public class RigidFragmentProvider {
 		boolean[] isOuterShellAtom = new boolean[mol.getAllAtoms()];
 		boolean[] isCoreFragment = new boolean[mol.getAllAtoms()];
 
-		for (int atom = 0; atom < mol.getAllAtoms(); atom++) {
+		for (int atom=0; atom<mol.getAllAtoms(); atom++) {
 			if (fragmentNo[atom] == fragmentIndex) {
 				isCoreFragment[atom] = true;
 				includeAtom[atom] = true;
 				atomCount++;
 				coreAtomCount++;
-				for (int i = 0; i < mol.getConnAtoms(atom); i++) {
+				}
+			}
+		for (int atom=0; atom<mol.getAllAtoms(); atom++) {
+			if (isCoreFragment[atom]) {
+				for (int i=0; i<mol.getConnAtoms(atom); i++) {
 					int connAtom = mol.getConnAtom(atom, i);
-					if (fragmentNo[connAtom] != fragmentIndex) {
+					if (!includeAtom[connAtom]) {
 						includeAtom[connAtom] = true;
 						atomCount++;
 						extendedAtomCount++;
-						for (int j = 0; j < mol.getAllConnAtoms(connAtom); j++) {
-							int connconn = mol.getConnAtom(connAtom, j);
-							if (fragmentNo[connconn] != fragmentIndex) {
-								isOuterShellAtom[connconn] = true;
-								includeAtom[connconn] = true;
-								atomCount++;
-							}
 						}
 					}
 				}
 			}
-		}
+		for (int atom=0; atom<mol.getAllAtoms(); atom++) {
+			if (includeAtom[atom] && !isCoreFragment[atom] && !isOuterShellAtom[atom]) {
+				for (int i=0; i<mol.getAllConnAtoms(atom); i++) {
+					int connAtom = mol.getConnAtom(atom, i);
+					if (!includeAtom[connAtom]) {
+						isOuterShellAtom[connAtom] = true;
+						includeAtom[connAtom] = true;
+						atomCount++;
+						}
+					}
+				}
+			}
 
 		int bondCount = 0;
 		for (int bond = 0; bond < mol.getAllBonds(); bond++)
@@ -73,6 +81,10 @@ public class RigidFragmentProvider {
 		mol.copyMoleculeByAtoms(fragment, includeAtom, false, null);
 
 		fragment.setFragment(true); // if can encode as fragment, because H-atoms are converted deuterium
+
+		// Although stereo in the original molecules may not be stereo centers in the fragment anymore
+		// we must keep the parities for the self organizer to generate stereo center coordinates correctly.
+		// Since the atom order is retained in copyMoleculeByAtoms(), we can safely keep the parities.
 		fragment.setParitiesValid(0);
 
 		int[] coreToFragmentAtom = new int[coreAtomCount];
@@ -117,7 +129,13 @@ public class RigidFragmentProvider {
 		String key = null;
 
 		if (mCache != null) {
-			canonizer = new Canonizer(fragment);
+			// We use the Canonizer's graphindex to store coordinates in a canonical sequence in the cache.
+			// If we have stereo centers in the original molecule, which are no stereo centers in the rigid
+			// fragment anymore, self organized coordinates are correct for the stereo center because we
+			// have copied the correct parity from molecules to fragment. However, when caching coordinates,
+			// fragment's pro-R and pro-S atoms must be distinguished, when producing the graphIndex to
+			// correctly assign cached coordinates back to atoms.
+			canonizer = new Canonizer(fragment, Canonizer.CONSIDER_STEREOHETEROTOPICITY);
 			key = canonizer.getIDCode();
 
 			RigidFragmentCache.CacheEntry cacheEntry = mCache.get(key);
