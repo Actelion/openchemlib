@@ -1,9 +1,6 @@
 package org.openmolecules.chem.conf.gen;
 
-import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.forcefield.mmff.BadAtomTypeException;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
@@ -82,11 +79,6 @@ public class RigidFragmentProvider {
 
 		fragment.setFragment(true); // if can encode as fragment, because H-atoms are converted deuterium
 
-		// Although stereo in the original molecules may not be stereo centers in the fragment anymore
-		// we must keep the parities for the self organizer to generate stereo center coordinates correctly.
-		// Since the atom order is retained in copyMoleculeByAtoms(), we can safely keep the parities.
-		fragment.setParitiesValid(0);
-
 		int[] coreToFragmentAtom = new int[coreAtomCount];
 		int[] fragmentToOriginalAtom = new int[atomCount];
 		int[] extendedToFragmentAtom = new int[coreAtomCount + extendedAtomCount];
@@ -123,6 +115,11 @@ public class RigidFragmentProvider {
 			}
 		}
 
+		// Although stereo in the original molecules may not be stereo centers in the fragment anymore
+		// we must keep the parities for the self organizer to generate stereo center coordinates correctly.
+		// Since the atom order is retained in copyMoleculeByAtoms(), we can safely keep the parities.
+		fragment.setParitiesValid(0);
+
 		Conformer[] conformers = null;
 		double[] likelihood = null;
 		Canonizer canonizer = null;
@@ -139,6 +136,7 @@ public class RigidFragmentProvider {
 			key = canonizer.getIDCode();
 
 			RigidFragmentCache.CacheEntry cacheEntry = mCache.get(key);
+
 
 			if (cacheEntry != null) {
 				// convert from canonical coordinates back to fragment
