@@ -15,6 +15,7 @@
 package org.openmolecules.chem.conf.gen;
 
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.*;
 
@@ -103,6 +104,7 @@ public class RotatableBond {
 			}
 		}
 
+		removeIllegalTorsions(mol);
 		removeEquivalentTorsions(mol);
 		mLikelyhood = new double[mTorsion.length];
 
@@ -650,6 +652,60 @@ public class RotatableBond {
 			int deltaTorsion = torsion - conformer.getBondTorsion(mBond);
 			rotateSmallerSide(conformer, Math.PI * deltaTorsion / 180.0);
 			conformer.setBondTorsion(mBond, torsion);
+			}
+		}
+
+	/**
+	 * If we have a BINAP stereo contraint, we have to remove colliding torsions
+	 * @param mol
+	 */
+	private void removeIllegalTorsions(StereoMolecule mol) {
+		if (mol.getBondOrder(mBond) == 1
+		 && (mol.getBondParity(mBond) == Molecule.cBondParityEor1 || mol.getBondParity(mBond) == Molecule.cBondParityZor2)) {
+			boolean inverse = false;
+			for (int i=0; i<2; i++) {
+				int conn = mTorsionAtom[3*i];
+				int atom = mTorsionAtom[1+i];
+				int rear = mTorsionAtom[2-i];
+				for (int j=0; j<mol.getConnAtoms(atom); j++) {
+					int other = mol.getConnAtom(atom, j);
+					if (other != rear && other != conn) {
+						if (other < conn)
+							inverse = !inverse;
+						break;
+						}
+					}
+				}
+			if (mol.getBondParity(mBond) == Molecule.cBondParityEor1)
+				inverse = !inverse;
+
+			// parityEor1 requires torsions values from 0...pi considering lowest atom indexes for mTorsionAtom[0 and 3]
+			int count = 0;
+			int frequencySum = 0;
+			for (int i=0; i<mTorsion.length; i++) {
+				if (mTorsion[i]<180 ^ inverse) {
+					frequencySum += mFrequency[i];
+					count++;
+					}
+				}
+
+			if (count < mTorsion.length) {
+				short[] newTorsion = new short[count];
+				short[] newFrequency = new short[count];
+				short[][] newRange = new short[count][];
+				count = 0;
+				for (int i=0; i<mTorsion.length; i++) {
+					if (mTorsion[i]<180 ^ inverse) {
+						newTorsion[count] = mTorsion[i];
+						newFrequency[count] = (short)(mFrequency[i] * 100 / frequencySum);
+						newRange[count] = mTorsionRange[i];
+						count++;
+						}
+					}
+				mTorsion = newTorsion;
+				mFrequency = newFrequency;
+				mTorsionRange = newRange;
+				}
 			}
 		}
 
