@@ -41,6 +41,12 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	private RigidFragmentCache() {}
 
 	@Override
+	public void clear() {
+		super.clear();
+		mDefaultCacheLoaded = false;
+	}
+
+	@Override
 	public RigidFragmentCache.CacheEntry get(Object key) {
 		RigidFragmentCache.CacheEntry entry = super.get(key);
 		mGetCount++;

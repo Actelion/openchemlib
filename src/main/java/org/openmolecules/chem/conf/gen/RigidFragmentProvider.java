@@ -137,7 +137,6 @@ public class RigidFragmentProvider {
 
 			RigidFragmentCache.CacheEntry cacheEntry = mCache.get(key);
 
-
 			if (cacheEntry != null) {
 				// convert from canonical coordinates back to fragment
 				int[] graphIndex = canonizer.getGraphIndexes();

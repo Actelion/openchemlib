@@ -94,7 +94,8 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 		for (int atom=0; atom<mol.getAtoms(); atom++)
 			implicitHydrogen[atom] = mol.getImplicitHydrogens(atom);
 
-		double avbl = mol.getAverageBondLength();
+		double hydrogenBondLength = 0.8 * mol.getAverageBondLength();
+
 		for (int atom=0; atom<implicitHydrogen.length; atom++)
 			if (implicitHydrogen[atom] != 0)
 				for (int i=0; i<implicitHydrogen[atom]; i++)
@@ -103,7 +104,7 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		for (int atom=0; atom<implicitHydrogen.length; atom++)
 			if (implicitHydrogen[atom] != 0)
-				setHydrogenLocations(mol, atom, implicitHydrogen[atom], avbl);
+				setHydrogenLocations(mol, atom, implicitHydrogen[atom], hydrogenBondLength);
 
 		// addAtom() and addBond() clear the helper status, i.e. flag all helpers as invalid.
 		// Adding hydrogens does not destroy parities. Though, we may flag them to be valid again.
@@ -113,55 +114,74 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 
 	/**
 	 * Finds the widest open angle between all connected non-stereo bonds of atom, divides this angle
-	 * into hydrogenCount+1 equals parts and sets atom coordinates of hydrogenCount new hydrogen atoms
-	 * such, that they equally occupy the space. Helper arrays are assumed to have the state before
-	 * adding any new hydrogen atoms.
+	 * into hydrogenCount+1 equal parts and sets atom coordinates of hydrogenCount new hydrogen atoms
+	 * such, that they equally occupy the space and not collide with a potential stereo-bonded neighbour.
 	 * @param mol
 	 * @param atom
 	 * @param newHydrogenCount new hydrogen atoms added to atom
 	 * @param avbl
 	 */
 	private static void setHydrogenLocations(StereoMolecule mol, int atom, int newHydrogenCount, double avbl) {
+		int firstNewHydrogenConnIndex = mol.getAllConnAtoms(atom) - newHydrogenCount;
 
-		int firstNewHydrogenNeighbour = mol.getAllConnAtoms(atom) - newHydrogenCount;
-
-		int stereoBondCount = 0;
-		for (int i=0; i<firstNewHydrogenNeighbour; i++)
-			if (mol.isStereoBond(mol.getConnBond(atom,i)))
-				stereoBondCount++;
+		int stereoBondIndex = -1;
+		double stereoBondAngle = Double.NaN;
+		for (int i=0; i<firstNewHydrogenConnIndex; i++) {
+			if (mol.isStereoBond(mol.getConnBond(atom, i), atom)) {
+				stereoBondIndex = i;
+				stereoBondAngle = mol.getBondAngle(atom, mol.getConnAtom(atom, i));
+				break;
+				}
+			}
+		int stereoBondCount = (stereoBondIndex == -1) ? 0 : 1;
 
 		double[] angle = null;
-		if (stereoBondCount < firstNewHydrogenNeighbour) {
-			angle = new double[firstNewHydrogenNeighbour-stereoBondCount];
+		if (stereoBondCount < firstNewHydrogenConnIndex) {
+			angle = new double[firstNewHydrogenConnIndex-stereoBondCount];
 			int bond = 0;
-			for (int i=0; i<firstNewHydrogenNeighbour; i++)
-				if (!mol.isStereoBond(mol.getConnBond(atom, i)))
+			for (int i=0; i<firstNewHydrogenConnIndex; i++)
+				if (i != stereoBondIndex)
 					angle[bond++] = mol.getBondAngle(atom, mol.getConnAtom(atom, i));
 	
 			Arrays.sort(angle);
 			}
 
-		double angleIncrement = 2.0*Math.PI/newHydrogenCount;
+		double angleIncrement = 2.0*Math.PI/Math.max(newHydrogenCount, 3);
 		double startAngle = 0.0;
 
 		if (angle != null) {
-			double biggestAngleDif = 0.0;
-			for (int i=0; i<angle.length; i++) {
-				double a1 = (i == 0) ? angle[angle.length-1] - Math.PI*2.0 : angle[i-1];
-				double a2 = angle[i];
-				if (biggestAngleDif < a2 - a1) {
-					biggestAngleDif = a2 - a1;
-					startAngle = a1;
-					}
+			if (angle.length == 1 && newHydrogenCount == 1) {
+				startAngle = angle[0];
 				}
-			angleIncrement = biggestAngleDif / (newHydrogenCount + 1);
+			else {
+				double biggestAngleDif = 0.0;
+				for (int i=0; i<angle.length; i++) {
+					double a1 = (i == 0) ? angle[angle.length - 1] - Math.PI * 2.0 : angle[i - 1];
+					double a2 = angle[i];
+					if (biggestAngleDif < a2 - a1) {
+						biggestAngleDif = a2 - a1;
+						startAngle = a1;
+						}
+					}
+				angleIncrement = biggestAngleDif / (newHydrogenCount + 1);
+				}
 			}
 
 		for (int i=0; i<newHydrogenCount; i++) {
 			startAngle += angleIncrement;
-			int newHydrogen = mol.getConnAtom(atom, firstNewHydrogenNeighbour+i);
-			mol.setAtomX(newHydrogen, mol.getAtomX(atom) + avbl * Math.sin(startAngle));
-			mol.setAtomY(newHydrogen, mol.getAtomY(atom) + avbl * Math.cos(startAngle));
+			double hydrogenAngle = startAngle;
+			if (stereoBondCount != 0) {
+				double dif = Molecule.getAngleDif(hydrogenAngle, stereoBondAngle);
+				if (Math.abs(dif) < angleIncrement/2) {
+					if (dif < 0)
+						hydrogenAngle = stereoBondAngle - angleIncrement/2;
+					else
+						hydrogenAngle = stereoBondAngle + angleIncrement/2;
+					}
+				}
+			int newHydrogen = mol.getConnAtom(atom, firstNewHydrogenConnIndex+i);
+			mol.setAtomX(newHydrogen, mol.getAtomX(atom) + avbl * Math.sin(hydrogenAngle));
+			mol.setAtomY(newHydrogen, mol.getAtomY(atom) + avbl * Math.cos(hydrogenAngle));
 			}
 		}
 
