@@ -67,6 +67,8 @@ public interface CompoundTableConstants {
     int cMaxTextCategoryCount = 65536;
     int cMaxDateOrDoubleCategoryCount = 16384;
 
+    boolean cAllowLogModeForNegativeOrZeroValues = true;
+
     // summary mode for displaying values.
     int cSummaryModeNormal = 0;
     int cSummaryModeMean = 1;

@@ -23,8 +23,9 @@ public abstract class ConformationRule {
 	public static final int RULE_TYPE_LINE = 2;
 	public static final int RULE_TYPE_TORSION = 3;
 	public static final int RULE_TYPE_STEREO = 4;
+	public static final int RULE_TYPE_BINAP = 5;
 
-	public static final String[] RULE_NAME = { "distance", "plane", "line", "torsion", "stereo" };
+	public static final String[] RULE_NAME = { "distance", "plane", "line", "torsion", "stereo", "binap" };
 
 	protected int[] mAtom;
 	protected boolean mIsEnabled;
