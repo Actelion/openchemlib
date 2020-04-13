@@ -69,14 +69,13 @@ public class CommandLineParser {
 
     public CommandLineParser(String parameterLine, String separatorRegEx) {
         hmCommandValue=new HashMap<>();
-        String args[] = parameterLine.split(separatorRegEx);
 
-        for (String command : args) {
-
-            String [] a = command.split("=");
-
-            hmCommandValue.put(a[0].trim(), a[1].trim().replace("\"", ""));
-
+        if(parameterLine!=null && parameterLine.length()>0) {
+            String args[] = parameterLine.split(separatorRegEx);
+            for (String command : args) {
+                String[] a = command.split("=");
+                hmCommandValue.put(a[0].trim(), a[1].trim().replace("\"", ""));
+            }
         }
     }
 
