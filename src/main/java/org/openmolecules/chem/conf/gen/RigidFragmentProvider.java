@@ -9,7 +9,47 @@ import org.openmolecules.chem.conf.so.SelfOrganizedConformer;
 
 import java.util.ArrayList;
 
+/**
+ * An instance of this class is used by any ConformerGenerator to hand out one or multiple 3D-coordinate sets
+ * for rigid fragments within a molecules. RigidFragments are those substructures obtained, when breaking a
+ * molecule apart at its non-ring single bonds, which are called 'rotatable bonds'.
+ * A RigidFragment consists of core atoms, extended atoms and outer shell atoms.
+ * Core atoms are all atoms making up the original substructure. Extended atoms are all atoms of the original
+ * molecule, which directly connect to any core atom. Extended atoms are important, because they define the exit
+ * vectors of the core atom fragment. Outer shell atoms are another layer of atoms connected the extended atoms.
+ * They are needed for the self-organizer to create context depending 3D-coordinates that considers steric and
+ * atom type dependent geometries.<br>
+ * RigidFragments are fragments rather than molecules. There are no implicit hydrogen atoms and some atoms
+ * have unoccupied valences. Nitrogen atoms may carry the flat-nitrogen query feature, which is considered
+ * by the self organizer when creating 3D-coordinates.<br>
+ * <b>Important:</b> Stereo centers in the molecule may not be a stereo center in the fragment anymore.
+ * Nevertheless, the self-organized coordinates must reflect the correct configuration of the originating molecule.
+ * Therefore, atom parities are copied from molecule to fragment and defined valid, which is possible, because
+ * parities are based on atom indexes and the atom order is kept in-tact, when assembling the fragment.<br>
+ * <b>Caching:</b> When generating conformers of many molecules, then many RigidFragments occurr repeatedly.
+ * Therefore, caching of fragment's coordinates speeds up conformer generation significantly. However, we need
+ * to consider various issues:<br>
+ * - As key for the cache we use the fragment's idcode (all atoms). To not loose hydrogen atoms, we convert all
+ * plain hydrogen atoms into deuterium.<br>
+ * - In the cache we just store 3D-coordinate sets and their likelyhoods based on self-organizer scores or MMFF-energies<br>
+ * - When locating the same fragment in a different molecule, then atom order may be different. Thus, we need to normalize.
+ * For this purpose we use the graphIndex of the Canonizer used to create the fragment's idcode and store coordinates in
+ * canonical atom order.<br>
+ * - For molecule stereo centers, which are gone in the fragment, copying of molecule parities to the fragment ensures
+ * proper 3D-coordinates. For the Canonizer graphIndex to reflect the original configuration, we need to make sure,
+ * that up/down-bonds are copied (parities won't do), which are now overspecifying the non-stereo center.
+ * And we use the Canonizer mode CONSIDER_STEREOHETEROTOPICITY to distinguish enantio- and diastereo-topic neighbours,
+ * which doesn't change the idcode, but is reflected in the graphindex, because stereoheterotopic atoms are ranked
+ * now differently before tie-breaking.<br>
+ * - Prochiral fragments in symmetrical environment: If a new fragment with a potential stereo center is found
+ * first in a symmetrical molecule, such that the potential stereo center is none, then no parity and no up/down-bond
+ * are copied and 3D-coordinates randomly reflect one of the two options. If the same fragment is later retrieved
+ * from the cache when found in a chiral situation, then cached coordinates have a 50% change to be wrong. Counter
+ * measure: For every pro-chiral atom we introduce an arbitrary parity and according up/down bond before
+ * generating coordinates and graphIndex.
+ */
 public class RigidFragmentProvider {
+	public static boolean sPrintParityFragment = false;
 	private static int MAX_CONFORMERS = 16;
 
 	private static final boolean DEBUG_INFO_MMFF = false;
@@ -84,6 +124,8 @@ public class RigidFragmentProvider {
 		int[] extendedToFragmentAtom = new int[coreAtomCount + extendedAtomCount];
 		int[] originalToExtendedAtom = new int[mol.getAllAtoms()];
 
+boolean parityFound = false; //TODO get rid of this
+
 		int coreAtom = 0;
 		int fragmentAtom = 0;
 		int extendedAtom = 0;
@@ -102,6 +144,7 @@ public class RigidFragmentProvider {
 				}
 
 				if (isCoreFragment[atom]) {
+if (mol.getAtomParity(atom)==Molecule.cAtomParity1 || mol.getAtomParity(atom)==Molecule.cAtomParity2) parityFound=true;
 					coreToFragmentAtom[coreAtom] = fragmentAtom;
 					coreAtom++;
 				}
@@ -126,6 +169,21 @@ public class RigidFragmentProvider {
 		String key = null;
 
 		if (mCache != null) {
+			// If the fragment contains a potential stereo center, which is not a stereo center in the molecule,
+			// it may be a stereo center in later molecules. Therefore, we set an arbitrary parity matching up/down
+			// bond as constraint.
+			fragment.ensureHelperArrays(Molecule.cHelperRings);
+			for (int i=0; i<coreAtomCount; i++) {
+				int fAtom = coreToFragmentAtom[i];
+				int oAtom = fragmentToOriginalAtom[fAtom];
+				if (isPotentialStereoCenter(mol, oAtom)
+						&& mol.getAtomParity(oAtom) != Molecule.cAtomParity1
+						&& mol.getAtomParity(oAtom) != Molecule.cAtomParity2) {
+					fragment.setAtomParity(fAtom, Molecule.cAtomParity1, false);
+					fragment.setStereoBondFromAtomParity(fAtom);
+					}
+				}
+
 			// We use the Canonizer's graphindex to store coordinates in a canonical sequence in the cache.
 			// If we have stereo centers in the original molecule, which are no stereo centers in the rigid
 			// fragment anymore, self organized coordinates are correct for the stereo center because we
@@ -134,6 +192,13 @@ public class RigidFragmentProvider {
 			// correctly assign cached coordinates back to atoms.
 			canonizer = new Canonizer(fragment, Canonizer.CONSIDER_STEREOHETEROTOPICITY);
 			key = canonizer.getIDCode();
+
+//if (sPrintParityFragment && parityFound) System.out.println("parity fragment:"+key);
+//if (key.equals("dmVBPBAIUh@XAInfYjjf@NDY@E@\u007FZB@")) {
+// System.out.println("molecule:"+new MolfileCreator(mol).getMolfile());
+// System.out.println("fragment:"+new MolfileCreator(fragment).getMolfile());
+// System.out.print("mapping:"); int[] gi = canonizer.getGraphIndexes(); for (int m:gi) System.out.print(" "+m); System.out.println();
+// }
 
 			RigidFragmentCache.CacheEntry cacheEntry = mCache.get(key);
 
@@ -209,6 +274,42 @@ public class RigidFragmentProvider {
 				extendedToFragmentAtom, originalToExtendedAtom,
 				conformers, likelihood);
 	}
+
+	private boolean isPotentialStereoCenter(StereoMolecule mol, int atom) {
+		if (mol.getAtomicNo(atom) != 5
+		 && mol.getAtomicNo(atom) != 6
+		 && mol.getAtomicNo(atom) != 7
+		 && mol.getAtomicNo(atom) != 14
+		 && mol.getAtomicNo(atom) != 15
+		 && mol.getAtomicNo(atom) != 16)
+			return false;
+
+		if (mol.getAtomPi(atom) != 0) {
+			if (mol.isCentralAlleneAtom(atom))
+				return true;
+
+			if (mol.getAtomicNo(atom) != 15
+			 && mol.getAtomicNo(atom) != 16)
+				return false;
+			}
+
+		if (mol.getConnAtoms(atom) < 3 || mol.getAllConnAtoms(atom) > 4)
+			return false;
+
+		// no carbenium
+		if (mol.getAtomCharge(atom) > 0 && mol.getAtomicNo(atom) == 6)
+			return false;
+
+		// no trivalent boron
+		if (mol.getAtomicNo(atom) == 5 && mol.getAllConnAtoms(atom) != 4)
+			return false;
+
+		// don't consider tetrahedral nitrogen, unless found to qualify for parity calculation
+		if (mol.getAtomicNo(atom) == 7 && mol.getConnAtoms(atom) < 4)
+			return false;
+
+		return true;
+		}
 
 	/**
 	 * @param conformer

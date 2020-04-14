@@ -33,11 +33,17 @@ import java.util.TreeMap;
 /**
  * This class generates 3D-conformers of a given molecule using the following strategy:
  * <li>All rotatable, non-ring bonds are determined.
- * <li>The fragments between rotatable bonds are considered rigid.
- * <li>For every fragment the relative atom coordinates are determined using a self organization based algorithm.
- * <li>For every rotatable bond a list of preferred torsion angles is determined based on from a CSD statistics of similar bond environments.
+ * <li>Fragments separated by rotatable bonds are considered rigid, but there may be more than one possible
+ * fragment conformer, e.g. chair- and boat conformers of a saturated 6-membered ring.
+ * <li>These atom coordinate sets of rigid fragments are handed out by a dedicated RigidFragmentProvider instance,
+ * which either generates them using a self organization algorithm, or which takes it from a cache.
+ * <li>For every rotatable bond a list of preferred torsion angles is determined based on from a COD statistics
+ * of similar bond environments.
  * <li>For individual torsion values likelihoods are estimated based on frequency and atom collisions of vicinal fragments.
  * <li>A dedicated (systematic, biased or random) torsion set strategy delivers collision-free torsion sets, i.e. conformers.
+ * <br><br>
+ * For generating conformers in multiple threads, every thread needs its own ConformerGenerator instance.
+ * If they use a RigidFragmentCache, then the cache is shared among all ConformerGenerators.
  */
 public class ConformerGenerator {
 	public static final int STRATEGY_LIKELY_SYSTEMATIC = 1;
@@ -230,7 +236,7 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 
 	/**
 	 * @param seed != 0L if conformers shall be created in a reproducible way
-	 * @param cache
+	 * @param cache may be null for generating all rigid fragment conformers on the fly
 	 * @param optimizeRigidFragments if true, then all rigid fragments will be energy minimized by the MMFF94s+ forcefield
 	 */
 	public ConformerGenerator(long seed, RigidFragmentCache cache, boolean optimizeRigidFragments) {
@@ -268,7 +274,6 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 	 * @param mol the molecule from which to create the conformer
 	 */
 	public Conformer getOneConformer(StereoMolecule mol) {
-try {	// TODO remove try catch
 		if (!initialize(mol, false))
 			return null;
 
@@ -284,7 +289,6 @@ try {	// TODO remove try catch
 			separateDisconnectedFragments(conformer);
 			return conformer;
 			}
-} catch (Exception e) { e.printStackTrace(); return null; }
 		}
 
 		/**

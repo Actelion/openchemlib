@@ -13,6 +13,17 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipInputStream;
 
+/**
+ * This class implements a thread-save, concurrent cache of rigid fragments' 3D-atom-coordinates.
+ * It is accessed by the RigidFragmentProvider instances, which serve RigidFragments to
+ * ConformerGenerator instances when constructing 3D-coordinates for molecules by assembling
+ * them from 3-dimensional rigid fragments and torsion tables.
+ * Typically, ConformerGenerators start with an empty cache that fills over time or with
+ * a default cache, which is prefilled with many common fragments from organic and medicinal
+ * chemistry as well as with common building block fragments.<br>
+ * The default cache is balanced in memory footprint and number of fragments it contains.
+ * For special purposes you may consider creating an own custom cache file using the createCacheFiles() method.
+ **/
 public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentCache.CacheEntry> implements Serializable {
 	private static final String DEFAULT_CACHE_FILE = "/resources/defaultRigidFragments.zip";
 	private static RigidFragmentCache sInstance;
@@ -185,11 +196,15 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	/**
 	 * This is a helper method to generate a set of cache files from one or more compound files.
 	 * You may use this function to create a custom fragment cache if the default cache file used
-	 * by the ConformerGenerator in not adequate for your purpose. The default files covers many
-	 * common fragments in organic and medicinal chemistry. However, it is limited in size. You may
-	 * consider a custom cache file in these cases:<br>
-	 * - If you process millions of compounds and your Java process has plenty of memory<br>
-	 * - If you process a molecules with limited diversity, e.g. combinatorial libraries as the Enamine REAL space<br>
+	 * by the ConformerGenerator in not adequate for your purpose. The default file covers many
+	 * common fragments in organic and medicinal chemistry and common building block fragments.
+	 * However, it is limited in size. You may consider using a custom cache file in these cases:<br>
+	 * - To achieve a maximum of speed on the expense of memory, e.g. for a cloud based service that
+	 * generates conformers on request.<br>
+	 * - If you process molecules with limited diversity, e.g. combinatorial libraries as the Enamine REAL space.
+	 * Then you may use a complete cache covering every existing fragment for maximum speed.<br>
+	 * - If you store conformer sets as fragment references and torsion tables. Then your fragment cache
+	 * needs a complete cache covering every existing fragment.<br>
 	 * This method processes all input files, locates and all rigid fragments, produces one or more
 	 * distinct conformers from the fragments and creates a new cache from them. Optionally, the
 	 * fragment conformers can be energy minimized using the MMFF94s+ forcefield. Then multiple cache
