@@ -124,8 +124,6 @@ public class RigidFragmentProvider {
 		int[] extendedToFragmentAtom = new int[coreAtomCount + extendedAtomCount];
 		int[] originalToExtendedAtom = new int[mol.getAllAtoms()];
 
-boolean parityFound = false; //TODO get rid of this
-
 		int coreAtom = 0;
 		int fragmentAtom = 0;
 		int extendedAtom = 0;
@@ -144,7 +142,6 @@ boolean parityFound = false; //TODO get rid of this
 				}
 
 				if (isCoreFragment[atom]) {
-if (mol.getAtomParity(atom)==Molecule.cAtomParity1 || mol.getAtomParity(atom)==Molecule.cAtomParity2) parityFound=true;
 					coreToFragmentAtom[coreAtom] = fragmentAtom;
 					coreAtom++;
 				}
@@ -174,15 +171,19 @@ if (mol.getAtomParity(atom)==Molecule.cAtomParity1 || mol.getAtomParity(atom)==M
 			// bond as constraint.
 			fragment.ensureHelperArrays(Molecule.cHelperRings);
 			for (int i=0; i<coreAtomCount; i++) {
-				int fAtom = coreToFragmentAtom[i];
-				int oAtom = fragmentToOriginalAtom[fAtom];
-				if (isPotentialStereoCenter(mol, oAtom)
-						&& mol.getAtomParity(oAtom) != Molecule.cAtomParity1
-						&& mol.getAtomParity(oAtom) != Molecule.cAtomParity2) {
-					fragment.setAtomParity(fAtom, Molecule.cAtomParity1, false);
-					fragment.setStereoBondFromAtomParity(fAtom);
+				int atom = coreToFragmentAtom[i];
+				if (fragment.getAtomParity(atom) != Molecule.cAtomParity1
+				 && fragment.getAtomParity(atom) != Molecule.cAtomParity2
+				 && isPotentialStereoCenter(fragment, atom)) {
+//System.out.println("***************************** adding parity ********************************");
+//System.out.println("molecule:"+new MolfileCreator(mol).getMolfile()+"$$$$");
+//System.out.println("fragment:"+new MolfileCreator(fragment).getMolfile()+"$$$$");
+					fragment.setAtomParity(atom, Molecule.cAtomParity1, false);
+					fragment.setStereoBondFromAtomParity(atom);
 					}
 				}
+			// Atropisomeric bond parities don't need to be handled here. These bonds are considered rotatable
+			// and conflicting torsion angles are removed by the TorsionSetStrategy.
 
 			// We use the Canonizer's graphindex to store coordinates in a canonical sequence in the cache.
 			// If we have stereo centers in the original molecule, which are no stereo centers in the rigid
@@ -192,13 +193,6 @@ if (mol.getAtomParity(atom)==Molecule.cAtomParity1 || mol.getAtomParity(atom)==M
 			// correctly assign cached coordinates back to atoms.
 			canonizer = new Canonizer(fragment, Canonizer.CONSIDER_STEREOHETEROTOPICITY);
 			key = canonizer.getIDCode();
-
-//if (sPrintParityFragment && parityFound) System.out.println("parity fragment:"+key);
-//if (key.equals("dmVBPBAIUh@XAInfYjjf@NDY@E@\u007FZB@")) {
-// System.out.println("molecule:"+new MolfileCreator(mol).getMolfile());
-// System.out.println("fragment:"+new MolfileCreator(fragment).getMolfile());
-// System.out.print("mapping:"); int[] gi = canonizer.getGraphIndexes(); for (int m:gi) System.out.print(" "+m); System.out.println();
-// }
 
 			RigidFragmentCache.CacheEntry cacheEntry = mCache.get(key);
 
@@ -308,12 +302,70 @@ if (mol.getAtomParity(atom)==Molecule.cAtomParity1 || mol.getAtomParity(atom)==M
 		if (mol.getAtomicNo(atom) == 7 && mol.getConnAtoms(atom) < 4)
 			return false;
 
+		int[] canRank = new int[mol.getConnAtoms(atom)];
+		Canonizer canonizer = new Canonizer(mol, Canonizer.CREATE_SYMMETRY_RANK);
+		for (int i=0; i<canRank.length; i++)
+			canRank[i] = canonizer.getSymmetryRank(mol.getConnAtom(atom, i));
+
+		// create array to remap connAtoms according to canRank order
+		boolean[] hasOpenValence = new boolean[mol.getConnAtoms(atom)];
+		int[] sortedRank = new int[mol.getConnAtoms(atom)];
+		boolean[] neighbourUsed = new boolean[4];
+		for (int i=0; i<mol.getConnAtoms(atom); i++) {
+			int highestRank = -1;
+			int highestConn = 0;
+			for (int j=0; j<mol.getConnAtoms(atom); j++) {
+				if (!neighbourUsed[j]) {
+					if (highestRank < canRank[j]) {
+						highestRank = canRank[j];
+						highestConn = j;
+						}
+					}
+				}
+			neighbourUsed[highestConn] = true;
+			sortedRank[i] = highestRank;
+			hasOpenValence[i] = isOpenValenceSubstituent(mol, atom, mol.getConnAtom(atom, highestConn));
+			}
+
+		for (int i=1; i<canRank.length; i++)
+			if (sortedRank[i-1] == sortedRank[i]
+			 && !hasOpenValence[i-1]
+			 && !hasOpenValence[i])
+				return false;
+
 		return true;
+		}
+
+	private boolean isOpenValenceSubstituent(StereoMolecule mol, int root, int first) {
+		if (mol.getConnAtoms(first) == 1)
+			return false;
+
+		boolean[] isUsed = new boolean[mol.getAtoms()];
+		isUsed[root] = true;
+		isUsed[first] = true;
+
+		int[] graphAtom = new int[mol.getAtoms()];
+		graphAtom[0] = first;
+		int current = 0;
+		int highest = 0;
+		while (current <= highest) {
+			for (int i=0; i<mol.getConnAtoms(graphAtom[current]); i++) {
+				int candidate = mol.getConnAtom(graphAtom[current], i);
+				if (!isUsed[candidate]) {
+					if (mol.getFreeValence(candidate) != 0)
+						return true;
+					isUsed[candidate] = true;
+					graphAtom[++highest] = candidate;
+					}
+				}
+			current++;
+			}
+		return false;
 		}
 
 	/**
 	 * @param conformer
-	 * @param energy_out [0] is the final energy,, [1] is the starting energy
+	 * @param energy_out [0] is the final energy, [1] is the starting energy
 	 * @return
 	 */
 	public static Conformer minimizeConformer( Conformer conformer , double[] energy_out ) {
