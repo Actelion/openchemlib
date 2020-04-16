@@ -120,6 +120,11 @@ public class ConstantsDWAR {
 	 */
 	public static final String TAG_COOR3D = "idcoordinates3D";
 
+	/**
+	 * For the PheSA single conf
+	 */
+	public static final String TAG_COOR3D_CRYSTAL = "idcoordinates3DCrystal";
+
 	public static final String TAG_COOR = "idcoordinates";
 
 	public static final String TAG_ID_QUERY = "Id Query";
