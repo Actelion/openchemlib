@@ -419,11 +419,11 @@ public class PharmacophoreTree {
 	 *
 	 */
 	
-	public static class Edge {
+	public static class BiGramInt {
 		public int[] edge;
 		int u,v;
 		
-		public Edge(int[] edge) {
+		public BiGramInt(int[] edge) {
 			this.edge = edge;
 
 			if(edge[0]<edge[1]) {
@@ -438,12 +438,15 @@ public class PharmacophoreTree {
 
 				
 		}
+		public BiGramInt(int i, int j) {
+			this(new int[] {i,j});
+		}
 		@Override
 		public boolean equals(Object obj) {
 
 		    if (obj == null) return false;
 
-		    if (!(obj instanceof Edge))
+		    if (!(obj instanceof BiGramInt))
 
 		        return false;
 
@@ -451,7 +454,7 @@ public class PharmacophoreTree {
 
 		        return true;
 
-		    return ((this.u == ((Edge) obj).u) && (this.v == ((Edge) obj).v));
+		    return ((this.u == ((BiGramInt) obj).u) && (this.v == ((BiGramInt) obj).v));
 
 		}
 		

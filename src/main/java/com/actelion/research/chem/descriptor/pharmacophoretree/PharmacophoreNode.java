@@ -171,7 +171,7 @@ public class PharmacophoreNode {
 				sterSim = 1.0;
 				chemSim = 1.0;
 		}
-	
+		
 		return (1.0-CHEM_SIM_WEIGHT)*sterSim+CHEM_SIM_WEIGHT*chemSim;	
 		
 	}
