@@ -37,7 +37,7 @@ import java.util.Comparator;
  * whether and how serious atom collisions occurred.
  */
 public abstract class TorsionSetStrategy {
-	private static final long[] BITS = { 0x00l, 0x01l, 0x03l, 0x07l, 0x0fl, 0x1fl, 0x3fl, 0x7fl };
+	private static final long[] BITS = { 0x00L, 0x01L, 0x03L, 0x07L, 0x0fL, 0x1fL, 0x3fL, 0x7fL };
 	private static final int MAX_TOTAL_COUNT = 10000;   // maximum of distinct torsion sets to be checked
 
 	// Slightly colliding torsion sets, which are initially not considered acceptable, are collected in a cache.
@@ -61,7 +61,7 @@ public abstract class TorsionSetStrategy {
 	public static final double MAX_ALLOWED_COLLISION_INTENSITY = MAX_COLLISION_INTENSITY_BASE + SECOND_CHOICE_MAX_TOLERANCE;
 
 	protected RotatableBond[] mRotatableBond;
-	protected Rigid3DFragment[] mRigidFragment;
+	protected RigidFragment[] mRigidFragment;
 	private int mFragmentCount,mEncodingLongCount,mCollisionCount,mTotalCount,mMaxTotalCount,mPermutationCount;
 	private boolean mUsingSecondChoices;
 	private int[][][] mBondsBetweenFragments;
@@ -79,7 +79,7 @@ public abstract class TorsionSetStrategy {
 	private SortedList<TorsionSet> mSecondChoiceList;
 	private ArrayList<TorsionSetEliminationRule> mEliminationRuleList;
 
-	public TorsionSetStrategy(RotatableBond[] rotatableBond, Rigid3DFragment[] fragment) {
+	public TorsionSetStrategy(RotatableBond[] rotatableBond, RigidFragment[] fragment) {
 		mRotatableBond = rotatableBond;
 		mRigidFragment = fragment;
 
@@ -130,9 +130,9 @@ public abstract class TorsionSetStrategy {
 		int bitCount = 0;
 		int longIndex = 0;
 		int index = 0;
-		for (int i=0; i<mRotatableBond.length; i++) {
-			mPermutationCount *= mRotatableBond[i].getTorsionCount();
-			int bits = neededBits(mRotatableBond[i].getTorsionCount());
+		for (RotatableBond rb:mRotatableBond) {
+			mPermutationCount *= rb.getTorsionCount();
+			int bits = neededBits(rb.getTorsionCount());
 			if (bitCount + bits <= 64) {
 				mEncodingBitShift[index] = bitCount;
 				bitCount += bits;
@@ -146,9 +146,9 @@ public abstract class TorsionSetStrategy {
 			mEncodingLongIndex[index] = longIndex;
 			index++;
 			}
-		for (int i=0; i<mRigidFragment.length; i++) {
-			mPermutationCount *= mRigidFragment[i].getConformerCount();
-			int bits = neededBits(mRigidFragment[i].getConformerCount());
+		for (RigidFragment rf:mRigidFragment) {
+			mPermutationCount *= rf.getConformerCount();
+			int bits = neededBits(rf.getConformerCount());
 			if (bitCount + bits <= 64) {
 				mEncodingBitShift[index] = bitCount;
 				bitCount += bits;
@@ -166,16 +166,10 @@ public abstract class TorsionSetStrategy {
 		if (mPermutationCount <= 0)
 			mPermutationCount = Integer.MAX_VALUE;
 
-		mEliminationRuleList = new ArrayList<TorsionSetEliminationRule>();
+		mEliminationRuleList = new ArrayList<>();
 
-		mTorsionSetList = new UniqueList<TorsionSet>();
-		mSecondChoiceList = new SortedList<TorsionSet>(new Comparator<TorsionSet>() {
-			@Override
-			public int compare(TorsionSet ts1, TorsionSet ts2) {
-				return ts1.getCollisionIntensitySum() < ts2.getCollisionIntensitySum() ? -1
-					 : ts1.getCollisionIntensitySum() > ts2.getCollisionIntensitySum() ? 1 : 0;
-			}
-		});
+		mTorsionSetList = new UniqueList<>();
+		mSecondChoiceList = new SortedList<>(Comparator.comparingDouble(ts -> ((TorsionSet)ts).getCollisionIntensitySum()));
 		mCollisionCount = 0;
 		mTotalCount = 0;
 		mLowestCollisionStrain = MAX_COLLISION_INTENSITY_BASE;
@@ -229,25 +223,25 @@ public abstract class TorsionSetStrategy {
 
 	/**
 	 * Creates a new TorsionSet object from a torsion index array.
-	 * An An overall likelyhood of the new torsion set is calculated
-	 * by multiplying individual likelyhoods of the specific torsion angles
+	 * An overall likelihood of the new torsion set is calculated
+	 * by multiplying individual likelihoods of the specific torsion angles
 	 * of all underlying RotatableBonds.
 	 * @param torsionIndex
 	 * @param conformerIndex null or conformer index for every rigid fragment
 	 * @return
 	 */
 	protected TorsionSet createTorsionSet(int[] torsionIndex, int[] conformerIndex) {
-		double likelyhood = 1.0;
+		double likelihood = 1.0;
 		for (int j=0; j<mRotatableBond.length; j++)
-			likelyhood *= mRotatableBond[j].getTorsionLikelyhood(torsionIndex[j]);
+			likelihood *= mRotatableBond[j].getTorsionLikelyhood(torsionIndex[j]);
 		if (conformerIndex != null)
 			for (int j=0; j<mRigidFragment.length; j++)
-				likelyhood *= mRigidFragment[j].getConformerLikelyhood(conformerIndex[j]);
-		return new TorsionSet(torsionIndex, conformerIndex, mEncodingBitShift, mEncodingLongIndex, likelyhood);
+				likelihood *= mRigidFragment[j].getConformerLikelihood(conformerIndex[j]);
+		return new TorsionSet(torsionIndex, conformerIndex, mEncodingBitShift, mEncodingLongIndex, likelihood);
 		}
 
-/*	protected TorsionSet createTorsionSet(int[] torsionIndex, double likelyhood) {
-		return new TorsionSet(torsionIndex, mEncodingBitShift, mEncodingLongIndex, likelyhood);
+/*	protected TorsionSet createTorsionSet(int[] torsionIndex, double likelihood) {
+		return new TorsionSet(torsionIndex, mEncodingBitShift, mEncodingLongIndex, likelihood);
 		}	*/
 
 	protected boolean isNewTorsionSet(TorsionSet ts) {
@@ -261,7 +255,7 @@ public abstract class TorsionSetStrategy {
 	 * collision intensity sum must have been reported to the torsion set.
 	 * Torsion sets returned by this method are guaranteed to avoid torsion sequences that
 	 * had previously caused collisions.
-	 * To achieve this goal, TorsionSetStragegy repeatedly requests new TorsionSets
+	 * To achieve this goal, TorsionSetStrategy repeatedly requests new TorsionSets
 	 * from the strategy implementation and returns the first set that is not in conflict
 	 * with the collision rules already collected or until no further set exists.
 	 * @param previousTorsionSet delivered by this method (or null if it is the first call)
@@ -418,8 +412,7 @@ public abstract class TorsionSetStrategy {
 						int[] rotatableBondIndex = mBondsBetweenFragments[f1][f2];
 						long[] mask = new long[mEncodingLongCount];
 						long[] data = new long[mEncodingLongCount];
-						for (int i=0; i<rotatableBondIndex.length; i++) {
-							int rb = rotatableBondIndex[i];
+						for (int rb:rotatableBondIndex) {
 							data[mEncodingLongIndex[rb]] += (torsionIndex[rb] << mEncodingBitShift[rb]);
 							mask[mEncodingLongIndex[rb]] += (BITS[mEncodingBitCount[rb]] << mEncodingBitShift[rb]);
 							}
@@ -432,7 +425,7 @@ public abstract class TorsionSetStrategy {
 								}
 							if (er.isMoreGeneral(mask, data)) {
 								if (obsoleteList == null)
-									obsoleteList = new ArrayList<TorsionSetEliminationRule>();
+									obsoleteList = new ArrayList<>();
 								obsoleteList.add(er);
 								}
 							}
@@ -494,7 +487,7 @@ public abstract class TorsionSetStrategy {
 		for (int i=0; i<mRotatableBond.length; i++)
 			likelyhood *= mRotatableBond[i].getTorsionLikelyhood(torsionSet.getTorsionIndexes()[i]);
 		for (int i=0; i<mRigidFragment.length; i++)
-			likelyhood *= mRigidFragment[i].getConformerLikelyhood(torsionSet.getConformerIndexes()[i]);
+			likelyhood *= mRigidFragment[i].getConformerLikelihood(torsionSet.getConformerIndexes()[i]);
 		return likelyhood;
 		}
 
@@ -570,7 +563,7 @@ public abstract class TorsionSetStrategy {
 				long mask = BITS[neededBits(mRigidFragment[i].getConformerCount())] << mEncodingBitShift[index];
 				if ((rule.getMask()[mEncodingLongIndex[index]] & mask) != 0) {
 					int t = (int)((rule.getData()[mEncodingLongIndex[index]] & mask) >> mEncodingBitShift[index]);
-					sb.append("f[" + i + "]:(" + (int)(100 * mRigidFragment[i].getConformerLikelyhood(t)) + "%) ");
+					sb.append("f[" + i + "]:(" + (int)(100 * mRigidFragment[i].getConformerLikelihood(t)) + "%) ");
 					}
 				}
 			index++;

@@ -821,16 +821,37 @@ public class StringFunctions {
 	public static String toString(double [] arr, NumberFormat nf){
 
 		StringBuilder sb = new  StringBuilder();
-
-
 		for (int i = 0; i < arr.length; i++) {
-
 			sb.append(nf.format(arr[i]));
-
 			if(i < arr.length-1){
 				sb.append(ConstantsDWAR.SEP_VALUE);
 			}
+		}
+		return sb.toString();
+	}
 
+	public static String toString(byte [] arr){
+
+		StringBuilder sb = new  StringBuilder();
+		for (int i = 0; i < arr.length; i++) {
+			int v = arr[i];
+			sb.append(v);
+			if(i < arr.length-1){
+				sb.append(ConstantsDWAR.SEP_VALUE);
+			}
+		}
+		return sb.toString();
+	}
+
+	public static String toString(boolean [] arr){
+
+		StringBuilder sb = new  StringBuilder();
+		for (int i = 0; i < arr.length; i++) {
+			if(arr[i]) {
+				sb.append(1);
+			} else {
+				sb.append(0);
+			}
 		}
 
 		return sb.toString();

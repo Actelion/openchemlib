@@ -26,22 +26,24 @@ import com.actelion.research.util.IntArrayComparator;
 import org.openmolecules.chem.conf.so.ConformationSelfOrganizer;
 import org.openmolecules.chem.conf.so.SelfOrganizedConformer;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Random;
 import java.util.TreeMap;
 
 /**
  * This class generates 3D-conformers of a given molecule using the following strategy:
  * <li>All rotatable, non-ring bonds are determined.
- * <li>The fragments between rotatable bonds are considered rigid.
- * <li>For every fragment the relative atom coordinates are determined using a self organization based algorithm.
- * <li>For every rotatable bond a list of preferred torsion angles is determined based on from a CSD statistics of similar bond environments.
+ * <li>Fragments separated by rotatable bonds are considered rigid, but there may be more than one possible
+ * fragment conformer, e.g. chair- and boat conformers of a saturated 6-membered ring.
+ * <li>These atom coordinate sets of rigid fragments are handed out by a dedicated RigidFragmentProvider instance,
+ * which either generates them using a self organization algorithm, or which takes it from a cache.
+ * <li>For every rotatable bond a list of preferred torsion angles is determined based on from a COD statistics
+ * of similar bond environments.
  * <li>For individual torsion values likelihoods are estimated based on frequency and atom collisions of vicinal fragments.
  * <li>A dedicated (systematic, biased or random) torsion set strategy delivers collision-free torsion sets, i.e. conformers.
+ * <br><br>
+ * For generating conformers in multiple threads, every thread needs its own ConformerGenerator instance.
+ * If they use a RigidFragmentCache, then the cache is shared among all ConformerGenerators.
  */
 public class ConformerGenerator {
 	public static final int STRATEGY_LIKELY_SYSTEMATIC = 1;
@@ -59,8 +61,9 @@ public class ConformerGenerator {
 	private StereoMolecule		mMolecule;
 	private TreeMap<int[],Conformer> mBaseConformerMap;
 	private RotatableBond[]		mRotatableBond;
-	private Rigid3DFragment[]	mRigidFragment;
+	private RigidFragment[]     mRigidFragment;
 	private ConformationSelfOrganizer mSelfOrganizer;
+	private RigidFragmentProvider mRigidFragmentProvider;
 	private TorsionSetStrategy	mTorsionSetStrategy;
 	private TorsionSet			mTorsionSet;
 	private long				mRandomSeed;
@@ -97,7 +100,8 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 		for (int atom=0; atom<mol.getAtoms(); atom++)
 			implicitHydrogen[atom] = mol.getImplicitHydrogens(atom);
 
-		double avbl = mol.getAverageBondLength();
+		double hydrogenBondLength = 0.8 * mol.getAverageBondLength();
+
 		for (int atom=0; atom<implicitHydrogen.length; atom++)
 			if (implicitHydrogen[atom] != 0)
 				for (int i=0; i<implicitHydrogen[atom]; i++)
@@ -106,7 +110,7 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		for (int atom=0; atom<implicitHydrogen.length; atom++)
 			if (implicitHydrogen[atom] != 0)
-				setHydrogenLocations(mol, atom, implicitHydrogen[atom], avbl);
+				setHydrogenLocations(mol, atom, implicitHydrogen[atom], hydrogenBondLength);
 
 		// addAtom() and addBond() clear the helper status, i.e. flag all helpers as invalid.
 		// Adding hydrogens does not destroy parities. Though, we may flag them to be valid again.
@@ -116,55 +120,74 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 
 	/**
 	 * Finds the widest open angle between all connected non-stereo bonds of atom, divides this angle
-	 * into hydrogenCount+1 equals parts and sets atom coordinates of hydrogenCount new hydrogen atoms
-	 * such, that they equally occupy the space. Helper arrays are assumed to have the state before
-	 * adding any new hydrogen atoms.
+	 * into hydrogenCount+1 equal parts and sets atom coordinates of hydrogenCount new hydrogen atoms
+	 * such, that they equally occupy the space and not collide with a potential stereo-bonded neighbour.
 	 * @param mol
 	 * @param atom
 	 * @param newHydrogenCount new hydrogen atoms added to atom
 	 * @param avbl
 	 */
 	private static void setHydrogenLocations(StereoMolecule mol, int atom, int newHydrogenCount, double avbl) {
+		int firstNewHydrogenConnIndex = mol.getAllConnAtoms(atom) - newHydrogenCount;
 
-		int firstNewHydrogenNeighbour = mol.getAllConnAtoms(atom) - newHydrogenCount;
-
-		int stereoBondCount = 0;
-		for (int i=0; i<firstNewHydrogenNeighbour; i++)
-			if (mol.isStereoBond(mol.getConnBond(atom,i)))
-				stereoBondCount++;
+		int stereoBondIndex = -1;
+		double stereoBondAngle = Double.NaN;
+		for (int i=0; i<firstNewHydrogenConnIndex; i++) {
+			if (mol.isStereoBond(mol.getConnBond(atom, i), atom)) {
+				stereoBondIndex = i;
+				stereoBondAngle = mol.getBondAngle(atom, mol.getConnAtom(atom, i));
+				break;
+				}
+			}
+		int stereoBondCount = (stereoBondIndex == -1) ? 0 : 1;
 
 		double[] angle = null;
-		if (stereoBondCount < firstNewHydrogenNeighbour) {
-			angle = new double[firstNewHydrogenNeighbour-stereoBondCount];
+		if (stereoBondCount < firstNewHydrogenConnIndex) {
+			angle = new double[firstNewHydrogenConnIndex-stereoBondCount];
 			int bond = 0;
-			for (int i=0; i<firstNewHydrogenNeighbour; i++)
-				if (!mol.isStereoBond(mol.getConnBond(atom, i)))
+			for (int i=0; i<firstNewHydrogenConnIndex; i++)
+				if (i != stereoBondIndex)
 					angle[bond++] = mol.getBondAngle(atom, mol.getConnAtom(atom, i));
 	
 			Arrays.sort(angle);
 			}
 
-		double angleIncrement = 2.0*Math.PI/newHydrogenCount;
+		double angleIncrement = 2.0*Math.PI/Math.max(newHydrogenCount, 3);
 		double startAngle = 0.0;
 
 		if (angle != null) {
-			double biggestAngleDif = 0.0;
-			for (int i=0; i<angle.length; i++) {
-				double a1 = (i == 0) ? angle[angle.length-1] - Math.PI*2.0 : angle[i-1];
-				double a2 = angle[i];
-				if (biggestAngleDif < a2 - a1) {
-					biggestAngleDif = a2 - a1;
-					startAngle = a1;
-					}
+			if (angle.length == 1 && newHydrogenCount == 1) {
+				startAngle = angle[0];
 				}
-			angleIncrement = biggestAngleDif / (newHydrogenCount + 1);
+			else {
+				double biggestAngleDif = 0.0;
+				for (int i=0; i<angle.length; i++) {
+					double a1 = (i == 0) ? angle[angle.length - 1] - Math.PI * 2.0 : angle[i - 1];
+					double a2 = angle[i];
+					if (biggestAngleDif < a2 - a1) {
+						biggestAngleDif = a2 - a1;
+						startAngle = a1;
+						}
+					}
+				angleIncrement = biggestAngleDif / (newHydrogenCount + 1);
+				}
 			}
 
 		for (int i=0; i<newHydrogenCount; i++) {
 			startAngle += angleIncrement;
-			int newHydrogen = mol.getConnAtom(atom, firstNewHydrogenNeighbour+i);
-			mol.setAtomX(newHydrogen, mol.getAtomX(atom) + avbl * Math.sin(startAngle));
-			mol.setAtomY(newHydrogen, mol.getAtomY(atom) + avbl * Math.cos(startAngle));
+			double hydrogenAngle = startAngle;
+			if (stereoBondCount != 0) {
+				double dif = Molecule.getAngleDif(hydrogenAngle, stereoBondAngle);
+				if (Math.abs(dif) < angleIncrement/2) {
+					if (dif < 0)
+						hydrogenAngle = stereoBondAngle - angleIncrement/2;
+					else
+						hydrogenAngle = stereoBondAngle + angleIncrement/2;
+					}
+				}
+			int newHydrogen = mol.getConnAtom(atom, firstNewHydrogenConnIndex+i);
+			mol.setAtomX(newHydrogen, mol.getAtomX(atom) + avbl * Math.sin(hydrogenAngle));
+			mol.setAtomY(newHydrogen, mol.getAtomY(atom) + avbl * Math.cos(hydrogenAngle));
 			}
 		}
 
@@ -175,20 +198,53 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 
 	/**
 	 * Instantiates a ConformerGenerator for creating not reproducible conformers.
+	 * Uses an the default rigid fragment cache, which is initially empty unless
+	 * RigidFragmentCache.getDefaultInstance().loadDefaultCache() was called before.
+	 * While rigid fragments, when found in the cache are always energy  minimized,
+	 * the ones not found in the cache are generated by self organization and not minimized afterawrds.
 	 */
 	public ConformerGenerator() {
-		this(0L);
+		this(0L, RigidFragmentCache.getDefaultInstance(), false);
 		}
 
 	/**
+	 * Instantiates a ConformerGenerator for creating reproducible conformers.
+	 * Uses an the default rigid fragment cache, which is initially empty unless
+	 * RigidFragmentCache.getDefaultInstance().loadDefaultCache() was called before.
+	 * While rigid fragments, when found in the cache, are always energy  minimized,
+	 * the ones not found in the cache are generated by self organization and energy
+	 * minimized before cached and being used, if optimizeRigidFragments is true.
 	 * @param seed != 0L if conformers shall be created in a reproducible way
+	 * @param optimizeRigidFragments if true, then all rigid fragments will be energy minimized by the MMFF94s+ forcefield
 	 */
-	public ConformerGenerator(long seed) {
+	public ConformerGenerator(long seed, boolean optimizeRigidFragments) {
+		this(seed, RigidFragmentCache.getDefaultInstance(), optimizeRigidFragments);
+	}
+
+	/**
+	 * Instantiates a ConformerGenerator for creating reproducible conformers.
+	 * Uses an the default rigid fragment cache, which is initially empty unless
+	 * RigidFragmentCache.getDefaultInstance().loadDefaultCache() was called before.
+	 * While rigid fragments, when found in the cache, are always energy minimized,
+	 * the ones not found in the cache are generated by self organization and energy
+	 * minimized before cached and being used, if optimizeRigidFragments is true.
+	 * @param optimizeRigidFragments if true, then all rigid fragments will be energy minimized by the MMFF94s+ forcefield
+	 */
+	public ConformerGenerator(boolean optimizeRigidFragments) {
+		this(0L, RigidFragmentCache.getDefaultInstance(), optimizeRigidFragments);
+	}
+
+	/**
+	 * @param seed != 0L if conformers shall be created in a reproducible way
+	 * @param cache may be null for generating all rigid fragment conformers on the fly
+	 * @param optimizeRigidFragments if true, then all rigid fragments will be energy minimized by the MMFF94s+ forcefield
+	 */
+	public ConformerGenerator(long seed, RigidFragmentCache cache, boolean optimizeRigidFragments) {
 		TorsionDB.initialize(TorsionDB.MODE_ANGLES);
 		mRandomSeed = seed;
 		mRandom = (seed == 0) ? new Random() : new Random(seed);
-		Rigid3DFragment.setRandomSeed(seed);
-		}
+		mRigidFragmentProvider = new RigidFragmentProvider(seed, cache, optimizeRigidFragments);
+	}
 
 	/**
 	 * Fills all free valences of mol with explicit hydrogens and tries to
@@ -218,14 +274,13 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 	 * @param mol the molecule from which to create the conformer
 	 */
 	public Conformer getOneConformer(StereoMolecule mol) {
-try {	// TODO remove try catch
 		if (!initialize(mol, false))
 			return null;
 
 		if (mRotatableBond != null) {
 			mTorsionSetStrategy = new TorsionSetStrategyAdaptiveRandom(mRotatableBond, mRigidFragment, true, true, mRandomSeed);
 			mTorsionSetStrategy.setMaxTotalCount(400);
-			mBaseConformerMap = new TreeMap<int[],Conformer>(new IntArrayComparator());
+			mBaseConformerMap = new TreeMap<>(new IntArrayComparator());
 			return getNextConformer();
 			}
 		else {
@@ -234,10 +289,10 @@ try {	// TODO remove try catch
 			separateDisconnectedFragments(conformer);
 			return conformer;
 			}
-} catch (Exception e) { e.printStackTrace(); return null; }
 		}
 
 		/**
+		 * Don't call this method directly. Rather call initializeConformers() !!!
 		 * Adds implicit hydrogens to the molecule and determines all rotatable bonds,
 		 * which are not part of a ring. Generates rigid fragments between rotatable bonds.
 		 * The base conformer is constructed by connecting all rigid fragments using the
@@ -247,7 +302,7 @@ try {	// TODO remove try catch
 		 * @param mol
 		 * @param use60degreeSteps use 60 degree steps for every rotatable bond instead of torsion DB
 		 */
-	private boolean initialize(StereoMolecule mol, boolean use60degreeSteps) {
+	protected boolean initialize(StereoMolecule mol, boolean use60degreeSteps) {
 		mSelfOrganizer = null;
 
 		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
@@ -310,39 +365,39 @@ try {	// TODO remove try catch
 
 		locateInitialFragments(isRotatableBond);
 
-if (WRITE_DW_FRAGMENT_FILE) {
- try {
-  BufferedWriter writer = new BufferedWriter(new FileWriter(DW_FRAGMENTS_FILE));
-  writer.write("<column properties>");
-  writer.newLine();
-  writer.write("<columnName=\"Structure\">");
-  writer.newLine();
-  writer.write("<columnProperty=\"specialType\tidcode\">");
-  writer.newLine();
-  writer.write("<columnName=\"coords\">");
-  writer.newLine();
-  writer.write("<columnProperty=\"specialType\tidcoordinates3D\">");
-  writer.newLine();
-  writer.write("<columnProperty=\"parent\tStructure\">");
-  writer.newLine();
-  writer.write("</column properties>");
-  writer.newLine();
-  writer.write("Structure\tcoords");
-  writer.newLine();
-  for (Rigid3DFragment f:mRigidFragment) {
-   StereoMolecule[] fragment = f.getFragment();
-   for (int i=0; i<fragment.length; i++) {
-	Canonizer canonizer = new Canonizer(fragment[i]);
-	String idcode = canonizer.getIDCode();
-	String coords = canonizer.getEncodedCoordinates();
-	writer.write(idcode + "\t" + coords + "\t");
-	writer.newLine();
-    }
-   }
-  writer.close();
-  }
- catch (IOException ioe) {}
- }
+//if (WRITE_DW_FRAGMENT_FILE) {
+// try {
+//  BufferedWriter writer = new BufferedWriter(new FileWriter(DW_FRAGMENTS_FILE));
+//  writer.write("<column properties>");
+//  writer.newLine();
+//  writer.write("<columnName=\"Structure\">");
+//  writer.newLine();
+//  writer.write("<columnProperty=\"specialType\tidcode\">");
+//  writer.newLine();
+//  writer.write("<columnName=\"coords\">");
+//  writer.newLine();
+//  writer.write("<columnProperty=\"specialType\tidcoordinates3D\">");
+//  writer.newLine();
+//  writer.write("<columnProperty=\"parent\tStructure\">");
+//  writer.newLine();
+//  writer.write("</column properties>");
+//  writer.newLine();
+//  writer.write("Structure\tcoords");
+//  writer.newLine();
+//  for (Rigid3DFragment f:mRigidFragment) {
+//   StereoMolecule[] fragment = f.getFragment();
+//   for (int i=0; i<fragment.length; i++) {
+//	Canonizer canonizer = new Canonizer(fragment[i]);
+//	String idcode = canonizer.getIDCode();
+//	String coords = canonizer.getEncodedCoordinates();
+//	writer.write(idcode + "\t" + coords + "\t");
+//	writer.newLine();
+//    }
+//   }
+//  writer.close();
+//  }
+// catch (IOException ioe) {}
+// }
 
 		mRotatableBond = new RotatableBond[count];
 		int rotatableBond = 0;
@@ -353,20 +408,23 @@ if (WRITE_DW_FRAGMENT_FILE) {
 						mRigidFragment, mRandom, use60degreeSteps);
 
 		// sort by descending atom count of smaller side, i.e. we want those bond dividing into equal parts first!
-		Arrays.sort(mRotatableBond, new Comparator<RotatableBond>() {
-			@Override
-			public int compare(RotatableBond b1, RotatableBond b2) {
-				int c1 = b1.getSmallerSideAtomCount();
-				int c2 = b2.getSmallerSideAtomCount();
-				return (c1 == c2) ? 0 : (c1 < c2) ? 1 : -1;
-				}
-			});
+		Arrays.sort(mRotatableBond, (b1, b2) ->
+			Integer.compare(b2.getSmallerSideAtomCount(), b1.getSmallerSideAtomCount()) );
 
 		// TODO this is actually only used with random conformers. Using a conformer mode
 		// may save some time, if systematic conformers are created.
 		initializeCollisionCheck();
 
 		return true;
+		}
+
+	/**
+	 * After calling initializeConformers() this method returns the number of rotatable bonds,
+	 * which are used to separate the molecule into rigid fragments.
+	 * @return
+	 */
+	public int getRotatableBondCount() {
+		return mRotatableBond == null ? 0 : mRotatableBond.length;
 		}
 
 	private Conformer getBaseConformer(int[] fragmentPermutation) {
@@ -420,6 +478,10 @@ if (WRITE_DW_FRAGMENT_FILE) {
 		return (conformer == null) ? null : conformer.toMolecule(mol);
 		}
 
+	public Conformer getNextConformer() {
+		return getNextConformer(null);
+	}
+
 	/**
 	 * Creates the next random, likely or systematic new(!) conformer of the molecule
 	 * that was passed when calling initializeConformers(). A new conformer is one,
@@ -427,9 +489,11 @@ if (WRITE_DW_FRAGMENT_FILE) {
 	 * created by this function since the last call of initializeConformers().
 	 * Every call of this method creates a new collision-free conformer until the employed torsion set
 	 * strategy decides that it cannot generate any more suitable torsion sets.
+	 *
+	 * @param torsion_set_out : will contain the TorsionSet that gave rise to the conformer.
 	 * @return conformer or null, if all/maximum torsion permutations have been tried
 	 */
-	public Conformer getNextConformer() {
+	public Conformer getNextConformer(TorsionSet[] torsion_set_out) {
 		if (mRotatableBond == null && mSelfOrganizer == null)
 			return null;
 
@@ -447,7 +511,7 @@ if (WRITE_DW_FRAGMENT_FILE) {
 		if (mBaseConformerMap == null)
 			return null;
 
-		// create a base conformer from first set of fragments and calculate torsion likelyhoods
+		// create a base conformer from first set of fragments and calculate torsion likelihoods
 		if (mBaseConformerMap.size() == 0)
 			getBaseConformer(new int[mRigidFragment.length]);
 
@@ -457,9 +521,9 @@ if (WRITE_DW_FRAGMENT_FILE) {
 System.out.println("---- new torsion and conformer index set: -----");
 for (int i=0; i<mRotatableBond.length; i++) System.out.println("rb:"+i+" index:"+torsionSet.getTorsionIndexes()[i]
 +" torsion:"+mRotatableBond[i].getTorsion(torsionSet.getTorsionIndexes()[i])
-+" likelyhood:"+mRotatableBond[i].getTorsionLikelyhood(torsionSet.getTorsionIndexes()[i]));
++" likelihood:"+mRotatableBond[i].getTorsionLikelihood(torsionSet.getTorsionIndexes()[i]));
 for (int i=0; i<mRigidFragment.length; i++) System.out.println("rf:"+i+" index:"+torsionSet.getConformerIndexes()[i]
-+" likelyhood:"+mRigidFragment[i].getConformerLikelyhood(torsionSet.getConformerIndexes()[i]));
++" likelihood:"+mRigidFragment[i].getConformerLikelihood(torsionSet.getConformerIndexes()[i]));
 */
 
 			Conformer conformer = new Conformer(getBaseConformer(mTorsionSet.getConformerIndexes()));
@@ -553,6 +617,11 @@ if (elimRules != mTorsionSetStrategy.getEliminationRuleList().size()) {
 			mContribution = mTorsionSetStrategy.getContribution(mTorsionSet);
 			mTorsionSet.setUsed();
 			mConformerCount++;
+
+			if(torsion_set_out != null) {
+				torsion_set_out[0] = new TorsionSet(mTorsionSet);
+			}
+
 			return conformer;
 			}
 
@@ -709,9 +778,9 @@ if (elimRules != mTorsionSetStrategy.getEliminationRuleList().size()) {
 	private void locateInitialFragments(boolean[] isRotatableBond) {
 		mFragmentNo = new int[mMolecule.getAllAtoms()];
 		int fragmentCount = mMolecule.getFragmentNumbers(mFragmentNo, isRotatableBond, true);
-		mRigidFragment = new Rigid3DFragment[fragmentCount];
+		mRigidFragment = new RigidFragment[fragmentCount];
 		for (int i=0; i<fragmentCount; i++)
-			mRigidFragment[i] = new Rigid3DFragment(mMolecule, mFragmentNo, i);
+			mRigidFragment[i] = mRigidFragmentProvider.createFragment(mMolecule, mFragmentNo, i);
 		}
 
 	/**
@@ -739,7 +808,7 @@ if (elimRules != mTorsionSetStrategy.getEliminationRuleList().size()) {
 			}*/
 
 		// skip collision check for two atoms of the same fragment
-		for (Rigid3DFragment rf:mRigidFragment)
+		for (RigidFragment rf:mRigidFragment)
 			for (int i=1; i<rf.getExtendedSize(); i++)
 				for (int j=0; j<i; j++)
 					skipCollisionCheck(rf.extendedToOriginalAtom(i), rf.extendedToOriginalAtom(j));
@@ -811,7 +880,6 @@ if (WRITE_DW_FRAGMENT_FILE) {
 											collisionIntensityMatrix[f1] = new double[f1];
 										collisionIntensityMatrix[f1][f2] += collisionIntensity;
 										}
-									continue;
 									}
 								}
 							}
@@ -906,7 +974,7 @@ if (WRITE_DW_FRAGMENT_FILE) {
 		return true;
 		}
 
-	private double calculateCollisionIntensity(Conformer conformer, Rigid3DFragment f1, Rigid3DFragment f2) {
+	private double calculateCollisionIntensity(Conformer conformer, RigidFragment f1, RigidFragment f2) {
 		double collisionIntensitySum = 0;
 		for (int i=0; i<f1.getCoreSize(); i++) {
 			int atom1 = f1.coreToOriginalAtom(i);
@@ -933,4 +1001,41 @@ if (WRITE_DW_FRAGMENT_FILE) {
 			}
 		return collisionIntensitySum;
 		}
+
+
+	/**
+	 * Computes a conformer from a TorsionSet object.
+	 *
+ 	 * @param torsionset
+	 * @return the generated conformer.
+	 */
+	public Conformer generateConformerFromTorsionSet(TorsionSet torsionset) {
+		return generateConformerFromTorsionSet(torsionset.getConformerIndexes(),torsionset.getTorsionIndexes());
 	}
+
+	private Conformer generateConformerFromTorsionSet(int[] conformerIndexes, int[] torsionIndexes) {
+		Conformer conformer = new Conformer(getBaseConformer( conformerIndexes ));
+		//Conformer conformer = new Conformer(base_conformer(torsionset.getConformerIndexes()));
+
+		if(false) {
+			System.out.println();
+			for (int ci:conformerIndexes) {
+				System.out.print(ci + " ");
+			}
+		}
+
+		for (int j=mRotatableBond.length-1; j>=0; j--) {
+			Conformer ci = new Conformer(conformer);
+			mRotatableBond[j].rotateToIndex(ci, torsionIndexes[j]);
+			if(false) { System.out.print(torsionIndexes[j]+ " "); }
+		}
+
+		//System.out.println("passed collision check! "+mTorsionSet.toString());
+		separateDisconnectedFragments(conformer);
+		return conformer;
+	}
+
+
+
+
+}

@@ -33,7 +33,7 @@ public class TorsionSetStrategyRandom extends TorsionSetStrategy {
 	 * @param preferLikelyTorsions if set then more frequent angles are picked with higher probability
 	 * @param seed
 	 */
-	public TorsionSetStrategyRandom(RotatableBond[] rotatableBond, Rigid3DFragment[] fragment, boolean preferLikelyTorsions, long seed) {
+	public TorsionSetStrategyRandom(RotatableBond[] rotatableBond, RigidFragment[] fragment, boolean preferLikelyTorsions, long seed) {
 		super(rotatableBond, fragment);
 		mPreferLikelyTorsions = preferLikelyTorsions;
 		mRandom = (seed == 0) ? new Random() : new Random(seed);
@@ -55,7 +55,7 @@ public class TorsionSetStrategyRandom extends TorsionSetStrategy {
 
 		int[] torsionIndex = new int[mRotatableBond.length];
 		int[] conformerIndex = new int[mRigidFragment.length];
-		TorsionSet ts = null;
+		TorsionSet ts;
 		int count = 0;
 
 		do {

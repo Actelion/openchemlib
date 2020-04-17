@@ -15,6 +15,7 @@
 package org.openmolecules.chem.conf.gen;
 
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.*;
 
@@ -47,7 +48,7 @@ public class RotatableBond {
 	private static final short[] SIXTY_DEGREE_FREQUENCY = { 17, 17, 17, 17, 17, 17};
 	private static final short[][] SIXTY_DEGREE_RANGE = { {-20,20},{40,80},{100,140},{160,200},{220,260},{280,320}};
 
-	private Rigid3DFragment mFragment1,mFragment2;
+	private RigidFragment mFragment1,mFragment2;
 	private Random mRandom;
 	private int mRotationCenter,mBond,mFragmentNo1,mFragmentNo2;
 	private boolean mBondAtomsInFragmentOrder;
@@ -59,12 +60,12 @@ public class RotatableBond {
 	private int[] mTorsionAtom,mRearAtom,mSmallerSideAtomList;
 
 	public RotatableBond(StereoMolecule mol, int bond, int[] fragmentNo, int[] disconnectedFragmentNo,
-	                     int disconnectedFragmentSize, Rigid3DFragment[] fragment, Random random) {
+	                     int disconnectedFragmentSize, RigidFragment[] fragment, Random random) {
 		this(mol, bond, fragmentNo, disconnectedFragmentNo, disconnectedFragmentSize, fragment, random, false);
 		}
 
 	public RotatableBond(StereoMolecule mol, int bond, int[] fragmentNo, int[] disconnectedFragmentNo,
-						 int disconnectedFragmentSize, Rigid3DFragment[] fragment, Random random, boolean use60degreeSteps) {
+	                     int disconnectedFragmentSize, RigidFragment[] fragment, Random random, boolean use60degreeSteps) {
 		mBond = bond;
 		mRandom = random;
 		mTorsionAtom = new int[4];
@@ -103,13 +104,14 @@ public class RotatableBond {
 			}
 		}
 
+		removeIllegalTorsions(mol);
 		removeEquivalentTorsions(mol);
 		mLikelyhood = new double[mTorsion.length];
 
 		findSmallerSideAtomList(mol, disconnectedFragmentNo, disconnectedFragmentSize);
 		}
 
-	public Rigid3DFragment getFragment(int i) {
+	public RigidFragment getFragment(int i) {
 		return (i == 0) ? mFragment1 : mFragment2;
 		}
 
@@ -288,7 +290,7 @@ public class RotatableBond {
 	 */
 	public void connectFragments(Conformer conformer, boolean[] isAttached, int[] fragmentPermutation) {
 		if (!isAttached[mFragmentNo1] && !isAttached[mFragmentNo2]) {
-			Rigid3DFragment largerFragment = (mFragment1.getCoreSize() > mFragment2.getCoreSize()) ? mFragment1 : mFragment2;
+			RigidFragment largerFragment = (mFragment1.getCoreSize() > mFragment2.getCoreSize()) ? mFragment1 : mFragment2;
             int largerFragmentNo = (mFragment1.getCoreSize() > mFragment2.getCoreSize()) ? mFragmentNo1 : mFragmentNo2;
 			isAttached[largerFragmentNo] = true;
 			int fragmentConformer = (fragmentPermutation == null) ? 0 : fragmentPermutation[largerFragmentNo];
@@ -301,7 +303,7 @@ public class RotatableBond {
 		assert(isAttached[mFragmentNo1] ^ isAttached[mFragmentNo2]);
 
 		int rootAtom,rearAtom,fragmentNo,bondAtomIndex;
-		Rigid3DFragment fragment = null;
+		RigidFragment fragment;
 		if (isAttached[mFragmentNo1]) {
             fragmentNo = mFragmentNo2;
 			fragment = mFragment2;
@@ -650,6 +652,60 @@ public class RotatableBond {
 			int deltaTorsion = torsion - conformer.getBondTorsion(mBond);
 			rotateSmallerSide(conformer, Math.PI * deltaTorsion / 180.0);
 			conformer.setBondTorsion(mBond, torsion);
+			}
+		}
+
+	/**
+	 * If we have a BINAP stereo contraint, we have to remove colliding torsions
+	 * @param mol
+	 */
+	private void removeIllegalTorsions(StereoMolecule mol) {
+		if (mol.getBondOrder(mBond) == 1
+		 && (mol.getBondParity(mBond) == Molecule.cBondParityEor1 || mol.getBondParity(mBond) == Molecule.cBondParityZor2)) {
+			boolean inverse = false;
+			for (int i=0; i<2; i++) {
+				int conn = mTorsionAtom[3*i];
+				int atom = mTorsionAtom[1+i];
+				int rear = mTorsionAtom[2-i];
+				for (int j=0; j<mol.getConnAtoms(atom); j++) {
+					int other = mol.getConnAtom(atom, j);
+					if (other != rear && other != conn) {
+						if (other < conn)
+							inverse = !inverse;
+						break;
+						}
+					}
+				}
+			if (mol.getBondParity(mBond) == Molecule.cBondParityEor1)
+				inverse = !inverse;
+
+			// parityEor1 requires torsions values from 0...pi considering lowest atom indexes for mTorsionAtom[0 and 3]
+			int count = 0;
+			int frequencySum = 0;
+			for (int i=0; i<mTorsion.length; i++) {
+				if (mTorsion[i]<180 ^ inverse) {
+					frequencySum += mFrequency[i];
+					count++;
+					}
+				}
+
+			if (count < mTorsion.length) {
+				short[] newTorsion = new short[count];
+				short[] newFrequency = new short[count];
+				short[][] newRange = new short[count][];
+				count = 0;
+				for (int i=0; i<mTorsion.length; i++) {
+					if (mTorsion[i]<180 ^ inverse) {
+						newTorsion[count] = mTorsion[i];
+						newFrequency[count] = (short)(mFrequency[i] * 100 / frequencySum);
+						newRange[count] = mTorsionRange[i];
+						count++;
+						}
+					}
+				mTorsion = newTorsion;
+				mFrequency = newFrequency;
+				mTorsionRange = newRange;
+				}
 			}
 		}
 

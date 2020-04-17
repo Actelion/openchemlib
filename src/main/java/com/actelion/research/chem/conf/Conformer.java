@@ -36,7 +36,7 @@ package com.actelion.research.chem.conf;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.Arrays;
 
 public class Conformer implements Comparable<Conformer> {
 	private Coordinates[] mCoordinates;
@@ -49,95 +49,118 @@ public class Conformer implements Comparable<Conformer> {
 	/**
 	 * Creates a Conformer, i.e. basically a new set of atom coordinates for the given Molecule.
 	 * The conformer is initialized with an exact copy of the molecules internal coordinates.
+	 *
 	 * @param mol
 	 */
 	public Conformer(StereoMolecule mol) {
 		mMol = mol;
 		mCoordinates = new Coordinates[mol.getAllAtoms()];
-		for (int atom=0; atom<mol.getAllAtoms(); atom++)
+		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
 			mCoordinates[atom] = new Coordinates(mol.getCoordinates(atom));
 
 		mEnergy = Double.NaN;
-		}
+	}
 
 	/**
 	 * Creates a new conformer as an exact copy of the given one.
+	 *
 	 * @param c
 	 */
 	public Conformer(Conformer c) {
-		mMol = c.mMol;
+		this(c, c.mMol);
+	}
+
+	/**
+	 * Use at own risk!!
+	 *
+	 * Initializes the conformer as a copy of c but replaces the
+	 * StereoMolecule by the supplied molecule.
+	 *
+	 * @param c
+	 * @param mol
+	 */
+	public Conformer(Conformer c, StereoMolecule mol) {
+		mMol = mol;
 
 		mCoordinates = new Coordinates[c.mCoordinates.length];
-		for (int i = 0; i< mCoordinates.length; i++)
+		for (int i = 0; i < mCoordinates.length; i++)
 			mCoordinates[i] = new Coordinates(c.mCoordinates[i]);
 
-		if (c.mBondTorsion != null) {
-			mBondTorsion = new short[c.mBondTorsion.length];
-			for (int i=0; i<c.mBondTorsion.length; i++)
-				mBondTorsion[i] = c.mBondTorsion[i];
-			}
+		if (c.mBondTorsion != null)
+			mBondTorsion = Arrays.copyOf(c.mBondTorsion, c.mBondTorsion.length);
 
 		mEnergy = Double.NaN;
-		}
+	}
+
 
 	/**
 	 * Translate this conformer's coordinates such that its center of gravity
 	 * is moved to P(0,0,0) assuming all atoms have the same mass.
+	 *
 	 * @return this conformer with centered coordinates
 	 */
 	public Conformer center() {
 		Coordinates cog = new Coordinates();
-		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+		for (int atom = 0; atom < mMol.getAllAtoms(); atom++)
 			cog.add(mCoordinates[atom]);
 		cog.scale(1.0 / mMol.getAllAtoms());
 
-		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+		for (int atom = 0; atom < mMol.getAllAtoms(); atom++)
 			mCoordinates[atom].sub(cog);
 
 		return this;
-		}
+	}
 
 	/**
 	 * Translate this conformer's coordinates by adding the dx,dy,dz shifts
 	 * to all atom coordinates.
+	 *
 	 * @return this conformer with translated coordinates
 	 */
 	public Conformer translate(double dx, double dy, double dz) {
-		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+		for (int atom = 0; atom < mMol.getAllAtoms(); atom++)
 			mCoordinates[atom].add(dx, dy, dz);
 
 		return this;
-		}
+	}
 
 	public int getSize() {
 		return mCoordinates.length;
-		}
+	}
 
 	public double getX(int atom) {
 		return mCoordinates[atom].x;
-		}
+	}
+
 	public double getY(int atom) {
 		return mCoordinates[atom].y;
-		}
+	}
+
 	public double getZ(int atom) {
 		return mCoordinates[atom].z;
-		}
+	}
+
+	public Coordinates[] getCoordinates() {
+		return mCoordinates;
+	}
 
 	public Coordinates getCoordinates(int atom) {
 		return mCoordinates[atom];
-		}
+	}
 
 	/**
 	 * Copies x,y,z from coords into this atom's coordinates
+	 *
 	 * @param atom
 	 * @param coords
 	 */
 	public void setCoordinates(int atom, Coordinates coords) {
 		mCoordinates[atom].set(coords);
-		}
+	}
 
 	/**
 	 * Replaces the atom's Coordinates object by the given one
+	 *
 	 * @param atom
 	 * @param coords
 	 */
@@ -147,23 +170,26 @@ public class Conformer implements Comparable<Conformer> {
 
 	public void setX(int atom, double x) {
 		mCoordinates[atom].x = x;
-		}
+	}
+
 	public void setY(int atom, double y) {
 		mCoordinates[atom].y = y;
-		}
+	}
+
 	public void setZ(int atom, double z) {
 		mCoordinates[atom].z = z;
-		}
+	}
 
 	/**
 	 * Removes atoms Coordinates objects from those atoms that are marked in the given array.
 	 * Make sure to also remove those atoms from the underlying Molecule.
+	 *
 	 * @param isToBeDeleted
 	 * @return
 	 */
 	public int deleteAtoms(boolean[] isToBeDeleted) {
 		int count = 0;
-		for (int i=0; i<mCoordinates.length; i++)
+		for (int i = 0; i < mCoordinates.length; i++)
 			if (isToBeDeleted[i])
 				count++;
 
@@ -171,20 +197,20 @@ public class Conformer implements Comparable<Conformer> {
 			Coordinates[] newCoords = new Coordinates[mCoordinates.length - count];
 			short[] newBondTorsion = (mBondTorsion == null) ? null : new short[mCoordinates.length - count];
 			int newIndex = 0;
-			for (int i=0; i<mCoordinates.length; i++) {
+			for (int i = 0; i < mCoordinates.length; i++) {
 				if (!isToBeDeleted[i]) {
 					newCoords[newIndex] = mCoordinates[i];
 					if (newBondTorsion != null)
 						newBondTorsion[newIndex] = mBondTorsion[i];
 					newIndex++;
-					}
 				}
+			}
 			mCoordinates = newCoords;
 			mBondTorsion = newBondTorsion;
-			}
+		}
 
 		return count;
-		}
+	}
 
 	/**
 	 * Calculates a signed torsion as an exterior spherical angle
@@ -194,6 +220,7 @@ public class Conformer implements Comparable<Conformer> {
 	 * If the front bond is rotated in the clockwise direction, the angle
 	 * increases, i.e. has a positive value.
 	 * http://en.wikipedia.org/wiki/Dihedral_angle
+	 *
 	 * @param atom 4 valid atom indices defining a connected atom sequence
 	 * @return torsion in the range: -pi <= torsion <= pi
 	 */
@@ -211,19 +238,21 @@ public class Conformer implements Comparable<Conformer> {
 		Coordinates n2 = v2.cross(v3);
 
 		return -Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2));
-		}
+	}
 
 	/**
 	 * Returns the current bond torsion angle in degrees, it is was set before.
+	 *
 	 * @param bond
 	 * @return -1 or previously set torsion angle in the range 0 ... 359
 	 */
 	public int getBondTorsion(int bond) {
 		return mBondTorsion == null ? -1 : mBondTorsion[bond];
-		}
+	}
 
 	/**
 	 * Sets the current bond torsion to be retrieved later.
+	 *
 	 * @param bond
 	 * @param torsion in degrees
 	 */
@@ -231,109 +260,115 @@ public class Conformer implements Comparable<Conformer> {
 		if (mBondTorsion == null)
 			mBondTorsion = new short[mMol.getAllBonds()];
 		mBondTorsion[bond] = torsion;
-		}
+	}
 
 	/**
 	 * @return reference to the original molecule
 	 */
 	public StereoMolecule getMolecule() {
 		return mMol;
-		}
+	}
 
 	/**
 	 * Copies the molecule's atom coordinates to this Conformer.
+	 *
 	 * @param mol molecule identical to the original molecule passed in the Constructor
 	 */
 	public void copyFrom(StereoMolecule mol) {
-		for (int atom=0; atom<mol.getAllAtoms(); atom++)
+		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
 			mCoordinates[atom].set(mol.getCoordinates(atom));
-		}
+	}
 
 	/**
 	 * Copies this conformer's atom coordinates to mol.
+	 *
 	 * @param mol molecule identical to the original molecule passed in the Constructor
 	 */
 	public void copyTo(StereoMolecule mol) {
-		for (int atom=0; atom<mol.getAllAtoms(); atom++)
+		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
 			mol.getCoordinates(atom).set(mCoordinates[atom]);
-		}
+	}
 
 	/**
 	 * Copies the conformer's atom coordinates to this Conformer.
+	 *
 	 * @param conformer other conformer of the molecule passed in the Constructor
 	 */
 	public void copyFrom(Conformer conformer) {
-		for (int atom=0; atom<conformer.getSize(); atom++)
+		for (int atom = 0; atom < conformer.getSize(); atom++)
 			mCoordinates[atom].set(conformer.mCoordinates[atom]);
 		if (conformer.mName != null)
 			mName = createNameCopy(conformer.mName);
-		}
+	}
 
 	private String createNameCopy(String originalName) {
 		int index = originalName.lastIndexOf(' ');
 		if (index != -1) {
-			if (originalName.substring(index+1).equals("copy"))
+			if (originalName.substring(index + 1).equals("copy"))
 				return originalName.concat(" 2");
 
 			try {
-				int no = Integer.parseInt(originalName.substring(index+1));
-				return originalName.substring(0, index+1).concat(Integer.toString(no+1));
-				}
-			catch (NumberFormatException nfe) {}
+				int no = Integer.parseInt(originalName.substring(index + 1));
+				return originalName.substring(0, index + 1).concat(Integer.toString(no + 1));
+			} catch (NumberFormatException nfe) {
 			}
-		return originalName.concat(" copy");
 		}
+		return originalName.concat(" copy");
+	}
 
 	/**
 	 * Copies this Conformer's atom coordinates to the associated molecule.
+	 *
 	 * @return this conformer's associated StereoMolecule with updated coordinates
 	 */
 	public StereoMolecule toMolecule() {
 		return toMolecule(mMol);
-		}
+	}
 
 	/**
 	 * Copies this Conformer's atom coordinates to the given molecule.
 	 * If no molecule is given, then a compact copy of this conformer's
 	 * molecule is created and returned with this conformer's coordinates.
+	 *
 	 * @param mol null or original molecule passed in the Constructor or identical copy
 	 * @return this conformer as StereoMolecule
 	 */
 	public StereoMolecule toMolecule(StereoMolecule mol) {
 		if (mol == null)
 			mol = mMol.getCompactCopy();
-		for (int atom=0; atom<mol.getAllAtoms(); atom++)
+		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
 			mol.getCoordinates(atom).set(mCoordinates[atom]);
 		if (mName != null)
 			mol.setName(mName);
 		return mol;
-		}
+	}
 
 	public double getEnergy() {
 		return mEnergy;
-		}
+	}
 
 	public void setEnergy(double energy) {
 		mEnergy = energy;
-		}
+	}
 
 	public String getName() {
 		return mName == null ? mMol.getName() : mName;
-		}
+	}
 
 	public void setName(String name) {
 		mName = name;
-		}
+	}
 
 	public boolean equals(Conformer c) {
 		ensureDescriptors(c);
 		return mTorsionDescriptor.equals(c.mTorsionDescriptor);
-		}
+	}
 
-	@Override public int compareTo(Conformer c) {
+	@Override
+	public int compareTo(Conformer c) {
 		ensureDescriptors(c);
 		return mTorsionDescriptor.compareTo(c.mTorsionDescriptor);
-		}
+	}
 
 	private void ensureDescriptors(Conformer c) {
 		if (mTorsionDescriptor == null || c.mTorsionDescriptor == null) {
@@ -342,6 +377,100 @@ public class Conformer implements Comparable<Conformer> {
 				mTorsionDescriptor = tdh.getTorsionDescriptor(this);
 			if (c.mTorsionDescriptor == null)
 				c.mTorsionDescriptor = tdh.getTorsionDescriptor(c);
-			}
 		}
 	}
+
+
+	/**
+	 * Serializes the given conformer to a string.
+	 * <p>
+	 * Use the constructor Conformer(String serialized) to deserialize
+	 * the conformer.
+	 *
+	 * @return
+	 *
+	public String serialize() {
+		StringBuilder sb = new StringBuilder();
+
+		Canonizer c = new Canonizer(mMol);
+		String s_idcode = c.getIDCode();
+
+		List<String> s_coordinates = new ArrayList<>();
+		for (Coordinates coords:mCoordinates)
+			s_coordinates.add(encodeCoordinates(coords));
+
+		String s_bondTorsion = null;
+		if (mBondTorsion == null) {
+			s_bondTorsion = "N";
+		} else {
+			s_bondTorsion = "X" + SimpleEncoder.encodeShortArray(mBondTorsion);
+		}
+
+		sb.append(s_idcode);
+		sb.append(" ");
+		sb.append(String.join(";", s_coordinates));
+		sb.append(" ");
+		sb.append(String.join(";", s_bondTorsion));
+		sb.append(" ");
+		sb.append("" + mEnergy);
+		sb.append(" ");
+		sb.append("" + mName);
+
+		return sb.toString();
+	}*/
+
+	/**
+	 * Constructor for deserialization.
+	 *
+	 * @param serialized
+	 *
+	public Conformer(String serialized) {
+		mTorsionDescriptor = null;
+
+		String[] splits = serialized.split(" ");
+
+		String idcode   = splits[0];
+		String coords   = splits[1];
+		String torsions = splits[2];
+		String energy   = splits[3];
+		String name     = splits[4];
+
+		IDCodeParser p = new IDCodeParser();
+		mMol = new StereoMolecule();
+		p.parse(mMol,idcode);
+		String[] c_split = coords.split(";");
+		mCoordinates = new Coordinates[c_split.length];
+		for(int zi=0;zi<c_split.length;zi++) { mCoordinates[zi] = decodeCoordinates(c_split[zi]); }
+
+		if(torsions.startsWith("N")) {
+			mBondTorsion = null;
+		}
+		else {
+			mBondTorsion = SimpleEncoder.decodeShortArray(torsions.substring(1));
+		}
+
+		mEnergy = Double.parseDouble(energy);
+		mName = name;
+	}
+
+	public static String encodeCoordinates(Coordinates c) {
+		StringBuilder sb = new StringBuilder();
+
+		byte[] data = ByteBuffer.allocate(4*3).putFloat((float) c.x)
+				.putFloat((float) c.y)
+				.putFloat((float) c.z).array();
+		return SimpleEncoder.convertByteArrayToS3IDCode(data);
+	}
+
+	public static Coordinates decodeCoordinates(String s) {
+		byte[] data = SimpleEncoder.convertS3IDCodeToByteArray(s);
+		byte[] fx = new byte[]{data[0],data[1],data[2],data[3]};
+		byte[] fy = new byte[]{data[4],data[5],data[6],data[7]};
+		byte[] fz = new byte[]{data[8],data[9],data[10],data[11]};
+		float cx = ByteBuffer.wrap(fx).getFloat();
+		float cy = ByteBuffer.wrap(fy).getFloat();
+		float cz = ByteBuffer.wrap(fz).getFloat();
+		return new Coordinates(cx,cy,cz);
+	}
+*/
+}

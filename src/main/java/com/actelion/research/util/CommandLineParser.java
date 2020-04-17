@@ -53,12 +53,30 @@ public class CommandLineParser {
     private HashMap<String,String> hmCommandValue;
 
     public CommandLineParser() {
-        hmCommandValue=new HashMap<String,String>();
+        hmCommandValue=new HashMap<>();
     }
 
     public CommandLineParser(String args[]) {
-        hmCommandValue=new HashMap<String,String>();
+        hmCommandValue=new HashMap<>();
         parse(args);
+    }
+
+    /**
+     *
+     * @param parameterLine i.e. width=234; color=233,0,0; resolution="super high"; blur=false
+     * @param separatorRegEx i.e. ;
+     */
+
+    public CommandLineParser(String parameterLine, String separatorRegEx) {
+        hmCommandValue=new HashMap<>();
+
+        if(parameterLine!=null && parameterLine.length()>0) {
+            String args[] = parameterLine.split(separatorRegEx);
+            for (String command : args) {
+                String[] a = command.split("=");
+                hmCommandValue.put(a[0].trim(), a[1].trim().replace("\"", ""));
+            }
+        }
     }
 
     public void add(String command, String value) {
@@ -78,6 +96,9 @@ public class CommandLineParser {
         return new File(get(command));
     }
 
+    public double getAsDouble(String command) {
+        return Double.parseDouble(get(command));
+    }
     public int getAsInt(String command) {
         return Integer.parseInt(get(command));
     }
@@ -164,6 +185,12 @@ public class CommandLineParser {
         CommandLineParser clp = new CommandLineParser();
 
         clp.parse(argsCmd);
+
+        System.out.println(clp.toString());
+
+        c = "width=234; color=233,0,0; resolution=\"super high\"; blur=false";
+
+        clp = new CommandLineParser(c, ";");
 
         System.out.println(clp.toString());
 

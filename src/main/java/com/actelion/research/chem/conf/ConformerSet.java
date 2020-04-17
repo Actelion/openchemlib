@@ -1,11 +1,12 @@
 package com.actelion.research.chem.conf;
 
 
-import java.util.Iterator;
-import java.util.TreeSet;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.StereoMolecule;
+
+import java.util.Iterator;
+import java.util.TreeSet;
 
 
 public class ConformerSet extends TreeSet<Conformer> {
@@ -24,18 +25,16 @@ public class ConformerSet extends TreeSet<Conformer> {
 				Conformer firstConformer = new Conformer(mol);
 				add(firstConformer);
 
-				int[] atomAndBondCount = parser.getAtomAndBondCounts(confString[0], null);
 				for(int i=2; i<confString.length;i++) {
 					Conformer conf = new Conformer(firstConformer);
 					try {
-						parser.parseCoordinates(confString[i].getBytes(), 0, conf, atomAndBondCount[0], atomAndBondCount[1]);
+						parser.parseCoordinates(confString[i].getBytes(), 0, mol, conf.getCoordinates());
 						add(conf);
 					} catch (Exception e) {}
 				}
 			}
 		}
 	}
-	
 	
 	public ConformerSet getSubset(int size) {
 		ConformerSet treeSet = new ConformerSet();

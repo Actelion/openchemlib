@@ -15,7 +15,6 @@
 package org.openmolecules.chem.conf.gen;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * TorsionSetStrategy that systematically creates all possible TorsionSets in
@@ -27,7 +26,7 @@ public class TorsionSetStrategyLikelySystematic extends TorsionSetStrategy {
 	private TorsionSet[]	mAvailableTorsionSet;
 	private int				mAvailableTorsionSetIndex;
 
-	public TorsionSetStrategyLikelySystematic(RotatableBond[] rotatableBond, Rigid3DFragment[] fragment) {
+	public TorsionSetStrategyLikelySystematic(RotatableBond[] rotatableBond, RigidFragment[] fragment) {
 		super(rotatableBond, fragment);
 		mCurrentMaxTorsionIndex = new int[rotatableBond.length];
 		mCurrentMaxConformerIndex = new int[fragment.length];
@@ -74,8 +73,8 @@ public class TorsionSetStrategyLikelySystematic extends TorsionSetStrategy {
 			}
 		for (int i=0; i<mCurrentMaxConformerIndex.length; i++) {
 			if (mCurrentMaxConformerIndex[i] < mRigidFragment[i].getConformerCount()-1) {
-				double loss = mRigidFragment[i].getConformerLikelyhood(mCurrentMaxConformerIndex[i])
-						    / mRigidFragment[i].getConformerLikelyhood(mCurrentMaxConformerIndex[i]+1);
+				double loss = mRigidFragment[i].getConformerLikelihood(mCurrentMaxConformerIndex[i])
+						    / mRigidFragment[i].getConformerLikelihood(mCurrentMaxConformerIndex[i]+1);
 				if (minLoss > loss) {
 					minLoss = loss;
 					bestIndex = i;
@@ -135,12 +134,8 @@ public class TorsionSetStrategyLikelySystematic extends TorsionSetStrategy {
 			mAvailableTorsionSet[i] = createTorsionSet(torsionIndex, conformerIndex);
 			}
 
-		Arrays.sort(mAvailableTorsionSet, new Comparator<TorsionSet>() {
-			@Override
-			public int compare(TorsionSet ts1, TorsionSet ts2) {
-				return ts1.getLikelyhood() == ts2.getLikelyhood() ? 0
-					 : ts1.getLikelyhood() > ts2.getLikelyhood() ? -1 : 1;	// we want the highest likelyhood first
-				}
+		Arrays.sort(mAvailableTorsionSet, (ts1, ts2) -> {
+			return Double.compare(ts2.getLikelihood(), ts1.getLikelihood());    // we want the highest likelyhood first
 			} );
 		mAvailableTorsionSetIndex = -1;
 		}
