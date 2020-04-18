@@ -65,7 +65,29 @@ public class EncoderFloatingPointNumbers {
      * @param arrValue array with the values that will be encoded. Determines also minimum and maximum encoding value.
      * @param precisionBits
      */
-    private EncoderFloatingPointNumbers(double [] arrValue, int precisionBits) {
+    public EncoderFloatingPointNumbers(double [] arrValue, int precisionBits) {
+
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
+
+        for (double v : arrValue) {
+
+            if(v<min){
+                min=v;
+            }
+            if(v>max){
+                max=v;
+            }
+        }
+
+        initialize(min, max, precisionBits);
+
+        for (double v : arrValue) {
+            add(v);
+        }
+    }
+
+    public EncoderFloatingPointNumbers(float [] arrValue, int precisionBits) {
 
         double min = Double.MAX_VALUE;
         double max = -Double.MAX_VALUE;
@@ -350,11 +372,13 @@ public class EncoderFloatingPointNumbers {
      * @return
      */
     public static String encode(double [] arrValue, int precisionBits) {
-
         EncoderFloatingPointNumbers efpnCoeff = new EncoderFloatingPointNumbers(arrValue, precisionBits);
-
         return efpnCoeff.encode();
+    }
 
+    public static String encode(float [] arrValue, int precisionBits) {
+        EncoderFloatingPointNumbers efpnCoeff = new EncoderFloatingPointNumbers(arrValue, precisionBits);
+        return efpnCoeff.encode();
     }
 
 
