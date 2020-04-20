@@ -194,9 +194,9 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	}
 
 	/**
-	 * This is a helper method to generate a set of cache files from one or more compound files.
-	 * You may use this function to create a custom fragment cache if the default cache file used
-	 * by the ConformerGenerator in not adequate for your purpose. The default file covers many
+	 * This is a helper method to generate a custom cache and optionally a set of cache files from one or
+	 * more compound files. You may use this function to create a custom fragment cache if the default cache
+	 * file used by the ConformerGenerator in not adequate for your purpose. The default file covers many
 	 * common fragments in organic and medicinal chemistry and common building block fragments.
 	 * However, it is limited in size. You may consider using a custom cache file in these cases:<br>
 	 * - To achieve a maximum of speed on the expense of memory, e.g. for a cloud based service that
@@ -213,9 +213,11 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	 * @param inputFileNames array of one or more input file paths (may be mixture of sdf and dwar)
 	 * @param cacheFileName path and file name without any extention ('_n_.txt' will be added)
 	 * @param optimizeFragments whether to energy minimize fragments using MMFF94s+
-	 * @return true, if all files are found and processed
+	 * @param maxCompoundsPerFile if an input file contains more compounds than this, then the rest are skipped
+	 * @return created cache or null, if an input file could not be found
 	 */
-	public static boolean createCacheFiles(String[] inputFileNames, String cacheFileName, boolean optimizeFragments, boolean verbose) {
+	public static RigidFragmentCache createCache(String[] inputFileNames, String cacheFileName,
+                                boolean optimizeFragments, boolean verbose, int maxCompoundsPerFile) {
 		boolean notFound = false;
 		for (String ifn:inputFileNames)
 			if (!FileHelper.fileExists(new File(ifn), 1000)) {
@@ -223,35 +225,38 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 				notFound = true;
 			}
 		if (notFound)
-			return false;
+			return null;
 
 		RigidFragmentCache cache = createInstance(null);
 
 		for (String ifn:inputFileNames) {
-			long millis = addFragmentsToCache(cache, optimizeFragments, ifn, verbose);
+			long millis = addFragmentsToCache(cache, optimizeFragments, ifn, verbose, maxCompoundsPerFile);
 			System.out.println("File '"+ifn+"' processed in "+millis+" milliseconds.");
 		}
 
-		System.out.print("Writing cache files... ");
-		boolean success = cache.serializeCache(cacheFileName+"_1_.txt", 0)   // we have one hit less than usages
-					   && cache.serializeCache(cacheFileName+"_2_.txt", 1)
-					   && cache.serializeCache(cacheFileName+"_3_.txt", 2)
-					   && cache.serializeCache(cacheFileName+"_5_.txt", 4)
-					   && cache.serializeCache(cacheFileName+"_10_.txt", 9);
-		System.out.println(success ? "done" : "failure");
+		if (inputFileNames != null) {
+			System.out.print("Writing cache files... ");
+			boolean success = cache.serializeCache(cacheFileName + "_1_.txt", 0)   // we have one hit less than usages
+					&& cache.serializeCache(cacheFileName + "_2_.txt", 1)
+					&& cache.serializeCache(cacheFileName + "_3_.txt", 2)
+					&& cache.serializeCache(cacheFileName + "_5_.txt", 4)
+					&& cache.serializeCache(cacheFileName + "_10_.txt", 9);
+			System.out.println(success ? "done" : "failure !!!");
+			}
 
-		return success;
+		return cache;
 	}
 
-	private static long addFragmentsToCache(RigidFragmentCache cache, boolean optimizeFragments, String inputFile, boolean verbose) {
+	private static long addFragmentsToCache(RigidFragmentCache cache, boolean optimizeFragments, String inputFile, boolean verbose, int maxCompounds) {
 		long start_millis = System.currentTimeMillis();
 		int compoundNo = 0;
 
-		CompoundFileParser parser = CompoundFileParser.createParser(inputFile);
-
 		System.out.println("Processing '"+inputFile+"'... ('.' = 100 molecules)");
 
-		while (parser.next()) {
+		CompoundFileParser parser = CompoundFileParser.createParser(inputFile);
+		ConformerGenerator cg = new ConformerGenerator(123L, cache, optimizeFragments);
+
+		while (parser.next() && compoundNo < maxCompounds) {
 			if (verbose)
 				System.out.println("\nFile:"+inputFile+" Compound:"+(1+compoundNo)+" idcode:"+parser.getIDCode());
 			else {
@@ -265,7 +270,7 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 				}
 			}
 
-			new ConformerGenerator(123, cache, optimizeFragments).initialize(parser.getMolecule(), false);
+			new ConformerGenerator(123L, cache, optimizeFragments).initialize(parser.getMolecule(), false);
 
 			compoundNo++;
 		}

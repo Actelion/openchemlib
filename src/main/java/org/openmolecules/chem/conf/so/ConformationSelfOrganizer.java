@@ -109,11 +109,11 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		mRuleCount[ConformationRule.RULE_TYPE_LINE] += mRuleList.size();
 
 		mRuleCount[ConformationRule.RULE_TYPE_STEREO] = -mRuleList.size();
-		StereoRule.calculateRules(mRuleList, mol);
+		TetrahedralStereoRule.calculateRules(mRuleList, mol);
 		mRuleCount[ConformationRule.RULE_TYPE_STEREO] += mRuleList.size();
 
 		mRuleCount[ConformationRule.RULE_TYPE_BINAP] = -mRuleList.size();
-		BinapRule.calculateRules(mRuleList, mol);
+		AxialStereoRule.calculateRules(mRuleList, mol);
 		mRuleCount[ConformationRule.RULE_TYPE_BINAP] += mRuleList.size();
 
 		mRuleCount[ConformationRule.RULE_TYPE_TORSION] = -mRuleList.size();
