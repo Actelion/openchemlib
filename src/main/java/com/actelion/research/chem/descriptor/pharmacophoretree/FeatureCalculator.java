@@ -49,6 +49,11 @@ public class FeatureCalculator {
 		for(int i=0;i<mol.getAllAtoms();i++) {
 			if(mol.isAromaticAtom(i))
 				aromAtoms.add(i);
+			else {
+				for(int n=0;n<mol.getConnAtoms(i);n++)
+					if(mol.getConnBondOrder(i, n)==2)
+						aromAtoms.add(i);
+			}
 
 			if (mol.getAtomicNo(i)==7 || mol.getAtomicNo(i)==8) {
 				if(PharmacophoreCalculator.isAcceptor(mol,i)) {
