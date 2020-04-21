@@ -25,8 +25,8 @@ public class PharmacophoreNode {
 	
 	public static final int[] FUNCTIONALITY_WEIGHTS = new int[] {3,3,3,3,1,1};
 	public static final double CHEM_SIM_WEIGHT = 0.7;
-	private static final int ZERO_NODE = 1;
-	private static final int LINK_NODE = 6;
+	public static final int ZERO_NODE = 1;
+	public static final int LINK_NODE = 6;
 	
 
 	private int[] functionalities;
@@ -234,9 +234,35 @@ public class PharmacophoreNode {
 		return functionalities;
 	}
 	
+	public List<Double> getVolumes() {
+		return weights;
+	}
+	
 	public double getSize() {
 		return size;
 	}
+	
+	public void setFunctionalities(int[] functionalities) {
+		this.functionalities = functionalities;
+	}
+	
+	public void setVolumes(List<Double> volumes) {
+		this.volumes = volumes;
+	}
+	
+	public void setWeights(List<Double> weights) {
+		this.weights = weights;
+	}
+	
+	public void setAtoms(List<Integer> atoms) {
+		this.atoms = atoms;
+	}
+	
+	public void setRole(int role) {
+		this.role = role;
+	}
+	
+	
 	
 	public boolean isLinkNode() {
 		 boolean b = (role & LINK_NODE)==0 ? false : true;
