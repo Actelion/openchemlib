@@ -42,7 +42,7 @@ public class TreeMatcher {
 	public static final int MATCH_NODE_NR_LIMIT = 2;
 	public static final int EXTENSION_MATCH_NODE_NR_LIMIT = 3;
 	public static final int INITIAL_SPLITS = 5;
-	public static final double SIZE_RATIO = 2.0; //if ratio of sizes (nr of atoms) of two matches differs by more than that, the similarity is zero 
+	public static final double SIZE_RATIO = 2; //if ratio of sizes (nr of atoms) of two matches differs by more than that, the similarity is zero 
 	private TreeMatching[][] dpMatchMatrix;
 	private PharmacophoreTree queryTree;
 	private PharmacophoreTree baseTree;
@@ -521,6 +521,8 @@ public class TreeMatcher {
 		public static class TreeMatching {
 			private List<FeatureMatch> matches;
 			private double sim;
+			private double size1;
+			private double size2;
 			
 			public TreeMatching() {
 				matches = new ArrayList<FeatureMatch>();
@@ -539,8 +541,8 @@ public class TreeMatcher {
 			
 			public void calculate() {
 				sim = 0.0;
-				double size1 = 0.0;
-				double size2 = 0.0;
+				size1 = 0.0;
+				size2 = 0.0;
 				for(FeatureMatch match : matches) {
 					sim += match.size*match.sim;
 					size1+=match.sizes[0];
@@ -560,6 +562,14 @@ public class TreeMatcher {
 			
 			public double getSim() {
 				return sim; 
+			}
+			
+			public double getSize1() {
+				return size1;
+			}
+			
+			public double getSize2() {
+				return size2;
 			}
 			
 		}
