@@ -135,14 +135,14 @@ public class CanonizerMesoHelper {
 				return false;
 			}
 
-			// if we have a direct BINAP bond or Z-double bond we refuse
+			// if we have a direct BINAP bond or E-double bond we refuse
 		int bond = mMol.getBond(atom1, atom2);
 		if (bond != -1) {
 			if (mMol.getBondOrder(bond) == 1
 			 && mEZParity[bond] != Molecule.cBondParityNone)
 				return false;
 			if (mMol.getBondOrder(bond) == 2
-			 && mEZParity[bond] == Molecule.cBondParityZor2)
+			 && mEZParity[bond] == Molecule.cBondParityEor1)
 				return false;
 			}
 
@@ -519,23 +519,26 @@ System.out.println();
 		return -1;
 		}
 
+
+	/**
+	 * If a meso fragment contains stereo atoms belonging to ESR groups
+	 * then there may be an alternative way of specifying the same
+	 * meso fragment because of the symmetry of the fragment.
+	 *
+	 * The procedure to normalize a meso fragment's ESR definition
+	 * depends on whether it contains ESR groups that have members
+	 * outside of the fragment or not.
+	 *
+	 * If we have group dependency cycles, i.e. some meso fragments contain
+	 * at least two groups each, as f1:g1,g2 f2:g2,g3 f3:g3,g1, then we need
+	 * to convert one group of the cycle into ABS atoms.
+	 *
+	 * To be precise we can determine here which situation to normalize,
+	 * however the actual normalization should be postponed until we have
+	 * canonization ranks that don't depend on the original grouping.
+	 */
 	protected void normalizeESRGroups() {
 //System.out.println("normalizeESRGroups() mMesoFragmentCount:"+mMesoFragmentAtom.length);
-		// If a meso fragment contains stereo atoms belonging to ESR groups
-		// then there may be an alternative way of specifying the same
-		// meso fragment because of the symmetry of the fragment.
-		//
-		// The procedure to normalize a meso fragment's ESR definition
-		// depends on whether it contains ESR groups that have members
-		// outside of the fragment or not.
-		//
-		// If we have group dependency cycles, i.e. some meso fragments contain
-		// at least two groups each, as f1:g1,g2 f2:g2,g3 f3:g3,g1, then we need
-		// to convert one group of the cycle into ABS atoms.
-
-		// To be precise we can determine here which situation to normalize,
-		// however the actual normalization should be postponed until we have
-		// canonization ranks that don't depend on the original grouping.
 		if (mMesoFragmentAtom != null) {
 			ESRGroupFragmentMatrix matrix = new ESRGroupFragmentMatrix();
 			mESRGroupNormalizationInfoList = new ArrayList<ESRGroupNormalizationInfo>();
