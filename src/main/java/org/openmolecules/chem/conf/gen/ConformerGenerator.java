@@ -363,7 +363,8 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 		if (count == 0)
 			return true;
 
-		locateInitialFragments(isRotatableBond);
+		if (!locateInitialFragments(isRotatableBond))
+			return false;
 
 //if (WRITE_DW_FRAGMENT_FILE) {
 // try {
@@ -775,12 +776,14 @@ if (elimRules != mTorsionSetStrategy.getEliminationRuleList().size()) {
 			}
 		}
 
-	private void locateInitialFragments(boolean[] isRotatableBond) {
+	private boolean locateInitialFragments(boolean[] isRotatableBond) {
 		mFragmentNo = new int[mMolecule.getAllAtoms()];
 		int fragmentCount = mMolecule.getFragmentNumbers(mFragmentNo, isRotatableBond, true);
 		mRigidFragment = new RigidFragment[fragmentCount];
+		boolean ok = true;
 		for (int i=0; i<fragmentCount; i++)
-			mRigidFragment[i] = mRigidFragmentProvider.createFragment(mMolecule, mFragmentNo, i);
+			ok &= ((mRigidFragment[i] = mRigidFragmentProvider.createFragment(mMolecule, mFragmentNo, i)) != null);
+		return ok;
 		}
 
 	/**

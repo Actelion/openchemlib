@@ -123,6 +123,16 @@ public interface DescriptorConstants {
 												false,
 												false);
 
+    public static final DescriptorInfo DESCRIPTOR_Vectophore =
+							new DescriptorInfo("Vectophore",
+												"Vectophore",
+												"pre-alpha",
+												DESCRIPTOR_TYPE_MOLECULE,
+												false,
+												true,
+												false,
+												false);
+
     public static final DescriptorInfo DESCRIPTOR_Flexophore_HighRes =
         					new DescriptorInfo("FlexophoreHighResolution",
 												"FlexophoreHighRes",

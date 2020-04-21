@@ -63,7 +63,7 @@ public class Canonizer {
 
 	// Consider both diastereotopic and enantiotopic atoms uniquely for atom ranking
 	public static final int CONSIDER_STEREOHETEROTOPICITY = CONSIDER_DIASTEREOTOPICITY | CONSIDER_ENANTIOTOPICITY;
-	
+
 	// Consider custom atom labels for atom ranking and encode them into idcodes
 	public static final int ENCODE_ATOM_CUSTOM_LABELS = 8;
 
@@ -92,6 +92,15 @@ public class Canonizer {
 	// then the normalization of tetrahedral stereo centers is skipped for OR groups retaining
 	// the given configuration within all OR groups.
 	public static final int DISTINGUISH_RACEMIC_OR_GROUPS = 256;
+
+	// If we have fragments instead of molecules, then there we typically have free valences
+	// instead of implicit hydrogens. If two otherwise equivalent (symmetrical) atoms have
+	// free valences, then these may differ in the context of a super-structure match.
+	// A stereo center in the super-structure may not be a stereo center in the fragment alone.
+	// Same is true for stereo bonds. To discover all potential stereo features within a
+	// substructure fragment use more CONSIDER_FREE_VALENCES, which breaks the ties
+	// between equivalent atoms that have free valences.
+	public static final int TIE_BREAK_FREE_VALENCE_ATOMS = 512;
 
 	protected static final int cIDCodeVersion2 = 8;
 		// productive version till May 2006 based on the molfile version 2
@@ -774,7 +783,41 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 
 			mNoOfRanks = canPerformRanking();
 			}
-//System.out.println("after initial ranking");
+
+		if ((mMode & TIE_BREAK_FREE_VALENCE_ATOMS) != 0 && mMol.isFragment())
+			canBreakFreeValenceAtomTies();
+
+		//System.out.println("after initial ranking");
+		}
+
+
+	private void canBreakFreeValenceAtomTies() {
+		while (true) {
+			boolean[] isFreeValenceRank = new boolean[mNoOfRanks+1];
+			int highestSharedFreeValenceRank = -1;
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+				if (mMol.getLowestFreeValence(atom) != 0) {
+					if (isFreeValenceRank[mCanRank[atom]] && highestSharedFreeValenceRank < mCanRank[atom])
+						highestSharedFreeValenceRank = mCanRank[atom];
+					isFreeValenceRank[mCanRank[atom]] = true;
+					}
+				}
+
+			if (highestSharedFreeValenceRank == -1)
+				break;
+
+			int increment = 0;
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+				int value = 0;
+				if (mCanRank[atom] == highestSharedFreeValenceRank)
+					value = ++increment;
+				mCanBase[atom].init(atom);
+				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+				mCanBase[atom].add(8, value);
+				}
+
+			mNoOfRanks = canPerformRanking();
+			}
 		}
 
 
@@ -1823,25 +1866,8 @@ System.out.println("noOfRanks:"+canRank);
 				mProTHAtomsInSameFragment[atom] = true;
 			}
 
-		int hp1 = halfParity1.getValue();
-		int hp2 = halfParity2.getValue();
-		if (hp1 == -1 || hp2 == -1 || ((hp1 + hp2) & 1) == 0) {
-			if (!calcProParity) {
-				mTHParity[atom] = Molecule.cAtomParityUnknown;
-				}
-			return true;
-			}
-
-		byte alleneParity = 0;
-		switch (hp1 + hp2) {
-		case 3:
-		case 7:
-			alleneParity = Molecule.cAtomParity2;
-			break;
-		case 5:
-			alleneParity = Molecule.cAtomParity1;
-			break;
-			}
+		byte alleneParity = mZCoordinatesAvailable ? canCalcAlleneParity3D(halfParity1, halfParity2)
+												  : canCalcAlleneParity2D(halfParity1, halfParity2);
 
 		if (!calcProParity) {	// increment mProParity[] for atoms that are Pro-Parity1
 			mTHParity[atom] = alleneParity;
@@ -1871,6 +1897,43 @@ System.out.println("noOfRanks:"+canRank);
 			}
 
 		return true;
+		}
+
+
+	private byte canCalcAlleneParity2D(EZHalfParity halfParity1, EZHalfParity halfParity2) {
+		int hp1 = halfParity1.getValue();
+		int hp2 = halfParity2.getValue();
+		if (hp1 == -1 || hp2 == -1 || ((hp1 + hp2) & 1) == 0)
+			return Molecule.cAtomParityUnknown;
+
+		byte alleneParity = 0;
+		switch (hp1 + hp2) {
+			case 3:
+			case 7:
+				alleneParity = Molecule.cAtomParity2;
+				break;
+			case 5:
+				alleneParity = Molecule.cAtomParity1;
+				break;
+			}
+		return alleneParity;
+		}
+
+
+	private byte canCalcAlleneParity3D(EZHalfParity halfParity1, EZHalfParity halfParity2) {
+		int[] atom = new int[4];
+		atom[0] = halfParity1.mHighConn;
+		atom[1] = halfParity1.mCentralAxialAtom;
+		atom[2] = halfParity2.mCentralAxialAtom;
+		atom[3] = halfParity2.mHighConn;
+		double torsion = mMol.calculateTorsion(atom);
+		// if the torsion is not significant (less than ~10 degrees) then return cAtomParityUnknown
+		if (Math.abs(torsion) < 0.3 || Math.abs(torsion) > Math.PI-0.3)
+			return Molecule.cAtomParityUnknown;
+		if (torsion < 0)
+			return Molecule.cAtomParity2;
+		else
+			return Molecule.cAtomParity1;
 		}
 
 
@@ -3748,9 +3811,69 @@ System.out.println();
 		}
 
 
-	protected void setParities() {
-		// Creates parities based on atom indices of original molecule and
-		// stores them in molecule. It also set the stereo center flag.
+	/**
+	 * This normalizes all tetrahedral-, allene- and atrop-parities within the molecule.
+	 * This is done by finding the lowest atom rank that is shared by an odd number of
+	 * atoms with determines parities, not counting unknown and none.
+	 * If there number of parity2 atoms is higher than parity1 atoms of that rank, then
+	 * all parities are inverted.<br>
+	 * You may call this method before creating the idcode from this Canonizer to convert
+	 * internal parity information to the noermalized enantiomer. When calling getIDCode()
+	 * afterwards, the idcode represents the normalized enantiomer. Stereo information of
+	 * the underlying molecule is not touched.
+	 * @return true, if all internal parities were inverted
+	 */
+	public boolean normalizeEnantiomer() {
+		int[] parityCount = new int[mNoOfRanks + 1];
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			if (mTHParity[atom] == Molecule.cAtomParity1)
+				parityCount[mCanRank[atom]]++;
+			else if (mTHParity[atom] == Molecule.cAtomParity2)
+				parityCount[mCanRank[atom]]--;
+			}
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
+			if (mMol.getBondOrder(bond) == 1) {
+				if (mEZParity[bond] == Molecule.cBondParityEor1) {
+					parityCount[mCanRank[mMol.getBondAtom(0, bond)]]++;
+					parityCount[mCanRank[mMol.getBondAtom(1, bond)]]++;
+					}
+				else if (mEZParity[bond] == Molecule.cBondParityZor2) {
+					parityCount[mCanRank[mMol.getBondAtom(0, bond)]]--;
+					parityCount[mCanRank[mMol.getBondAtom(1, bond)]]--;
+					}
+				}
+			}
+		for (int rank=1; rank<=mNoOfRanks; rank++) {
+			if (parityCount[rank] != 0) {
+				boolean invert = (parityCount[rank] < 0);
+				if (invert) {
+					for (int atom=0; atom<mMol.getAtoms(); atom++) {
+						if (mTHParity[atom] == Molecule.cAtomParity1)
+							mTHParity[atom] = Molecule.cAtomParity2;
+						else if (mTHParity[atom] == Molecule.cAtomParity2)
+							mTHParity[atom] = Molecule.cAtomParity1;
+						}
+					for (int bond=0; bond<mMol.getBonds(); bond++) {
+						if (mMol.getBondOrder(bond) == 1) {
+							if (mEZParity[bond] == Molecule.cBondParityEor1)
+								mEZParity[bond] = Molecule.cBondParityZor2;
+							else if (mEZParity[bond] == Molecule.cBondParityZor2)
+								mEZParity[bond] = Molecule.cBondParityEor1;
+							}
+						}
+					}
+				return invert;
+				}
+			}
+
+		return false;
+		}
+
+	/**
+	 * Creates parities based on atom indices of original molecule and
+	 * stores them into the molecule. It also sets the stereo center flag.
+	 */
+	public void setParities() {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (mTHParity[atom] == Molecule.cAtomParity1
 			 || mTHParity[atom] == Molecule.cAtomParity2) {

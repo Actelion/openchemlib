@@ -389,45 +389,59 @@ public class IntVec implements Comparable<IntVec> {
    
    
     public byte [] getByteVec() {
-    	
-    	int fac = (Integer.SIZE / Byte.SIZE);
-    	
-    	byte [] arr = new byte[data.length * fac];
-    	 
-    	 for (int i = 0; i < data.length; i++) {
-			byte [] ab = IntVec.getByteVec(data[i]);
-			
-			System.arraycopy(ab, 0, arr, i*fac, ab.length);
-			
-		}
-    	 
-    	return arr;
+    	return getByteVec(data);
     }
-    
-    
-    
+
     public static byte [] getByteVec(int intVal) {
     	byte [] arr = new byte[4];
         int val = 0;
        
     	arr[0] = (byte)(intVal & MASK_FIRST_BYTE);
-        
     
         val = intVal & MASK_SEC_BYTE;
         arr[1] = (byte)(val >>> 8);
-       
     
         val = intVal & MASK_THIRD_BYTE;
         arr[2] = (byte)(val >>>16);
-        
     
         val = intVal & MASK_FOURTH_BYTE;
         arr[3] = (byte)(val >>> 24);
-                
-        
+
         return arr;
     }
-    
+
+    public static byte [] getByteVec(int [] a) {
+
+        int fac = (Integer.SIZE / Byte.SIZE);
+
+        byte [] arr = new byte[a.length * fac];
+
+        for (int i = 0; i < a.length; i++) {
+
+            final int intVal = a[i];
+
+            int val = 0;
+
+            final int indexByteVec = i*fac;
+
+            arr[indexByteVec+0] = (byte)(intVal & MASK_FIRST_BYTE);
+
+            val = intVal & MASK_SEC_BYTE;
+            arr[indexByteVec+1] = (byte)(val >>> 8);
+
+
+            val = intVal & MASK_THIRD_BYTE;
+            arr[indexByteVec+2] = (byte)(val >>>16);
+
+
+            val = intVal & MASK_FOURTH_BYTE;
+            arr[indexByteVec+3] = (byte)(val >>> 24);
+        }
+
+
+        return arr;
+    }
+
     public static int getSizeForBits(int bits){
     	
     	int sizeInteger = 0;

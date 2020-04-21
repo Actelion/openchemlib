@@ -117,6 +117,27 @@ public class DoubleArray implements INumericalDataColumn {
 		return index;
 	}
 
+	public int add(double [] d){
+
+		int index = size-1;
+
+		for (int i = 0; i < d.length; i++) {
+			index = add(d[i]);
+		}
+
+		return index;
+	}
+
+	public int add(float [] d){
+
+		int index = size-1;
+
+		for (int i = 0; i < d.length; i++) {
+			index = add(d[i]);
+		}
+
+		return index;
+	}
 	public int add(DoubleArray d){
 
 		int index = size-1;

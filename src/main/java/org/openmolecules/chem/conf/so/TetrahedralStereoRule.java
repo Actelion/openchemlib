@@ -20,15 +20,15 @@ import com.actelion.research.chem.conf.Conformer;
 
 import java.util.ArrayList;
 
-public class StereoRule extends ConformationRule {
-	public StereoRule(int[] atom) {
+public class TetrahedralStereoRule extends ConformationRule {
+	public TetrahedralStereoRule(int[] atom) {
 		super(atom);
 		}
 
     public static void calculateRules(ArrayList<ConformationRule> ruleList, StereoMolecule mol) {
 		for (int atom=0; atom<mol.getAtoms(); atom++) {
 			int parity = mol.getAtomParity(atom);
-			if (parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2) {
+			if ((parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2) && mol.getAtomPi(atom) == 0) {
 				int[] atomList = new int[5];
 				for (int i=0; i<mol.getAllConnAtoms(atom); i++) {
 					int connAtom = mol.getConnAtom(atom, i);
@@ -51,7 +51,7 @@ public class StereoRule extends ConformationRule {
 					atomList[1] = temp;
 					}
 
-				ruleList.add(new StereoRule(atomList));
+				ruleList.add(new TetrahedralStereoRule(atomList));
 				}
 			}
 		}
