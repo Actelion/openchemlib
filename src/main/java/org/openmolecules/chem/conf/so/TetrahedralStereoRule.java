@@ -28,7 +28,8 @@ public class TetrahedralStereoRule extends ConformationRule {
     public static void calculateRules(ArrayList<ConformationRule> ruleList, StereoMolecule mol) {
 		for (int atom=0; atom<mol.getAtoms(); atom++) {
 			int parity = mol.getAtomParity(atom);
-			if ((parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2) && mol.getAtomPi(atom) == 0) {
+			if ((parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2)
+			 && !mol.isCentralAlleneAtom(atom)) {
 				int[] atomList = new int[5];
 				for (int i=0; i<mol.getAllConnAtoms(atom); i++) {
 					int connAtom = mol.getConnAtom(atom, i);
