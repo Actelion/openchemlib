@@ -106,17 +106,17 @@ public interface DescriptorConstants {
     public static final DescriptorInfo DESCRIPTOR_Flexophore =
 							new DescriptorInfo("Flexophore",
 												"Flexophore",
-												"4.4",
+												"5.0",
 												DESCRIPTOR_TYPE_MOLECULE,
 												false,
 												false,
 												false,
 												false);
-
-    public static final DescriptorInfo DESCRIPTOR_FlexophoreV5 =
-							new DescriptorInfo("FlexophoreV5",
-												"FlexophoreV5",
-												"5.0",
+	@Deprecated
+    public static final DescriptorInfo DESCRIPTOR_FlexophoreV4 =
+							new DescriptorInfo("FlexophoreV4",
+												"FlexophoreV4",
+												"4.3",
 												DESCRIPTOR_TYPE_MOLECULE,
 												false,
 												false,
