@@ -14,6 +14,7 @@
 
 package org.openmolecules.chem.conf.so;
 
+import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 
@@ -157,4 +158,19 @@ System.out.println();
 		        conformer.getCoordinates(connAtom).add(dx, dy, dz);
 	    	}
 	    }
+
+	protected void rotateAtom(Conformer conformer, int atom, int refAtom, Coordinates unit, double theta) {
+		double x = unit.x;
+		double y = unit.y;
+		double z = unit.z;
+		double c = Math.cos(theta);
+		double s = Math.sin(theta);
+		double t = 1-c;
+		double mx = conformer.getX(atom) - conformer.getX(refAtom);
+		double my = conformer.getY(atom) - conformer.getY(refAtom);
+		double mz = conformer.getZ(atom) - conformer.getZ(refAtom);
+		conformer.setX(atom, conformer.getX(refAtom) + (t*x*x+c)*mx + (t*x*y+s*z)*my + (t*x*z-s*y)*mz);
+		conformer.setY(atom, conformer.getY(refAtom) + (t*x*y-s*z)*mx + (t*y*y+c)*my + (t*y*z+s*x)*mz);
+		conformer.setZ(atom, conformer.getZ(refAtom) + (t*x*z+s*y)*mx + (t*z*y-s*x)*my + (t*z*z+c)*mz);
+		}
 	}

@@ -27,7 +27,7 @@ import java.util.zip.ZipInputStream;
 public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentCache.CacheEntry> implements Serializable {
 	private static final String DEFAULT_CACHE_FILE = "/resources/defaultRigidFragments.zip";
 	private static RigidFragmentCache sInstance;
-	private int mHitCount,mGetCount;
+	private int mHitCount,mGetCount, mNonCachableCount;
 	private boolean mDefaultCacheLoaded;
 	private TreeSet<String> mSetOfLoadedCacheFiles;
 
@@ -72,7 +72,24 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 		return (double)mHitCount/(double)mGetCount;
 		}
 
-	public void resetHitQuote() {
+	public int getHitCount() {
+		return mHitCount;
+		}
+
+	public int getRequestCount() {
+		return mGetCount;
+		}
+
+	public int getNonCachableCount() {
+		return mNonCachableCount;
+		}
+
+	public void increaseNonCachableCount() {
+		mNonCachableCount++;
+		}
+
+	public void resetAllCounters() {
+		mNonCachableCount = 0;
 		mHitCount = 0;
 		mGetCount = 0;
 		}
@@ -266,7 +283,7 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 					System.out.println(" hit-rate:" + DoubleFormat.toString(cache.getHitQuote(), 5, false)
 							+ " millis:" + (System.currentTimeMillis() - start_millis)
 							+ " cacheSize:" + cache.size());
-					cache.resetHitQuote();
+					cache.resetAllCounters();
 				}
 			}
 

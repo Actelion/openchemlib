@@ -71,8 +71,9 @@ public class TorsionRule extends ConformationRule {
                     if (torsion != null) {
 /*
 System.out.print("torsionID:"+torsionID+" torsions:"+torsion[0]);
-for (int i=1; i<torsion.length; i++)
-System.out.print(","+torsion[i]);
+for (int i=1; i<torsion.length; i++) System.out.print(","+torsion[i]);
+System.out.print(" atoms(parity):"+torsionAtom[0]+"("+mol.getAtomParity(torsionAtom[0])+")");
+for (int i=1; i<torsionAtom.length; i++) System.out.print(","+torsionAtom[i]+"("+mol.getAtomParity(torsionAtom[i])+")");
 System.out.println();
 */
 					    int[] atomToRotate = null;
@@ -370,21 +371,6 @@ System.out.println((mAtomToRotate==null?"ring":"!ring")+" before:"+currentTorsio
         		rotateAtom(conformer, connAtom, refAtom, unit, theta);
         	}
 		}
-
-	private void rotateAtom(Conformer conformer, int atom, int refAtom, Coordinates unit, double theta) {
-        double x = unit.x;
-        double y = unit.y;
-        double z = unit.z;
-        double c = Math.cos(theta);
-        double s = Math.sin(theta);
-        double t = 1-c;
-        double mx = conformer.getX(atom) - conformer.getX(refAtom);
-        double my = conformer.getY(atom) - conformer.getY(refAtom);
-        double mz = conformer.getZ(atom) - conformer.getZ(refAtom);
-        conformer.setX(atom, conformer.getX(refAtom) + (t*x*x+c)*mx + (t*x*y+s*z)*my + (t*x*z-s*y)*mz);
-        conformer.setY(atom, conformer.getY(refAtom) + (t*x*y-s*z)*mx + (t*y*y+c)*my + (t*y*z+s*x)*mz);
-        conformer.setZ(atom, conformer.getZ(refAtom) + (t*x*z+s*y)*mx + (t*z*y-s*x)*my + (t*z*z+c)*mz);
-	    }
 
 	@Override
 	public double addStrain(Conformer conformer, double[] atomStrain) {

@@ -217,6 +217,7 @@ public class RigidFragmentProvider {
 				}
 
 			if (!putFragmentIntoCache) {    // restore orignal fragment parities
+				mCache.increaseNonCachableCount();
 				for (int atom=0; atom<atomCount; atom++)
 					fragment.setAtomParity(atom, Math.abs(originalAtomParity[atom]), originalAtomParity[atom] < 0);
 				for (int bond=0; bond<bondCount; bond++)
