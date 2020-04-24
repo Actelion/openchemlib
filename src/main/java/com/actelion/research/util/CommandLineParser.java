@@ -99,8 +99,13 @@ public class CommandLineParser {
     public double getAsDouble(String command) {
         return Double.parseDouble(get(command));
     }
+
     public int getAsInt(String command) {
         return Integer.parseInt(get(command));
+    }
+
+    public boolean getAsBoolean(String command) {
+        return Boolean.parseBoolean(get(command));
     }
 
     public boolean contains(String command) {
