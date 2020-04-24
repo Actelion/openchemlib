@@ -72,13 +72,11 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	// until 24.03.2020
 	// private static final double CORRECTION_FACTOR = 0.40;
 
-	private static final double CORRECTION_FACTOR = 0.5;
+	private static final double CORRECTION_FACTOR = 0.4;
 
 	private static final int MAX_TRIES_TO_GENERATE_CONFORMER = 25;
 
 	private static final int MAX_TRIES_TO_GENERATE_CONFORMER_ONE_CONF = 11;
-
-	private static DescriptorHandlerFlexophore INSTANCE;
 
 	protected static final int MIN_NUM_ATOMS = 6;
 
@@ -102,8 +100,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	public static final double THRESH_SIMILARITY_COMPARISON_NODE = PPNodeSimilarity.THRESH_SIMILARITY_HARD_MATCH;
 	public static final double THRESH_HISTOGRAM_SIMILARITY = ObjectiveFlexophoreHardMatchUncovered.THRESH_HISTOGRAM_SIMILARITY;
 
-	private ConcurrentLinkedQueue<CompleteGraphMatcher<IMolDistHist>> queueCGM;
+	private static DescriptorHandlerFlexophore INSTANCE;
 
+
+	private ConcurrentLinkedQueue<CompleteGraphMatcher<IMolDistHist>> queueCGM;
 
 	private MolDistHistEncoder molDistHistEncoder;
 
