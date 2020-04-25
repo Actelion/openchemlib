@@ -41,21 +41,18 @@ import java.util.ArrayList;
  * - For molecule stereo centers, which are gone in the fragment, copying of molecule parities to the fragment ensures
  * proper 3D-coordinates. For the Canonizer graphIndex to reflect the original configuration, we need to make sure,
  * that up/down-bonds are copied (parities won't do), which are now overspecifying the non-stereo center.
- * And we use the Canonizer mode CONSIDER_STEREOHETEROTOPICITY to distinguish enantio- and diastereo-topic neighbours,
- * which doesn't change the idcode, but is reflected in the graphindex, because stereoheterotopic atoms are ranked
- * now differently before tie-breaking.<br>
- * - Prochiral fragments in symmetrical environment: If a new fragment with a potential stereo center is found
- * first in a symmetrical molecule, such that the potential stereo center is none, then no parity and no up/down-bond
- * are copied and 3D-coordinates randomly reflect one of the two options. If the same fragment is later retrieved
- * from the cache when found in a chiral situation, then cached coordinates have a 50% change to be wrong. Counter
- * measure: For every pro-chiral atom we introduce an arbitrary parity and according up/down bond before
- * generating coordinates and graphIndex.
+ * And we use the Canonizer mode TIE_BREAK_FREE_VALENCE_ATOMS to distinguish symmetrical fragment atoms if they have
+ * free valences and, thus, could be differently substituted in molecule matches. This way we locate all potential
+ * stereo centers in fragments. If a given molecule does not specify a parity for any of the potential stereo
+ * centers, then this fragment is not cached. Otherwise a later hit with a defined stereo center might get coordinates
+ * for the wrong stereo configuration.<br>
+ * - If a fragment contains stereo centers, then only one of the two possible enantiomers is cached. The other one is
+ * constructed by z-coordinate inversion.<br>
  */
 public class RigidFragmentProvider {
-	public static boolean sPrintParityFragment = false;
 	private static int MAX_CONFORMERS = 16;
 
-	private static final boolean DEBUG_INFO_MMFF = false;
+	private static final boolean DEBUG_INFO_MMFF = true;
 
 	// Random seed for initializing the SelfOrganizer.
 	private long mRandomSeed;
@@ -159,7 +156,7 @@ public class RigidFragmentProvider {
 			}
 		}
 
-		Conformer[] conformers = null;
+		ArrayList<Conformer> conformerList = null;
 		double[] likelihood = null;
 		Canonizer canonizer = null;
 		String key = null;
@@ -208,77 +205,116 @@ public class RigidFragmentProvider {
 			if (cacheEntry != null) {
 				// convert from canonical coordinates back to fragment
 				int[] graphIndex = canonizer.getGraphIndexes();
-				conformers = new Conformer[cacheEntry.coordinates.length];
-				for (int i=0; i<conformers.length; i++) {
+				conformerList = new ArrayList<>();
+				for (Coordinates[] coords:cacheEntry.coordinates) {
 					for (int j = 0; j<fragment.getAllAtoms(); j++) {
-						Coordinates coords = cacheEntry.coordinates[i][graphIndex[j]];
-						fragment.setAtomX(j, coords.x);
-						fragment.setAtomY(j, coords.y);
-						fragment.setAtomZ(j, invertedEnantiomer ? -coords.z : coords.z);
+						Coordinates c = coords[graphIndex[j]];
+						fragment.setAtomX(j, c.x);
+						fragment.setAtomY(j, c.y);
+						fragment.setAtomZ(j, invertedEnantiomer ? -c.z : c.z);
+						}
+					conformerList.add(new Conformer(fragment));
 					}
-					conformers[i] = new Conformer(fragment);
-				}
 
 				likelihood = cacheEntry.likelihood;
 				}
 			}
 
-		if (conformers == null) {
+		if (conformerList == null) {
 			ConformationSelfOrganizer selfOrganizer = new ConformationSelfOrganizer(fragment, true);
 			selfOrganizer.initializeConformers(mRandomSeed, MAX_CONFORMERS);
 
 			// Generate multiple low constrain conformers
-			ArrayList<SelfOrganizedConformer> conformerList = new ArrayList<>();
+			conformerList = new ArrayList<>();
 			SelfOrganizedConformer bestConformer = selfOrganizer.getNextConformer();
 			conformerList.add(bestConformer);
 			SelfOrganizedConformer conformer = selfOrganizer.getNextConformer();
 			while (conformer != null) {
 				conformerList.add(conformer);
 				conformer = selfOrganizer.getNextConformer();
-			}
+				}
 
-			conformers = conformerList.toArray(new Conformer[0]);
-			likelihood = new double[conformers.length];
+			likelihood = new double[conformerList.size()];
 			double likelyhoodSum = 0.0;
-			for (int i = 0; i < conformers.length; i++) {
-				likelihood[i] = ((SelfOrganizedConformer) conformers[i]).getLikelyhood();
+			for (int i = 0; i < conformerList.size(); i++) {
+				likelihood[i] = ((SelfOrganizedConformer) conformerList.get(i)).getLikelyhood();
 				likelyhoodSum += likelihood[i];
-			}
-			if (likelyhoodSum != 0.0) {
-				for (int i = 0; i < conformers.length; i++)
+				}
+			if (likelyhoodSum != 0.0)
+				for (int i=0; i < conformerList.size(); i++)
 					likelihood[i] /= likelyhoodSum;
-			}
 
 			if(mOptimizeFragments) {
-				// @TODO: update the likelihoods according to the resulting energies..)
-				for(int zi=0;zi<conformers.length;zi++) {
-					if(DEBUG_INFO_MMFF){
-						System.out.println("FFMIN: Minimize Conformer "+zi);
+				double ENERGY_FOR_FACTOR_10 = 1.36; // MMFF uses kcal/mol; 1.36 kcal/mol is factor 10
+
+				ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+
+				int validEnergyCount = 0;
+				double minEnergy = Double.MAX_VALUE;
+				for(Conformer conf:conformerList) {
+					try {
+						ForceFieldMMFF94 ff = new ForceFieldMMFF94(conf.toMolecule(), ForceFieldMMFF94.MMFF94SPLUS);
+						ff.minimise();
+						double energy = ff.getTotalEnergy();
+						conf.setEnergy(energy);
+						if (!Double.isNaN(energy)) {
+							minEnergy = Math.min(minEnergy, energy);
+							validEnergyCount++;
+							}
+						conf.copyFrom(fragment);
+						}
+					catch (BadAtomTypeException bate) {
+						break;
+						}
+					catch(Exception ex) {
+						ex.printStackTrace();
+						break;
+						}
 					}
-					double[] ff_energies = new double[2];
-					conformers[zi] = minimizeConformer(conformers[zi], ff_energies);
-					if(DEBUG_INFO_MMFF){
-						System.out.println("FFMIN: Result: E_start= "+ff_energies[1]+" , E_end= "+ff_energies[0]);
+
+				double energyLimit = 2.0 * ENERGY_FOR_FACTOR_10;    // population of less than 1% of best conformer
+				for(Conformer conf:conformerList) {
+					if (!Double.isNaN(conf.getEnergy()) && conf.getEnergy()>energyLimit) {
+						conf.setEnergy(Double.NaN);
+						validEnergyCount--;
+						}
+					}
+
+					// if we have no valid energy values, we keep the likelihoods from the self organizer
+				if (validEnergyCount != 0) {
+					double[] population = new double[validEnergyCount];
+					double populationSum = 0;
+					int index = 0;
+					for(int i=0; i<conformerList.size(); i++) {
+						Conformer conf = conformerList.get(i);
+						if (!Double.isNaN(conf.getEnergy()))
+							populationSum += (population[index++] = Math.pow(10, (minEnergy - conf.getEnergy()) / ENERGY_FOR_FACTOR_10));
+						else
+							conformerList.remove(conf);
+						}
+
+					likelihood = new double[validEnergyCount];
+					for (int i=0; i<validEnergyCount; i++)
+						likelihood[i] = population[i] / populationSum;
 					}
 				}
-			}
 
 			if (useCache) {
 				int[] graphIndex = canonizer.getGraphIndexes();
-				Coordinates[][] coords = new Coordinates[conformers.length][fragment.getAllAtoms()];
+				Coordinates[][] coords = new Coordinates[conformerList.size()][fragment.getAllAtoms()];
 				for (int i=0; i<coords.length; i++) {
 					for (int j = 0; j<coords[i].length; j++) {
-						Coordinates xyz = conformers[i].getCoordinates(j);
+						Coordinates xyz = conformerList.get(i).getCoordinates(j);
 						coords[i][graphIndex[j]] = new Coordinates(xyz.x, xyz.y, invertedEnantiomer ? -xyz.z : xyz.z);
 						}
 					}
 
 				mCache.put(key, new RigidFragmentCache.CacheEntry(coords, likelihood));
+				}
 			}
-		}
 
 		return new RigidFragment(coreAtomCount, coreToFragmentAtom, fragmentToOriginalAtom,
-				extendedToFragmentAtom, originalToExtendedAtom, conformers, likelihood);
+				extendedToFragmentAtom, originalToExtendedAtom, conformerList.toArray(new Conformer[0]), likelihood);
 	}
 
 	/**
