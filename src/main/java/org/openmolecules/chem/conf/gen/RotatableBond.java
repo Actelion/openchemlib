@@ -331,7 +331,7 @@ public class RotatableBond {
 
 		Coordinates[] fcoords = new Coordinates[fragment.getExtendedSize()];
 
-		if (alpha < ANGLE_TOLERANCE || alpha > Math.PI - ANGLE_TOLERANCE) {   // special cases
+		if (alpha < ANGLE_TOLERANCE) { // special case both axes parallel: we only need to translate
 			for (int i=0; i<fragment.getExtendedSize(); i++) {
 				int atom = fragment.extendedToOriginalAtom(i);
 				if (atom != rootAtom && atom != rearAtom)
@@ -341,7 +341,20 @@ public class RotatableBond {
 				}
 			}
 		else {
-			double[][] m = getRotationMatrix(uv.cross(fuv).unit(), alpha);
+			Coordinates rotationAxis;
+			if (alpha < Math.PI - ANGLE_TOLERANCE) {    // normal case, just rotate around the plane orthogonal
+				rotationAxis = uv.cross(fuv);
+				}
+			else {    // special case both axes anti-parallel: for cross-product we need any vector being different from uv
+				if (Math.abs(uv.x) >= Math.abs(uv.y) && Math.abs(uv.x) >= Math.abs(uv.z))
+					rotationAxis = new Coordinates(-(uv.y + uv.z) / uv.x, 1.0, 1.0);
+				else if (Math.abs(uv.y) >= Math.abs(uv.x) && Math.abs(uv.y) >= Math.abs(uv.z))
+					rotationAxis = new Coordinates(1.0, -(uv.x + uv.z) / uv.y, 1.0);
+				else
+					rotationAxis = new Coordinates(1.0, 1.0, -(uv.x + uv.y) / uv.z);
+				}
+
+			double[][] m = getRotationMatrix(rotationAxis.unit(), alpha);
 	
 			for (int i=0; i<fragment.getExtendedSize(); i++) {
 				int atom = fragment.extendedToOriginalAtom(i);

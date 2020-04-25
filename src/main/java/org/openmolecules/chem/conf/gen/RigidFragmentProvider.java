@@ -1,15 +1,16 @@
 package org.openmolecules.chem.conf.gen;
 
-import com.actelion.research.chem.*;
+import com.actelion.research.chem.Canonizer;
+import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.forcefield.mmff.BadAtomTypeException;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import org.openmolecules.chem.conf.so.ConformationSelfOrganizer;
 import org.openmolecules.chem.conf.so.SelfOrganizedConformer;
 
-import java.io.BufferedWriter;
 import java.util.ArrayList;
-import java.util.TreeSet;
 
 /**
  * An instance of this class is used by any ConformerGenerator to hand out one or multiple 3D-coordinate sets
@@ -61,22 +62,10 @@ public class RigidFragmentProvider {
 	private boolean mOptimizeFragments;
 	private RigidFragmentCache mCache;
 
-	private static TreeSet<String> sDebugFragmentSet;
-	private static BufferedWriter sDebugWriter;
-
 	public RigidFragmentProvider(long randomSeed, RigidFragmentCache cache, boolean optimizeRigidFragments) {
 		mRandomSeed = randomSeed;
 		mCache = cache;
 		mOptimizeFragments = optimizeRigidFragments;
-		}
-
-	/**
-	 * @param debugFragmentSet if given, then only listed fragment are generated
-	 * @param debugWriter if given, then generated fragments are written as SD-entries into file
-	 */
-	public static void setDebugMode(TreeSet<String> debugFragmentSet, BufferedWriter debugWriter) {
-		sDebugFragmentSet = debugFragmentSet;
-		sDebugWriter = debugWriter;
 		}
 
 	public RigidFragment createFragment(StereoMolecule mol, int[] fragmentNo, int fragmentIndex) {
@@ -176,71 +165,46 @@ public class RigidFragmentProvider {
 		String key = null;
 		boolean invertedEnantiomer = false;
 
-		boolean putFragmentIntoCache = false;
+		boolean useCache = (mCache != null);
 
-		// Generate stereo parities for all potential stereo configurations in fragment.
-		// If one or more potential stereo configurations are unknown, then the fragment doesn't qualify to be cached.
-		if (mCache != null) {
-			// we may use original parities for coordinate generation, if fragment doesn't qualify for caching
-			int[] originalAtomParity = new int[atomCount];
-			for (int atom=0; atom<atomCount; atom++) {
-				originalAtomParity[atom] = fragment.getAtomParity(atom);
-				if (fragment.isAtomParityPseudo(atom));
-					originalAtomParity[atom] = -originalAtomParity[atom];
-				}
-			int[] originalBondParity = new int[bondCount];
-			for (int bond=0; bond<bondCount; bond++) {
-				originalBondParity[bond] = fragment.getBondParity(bond);
-				if (fragment.isBondParityPseudo(bond));
-					originalBondParity[bond] = -originalBondParity[bond];
-				}
-
+		// Generate stereo parities for all potential stereo features in the fragment.
+		// If one or more potential stereo features are unknown, then the fragment doesn't qualify to be cached.
+		if (useCache) {
 			// By distinguishing equal ranking atoms, if they have free valencens, we detect all possible stereo features
 			canonizer = new Canonizer(fragment, Canonizer.TIE_BREAK_FREE_VALENCE_ATOMS);
-			canonizer.setParities();
 
 			// we don't cache fragments with unspecified stereo configurations
-			putFragmentIntoCache = true;
-
-			fragment.ensureHelperArrays(Molecule.cHelperNeighbours);
 			for (int atom=0; atom<fragment.getAtoms(); atom++) {
-				if (fragment.getAtomParity(atom) == Molecule.cAtomParityUnknown) {
-					putFragmentIntoCache = false;
+				if (canonizer.getTHParity(atom) == Molecule.cAtomParityUnknown) {
+					useCache = false;
 					break;
 					}
 				}
 			for (int bond=0; bond<fragment.getBonds(); bond++) {
-				if (fragment.getBondParity(bond) == Molecule.cBondParityUnknown) {
-					putFragmentIntoCache = false;
+				if (canonizer.getEZParity(bond) == Molecule.cBondParityUnknown) {
+					useCache = false;
 					break;
 					}
 				}
 
-			if (!putFragmentIntoCache) {    // restore orignal fragment parities
-				mCache.increaseNonCachableCount();
-				for (int atom=0; atom<atomCount; atom++)
-					fragment.setAtomParity(atom, Math.abs(originalAtomParity[atom]), originalAtomParity[atom] < 0);
-				for (int bond=0; bond<bondCount; bond++)
-					fragment.setBondParity(bond, Math.abs(originalBondParity[bond]), originalBondParity[bond] < 0);
-				}
+			// If the fragment qualifies for caching, then we use Canonizer parities, which are consistent with canonical atom numbering.
+			// Otherwise, we keep and use the original parities for coordinate generation.
+			if (useCache)
+				canonizer.setParities();
 			}
 
-		// no matter, whether we use the original parities or freshly calculated parities,
-		// we need to define them to be valid for the coordinate self-organization
+		// No matter, whether parities were copied from the original molecule, or whether we use freshly calculated parities,
+		// we need to define them to be valid for the coordinate self-organization.
 		fragment.setParitiesValid(0);
 
 		// Check, whether we have the fragment already in the cache.
 		// If yes, then map coordinates from canonical order and mirror coordinates, if needed.
 		// Coordinates are store normalized to one enantiomer
-		if (mCache != null) {
+		if (useCache) {
 			invertedEnantiomer = canonizer.normalizeEnantiomer();
 			key = canonizer.getIDCode();
 
-			if (sDebugFragmentSet != null && (!sDebugFragmentSet.contains(key) || mCache.containsKey(key)))
-				return null;
-
 			RigidFragmentCache.CacheEntry cacheEntry = mCache.get(key);
-
 			if (cacheEntry != null) {
 				// convert from canonical coordinates back to fragment
 				int[] graphIndex = canonizer.getGraphIndexes();
@@ -254,11 +218,10 @@ public class RigidFragmentProvider {
 					}
 					conformers[i] = new Conformer(fragment);
 				}
+
 				likelihood = cacheEntry.likelihood;
+				}
 			}
-		}
-		else if (sDebugFragmentSet != null)
-			return null;
 
 		if (conformers == null) {
 			ConformationSelfOrganizer selfOrganizer = new ConformationSelfOrganizer(fragment, true);
@@ -300,7 +263,7 @@ public class RigidFragmentProvider {
 				}
 			}
 
-			if (putFragmentIntoCache) {
+			if (useCache) {
 				int[] graphIndex = canonizer.getGraphIndexes();
 				Coordinates[][] coords = new Coordinates[conformers.length][fragment.getAllAtoms()];
 				for (int i=0; i<coords.length; i++) {
@@ -311,32 +274,11 @@ public class RigidFragmentProvider {
 					}
 
 				mCache.put(key, new RigidFragmentCache.CacheEntry(coords, likelihood));
-
-				if (sDebugWriter != null) {
-					conformers[0].toMolecule(fragment);
-					if (invertedEnantiomer)
-						for (int atom=0; atom<fragment.getAllAtoms(); atom++)
-							fragment.setAtomZ(atom, -fragment.getAtomZ(atom));
-					try {
-//						sDebugWriter.write("parent"+new MolfileCreator(mol).getMolfile());
-//						sDebugWriter.write("$$$$\n");
-
-						sDebugWriter.write(key+new MolfileCreator(fragment).getMolfile());
-						sDebugWriter.write(">  <graph-index>\n");
-						for (int gi:graphIndex)
-							sDebugWriter.write(" "+gi);
-						sDebugWriter.newLine();
-						sDebugWriter.newLine();
-						sDebugWriter.write("$$$$\n");
-					} catch (Exception e) {}
-					return null;
-				}
 			}
 		}
 
 		return new RigidFragment(coreAtomCount, coreToFragmentAtom, fragmentToOriginalAtom,
-				extendedToFragmentAtom, originalToExtendedAtom,
-				conformers, likelihood);
+				extendedToFragmentAtom, originalToExtendedAtom, conformers, likelihood);
 	}
 
 	/**
