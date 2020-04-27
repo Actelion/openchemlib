@@ -146,6 +146,7 @@ public class Canonizer {
 	private CanonizerMesoHelper mMesoHelper;
 	private boolean mIsMeso,mStereoCentersFound;
 	private boolean[] mIsStereoCenter;  // based on extended stereo ranking, i.e. considering ESR type and group
+	private boolean[] mTHParityIsMesoInverted;  // whether the atom's parity must be inverted in the idcode because of meso fragment parity normalization
 	private boolean[] mTHParityNeedsNormalization;
 	private boolean[] mTHESRTypeNeedsNormalization;
 	private boolean[] mTHParityRoundIsOdd;
@@ -523,6 +524,7 @@ System.out.println();
 		// schedule all atoms of any ESR group (AND and OR) to be normalized
 		// concerning their parities, in order to be able to consider the
 		// parities for ranking and ,thus, for recursive parity determination.
+		mTHParityIsMesoInverted = new boolean[mMol.getAtoms()];
 		mTHParityNeedsNormalization = new boolean[mMol.getAtoms()];
 		mTHParityNormalizationGroupList = new ArrayList<>();
 		canMarkESRGroupsForParityNormalization();
@@ -955,22 +957,30 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
 				mCanBase[atom].add(20, 0);
 
-					// Certain groups of parities require normalization before
-					// the definite parity values can be considered here. These
-					// groups of stereo centers consist of all ESR groups of type
-					// OR and AND, but also of independent ABS atoms in meso
-					// fragments.
-					// If a stereo center is marked to require normalization
-					// then only consider the ESR type and the rank of the group.
+				// Certain groups of parities require normalization before
+				// the definite parity values can be considered here. These
+				// groups of stereo centers consist of all ESR groups of type
+				// OR and AND, but also of independent ABS atoms in meso
+				// fragments.
+				// If a stereo center is marked to require normalization
+				// then only consider the ESR type and the rank of the group.
 
 				if (!mTHESRTypeNeedsNormalization[atom]
-				 && mTHESRType[atom] != Molecule.cESRTypeAbs)
+						&& mTHESRType[atom] != Molecule.cESRTypeAbs)
 					mCanBase[atom].add((mTHESRType[atom] << 18)
-									+  (groupRank[(mTHESRType[atom] == Molecule.cESRTypeAnd) ? 0 : 1][mTHESRGroup[atom]] << 8));
+							+ (groupRank[(mTHESRType[atom] == Molecule.cESRTypeAnd) ? 0 : 1][mTHESRGroup[atom]] << 8));
 
-//				if (!mTHParityNeedsNormalization[atom])
-					mCanBase[atom].add(mTHParity[atom] << 4);
-				}
+//				if (!mTHParityNeedsNormalization[atom]) {
+					int parity = mTHParity[atom];
+					if (mTHParityIsMesoInverted[atom]) {
+						if (parity == Molecule.cAtomParity1)
+							parity = Molecule.cAtomParity2;
+						else if (parity == Molecule.cAtomParity2)
+							parity = Molecule.cAtomParity1;
+						}
+					mCanBase[atom].add(parity << 4);
+					}
+//				}
 
 // TODO consider groupRank for bonds
 			for (int bond=0; bond<mMol.getBonds(); bond++) {
@@ -1021,8 +1031,9 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 
 
 	/**
-	 * This normalizes relative parities within any ESR group
-	 * such that the highest ranking atom or bond gets parity2
+	 * This determines for relative parities within any ESR group, whether the
+	 * parity should be inverted for normalization in the idcode.
+	 * The rule is that the highest ranking atom or bond gets parity2
 	 * and the others are adapted accordingly.
 	 * @return
 	 */
@@ -1058,12 +1069,9 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 			if (allParitiesDetermined
 			 && maxRank != -1) {
 				for (int atom:groupAtom) {
-					if (invertParities) {
-						if (mTHParity[atom] == Molecule.cAtomParity1)
-							mTHParity[atom] = Molecule.cAtomParity2;
-						else if (mTHParity[atom] == Molecule.cAtomParity2)
-							mTHParity[atom] = Molecule.cAtomParity1;
-						}
+					if (mTHParity[atom] == Molecule.cAtomParity1
+					 || mTHParity[atom] == Molecule.cAtomParity2)
+						mTHParityIsMesoInverted[atom] = invertParities;
 					mTHParityNeedsNormalization[atom] = false;
 					}
 				mTHParityNormalizationGroupList.remove(groupAtom);
@@ -3492,18 +3500,19 @@ System.out.println();
 		}
 
 
+	/**
+	 * Creates parities based on atom indices in graph rather than on priority values.
+	 * These values are more meaningful to be written into idcodes, because they allow
+	 * to create coordinates or running Configuration aware substructure searches on
+	 * molecules creates from idcode without the necessity to recreate the priority values.
+	 */
 	private void idGenerateConfigurations() {
-		// Creates parities based on atom indices in graph rather than on priority values.
-		// These values are more meaningful to be written into idcodes, because they allow
-		// to create coordinates or running Configuration aware substructure searches on
-		// molecules creates from idcode without the necessity to recreate the priority values.
-
 		mTHConfiguration = new byte[mMol.getAtoms()];
 
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (mTHParity[atom] == Molecule.cAtomParity1
 			 || mTHParity[atom] == Molecule.cAtomParity2) {
-				boolean inversion = false;
+				boolean inversion = mTHParityIsMesoInverted[atom];
 				if (mMol.isCentralAlleneAtom(atom)) {
 					for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 						int connAtom = mMol.getConnAtom(atom,i);
@@ -3572,78 +3581,6 @@ System.out.println();
 		}
 
 
-/*	private void idNormalizeConfigurations() {
-		// Atom TH-parities of type ABS in meso fragments can be defined in
-		// two degenerate ways. Normalize them based on the current mCanRank
-		if (mMesoHelper != null) {
-			mMesoHelper.normalizeFragmentsAbsAtoms(mCanRank, mTHConfiguration);
-			}
-
-		// Atom TH-parities of ESR-AND or ESR-OR groups are up to now
-		// arbitrary values, i.e. one of two possible ways of encoding
-		// the group's relative parity information.
-		// First we create for every ESR group a list of its atoms.
-		// All parities of a list's atoms are then normalized by inverting
-		// all parities of a group if the parity of the highest ranking
-		// group member is parity2.
-
-		int count = 0;
-		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			if (canIsMemberOfESRGroup(atom))
-				count++;
-
-		if (count == 0)
-			return;
-
-		int[] parity = new int[count];
-		count = 0;
-		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (canIsMemberOfESRGroup(atom)) {
-				parity[count] = (mTHESRType[atom] << 29)
-							  | (mTHESRGroup[atom] << 24)
-							  | (mCanRank[atom] << 12)
-							  | atom;
-				count++;
-				}
-			}
-
-		Arrays.sort(parity);
-		int groupBase = 0;
-		int nextGroupBase = 0;
-		int groupID = parity[0] & 0xff000000;
-		while (true) {
-			nextGroupBase++;
-			if (nextGroupBase == parity.length
-			 || groupID != (parity[nextGroupBase] & 0xff000000)) {
-				int[] atomList = new int[nextGroupBase-groupBase];
-				for (int i=groupBase; i<nextGroupBase; i++)
-					atomList[i-groupBase] = parity[i] & 0x00000fff;
-				idNormalizeConfigurations(atomList);
-
-				if (nextGroupBase == parity.length)
-					break;
-
-				groupID = (parity[nextGroupBase] & 0xff000000);
-				groupBase = nextGroupBase;
-				}
-			}
-		}
-
-
-	private void idNormalizeConfigurations(int[] atomList) {
-			// atomList is sorted by mCanRank with the lowest rank first
-		if (mTHParity[atomList[atomList.length-1]] == Molecule.cAtomParity2) {
-			for (int i=0; i<atomList.length; i++) {
-				int atom = atomList[i];
-				if (mTHConfiguration[atom] == Molecule.cAtomParity1)
-					mTHConfiguration[atom] = Molecule.cAtomParity2;
-				else if (mTHConfiguration[atom] == Molecule.cAtomParity2)
-					mTHConfiguration[atom] = Molecule.cAtomParity1;
-				}
-			}
-		}*/
-
-	
 	private void idNormalizeESRGroupNumbers() {
 		idNormalizeESRGroupNumbers(Molecule.cESRTypeAnd);
 		idNormalizeESRGroupNumbers(Molecule.cESRTypeOr);
@@ -3812,7 +3749,7 @@ System.out.println();
 
 
 	/**
-	 * This normalizes all tetrahedral-, allene- and atrop-parities within the molecule.
+	 * This normalizes all absolute tetrahedral-, allene- and atrop-parities within the molecule.
 	 * This is done by finding the lowest atom rank that is shared by an odd number of
 	 * atoms with determines parities, not counting unknown and none.
 	 * If there number of parity2 atoms is higher than parity1 atoms of that rank, then
@@ -3826,13 +3763,15 @@ System.out.println();
 	public boolean normalizeEnantiomer() {
 		int[] parityCount = new int[mNoOfRanks + 1];
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (mTHParity[atom] == Molecule.cAtomParity1)
-				parityCount[mCanRank[atom]]++;
-			else if (mTHParity[atom] == Molecule.cAtomParity2)
-				parityCount[mCanRank[atom]]--;
+			if (mMol.getAtomESRType(atom) == Molecule.cESRTypeAbs) {
+				if (mTHParity[atom] == Molecule.cAtomParity1)
+					parityCount[mCanRank[atom]]++;
+				else if (mTHParity[atom] == Molecule.cAtomParity2)
+					parityCount[mCanRank[atom]]--;
+				}
 			}
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
-			if (mMol.getBondOrder(bond) == 1) {
+			if (mMol.getBondOrder(bond) == 1 && mMol.getBondESRType(bond) == Molecule.cESRTypeAbs) {
 				if (mEZParity[bond] == Molecule.cBondParityEor1) {
 					parityCount[mCanRank[mMol.getBondAtom(0, bond)]]++;
 					parityCount[mCanRank[mMol.getBondAtom(1, bond)]]++;
@@ -3848,13 +3787,15 @@ System.out.println();
 				boolean invert = (parityCount[rank] < 0);
 				if (invert) {
 					for (int atom=0; atom<mMol.getAtoms(); atom++) {
-						if (mTHParity[atom] == Molecule.cAtomParity1)
-							mTHParity[atom] = Molecule.cAtomParity2;
-						else if (mTHParity[atom] == Molecule.cAtomParity2)
-							mTHParity[atom] = Molecule.cAtomParity1;
+						if (mMol.getAtomESRType(atom) == Molecule.cESRTypeAbs) {
+							if (mTHParity[atom] == Molecule.cAtomParity1)
+								mTHParity[atom] = Molecule.cAtomParity2;
+							else if (mTHParity[atom] == Molecule.cAtomParity2)
+								mTHParity[atom] = Molecule.cAtomParity1;
+							}
 						}
 					for (int bond=0; bond<mMol.getBonds(); bond++) {
-						if (mMol.getBondOrder(bond) == 1) {
+						if (mMol.getBondOrder(bond) == 1 && mMol.getBondESRType(bond) == Molecule.cESRTypeAbs) {
 							if (mEZParity[bond] == Molecule.cBondParityEor1)
 								mEZParity[bond] = Molecule.cBondParityZor2;
 							else if (mEZParity[bond] == Molecule.cBondParityZor2)
@@ -3878,10 +3819,7 @@ System.out.println();
 			if (mTHParity[atom] == Molecule.cAtomParity1
 			 || mTHParity[atom] == Molecule.cAtomParity2) {
 				boolean inversion = false;
-				if (mMol.getAtomPi(atom) != 0
-				 && mMol.getConnAtoms(atom) == 2
-				 && mMol.getConnBondOrder(atom,0) == 2
-				 && mMol.getConnBondOrder(atom,1) == 2) {   // allene parities
+				if (mMol.isCentralAlleneAtom(atom)) {   // allene parities
 					for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 						int connAtom = mMol.getConnAtom(atom,i);
 						int neighbours = 0;
