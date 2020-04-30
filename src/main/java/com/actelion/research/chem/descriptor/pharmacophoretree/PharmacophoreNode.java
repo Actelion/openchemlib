@@ -112,7 +112,7 @@ public class PharmacophoreNode {
 	}
 
 	
-	private static double calcFeatureSim(int[] features1, int[] features2) {
+	public static double calcFeatureSim(int[] features1, int[] features2) {
 		double sim = 0.0;
 		double nom = 0.0;
 		double denom = 0.0;
@@ -167,11 +167,12 @@ public class PharmacophoreNode {
 		if(nodes1.size() == 1 && nodes2.size()==1) { //matching link Nodes have similarity of 1;
 			PharmacophoreNode n1 = allNodes1.get((Integer)nodes1.toArray()[0]);
 			PharmacophoreNode n2 = allNodes2.get((Integer)nodes2.toArray()[0]);
-			if(n1.isLinkNode() && n2.isLinkNode())
+			if(n1.isLinkNode() && n2.isLinkNode()) {
 				sterSim = 1.0;
 				chemSim = 1.0;
+			}
 		}
-		
+
 		return (1.0-CHEM_SIM_WEIGHT)*sterSim+CHEM_SIM_WEIGHT*chemSim;	
 		
 	}
@@ -213,9 +214,10 @@ public class PharmacophoreNode {
 			chemSim = calcFeatureSim(functionalities1,functionalities2);
 		}
 		if(nodes1.size() == 1 && nodes2.size()==1) { //matching link Nodes have similarity of 1;
-			if(((PharmacophoreNode)nodes1.toArray()[0]).isLinkNode() && ((PharmacophoreNode)nodes2.toArray()[0]).isLinkNode())
+			if(((PharmacophoreNode)nodes1.toArray()[0]).isLinkNode() && ((PharmacophoreNode)nodes2.toArray()[0]).isLinkNode()) {
 				sterSim = 1.0;
 				chemSim = 1.0;
+			}
 		}
 	
 		return (1.0-CHEM_SIM_WEIGHT)*sterSim+CHEM_SIM_WEIGHT*chemSim;	

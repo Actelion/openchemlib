@@ -44,6 +44,7 @@ public class PharmacophoreTree {
 	}
 	
 	private void update() {
+		linkerNodes = 0;
 		for(PharmacophoreNode node : nodes) {
 			if(node.isLinkNode())
 				linkerNodes++;
@@ -113,7 +114,8 @@ public class PharmacophoreTree {
 	 */
 	public void treeWalkBFS(int headNode,int deletedEdgeIndex,List<Integer> treeEdgesBFS, List<Integer> edgeParentsBFS) {
 
-		List<Integer> visitedEdges = new ArrayList<Integer>();
+		Set<Integer> visitedNodes = new HashSet<Integer>();
+		Set<Integer> visitedEdges = new HashSet<Integer>();
 		PriorityQueue<Integer> pqNodes = new PriorityQueue<Integer> ();
 		Map<Integer,Integer> parentEdges = new HashMap<Integer,Integer>();
 		pqNodes.add(headNode);
@@ -123,6 +125,7 @@ public class PharmacophoreTree {
 		edgeParentsBFS.add(-1);
 		while(!pqNodes.isEmpty()) {
 			int node = pqNodes.poll();
+			visitedNodes.add(node);
 			int parentEdge = parentEdges.get(node);
 			for(int edgeNo : adjacencyList.get(node)) {
 				int[] edge = edges.get(edgeNo);
@@ -262,7 +265,13 @@ public class PharmacophoreTree {
 			int[] nextCut = previousCut.clone();
 			lowerBound = getNextCut(previousCut,nextCut,subtreeEdgeIndeces,subtreeEdgeParentIndeces);
 			previousCut = nextCut;
-			cuts.add(previousCut);
+			boolean alreadyPresent = false;
+			for(int i=0;i<cuts.size();i++) {
+				if(Arrays.equals(previousCut, cuts.get(i)))
+					alreadyPresent = true;
+			}
+			if(!alreadyPresent)
+				cuts.add(previousCut);
 		}
 
 		return cuts;
@@ -270,7 +279,7 @@ public class PharmacophoreTree {
 		
 	}
 	
-	public Collection<Integer> getNodesFromEdges(List<Integer> edgeIndeces) {
+	public Set<Integer> getNodesFromEdges(List<Integer> edgeIndeces) {
 		Set<Integer> nodes = new HashSet<Integer>();
 		for(int i=1;i<edgeIndeces.size();i++) { // skip first node, since it is the cut node (its head node is added later)
 			int edgeIndex =edgeIndeces.get(i);
@@ -409,6 +418,56 @@ public class PharmacophoreTree {
 	
 	public double getDirectSim(PharmacophoreTree pTree2) {
 		return PharmacophoreNode.getSimilarity(nodes, pTree2.getNodes());
+	}
+	
+	
+	public List<Set<Integer>> getAllSubtrees() {
+		Set<Set<Integer>> allSubTrees = new HashSet<Set<Integer>>();
+		for(int e=0;e<edges.size();e++) {
+			for(int i=0;i<2;i++) {
+				int[] edge = edges.get(e);
+				List<Integer> treeEdgeIndeces = new ArrayList<Integer>();
+				List<Integer> treeEdgeParentIndeces = new ArrayList<Integer>();
+				treeWalkBFS(edge[i],e,treeEdgeIndeces,treeEdgeParentIndeces);
+				List<int[]> cuts = getExtensionCuts(treeEdgeIndeces,treeEdgeParentIndeces);
+				for(int[] cut : cuts) {
+					List<List<Integer>> sourceTreeEdgeIndeces = new ArrayList<List<Integer>>();
+					List<List<Integer>> sourceTreeEdgeParentIndeces = new ArrayList<List<Integer>>();
+					List<Integer> sourceTreeHeadNodes = new ArrayList<Integer>();
+					Set<Integer> extensionNodes = new HashSet<Integer>();
+					List<Integer> cutEdges = new ArrayList<Integer>();
+					List<Integer> cutDirs = new ArrayList<Integer>();
+					enumerateExtensionCutFull(edge[i],cut, treeEdgeIndeces,
+						treeEdgeParentIndeces, sourceTreeEdgeIndeces,sourceTreeEdgeParentIndeces, 
+						sourceTreeHeadNodes,extensionNodes, cutEdges, cutDirs);
+					allSubTrees.add(extensionNodes);
+				}
+			}
+		}
+		//System.out.println(allSubTrees);
+		return new ArrayList<Set<Integer>>(allSubTrees);
+	}
+	
+	public void getPathsFromHeadNode(int headNode, List<Set<Integer>> paths, Set<Integer> visitedEdges) {
+		Set<Integer> lastPath = paths.get(paths.size()-1);
+		Set<Integer> nextPath = new HashSet<Integer> (lastPath);
+		nextPath.add(headNode);
+		paths.add(nextPath);
+		List<Integer> adjacentEdges = adjacencyList.get(headNode);
+		for(Integer edge : adjacentEdges) {
+			if(visitedEdges.contains(edge))
+				continue;
+			else {
+				int[] e = edges.get(edge);
+				int u = e[0];
+				int v = e[1];
+				if(u==headNode)
+					getPathsFromHeadNode(v,paths,visitedEdges);
+				else
+					getPathsFromHeadNode(u,paths,visitedEdges);
+			}
+		}
+		
 	}
 	
 

@@ -638,6 +638,15 @@ public class TreeMatcher {
 				return match;
 			}
 			
+			public void setSizes(double[] sizes) {
+				this.sizes = sizes;
+				size = sizes[0] + sizes[1];
+			}
+			
+			public void setSim(double sim) {
+				this.sim = sim;
+			}
+			
 		
 		
 		}
