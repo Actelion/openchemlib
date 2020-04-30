@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * 15 Jul 2016 MvK if generation of conformer failed a new seed is injected and the generation is tried again.
  * 11 Aug 2016 MvK number of bins increase from 50 to 80, histogram range increased from 25 to 40 Angstroem. --> V.4.3
  * 30 Jan 2017 MvK minor bug fix. Two constants for the number of conformations. --> V.4.4. Compatible with V.4.3
- * April 2020 Version 5.0, new interaction tables from Joel Wahl
+ * April 2020 Version 5.0, new interaction tables from Joel Wahl, algorithmic changes.
  */
 public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
