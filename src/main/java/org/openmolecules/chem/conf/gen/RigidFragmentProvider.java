@@ -54,6 +54,7 @@ import java.util.ArrayList;
  */
 public class RigidFragmentProvider {
 	private static int MAX_CONFORMERS = 16;
+	private static int MAX_ATOMS_FOR_CACHING = 32;
 
 	// Random seed for initializing the SelfOrganizer.
 	private long mRandomSeed;
@@ -169,7 +170,7 @@ public class RigidFragmentProvider {
 		String key = null;
 		boolean invertedEnantiomer = false;
 
-		boolean useCache = (mCache != null);
+		boolean useCache = (mCache != null && atomCount <= MAX_ATOMS_FOR_CACHING);
 
 		// Generate stereo parities for all potential stereo features in the fragment.
 		// If one or more potential stereo features are unknown, then the fragment doesn't qualify to be cached.
