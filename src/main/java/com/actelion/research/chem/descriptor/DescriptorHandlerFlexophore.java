@@ -24,7 +24,9 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.descriptor.flexophore.*;
+import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.HistogramMatchCalculator;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.PPNodeSimilarity;
+import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDistHistViz;
 import com.actelion.research.util.CommandLineParser;
 import com.actelion.research.util.graph.complete.CompleteGraphMatcher;
@@ -108,6 +110,8 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	private MolDistHistEncoder molDistHistEncoder;
 
 	protected CreatorMolDistHistViz creatorMolDistHistViz;
+
+
 
 	//
 	// If you change this, do not forget to change the objective in CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher().
@@ -221,6 +225,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		cgMatcher.setMaxNumSolutions(MAX_NUM_SOLUTIONS);
 
 		return cgMatcher;
+	}
+
+	public ObjectiveFlexophoreHardMatchUncovered getObjectiveCompleteGraphHard() {
+		return objectiveCompleteGraphHard;
 	}
 
 	public DescriptorInfo getInfo() {
@@ -469,7 +477,21 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	}
 
 
-	private double getSimilarity(IMolDistHist mdhvBase, IMolDistHist mdhvQuery){
+	private double getSimilarity(IMolDistHist iBase, IMolDistHist iQuery){
+
+		MolDistHistViz mdhvBase = null;
+		if(iBase instanceof MolDistHist){
+			mdhvBase = new MolDistHistViz((MolDistHist)iBase);
+		} else if(iBase instanceof MolDistHistViz){
+			mdhvBase = new MolDistHistViz((MolDistHistViz)iBase);
+		}
+
+		MolDistHistViz mdhvQuery = null;
+		if(iQuery instanceof MolDistHist){
+			mdhvQuery = new MolDistHistViz((MolDistHist)iQuery);
+		} else if(iQuery instanceof MolDistHistViz){
+			mdhvQuery = new MolDistHistViz((MolDistHistViz)iQuery);
+		}
 
 		CompleteGraphMatcher<IMolDistHist> cgMatcher = queueCGM.poll();
 

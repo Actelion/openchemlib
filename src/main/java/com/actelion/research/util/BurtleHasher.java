@@ -378,14 +378,24 @@ public class BurtleHasher {
 	  finalMix(abc);
 	  return (int)abc.c;
 	}
-
 	public static int hashlittle(byte [] k, long initval) {
+		return hashlittle(k, initval, k.length);
+	}
+
+	/**
+	 *
+	 * @param k
+	 * @param initval
+	 * @param size the hash value will be calculated for k up to size fields.
+	 * @return
+	 */
+	public static int hashlittle(byte [] k, long initval, int size) {
 		
 	  long a,b,c;
 
 	  /* Set up the internal state */
 	  
-	  int length = k.length;
+	  int length = size;
 	  
 	  a = b = c = 0xdeadbeef + ((long)length) + initval;
 

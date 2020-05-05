@@ -9,6 +9,10 @@ public class ConstantsFlexophoreGenerator {
      * Defines the resolution for the range.
      */
     public static final int BINS_HISTOGRAM = 80;
+
+    public static final int INTERACTION_TYPE_NONE = -1;
+
+
     /**
      * Range histogram in Angstrom.
      */
@@ -18,6 +22,8 @@ public class ConstantsFlexophoreGenerator {
 
 
     public static final boolean OPTIMIZE_RIGID_FRAGS = false;
+    // Filter 07.04.2020
+    public static final double [] FILTER = {0.25,0.5,0.25};
 
 
     public static double getResolution(){

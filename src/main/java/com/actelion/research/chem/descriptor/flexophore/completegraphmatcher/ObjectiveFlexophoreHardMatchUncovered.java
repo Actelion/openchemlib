@@ -2,10 +2,7 @@ package com.actelion.research.chem.descriptor.flexophore.completegraphmatcher;
 
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.graph.MinimumSpanningTree;
-import com.actelion.research.chem.descriptor.flexophore.DistHist;
-import com.actelion.research.chem.descriptor.flexophore.IMolDistHist;
-import com.actelion.research.chem.descriptor.flexophore.MolDistHistViz;
-import com.actelion.research.chem.descriptor.flexophore.PPNode;
+import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.util.Formatter;
 import com.actelion.research.util.graph.complete.IObjectiveCompleteGraph;
@@ -49,18 +46,16 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	private static final float INIT_VAL = -1;
 
 	
-	private IMolDistHist cgBase;
+	private MolDistHistViz mdhvBase;
 	
-	private IMolDistHist cgQuery;
+	private MolDistHistViz mdhvQuery;
 	
 	private int nodesBase;
 	
 	private int nodesQuery;
 	
 	private byte [] arrTmpHist;
-	
-	private boolean queryBias;
-	
+
 	private boolean validHelpersQuery;
 	
 	private boolean validHelpersBase;
@@ -70,8 +65,6 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	private double threshNodeMinSimilarityStart;
 	
 	private double threshHistogramSimilarity;
-
-	private HistogramMatchCalculator histogramMatchCalculator;
 
 	// private IPPNodeSimilarity nodeSimilarity;
 	private PPNodeSimilarity nodeSimilarity;
@@ -108,6 +101,8 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	
 	private double similarity;
 
+	private SlidingWindowDistHist slidingWindowDistHist;
+
 	public ObjectiveFlexophoreHardMatchUncovered(
 			int versionInteractionTable,
 			int modePPNodeSimilarity,
@@ -115,12 +110,6 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 			double threshHistogramSimilarity) {
 		
 		arrTmpHist =  new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
-		
-		histogramMatchCalculator = new HistogramMatchCalculator();
-
-		// nodeSimilarity = new PPNodeSimilarityOptimistic();
-
-		// nodeSimilarity = new PPNodeSimilarityMedian();
 
 		nodeSimilarity = new PPNodeSimilarity(versionInteractionTable, modePPNodeSimilarity);
 
@@ -129,6 +118,8 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		this.threshHistogramSimilarity = threshHistogramSimilarity;
 
 		threshNodeMinSimilarityStart = THRESH_NODE_SIMILARITY_START;
+
+		slidingWindowDistHist = new SlidingWindowDistHist(ConstantsFlexophoreGenerator.FILTER);
 
 		initSimilarityMatrices();
 	}
@@ -218,8 +209,6 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		// 
 		
 		int heap = solution.getSizeHeap();
-		
-		
 		//
 		// Check for inevitable pharmacophore points.
 		//
@@ -230,7 +219,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 			for (int i = 0; i < heap; i++) {
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
 				
-				if(cgQuery.isInevitablePharmacophorePoint(indexNodeQuery)){
+				if(mdhvQuery.isInevitablePharmacophorePoint(indexNodeQuery)){
 					ccInevitablePPPointsInSolution++;
 				}
 			}
@@ -255,14 +244,14 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 			for (int i = 0; i < heap; i++) {
 				
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
-				PPNode nodeQuery = cgQuery.getNode(indexNodeQuery);
+				PPNode nodeQuery = mdhvQuery.getNode(indexNodeQuery);
 				if(nodeQuery.hasHeteroAtom()){
 					heteroNodeQuery = true;
 				}
 				
 				int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
 				
-				PPNode nodeBase = cgBase.getNode(indexNodeBase);
+				PPNode nodeBase = mdhvBase.getNode(indexNodeBase);
 				if(nodeBase.hasHeteroAtom()){
 					heteroNodeBase = true;
 				}
@@ -302,16 +291,16 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		if(mapping){
 			outer:
 			for (int i = 0; i < heap; i++) {
-				
+
 				int indexNode1Query = solution.getIndexQueryFromHeap(i);
-				
+
 				int indexNode1Base = solution.getIndexCorrespondingBaseNode(indexNode1Query);
-				
+
 				for (int j = i+1; j < heap; j++) {
 					int indexNode2Query = solution.getIndexQueryFromHeap(j);
-					
+
 					int indexNode2Base = solution.getIndexCorrespondingBaseNode(indexNode2Query);
-					
+
 					if(!areHistogramsMapping(indexNode1Query, indexNode2Query, indexNode1Base, indexNode2Base)){
 						mapping = false;
 						break outer;
@@ -356,9 +345,9 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		//
 		// Dynamic calculation of similarity threshold.
 		//
-		PPNode ppNodeBase = cgBase.getNode(indexNodeBase);
+		PPNode ppNodeBase = mdhvBase.getNode(indexNodeBase);
 
-		PPNode ppNodeQuery = cgQuery.getNode(indexNodeQuery);
+		PPNode ppNodeQuery = mdhvQuery.getNode(indexNodeQuery);
 
 		int interactionTypeCountBase = ppNodeBase.getInteractionTypeCount();
 
@@ -450,13 +439,6 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		double ratioNodesMatchQuery = Math.min(nodesQuery, heap) / (double)Math.max(nodesQuery, heap);
 		double ratioNodesMatchBase = Math.min(heap, nodesBase) / (double)Math.max(heap, nodesBase);
 
-		if(queryBias) {
-			
-			coverage = coverageQuery;
-
-			ratioNodesMatchBase = 1;
-		}
-
 		similarity = avrPairwiseMappingScaled * coverage * ratioNodesMatchQuery * ratioNodesMatchBase;
 
 		if(verbose) {
@@ -502,14 +484,14 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		MolDistHistViz mdhvQuery = null; 
 		MolDistHistViz mdhvBase = null; 
 		
-		if(cgQuery instanceof MolDistHistViz) {
-			mdhvQuery = (MolDistHistViz)cgQuery;
+		if(this.mdhvQuery instanceof MolDistHistViz) {
+			mdhvQuery = (MolDistHistViz) this.mdhvQuery;
 		} else {
 			throw new RuntimeException("Query has to be of type MolDistHistViz for visualization.");
 		}
 		
-		if(cgBase instanceof MolDistHistViz) {
-			mdhvBase = (MolDistHistViz)cgBase;
+		if(this.mdhvBase instanceof MolDistHistViz) {
+			mdhvBase = (MolDistHistViz) this.mdhvBase;
 		} else {
 			throw new RuntimeException("Base has to be of type MolDistHistViz for visualization.");
 		}
@@ -546,17 +528,19 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	
 	
 	public IMolDistHist getBase() {
-		return cgBase;
+		return mdhvBase;
 	}
 
 	public IMolDistHist getQuery() {
-		return cgQuery;
+		return mdhvQuery;
 	}
 
 	public void setBase(IMolDistHist cgBase) {
-		
-		this.cgBase = cgBase;
-		
+
+		mdhvBase = new MolDistHistViz((MolDistHistViz)cgBase);
+
+		slidingWindowDistHist.apply(mdhvBase);
+
 		nodesBase = cgBase.getNumPPNodes();
 		
 		validHelpersBase = false;
@@ -564,17 +548,12 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		resetSimilarityArrays = true;
 	}
 	
-	/**
-	 * @param queryBias the queryBias to set
-	 */
-	public void setQueryBias(boolean queryBias) {
-		this.queryBias = queryBias;
-	}
-	
 	public void setQuery(IMolDistHist cgQuery) {
 		
-		this.cgQuery = cgQuery;
-		
+		mdhvQuery = new MolDistHistViz((MolDistHistViz)cgQuery);
+
+		slidingWindowDistHist.apply(mdhvQuery);
+
 		nodesQuery = cgQuery.getNumPPNodes();
 		
 		numInevitablePPPoints = cgQuery.getNumInevitablePharmacophorePoints();
@@ -587,7 +566,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	
 	private void calculateHelpersQuery(){
 		
-		arrRelativeDistanceMatrixQuery = calculateRelativeDistanceMatrix(cgQuery);
+		arrRelativeDistanceMatrixQuery = calculateRelativeDistanceMatrix(mdhvQuery);
 		
 		maHelperAdjacencyQuery = new Matrix(arrRelativeDistanceMatrixQuery);
 		
@@ -603,7 +582,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 
 	private void calculateHelpersBase(){
 		
-		arrRelativeDistanceMatrixBase = calculateRelativeDistanceMatrix(cgBase);
+		arrRelativeDistanceMatrixBase = calculateRelativeDistanceMatrix(mdhvBase);
 
 		maHelperAdjacencyBase = new Matrix(arrRelativeDistanceMatrixBase);
 		
@@ -812,7 +791,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		
 		if(arrSimilarityNodes[indexNodeQuery][indexNodeBase] < 0 || verbose){
 			
-			float similarity = (float)nodeSimilarity.getSimilarity(cgQuery.getNode(indexNodeQuery), cgBase.getNode(indexNodeBase));
+			float similarity = (float)nodeSimilarity.getSimilarity(mdhvQuery.getNode(indexNodeQuery), mdhvBase.getNode(indexNodeBase));
 			
 			arrSimilarityNodes[indexNodeQuery][indexNodeBase]=similarity;
 		} 
@@ -821,19 +800,18 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	}
 	
 	private float getSimilarityHistogram(int indexNode1Query, int indexNode2Query, int indexNode1Base, int indexNode2Base) {
-		
+
 		int indexHistogramQuery = DistHist.getIndex(indexNode1Query, indexNode2Query, nodesQuery);
-		
+
 		int indexHistogramBase = DistHist.getIndex(indexNode1Base, indexNode2Base, nodesBase);
-		
+
 		if(arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase] < 0){
-			
-			float similarityHistogram = (float)histogramMatchCalculator.getSimilarity(cgQuery, indexNode1Query, indexNode2Query, cgBase, indexNode1Base, indexNode2Base);
+
+			float similarityHistogram = (float)HistogramMatchCalculator.getSimilarity((MolDistHistViz) mdhvQuery, indexNode1Query, indexNode2Query, (MolDistHistViz) mdhvBase, indexNode1Base, indexNode2Base);
 
 			arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase]=similarityHistogram;
-		} 
-			
-		
+		}
+
 		return arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase];
 	}
 	

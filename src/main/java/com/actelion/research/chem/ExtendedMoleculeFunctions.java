@@ -881,6 +881,36 @@ public class ExtendedMoleculeFunctions {
 		return hetero;
 	}
 
+	/**
+	 *
+	 * @param mol
+	 * @param atomIndex
+	 * @return true if at least one neighbour is a hetero atom.
+	 */
+	public static boolean isCarbonConnected2Hetero(StereoMolecule mol, int atomIndex) {
+
+		boolean hetero = false;
+
+		int atomicNo = mol.getAtomicNo(atomIndex);
+
+		if(atomicNo==6){
+
+			int connected = mol.getConnAtoms(atomIndex);
+
+			for (int j = 0; j < connected; j++) {
+
+				int indexConnecetd = mol.getConnAtom(atomIndex, j);
+
+				if(mol.getAtomicNo(indexConnecetd)!=6 && mol.getAtomicNo(indexConnecetd)!=1){
+					hetero = true;
+					break;
+				}
+			}
+		}
+
+		return hetero;
+	}
+
 	public static boolean isRingInMolecule(StereoMolecule mol) {
 
 		boolean ring = false;

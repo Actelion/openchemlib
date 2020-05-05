@@ -22,6 +22,8 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	private int sizeHeap;
 	
 	private byte [] heapIndexQuery;
+
+	private byte maxIndexNodeQuery;
 	
 	/**
 	 * The index is the index of the node in the query molecule.
@@ -61,7 +63,11 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	public void add(byte indexNodeQuery, byte indexNodeBase) {
 		
 		arrSolution[indexNodeQuery]=indexNodeBase;
-		
+
+		if(indexNodeQuery>maxIndexNodeQuery){
+			maxIndexNodeQuery=indexNodeQuery;
+		}
+
 		heapIndexBase[sizeHeap]=indexNodeBase;
 		
 		heapIndexQuery[sizeHeap]=indexNodeQuery;
@@ -114,8 +120,12 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 		if(sizeHeap != s.sizeHeap){
 			return false;
 		}
-		
-		for (int i = 0; i < arrSolution.length; i++) {
+
+		if(maxIndexNodeQuery != s.maxIndexNodeQuery){
+			return false;
+		}
+
+		for (int i = 0; i < maxIndexNodeQuery; i++) {
 			if(arrSolution[i]!=s.arrSolution[i]){
 				eq = false;
 				break;
@@ -146,11 +156,10 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	}
 	
     private void calcHashCode(){
-    	hash = BurtleHasher.hashlittle(arrSolution, 13);
+    	hash = BurtleHasher.hashlittle(arrSolution, 13, maxIndexNodeQuery+1);
     }
     
 	public int hashCode() {
-		
 		return hash;
 	}
 	

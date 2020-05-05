@@ -36,6 +36,8 @@ public class CreatorMolDistHistViz {
     // Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
     private static final int MAX_NUM_TRIES = 10000;
 
+    private static final int MAX_NUM_ATOMS = 1000;
+
     private static final int CONF_GEN_TS = 0;
 
     public static final int CONF_GIVEN_SINGLE_CONFORMATION = 1;
@@ -56,6 +58,7 @@ public class CreatorMolDistHistViz {
     // for debugging
     private boolean onlyOneConformer;
 
+    private int [] arrIndexAtomNewTmp;
 
     public CreatorMolDistHistViz() {
 
@@ -68,6 +71,8 @@ public class CreatorMolDistHistViz {
         moleculeStandardizer = new MoleculeStandardizer();
 
         conformationMode = CONF_GEN_TS;
+
+        arrIndexAtomNewTmp = new int[MAX_NUM_ATOMS];
 
         // System.out.println("CreatorCompleteGraph conformationMode " + conformationMode);
 
@@ -117,7 +122,55 @@ public class CreatorMolDistHistViz {
 
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
 
+        //
+        // Propagate atom types
+        //
+//        for (int i = 0; i < molInPlace.getAtoms(); i++) {
+//            if(ExtendedMoleculeFunctions.isCarbonConnected2Hetero(molInPlace, i)) {
+//                molInPlace.setInteractionAtomType(i, ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE);
+//            }
+//        }
+
+
+
+        //
+        // Remove all carbon atoms connected to a hetero atom.
+        //
+        for (int i = 0; i < molInPlace.getAtoms(); i++) {
+            if(ExtendedMoleculeFunctions.isCarbonConnected2Hetero(molInPlace, i)) {
+                molInPlace.setInteractionAtomType(i, ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE);
+            }
+        }
+
         List<SubGraphIndices> liFragment = subGraphExtractor.extract(molInPlace);
+
+        for (int i = liFragment.size() - 1; i >= 0; i--) {
+            SubGraphIndices sgi = liFragment.get(i);
+            int [] arrIndexAtom = sgi.getAtomIndices();
+
+            int indexOfIndex = 0;
+
+            for (int j = 0; j < arrIndexAtom.length; j++) {
+
+                if(molInPlace.getInteractionAtomType(arrIndexAtom[j])!=ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE){
+                    arrIndexAtomNewTmp[indexOfIndex++]=arrIndexAtom[j];
+                }
+            }
+
+            if(indexOfIndex<arrIndexAtom.length){
+
+                if(indexOfIndex==0){
+                    liFragment.remove(i);
+                } else {
+
+                    arrIndexAtom = new int[indexOfIndex];
+                    System.arraycopy(arrIndexAtomNewTmp, 0, arrIndexAtom, 0, arrIndexAtom.length);
+                    sgi.clear();
+                    sgi.addIndex(arrIndexAtom);
+                }
+            }
+        }
+
 
         if(DEBUG) {
             injectNewSeed();
@@ -148,7 +201,7 @@ public class CreatorMolDistHistViz {
             calcFragmentCenter(molInPlace, liMultCoordFragIndex);
 
             if(i==0){
-                molViz = createMoleculeForVisualization(molInPlace, liMultCoordFragIndex);
+                molViz = createPharmacophorePoints(molInPlace, liMultCoordFragIndex);
             }
         }
 
@@ -220,7 +273,7 @@ public class CreatorMolDistHistViz {
 
     }
 
-    private Molecule3D createMoleculeForVisualization(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
+    private Molecule3D createPharmacophorePoints(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
 
         Molecule3D molCenter = new Molecule3D(molecule3D);
 
@@ -238,7 +291,7 @@ public class CreatorMolDistHistViz {
                 // Atom type.
                 int interactionType = molCenter.getInteractionAtomType(arrAtomIndexList[at]);
 
-                if(interactionType == -1){
+                if(interactionType == ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE){
                     continue;
                 }
 
