@@ -11,6 +11,7 @@ import com.actelion.research.util.DoubleFormat;
 import java.io.*;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.SynchronousQueue;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -97,10 +98,11 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	/**
 	 * Writes for every distinct fragment: one idcode, multiple encoded coordinate sets, multiple conformer likelihoods
 	 * @param cacheFileName
+	 * @param minHits number of hits for a cache entry to be included in the cache file
 	 */
 	public boolean serializeCache(String cacheFileName, int minHits) {
 		try{
-			BufferedWriter bw = new BufferedWriter(new FileWriter(cacheFileName));
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(cacheFileName),"UTF-8"));
 			for (String key : keySet()) {
 				RigidFragmentCache.CacheEntry cacheEntry = super.get(key);  // we need super to not increment hit counter
 
@@ -229,12 +231,14 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	 * The numbers 1,2,3,5,10 and .txt extention will be appended to the given cache file name.
 	 * @param inputFileNames array of one or more input file paths (may be mixture of sdf and dwar)
 	 * @param cacheFileName path and file name without any extention ('_n_.txt' will be added)
+	 * @param multiThreaded whether to use multiple threads
 	 * @param optimizeFragments whether to energy minimize fragments using MMFF94s+
 	 * @param maxCompoundsPerFile if an input file contains more compounds than this, then the rest are skipped
+	 * @param rfp null or custom RigidFragmentProvider if fragments shall be minimized with a different method
 	 * @return created cache or null, if an input file could not be found
 	 */
-	public static RigidFragmentCache createCache(String[] inputFileNames, String cacheFileName,
-                                boolean optimizeFragments, boolean verbose, int maxCompoundsPerFile) {
+	public static RigidFragmentCache createCache(String[] inputFileNames, String cacheFileName, boolean multiThreaded,
+                                boolean optimizeFragments, int maxCompoundsPerFile, RigidFragmentProvider rfp) {
 		boolean notFound = false;
 		for (String ifn:inputFileNames)
 			if (!FileHelper.fileExists(new File(ifn), 1000)) {
@@ -245,9 +249,14 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 			return null;
 
 		RigidFragmentCache cache = createInstance(null);
+		if (rfp != null)
+			rfp.setCache(cache);
 
 		for (String ifn:inputFileNames) {
-			long millis = addFragmentsToCache(cache, optimizeFragments, ifn, verbose, maxCompoundsPerFile);
+			long millis = multiThreaded ?
+					addFragmentsToCacheSMP(cache, optimizeFragments, ifn, maxCompoundsPerFile, rfp)
+				  : addFragmentsToCache(cache, optimizeFragments, ifn, maxCompoundsPerFile, rfp);
+
 			System.out.println("File '"+ifn+"' processed in "+millis+" milliseconds.");
 		}
 
@@ -264,36 +273,139 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 		return cache;
 	}
 
-	private static long addFragmentsToCache(RigidFragmentCache cache, boolean optimizeFragments, String inputFile, boolean verbose, int maxCompounds) {
+	private static long addFragmentsToCache(RigidFragmentCache cache, boolean optimizeFragments,
+	                                        String inputFile, int maxCompounds, RigidFragmentProvider rfp) {
 		long start_millis = System.currentTimeMillis();
 		int compoundNo = 0;
 
-		System.out.println("Processing '"+inputFile+"'... ('.' = 100 molecules)");
+		System.out.println("Processing '"+inputFile+"'... ('.' = 50 molecules)");
 
 		CompoundFileParser parser = CompoundFileParser.createParser(inputFile);
-		ConformerGenerator cg = new ConformerGenerator(123L, cache, optimizeFragments);
+
+		ConformerGenerator cg = (rfp == null) ?
+				new ConformerGenerator(123L, cache, optimizeFragments)
+				: new ConformerGenerator(123L, rfp);
 
 		while (parser.next() && compoundNo < maxCompounds) {
-			if (verbose)
-				System.out.println("\nFile:"+inputFile+" Compound:"+(1+compoundNo)+" idcode:"+parser.getIDCode());
-			else {
-				if (compoundNo % 50 == 49)
-					System.out.print(".");
-				if (compoundNo % 5000 == 4999) {
-					System.out.println(" hit-rate:" + DoubleFormat.toString(cache.getHitQuote(), 5, false)
-							+ " millis:" + (System.currentTimeMillis() - start_millis)
-							+ " cacheSize:" + cache.size());
-					cache.resetAllCounters();
-				}
+			if (compoundNo % 50 == 49)
+				System.out.print(".");
+			if (compoundNo % 5000 == 4999) {
+				System.out.println(" hit-rate:" + DoubleFormat.toString(cache.getHitQuote(), 5, false)
+						+ " millis:" + (System.currentTimeMillis() - start_millis)
+						+ " cacheSize:" + cache.size());
+				cache.resetAllCounters();
 			}
 
-			new ConformerGenerator(123L, cache, optimizeFragments).initialize(parser.getMolecule(), false);
+			cg.initialize(parser.getMolecule(), false);
 
 			compoundNo++;
 		}
 		System.out.println();
 
 		return System.currentTimeMillis() - start_millis;
+	}
+
+	private static long addFragmentsToCacheSMP(RigidFragmentCache cache, boolean optimizeFragments,
+	                                        String inputFile, int maxCompounds, RigidFragmentProvider rfp) {
+		long start_millis = System.currentTimeMillis();
+		int compoundNo = 0;
+
+		System.out.println("Processing '" + inputFile + "'... ('.' = 50 molecules)");
+
+		CompoundFileParser parser = CompoundFileParser.createParser(inputFile);
+
+		SynchronousQueue<StereoMolecule> queue = new SynchronousQueue<>();
+		int threadCount = Runtime.getRuntime().availableProcessors();
+		for (int i = 0; i<threadCount; i++)
+			new Thread(() -> consumeMoleculesToCacheFragments(queue, cache, optimizeFragments, rfp)).start();
+
+		while (parser.next() && compoundNo<maxCompounds) {
+			if (compoundNo % 50 == 49)
+				System.out.print(".");
+			if (compoundNo % 5000 == 4999) {
+				System.out.println(" hit-rate:" + DoubleFormat.toString(cache.getHitQuote(), 5, false)
+						+ " millis:" + (System.currentTimeMillis() - start_millis)
+						+ " cacheSize:" + cache.size());
+				cache.resetAllCounters();
+			}
+
+			try {
+				StereoMolecule mol = parser.getMolecule();
+				if (mol.getAllAtoms() != 0)
+					queue.put(mol);
+			} catch (InterruptedException ie) {
+			}
+
+			compoundNo++;
+		}
+		System.out.println();
+
+		try {
+			queue.put(new StereoMolecule());   // empty molecule to signalize end of queue
+			} catch (InterruptedException ie) {
+		}
+
+		return System.currentTimeMillis() - start_millis;
+	}
+
+	private static void consumeMoleculesToCacheFragments(SynchronousQueue<StereoMolecule> queue, RigidFragmentCache cache,
+	                                                     boolean optimizeFragments, RigidFragmentProvider rfp) {
+		ConformerGenerator cg = (rfp == null) ?
+				new ConformerGenerator(123L, cache, optimizeFragments)
+				: new ConformerGenerator(123L, rfp);
+
+		StereoMolecule mol;
+		try {
+			while ((mol = queue.take()).getAllAtoms() != 0)
+				cg.initialize(mol, false);
+
+			queue.put(mol);    // put empty mol back for others to see
+		} catch (InterruptedException ie) {}
+	}
+
+	/**
+	 * Writes a TAB delimited text file that can be opened for debug or other purposes by DataWarrior containing
+	 * idcode, idcoords,  multiple conformer likelihoods
+	 * @param cacheFileName
+	 */
+	public boolean writeTabDelimitedTable(String cacheFileName) {
+		try {
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(cacheFileName),"UTF-8"));
+			bw.write("Fragment No\tConformer No\tConformer Count\tidcode\tidcoords\tLikelihood");
+			bw.newLine();
+
+			int fragmentCount = 0;
+			for (String key : keySet()) {
+				fragmentCount++;
+
+				RigidFragmentCache.CacheEntry cacheEntry = super.get(key);  // we need super to not increment hit counter
+
+				StereoMolecule mol = new IDCodeParserWithoutCoordinateInvention().getCompactMolecule(key);
+				Canonizer canonizer = new Canonizer(mol, Canonizer.COORDS_ARE_3D);
+
+				for (int i=0; i<cacheEntry.coordinates.length; i++) {
+					bw.write(Integer.toString(fragmentCount));
+					bw.write("\t");
+					bw.write(Integer.toString(i+1));
+					bw.write("\t");
+					bw.write(Integer.toString(cacheEntry.coordinates.length));
+					bw.write("\t");
+					bw.write(key);
+					bw.write("\t");
+					bw.write(canonizer.getEncodedCoordinates(true, cacheEntry.coordinates[i]));
+					bw.write("\t");
+					bw.write(DoubleFormat.toString(cacheEntry.likelihood[i]));
+					bw.newLine();
+
+					canonizer.invalidateCoordinates();
+				}
+			}
+			bw.close();
+			return true;
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+		return false;
 	}
 
 	public static class CacheEntry implements Comparable<CacheEntry> {

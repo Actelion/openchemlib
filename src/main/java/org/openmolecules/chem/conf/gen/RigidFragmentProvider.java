@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * - As key for the cache we use the fragment's idcode (all atoms). To not loose hydrogen atoms, we convert all
  * plain hydrogen atoms into deuterium.<br>
  * - In the cache we just store 3D-coordinate sets and their likelyhoods based on self-organizer scores or MMFF-energies<br>
- * - When locating the same fragment in a different molecule, then atom order may be different. Thus, we need to normalize.
+ * - When locating the same fragment in a different molecule, then the atom order may be different. Thus, we need to normalize.
  * For this purpose we use the graphIndex of the Canonizer used to create the fragment's idcode and store coordinates in
  * canonical atom order.<br>
  * - For molecule stereo centers, which are gone in the fragment, copying of molecule parities to the fragment ensures
@@ -44,15 +44,17 @@ import java.util.ArrayList;
  * And we use the Canonizer mode TIE_BREAK_FREE_VALENCE_ATOMS to distinguish symmetrical fragment atoms if they have
  * free valences and, thus, could be differently substituted in molecule matches. This way we locate all potential
  * stereo centers in fragments. If a given molecule does not specify a parity for any of the potential stereo
- * centers, then this fragment is not cached. Otherwise a later hit with a defined stereo center might get coordinates
- * for the wrong stereo configuration.<br>
+ * centers, then this fragment is not cached. Otherwise a later hit with a defined stereo center at that position
+ * might get coordinates for the wrong stereo configuration.<br>
  * - If a fragment contains stereo centers, then only one of the two possible enantiomers is cached. The other one is
  * constructed by z-coordinate inversion.<br>
+ * - If optimizeRigidFragments is true, then the MMFF94s+ forcefield is used to minimize fragments before caching/using
+ * them. A different force field may be used by overriding RigidFragmentProvider and all of its forceField...
+ * methods and passing an overridden instance to the constructor(s) of the ConformerGenerator to be used.
  */
 public class RigidFragmentProvider {
 	private static int MAX_CONFORMERS = 16;
-
-	private static final boolean DEBUG_INFO_MMFF = true;
+	private static int MAX_ATOMS_FOR_CACHING = 32;
 
 	// Random seed for initializing the SelfOrganizer.
 	private long mRandomSeed;
@@ -63,6 +65,12 @@ public class RigidFragmentProvider {
 		mRandomSeed = randomSeed;
 		mCache = cache;
 		mOptimizeFragments = optimizeRigidFragments;
+		if (optimizeRigidFragments)
+			forceFieldInitialize();
+		}
+
+	public void setCache(RigidFragmentCache cache) {
+		mCache = cache;
 		}
 
 	public RigidFragment createFragment(StereoMolecule mol, int[] fragmentNo, int fragmentIndex) {
@@ -162,12 +170,12 @@ public class RigidFragmentProvider {
 		String key = null;
 		boolean invertedEnantiomer = false;
 
-		boolean useCache = (mCache != null);
+		boolean useCache = (mCache != null && atomCount <= MAX_ATOMS_FOR_CACHING);
 
 		// Generate stereo parities for all potential stereo features in the fragment.
 		// If one or more potential stereo features are unknown, then the fragment doesn't qualify to be cached.
 		if (useCache) {
-			// By distinguishing equal ranking atoms, if they have free valencens, we detect all possible stereo features
+			// By distinguishing equal ranking atoms, if they have free valences, we detect all possible stereo features
 			canonizer = new Canonizer(fragment, Canonizer.TIE_BREAK_FREE_VALENCE_ATOMS);
 
 			// we don't cache fragments with unspecified stereo configurations
@@ -221,10 +229,15 @@ public class RigidFragmentProvider {
 			}
 
 		if (conformerList == null) {
+			if (mOptimizeFragments && !forceFieldAllowsOpenValences()) {
+				fragment.setFragment(false);    // to allow conversion of implicit to explicit hydrogen
+				ConformerGenerator.addHydrogenAtoms(fragment);
+			}
+
 			ConformationSelfOrganizer selfOrganizer = new ConformationSelfOrganizer(fragment, true);
 			selfOrganizer.initializeConformers(mRandomSeed, MAX_CONFORMERS);
 
-			// Generate multiple low constrain conformers
+			// Generate multiple low constraint conformers
 			conformerList = new ArrayList<>();
 			SelfOrganizedConformer bestConformer = selfOrganizer.getNextConformer();
 			conformerList.add(bestConformer);
@@ -247,29 +260,16 @@ public class RigidFragmentProvider {
 			if(mOptimizeFragments) {
 				double ENERGY_FOR_FACTOR_10 = 1.36; // MMFF uses kcal/mol; 1.36 kcal/mol is factor 10
 
-				ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
-
 				int validEnergyCount = 0;
 				double minEnergy = Double.MAX_VALUE;
 				for(Conformer conf:conformerList) {
-					try {
-						ForceFieldMMFF94 ff = new ForceFieldMMFF94(conf.toMolecule(), ForceFieldMMFF94.MMFF94SPLUS);
-						ff.minimise();
-						double energy = ff.getTotalEnergy();
-						conf.setEnergy(energy);
-						if (!Double.isNaN(energy)) {
-							minEnergy = Math.min(minEnergy, energy);
-							validEnergyCount++;
-							}
-						conf.copyFrom(fragment);
+					double energy = forceFieldMinimize(conf.toMolecule());
+					conf.setEnergy(energy);
+					if (!Double.isNaN(energy)) {
+						minEnergy = Math.min(minEnergy, energy);
+						validEnergyCount++;
 						}
-					catch (BadAtomTypeException bate) {
-						break;
-						}
-					catch(Exception ex) {
-						ex.printStackTrace();
-						break;
-						}
+					conf.copyFrom(fragment);
 					}
 
 				double energyLimit = 2.0 * ENERGY_FOR_FACTOR_10;    // population of less than 1% of best conformer
@@ -285,12 +285,12 @@ public class RigidFragmentProvider {
 					double[] population = new double[validEnergyCount];
 					double populationSum = 0;
 					int index = 0;
-					for(int i=0; i<conformerList.size(); i++) {
+					for(int i=conformerList.size()-1; i>=0; i--) {
 						Conformer conf = conformerList.get(i);
-						if (!Double.isNaN(conf.getEnergy()))
-							populationSum += (population[index++] = Math.pow(10, (minEnergy - conf.getEnergy()) / ENERGY_FOR_FACTOR_10));
+						if (Double.isNaN(conf.getEnergy()))
+							conformerList.remove(i);
 						else
-							conformerList.remove(conf);
+							populationSum += (population[index++] = Math.pow(10, (minEnergy - conf.getEnergy()) / ENERGY_FOR_FACTOR_10));
 						}
 
 					likelihood = new double[validEnergyCount];
@@ -301,9 +301,9 @@ public class RigidFragmentProvider {
 
 			if (useCache) {
 				int[] graphIndex = canonizer.getGraphIndexes();
-				Coordinates[][] coords = new Coordinates[conformerList.size()][fragment.getAllAtoms()];
+				Coordinates[][] coords = new Coordinates[conformerList.size()][graphIndex.length];
 				for (int i=0; i<coords.length; i++) {
-					for (int j = 0; j<coords[i].length; j++) {
+					for (int j=0; j<graphIndex.length; j++) {
 						Coordinates xyz = conformerList.get(i).getCoordinates(j);
 						coords[i][graphIndex[j]] = new Coordinates(xyz.x, xyz.y, invertedEnantiomer ? -xyz.z : xyz.z);
 						}
@@ -318,10 +318,42 @@ public class RigidFragmentProvider {
 	}
 
 	/**
+	 * For using a different forcefield you may override all three forceField... methods.
+	 */
+	public void forceFieldInitialize() {
+		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+	}
+
+	/**
+	 * For using a different forcefield you may override all three forceField... methods.
+	 */
+	public boolean forceFieldAllowsOpenValences() {
+		return true;
+	}
+
+	/**
+	 * For using a different forcefield you may override all three forceField... methods.
+	 */
+	public double forceFieldMinimize(StereoMolecule mol) {
+		try {
+			ForceFieldMMFF94 ff = new ForceFieldMMFF94(mol, ForceFieldMMFF94.MMFF94SPLUS);
+			ff.minimise();
+			return ff.getTotalEnergy();
+			}
+		catch (BadAtomTypeException bate) {
+			return Double.NaN;
+		}
+		catch(Exception ex) {
+			ex.printStackTrace();
+			return Double.NaN;
+		}
+	}
+
+	/**
 	 * @param conformer
 	 * @param energy_out [0] is the final energy, [1] is the starting energy
 	 * @return
-	 */
+	 *
 	public static Conformer minimizeConformer( Conformer conformer , double[] energy_out ) {
 		StereoMolecule mol = conformer.toMolecule();
 
@@ -380,5 +412,5 @@ public class RigidFragmentProvider {
 			mol.setY(atom, ff.getCurrentPositions()[atom*3+1]);
 			mol.setZ(atom, ff.getCurrentPositions()[atom*3+2]);
 		}
-	}
+	}*/
 }
