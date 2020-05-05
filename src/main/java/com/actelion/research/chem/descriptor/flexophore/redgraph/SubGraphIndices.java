@@ -28,30 +28,27 @@ public class SubGraphIndices {
     }
 
     public int getNumIndices() {
-
         return hsIndexAtom.size();
+    }
 
+    public void clear() {
+        hsIndexAtom.clear();
     }
 
     public void addIndex(int indexAtom) {
-
         hsIndexAtom.add(indexAtom);
     }
 
     public void addIndex(int[] arrIndexAtom) {
-
         hsIndexAtom.add(arrIndexAtom);
     }
 
     public int[] getAtomIndices() {
-
         return hsIndexAtom.getValues();
     }
 
     public boolean contains(int indexAtom) {
-
         return hsIndexAtom.contains(indexAtom);
-
     }
 
     @Override

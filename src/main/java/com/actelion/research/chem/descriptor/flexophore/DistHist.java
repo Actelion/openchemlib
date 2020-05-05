@@ -21,6 +21,7 @@
 package com.actelion.research.chem.descriptor.flexophore;
 
 import com.actelion.research.calc.ArrayUtilsCalc;
+import com.actelion.research.calc.filter.SlidingWindow;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 
 import java.io.Serializable;
@@ -45,7 +46,11 @@ public class DistHist implements Serializable {
 		numPPNodes = 0;
 		identifier=-1;
 	}
-	
+
+	public DistHist(int nPPNodes) {
+		initHistogramArray(nPPNodes);
+	}
+
 	public DistHist(DistHist distHist) {
 		distHist.copy(this);
 	}
@@ -249,7 +254,21 @@ public class DistHist implements Serializable {
 		
 		return arr;
 	}
-	
+
+	public int getIndexPosStartForDistHist(int indexAt1, int indexAt2) {
+
+		int index = getIndex(indexAt1, indexAt2, numPPNodes);
+
+		int posStart = index * ConstantsFlexophoreGenerator.BINS_HISTOGRAM;
+
+		return posStart;
+	}
+
+	public byte getValueAtAbsolutePosition(int indexAbsolutePosition){
+		return arrDistHists[indexAbsolutePosition];
+	}
+
+
 	public byte [] getDistHist(int indexAt1, int indexAt2, byte [] arr) {
 		
 		int index = getIndex(indexAt1, indexAt2, numPPNodes);

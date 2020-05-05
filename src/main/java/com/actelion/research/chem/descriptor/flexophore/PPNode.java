@@ -50,7 +50,11 @@ public class PPNode implements Comparable<PPNode> {
 	private byte [] arrInteractionType;
 	
 	private byte size;
-	
+
+
+	transient boolean heteroAtom;
+
+
 	public PPNode(){
 		init();
 	}
@@ -199,6 +203,8 @@ public class PPNode implements Comparable<PPNode> {
 		arrInteractionType = ArrayUtilsCalc.resize(arrInteractionType, sizeBytes);
 		
 		sortInteractionTypes();
+
+		calcHasHeteroAtom();
 	}
 	
 	/**
@@ -299,20 +305,24 @@ public class PPNode implements Comparable<PPNode> {
 		node.add(DUMMY_INTERACT_ID);
 		return node;
 	}
-	
+
 	public boolean hasHeteroAtom(){
-		boolean bY = false;
+		return heteroAtom;
+	}
+
+	private void calcHasHeteroAtom(){
+		heteroAtom = false;
 		
 		int size = getInteractionTypeCount();
 		
 		for (int i = 0; i < size; i++) {
 			if(getAtomicNo(i) !=6) {
-				bY=true;
+				heteroAtom=true;
 				break;
 			}
 		}
-		return bY;
 	}
+
 	public boolean isCarbonExclusiveNode(){
 		
 		boolean bY = true;

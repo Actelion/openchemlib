@@ -132,6 +132,8 @@ public class PPNodeViz extends PPNode implements Serializable {
 		
 		marked = node.marked;
 
+		heteroAtom = node.heteroAtom;
+
 	}
 	
 	/**
