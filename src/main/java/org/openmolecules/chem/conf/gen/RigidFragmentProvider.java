@@ -198,6 +198,9 @@ public class RigidFragmentProvider {
 				canonizer.setParities();
 			}
 
+		if (mCache != null && !useCache)
+			mCache.increaseNonCachableCount();
+
 		// No matter, whether parities were copied from the original molecule, or whether we use freshly calculated parities,
 		// we need to define them to be valid for the coordinate self-organization.
 		fragment.setParitiesValid(0);
