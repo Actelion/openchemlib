@@ -24,13 +24,11 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.descriptor.flexophore.*;
-import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.HistogramMatchCalculator;
+import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveFlexophoreHardMatchUncovered;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.PPNodeSimilarity;
-import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDistHistViz;
 import com.actelion.research.util.CommandLineParser;
 import com.actelion.research.util.graph.complete.CompleteGraphMatcher;
-import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveFlexophoreHardMatchUncovered;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -340,7 +338,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 //		fragBiggest = parser.getCompactMolecule(new Canonizer(fragBiggest).getIDCode());
 
 		MolDistHistViz mdhv = createVisualDescriptor(fragBiggest);
-		MolDistHist mdh = mdhv.getMolDistHist();
+		MolDistHist mdh = (mdhv == null) ? null : mdhv.getMolDistHist();
 
 		exceptionCreateDescriptor = null;
 
