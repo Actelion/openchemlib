@@ -480,7 +480,23 @@ public class PPNode implements Comparable<PPNode> {
 		sb.append(")");
 		return sb.toString();
 	}
-	
+
+	public static PPNode getHeteroOnlyNode(PPNode node){
+
+		PPNode nodeHetero = new PPNode();
+
+		int nQuery = node.getInteractionTypeCount();
+		for (int i = 0; i < nQuery; i++) {
+			int interactionType = node.getInteractionType(i);
+			if(InteractionAtomTypeCalculator.getAtomicNumber(interactionType)!=6){
+				nodeHetero.add(interactionType);
+			}
+		}
+		nodeHetero.realize();
+
+		return nodeHetero;
+	}
+
 	public String toStringLong(){
 
 		StringBuilder sb = new StringBuilder();

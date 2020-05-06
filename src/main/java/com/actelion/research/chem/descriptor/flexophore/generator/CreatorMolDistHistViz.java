@@ -18,6 +18,7 @@ import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -122,54 +123,98 @@ public class CreatorMolDistHistViz {
 
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
 
+
         //
-        // Propagate atom types
+        // Handle carbon atoms connected to hetero atoms
         //
-//        for (int i = 0; i < molInPlace.getAtoms(); i++) {
-//            if(ExtendedMoleculeFunctions.isCarbonConnected2Hetero(molInPlace, i)) {
-//                molInPlace.setInteractionAtomType(i, ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE);
+        List<SubGraphIndices> liFragment = subGraphExtractor.extract(molInPlace);
+        for (SubGraphIndices sgi : liFragment) {
+            int [] arrIndexAtomFragment = sgi.getAtomIndices();
+
+
+            HashSet<Integer> hsIndexAtom2Remove = new HashSet<>();
+
+            for (int indexAtFrag : arrIndexAtomFragment) {
+                if (ExtendedMoleculeFunctions.isCarbonConnected2Hetero(molInPlace, indexAtFrag)) {
+                    // Is isolated carbon?
+                    if(ExtendedMoleculeFunctions.isIsolatedCarbon(molInPlace, indexAtFrag, arrIndexAtomFragment)){
+                        hsIndexAtom2Remove.add(indexAtFrag);
+                    }
+                }
+            }
+
+//            int [] arrAtIndexAromaticRing = null;
+//            if((arrAtIndexAromaticRing = ExtendedMoleculeFunctions.extractAromaticRing(molInPlace, arrIndexAtomFragment))!=null){
+//
+//                if(ExtendedMoleculeFunctions.containsHeteroAtom(molInPlace, arrAtIndexAromaticRing)){
+//                    for (int indexAt : arrAtIndexAromaticRing) {
+//                        if(molInPlace.getAtomicNo(indexAt)==6){
+//                            hsIndexAtom2Remove.add(indexAt);
+//                        }
+//                    }
+//                } else {
+//
+//                    if(ExtendedMoleculeFunctions.isConnected2Hetero(molInPlace, arrAtIndexAromaticRing)){
+//                        for (int indexAt : arrAtIndexAromaticRing) {
+//
+//                            int connected = molInPlace.getConnAtoms(indexAt);
+//
+//                            boolean hetero=false;
+//                            for (int i = 0; i < connected; i++) {
+//
+//                                int indexConnected = molInPlace.getConnAtom(indexAt, i);
+//
+//                                if (molInPlace.getAtomicNo(indexConnected) != 6 && molInPlace.getAtomicNo(indexConnected) != 1) {
+//                                    hetero=true;
+//                                    break;
+//                                }
+//                            }
+//
+//                            if(!hetero){
+//                                hsIndexAtom2Remove.add(indexAt);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+
+            if(hsIndexAtom2Remove.size()>0) {
+                sgi.clear();
+                for (int indexAtFrag : arrIndexAtomFragment) {
+
+                    if(!hsIndexAtom2Remove.contains(indexAtFrag)){
+                        sgi.addIndex(indexAtFrag);
+                    }
+                }
+            }
+        }
+
+//        for (int i = liFragment.size() - 1; i >= 0; i--) {
+//            SubGraphIndices sgi = liFragment.get(i);
+//            int [] arrIndexAtom = sgi.getAtomIndices();
+//
+//            int indexOfIndex = 0;
+//
+//            for (int j = 0; j < arrIndexAtom.length; j++) {
+//
+//                if(molInPlace.getInteractionAtomType(arrIndexAtom[j])!=ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE){
+//                    arrIndexAtomNewTmp[indexOfIndex++]=arrIndexAtom[j];
+//                }
+//            }
+//
+//            if(indexOfIndex<arrIndexAtom.length){
+//
+//                if(indexOfIndex==0){
+//                    liFragment.remove(i);
+//                } else {
+//
+//                    arrIndexAtom = new int[indexOfIndex];
+//                    System.arraycopy(arrIndexAtomNewTmp, 0, arrIndexAtom, 0, arrIndexAtom.length);
+//                    sgi.clear();
+//                    sgi.addIndex(arrIndexAtom);
+//                }
 //            }
 //        }
-
-
-
-        //
-        // Remove all carbon atoms connected to a hetero atom.
-        //
-        for (int i = 0; i < molInPlace.getAtoms(); i++) {
-            if(ExtendedMoleculeFunctions.isCarbonConnected2Hetero(molInPlace, i)) {
-                molInPlace.setInteractionAtomType(i, ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE);
-            }
-        }
-
-        List<SubGraphIndices> liFragment = subGraphExtractor.extract(molInPlace);
-
-        for (int i = liFragment.size() - 1; i >= 0; i--) {
-            SubGraphIndices sgi = liFragment.get(i);
-            int [] arrIndexAtom = sgi.getAtomIndices();
-
-            int indexOfIndex = 0;
-
-            for (int j = 0; j < arrIndexAtom.length; j++) {
-
-                if(molInPlace.getInteractionAtomType(arrIndexAtom[j])!=ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE){
-                    arrIndexAtomNewTmp[indexOfIndex++]=arrIndexAtom[j];
-                }
-            }
-
-            if(indexOfIndex<arrIndexAtom.length){
-
-                if(indexOfIndex==0){
-                    liFragment.remove(i);
-                } else {
-
-                    arrIndexAtom = new int[indexOfIndex];
-                    System.arraycopy(arrIndexAtomNewTmp, 0, arrIndexAtom, 0, arrIndexAtom.length);
-                    sgi.clear();
-                    sgi.addIndex(arrIndexAtom);
-                }
-            }
-        }
 
 
         if(DEBUG) {

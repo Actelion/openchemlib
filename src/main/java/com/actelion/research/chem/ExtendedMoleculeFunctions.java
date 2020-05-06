@@ -597,6 +597,18 @@ public class ExtendedMoleculeFunctions {
 		return bOk;
 	}
 
+	public static boolean containsHeteroAtom(ExtendedMolecule mol, int [] arrIndexAt) {
+		boolean hetero=false;
+
+		for (int indexAt : arrIndexAt) {
+			if(mol.getAtomicNo(indexAt)!=6 && mol.getAtomicNo(indexAt)!=1){
+				hetero=true;
+				break;
+			}
+		}
+		return hetero;
+	}
+
 	/**
 	 *
 	 * @param mol
@@ -899,15 +911,42 @@ public class ExtendedMoleculeFunctions {
 
 			for (int j = 0; j < connected; j++) {
 
-				int indexConnecetd = mol.getConnAtom(atomIndex, j);
+				int indexConnected = mol.getConnAtom(atomIndex, j);
 
-				if(mol.getAtomicNo(indexConnecetd)!=6 && mol.getAtomicNo(indexConnecetd)!=1){
+				if(mol.getAtomicNo(indexConnected)!=6 && mol.getAtomicNo(indexConnected)!=1){
 					hetero = true;
 					break;
 				}
 			}
 		}
 
+		return hetero;
+	}
+
+	/**
+	 *
+	 * @param mol
+	 * @param arrAtomIndex
+	 * @return true if one of the atoms from arrAtomIndex is connected to a hetero atom.
+	 */
+	public static boolean isConnected2Hetero(StereoMolecule mol, int [] arrAtomIndex) {
+
+		boolean hetero = false;
+
+		for (int atomIndex : arrAtomIndex) {
+
+			int connected = mol.getConnAtoms(atomIndex);
+
+			for (int j = 0; j < connected; j++) {
+
+				int indexConnected = mol.getConnAtom(atomIndex, j);
+
+				if(mol.getAtomicNo(indexConnected)!=6 && mol.getAtomicNo(indexConnected)!=1){
+					hetero = true;
+					break;
+				}
+			}
+		}
 		return hetero;
 	}
 
@@ -1044,6 +1083,77 @@ public class ExtendedMoleculeFunctions {
 		}
 
 		return oxy;
+	}
+
+	/**
+	 *
+	 * @param mol
+	 * @param indexAtCentral
+	 * @param arrIndexAt
+	 * @return true if no connected carbon atom is in arrIndexAt
+	 */
+	public static boolean isIsolatedCarbon(StereoMolecule mol, int indexAtCentral, int [] arrIndexAt){
+
+		boolean isolated=true;
+
+		int nConnected = mol.getConnAtoms(indexAtCentral);
+
+		boolean [] arrConnected = new boolean[mol.getAtoms()];
+
+		for (int i = 0; i < nConnected; i++) {
+			arrConnected[mol.getConnAtom(indexAtCentral,i)]=true;
+		}
+
+		for (int indexAt : arrIndexAt) {
+			if(!arrConnected[indexAt]){
+				continue;
+			}
+
+			if(mol.getAtomicNo(indexAt)==6){
+				isolated=false;
+				break;
+			}
+		}
+
+		return isolated;
+	}
+
+	public static int [] extractAromaticRing(StereoMolecule mol, int [] arrIndexAt){
+
+		RingCollection rc = mol.getRingSet();
+
+		boolean [] arrRingMemberMarker = new boolean[mol.getAtoms()];
+
+		int [] arrIndexAromaticRing = null;
+
+		for (int i = 0; i < rc.getSize(); i++) {
+
+			if(!rc.isAromatic(i)){
+				continue;
+			}
+
+			Arrays.fill(arrRingMemberMarker, false);
+
+			int [] arrRingAtoms = rc.getRingAtoms(i);
+
+			for (int indexRingAtom : arrRingAtoms) {
+				arrRingMemberMarker[indexRingAtom]=true;
+			}
+
+			int sum=0;
+			for (int indexAt : arrIndexAt) {
+				if(arrRingMemberMarker[indexAt]){
+					sum++;
+				}
+			}
+
+			if(sum==arrRingAtoms.length){
+				arrIndexAromaticRing=arrRingAtoms;
+				break;
+			}
+		}
+
+		return arrIndexAromaticRing;
 	}
 
 	/**
