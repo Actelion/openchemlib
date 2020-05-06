@@ -830,6 +830,18 @@ public class StringFunctions {
 		return sb.toString();
 	}
 
+	public static String toString(float [] arr, NumberFormat nf){
+
+		StringBuilder sb = new  StringBuilder();
+		for (int i = 0; i < arr.length; i++) {
+			sb.append(nf.format(arr[i]));
+			if(i < arr.length-1){
+				sb.append(ConstantsDWAR.SEP_VALUE);
+			}
+		}
+		return sb.toString();
+	}
+
 	public static String toString(byte [] arr){
 
 		StringBuilder sb = new  StringBuilder();

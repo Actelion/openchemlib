@@ -1,6 +1,7 @@
 package com.actelion.research.chem.descriptor.flexophore.completegraphmatcher;
 
 import com.actelion.research.calc.filter.SlidingWindow;
+import com.actelion.research.chem.descriptor.flexophore.DistHist;
 import com.actelion.research.chem.descriptor.flexophore.IMolDistHist;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 
@@ -18,154 +19,41 @@ import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexo
  * Mar 01 2016 MvK sliding filter added.
  */
 public class HistogramMatchCalculator {
-	
-	private static final boolean DEBUG = false;
 
 	// private static final double [] FILTER = {1};
 
 	// private static final double [] FILTER = {0.125,0.75,0.125};
 
-	// Filter 07.04.2020
-	private static final double [] FILTER = {0.25,0.5,0.25};
-
 	// private static final double [] FILTER = {0.05, 0.1, 0.2, 0.3, 0.2, 0.1, 0.5};
 
 
-	
-	private byte [] arrTmpHistMol;
+	public static double getSimilarity(DistHist dh1, int indexDistHist1At1, int indexDistHist1At2, DistHist dh2, int indexDistHist2At1, int indexDistHist2At2){
 
-	private int [] arrTmpHistMolBlurred;
+		int indexPostStartDistHist1 = dh1.getIndexPosStartForDistHist(indexDistHist1At1, indexDistHist1At2);
+		int indexPostStartDistHist2 = dh2.getIndexPosStartForDistHist(indexDistHist2At1, indexDistHist2At2);
 
-	private byte [] arrTmpHistFrag;
+		int n = ConstantsFlexophoreGenerator.BINS_HISTOGRAM;
 
-	private int [] arrTmpHistFragBlurred;
+		double sumMin = 0;
+		double sumMax = 0;
 
-	private SlidingWindow slidingWindow;
+		for (int i = 0; i < n; i++) {
 
-	public HistogramMatchCalculator() {
-		
-		arrTmpHistMol =  new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
-		
-		arrTmpHistMolBlurred =  new int[ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
-		
-		arrTmpHistFrag =  new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
-		
-		arrTmpHistFragBlurred =  new int[ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
+			int v1 = dh1.getValueAtAbsolutePosition(indexPostStartDistHist1+i);
+			int v2 = dh2.getValueAtAbsolutePosition(indexPostStartDistHist2+i);
 
-		slidingWindow = new SlidingWindow(FILTER);
-	}
-	
-	private void reset(){
-		for (int i = 0; i < ConstantsFlexophoreGenerator.BINS_HISTOGRAM; i++) {
-			arrTmpHistMol[i]=0;
-			arrTmpHistMolBlurred[i]=0;
-			arrTmpHistFrag[i]=0;
-			arrTmpHistFragBlurred[i]=0;
-		}
-	}
+			sumMin += Math.min(v1, v2);
 
-
-	/**
-	 *
-	 * @param query
-	 * @param indexQueryPPPoint1 index for pharmacophore point 1 in the query
-	 * @param indexQueryPPPoint2 index for pharmacophore point 2 in the query
-	 * @param base
-	 * @param indexBasePPPoint1 index for pharmacophore point 1 in the base
-	 * @param indexBasePPPoint2 index for pharmacophore point 2 in the base
-	 * @return
-	 */
-	public double getSimilarity(IMolDistHist query, int indexQueryPPPoint1, int indexQueryPPPoint2, IMolDistHist base, int indexBasePPPoint1, int indexBasePPPoint2) {
-		
-		double sc = 0;
-		
-		byte [] arr1 = query.getDistHist(indexQueryPPPoint1, indexQueryPPPoint2, arrTmpHistMol);
-		
-		byte [] arr2 = base.getDistHist(indexBasePPPoint1, indexBasePPPoint2, arrTmpHistFrag);
-
-		byte [] arr1Filt = slidingWindow.filter(arr1);
-
-		byte [] arr2Filt = slidingWindow.filter(arr2);
-
-		sc = getSimilarity(arr1Filt, arr2Filt);
-
-		reset();
-		
-		return sc;
-
-	}
-
-	private void blurrHistogram(byte [] arr, int [] arrBlurred){
-
-		slidingWindow.filter(arr);
-
-	}
-
-
-	
-	/**
-	 * 
-	 * @param arr1
-	 * @param arr2
-	 * @return Similarity value between 0 and 1. 1: histograms are identical.
-	 */
-	private double getSimilarity(int [] arr1, int [] arr2) {
-
-		if(DEBUG){
-			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			System.out.println("!!!HistogramMatchCalculator DEBUG mode!!!");
-			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			
-			return 1.0;
-		}
-
-		double sumOverlap = 0;
-
-		double sum = 0;
-
-		for (int i = 0; i < arr1.length; i++) {
-			
-			sumOverlap += Math.min(arr1[i], arr2[i]); 
-			
-		}
-
-		double score = sumOverlap / (sum/2.0);
-
-		if(score>1)
-			score = 1.0;
-		
-		return score;
-	}
-
-	private double getSimilarity(byte [] arr1, byte [] arr2) {
-
-		if(DEBUG){
-			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			System.out.println("!!!HistogramMatchCalculator DEBUG mode!!!");
-			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
-			return 1.0;
-		}
-
-		double sumOverlap = 0;
-
-		double sum = 0;
-
-		for (int i = 0; i < arr1.length; i++) {
-
-			sumOverlap += Math.min(arr1[i], arr2[i]);
-
-			sum += arr1[i] + arr2[i];
+			sumMax += Math.max(v1, v2);
 
 		}
 
-		double score = sumOverlap / (sum/2.0);
-
-		if(score>1)
-			score = 1.0;
+		double score = sumMin / sumMax;
 
 		return score;
+
 	}
+
 
 
 }

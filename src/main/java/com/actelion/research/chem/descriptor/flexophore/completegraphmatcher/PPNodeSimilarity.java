@@ -45,7 +45,7 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 	 A similarity thresh of 0.99 allows 58 pairwise interactions.
 	 */
-	public static final double THRESH_SIMILARITY_HARD_MATCH = 0.8;
+	public static final double THRESH_SIMILARITY_HARD_MATCH = 0.875;
 
 	public static final double HARD_MATCH_OPTIMISTIC_PERCENTILE = 0.75;
 

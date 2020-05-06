@@ -24,7 +24,9 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.descriptor.flexophore.*;
+import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.HistogramMatchCalculator;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.PPNodeSimilarity;
+import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDistHistViz;
 import com.actelion.research.util.CommandLineParser;
 import com.actelion.research.util.graph.complete.CompleteGraphMatcher;
@@ -53,7 +55,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * 15 Jul 2016 MvK if generation of conformer failed a new seed is injected and the generation is tried again.
  * 11 Aug 2016 MvK number of bins increase from 50 to 80, histogram range increased from 25 to 40 Angstroem. --> V.4.3
  * 30 Jan 2017 MvK minor bug fix. Two constants for the number of conformations. --> V.4.4. Compatible with V.4.3
- * April 2020 Version 5.0, new interaction tables from Joel Wahl
+ * April 2020 Version 5.0, new interaction tables from Joel Wahl, algorithmic changes.
  */
 public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
@@ -72,13 +74,11 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	// until 24.03.2020
 	// private static final double CORRECTION_FACTOR = 0.40;
 
-	private static final double CORRECTION_FACTOR = 0.5;
+	private static final double CORRECTION_FACTOR = 0.4;
 
 	private static final int MAX_TRIES_TO_GENERATE_CONFORMER = 25;
 
 	private static final int MAX_TRIES_TO_GENERATE_CONFORMER_ONE_CONF = 11;
-
-	private static DescriptorHandlerFlexophore INSTANCE;
 
 	protected static final int MIN_NUM_ATOMS = 6;
 
@@ -102,12 +102,16 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	public static final double THRESH_SIMILARITY_COMPARISON_NODE = PPNodeSimilarity.THRESH_SIMILARITY_HARD_MATCH;
 	public static final double THRESH_HISTOGRAM_SIMILARITY = ObjectiveFlexophoreHardMatchUncovered.THRESH_HISTOGRAM_SIMILARITY;
 
-	private ConcurrentLinkedQueue<CompleteGraphMatcher<IMolDistHist>> queueCGM;
+	private static DescriptorHandlerFlexophore INSTANCE;
 
+
+	private ConcurrentLinkedQueue<CompleteGraphMatcher<IMolDistHist>> queueCGM;
 
 	private MolDistHistEncoder molDistHistEncoder;
 
 	protected CreatorMolDistHistViz creatorMolDistHistViz;
+
+
 
 	//
 	// If you change this, do not forget to change the objective in CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher().
@@ -221,6 +225,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		cgMatcher.setMaxNumSolutions(MAX_NUM_SOLUTIONS);
 
 		return cgMatcher;
+	}
+
+	public ObjectiveFlexophoreHardMatchUncovered getObjectiveCompleteGraphHard() {
+		return objectiveCompleteGraphHard;
 	}
 
 	public DescriptorInfo getInfo() {
@@ -469,7 +477,21 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	}
 
 
-	private double getSimilarity(IMolDistHist mdhvBase, IMolDistHist mdhvQuery){
+	private double getSimilarity(IMolDistHist iBase, IMolDistHist iQuery){
+
+		MolDistHistViz mdhvBase = null;
+		if(iBase instanceof MolDistHist){
+			mdhvBase = new MolDistHistViz((MolDistHist)iBase);
+		} else if(iBase instanceof MolDistHistViz){
+			mdhvBase = new MolDistHistViz((MolDistHistViz)iBase);
+		}
+
+		MolDistHistViz mdhvQuery = null;
+		if(iQuery instanceof MolDistHist){
+			mdhvQuery = new MolDistHistViz((MolDistHist)iQuery);
+		} else if(iQuery instanceof MolDistHistViz){
+			mdhvQuery = new MolDistHistViz((MolDistHistViz)iQuery);
+		}
 
 		CompleteGraphMatcher<IMolDistHist> cgMatcher = queueCGM.poll();
 

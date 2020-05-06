@@ -940,7 +940,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 		if (coordinates == null || coordinates.length == 0)
 			return false;
 
-		if (coordinates[0] == '!') {	// current version starts with '!' (ASC 33), further versions may start with ASC 34 to 38
+		if (coordinates[0] == '!' || coordinates[0] == '#') {
+			// current version starts with '!' (ASC 33) or '#' (ASC 35) (includs implicit hydrogen coordinates)
+			// further versions may start with ASC 36 to 38
 			decodeBitsStart(coordinates, 1);
 			return (decodeBits(1) == 1);
 			}
@@ -969,7 +971,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 				if (coordinates[i] == '\'' || coordinates[i] == '&')
 					return true;
 			}
-		else if (coordinates[coordStart] == '!') {	// current version starts with '!' (ASC 33), further versions may start with ASC 34 to 38
+		else if (coordinates[coordStart] == '!' || coordinates[coordStart] == '#') {
+			// current version starts with '!' (ASC 33) or '#' (ASC 35) (includs implicit hydrogen coordinates)
+			// further versions may start with ASC 36 to 38
 			decodeBitsStart(coordinates, coordStart+1);
 			decodeBits(1);	// skip 3D information
 			return (decodeBits(1) == 1);

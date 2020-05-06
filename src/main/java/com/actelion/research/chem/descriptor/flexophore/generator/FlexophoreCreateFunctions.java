@@ -29,7 +29,6 @@ public class FlexophoreCreateFunctions {
 		
 		coordinateInventor.invent(mol);
 		
-		
 		return createDescriptor(mol);
 	}
 	
