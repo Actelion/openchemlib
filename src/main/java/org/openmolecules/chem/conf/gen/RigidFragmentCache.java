@@ -10,8 +10,8 @@ import com.actelion.research.util.DoubleFormat;
 
 import java.io.*;
 import java.util.TreeSet;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.SynchronousQueue;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -230,14 +230,14 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	 * cache export files are written: with all cache entries, with entries used at least 2,3,5, and 10 times.
 	 * The numbers 1,2,3,5,10 and .txt extention will be appended to the given cache file name.
 	 * @param inputFileNames array of one or more input file paths (may be mixture of sdf and dwar)
-	 * @param cacheFileName path and file name without any extention ('_n_.txt' will be added)
-	 * @param multiThreaded whether to use multiple threads
+	 * @param outputDirectory path to output directory ('_cache_n_.txt' will be added)
+	 * @param threadCount if 1 then a single threaded approach is used; if 0 then all existing cores are used
 	 * @param optimizeFragments whether to energy minimize fragments using MMFF94s+
 	 * @param maxCompoundsPerFile if an input file contains more compounds than this, then the rest are skipped
 	 * @param rfp null or custom RigidFragmentProvider if fragments shall be minimized with a different method
 	 * @return created cache or null, if an input file could not be found
 	 */
-	public static RigidFragmentCache createCache(String[] inputFileNames, String cacheFileName, boolean multiThreaded,
+	public static RigidFragmentCache createCache(String[] inputFileNames, String outputDirectory, int threadCount,
                                 boolean optimizeFragments, int maxCompoundsPerFile, RigidFragmentProvider rfp) {
 		boolean notFound = false;
 		for (String ifn:inputFileNames)
@@ -253,8 +253,8 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 			rfp.setCache(cache);
 
 		for (String ifn:inputFileNames) {
-			long millis = multiThreaded ?
-					addFragmentsToCacheSMP(cache, optimizeFragments, ifn, maxCompoundsPerFile, rfp)
+			long millis = (threadCount != 1) ?
+					addFragmentsToCacheSMP(cache, optimizeFragments, ifn, maxCompoundsPerFile, rfp, threadCount)
 				  : addFragmentsToCache(cache, optimizeFragments, ifn, maxCompoundsPerFile, rfp);
 
 			System.out.println("File '"+ifn+"' processed in "+millis+" milliseconds.");
@@ -262,11 +262,12 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 
 		if (inputFileNames != null) {
 			System.out.print("Writing cache files... ");
-			boolean success = cache.serializeCache(cacheFileName + "_1_.txt", 0)   // we have one hit less than usages
-					&& cache.serializeCache(cacheFileName + "_2_.txt", 1)
-					&& cache.serializeCache(cacheFileName + "_3_.txt", 2)
-					&& cache.serializeCache(cacheFileName + "_5_.txt", 4)
-					&& cache.serializeCache(cacheFileName + "_10_.txt", 9);
+			String cacheFileName = outputDirectory.concat("/cache_");
+			boolean success = cache.serializeCache(cacheFileName + "1.txt", 0)   // we have one hit less than usages
+					&& cache.serializeCache(cacheFileName + "2.txt", 1)
+					&& cache.serializeCache(cacheFileName + "3.txt", 2)
+					&& cache.serializeCache(cacheFileName + "5.txt", 4)
+					&& cache.serializeCache(cacheFileName + "10.txt", 9);
 			System.out.println(success ? "done" : "failure !!!");
 			}
 
@@ -306,7 +307,7 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 	}
 
 	private static long addFragmentsToCacheSMP(RigidFragmentCache cache, boolean optimizeFragments,
-	                                        String inputFile, int maxCompounds, RigidFragmentProvider rfp) {
+	                                        String inputFile, int maxCompounds, RigidFragmentProvider rfp, int threadCount) {
 		long start_millis = System.currentTimeMillis();
 		int compoundNo = 0;
 
@@ -314,10 +315,16 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 
 		CompoundFileParser parser = CompoundFileParser.createParser(inputFile);
 
-		SynchronousQueue<StereoMolecule> queue = new SynchronousQueue<>();
-		int threadCount = Runtime.getRuntime().availableProcessors();
-		for (int i = 0; i<threadCount; i++)
-			new Thread(() -> consumeMoleculesToCacheFragments(queue, cache, optimizeFragments, rfp)).start();
+		if (threadCount == 0)
+			threadCount = Runtime.getRuntime().availableProcessors();
+
+		ArrayBlockingQueue<StereoMolecule> queue = new ArrayBlockingQueue<>(2*threadCount);
+		Thread[] t = new Thread[threadCount];
+		for (int i = 0; i<threadCount; i++) {
+			t[i] = new Thread(() -> consumeMoleculesToCacheFragments(queue, cache, optimizeFragments, rfp));
+			t[i].setPriority(Thread.MIN_PRIORITY);
+			t[i].start();
+		}
 
 		while (parser.next() && compoundNo<maxCompounds) {
 			if (compoundNo % 50 == 49)
@@ -333,34 +340,33 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 				StereoMolecule mol = parser.getMolecule();
 				if (mol.getAllAtoms() != 0)
 					queue.put(mol);
-			} catch (InterruptedException ie) {
 			}
+			catch (InterruptedException ie) {}
 
 			compoundNo++;
 		}
-		System.out.println();
 
-		try {
-			queue.put(new StereoMolecule());   // empty molecule to signalize end of queue
-			} catch (InterruptedException ie) {
-		}
+		for (int i=0; i<threadCount; i++)
+			t[i].interrupt();
+		for (int i=0; i<threadCount; i++)
+			try { t[i].join(); } catch (InterruptedException e) {}
+
+		System.out.println();
 
 		return System.currentTimeMillis() - start_millis;
 	}
 
-	private static void consumeMoleculesToCacheFragments(SynchronousQueue<StereoMolecule> queue, RigidFragmentCache cache,
+	private static void consumeMoleculesToCacheFragments(ArrayBlockingQueue<StereoMolecule> queue, RigidFragmentCache cache,
 	                                                     boolean optimizeFragments, RigidFragmentProvider rfp) {
 		ConformerGenerator cg = (rfp == null) ?
 				new ConformerGenerator(123L, cache, optimizeFragments)
 				: new ConformerGenerator(123L, rfp);
 
-		StereoMolecule mol;
 		try {
-			while ((mol = queue.take()).getAllAtoms() != 0)
-				cg.initialize(mol, false);
-
-			queue.put(mol);    // put empty mol back for others to see
-		} catch (InterruptedException ie) {}
+			while (true)
+				cg.initialize(queue.take(), false);
+		}
+		catch (InterruptedException ie) {}  // spawning thread interrupts this after last molecule
 	}
 
 	/**

@@ -74,13 +74,13 @@ public class PheSAAlignmentOptimizer {
 				double[] r = shapeAlignment.findAlignment(alignments);
 				if(r[0]>bestScoreTriangle) {
 					bestScoreTriangle = r[0];
-					bestTransformTriangle[0] = r[1];
-					bestTransformTriangle[1] = r[2];
-					bestTransformTriangle[2] = r[3];
-					bestTransformTriangle[3] = r[4];
-					bestTransformTriangle[4] = r[5];
-					bestTransformTriangle[5] = r[6];
-					bestTransformTriangle[6] = r[7];
+					bestTransformTriangle[0] = r[3];
+					bestTransformTriangle[1] = r[4];
+					bestTransformTriangle[2] = r[5];
+					bestTransformTriangle[3] = r[6];
+					bestTransformTriangle[4] = r[7];
+					bestTransformTriangle[5] = r[8];
+					bestTransformTriangle[6] = r[9];
 					bestMatch = fitMol2;
 				}
 			}
