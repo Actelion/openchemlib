@@ -1332,6 +1332,7 @@ public class SubGraphExtractor {
                 // Additionally it can be included to the atom types of the ring.
                 if(atomicNo != PeriodicTable.Nitrogen &&
                         atomicNo != PeriodicTable.Oxygen &&
+                        atomicNo != PeriodicTable.Sulfur &&
                         atomicNo != PeriodicTable.Chlorine &&
                         atomicNo != PeriodicTable.Bromine)
 
@@ -1356,7 +1357,6 @@ public class SubGraphExtractor {
         // Get third layer
         // Only if the new atom or the connecting atom is a hetero atom.
         //
-
         for (SubGraphIndices frag : liFragmentHetero) {
 
             int [] arrAtomIndices = frag.getAtomIndices();
@@ -1382,17 +1382,19 @@ public class SubGraphExtractor {
                         boolean heteroChild = ExtendedMoleculeFunctions.isHetero(mol, indexAtmConn);
 
                         // A hetero atom in a ring is allowed in this layer. This gets the N of an amide in the ring etc.
-                        if (!heteroChild && isSmallRingAtom(indexAtmConn)) {
+//                        if (!heteroChild && isSmallRingAtom(indexAtmConn)) {
+//                            continue;
+//                        }
 
+                        // 07.05.2020 Changed, no hetero atom in ring allowed any more.
+                        // Result was a coarse granulation. i.e. for (Ring)N-C-S
+                        if (isSmallRingAtom(indexAtmConn)) {
                             continue;
-
                         }
 
 
                         if (heteroParent || heteroChild){
-
                             frag.addIndex(indexAtmConn);
-
                         }
                     }
                 }

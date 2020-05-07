@@ -22,8 +22,14 @@ public class ConstantsFlexophoreGenerator {
 
 
     public static final boolean OPTIMIZE_RIGID_FRAGS = false;
-    // Filter 07.04.2020
+
+    /**
+     * Filter for sliding window to blurr distance histograms
+     * 07.04.2020
+     */
     public static final double [] FILTER = {0.25,0.5,0.25};
+
+    // public static final double [] FILTER = {0.125, 0.25,0.25,0.25, 0.125};
 
 
     public static double getResolution(){

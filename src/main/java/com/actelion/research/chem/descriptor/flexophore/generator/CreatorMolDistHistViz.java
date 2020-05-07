@@ -128,6 +128,7 @@ public class CreatorMolDistHistViz {
         // Handle carbon atoms connected to hetero atoms
         //
         List<SubGraphIndices> liFragment = subGraphExtractor.extract(molInPlace);
+
         for (SubGraphIndices sgi : liFragment) {
             int [] arrIndexAtomFragment = sgi.getAtomIndices();
 
