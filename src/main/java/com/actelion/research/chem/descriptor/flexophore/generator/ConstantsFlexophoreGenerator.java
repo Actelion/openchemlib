@@ -27,9 +27,11 @@ public class ConstantsFlexophoreGenerator {
      * Filter for sliding window to blurr distance histograms
      * 07.04.2020
      */
-    public static final double [] FILTER = {0.25,0.5,0.25};
+    // public static final double [] FILTER = {0.25,0.5,0.25};
 
     // public static final double [] FILTER = {0.125, 0.25,0.25,0.25, 0.125};
+    // public static final double [] FILTER = {0.06, 0.125, 0.19,0.25,0.19, 0.125, 0.06};
+    public static final double [] FILTER = {0.125, 0.125, 0.125,0.25,0.125, 0.125, 0.125};
 
 
     public static double getResolution(){

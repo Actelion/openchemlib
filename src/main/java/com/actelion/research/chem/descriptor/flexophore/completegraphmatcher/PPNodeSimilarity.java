@@ -274,7 +274,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 		}
 
-
 		List<Double> liSimilarities = getSimilarityList(queryCmp, baseCmp);
 
 		double sim = 0;
