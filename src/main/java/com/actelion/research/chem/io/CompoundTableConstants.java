@@ -196,6 +196,9 @@ public interface CompoundTableConstants {
     String cDataDependentPropertiesStart = "<data dependent properties type=\"";
     String cDataDependentPropertiesEnd = "</data dependent properties>";
 
+    String cViewNameStart = "<view name=\"";    // used as part of data dependent properties
+    String cViewNameEnd = "</view>";
+
     String cExtensionNameFileExplanation = "explanation";
     String cExtensionNameMacroList = "macroList";
 
