@@ -54,6 +54,8 @@ public class PPNode implements Comparable<PPNode> {
 
 	transient boolean heteroAtom;
 
+	transient byte modeFlexophore;
+
 
 	public PPNode(){
 		init();
@@ -178,6 +180,8 @@ public class PPNode implements Comparable<PPNode> {
 		System.arraycopy(node.arrInteractionType, 0, arrInteractionType, 0, node.arrInteractionType.length);
 		
 		size = node.size;
+
+		modeFlexophore = node.modeFlexophore;
 	}
 	
 	/**
@@ -342,6 +346,7 @@ public class PPNode implements Comparable<PPNode> {
 	
 	private void init(){
 		arrInteractionType = new byte [BUFFER_SIZE];
+		modeFlexophore = ConstantsFlexophore.MODE_SOFT_PPPOINTS;
 	}
 	
 	/**
@@ -356,8 +361,16 @@ public class PPNode implements Comparable<PPNode> {
 		this.size = size;
 	}
 
+	public byte getModeFlexophore() {
+		return modeFlexophore;
+	}
 
-	
+	public void setModeFlexophore(byte modeFlexophore) {
+		this.modeFlexophore = modeFlexophore;
+	}
+
+
+
 	private void initInteractionType(int interactionType){
 
 		if(interactionType > ConstantsFlexophoreGenerator.MAX_VAL_INTERACTION_TYPE){
@@ -524,7 +537,35 @@ public class PPNode implements Comparable<PPNode> {
 		sb.append(")");
 		return sb.toString();
 	}
-	
+
+	public String toStringLongHardPPPoint(){
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("(");
+
+		for (int i = 0; i < size; i++) {
+
+			if(i>0){
+				sb.append(SEPARATOR_ATOMS);
+			}
+
+			InterActionTypeFreq iaf = getInteraction(i);
+
+			String s = ConstantsFlexophoreHardPPPoints.toStringPPPoints(iaf.interactionType);
+
+			sb.append(s);
+
+			if(iaf.frequency>1){
+				sb.append(MULT_FREQ);
+				sb.append( iaf.frequency);
+			}
+		}
+
+		sb.append(")");
+		return sb.toString();
+	}
+
 	private static int getMaximumInteractionType(PPNode n){
 		
 		int max = 0;

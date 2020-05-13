@@ -49,16 +49,21 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	
 	private boolean finalized;
 
+	private byte modeFlexophore;
+
 	public MolDistHist () {
 		initHistogramArray(0);
+		init();
 	}
 	
 	public MolDistHist (int nNodes) {
 		initHistogramArray(nNodes);
+		init();
 	}
 	
 	public MolDistHist (MolDistHist mdh) {
 		initHistogramArray(mdh.getNumPPNodes());
+		init();
 		mdh.copy(this);
 	}
 	
@@ -67,7 +72,10 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 		copy(copy);
 		return copy;
 	}
-	
+
+	private void init(){
+		modeFlexophore = ConstantsFlexophore.MODE_SOFT_PPPOINTS;
+	}
 	
 	public boolean check(){
 		boolean bOK = true;
@@ -103,7 +111,9 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 		System.arraycopy(arrNode, 0, copy.arrNode, 0, arrNode.length);
 		
 		copy.posNode = posNode;
-		
+
+		copy.modeFlexophore = modeFlexophore;
+
 		copy.realize();
 		
 	}
@@ -147,7 +157,11 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 		
 		return bEQ;
 	}
-	
+
+	public byte getModeFlexophore() {
+		return modeFlexophore;
+	}
+
 	protected void initHistogramArray(int nNodes) {
 		super.initHistogramArray(nNodes);
 		

@@ -97,8 +97,18 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	public static final int VERSION_INTERACTION_TABLES = -1;
 
 	public static final int MODE_PPNODE_SIMILARITY_COMPARISON = PPNodeSimilarity.SIMILARITY_MODE_HARD_THRESH;
+
+	// Production
 	public static final double THRESH_SIMILARITY_COMPARISON_NODE = PPNodeSimilarity.THRESH_SIMILARITY_HARD_MATCH;
+
+	// Test
+	// public static final double THRESH_SIMILARITY_COMPARISON_NODE = 0.001;
+
+	// Production
 	public static final double THRESH_HISTOGRAM_SIMILARITY = ObjectiveFlexophoreHardMatchUncovered.THRESH_HISTOGRAM_SIMILARITY;
+
+	// Test
+	// public static final double THRESH_HISTOGRAM_SIMILARITY = 0.5;
 
 	private static DescriptorHandlerFlexophore INSTANCE;
 

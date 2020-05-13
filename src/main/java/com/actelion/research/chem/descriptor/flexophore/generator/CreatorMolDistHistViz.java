@@ -132,7 +132,6 @@ public class CreatorMolDistHistViz {
         for (SubGraphIndices sgi : liFragment) {
             int [] arrIndexAtomFragment = sgi.getAtomIndices();
 
-
             HashSet<Integer> hsIndexAtom2Remove = new HashSet<>();
 
             for (int indexAtFrag : arrIndexAtomFragment) {
@@ -144,41 +143,6 @@ public class CreatorMolDistHistViz {
                 }
             }
 
-//            int [] arrAtIndexAromaticRing = null;
-//            if((arrAtIndexAromaticRing = ExtendedMoleculeFunctions.extractAromaticRing(molInPlace, arrIndexAtomFragment))!=null){
-//
-//                if(ExtendedMoleculeFunctions.containsHeteroAtom(molInPlace, arrAtIndexAromaticRing)){
-//                    for (int indexAt : arrAtIndexAromaticRing) {
-//                        if(molInPlace.getAtomicNo(indexAt)==6){
-//                            hsIndexAtom2Remove.add(indexAt);
-//                        }
-//                    }
-//                } else {
-//
-//                    if(ExtendedMoleculeFunctions.isConnected2Hetero(molInPlace, arrAtIndexAromaticRing)){
-//                        for (int indexAt : arrAtIndexAromaticRing) {
-//
-//                            int connected = molInPlace.getConnAtoms(indexAt);
-//
-//                            boolean hetero=false;
-//                            for (int i = 0; i < connected; i++) {
-//
-//                                int indexConnected = molInPlace.getConnAtom(indexAt, i);
-//
-//                                if (molInPlace.getAtomicNo(indexConnected) != 6 && molInPlace.getAtomicNo(indexConnected) != 1) {
-//                                    hetero=true;
-//                                    break;
-//                                }
-//                            }
-//
-//                            if(!hetero){
-//                                hsIndexAtom2Remove.add(indexAt);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-
             if(hsIndexAtom2Remove.size()>0) {
                 sgi.clear();
                 for (int indexAtFrag : arrIndexAtomFragment) {
@@ -189,33 +153,6 @@ public class CreatorMolDistHistViz {
                 }
             }
         }
-
-//        for (int i = liFragment.size() - 1; i >= 0; i--) {
-//            SubGraphIndices sgi = liFragment.get(i);
-//            int [] arrIndexAtom = sgi.getAtomIndices();
-//
-//            int indexOfIndex = 0;
-//
-//            for (int j = 0; j < arrIndexAtom.length; j++) {
-//
-//                if(molInPlace.getInteractionAtomType(arrIndexAtom[j])!=ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE){
-//                    arrIndexAtomNewTmp[indexOfIndex++]=arrIndexAtom[j];
-//                }
-//            }
-//
-//            if(indexOfIndex<arrIndexAtom.length){
-//
-//                if(indexOfIndex==0){
-//                    liFragment.remove(i);
-//                } else {
-//
-//                    arrIndexAtom = new int[indexOfIndex];
-//                    System.arraycopy(arrIndexAtomNewTmp, 0, arrIndexAtom, 0, arrIndexAtom.length);
-//                    sgi.clear();
-//                    sgi.addIndex(arrIndexAtom);
-//                }
-//            }
-//        }
 
 
         if(DEBUG) {
@@ -319,7 +256,7 @@ public class CreatorMolDistHistViz {
 
     }
 
-    private Molecule3D createPharmacophorePoints(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
+    private static Molecule3D createPharmacophorePoints(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
 
         Molecule3D molCenter = new Molecule3D(molecule3D);
 
@@ -508,7 +445,7 @@ public class CreatorMolDistHistViz {
         return INSTANCE;
     }
 
-    private static class MultCoordFragIndex {
+    public static class MultCoordFragIndex {
 
         private int [] arrIndexFrag;
 
@@ -521,6 +458,10 @@ public class CreatorMolDistHistViz {
 
         public void addCoord(Coordinates coordinates){
             liCoord.add(coordinates);
+        }
+
+        public List<Coordinates> getCoordinates() {
+            return liCoord;
         }
 
         public int[] getArrIndexFrag() {
