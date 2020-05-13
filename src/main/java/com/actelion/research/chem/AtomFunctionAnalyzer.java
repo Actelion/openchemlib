@@ -133,8 +133,8 @@ public class AtomFunctionAnalyzer {
 		for (int i=0; i<mol.getConnAtoms(atom); i++) {
 			int conn = mol.getConnAtom(atom, i);
 			if (mol.getAtomicNo(conn) != 6
-			 || (mol.getAtomPi(conn) != 0 && !mol.isAromaticAtom(conn))
-			 || getNegativeNeighbourCount(mol, conn) != 1) {
+			 || (!mol.isAromaticAtom(conn)
+			  && (mol.getAtomPi(conn) != 0 || getNegativeNeighbourCount(mol, conn) != 1))) {
 				return false;
 				}
 			}
@@ -150,15 +150,16 @@ public class AtomFunctionAnalyzer {
 		for (int i=0; i<mol.getConnAtoms(atom); i++) {
 			int conn = mol.getConnAtom(atom, i);
 			if (mol.getAtomicNo(conn) != 6
-			 || (mol.getAtomPi(conn) != 0 && !mol.isAromaticAtom(conn))
-			 || getNegativeNeighbourCount(mol, conn) != 1)
+			 || (!mol.isAromaticAtom(conn)
+			  && (mol.getAtomPi(conn) != 0 || getNegativeNeighbourCount(mol, conn) != 1))) {
 				return false;
+				}
 			if (mol.isAromaticAtom(conn))
 				aromaticNeighbourFound = true;
 			}
 
 		return aromaticNeighbourFound;
-	}
+		}
 	
 	public static boolean hasUnbalancedAtomCharge(StereoMolecule mol, int atom) {
 		
