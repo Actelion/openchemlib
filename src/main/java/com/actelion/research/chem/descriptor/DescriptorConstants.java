@@ -112,28 +112,8 @@ public interface DescriptorConstants {
 												false,
 												false,
 												false);
-	@Deprecated
-    public static final DescriptorInfo DESCRIPTOR_FlexophoreV4 =
-							new DescriptorInfo("FlexophoreV4",
-												"FlexophoreV4",
-												"4.3",
-												DESCRIPTOR_TYPE_MOLECULE,
-												false,
-												false,
-												false,
-												false);
 
-    public static final DescriptorInfo DESCRIPTOR_Vectophore =
-							new DescriptorInfo("Vectophore",
-												"Vectophore",
-												"pre-alpha",
-												DESCRIPTOR_TYPE_MOLECULE,
-												false,
-												true,
-												false,
-												false);
-
-    public static final DescriptorInfo DESCRIPTOR_Flexophore_HighRes =
+	public static final DescriptorInfo DESCRIPTOR_Flexophore_HighRes =
         					new DescriptorInfo("FlexophoreHighResolution",
 												"FlexophoreHighRes",
 												"version",
