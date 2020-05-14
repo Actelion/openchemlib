@@ -26,6 +26,7 @@ import com.actelion.research.chem.descriptor.flexophore.calculator.StructureCalc
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 
+import com.actelion.research.chem.phesa.pharmacophore.IPharmacophorePoint;
 import com.actelion.research.util.graph.complete.ICompleteGraph;
 
 import java.io.Serializable;
@@ -647,7 +648,7 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		boolean aliphatic = true;
 
 		PPNodeViz node = getNode(indexNode);
-		
+
 		for (int i = 0; i < node.getInteractionTypeCount(); i++) {
 
 			if(node.getAtomicNo(i)!=6){
@@ -663,12 +664,18 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		boolean acceptor = false;
 		
 		PPNodeViz node = getNode(indexNode);
-		
-		for (int i = 0; i < node.getInteractionTypeCount(); i++) {
+		if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS){
+			if(IPharmacophorePoint.Functionality.ACCEPTOR.getIndex()==node.get()[0]){
+				acceptor=true;
+			}
 
-			if(node.getAtomicNo(i)==8 || node.getAtomicNo(i)==7){
-				acceptor = true;
-				break;
+		} else {
+			for (int i = 0; i < node.getInteractionTypeCount(); i++) {
+
+				if (node.getAtomicNo(i) == 8 || node.getAtomicNo(i) == 7) {
+					acceptor = true;
+					break;
+				}
 			}
 		}
 		
@@ -681,26 +688,79 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 
 		PPNodeViz node = getNode(indexNode);
 
-		List<Integer> liIndexAtom = node.getListIndexOriginalAtoms();
-		
-		StereoMolecule mol = new Molecule3D(molecule3D);
-		
-		mol.ensureHelperArrays(Molecule.cHelperRings);
-		
-		for (int indexAtom : liIndexAtom) {
-			
-			if(mol.getAtomicNo(indexAtom)==8 || mol.getAtomicNo(indexAtom)==7){
-				
-				if(mol.getAllHydrogens(indexAtom)>0){
-					donor = true;
-					break;
+		if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS){
+
+			if(IPharmacophorePoint.Functionality.DONOR.getIndex()==node.get()[0]){
+				donor=true;
+			}
+
+		} else {
+			List<Integer> liIndexAtom = node.getListIndexOriginalAtoms();
+
+			StereoMolecule mol = new Molecule3D(molecule3D);
+
+			mol.ensureHelperArrays(Molecule.cHelperRings);
+
+			for (int indexAtom : liIndexAtom) {
+
+				if (mol.getAtomicNo(indexAtom) == 8 || mol.getAtomicNo(indexAtom) == 7) {
+
+					if (mol.getAllHydrogens(indexAtom) > 0) {
+						donor = true;
+						break;
+					}
 				}
 			}
 		}
 
 		return donor;
 	}
-	
+
+	public boolean isAromatic(int indexNode) {
+
+		boolean aromatic = false;
+
+		PPNodeViz node = getNode(indexNode);
+
+		if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS){
+			if(IPharmacophorePoint.Functionality.AROM_RING.getIndex()==node.get()[0]){
+				aromatic=true;
+			}
+		}
+
+		return aromatic;
+	}
+
+	public boolean isChargePos(int indexNode) {
+
+		boolean charge = false;
+
+		PPNodeViz node = getNode(indexNode);
+
+		if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS){
+			if(IPharmacophorePoint.Functionality.POS_CHARGE.getIndex()==node.get()[0]){
+				charge=true;
+			}
+		}
+
+		return charge;
+	}
+
+	public boolean isChargeNeg(int indexNode) {
+
+		boolean charge = false;
+
+		PPNodeViz node = getNode(indexNode);
+
+		if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS){
+			if(IPharmacophorePoint.Functionality.NEG_CHARGE.getIndex()==node.get()[0]){
+				charge=true;
+			}
+		}
+
+		return charge;
+	}
+
 
 	private int calcNumCExclusiveNodes(){
 		int num=0;
@@ -800,17 +860,11 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		
 	}
 
-	
-	
 	public void calculate() {
-		
 		numCNodes = calcNumCExclusiveNodes();
-		
 		numHeteroNodes = calcNumHeteroNodes();
-		
 	}
-	
-	
+
 	/**
 	 * Remove all atoms without connections.
 	 * @param mol

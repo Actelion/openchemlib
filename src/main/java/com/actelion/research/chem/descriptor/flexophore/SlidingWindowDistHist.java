@@ -27,7 +27,13 @@ public class SlidingWindowDistHist {
 
         lenFilHalf = arrFilter.length / 2;
 
-        arrTmp = new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM * ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE];
+        int n = ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE;
+
+        int maxNumDistHist = ((n*n)-n)/2;
+
+        arrTmp = new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM * maxNumDistHist];
+
+        System.out.println("arrTmp " + arrTmp.length);
 
     }
 
