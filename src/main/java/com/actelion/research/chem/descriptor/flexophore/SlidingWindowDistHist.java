@@ -22,7 +22,7 @@ public class SlidingWindowDistHist {
         this.arrFilter = arrFilter;
 
         if(arrFilter.length % 2 == 0){
-            throw new RuntimeException("Odd number of filter values needed.");
+            throw new RuntimeException("Odd number of filter values needed!");
         }
 
         lenFilHalf = arrFilter.length / 2;
@@ -32,9 +32,6 @@ public class SlidingWindowDistHist {
         int maxNumDistHist = ((n*n)-n)/2;
 
         arrTmp = new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM * maxNumDistHist];
-
-        System.out.println("arrTmp " + arrTmp.length);
-
     }
 
     public void apply(DistHist distHist){
