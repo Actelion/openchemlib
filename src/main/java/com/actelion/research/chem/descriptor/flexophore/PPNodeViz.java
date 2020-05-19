@@ -54,7 +54,7 @@ public class PPNodeViz extends PPNode implements Serializable {
 	private int indexSphereViz;
 	
 	private boolean marked;
-	
+
 	public PPNodeViz(){
 		super(new PPNode()); 
 		init();
@@ -81,7 +81,8 @@ public class PPNodeViz extends PPNode implements Serializable {
 		index = INFO_DEFAULT;
 
 		similarityMappingNodes = SIMILARITY_NODES;
-		
+
+
 	}
 	
 	public int getIndex() {
@@ -261,9 +262,15 @@ public class PPNodeViz extends PPNode implements Serializable {
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append("(");
-		
-		sb.append(super.toStringLong());
-		
+
+		if(modeFlexophore==ConstantsFlexophore.MODE_SOFT_PPPOINTS) {
+			sb.append(super.toStringLong());
+		} else if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS) {
+			sb.append(super.toStringLongHardPPPoint());
+		} else {
+			throw new RuntimeException("Unknown Flexophore mode " + modeFlexophore + "!");
+		}
+
 		sb.append(", coord ");
 		sb.append(coordinates.toString());
 		
@@ -281,7 +288,6 @@ public class PPNodeViz extends PPNode implements Serializable {
 	}
 
 	public String toStringShort(){
-		
 		return super.toString();
 	}
 

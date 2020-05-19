@@ -155,7 +155,7 @@ public class AromRingPoint implements IPharmacophorePoint {
 	
 	@Override
 	public int getFunctionalityIndex() {
-		return IPharmacophorePoint.Functionality.POS_CHARGE.getIndex();
+		return Functionality.AROM_RING.getIndex();
 	}
 
 

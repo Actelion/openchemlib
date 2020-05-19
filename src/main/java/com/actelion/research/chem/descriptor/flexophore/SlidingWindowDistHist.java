@@ -22,13 +22,16 @@ public class SlidingWindowDistHist {
         this.arrFilter = arrFilter;
 
         if(arrFilter.length % 2 == 0){
-            throw new RuntimeException("Odd number of filter values needed.");
+            throw new RuntimeException("Odd number of filter values needed!");
         }
 
         lenFilHalf = arrFilter.length / 2;
 
-        arrTmp = new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM * ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE];
+        int n = ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE;
 
+        int maxNumDistHist = ((n*n)-n)/2;
+
+        arrTmp = new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM * maxNumDistHist];
     }
 
     public void apply(DistHist distHist){

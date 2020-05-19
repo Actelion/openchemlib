@@ -24,13 +24,11 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.descriptor.flexophore.*;
-import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.HistogramMatchCalculator;
+import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveFlexophoreHardMatchUncovered;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.PPNodeSimilarity;
-import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDistHistViz;
 import com.actelion.research.util.CommandLineParser;
 import com.actelion.research.util.graph.complete.CompleteGraphMatcher;
-import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveFlexophoreHardMatchUncovered;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -99,8 +97,18 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	public static final int VERSION_INTERACTION_TABLES = -1;
 
 	public static final int MODE_PPNODE_SIMILARITY_COMPARISON = PPNodeSimilarity.SIMILARITY_MODE_HARD_THRESH;
+
+	// Production
 	public static final double THRESH_SIMILARITY_COMPARISON_NODE = PPNodeSimilarity.THRESH_SIMILARITY_HARD_MATCH;
+
+	// Test
+	// public static final double THRESH_SIMILARITY_COMPARISON_NODE = 0.001;
+
+	// Production
 	public static final double THRESH_HISTOGRAM_SIMILARITY = ObjectiveFlexophoreHardMatchUncovered.THRESH_HISTOGRAM_SIMILARITY;
+
+	// Test
+	// public static final double THRESH_HISTOGRAM_SIMILARITY = 0.5;
 
 	private static DescriptorHandlerFlexophore INSTANCE;
 
@@ -306,6 +314,13 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		}
 	}
 
+	public MolDistHist createDescriptorSingleConf(StereoMolecule mol) {
+
+		MolDistHistViz mdhv = creatorMolDistHistViz.createFromGivenConformation(mol);
+
+		return mdhv.getMolDistHist();
+	}
+
 	public MolDistHist createDescriptorSingleConf(ConformerSet conformerSet) {
 
 		MolDistHistViz mdhv = createVisualDescriptorSingleConf(conformerSet);
@@ -340,7 +355,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 //		fragBiggest = parser.getCompactMolecule(new Canonizer(fragBiggest).getIDCode());
 
 		MolDistHistViz mdhv = createVisualDescriptor(fragBiggest);
-		MolDistHist mdh = mdhv.getMolDistHist();
+		MolDistHist mdh = (mdhv == null) ? null : mdhv.getMolDistHist();
 
 		exceptionCreateDescriptor = null;
 

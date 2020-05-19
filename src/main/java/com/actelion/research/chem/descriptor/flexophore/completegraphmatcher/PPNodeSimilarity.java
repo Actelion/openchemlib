@@ -45,7 +45,7 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 	 A similarity thresh of 0.99 allows 58 pairwise interactions.
 	 */
-	public static final double THRESH_SIMILARITY_HARD_MATCH = 0.875;
+	public static final double THRESH_SIMILARITY_HARD_MATCH = 0.9;
 
 	public static final double HARD_MATCH_OPTIMISTIC_PERCENTILE = 0.75;
 
@@ -262,7 +262,19 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 	}
 	public double getSimilarityHardMatchMultiplicative(PPNode query, PPNode base) {
 
-		List<Double> liSimilarities = getSimilarityList(query, base);
+		PPNode queryCmp = query;
+
+		PPNode baseCmp = base;
+
+		if(base.hasHeteroAtom() && query.hasHeteroAtom()){
+
+			queryCmp = PPNode.getHeteroOnlyNode(query);
+
+			baseCmp = PPNode.getHeteroOnlyNode(base);
+
+		}
+
+		List<Double> liSimilarities = getSimilarityList(queryCmp, baseCmp);
 
 		double sim = 0;
 

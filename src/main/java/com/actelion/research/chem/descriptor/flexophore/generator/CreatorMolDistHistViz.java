@@ -18,6 +18,7 @@ import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -122,51 +123,33 @@ public class CreatorMolDistHistViz {
 
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
 
-        //
-        // Propagate atom types
-        //
-//        for (int i = 0; i < molInPlace.getAtoms(); i++) {
-//            if(ExtendedMoleculeFunctions.isCarbonConnected2Hetero(molInPlace, i)) {
-//                molInPlace.setInteractionAtomType(i, ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE);
-//            }
-//        }
-
-
 
         //
-        // Remove all carbon atoms connected to a hetero atom.
+        // Handle carbon atoms connected to hetero atoms
         //
-        for (int i = 0; i < molInPlace.getAtoms(); i++) {
-            if(ExtendedMoleculeFunctions.isCarbonConnected2Hetero(molInPlace, i)) {
-                molInPlace.setInteractionAtomType(i, ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE);
-            }
-        }
-
         List<SubGraphIndices> liFragment = subGraphExtractor.extract(molInPlace);
 
-        for (int i = liFragment.size() - 1; i >= 0; i--) {
-            SubGraphIndices sgi = liFragment.get(i);
-            int [] arrIndexAtom = sgi.getAtomIndices();
+        for (SubGraphIndices sgi : liFragment) {
+            int [] arrIndexAtomFragment = sgi.getAtomIndices();
 
-            int indexOfIndex = 0;
+            HashSet<Integer> hsIndexAtom2Remove = new HashSet<>();
 
-            for (int j = 0; j < arrIndexAtom.length; j++) {
-
-                if(molInPlace.getInteractionAtomType(arrIndexAtom[j])!=ConstantsFlexophoreGenerator.INTERACTION_TYPE_NONE){
-                    arrIndexAtomNewTmp[indexOfIndex++]=arrIndexAtom[j];
+            for (int indexAtFrag : arrIndexAtomFragment) {
+                if (ExtendedMoleculeFunctions.isCarbonConnected2Hetero(molInPlace, indexAtFrag)) {
+                    // Is isolated carbon?
+                    if(ExtendedMoleculeFunctions.isIsolatedCarbon(molInPlace, indexAtFrag, arrIndexAtomFragment)){
+                        hsIndexAtom2Remove.add(indexAtFrag);
+                    }
                 }
             }
 
-            if(indexOfIndex<arrIndexAtom.length){
+            if(hsIndexAtom2Remove.size()>0) {
+                sgi.clear();
+                for (int indexAtFrag : arrIndexAtomFragment) {
 
-                if(indexOfIndex==0){
-                    liFragment.remove(i);
-                } else {
-
-                    arrIndexAtom = new int[indexOfIndex];
-                    System.arraycopy(arrIndexAtomNewTmp, 0, arrIndexAtom, 0, arrIndexAtom.length);
-                    sgi.clear();
-                    sgi.addIndex(arrIndexAtom);
+                    if(!hsIndexAtom2Remove.contains(indexAtFrag)){
+                        sgi.addIndex(indexAtFrag);
+                    }
                 }
             }
         }
@@ -273,7 +256,7 @@ public class CreatorMolDistHistViz {
 
     }
 
-    private Molecule3D createPharmacophorePoints(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
+    private static Molecule3D createPharmacophorePoints(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
 
         Molecule3D molCenter = new Molecule3D(molecule3D);
 
@@ -462,7 +445,7 @@ public class CreatorMolDistHistViz {
         return INSTANCE;
     }
 
-    private static class MultCoordFragIndex {
+    public static class MultCoordFragIndex {
 
         private int [] arrIndexFrag;
 
@@ -475,6 +458,10 @@ public class CreatorMolDistHistViz {
 
         public void addCoord(Coordinates coordinates){
             liCoord.add(coordinates);
+        }
+
+        public List<Coordinates> getCoordinates() {
+            return liCoord;
         }
 
         public int[] getArrIndexFrag() {
