@@ -111,7 +111,8 @@ public class VolumeGaussian extends Gaussian3D {
 	}
 	
 	public void rotateShift(Matrix rotMat) {
-		PheSAAlignment.rotateCoords(shiftVector, rotMat.getArray());
+		//PheSAAlignment.rotateCoords(shiftVector, rotMat.getArray());
+		shiftVector.rotate(rotMat.getArray());
 		center = referenceVector.addC(shiftVector);
 	}
 	

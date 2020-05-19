@@ -97,7 +97,7 @@ public class PheSAAlignment {
 			u.set(1,1,-u.get(1, 1));
 			u.set(2,1,-u.get(2, 1));
 		}
-		rotateMol(conf,u);
+		PheSAAlignment.rotateMol(conf,u);
 		molGauss.update(conf);
 		Matrix rotMat = u;
 		
@@ -473,12 +473,7 @@ public class PheSAAlignment {
 		for (int i=0;i<nrOfAtoms;i++) {
 			Coordinates coords = conf.getCoordinates(i);
 			double[][] m = rotor.getRotMatrix().getArray();
-			double x0 = coords.x;
-			double y0 = coords.y;
-			double z0 = coords.z;
-			coords.x = x0*m[0][0]+y0*m[0][1]+z0*m[0][2];
-			coords.y = x0*m[1][0]+y0*m[1][1]+z0*m[1][2];
-			coords.z = x0*m[2][0]+y0*m[2][1]+z0*m[2][2];
+			coords.rotate(m);
 			
 			coords.scale(normFactor);
 			coords.add(transl[0],transl[1],transl[2]);
@@ -496,13 +491,7 @@ public class PheSAAlignment {
 		for (int i=0;i<nrOfAtoms;i++) {
 			Coordinates coords = mol.getCoordinates(i);
 			double[][] m = rotor.getRotMatrix().getArray();
-			double x0 = coords.x;
-			double y0 = coords.y;
-			double z0 = coords.z;
-			coords.x = x0*m[0][0]+y0*m[0][1]+z0*m[0][2];
-			coords.y = x0*m[1][0]+y0*m[1][1]+z0*m[1][2];
-			coords.z = x0*m[2][0]+y0*m[2][1]+z0*m[2][2];
-			
+			coords.rotate(m);	
 			coords.scale(normFactor);
 			coords.add(transl[0],transl[1],transl[2]);
 
@@ -514,25 +503,12 @@ public class PheSAAlignment {
 		int nrOfAtoms = mol.getAllAtoms();
 		for (int i=0;i<nrOfAtoms;i++) {
 			Coordinates coords = mol.getCoordinates(i);
-			double x0 = coords.x;
-			double y0 = coords.y;
-			double z0 = coords.z;
-			coords.x = x0*m[0][0]+y0*m[0][1]+z0*m[0][2];
-			coords.y = x0*m[1][0]+y0*m[1][1]+z0*m[1][2];
-			coords.z = x0*m[2][0]+y0*m[2][1]+z0*m[2][2];
+			coords.rotate(m);
 		}
 		
 	}
 	
-	public static void rotateCoords(Coordinates coords,double[][] m) {
-		double x0 = coords.x;
-		double y0 = coords.y;
-		double z0 = coords.z;
-		coords.x = x0*m[0][0]+y0*m[0][1]+z0*m[0][2];
-		coords.y = x0*m[1][0]+y0*m[1][1]+z0*m[1][2];
-		coords.z = x0*m[2][0]+y0*m[2][1]+z0*m[2][2];
-		
-	}
+
 	
 	public static void translateMol(StereoMolecule mol,double[] translate) {
 		int nrOfAtoms = mol.getAllAtoms();
@@ -581,13 +557,13 @@ public class PheSAAlignment {
 		double s = Math.sin(theta);
 		double t = 1-c;
 		r[0][0] = c+x*x*t;
-		r[0][1] = x*y*t-z*s;
-		r[0][2] = x*z*t+y*s;
-		r[1][0] = x*y*t+z*s;
+		r[1][0] = x*y*t-z*s;
+		r[2][0] = x*z*t+y*s;
+		r[0][1] = x*y*t+z*s;
 		r[1][1] = c+y*y*t;
-		r[1][2] = y*z*t-x*s;
-		r[2][0] = z*x*t-y*s;
-		r[2][1] = z*y*t+x*s;
+		r[2][1] = y*z*t-x*s;
+		r[0][2] = z*x*t-y*s;
+		r[1][2] = z*y*t+x*s;
 		r[2][2] = c+z*z*t;
 
 	}

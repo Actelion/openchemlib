@@ -74,13 +74,13 @@ public class Quaternion {
 		double q0q2 = q0*q2;
 		double q2q3 = q2*q3;
 		data[0][0] = q0q0+q1q1-q2q2-q3q3;
-		data[0][1] = 2*(q1q2-q0q3);
-		data[0][2] = 2*(q1q3+q0q2);
-		data[1][0] = 2*(q1q2+q0q3);
+		data[1][0] = 2*(q1q2-q0q3);
+		data[2][0] = 2*(q1q3+q0q2);
+		data[0][1] = 2*(q1q2+q0q3);
 		data[1][1] = q0q0-q1q1+q2q2-q3q3;
-		data[1][2] = 2*(q2q3-q0q1);
-		data[2][0] = 2*(q1q3-q0q2);
-		data[2][1] = 2*(q2q3+q0q1);
+		data[2][1] = 2*(q2q3-q0q1);
+		data[0][2] = 2*(q1q3-q0q2);
+		data[1][2] = 2*(q2q3+q0q1);
 		data[2][2] = q0q0-q1q1-q2q2+q3q3;
 		
 		

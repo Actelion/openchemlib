@@ -14,9 +14,7 @@ public class PPTriangle {
 	private int[] f = new int[3]; //f1, f2, f3
 	private double[][] initialRot; 
 	private double[] initialTranslate;
-	private double[][] s; //final rotation for alignment
 	private double[][] u;
-	private double[][] us; //product of final rotation and inverse of rotation performed to align the reference Triangle to the xy-plane 
 	private Coordinates molCom; //center of mass of the associated MolecularVolume
 	private Coordinates com; // center of mass of the triangle
 	private Coordinates[] dirs = new Coordinates[3]; // directionalities
@@ -112,8 +110,6 @@ public class PPTriangle {
 	}
 	
 	private void preAlign() {  //move com to origin, rotate triangle into xy-plane (c1 should lie on positive x-axis)
-		s = new double[3][3];
-		us = new double[3][3];
 		com = (c[0].addC(c[1]).addC(c[2])).scaleC(0.33333);
 		c[0].sub(com);
 		c[1].sub(com);
@@ -125,17 +121,18 @@ public class PPTriangle {
 		// align three internal axis to lab-frame coord system -> direction cosine
 		double[][] m = new double[3][3];
 		m[0][0] = xInt.x;
-		m[0][1] = xInt.y;
-		m[0][2] = xInt.z;
-		m[1][0] = yInt.x;
+		m[1][0] = xInt.y;
+		m[2][0] = xInt.z;
+		m[0][1] = yInt.x;
 		m[1][1] = yInt.y;
-		m[1][2] = yInt.z;
-		m[2][0] = zInt.x;
-		m[2][1] = zInt.y;
+		m[2][1] = yInt.z;
+		m[0][2] = zInt.x;
+		m[1][2] = zInt.y;
 		m[2][2] = zInt.z;
-		PheSAAlignment.rotateCoords(c[0], m);
-		PheSAAlignment.rotateCoords(c[1], m);
-		PheSAAlignment.rotateCoords(c[2], m);
+		c[0].rotate(m);
+		c[1].rotate(m);
+		c[2].rotate(m);
+
 		initialRot = m;
 		initialTranslate = new double[]{-com.x,-com.y,-com.z};
 
@@ -197,15 +194,15 @@ public class PPTriangle {
 		Coordinates fitComNewRot = new Coordinates();
 		//rotate
 		fitComNewRot.x = ur[0][0]*(fitComNew.x)+
-				ur[0][1]*(fitComNew.y)+
-				ur[0][2]*(fitComNew.z);
+				ur[1][0]*(fitComNew.y)+
+				ur[2][0]*(fitComNew.z);
 		
-		fitComNewRot.y = ur[1][0]*(fitComNew.x)+
+		fitComNewRot.y = ur[0][1]*(fitComNew.x)+
 				ur[1][1]*(fitComNew.y)+
-				ur[1][2]*(fitComNew.z);
+				ur[2][1]*(fitComNew.z);
 		
-		fitComNewRot.z = ur[2][0]*(fitComNew.x)+
-				ur[2][1]*(fitComNew.y)+
+		fitComNewRot.z = ur[0][2]*(fitComNew.x)+
+				ur[1][2]*(fitComNew.y)+
 				ur[2][2]*(fitComNew.z);
 		
 		//move to refTriangle
@@ -226,9 +223,9 @@ public class PPTriangle {
 		Coordinates fitDir1 = new Coordinates(fitTriangle.dirs[0]);
 		Coordinates fitDir2 = new Coordinates(fitTriangle.dirs[1]);
 		Coordinates fitDir3 = new Coordinates(fitTriangle.dirs[2]);
-		PheSAAlignment.rotateCoords(fitDir1, ur);
-		PheSAAlignment.rotateCoords(fitDir2, ur);
-		PheSAAlignment.rotateCoords(fitDir3, ur);
+		fitDir1.rotate(ur);
+		fitDir2.rotate(ur);
+		fitDir3.rotate(ur);
 		double dirScore = 0.33333*(Math.max(0,fitDir1.dot(dirs[0])) + Math.max(0,fitDir2.dot(dirs[1])) + Math.max(0,fitDir3.dot(dirs[2])));
 		return ppFit*dirScore*comScore;
 	
