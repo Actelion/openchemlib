@@ -35,7 +35,6 @@ package com.actelion.research.gui.hidpi;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Created by sandert on 04/12/15.
@@ -134,60 +133,34 @@ public class HiDPIIconButton extends JButton {
 		super.updateUI();
 		}
 
-	private class Animator implements Runnable {
-		private static final long FRAME_RATE = 100L;
-		private volatile long mStartMillis;
+	private class Animator {
+		private static final long FRAME_RATE = 80L;
 		private volatile int mFrameCount;
-		private Thread mThread;
+		private volatile boolean mRunning;
 
 		public Animator(int frameCount) {
 			mFrameCount = frameCount;
 		}
 
-		public void reset() {
-			mThread = null;
-		}
-
 		public void start() {
-			if (mThread == null) {
-				mThread = new Thread(this);
-				mThread.start();
-				mStartMillis = System.currentTimeMillis();
+			if (!mRunning) {
+				mRunning = true;
+				new Thread(() -> {
+					int state = 0;
+					while (mRunning) {
+						try {
+							Thread.sleep(FRAME_RATE);
+							final int frameNo = ++state % mFrameCount;
+							SwingUtilities.invokeLater(() -> setIcon(mAnimationIcon[frameNo]));
+							}
+						catch (InterruptedException ie) {}
+						}
+					}).start();
+				}
 			}
-		}
 
 		public void stop() {
-			mThread = null;
-		}
-
-		@Override
-		public void run() {
-			while (Thread.currentThread() == mThread) {
-				try {
-					SwingUtilities.invokeAndWait(new Runnable() {
-						int mRecentFrame = -1;
-
-						@Override
-						public void run() {
-							if (mThread != null) {
-								long totalDelay = System.currentTimeMillis() - mStartMillis;
-								int currentFrame = (int)(totalDelay / FRAME_RATE);
-								if (mRecentFrame < currentFrame) {
-									mRecentFrame = currentFrame;
-									setIcon(mAnimationIcon[currentFrame % mFrameCount]);
-									}
-								}
-							}
-						});
-					}
-				catch (InvocationTargetException ite) {}
-				catch (InterruptedException ie) {}
-
-				try {
-					Thread.sleep(FRAME_RATE - (System.currentTimeMillis() - mStartMillis) % FRAME_RATE);
-					}
-				catch (InterruptedException ie) {}
-				}
+			mRunning = false;
 			}
 		}
 	}
