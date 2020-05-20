@@ -113,17 +113,7 @@ public interface DescriptorConstants {
 												false,
 												false);
 
-	public static final DescriptorInfo DESCRIPTOR_Flexophore_HighRes =
-        					new DescriptorInfo("FlexophoreHighResolution",
-												"FlexophoreHighRes",
-												"version",
-        										DESCRIPTOR_TYPE_MOLECULE,
-												false,
-												false,
-												false,
-											   false);
-
-    public static final DescriptorInfo DESCRIPTOR_ShapeAlign =
+	public static final DescriptorInfo DESCRIPTOR_ShapeAlign =
         					new DescriptorInfo("PharmacophoreEnhancedShapeAlignment",
         									   "PheSA",
 												"2.0",
@@ -246,7 +236,6 @@ public interface DescriptorConstants {
                                                 DESCRIPTOR_TopoPPHistDist,
                                                 DESCRIPTOR_OrganicFunctionalGroups,
                                                 DESCRIPTOR_Flexophore,
-                                                DESCRIPTOR_Flexophore_HighRes,
 												DESCRIPTOR_ShapeAlign,
 												DESCRIPTOR_ReactionFP,
                                                 DESCRIPTOR_IntegerVector,
