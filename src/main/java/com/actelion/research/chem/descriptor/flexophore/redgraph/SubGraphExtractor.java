@@ -38,8 +38,15 @@ public class SubGraphExtractor {
 
     private boolean [] arrRingAtom;
 
+    private HashSet<Integer> hsAtomicNumberExcludeAliphatic;
+
+
     public SubGraphExtractor() {
         arrRingAtom = new boolean[MAX_NUM_ATOMS];
+
+        hsAtomicNumberExcludeAliphatic = new HashSet<>();
+        hsAtomicNumberExcludeAliphatic.add(7);
+        hsAtomicNumberExcludeAliphatic.add(8);
     }
 
     /**
@@ -624,9 +631,6 @@ public class SubGraphExtractor {
         //
         // First layer end standing carbon atoms
         //
-        HashSet<Integer> hsAtomicNumber = new HashSet<>();
-        hsAtomicNumber.add(7);
-        hsAtomicNumber.add(8);
 
         for (int indexEndStandingAtom : liEndStandingAtoms) {
             if(arrAtomIndicesUsedMap[indexEndStandingAtom]){
@@ -637,7 +641,7 @@ public class SubGraphExtractor {
                 throw new RuntimeException("This should not happen.");
             }
 
-            if(areAtomicNoConnectedInList(mol, indexEndStandingAtom, hsAtomicNumber)){
+            if(areAtomicNoConnectedInList(mol, indexEndStandingAtom, hsAtomicNumberExcludeAliphatic)){
                 continue;
             }
 
@@ -653,7 +657,7 @@ public class SubGraphExtractor {
                     break;
                 }
 
-                if(areAtomicNoConnectedInList(mol, indAtConn, hsAtomicNumber)){
+                if(areAtomicNoConnectedInList(mol, indAtConn, hsAtomicNumberExcludeAliphatic)){
                     addEndStanding=false;
                     break;
                 }
