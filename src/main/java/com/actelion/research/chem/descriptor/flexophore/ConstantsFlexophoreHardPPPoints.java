@@ -9,11 +9,10 @@ public class ConstantsFlexophoreHardPPPoints {
     public static final String ATTR_NEGATIVE_CHARGE = "-";
     public static final String ATTR_POSITIVE_CHARGE = "+";
     public static final String ATTR_AROMATIC = "r";
-    public static final String ATTR_LIPO = "l";
+    public static final String ATTR_ALIPHATIC = "l";
 
-
-    public static final int INDEX_DONOR = IPharmacophorePoint.Functionality.ACCEPTOR.getIndex();
-    // public static final int INDEX_DONOR = 0;
+    // Not defined by Joel Wahl
+    public static final int ALIPHATIC_ID = 7;
 
     public static String toStringPPPoints(int type) {
 
@@ -29,6 +28,8 @@ public class ConstantsFlexophoreHardPPPoints {
             s=ATTR_POSITIVE_CHARGE;
         } else if(type==IPharmacophorePoint.Functionality.AROM_RING.getIndex()){
             s=ATTR_AROMATIC;
+        } else if(type== ALIPHATIC_ID){
+            s=ATTR_ALIPHATIC;
         } else {
             throw new RuntimeException("Unknown pharmacophore point type: " + type + "!");
         }

@@ -252,6 +252,11 @@ public class SubGraphIndices {
         return liFragmentMerged;
     }
 
+    /**
+     * Adds the atom indices to the hash set.
+     * @param hs
+     * @param liFragment
+     */
     protected static void addAtomIndices(HashSetInt hs, List<SubGraphIndices> liFragment) {
 
         for (SubGraphIndices fragment : liFragment) {

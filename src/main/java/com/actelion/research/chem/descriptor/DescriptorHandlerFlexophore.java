@@ -54,6 +54,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * 11 Aug 2016 MvK number of bins increase from 50 to 80, histogram range increased from 25 to 40 Angstroem. --> V.4.3
  * 30 Jan 2017 MvK minor bug fix. Two constants for the number of conformations. --> V.4.4. Compatible with V.4.3
  * April 2020 Version 5.0, new interaction tables from Joel Wahl, algorithmic changes.
+ * 20.05.2020 Changed definition of end-standing aliphatic groups. Center of gravity moved one bond to the outside.
+ * Aromatic rings are not aliphatic any more. Methyl groups connected to a ring are not considered. The next O or N
+ * must have a minimum distance of two bonds to the end standing atom.
  */
 public class DescriptorHandlerFlexophore implements DescriptorHandler {
 

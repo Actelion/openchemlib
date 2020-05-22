@@ -54,9 +54,9 @@ public class PPGaussian extends Gaussian3D {
 	public Coordinates getRotatedDirectionality(double[][] rotMatrix, double scaleFactor) {
 		Coordinates direct = pp.getDirectionality();
 		Coordinates directMod = new Coordinates();
-		directMod.x = direct.x*rotMatrix[0][0] + direct.y*rotMatrix[0][1] + direct.z*rotMatrix[0][2];
-		directMod.y = direct.x*rotMatrix[1][0] + direct.y*rotMatrix[1][1] + direct.z*rotMatrix[1][2];
-		directMod.z = direct.x*rotMatrix[2][0] + direct.y*rotMatrix[2][1] + direct.z*rotMatrix[2][2];
+		directMod.x = direct.x*rotMatrix[0][0] + direct.y*rotMatrix[1][0] + direct.z*rotMatrix[2][0];
+		directMod.y = direct.x*rotMatrix[0][1] + direct.y*rotMatrix[1][1] + direct.z*rotMatrix[2][1];
+		directMod.z = direct.x*rotMatrix[0][2] + direct.y*rotMatrix[1][2] + direct.z*rotMatrix[2][2];
 		//centerModCoords = this.getCenter().rotateC(rotMatrix); //we operate on the transformed coordinates of the molecule to be fitted
 		directMod.scale(scaleFactor); // scale by the invers
 

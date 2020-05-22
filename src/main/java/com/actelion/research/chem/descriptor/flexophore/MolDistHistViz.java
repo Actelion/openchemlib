@@ -648,12 +648,17 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		boolean aliphatic = true;
 
 		PPNodeViz node = getNode(indexNode);
+		if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS){
+			if(ConstantsFlexophoreHardPPPoints.ALIPHATIC_ID == node.get()[0]){
+				aliphatic=true;
+			}
+		} else {
+			for (int i = 0; i < node.getInteractionTypeCount(); i++) {
 
-		for (int i = 0; i < node.getInteractionTypeCount(); i++) {
-
-			if(node.getAtomicNo(i)!=6){
-				aliphatic = false;
-				break;
+				if (node.getAtomicNo(i) != 6) {
+					aliphatic = false;
+					break;
+				}
 			}
 		}
 
