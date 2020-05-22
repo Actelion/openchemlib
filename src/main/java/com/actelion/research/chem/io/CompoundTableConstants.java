@@ -61,8 +61,9 @@ public interface CompoundTableConstants {
 
     int cTextExclusionTypeContains = 1;
     int cTextExclusionTypeStartsWith = 2;
-    int cTextExclusionTypeEquals = 3;
-    int cTextExclusionTypeRegEx = 4;
+    int cTextExclusionTypeEndsWith = 3;
+    int cTextExclusionTypeEquals = 4;
+    int cTextExclusionTypeRegEx = 5;
 
     int cMaxTextCategoryCount = 65536;
     int cMaxDateOrDoubleCategoryCount = 16384;
