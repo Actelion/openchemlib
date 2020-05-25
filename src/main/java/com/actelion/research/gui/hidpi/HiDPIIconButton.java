@@ -33,8 +33,6 @@
 
 package com.actelion.research.gui.hidpi;
 
-import com.actelion.research.gui.LookAndFeelHelper;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -44,6 +42,8 @@ import java.awt.*;
 public class HiDPIIconButton extends JButton {
 	private String mImageName,mStyle;
 	private int mRotation;
+	private Icon[] mAnimationIcon;
+	private Animator mAnimator;
 
 	/**
 	 * Creates a button that, if image2 is given, toggles between two states indicated
@@ -63,7 +63,7 @@ public class HiDPIIconButton extends JButton {
 		 * Creates a button that, if image2 is given, toggles between two states indicated
 		 * by two different button images. The button optimizes its size to for QuaQua
 		 * and Substance look&feels and uses adequate higher resolution images on HiDPI monitors.
-		 * For Retina displays (Mac) it expects double resulution images named 'originalName@2x.png'.
+		 * For Retina displays (Mac) it expects double resolution images named 'originalName@2x.png'.
 		 *
 		 * @param imageName initial appearance
 		 * @param tooltip may be null
@@ -88,6 +88,33 @@ public class HiDPIIconButton extends JButton {
 			setToolTipText(tooltip);
 		}
 
+	/**
+	 * In order for a button to support an animation, it need additional images to follow after its normal appearance.
+	 * Animation image names are built from the button's imageName with appended '_0', '_1', etc.
+	 * This methods loads and prepares the additional images needed for the button animation.
+	 * @param animationImageCount number of animation images including the base image
+	 */
+	public void startAnimation(int animationImageCount) {
+		if (mAnimationIcon == null) {
+			mAnimationIcon = new Icon[animationImageCount];
+			mAnimationIcon[0] = getIcon();
+			for (int i=1; i<animationImageCount; i++) {
+				int index = mImageName.lastIndexOf('.');
+				String fileName = mImageName.substring(0, index)+"_"+i+mImageName.substring(index);
+				mAnimationIcon[i] = HiDPIHelper.createIcon(fileName, 0);
+				}
+			}
+
+		mAnimator = new Animator(animationImageCount);
+		mAnimator.start();
+		}
+
+	public void stopAnimation() {
+		if (mAnimator != null) {
+			mAnimator.stop();
+			}
+		}
+
 	private void updateIconSet() {
 		if (mImageName != null) {
 			setIcon(HiDPIHelper.createIcon(mImageName, mRotation));
@@ -104,5 +131,36 @@ public class HiDPIIconButton extends JButton {
 	public void updateUI() {
 		updateIconSet();
 		super.updateUI();
+		}
+
+	private class Animator {
+		private static final long FRAME_RATE = 80L;
+		private volatile int mFrameCount;
+		private volatile boolean mRunning;
+
+		public Animator(int frameCount) {
+			mFrameCount = frameCount;
+		}
+
+		public void start() {
+			if (!mRunning) {
+				mRunning = true;
+				new Thread(() -> {
+					int state = 0;
+					while (mRunning) {
+						try {
+							Thread.sleep(FRAME_RATE);
+							final int frameNo = ++state % mFrameCount;
+							SwingUtilities.invokeLater(() -> setIcon(mAnimationIcon[frameNo]));
+							}
+						catch (InterruptedException ie) {}
+						}
+					}).start();
+				}
+			}
+
+		public void stop() {
+			mRunning = false;
+			}
 		}
 	}
