@@ -105,7 +105,7 @@ public class SubGraphExtractor {
         //
         // Small rings
         //
-        List<SubGraphIndices> liFragmentRings = getSmallRings(mol);
+        List<SubGraphIndices> liFragmentRings = getSmallRingsWithConnEndStanding(mol);
 
         liFragment.addAll(liFragmentRings);
 
@@ -199,7 +199,7 @@ public class SubGraphExtractor {
         //
         // Small aliphatic rings
         //
-        List<SubGraphIndices> liSGIRings = getSmallRings(mol);
+        List<SubGraphIndices> liSGIRings = getSmallRingsWithConnEndStanding(mol);
         for (SubGraphIndices sgiRing : liSGIRings) {
 
             int [] arrIndAt =  sgiRing.getAtomIndices();
@@ -975,7 +975,7 @@ public class SubGraphExtractor {
      * @param mol
      * @return
      */
-    private List<SubGraphIndices> getSmallRings(StereoMolecule mol){
+    private List<SubGraphIndices> getSmallRingsWithConnEndStanding(StereoMolecule mol){
 
         List<SubGraphIndices> liFragmentRings = new ArrayList<>();
 
@@ -1017,9 +1017,7 @@ public class SubGraphExtractor {
                 int nConnAtms = mol.getConnAtoms(indexRingAtom);
 
                 if(nConnAtms < 3) {
-
                     continue;
-
                 }
 
                 for (int i = 0; i < nConnAtms; i++) {

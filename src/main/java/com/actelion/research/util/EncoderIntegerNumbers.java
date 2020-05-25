@@ -5,6 +5,11 @@ import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.util.datamodel.DoubleArray;
 import com.actelion.research.util.datamodel.IntArray;
 
+import java.util.Random;
+
+/**
+ * Encodes integer numbers into a string.
+ */
 public class EncoderIntegerNumbers {
 
     private static final int CAPACITY_DATA = 100;
@@ -12,8 +17,6 @@ public class EncoderIntegerNumbers {
     private int min;
     private int max;
     private int bits;
-
-    private int range;
 
     private int [] dataEncoded;
 
@@ -56,7 +59,7 @@ public class EncoderIntegerNumbers {
         min = minValue;
         max = maxValue;
 
-        range = max-min;
+        int range = max-min;
 
         this.bits = Logarithm.log2(range)+1;
 
@@ -70,9 +73,6 @@ public class EncoderIntegerNumbers {
         ccBitCounter += Integer.SIZE;
 
         // min value
-        ccBitCounter += Integer.SIZE;
-
-        // range
         ccBitCounter += Integer.SIZE;
 
         ccAddedValuesCounter = 0;
@@ -153,10 +153,6 @@ public class EncoderIntegerNumbers {
 
         set(min, Integer.SIZE, offset);
 
-        offset += Integer.SIZE;
-
-        set(range, Integer.SIZE, offset);
-
         int nInteger = ccBitCounter / Integer.SIZE + 1;
 
         int [] data = new int[nInteger];
@@ -203,10 +199,6 @@ public class EncoderIntegerNumbers {
 
         offset += Integer.SIZE;
 
-        int range =  decode(data, offset, Integer.SIZE);
-
-        offset += Integer.SIZE;
-
         int [] arrValue = new int[nAddedValues];
 
         for (int i = 0; i < nAddedValues; i++) {
@@ -250,19 +242,37 @@ public class EncoderIntegerNumbers {
 
     public static void main(String[] args) {
 
-
-        double min = -7;
-
-
-        double max = 8;
-
-
         IntArray da = new IntArray();
 
-        da.add(8);
-        da.add(-7);
-        da.add(1);
-        da.add(2);
+        int n = 100;
+
+        int min = 0;
+        int max = 1000;
+
+        Random random = new Random();
+        for (int i = 0; i < n; i++) {
+
+            int v = 0;
+            if(random.nextBoolean()) {
+                v = random.nextInt(max);
+            } else {
+                if(min>0) {
+                    v = -random.nextInt(Math.abs(min));
+                } else {
+                    v = random.nextInt(max);
+                }
+            }
+            da.add(v);
+
+
+
+        }
+
+
+//        da.add(18);
+//        da.add(-70);
+//        da.add(1);
+//        da.add(2);
 
         int [] arr = da.get();
 
@@ -283,132 +293,5 @@ public class EncoderIntegerNumbers {
 
     }
 
-//    public static void main(String[] args) {
-//
-//        min = -7.742162891457342
-//        max = 8.161857389358609
-//        v = 0.723867952243311
-//
-//        int n = 10;
-//
-//        double min = -5;
-//
-//        double max = 34;
-//
-//        int precisionInBits = 19;
-//
-//        EncoderFloatingPointNumbers encoderFloatingPointNumbers = new EncoderFloatingPointNumbers(min, max, precisionInBits);
-//
-//        encoderFloatingPointNumbers.add(-4);
-//        encoderFloatingPointNumbers.add(0);
-//        encoderFloatingPointNumbers.add(5);
-//        encoderFloatingPointNumbers.add(1.23456);
-//
-//        String strData = encoderFloatingPointNumbers.encode();
-//
-//        System.out.println(strData);
-//
-//        double [] arrValue = EncoderFloatingPointNumbers.decode(strData);
-//
-//        for (double v : arrValue) {
-//            System.out.println(v);
-//        }
-//    }
-
-//    public static void main(String[] args) {
-//
-//        int n = 10;
-//
-//        double min = -5;
-//
-//        double max = 34;
-//
-//        int precisionInBits = 32;
-//
-//        EncoderFloat encoderFloat = new EncoderFloat(min, max, precisionInBits);
-//
-//
-//
-//
-//        Long lMin = Double.doubleToLongBits(min);
-//
-//        int offset = 0;
-//
-//        encoderFloat.set(lMin, Long.SIZE, offset);
-//
-//
-//
-//        long lMinDecoded = decode(encoderFloat.dataEncoded, offset, Long.SIZE);
-//
-//        double minFromLong = Double.longBitsToDouble(lMin);
-//
-//        double minFromLongDecoded = Double.longBitsToDouble(lMinDecoded);
-//
-//
-//        System.out.println(min);
-//        System.out.println(minFromLong);
-//        System.out.println(minFromLongDecoded);
-//
-//    }
-
-//    public static void main(String[] args) {
-//
-//        int n = 10;
-//
-//        double min = -5;
-//
-//        double max = 34;
-//
-//        int precisionInBits = 32;
-//
-//        EncoderFloat encoderFloat = new EncoderFloat(min, max, precisionInBits);
-//
-//        Random rnd = new Random();
-//
-//        double range = Math.abs(max-min);
-//
-//        for (int i = 0; i < n; i++) {
-//            double  vRaw = rnd.nextDouble() * range;
-//
-//            double vInput = vRaw + min;
-//
-//            long iVScaledRange = encoderFloat.getEncoded(vInput);
-//
-////            System.out.println(vScaled2Range + "\t" + iVScaledRange);
-//
-//            double vScaled2RangeDecoded = encoderFloat.getDecoded(iVScaledRange);
-//
-//            System.out.println(vInput + "\t" + vScaled2RangeDecoded);
-//        }
-//
-//        long iVScaledRange = encoderFloat.getEncoded(max);
-//
-//        double vScaled2RangeDecoded = encoderFloat.getDecoded(iVScaledRange);
-//
-//        System.out.println(max + "\t" + iVScaledRange + "\t" + vScaled2RangeDecoded);
-//    }
-
-
-//    private static class Decoder {
-//
-//        private double min;
-//        private double factorPrecision;
-//        private double range;
-//
-//
-//        public Decoder(int precisionBits, double min, double range) {
-//            this.min = min;
-//            this.range = range;
-//
-//            factorPrecision = Math.pow(2,precisionBits);
-//        }
-//
-//        private double getDecoded(long encoded){
-//            double vScaled2RangeDecoded = encoded / factorPrecision * range + min;
-//
-//            return vScaled2RangeDecoded;
-//        }
-//
-//    }
 
 }
