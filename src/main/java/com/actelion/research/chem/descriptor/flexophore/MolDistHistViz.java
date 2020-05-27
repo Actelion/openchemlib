@@ -27,6 +27,7 @@ import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexo
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 
 import com.actelion.research.chem.phesa.pharmacophore.IPharmacophorePoint;
+import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.util.graph.complete.ICompleteGraph;
 
 import java.io.Serializable;
@@ -649,7 +650,7 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 
 		PPNodeViz node = getNode(indexNode);
 		if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS){
-			if(ConstantsFlexophoreHardPPPoints.ALIPHATIC_ID == node.get()[0]){
+			if(PharmacophoreCalculator.LIPO_ID == node.get()[0]){
 				aliphatic=true;
 			}
 		} else {

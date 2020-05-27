@@ -1,5 +1,7 @@
 package com.actelion.research.calc;
 
+import com.actelion.research.util.DoubleVec;
+
 public class VectorSimilarity {
 
 
@@ -59,6 +61,14 @@ public class VectorSimilarity {
         return sum;
     }
 
+    public static double getCosine(int[] d1, int[] d2){
+        DoubleVec dB = new DoubleVec(d1);
+        DoubleVec dC = new DoubleVec(d2);
+        dB.norm2One();
+        dC.norm2One();
+        return DoubleVec.getCosine(dB, dC);
+    }
+
     private static double mult(int [] arr1, int [] arr2) {
 
         double sum = 0.0;
@@ -68,6 +78,7 @@ public class VectorSimilarity {
 
         return sum;
     }
+
 
 
 }
