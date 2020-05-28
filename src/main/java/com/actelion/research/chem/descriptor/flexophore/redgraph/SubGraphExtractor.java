@@ -23,7 +23,7 @@ public class SubGraphExtractor {
 
     private static final int MAX_RING_SIZE_TO_SUMMARIZE_HETERO_RINGS = 6;
 
-    private static final int MAX_DEPTH_END_STANDING_ALIPHATIC_GROUP = 2;
+    private static final int MAX_DEPTH_END_STANDING_ALIPHATIC_GROUP = 1;
 
     private static final int MIN_SIZE_ALIPHATIC_CHAIN_IN_RING = 3;
 
@@ -38,8 +38,15 @@ public class SubGraphExtractor {
 
     private boolean [] arrRingAtom;
 
+    private HashSet<Integer> hsAtomicNumberExcludeAliphatic;
+
+
     public SubGraphExtractor() {
         arrRingAtom = new boolean[MAX_NUM_ATOMS];
+
+        hsAtomicNumberExcludeAliphatic = new HashSet<>();
+        hsAtomicNumberExcludeAliphatic.add(7);
+        hsAtomicNumberExcludeAliphatic.add(8);
     }
 
     /**
@@ -98,7 +105,7 @@ public class SubGraphExtractor {
         //
         // Small rings
         //
-        List<SubGraphIndices> liFragmentRings = getSmallRings(mol);
+        List<SubGraphIndices> liFragmentRings = getSmallRingsWithConnEndStanding(mol);
 
         liFragment.addAll(liFragmentRings);
 
@@ -145,6 +152,78 @@ public class SubGraphExtractor {
         // Split long hetero groups into subgroups
         //
         splitLongHeteroGroups(mol, liFragment);
+
+        return  liFragment;
+    }
+
+    public List<SubGraphIndices> extractAliphaticRingsAndEndStandingAliphaticGroups(StereoMolecule molOrig) {
+
+        StereoMolecule mol = new StereoMolecule(molOrig);
+
+        mol.ensureHelperArrays(Molecule.cHelperRings);
+
+        int nAtoms = mol.getAtoms();
+
+        createRingAtomIndexMap(mol);
+
+        //
+        // Detect end standing atoms
+        //
+        List<Integer> liEndStandingAtoms = new ArrayList<>();
+        for (int i = 0; i < nAtoms; i++) {
+
+            int nConnAtms = mol.getAllConnAtoms(i);
+            int ccConnNonHydrogen = 0;
+            for (int j = 0; j < nConnAtms; j++) {
+                int indexConnAtm = mol.getConnAtom(i,j);
+                int atNo = mol.getAtomicNo(indexConnAtm);
+                if(atNo>1){
+                    ccConnNonHydrogen++;
+                }
+            }
+
+            if(ccConnNonHydrogen==1){
+                liEndStandingAtoms.add(i);
+            }
+        }
+
+        HashSetInt hsAtomNonAliphatic = new HashSetInt();
+        for (int indexEndStandingAtom : liEndStandingAtoms) {
+            if(ExtendedMoleculeFunctions.isHetero(mol, indexEndStandingAtom)){
+                hsAtomNonAliphatic.add(indexEndStandingAtom);
+            }
+        }
+
+        List<SubGraphIndices> liFragment = new ArrayList<>();
+
+        //
+        // Small aliphatic rings
+        //
+        List<SubGraphIndices> liSGIRings = getSmallRingsWithConnEndStanding(mol);
+        for (SubGraphIndices sgiRing : liSGIRings) {
+
+            int [] arrIndAt =  sgiRing.getAtomIndices();
+
+            int ccAromatic = 0;
+            for (int indAt : arrIndAt) {
+                if(mol.isAromaticAtom(indAt)){
+                    ccAromatic++;
+                }
+            }
+
+            if(ccAromatic/arrIndAt.length<0.5){
+                if(containsOnlyCarbon(mol, sgiRing)){
+                    liFragment.add(sgiRing);
+                }
+            }
+        }
+
+        //
+        // End standing aliphatic group
+        //
+        List<SubGraphIndices> liFragmentEndStandingAliphaticGroup = getEndStandingAliphaticGroups(mol, liEndStandingAtoms, hsAtomNonAliphatic);
+
+        liFragment.addAll(liFragmentEndStandingAliphaticGroup);
 
         return  liFragment;
     }
@@ -546,36 +625,53 @@ public class SubGraphExtractor {
         int [] arrAtomIndicesUsed = hsAtomIndicesUsed.getValues();
 
         for (int indexAtmUsed : arrAtomIndicesUsed) {
-
             arrAtomIndicesUsedMap[indexAtmUsed] = true;
-
         }
 
         //
         // First layer end standing carbon atoms
         //
+
         for (int indexEndStandingAtom : liEndStandingAtoms) {
-
             if(arrAtomIndicesUsedMap[indexEndStandingAtom]){
-
                 continue;
-
             }
 
             if(ExtendedMoleculeFunctions.isHetero(mol, indexEndStandingAtom)){ // All end standing hetero atoms should already be used here.
                 throw new RuntimeException("This should not happen.");
             }
 
-            if(mol.getAtomicNo(indexEndStandingAtom)==6){
-
-
-                SubGraphIndices fragment = new SubGraphIndices();
-
-                fragment.addIndex(indexEndStandingAtom);
-
-                liFragmentEndStandingAliphaticGroup.add(fragment);
-
+            if(areAtomicNoConnectedInList(mol, indexEndStandingAtom, hsAtomicNumberExcludeAliphatic)){
+                continue;
             }
+
+            int nConnected = mol.getConnAtoms(indexEndStandingAtom);
+
+            boolean addEndStanding=true;
+
+            for (int i = 0; i < nConnected; i++) {
+                int indAtConn = mol.getConnAtom(indexEndStandingAtom, i);
+
+                if(mol.isRingAtom(indAtConn)){
+                    addEndStanding=false;
+                    break;
+                }
+
+                if(areAtomicNoConnectedInList(mol, indAtConn, hsAtomicNumberExcludeAliphatic)){
+                    addEndStanding=false;
+                    break;
+                }
+            }
+
+
+            if(addEndStanding) {
+                SubGraphIndices fragment = new SubGraphIndices();
+                fragment.addIndex(indexEndStandingAtom);
+                liFragmentEndStandingAliphaticGroup.add(fragment);
+            }
+
+
+
         }
 
         //
@@ -589,6 +685,25 @@ public class SubGraphExtractor {
 
         return liFragmentEndStandingAliphaticGroup;
 
+    }
+
+    private static boolean areAtomicNoConnectedInList(StereoMolecule mol, int indexAtCenter, HashSet<Integer> hsAtomicNumber) {
+
+        int nConnected = mol.getConnAtoms(indexAtCenter);
+
+        boolean contains=false;
+
+        for (int i = 0; i < nConnected; i++) {
+            int indAtConn = mol.getConnAtom(indexAtCenter, i);
+
+            int atomicNoConn = mol.getAtomicNo(indAtConn);
+            if(hsAtomicNumber.contains(atomicNoConn)){
+                contains=true;
+                break;
+            }
+        }
+
+        return contains;
     }
 
     /**
@@ -860,7 +975,7 @@ public class SubGraphExtractor {
      * @param mol
      * @return
      */
-    private List<SubGraphIndices> getSmallRings(StereoMolecule mol){
+    private List<SubGraphIndices> getSmallRingsWithConnEndStanding(StereoMolecule mol){
 
         List<SubGraphIndices> liFragmentRings = new ArrayList<>();
 
@@ -902,9 +1017,7 @@ public class SubGraphExtractor {
                 int nConnAtms = mol.getConnAtoms(indexRingAtom);
 
                 if(nConnAtms < 3) {
-
                     continue;
-
                 }
 
                 for (int i = 0; i < nConnAtms; i++) {

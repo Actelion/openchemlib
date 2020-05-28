@@ -15,7 +15,7 @@ import java.util.Arrays;
  * 
  * ObjectiveFlexophoreHardMatchUncovered
  * The weighting of the coverage is hard. Which means that uncovered nodes 
- * are strongly change the final similarity score.
+ * strongly change the final similarity score.
  * look in <code>getScoreUncoveredNearestNodesBase(SolutionCompleteGraph solution)</code> 
  * and <code>getScoreUncoveredNearestNodesQuery(SolutionCompleteGraph solution)</code>.
  * Use is subject to license terms.</p>
