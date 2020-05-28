@@ -1,0 +1,26 @@
+# Modest v. Korff 17.04.2018
+# DWAR Idcodes for the twenty natural amino acids.
+# The atoms of the resudues are labeled according to the PDB atom label.
+# Example: http://ligand-expo.rcsb.org/reports/T/TYR/TYR_D3L1.gif
+# For labeling the custom label in the idcode was used.
+# Structure	idcoordinates2D	Name	Abbreviation1
+gGX`BDdwMULPGzILwXM[jD	!BMpLwOGyB@Lw@p	Alanine	Ala
+dctd@BE]ADf{UYjjihp`GzBfMvCS]Plw^OMtbK]hrwUj}tRfwnbXp	!Bb@J~@Hb}oe~H@hb}b@JHoX`Bo`BHoP	Arginine	Arg
+diEL@BDDyInvZjZL`OtiL[lFfzaYn|^{iFLO]Hi`	!B_g|H@s\CMpI~_p`CBCq~_p	Asparagine	Asn
+diFB@BANEInvZjZLHA~eIc]`twTKMwcw]Hqa{iEL	!Bog}p@s\CMwr~_w@C\Er~_p	Aspartic Acid	Asp
+gNxhMV@aI[jihj@SHF{qc]PinpP	!BMupw@s]\og|w@w@C	Cysteine	Cys
+defB@BAAeInufjihr@QdqnpZ[jEf{qyndQ{mFMO]hi`	!BROqHo[x@EqHDb}ROr~@Db}	Glutamic Acid	Glu
+deeL@BdDEInufjihp`GzLfMvCS]Plw^OMtbO]hqi{mEL	!BR@IH_Wx@UpIH@da}R@I~@Da}	Glutamine	Gln
+gJX`BDdvu@OtbYnpP	!BMpLwOGyB@L	Glycine	Gly
+dmwD@ByPQInvVUZjejL`OtyL[lFfzaYn|^{iFLO]Hii{mFLo]hi`	!Bo`@W@d`Bo`AHo[y_QzLXh~hoqR|	Histidine	His
+diFD@BADf{ejjdrU@_iRXwXMMuBw]xqn{oELO]Hq`	!B_g|H@s\CMpI~_p`CMpM~_p	Isoleucine	Ile
+diFD@BADf{Yjjhr@RdqnpZ[jEf{q{ndTp}tcF@	!BRGqHWx@UwqH_Dc}_c}H_@	Leucine	Leu
+deeD@BdDR[mUjjjL`OtYL[lFfzaYn|^[iDV{QenkP	!BR@IHOWx@UpIH@dc}R@IHT`B	Lysine	Lys
+diFD`JxPBDivzjihI@RdAndX[oEF{QqnhR[lD	!BMpLH@s\|MpLwOGyMpLH@p	Methionine	Met
+dcND@BADf{YU]Zj@@cHC}ASF{AinhV[oGnzQSCwRLZ^{QSKwZL[Vzm@	!BO`AHF_|O`AgWSx_YuuHWSx_Oa}HWP	Phenylalanine	Phe
+daFD@BADfyVyjjhr@PdqnpZ[jEfzQyn|P	!BF]|xjqEYxsEGv^S_{x	Proline	Pro
+gNy`BDtf{ZjfHC}Lf[lFmuBv{q@	!BRGqHWx@UwqH_Dc}	Serine	Ser
+dazL@BAFR[nZjdrT`_hRXwXMMuBw]xqn{oEL	!B_g|H@s\CMpI~_p`CMpL	Threonine	Thr
+foAP`@BZ@aInvYWejsfjiB@bFB@OttfF{AhwTKF{qywRJXW]Hqi]vbfUwZN[W]hqc]uZfmwUnYw]Di`	!Bb@I~@Ha}_c~H@ha}tEJNwuS[zfC@F\@fpB[jX@	Tryptophane	Trp
+dknL@BACR[me]]Zj@BHr@RTqnpZ[jEf{q{ndTp}tcFgntTr}vcFunkS[hd	!Bo`AH@a\Bo`@Ww[y_E}uHw[y_oe}Hw[y_	Tyrosine	Tyr
+dazD@BADf{fjjL`OtIL[lFfza[n|Tw]wcF@	!B_g|H@s\CMq~_s\CB@L	Valine	Val
