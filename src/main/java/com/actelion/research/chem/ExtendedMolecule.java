@@ -1166,7 +1166,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 //			int connAtoms = getAllConnAtomsPlusMetalBonds(graphAtom[current]);
 //		    for (int i=0; i<connAtoms; i++) {     the default for graph methods is to neglect dative bonds; TLS 27 May 2020
 // If dative bonds must be considered on a certain context, the we need to introduce a flag e.g. as in getFragmentAtoms()
-			for (int i=0; i<mConnAtoms[graphAtom[current]]; i++) {
+			for (int i=0; i<mAllConnAtoms[graphAtom[current]]; i++) {
 				int candidate = mConnAtom[graphAtom[current]][i];
 				if (candidate == coreAtom) {
 					if (current != 1)
