@@ -137,6 +137,7 @@ public abstract class AbstractDepictor {
     public static final int cDModeShowSymmetryEnantiotopic = 0x0400;
 	public static final int	cDModeNoImplicitAtomLabelColors = 0x0800;
 	public static final int	cDModeNoStereoProblem = 0x1000;
+	public static final int	cDModeNoColorOnESRAndCIP = 0x2000;
 
 	private static final double cFactorTextSize = 0.6;
 	private static final double cFactorChiralTextSize = 0.5;
@@ -768,7 +769,8 @@ public abstract class AbstractDepictor {
 					if (cipStr != null) {
 						mpSetSmallLabelSize();
 						setColor(mMol.isBondForegroundHilited(i) ? COLOR_HILITE_BOND_FG :
-								 mMol.getMoleculeColor() == Molecule.cMoleculeColorNeutral ? mStandardForegroundColor : COLOR_CIP_LETTER);
+								(mMol.getMoleculeColor() == Molecule.cMoleculeColorNeutral || (mDisplayMode & cDModeNoColorOnESRAndCIP) != 0) ?
+										mStandardForegroundColor : COLOR_CIP_LETTER);
 						int atom1 = mMol.getBondAtom(0,i);
 						int atom2 = mMol.getBondAtom(1,i);
 						double x = (getAtomX(atom1) + getAtomX(atom2)) / 2;
@@ -1835,7 +1837,7 @@ public abstract class AbstractDepictor {
 			x = getAtomX(atom) - ((labelWidth + getStringWidth(cipStr)) / 2.0f);
 			y = getAtomY(atom) + ((getTextSize()*4+4)/8);
 			int theColor = mCurrentColor;
-			if (mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral)
+			if (mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral && (mDisplayMode & cDModeNoColorOnESRAndCIP) == 0)
 				setColor(COLOR_CIP_LETTER);
 			mpDrawString(x,y,cipStr,false);
 			setColor(theColor);
@@ -1859,7 +1861,7 @@ public abstract class AbstractDepictor {
             x = getAtomX(atom) + 0.7*getTextSize()*Math.sin(angle);
             y = getAtomY(atom) + 0.7*getTextSize()*Math.cos(angle);
             int theColor = mCurrentColor;
-			if (mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral)
+			if (!mIsValidatingView && mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral)
 	            setColor(getESRColor(atom));
             mpDrawString(x,y,esrStr,false);
             setColor(theColor);
@@ -2512,7 +2514,7 @@ public abstract class AbstractDepictor {
 	 * @return
 	 */
 	private int getESRColor(int atom) {
-		if ((mDisplayMode & cDModeSuppressESR) != 0)
+		if ((mDisplayMode & (cDModeSuppressESR | cDModeNoColorOnESRAndCIP)) != 0)
 			return mAtomColor[atom];
 
 		int esrInfo = getESRTypeToDisplayAt(atom);

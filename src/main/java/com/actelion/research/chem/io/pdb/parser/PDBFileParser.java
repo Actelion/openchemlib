@@ -185,14 +185,15 @@ public class PDBFileParser {
     }
 
     public PDBCoordEntryFile parse(File fiPDB) throws IOException, ParseException {
+        return parse(new BufferedReader(new FileReader(fiPDB)));
+    }
 
+    public PDBCoordEntryFile parse(BufferedReader br) throws IOException, ParseException {
         PDBCoordEntryFile pdbCoordEntryFile = new PDBCoordEntryFile();
         
 		ArrayList<String> liRaw = new ArrayList<String>();
 
-		BufferedReader br = new BufferedReader(new FileReader(fiPDB));
 		String sCurrentLine;
-
 		while ((sCurrentLine = br.readLine()) != null) {
 			liRaw.add(sCurrentLine);
 		}
