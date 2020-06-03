@@ -33,15 +33,14 @@
 
 package com.actelion.research.chem.io;
 
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.reaction.Reaction;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-
-import com.actelion.research.chem.MolfileCreator;
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.reaction.Reaction;
 
 public abstract class CompoundFileHelper {
 	public static final int cFileTypeMask = 0x0000FFFF;
@@ -60,11 +59,12 @@ public abstract class CompoundFileHelper {
 	public static final int cFileTypeRXN = 0x00000100;
 	public static final int cFileTypeSOM = 0x00000200;
 	public static final int cFileTypeJPG = 0x00000400;
-	public static final int cFileTypePNG = 0x00000800;
-	public static final int cFileTypeSVG = 0x00001000;
-	public static final int cFileTypePictureFile = cFileTypeJPG | cFileTypePNG | cFileTypeSVG;
-    public static final int cFileTypeRDV3 = 0x00002000;
-    public static final int cFileTypeRDV2 = 0x00004000;
+	public static final int cFileTypeGIF = 0x00000800;
+	public static final int cFileTypePNG = 0x00001000;
+	public static final int cFileTypeSVG = 0x00002000;
+	public static final int cFileTypePictureFile = cFileTypeJPG | cFileTypeGIF | cFileTypePNG | cFileTypeSVG;
+    public static final int cFileTypeRDV3 = 0x00004000;
+    public static final int cFileTypeRDV2 = 0x00008000;
     public static final int cFileTypeRD = cFileTypeRDV3 | cFileTypeRDV2;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
@@ -303,6 +303,10 @@ public abstract class CompoundFileHelper {
 			filter.addExtension("jpeg");
 			filter.addDescription("JPEG image files");
 			}
+		if ((filetypes & cFileTypeGIF) != 0) {
+			filter.addExtension("gif");
+			filter.addDescription("GIF image files");
+			}
 		if ((filetypes & cFileTypePNG) != 0) {
 			filter.addExtension("png");
 			filter.addDescription("PNG image files");
@@ -381,6 +385,8 @@ public abstract class CompoundFileHelper {
             return cFileTypeRXN;
         if (extension.equals(".jpg") || extension.equals(".jpeg"))
             return cFileTypeJPG;
+		if (extension.equals(".gif"))
+			return cFileTypeGIF;
         if (extension.equals(".png"))
             return cFileTypePNG;
         if (extension.equals(".svg"))
@@ -450,6 +456,9 @@ public abstract class CompoundFileHelper {
 			break;
 		case cFileTypeJPG:
 			extension = ".jpeg";
+			break;
+		case cFileTypeGIF:
+			extension = ".gif";
 			break;
 		case cFileTypePNG:
 			extension = ".png";
