@@ -957,7 +957,10 @@ public class MolfileParser
 	{
 		mMol = null;
 		try {
-			return (readMoleculeFromBuffer(new BufferedReader(new FileReader(file)))) ? mMol : null;
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			boolean success = readMoleculeFromBuffer(reader);
+			try { reader.close(); } catch (IOException ioe) {}
+			return success ? mMol : null;
 		} catch (FileNotFoundException fnfe) {
 			return null;
 		}

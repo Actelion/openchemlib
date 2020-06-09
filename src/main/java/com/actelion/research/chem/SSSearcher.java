@@ -234,7 +234,10 @@ public class SSSearcher {
 	private void buildFragmentGraph() {
 		mFragment.ensureHelperArrays(mRequiredHelperLevel);
 
-		int graphAllocation = mFragment.getBonds() + 12;    // 12 is max number of separated fragments within mFragment
+		// ringClosures = bonds - atoms + fragments;
+		// extreme cases: highly bridged multicycle, e.g. ikosaeder; many exclude atoms (many atoms)
+		int graphAllocation = Math.max(mFragment.getAtoms(), mFragment.getBonds()) + 16;
+
 		mFragmentGraphAtom = new int[graphAllocation];
 		mFragmentGraphParentAtom = new int[graphAllocation];
 		mFragmentGraphParentBond = new int[graphAllocation];
