@@ -1,8 +1,6 @@
 package com.actelion.research.chem.descriptor.flexophore.completegraphmatcher;
 
-import com.actelion.research.calc.filter.SlidingWindow;
 import com.actelion.research.chem.descriptor.flexophore.DistHist;
-import com.actelion.research.chem.descriptor.flexophore.IMolDistHist;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 
 /**
@@ -17,15 +15,9 @@ import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexo
  * Oct 2, 2012 MvK: Start implementation
  * May 15 2013 MvK: Heavy bug detected. Wrong similarity results. reset() added.
  * Mar 01 2016 MvK sliding filter added.
+ * 2020 March, re-written
  */
 public class HistogramMatchCalculator {
-
-	// private static final double [] FILTER = {1};
-
-	// private static final double [] FILTER = {0.125,0.75,0.125};
-
-	// private static final double [] FILTER = {0.05, 0.1, 0.2, 0.3, 0.2, 0.1, 0.5};
-
 
 	public static double getSimilarity(DistHist dh1, int indexDistHist1At1, int indexDistHist1At2, DistHist dh2, int indexDistHist2At1, int indexDistHist2At2){
 
