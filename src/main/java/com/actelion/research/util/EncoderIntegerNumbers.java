@@ -46,6 +46,10 @@ public class EncoderIntegerNumbers {
             }
         }
 
+        if(min == max) {
+            throw new RuntimeException("Range is 0!");
+        }
+
         initialize(min, max);
 
         for (int v : arrValue) {
