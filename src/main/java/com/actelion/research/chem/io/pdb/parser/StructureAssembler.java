@@ -48,9 +48,12 @@ public class StructureAssembler {
 		
 	}
 	
+	
 	public Map<String,List<Molecule3D>> assemble() {
 		group();
 		List<Molecule3D> protMols = new ArrayList<>();
+		mols.putIfAbsent(SOLVENT_GROUP, new ArrayList<Molecule3D>());
+		mols.putIfAbsent(LIGAND_GROUP, new ArrayList<Molecule3D>());
 		protMols.add(buildProtein());
 		mols.put(PROTEIN_GROUP, protMols);
 		buildHetResidues();
@@ -61,6 +64,7 @@ public class StructureAssembler {
 	
 	private void group() {
 		groups.put(PROTEIN_GROUP, atomRecords);
+		
 		hetAtomRecords.forEach(e -> { 
 			String s = e.getString();
 			if(groups.get(s)!=null) {
@@ -73,7 +77,6 @@ public class StructureAssembler {
 				groups.put(s, li);
 			}
 		});
-	
 		bondList.forEach(b -> processBond(b)); //put bonded molecules/fragments to same group
 		
 			
@@ -99,10 +102,17 @@ public class StructureAssembler {
 				}
 			});
 		
-
 		List<Molecule3D> protMols = new ArrayList<Molecule3D>();
 		for(Residue residue : residues) {
 				Molecule3D fragment = residue.getMolecule();
+				if(fragment.getAtomAmino(0).trim().equals("ACT") || fragment.getAtomAmino(0).trim().equals("LIG")) {
+					mols.get(LIGAND_GROUP).add(fragment);
+					continue;
+				}
+				else if(fragment.getAtomAmino(0).trim().equals("HOH")) {
+					mols.get(SOLVENT_GROUP).add(fragment);
+					continue;
+				}
 				boolean coupled = proteinSynthesizer.addResidue(fragment);
 				if(coupled) { 
 					if(residue.isTerminal()) {
@@ -119,12 +129,14 @@ public class StructureAssembler {
 						
 				}
 			}
+		Molecule3D nextMol = proteinSynthesizer.retrieveProtein();
+		if(nextMol!=null && !protMols.contains(nextMol))
+				protMols.add(nextMol);
 		Molecule3D protein = protMols.stream().reduce((mol1,mol2) ->{
 			mol1.addMolecule(mol2);
-			mol1.ensureHelperArrays(Molecule.cHelperCIP);
 			return mol1;})
 				.get();
-
+		protein.ensureHelperArrays(Molecule.cHelperCIP);
 		return protein;
 		}
 	

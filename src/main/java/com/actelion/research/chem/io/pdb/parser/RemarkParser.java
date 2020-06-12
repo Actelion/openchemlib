@@ -57,9 +57,9 @@ public class RemarkParser {
         	SimpleEntry<String, Integer> siIndex = parseRemark(liRaw, indexLine, ccRemark);
             hmNo_Remark.put(ccRemark, siIndex.getKey());
             indexLine = siIndex.getValue();
-        } else {
-            throw new RuntimeException("Missing " + PDBFileParser.TAG_REMARK2);
-        }
+        } //else {
+       //     throw new RuntimeException("Missing " + PDBFileParser.TAG_REMARK2);
+        //}
 
         // Remark 3 mandatory
         ccRemark++;
@@ -67,9 +67,9 @@ public class RemarkParser {
         	SimpleEntry<String, Integer> siIndex = parseRemark(liRaw, indexLine, ccRemark);
             hmNo_Remark.put(ccRemark, siIndex.getKey());
             indexLine = siIndex.getValue();
-        } else {
-            throw new RuntimeException("Missing " + PDBFileParser.TAG_REMARK3);
-        }
+        } //else {
+        //    throw new RuntimeException("Missing " + PDBFileParser.TAG_REMARK3);
+        //}
 
         Pattern p = getPatternRemark();
 

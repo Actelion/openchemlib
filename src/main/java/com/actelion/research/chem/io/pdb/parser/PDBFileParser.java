@@ -203,309 +203,318 @@ public class PDBFileParser {
 
         String lHeader = liRaw.get(0);
 
-        if(!lHeader.startsWith(TAG_HEADER)){
-            throw new RuntimeException("Incorrect pdb file");
-        }
+        if(lHeader.startsWith(TAG_HEADER))
+        	indexLine = parseHeader(lHeader, pdbCoordEntryFile);
 
-        indexLine = parseHeader(lHeader, pdbCoordEntryFile);
-
-        int skipFirst2 = 2;
-
-        // Not mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_OBSOLTE)) {
-            SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_OBSOLTE);
-            pdbCoordEntryFile.setObsolete(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_TITLE)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_TITLE);
-            pdbCoordEntryFile.setTitle(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        } else {
-            throw new RuntimeException("Missing " + TAG_TITLE);
-        }
-
-        // Not mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_SPLIT)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_SPLIT);
-            pdbCoordEntryFile.setSplit(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        }
-
-        // Not mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_CAVEAT)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_CAVEAT);
-            pdbCoordEntryFile.setSplit(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        }
-
-        // Mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_COMPND)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_COMPND);
-            pdbCoordEntryFile.setCompound(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        } else {
-            throw new RuntimeException("Missing " + TAG_COMPND);
-        }
-
-        // Mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_SOURCE)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_SOURCE);
-            pdbCoordEntryFile.setSource(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        } else {
-            throw new RuntimeException("Missing " + TAG_SOURCE);
-        }
-
-        // Mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_KEYWDS)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_KEYWDS);
-            pdbCoordEntryFile.setKeywords(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        } else {
-            throw new RuntimeException("Missing " + TAG_KEYWDS);
-        }
-
-        // Mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_EXPDTA)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_EXPDTA);
-            pdbCoordEntryFile.setExpdata(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        } else {
-            throw new RuntimeException("Missing " + TAG_EXPDTA);
-        }
-
-        // Optional Mandatory for NMR ensemble entries.
-        if(liRaw.get(indexLine).startsWith(TAG_NUMMDL)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_NUMMDL);
-            pdbCoordEntryFile.setNummdl(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        }
-
-        // Optional Mandatory for NMR minimized average Structures or when the entire polymer chain contains C alpha or P atoms only.
-        if(liRaw.get(indexLine).startsWith(TAG_MDLTYP)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_MDLTYP);
-            pdbCoordEntryFile.setMdltyp(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        }
-
-        // Mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_AUTHOR)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_AUTHOR);
-            pdbCoordEntryFile.setAuthor(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        }
-
-        // Mandatory
-        if(liRaw.get(indexLine).startsWith(TAG_REVDAT)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_REVDAT);
-            pdbCoordEntryFile.setRevdat(liIndex.getLi());
-            indexLine = liIndex.getId();
-        } else {
-            throw new RuntimeException("Missing " + TAG_REVDAT);
-        }
-
-        // Optional Mandatory for a replacement entry.
-        if(liRaw.get(indexLine).startsWith(TAG_SPRSDE)) {
-        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_SPRSDE);
-            pdbCoordEntryFile.setSprsde(siIndex.getKey());
-            indexLine = siIndex.getValue();
-        }
-
-        // Optional Mandatory for a publication describes the experiment.
-        if(liRaw.get(indexLine).startsWith(TAG_JRNL)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_JRNL);
-            pdbCoordEntryFile.setJrnl(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        remarkParser.parse(liRaw, indexLine);
-
-        HashMap<Integer, String> hmNo_Remark = remarkParser.getHmNo_Remark();
-
-        indexLine = remarkParser.getIndexLine();
-
-        pdbCoordEntryFile.setRemarks(hmNo_Remark);
-
-        // Mandatory for all polymers.
-        if(liRaw.get(indexLine).startsWith(TAG_DBREF)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_DBREF);
-            pdbCoordEntryFile.setDBRef(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        // Mandatory for all polymers.
-        if(liRaw.get(indexLine).startsWith(TAG_DBREF1_DBREF2)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_DBREF1_DBREF2);
-            pdbCoordEntryFile.setDBRef1DBRef2(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        // Mandatory if sequence conflict exists.
-        if(liRaw.get(indexLine).startsWith(TAG_SEQADV)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SEQADV);
-            pdbCoordEntryFile.setSEQADV(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        // Mandatory if ATOM records exist.
-        // Primary sequence of backbone residues.
-        if(liRaw.get(indexLine).startsWith(TAG_SEQRES)) {
-            ListInteger<String> liIndexChains = parseMultipleTimesMultipleLinesSEQRES(liRaw, indexLine, TAG_SEQRES);
-            pdbCoordEntryFile.setSEQRES(liIndexChains.getLi());
-            indexLine = liIndexChains.getId();
-        }
-
-        // Mandatory if modified group exists in the coordinates.
-        // Identification of modifications to standard residues.
-        if(liRaw.get(indexLine).startsWith(TAG_MODRES)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MODRES);
-            pdbCoordEntryFile.setModRes(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        // Mandatory if a non-standard group other than water appears in the coordinates.
-        // Identification of non-standard groups heterogens).
-
-        String patternHET = TAG_HET + " ";
-
-        if(liRaw.get(indexLine).startsWith(patternHET)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, patternHET);
-            pdbCoordEntryFile.setHet(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        //
-        // Compound name of the heterogens.
-        if(liRaw.get(indexLine).startsWith(TAG_HETNAM)) {
-            hetNameParser.parse(liRaw, indexLine);
-            HashMap<String, String> hmId_Name = hetNameParser.getHMId_Name();
-            pdbCoordEntryFile.setHmId_Name(hmId_Name);
-            indexLine = hetNameParser.getIndexLine();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_HETSYN)) {
-            hetSynonymParser.parse(liRaw, indexLine);
-            HashMap<String, String> hmId_Synonyms = hetSynonymParser.getHMId_Synonyms();
-            pdbCoordEntryFile.setHmId_Synonyms(hmId_Synonyms);
-            indexLine = hetSynonymParser.getIndexLine();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_FORMUL)) {
-            formulaParser.parse(liRaw, indexLine);
-            HashMap<String, String> hmId_Formula = formulaParser.getHMId_Formula();
-            pdbCoordEntryFile.setHmId_Formula(hmId_Formula);
-            indexLine = formulaParser.getIndexLine();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_HELIX)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_HELIX);
-            pdbCoordEntryFile.setHelix(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_SHEET)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SHEET);
-            pdbCoordEntryFile.setSheet(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_SSBOND)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SSBOND);
-            pdbCoordEntryFile.setSSBond(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_LINK)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_LINK);
-            pdbCoordEntryFile.setLink(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_CISPEP)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_CISPEP);
-            pdbCoordEntryFile.setCisPep(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_SITE)) {
-            siteParser.parse(liRaw, indexLine);
-            HashMap<String, String> hmId_Site = siteParser.getHMId_Site();
-            pdbCoordEntryFile.setHmId_Site(hmId_Site);
-            indexLine = siteParser.getIndexLine();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_CRYST1)) {
-            pdbCoordEntryFile.setCryst1(liRaw.get(indexLine).substring(6));
-            indexLine++;
-        } else {
-            throw new RuntimeException("Missing " + TAG_CRYST1);
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_ORIGX1)) {
-            pdbCoordEntryFile.setOrigX1(liRaw.get(indexLine).substring(10));
-            indexLine++;
-        } else {
-            throw new RuntimeException("Missing " + TAG_ORIGX1);
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_ORIGX2)) {
-            pdbCoordEntryFile.setOrigX2(liRaw.get(indexLine).substring(10));
-            indexLine++;
-        } else {
-            throw new RuntimeException("Missing " + TAG_ORIGX2);
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_ORIGX3)) {
-            pdbCoordEntryFile.setOrigX3(liRaw.get(indexLine).substring(10));
-            indexLine++;
-        } else {
-            throw new RuntimeException("Missing " + TAG_ORIGX3);
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_SCALE1)) {
-            pdbCoordEntryFile.setScale1(liRaw.get(indexLine).substring(10));
-            indexLine++;
-        } else {
-            throw new RuntimeException("Missing " + TAG_SCALE1);
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_SCALE2)) {
-            pdbCoordEntryFile.setScale2(liRaw.get(indexLine).substring(10));
-            indexLine++;
-        } else {
-            throw new RuntimeException("Missing " + TAG_SCALE2);
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_SCALE3)) {
-            pdbCoordEntryFile.setScale3(liRaw.get(indexLine).substring(10));
-            indexLine++;
-        } else {
-            throw new RuntimeException("Missing " + TAG_SCALE3);
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_MTRIX1)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX1);
-            pdbCoordEntryFile.setMtrix1(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_MTRIX2)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX2);
-            pdbCoordEntryFile.setMtrix2(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        if(liRaw.get(indexLine).startsWith(TAG_MTRIX3)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX3);
-            pdbCoordEntryFile.setMtrix3(liIndex.getLi());
-            indexLine = liIndex.getId();
-        }
-
-        //
-        // Parsing atoms and their coordinates
-        //
+        
+        String data = liRaw.get(indexLine);
+        
+	    while((!data.startsWith(TAG_ATOM) && !data.startsWith(TAG_HETATM)) && indexLine<liRaw.size()-1) {
+	        // Not mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_OBSOLTE)) {
+	            SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_OBSOLTE);
+	            pdbCoordEntryFile.setObsolete(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_TITLE)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_TITLE);
+	            pdbCoordEntryFile.setTitle(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	        //} else {
+	        //    throw new RuntimeException("Missing " + TAG_TITLE);
+	        //}
+	
+	        // Not mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_SPLIT)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_SPLIT);
+	            pdbCoordEntryFile.setSplit(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	
+	        // Not mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_CAVEAT)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_CAVEAT);
+	            pdbCoordEntryFile.setSplit(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	
+	        // Mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_COMPND)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_COMPND);
+	            pdbCoordEntryFile.setCompound(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	        //} else {
+	        //    throw new RuntimeException("Missing " + TAG_COMPND);
+	        //}
+	
+	        // Mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_SOURCE)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_SOURCE);
+	            pdbCoordEntryFile.setSource(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	        //} else {
+	        //   throw new RuntimeException("Missing " + TAG_SOURCE);
+	        
+	
+	        // Mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_KEYWDS)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_KEYWDS);
+	            pdbCoordEntryFile.setKeywords(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        } //else {
+	            //throw new RuntimeException("Missing " + TAG_KEYWDS);
+	        //}
+	
+	        // Mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_EXPDTA)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_EXPDTA);
+	            pdbCoordEntryFile.setExpdata(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        } //else {
+	        //    throw new RuntimeException("Missing " + TAG_EXPDTA);
+	        //}
+	
+	        // Optional Mandatory for NMR ensemble entries.
+	        if(liRaw.get(indexLine).startsWith(TAG_NUMMDL)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_NUMMDL);
+	            pdbCoordEntryFile.setNummdl(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	
+	        // Optional Mandatory for NMR minimized average Structures or when the entire polymer chain contains C alpha or P atoms only.
+	        if(liRaw.get(indexLine).startsWith(TAG_MDLTYP)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_MDLTYP);
+	            pdbCoordEntryFile.setMdltyp(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	
+	        // Mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_AUTHOR)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_AUTHOR);
+	            pdbCoordEntryFile.setAuthor(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	
+	        // Mandatory
+	        if(liRaw.get(indexLine).startsWith(TAG_REVDAT)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_REVDAT);
+	            pdbCoordEntryFile.setRevdat(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        } //else {
+	           // throw new RuntimeException("Missing " + TAG_REVDAT);
+	        //}
+	
+	        // Optional Mandatory for a replacement entry.
+	        if(liRaw.get(indexLine).startsWith(TAG_SPRSDE)) {
+	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_SPRSDE);
+	            pdbCoordEntryFile.setSprsde(siIndex.getKey());
+	            indexLine = siIndex.getValue();
+	        }
+	
+	        // Optional Mandatory for a publication describes the experiment.
+	        if(liRaw.get(indexLine).startsWith(TAG_JRNL)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_JRNL);
+	            pdbCoordEntryFile.setJrnl(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        remarkParser.parse(liRaw, indexLine);
+	
+	        HashMap<Integer, String> hmNo_Remark = remarkParser.getHmNo_Remark();
+	
+	        indexLine = remarkParser.getIndexLine();
+	
+	        pdbCoordEntryFile.setRemarks(hmNo_Remark);
+	
+	        // Mandatory for all polymers.
+	        if(liRaw.get(indexLine).startsWith(TAG_DBREF)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_DBREF);
+	            pdbCoordEntryFile.setDBRef(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        // Mandatory for all polymers.
+	        if(liRaw.get(indexLine).startsWith(TAG_DBREF1_DBREF2)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_DBREF1_DBREF2);
+	            pdbCoordEntryFile.setDBRef1DBRef2(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        // Mandatory if sequence conflict exists.
+	        if(liRaw.get(indexLine).startsWith(TAG_SEQADV)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SEQADV);
+	            pdbCoordEntryFile.setSEQADV(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        // Mandatory if ATOM records exist.
+	        // Primary sequence of backbone residues.
+	        if(liRaw.get(indexLine).startsWith(TAG_SEQRES)) {
+	            ListInteger<String> liIndexChains = parseMultipleTimesMultipleLinesSEQRES(liRaw, indexLine, TAG_SEQRES);
+	            pdbCoordEntryFile.setSEQRES(liIndexChains.getLi());
+	            indexLine = liIndexChains.getId();
+	        }
+	
+	        // Mandatory if modified group exists in the coordinates.
+	        // Identification of modifications to standard residues.
+	        if(liRaw.get(indexLine).startsWith(TAG_MODRES)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MODRES);
+	            pdbCoordEntryFile.setModRes(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        // Mandatory if a non-standard group other than water appears in the coordinates.
+	        // Identification of non-standard groups heterogens).
+	
+	        String patternHET = TAG_HET + " ";
+	
+	        if(liRaw.get(indexLine).startsWith(patternHET)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, patternHET);
+	            pdbCoordEntryFile.setHet(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        //
+	        // Compound name of the heterogens.
+	        if(liRaw.get(indexLine).startsWith(TAG_HETNAM)) {
+	            hetNameParser.parse(liRaw, indexLine);
+	            HashMap<String, String> hmId_Name = hetNameParser.getHMId_Name();
+	            pdbCoordEntryFile.setHmId_Name(hmId_Name);
+	            indexLine = hetNameParser.getIndexLine();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_HETSYN)) {
+	            hetSynonymParser.parse(liRaw, indexLine);
+	            HashMap<String, String> hmId_Synonyms = hetSynonymParser.getHMId_Synonyms();
+	            pdbCoordEntryFile.setHmId_Synonyms(hmId_Synonyms);
+	            indexLine = hetSynonymParser.getIndexLine();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_FORMUL)) {
+	            formulaParser.parse(liRaw, indexLine);
+	            HashMap<String, String> hmId_Formula = formulaParser.getHMId_Formula();
+	            pdbCoordEntryFile.setHmId_Formula(hmId_Formula);
+	            indexLine = formulaParser.getIndexLine();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_HELIX)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_HELIX);
+	            pdbCoordEntryFile.setHelix(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_SHEET)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SHEET);
+	            pdbCoordEntryFile.setSheet(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_SSBOND)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SSBOND);
+	            pdbCoordEntryFile.setSSBond(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_LINK)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_LINK);
+	            pdbCoordEntryFile.setLink(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_CISPEP)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_CISPEP);
+	            pdbCoordEntryFile.setCisPep(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_SITE)) {
+	            siteParser.parse(liRaw, indexLine);
+	            HashMap<String, String> hmId_Site = siteParser.getHMId_Site();
+	            pdbCoordEntryFile.setHmId_Site(hmId_Site);
+	            indexLine = siteParser.getIndexLine();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_CRYST1)) {
+	            pdbCoordEntryFile.setCryst1(liRaw.get(indexLine).substring(6));
+	            indexLine++;
+	        } //else {
+	        //    throw new RuntimeException("Missing " + TAG_CRYST1);
+	        //}
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_ORIGX1)) {
+	            pdbCoordEntryFile.setOrigX1(liRaw.get(indexLine).substring(10));
+	            indexLine++;
+	        } //else {
+	        //   throw new RuntimeException("Missing " + TAG_ORIGX1);
+	        //}
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_ORIGX2)) {
+	            pdbCoordEntryFile.setOrigX2(liRaw.get(indexLine).substring(10));
+	            indexLine++;
+	        } //else {
+	           // throw new RuntimeException("Missing " + TAG_ORIGX2);
+	        //}
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_ORIGX3)) {
+	            pdbCoordEntryFile.setOrigX3(liRaw.get(indexLine).substring(10));
+	            indexLine++;
+	        } //else {
+	        //    throw new RuntimeException("Missing " + TAG_ORIGX3);
+	        //}
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_SCALE1)) {
+	            pdbCoordEntryFile.setScale1(liRaw.get(indexLine).substring(10));
+	            indexLine++;
+	        } //else {
+	           // throw new RuntimeException("Missing " + TAG_SCALE1);
+	        //}
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_SCALE2)) {
+	            pdbCoordEntryFile.setScale2(liRaw.get(indexLine).substring(10));
+	            indexLine++;
+	        } //else {
+	        //    throw new RuntimeException("Missing " + TAG_SCALE2);
+	        //}
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_SCALE3)) {
+	            pdbCoordEntryFile.setScale3(liRaw.get(indexLine).substring(10));
+	            indexLine++;
+	        } //else {
+	        //    throw new RuntimeException("Missing " + TAG_SCALE3);
+	        //}
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_MTRIX1)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX1);
+	            pdbCoordEntryFile.setMtrix1(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_MTRIX2)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX2);
+	            pdbCoordEntryFile.setMtrix2(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	
+	        if(liRaw.get(indexLine).startsWith(TAG_MTRIX3)) {
+	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX3);
+	            pdbCoordEntryFile.setMtrix3(liIndex.getLi());
+	            indexLine = liIndex.getId();
+	        }
+	        else {
+	        	indexLine++;
+	        }
+	        
+	        data = liRaw.get(indexLine);
+	        
+	        
+	        //
+	        // Parsing atoms and their coordinates
+	        //
+	    }
         List<AtomRecord> hetAtomRecords = new ArrayList<AtomRecord>();
         List<AtomRecord> protAtomRecords = new ArrayList<AtomRecord>();
         modelParser.parse(liRaw, indexLine,protAtomRecords,hetAtomRecords);
@@ -515,12 +524,13 @@ public class PDBFileParser {
         //pdbCoordEntryFile.setLiModelModel(liModelModel);
 
         indexLine = modelParser.getIndexLine();
-
         //
         // Parsing atom connections
         //
+        
+        List<int[]> bonds = new ArrayList<int[]>();
+        
         if(liRaw.get(indexLine).startsWith(TAG_CONECT)) {
-        	List<int[]> bonds = new ArrayList<int[]>();
             ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_CONECT);
             for(String bondInfo:liIndex.getLi()) {
             	bondInfo = bondInfo.trim();
@@ -534,22 +544,20 @@ public class PDBFileParser {
             	});
             }
             indexLine = liIndex.getId();
-            pdbCoordEntryFile.setLiConnect(bonds);
         }
+        
+        pdbCoordEntryFile.setLiConnect(bonds);
 
 
         if(liRaw.get(indexLine).startsWith(TAG_MASTER)) {
             pdbCoordEntryFile.setMaster(liRaw.get(indexLine).substring(10).trim());
             indexLine++;
-        } else {
-            throw new RuntimeException("Missing " + TAG_MASTER);
-        }
+        } 
 
         if(liRaw.get(indexLine).startsWith(TAG_END)) {
             pdbCoordEntryFile.setEnd(true);
         } else {
             pdbCoordEntryFile.setEnd(false);
-            throw new RuntimeException("Missing " + TAG_END);
         }
 
         return pdbCoordEntryFile;

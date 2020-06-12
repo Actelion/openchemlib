@@ -16,7 +16,7 @@ public class ModelParser {
 
     public void parse(List<String> liRaw, int indexLine, List<AtomRecord> protAtomRecords, 
     		List<AtomRecord> hetAtomRecords) {
-
+    	
         String tagAtom = PDBFileParser.TAG_ATOM;
         String tagHeteroAtom = PDBFileParser.TAG_HETATM;
 
@@ -97,8 +97,8 @@ public class ModelParser {
         double tempFactor = Double.parseDouble(line.substring(60,66).trim());
 
         String element = line.substring(76,78).trim();
-
-        String charge = line.substring(78,80).trim();
+        element = element.toLowerCase();
+        element = element.substring(0, 1).toUpperCase() + element.substring(1);
 
         AtomRecord modelAtom = new AtomRecord(serialId,
                 atomName,
@@ -112,8 +112,7 @@ public class ModelParser {
                 z,
                 occupancy,
                 tempFactor,
-                element,
-                charge);
+                element);
 
         return modelAtom;
     }

@@ -56,8 +56,7 @@ public class AtomRecord {
                      double z,
                      double occupancy,
                      double tempFactor,
-                     String element,
-                     String charge) {
+                     String element) {
 
         this.serialId = serialId;
         this.atomName = atomName;
@@ -72,7 +71,6 @@ public class AtomRecord {
         this.occupancy = occupancy;
         this.tempFactor = tempFactor;
         this.element = element;
-        this.charge = charge;
         this.atomicNo = PeriodicTable.number(element);
         isTerminalC = false;
     }

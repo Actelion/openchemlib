@@ -93,10 +93,8 @@ public class Residue {
 			BondsCalculator.createBonds(fragment, true, null);
 			BondsCalculator.calculateBondOrders(fragment, true);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			System.err.println("Cannot process structure");
 		}
-		fragment.setName(resname);
 		fragment.ensureHelperArrays(Molecule.cHelperCIP);
 		return fragment;
 	}
