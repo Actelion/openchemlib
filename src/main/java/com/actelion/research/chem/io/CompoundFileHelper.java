@@ -33,18 +33,19 @@
 
 package com.actelion.research.chem.io;
 
+import com.actelion.research.chem.Canonizer;
+import com.actelion.research.chem.MolfileParser;
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.reaction.Reaction;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.actelion.research.chem.MolfileCreator;
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.reaction.Reaction;
-
 public abstract class CompoundFileHelper {
-	public static final int cFileTypeMask = 0x0000FFFF;
+	public static final int cFileTypeMask = 0x0003FFFF;
 	public static final int cFileTypeDataWarrior = 0x00000001;
 	public static final int cFileTypeDataWarriorTemplate = 0x00000002;
 	public static final int cFileTypeDataWarriorQuery = 0x00000004;
@@ -60,12 +61,15 @@ public abstract class CompoundFileHelper {
 	public static final int cFileTypeRXN = 0x00000100;
 	public static final int cFileTypeSOM = 0x00000200;
 	public static final int cFileTypeJPG = 0x00000400;
-	public static final int cFileTypePNG = 0x00000800;
-	public static final int cFileTypeSVG = 0x00001000;
-	public static final int cFileTypePictureFile = cFileTypeJPG | cFileTypePNG | cFileTypeSVG;
-    public static final int cFileTypeRDV3 = 0x00002000;
-    public static final int cFileTypeRDV2 = 0x00004000;
+	public static final int cFileTypeGIF = 0x00000800;
+	public static final int cFileTypePNG = 0x00001000;
+	public static final int cFileTypeSVG = 0x00002000;
+	public static final int cFileTypePictureFile = cFileTypeJPG | cFileTypeGIF | cFileTypePNG | cFileTypeSVG;
+    public static final int cFileTypeRDV3 = 0x00004000;
+    public static final int cFileTypeRDV2 = 0x00008000;
     public static final int cFileTypeRD = cFileTypeRDV3 | cFileTypeRDV2;
+	public static final int cFileTypeMOL = 0x00010000;
+	public static final int cFileTypePDB = 0x00020000;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
 
@@ -87,7 +91,8 @@ public abstract class CompoundFileHelper {
 
 	public ArrayList<StereoMolecule> readStructuresFromFile(boolean readIdentifier) {
         File file = selectFileToOpen("Please select substance file",
-                               CompoundFileHelper.cFileTypeSD
+					           CompoundFileHelper.cFileTypeMOL
+                             | CompoundFileHelper.cFileTypeSD
                              | CompoundFileHelper.cFileTypeDataWarrior);
 
         return readStructuresFromFile(file, readIdentifier);
@@ -95,7 +100,8 @@ public abstract class CompoundFileHelper {
 
 	public ArrayList<String> readIDCodesFromFile() {
         File file = selectFileToOpen("Please select substance file",
-        					   CompoundFileHelper.cFileTypeSD
+		                CompoundFileHelper.cFileTypeMOL
+					         | CompoundFileHelper.cFileTypeSD
                              | CompoundFileHelper.cFileTypeDataWarrior);
 
         return readIDCodesFromFile(file);
@@ -136,7 +142,8 @@ public abstract class CompoundFileHelper {
 	public ArrayList<String[]> readIDCodesWithNamesFromFile(File file, boolean readIDCoords) {
 		if (file == null)
 			file = selectFileToOpen("Please select substance file",
-									CompoundFileHelper.cFileTypeSD
+									CompoundFileHelper.cFileTypeMOL
+								  | CompoundFileHelper.cFileTypeSD
 								  | CompoundFileHelper.cFileTypeDataWarrior);
 
 		if (file == null)
@@ -158,6 +165,30 @@ public abstract class CompoundFileHelper {
 	    String filename = file.getName();
 	    int index = filename.indexOf('.');
 	    String extention = (index == -1) ? "" : filename.substring(index).toLowerCase();
+
+	    if (extention.equals(".mol")) {
+		    MolfileParser parser = new MolfileParser();
+		    StereoMolecule mol = parser.getCompactMolecule(file);
+		    if (moleculeList != null)
+		    	moleculeList.add(mol);
+		    if (idcodeList != null || idcodeWithIDList != null) {
+		    	Canonizer canonizer = new Canonizer(mol);
+		    	String idcode = canonizer.getIDCode();
+			    String coords = canonizer.getEncodedCoordinates();
+		    	if (idcode != null && coords.length() != 0 && readIDCoords)
+		    		idcode = idcode+" "+coords;
+		    	if (idcodeList != null)
+		    		idcodeList.add(idcode);
+		    	if (idcodeWithIDList != null) {
+				    String[] idcodeWithID = new String[2];
+				    idcodeWithID[0] = idcode;
+				    idcodeWithID[1] = mol.getName();
+				    idcodeWithIDList.add(idcodeWithID);
+				    }
+			    }
+	    	return;
+		    }
+
 	    CompoundFileParser parser = (extention.equals(".sdf")) ?
 	                                           new SDFileParser(file)
 	                              : (extention.equals(".dwar")) ?
@@ -303,6 +334,10 @@ public abstract class CompoundFileHelper {
 			filter.addExtension("jpeg");
 			filter.addDescription("JPEG image files");
 			}
+		if ((filetypes & cFileTypeGIF) != 0) {
+			filter.addExtension("gif");
+			filter.addDescription("GIF image files");
+			}
 		if ((filetypes & cFileTypePNG) != 0) {
 			filter.addExtension("png");
 			filter.addDescription("PNG image files");
@@ -321,6 +356,14 @@ public abstract class CompoundFileHelper {
         if (filetypes == cFileTypePictureFile) {
             filter.setDescription("Image files");
             }
+		if ((filetypes & cFileTypePDB) != 0) {
+			filter.addExtension("pdb");
+			filter.addDescription("Protein Data Bank files");
+			}
+		if ((filetypes & cFileTypeMOL) != 0) {
+			filter.addExtension("mol");
+			filter.addDescription("MDL Molfiles");
+		}
 
 		return filter;
 		}
@@ -381,10 +424,16 @@ public abstract class CompoundFileHelper {
             return cFileTypeRXN;
         if (extension.equals(".jpg") || extension.equals(".jpeg"))
             return cFileTypeJPG;
+		if (extension.equals(".gif"))
+			return cFileTypeGIF;
         if (extension.equals(".png"))
             return cFileTypePNG;
         if (extension.equals(".svg"))
             return cFileTypeSVG;
+		if (extension.equals(".mol"))
+			return cFileTypeMOL;
+		if (extension.equals(".pdb"))
+			return cFileTypePDB;
 
         return cFileTypeUnknown;
         }
@@ -451,11 +500,20 @@ public abstract class CompoundFileHelper {
 		case cFileTypeJPG:
 			extension = ".jpeg";
 			break;
+		case cFileTypeGIF:
+			extension = ".gif";
+			break;
 		case cFileTypePNG:
 			extension = ".png";
 			break;
 		case cFileTypeSVG:
 			extension = ".svg";
+			break;
+		case cFileTypeMOL:
+			extension = ".mol";
+			break;
+		case cFileTypePDB:
+			extension = ".pdb";
 			break;
 			}
 		return extension;

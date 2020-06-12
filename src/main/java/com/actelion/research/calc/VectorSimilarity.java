@@ -79,6 +79,23 @@ public class VectorSimilarity {
         return sum;
     }
 
+    public static double getMinMaxSimilarity(int[] d1, int[] d2){
+
+         double sumMin = 0;
+         double sumMax = 0;
+
+        for (int i = 0; i < d1.length; i++) {
+            int v1 = d1[i];
+            int v2 = d2[i];
+            sumMin += Math.min(v1, v2);
+            sumMax += Math.max(v1, v2);
+        }
+
+        double score = sumMin / sumMax;
+
+        return score;
+
+    }
 
 
 }

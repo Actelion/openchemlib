@@ -28,7 +28,6 @@ public class CombinationGenerator {
 	 */
 	public static List<int[]> getAllOutOf(int nObjects, int sampleSize) {
 
-		
 		List<int[]> li = new ArrayList<int[]>();
 		
 		int [] arrCounters = new int [sampleSize];
@@ -51,14 +50,13 @@ public class CombinationGenerator {
 			return null;
 		}
 		
-		
 		// init
 		for (int i = 0; i < arrCounters.length; i++) {
 			arrCounters[i]=i;
 		}
-		boolean bProceed = true;
+		boolean proceed = true;
 		
-		while(bProceed){
+		while(proceed){
 			
 			int [] arr = new int [sampleSize];
 			for (int i = 0; i < sampleSize; i++) {
@@ -69,51 +67,128 @@ public class CombinationGenerator {
 			
 			int depth = sampleSize-1;
 			arrCounters[depth]++;
-			
-			boolean bCounterFieldReset = false;
+			boolean counterFieldReset = false;
 			
 			if(arrCounters[depth]>=nObjects){
-				bCounterFieldReset=true;
+				counterFieldReset=true;
 			}
 			
-			while(bCounterFieldReset){
-				bCounterFieldReset=false;
+			while(counterFieldReset){
+				counterFieldReset=false;
 				depth--;
 				arrCounters[depth]++;
 				for (int i = depth + 1; i < sampleSize; i++) {
 					arrCounters[i] = arrCounters[i-1]+1;
 					if(arrCounters[i] >= nObjects){
-						bCounterFieldReset=true;
+						counterFieldReset=true;
 					}
 				}
 				
 				if(depth==0)
 					break;
 			}
-			if(bCounterFieldReset)
-				bProceed = false;
+			if(counterFieldReset)
+				proceed = false;
 		}
 		
 		return li; 
 	}
 
-	public static void main(String[] args) {
+	public static List<int[]> getCombinations(List<int[]> li){
 
-		int sizeList = 5;
+		int nCombinations = 1;
+		for (int[] arr : li) {
+			nCombinations *= arr.length;
+		}
 
-		for (int i = 2; i < sizeList+1; i++) {
+		List<int[]> liComb = new ArrayList<>(nCombinations);
 
-			List<int[]> li = CombinationGenerator.getAllOutOf(sizeList, i);
+		for (int i = 0; i < nCombinations; i++) {
+			int [] arrComb = new int[li.size()];
+			liComb.add(arrComb);
+		}
 
-			for (int j = 0; j < li.size(); j++) {
+		int nCombCol=1;
+		for (int col = 0; col < li.size(); col++) {
 
-				int [] a = li.get(j);
+			nCombCol *= li.get(col).length;
 
-				System.out.println(ArrayUtils.toString(a));
+			int nRepetitions = nCombinations / nCombCol;
 
+			int [] arr = li.get(col);
+
+			int indexArr = 0;
+
+			int row = 0;
+
+			while (row < nCombinations) {
+
+				for (int i = 0; i < nRepetitions; i++) {
+					int [] arrComb = liComb.get(row);
+					arrComb[col]=arr[indexArr];
+					row++;
+				}
+
+				indexArr++;
+				if(indexArr==arr.length) {
+					indexArr=0;
+				}
 			}
 		}
 
+		return liComb;
 	}
+
+
+	public static void main(String[] args) {
+		List<int[]> li = new ArrayList<>();
+
+//		int [] a1 = {0,1};
+//		int [] a2 = {0};
+//		int [] a3 = {1,2};
+		int [] a1 = {0,1,2};
+		int [] a2 = {3,4};
+		int [] a3 = {5,6,7};
+		int [] a4 = {8};
+
+		li.add(a1);
+		li.add(a2);
+		li.add(a3);
+		li.add(a4);
+
+		List<int[]> liComb = getCombinations(li);
+
+		for (int[] arr : liComb) {
+			System.out.println(ArrayUtils.toString(arr));
+		}
+
+
+
+
+
+	}
+
+//	public static void main(String[] args) {
+//
+//		int sizeList = 9;
+//
+//		int sumCombinations=0;
+//		for (int i = 4; i < sizeList+1; i++) {
+//
+//			List<int[]> li = CombinationGenerator.getAllOutOf(sizeList, i);
+//
+//			sumCombinations += li.size();
+//			for (int j = 0; j < li.size(); j++) {
+//				int [] a = li.get(j);
+//				System.out.println(ArrayUtils.toString(a));
+//
+//			}
+//		}
+//
+//		System.out.println("sum combinations " + sumCombinations);
+//
+//
+//
+//	}
 
 }
