@@ -120,7 +120,7 @@ public class FractalDimensionMolecule {
     }
 
 
-    protected void finalizeThreads() throws Throwable {
+    public void finalizeThreads() throws Throwable {
         if(exhaustiveFragmentsStatistics!=null) {
             exhaustiveFragmentsStatistics.finalize();
         }
