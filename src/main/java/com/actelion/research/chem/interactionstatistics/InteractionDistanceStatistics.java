@@ -22,7 +22,7 @@ public class InteractionDistanceStatistics {
 	
 	private static volatile InteractionDistanceStatistics instance = new InteractionDistanceStatistics(); //eager initialization
 	private static final String BASE_PATH = "/resources/interactionstatistics/";
-	private volatile Map<Long,DistanceDependentPairPotential> pairPotentials;
+	private volatile Map<Long,SplineFunction> pairPotentials;
 	public static final double OCCURENCE_CUTOFF = 500;
 	public static final double CUTOFF_RADIUS = 6.0;
 	public static final double BIN_SIZE = 0.2;
@@ -47,7 +47,7 @@ public class InteractionDistanceStatistics {
 		return pairPotentials.keySet().size();
 	}
 
-	public Map<Long, DistanceDependentPairPotential> getPairPotentials() {
+	public Map<Long, SplineFunction> getPairPotentials() {
 		return pairPotentials;
 	}
 
@@ -221,7 +221,7 @@ public class InteractionDistanceStatistics {
 
 		
 		private void splineCalculation() {
-			pairPotentials = new HashMap<Long,DistanceDependentPairPotential>();
+			pairPotentials = new HashMap<Long,SplineFunction>();
 
 			double[] referenceSum = new double[(int)(CUTOFF_RADIUS/BIN_SIZE)];
 
@@ -229,7 +229,7 @@ public class InteractionDistanceStatistics {
 			
 			
 			interactionStatistics.entrySet().stream().forEach(e -> {
-				DistanceDependentPairPotential potential = new DistanceDependentPairPotential();
+				SplineFunction potential = new SplineFunction();
 				potential.setOccurencesArray(e.getValue());
 				pairPotentials.putIfAbsent(e.getKey(), potential);
 			});
@@ -311,7 +311,7 @@ public class InteractionDistanceStatistics {
 					ff = interpolator.interpolate(X, Y);
 				}
 				
-				DistanceDependentPairPotential potential = pairPotentials.get(l);
+				SplineFunction potential = pairPotentials.get(l);
 				potential.setSplineFunction(ff);
 				potential.setDiscreteFunction(discreteFunctions.get(l));
 
@@ -341,14 +341,14 @@ public class InteractionDistanceStatistics {
 			return YNorm;
 		}
 		
-		public DistanceDependentPairPotential getFunction(long l) {
+		public SplineFunction getFunction(long l) {
 			return pairPotentials.get(l);
 		}
 		
-		public DistanceDependentPairPotential getFunction(int a, int b) {
+		public SplineFunction getFunction(int a, int b) {
 
 			
-			DistanceDependentPairPotential spline;
+			SplineFunction spline;
 
 			int a1 = a & InteractionAtomTypeCalculator.AtomPropertyMask.SPECIFIC.getMask();
 			int b1 = b & InteractionAtomTypeCalculator.AtomPropertyMask.SPECIFIC.getMask();

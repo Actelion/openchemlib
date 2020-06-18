@@ -39,7 +39,7 @@ import com.actelion.research.util.FastSpline;
  * Class used to represent a Protein Ligand Function
  * 
  */
-public class DistanceDependentPairPotential {
+public class SplineFunction {
 	
 	private int[] occurencesArray;
 	private FastSpline spline, derivate;	
