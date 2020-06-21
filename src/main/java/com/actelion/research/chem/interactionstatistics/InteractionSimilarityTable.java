@@ -70,7 +70,7 @@ public class InteractionSimilarityTable {
 		public double optimalDist;
 		public double optimalStrength;
 		
-		public InteractionDescriptor(DistanceDependentPairPotential plf) {
+		public InteractionDescriptor(SplineFunction plf) {
 			if(plf==null) return;
 			N = plf.getTotalOccurences();
 			try {
@@ -138,7 +138,7 @@ public class InteractionSimilarityTable {
 		
 		for (int i : atomKeys) {
 			for (int j : atomKeys) {
-				DistanceDependentPairPotential plf = stats.getFunction(i, j);
+				SplineFunction plf = stats.getFunction(i, j);
 				iDsToDescriptor[keyToId.get(i)][keyToId.get(j)] = new InteractionDescriptor(plf);
 			}			
 		}

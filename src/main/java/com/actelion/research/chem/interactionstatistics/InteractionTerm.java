@@ -60,9 +60,9 @@ public class InteractionTerm  {
 	private StereoMolecule receptor;
 	private int atoms[];	
 	//Statistics
-	private final DistanceDependentPairPotential f; 
+	private final SplineFunction f; 
 	
-	private InteractionTerm(StereoMolecule receptor, StereoMolecule ligand, int[] atoms, DistanceDependentPairPotential f, double factor) {
+	private InteractionTerm(StereoMolecule receptor, StereoMolecule ligand, int[] atoms, SplineFunction f, double factor) {
 		this.receptor = receptor;
 		this.ligand = ligand;
 		this.f = f;			
@@ -71,7 +71,7 @@ public class InteractionTerm  {
 	}
 	
 	public static InteractionTerm create(StereoMolecule receptor, StereoMolecule ligand, int p, int l, int[] receptorAtomTypes, int[] ligandAtomTypes) {		
-		DistanceDependentPairPotential f = InteractionDistanceStatistics.getInstance().getFunction(receptorAtomTypes[p], ligandAtomTypes[l]);
+		SplineFunction f = InteractionDistanceStatistics.getInstance().getFunction(receptorAtomTypes[p], ligandAtomTypes[l]);
 		if(f==null) {
 			return null;
 		}

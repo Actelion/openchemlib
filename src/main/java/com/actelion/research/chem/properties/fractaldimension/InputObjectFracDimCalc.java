@@ -42,7 +42,7 @@ import com.actelion.research.util.datamodel.IdentifiedObject;
  * <p>
  * Created by korffmo1 on 28.08.18.
  */
-class InputObjectFracDimCalc extends IdentifiedObject<StereoMolecule> {
+public class InputObjectFracDimCalc extends IdentifiedObject<StereoMolecule> {
 
     private String smiles;
 
