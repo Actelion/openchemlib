@@ -2728,7 +2728,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 					}
 				}
 			java.util.Arrays.sort(negativeAtom);
-			for (int i=negativeAtom.length-1; (overallCharge < 0) && (i>=negativeAtom.length-negativeAtomCount); i--) {
+			for (int i=negativeAtom.length-1; (overallChargeChange < 0) && (i>=negativeAtom.length-negativeAtomCount); i--) {
 				int atom = negativeAtom[i] & 0x0000FFFF;
 				if (isElectronegative(atom)) {
 					int chargeReduction = Math.min(-overallChargeChange, -mAtomCharge[atom]);
