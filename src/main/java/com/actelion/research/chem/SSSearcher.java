@@ -903,8 +903,12 @@ System.out.println();
 
 					// consider as match if an E/Z-bond with defined parity atom matches on one with no parity
 					int moleculeParity = mMolecule.getBondParity(moleculeBond);
-					if (moleculeParity == Molecule.cBondParityNone)
-						continue;
+					if (moleculeParity == Molecule.cBondParityNone) {
+						if (mMolecule.isSmallRingBond(moleculeBond))
+							moleculeParity = calculateImplicitSmallRingBondParity(moleculeBond);
+						if (moleculeParity == Molecule.cBondParityNone)
+							continue;
+						}
 
 					// unknown molecule E/Z-bonds need to match everything because
 					// parities from idcodes don't include them, i.e. depending
@@ -925,45 +929,116 @@ System.out.println();
 		return true;
 		}
 
+	/**
+	 * IDcodes don't store double bond conformations if they are implicitly given due to small ring membership.
+	 * Therefore, if we need to match EZ-configurations and the molecule bond is a small ring bond, we may have
+	 * no given configuration, if the molecules was directly created from an idcode.
+	 * @param moleculeBond
+	 * @return
+	 */
+	private int calculateImplicitSmallRingBondParity(int moleculeBond) {
+		RingCollection ringSet = mMolecule.getRingSet();
+		for (int r=0; r<ringSet.getSize(); r++) {
+			if (ringSet.isBondMember(r, moleculeBond)) {
+				int[] relevantAtom = new int[2];
+				for (int i=0; i<2; i++) {
+					relevantAtom[i] = Integer.MAX_VALUE;
+					int bondAtom = mMolecule.getBondAtom(i, moleculeBond);
+					for (int j=0; j<mMolecule.getConnAtoms(bondAtom); j++) {
+						int atom = mMolecule.getConnAtom(bondAtom, j);
+						if (atom != mMolecule.getBondAtom(1-i, moleculeBond)
+								&& relevantAtom[i] > atom)
+							relevantAtom[i] = atom;
+						}
+					}
+
+				int memberCount = 0;
+				if (ringSet.isAtomMember(r, relevantAtom[0]))
+					memberCount++;
+				if (ringSet.isAtomMember(r, relevantAtom[1]))
+					memberCount++;
+				if (memberCount == 2)
+					return Molecule.cBondCIPParityZorM;
+				if (memberCount == 1)
+					return Molecule.cBondCIPParityEorP;
+
+				return Molecule.cBondCIPParityZorM;
+				}
+			}
+
+		return Molecule.cBondCIPParityNone;
+		}
+
+
+//	private boolean isEZParityInversion(int fragmentBond, int moleculeBond) {
+//		boolean inversion = false;
+//		for (int i=0; i<2; i++) {
+//			int fragmentAtom = mFragment.getBondAtom(i, fragmentBond);
+//			int moleculeAtom = mMatchTable[fragmentAtom];
+//			if (mFragment.getConnAtoms(fragmentAtom) == 2) {
+//				if (mMolecule.getConnAtoms(moleculeAtom) == 2)
+//					continue;
+//
+//				int fragmentNeighbour = -1;
+//				for (int j=0; j<2; j++)
+//					if (mFragment.getConnBond(fragmentAtom, j) != fragmentBond)
+//						fragmentNeighbour = mFragment.getConnAtom(fragmentAtom, j);
+//
+//				int moleculeNeighbours = 0;
+//				int[] moleculeNeighbour = new int[2];
+//				for (int j=0; j<3; j++)
+//					if (mMolecule.getConnBond(moleculeAtom, j) != moleculeBond)
+//						moleculeNeighbour[moleculeNeighbours++] = mMolecule.getConnAtom(moleculeAtom, j);
+//
+//				if (mMatchTable[fragmentNeighbour] != moleculeNeighbour[0])
+//					inversion = !inversion;
+//				}
+//			else if (mFragment.getConnAtoms(fragmentAtom) == 3
+//	   			  && mMolecule.getConnAtoms(moleculeAtom) == 3) {
+//				int[] fragmentNeighbour = new int[2];
+//				int fragmentNeighbours = 0;
+//				for (int j=0; j<3; j++)
+//					if (mFragment.getConnBond(fragmentAtom, j) != fragmentBond)
+//						fragmentNeighbour[fragmentNeighbours++] = mFragment.getConnAtom(fragmentAtom, j);
+//				if ((mMatchTable[fragmentNeighbour[0]] > mMatchTable[fragmentNeighbour[1]])
+//				  ^ (fragmentNeighbour[0] > fragmentNeighbour[1]))
+//					inversion = !inversion;
+//				}
+//			}
+//		return inversion;
+//		}
+
 
 	private boolean isEZParityInversion(int fragmentBond, int moleculeBond) {
 		boolean inversion = false;
 		for (int i=0; i<2; i++) {
 			int fragmentAtom = mFragment.getBondAtom(i, fragmentBond);
 			int moleculeAtom = mMatchTable[fragmentAtom];
-			if (mFragment.getConnAtoms(fragmentAtom) == 2) {
-				if (mMolecule.getConnAtoms(moleculeAtom) == 2)
-					continue;
+			if (mMolecule.getConnAtoms(moleculeAtom) > 2) {
+				int otherFragmentAtom = mFragment.getBondAtom(1-i, fragmentBond);
+				int lowFragmentNeighbour = Integer.MAX_VALUE;
+				for (int j=0; j<mFragment.getConnAtoms(fragmentAtom); j++) {
+					int fragmentNeighbour = mFragment.getConnAtom(fragmentAtom, j);
+					if (fragmentNeighbour != otherFragmentAtom
+					 && lowFragmentNeighbour > fragmentNeighbour)
+						lowFragmentNeighbour = fragmentNeighbour;
+					}
 
-				int fragmentNeighbour = -1;
-				for (int j=0; j<2; j++)
-					if (mFragment.getConnBond(fragmentAtom, j) != fragmentBond)
-						fragmentNeighbour = mFragment.getConnAtom(fragmentAtom, j);
+				int otherMoleculeAtom = mMatchTable[otherFragmentAtom];
+				int lowMoleculeNeighbour = Integer.MAX_VALUE;
+				for (int j=0; j<mMolecule.getConnAtoms(moleculeAtom); j++) {
+					int moleculeNeighbour = mMolecule.getConnAtom(moleculeAtom, j);
+					if (moleculeNeighbour != otherMoleculeAtom
+					 && lowMoleculeNeighbour > moleculeNeighbour)
+						lowMoleculeNeighbour = moleculeNeighbour;
+					}
 
-				int moleculeNeighbours = 0;
-				int[] moleculeNeighbour = new int[2];
-				for (int j=0; j<3; j++)
-					if (mMolecule.getConnBond(moleculeAtom, j) != moleculeBond)
-						moleculeNeighbour[moleculeNeighbours++] = mMolecule.getConnAtom(moleculeAtom, j);
-
-				if (mMatchTable[fragmentNeighbour] != moleculeNeighbour[0])
-					inversion = !inversion;
-				}
-			else if (mFragment.getConnAtoms(fragmentAtom) == 3
-	   			  && mMolecule.getConnAtoms(moleculeAtom) == 3) {
-				int[] fragmentNeighbour = new int[2];
-				int fragmentNeighbours = 0;
-				for (int j=0; j<3; j++)
-					if (mFragment.getConnBond(fragmentAtom, j) != fragmentBond)
-						fragmentNeighbour[fragmentNeighbours++] = mFragment.getConnAtom(fragmentAtom, j);
-				if ((mMatchTable[fragmentNeighbour[0]] > mMatchTable[fragmentNeighbour[1]])
-				  ^ (fragmentNeighbour[0] > fragmentNeighbour[1]))
+				if (mMatchTable[lowFragmentNeighbour] != lowMoleculeNeighbour)
 					inversion = !inversion;
 				}
 			}
 		return inversion;
 		}
-
 
 	/**
 	 * Starting from a full match of the fragment without exclude groups, this method continues

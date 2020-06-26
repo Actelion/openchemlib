@@ -80,12 +80,14 @@ public class DoubleFormat {
 		if (value == 0.0)
 			return (skipTrailingZeros || significantDigits==1) ? "0" : "0."+zeros(significantDigits-1);
 
-		// determine cipher count of integer fraction in excess of significant digits.
+		// Determine cipher count of integer fraction in excess of significant digits.
 		// For those cases, where the number is not expressed in scientific notation,
 		// the increase significant digits to prevent trailing zeros through rounding.
-		int cipherExcess = Long.toString(Math.round(value)).length() - significantDigits;
-		if (cipherExcess > 0 && cipherExcess <= 4)
-			significantDigits += cipherExcess;
+		//		int cipherExcess = Long.toString(Math.round(value)).length() - significantDigits;
+		//		if (cipherExcess > 0 && cipherExcess <= 4)
+		//			significantDigits += cipherExcess;
+		// Returned to original behaviour with consistent rounding no matter whether we see trailing zeros
+		// in integer part that pretend precision with digits (zeros). TLS 21Jun2020
 
 		double limit1 = 1;
 		for (int i=1; i<significantDigits; i++)
