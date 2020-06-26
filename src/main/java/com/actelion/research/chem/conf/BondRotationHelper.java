@@ -17,6 +17,7 @@ public class BondRotationHelper {
 	private int[][] mTorsionAtoms;
 	private int[][] mRearAtoms;
 	private int[] mRotationCenters;
+	private String[] mTorsionIDs;
 
 	
 	
@@ -45,18 +46,21 @@ public class BondRotationHelper {
 		mRearAtoms = new int[mRotatableBonds.length][];
 		mSmallerSideAtomLists = new int[mRotatableBonds.length][];
 		mRotationCenters = new int[mRotatableBonds.length];
+		mTorsionIDs = new String[mRotatableBonds.length];
 		
 		for(int i=0;i<mRotatableBonds.length;i++) {
 			int bond = mRotatableBonds[i];
 			int[] torsionAtoms = new int[4];
 			int[] rearAtoms = new int[2];
 			TorsionDetail detail = new TorsionDetail();
-			if (TorsionDB.getTorsionID(mMol, bond, torsionAtoms, detail) != null) {
+			String torsionID = TorsionDB.getTorsionID(mMol, bond, torsionAtoms, detail);
+			mTorsionIDs[i] = torsionID;
+			if (torsionID != null) {
 				rearAtoms[0] = detail.getRearAtom(0);
 				rearAtoms[1] = detail.getRearAtom(1);
 				}
 			else {
-				predictAtomSequence(bond, torsionAtoms, rearAtoms);
+				predictAtomSequence(mMol,bond, torsionAtoms, rearAtoms);
 				}
 			mTorsionAtoms[i] = torsionAtoms;
 			mRearAtoms[i] = rearAtoms;
@@ -117,17 +121,17 @@ public class BondRotationHelper {
 		}
 	
 	
-	private void predictAtomSequence(int bond, int[] torsionAtoms, int[] rearAtoms) {
+	public static void predictAtomSequence(StereoMolecule mol,int bond, int[] torsionAtoms, int[] rearAtoms) {
         for (int i=0; i<2; i++) {
-    		int centralAtom = mMol.getBondAtom(i, bond);
-        	int rearAtom = mMol.getBondAtom(1-i, bond);
+    		int centralAtom = mol.getBondAtom(i, bond);
+        	int rearAtom = mol.getBondAtom(1-i, bond);
 
         	// walk along sp-chains to first sp2 or sp3 atom
-        	while (mMol.getAtomPi(centralAtom) == 2
-        		&& mMol.getConnAtoms(centralAtom) == 2
-        		&& mMol.getAtomicNo(centralAtom) < 10) {
+        	while (mol.getAtomPi(centralAtom) == 2
+        		&& mol.getConnAtoms(centralAtom) == 2
+        		&& mol.getAtomicNo(centralAtom) < 10) {
         		for (int j=0; j<2; j++) {
-        			int connAtom = mMol.getConnAtom(centralAtom, j);
+        			int connAtom = mol.getConnAtom(centralAtom, j);
         			if (connAtom != rearAtom) {
         				rearAtom = centralAtom;
         				centralAtom = connAtom;
@@ -142,24 +146,24 @@ public class BondRotationHelper {
 
     	// A TorsionPrediction does not distinguish hetero atoms from carbons a positions 0 and 3.
         // Therefore we can treat two sp2 neighbors as equivalent when predicting torsions.
-        if (mMol.getAtomPi(torsionAtoms[1]) == 0 && mMol.getConnAtoms(torsionAtoms[1]) == 3) {
+        if (mol.getAtomPi(torsionAtoms[1]) == 0 && mol.getConnAtoms(torsionAtoms[1]) == 3) {
         	torsionAtoms[0] = -1;
         	}
         else {
-			for (int i=0; i<mMol.getConnAtoms(torsionAtoms[1]); i++) {
-				int connAtom = mMol.getConnAtom(torsionAtoms[1], i);
+			for (int i=0; i<mol.getConnAtoms(torsionAtoms[1]); i++) {
+				int connAtom = mol.getConnAtom(torsionAtoms[1], i);
 				if (connAtom != torsionAtoms[2]) {
 					torsionAtoms[0] = connAtom;
 					break;
 					}
 				}
         	}
-        if (mMol.getAtomPi(torsionAtoms[2]) == 0 && mMol.getConnAtoms(torsionAtoms[2]) == 3) {
+        if (mol.getAtomPi(torsionAtoms[2]) == 0 && mol.getConnAtoms(torsionAtoms[2]) == 3) {
         	torsionAtoms[3] = -1;
         	}
         else {
-			for (int i=0; i<mMol.getConnAtoms(torsionAtoms[2]); i++) {
-				int connAtom = mMol.getConnAtom(torsionAtoms[2], i);
+			for (int i=0; i<mol.getConnAtoms(torsionAtoms[2]); i++) {
+				int connAtom = mol.getConnAtom(torsionAtoms[2], i);
 				if (connAtom != torsionAtoms[1]) {
 					torsionAtoms[3] = connAtom;
 					break;
@@ -203,6 +207,52 @@ public class BondRotationHelper {
 				}
 			}
 		}
+
+
+
+	public void setRotatableBonds(int[] rotatableBonds) {
+		mRotatableBonds = rotatableBonds;
+	}
+
+	public int[][] getSmallerSideAtomLists() {
+		return mSmallerSideAtomLists;
+	}
+
+	public void setSmallerSideAtomLists(int[][] smallerSideAtomLists) {
+		mSmallerSideAtomLists = smallerSideAtomLists;
+	}
+
+	public int[][] getTorsionAtoms() {
+		return mTorsionAtoms;
+	}
+
+	public void setTorsionAtoms(int[][] torsionAtoms) {
+		mTorsionAtoms = torsionAtoms;
+	}
+
+	public int[][] getRearAtoms() {
+		return mRearAtoms;
+	}
+
+	public void setRearAtoms(int[][] rearAtoms) {
+		this.mRearAtoms = rearAtoms;
+	}
+
+	public int[] getRotationCenters() {
+		return mRotationCenters;
+	}
+
+	public void setRotationCenters(int[] rotationCenters) {
+		this.mRotationCenters = rotationCenters;
+	}
+
+	public String[] getTorsionIDs() {
+		return mTorsionIDs;
+	}
+
+	public void setTorsionIDs(String[] torsionIDs) {
+		this.mTorsionIDs = torsionIDs;
+	}
 
 
 }
