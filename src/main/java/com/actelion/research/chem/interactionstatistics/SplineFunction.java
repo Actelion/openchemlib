@@ -68,14 +68,13 @@ public class SplineFunction {
 	}
 	
 	public double[] getFGValue(double v) {
-		if(spline==null) throw new IllegalArgumentException("no spline available");
+		if(spline==null) return new double[]{0.0, 0.0};
 		try{		
 			double value = spline.value(v);
 			double dev = derivate.value(v);
 			return new double[]{value, dev};
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new IllegalArgumentException("no spline available");
+		} catch (ArrayIndexOutOfBoundsException e) {
+			return new double[]{0.0, 0.0};
 		}
 	}
 	
