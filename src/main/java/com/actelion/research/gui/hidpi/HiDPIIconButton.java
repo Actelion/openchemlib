@@ -115,6 +115,10 @@ public class HiDPIIconButton extends JButton {
 			}
 		}
 
+	public boolean isAnimating() {
+		return mAnimator != null && mAnimator.isRunning();
+		}
+
 	private void updateIconSet() {
 		if (mImageName != null) {
 			setIcon(HiDPIHelper.createIcon(mImageName, mRotation));
@@ -162,5 +166,9 @@ public class HiDPIIconButton extends JButton {
 		public void stop() {
 			mRunning = false;
 			}
+
+		public boolean isRunning() {
+			return mRunning;
+		}
 		}
 	}
