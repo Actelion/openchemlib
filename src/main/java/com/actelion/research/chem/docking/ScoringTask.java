@@ -10,11 +10,20 @@ import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
+import com.actelion.research.chem.interactionstatistics.SplineFunction;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 
 
 public class ScoringTask {
 	
+	/**
+	 * 
+	 * @param receptor
+	 * @param ligand
+	 * @param receptorAtomTypes
+	 * @param ligandAtomTypes
+	 * @return
+	 */
 	public static double calcScore(StereoMolecule receptor, StereoMolecule ligand, int[] receptorAtomTypes, int[] ligandAtomTypes) {
 		InteractionDistanceStatistics.getInstance().initialize();
 		Set<Integer> receptorAtoms = new HashSet<Integer>(); 
@@ -44,6 +53,34 @@ public class ScoringTask {
 		
 		
 	}
+	/**
+	 * calculate interaction of probe atom with receptor
+	 * @param receptor
+	 * @param probeAtomType
+	 * @param c
+	 * @param receptorAtomTypes
+	 * @param ligandAtomTypes
+	 * @param grid
+	 * @return
+	 */
+	public static double calcScore(StereoMolecule receptor, int probeAtomType, Coordinates c, int[] receptorAtomTypes) {
+		double score = 0.0;
+		InteractionDistanceStatistics.getInstance().initialize();
+		Set<Integer> receptorAtoms = new HashSet<Integer>(); 
+		MoleculeGrid grid = new MoleculeGrid(receptor);
+		receptorAtoms.addAll(grid.getNeighbours(c, InteractionDistanceStatistics.CUTOFF_RADIUS));
+		for(int p : receptorAtoms) {
+			SplineFunction f = InteractionDistanceStatistics.getInstance().getFunction(receptorAtomTypes[p], probeAtomType);
+			double dist = c.distance(receptor.getCoordinates(p));
+			score+=f.getFGValue(dist)[0];
+		}
+		
+	
+		
+		return score;
+		
+		
+	}
 	
 
-}
+};

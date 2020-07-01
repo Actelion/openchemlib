@@ -321,6 +321,23 @@ public class InteractionAtomTypeCalculator {
 		return type;	
 	}
 	
+	public static int getAtomType(FunctionalGroup fg, int atomicNo, boolean isAromatic, int hybridization,
+			boolean isStabilized) {
+		int type = 0;
+		if(fg!=null) {
+			type+=fg.id<<AtomPropertyShift.FUNCTIONAL_GROUP_SHIFT.getShift();
+		}
+		type+=hybridization << AtomPropertyShift.HYBRID_SHIFT.getShift();
+		if(isStabilized)
+				type += AtomPropertyMask.STABILIZED.getMask();
+		if(isAromatic)
+			type += AtomPropertyMask.AROM.getMask();
+		
+		type+= atomicNo;
+		
+		return type;
+	}
+	
 	public static String getString(int atomType) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(PeriodicTable.symbol(atomType & AtomPropertyMask.ATOMIC_NO.getMask()));
@@ -366,5 +383,26 @@ public class InteractionAtomTypeCalculator {
 			mol.setInteractionAtomType(i, atomType);
 		}
 	}
+	
+	public static int getGenericDonor() {//represents a hydroxyl group
+		return getAtomType(null, 8, false, 3,
+			false);
+	}
+	
+	public static int getGenericAcceptor() {//represents a hydroxyl group
+		return getAtomType(null, 8, false, 3,
+			false);
+	}
+	
+	public static int getGenericPosCharge() {//represents sp3 primary amine
+		return getAtomType(null, 7, false, 3,
+			false);
+	}
+	
+	public static int getGenericNegCharge() {//represents a carboxylate oxygen
+		return getAtomType(FunctionalGroup.CARBOXYL, 8, false, 2,
+			false);
+	}
+	
 }
 	
