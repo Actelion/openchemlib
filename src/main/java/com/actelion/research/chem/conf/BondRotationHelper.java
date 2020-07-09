@@ -207,6 +207,40 @@ public class BondRotationHelper {
 				}
 			}
 		}
+	
+	/**
+	 * rotate torsion angle of a conformer
+	 * @param bond
+	 * @param alpha
+	 * @param conf
+	 */
+	public void rotateSmallerSide(int bond, double alpha, Conformer conf) {
+		if(!isRotatableBond(bond))
+			return;
+		int bondIndex=-1;
+		for(int i=0;i<mRotatableBonds.length;i++) {
+			if(mRotatableBonds[i]==bond)
+				bondIndex = i;
+		}
+		if(bondIndex==-1)
+			return;
+		Coordinates t2 = conf.getCoordinates(mTorsionAtoms[bondIndex][2]);
+		Coordinates unit = t2.subC(conf.getCoordinates(mTorsionAtoms[bondIndex][1])).unit();
+		double[][] m = new double[3][3];
+		int rotationCenter = mRotationCenters[bondIndex];
+		PheSAAlignment.getRotationMatrix((rotationCenter == mTorsionAtoms[bondIndex][1]) ? alpha : -alpha,unit,m);
+
+		for (int atom:mSmallerSideAtomLists[bondIndex]) {
+			if (atom != rotationCenter) {
+				double x = conf.getX(atom) - t2.x;
+				double y = conf.getY(atom) - t2.y;
+				double z = conf.getZ(atom) - t2.z;
+				conf.setX(atom, x*m[0][0]+y*m[0][1]+z*m[0][2] + t2.x);
+				conf.setY(atom, x*m[1][0]+y*m[1][1]+z*m[1][2] + t2.y);
+				conf.setZ(atom, x*m[2][0]+y*m[2][1]+z*m[2][2] + t2.z);
+				}
+			}
+		}
 
 
 

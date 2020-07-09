@@ -28,9 +28,24 @@ public class TorsionConstraint implements PotentialEnergyTerm {
 		this.targetValueMax = 2*Math.PI*(targetValue+width)/360.0;
 		if(targetValueMin < 0.0)
 			targetValueMin+=2*Math.PI;
-		if(targetValueMax > 0.0)
-			targetValueMax-=2*Math.PI;
+		if(targetValueMax < 0.0)
+			targetValueMax=2*Math.PI;
 	}
+	
+	double computeDihedralTerm(double dihedral)  {
+		  double dihedralTarget = dihedral;
+		  if (!(dihedral > targetValueMin && dihedral < targetValueMax)
+		      && !(dihedral > targetValueMin && targetValueMin >  targetValueMax)
+		      && !(dihedral < targetValueMax && targetValueMin > targetValueMax)) {
+		    double minDihedralTarget = dihedral - targetValueMin;
+		    double maxDihedralTarget = dihedral - targetValueMax;
+
+		    dihedralTarget = (Math.abs(minDihedralTarget) < Math.abs(maxDihedralTarget)
+		      ? targetValueMin : targetValueMax);
+		  }
+		  double dihedralTerm = dihedral - dihedralTarget;
+		  return dihedralTerm;
+		}
 	
 	
 	
@@ -45,19 +60,11 @@ public class TorsionConstraint implements PotentialEnergyTerm {
 		Coordinates c2 = conf.getCoordinates(a2);
 		Coordinates c3 = conf.getCoordinates(a3);
 		Coordinates c4 = conf.getCoordinates(a4);
-		
 		double dihedral = Coordinates.getDihedral(c1, c2, c3, c4);
 		if(dihedral<0.0)
 			dihedral+=2*Math.PI;
-		
-        double dihedralTerm = 0.0;
-        if(dihedral<targetValueMin)
-            dihedralTerm = dihedral-targetValueMin;
-        else if(dihedral>targetValueMax)
-            dihedralTerm = dihedral-targetValueMax;
-        
+		double dihedralTerm = computeDihedralTerm(dihedral);
         double e = 0.5*dihedralTerm*dihedralTerm*FORCE_CONSTANT;
-
         double dEdPhi = FORCE_CONSTANT*dihedralTerm;
         
         StatisticalTorsionTerm.getCartesianTorsionGradient(torsionAtoms, conf,gradient, dEdPhi,new Coordinates[] {c1,c2,c3,c4},null);

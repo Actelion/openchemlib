@@ -281,5 +281,9 @@ public class MoleculeGrid {
 		
 		return cartCoords;
 	}
+	
+	public int[] getGridSize() {
+		return gridSize;
+	}
 
 }

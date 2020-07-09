@@ -1,5 +1,7 @@
 package com.actelion.research.chem.docking;
 
+import java.util.Random;
+
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
 import com.actelion.research.chem.Coordinates;
@@ -66,6 +68,21 @@ public class DockingUtils {
 		massMatrix.set(2,1,massMatrix.get(1,2));
 		
 		return massMatrix;
+	}
+	
+	public static Coordinates randomVectorInSphere(Random r) {
+		double r1 = 1.0;
+		double r2 = 0.0;
+		double r3 = 0.0;
+		boolean notDone = true;
+		while(notDone) {
+			r1 = -1+2*r.nextDouble();
+			r2 = -1+2*r.nextDouble();
+			r3 = -1+2*r.nextDouble();
+			if(r1*r1+r2*r2+r3*r3<1.0)
+				notDone = false;
+		}
+		return new Coordinates(r1,r2,r3);
 	}
 	
 
