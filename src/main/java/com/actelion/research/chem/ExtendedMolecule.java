@@ -2493,8 +2493,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 */
 	public boolean normalizeAmbiguousBonds() {
 		ensureHelperArrays(cHelperNeighbours);
+
+		// Molecules from Marvin Sketch, if generated from SMILES, may contains delocalized bonds
+		// using the Daylight aromaticity model, e.g. with aromatic carbonyl carbons in case of pyridinone.
+		// Before generating idcodes, we need tp convert to cumulated double bonds and use our own
+		// aromaticity model to locate delocalized bonds.
+		normalizeExplicitlyDelocalizedBonds();
+
 		boolean found = false;
-		
 		for (int atom=0; atom<mAtoms; atom++) {
 			if (mAtomicNo[atom] == 7
 			 && mAtomCharge[atom] == 0) {
@@ -2571,6 +2577,19 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			mValidHelperArrays = cHelperNone;
 
 		return found;
+		}
+
+	/**
+	 * Checks, converts any explicitly delocalized bonds with cBondTypeDelocalized into alternating
+	 * single and double bonds.
+	 * @return
+	 */
+	private boolean normalizeExplicitlyDelocalizedBonds() {
+		for (int bond=0; bond<mBonds; bond++)
+			if (mBondType[bond] == cBondTypeDelocalized)
+				return new AromaticityResolver(this).locateDelocalizedDoubleBonds(null);
+
+		return false;
 		}
 
 	/**

@@ -36,7 +36,7 @@ package com.actelion.research.chem;
 public class AromaticityResolver {
 	ExtendedMolecule	mMol;
 	private boolean		mAllHydrogensAreExplicit;
-	private boolean[]	mIsDelocalizedBond;
+	private boolean[]	mIsDelocalizedAtom,mIsDelocalizedBond;
     private int         mAromaticAtoms,mAromaticBonds,mPiElectronsAdded;
 
     /**
@@ -100,13 +100,13 @@ public class AromaticityResolver {
 
 		mPiElectronsAdded = 0;
 
-		boolean[] isAromaticAtom = new boolean[mMol.getAtoms()];
+		mIsDelocalizedAtom = new boolean[mMol.getAtoms()];
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			if (mIsDelocalizedBond[bond]) {
 				mAromaticBonds++;
 				for (int i=0; i<2; i++) {
-					if (!isAromaticAtom[mMol.getBondAtom(i, bond)]) {
-						isAromaticAtom[mMol.getBondAtom(i, bond)] = true;
+					if (!mIsDelocalizedAtom[mMol.getBondAtom(i, bond)]) {
+						mIsDelocalizedAtom[mMol.getBondAtom(i, bond)] = true;
 						mAromaticAtoms++;
 						}
 					}
@@ -118,7 +118,9 @@ public class AromaticityResolver {
 
 		mAllHydrogensAreExplicit = allHydrogensAreExplicit;
 
-        if (mMol.isFragment())	
+		protectFullValenceAtoms(mayChangeAtomCharges);
+
+        if (mMol.isFragment())
         	promoteDelocalizedChains();
 
 		// create small-ring set without aromaticity information
@@ -318,8 +320,22 @@ public class AromaticityResolver {
 		}
 
 
+	private void protectFullValenceAtoms(boolean mayChangeAtomCharges) {
+		for (int atom=0; atom<mMol.getAtoms(); atom++)
+			if (mIsDelocalizedAtom[atom]
+			 && mMol.getLowestFreeValence(atom) == 0
+			 && (!mayChangeAtomCharges
+			  || !mMol.isElectronegative(atom)
+			  || mMol.getAtomCharge(atom) > 0))
+				protectAtom(atom);
+		}
+
+
 	private void protectAtom(int atom) {
-        mAromaticAtoms--;
+		if (mIsDelocalizedAtom[atom]) {
+			mIsDelocalizedAtom[atom] = false;
+			mAromaticAtoms--;
+			}
 		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 			int connBond = mMol.getConnBond(atom, i);
             if (mIsDelocalizedBond[connBond]) {
