@@ -75,4 +75,12 @@ public interface VDWRadii {
 			1.37f, 1.36f, 1.43f, 1.62f, // Cn,Uut,Fl,Uup
 			1.75f, 1.65f, 1.57f         // Lv, Uus, Uuo
 	};
+
+	public static float getVDWRadius(int atomicNo) {
+		return VDW_RADIUS[atomicNo < VDW_RADIUS.length ? atomicNo : 6]; // we assume some kind of carbon from the MDL special types
+	}
+
+	public static float getCovalentRadius(int atomicNo) {
+		return COVALENT_RADIUS[atomicNo < COVALENT_RADIUS.length ? atomicNo : 6]; // we assume some kind of carbon from the MDL special types
+	}
 }
