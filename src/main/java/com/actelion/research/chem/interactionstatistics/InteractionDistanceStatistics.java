@@ -82,6 +82,7 @@ public class InteractionDistanceStatistics {
 	
 	private InteractionDistanceStatistics() {
 		interactionStatistics = new ConcurrentHashMap<Long,int[]>();
+		initialize();
 
 	}
 	

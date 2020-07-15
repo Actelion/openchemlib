@@ -200,18 +200,20 @@ public class PDBFileParser {
 
 
         int indexLine = 0;
-
-        String lHeader = liRaw.get(0);
-
-        if(lHeader.startsWith(TAG_HEADER))
-        	indexLine = parseHeader(lHeader, pdbCoordEntryFile);
-
         
+        String lHeader = liRaw.get(indexLine);
+
+        if(lHeader.startsWith(TAG_HEADER)) {
+        	try {
+        		indexLine = parseHeader(lHeader, pdbCoordEntryFile);}
+        	catch(Exception e) {
+        		indexLine++;
+        	}
+    	}
         String data = liRaw.get(indexLine);
-        
 	    while((!data.startsWith(TAG_ATOM) && !data.startsWith(TAG_HETATM)) && indexLine<liRaw.size()-1) {
 	        // Not mandatory
-	        if(liRaw.get(indexLine).startsWith(TAG_OBSOLTE)) {
+	    	if(liRaw.get(indexLine).startsWith(TAG_OBSOLTE)) {
 	            SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_OBSOLTE);
 	            pdbCoordEntryFile.setObsolete(siIndex.getKey());
 	            indexLine = siIndex.getValue();
@@ -321,7 +323,7 @@ public class PDBFileParser {
 	            pdbCoordEntryFile.setJrnl(liIndex.getLi());
 	            indexLine = liIndex.getId();
 	        }
-	
+	        /*
 	        remarkParser.parse(liRaw, indexLine);
 	
 	        HashMap<Integer, String> hmNo_Remark = remarkParser.getHmNo_Remark();
@@ -329,6 +331,7 @@ public class PDBFileParser {
 	        indexLine = remarkParser.getIndexLine();
 	
 	        pdbCoordEntryFile.setRemarks(hmNo_Remark);
+	        */
 	
 	        // Mandatory for all polymers.
 	        if(liRaw.get(indexLine).startsWith(TAG_DBREF)) {
@@ -515,9 +518,12 @@ public class PDBFileParser {
 	        // Parsing atoms and their coordinates
 	        //
 	    }
+	    
+	    indexLine--;
         List<AtomRecord> hetAtomRecords = new ArrayList<AtomRecord>();
         List<AtomRecord> protAtomRecords = new ArrayList<AtomRecord>();
         modelParser.parse(liRaw, indexLine,protAtomRecords,hetAtomRecords);
+
         pdbCoordEntryFile.setProtAtomRecords(protAtomRecords);
         pdbCoordEntryFile.setHetAtomRecords(hetAtomRecords);
         //List<ModelModel> liModelModel = modelParser.getLiModelModel();
@@ -528,6 +534,8 @@ public class PDBFileParser {
         // Parsing atom connections
         //
         
+
+        
         List<int[]> bonds = new ArrayList<int[]>();
         
         if(liRaw.get(indexLine).startsWith(TAG_CONECT)) {
@@ -535,6 +543,7 @@ public class PDBFileParser {
             for(String bondInfo:liIndex.getLi()) {
             	bondInfo = bondInfo.trim();
             	String[] strArr = bondInfo.split("\\s+");
+            	try {
             	int firstAtom = Integer.parseInt(strArr[0]);
             	IntStream.range(1,strArr.length).forEach(e -> {
             		int[] bond = new int[2];
@@ -542,24 +551,26 @@ public class PDBFileParser {
             		bond[1] = Integer.parseInt(strArr[e]);
             		bonds.add(bond);
             	});
+            	}
+            	catch(Exception e) {
+            		continue;
+            	}
+
             }
             indexLine = liIndex.getId();
         }
-        
         pdbCoordEntryFile.setLiConnect(bonds);
-
 
         if(liRaw.get(indexLine).startsWith(TAG_MASTER)) {
             pdbCoordEntryFile.setMaster(liRaw.get(indexLine).substring(10).trim());
             indexLine++;
         } 
-
         if(liRaw.get(indexLine).startsWith(TAG_END)) {
             pdbCoordEntryFile.setEnd(true);
         } else {
             pdbCoordEntryFile.setEnd(false);
         }
-
+        
         return pdbCoordEntryFile;
 
     }
@@ -711,6 +722,7 @@ public class PDBFileParser {
 
             int numResiduesLine = Integer.parseInt(l.substring(13,17).trim());
 
+
             if(!chainId.equals(chainIdLine)) {
 
                 String chain = sb.toString();
@@ -727,11 +739,11 @@ public class PDBFileParser {
             if(sb.length()>0){
                 sb.append(" ");
             }
-
+            /*
             if(numResidues!=numResiduesLine) {
                 throw new RuntimeException("Number of residues differs!");
             }
-
+			*/
             String chainLine = l.substring(19).trim();
             sb.append(chainLine);
 
