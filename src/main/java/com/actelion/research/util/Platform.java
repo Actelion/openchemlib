@@ -56,7 +56,7 @@ public class Platform
 
     private static Properties PATH_PROPERTIES = null;
 
-    private static String WINPATH = "\\\\actelch02\\pgm\\ActelionResearch";
+    private static String WINPATH = "\\\\idorsia.com\\app\\DDSC\\config";
     private static String WINPROPERTIES = WINPATH + "\\ApplicationDatabase.db";
 
     private static final String[][] MACINTOSH_APPLICATION_NAME = { { "orbit" , "Orbit Image Analysis" },

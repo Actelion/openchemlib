@@ -77,7 +77,15 @@ public class StructureAssembler {
 				groups.put(s, li);
 			}
 		});
-		bondList.forEach(b -> processBond(b)); //put bonded molecules/fragments to same group
+		for(int[] bond : bondList) {
+			try {
+				 processBond(bond);
+			}
+			catch(Exception e) {
+				continue;
+			}
+			
+		}
 		
 			
 	

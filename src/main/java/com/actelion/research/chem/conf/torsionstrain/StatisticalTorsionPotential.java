@@ -68,7 +68,6 @@ public class StatisticalTorsionPotential {
 				database = DATABASE_COD;
 			}
 		}
-		System.out.println(database);
 		
 		BufferedReader torsionIDReader = new BufferedReader(new InputStreamReader(TorsionDB.class.getResourceAsStream(
 				BASE_PATH+database+TORSION_IDS_FILE)));

@@ -90,8 +90,8 @@ public class Residue {
 			fragment.setAtomZ(atom,record.getZ());
 		}
 		try {
-			BondsCalculator.createBonds(fragment, true, null);
-			BondsCalculator.calculateBondOrders(fragment, true);
+			BondsCalculator.createBonds(fragment, true);
+			BondsCalculator.calculateBondOrders(fragment);
 		} catch (Exception e) {
 			System.err.println("Cannot process structure");
 		}

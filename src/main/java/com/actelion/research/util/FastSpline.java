@@ -94,7 +94,7 @@ public final class FastSpline {
     /**
      * Compute the value for the function.
      */
-    public final double value(double v) {    	
+    public final double value(double v) throws ArrayIndexOutOfBoundsException {    	
         int i = Arrays.binarySearch(knots, v);
         if (i < 0) i = -i - 2;
         if (i < 0) i = 0; 

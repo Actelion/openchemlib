@@ -19,6 +19,7 @@ package com.actelion.research.chem.io.pdb.converter;
 
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
 
 import java.util.Set;
 import java.util.TreeSet;
@@ -30,14 +31,19 @@ import java.util.TreeSet;
  */
 public class MoleculeGrid {
 	
-	private final StereoMolecule mol;
-	private final double gridWidth;
-	private final Coordinates min;
-	private final int[] gridSize = new int[3];
-	private final Set<Integer>[][][] grid;
+	protected final StereoMolecule mol;
+	protected final double gridWidth;
+	protected final Coordinates min;
+	protected final Coordinates max;
+	protected final int[] gridSize = new int[3];
+	protected final Set<Integer>[][][] grid;
 	
 	public MoleculeGrid(StereoMolecule mol) {
-		this(mol, 1.1);
+		this(mol, 1.1,new Coordinates(0.0,0.0,0.0),true);
+	}
+	
+	public MoleculeGrid(StereoMolecule mol, boolean includeHydrogens) {
+		this(mol, 1.1,new Coordinates(0.0,0.0,0.0),includeHydrogens);
 	}
 
 	/**
@@ -45,21 +51,36 @@ public class MoleculeGrid {
 	 * @param mol
 	 */
 	@SuppressWarnings("unchecked")
-	public MoleculeGrid(StereoMolecule mol, double gridWidth) {
+	public MoleculeGrid(StereoMolecule mol, double gridWidth, Coordinates extension, boolean includeHydrogens) {
 		this.mol = mol;
 		this.gridWidth = gridWidth;
 		//1. Find the Molecule's bounds
 		Coordinates[] bounds = GeometryCalculator.getBounds(mol);
+		
 		min = bounds[0];
+		max = bounds[1];
+		
+		min.x -= extension.x;
+		min.y -= extension.y;
+		min.z -= extension.z;
+		
+		max.x += extension.x;
+		max.y += extension.y;
+		max.z += extension.z;
 		
 		//2. Creates the grid 
-		gridSize[0] = (int)((bounds[1].x-bounds[0].x)/gridWidth)+1;
-		gridSize[1] = (int)((bounds[1].y-bounds[0].y)/gridWidth)+1;
-		gridSize[2] = (int)((bounds[1].z-bounds[0].z)/gridWidth)+1;
+		gridSize[0] = (int)((max.x-min.x)/gridWidth)+1;
+		gridSize[1] = (int)((max.y-min.y)/gridWidth)+1;
+		gridSize[2] = (int)((max.z-min.z)/gridWidth)+1;
 		grid = new Set[Math.max(0, gridSize[0])][Math.max(0, gridSize[1])][Math.max(0, gridSize[2])];		
 		
 		//3. Put each atom in the grid
-		for (int i = 0; i < mol.getAllAtoms(); i++) {
+		int atoms = 0;
+		if(includeHydrogens) 
+			atoms = mol.getAllAtoms();
+		else 
+			atoms = mol.getAtoms();
+		for (int i = 0; i < atoms; i++) {
 			int x = (int)((mol.getAtomX(i)-min.x)/gridWidth);
 			int y = (int)((mol.getAtomY(i)-min.y)/gridWidth);
 			int z = (int)((mol.getAtomZ(i)-min.z)/gridWidth);			
@@ -249,6 +270,40 @@ public class MoleculeGrid {
 			}
 		}
 		
+	}
+	
+	public     Set<Integer> getNeighbours(Molecule mol, int atom, double maxDist) {
+        return getNeighbours(mol, atom, maxDist, false);
+    }
+	
+	 public Set<Integer> getNeighbours(Molecule mol, int atom, double maxDist, boolean enforceDist) {
+	        Set<Integer> res = getNeighbours(mol.getCoordinates(atom), maxDist, enforceDist);
+	        res.remove(Integer.valueOf(atom));
+	        return res;
+	    }
+	
+	public int[] getGridCoordinates(Coordinates c) {
+		int[] gridCoords = new int[3];
+		gridCoords[0] = (int)((c.x-min.x)/gridWidth);
+		gridCoords[1] = (int)((c.y-min.y)/gridWidth);
+		gridCoords[2] = (int)((c.z-min.z)/gridWidth);	
+		return gridCoords;
+	}
+	
+	public Coordinates getCartCoordinates(int[] gridCoords) {
+		int gridX = gridCoords[0];
+		int gridY = gridCoords[1];
+		int gridZ = gridCoords[2];
+		Coordinates cartCoords = new Coordinates();
+		cartCoords.x = min.x + gridX*gridWidth;
+		cartCoords.y = min.y + gridY*gridWidth;
+		cartCoords.z = min.z + gridZ*gridWidth;
+		
+		return cartCoords;
+	}
+	
+	public int[] getGridSize() {
+		return gridSize;
 	}
 
 }
