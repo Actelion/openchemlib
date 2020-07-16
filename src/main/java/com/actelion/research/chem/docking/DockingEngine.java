@@ -33,7 +33,7 @@ public class DockingEngine {
 	private Random random;
 	
 	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand, int mcSteps, int startPositions) {
-		grid = new MoleculeGrid(nativeLigand, 0.5, new Coordinates(8.0,8.0,8.0));
+		grid = new MoleculeGrid(nativeLigand, 0.5, new Coordinates(8.0,8.0,8.0),false);
 		MolecularVolume molVol = new MolecularVolume(nativeLigand);
 		origCOM  = new Coordinates(molVol.getCOM());
 		Conformer conf = new Conformer(nativeLigand);

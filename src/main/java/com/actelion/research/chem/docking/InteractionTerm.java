@@ -93,16 +93,11 @@ public class InteractionTerm implements PotentialEnergyTerm {
 			
 				double deddt = (rik<=1? -10 : de) / rik;
 				cr.scale(deddt);
-				if(atoms[1]<gradient.length) {
-					gradient[3*atoms[1]]-= cr.x;
-					gradient[3*atoms[1]+1]-= cr.y;
-					gradient[3*atoms[1]+2]-= cr.z;
-				}
-				if(atoms[0]<gradient.length) {
-					gradient[3*atoms[0]]+= cr.x;
-					gradient[3*atoms[0]+1]+= cr.y;
-					gradient[3*atoms[0]+2]+= cr.z;
-				}
+	
+				gradient[3*atoms[1]]+= cr.x;
+				gradient[3*atoms[1]+1]+= cr.y;
+				gradient[3*atoms[1]+2]+= cr.z;
+				
 			}	
 			
 

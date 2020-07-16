@@ -318,17 +318,27 @@ public class IO {
 	 * @return base name without extension.
 	 */
 	public static String getBaseName(String str) {
-		
-		int iIndexStart = str.lastIndexOf(SEP) + 1;
-		
-		int iIndexEnd = str.lastIndexOf('.');
-		
+
+		File fi = new File(str);
+
+		String name = fi.getName();
+
+		int iIndexStart = name.lastIndexOf('\\');
+		if(iIndexStart==-1){
+			iIndexStart = name.lastIndexOf(File.separator);
+		}
+		if(iIndexStart==-1){
+			iIndexStart = 0;
+		}
+
+		int iIndexEnd = name.lastIndexOf('.');
+
 		String sBaseName = "";
 				
 		if(iIndexEnd == -1)
-			iIndexEnd = str.length();
+			iIndexEnd = name.length();
 				
-		sBaseName = str.substring(iIndexStart, iIndexEnd);
+		sBaseName = name.substring(iIndexStart, iIndexEnd);
 		
 		return sBaseName;
 	}
