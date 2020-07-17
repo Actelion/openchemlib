@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -59,10 +58,17 @@ public class Platform
     private static String WINPATH = "\\\\idorsia.com\\app\\DDSC\\config";
     private static String WINPROPERTIES = WINPATH + "\\ApplicationDatabase.db";
 
-    private static final String[][] MACINTOSH_APPLICATION_NAME = { { "orbit" , "Orbit Image Analysis" },
-    															   { "datawarrior", "DataWarrior" },
-    															   { "actelion3d", "Actelion3D" },
-                                                                   { "spirit", "Spirit Database" } };
+    private static final String[] WINDOWS_APP_DIR = { "C:\\Program Files\\", "C:\\Program Files (x86)\\" };
+
+	private static final String[][] WINDOWS_APPL_NAME = { { "datawarrior" , "DataWarrior\\DataWarrior.exe" },
+														  { "orbit" , "Orbit\\Orbit.exe" },
+														  { "pymol" , "PyMOL\\pymol.exe" } };
+
+    private static final String[][] MACINTOSH_APP_NAME = { { "orbit" , "Orbit Image Analysis" },
+    													   { "datawarrior", "DataWarrior" },
+    													   { "actelion3d", "Actelion3D" },
+                                                           { "pymol", "PyMol" },
+														   { "spirit", "Spirit Database" } };
 
     public static boolean isWindows()
     {
@@ -178,8 +184,25 @@ public class Platform
     {
         String res = name;
         if (isWindows()) {
-            try {
-                //load a properties file
+            for (String[] appKeyAndName: WINDOWS_APPL_NAME) {
+	            if (appKeyAndName[0].equals(name)) {
+		            for (String appDir: WINDOWS_APP_DIR) {
+			            String path = appDir.concat(appKeyAndName[1]);
+			            if (new File(path).exists())
+				            return path;
+		            }
+	            }
+            }
+
+            // If we don't have it predefined, just try C:\Program Files\name\name.exe
+	        for (String appDir: WINDOWS_APP_DIR) {
+		        String path = appDir.concat(name).concat("\\").concat(name).concat(".exe");
+		        if (new File(path).exists())
+			        return path;
+	        }
+
+	        try {
+                //If no local exe is found, load a properties file
                 if (PATH_PROPERTIES == null) {
                     PATH_PROPERTIES = new Properties();
                     PATH_PROPERTIES.load(new FileInputStream(WINPROPERTIES));
@@ -192,7 +215,7 @@ public class Platform
             }
         }
         if (isMacintosh()) {
-        	for (String[] appKeyAndName:MACINTOSH_APPLICATION_NAME) {
+        	for (String[] appKeyAndName: MACINTOSH_APP_NAME) {
         		if (appKeyAndName[0].equals(name)) {
         		    // we assume that the name of the launcher is equal to parameter name
                     String path = "/Applications/"+appKeyAndName[1]+".app/Contents/MacOS/"+name;
