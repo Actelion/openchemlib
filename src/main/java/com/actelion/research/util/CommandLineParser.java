@@ -116,6 +116,11 @@ public class CommandLineParser {
         return Integer.parseInt(get(command));
     }
 
+    /**
+     * Use contains(...) if only the flag is used.
+     * @param command
+     * @return
+     */
     public boolean getAsBoolean(String command) {
         return Boolean.parseBoolean(get(command));
     }
