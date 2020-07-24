@@ -121,6 +121,11 @@ public class ConstantsDWAR {
 	public static final String TAG_COOR3D = "idcoordinates3D";
 
 	/**
+	 * Contains the idcode and the 3d coordinates.
+	 */
+	public static final String TAG_CONFORMERSET = "conformerSet";
+
+	/**
 	 * For the PheSA single conf
 	 */
 	public static final String TAG_COOR3D_SINGLE_CONF = "idcoordinates3DSingleConf";
