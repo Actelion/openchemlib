@@ -2,6 +2,7 @@ package com.actelion.research.chem.descriptor.flexophore.completegraphmatcher;
 
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.graph.MinimumSpanningTree;
+import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.util.Formatter;
@@ -104,6 +105,15 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	private double similarity;
 
 	private SlidingWindowDistHist slidingWindowDistHist;
+
+	public ObjectiveFlexophoreHardMatchUncovered(){
+		this(DescriptorHandlerFlexophore.VERSION_INTERACTION_TABLES,
+				DescriptorHandlerFlexophore.MODE_PPNODE_SIMILARITY_COMPARISON,
+				DescriptorHandlerFlexophore.THRESH_SIMILARITY_COMPARISON_NODE, THRESH_HISTOGRAM_SIMILARITY);
+
+	}
+
+
 
 	public ObjectiveFlexophoreHardMatchUncovered(
 			int versionInteractionTable,
