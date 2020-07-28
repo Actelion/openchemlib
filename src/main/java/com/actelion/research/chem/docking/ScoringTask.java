@@ -9,6 +9,7 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.docking.scoring.idoscore.InteractionTerm;
 import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
 import com.actelion.research.chem.interactionstatistics.SplineFunction;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;

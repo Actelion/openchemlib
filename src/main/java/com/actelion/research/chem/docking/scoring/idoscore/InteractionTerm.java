@@ -15,7 +15,7 @@
  *
  * @author Joel Freyss
  */
-package com.actelion.research.chem.docking;
+package com.actelion.research.chem.docking.scoring.idoscore;
 
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -42,8 +42,7 @@ public class InteractionTerm implements PotentialEnergyTerm {
 
 	//Taper to the null function close to cutoff distance
 	private final static double CUTOFF = InteractionDistanceStatistics.CUTOFF_RADIUS - InteractionDistanceStatistics.BIN_SIZE;
-	
-	public double rik2;
+	private final static double CUTOFF_SQ = CUTOFF*CUTOFF;
 	private double energy;
 	private double factor;
 	private Conformer ligand;
@@ -76,9 +75,9 @@ public class InteractionTerm implements PotentialEnergyTerm {
 		final Coordinates ci = receptor.getCoordinates(atoms[0]);		
 		final Coordinates ck = ligand.getCoordinates(atoms[1]);				
 		final Coordinates cr = ci.subC(ck);
-		rik2 = cr.distSq();		
+		double rik2 = cr.distSq();		
 		double rik = 0.0;
-		if(rik2>CUTOFF*CUTOFF) {
+		if(rik2>CUTOFF_SQ) {
 			energy = 0; 
 		} else {
 			double de=0;
@@ -93,16 +92,16 @@ public class InteractionTerm implements PotentialEnergyTerm {
 			
 				double deddt = (rik<=1? -10 : de) / rik;
 				cr.scale(deddt);
-				if(atoms[1]<gradient.length) {
-					gradient[3*atoms[1]]-= cr.x;
-					gradient[3*atoms[1]+1]-= cr.y;
-					gradient[3*atoms[1]+2]-= cr.z;
-				}
-				if(atoms[0]<gradient.length) {
-					gradient[3*atoms[0]]+= cr.x;
-					gradient[3*atoms[0]+1]+= cr.y;
-					gradient[3*atoms[0]+2]+= cr.z;
-				}
+				
+				gradient[3*atoms[1]]-= cr.x;
+				gradient[3*atoms[1]+1]-= cr.y;
+				gradient[3*atoms[1]+2]-= cr.z;
+				
+				
+				gradient[3*atoms[0]]+= cr.x;
+				gradient[3*atoms[0]+1]+= cr.y;
+				gradient[3*atoms[0]+2]+= cr.z;
+				
 			}	
 			
 

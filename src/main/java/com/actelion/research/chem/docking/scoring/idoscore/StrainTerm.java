@@ -1,4 +1,4 @@
-package com.actelion.research.chem.docking;
+package com.actelion.research.chem.docking.scoring.idoscore;
 
 import java.util.ArrayList;
 import java.util.List;
