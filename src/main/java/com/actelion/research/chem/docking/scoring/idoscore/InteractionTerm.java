@@ -92,22 +92,13 @@ public class InteractionTerm implements PotentialEnergyTerm {
 			
 				double deddt = (rik<=1? -10 : de) / rik;
 				cr.scale(deddt);
-<<<<<<< HEAD:src/main/java/com/actelion/research/chem/docking/scoring/idoscore/InteractionTerm.java
+
 				
 				gradient[3*atoms[1]]-= cr.x;
 				gradient[3*atoms[1]+1]-= cr.y;
 				gradient[3*atoms[1]+2]-= cr.z;
-				
-				
-				gradient[3*atoms[0]]+= cr.x;
-				gradient[3*atoms[0]+1]+= cr.y;
-				gradient[3*atoms[0]+2]+= cr.z;
-=======
-	
-				gradient[3*atoms[1]]+= cr.x;
-				gradient[3*atoms[1]+1]+= cr.y;
-				gradient[3*atoms[1]+2]+= cr.z;
->>>>>>> a1549058513c8d513e00a3310375aaeef9cbeefb:src/main/java/com/actelion/research/chem/docking/InteractionTerm.java
+			
+
 				
 			}	
 			
