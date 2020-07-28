@@ -4,6 +4,7 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.conf.ConformerSetGenerator;

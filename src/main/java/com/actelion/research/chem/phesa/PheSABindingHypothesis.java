@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer;
 
 
 

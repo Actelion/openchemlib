@@ -20,20 +20,20 @@ import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalcu
  */
 
 public class SymmetryCorrectedRMSDCalculator {
-	private StereoMolecule mol1;
-	private StereoMolecule mol2;
+	private Conformer conf1;
+	private Conformer conf2;
 	
-	public SymmetryCorrectedRMSDCalculator(StereoMolecule mol1, StereoMolecule mol2) {
-		this.mol1 = mol1;
-		this.mol2 = mol2;
+	public SymmetryCorrectedRMSDCalculator(Conformer conf1, Conformer conf2) {
+		this.conf1 = conf1;
+		this.conf2 = conf2;
 	}
 	
 	public double calculate() {
 		int[][] assignments = getAssignments();
 		double rmsd = 0.0;
 		for(int[] pair : assignments) { 
-			Coordinates c1 = mol1.getCoordinates(pair[0]);
-			Coordinates c2 = mol2.getCoordinates(pair[1]);
+			Coordinates c1 = conf1.getCoordinates(pair[0]);
+			Coordinates c2 = conf2.getCoordinates(pair[1]);
 			rmsd+=c1.distanceSquared(c2);
 		}
 		rmsd/=assignments.length;
@@ -51,8 +51,8 @@ public class SymmetryCorrectedRMSDCalculator {
 	
 	private int[][] getAssignments() {
 		List<int[]> assignments = new ArrayList<>();
-		Integer[] atomTypes1 = getAtomTypes(mol1);
-		Integer[] atomTypes2 = getAtomTypes(mol2);
+		Integer[] atomTypes1 = getAtomTypes(conf1.getMolecule());
+		Integer[] atomTypes2 = getAtomTypes(conf2.getMolecule());
 		Set<Integer> uniqueAtomTypes1 = new HashSet<>();
 		Collections.addAll(uniqueAtomTypes1, atomTypes1);
 		Set<Integer> uniqueAtomTypes2 = new HashSet<>();
@@ -77,7 +77,7 @@ public class SymmetryCorrectedRMSDCalculator {
 			for(int occ1 : occurences1) { 
 				int counter2 = 0;
 				for(int occ2 : occurences2) {
-					double distSq = mol1.getCoordinates(occ1).distanceSquared(mol2.getCoordinates(occ2));
+					double distSq = conf1.getCoordinates(occ1).distanceSquared(conf2.getCoordinates(occ2));
 					costMatrix[counter1][counter2] = distSq;
 					costMatrix[counter2][counter1] = distSq;
 					counter2++;

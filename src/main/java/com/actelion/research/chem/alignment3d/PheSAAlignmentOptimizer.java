@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa;
+package com.actelion.research.chem.alignment3d;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +11,9 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.phesa.MolecularVolume;
+import com.actelion.research.chem.phesa.PheSAAlignment;
+import com.actelion.research.chem.phesa.PheSAMolecule;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangle;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleCreator;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleMatcher;
