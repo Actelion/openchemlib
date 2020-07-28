@@ -34,6 +34,7 @@
 package com.actelion.research.util;
 
 import java.io.File;
+import java.nio.file.NotDirectoryException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -96,6 +97,17 @@ public class CommandLineParser {
         return new File(get(command));
     }
 
+    public File getAsDir(String command) throws NotDirectoryException {
+
+        File d = getAsFile(command);
+
+        if(!d.isDirectory()){
+            throw new NotDirectoryException("Not a dir " + d.getAbsolutePath());
+        }
+
+        return d;
+    }
+
     public double getAsDouble(String command) {
         return Double.parseDouble(get(command));
     }
@@ -104,6 +116,11 @@ public class CommandLineParser {
         return Integer.parseInt(get(command));
     }
 
+    /**
+     * Use contains(...) if only the flag is used.
+     * @param command
+     * @return
+     */
     public boolean getAsBoolean(String command) {
         return Boolean.parseBoolean(get(command));
     }

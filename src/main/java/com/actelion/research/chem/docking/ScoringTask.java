@@ -26,10 +26,9 @@ public class ScoringTask {
 	 * @return
 	 */
 	public static double calcScore(StereoMolecule receptor, StereoMolecule ligand, int[] receptorAtomTypes, int[] ligandAtomTypes) {
-		InteractionDistanceStatistics.getInstance().initialize();
 		Set<Integer> receptorAtoms = new HashSet<Integer>(); 
 		List<InteractionTerm> terms = new ArrayList<InteractionTerm>();
-		MoleculeGrid molGrid = new MoleculeGrid(receptor);
+		MoleculeGrid molGrid = new MoleculeGrid(receptor,false);
 		for(int l=0;l<ligand.getAtoms();l++) 
 			receptorAtoms.addAll(molGrid.getNeighbours(ligand.getCoordinates(l), InteractionDistanceStatistics.CUTOFF_RADIUS));
 		
@@ -42,7 +41,7 @@ public class ScoringTask {
 		}
 		
 		double score = 0.0;
-		double[] gradient = new double[3*ligand.getAllAtoms()];
+		double[] gradient = new double[3*ligand.getAtoms()];
 		for(InteractionTerm term : terms) {
 			if(term!=null) {
 			//System.out.println(score);

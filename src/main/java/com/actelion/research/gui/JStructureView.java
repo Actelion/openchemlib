@@ -43,6 +43,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 
     private static final String ITEM_COPY = "Copy Structure";
 	private static final String ITEM_PASTE = "Paste Structure";
+	private static final String ITEM_CLEAR = "Clear Structure";
 
     private ArrayList<StructureListener> mListener;
 	private String mIDCode;
@@ -336,21 +337,32 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 				structureChanged();
 				}
 			}
+		if (e.getActionCommand().equals(ITEM_CLEAR)) {
+			mMol.deleteMolecule();
+			mDisplayMol = mMol;
+			structureChanged();
+			}
 		}
 
 	private void handlePopupTrigger(MouseEvent e) {
 		if (mMol != null && e.isPopupTrigger() && mClipboardHandler != null) {
 			JPopupMenu popup = new JPopupMenu();
 
-			if (mMol.getAllAtoms() != 0) {
-				JMenuItem item = new JMenuItem(ITEM_COPY);
-				item.addActionListener(this);
-				popup.add(item);
-				}
+			JMenuItem item1 = new JMenuItem(ITEM_COPY);
+			item1.addActionListener(this);
+			item1.setEnabled(mMol.getAllAtoms() != 0);
+			popup.add(item1);
 
-			JMenuItem item = new JMenuItem(ITEM_PASTE);
-			item.addActionListener(this);
-			popup.add(item);
+			JMenuItem item2 = new JMenuItem(ITEM_PASTE);
+			item2.addActionListener(this);
+			popup.add(item2);
+
+			popup.addSeparator();
+
+			JMenuItem item3 = new JMenuItem(ITEM_CLEAR);
+			item3.addActionListener(this);
+			item3.setEnabled(mMol.getAllAtoms() != 0);
+			popup.add(item3);
 
 			popup.show(this, e.getX(), e.getY());
 			}
