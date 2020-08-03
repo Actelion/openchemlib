@@ -143,6 +143,8 @@ public interface CompoundTableConstants {
     String cColumnPropertyLookupCount = "lookupCount";
     String cColumnPropertyLookupName = "lookupName";
     String cColumnPropertyLookupURL = "lookupURL";
+    String cColumnPropertyLookupFilter = "lookupFilter";
+    String cColumnPropertyLookupFilterRemoveMinus = "lookupFilterRemoveMinus";
     String cColumnPropertyLookupEncode = "lookupEncode";
     String cColumnPropertyLookupDetailURL = "lookupDetailURL";
     String cColumnPropertyLaunchCount = "launchCount";
