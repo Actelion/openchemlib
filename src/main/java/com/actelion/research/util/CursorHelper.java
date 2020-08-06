@@ -51,8 +51,9 @@ public class CursorHelper {
     public static final int cInvisibleCursor = 10;
 	public static final int cPointerCursor = 11;
 	public static final int cTextCursor = 12;
+	public static final int cPointedHandCursor = 13;
 
-	private static final int cCursorCount = 13;
+	private static final int cCursorCount = 14;
 
 	private static final int[][] cCursorData = { {
 		0xaaa2aaaa, 0xaa84aaaa, 0xaa152aa2, 0xa8514a84, 0xa1485214,
@@ -150,6 +151,8 @@ public class CursorHelper {
 				return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
 			case cTextCursor:
 				return Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
+			case cPointedHandCursor:
+				return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 				}
 			}
 		return null;

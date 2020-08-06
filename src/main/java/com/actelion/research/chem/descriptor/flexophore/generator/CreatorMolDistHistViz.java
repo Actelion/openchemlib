@@ -117,6 +117,9 @@ public class CreatorMolDistHistViz {
 
         molInPlace.ensureHelperArrays(Molecule.cHelperRings);
 
+        conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
+
+
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
 
         //
@@ -154,7 +157,6 @@ public class CreatorMolDistHistViz {
             injectNewSeed();
         }
 
-        conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
 
         int nAtoms = molInPlace.getAtoms();
 

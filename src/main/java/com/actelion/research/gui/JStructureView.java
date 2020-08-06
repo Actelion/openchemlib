@@ -49,7 +49,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	private String mIDCode;
 	private StereoMolecule mMol,mDisplayMol;
     private Depictor2D mDepictor;
-	private boolean mShowBorder, mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis;
+	private boolean mShowBorder, mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mOpaqueBackground;
 	private int mChiralTextPosition,mDisplayMode;
 	private String[] mAtomText;
 	private IClipboardHandler mClipboardHandler;
@@ -139,6 +139,10 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	    mDisplayMode = mode;
 	    }
 
+	public void setOpaqueBackground(boolean b) {
+		mOpaqueBackground = b;
+		}
+
 	/**
 	 * Defines additional atom text to be displayed in top right
 	 * position of some/all atom labels. If the atom is charged, then
@@ -191,6 +195,14 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+        if (mOpaqueBackground) {
+        	Color fg = g2.getColor();
+	        g2.setColor(UIManager.getColor(isEnabled() ? "TextField.background" : "TextField.inactiveBackground"));
+	        g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
+	        g2.setColor(fg);
+            }
+
 		if (mDisplayMol != null && mDisplayMol.getAllAtoms() != 0) {
 			mDepictor = new Depictor2D(mDisplayMol);
             mDepictor.setDisplayMode(mDisplayMode);
