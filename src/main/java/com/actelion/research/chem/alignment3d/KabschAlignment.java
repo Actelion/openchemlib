@@ -28,7 +28,12 @@ public class KabschAlignment {
 		this.coords2 = coords2;
 		this.mapping = mapping;
 	}
-	
+	/**
+	 * first conformer is the reference, second conformer is rotated and translated
+	 * to minimize the RMSD
+	 * @param conf1
+	 * @param conf2
+	 */
 	public KabschAlignment(Conformer conf1, Conformer conf2) {
 		this(conf1.getCoordinates(), conf2.getCoordinates(),
 				IntStream.range(0, conf1.getMolecule().getAtoms()).mapToObj(e -> new int[]{e,e}).toArray(int[][]::new));
@@ -48,8 +53,11 @@ public class KabschAlignment {
 	}
 	
 	public void align() {
+		align(new Coordinates(), new Matrix(3,3), new Coordinates());
+	}
+	
+	public void align(Coordinates trans1, Matrix rot, Coordinates trans2) {
 		
-
 		com1 = getCOM(coords1);
 		com2 = getCOM(coords2);
 		for(Coordinates c1 : coords1)
@@ -57,6 +65,10 @@ public class KabschAlignment {
 		
 		for(Coordinates c2 : coords2)
 			c2.sub(com2);
+		
+		trans1 = com2.scaleC(-1.0);
+		trans2 = new Coordinates(com1);
+
 		
 		Matrix m = new Matrix(3,3);
 		double [][] c1 = Arrays.stream(coords1).map(e -> new double[] {e.x,e.y,e.z}).toArray(double[][]::new);
@@ -84,7 +96,6 @@ public class KabschAlignment {
 		ma.set(1,1,1.0);
 		ma.set(2,2,det);
 		
-		Matrix rot = new Matrix(3,3);
 		
 		rot = ma.multiply(ut);
 		rot = v.multiply(rot);
@@ -95,7 +106,7 @@ public class KabschAlignment {
 		
 	    for(Coordinates c : coords2) {
 	    	c.rotate(rot.getArray());
-	    	c.add(com2);
+	    	c.add(com1);
 	    }
 	    
 	    for(Coordinates c : coords1) {
