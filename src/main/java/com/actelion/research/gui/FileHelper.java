@@ -39,11 +39,12 @@ import com.actelion.research.gui.hidpi.HiDPIHelper;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FileHelper extends CompoundFileHelper {
+	private static final long TIME_OUT = 5000;
+
 	private Component mParent;
 
 	public FileHelper(Component parent) {
@@ -72,7 +73,7 @@ public class FileHelper extends CompoundFileHelper {
 
 	public static ArrayList<File> getCompatibleFileList(File directory, int filetypes) {
 		ArrayList<File> list = new ArrayList<>();
-		if (fileExists(directory, 1000)) {
+		if (fileExists(directory)) {
 			javax.swing.filechooser.FileFilter ff = FileHelper.createFileFilter(filetypes, false);
 			for (File file:directory.listFiles((File pathname) -> ff.accept(pathname) ))
 				list.add(file);
@@ -177,8 +178,18 @@ public class FileHelper extends CompoundFileHelper {
 		return (option != JFileChooser.APPROVE_OPTION) ? null : fileChooser.getFile().getPath();
 		}
 
-	// java.io.File.exists() and java.nio.file.Files.exists() may cause minutes of delay,
-	// if a file is/was on a network share which is currently unmounted. This version returns quickly.
+	/**
+	 * java.io.File.exists() and java.nio.file.Files.exists() may cause minutes of delay,
+	 * if a file is/was on a network share which is currently unmounted. This version returns quickly.
+	 */
+	public static boolean fileExists(final File file) {
+		return fileExists(file, TIME_OUT);
+		}
+
+		/**
+		 * java.io.File.exists() and java.nio.file.Files.exists() may cause minutes of delay,
+		 * if a file is/was on a network share which is currently unmounted. This version returns quickly.
+		  */
 	public static boolean fileExists(final File file, final long timeOutMillis) {
 		final AtomicBoolean exists = new AtomicBoolean(false);
 		final AtomicBoolean done = new AtomicBoolean(false);
