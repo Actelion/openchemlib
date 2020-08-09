@@ -6,8 +6,8 @@ import java.util.Map;
 
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
+import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.phesa.AtomicGaussian;
-import com.actelion.research.chem.phesa.Evaluable;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.QuickMathCalculator;

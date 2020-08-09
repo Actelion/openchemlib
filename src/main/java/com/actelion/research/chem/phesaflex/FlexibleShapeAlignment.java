@@ -7,8 +7,8 @@ import java.util.Map;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.forcefield.mmff.PositionConstraint;
+import com.actelion.research.chem.optimization.OptimizerLBFGS;
 import com.actelion.research.chem.phesa.MolecularVolume;
-import com.actelion.research.chem.phesa.OptimizerLBFGS;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 
 

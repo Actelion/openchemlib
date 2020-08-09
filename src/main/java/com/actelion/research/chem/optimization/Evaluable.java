@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa;
+package com.actelion.research.chem.optimization;
 
 public interface Evaluable {
 

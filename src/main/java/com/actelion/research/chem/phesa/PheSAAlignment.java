@@ -2,6 +2,7 @@ package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.optimization.OptimizerLBFGS;
 import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;

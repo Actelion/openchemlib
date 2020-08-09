@@ -2,6 +2,7 @@ package com.actelion.research.chem.phesa;
 
 import java.util.ArrayList;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 
 

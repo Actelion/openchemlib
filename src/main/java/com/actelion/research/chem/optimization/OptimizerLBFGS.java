@@ -30,7 +30,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-package com.actelion.research.chem.phesa;
+package com.actelion.research.chem.optimization;
 
 import java.util.Arrays;
 
