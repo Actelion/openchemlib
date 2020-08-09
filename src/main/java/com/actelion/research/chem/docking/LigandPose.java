@@ -23,7 +23,7 @@ import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalcu
 import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
 import com.actelion.research.chem.interactionstatistics.SplineFunction;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
-import com.actelion.research.chem.phesa.Evaluable;
+import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.Quaternion;
 import com.actelion.research.chem.potentialenergy.AngleConstraint;
@@ -36,8 +36,7 @@ import java.util.AbstractMap.SimpleEntry;
 public class LigandPose implements Evaluable{
 	
 	private static double MOVE_AMPLITUDE = 2.0;
-	private double BUMP_PENALTY = 500;
-	private int BUMP_RADIUS = 3;
+	private static final double BUMP_PENALTY = 5.0;
 	private BondRotationHelper torsionHelper;
 	private List<int[]> ligAtomPairs; //separated by more than 3 bonds for internal strain
 	//private double[] torsionValues;
