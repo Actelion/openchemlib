@@ -1055,12 +1055,17 @@ public class JDrawArea extends JPanel
 			char ch = e.getKeyChar();
 			if (ch == 'q' && mMol.isFragment()) {
 				showBondQFDialog(mCurrentHiliteBond);
+			} else if (ch == 'v') { // ChemDraw uses the same key
+				if (mMol.addRingToBond(mCurrentHiliteBond, 3, false)) {
+					fireMoleculeChanged();
+					update(UPDATE_CHECK_COORDS);
+				}
 			} else if (ch >= '4' && ch <= '7') {
 				if (mMol.addRingToBond(mCurrentHiliteBond, ch - '0', false)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
-			} else if (ch == 'b') {
+			} else if (ch == 'a' || ch == 'b') {    // ChemDraw uses 'a', we use 'b' since a long time
 				if (mMol.addRingToBond(mCurrentHiliteBond, 6, true)) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
