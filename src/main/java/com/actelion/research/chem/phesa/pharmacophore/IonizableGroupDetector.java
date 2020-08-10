@@ -22,8 +22,8 @@ public class IonizableGroupDetector {
 		ringCollection = mol.getRingSet();
 	}
 	
-	public ArrayList<IPharmacophorePoint> detect() {
-		ArrayList<IPharmacophorePoint> chargePoints = new ArrayList<IPharmacophorePoint>();
+	public ArrayList<ChargePoint> detect() {
+		ArrayList<ChargePoint> chargePoints = new ArrayList<ChargePoint>();
 		ArrayList<Integer> ionizableGroup;
 		//detect tetrazoles
 		for(int r=0;r<ringCollection.getSize();r++) {

@@ -3,7 +3,9 @@ package com.actelion.research.calc.combinatorics;
 import com.actelion.research.util.ArrayUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * 
@@ -138,7 +140,34 @@ public class CombinationGenerator {
 
 		return liComb;
 	}
+	
 
+	private static void swap(int[] input, int a, int b) {
+		    int tmp = input[a];
+		    input[a] = input[b];
+		    input[b] = tmp;
+	}
+	
+	
+	public static List<int[]> getPermutations(int[] elements, int n){
+		List<int[]> permutations = new ArrayList<int[]>();
+		int[] indexes = new int[n];
+		int i = 0;
+		permutations.add(Arrays.copyOf(elements, elements.length));
+		while (i < n) {
+		    if (indexes[i] < i) {
+		        swap(elements, i % 2 == 0 ?  0: indexes[i], i);
+		        permutations.add(Arrays.copyOf(elements, elements.length));
+		        indexes[i]++;
+		        i = 0;
+		    }
+		    else {
+		        indexes[i] = 0;
+		        i++;
+		    }
+		}
+		return permutations;
+	}
 
 	public static void main(String[] args) {
 		List<int[]> li = new ArrayList<>();
@@ -146,27 +175,52 @@ public class CombinationGenerator {
 //		int [] a1 = {0,1};
 //		int [] a2 = {0};
 //		int [] a3 = {1,2};
-		int [] a1 = {0,1,2};
-		int [] a2 = {3,4};
-		int [] a3 = {5,6,7};
-		int [] a4 = {8};
+		int [] a1 = {1,2,3,4,5,6,7,8};
+		int [] a2 = {1,2,3};
+		//int [] a3 = {5,6,7};
+		//int [] a4 = {8};
 
-		li.add(a1);
-		li.add(a2);
-		li.add(a3);
-		li.add(a4);
+		//li.add(a1);
+		//li.add(a2);
+		
+		
+		//li.add(a3);
+		//li.add(a4);
 
-		List<int[]> liComb = getCombinations(li);
+		//List<int[]> liComb = getCombinations(li);
+		/*
+		List<int[]> liComb = getAllOutOf(9,3);
+		
+		
+		li = new ArrayList<>();
+		for(int[] l : liComb)
+			//getPermutations(l,l.length);
+			System.out.println(Arrays.toString(l));
+		*/
+		int n = 3;
+		int[] elements = IntStream.range(1,n).toArray();
+		List<int[]> liComb = getAllOutOf(7,n-1);
 
-		for (int[] arr : liComb) {
-			System.out.println(ArrayUtils.toString(arr));
+		for(int[] r : liComb) {
+			List<int[]> permutations = getPermutations(r,r.length);
+			System.out.println("#####");
+			//System.out.println(Arrays.toString(r));
+			for(int[] per : permutations) {
+				//System.out.println(Arrays.toString(per));
+				int[] arr = new int[per.length+1];
+				arr[0] = 0;
+				IntStream.range(0, per.length).forEach(e -> {
+				arr[e+1] = per[e]+1;});
+				System.out.println(Arrays.toString(arr));
+			}
 		}
 
-
-
-
-
 	}
+
+
+
+		
+	
 
 //	public static void main(String[] args) {
 //

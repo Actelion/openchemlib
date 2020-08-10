@@ -177,4 +177,20 @@ public class ChargePoint implements IPharmacophorePoint {
 			return IPharmacophorePoint.Functionality.POS_CHARGE.getIndex();
 	}
 
+	public int getChargeAtom() {
+		return chargeAtom;
+	}
+
+	public void setChargeAtom(int chargeAtom) {
+		this.chargeAtom = chargeAtom;
+	}
+
+	public List<Integer> getNeighbours() {
+		return neighbours;
+	}
+
+	public void setNeighbours(List<Integer> neighbours) {
+		this.neighbours = neighbours;
+	}
+
 }
