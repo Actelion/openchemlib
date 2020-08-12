@@ -38,38 +38,30 @@ import com.actelion.research.chem.dnd.ChemistryFlavors;
 
 import java.awt.datatransfer.*;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
-public class MoleculeTransferable implements Transferable,ClipboardOwner 
-{
-        private static final List cFlavorList = Arrays.asList( ChemistryFlavors.MOLECULE_FLAVORS);
-        protected StereoMolecule mMol;
+public class MoleculeTransferable implements Transferable,ClipboardOwner {
+    protected StereoMolecule mMol;
 
-        public MoleculeTransferable(StereoMolecule mol) {
-                mMol = mol;
-                }
-
-        @Override
-        public synchronized DataFlavor[] getTransferDataFlavors() {
-//            System.out.println("Moleculetransferable getTransferFlavors");
-                return ChemistryFlavors.MOLECULE_FLAVORS;
-                }
-
-        @Override
-        public boolean isDataFlavorSupported( DataFlavor flavor ) {
-//            System.out.println("Moleculetransferable  isdataflavor supported : " + flavor);
-//                return (cFlavorList.contains(flavor));
-            for (DataFlavor f:ChemistryFlavors.MOLECULE_FLAVORS)
-                if (f.equals(flavor))
-                    return true;
-
-            return false;
+    public MoleculeTransferable(StereoMolecule mol) {
+            mMol = mol;
             }
 
-        @Override
-        public synchronized Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException,IOException {
-//        System.out.println("MoleculeTransferable flavor " + flavor);
+    @Override
+    public synchronized DataFlavor[] getTransferDataFlavors() {
+            return ChemistryFlavors.MOLECULE_FLAVORS;
+            }
+
+    @Override
+    public boolean isDataFlavorSupported( DataFlavor flavor ) {
+        for (DataFlavor f:ChemistryFlavors.MOLECULE_FLAVORS)
+            if (f.equals(flavor))
+                return true;
+
+        return false;
+        }
+
+    @Override
+    public synchronized Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException,IOException {
         if (flavor.equals(ChemistryFlavors.DF_SERIALIZED_MOLECULE)) {
             return new StereoMolecule(mMol);
         } else if (flavor.equals(ChemistryFlavors.DF_MDLMOLFILEV3)) {
@@ -89,8 +81,7 @@ public class MoleculeTransferable implements Transferable,ClipboardOwner
         return "MoleculeTransferable";
     }
 
-    public void lostOwnership(Clipboard clipboard, Transferable contents)
-    {
+    public void lostOwnership(Clipboard clipboard, Transferable contents) {
     }
 }
 

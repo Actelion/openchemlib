@@ -19,6 +19,7 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDragAdapter;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
@@ -42,7 +43,8 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
     static final long serialVersionUID = 0x20061113;
 
     private static final String ITEM_COPY = "Copy Structure";
-	private static final String ITEM_PASTE = "Paste Structure";
+	private static final String ITEM_PASTE= "Paste Structure";
+	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE+" or Name";
 	private static final String ITEM_CLEAR = "Clear Structure";
 
     private ArrayList<StructureListener> mListener;
@@ -339,7 +341,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		if (e.getActionCommand().equals(ITEM_COPY)) {
 			mClipboardHandler.copyMolecule(mMol);
 			}
-		if (e.getActionCommand().equals(ITEM_PASTE)) {
+		if (e.getActionCommand().startsWith(ITEM_PASTE)) {
 			StereoMolecule mol = mClipboardHandler.pasteMolecule();
 			if (mol != null) {
 				if (!mAllowFragmentStatusChangeOnPasteOrDrop)
@@ -365,7 +367,8 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 			item1.setEnabled(mMol.getAllAtoms() != 0);
 			popup.add(item1);
 
-			JMenuItem item2 = new JMenuItem(ITEM_PASTE);
+			String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
+			JMenuItem item2 = new JMenuItem(itemText);
 			item2.addActionListener(this);
 			popup.add(item2);
 

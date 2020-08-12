@@ -35,12 +35,9 @@ package com.actelion.research.chem.dnd;
 
 import java.awt.datatransfer.DataFlavor;
 
-public class ChemistryFlavors
-{
-    static class MyFlavor extends DataFlavor
-    {
-        public MyFlavor(Class representationClass, String humanPresentableName)
-        {
+public class ChemistryFlavors {
+    static class SerializedClassFlavor extends DataFlavor {
+        public SerializedClassFlavor(Class representationClass, String humanPresentableName) {
             super(representationClass, humanPresentableName);
             try {
                 ClassLoader cl = this.getClass().getClassLoader();
@@ -52,7 +49,7 @@ public class ChemistryFlavors
         }
     }
 
-    public static final DataFlavor DF_SERIALIZED_MOLECULE = new MyFlavor(com.actelion.research.chem.Molecule.class, "Native OpenChemLib Molecule");
+    public static final DataFlavor DF_SERIALIZED_MOLECULE = new SerializedClassFlavor(com.actelion.research.chem.StereoMolecule.class, "Native OpenChemLib Molecule");
     public static final DataFlavor DF_MDLMOLFILE = new DataFlavor("chemical/x-mdl-molfile;class=java.lang.String", "MDL Molfile");
     public static final DataFlavor DF_MDLMOLFILEV3 = new DataFlavor("chemical/x-mdl-molfilev3;class=java.lang.String", "MDL Molfile V3");
     public static final DataFlavor DF_SMILES = new DataFlavor("chemical/x-daylight-smiles;class=java.lang.String", "Daylight Smiles");
@@ -65,12 +62,10 @@ public class ChemistryFlavors
         DF_IDCODE
     };
 
-    public static final DataFlavor DF_SERIALIZED_REACTION = new MyFlavor(com.actelion.research.chem.reaction.Reaction.class, "Native OpenChemLib Reaction");
+    public static final DataFlavor DF_SERIALIZED_REACTION = new SerializedClassFlavor(com.actelion.research.chem.reaction.Reaction.class, "Native OpenChemLib Reaction");
     public static final DataFlavor DF_REACTION_SMILES = new DataFlavor("chemical/x-daylight-reactionsmiles;class=java.lang.String", "Daylight Reaction Smiles");
     public static final DataFlavor[] REACTION_FLAVORS = {
         DF_SERIALIZED_REACTION,
         DF_REACTION_SMILES,
     };
-
-
 }
