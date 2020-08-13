@@ -16,13 +16,28 @@ public class StructureNameResolver {
 		sResolver = resolver;
 	}
 
+	public static StereoMolecule resolve(String name) {
+		StereoMolecule mol = resolveLocal(name);
+		return mol != null ? mol : resolveRemote(name);
+	}
+
 	/**
 	 * If a IStructureNameResolver instance was instantiated and given to this class, then that is
 	 * asked to try to resolve the given chemical name, i.e. to create the respective StereoMolecule
 	 * that is represented by the name.
 	 * @param name
 	 */
-	public static StereoMolecule resolve(String name) {
-		return sResolver == null ? null : sResolver.resolveName(name);
+	public static StereoMolecule resolveLocal(String name) {
+		return sResolver == null ? null : sResolver.resolveLocal(name);
+		}
+
+	/**
+	 * If a IStructureNameResolver instance was instantiated and given to this class, then that is
+	 * asked to try to resolve the given chemical name, i.e. to create the respective StereoMolecule
+	 * that is represented by the name.
+	 * @param name
+	 */
+	public static StereoMolecule resolveRemote(String name) {
+		return sResolver == null ? null : sResolver.resolveRemote(name);
 		}
 	}

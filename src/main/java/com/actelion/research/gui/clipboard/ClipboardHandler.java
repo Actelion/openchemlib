@@ -51,6 +51,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * <p>Title: Actelion Library</p>
@@ -66,30 +67,59 @@ public class ClipboardHandler implements IClipboardHandler
 	private static final byte MDLSK[] = {(byte) 'M', (byte) 'D', (byte) 'L', (byte) 'S', (byte) 'K', 0, 0};
 
 	/**
-	 * Get a Molecule from the Clipboard. The supported formats are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch
-	 * If the clipboard molecule has 3D coordinates, then new 2D-coords are invented and used instead.
-	 *
+	 * Get one or more Molecule(s) from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
+	 * Further supported formats on Windows are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch.
+	 * If no supported format is found and the clipboard contains text, which can be interpreted as molfile, then the
+	 * corresponding molecule is returned. If the clipboard contains one or multiple SMILES, IUPAC name(s) or idcode(s),
+	 * then the corresponding molecule(s) is/are returned. These can be multiple if allowMultiple is true.
+	 * Otherwise, if a StructureNameResolver is present, then it tries to interpret the name(s) and returns the
+	 * corresponding molecules, which may be limited to a certain number.
 	 * @return Molecule found or null if no molecule present on the clipboard
 	 */
+	@Override
+	public ArrayList<StereoMolecule> pasteMolecules() {
+		return pasteMolecules(true, true);
+	}
+
+	/**
+	 * Get one Molecule from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
+	 * Further supported formats on Windows are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch.
+	 * If no supported format is found and the clipboard contains text, which can be interpreted as molfile,
+	 * SMILES, IUPAC name or idcode, then the corresponding molecule is returned.
+	 * Otherwise, if a StructureNameResolver is present, then it tries to interpret the name.
+	 * If the clipboard molecule has 3D coordinates, then new 2D-coords are invented and used instead.
+	 * @return Molecule found or null if no molecule present on the clipboard
+	 */
+	@Override
 	public StereoMolecule pasteMolecule() {
 		return pasteMolecule(true);
 	}
 
-		/**
-		 * Get a Molecule from the Clipboard. The supported formats are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch
-		 *
-		 * @param prefer2D if true and if the clipboard molecule has 3D coordinates, then new 2D-coords are invented
-		 * @return Molecule found or null if no molecule present on the clipboard
-		 */
 	public StereoMolecule pasteMolecule(boolean prefer2D) {
-		StereoMolecule mol;
+		ArrayList<StereoMolecule> molList = pasteMolecules(prefer2D, false);
+		return molList.size() == 0 ? null : molList.get(0);
+	}
 
-		if (Platform.isWindows())
-			mol = pasteMoleculeWindowsNative(prefer2D);
-		else
-			mol = pasteMoleculeLinux();
+	/**
+	 * Get one or more Molecule(s) from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
+	 * Further supported formats on Windows are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch.
+	 * If no supported format is found and the clipboard contains text, which can be interpreted as molfile, then the
+	 * corresponding molecule is returned. If the clipboard contains one or multiple SMILES, IUPAC name(s) or idcode(s),
+	 * then the corresponding molecule(s) is/are returned. These can be multiple if allowMultiple is true.
+	 * Otherwise, if a StructureNameResolver is present, then it tries to interpret the name(s) and returns the
+	 * corresponding molecules, which may be limited to a certain number.
+	 * @param prefer2D if true and if the clipboard molecule has 3D coordinates, then new 2D-coords are invented
+	 * @param allowMultiple whether multiple molecules may be generated from clipboard text, if no serialized mol or special molecule format present
+	 * @return list of molecules found or generated from SMILES, names, etc; empty list if no molecule present on the clipboard
+	 */
+	private ArrayList<StereoMolecule> pasteMolecules(boolean prefer2D, boolean allowMultiple) {
+		ArrayList<StereoMolecule> molList = new ArrayList<>();
 
-		if (mol == null) {
+		StereoMolecule mol = Platform.isWindows() ? pasteMoleculeWindowsNative(prefer2D) : pasteMoleculeLinux();
+		if (mol != null)
+			molList.add(mol);
+
+		if (molList.size() == 0) {
 			// get StringFlavor from clipboard and try parsing it as idcode, molfile, smiles, or (if NameResolver exists) as name
 			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 			String text = null;
@@ -98,30 +128,68 @@ public class ClipboardHandler implements IClipboardHandler
 				}
 			catch (Exception ioe) {}
 			if (text != null) {
-				try { mol = new MolfileParser().getCompactMolecule(text); } catch (Exception e) {}
-				if (mol == null)
-					try { mol = new IDCodeParser(prefer2D).getCompactMolecule(text); } catch (Exception e) {}
-				if (mol == null) {
-					mol = new StereoMolecule();
+				try {
+					mol = new MolfileParser().getCompactMolecule(text);
+					if (mol != null && mol.getAllAtoms() != 0)
+						molList.add(mol);
+					}
+				catch (Exception e) {}
+
+				if (molList.size() == 0) {
+					BufferedReader reader = new BufferedReader(new StringReader(text));
 					try {
-						new SmilesParser().parse(mol, text);
+						String line = reader.readLine();
+						while (line != null) {
+							line = line.trim();
+							try {
+								mol = new IDCodeParser(prefer2D).getCompactMolecule(line);
+							} catch (Exception e) {}
+
+							if (mol == null || mol.getAllAtoms() == 0) {
+								mol = new StereoMolecule();
+								try {
+									new SmilesParser().parse(mol, line);
+								}
+								catch (Exception e) {
+									mol = null;
+								}
+							}
+
+							if (mol == null || mol.getAllAtoms() == 0)
+								mol = StructureNameResolver.resolveLocal(line);
+
+							if (mol != null && mol.getAllAtoms() != 0) {
+								molList.add(mol);
+
+								if (!allowMultiple)
+									break;
+							}
+
+							line = reader.readLine();
+						}
 					}
-					catch (Exception e) {
-						mol = null;
-					}
+					catch (IOException ioe) {}
 				}
 
-				if (mol == null)
-					mol = StructureNameResolver.resolve(text);
+				if (molList.size() == 0) {
+					mol = StructureNameResolver.resolveRemote(text);
+					if (mol != null)
+						molList.add(mol);
+				}
 			}
 		}
-		if (prefer2D && mol != null && mol.is3D()) {
-			mol.ensureHelperArrays(Molecule.cHelperParities);    // to ensure stereo parities
-			new CoordinateInventor().invent(mol);
+
+		if (prefer2D) {
+			for (StereoMolecule m:molList) {
+				if (m.is3D()) {
+					m.ensureHelperArrays(Molecule.cHelperParities);    // to ensure stereo parities
+					new CoordinateInventor().invent(m);
+				}
+			}
 		}
 
-		System.out.println("returned Mol is " + mol);
-		return mol;
+		System.out.println("returned mol(s): " + molList.size());
+		return molList;
 	}
 
 	private StereoMolecule pasteMoleculeWindowsNative(boolean prefer2D) {

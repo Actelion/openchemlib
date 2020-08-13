@@ -46,7 +46,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
             implements ActionListener,CompoundCollectionListener,MouseListener,MouseMotionListener,StructureListener {
     private static final long serialVersionUID = 0x20060904;
 
-	private static final String MESSAGE = "<use popup menu, copy/paste or drag&drop to add compounds>";
+	private static final String MESSAGE = "<use popup menu, copy/paste\nor drag&drop to add compounds>";
 
 	private static final String ADD = "Add...";
     private static final String EDIT = "Edit...";
@@ -201,14 +201,19 @@ public class CompoundCollectionPane<T> extends JScrollPane
 	        }
 	    else if (e.getActionCommand().equals(PASTE)) {
             int index = (mHighlightedIndex == -1) ? mModel.getSize() : mHighlightedIndex;
-            StereoMolecule mol = mClipboardHandler.pasteMolecule();
-	        if (mol != null) {
-	        	mol.setFragment(mCreateFragments);
-	        	if (mCompoundFilter == null || mCompoundFilter.moleculeQualifies(mol))
-		            mModel.addMolecule(index, mol);
-	        	else
-					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be added, because it doesn't qualify.");
-	        	}
+            ArrayList<StereoMolecule> molList = mClipboardHandler.pasteMolecules();
+	        if (molList != null) {
+	        	int errorCount = 0;
+	        	for (StereoMolecule mol:molList) {
+		            mol.setFragment(mCreateFragments);
+		            if (mCompoundFilter == null || mCompoundFilter.moleculeQualifies(mol))
+			            mModel.addMolecule(index, mol);
+		            else
+		            	errorCount++;
+		            }
+	        	if (errorCount != 0)
+			        JOptionPane.showMessageDialog(getParentFrame(), errorCount+" compound(s) could not be added, because they doesn't qualify.");
+		        }
             }
         else if (e.getActionCommand().equals(ADD)) {
             editStructure(-1);
