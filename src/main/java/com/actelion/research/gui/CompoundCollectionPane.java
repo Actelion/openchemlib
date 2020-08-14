@@ -46,7 +46,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
             implements ActionListener,CompoundCollectionListener,MouseListener,MouseMotionListener,StructureListener {
     private static final long serialVersionUID = 0x20060904;
 
-	private static final String MESSAGE = "<use popup menu, copy/paste\nor drag&drop to add compounds>";
+	private static final String[] MESSAGE = { "<to add compounds use popup menu,", "drag&drop, or paste structure or name(s)>" };
 
 	private static final String ADD = "Add...";
     private static final String EDIT = "Edit...";
@@ -439,8 +439,12 @@ public class CompoundCollectionPane<T> extends JScrollPane
 					g.setColor(foreground);
 					g.setFont(g.getFont().deriveFont(Font.PLAIN, HiDPIHelper.scale(12)));
 					FontMetrics m = g.getFontMetrics();
-					Rectangle2D b = m.getStringBounds(MESSAGE, g);
-					g.drawString(MESSAGE, bounds.x+(bounds.width-(int)b.getWidth())/2, bounds.y+(bounds.height-(int)b.getHeight())/2+m.getAscent());
+					int fontHeight = m.getHeight();
+					for (int i=0; i<MESSAGE.length; i++) {
+						Rectangle2D b = m.getStringBounds(MESSAGE[i], g);
+						g.drawString(MESSAGE[i], bounds.x + (bounds.width - (int)b.getWidth()) / 2,
+								bounds.y + i*m.getHeight() + (bounds.height - MESSAGE.length * m.getHeight()) / 2 + m.getAscent());
+						}
 					}
 				}
 			};

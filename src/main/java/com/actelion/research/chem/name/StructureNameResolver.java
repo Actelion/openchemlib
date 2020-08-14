@@ -2,6 +2,8 @@ package com.actelion.research.chem.name;
 
 import com.actelion.research.chem.StereoMolecule;
 
+import java.util.List;
+
 /**
  * Created by thomas on 7/13/17.
  */
@@ -39,5 +41,15 @@ public class StructureNameResolver {
 	 */
 	public static StereoMolecule resolveRemote(String name) {
 		return sResolver == null ? null : sResolver.resolveRemote(name);
+		}
+
+	/**
+	 * If a IStructureNameResolver instance was instantiated and given to this class, then that is
+	 * asked to try to resolve the given chemical name list, i.e. to create the respective idcodes
+	 * that represent the names of the list.
+	 * @param nameList
+	 */
+	public static String[] resolveRemote(List<String> nameList) {
+		return sResolver == null ? null : sResolver.resolveRemote(nameList);
 		}
 	}

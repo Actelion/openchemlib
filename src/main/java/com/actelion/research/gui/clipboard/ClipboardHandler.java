@@ -135,6 +135,8 @@ public class ClipboardHandler implements IClipboardHandler
 					}
 				catch (Exception e) {}
 
+				ArrayList<String> unresolvedNameList = null;
+
 				if (molList.size() == 0) {
 					BufferedReader reader = new BufferedReader(new StringReader(text));
 					try {
@@ -143,7 +145,9 @@ public class ClipboardHandler implements IClipboardHandler
 							line = line.trim();
 							try {
 								mol = new IDCodeParser(prefer2D).getCompactMolecule(line);
-							} catch (Exception e) {}
+							} catch (Exception e) {
+								mol = null;
+							}
 
 							if (mol == null || mol.getAllAtoms() == 0) {
 								mol = new StereoMolecule();
@@ -158,11 +162,19 @@ public class ClipboardHandler implements IClipboardHandler
 							if (mol == null || mol.getAllAtoms() == 0)
 								mol = StructureNameResolver.resolveLocal(line);
 
+							if ((mol == null || mol.getAllAtoms() == 0) && !allowMultiple)
+								mol = StructureNameResolver.resolveRemote(line);
+
 							if (mol != null && mol.getAllAtoms() != 0) {
 								molList.add(mol);
 
 								if (!allowMultiple)
 									break;
+							}
+							else if (allowMultiple) {
+								if (unresolvedNameList == null)
+									unresolvedNameList = new ArrayList<>();
+								unresolvedNameList.add(line);
 							}
 
 							line = reader.readLine();
@@ -171,10 +183,15 @@ public class ClipboardHandler implements IClipboardHandler
 					catch (IOException ioe) {}
 				}
 
-				if (molList.size() == 0) {
-					mol = StructureNameResolver.resolveRemote(text);
-					if (mol != null)
-						molList.add(mol);
+				if (unresolvedNameList != null && unresolvedNameList.size() != 0) {
+					String[] idcodes = StructureNameResolver.resolveRemote(unresolvedNameList);
+					for (String idcode:idcodes) {
+						try {
+							mol = new IDCodeParser(prefer2D).getCompactMolecule(idcode);
+							if (mol != null && mol.getAllAtoms() != 0)
+								molList.add(mol);
+						} catch (Exception e) {}
+					}
 				}
 			}
 		}
