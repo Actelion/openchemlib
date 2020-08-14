@@ -36,7 +36,7 @@ package com.actelion.research.gui.clipboard.external;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
-import com.actelion.research.gui.clipboard.WindowsClipboardAccessor;
+import com.actelion.research.gui.clipboard.NativeClipboardAccessor;
 import com.actelion.research.util.LittleEndianDataOutputStream;
 
 import java.io.*;
@@ -1340,7 +1340,7 @@ if (false) {
         }
         System.out.println("\nByte Dump:\n" + sb);
 
-        WindowsClipboardAccessor.setClipBoardData("ChemDraw Interchange Format",buffer);
+        NativeClipboardAccessor.setClipBoardData("ChemDraw Interchange Format",buffer);
 
         try{
             BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream("d:\\dev\\console\\test.cdx"));

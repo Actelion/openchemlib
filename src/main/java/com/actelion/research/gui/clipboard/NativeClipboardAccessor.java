@@ -33,7 +33,7 @@
 
 package com.actelion.research.gui.clipboard;
 
-public class WindowsClipboardAccessor {
+public class NativeClipboardAccessor {
 	public static final String NC_SKETCH	= "MDLSK";
 	public static final String NC_CTAB		= "MDLCT";
 	public static final String NC_MOLFILE	= "MDL_MOL";

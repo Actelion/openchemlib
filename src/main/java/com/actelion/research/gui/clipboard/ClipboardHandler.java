@@ -196,7 +196,7 @@ public class ClipboardHandler implements IClipboardHandler
 		byte[] buffer;
 		StereoMolecule mol = null;
 
-		if ((buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_SERIALIZEMOLECULE)) != null) {
+		if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SERIALIZEMOLECULE)) != null) {
 			try {
 				ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
 				Object o = is.readObject();
@@ -211,8 +211,8 @@ public class ClipboardHandler implements IClipboardHandler
 		}
 		System.out.println("Mol is " + mol);
 		if (mol == null) {
-			if ((buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_CTAB)) != null
-					|| (buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_MOLFILE)) != null) {
+			if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_CTAB)) != null
+					|| (buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_MOLFILE)) != null) {
 				MolfileParser p = new MolfileParser();
 				mol = new StereoMolecule();
 				if (!p.parse(mol, new String(buffer))) {
@@ -221,8 +221,8 @@ public class ClipboardHandler implements IClipboardHandler
 				}
 			}
 			if (mol == null) {
-				if ((buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_SKETCH)) != null
-						|| (buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_EMBEDDEDSKETCH)) != null) {
+				if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SKETCH)) != null
+						|| (buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_EMBEDDEDSKETCH)) != null) {
 					try {
 						mol = new StereoMolecule();
 						if (!Sketch.createMolFromSketchBuffer(mol, buffer)) {
@@ -238,7 +238,7 @@ public class ClipboardHandler implements IClipboardHandler
 		}
 		String clipboardText = null;
 		if (mol == null) {
-			if ((buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_IDCODE)) != null) {
+			if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_IDCODE)) != null) {
 				clipboardText = new String(buffer);
 				try {
 					mol = new StereoMolecule();
@@ -284,7 +284,7 @@ public class ClipboardHandler implements IClipboardHandler
 		byte[] buffer;
 		Reaction rxn = null;
 
-		if ((buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_SERIALIZEREACTION)) != null) {
+		if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SERIALIZEREACTION)) != null) {
 			try {
 				ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
 				Object o = is.readObject();
@@ -296,7 +296,7 @@ public class ClipboardHandler implements IClipboardHandler
 				e.printStackTrace();
 				System.out.println("ClipboardHandler.pasteReaction(): Exception " + e);
 			}
-		} else if ((buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_CTAB)) != null) {
+		} else if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_CTAB)) != null) {
 			RXNFileParser p = new RXNFileParser();
 			rxn = new Reaction();
 			try {
@@ -306,7 +306,7 @@ public class ClipboardHandler implements IClipboardHandler
 				System.err.println("Error parsing Reaction Buffer " + e);
 				rxn = null;
 			}
-		} else if ((buffer = WindowsClipboardAccessor.getClipboardData(WindowsClipboardAccessor.NC_SKETCH)) != null) {
+		} else if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SKETCH)) != null) {
 			try {
 				rxn = new Reaction();
 				if (!Sketch.createReactionFromSketchBuffer(rxn, buffer)) {
@@ -380,7 +380,7 @@ public class ClipboardHandler implements IClipboardHandler
 			out.close();
 			bos.close();
 
-			ok = WindowsClipboardAccessor.copyMoleculeToClipboard(path, cdbuffer, bos.toByteArray());
+			ok = NativeClipboardAccessor.copyMoleculeToClipboard(path, cdbuffer, bos.toByteArray());
 
 			temp.delete();
 		} catch (IOException e) {
@@ -459,7 +459,7 @@ public class ClipboardHandler implements IClipboardHandler
 		out.close();
 		bos.close();
 
-		return WindowsClipboardAccessor.copyReactionToClipboard(ctab.getBytes(), sketch, bos.toByteArray());
+		return NativeClipboardAccessor.copyReactionToClipboard(ctab.getBytes(), sketch, bos.toByteArray());
 	}
 
 	private boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch) {
@@ -498,7 +498,7 @@ public class ClipboardHandler implements IClipboardHandler
 
 	public static boolean setClipBoardData(String format, byte[] buffer) {
 		if (Platform.isWindows()) {
-			return WindowsClipboardAccessor.setClipBoardData(format,buffer);
+			return NativeClipboardAccessor.setClipBoardData(format,buffer);
 		} else
 			return false;
 	}
@@ -509,7 +509,7 @@ public class ClipboardHandler implements IClipboardHandler
 	 * @return boolean
 	 */
 	public static boolean copyMetaFile(byte []data) {
-		return Platform.isWindows() ? setClipBoardData(WindowsClipboardAccessor.NC_METAFILE,data) : false;
+		return Platform.isWindows() ? setClipBoardData(NativeClipboardAccessor.NC_METAFILE,data) : false;
 		}
 
 /*	private boolean writeRXN2Metafile(File temp, byte sketch[], Reaction m)
