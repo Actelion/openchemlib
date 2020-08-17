@@ -69,7 +69,8 @@ public abstract class CompoundFileHelper {
     public static final int cFileTypeRDV2 = 0x00008000;
     public static final int cFileTypeRD = cFileTypeRDV3 | cFileTypeRDV2;
 	public static final int cFileTypeMOL = 0x00010000;
-	public static final int cFileTypePDB = 0x00020000;
+	public static final int cFileTypeMOL2 = 0x00020000;
+	public static final int cFileTypePDB = 0x00040000;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
 
@@ -92,6 +93,7 @@ public abstract class CompoundFileHelper {
 	public ArrayList<StereoMolecule> readStructuresFromFile(boolean readIdentifier) {
         File file = selectFileToOpen("Please select substance file",
 					           CompoundFileHelper.cFileTypeMOL
+					         | CompoundFileHelper.cFileTypeMOL2
                              | CompoundFileHelper.cFileTypeSD
                              | CompoundFileHelper.cFileTypeDataWarrior);
 
@@ -101,6 +103,7 @@ public abstract class CompoundFileHelper {
 	public ArrayList<String> readIDCodesFromFile() {
         File file = selectFileToOpen("Please select substance file",
 		                CompoundFileHelper.cFileTypeMOL
+				             | CompoundFileHelper.cFileTypeMOL2
 					         | CompoundFileHelper.cFileTypeSD
                              | CompoundFileHelper.cFileTypeDataWarrior);
 
@@ -166,24 +169,31 @@ public abstract class CompoundFileHelper {
 	    int index = filename.indexOf('.');
 	    String extention = (index == -1) ? "" : filename.substring(index).toLowerCase();
 
-	    if (extention.equals(".mol")) {
-		    MolfileParser parser = new MolfileParser();
-		    StereoMolecule mol = parser.getCompactMolecule(file);
-		    if (moleculeList != null)
-		    	moleculeList.add(mol);
-		    if (idcodeList != null || idcodeWithIDList != null) {
-		    	Canonizer canonizer = new Canonizer(mol);
-		    	String idcode = canonizer.getIDCode();
-			    String coords = canonizer.getEncodedCoordinates();
-		    	if (idcode != null && coords.length() != 0 && readIDCoords)
-		    		idcode = idcode+" "+coords;
-		    	if (idcodeList != null)
-		    		idcodeList.add(idcode);
-		    	if (idcodeWithIDList != null) {
-				    String[] idcodeWithID = new String[2];
-				    idcodeWithID[0] = idcode;
-				    idcodeWithID[1] = mol.getName();
-				    idcodeWithIDList.add(idcodeWithID);
+	    if (extention.equals(".mol")
+		 || extention.equals(".mol2")) {
+		    StereoMolecule mol = null;
+	    	if (extention.equals(".mol"))
+			    mol = new MolfileParser().getCompactMolecule(file);
+	    	else
+			    try { mol = new Mol2FileParser().load(filename); } catch (Exception e) { e.printStackTrace(); }
+
+		    if (mol != null && mol.getAllAtoms() != 0) {
+			    if (moleculeList != null)
+			        moleculeList.add(mol);
+			    if (idcodeList != null || idcodeWithIDList != null) {
+			        Canonizer canonizer = new Canonizer(mol);
+			        String idcode = canonizer.getIDCode();
+				    String coords = canonizer.getEncodedCoordinates();
+			        if (idcode != null && coords.length() != 0 && readIDCoords)
+			            idcode = idcode+" "+coords;
+			        if (idcodeList != null)
+			            idcodeList.add(idcode);
+			        if (idcodeWithIDList != null) {
+					    String[] idcodeWithID = new String[2];
+					    idcodeWithID[0] = idcode;
+					    idcodeWithID[1] = mol.getName();
+					    idcodeWithIDList.add(idcodeWithID);
+					    }
 				    }
 			    }
 	    	return;
@@ -363,7 +373,11 @@ public abstract class CompoundFileHelper {
 		if ((filetypes & cFileTypeMOL) != 0) {
 			filter.addExtension("mol");
 			filter.addDescription("MDL Molfiles");
-		}
+			}
+		if ((filetypes & cFileTypeMOL2) != 0) {
+			filter.addExtension("mol2");
+			filter.addDescription("Tripos Mol2 files");
+			}
 
 		return filter;
 		}
@@ -432,6 +446,8 @@ public abstract class CompoundFileHelper {
             return cFileTypeSVG;
 		if (extension.equals(".mol"))
 			return cFileTypeMOL;
+		if (extension.equals(".mol2"))
+			return cFileTypeMOL2;
 		if (extension.equals(".pdb"))
 			return cFileTypePDB;
 
@@ -511,6 +527,9 @@ public abstract class CompoundFileHelper {
 			break;
 		case cFileTypeMOL:
 			extension = ".mol";
+			break;
+		case cFileTypeMOL2:
+			extension = ".mol2";
 			break;
 		case cFileTypePDB:
 			extension = ".pdb";
