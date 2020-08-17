@@ -46,7 +46,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
             implements ActionListener,CompoundCollectionListener,MouseListener,MouseMotionListener,StructureListener {
     private static final long serialVersionUID = 0x20060904;
 
-	private static final String MESSAGE = "<use popup menu, copy/paste or drag&drop to add compounds>";
+	private static final String[] MESSAGE = { "<to add compounds use popup menu,", "drag&drop, or paste structure or name(s)>" };
 
 	private static final String ADD = "Add...";
     private static final String EDIT = "Edit...";
@@ -201,14 +201,19 @@ public class CompoundCollectionPane<T> extends JScrollPane
 	        }
 	    else if (e.getActionCommand().equals(PASTE)) {
             int index = (mHighlightedIndex == -1) ? mModel.getSize() : mHighlightedIndex;
-            StereoMolecule mol = mClipboardHandler.pasteMolecule();
-	        if (mol != null) {
-	        	mol.setFragment(mCreateFragments);
-	        	if (mCompoundFilter == null || mCompoundFilter.moleculeQualifies(mol))
-		            mModel.addMolecule(index, mol);
-	        	else
-					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be added, because it doesn't qualify.");
-	        	}
+            ArrayList<StereoMolecule> molList = mClipboardHandler.pasteMolecules();
+	        if (molList != null) {
+	        	int errorCount = 0;
+	        	for (StereoMolecule mol:molList) {
+		            mol.setFragment(mCreateFragments);
+		            if (mCompoundFilter == null || mCompoundFilter.moleculeQualifies(mol))
+			            mModel.addMolecule(index, mol);
+		            else
+		            	errorCount++;
+		            }
+	        	if (errorCount != 0)
+			        JOptionPane.showMessageDialog(getParentFrame(), errorCount+" compound(s) could not be added, because they doesn't qualify.");
+		        }
             }
         else if (e.getActionCommand().equals(ADD)) {
             editStructure(-1);
@@ -434,8 +439,12 @@ public class CompoundCollectionPane<T> extends JScrollPane
 					g.setColor(foreground);
 					g.setFont(g.getFont().deriveFont(Font.PLAIN, HiDPIHelper.scale(12)));
 					FontMetrics m = g.getFontMetrics();
-					Rectangle2D b = m.getStringBounds(MESSAGE, g);
-					g.drawString(MESSAGE, bounds.x+(bounds.width-(int)b.getWidth())/2, bounds.y+(bounds.height-(int)b.getHeight())/2+m.getAscent());
+					int fontHeight = m.getHeight();
+					for (int i=0; i<MESSAGE.length; i++) {
+						Rectangle2D b = m.getStringBounds(MESSAGE[i], g);
+						g.drawString(MESSAGE[i], bounds.x + (bounds.width - (int)b.getWidth()) / 2,
+								bounds.y + i*m.getHeight() + (bounds.height - MESSAGE.length * m.getHeight()) / 2 + m.getAscent());
+						}
 					}
 				}
 			};

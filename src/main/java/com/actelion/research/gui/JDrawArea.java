@@ -35,6 +35,7 @@ package com.actelion.research.gui;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
+import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.chem.reaction.*;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
@@ -57,9 +58,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.TreeMap;
 
-public class JDrawArea extends JPanel
-	implements ActionListener, KeyListener, MouseListener, MouseMotionListener
-{
+public class JDrawArea extends JPanel implements ActionListener, KeyListener, MouseListener, MouseMotionListener {
 	static final long serialVersionUID = 0x20061019;
 
 	public static final int MODE_MULTIPLE_FRAGMENTS = 1;
@@ -74,6 +73,10 @@ public class JDrawArea extends JPanel
 	private static final int KEY_IS_SUBSTITUENT = 2;
 	private static final int KEY_IS_VALID_START = 3;
 	private static final int KEY_IS_INVALID = 4;
+
+	private static final String ITEM_COPY = "Copy Structure";
+	private static final String ITEM_PASTE= "Paste Structure";
+	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE+" or Name";
 
 	private static final float FRAGMENT_MAX_CLICK_DISTANCE = 24.0f;
 	private static final float FRAGMENT_GROUPING_DISTANCE = 1.4f;	// in average bond lengths
@@ -559,9 +562,9 @@ public class JDrawArea extends JPanel
 	public void actionPerformed(ActionEvent e)
 	{
 		String command = e.getActionCommand();
-		if (command.equals("Copy")) {
+		if (command.equals(ITEM_COPY)) {
 			copy();
-		} else if (command.equals("Paste")) {
+		} else if (command.startsWith(ITEM_PASTE)) {
 			paste();
 		} else if (command.startsWith("atomColor")) {
 			int index = command.indexOf(':');
@@ -1246,12 +1249,13 @@ public class JDrawArea extends JPanel
 		if (e.isPopupTrigger()) {
 			JPopupMenu popup = null;
 			if (mClipboardHandler != null) {
-				JMenuItem menuItem1 = new JMenuItem("Copy");
+				JMenuItem menuItem1 = new JMenuItem(ITEM_COPY);
 				menuItem1.addActionListener(this);
 				if (mMol.getAllAtoms() == 0) {
 					menuItem1.setEnabled(false);
 				}
-				JMenuItem menuItem2 = new JMenuItem("Paste");
+				String itemText = (StructureNameResolver.getInstance() == null) ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
+				JMenuItem menuItem2 = new JMenuItem(itemText);
 				menuItem2.addActionListener(this);
 				if (popup == null) {
 					popup = new JPopupMenu();

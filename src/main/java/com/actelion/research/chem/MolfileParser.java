@@ -944,7 +944,7 @@ public class MolfileParser
 	public StereoMolecule getCompactMolecule(String molFile)
 	{
 		mMol = null;
-		return (readMoleculeFromBuffer(new BufferedReader(new StringReader(molFile)))) ? mMol : null;
+		return readMoleculeFromBuffer(new BufferedReader(new StringReader(molFile))) ? mMol : null;
 	}
 
 	public StereoMolecule getCompactMolecule(BufferedReader reader)

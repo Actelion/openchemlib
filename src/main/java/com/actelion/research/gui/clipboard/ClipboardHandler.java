@@ -34,13 +34,16 @@ package com.actelion.research.gui.clipboard;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
+import com.actelion.research.chem.dnd.ChemistryFlavors;
 import com.actelion.research.chem.io.RXNFileCreator;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.chem.reaction.Reaction;
-import com.actelion.research.gui.clipboard.external.ChemDrawCDX;
+import com.actelion.research.gui.dnd.MoleculeTransferable;
+import com.actelion.research.gui.dnd.ReactionTransferable;
 import com.actelion.research.gui.wmf.WMF;
 import com.actelion.research.gui.wmf.WMFGraphics2D;
+import com.actelion.research.util.Platform;
 import com.actelion.research.util.Sketch;
 
 import java.awt.*;
@@ -48,6 +51,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * <p>Title: Actelion Library</p>
@@ -60,406 +64,531 @@ import java.io.*;
  */
 public class ClipboardHandler implements IClipboardHandler
 {
-    private static final byte MDLSK[] = {(byte) 'M', (byte) 'D', (byte) 'L', (byte) 'S', (byte) 'K', 0, 0};
+	private static final byte MDLSK[] = {(byte) 'M', (byte) 'D', (byte) 'L', (byte) 'S', (byte) 'K', 0, 0};
 
-    /**
-     * Get a Molecule from the Clipboard. The supported formats are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch
-     * If the clipboard molecule has 3D coordinates, then new 2D-coords are invented and used instead.
-     *
-     * @return Molecule found or null if no molecule present on the clipboard
-     */
-    public StereoMolecule pasteMolecule()
-    {
-        return pasteMolecule(true);
-    }
+	/**
+	 * Get one or more Molecule(s) from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
+	 * Further supported formats on Windows are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch.
+	 * If no supported format is found and the clipboard contains text, which can be interpreted as molfile, then the
+	 * corresponding molecule is returned. If the clipboard contains one or multiple SMILES, IUPAC name(s) or idcode(s),
+	 * then the corresponding molecule(s) is/are returned. These can be multiple if allowMultiple is true.
+	 * Otherwise, if a StructureNameResolver is present, then it tries to interpret the name(s) and returns the
+	 * corresponding molecules, which may be limited to a certain number.
+	 * @return Molecule found or null if no molecule present on the clipboard
+	 */
+	@Override
+	public ArrayList<StereoMolecule> pasteMolecules() {
+		return pasteMolecules(true, true);
+	}
 
-        /**
-		 * Get a Molecule from the Clipboard. The supported formats are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch
-		 *
-         * @param prefer2D if true and if the clipboard molecule has 3D coordinates, then new 2D-coords are invented
-		 * @return Molecule found or null if no molecule present on the clipboard
-		 */
-    public StereoMolecule pasteMolecule(boolean prefer2D)
-    {
-        byte[] buffer = null;
-        StereoMolecule mol = null;
+	/**
+	 * Get one Molecule from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
+	 * Further supported formats on Windows are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch.
+	 * If no supported format is found and the clipboard contains text, which can be interpreted as molfile,
+	 * SMILES, IUPAC name or idcode, then the corresponding molecule is returned.
+	 * Otherwise, if a StructureNameResolver is present, then it tries to interpret the name.
+	 * If the clipboard molecule has 3D coordinates, then new 2D-coords are invented and used instead.
+	 * @return Molecule found or null if no molecule present on the clipboard
+	 */
+	@Override
+	public StereoMolecule pasteMolecule() {
+		return pasteMolecule(true);
+	}
 
-        if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_SERIALIZEMOLECULE)) != null) {
-            try {
-                ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
-                Object o = is.readObject();
-                System.out.println("Object read from Bytearray input " + o);
-                if (o instanceof StereoMolecule) {
-                    mol = (StereoMolecule) o;
-                }
-                is.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("NativeClipboardAccessor.pasteMolecule(): Exception " + e);
-            }
-        }
-        System.out.println("Mol is " + mol);
-        if (mol == null) {
-            if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_CTAB)) != null || (buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_MOLFILE)) != null) {
-                MolfileParser p = new MolfileParser();
-                mol = new StereoMolecule();
-                if (!p.parse(mol, new String(buffer))) {
-                    mol = null;
-                    System.err.println("Error Parsing CTAB during clipboard paste");
-                }
-            }
-            if (mol == null) {
-                if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_SKETCH)) != null || (buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_EMBEDDEDSKETCH)) != null) {
-                    try {
-                        mol = new StereoMolecule();
-                        if (!Sketch.createMolFromSketchBuffer(mol, buffer)) {
-                            mol = null;
-                        }
-                    } catch (IOException e) {
-                        mol = null;
-                        e.printStackTrace();
-                        System.out.println("NativeClipboardAccessor.pasteMolecule(): Exception " + e);
-                    }
-                }
-            }
-        }
-        String clipboardText = null;
-        if (mol == null) {
-            if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_IDCODE)) != null) {
-                clipboardText = new String(buffer);
-                try {
-                    mol = new StereoMolecule();
-                    IDCodeParser parser = new IDCodeParser(prefer2D);
-                    System.out.printf("Pasted string '%s'\n",clipboardText);
-                    parser.parse(mol,buffer);
-                    if (mol.getAllAtoms() == 0)
-                    	mol = null;
-                } catch (Exception e) {
-                    mol = null;
-                    System.out.println("NativeClipboardAccessor.pasteMolecule(): Exception " + e);
-                }
-            }
-        }
-        if (mol == null) {
-            // get StringFlavor from clipboard and try parsing it as molfile, smiles, or (if NameResolver exists) as name
-            if (clipboardText == null) {
-                Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
-                try {
-                    Object o = t.getTransferData(DataFlavor.stringFlavor);
-                    if (o != null)
-                        clipboardText = o.toString();
-                }
-                catch (Exception ioe) {}
-            }
-            if (clipboardText != null) {
-                mol = new MolfileParser().getCompactMolecule(clipboardText);
-                if (mol == null) {
-                    mol = new StereoMolecule();
-                    try {
-                        new SmilesParser().parse(mol, clipboardText);
-                    }
-                    catch (Exception e) {
-                        mol = null;
-                    }
-                }
+	public StereoMolecule pasteMolecule(boolean prefer2D) {
+		ArrayList<StereoMolecule> molList = pasteMolecules(prefer2D, false);
+		return molList.size() == 0 ? null : molList.get(0);
+	}
 
-                if (mol == null)
-                    mol = StructureNameResolver.resolve(clipboardText);
-            }
-        }
-        if (prefer2D && mol != null && is3DMolecule(mol)) {
-            mol.ensureHelperArrays(Molecule.cHelperParities);    // to ensure stereo parities
-            new CoordinateInventor().invent(mol);
-//			mol.setStereoBondsFromParity(); not needed anymore
-        }
+	/**
+	 * Get one or more Molecule(s) from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
+	 * Further supported formats on Windows are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch.
+	 * If no supported format is found and the clipboard contains text, which can be interpreted as molfile, then the
+	 * corresponding molecule is returned. If the clipboard contains one or multiple SMILES, IUPAC name(s) or idcode(s),
+	 * then the corresponding molecule(s) is/are returned. These can be multiple if allowMultiple is true.
+	 * Otherwise, if a StructureNameResolver is present, then it tries to interpret the name(s) and returns the
+	 * corresponding molecules, which may be limited to a certain number.
+	 * @param prefer2D if true and if the clipboard molecule has 3D coordinates, then new 2D-coords are invented
+	 * @param allowMultiple whether multiple molecules may be generated from clipboard text, if no serialized mol or special molecule format present
+	 * @return list of molecules found or generated from SMILES, names, etc; empty list if no molecule present on the clipboard
+	 */
+	private ArrayList<StereoMolecule> pasteMolecules(boolean prefer2D, boolean allowMultiple) {
+		ArrayList<StereoMolecule> molList = new ArrayList<>();
 
-        System.out.println("returned Mol is " + mol);
-        return mol;
-    }
+		StereoMolecule mol = Platform.isWindows() ? pasteMoleculeWindowsNative(prefer2D) : pasteMoleculeLinux();
+		if (mol != null)
+			molList.add(mol);
 
+		if (molList.size() == 0) {
+			// get StringFlavor from clipboard and try parsing it as idcode, molfile, smiles, or (if NameResolver exists) as name
+			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+			String text = null;
+			try {
+                text = (String)t.getTransferData(DataFlavor.stringFlavor);
+				}
+			catch (Exception ioe) {}
+			if (text != null) {
+				try {
+					mol = new MolfileParser().getCompactMolecule(text);
+					if (mol != null && mol.getAllAtoms() != 0)
+						molList.add(mol);
+					}
+				catch (Exception e) {}
 
-    /**
-     * Get a Reaction from the Clipboard
-     *
-     * @return Reaction or null if no reaction present
-     */
-    public Reaction pasteReaction()
-    {
-        byte[] buffer = null;
-        Reaction rxn = null;
+				ArrayList<String> unresolvedNameList = null;
 
-        if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_SERIALIZEREACTION)) != null) {
-            try {
-                ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
-                Object o = is.readObject();
-                if (o instanceof Reaction) {
-                    rxn = (Reaction) o;
-                }
-                is.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("NativeClipboardAccessor.pasteReaction(): Exception " + e);
-            }
-        } else if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_CTAB)) != null) {
-            RXNFileParser p = new RXNFileParser();
-            rxn = new Reaction();
-            try {
-                if (!p.parse(rxn, new String(buffer)))
-                    rxn = null;
-            } catch (Exception e) {
-                System.err.println("Error parsing Reaction Buffer " + e);
-                rxn = null;
-            }
-        } else if ((buffer = NativeClipboardHandler.getClipboardData(NativeClipboardHandler.NC_SKETCH)) != null) {
-            try {
-                rxn = new Reaction();
-                if (!Sketch.createReactionFromSketchBuffer(rxn, buffer)) {
-                    rxn = null;
-                }
-            } catch (IOException e) {
-                rxn = null;
-            }
-        }
-        return rxn;
-    }
+				if (molList.size() == 0) {
+					BufferedReader reader = new BufferedReader(new StringReader(text));
+					try {
+						String line = reader.readLine();
+						while (line != null) {
+							line = line.trim();
+							try {
+								mol = new IDCodeParser(prefer2D).getCompactMolecule(line);
+							} catch (Exception e) {
+								mol = null;
+							}
 
-    public boolean copyMolecule(String molfile)
-    {
-        StereoMolecule m = new StereoMolecule();
-        MolfileParser p = new MolfileParser();
-        p.parse(m, molfile);
-        return copyMolecule(m);
-    }
+							if (mol == null || mol.getAllAtoms() == 0) {
+								mol = new StereoMolecule();
+								try {
+									new SmilesParser().parse(mol, line);
+								}
+								catch (Exception e) {
+									mol = null;
+								}
+							}
 
+							if (mol == null || mol.getAllAtoms() == 0)
+								mol = StructureNameResolver.resolveLocal(line);
 
-    /**
-     * Copies a molecule to the clipboard in various formats:
-     * ENHMETAFILE with an embedded sketch
-     * MDLSK Sketch
-     * MDLCT MDL molfile
-     */
-    public boolean copyMolecule(StereoMolecule mol)
-    {
-        boolean ok = false;
-        try {
-            StereoMolecule m = mol.getCompactCopy();
-            for (int atom=0; atom<m.getAllAtoms(); atom++)
-            	m.setAtomMapNo(atom, 0, false);
+							if ((mol == null || mol.getAllAtoms() == 0) && !allowMultiple)
+								mol = StructureNameResolver.resolveRemote(line);
 
-            byte buffer[] = Sketch.createSketchFromMol(m);
+							if (mol != null && mol.getAllAtoms() != 0) {
+								molList.add(mol);
 
-            File temp = File.createTempFile("actnca", ".wmf");
-            temp.deleteOnExit();
+								if (!allowMultiple)
+									break;
+							}
+							else if (allowMultiple) {
+								if (unresolvedNameList == null)
+									unresolvedNameList = new ArrayList<>();
+								unresolvedNameList.add(line);
+							}
 
-            String path = null;
-            if (writeMol2Metafile(temp, m, buffer))
-                path = temp.getAbsolutePath();
+							line = reader.readLine();
+						}
+					}
+					catch (IOException ioe) {}
+				}
 
-            // Serialize to a byte array
-            System.out.println("CopyMolecule");
-            com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
-            byte[] cdbuffer = cdx.getChemDrawBuffer(m);
+				if (unresolvedNameList != null && unresolvedNameList.size() != 0) {
+					String[] idcodes = StructureNameResolver.resolveRemote(unresolvedNameList);
+					for (String idcode:idcodes) {
+						try {
+							mol = new IDCodeParser(prefer2D).getCompactMolecule(idcode);
+							if (mol != null && mol.getAllAtoms() != 0)
+								molList.add(mol);
+						} catch (Exception e) {}
+					}
+				}
+			}
+		}
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream out = new ObjectOutputStream(bos);
-            // Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
-            // which is unacceptable for 3D molecules.
-            // If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
-            out.writeObject(mol);
-            out.close();
-            bos.close();
+		if (prefer2D) {
+			for (StereoMolecule m:molList) {
+				if (m.is3D()) {
+					m.ensureHelperArrays(Molecule.cHelperParities);    // to ensure stereo parities
+					new CoordinateInventor().invent(m);
+				}
+			}
+		}
 
-//				ok = NativeClipboardHandler.copyMoleculeToClipboard(temp.getAbsolutePath(),buffer,bos.toByteArray());
-            ok = NativeClipboardHandler.copyMoleculeToClipboard(path, cdbuffer, bos.toByteArray());
+		System.out.println("returned mol(s): " + molList.size());
+		return molList;
+	}
 
-            temp.delete();
-        } catch (IOException e) {
-            System.err.println("Error copying Molecule " + e);
-        }
-        return ok;
-    }
+	private StereoMolecule pasteMoleculeWindowsNative(boolean prefer2D) {
+		byte[] buffer;
+		StereoMolecule mol = null;
 
+		if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SERIALIZEMOLECULE)) != null) {
+			try {
+				ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
+				Object o = is.readObject();
+				if (o instanceof StereoMolecule) {
+					mol = (StereoMolecule) o;
+				}
+				is.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Parsing NC_SERIALIZEMOLECULE during clipboard paste: Exception " + e);
+			}
+		}
+		System.out.println("Mol is " + mol);
+		if (mol == null) {
+			if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_CTAB)) != null
+					|| (buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_MOLFILE)) != null) {
+				MolfileParser p = new MolfileParser();
+				mol = new StereoMolecule();
+				if (!p.parse(mol, new String(buffer))) {
+					mol = null;
+					System.out.println("Error Parsing CTAB during clipboard paste");
+				}
+			}
+			if (mol == null) {
+				if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SKETCH)) != null
+						|| (buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_EMBEDDEDSKETCH)) != null) {
+					try {
+						mol = new StereoMolecule();
+						if (!Sketch.createMolFromSketchBuffer(mol, buffer)) {
+							mol = null;
+						}
+					} catch (IOException e) {
+						mol = null;
+						e.printStackTrace();
+						System.out.println("Parsing NC_SKETCH during clipboard paste: Exception " + e);
+					}
+				}
+			}
+		}
+		String clipboardText = null;
+		if (mol == null) {
+			if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_IDCODE)) != null) {
+				clipboardText = new String(buffer);
+				try {
+					mol = new StereoMolecule();
+					IDCodeParser parser = new IDCodeParser(prefer2D);
+					parser.parse(mol,buffer);
+					if (mol.getAllAtoms() == 0)
+						mol = null;
+					else
+						System.out.printf("NC_IDCODE '%s' successfully interpreted as idcode\n",clipboardText);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.out.printf("NC_IDCODE '%s' could not be parsed: "+e+"\n", clipboardText);
+					mol = null;
+				}
+			}
+		}
 
-    /**
-     * Copies a reaction to the clipboard in various formats:
-     * MDLSK Sketch
-     * MDLCT MDL molfile
-     */
-    public boolean copyReaction(Reaction r)
-    {
-        boolean ok = false;
-        try {
-            ok = copyReactionToClipboard(null, r);
-        } catch (IOException e) {
-            System.err.println("Error Copying Reaction " + e);
-        }
-        return ok;
-    }
+		return mol;
+	}
 
-    private Reaction makeRXNCopy(Reaction r)
-    {
-        Reaction rxn = new Reaction(r);
-        int mols = rxn.getMolecules();
-        for (int i = 0; i < mols; i++) {
-            rxn.getMolecule(i).ensureHelperArrays(Molecule.cHelperCIP);
-        }
-        return rxn;
-    }
+	private StereoMolecule pasteMoleculeLinux() {
+		try {
+			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+			return (StereoMolecule)t.getTransferData(ChemistryFlavors.DF_SERIALIZED_MOLECULE);
+		} catch (Exception e) {
+			System.err.println("error getting clipboard data "+ e);
+		}
+	return null;
+	}
 
-    /**
-     * Copies a reaction to the clipboard in various formats:
-     * CTAB with an embedded sketch
-     * MDLSK Sketch
-     * serialized
-     */
-    public boolean copyReaction(String ctab)
-    {
-        boolean ok = false;
-        try {
-            Reaction rxn = new Reaction();
-            RXNFileParser p = new RXNFileParser();
-            p.parse(rxn, ctab);
-            ok = copyReactionToClipboard(ctab, rxn);
-        } catch (IOException e) {
-            System.err.println("Error copy reaction " + e);
-        } catch (Exception e) {
-            System.err.println("Error copy reaction " + e);
-        }
-        return ok;
-    }
+	/**
+	 * Get a Reaction from the Clipboard
+	 *
+	 * @return Reaction or null if no reaction present
+	 */
+	public Reaction pasteReaction() {
+		Reaction rxn;
 
-    private boolean copyReactionToClipboard(String ctab, Reaction rxn) throws IOException {
-        if (ctab == null) {
-            RXNFileCreator mc = new RXNFileCreator(rxn);
-            ctab = mc.getRXNfile();
-        }
+		return Platform.isWindows() ? pasteReactionWindowsNative() : pasteReactionLinux();
+	}
 
-        byte sketch[] = Sketch.createSketchFromReaction(makeRXNCopy(rxn));
+	public Reaction pasteReactionWindowsNative() {
+		byte[] buffer;
+		Reaction rxn = null;
 
-        // Serialize to a byte array
-        System.out.println("copyReactionToClipboard");
+		if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SERIALIZEREACTION)) != null) {
+			try {
+				ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
+				Object o = is.readObject();
+				if (o instanceof Reaction) {
+					rxn = (Reaction) o;
+				}
+				is.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("ClipboardHandler.pasteReaction(): Exception " + e);
+			}
+		} else if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_CTAB)) != null) {
+			RXNFileParser p = new RXNFileParser();
+			rxn = new Reaction();
+			try {
+				if (!p.parse(rxn, new String(buffer)))
+					rxn = null;
+			} catch (Exception e) {
+				System.err.println("Error parsing Reaction Buffer " + e);
+				rxn = null;
+			}
+		} else if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SKETCH)) != null) {
+			try {
+				rxn = new Reaction();
+				if (!Sketch.createReactionFromSketchBuffer(rxn, buffer)) {
+					rxn = null;
+				}
+			} catch (IOException e) {
+				rxn = null;
+			}
+		}
+		return rxn;
+	}
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(bos);
-        out.writeObject(rxn);
-        out.close();
-        bos.close();
+	private Reaction pasteReactionLinux() {
+		try {
+			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+			return (Reaction)t.getTransferData(ChemistryFlavors.DF_SERIALIZED_REACTION);
+		} catch (Exception e) {
+			System.err.println("error getting clipboard data "+ e);
+		}
+		return null;
+	}
 
-        return NativeClipboardHandler.copyReactionToClipboard(ctab.getBytes(), sketch, bos.toByteArray());
-    }
-
-    private boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch)
-    {
-        boolean ok = false;
-        try {
-            ok = writeMol2Metafile(new FileOutputStream(temp), m, sketch);
-        } catch (Exception e) {
-            System.err.println("error writing molfile " + e);
-            e.printStackTrace();
-        }
-        return ok;
-    }
+	public boolean copyMolecule(String molfile) {
+		StereoMolecule m = new StereoMolecule();
+		MolfileParser p = new MolfileParser();
+		p.parse(m, molfile);
+		return copyMolecule(m);
+	}
 
 
-    private boolean writeMol2Metafile(OutputStream out, StereoMolecule m, byte[] sketch) throws IOException
-    {
-        int w = 300;
-        int h = 200;
-        WMF wmf = new WMF();
-        WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
+	/**
+	 * Copies a molecule to the clipboard in various formats:
+	 * ENHMETAFILE with an embedded sketch
+	 * MDLSK Sketch
+	 * MDLCT MDL molfile
+	 */
+	public boolean copyMolecule(StereoMolecule mol) {
+		if (!Platform.isWindows()) {
+			MoleculeTransferable transferable = new MoleculeTransferable(mol);
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+			return true;
+			}
 
-        Depictor d = new Depictor(m);
-        d.updateCoords(g, new Rectangle2D.Double(0, 0, w, h), AbstractDepictor.cModeInflateToMaxAVBL);
-        d.paint(g);
+		// For now we keep the old handling for Windows...
+		boolean ok = false;
+		try {
+			StereoMolecule m = mol.getCompactCopy();
+			for (int atom=0; atom<m.getAllAtoms(); atom++)
+				m.setAtomMapNo(atom, 0, false);
 
-        if (sketch != null) {
-            byte temp[] = new byte[MDLSK.length + sketch.length];
-            System.arraycopy(MDLSK, 0, temp, 0, MDLSK.length);
-            System.arraycopy(sketch, 0, temp, MDLSK.length, sketch.length);
-            wmf.escape(WMF.MFCOMMENT, temp);
-        }
-        wmf.writeWMF(out);
-        out.close();
+			byte buffer[] = Sketch.createSketchFromMol(m);
+
+			File temp = File.createTempFile("actnca", ".wmf");
+			temp.deleteOnExit();
+
+			String path = null;
+			if (writeMol2Metafile(temp, m, buffer))
+				path = temp.getAbsolutePath();
+
+			// Serialize to a byte array
+			System.out.println("CopyMolecule");
+			com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
+			byte[] cdbuffer = cdx.getChemDrawBuffer(m);
+
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
+			// which is unacceptable for 3D molecules.
+			// If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
+			out.writeObject(mol);
+			out.close();
+			bos.close();
+
+			ok = NativeClipboardAccessor.copyMoleculeToClipboard(path, cdbuffer, bos.toByteArray());
+
+			temp.delete();
+		} catch (IOException e) {
+			System.err.println("ClipboardHandler: Exception copying Molecule " + e);
+		}
+		return ok;
+	}
+
+
+	/**
+	 * Copies a reaction to the clipboard in various formats:
+	 * MDLSK Sketch
+	 * MDLCT MDL molfile
+	 */
+	public boolean copyReaction(Reaction r) {
+		if (!Platform.isWindows()) {
+			ReactionTransferable transferable = new ReactionTransferable(r);
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+			return true;
+		}
+
+		// For now we keep the old handling for Windows...
+		boolean ok = false;
+		try {
+			ok = copyReactionToClipboard(null, r);
+		} catch (IOException e) {
+			System.err.println("ClipboardHandler: Exception Copying Reaction " + e);
+		}
+		return ok;
+	}
+
+	private Reaction makeRXNCopy(Reaction r)  {
+		Reaction rxn = new Reaction(r);
+		int mols = rxn.getMolecules();
+		for (int i = 0; i < mols; i++) {
+			rxn.getMolecule(i).ensureHelperArrays(Molecule.cHelperCIP);
+		}
+		return rxn;
+	}
+
+	/**
+	 * Copies a reaction to the clipboard in various formats:
+	 * CTAB with an embedded sketch
+	 * MDLSK Sketch
+	 * serialized
+	 */
+	public boolean copyReaction(String ctab) {
+		boolean ok = false;
+		try {
+			Reaction rxn = new Reaction();
+			RXNFileParser p = new RXNFileParser();
+			p.parse(rxn, ctab);
+			ok = copyReactionToClipboard(ctab, rxn);
+		} catch (IOException e) {
+			System.err.println("ClipboardHandler: Exception copying reaction " + e);
+		} catch (Exception e) {
+			System.err.println("ClipboardHandler: Exception copying reaction " + e);
+		}
+		return ok;
+	}
+
+	private boolean copyReactionToClipboard(String ctab, Reaction rxn) throws IOException {
+		if (ctab == null) {
+			RXNFileCreator mc = new RXNFileCreator(rxn);
+			ctab = mc.getRXNfile();
+		}
+
+		byte sketch[] = Sketch.createSketchFromReaction(makeRXNCopy(rxn));
+
+		// Serialize to a byte array
+		System.out.println("copyReactionToClipboard");
+
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream out = new ObjectOutputStream(bos);
+		out.writeObject(rxn);
+		out.close();
+		bos.close();
+
+		return NativeClipboardAccessor.copyReactionToClipboard(ctab.getBytes(), sketch, bos.toByteArray());
+	}
+
+	private boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch) {
+		boolean ok = false;
+		try {
+			ok = writeMol2Metafile(new FileOutputStream(temp), m, sketch);
+		} catch (Exception e) {
+			System.err.println("ClipboardHandler: Exception writing molfile " + e);
+			e.printStackTrace();
+		}
+		return ok;
+	}
+
+
+	private boolean writeMol2Metafile(OutputStream out, StereoMolecule m, byte[] sketch) throws IOException {
+		int w = 300;
+		int h = 200;
+		WMF wmf = new WMF();
+		WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
+
+		Depictor d = new Depictor(m);
+		d.updateCoords(g, new Rectangle2D.Double(0, 0, w, h), AbstractDepictor.cModeInflateToMaxAVBL);
+		d.paint(g);
+
+		if (sketch != null) {
+			byte temp[] = new byte[MDLSK.length + sketch.length];
+			System.arraycopy(MDLSK, 0, temp, 0, MDLSK.length);
+			System.arraycopy(sketch, 0, temp, MDLSK.length, sketch.length);
+			wmf.escape(WMF.MFCOMMENT, temp);
+		}
+		wmf.writeWMF(out);
+		out.close();
 //		g.dispose();
-        return true;
-    }
+		return true;
+	}
 
-/*
+	public static boolean setClipBoardData(String format, byte[] buffer) {
+		if (Platform.isWindows()) {
+			return NativeClipboardAccessor.setClipBoardData(format,buffer);
+		} else
+			return false;
+	}
 
-    private boolean writeRXN2Metafile(File temp, byte sketch[], Reaction m)
-    {
-        try {
-            return writeRXN2Metafile(new FileOutputStream(temp), sketch, m);
-        } catch (Exception e) {
-            System.err.println("Error writeRXN2Metafile " + e);
-            e.printStackTrace();
-            return false;
-        }
-    }
+	/**
+	 * Copy a windows enhance metafile to the Windows clipboard
+	 * @param data byte[]
+	 * @return boolean
+	 */
+	public static boolean copyMetaFile(byte []data) {
+		return Platform.isWindows() ? setClipBoardData(NativeClipboardAccessor.NC_METAFILE,data) : false;
+		}
+
+/*	private boolean writeRXN2Metafile(File temp, byte sketch[], Reaction m)
+	{
+		try {
+			return writeRXN2Metafile(new FileOutputStream(temp), sketch, m);
+		} catch (Exception e) {
+			System.err.println("Error writeRXN2Metafile " + e);
+			e.printStackTrace();
+			return false;
+		}
+	}
 */
 
-/*
-    private boolean writeRXN2Metafile(OutputStream out, byte sketch[], Reaction m) throws IOException
-    {
-        int w = 400;
-        int h = 300;
-        WMF wmf = new WMF();
-        WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
-        AbstractReactionDepictor d = new ReactionDepictor(m);
-        d.updateCoords(new GraphicsContext(g), 8, 8, w - 16, h - 16, AbstractDepictor.cModeInflateToMaxAVBL);
-        d.paint(new GraphicsContext(g));
-        if (sketch != null) {
+/*	private boolean writeRXN2Metafile(OutputStream out, byte sketch[], Reaction m) throws IOException
+	{
+		int w = 400;
+		int h = 300;
+		WMF wmf = new WMF();
+		WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
+		AbstractReactionDepictor d = new ReactionDepictor(m);
+		d.updateCoords(new GraphicsContext(g), 8, 8, w - 16, h - 16, AbstractDepictor.cModeInflateToMaxAVBL);
+		d.paint(new GraphicsContext(g));
+		if (sketch != null) {
 //			byte MDLSK[] = {(byte)'M',(byte)'D',(byte)'L',(byte)'S',(byte)'K',0,0};
-            byte temp[] = new byte[MDLSK.length + sketch.length];
-            System.arraycopy(MDLSK, 0, temp, 0, MDLSK.length);
-            System.arraycopy(sketch, 0, temp, MDLSK.length, sketch.length);
-            wmf.escape(WMF.MFCOMMENT, temp);
-        }
-        wmf.writeWMF(out);
-        out.close();
-        return true;
-    }
+			byte temp[] = new byte[MDLSK.length + sketch.length];
+			System.arraycopy(MDLSK, 0, temp, 0, MDLSK.length);
+			System.arraycopy(sketch, 0, temp, MDLSK.length, sketch.length);
+			wmf.escape(WMF.MFCOMMENT, temp);
+		}
+		wmf.writeWMF(out);
+		out.close();
+		return true;
+	}
 */
 
 
-    /**
-     * Copies an Image to the clipboard
-     *
-     * @param img Image to be copied
-     * @return true on success
-     */
-    public boolean copyImage(java.awt.Image img)
-    {
-        return ImageClipboardHandler.copyImage(img);
-    }
+	/**
+	 * Copies an Image to the clipboard
+	 *
+	 * @param img Image to be copied
+	 * @return true on success
+	 */
+	public boolean copyImage(java.awt.Image img) {
+		return ImageClipboardHandler.copyImage(img);
+	}
 
-    public java.awt.Image pasteImage()
-    {
-        return ImageClipboardHandler.pasteImage();
-    }
+	public java.awt.Image pasteImage() {
+		return ImageClipboardHandler.pasteImage();
+	}
 
-    private boolean is3DMolecule(ExtendedMolecule mol)
-    {
-        for (int atom = 0; atom < mol.getAllAtoms(); atom++)
-            if (mol.getAtomZ(atom) != 0.0)
-                return true;
+	/**
+	 * @deprecated Use ImageClipboardHandler.pasteImage for consistency reasons
+	 */
+	public static Image getImage() {
+		return ImageClipboardHandler.pasteImage();
+	}
 
-        return false;
-    }
-
-    /**
-     * @deprecated Use ImageClipboardHandler.pasteImage for consistency reasons
-     */
-    public static Image getImage()
-    {
-        return ImageClipboardHandler.pasteImage();
-    }
-
-    /**
-     * @deprecated You may use ImageClipboardHandler.copyImage for consistency reasons
-     */
-    public static void putImage(Image image)
-    {
-        ImageClipboardHandler.copyImage(image);
-    }
+	/**
+	 * @deprecated You may use ImageClipboardHandler.copyImage for consistency reasons
+	 */
+	public static void putImage(Image image) {
+		ImageClipboardHandler.copyImage(image);
+	}
 }

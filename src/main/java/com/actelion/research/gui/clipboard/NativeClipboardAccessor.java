@@ -33,8 +33,19 @@
 
 package com.actelion.research.gui.clipboard;
 
-public class NativeClipboardAccessor
-{
+public class NativeClipboardAccessor {
+	public static final String NC_SKETCH	= "MDLSK";
+	public static final String NC_CTAB		= "MDLCT";
+	public static final String NC_MOLFILE	= "MDL_MOL";
+	public static final String NC_METAFILE	= "CF_METAFILEPICT";
+	public static final String NC_DIB		= "CF_DIB";
+	public static final String NC_BITMAP	= "CF_BITMAP";
+	public static final String NC_SERIALIZEMOLECULE = "ACT_MOLECULE";
+	public static final String NC_SERIALIZEREACTION = "ACT_REACTION";
+	public static final String NC_ALDUSMETAFILE	= "ALDUS_METAFILE";;
+	public static final String NC_EMBEDDEDSKETCH = "MDLSK_EMBEDDED";
+	public static final String NC_CHEMDRAWINTERCHANGE = "ChemDraw Interchange Format";
+	public static final String NC_IDCODE		= "IDCODE";
 
     public static native boolean copyMoleculeToClipboard(String filname, byte[] sketch, byte[] serializedObject);
 	public static native boolean copyReactionToClipboard(byte[] ctab, byte[] sketch, byte[] serializedObject);

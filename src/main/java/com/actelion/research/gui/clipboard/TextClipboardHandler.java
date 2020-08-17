@@ -33,13 +33,12 @@
 
 package com.actelion.research.gui.clipboard;
 
-import java.awt.Image;
-import java.io.IOException;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.Toolkit;
-import java.awt.datatransfer.DataFlavor;
+import java.io.IOException;
 
 /**
  * <p> </p>
@@ -104,7 +103,7 @@ public class TextClipboardHandler
 			return DataFlavor.stringFlavor.equals(flavor);
 		}
 
-		public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException,IOException {
+		public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
 			if (!DataFlavor.stringFlavor.equals(flavor)) {
 				throw new UnsupportedFlavorException(flavor);
 			}
