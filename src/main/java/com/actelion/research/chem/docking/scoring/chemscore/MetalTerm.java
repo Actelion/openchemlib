@@ -1,6 +1,7 @@
 package com.actelion.research.chem.docking.scoring.chemscore;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.actelion.research.chem.Coordinates;
@@ -46,13 +47,17 @@ public class MetalTerm implements PotentialEnergyTerm {
 	}
 
 	private double getDistTerm(double[] gradient) {
+		System.out.println("check metal");
 		Coordinates a;
 		Coordinates grad = new Coordinates();
 		double energy = 0.0;
 		a = ligand.getCoordinates(acceptor);
 		Coordinates r = a.subC(fitPoint);
+		System.out.println(a);
+		System.out.println(fitPoint);
 		double d = r.dist();
-
+		System.out.println("dist");
+		System.out.println(d);
 		if(d<D1) {
 			energy = 1.0;
 		}
@@ -145,6 +150,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 		double energy = 0.0;
 		double[] grad = new double[gradient.length];
 		energy = getDistTerm(grad);
+		double totEnergy = 0.0;
 		if(energy!=0.0) {
 			energies.add(energy);
 			gradients.add(grad);
@@ -155,30 +161,35 @@ public class MetalTerm implements PotentialEnergyTerm {
 				energies.add(energy);
 				gradients.add(grad);
 			}
-		}
-		double[] totGrad = new double[gradient.length];
-		double totEnergy = scale*ENERGY;
-		for(double eng : energies)
-			totEnergy*=eng;
-		//apply product rules
-		for(int i=0;i<gradients.size();i++) {
-			double[] g = gradients.get(i);
-			for(int j=0;j<gradients.size();j++) {
-				if(i==j)
-					continue;
-				double e = energies.get(j);
-				double w = e*scale*ENERGY;
-				for(int k=0;j<g.length;k++)
-					g[k]*=w;
-				
+		
+			double[] totGrad = new double[gradient.length];
+			System.out.println("engies");
+			System.out.println(energies);
+			totEnergy = scale*ENERGY;
+			for(double eng : energies)
+				totEnergy*=eng;
+			//apply product rules
+			for(int i=0;i<gradients.size();i++) {
+				double[] g = gradients.get(i);
+				for(int j=0;j<gradients.size();j++) {
+					if(i==j)
+						continue;
+					double e = energies.get(j);
+					double w = e*scale*ENERGY;
+					for(int k=0;j<g.length;k++)
+						g[k]*=w;
+					
+				}
+				for(int l=0;l<totGrad.length;l++) {
+					totGrad[l]+=g[l];
+				}
 			}
-			for(int l=0;l<totGrad.length;l++) {
-				totGrad[l]+=g[l];
+			for(int i=0;i<totGrad.length;i++) {
+				gradient[i]+=totGrad[i];
 			}
 		}
-		for(int i=0;i<totGrad.length;i++) {
-			gradient[i]+=totGrad[i];
-		}
+		System.out.println("tot");
+		System.out.println(totEnergy);
 		return totEnergy;
 	}
 	

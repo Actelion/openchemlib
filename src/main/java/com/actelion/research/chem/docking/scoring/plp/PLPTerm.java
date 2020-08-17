@@ -23,7 +23,7 @@ public class PLPTerm implements PotentialEnergyTerm {
 		HBOND_TERM.put("B", 2.6);
 		HBOND_TERM.put("C", 3.1);
 		HBOND_TERM.put("D", 3.4);
-		HBOND_TERM.put("E", -4.0);
+		HBOND_TERM.put("E", -1.0);
 		HBOND_TERM.put("F", 20.0);
 	};
 	
@@ -33,7 +33,7 @@ public class PLPTerm implements PotentialEnergyTerm {
 		METAL_TERM.put("B", 2.2);
 		METAL_TERM.put("C", 2.6);
 		METAL_TERM.put("D", 2.8);
-		METAL_TERM.put("E", -6.0);
+		METAL_TERM.put("E", -1.0);
 		METAL_TERM.put("F", 20.0);
 	};
 	
@@ -43,7 +43,7 @@ public class PLPTerm implements PotentialEnergyTerm {
 		BURIED_TERM.put("B", 3.6);
 		BURIED_TERM.put("C", 4.5);
 		BURIED_TERM.put("D", 5.5);
-		BURIED_TERM.put("E", -0.05);
+		BURIED_TERM.put("E", -0.1);
 		BURIED_TERM.put("F", 20.0);
 	};
 	

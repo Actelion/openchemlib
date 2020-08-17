@@ -38,12 +38,10 @@ public class MoleculeGrid {
 	protected final int[] gridSize = new int[3];
 	protected final Set<Integer>[][][] grid;
 	
-	public MoleculeGrid(StereoMolecule mol) {
-		this(mol, 1.1,new Coordinates(0.0,0.0,0.0),true);
-	}
+
 	
-	public MoleculeGrid(StereoMolecule mol, boolean includeHydrogens) {
-		this(mol, 1.1,new Coordinates(0.0,0.0,0.0),includeHydrogens);
+	public MoleculeGrid(StereoMolecule mol) {
+		this(mol, 1.1,new Coordinates(0.0,0.0,0.0));
 	}
 
 	/**
@@ -51,7 +49,7 @@ public class MoleculeGrid {
 	 * @param mol
 	 */
 	@SuppressWarnings("unchecked")
-	public MoleculeGrid(StereoMolecule mol, double gridWidth, Coordinates extension, boolean includeHydrogens) {
+	public MoleculeGrid(StereoMolecule mol, double gridWidth, Coordinates extension) {
 		this.mol = mol;
 		this.gridWidth = gridWidth;
 		//1. Find the Molecule's bounds
@@ -75,11 +73,8 @@ public class MoleculeGrid {
 		grid = new Set[Math.max(0, gridSize[0])][Math.max(0, gridSize[1])][Math.max(0, gridSize[2])];		
 		
 		//3. Put each atom in the grid
-		int atoms = 0;
-		if(includeHydrogens) 
-			atoms = mol.getAllAtoms();
-		else 
-			atoms = mol.getAtoms();
+
+		int atoms = mol.getAtoms();
 		for (int i = 0; i < atoms; i++) {
 			int x = (int)((mol.getAtomX(i)-min.x)/gridWidth);
 			int y = (int)((mol.getAtomY(i)-min.y)/gridWidth);

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
@@ -22,6 +23,8 @@ public class DockingEngine {
 	private static final int DEFAULT_NR_MC_STEPS = 200;
 	private static final int DEFAULT_START_POSITIONS = 5;
 	private static final double BOLTZMANN_FACTOR = 0.593;
+	public static final double GRID_DIMENSION = 8.0;
+	public static final double GRID_RESOLUTION = 0.5;
 	
 	private StereoMolecule receptor;
 	private MoleculeGrid grid;
@@ -33,7 +36,8 @@ public class DockingEngine {
 	private Random random;
 	
 	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand, int mcSteps, int startPositions) {
-		grid = new MoleculeGrid(nativeLigand, 0.5, new Coordinates(8.0,8.0,8.0),false);
+		grid = new MoleculeGrid(nativeLigand, GRID_RESOLUTION, new Coordinates(GRID_DIMENSION,GRID_DIMENSION,
+				GRID_DIMENSION));
 		MolecularVolume molVol = new MolecularVolume(nativeLigand);
 		origCOM  = new Coordinates(molVol.getCOM());
 		Conformer conf = new Conformer(nativeLigand);
@@ -117,12 +121,25 @@ public class DockingEngine {
 	}
 	
 	private LigandPose initiate(Conformer ligConf) {
-		int[] gridSize = grid.getGridSize();
 		Conformer recConf = new Conformer(receptor);
 		Set<Integer> receptorAtoms = new HashSet<Integer>();
 		int[] receptorAtomTypes = new int[receptor.getAtoms()];
-		for(int i=0;i<receptor.getAtoms();i++) {
-			receptorAtomTypes[i] = InteractionAtomTypeCalculator.getAtomType(receptor, i);
+		
+		LigandPose pose = new LigandPose(ligConf,recConf,receptorAtoms,receptorAtomTypes, grid);
+		
+		return pose;
+		
+		
+	}
+	
+	public static void getBindingSiteAtoms(StereoMolecule receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid,
+			boolean includeHydrogens) {
+		int[] gridSize = grid.getGridSize();
+		int atoms = receptor.getAtoms();
+		if(includeHydrogens)
+			atoms = receptor.getAllAtoms();
+		
+		for(int i=0;i<atoms;i++) {
 			int[] gridC = grid.getGridCoordinates(receptor.getCoordinates(i));
 			int x = gridC[0];
 			int y = gridC[1];
@@ -130,14 +147,20 @@ public class DockingEngine {
 			if(x>0 && x<gridSize[0]) {
 				if(y>0 && y<gridSize[1]) {
 					if(z>0 && z<gridSize[2]) {
-						receptorAtoms.add(i);
+						bindingSiteAtoms.add(i);
 					}
 			}
 		}
 		}
-		LigandPose pose = new LigandPose(ligConf,recConf,receptorAtoms,receptorAtomTypes, grid);
 		
-		return pose;
+	}
+	
+	public static int[] getReceptorAtomTypes(StereoMolecule receptor) {
+		int[] receptorAtomTypes = new int[receptor.getAtoms()];
+		for(int i=0;i<receptor.getAtoms();i++) {
+			receptorAtomTypes[i] = InteractionAtomTypeCalculator.getAtomType(receptor, i);
+		}
+		return receptorAtomTypes;
 		
 		
 	}

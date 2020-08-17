@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.Molecule;
@@ -85,17 +86,48 @@ public class Mol2FileParser extends AbstractParser {
 		} else {*/
 			//Use BondsCalculator.aromatize
 			boolean suc = BondsCalculator.aromatize(m, aromaticAtoms, aromaticBonds);
-			System.out.println(new SmilesCreator().generateSmiles(m));
 			if(!suc) {
 				System.err.println("Could not aromatize the molecule");
 			}
 		//}		
-		
-		
+		assignCharges(m);
+
 		m.setAllAtomFlag(Molecule3D.LIGAND, true);
+		
 		res.add(m);
 
 	}
+	
+	private void assignCharges(Molecule3D mol) {
+		for (int atom=0; atom<mol.getAtoms(); atom++) {
+			if (mol.getAtomicNo(atom) == 7)
+				if(mol.getOccupiedValence(atom)==4) {
+					//sulfonium ion
+					mol.setAtomCharge(atom, 1);
+				}
+				else if(mol.getOccupiedValence(atom)==2) {
+					mol.setAtomCharge(atom, -1);
+				}
+			
+			if (mol.getAtomicNo(atom) == 8)
+				if(mol.getOccupiedValence(atom)==3) {
+					//sulfonium ion
+					mol.setAtomCharge(atom, 1);
+				}
+				else if(mol.getOccupiedValence(atom)==1) {
+					mol.setAtomCharge(atom, -1);
+				}
+			if (mol.getAtomicNo(atom) == 16)
+				if(mol.getOccupiedValence(atom)==3) {
+					//sulfonium ion
+					mol.setAtomCharge(atom, 1);
+				}
+				else if(mol.getOccupiedValence(atom)==1)
+					mol.setAtomCharge(atom, -1);
+			
+		}
+	}
+	
 	
 	public static String getChargeType(int type) {
 		
@@ -235,33 +267,38 @@ public class Mol2FileParser extends AbstractParser {
 					
 					int order;
 					if (o.equals("ar")) {
-						order = 1;
+						//order = 1;
 						//aromatic.add(i1);
 						//aromatic.add(i2);
-						//order = Molecule.cBondTypeDelocalized;
+						order = Molecule.cBondTypeDelocalized;
 					} else if (o.equals("am")) {
-						//order = Molecule.cBondTypeSingle;
-						order = 1;
+						order = Molecule.cBondTypeSingle;
+						//order = 1;
+					} else if(o.equals("un")) {
+						continue;
+					} else if(o.equals("du")) {
+						continue;
 					} else {
 						order = Integer.parseInt(o);
-						/*
-						if (orderMol2 == 1) {
+						
+						if (order== 1) {
 							order = Molecule.cBondTypeSingle;
-						} else if (orderMol2 == 2) { 
+						} else if (order == 2) { 
 							order = Molecule.cBondTypeDouble;
-						} else if (orderMol2 == 3) {
-							order = 3; Molecule.cBondTypeTriple;
+						} else if (order == 3) {
+							order = Molecule.cBondTypeTriple;
 						} else {
-							throw new RuntimeException("Unknown bond type " + orderMol2 + ".");
+							throw new RuntimeException("Unknown bond type " + order + ".");
 						}
-						*/
+						
 					}
 
 					
 
 					int a1 = i1.intValue();
 					int a2 = i2.intValue();
-					int b = m.addBond(a1, a2, order);
+					int b = m.addBond(a1, a2,order);
+					//m.setBondOrder(b, order);
 					if(o.equals("ar")) {
 						aromaticBonds.add(b);
 					}

@@ -219,6 +219,8 @@ public class HBTerm implements PotentialEnergyTerm {
 				gradients.add(grad);
 			}
 		}
+		else 
+			energies.add(0.0);
 		double[] totGrad = new double[gradient.length];
 		double totEnergy = scale*ENERGY;
 		for(double eng : energies)
@@ -231,7 +233,7 @@ public class HBTerm implements PotentialEnergyTerm {
 					continue;
 				double e = energies.get(j);
 				double w = e*scale*ENERGY;
-				for(int k=0;j<g.length;k++)
+				for(int k=0;k<g.length;k++)
 					g[k]*=w;
 				
 			}

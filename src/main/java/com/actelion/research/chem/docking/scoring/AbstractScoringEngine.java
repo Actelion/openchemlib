@@ -4,6 +4,7 @@ import java.util.Set;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule3D;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
@@ -21,7 +22,7 @@ public abstract class AbstractScoringEngine implements Evaluable  {
 	protected double[] state;
 	protected MoleculeGrid grid;
 	
-	public AbstractScoringEngine(Molecule3D receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid) {
+	public AbstractScoringEngine(StereoMolecule receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid) {
 		this.receptorConf = new Conformer(receptor);
 		this.bindingSiteAtoms = bindingSiteAtoms;
 		this.grid = grid;
@@ -66,7 +67,7 @@ public abstract class AbstractScoringEngine implements Evaluable  {
 		return v;
 	}
 	
-	protected double getBumpTerm() {
+	public double getBumpTerm() {
 		double bumpTerm = 0.0;
 		int[] gridSize = grid.getGridSize();
 		for(Coordinates c : candidatePose.getCoordinates()) {
@@ -74,15 +75,15 @@ public abstract class AbstractScoringEngine implements Evaluable  {
 			int x = gridC[0];
 			int y = gridC[1];
 			int z = gridC[2];	
-			if(x<0 || x>(gridSize[0]-3)) {
+			if(x<BUMP_RADIUS || x>(gridSize[0]-BUMP_RADIUS)) {
 				bumpTerm = BUMP_PENALTY;
 				break;
 			}
-			else if(y<0 || y>(gridSize[1])-3) {
+			else if(y<BUMP_RADIUS || y>(gridSize[1]-BUMP_RADIUS)) {
 				bumpTerm = BUMP_PENALTY;
 				break;
 			}
-			else if(z<0 || z>(gridSize[1])-3) {
+			else if(z<BUMP_RADIUS || z>(gridSize[2]-BUMP_RADIUS)) {
 				bumpTerm = BUMP_PENALTY;
 				break;	
 				}

@@ -92,7 +92,8 @@ public class PharmacophoreCalculator {
 	}
 	
 	public static boolean isAcceptor(StereoMolecule mol, int a) {
-		if (mol.getAtomCharge(a)<=0) { //charge is not positive -> no acceptor
+		if (mol.getAtomicNo(a)==7 || mol.getAtomicNo(a)==8) {
+		if (mol.getAtomCharge(a)<=0) { //charge is positive -> no acceptor
 			if (mol.isAromaticAtom(a)) { 
 				if (mol.getAllConnAtoms(a)<3) {
 					return true;
@@ -104,8 +105,14 @@ public class PharmacophoreCalculator {
 			else if (mol.getAtomicNo(a)==7){ // atom is not aromatic
 				if(mol.getConnBondOrder(a, 0)==3) //nitrile
 					return true;
-				if (mol.isFlatNitrogen(a)) 
+				if (mol.isFlatNitrogen(a)) { 
+					for(int b=0;b<mol.getConnAtoms(a);b++) {
+						if(mol.getConnBondOrder(a, b)>1)
+							return true;
+					}
 					return false;
+					
+				}
 				for(int i=0;i<mol.getAllConnAtoms(a);i++) {
 					int aa = mol.getConnAtom(a, i);
 					if (mol.getAtomicNo(aa)==6) {
@@ -126,21 +133,31 @@ public class PharmacophoreCalculator {
 		return true;
 		}
 		else return false;
+		}
+		else {
+			return false;
+		}
 	}
 	
 	public static boolean isDonorHydrogen(StereoMolecule mol, int h) {
-		int dh = mol.getConnAtom(h, 0);
-		if (mol.getAtomCharge(dh)>=0 && (mol.getAtomicNo(dh)==7 || mol.getAtomicNo(dh)==8) ) { //charge is not positive -> no acceptor
-			return true;
+		if(mol.getAtomicNo(h)==1) {
+			int dh = mol.getConnAtom(h, 0);
+			if (mol.getAtomCharge(dh)>=0 && (mol.getAtomicNo(dh)==7 || mol.getAtomicNo(dh)==8) ) { //charge is not positive -> no acceptor
+				return true;
+			}
+			else return false;
 		}
-		else return false;
+		else
+			return false;
 	}
 	
 	public static boolean isDonorHeavyAtom(StereoMolecule mol, int d) {
 		boolean isDonor = false;
+		if (mol.getAtomicNo(d)==7 || mol.getAtomicNo(d)==8) {
 		if (mol.getAtomCharge(d)>=0 && (mol.getAtomicNo(d)==7 || mol.getAtomicNo(d)==8) ) {
 			if(mol.getAllHydrogens(d)>0)
 			isDonor = true;
+		}
 		}
 		return isDonor;
 	}

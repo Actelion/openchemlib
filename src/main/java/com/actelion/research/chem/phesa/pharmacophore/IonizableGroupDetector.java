@@ -104,9 +104,9 @@ public class IonizableGroupDetector {
 				}
 				else if(mol.getAtomicNo(a)==7) {
 					if(!mol.isAromaticAtom(a) && mol.getConnAtoms(a)<=2) { //HNR2 or H2NR
-							int nDBs = 0;
 							boolean found=false;
 							for(int i=0;i<mol.getConnAtoms(a) && !found;i++) { //search for amidine
+								int nDBs = 0;
 								int aa = mol.getConnAtom(a, i);
 								if(alreadyDetected(aa)) continue;
 								if(mol.getAtomicNo(aa)==6) {
@@ -128,6 +128,7 @@ public class IonizableGroupDetector {
 												ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),1);
 												chargePoints.add(cp);
 												found = true;
+
 											}
 												
 										}

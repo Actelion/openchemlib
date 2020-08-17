@@ -9,8 +9,8 @@ import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 public class SimpleMetalTerm implements PotentialEnergyTerm {
 	
-	private static final double D1 = 0.6;
-	private static final double D2 = 0.8;
+	private static final double D1 = 2.6;
+	private static final double D2 = 3.0;
 
 	
 	private static final double PHI0 = Math.PI;
@@ -160,6 +160,8 @@ public class SimpleMetalTerm implements PotentialEnergyTerm {
 				gradients.add(grad);
 			}
 		}
+		else 
+			energies.add(energy);
 		double[] totGrad = new double[gradient.length];
 		double totEnergy = scale*ENERGY;
 		for(double eng : energies)
@@ -172,7 +174,7 @@ public class SimpleMetalTerm implements PotentialEnergyTerm {
 					continue;
 				double e = energies.get(j);
 				double w = e*scale*ENERGY;
-				for(int k=0;j<g.length;k++)
+				for(int k=0;k<g.length;k++)
 					g[k]*=w;
 				
 			}
