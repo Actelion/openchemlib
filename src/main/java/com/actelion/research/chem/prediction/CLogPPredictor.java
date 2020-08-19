@@ -33,14 +33,13 @@
 
 package com.actelion.research.chem.prediction;
 
-import com.actelion.research.chem.*;
-import com.actelion.research.util.DoubleFormat;
+import com.actelion.research.chem.AtomTypeCalculator;
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.SortedList;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.TreeMap;
 
 public class CLogPPredictor {
@@ -288,10 +287,10 @@ public class CLogPPredictor {
 							ParameterizedStringList.cStringTypeText);
 		detail.add("Recognized atom types and their contributions are:",ParameterizedStringList.cStringTypeText);
 
-		mol.normalizeAmbiguousBonds();
-		mol.ensureHelperArrays(Molecule.cHelperRings);
-
 		if (mol != null) {
+			mol.normalizeAmbiguousBonds();
+			mol.ensureHelperArrays(Molecule.cHelperRings);
+
 			int errorCount = 0;
 			TreeMap<Long,Integer> countMap = new TreeMap<Long,Integer>();
 			NumberFormat formatter = new DecimalFormat("#0.000");

@@ -65,7 +65,16 @@ public abstract class AbstractParser {
 		return loadGroup(fileName, in, -1, -1);
 	}
 	public abstract List<Molecule3D> loadGroup(String fileName, Reader in, int from, int to) throws Exception;
-	
+
+	/**
+	 *
+	 * @param file
+	 * @throws Exception
+	 */
+	public final Molecule3D load(File file) throws Exception {
+		return load(file.getPath());
+	}
+
 	/**
 	 * 
 	 * @param fileName
@@ -75,7 +84,7 @@ public abstract class AbstractParser {
 		List<Molecule3D> list = loadGroup(fileName);
 		return list.size()>0? list.get(0): null;
 	}
-	
+
 	/**
 	 *
 	 * @param fileName
