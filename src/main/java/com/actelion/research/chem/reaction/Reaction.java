@@ -33,13 +33,13 @@
 
 package com.actelion.research.chem.reaction;
 
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import com.actelion.research.chem.DrawingObjectList;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Reaction implements java.io.Serializable {
 	static final long serialVersionUID = 0x2006CAFE;
@@ -233,7 +233,7 @@ public class Reaction implements java.io.Serializable {
 	}
 
 	public String getName() {
-		return (mName == null) ? "Unknown Reaction" : mName;
+		return (mName == null) ? "" : mName;
 		}
 
 	public void setName(String name) {
@@ -552,7 +552,7 @@ public class Reaction implements java.io.Serializable {
 		}
 
 	/**
-	 * Merges all reactants into one molecule and all rpoducts into another ad creates a new Reaction object from those.
+	 * Merges all reactants into one molecule and all products into another ad creates a new Reaction object from those.
 	 * @return new reaction from merged reactants and merged products
 	 */
 	public Reaction getMergedCopy() {

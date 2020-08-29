@@ -48,6 +48,9 @@ public class ReactionEncoder
 	public static final char CATALYST_DELIMITER = '+';	// character must not collide with idcode or coordinate encodings
 	public static final char OBJECT_DELIMITER = '#';
 
+	public static final String MOLECULE_DELIMITER_STRING = " ";
+	public static final String OBJECT_DELIMITER_STRING = "#";
+
 	public static final int INCLUDE_MAPPING = 1;
 	public static final int INCLUDE_COORDS = 2;
 	public static final int INCLUDE_DRAWING_OBJECTS = 4;
@@ -582,13 +585,58 @@ public class ReactionEncoder
 	 * Generates an array of all reactants and/or products of the encoded reaction string as bytes.
 	 * If the string includes atom coordinates or if they are explicitly, these are used.
 	 * At least one of includeReactants and includeProducts must be true.
-	 * @param rxnBytes may contain atom coordinates
-	 * @param coords may be null
-	 * @param mapping may be null
+	 * @param s encoded reaction
 	 * @param includeReactants
 	 * @param includeProducts
+	 * @param includeMapping
 	 * @return null (if reactants or products are missing) or StereoMolecule array with at least one molecule
 	 */
+	public static StereoMolecule[] decodeMolecules(String s, boolean includeCoords, boolean includeMapping, boolean includeReactants, boolean includeProducts) {
+		if (s == null)
+			return null;
+
+		byte[] rxnCode = null;
+		byte[] rxnMapping = null;
+		byte[] rxnCoords = null;
+		int index1 = s.indexOf(OBJECT_DELIMITER);
+		if (index1 == -1) {
+			rxnCode = s.getBytes();
+		} else {
+			rxnCode = s.substring(0, index1).getBytes();
+			if (includeMapping || includeCoords) {
+				int index2 = s.indexOf(OBJECT_DELIMITER, index1 + 1);
+				if (index2 == -1) {
+					if (includeMapping)
+						rxnMapping = s.substring(index1 + 1).getBytes();
+				} else {
+					if (includeMapping)
+						rxnMapping = s.substring(index1 + 1, index2).getBytes();
+					if (includeCoords) {
+						int index3 = s.indexOf(OBJECT_DELIMITER, index2 + 1);
+						if (index3 == -1) {
+							rxnCoords = s.substring(index2 + 1).getBytes();
+						} else {
+							rxnCoords = s.substring(index2 + 1, index3).getBytes();
+							}
+						}
+					}
+				}
+			}
+
+		return decodeMolecules(rxnCode, rxnCoords, rxnMapping, includeReactants, includeProducts);
+		}
+
+		/**
+		 * Generates an array of all reactants and/or products of the encoded reaction string as bytes.
+		 * If the string includes atom coordinates or if they are explicitly, these are used.
+		 * At least one of includeReactants and includeProducts must be true.
+		 * @param rxnBytes may contain atom coordinates
+		 * @param coords may be null
+		 * @param mapping may be null
+		 * @param includeReactants
+		 * @param includeProducts
+		 * @return null (if reactants or products are missing) or StereoMolecule array with at least one molecule
+		 */
 	public static StereoMolecule[] decodeMolecules(byte[] rxnBytes, byte[] coords, byte[] mapping, boolean includeReactants, boolean includeProducts) {
 		if (rxnBytes == null || rxnBytes.length == 0)
 			return null;

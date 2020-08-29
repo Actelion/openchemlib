@@ -56,8 +56,6 @@ public abstract class CompoundFileHelper {
 	public static final int cFileTypeSDV3 = 0x00000040;
     public static final int cFileTypeSDV2 = 0x00000080;
     public static final int cFileTypeSD = cFileTypeSDV3 | cFileTypeSDV2;
-	public static final int cFileTypeDataWarriorCompatibleData = cFileTypeDataWarrior | cFileTypeText | cFileTypeSD;
-	public static final int cFileTypeDataWarriorTemplateContaining = cFileTypeDataWarrior | cFileTypeDataWarriorQuery | cFileTypeDataWarriorTemplate;
 	public static final int cFileTypeRXN = 0x00000100;
 	public static final int cFileTypeSOM = 0x00000200;
 	public static final int cFileTypeJPG = 0x00000400;
@@ -73,6 +71,9 @@ public abstract class CompoundFileHelper {
 	public static final int cFileTypePDB = 0x00040000;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
+
+	public static final int cFileTypeDataWarriorCompatibleData = cFileTypeDataWarrior | cFileTypeText | cFileTypeRD | cFileTypeSD;
+	public static final int cFileTypeDataWarriorTemplateContaining = cFileTypeDataWarrior | cFileTypeDataWarriorQuery | cFileTypeDataWarriorTemplate;
 
 	private static File sCurrentDirectory;
 	private int mRecordCount,mErrorCount;

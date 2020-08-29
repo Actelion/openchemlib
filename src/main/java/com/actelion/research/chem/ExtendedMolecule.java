@@ -404,7 +404,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * @param atom
-	 * @return count of category 1 & 2 & 3 neighbour atoms (excludes neighbours connected with zero bond order)
+	 * @return count of category 1 & 2 & 3 neighbour atoms
 	 */
 	public int getAllConnAtomsPlusMetalBonds(int atom) {
 		return mConnAtom[atom].length;
@@ -3204,8 +3204,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean isSimpleHydrogen(int atom) {
-		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0 && mAtomCharge[atom] == 0 && mAtomMapNo[atom] == 0
+		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0 && mAtomCharge[atom] == 0 // && mAtomMapNo[atom] == 0
 			&& (mAtomCustomLabel == null || mAtomCustomLabel[atom] == null);
+		// Since a mapNo is not part of an idcode, a mapped but otherwise simple H must be considered simple; TLS 29Aug2020
 		}
 
 	/**

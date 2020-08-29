@@ -33,14 +33,13 @@
 
 package com.actelion.research.chem.properties.complexity;
 
-import java.util.List;
-
 import com.actelion.research.calc.CorrelationCalculator;
 import com.actelion.research.calc.Logarithm;
 import com.actelion.research.calc.regression.linear.simple.LinearRegression;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.properties.symmetry.SymmetryCalculator;
 import com.actelion.research.util.datamodel.DoubleArray;
+
+import java.util.List;
 
 
 public class ObjectiveExhaustiveStatistics {
