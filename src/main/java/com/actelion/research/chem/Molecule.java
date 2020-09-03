@@ -1687,10 +1687,19 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 *  Use clear() instead of this method
+	 */
+	@Deprecated
+	public void deleteMolecule() {
+		clear();
+		}
+
+
+	/**
 	 * Empties the molecule to serve as container for constructing a new molecule,
 	 * e.g. by multiply calling addAtom(...), addBond(...) and other high level methods.
 	 */
-	public void deleteMolecule() {
+	public void clear() {
 		mAllAtoms = 0;
 		mAllBonds = 0;
 		mIsFragment = false;
