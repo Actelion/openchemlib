@@ -78,6 +78,13 @@ public class DoubleArray implements INumericalDataColumn {
 		size = a.length;
 	}
 
+	public DoubleArray(IntArray ia) {
+		init(ia.length());
+		for (int i = 0; i < ia.length(); i++) {
+			add(ia.get(i));
+		}
+	}
+
 
 
 	private void init(int capacity){
