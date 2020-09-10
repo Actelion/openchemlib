@@ -3465,4 +3465,35 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	private void writeObject(ObjectOutputStream stream) throws IOException {}
 	private void readObject(ObjectInputStream stream) throws IOException {}
+
+
+
+	public final static Coordinates getCenterGravity(ExtendedMolecule mol) {
+
+		int n = mol.getAllAtoms();
+
+		int [] indices = new int [n];
+
+		for (int i = 0; i < indices.length; i++) {
+			indices[i]=i;
+		}
+
+		return getCenterGravity(mol, indices);
 	}
+
+	public final static Coordinates getCenterGravity(ExtendedMolecule mol, int[] indices) {
+
+		Coordinates c = new Coordinates();
+		for (int i = 0; i < indices.length; i++) {
+			c.x += mol.getAtomX(indices[i]);
+			c.y += mol.getAtomY(indices[i]);
+			c.z += mol.getAtomZ(indices[i]);
+		}
+		c.x /= indices.length;
+		c.y /= indices.length;
+		c.z /= indices.length;
+
+		return c;
+	}
+
+}
