@@ -326,12 +326,20 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 	public MolDistHist createDescriptorSingleConf(ConformerSet conformerSet) {
 
+		if(conformerSet==null){
+			return FAILED_OBJECT;
+		}
+
 		MolDistHistViz mdhv = createVisualDescriptorSingleConf(conformerSet);
 
 		return mdhv.getMolDistHist();
 	}
 
 	public MolDistHistViz createVisualDescriptorSingleConf(ConformerSet conformerSet) {
+
+		if(conformerSet==null){
+			return new MolDistHistViz();
+		}
 
 		StereoMolecule mol = conformerSet.first().toMolecule();
 

@@ -56,6 +56,47 @@ public class StringFunctions {
 
 	public static final String SEP = "; ";
 
+	public static String getAppendedSorted(String s1, String s2) {
+
+		StringBuilder sb = new StringBuilder();
+
+		if(s1.compareTo(s2)>0){
+			sb.append(s1);
+			sb.append(s2);
+		} else {
+			sb.append(s2);
+			sb.append(s1);
+		}
+
+		return sb.toString();
+	}
+
+	public static String min(String s1, String s2) {
+
+		StringBuilder sb = new StringBuilder();
+
+		if(s1.compareTo(s2)<0){
+			sb.append(s1);
+		} else {
+			sb.append(s2);
+		}
+
+		return sb.toString();
+	}
+
+	public static String max(String s1, String s2) {
+
+		StringBuilder sb = new StringBuilder();
+
+		if(s1.compareTo(s2)>0){
+			sb.append(s1);
+		} else {
+			sb.append(s2);
+		}
+
+		return sb.toString();
+	}
+
 	public static int countIntegerInText(String txt) {
 
 		int nInt = 0;
