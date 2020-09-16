@@ -2,8 +2,6 @@ package com.actelion.research.chem.name;
 
 import com.actelion.research.chem.StereoMolecule;
 
-import java.util.List;
-
 /**
  * Created by thomas on 7/13/17.
  */
@@ -49,7 +47,7 @@ public class StructureNameResolver {
 	 * that represent the names of the list.
 	 * @param nameList
 	 */
-	public static String[] resolveRemote(List<String> nameList) {
+	public static String[] resolveRemote(String[] nameList) {
 		return sResolver == null ? null : sResolver.resolveRemote(nameList);
 		}
 	}

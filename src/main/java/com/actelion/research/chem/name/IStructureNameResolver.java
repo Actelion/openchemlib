@@ -2,8 +2,6 @@ package com.actelion.research.chem.name;
 
 import com.actelion.research.chem.StereoMolecule;
 
-import java.util.List;
-
 /**
  * Created by thomas on 7/13/17.
  */
@@ -19,7 +17,7 @@ public interface IStructureNameResolver {
 	public StereoMolecule resolveRemote(String name);
 
 	/**
-	 * Remote server based name resolution of list of multiple names packed into one network round trip
+	 * Remote server based name resolution of multiple names packed into one network round trip
 	 */
-	public String[] resolveRemote(List<String> nameList);
+	public String[] resolveRemote(String[] nameList);
 }
