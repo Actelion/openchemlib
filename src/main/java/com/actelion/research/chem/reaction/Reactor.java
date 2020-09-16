@@ -33,22 +33,23 @@
 
 package com.actelion.research.chem.reaction;
 
+import com.actelion.research.chem.*;
+import com.actelion.research.chem.coords.CoordinateInventor;
+
 import java.util.ArrayList;
 
-import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.coords.CoordinateInventor;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.SSSearcher;
-import com.actelion.research.chem.SortedStringList;
-import com.actelion.research.chem.StereoMolecule;
-
 public class Reactor {
+	public static final int MODE_RETAIN_COORDINATES = 1;
+	public static final int MODE_FULLY_MAP_REACTIONS = 2;
+	public static final int MODE_REMOVE_DUPLICATE_PRODUCTS = 4;
+	public static final int MODE_ALLOW_CHARGE_CORRECTIONS = 8;
+
 	private Reaction			mGenericReaction;
 	private SSSearcher			mSSSearcher;
 	private	StereoMolecule[]	mReactant;
 	private int[][]				mMinFreeValence;	// minimum required free valence on reactant atoms
 	private boolean[][]			mIsReactionCenter;	// reaction center flags on product atoms
-	private boolean				mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly;
+	private boolean				mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly,mAllowChargeCorrections;
 	private int					mMaxGenericMapNo,mMaxCount,mReactantMatchCombinationCount;
 	private ArrayList<int[]>[]	mMatchList;
 	private int[][][]			mReactantMapNo;	// Reactant mapNos of the real reactant change with every reactant substructure match
@@ -75,7 +76,7 @@ public class Reactor {
 	 * @param retainCoordinates if true, then atom coordinates from the generic products are taken into the real world products
 	 */
 	public Reactor(Reaction reaction, boolean retainCoordinates) {
-		this(reaction, retainCoordinates, false, Integer.MAX_VALUE, true);
+		this(reaction, (retainCoordinates ? MODE_RETAIN_COORDINATES : 0) + MODE_REMOVE_DUPLICATE_PRODUCTS, Integer.MAX_VALUE);
 		}
 
 	/**
@@ -88,17 +89,43 @@ public class Reactor {
 	 * @param maxProducts maximum number of products/reactions to be enumerated
 	 * @param uniqueOnly whether to skip duplicate products/reactions because of starting material symmetry
 	 */
+	@Deprecated // Use: Reactor(Reaction reaction, int mode, int maxProducts)
 	public Reactor(Reaction reaction, boolean retainCoordinates, boolean fullyMapReactions, int maxProducts, boolean uniqueOnly) {
-		// If retainCoordinates is true, then the relative orientation of the
-		// generic product's atom coordinates are retained in the real products.
-		mGenericReaction = reaction;
-		mRetainCoordinates = retainCoordinates;
-		mFullyMapReactions = fullyMapReactions;
-		mReactant = new StereoMolecule[reaction.getReactants()];
-		mMaxCount = maxProducts;
-		mUniqueProductsOnly = uniqueOnly;
+		this(reaction, (retainCoordinates ? MODE_RETAIN_COORDINATES : 0)
+						+ (fullyMapReactions ? MODE_FULLY_MAP_REACTIONS : 0)
+						+ (uniqueOnly ? MODE_REMOVE_DUPLICATE_PRODUCTS : 0), maxProducts);
+	}
 
-					// for sub-structure-search all generic reactants must be fragments
+	/**
+	 * Constructs a Reactor that is able to build products from a generic reaction (transformation)
+	 * and a list of real world reactants. These MODE_xxx flags can be used to finetune the Reactor's
+	 * behaviour:<br>
+	 * MODE_RETAIN_COORDINATES: If set, then atom coordinates from the generic products are taken into the
+	 * real world products as fixed atom coordinates set when creating atom coordinates for all product atoms.<br>
+	 * MODE_FULLY_MAP_REACTIONS: If true, then real world reactants and products will have valid mapping numbers
+	 * after product generation. getFullyMappedReactions() can be used after each setReactant() call to get
+	 * complete and mapped Reaction objects, one for every potential product.<br>
+	 * MODE_REMOVE_DUPLICATE_PRODUCTS: Whether to skip duplicate products/reactions because of starting material
+	 * symmetry.<br>
+	 * MODE_ALLOW_CHARGE_CORRECTIONS: If set, then the Reactor will try to neutralize real world reactant atoms,
+	 * if the matching generic reactant atom has no charge. E.g. this would allow carboxylate anions to represent
+	 * a carboxylic acid in an esterification despite formally the anion oxygen has no free valence to form a new bond.
+	 * WARNING: This may produce products with unbalenced atom charges.<br>
+	 * @param reaction generic reactions consisting of reactant substructures with optional query features
+	 * @param mode 0 or any combination of MODE_xxx flags   
+	 * @param maxProducts limitation of products/reactions to be enumerated in case of heavy symmetries
+	 */
+	public Reactor(Reaction reaction, int mode, int maxProducts) {
+		mRetainCoordinates = (mode & MODE_RETAIN_COORDINATES) != 0;
+		mFullyMapReactions = (mode & MODE_FULLY_MAP_REACTIONS) != 0;
+		mUniqueProductsOnly = (mode & MODE_REMOVE_DUPLICATE_PRODUCTS) != 0;
+		mAllowChargeCorrections = (mode & MODE_ALLOW_CHARGE_CORRECTIONS) != 0;
+		mMaxCount = maxProducts;
+
+		mGenericReaction = reaction;
+		mReactant = new StereoMolecule[reaction.getReactants()];
+
+		// for sub-structure-search all generic reactants must be fragments
 		for (int i=0; i<reaction.getReactants(); i++) {
 			reaction.getReactant(i).setFragment(true);
 			reaction.getReactant(i).ensureHelperArrays(Molecule.cHelperParities);
@@ -247,14 +274,18 @@ public class Reactor {
 			}
 		}
 
+	/**
+	 * @param no
+	 * @param reactant with correctly set parity flags
+	 */
 	@SuppressWarnings("unchecked")
 	public void setReactant(int no, StereoMolecule reactant) {
-			// reactants need correctly set parity flags
 		mReactant[no] = reactant;
 		mProduct = null;
+		StereoMolecule genericReactant = mGenericReaction.getReactant(no);
 
-		mSSSearcher.setMol(mGenericReaction.getReactant(no), mReactant[no]);
-		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cMatchAtomCharge) == 0) {
+		mSSSearcher.setMol(genericReactant, mReactant[no]);
+		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, mAllowChargeCorrections ? 0 : SSSearcher.cMatchAtomCharge) == 0) {
 			mMatchList[no] = new ArrayList<>();
 			mReactantMatchCombinationCount = 0;
 			return;
@@ -266,8 +297,19 @@ public class Reactor {
 			int[] matchingAtom = mMatchList[no].get(j);
 			for (int k=0; k<matchingAtom.length; k++) {
 				if (matchingAtom[k] != -1) {
+					// If mAllowChargeCorrections==true, then we could neutralize atom charges, to be more forgiving:
+					// We don't use the restrictive SSSearcher.cMatchAtomCharge in SSS matching above and we remove
+					// the charge correction for real world reactant atoms when performing the free valence check.
+					int correction = 0;
+					if (mAllowChargeCorrections
+					 && genericReactant.getAtomCharge(k) == 0
+					 && mReactant[no].getAtomCharge(matchingAtom[k]) != 0) {
+						int valence = mReactant[no].getMaxValenceUncharged(matchingAtom[k]);
+						correction = mReactant[no].getElectronValenceCorrection(matchingAtom[k], valence);
+						}
+
 					if (mMinFreeValence[no][k] > 0
-							&& mMinFreeValence[no][k] > mReactant[no].getFreeValence(matchingAtom[k])) {
+					 && mMinFreeValence[no][k] > mReactant[no].getFreeValence(matchingAtom[k]) - correction) {
 						mMatchList[no].remove(j);
 						break;
 						}
@@ -322,7 +364,7 @@ public class Reactor {
 
 
 	/**
-	 * After instantiating the Reactor with fullyMappedReaction==true and after supplying real reactants,
+	 * After instantiating the Reactor with MODE_FULLY_MAP_REACTIONS and after supplying real reactants,
 	 * this method may be used to construct the fully mapped reaction. If one or more reactants have multiple
 	 * matches of their generic reactants, then multiple reactions leading to isomeric products are returned.
 	 * After calling this method, one or more new real reactants may provided with setReactant()
