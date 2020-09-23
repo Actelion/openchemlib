@@ -20,6 +20,7 @@
 
 package com.actelion.research.chem.descriptor;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.ConformerSet;
@@ -138,7 +139,6 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 	private boolean singleConformationModeQuery;
 
-
 	public DescriptorHandlerFlexophore(String parameter) {
 		CommandLineParser cmd = new CommandLineParser(parameter, SEP_PARAMETER);
 		int versionInteractionTable = VERSION_INTERACTION_TABLES;
@@ -212,6 +212,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		creatorMolDistHistViz = new CreatorMolDistHistViz();
 
 
+	}
+
+	public void setThreadMaster(ThreadMaster threadMaster) {
+		creatorMolDistHistViz.setThreadMaster(threadMaster);
 	}
 
 	public boolean isSingleConformationModeQuery() {
