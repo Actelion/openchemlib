@@ -164,6 +164,7 @@ public class TorsionDB {
 				for (int i=0; i<2; i++) {
 					centralAtom[i] = mol.getBondAtom(i, bond);
 					rearAtom[i] = mol.getBondAtom(1-i, bond);
+					int startAtom = rearAtom[i];
 		
 					// walk along sp-chains to first sp2 or sp3 atom
 					while (mol.getAtomPi(centralAtom[i]) == 2
@@ -183,6 +184,10 @@ public class TorsionDB {
 								alkyneAtomCount++;
 								break;
 								}
+							}
+						if (centralAtom[i] == startAtom) {  // we found a sp-cycle
+							alkyneAtomCount = 0;
+							break;
 							}
 						}
 					}

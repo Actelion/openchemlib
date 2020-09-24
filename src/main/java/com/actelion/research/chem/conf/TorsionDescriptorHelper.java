@@ -136,7 +136,7 @@ public class TorsionDescriptorHelper {
 					chainEndAtom[i] = new int[2];
 					chainEndAtom[i][0] = bondAtom[1-i];
 					chainEndAtom[i][1] = bondAtom[i];
-					if (!getFirstNonSPAtom(mol, chainEndAtom[i], maxBond))
+					if (!getFirstNonSPAtom(mol, bondAtom[1-i], chainEndAtom[i], maxBond))
 						return false;
 					}
 				}
@@ -184,12 +184,15 @@ public class TorsionDescriptorHelper {
 	 * @param mol
 	 * @param atom contains two connected atoms, of which atom[1] is sp-hybridized
 	 * @param maxBond null or contains the highest non-marked rotatable bond in the chain
-	 * @return false if the end of the chain is a sp-hybridized atom
+	 * @return false if the end of the chain is a sp-hybridized atom or in case of a cyclic chain
 	 */
-	private static boolean getFirstNonSPAtom(StereoMolecule mol, int[] atom, int[] maxBond) {
+	private static boolean getFirstNonSPAtom(StereoMolecule mol, int startAtom, int[] atom, int[] maxBond) {
 		for (int i=0; i<2; i++) {
 			int nextAtom = mol.getConnAtom(atom[1], i);
 			if (nextAtom != atom[0]) {
+				if (nextAtom == startAtom)  // we found a cycle
+					return false;
+
 				int nextBond = mol.getConnBond(atom[1], i);
 
 				atom[0] = atom[1];
@@ -204,7 +207,7 @@ public class TorsionDescriptorHelper {
 				if (!isLinearAtom(mol, nextAtom))
 					return true;
 
-				return getFirstNonSPAtom(mol, atom, maxBond);
+				return getFirstNonSPAtom(mol, startAtom, atom, maxBond);
 				}
 			}
 		return false;	// should never happen
@@ -222,7 +225,7 @@ public class TorsionDescriptorHelper {
 				atom[1] = mMol.getBondAtom(j, mRotatableBond[i]);
 
 				if (isLinearAtom(mMol, atom[1]))
-					getFirstNonSPAtom(mMol, atom, null);
+					getFirstNonSPAtom(mMol, atom[0], atom, null);
 
 				mAtomSequence[i][1+j] = atom[1];
 				mRearAtom[i][j] = atom[0];
