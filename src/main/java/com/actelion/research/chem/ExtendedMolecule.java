@@ -1146,7 +1146,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperNeighbours);
 
 		if (substituent != null) {
-			substituent.deleteMolecule();
+			substituent.clear();
 			substituent.mIsFragment = false;
 			}
 

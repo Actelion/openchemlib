@@ -587,7 +587,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
     			if (mCompoundFilter == null || mCompoundFilter.moleculeQualifies(mol))
 					mModel.addMolecule(mModel.getSize(), mol);
     			else
-					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be added, because it doesn't qualify.");
+					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be added, because it doesn't fullfil all criteria.");
 				}
     		}
     	else {
@@ -597,7 +597,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 				if (mCompoundFilter == null || mCompoundFilter.moleculeQualifies(mol))
 					mModel.setMolecule(mEditedIndex, mol);
 				else
-					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be changed, because the changes don't qualify.");
+					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be changed, because the changed structure doesn't fullfil all criteria.");
 				}
     		}
         }
