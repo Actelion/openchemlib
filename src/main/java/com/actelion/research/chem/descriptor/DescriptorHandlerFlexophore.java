@@ -139,6 +139,9 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 	private boolean singleConformationModeQuery;
 
+
+	private ThreadMaster threadMaster;
+
 	public DescriptorHandlerFlexophore(String parameter) {
 		CommandLineParser cmd = new CommandLineParser(parameter, SEP_PARAMETER);
 		int versionInteractionTable = VERSION_INTERACTION_TABLES;
@@ -215,6 +218,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	}
 
 	public void setThreadMaster(ThreadMaster threadMaster) {
+		this.threadMaster = threadMaster;
 		creatorMolDistHistViz.setThreadMaster(threadMaster);
 	}
 
@@ -416,6 +420,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 				exceptionCreateDescriptor = e;
 			} catch (Exception e) {
 				exceptionCreateDescriptor = e;
+			}
+
+			if(threadMaster!=null && threadMaster.threadMustDie()){
+				break;
 			}
 
 			if(conformationGenerationFailed) {
