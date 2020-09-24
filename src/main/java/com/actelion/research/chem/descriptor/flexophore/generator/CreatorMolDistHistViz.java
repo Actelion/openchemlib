@@ -1,5 +1,6 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
@@ -70,6 +71,10 @@ public class CreatorMolDistHistViz {
 
         // System.out.println("CreatorCompleteGraph conformationMode " + conformationMode);
 
+    }
+
+    public void setThreadMaster(ThreadMaster threadMaster) {
+        conformerGenerator.setThreadMaster(threadMaster);
     }
 
     public void setConformationMode(int conformationMode) {
