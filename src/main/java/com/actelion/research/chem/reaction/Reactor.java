@@ -46,17 +46,12 @@ public class Reactor {
 	public static final int MODE_REMOVE_DUPLICATE_PRODUCTS = 4;
 	public static final int MODE_ALLOW_CHARGE_CORRECTIONS = 8;
 
-	// For reaction center atoms take the parity from the real reactant rather than from the generic reaction product,
-	// assuming that reaction center configurations are retained rather than inverted or racemized.
-	public static final int MODE_KEEP_REACTANT_REACTION_CENTER_PARITIES = 16;
-
 	private Reaction			mGenericReaction;
 	private SSSearcher			mSSSearcher;
 	private	StereoMolecule[]	mReactant;
 	private int[][]				mMinFreeValence;	// minimum required free valence on reactant atoms
 	private boolean[][]			mIsReactionCenter;	// reaction center flags on product atoms
-	private boolean				mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly,mAllowChargeCorrections,
-								mKeepReactantRCParities;
+	private boolean				mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly,mAllowChargeCorrections;
 	private int					mMaxGenericMapNo,mMaxCount,mReactantMatchCombinationCount;
 	private ArrayList<int[]>[]	mMatchList;
 	private int[][][]			mReactantMapNo;	// Reactant mapNos of the real reactant change with every reactant substructure match
@@ -127,7 +122,6 @@ public class Reactor {
 		mFullyMapReactions = (mode & MODE_FULLY_MAP_REACTIONS) != 0;
 		mUniqueProductsOnly = (mode & MODE_REMOVE_DUPLICATE_PRODUCTS) != 0;
 		mAllowChargeCorrections = (mode & MODE_ALLOW_CHARGE_CORRECTIONS) != 0;
-		mKeepReactantRCParities = (mode & MODE_KEEP_REACTANT_REACTION_CENTER_PARITIES) != 0;
 		mMaxCount = maxProducts;
 
 		mGenericReaction = reaction;
@@ -492,6 +486,8 @@ public class Reactor {
 
 		int esrGroupCountAND = 0;
 		int esrGroupCountOR = 0;
+		ArrayList<Integer> racemicAtomList = null;
+
 		for (int i=0; i<mReactant.length; i++) {
 			StereoMolecule genericReactant = mGenericReaction.getReactant(i);
 			mReactant[i].ensureHelperArrays(Molecule.cHelperNeighbours);
@@ -554,14 +550,23 @@ public class Reactor {
 								product.setAtomCharge(newAtomNo[j], genericProduct.getAtomCharge(k));
 								product.setAtomRadical(newAtomNo[j], genericProduct.getAtomRadical(k));
 								if (mIsReactionCenter[genericProductNo][k]) {
-									if (mKeepReactantRCParities) {
-										int parity = mReactant[i].getAtomParity(j);
+									int parity = mReactant[i].getAtomParity(j);
+									int productParityHint = genericProduct.getAtomQueryFeatures(k) & Molecule.cAtomQFRxnParityHint;
+									if (productParityHint == 0) {
+										product.setAtomParity(newAtomNo[j], Molecule.cAtomParityUnknown, false);
+										}
+									else if (productParityHint == Molecule.cAtomQFRxnParityRacemize) {
+										if (racemicAtomList == null)
+											racemicAtomList = new ArrayList<>();
+										racemicAtomList.add(newAtomNo[j]);
+										}
+									else {
 										if (parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2) {
 											// Excluded atoms are added later to the product. Therefore, the parity needs
 											// to be inverted for every atom index that is between the current and the atom's new index
 											// Without further potential correction of final order of here excluded atoms
 											// this only works for substitution reactions of one atom for a new one!!!
-											boolean inversion = false;
+											boolean inversion = (productParityHint == Molecule.cAtomQFRxnParityInvert);
 											for (int l=0; l<mReactant[i].getConnAtoms(j); l++) {
 												int connAtom = mReactant[i].getConnAtom(j, l);
 												if (excludeAtom[connAtom]) {
@@ -576,9 +581,9 @@ public class Reactor {
 												parity = (parity == Molecule.cAtomParity1) ? Molecule.cAtomParity2 : Molecule.cAtomParity1;
 											product.setAtomParity(newAtomNo[j], parity, false);
 											}
-										}
-									else {
-										product.setAtomParity(newAtomNo[j], 0, false);
+										else {
+											product.setAtomParity(newAtomNo[j], 0, false);
+											}
 										}
 									}
 								break;
@@ -635,10 +640,8 @@ public class Reactor {
 				}
 			// copy corrected atom parities of generic product reaction center atoms
 			else if (mIsReactionCenter[genericProductNo][j]) {
-				if (mKeepReactantRCParities) {
-					// TODO
-					}
-				else if (useConfigurationFromGenericReaction(genericProduct, j)) {
+				if ((genericProduct.getAtomQueryFeatures(j) & Molecule.cAtomQFRxnParityHint) == 0
+				 && useConfigurationFromGenericReaction(genericProduct, j)) {
 					int parity = genericProduct.translateTHParity(j, newAtomNo);
 					product.setAtomParity(newAtomNo[j], parity, false);
 					if (parity == Molecule.cAtomParity1
@@ -751,6 +754,16 @@ public class Reactor {
 		int mode = CoordinateInventor.MODE_REMOVE_HYDROGEN
 				 | (mRetainCoordinates ? CoordinateInventor.MODE_PREFER_MARKED_ATOM_COORDS : 0);
 		new CoordinateInventor(mode).invent(product);
+
+		if (racemicAtomList != null) {
+			product.ensureHelperArrays(Molecule.cHelperParities);
+			for (int atom:racemicAtomList) {
+				if (product.isAtomStereoCenter(atom)) {
+					product.setAtomParity(atom, Molecule.cAtomParity1, false);
+					product.setAtomESR(atom, Molecule.cESRTypeAnd, esrGroupCountAND++);
+					}
+				}
+			}
 
 		return product;
 		}

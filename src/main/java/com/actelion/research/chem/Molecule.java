@@ -139,6 +139,8 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFRingSizeShift	= 22;
 	public static final int cAtomQFChargeBits		= 3;
 	public static final int cAtomQFChargeShift		= 25;
+	public static final int cAtomQFRxnParityBits	= 2;
+	public static final int cAtomQFRxnParityShift	= 30;
 	public static final int cAtomQFSimpleFeatures	= 0x0E3FC7FE;
 	public static final int cAtomQFNarrowing		= 0x0E3FC7FE;
 	public static final int cAtomQFAny				= 0x00000001;
@@ -175,6 +177,10 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFNotChargePos		= 0x08000000;
 	public static final int cAtomQFFlatNitrogen		= 0x10000000;  // currently only used in TorsionDetail
 	public static final int cAtomQFExcludeGroup		= 0x20000000;  // these atoms must not exist in SS-matches
+	public static final int cAtomQFRxnParityHint    = 0xC0000000;  // Retain,invert,racemise configuration in reaction
+	public static final int cAtomQFRxnParityRetain  = 0x40000000;  // Retain,invert,racemise configuration in reaction
+	public static final int cAtomQFRxnParityInvert  = 0x80000000;  // Retain,invert,racemise configuration in reaction
+	public static final int cAtomQFRxnParityRacemize= 0xC0000000;  // Retain,invert,racemise configuration in reaction
 
 	public static final int cBondTypeSingle			= 0x00000001;
 	public static final int cBondTypeDouble			= 0x00000002;
