@@ -270,7 +270,8 @@ public class Reactor {
 		StereoMolecule genericReactant = mGenericReaction.getReactant(no);
 
 		mSSSearcher.setMol(genericReactant, mReactant[no]);
-		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, mAllowChargeCorrections ? 0 : SSSearcher.cMatchAtomCharge) == 0) {
+		int matchMode = SSSearcher.cMatchDBondToDelocalized + (mAllowChargeCorrections ? 0 : SSSearcher.cMatchAtomCharge);
+		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, matchMode) == 0) {
 			mMatchList[no] = new ArrayList<>();
 			mReactantMatchCombinationCount = 0;
 			return;
@@ -593,10 +594,11 @@ public class Reactor {
 					}
 				}
 
-			for (int j=0; j<mReactant[i].getBonds(); j++) {
+			// Delocalized double bonds are copied as delocalized to avoid cumulated double bonds
+			// when delocalized double bonds from generic product and from real reactant touch.
+			for (int j=0; j<mReactant[i].getBonds(); j++)
 				if (!excludeBond[j])
-					mReactant[i].copyBond(product, j, esrGroupCountAND, esrGroupCountOR, newAtomNo, false);
-				}
+					mReactant[i].copyBond(product, j, esrGroupCountAND, esrGroupCountOR, newAtomNo, true);
 
 			esrGroupCountAND = product.renumberESRGroups(Molecule.cESRTypeAnd);
 			esrGroupCountOR = product.renumberESRGroups(Molecule.cESRTypeOr);
@@ -749,6 +751,10 @@ public class Reactor {
 			for (int atom=0; atom<product.getAllAtoms(); atom++)
 				product.setAtomMapNo(atom, 0, false);
 
+		// Here we need to convert delocalized double bonds from real reactant to nicely match
+		// alternating delocalized double bonds from generic product.
+		new AromaticityResolver(product).locateDelocalizedDoubleBonds(null);
+
 		product.setParitiesValid(0);
 
 		int mode = CoordinateInventor.MODE_REMOVE_HYDROGEN
@@ -768,15 +774,15 @@ public class Reactor {
 		return product;
 		}
 
-	private boolean reactantQueryFeatureMatchStereoCenter(int reactantMapNo) {
-		for (int i=0; i<mGenericReaction.getReactants(); i++) {
-			StereoMolecule reactant = mGenericReaction.getReactant(i);
-			for (int atom=0; atom<reactant.getAtoms(); atom++)
-				if (reactant.getAtomMapNo(atom) == reactantMapNo)
-					return (reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFMatchStereo) != 0;
-			}
-		return false;
-		}
+//	private boolean reactantQueryFeatureMatchStereoCenter(int reactantMapNo) {
+//		for (int i=0; i<mGenericReaction.getReactants(); i++) {
+//			StereoMolecule reactant = mGenericReaction.getReactant(i);
+//			for (int atom=0; atom<reactant.getAtoms(); atom++)
+//				if (reactant.getAtomMapNo(atom) == reactantMapNo)
+//					return (reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFMatchStereo) != 0;
+//			}
+//		return false;
+//		}
 
 	private boolean useConfigurationFromGenericReaction(StereoMolecule genericProduct, int productAtom) {
 		int mapNo = genericProduct.getAtomMapNo(productAtom);
