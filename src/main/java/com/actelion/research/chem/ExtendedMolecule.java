@@ -559,7 +559,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 */
 	public int getLowestFreeValence(int atom) {
 		int occupiedValence = getOccupiedValence(atom);
-		occupiedValence += getElectronValenceCorrection(atom, occupiedValence);
+		int correction = getElectronValenceCorrection(atom, occupiedValence);
 
 		int valence = getAtomAbnormalValence(atom);
 		if (valence == -1) {
@@ -569,13 +569,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			}
 			else {
 				int i= 0;
-				while (occupiedValence > valenceList[i] && i<valenceList.length-1)
+				while ((occupiedValence > valenceList[i] + correction) && (i<valenceList.length-1))
 					i++;
 				valence = valenceList[i];
 				}
 			}
 
-		return valence - occupiedValence;
+		return valence + correction - occupiedValence;
 		}
 
 

@@ -140,8 +140,12 @@ public class MoleculeNeutralizer {
 									}
 
 									if (!found) {
-										if (noOfMembers == member.length)
-											member = (int[]) Molecule.copyOf(member, 2 * member.length);
+										if (noOfMembers == member.length) {
+											// for cartridge compatibility use old Java 5 method rather than Arrays.copy():
+											int[] copy = new int[2 * member.length];
+											System.arraycopy(member, 0, copy, 0, member.length);
+											member = copy;
+										}
 
 										member[noOfMembers++] = atom;
 									}
