@@ -3103,6 +3103,9 @@ System.out.println();
 					encodeBits(bond, nbits);
 			}
 
+		if (mMol.isFragment())	// 29 = datatype 'reaction parity hint'
+			isSecondFeatureBlock |= addAtomQueryFeatures(29, isSecondFeatureBlock, nbits, Molecule.cAtomQFRxnParityHint, Molecule.cAtomQFRxnParityBits, Molecule.cAtomQFRxnParityShift);
+
 		encodeBits(0, 1);
 		mIDCode = encodeBitsEnd();
 		}
