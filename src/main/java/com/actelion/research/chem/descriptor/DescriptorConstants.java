@@ -116,7 +116,7 @@ public interface DescriptorConstants {
 	public static final DescriptorInfo DESCRIPTOR_ShapeAlign =
         					new DescriptorInfo("PharmacophoreEnhancedShapeAlignment",
         									   "PheSA",
-												"2.0",
+												"2.1",
 												DESCRIPTOR_TYPE_MOLECULE,
 												false,
 												false,
@@ -126,7 +126,7 @@ public interface DescriptorConstants {
     public static final DescriptorInfo DESCRIPTOR_ShapeAlignSingleConf =
         					new DescriptorInfo("PharmacophoreEnhancedShapeAlignmentSingleConfQuery",
         									   "PheSASingleConf",
-												"2.0",
+												"2.1",
 												DESCRIPTOR_TYPE_MOLECULE,
         									   false,
 												false,

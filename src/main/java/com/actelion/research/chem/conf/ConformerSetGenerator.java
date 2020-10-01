@@ -48,7 +48,9 @@ public class ConformerSetGenerator {
 	public ConformerSet generateConformerSet(StereoMolecule mol) {   
 		StereoMolecule m = new StereoMolecule(mol);
 		m.stripSmallFragments();
-		new Canonizer(m);
+		ConformerGenerator.addHydrogenAtoms(m);
+		Canonizer can = new Canonizer(m);
+		m = can.getCanMolecule(true);
 		m.ensureHelperArrays(Molecule.cHelperCIP);
 		if(mUseFF) {
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
