@@ -196,14 +196,16 @@ public class JAtomQueryFeatureDialog extends JDialog
 		mCBExcludeGroup.setOpaque(opaque);
 		p1.add(mCBExcludeGroup, "1,25,3,25");
 
-		p1.add(new JLabel("Stereo center hint for product:"), "1,27,3,27");
-		mChoiceReactionParityHint = new JComboBox();
-		mChoiceReactionParityHint.setOpaque(opaque);
-		mChoiceReactionParityHint.addItem("Make unknown in product");
-		mChoiceReactionParityHint.addItem("Keep reactant configuration");
-		mChoiceReactionParityHint.addItem("Invert reactant configuration");
-		mChoiceReactionParityHint.addItem("Racemise configuration");
-		p1.add(mChoiceReactionParityHint, "1,29,3,29");
+		if (includeReactionHints) {
+			p1.add(new JLabel("Stereo center hint for product:"), "1,27,3,27");
+			mChoiceReactionParityHint = new JComboBox();
+			mChoiceReactionParityHint.setOpaque(opaque);
+			mChoiceReactionParityHint.addItem("Make unknown in product");
+			mChoiceReactionParityHint.addItem("Keep reactant configuration");
+			mChoiceReactionParityHint.addItem("Invert reactant configuration");
+			mChoiceReactionParityHint.addItem("Racemise configuration");
+			p1.add(mChoiceReactionParityHint, "1,29,3,29");
+			}
 
 		JPanel buttonpanel = new JPanel();
         buttonpanel.setBorder(BorderFactory.createEmptyBorder(12, 8, 8, 8));
@@ -398,17 +400,19 @@ public class JAtomQueryFeatureDialog extends JDialog
 		if ((queryFeatures & Molecule.cAtomQFExcludeGroup) != 0)
 			mCBExcludeGroup.setSelected(true);
 
-		int rxnStereo = queryFeatures & Molecule.cAtomQFRxnParityHint;
-		switch (rxnStereo) {
-			case Molecule.cAtomQFRxnParityRetain:
-				mChoiceReactionParityHint.setSelectedIndex(1);
-				break;
-			case Molecule.cAtomQFRxnParityInvert:
-				mChoiceReactionParityHint.setSelectedIndex(2);
-				break;
-			case Molecule.cAtomQFRxnParityRacemize:
-				mChoiceReactionParityHint.setSelectedIndex(3);
-				break;
+		if (mChoiceReactionParityHint != null) {
+			int rxnStereo = queryFeatures & Molecule.cAtomQFRxnParityHint;
+			switch (rxnStereo) {
+				case Molecule.cAtomQFRxnParityRetain:
+					mChoiceReactionParityHint.setSelectedIndex(1);
+					break;
+				case Molecule.cAtomQFRxnParityInvert:
+					mChoiceReactionParityHint.setSelectedIndex(2);
+					break;
+				case Molecule.cAtomQFRxnParityRacemize:
+					mChoiceReactionParityHint.setSelectedIndex(3);
+					break;
+				}
 			}
 		}
 
@@ -613,17 +617,19 @@ public class JAtomQueryFeatureDialog extends JDialog
 		if (mCBExcludeGroup.isSelected())
 			queryFeatures |= Molecule.cAtomQFExcludeGroup;
 
-	    switch (mChoiceReactionParityHint.getSelectedIndex()) {
-		    case 1:
-			    queryFeatures |= Molecule.cAtomQFRxnParityRetain;
-			    break;
-		    case 2:
-			    queryFeatures |= Molecule.cAtomQFRxnParityInvert;
-			    break;
-		    case 3:
-			    queryFeatures |= Molecule.cAtomQFRxnParityRacemize;
-			    break;
-		    }
+		if (mChoiceReactionParityHint != null) {
+		    switch (mChoiceReactionParityHint.getSelectedIndex()) {
+			    case 1:
+				    queryFeatures |= Molecule.cAtomQFRxnParityRetain;
+				    break;
+			    case 2:
+				    queryFeatures |= Molecule.cAtomQFRxnParityInvert;
+				    break;
+			    case 3:
+				    queryFeatures |= Molecule.cAtomQFRxnParityRacemize;
+				    break;
+			    }
+			}
 
 	    mMol.setAtomQueryFeature(atom, 0xFFFFFFFF, false);
 		mMol.setAtomQueryFeature(atom, queryFeatures, true);

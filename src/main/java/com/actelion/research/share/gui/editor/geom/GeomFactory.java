@@ -66,7 +66,7 @@ public abstract class GeomFactory
         return new Polygon();
     }
     public abstract IArrow createArrow(Rectangle2D r);
-    public abstract IAtomQueryFeaturesDialog createAtomQueryFeatureDialog(StereoMolecule mol, int atom);
+    public abstract IAtomQueryFeaturesDialog createAtomQueryFeatureDialog(StereoMolecule mol, int atom, boolean includeReactionHints);
     public abstract IBondQueryFeaturesDialog createBondFeaturesDialog(StereoMolecule mol, int bond);
     public abstract IAtomPropertiesDialog createAtomPropertiesDialog(StereoMolecule m, int atom);
     public abstract Rectangle2D getBoundingRect(StereoMolecule m);
