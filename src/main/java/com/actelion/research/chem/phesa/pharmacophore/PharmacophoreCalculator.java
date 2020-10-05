@@ -19,7 +19,8 @@ public class PharmacophoreCalculator {
 	public static final int AROM_ID = 4;
 	public static final int LIPO_ID = 5;
 	public static final int AROM_RING_ID = 6;
-	public static final int MAX_ID = 6;
+	public static final int EXIT_VECTOR_ID = 7;
+	public static final int MAX_ID = 7;
 	
 	private PharmacophoreCalculator() {}
 	
@@ -37,6 +38,14 @@ public class PharmacophoreCalculator {
 			ppPoints.add(arp);
 		}
 		for(int i=0;i<mol.getAllAtoms();i++) {
+			if(mol.getAtomicNo(i)==0) { //end point of exit vector
+				for(int c=0;c<mol.getConnAtoms(i);c++) {
+					int j = mol.getConnAtom(i, 0);
+					ExitVectorPoint evp = new ExitVectorPoint(mol,j,i);
+					ppPoints.add(evp);
+					}
+				}
+			
 			if (mol.getAtomicNo(i)==1) {
 				if(isDonorHydrogen(mol,i)) {
 					int d = mol.getConnAtom(i,0);

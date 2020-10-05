@@ -11,17 +11,21 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.PheSAMolecule;
+import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangle;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleCreator;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleMatcher;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleMatcher.AlignmentResult;
+import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 
 public class PheSAAlignmentOptimizer {
 	
 	private static int OPTIMIZATIONS = 20;
+	private static double EXIT_VECTOR_WEIGHT = 10.0;
 	
 	private PheSAAlignmentOptimizer() {}
 	
@@ -124,6 +128,16 @@ public class PheSAAlignmentOptimizer {
 	
 	public static double[] align(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestAlignment, double ppWeight) {
 		double[] result = new double[3]; //overall sim, ppSimilarity and additional volume similarity contribution
+		
+		for(MolecularVolume molVol : refShape.getVolumes()) {
+			for(PPGaussian ppg : molVol.getPPGaussians()) {
+				if(ppg.getPharmacophorePoint().getFunctionalityIndex()==PharmacophoreCalculator.EXIT_VECTOR_ID) {
+					ppg.setWeight(EXIT_VECTOR_WEIGHT);
+				}
+			}
+		}
+		
+			
 		StereoMolecule[] bestPairTriangle = new StereoMolecule[2];
 		double[] bestTransformTriangle = new double[7];
 		double[] triangleRes = getBestTriangleAlignment(refShape,fitShape,bestPairTriangle,bestTransformTriangle,ppWeight);
@@ -132,7 +146,7 @@ public class PheSAAlignmentOptimizer {
 		double[] bestTransformPMI = new double[7];
 		MolecularVolume[] bestPairPMI = new MolecularVolume[2];
 		double similarity = 0.0;
-		if(bestScoreTriangle>0.0) {
+		if(bestScoreTriangle>=0.0) {
 			similarity = bestScoreTriangle;
 			result[0] = similarity;
 			result[1] = triangleRes[1];
@@ -147,7 +161,7 @@ public class PheSAAlignmentOptimizer {
 					MolecularVolume fitVol = new MolecularVolume(fitShape.getVolumes().get(j));
 					PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol, ppWeight);
 					double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(1),false);
-					if(r[0]>bestScorePMI) {
+					if(r[0]>=bestScorePMI) {
 						bestScorePMI = r[0];
 						bestTransformPMI = new double[] {r[3],r[4], r[5], r[6], r[7], r[8], r[9]};
 						bestPairPMI[0] = refVol;
@@ -174,8 +188,22 @@ public class PheSAAlignmentOptimizer {
 				bestAlignment[0] = bestPairTriangle[0];
 				bestAlignment[1] = bestPairTriangle[1];
 			}
-		}			
-	return result;
+		}
+		int n1 = refShape.getVolumes().get(0).getExitVectorGaussians().size();
+		int n2 = fitShape.getVolumes().get(0).getExitVectorGaussians().size();
+		if(refShape.getVolumes().get(0).getExitVectorGaussians().size()!=0 || 
+				refShape.getVolumes().get(0).getExitVectorGaussians().size()!=0) {
+			// there are exit vectors 
+			
+			if(n1!=n2) { //different number of exit vectors --> no match
+				result[0] = 0.0;
+				result[1] = 0.0;
+				result[2] = 0.0;
+			}
+			
+		}
+	
+		return result;
 	}
 	
 	public static double align(PheSAMolecule fitShape, MolecularVolume refVol, MolecularVolume fitVol, StereoMolecule aligned, double ppWeight) {
@@ -324,5 +352,7 @@ public class PheSAAlignmentOptimizer {
 		}
 		return bestScoreTriangle;
 	}
+
+	
 
 }
