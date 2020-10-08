@@ -211,7 +211,6 @@ public class SelectionAction extends BondHighlightAction//DrawAction
             int atom = mol.findAtom((float) pt.getX(), (float) pt.getY());
             int bond = mol.findBond((float) pt.getX(), (float) pt.getY());
             boolean mShiftIsDown = evt.isShiftDown();
-            int mMode = model.getMode();
 
             if (mol.isFragment()) {
                 if (atom != -1) {
@@ -602,7 +601,8 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     private boolean showAtomQFDialog(int atom) {
         StereoMolecule mol = model.getMolecule();
         if (mol != null) {
-            IAtomQueryFeaturesDialog dlg = factory.createAtomQueryFeatureDialog(/* new AtomQueryFeaturesDialog*/mol, atom);
+            boolean showReactionHints = (model.getMode() & Model.MODE_REACTION) != 0;
+            IAtomQueryFeaturesDialog dlg = factory.createAtomQueryFeatureDialog(mol, atom, showReactionHints);
             return dlg.doModalAt(lastHightlightPoint.getX(), lastHightlightPoint.getY()) == DialogResult.IDOK;
         }
         return false;

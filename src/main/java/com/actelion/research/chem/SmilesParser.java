@@ -103,7 +103,7 @@ public class SmilesParser {
 
 	public void parse(StereoMolecule mol, byte[] smiles, int position, int endIndex, boolean createCoordinates, boolean readStereoFeatures) throws Exception {
 		mMol = mol;
-		mMol.deleteMolecule();
+		mMol.clear();
 
 		TreeMap<Integer,THParity> parityMap = null;
 

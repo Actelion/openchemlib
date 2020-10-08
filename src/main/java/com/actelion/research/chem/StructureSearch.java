@@ -176,7 +176,7 @@ public class StructureSearch {
 
 	private void calculateQueryDescriptorsAndWait() {
     	mSMPIndex = new AtomicInteger(mQueryDescriptor.length);
-		int threadCount = Runtime.getRuntime().availableProcessors();
+		int threadCount = Math.min(mQueryDescriptor.length, Runtime.getRuntime().availableProcessors());
     	Thread[] t = new Thread[threadCount];
     	for (int i=0; i<threadCount; i++) {
     		t[i] = new Thread("Query Descriptor Calculation "+(i+1)) {

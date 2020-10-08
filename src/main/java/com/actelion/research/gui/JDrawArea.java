@@ -1427,10 +1427,11 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				c = c.getParent();
 			}
 			storeState();
+			boolean showReactionHints = ((mMode & MODE_REACTION) != 0);
 			if (c instanceof Dialog)
-				new JAtomQueryFeatureDialog((Dialog) c, mMol, atom);
+				new JAtomQueryFeatureDialog((Dialog) c, mMol, atom, showReactionHints);
 			else
-				new JAtomQueryFeatureDialog((Frame) c, mMol, atom);
+				new JAtomQueryFeatureDialog((Frame) c, mMol, atom, showReactionHints);
 			fireMoleculeChanged();
 			update(UPDATE_REDRAW);
 		}

@@ -35,6 +35,7 @@ package com.actelion.research.gui;
 
 import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.Molecule;
+import com.actelion.research.gui.hidpi.HiDPIHelper;
 import info.clearthought.layout.TableLayout;
 
 import javax.swing.*;
@@ -54,21 +55,21 @@ public class JAtomQueryFeatureDialog extends JDialog
 	private int					mAtom;
 	private JCheckBox			mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo,mCBExcludeGroup;
 	private JComboBox			mChoiceArom,mChoiceRingState,mChoiceRingSize,mChoiceCharge,
-	                            mChoiceNeighbours,mChoiceHydrogen,mChoicePi;
+	                            mChoiceNeighbours,mChoiceHydrogen,mChoicePi,mChoiceReactionParityHint;
 	private JTextField			mTFAtomList;
 	private JLabel				mLabelAtomList;
 
-	protected JAtomQueryFeatureDialog(Dialog parent, ExtendedMolecule mol, int atom) {
+	protected JAtomQueryFeatureDialog(Dialog parent, ExtendedMolecule mol, int atom, boolean includeReactionHints) {
 		super(parent, (mol.isSelectedAtom(atom)) ? "Multiple Atom Properties" : "Atom Properties", true);
-		init(parent, mol, atom);
+		init(parent, mol, atom, includeReactionHints);
 		}
 
-	protected JAtomQueryFeatureDialog(Frame parent, ExtendedMolecule mol, int atom) {
+	protected JAtomQueryFeatureDialog(Frame parent, ExtendedMolecule mol, int atom, boolean includeReactionHints) {
 		super(parent, (mol.isSelectedAtom(atom)) ? "Multiple Atom Properties" : "Atom Properties", true);
-		init(parent, mol, atom);
+		init(parent, mol, atom, includeReactionHints);
 		}
 
-	private void init(Component parent, ExtendedMolecule mol, int atom) {
+	private void init(Component parent, ExtendedMolecule mol, int atom, boolean includeReactionHints) {
 		mParent = parent;
 		mMol = mol;
 		mAtom = atom;
@@ -77,20 +78,22 @@ public class JAtomQueryFeatureDialog extends JDialog
 		JPanel p1 = new JPanel();
 		p1.setOpaque(opaque);
 
-        double[][] size = { {8, TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 8 },
-                            {8, TableLayout.PREFERRED,
-                             4, TableLayout.PREFERRED,
-                            12, TableLayout.PREFERRED,
-                             4, TableLayout.PREFERRED,
-                             4, TableLayout.PREFERRED,
-                             4, TableLayout.PREFERRED,
-                             4, TableLayout.PREFERRED,
-                             4, TableLayout.PREFERRED,
-                             4, TableLayout.PREFERRED,
-                            12, TableLayout.PREFERRED,
-                             0, TableLayout.PREFERRED,
-							 4, TableLayout.PREFERRED,
-                             4, TableLayout.PREFERRED} };
+		int gap = HiDPIHelper.scale(8);
+		int[] gap1 = { gap, gap/2, gap*3/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap*3/2, 0, 0, 0 };
+		int[] gap2 = { gap*3/2, gap/2 };
+		double[] size2 = new double[1 + 2*gap1.length + (includeReactionHints ? 2*gap2.length : 0)];
+		int index = 0;
+		for (int g:gap1) {
+			size2[index++] = g;
+			size2[index++] = TableLayout.PREFERRED;
+			}
+		if (includeReactionHints)
+			for (int g:gap2) {
+				size2[index++] = g;
+				size2[index++] = TableLayout.PREFERRED;
+				}
+		size2[index++] = gap;
+        double[][] size = { {gap, TableLayout.PREFERRED, gap, TableLayout.PREFERRED, gap}, size2 };
         p1.setLayout(new TableLayout(size));
 		
 		mCBAny = new JCheckBox("any atomic number");
@@ -192,6 +195,17 @@ public class JAtomQueryFeatureDialog extends JDialog
 		mCBExcludeGroup = new JCheckBox("is part of exclude group");
 		mCBExcludeGroup.setOpaque(opaque);
 		p1.add(mCBExcludeGroup, "1,25,3,25");
+
+		if (includeReactionHints) {
+			p1.add(new JLabel("Stereo center hint for product:"), "1,27,3,27");
+			mChoiceReactionParityHint = new JComboBox();
+			mChoiceReactionParityHint.setOpaque(opaque);
+			mChoiceReactionParityHint.addItem("Make unknown in product");
+			mChoiceReactionParityHint.addItem("Keep reactant configuration");
+			mChoiceReactionParityHint.addItem("Invert reactant configuration");
+			mChoiceReactionParityHint.addItem("Racemise configuration");
+			p1.add(mChoiceReactionParityHint, "1,29,3,29");
+			}
 
 		JPanel buttonpanel = new JPanel();
         buttonpanel.setBorder(BorderFactory.createEmptyBorder(12, 8, 8, 8));
@@ -385,6 +399,21 @@ public class JAtomQueryFeatureDialog extends JDialog
 
 		if ((queryFeatures & Molecule.cAtomQFExcludeGroup) != 0)
 			mCBExcludeGroup.setSelected(true);
+
+		if (mChoiceReactionParityHint != null) {
+			int rxnStereo = queryFeatures & Molecule.cAtomQFRxnParityHint;
+			switch (rxnStereo) {
+				case Molecule.cAtomQFRxnParityRetain:
+					mChoiceReactionParityHint.setSelectedIndex(1);
+					break;
+				case Molecule.cAtomQFRxnParityInvert:
+					mChoiceReactionParityHint.setSelectedIndex(2);
+					break;
+				case Molecule.cAtomQFRxnParityRacemize:
+					mChoiceReactionParityHint.setSelectedIndex(3);
+					break;
+				}
+			}
 		}
 
 
@@ -588,7 +617,21 @@ public class JAtomQueryFeatureDialog extends JDialog
 		if (mCBExcludeGroup.isSelected())
 			queryFeatures |= Molecule.cAtomQFExcludeGroup;
 
-		mMol.setAtomQueryFeature(atom, 0xFFFFFFFF, false);
+		if (mChoiceReactionParityHint != null) {
+		    switch (mChoiceReactionParityHint.getSelectedIndex()) {
+			    case 1:
+				    queryFeatures |= Molecule.cAtomQFRxnParityRetain;
+				    break;
+			    case 2:
+				    queryFeatures |= Molecule.cAtomQFRxnParityInvert;
+				    break;
+			    case 3:
+				    queryFeatures |= Molecule.cAtomQFRxnParityRacemize;
+				    break;
+			    }
+			}
+
+	    mMol.setAtomQueryFeature(atom, 0xFFFFFFFF, false);
 		mMol.setAtomQueryFeature(atom, queryFeatures, true);
 		}
 

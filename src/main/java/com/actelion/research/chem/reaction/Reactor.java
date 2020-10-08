@@ -33,22 +33,25 @@
 
 package com.actelion.research.chem.reaction;
 
-import java.util.ArrayList;
-
-import com.actelion.research.chem.Canonizer;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.SSSearcher;
-import com.actelion.research.chem.SortedStringList;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.util.IntArrayComparator;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Reactor {
+	public static final int MODE_RETAIN_COORDINATES = 1;
+	public static final int MODE_FULLY_MAP_REACTIONS = 2;
+	public static final int MODE_REMOVE_DUPLICATE_PRODUCTS = 4;
+	public static final int MODE_ALLOW_CHARGE_CORRECTIONS = 8;
+
 	private Reaction			mGenericReaction;
 	private SSSearcher			mSSSearcher;
 	private	StereoMolecule[]	mReactant;
 	private int[][]				mMinFreeValence;	// minimum required free valence on reactant atoms
 	private boolean[][]			mIsReactionCenter;	// reaction center flags on product atoms
-	private boolean				mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly;
+	private boolean				mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly,mAllowChargeCorrections;
 	private int					mMaxGenericMapNo,mMaxCount,mReactantMatchCombinationCount;
 	private ArrayList<int[]>[]	mMatchList;
 	private int[][][]			mReactantMapNo;	// Reactant mapNos of the real reactant change with every reactant substructure match
@@ -75,7 +78,7 @@ public class Reactor {
 	 * @param retainCoordinates if true, then atom coordinates from the generic products are taken into the real world products
 	 */
 	public Reactor(Reaction reaction, boolean retainCoordinates) {
-		this(reaction, retainCoordinates, false, Integer.MAX_VALUE, true);
+		this(reaction, (retainCoordinates ? MODE_RETAIN_COORDINATES : 0) + MODE_REMOVE_DUPLICATE_PRODUCTS, Integer.MAX_VALUE);
 		}
 
 	/**
@@ -88,17 +91,43 @@ public class Reactor {
 	 * @param maxProducts maximum number of products/reactions to be enumerated
 	 * @param uniqueOnly whether to skip duplicate products/reactions because of starting material symmetry
 	 */
+	@Deprecated // Use: Reactor(Reaction reaction, int mode, int maxProducts)
 	public Reactor(Reaction reaction, boolean retainCoordinates, boolean fullyMapReactions, int maxProducts, boolean uniqueOnly) {
-		// If retainCoordinates is true, then the relative orientation of the
-		// generic product's atom coordinates are retained in the real products.
-		mGenericReaction = reaction;
-		mRetainCoordinates = retainCoordinates;
-		mFullyMapReactions = fullyMapReactions;
-		mReactant = new StereoMolecule[reaction.getReactants()];
-		mMaxCount = maxProducts;
-		mUniqueProductsOnly = uniqueOnly;
+		this(reaction, (retainCoordinates ? MODE_RETAIN_COORDINATES : 0)
+						+ (fullyMapReactions ? MODE_FULLY_MAP_REACTIONS : 0)
+						+ (uniqueOnly ? MODE_REMOVE_DUPLICATE_PRODUCTS : 0), maxProducts);
+	}
 
-					// for sub-structure-search all generic reactants must be fragments
+	/**
+	 * Constructs a Reactor that is able to build products from a generic reaction (transformation)
+	 * and a list of real world reactants. These MODE_xxx flags can be used to finetune the Reactor's
+	 * behaviour:<br>
+	 * MODE_RETAIN_COORDINATES: If set, then atom coordinates from the generic products are taken into the
+	 * real world products as fixed atom coordinates set when creating atom coordinates for all product atoms.<br>
+	 * MODE_FULLY_MAP_REACTIONS: If true, then real world reactants and products will have valid mapping numbers
+	 * after product generation. getFullyMappedReactions() can be used after each setReactant() call to get
+	 * complete and mapped Reaction objects, one for every potential product.<br>
+	 * MODE_REMOVE_DUPLICATE_PRODUCTS: Whether to skip duplicate products/reactions because of starting material
+	 * symmetry.<br>
+	 * MODE_ALLOW_CHARGE_CORRECTIONS: If set, then the Reactor will try to neutralize real world reactant atoms,
+	 * if the matching generic reactant atom has no charge. E.g. this would allow carboxylate anions to represent
+	 * a carboxylic acid in an esterification despite formally the anion oxygen has no free valence to form a new bond.
+	 * WARNING: This may produce products with unbalanced atom charges.<br>
+	 * @param reaction generic reaction with reactant & product substructures with optional query features (reactant)
+	 * @param mode 0 or any combination of MODE_xxx flags
+	 * @param maxProducts limitation of products/reactions to be enumerated in case of heavy symmetries
+	 */
+	public Reactor(Reaction reaction, int mode, int maxProducts) {
+		mRetainCoordinates = (mode & MODE_RETAIN_COORDINATES) != 0;
+		mFullyMapReactions = (mode & MODE_FULLY_MAP_REACTIONS) != 0;
+		mUniqueProductsOnly = (mode & MODE_REMOVE_DUPLICATE_PRODUCTS) != 0;
+		mAllowChargeCorrections = (mode & MODE_ALLOW_CHARGE_CORRECTIONS) != 0;
+		mMaxCount = maxProducts;
+
+		mGenericReaction = reaction;
+		mReactant = new StereoMolecule[reaction.getReactants()];
+
+		// for sub-structure-search all generic reactants must be fragments
 		for (int i=0; i<reaction.getReactants(); i++) {
 			reaction.getReactant(i).setFragment(true);
 			reaction.getReactant(i).ensureHelperArrays(Molecule.cHelperParities);
@@ -130,7 +159,9 @@ public class Reactor {
 				}
 			}
 
-					// mark all reaction center atoms in product
+		// Find and mark all reaction center atoms in product.
+		// These are mapped atoms that have a different number of neighbours in reactant or product
+		// or different neighbours when judging based on mapping numbers or atomic numbers.
 		mIsReactionCenter = new boolean[reaction.getProducts()][];
 		for (int i=0; i<reaction.getProducts(); i++) {
 			StereoMolecule product = reaction.getProduct(i);
@@ -142,50 +173,12 @@ public class Reactor {
 						StereoMolecule reactant = reaction.getReactant(k);
 						for (int l=0; l<reactant.getAtoms(); l++) {
 							if (reactant.getAtomMapNo(l) == mapNo) {
-
-					// get sorted list of mapping no's of attached atoms in product
-								long pruductNeighbours = 0;
-								boolean[] neighbourHandled = new boolean[product.getConnAtoms(j)];
-								for (int m=0; m<product.getConnAtoms(j); m++) {
-									int minNeighbourMapNo = 99999;
-									int minNeighbourIndex = 0;
-									for (int n=0; n<product.getConnAtoms(j); n++) {
-										if (!neighbourHandled[n]) {
-											int neighbour = product.getConnAtom(j,n);
-											int neighbourMapNo = product.getAtomMapNo(neighbour);
-											if (minNeighbourMapNo > neighbourMapNo) {
-												minNeighbourMapNo = neighbourMapNo;
-												minNeighbourIndex = n;
-												}
-											}
-										}
-									neighbourHandled[minNeighbourIndex] = true;
-									pruductNeighbours <<= 10;
-									pruductNeighbours += minNeighbourMapNo;
-									}
-
-					// get sorted list of mapping no's of attached atoms in reactant
-								long reactantNeighbours = 0;
-								neighbourHandled = new boolean[reactant.getConnAtoms(l)];
-								for (int m=0; m<reactant.getConnAtoms(l); m++) {
-									int minNeighbourMapNo = 99999;
-									int minNeighbourIndex = 0;
-									for (int n=0; n<reactant.getConnAtoms(l); n++) {
-										if (!neighbourHandled[n]) {
-											int neighbour = reactant.getConnAtom(l,n);
-											int neighbourMapNo = reactant.getAtomMapNo(neighbour);
-											if (minNeighbourMapNo > neighbourMapNo) {
-												minNeighbourMapNo = neighbourMapNo;
-												minNeighbourIndex = n;
-												}
-											}
-										}
-									neighbourHandled[minNeighbourIndex] = true;
-									reactantNeighbours <<= 10;
-									reactantNeighbours += minNeighbourMapNo;
-									}
-
-								if (pruductNeighbours != reactantNeighbours)
+								if (new IntArrayComparator().compare(
+										getSortedConnectedMapNos(product, j),
+										getSortedConnectedMapNos(reactant, l)) != 0
+								 || new IntArrayComparator().compare(
+										getSortedConnectedAtomicNos(product, j),
+										getSortedConnectedAtomicNos(reactant, l)) != 0)
 									mIsReactionCenter[i][j] = true;
 								}
 							}
@@ -196,6 +189,22 @@ public class Reactor {
 
 		mSSSearcher = new SSSearcher();
 		mMatchList = new ArrayList[mReactant.length];
+		}
+
+	private int[] getSortedConnectedAtomicNos(StereoMolecule mol, int atom) {
+		int[] atomicNo = new int[mol.getConnAtoms(atom)];
+		for (int i=0; i<mol.getConnAtoms(atom); i++)
+			atomicNo[i] = mol.getAtomicNo(mol.getConnAtom(atom, i));
+		Arrays.sort(atomicNo);
+		return atomicNo;
+		}
+
+	private int[] getSortedConnectedMapNos(StereoMolecule mol, int atom) {
+		int[] mapNo = new int[mol.getConnAtoms(atom)];
+		for (int i=0; i<mol.getConnAtoms(atom); i++)
+			mapNo[i] = mol.getAtomMapNo(mol.getConnAtom(atom, i));
+		Arrays.sort(mapNo);
+		return mapNo;
 		}
 
 	/**
@@ -247,14 +256,22 @@ public class Reactor {
 			}
 		}
 
+	/**
+	 * Defines a real world reactant. This triggers a sub-structure search of the respective
+	 * generic reactant in the real reactant resulting in potentially multiple matches.
+	 * Matches are removed, if free valences are not compatible with the formation of new bonds.
+	 * @param no
+	 * @param reactant with correctly set parity flags
+	 */
 	@SuppressWarnings("unchecked")
 	public void setReactant(int no, StereoMolecule reactant) {
-			// reactants need correctly set parity flags
 		mReactant[no] = reactant;
 		mProduct = null;
+		StereoMolecule genericReactant = mGenericReaction.getReactant(no);
 
-		mSSSearcher.setMol(mGenericReaction.getReactant(no), mReactant[no]);
-		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cMatchAtomCharge) == 0) {
+		mSSSearcher.setMol(genericReactant, mReactant[no]);
+		int matchMode = SSSearcher.cMatchDBondToDelocalized + (mAllowChargeCorrections ? 0 : SSSearcher.cMatchAtomCharge);
+		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, matchMode) == 0) {
 			mMatchList[no] = new ArrayList<>();
 			mReactantMatchCombinationCount = 0;
 			return;
@@ -266,8 +283,19 @@ public class Reactor {
 			int[] matchingAtom = mMatchList[no].get(j);
 			for (int k=0; k<matchingAtom.length; k++) {
 				if (matchingAtom[k] != -1) {
+					// If mAllowChargeCorrections==true, then we could neutralize atom charges, to be more forgiving:
+					// We don't use the restrictive SSSearcher.cMatchAtomCharge in SSS matching above and we remove
+					// the charge correction for real world reactant atoms when performing the free valence check.
+					int correction = 0;
+					if (mAllowChargeCorrections
+					 && genericReactant.getAtomCharge(k) == 0
+					 && mReactant[no].getAtomCharge(matchingAtom[k]) != 0) {
+						int valence = mReactant[no].getMaxValenceUncharged(matchingAtom[k]);
+						correction = mReactant[no].getElectronValenceCorrection(matchingAtom[k], valence);
+						}
+
 					if (mMinFreeValence[no][k] > 0
-							&& mMinFreeValence[no][k] > mReactant[no].getFreeValence(matchingAtom[k])) {
+					 && mMinFreeValence[no][k] > mReactant[no].getFreeValence(matchingAtom[k]) - correction) {
 						mMatchList[no].remove(j);
 						break;
 						}
@@ -322,7 +350,7 @@ public class Reactor {
 
 
 	/**
-	 * After instantiating the Reactor with fullyMappedReaction==true and after supplying real reactants,
+	 * After instantiating the Reactor with MODE_FULLY_MAP_REACTIONS and after supplying real reactants,
 	 * this method may be used to construct the fully mapped reaction. If one or more reactants have multiple
 	 * matches of their generic reactants, then multiple reactions leading to isomeric products are returned.
 	 * After calling this method, one or more new real reactants may provided with setReactant()
@@ -452,13 +480,15 @@ public class Reactor {
 
 
 	private StereoMolecule generateProduct(ArrayList<int[]>[] matchList, int[] matchListIndex, int genericProductNo) {
-			// currently only support for first product of generic reaction
+		// currently only support for first product of generic reaction
 		StereoMolecule genericProduct = mGenericReaction.getProduct(genericProductNo);
 
 		StereoMolecule product = new StereoMolecule();
 
 		int esrGroupCountAND = 0;
 		int esrGroupCountOR = 0;
+		ArrayList<Integer> racemicAtomList = null;
+
 		for (int i=0; i<mReactant.length; i++) {
 			StereoMolecule genericReactant = mGenericReaction.getReactant(i);
 			mReactant[i].ensureHelperArrays(Molecule.cHelperNeighbours);
@@ -467,7 +497,7 @@ public class Reactor {
 			boolean[] excludeAtom = new boolean[mReactant[i].getAtoms()];
 			boolean[] excludeBond = new boolean[mReactant[i].getBonds()];
 
-			// eliminate atoms from reactant which are unmapped in generic reaction
+			// Exclude atoms from real reactants, which are unmapped in generic reaction
 			// (including attached bonds)
 			for (int j=0; j<genericReactant.getAtoms(); j++) {
 				if (matchingAtom[j] != -1) {	// non-exclude-group atoms only
@@ -483,7 +513,7 @@ public class Reactor {
 					}
 				}
 
-			// eliminate bonds from reactant which connect mapped atoms in generic reaction
+			// Exclude bonds from real reactants, which connect mapped atoms in generic reaction
 			for (int j=0; j<genericReactant.getBonds(); j++) {
 				int bondAtom1 = genericReactant.getBondAtom(0, j);
 				int bondAtom2 = genericReactant.getBondAtom(1, j);
@@ -516,10 +546,47 @@ public class Reactor {
 
 					if (mapNo[j] != 0) {  // take charge and radical from generic product atoms
 						product.setAtomMapNo(newAtomNo[j], mapNo[j], false);
-						for (int k=0; k<genericProduct.getAllAtoms(); k++) {
+						for (int k=0; k<genericProduct.getAtoms(); k++) {
 							if (genericProduct.getAtomMapNo(k) == mapNo[j]) {
 								product.setAtomCharge(newAtomNo[j], genericProduct.getAtomCharge(k));
 								product.setAtomRadical(newAtomNo[j], genericProduct.getAtomRadical(k));
+								if (mIsReactionCenter[genericProductNo][k]) {
+									int parity = mReactant[i].getAtomParity(j);
+									int productParityHint = genericProduct.getAtomQueryFeatures(k) & Molecule.cAtomQFRxnParityHint;
+									if (productParityHint == 0) {
+										product.setAtomParity(newAtomNo[j], Molecule.cAtomParityUnknown, false);
+										}
+									else if (productParityHint == Molecule.cAtomQFRxnParityRacemize) {
+										if (racemicAtomList == null)
+											racemicAtomList = new ArrayList<>();
+										racemicAtomList.add(newAtomNo[j]);
+										}
+									else {
+										if (parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2) {
+											// Excluded atoms are added later to the product. Therefore, the parity needs
+											// to be inverted for every atom index that is between the current and the atom's new index
+											// Without further potential correction of final order of here excluded atoms
+											// this only works for substitution reactions of one atom for a new one!!!
+											boolean inversion = (productParityHint == Molecule.cAtomQFRxnParityInvert);
+											for (int l=0; l<mReactant[i].getConnAtoms(j); l++) {
+												int connAtom = mReactant[i].getConnAtom(j, l);
+												if (excludeAtom[connAtom]) {
+													for (int m=0; m<mReactant[i].getConnAtoms(j); m++) {
+														int otherConnAtom = mReactant[i].getConnAtom(j, m);
+														if (!excludeAtom[otherConnAtom] && otherConnAtom > connAtom)
+															inversion = !inversion;
+														}
+													}
+												}
+											if (inversion)
+												parity = (parity == Molecule.cAtomParity1) ? Molecule.cAtomParity2 : Molecule.cAtomParity1;
+											product.setAtomParity(newAtomNo[j], parity, false);
+											}
+										else {
+											product.setAtomParity(newAtomNo[j], 0, false);
+											}
+										}
+									}
 								break;
 								}
 							}
@@ -527,10 +594,11 @@ public class Reactor {
 					}
 				}
 
-			for (int j=0; j<mReactant[i].getBonds(); j++) {
+			// Delocalized double bonds are copied as delocalized to avoid cumulated double bonds
+			// when delocalized double bonds from generic product and from real reactant touch.
+			for (int j=0; j<mReactant[i].getBonds(); j++)
 				if (!excludeBond[j])
-					mReactant[i].copyBond(product, j, esrGroupCountAND, esrGroupCountOR, newAtomNo, false);
-				}
+					mReactant[i].copyBond(product, j, esrGroupCountAND, esrGroupCountOR, newAtomNo, true);
 
 			esrGroupCountAND = product.renumberESRGroups(Molecule.cESRTypeAnd);
 			esrGroupCountOR = product.renumberESRGroups(Molecule.cESRTypeOr);
@@ -573,20 +641,23 @@ public class Reactor {
 				product.setAtomParity(newAtomNo[j], parity, false);
 				}
 			// copy corrected atom parities of generic product reaction center atoms
-			else if (mIsReactionCenter[genericProductNo][j] && useConfigurationFromGenericReaction(genericProduct, j)) {
-				int parity = genericProduct.translateTHParity(j, newAtomNo);
-				product.setAtomParity(newAtomNo[j], parity, false);
-				if (parity == Molecule.cAtomParity1
-				 || parity == Molecule.cAtomParity2) {
-					int esrType = genericProduct.getAtomESRType(j);
-					int esrGroup = genericProduct.getAtomESRGroup(j);
-					if (esrType == Molecule.cESRTypeAnd)
-						esrGroup += esrGroupCountAND;
-					else if (esrType == Molecule.cESRTypeOr)
-						esrGroup += esrGroupCountOR;
+			else if (mIsReactionCenter[genericProductNo][j]) {
+				if ((genericProduct.getAtomQueryFeatures(j) & Molecule.cAtomQFRxnParityHint) == 0
+				 && useConfigurationFromGenericReaction(genericProduct, j)) {
+					int parity = genericProduct.translateTHParity(j, newAtomNo);
+					product.setAtomParity(newAtomNo[j], parity, false);
+					if (parity == Molecule.cAtomParity1
+					 || parity == Molecule.cAtomParity2) {
+						int esrType = genericProduct.getAtomESRType(j);
+						int esrGroup = genericProduct.getAtomESRGroup(j);
+						if (esrType == Molecule.cESRTypeAnd)
+							esrGroup += esrGroupCountAND;
+						else if (esrType == Molecule.cESRTypeOr)
+							esrGroup += esrGroupCountOR;
 
-					product.setAtomESR(newAtomNo[j], esrType, esrGroup);
-					esrGroupsChanged = true;
+						product.setAtomESR(newAtomNo[j], esrType, esrGroup);
+						esrGroupsChanged = true;
+						}
 					}
 				}
 			}
@@ -680,24 +751,38 @@ public class Reactor {
 			for (int atom=0; atom<product.getAllAtoms(); atom++)
 				product.setAtomMapNo(atom, 0, false);
 
+		// Here we need to convert delocalized double bonds from real reactant to nicely match
+		// alternating delocalized double bonds from generic product.
+		new AromaticityResolver(product).locateDelocalizedDoubleBonds(null);
+
 		product.setParitiesValid(0);
 
 		int mode = CoordinateInventor.MODE_REMOVE_HYDROGEN
 				 | (mRetainCoordinates ? CoordinateInventor.MODE_PREFER_MARKED_ATOM_COORDS : 0);
 		new CoordinateInventor(mode).invent(product);
 
+		if (racemicAtomList != null) {
+			product.ensureHelperArrays(Molecule.cHelperParities);
+			for (int atom:racemicAtomList) {
+				if (product.isAtomStereoCenter(atom)) {
+					product.setAtomParity(atom, Molecule.cAtomParity1, false);
+					product.setAtomESR(atom, Molecule.cESRTypeAnd, esrGroupCountAND++);
+					}
+				}
+			}
+
 		return product;
 		}
 
-	private boolean reactantQueryFeatureMatchStereoCenter(int reactantMapNo) {
-		for (int i=0; i<mGenericReaction.getReactants(); i++) {
-			StereoMolecule reactant = mGenericReaction.getReactant(i);
-			for (int atom=0; atom<reactant.getAtoms(); atom++)
-				if (reactant.getAtomMapNo(atom) == reactantMapNo)
-					return (reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFMatchStereo) != 0;
-			}
-		return false;
-		}
+//	private boolean reactantQueryFeatureMatchStereoCenter(int reactantMapNo) {
+//		for (int i=0; i<mGenericReaction.getReactants(); i++) {
+//			StereoMolecule reactant = mGenericReaction.getReactant(i);
+//			for (int atom=0; atom<reactant.getAtoms(); atom++)
+//				if (reactant.getAtomMapNo(atom) == reactantMapNo)
+//					return (reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFMatchStereo) != 0;
+//			}
+//		return false;
+//		}
 
 	private boolean useConfigurationFromGenericReaction(StereoMolecule genericProduct, int productAtom) {
 		int mapNo = genericProduct.getAtomMapNo(productAtom);
@@ -707,12 +792,12 @@ public class Reactor {
 				for (int reactantAtom = 0; reactantAtom < reactant.getAtoms(); reactantAtom++) {
 					if (reactant.getAtomMapNo(reactantAtom) == mapNo) {
 						// If the reactant atom is explicitly set to match the stereo center,
-						// we assume that the product also contains a well specified stereo center to be copied
+						// we assume that the product also contains a well specified stereo center to be copied.
 						if ((reactant.getAtomQueryFeatures(reactantAtom) & Molecule.cAtomQFMatchStereo) != 0)
 							return true;
 
 						// If we have an explicit change of the ESR type, we also assume that this is intentional
-						// .and copy the stereo configuration from the product
+						// and copy the stereo configuration from the product.
 						if (reactant.getAtomESRType(reactantAtom) != genericProduct.getAtomESRType(productAtom))
 							return true;
 						}

@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 
 
@@ -139,6 +138,8 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFRingSizeShift	= 22;
 	public static final int cAtomQFChargeBits		= 3;
 	public static final int cAtomQFChargeShift		= 25;
+	public static final int cAtomQFRxnParityBits	= 2;
+	public static final int cAtomQFRxnParityShift	= 30;
 	public static final int cAtomQFSimpleFeatures	= 0x0E3FC7FE;
 	public static final int cAtomQFNarrowing		= 0x0E3FC7FE;
 	public static final int cAtomQFAny				= 0x00000001;
@@ -175,6 +176,10 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFNotChargePos		= 0x08000000;
 	public static final int cAtomQFFlatNitrogen		= 0x10000000;  // currently only used in TorsionDetail
 	public static final int cAtomQFExcludeGroup		= 0x20000000;  // these atoms must not exist in SS-matches
+	public static final int cAtomQFRxnParityHint    = 0xC0000000;  // Retain,invert,racemise configuration in reaction
+	public static final int cAtomQFRxnParityRetain  = 0x40000000;  // Retain,invert,racemise configuration in reaction
+	public static final int cAtomQFRxnParityInvert  = 0x80000000;  // Retain,invert,racemise configuration in reaction
+	public static final int cAtomQFRxnParityRacemize= 0xC0000000;  // Retain,invert,racemise configuration in reaction
 
 	public static final int cBondTypeSingle			= 0x00000001;
 	public static final int cBondTypeDouble			= 0x00000002;
@@ -1687,10 +1692,19 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 *  Use clear() instead of this method
+	 */
+	@Deprecated
+	public void deleteMolecule() {
+		clear();
+		}
+
+
+	/**
 	 * Empties the molecule to serve as container for constructing a new molecule,
 	 * e.g. by multiply calling addAtom(...), addBond(...) and other high level methods.
 	 */
-	public void deleteMolecule() {
+	public void clear() {
 		mAllAtoms = 0;
 		mAllBonds = 0;
 		mIsFragment = false;
@@ -2410,25 +2424,50 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Used instead of the 1.6 Features. Cartridge needs 1.5
-	 * @param a
-	 * @param newSize
+	 * @param original
+	 * @param newLength
      * @return
      */
-/*
+	private static Coordinates[] copyOf(Coordinates[] original, int newLength) {
+		Coordinates[] copy = new Coordinates[newLength];
+		for (int i=0; i<original.length; i++)
+			if (original[i] != null)
+				copy[i] = new Coordinates(original[i]);
+		return copy;
+	}
 	private static int[] copyOf(int[] original, int newLength) {
-     int[] copy = new int[newLength];
-     System.arraycopy(original, 0, copy, 0,
-                      Math.min(original.length, newLength));
-     return copy;
- }
-*/
+		int[] copy = new int[newLength];
+		System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
+		return copy;
+    }
+	private static int[][] copyOf(int[][] original, int newLength) {
+		int[][] copy = new int[newLength][];
+		for (int i=0; i<original.length; i++) {
+			if (original[i] != null) {
+				copy[i] = new int[original[i].length];
+				System.arraycopy(original[i], 0, copy, 0, original[i].length);
+			}
+		}
+		return copy;
+	}
+	private static byte[][] copyOf(byte[][] original, int newLength) {
+		byte[][] copy = new byte[newLength][];
+		for (int i=0; i<original.length; i++) {
+			if (original[i] != null) {
+				copy[i] = new byte[original[i].length];
+				System.arraycopy(original[i], 0, copy, 0, original[i].length);
+			}
+		}
+		return copy;
+	}
 
+// changed back to old behaviour above, because Array is not compatible with openchemlib-js
 	/**
 	 * Used instead of the 1.6 Features. Cartridge needs 1.5
 	 * @param a
 	 * @param newSize
      * @return
-     */
+     *
 	protected static Object copyOf(Object a, int newSize) {
 		Class cl = a.getClass();
 		if (!cl.isArray()) return null;
@@ -2437,27 +2476,27 @@ public class Molecule implements Serializable {
 		Object newArray = Array.newInstance(componentType, newSize);
 		System.arraycopy(a, 0, newArray, 0, Math.min(size, newSize));
 		return newArray;
-	}
+	}   */
 
 	/**
 	 * Usually called automatically and hardly needed to be called.
 	 * @param v
 	 */
 	public void setMaxAtoms(int v) {
-		mAtomicNo = (int[])copyOf(mAtomicNo, v);		// CXR: Do not used Arrays.copyOf: It's a 1.6 Feature!!
-		mAtomCharge = (int[])copyOf(mAtomCharge, v);
-		mAtomMapNo = (int[])copyOf(mAtomMapNo, v);
+		mAtomicNo = copyOf(mAtomicNo, v);		// CXR: Do not used Arrays.copyOf: It's a 1.6 Feature!!
+		mAtomCharge = copyOf(mAtomCharge, v);
+		mAtomMapNo = copyOf(mAtomMapNo, v);
 		int orig = mCoordinates.length;
-		mCoordinates = (Coordinates[])copyOf(mCoordinates, v);
+		mCoordinates = copyOf(mCoordinates, v);
 		for (int i=orig; i<v; i++)
 			mCoordinates[i] = new Coordinates();
-		mAtomMass = (int[])copyOf(mAtomMass, v);
-		mAtomFlags = (int[])copyOf(mAtomFlags, v);
-		mAtomQueryFeatures = (int[])copyOf(mAtomQueryFeatures, v);
+		mAtomMass = copyOf(mAtomMass, v);
+		mAtomFlags = copyOf(mAtomFlags, v);
+		mAtomQueryFeatures = copyOf(mAtomQueryFeatures, v);
 		if (mAtomList != null)
-			mAtomList = (int[][])copyOf(mAtomList, v);
+			mAtomList = copyOf(mAtomList, v);
 		if (mAtomCustomLabel != null)
-			mAtomCustomLabel = (byte[][])copyOf(mAtomCustomLabel, v);
+			mAtomCustomLabel = copyOf(mAtomCustomLabel, v);
 		mMaxAtoms = v;
 		}
 

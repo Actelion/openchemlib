@@ -44,6 +44,7 @@ public class PropertyCalculator {
 
 	public PropertyCalculator(StereoMolecule mol) {
 		mMolecule = mol;
+		mol.normalizeAmbiguousBonds();
 		}
 
 	public int getAcceptorCount() {

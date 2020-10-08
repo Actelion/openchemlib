@@ -1,6 +1,5 @@
 package com.actelion.research.gui;
 
-import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.DrawingObjectList;
 import com.actelion.research.chem.ExtendedDepictor;
 import com.actelion.research.chem.StereoMolecule;

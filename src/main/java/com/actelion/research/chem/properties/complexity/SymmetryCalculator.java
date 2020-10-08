@@ -31,7 +31,7 @@
 *
 */
 
-package com.actelion.research.chem.properties.symmetry;
+package com.actelion.research.chem.properties.complexity;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;

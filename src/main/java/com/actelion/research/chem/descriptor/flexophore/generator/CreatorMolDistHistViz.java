@@ -1,12 +1,10 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
-import com.actelion.research.chem.descriptor.flexophore.ExceptionConformationGenerationFailed;
-import com.actelion.research.chem.descriptor.flexophore.MolDistHistViz;
-import com.actelion.research.chem.descriptor.flexophore.Molecule3DFunctions;
-import com.actelion.research.chem.descriptor.flexophore.PPNodeViz;
+import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphExtractor;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
@@ -73,6 +71,10 @@ public class CreatorMolDistHistViz {
 
         // System.out.println("CreatorCompleteGraph conformationMode " + conformationMode);
 
+    }
+
+    public void setThreadMaster(ThreadMaster threadMaster) {
+        conformerGenerator.setThreadMaster(threadMaster);
     }
 
     public void setConformationMode(int conformationMode) {
@@ -264,7 +266,7 @@ public class CreatorMolDistHistViz {
             int [] arrAtomIndexList = multCoordFragIndex.getArrIndexFrag();
 
             // Calculate center coordinates.
-            Coordinates coordCenter = Molecule3DFunctions.getCenterGravity(molCenter, arrAtomIndexList);
+            Coordinates coordCenter = ExtendedMolecule.getCenterGravity(molCenter, arrAtomIndexList);
 
             for (int at = 0; at < arrAtomIndexList.length; at++) {
 
@@ -292,7 +294,7 @@ public class CreatorMolDistHistViz {
                 // Set the center coordinates
                 molCenter.setCoordinates(indexAtm, coordCenter);
 
-                molCenter.setAtomFlag(indexAtm, Molecule3DFunctions.FLAG_CENTER_ATOM, true);
+                molCenter.setAtomFlag(indexAtm, ConstantsFlexophore.FLAG_CENTER_ATOM, true);
 
                 molCenter.setPPP(indexAtm, arrAtomIndexList);
 
@@ -388,7 +390,7 @@ public class CreatorMolDistHistViz {
             int [] arrAtomIndexList = multCoordFragIndex.getArrIndexFrag();
 
             // Calculate center coordinates.
-            Coordinates coordCenter = Molecule3DFunctions.getCenterGravity(molecule3D, arrAtomIndexList);
+            Coordinates coordCenter = ExtendedMolecule.getCenterGravity(molecule3D, arrAtomIndexList);
 
             multCoordFragIndex.addCoord(coordCenter);
 

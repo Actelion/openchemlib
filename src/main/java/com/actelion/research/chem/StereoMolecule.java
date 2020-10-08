@@ -514,6 +514,8 @@ public class StereoMolecule extends ExtendedMolecule {
 					}
 				}
 			}
+		if (inversion)
+			parity = (parity == Molecule.cAtomParity1) ? Molecule.cAtomParity2 : Molecule.cAtomParity1;
 		}
 	return parity;
 	}

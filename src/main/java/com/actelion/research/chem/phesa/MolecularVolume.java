@@ -3,6 +3,7 @@ package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.phesa.pharmacophore.ExitVectorPoint;
 import com.actelion.research.chem.phesa.pharmacophore.IPharmacophorePoint;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
@@ -10,6 +11,7 @@ import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
@@ -150,9 +152,17 @@ public class MolecularVolume {
 				this.hydrogens.add(new Coordinates(mol.getCoordinates(i)));
 				continue;
 			}
-			Coordinates coords = new Coordinates(mol.getCoordinates(i));
-			AtomicGaussian atomicGaussian = new AtomicGaussian(i,mol.getAtomicNo(i),coords);
-			this.atomicGaussians.add(atomicGaussian);
+			else if(mol.getAtomicNo(i)==0) {
+				Coordinates coords = new Coordinates(mol.getCoordinates(i));
+				AtomicGaussian atomicGaussian = new AtomicGaussian(i,6,coords);
+				atomicGaussian.setWeight(0.0);
+				this.atomicGaussians.add(atomicGaussian);
+			}
+			else {
+				Coordinates coords = new Coordinates(mol.getCoordinates(i));
+				AtomicGaussian atomicGaussian = new AtomicGaussian(i,mol.getAtomicNo(i),coords);
+				this.atomicGaussians.add(atomicGaussian);
+			}
 		}
 	}
 	
@@ -297,6 +307,10 @@ public class MolecularVolume {
 		for (Coordinates hydrogen : getHydrogens()){
 			hydrogen.sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
 		}
+	}
+	
+	public List<PPGaussian> getExitVectorGaussians() {
+		return ppGaussians.stream().filter(e -> (e.getPharmacophorePoint() instanceof ExitVectorPoint)).collect(Collectors.toList());
 	}
 
 	

@@ -184,7 +184,7 @@ public class ClipboardHandler implements IClipboardHandler
 				}
 
 				if (unresolvedNameList != null && unresolvedNameList.size() != 0) {
-					String[] idcodes = StructureNameResolver.resolveRemote(unresolvedNameList);
+					String[] idcodes = StructureNameResolver.resolveRemote(unresolvedNameList.toArray(new String[0]));
 					for (String idcode:idcodes) {
 						try {
 							mol = new IDCodeParser(prefer2D).getCompactMolecule(idcode);

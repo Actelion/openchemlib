@@ -72,9 +72,10 @@ public class SRSearcher {
 	 * if a reaction collection is searched for hits. For acceleration through ffp based
 	 * pre-screening, you should use this method to supply query ffps.
 	 * If the query reaction contains multiple reactants or multiple products,
-	 * these are merged into one molecule each.
-	 * Thus, for a maximum of performance you may avoid this step by parsing a reaction
-	 * that contains one reactant and one product only.
+	 * then setQuery() merges these into one reactant and one product molecule.
+	 * If you call setQuery() with the same query reactions multiple times, then
+	 * for a maximum of performance you should cache merged query reactions and pass these.
+	 * Merging can be done by getMergedCopy() of the reaction class.
 	 * @param query
 	 * @param reactantFFP
 	 * @param productFFP

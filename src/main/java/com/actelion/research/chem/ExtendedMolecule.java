@@ -404,7 +404,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * @param atom
-	 * @return count of category 1 & 2 & 3 neighbour atoms (excludes neighbours connected with zero bond order)
+	 * @return count of category 1 & 2 & 3 neighbour atoms
 	 */
 	public int getAllConnAtomsPlusMetalBonds(int atom) {
 		return mConnAtom[atom].length;
@@ -559,7 +559,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 */
 	public int getLowestFreeValence(int atom) {
 		int occupiedValence = getOccupiedValence(atom);
-		occupiedValence += getElectronValenceCorrection(atom, occupiedValence);
+		int correction = getElectronValenceCorrection(atom, occupiedValence);
 
 		int valence = getAtomAbnormalValence(atom);
 		if (valence == -1) {
@@ -569,13 +569,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			}
 			else {
 				int i= 0;
-				while (occupiedValence > valenceList[i] && i<valenceList.length-1)
+				while ((occupiedValence > valenceList[i] + correction) && (i<valenceList.length-1))
 					i++;
 				valence = valenceList[i];
 				}
 			}
 
-		return valence - occupiedValence;
+		return valence + correction - occupiedValence;
 		}
 
 
@@ -1146,7 +1146,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperNeighbours);
 
 		if (substituent != null) {
-			substituent.deleteMolecule();
+			substituent.clear();
 			substituent.mIsFragment = false;
 			}
 
@@ -1696,6 +1696,15 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @param atom
 	 */
 	public void convertStereoBondsToSingleBonds(int atom) {
+		if (mPi[atom] == 2 && mConnAtoms[atom] == 2) {
+			for (int i=0; i<2; i++) {
+				int alleneEnd = findAlleneEndAtom(atom, mConnAtom[atom][i]);
+				if (alleneEnd != -1)
+					convertStereoBondsToSingleBonds(alleneEnd);
+				}
+			return;
+			}
+
 		for (int i=0; i<mAllConnAtoms[atom]; i++) {
 			int connBond = mConnBond[atom][i];
 			if (isStereoBond(connBond, atom))
@@ -1705,6 +1714,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	public void setStereoBondFromAtomParity(int atom) {
+		convertStereoBondsToSingleBonds(atom);
+
 			// set an optimal bond to up/down to reflect the atom parity
 		if (getAtomParity(atom) == Molecule.cAtomParityNone
 		 || getAtomParity(atom) == Molecule.cAtomParityUnknown)
@@ -2230,7 +2241,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
-	 * Checks whether atom is one of the two end of an allene.
+	 * If atom is one of the two ends of an allene then returns allene center atom.
 	 * @param atom
 	 * @return allene center or -1
 	 */
@@ -2257,13 +2268,32 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 	/**
-	 * Checks whether atom is one of the two atoms of an axial chirality bond of BINAP type.
-	 * Condition: non-aromatic single bond connecting two aromatic rings with 6 or more members
-	 * that together bear at least three ortho substituents. A stereo bond indicating the
-	 * chirality is not(!!!) a condition.
-	 * @param atom to check, whether it is part of a bond, which has BINAP type of axial chirality
-	 * @return opposite atom of axial chirality bond or -1 if axial chirality conditions are not met
+	 * Crawls along a chain of sp-hybridized atoms starting from atom2 (which may not be
+	 * sp-hybridized) away from its sp-hybridized neighbour atom1. Returns the first atom
+	 * that is either not sp-hybridized anymore or the last atom of the chain if that is still
+	 * sp-hybridized. Returns -1 in case of an sp-hybridized cycle.
+	 * @param atom1 sp-hybridized atom
+	 * @param atom2 neighbour atom of atom1
+	 * @return first non-sp-hybridized atom when crawling from atom2 away from atom1
 	 */
+	public int findAlleneEndAtom(int atom1, int atom2) {
+		int startAtom = atom1;
+		while (mConnAtoms[atom2] == 2 && mPi[atom2] == 2 && atom2 != startAtom) {
+			int temp = atom2;
+			atom2 = (mConnAtom[atom2][0] == atom1) ? mConnAtom[atom2][1] : mConnAtom[atom2][0];
+			atom1 = temp;
+			}
+		return (atom2 == startAtom) ? -1 : atom2;
+		}
+
+		/**
+		 * Checks whether atom is one of the two atoms of an axial chirality bond of BINAP type.
+		 * Condition: non-aromatic single bond connecting two aromatic rings with 6 or more members
+		 * that together bear at least three ortho substituents. A stereo bond indicating the
+		 * chirality is not(!!!) a condition.
+		 * @param atom to check, whether it is part of a bond, which has BINAP type of axial chirality
+		 * @return opposite atom of axial chirality bond or -1 if axial chirality conditions are not met
+		 */
 	private int findBINAPOppositeAtom(int atom) {
 		if (mConnAtoms[atom] == 3 && isAromaticAtom(atom) && getAtomRingSize(atom) >= 6)
 			for (int i = 0; i< mConnAtoms[atom]; i++)
@@ -3204,8 +3234,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean isSimpleHydrogen(int atom) {
-		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0 && mAtomCharge[atom] == 0 && mAtomMapNo[atom] == 0
+		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0 && mAtomCharge[atom] == 0 // && mAtomMapNo[atom] == 0
 			&& (mAtomCustomLabel == null || mAtomCustomLabel[atom] == null);
+		// Since a mapNo is not part of an idcode, a mapped but otherwise simple H must be considered simple; TLS 29Aug2020
 		}
 
 	/**
@@ -3464,4 +3495,35 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	private void writeObject(ObjectOutputStream stream) throws IOException {}
 	private void readObject(ObjectInputStream stream) throws IOException {}
+
+
+
+	public final static Coordinates getCenterGravity(ExtendedMolecule mol) {
+
+		int n = mol.getAllAtoms();
+
+		int [] indices = new int [n];
+
+		for (int i = 0; i < indices.length; i++) {
+			indices[i]=i;
+		}
+
+		return getCenterGravity(mol, indices);
 	}
+
+	public final static Coordinates getCenterGravity(ExtendedMolecule mol, int[] indices) {
+
+		Coordinates c = new Coordinates();
+		for (int i = 0; i < indices.length; i++) {
+			c.x += mol.getAtomX(indices[i]);
+			c.y += mol.getAtomY(indices[i]);
+			c.z += mol.getAtomZ(indices[i]);
+		}
+		c.x /= indices.length;
+		c.y /= indices.length;
+		c.z /= indices.length;
+
+		return c;
+	}
+
+}

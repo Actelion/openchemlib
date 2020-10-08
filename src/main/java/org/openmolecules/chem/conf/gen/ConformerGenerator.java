@@ -28,6 +28,7 @@
 
 package org.openmolecules.chem.conf.gen;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
@@ -87,6 +88,7 @@ public class ConformerGenerator {
 	private int[]				mFragmentNo,mDisconnectedFragmentNo,mDisconnectedFragmentSize;
 	private boolean[][]			mSkipCollisionCheck;
 	private Random				mRandom;
+	private ThreadMaster        mThreadMaster;
 
 	public static final boolean PRINT_TORSION_AND_FRAGMENT_LIKELYHOODS = false;
 	public static final boolean PRINT_DEBUG_INDEXES = false;
@@ -277,6 +279,15 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 		mRandomSeed = seed;
 		mRandom = (seed == 0) ? new Random() : new Random(seed);
 		mRigidFragmentProvider = rfp;
+	}
+
+	/**
+	 * If the conformer generation must be stopped from outside, for instance because of user
+	 * intervention or because of a defined timeout, the provide a ThreadMaster with this method.
+	 * @param tm
+	 */
+	public void setThreadMaster(ThreadMaster tm) {
+		mThreadMaster = tm;
 	}
 
 	/**
@@ -550,7 +561,7 @@ public static boolean WRITE_DW_FRAGMENT_FILE = false;
 			getBaseConformer(new int[mRigidFragment.length]);
 
 		mTorsionSet = mTorsionSetStrategy.getNextTorsionSet(mTorsionSet);
-		while (mTorsionSet != null) {
+		while (mTorsionSet != null && (mThreadMaster == null || !mThreadMaster.threadMustDie())) {
 /*
 System.out.println("---- new torsion and conformer index set: -----");
 for (int i=0; i<mRotatableBond.length; i++) System.out.println("rb:"+i+" index:"+torsionSet.getTorsionIndexes()[i]
@@ -627,6 +638,7 @@ if (elimRules != mTorsionSetStrategy.getEliminationRuleList().size()) {
 
 				if (mUseSelfOrganizerIfAllFails) {
 					mSelfOrganizer = new ConformationSelfOrganizer(mMolecule, true);
+					mSelfOrganizer.setThreadMaster(mThreadMaster);
 					mSelfOrganizer.initializeConformers(mRandomSeed, -1);
 					conformer = mSelfOrganizer.getNextConformer();
 					if (conformer != null) {
@@ -738,6 +750,7 @@ if (elimRules != mTorsionSetStrategy.getEliminationRuleList().size()) {
 
 		if (mRotatableBond == null) {
 			mSelfOrganizer = new ConformationSelfOrganizer(mol, true);
+			mSelfOrganizer.setThreadMaster(mThreadMaster);
 			mSelfOrganizer.initializeConformers(mRandomSeed, -1);
 			}
 		else {
@@ -937,6 +950,9 @@ if (WRITE_DW_FRAGMENT_FILE) {
 	 * @return true if successful; false if no fix possible that reduces total collision intensity below tolerance
 	 */
 	private boolean tryFixCollisions(Conformer origConformer, TorsionSet torsionSet) {
+		if (mThreadMaster != null && mThreadMaster.threadMustDie())
+			return false;
+
 		double[][] origCollisionIntensityMatrix = torsionSet.getCollisionIntensityMatrix();
 		double remainingCollisionIntensity = 0;
 		for (int f1=1; f1<origCollisionIntensityMatrix.length; f1++)
@@ -1053,25 +1069,18 @@ if (WRITE_DW_FRAGMENT_FILE) {
 		Conformer conformer = new Conformer(getBaseConformer( conformerIndexes ));
 		//Conformer conformer = new Conformer(base_conformer(torsionset.getConformerIndexes()));
 
-		if(false) {
-			System.out.println();
-			for (int ci:conformerIndexes) {
-				System.out.print(ci + " ");
-			}
-		}
+// System.out.println();
+// for (int ci:conformerIndexes)
+//  System.out.print(ci + " ");
 
 		for (int j=mRotatableBond.length-1; j>=0; j--) {
 			Conformer ci = new Conformer(conformer);
 			mRotatableBond[j].rotateToIndex(ci, torsionIndexes[j]);
-			if(false) { System.out.print(torsionIndexes[j]+ " "); }
+// System.out.print(torsionIndexes[j]+ " ");
 		}
 
 		//System.out.println("passed collision check! "+mTorsionSet.toString());
 		separateDisconnectedFragments(conformer);
 		return conformer;
 	}
-
-
-
-
 }

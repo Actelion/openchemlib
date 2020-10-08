@@ -73,13 +73,9 @@ public abstract class PasteAction extends CommandAction
 
     private void paste()
     {
-        int mMode = model.getMode();
+        if ((model.getMode() & Model.MODE_REACTION) != 0 && pasteReaction())
+            return;
 
-        if ((mMode & Model.MODE_REACTION) != 0) {
-            if (pasteReaction()) {
-                return;
-            }
-        }
         pasteMolecule();
     }
 

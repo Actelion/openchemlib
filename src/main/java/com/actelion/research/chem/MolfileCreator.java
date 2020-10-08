@@ -238,10 +238,15 @@ public class MolfileCreator {
             default:							order = 1; stereo = 0; break; }
 
             if (isRacemic && (stereo == 1 || stereo == 6)) {
-                if (mol.getAtomESRGroup(mol.getBondAtom(0, bond)) != maxESRGroup)
-                    stereo = 0;
+                int atom = mol.getBondAtom(0, bond);
+                if (mol.getAtomESRType(atom) == Molecule.cESRTypeOr)
+                    stereo = 0; // we interpret 'either' bonds as racemic and don't use it for OR atoms
+                else if (mol.getAtomESRType(atom) == Molecule.cESRTypeAnd
+                      && mol.getAtomESRGroup(atom) != maxESRGroup)
+                    stereo = 4; // we use 'either' bonds for all racemic atoms that are not in the largest AND group
                 }
-                    // if query features cannot be expressed exactly stay on the loosely defined side
+
+            // if query features cannot be expressed exactly stay on the loosely defined side
             int bondType = mol.getBondQueryFeatures(bond) & Molecule.cBondQFBondTypes;
             if (bondType != 0) {
                 if (bondType == Molecule.cBondQFDelocalized)

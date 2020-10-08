@@ -31,7 +31,11 @@
 *
 */
 
-package com.actelion.research.chem;
+package com.actelion.research.chem.descriptor;
+
+import com.actelion.research.chem.IDCodeParser;
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.StereoMolecule;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -46,7 +50,6 @@ import java.util.Hashtable;
  */
 public class FingerPrintGenerator
 {
-
     private static final int MAX_BITS = 512;
     private static final int MAX_DEPTH = 6;
     private static final boolean DEBUG = false;
@@ -248,7 +251,6 @@ public class FingerPrintGenerator
             }
         }
         return ok;
-
     }
 
 
@@ -313,6 +315,5 @@ public class FingerPrintGenerator
             System.err.println("Server Exception: " + e);
             e.printStackTrace();
         }
-
     }
 }

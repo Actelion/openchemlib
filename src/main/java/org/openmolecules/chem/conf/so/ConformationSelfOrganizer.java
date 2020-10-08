@@ -28,6 +28,7 @@
 
 package org.openmolecules.chem.conf.so;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
@@ -77,6 +78,7 @@ private double[] mDWStrain; 	// TODO get rid of this
 	private int[]				mRuleCount;
 	private boolean[]			mSkipRule;
 	private int[]				mRotatableBondForDescriptor;
+	private ThreadMaster        mThreadMaster;
 
 	/**
 	 * Generates a new ConformationSelfOrganizer from the given molecule.
@@ -194,6 +196,10 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		return mMol;
 	}
 
+	public void setThreadMaster(ThreadMaster tm) {
+		mThreadMaster = tm;
+		}
+
 	/**
 	 * This convenience method returns the StereoMolecule that has been passed
 	 * to the constructor after modifying its atom coordinates
@@ -238,6 +244,9 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 
 		SelfOrganizedConformer bestConformer = null;
 		for (int i=0; i<MAX_CONFORMER_TRIES; i++) {
+			if (mThreadMaster != null && mThreadMaster.threadMustDie())
+				break;
+
 			if (tryGenerateConformer(conformer) || randomSeed != 0L)
 				return conformer;	// sufficiently low strain, we take this and don't try generating better ones
 
@@ -296,6 +305,9 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		int finalPoolSize = mConformerList.size() + newConformerCount;
 		int tryCount = newConformerCount * MAX_CONFORMER_TRIES;
 		for (int i=0; i<tryCount && mConformerList.size()<finalPoolSize; i++) {
+			if (mThreadMaster != null && mThreadMaster.threadMustDie())
+				break;
+
 			if (conformer == null)
 				conformer = new SelfOrganizedConformer(mMol);
 			if (tryGenerateConformer(conformer)) {
@@ -515,6 +527,9 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 			}
 
 		for (int i=0; !done && i<MAX_BREAKOUT_ROUNDS; i++) {
+			if (mThreadMaster != null && mThreadMaster.threadMustDie())
+				break;
+
 			if (jumbleStrainedAtoms(conformer) == 0)
 				break;
 
@@ -540,9 +555,15 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 //double[] dummy_ = new double[mMol.getAllAtoms()];
 
 		for (int outerCycle=0; outerCycle<cycles; outerCycle++) {
+			if (mThreadMaster != null && mThreadMaster.threadMustDie())
+				break;
+
 			double cycleFactor = startFactor * Math.exp(-k*outerCycle);
 
 			for (int innerCycle=0; innerCycle<atomsSquare; innerCycle++) {
+				if (mThreadMaster != null && mThreadMaster.threadMustDie())
+					break;
+
 				ConformationRule rule = mRuleList.get((int)(mRandom.nextDouble() * mRuleList.size()));
 
 /*				// Always use maximum strain constraint.
