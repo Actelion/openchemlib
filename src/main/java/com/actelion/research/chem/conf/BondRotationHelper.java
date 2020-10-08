@@ -1,9 +1,11 @@
 package com.actelion.research.chem.conf;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.phesa.PheSAAlignment;
@@ -195,15 +197,13 @@ public class BondRotationHelper {
 		double[][] m = new double[3][3];
 		int rotationCenter = mRotationCenters[bondIndex];
 		PheSAAlignment.getRotationMatrix((rotationCenter == mTorsionAtoms[bondIndex][1]) ? alpha : -alpha,unit,m);
-
+		Coordinates t2Neg = t2.scaleC(-1.0);
 		for (int atom:mSmallerSideAtomLists[bondIndex]) {
 			if (atom != rotationCenter) {
-				double x = mMol.getAtomX(atom) - t2.x;
-				double y = mMol.getAtomY(atom) - t2.y;
-				double z = mMol.getAtomZ(atom) - t2.z;
-				mMol.setAtomX(atom, x*m[0][0]+y*m[0][1]+z*m[0][2] + t2.x);
-				mMol.setAtomY(atom, x*m[1][0]+y*m[1][1]+z*m[1][2] + t2.y);
-				mMol.setAtomZ(atom, x*m[2][0]+y*m[2][1]+z*m[2][2] + t2.z);
+				mMol.getCoordinates(atom).add(t2Neg);
+				mMol.getCoordinates(atom).rotate(m);
+				mMol.getCoordinates(atom).add(t2);
+
 				}
 			}
 		}
@@ -229,15 +229,13 @@ public class BondRotationHelper {
 		double[][] m = new double[3][3];
 		int rotationCenter = mRotationCenters[bondIndex];
 		PheSAAlignment.getRotationMatrix((rotationCenter == mTorsionAtoms[bondIndex][1]) ? alpha : -alpha,unit,m);
-
+		Coordinates t2Neg = t2.scaleC(-1.0);
 		for (int atom:mSmallerSideAtomLists[bondIndex]) {
 			if (atom != rotationCenter) {
-				double x = conf.getX(atom) - t2.x;
-				double y = conf.getY(atom) - t2.y;
-				double z = conf.getZ(atom) - t2.z;
-				conf.setX(atom, x*m[0][0]+y*m[0][1]+z*m[0][2] + t2.x);
-				conf.setY(atom, x*m[1][0]+y*m[1][1]+z*m[1][2] + t2.y);
-				conf.setZ(atom, x*m[2][0]+y*m[2][1]+z*m[2][2] + t2.z);
+				conf.getCoordinates(atom).add(t2Neg);
+				conf.getCoordinates(atom).rotate(m);
+				conf.getCoordinates(atom).add(t2);
+
 				}
 			}
 		}
@@ -287,6 +285,8 @@ public class BondRotationHelper {
 	public void setTorsionIDs(String[] torsionIDs) {
 		this.mTorsionIDs = torsionIDs;
 	}
+	
+
 
 
 }
