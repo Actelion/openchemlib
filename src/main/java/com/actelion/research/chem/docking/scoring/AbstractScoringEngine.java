@@ -7,19 +7,19 @@ import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.Evaluable;
 
 
-public abstract class AbstractScoringEngine implements Evaluable  {
+public abstract class AbstractScoringEngine  {
 	
 	private double BUMP_PENALTY = 500;
 	private int BUMP_RADIUS = 3;
 	
 	protected Conformer receptorConf;
 	protected Set<Integer> bindingSiteAtoms;
-	protected Conformer candidatePose;
-	protected double[] state;
+	protected LigandPose candidatePose;
 	protected MoleculeGrid grid;
 	
 	public AbstractScoringEngine(StereoMolecule receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid) {
@@ -28,49 +28,17 @@ public abstract class AbstractScoringEngine implements Evaluable  {
 		this.grid = grid;
 	}
 	
-	public Conformer getCandidatePose() {
-		return candidatePose;
-	}
-	
-	public void updateState() {
-		for(int a=0;a<candidatePose.getMolecule().getAllAtoms();a++) {
-			Coordinates c = candidatePose.getCoordinates(a);
-			state[3*a] = c.x;
-			state[3*a+1] = c.y;
-			state[3*a+2] = c.z;
-		}
+	public LigandPose getCandidatePose() {
+		return candidatePose; 
 	}
 	
 
-	@Override
-	public void setState(double[] state){
-		assert this.state.length==state.length;
-		for(int i=0;i<state.length;i++) {
-			this.state[i] = state[i];
-		}
-		for(int a=0;a<candidatePose.getMolecule().getAllAtoms();a++) {
-			Coordinates c = new Coordinates(state[3*a],state[3*a+1],state[3*a+2]);
-			candidatePose.setCoordinates(a, c);
-		}
-	}
-	
-	@Override
-	public double[] getState() {
-		return this.getState(new double[state.length]);
-	}
-	
-	public double[] getState(double[] v){
-		for(int i=0;i<this.state.length;i++) {
-			v[i] = state[i];
-			
-		}
-		return v;
-	}
 	
 	public double getBumpTerm() {
 		double bumpTerm = 0.0;
 		int[] gridSize = grid.getGridSize();
-		for(Coordinates c : candidatePose.getCoordinates()) {
+		for(int a=0;a<candidatePose.getLigConf().getMolecule().getAllAtoms();a++) {
+			Coordinates c = candidatePose.getLigConf().getCoordinates(a);
 			int[] gridC = grid.getGridCoordinates(c);
 			int x = gridC[0];
 			int y = gridC[1];
@@ -91,8 +59,13 @@ public abstract class AbstractScoringEngine implements Evaluable  {
 		return bumpTerm;
 		}
 
-	public abstract void init(Conformer candidatePose);
+	public abstract void init(LigandPose candidatePose);
+	
+	public abstract void updateState();
 
+	public abstract double getFGValue(double[] grad);
+	
+	public abstract double getScore();
 	
 
 }

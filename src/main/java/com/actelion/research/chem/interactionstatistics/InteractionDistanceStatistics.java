@@ -86,7 +86,7 @@ public class InteractionDistanceStatistics {
 
 	}
 	
-	public void initialize() {
+	private void initialize() {
 	try {
 		readFromFile();
 	} catch (IOException e) {

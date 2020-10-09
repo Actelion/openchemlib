@@ -16,7 +16,8 @@ public class DockingUtils {
 	public static Coordinates getCOM(Conformer conf) {
 		int counter = 0;
 		Coordinates com = new Coordinates();
-		for(Coordinates coords:conf.getCoordinates()) {
+		for(int a=0;a<conf.getMolecule().getAtoms();a++) {
+			Coordinates coords = conf.getCoordinates(a);
 			com.add(coords);
 			counter++;
 		}
@@ -42,7 +43,8 @@ public class DockingUtils {
 	public static Matrix calculateMassCovarianceMatrix(Conformer conf) {
 		Matrix massMatrix = new Matrix(3,3); 
 		int counter = 0;
-		for (Coordinates coords : conf.getCoordinates()){
+		for (int a=0;a<conf.getMolecule().getAllAtoms();a++){
+			Coordinates coords = conf.getCoordinates(a);
 			counter++;
 			double value = coords.x*coords.x;
 			massMatrix.addToElement(0,0,value);

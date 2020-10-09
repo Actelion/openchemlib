@@ -26,7 +26,6 @@ public class InteractionTypeMap {
         interactionSimilarityTable = InteractionSimilarityTable.getInstance();
 
         InteractionDistanceStatistics interactionDistanceStatistics = InteractionDistanceStatistics.getInstance();
-        interactionDistanceStatistics.initialize();
         liAtomTypes = interactionDistanceStatistics.getAtomTypes();
 
         hmAtomType_ListSimilars = new HashMap<>();

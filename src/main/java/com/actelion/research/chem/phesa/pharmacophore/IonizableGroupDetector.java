@@ -46,6 +46,8 @@ public class IonizableGroupDetector {
 		for(int a=0;a<mol.getAtoms();a++) {
 			if(alreadyDetected(a)) continue;
 			if(mol.getAtomicNo(a)==8) { //oxygen
+				if(mol.getConnAtoms(a)==0)
+					continue;
 				int aa = mol.getConnAtom(a,0);
 				if(alreadyDetected(aa)) continue;
 				if(AtomFunctionAnalyzer.isAcidicOxygen(mol, a)) { //COOH,SO3H,PO3H2, N(+)-OH

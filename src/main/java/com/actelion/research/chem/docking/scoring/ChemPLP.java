@@ -17,11 +17,13 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.KabschAlignment;
 import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.docking.scoring.chemscore.HBTerm;
 import com.actelion.research.chem.docking.scoring.chemscore.MetalTerm;
 import com.actelion.research.chem.docking.scoring.chemscore.SimpleMetalTerm;
 import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
+import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.phesa.pharmacophore.ChargePoint;
@@ -29,6 +31,13 @@ import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.potentialenergy.EmpiricalLigandStrain;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
+
+/**
+ * Implementation of ChemPLP scoring function as described in: doi: 10.1021/ci800298z
+ * THIS SCORING FUNCTION REQUIRES EXPLICIT HYDROGENS TO BE PRESENT!
+ * @author joel
+ *
+ */
 
 public class ChemPLP extends AbstractScoringEngine {
 	
@@ -54,7 +63,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	private List<PotentialEnergyTerm> plp;
 	private List<PotentialEnergyTerm> chemscoreHbond;
 	private List<PotentialEnergyTerm> chemscoreMetal;
-	private List<PotentialEnergyTerm> strain;
+	private ForceFieldMMFF94 ff;
 	
 	private Map<Integer,List<Coordinates>> metalInteractionSites;
 	
@@ -79,33 +88,42 @@ public class ChemPLP extends AbstractScoringEngine {
 		
 		
 	}
+	
+
+	
 
 	@Override
 	public double getFGValue(double[] grad) {
 		double energy = getBumpTerm();
-		for(PotentialEnergyTerm term : chemscoreHbond)
-			energy+=term.getFGValue(grad);
-		for(PotentialEnergyTerm term : chemscoreMetal)
-			energy+=term.getFGValue(grad);
+//		for(PotentialEnergyTerm term : chemscoreHbond)
+//			energy+=term.getFGValue(grad);
+//		for(PotentialEnergyTerm term : chemscoreMetal)
+//			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
-		for(PotentialEnergyTerm term : strain)
-			energy+=term.getFGValue(grad);
+		ff.setState(candidatePose.getState());
+		ff.addGradient(grad);
+		energy += ff.getTotalEnergy();
 		return energy;
 	}
 	
-	public double score() {
-		double[] grad = new double[3*candidatePose.getMolecule().getAllAtoms()];
-		double energy = 0.0;
+	@Override 
+	public void updateState() {
+		ff.setState(candidatePose.getState());
+	}
+	
+	@Override
+	public double getScore() {
+		double[] grad = new double[3*candidatePose.getLigConf().getMolecule().getAllAtoms()];
+		double energy = getBumpTerm();
 		
 		for(PotentialEnergyTerm term : chemscoreHbond)
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : chemscoreMetal) 
 			energy+=term.getFGValue(grad);
-
-		
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
+
 	
 
 		return energy;
@@ -113,7 +131,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 
 	@Override
-	public void init(Conformer candidatePose) {
+	public void init(LigandPose candidatePose) {
 		
 		this.candidatePose = candidatePose;
 		
@@ -127,27 +145,19 @@ public class ChemPLP extends AbstractScoringEngine {
 		ligandDonorHPos = new HashSet<>();
 		ligandAcceptorNeg = new HashSet<>();
 		
-		strain = new ArrayList<>();
 		
-		StereoMolecule ligand = candidatePose.getMolecule();
+		StereoMolecule ligand = candidatePose.getLigConf().getMolecule();
 		
-		state = new double[3*ligand.getAllAtoms()];
 		
-		List<Integer> ligAtomTypesList = new ArrayList<>();
-		for(int a=0;a<ligand.getAtoms();a++) {
-			ligAtomTypesList.add(InteractionAtomTypeCalculator.getAtomType(ligand, a));
-		}
-		int [] ligAtomTypes = new int[ligAtomTypesList.size()];
-		IntStream.range(0, ligAtomTypes.length).forEach(e -> ligAtomTypes[e] = ligAtomTypesList.get(e));
-		updateState();
-		BondRotationHelper torsionHelper = new BondRotationHelper(ligand);
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 10.0);
 		
-		EmpiricalLigandStrain ligStrain = new EmpiricalLigandStrain(candidatePose,ligAtomTypes,torsionHelper);
-		strain.add(ligStrain);
-		
+		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+		ff = new ForceFieldMMFF94(ligand, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 		StereoMolecule receptor = receptorConf.getMolecule();
 		identifyHBondFunctionality(ligand,ligandAcceptors,ligandDonorHs, ligandDonors, new HashSet<Integer>(),ligandAcceptorNeg,
 				ligandDonorHPos);
+
 		for(int p : bindingSiteAtoms) {
 			if(receptor.getAtomicNo(p)==1) { // receptor hydrogen atom
 				if(receptorDonorHs.contains(p)) {
@@ -162,7 +172,7 @@ public class ChemPLP extends AbstractScoringEngine {
 							double scale = 1.0;
 							if(chargedP && chargedL)
 								scale = 2.0;
-							HBTerm hbTerm = HBTerm.create(receptorConf, candidatePose, l, d, p, true, false, acceptorNeighbours, scale);
+							HBTerm hbTerm = HBTerm.create(receptorConf, candidatePose.getLigConf(), l, d, p, true, false, acceptorNeighbours, scale);
 							chemscoreHbond.add(hbTerm);
 						}	
 				}
@@ -172,15 +182,15 @@ public class ChemPLP extends AbstractScoringEngine {
 				if(receptorDonors.contains(p)) { // receptor donor heavy atom -> only plp terms 
 					for(int l=0;l<ligand.getAtoms();l++) { //only consider ligand heavy atoms
 						if(ligandAcceptors.contains(l)) {  //plp hbond donor-acceptor
-							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.HBOND_TERM);
+							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.HBOND_TERM);
 							plp.add(plpTerm);
 						}
 						else if(ligandDonors.contains(l)) {  //repulsive donor-donor
-							REPTerm repTerm = REPTerm.create(receptorConf, candidatePose, p, l);
+							REPTerm repTerm = REPTerm.create(receptorConf, candidatePose.getLigConf(), p, l);
 							plp.add(repTerm);
 						}
 						else { //buried
-							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.BURIED_TERM);
+							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.BURIED_TERM);
 							plp.add(plpTerm);
 						}					
 					}
@@ -196,21 +206,21 @@ public class ChemPLP extends AbstractScoringEngine {
 								double scale = 1.0;
 								if(chargedP && chargedL)
 									scale = 2.0;
-								HBTerm hbTerm = HBTerm.create(receptorConf, candidatePose, p, d,l, false, true, acceptorNeighbours, scale);
+								HBTerm hbTerm = HBTerm.create(receptorConf, candidatePose.getLigConf(), p, d,l, false, true, acceptorNeighbours, scale);
 								chemscoreHbond.add(hbTerm);
 							}
 						}
 						else { //ligand heavy atom
 							if(ligandDonors.contains(l)) {  //plp hbond donor-acceptor
-								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.HBOND_TERM);
+								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.HBOND_TERM);
 								plp.add(plpTerm);
 							}
 							else if(ligandAcceptors.contains(l)) {  //repulsive donor-donor
-								REPTerm repTerm = REPTerm.create(receptorConf, candidatePose, p, l);
+								REPTerm repTerm = REPTerm.create(receptorConf, candidatePose.getLigConf(), p, l);
 								plp.add(repTerm);
 							}
 							else { //buried
-								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.BURIED_TERM);
+								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.BURIED_TERM);
 								plp.add(plpTerm);
 							}			
 							
@@ -221,15 +231,15 @@ public class ChemPLP extends AbstractScoringEngine {
 				else if(receptorMetals.contains(p)) {
 						for(int l=0;l<ligand.getAtoms();l++) { 
 							if(ligandDonors.contains(l)) {  //met-donor -> repulsive
-								REPTerm repTerm = REPTerm.create(receptorConf, candidatePose, p, l);
+								REPTerm repTerm = REPTerm.create(receptorConf, candidatePose.getLigConf(), p, l);
 								plp.add(repTerm);
 							}
 							else if(ligandAcceptors.contains(l)) { //attractive met-acc interaction
-								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.METAL_TERM);
+								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.METAL_TERM);
 								plp.add(plpTerm);
 							}
 							else { //buried met-nonp interaction
-								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.BURIED_TERM);
+								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.BURIED_TERM);
 								plp.add(plpTerm);
 							}	
 						}
@@ -240,7 +250,7 @@ public class ChemPLP extends AbstractScoringEngine {
 							if(ligandAcceptorNeg.contains(l))
 								scale = 2.0;
 							int[] acceptorNeighbours = IntStream.range(0, ligand.getConnAtoms(l)).map(i -> ligand.getConnAtom(l, i)).toArray();
-							SimpleMetalTerm metTerm = SimpleMetalTerm.create(receptorConf, candidatePose, 
+							SimpleMetalTerm metTerm = SimpleMetalTerm.create(receptorConf, candidatePose.getLigConf(), 
 									l, p, acceptorNeighbours, scale);
 							chemscoreMetal.add(metTerm);
 						}
@@ -267,15 +277,15 @@ public class ChemPLP extends AbstractScoringEngine {
 				else { // non-polar heavy atom
 					for(int l=0;l<ligand.getAtoms();l++) { 
 						if(ligandDonors.contains(l)) {  //nonpolar-donor -> buried
-							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.BURIED_TERM);
+							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.BURIED_TERM);
 							plp.add(plpTerm);
 						}
 						else if(ligandAcceptors.contains(l)) { //nonpolar-acceptor -> buried
-							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.BURIED_TERM);
+							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.BURIED_TERM);
 							plp.add(plpTerm);
 						}
 						else { // nonpolar-nonpolar -> nonpolar
-							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose, p, l, PLPTerm.NONPOLAR_TERM);
+							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.NONPOLAR_TERM);
 							plp.add(plpTerm);
 						}	
 				}
@@ -478,6 +488,11 @@ public class ChemPLP extends AbstractScoringEngine {
 				new Coordinates(-1.555,1.555,0.0), new Coordinates(-1.555,-1.555,0.0)
 		};
 	}
+
+
+
+
+
 	
 	
 		

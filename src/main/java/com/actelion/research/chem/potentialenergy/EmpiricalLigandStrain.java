@@ -33,8 +33,6 @@ public class EmpiricalLigandStrain implements PotentialEnergyTerm {
 	}
 	
 	private void init() {
-		InteractionDistanceStatistics.getInstance().initialize();
-		StatisticalTorsionPotential.getInstance().initialize();
 		StereoMolecule mol = conf.getMolecule();
 		strain = new ArrayList<PotentialEnergyTerm>();
 		ligAtomPairs = new ArrayList<int[]>();

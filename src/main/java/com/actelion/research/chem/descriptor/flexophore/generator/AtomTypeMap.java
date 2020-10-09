@@ -21,7 +21,6 @@ public class AtomTypeMap {
     private void init() {
 
         InteractionDistanceStatistics interactionDistanceStatistics = InteractionDistanceStatistics.getInstance();
-        interactionDistanceStatistics.initialize();
         List<Integer> liAtomTypes = interactionDistanceStatistics.getAtomTypes();
 
         hmAtomType_Index = new HashMap<>(liAtomTypes.size());
@@ -62,7 +61,6 @@ public class AtomTypeMap {
     public static void main(String[] args) {
 
         InteractionDistanceStatistics interactionDistanceStatistics = InteractionDistanceStatistics.getInstance();
-        interactionDistanceStatistics.initialize();
         List<Integer> liAtomTypes = interactionDistanceStatistics.getAtomTypes();
 
         AtomTypeMap atomTypeMap = AtomTypeMap.getInstance();

@@ -120,9 +120,6 @@ public class InteractionSimilarityTable {
 	private InteractionSimilarityTable() {
 		keyToId = new HashMap<Integer,Integer>();
 		stats = InteractionDistanceStatistics.getInstance();
-		stats.initialize();
-
-		
 		
 		//Prepare the proteinLigandIDs table
 		atomKeys = stats.getAtomKeySet();
