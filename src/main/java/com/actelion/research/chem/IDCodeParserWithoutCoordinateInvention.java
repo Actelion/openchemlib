@@ -48,9 +48,20 @@ public class IDCodeParserWithoutCoordinateInvention {
 	private StereoMolecule	mMol;
 	private byte[]			mDecodingBytes;
 	private	int				mIDCodeBitsAvail,mIDCodeTempData,mIDCodeBufferIndex;
+	private boolean         mNeglectSpaceDelimitedCoordinates;
 
 	protected boolean ensure2DCoordinates() {
 		return false;
+		}
+
+	/**
+	 * IDCodeParsers allow passing idcode and coordinates as one String with a space
+	 * as separator in between. If an idcode is followed by a space and more, and if
+	 * the following shall not be interpreted as encoded coordinates, then call this
+	 * method after instantiation.
+	 */
+	public void neglectSpaceDelimitedCoordinates() {
+		mNeglectSpaceDelimitedCoordinates = true;
 		}
 
 	/**
@@ -659,6 +670,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 						Molecule.cBondTypeTriple : Molecule.cBondTypeDouble);
 
 		if (coordinates == null
+		 && !mNeglectSpaceDelimitedCoordinates
 		 && idcode.length > mIDCodeBufferIndex+1
 		 && (idcode[mIDCodeBufferIndex+1] == ' ' || idcode[mIDCodeBufferIndex+1] == '\t')) {
 			coordinates = idcode;
