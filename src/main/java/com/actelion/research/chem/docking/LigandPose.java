@@ -145,6 +145,7 @@ public class LigandPose implements Evaluable{
 			double rotateBy = random.nextBoolean() ? rnd : -rnd;
 			rotateBy = rotateBy*Math.PI/180.0;
 			int bond = random.nextInt(torsionHelper.getRotatableBonds().length);
+			bond = torsionHelper.getRotatableBonds()[bond];
 			//calculate actual torsion, get difference to desired torsion and take
 			//code snippet from torsionHelper to rotate the atoms
 			torsionHelper.rotateSmallerSide(bond, rotateBy,ligConf);

@@ -434,6 +434,7 @@ public class ReactionEncoder
 			}
 
 			IDCodeParser parser = new IDCodeParser(ensureCoordinates);
+			parser.neglectSpaceDelimitedCoordinates();
 			StereoMolecule mol = parser.getCompactMolecule(rxnCode, rxnCoords, idcodeStart, coordsStart);
 
 			if (mappingStart != -1)
@@ -699,6 +700,7 @@ public class ReactionEncoder
 			int reactantIndex = 0;
 			do {
 				IDCodeParser parser = new IDCodeParser();
+				parser.neglectSpaceDelimitedCoordinates();
 				StereoMolecule reactant = parser.getCompactMolecule(rxnBytes, coords, reactantIndex, coordsIndex);
 				if (reactant.getAllAtoms() != 0)
 					moleculeList.add(reactant);
@@ -715,6 +717,7 @@ public class ReactionEncoder
 		if (includeProducts) {
 			do {
 				IDCodeParser parser = new IDCodeParser();
+				parser.neglectSpaceDelimitedCoordinates();
 				StereoMolecule product = parser.getCompactMolecule(rxnBytes, coords, productIndex, coordsIndex);
 				if (product.getAllAtoms() != 0)
 					moleculeList.add(product);
