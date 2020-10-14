@@ -58,7 +58,6 @@ public class StatisticalTorsionPotential {
 		torsionIDs = new ArrayList<String>();
 		torsionStatistics = new ConcurrentHashMap<String,int[]>();
 		TorsionDB.initialize(TorsionDB.MODE_BINS);
-		BufferedReader reader; 
 		if (database == null) {
 			InputStream is = TorsionDB.class.getResourceAsStream(BASE_PATH+DATABASE_CSD+TORSION_BINS_FILE);
 			if (is != null) {
@@ -69,21 +68,14 @@ public class StatisticalTorsionPotential {
 			}
 		}
 		
-		BufferedReader torsionIDReader = new BufferedReader(new InputStreamReader(TorsionDB.class.getResourceAsStream(
-				BASE_PATH+database+TORSION_IDS_FILE)));
-
-		try {
-			readTorsionIDs(torsionIDReader);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			throw new RuntimeException();
-		}
+		
+	initialize();
 		
 
 
 	}
 	
-	public void initialize() {
+	private void initialize() {
 		BufferedReader torsionIDReader = new BufferedReader(new InputStreamReader(TorsionDB.class.getResourceAsStream(
 				BASE_PATH+database+TORSION_IDS_FILE)));
 		

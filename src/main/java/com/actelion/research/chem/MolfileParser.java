@@ -979,7 +979,7 @@ public class MolfileParser
 			case 3:
 				realBondType = Molecule.cBondTypeCross;
 				break;
-			case 4:
+			case 4: // we interpret 'either' as being racemic
 				realBondType = Molecule.cBondTypeUp;
 				isAtomESRAnd = true;
 				break;

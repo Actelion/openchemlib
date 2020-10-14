@@ -33,10 +33,7 @@
 
 package com.actelion.research.chem.reaction;
 
-import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.DrawingObjectList;
-import com.actelion.research.chem.IDCodeParser;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.util.ArrayUtils;
 
 import java.util.ArrayList;
@@ -110,7 +107,14 @@ public class ReactionEncoder
 		String[] coords = new String[reaction.getMolecules()];
 
 		for (int i = 0; i < reaction.getMolecules(); i++) {
-			Canonizer canonizer = new Canonizer(reaction.getMolecule(i));
+			StereoMolecule mol = reaction.getMolecule(i);
+
+			// reactants may not use cAtomQFRxnParityHint
+			if (mol.isFragment() && i < reaction.getReactants())
+				for (int atom=0; atom<mol.getAllAtoms(); atom++)
+					mol.setAtomQueryFeature(atom, Molecule.cAtomQFRxnParityHint, false);
+
+			Canonizer canonizer = new Canonizer(mol);
 			idcode[i] = canonizer.getIDCode();
 			if (idcode[i] == null) {
 				return null;
@@ -430,6 +434,7 @@ public class ReactionEncoder
 			}
 
 			IDCodeParser parser = new IDCodeParser(ensureCoordinates);
+			parser.neglectSpaceDelimitedCoordinates();
 			StereoMolecule mol = parser.getCompactMolecule(rxnCode, rxnCoords, idcodeStart, coordsStart);
 
 			if (mappingStart != -1)
@@ -695,6 +700,7 @@ public class ReactionEncoder
 			int reactantIndex = 0;
 			do {
 				IDCodeParser parser = new IDCodeParser();
+				parser.neglectSpaceDelimitedCoordinates();
 				StereoMolecule reactant = parser.getCompactMolecule(rxnBytes, coords, reactantIndex, coordsIndex);
 				if (reactant.getAllAtoms() != 0)
 					moleculeList.add(reactant);
@@ -711,6 +717,7 @@ public class ReactionEncoder
 		if (includeProducts) {
 			do {
 				IDCodeParser parser = new IDCodeParser();
+				parser.neglectSpaceDelimitedCoordinates();
 				StereoMolecule product = parser.getCompactMolecule(rxnBytes, coords, productIndex, coordsIndex);
 				if (product.getAllAtoms() != 0)
 					moleculeList.add(product);

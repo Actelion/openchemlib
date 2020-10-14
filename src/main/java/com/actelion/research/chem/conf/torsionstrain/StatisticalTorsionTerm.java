@@ -226,6 +226,9 @@ public class StatisticalTorsionTerm implements PotentialEnergyTerm  {
 
 	@Override
 	public final double getFGValue(final double[] gradient) {
+		for(int i=0;i<gradient.length;i++) {
+			gradient[i] = 0.0;
+		}
 		Coordinates c1,c2,c3,c4;
 		int a1 = atoms[0];
 		int a2 = atoms[1];

@@ -38,8 +38,7 @@ import java.util.ArrayList;
 public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,StereoMolecule> {
 
 		
-	private static final long SEED = 123456789;
-	
+
 	private static final int CONFORMATIONS = 50;
 
 
@@ -50,7 +49,6 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 
 	private  boolean singleBaseConformation; // take conformation of base molecule as is and don't generate conformers
 	
-	private double[][] transforms;// = ShapeAlignment.initialTransform(2);
 	
 	private StereoMolecule[] previousAlignment;// = new StereoMolecule[2];
 	
@@ -107,26 +105,25 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		try {
 			ConformerSet confSet = fullSet.getSubset(maxConfs);
 
-		init();
-		
-		ArrayList<MolecularVolume> molecularVolumes = new ArrayList<MolecularVolume>(); 
-		
-		StereoMolecule mol = confSet.first().toMolecule();
-		MolecularVolume refMolVol = new MolecularVolume(mol);
-		MolecularVolume molVol;
-		
-		for(Conformer conformer : confSet) {
-
-            if(conformer==null) {
-
-                break;
-
-            } else {
-				molVol = new MolecularVolume(refMolVol,conformer);
-				PheSAAlignment.preProcess(conformer, molVol);
-				molecularVolumes.add(molVol);
-            }
-        }
+			init();
+			
+			ArrayList<MolecularVolume> molecularVolumes = new ArrayList<MolecularVolume>(); 
+			
+			StereoMolecule mol = confSet.first().toMolecule();
+			MolecularVolume refMolVol = new MolecularVolume(mol);
+			MolecularVolume molVol;
+			
+			for(Conformer conformer : confSet) {
+	            if(conformer==null) {
+	
+	                break;
+	
+	            } else {
+					molVol = new MolecularVolume(refMolVol,conformer);
+					PheSAAlignment.preProcess(conformer, molVol);
+					molecularVolumes.add(molVol);
+	            }
+	        }
         return new PheSAMolecule(mol,molecularVolumes);
 		}
 		catch(Exception e) {
@@ -136,7 +133,6 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 
 	
 	public void init() {
-		transforms = PheSAAlignment.initialTransform(2);
 		previousAlignment = new StereoMolecule[2];
 		conformerGenerator = new ConformerSetGenerator();
 		
@@ -151,6 +147,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	public PheSAMolecule createDescriptor(StereoMolecule mol) {
 		StereoMolecule shapeMolecule = new StereoMolecule(mol);
+		shapeMolecule.ensureHelperArrays(StereoMolecule.cHelperCIP);
 		boolean has3Dcoordinates = false;
 		for (int atom=1; atom<mol.getAllAtoms(); atom++) {
 			if (Math.abs(mol.getAtomZ(atom) - mol.getAtomZ(0)) > 0.1) {
@@ -159,8 +156,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 				}
 			}
 		shapeMolecule.stripSmallFragments();
-		new Canonizer(shapeMolecule);
-		shapeMolecule.ensureHelperArrays(StereoMolecule.cHelperCIP);
+		Canonizer can = new Canonizer(shapeMolecule);
+		shapeMolecule = can.getCanMolecule(true);
 
 		ConformerSet confSet = new ConformerSet();
 		if (!singleBaseConformation) {
@@ -271,9 +268,10 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		}
 			
 		shapeString.append("   ");
-		StereoMolecule mol = shapeMol.getConformer(shapeMol.getVolumes().get(0));
+		//StereoMolecule mol = shapeMol.getConformer(shapeMol.getVolumes().get(0));
+		StereoMolecule mol = new StereoMolecule(shapeMol.getMolecule());
 		Canonizer can = new Canonizer(mol, Canonizer.COORDS_ARE_3D);
-		mol = can.getCanMolecule(true);
+		StereoMolecule mol2 = can.getCanMolecule();
 		String idcoords = can.getEncodedCoordinates(true);
 		String idcode = can.getIDCode();
 		shapeString.append(idcode);

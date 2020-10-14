@@ -37,7 +37,7 @@ public class PPGaussian extends Gaussian3D {
 	}
 	
 	public PPGaussian(PPGaussian original){
-		super(original.atomId,original.atomicNo,original.center,original.weight);
+		super(original.atomId,original.atomicNo,new Coordinates(original.center),original.weight);
 		this.pp = original.pp.copyPharmacophorePoint();
 		
 

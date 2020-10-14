@@ -105,7 +105,8 @@ public class StraightLineRule extends ConformationRule {
 				for (int i=0; i<atomList.length; i++)
 					atomHandled[atomList[i]] = true;
 
-				ruleList.add(new StraightLineRule(atomList));
+				if (atomList[0] != atomList[atomList.length-1]) // we don't add cycles
+					ruleList.add(new StraightLineRule(atomList));
 				}
 			}
 		}
@@ -119,16 +120,20 @@ public class StraightLineRule extends ConformationRule {
      */
 	private static int[] getLineFragmentAtoms(int seedAtom, StereoMolecule mol) {
 		// crawl to the end of the chain
-		int backAtom = mol.getConnAtom(seedAtom, 0);
-		while (mol.getAllConnAtoms(seedAtom) != 1 && mol.getAtomPi(seedAtom) == 2) {	// while we are not at the chain end
+		int firstAtom = seedAtom;
+		int backAtom = mol.getConnAtom(firstAtom, 0);
+		while (mol.getAllConnAtoms(firstAtom) != 1 && mol.getAtomPi(firstAtom) == 2) {	// while we are not at the chain end
 			int tempAtom = backAtom;
-			backAtom = seedAtom;
-			seedAtom = (mol.getConnAtom(seedAtom, 0) == tempAtom) ?
-					mol.getConnAtom(seedAtom, 1) : mol.getConnAtom(seedAtom, 0);
+			backAtom = firstAtom;
+			firstAtom = (mol.getConnAtom(firstAtom, 0) == tempAtom) ?
+					mol.getConnAtom(firstAtom, 1) : mol.getConnAtom(firstAtom, 0);
+
+			if (firstAtom == seedAtom)  // cycle found
+				break;
 			}
 
 		// count number of atoms in straight atom strand
-		int rearAtom = seedAtom;	// invert direction for counting
+		int rearAtom = firstAtom;	// invert direction for counting
 		int headAtom = backAtom;
 		int count = 2;
 		while (mol.getAllConnAtoms(headAtom) != 1 && mol.getAtomPi(headAtom) == 2) {
@@ -137,17 +142,23 @@ public class StraightLineRule extends ConformationRule {
 			headAtom = (mol.getConnAtom(headAtom, 0) == tempAtom) ?
 					mol.getConnAtom(headAtom, 1) : mol.getConnAtom(headAtom, 0);
 			count++;
+
+			if (headAtom == firstAtom)  // cycle found
+				break;
 			}
 
 		int[] atomList = new int[count];
-		atomList[0] = seedAtom;
+		atomList[0] = firstAtom;
 		atomList[1] = backAtom;
-		int index = 1;
-		while (mol.getAllConnAtoms(atomList[index]) != 1 && mol.getAtomPi(atomList[index]) == 2) {
-			atomList[index+1] = (mol.getConnAtom(atomList[index], 0) == atomList[index-1]) ?
-					mol.getConnAtom(atomList[index], 1) : mol.getConnAtom(atomList[index], 0);
-			index++;
-			}
+		for (int i=2; i<count; i++)
+			atomList[i] = (mol.getConnAtom(atomList[i-1], 0) == atomList[i-2]) ?
+					mol.getConnAtom(atomList[i-1], 1) : mol.getConnAtom(atomList[i-1], 0);
+//		int index = 1;
+//		while (mol.getAllConnAtoms(atomList[index]) != 1 && mol.getAtomPi(atomList[index]) == 2) {
+//			atomList[index+1] = (mol.getConnAtom(atomList[index], 0) == atomList[index-1]) ?
+//					mol.getConnAtom(atomList[index], 1) : mol.getConnAtom(atomList[index], 0);
+//			index++;
+//			}
 
 		return atomList;
 		}

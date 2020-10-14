@@ -48,9 +48,20 @@ public class IDCodeParserWithoutCoordinateInvention {
 	private StereoMolecule	mMol;
 	private byte[]			mDecodingBytes;
 	private	int				mIDCodeBitsAvail,mIDCodeTempData,mIDCodeBufferIndex;
+	private boolean         mNeglectSpaceDelimitedCoordinates;
 
 	protected boolean ensure2DCoordinates() {
 		return false;
+		}
+
+	/**
+	 * IDCodeParsers allow passing idcode and coordinates as one String with a space
+	 * as separator in between. If an idcode is followed by a space and more, and if
+	 * the following shall not be interpreted as encoded coordinates, then call this
+	 * method after instantiation.
+	 */
+	public void neglectSpaceDelimitedCoordinates() {
+		mNeglectSpaceDelimitedCoordinates = true;
 		}
 
 	/**
@@ -640,6 +651,14 @@ public class IDCodeParserWithoutCoordinateInvention {
 				for (int i=0; i<no; i++)
 					mMol.setBondType(decodeBits(bbits), Molecule.cBondTypeMetalLigand);
 				break;
+			case 29:	//	datatype 'reaction parity hint'
+				no = decodeBits(abits);
+				for (int i=0; i<no; i++) {
+					int atom = decodeBits(abits);
+					int hint = decodeBits(Molecule.cAtomQFRxnParityBits) << Molecule.cAtomQFRxnParityShift;
+					mMol.setAtomQueryFeature(atom, hint, true);
+					}
+				break;
 				}
 			}
 
@@ -651,6 +670,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 						Molecule.cBondTypeTriple : Molecule.cBondTypeDouble);
 
 		if (coordinates == null
+		 && !mNeglectSpaceDelimitedCoordinates
 		 && idcode.length > mIDCodeBufferIndex+1
 		 && (idcode[mIDCodeBufferIndex+1] == ' ' || idcode[mIDCodeBufferIndex+1] == '\t')) {
 			coordinates = idcode;
@@ -1491,6 +1511,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 						System.out.print("Coordinate Bonds:");
 						for (int i = 0; i < no; i++)
 							System.out.print(" " + decodeBits(bbits));
+						System.out.println();
+						break;
+					case 29:
+						no = decodeBits(abits);
+						System.out.print("ReactionParityHint:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFRxnParityBits));
 						System.out.println();
 						break;
 				}

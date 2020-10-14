@@ -143,7 +143,7 @@ public abstract class Model
     private StereoMolecule[] mFragment;    // in case of MODE_MULTIPLE_FRAGMENTS contains valid stereo fragments
     private IDrawingObject selectedDrawingObject;
 
-    private IReactionMapper mapper;
+    private IReactionMapper mMapper;
     private ImageProvider imageProvider;
 
 
@@ -164,7 +164,6 @@ public abstract class Model
             Arrow arrow = new Arrow(factory.getDrawConfig(), 0, 0, 0, 0);
             mDrawingObjectList.add(arrow);
         }
-
     }
 
     public GeomFactory getGeomFactory()
@@ -888,7 +887,7 @@ public abstract class Model
 
     public void setMapper(IReactionMapper mapper)
     {
-        this.mapper = mapper;
+        mMapper = mapper;
     }
 
     public void mapReaction(int atom, Point2D left, Point2D right)
@@ -907,7 +906,7 @@ public abstract class Model
                     mol.setAtomMapNo(atom, freeMapNo, false);
                     mol.setAtomMapNo(dest, freeMapNo, false);
                 }
-                if (mapper != null)
+                if (mMapper != null)
                     tryAutoMapReaction();
             }
         }
@@ -1387,7 +1386,7 @@ public abstract class Model
                 }
             }
         }
-        rxn = mapper.mapReaction(rxn, sss);
+        rxn = mMapper.mapReaction(rxn, sss);
         if (rxn != null) {
             int offset = 0;
             // Sync the display molecule with the reaction fragments

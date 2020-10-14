@@ -44,6 +44,8 @@ public class TautomerHelper {
 	private int[] mRegionDCount;
 	private int[] mRegionTCount;
 
+boolean[] isCenterAtom,isChangeAtom;    // TODO remove
+
 	public TautomerHelper(StereoMolecule mol) {
 		mMol = mol;
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
@@ -107,15 +109,16 @@ public class TautomerHelper {
 
 		// remove stereo information from bonds that indicate a stereo center at one of the tautomer region atoms
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
-			if (!mIsTautomerBond[bond]) {
+//			if (!mIsTautomerBond[bond]) {
 				for (int i=0; i<2; i++) {
 					int atom = mMol.getBondAtom(i, bond);
 					if (atomRegionNo[atom] != 0 && mMol.isStereoBond(bond, atom)) {
 						mMol.setBondType(bond, Molecule.cBondTypeSingle);
+						mMol.setAtomConfigurationUnknown(atom,false);
 						mMol.setAtomESR(atom, Molecule.cESRTypeAbs, -1);
 						}
 					}
-				}
+//				}
 			}
 
 		// find highest ranking atom in every region
@@ -136,8 +139,15 @@ public class TautomerHelper {
 		compileRegionCounts(atomRegionNo, regionCount);
 		for (int i=0; i<regionCount; i++) {
 			String label = ""+mRegionPiCount[i]+"|"+mRegionDCount[i]+"|"+mRegionTCount[i];
-			genericTautomer.setAtomCustomLabel(maxAtom[i], label);
+// TODO			genericTautomer.setAtomCustomLabel(maxAtom[i], label);
 			}
+
+// TODO remove
+for (int atom=0; atom<mMol.getAtoms(); atom++) {
+ int v = (isCenterAtom[atom] ? 2 : 0) + (isChangeAtom[atom] ? 1 : 0);
+ genericTautomer.setAtomCustomLabel(atom, Integer.toString(v));
+ }
+
 
 		return genericTautomer;
 		}
@@ -439,8 +449,8 @@ public class TautomerHelper {
 		mIsTautomerBond = new boolean[mMol.getBonds()];
 
 		// We define two atom roles in keto/enol type tautomers. An atom can also assume both roles.
-		boolean[] isCenterAtom = new boolean[mMol.getAtoms()]; // Central atom with no change in H-count or pi-electron count
-		boolean[] isChangeAtom = new boolean[mMol.getAtoms()];  // Atom that may switch between hydrogen and pi-bond
+		isCenterAtom = new boolean[mMol.getAtoms()]; // Central atom with no change in H-count or pi-electron count
+		isChangeAtom = new boolean[mMol.getAtoms()];  // Atom that may switch between hydrogen and pi-bond
 
 		// As starting points for tautomeric reagions find all HX-Y=Z / X=Y-ZH type 3-atom sequences
 		// of which at least one bond is not aromatic.
@@ -454,9 +464,9 @@ public class TautomerHelper {
 						int atom3 = mMol.getConnAtom(atom2, j);
 						if (atom3 != atom1 && isValidDonorAtom(atom3)) {
 							int bond23 = mMol.getConnBond(atom2, j);
-							if ((!mMol.isAromaticBond(bond12) || mMol.isAromaticBond(bond23))
-							 && ((isPiBond(bond23) && isSingleBond(bond12) && mMol.getAllHydrogens(atom1) != 0)
-							  || (isPiBond(bond12) && isSingleBond(bond23) && mMol.getAllHydrogens(atom3) != 0))) {
+							if (true//(!mMol.isAromaticBond(bond12) || mMol.isAromaticBond(bond23))
+							 && ((isPiBond(bond23) && isSingleBond(bond12) && mMol.getAllHydrogens(atom1) > mMol.getAtomCharge(atom1))
+							  || (isPiBond(bond12) && isSingleBond(bond23) && mMol.getAllHydrogens(atom3) > mMol.getAtomCharge(atom3)))) {
 								isChangeAtom[atom1] = true;
 								isCenterAtom[atom2] = true;
 								isChangeAtom[atom3] = true;
@@ -475,7 +485,7 @@ public class TautomerHelper {
 
 		while (true) {
 			boolean changeFound = false;
-
+/*
 			// Mark any two vinylogous bonds attached to change atoms also to belong to tautomeric region
 			for (int atom1=0; atom1<mMol.getAtoms(); atom1++) {
 				if (isChangeAtom[atom1]) {
@@ -500,13 +510,67 @@ public class TautomerHelper {
 						}
 					}
 				}
+*/
+			// Extend region by checking all change atoms, whether they can assume the central atom role as well
+			for (int atom1=0; atom1<mMol.getAtoms(); atom1++) {
+				if (isCenterAtom[atom1]) {
+					for (int i=0; i<mMol.getConnAtoms(atom1); i++) {
+						if (mIsTautomerBond[mMol.getConnBond(atom1, i)]) {
+							int atom2 = mMol.getConnAtom(atom1, i);
+							if (isChangeAtom[atom2]) {
+								for (int j=0; j<mMol.getConnAtoms(atom2); j++) {
+									int bond23 = mMol.getConnBond(atom2, j);
+									if (!mIsTautomerBond[bond23] && mMol.getBondOrder(bond23) == 1) {
+										int atom3 = mMol.getConnAtom(atom2, j);
+										if ((mMol.getAllHydrogens(atom3) > mMol.getAtomCharge(atom3))
+										 && ((isValidDonorAtom(atom1) && isValidHeteroAtom(atom3))
+										  || (isValidDonorAtom(atom3) && isValidHeteroAtom(atom1)))
+										 && (isChangeAtom[atom3]) || !hasOtherDoubleBond(atom3, bond23)) {
+											mIsTautomerBond[bond23] = true;
+											isChangeAtom[atom1] = true;
+											isCenterAtom[atom2] = true;
+											isChangeAtom[atom3] = true;
+											changeFound = true;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 
-			// If we have  to adjacent change atoms, then the bond betwen must be tautomeric
+			// If we have two adjacent change atoms, then the bond between must be tautomeric
+/*			for (int bond=0; bond<mMol.getBonds(); bond++) {
+				int atom1 = mMol.getBondAtom(0, bond);
+				int atom2 = mMol.getBondAtom(1, bond);
+				if (isChangeAtom[atom1]
+				 && isChangeAtom[atom2]
+				 && (!isCenterAtom[atom1]
+				  || !isCenterAtom[atom2]
+				  || !mIsTautomerBond[bond])) {
+					isCenterAtom[atom1] = true;
+					isCenterAtom[atom2] = true;
+					mIsTautomerBond[bond] = true;
+					changeFound = true;
+					}
+				}
+*/
+			// If we have a central atom adjacent to a change atoms, then the bond between must be tautomeric
 			for (int bond=0; bond<mMol.getBonds(); bond++) {
 				if (!mIsTautomerBond[bond]) {
 					int atom1 = mMol.getBondAtom(0, bond);
 					int atom2 = mMol.getBondAtom(1, bond);
-					if (isChangeAtom[atom1] && isChangeAtom[atom2]) {
+					if ((isChangeAtom[atom1] && isCenterAtom[atom2])
+					 || (isChangeAtom[atom2] && isCenterAtom[atom1])) {
+						mIsTautomerBond[bond] = true;
+						changeFound = true;
+						}
+
+					if (isChangeAtom[atom1]
+					 && isChangeAtom[atom2]
+					 && (!isCenterAtom[atom1]
+					  || !isCenterAtom[atom2])) {
 						isCenterAtom[atom1] = true;
 						isCenterAtom[atom2] = true;
 						mIsTautomerBond[bond] = true;
@@ -538,11 +602,20 @@ public class TautomerHelper {
 		return true;
 		}
 
+	private boolean hasOtherDoubleBond(int atom, int excludedBond) {
+		for (int i=0; i<mMol.getConnAtoms(atom); i++)
+			if (mMol.getConnBond(atom, i) != excludedBond && mMol.getConnBondOrder(atom, i) >= 2)
+				return true;
+
+		return false;
+		}
+
 	private boolean isPiBond(int bond) {
 		int bondType = mMol.getBondType(bond) & Molecule.cBondTypeMaskSimple;
 		return bondType == Molecule.cBondTypeDelocalized
 			|| bondType == Molecule.cBondTypeDouble
-			|| bondType == Molecule.cBondTypeTriple;
+			|| bondType == Molecule.cBondTypeTriple
+			|| mMol.isDelocalizedBond(bond);
 		}
 
 	private boolean isSingleBond(int bond) {
