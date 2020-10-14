@@ -217,6 +217,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 	}
 
+	public void setModeQuery(boolean modeQuery){
+		objectiveCompleteGraphHard.setModeQuery(modeQuery);
+	}
+
 	public void setThreadMaster(ThreadMaster threadMaster) {
 		this.threadMaster = threadMaster;
 		creatorMolDistHistViz.setThreadMaster(threadMaster);
@@ -511,6 +515,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		} else {
 			sc = getSimilarity(mdhvBase, mdhvQuery);
 		}
+
 		return sc;
 	}
 

@@ -46,7 +46,10 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 
 	private static final float INIT_VAL = -1;
 
-	
+
+
+	private boolean modeQuery;
+
 	private MolDistHistViz mdhvBase;
 	private MolDistHistViz mdhvBaseBlurredHist;
 
@@ -69,14 +72,10 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	
 	private double threshHistogramSimilarity;
 
-	// private IPPNodeSimilarity nodeSimilarity;
 	private PPNodeSimilarity nodeSimilarity;
 
 	boolean verbose;
 
-	// private ScaleClasses scaleClassesSimilarityNodes;
-	
-	// private ScaleClasses scaleClassesFinalSimilarity;
 
 	private float [][] arrSimilarityNodes;
 	
@@ -133,6 +132,8 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 
 		slidingWindowDistHist = new SlidingWindowDistHist(ConstantsFlexophoreGenerator.FILTER);
 
+		modeQuery = false;
+
 		initSimilarityMatrices();
 	}
 	
@@ -152,6 +153,10 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 			arrSimilarityHistograms[i] = new float [maxNumHistograms];
 			Arrays.fill(arrSimilarityHistograms[i], INIT_VAL);
 		}
+	}
+
+	public void setModeQuery(boolean modeQuery) {
+		this.modeQuery = modeQuery;
 	}
 
 	public String toStringParameter(){
@@ -451,7 +456,13 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		double ratioNodesMatchQuery = Math.min(nodesQuery, heap) / (double)Math.max(nodesQuery, heap);
 		double ratioNodesMatchBase = Math.min(heap, nodesBase) / (double)Math.max(heap, nodesBase);
 
-		similarity = avrPairwiseMappingScaled * coverage * ratioNodesMatchQuery * ratioNodesMatchBase;
+		if(modeQuery) {
+			similarity = avrPairwiseMappingScaled * coverageQuery * ratioNodesMatchQuery;
+		} else {
+			similarity = avrPairwiseMappingScaled * coverage * ratioNodesMatchQuery * ratioNodesMatchBase;
+		}
+
+
 
 		if(verbose) {
 			StringBuilder sb = new StringBuilder();
