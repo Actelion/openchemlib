@@ -159,6 +159,10 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		this.modeQuery = modeQuery;
 	}
 
+	public boolean isModeQuery() {
+		return modeQuery;
+	}
+
 	public String toStringParameter(){
 		StringBuilder sb = new StringBuilder();
 
