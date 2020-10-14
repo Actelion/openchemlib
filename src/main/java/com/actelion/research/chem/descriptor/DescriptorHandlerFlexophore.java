@@ -583,6 +583,8 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 				threshHistogramSimilarity,
 				singleConformationModeQuery);
 
+		dh.setModeQuery(objectiveCompleteGraphHard.isModeQuery());
+
 		return dh;
 	}
 	public void setObjectiveQueryBiased(boolean enable){
