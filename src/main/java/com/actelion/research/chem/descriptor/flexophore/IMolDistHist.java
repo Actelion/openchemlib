@@ -24,15 +24,15 @@ import com.actelion.research.util.graph.complete.ICompleteGraph;
 
 public interface IMolDistHist extends ICompleteGraph {
 	
-	public double getRelMaxDistInHist(int indexAt1, int indexAt2);
+	double getRelMaxDistInHist(int indexAt1, int indexAt2);
 	
-	public PPNode getNode(int i);
+	PPNode getNode(int i);
 	
-	public byte [] getDistHist(int indexAt1, int indexAt2, byte[] arr);
+	byte [] getDistHist(int indexAt1, int indexAt2, byte[] arr);
 	
-	public boolean isInevitablePharmacophorePoint(int indexNode);
+	boolean isInevitablePharmacophorePoint(int indexNode);
 	
-	public int getNumInevitablePharmacophorePoints();
+	int getNumInevitablePharmacophorePoints();
 
 	
 }

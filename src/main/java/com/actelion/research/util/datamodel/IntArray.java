@@ -192,7 +192,19 @@ public class IntArray implements Serializable {
 		
 		return index;
 	}
-	
+
+	public int max(){
+
+		int max = Integer.MIN_VALUE;
+		for (int i = 0; i < size; i++) {
+			if(data[i]>max){
+				max=data[i];
+			}
+		}
+
+		return max;
+	}
+
 	private void facultativeResize(){
 		
 		if(size == data.length){
@@ -255,7 +267,9 @@ public class IntArray implements Serializable {
 		size--;
 		return last;
 	}
-	
+
+
+
 	private void resize(long newlen){
 		
 		if(data.length == newlen){

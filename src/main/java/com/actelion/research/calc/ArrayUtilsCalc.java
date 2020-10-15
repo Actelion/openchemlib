@@ -45,6 +45,7 @@ import java.util.StringTokenizer;
 import java.util.TreeSet;
 
 import com.actelion.research.calc.statistics.median.ModelMedianDouble;
+import com.actelion.research.calc.statistics.median.ModelMedianInteger;
 import com.actelion.research.util.datamodel.PointDouble;
 
 /* TODO
@@ -222,7 +223,25 @@ public class ArrayUtilsCalc {
 		
 	}
 
-	
+	public static ModelMedianInteger getMedian(int [] arr) {
+
+		Arrays.sort(arr);
+
+		ModelMedianInteger m = new ModelMedianInteger();
+
+		m.lowerQuartile = getPercentileFromSorted(arr, 0.25);
+
+		m.median = getPercentileFromSorted(arr, 0.5);
+
+		m.upperQuartile = getPercentileFromSorted(arr, 0.75);
+
+		m.size = arr.length;
+
+		return m;
+
+	}
+
+
 
 	/**
 	 * 
@@ -256,6 +275,35 @@ public class ArrayUtilsCalc {
 			percentile = arr[index1];
 		}
 		
+		return percentile;
+	}
+
+	public static int getPercentileFromSorted(int [] arr, double fraction) {
+
+		if(arr.length==1){
+			return arr[0];
+		}
+
+		int percentile=0;
+
+		int len = arr.length;
+
+		if(((int)(len*fraction))==(len*fraction)) {
+			int index1 = (int)(len*fraction)-1;
+			int index2 = index1+1;
+
+			if(index1<0){
+				throw new RuntimeException("Fraction to small.");
+			}
+
+			percentile = (int)((arr[index1] +  arr[index2])/2.0 + 0.5);
+
+		} else {
+			int index1 = (int)(len*fraction);
+
+			percentile = arr[index1];
+		}
+
 		return percentile;
 	}
 
