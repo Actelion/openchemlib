@@ -12,11 +12,19 @@ import java.util.Set;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
 import com.actelion.research.calc.Matrix;
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
+import com.actelion.research.chem.MoleculeNeutralizer;
+import com.actelion.research.chem.MoleculeStandardizer;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.conf.ConformerSet;
+import com.actelion.research.chem.conf.ConformerSetGenerator;
+import com.actelion.research.chem.conf.TorsionDescriptorHelper;
+import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
+import com.actelion.research.chem.descriptor.flexophore.MolDistHist;
 import com.actelion.research.chem.docking.scoring.AbstractScoringEngine;
 import com.actelion.research.chem.docking.scoring.ChemPLP;
 import com.actelion.research.chem.docking.scoring.IdoScore;
@@ -24,15 +32,13 @@ import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
-import com.actelion.research.chem.phesa.DescriptorHandlerShape;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
-import com.actelion.research.chem.phesa.PheSAMolecule;
 
 public class DockingEngine {
 	
 	public enum ScoringFunction {CHEMPLP,IDOSCORE;}
-	private static final int DEFAULT_NR_MC_STEPS = 100;
+	private static final int DEFAULT_NR_MC_STEPS = 50;
 	private static final int DEFAULT_START_POSITIONS = 5;
 	private static final double BOLTZMANN_FACTOR = 1.2; //as for AutoDock Vina
 	public static final double GRID_DIMENSION = 6.0;
@@ -48,6 +54,7 @@ public class DockingEngine {
 	
 	public DockingEngine(Molecule3D receptor, Molecule3D nativeLig, int mcSteps, int startPositions,
 			ScoringFunction scoringFunction) {
+
 		Molecule3D nativeLigand = new Molecule3D(nativeLig);
 		nativeLigand.ensureHelperArrays(Molecule.cHelperCIP);
 		MolecularVolume molVol = new MolecularVolume(nativeLigand);
@@ -84,7 +91,8 @@ public class DockingEngine {
 	
 	
 	
-	public StereoMolecule dockMolecule(StereoMolecule mol) {
+	public StereoMolecule dockMolecule(StereoMolecule mol) throws DockingFailedException {
+
 		/*
 		DescriptorHandlerShape dhs = new DescriptorHandlerShape();
 		PheSAMolecule pheSAMol = dhs.createDescriptor(mol);
@@ -99,8 +107,7 @@ public class DockingEngine {
 		mol.translate(origCOM.x,origCOM.y,origCOM.z);
 		*/
 
-		ConformerGenerator confGen = new ConformerGenerator(LigandPose.SEED,true);
-		confGen.initializeConformers(mol);
+
 		Conformer bestPose = null;
 		double bestEnergy = Double.MAX_VALUE;
 		
@@ -108,42 +115,62 @@ public class DockingEngine {
 		ffOptions.put("dielectric constant", 10.0);
 		
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
-		for(int i=0;i<startPositions;i++) {
-			StereoMolecule conf = new StereoMolecule(mol);
-			conf.ensureHelperArrays(Molecule.cHelperCIP);
-			confGen.getNextConformerAsMolecule(conf);
-			ForceFieldMMFF94 ff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-			ff.minimise();
-			Conformer ligConf = new Conformer(conf);
-			Coordinates com = DockingUtils.getCOM(ligConf);
-			Coordinates translate = com.scale(-1.0);
-			for(int a=0;a<ligConf.getMolecule().getAllAtoms();a++) {
-				Coordinates c = ligConf.getCoordinates(a);
-				c.add(translate);
-			}
-			for(double[] transform : PheSAAlignment.initialTransform(1)) {
-				Conformer newLigConf = new Conformer(ligConf);
-				PheSAAlignment.rotateMol(newLigConf, transform);
-				
-				LigandPose pose = initiate(newLigConf);
-				double energy = mcSearch(pose);
-				if(energy<bestEnergy) {
-					bestEnergy = energy;
-					bestPose = pose.getLigConf();
+		ConformerGenerator.addHydrogenAtoms(mol);
+		MoleculeStandardizer molStand = new MoleculeStandardizer();
+		try {
+			mol = molStand.getStandardized(mol);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		ConformerSetGenerator confSetGen = new ConformerSetGenerator(startPositions,ConformerGenerator.STRATEGY_LIKELY_RANDOM, false,
+				LigandPose.SEED);
+		ConformerSet confSet = confSetGen.generateConformerSet(mol);
+		for(Conformer conformer : confSet) {
+			if(conformer!=null) {
+				StereoMolecule conf = conformer.toMolecule(new StereoMolecule(mol));
+				conf.ensureHelperArrays(Molecule.cHelperParities);
+				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				mmff.minimise();
+				Conformer ligConf = new Conformer(conf);
+				//Coordinates com = DockingUtils.getCOM(ligConf);
+				//Coordinates translate = com.scale(-1.0);
+				//for(int a=0;a<ligConf.getMolecule().getAllAtoms();a++) {
+				//	Coordinates c = ligConf.getCoordinates(a);
+				//	c.add(translate);
+				//}
+	
+				PheSAAlignment.preProcess(ligConf, new MolecularVolume(ligConf.toMolecule()));
+	
+				for(double[] transform : PheSAAlignment.initialTransform(1)) {
+					Conformer newLigConf = new Conformer(ligConf);
+					PheSAAlignment.rotateMol(newLigConf, transform);
+					
+					LigandPose pose = initiate(newLigConf);
+					double energy = mcSearch(pose);
+					if(energy<bestEnergy) {
+						bestEnergy = energy;
+						bestPose = pose.getLigConf();
+					}
 				}
 			}
 		}
-		System.out.println(bestEnergy);
-		StereoMolecule best = bestPose.toMolecule();
-		double[][] rot = rotation.getTranspose().getArray();
-		PheSAAlignment.rotateMol(best, rot);
-		PheSAAlignment.translateMol(best, new double[] {origCOM.x, origCOM.y, origCOM.z} );
-		return best;
+		if(bestPose!=null) {
+			StereoMolecule best = bestPose.toMolecule();
+			double[][] rot = rotation.getTranspose().getArray();
+			PheSAAlignment.rotateMol(best, rot);
+			PheSAAlignment.translateMol(best, new double[] {origCOM.x, origCOM.y, origCOM.z} );
+			System.out.println(bestEnergy);
+			return best;
+		}
+		else {
+			throw new DockingFailedException("docking failed");
+		}
 		
 	}
 	
 	private double mcSearch(LigandPose pose) {
-		List<Conformer> allPoses = new ArrayList<>();
 		double[] bestState = new double[pose.getState().length];
 		double[] oldState = new double[pose.getState().length];
 		double[] state = new double[pose.getState().length];
@@ -151,16 +178,21 @@ public class DockingEngine {
 		double oldEnergy = -Float.MAX_VALUE;
 		double energy = -Float.MAX_VALUE;
 		OptimizerLBFGS optimizer = new OptimizerLBFGS(200,0.001);
+		//System.out.println("start");
+		//System.out.println(pose.getFGValue(new double[bestState.length]));
 		oldState = optimizer.optimize(pose);
-
+		//System.out.println(pose.getFGValue(new double[bestState.length]));
 		bestState = oldState;
 		oldEnergy = pose.getFGValue(new double[bestState.length]);
-
 		bestEnergy = oldEnergy;
 		for(int i=0;i<mcSteps;i++) {
+			//System.out.println(i);
+			//System.out.println(pose.getFGValue(new double[bestState.length]));
 			pose.randomPerturbation();
+			//System.out.println(pose.getFGValue(new double[bestState.length]));
 			state = optimizer.optimize(pose);
 			energy = pose.getFGValue(new double[bestState.length]);
+			//System.out.println(energy);
 
 			if(energy<bestEnergy) {
 				bestEnergy = energy;
