@@ -1,6 +1,7 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
 import com.actelion.research.calc.combinatorics.CombinationGenerator;
+import com.actelion.research.chem.descriptor.flexophore.MolDistHist;
 import com.actelion.research.chem.descriptor.flexophore.MolDistHistViz;
 import com.actelion.research.chem.descriptor.flexophore.MolDistHistVizFrag;
 import com.actelion.research.chem.descriptor.flexophore.PPNodeViz;
@@ -143,9 +144,9 @@ public class SubFlexophoreGenerator {
 		
 		return liFrags;
 	}
-	
+
+
 	/**
-	 * Method not static to make it thread save. 
 	 * @param mdh
 	 * @param arrIndices the original index is set in the index field of the new SubFragment.
 	 * @return
@@ -171,6 +172,44 @@ public class SubFlexophoreGenerator {
 		
 		frag.realize();
 			
+		return frag;
+	}
+
+	public static List<MolDistHist> generateSubPharmacophores(MolDistHist mdh, int size){
+
+		List<int[]> liIndSub = CombinationGenerator.getAllOutOf(mdh.getNumPPNodes(), size);
+		if(liIndSub == null)
+			return null;
+
+		List<MolDistHist> liMolDistHistSub = new ArrayList<>();
+
+		for (int[] arrIndSub : liIndSub) {
+			MolDistHist mdhSub = getSubFragment(mdh, arrIndSub);
+			liMolDistHistSub.add(mdhSub);
+		}
+
+		return liMolDistHistSub;
+	}
+
+	public static MolDistHist getSubFragment(MolDistHist mdh, int [] arrIndices){
+
+
+		MolDistHist frag = new MolDistHist(arrIndices.length);
+
+		for (int i = 0; i < arrIndices.length; i++) {
+			PPNodeViz node = new PPNodeViz(mdh.getNode(arrIndices[i]));
+			frag.addNode(node);
+		}
+
+		for (int i = 0; i < arrIndices.length; i++) {
+			for (int j = i+1; j < arrIndices.length; j++) {
+				byte [] arrHist = mdh.getDistHist(arrIndices[i],arrIndices[j]);
+				frag.setDistHist(i,j,arrHist);
+			}
+		}
+
+		frag.realize();
+
 		return frag;
 	}
 
