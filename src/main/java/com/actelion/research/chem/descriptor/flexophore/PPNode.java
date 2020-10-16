@@ -566,6 +566,36 @@ public class PPNode implements Comparable<PPNode> {
 		return sb.toString();
 	}
 
+	/**
+	 *
+	 * @param strNode i.e. 262,392,4358*2,8582,590088,598407
+	 * @return
+	 */
+	public static PPNode read(String strNode) {
+
+		String [] arr = strNode.split(",");
+
+		PPNode n = new PPNode();
+		for (int i = 0; i < arr.length; i++) {
+			String strAtomType = arr[i];
+			if(strAtomType.contains("*")){
+				String [] arrAtType = strAtomType.split("\\*");
+				int type = Integer.parseInt(arrAtType[0]);
+				int freq = Integer.parseInt(arrAtType[1]);
+				for (int j = 0; j < freq; j++) {
+					n.add(type);
+				}
+			} else {
+				int type = Integer.parseInt(strAtomType);
+				n.add(type);
+			}
+		}
+
+		n.realize();
+
+		return n;
+	}
+
 	private static int getMaximumInteractionType(PPNode n){
 		
 		int max = 0;
