@@ -529,7 +529,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		}
 		storeState();
 		boolean isFragment = mMol.isFragment();
-		mMol.deleteMolecule();
+		mMol.clear();
 		mMol.setFragment(isFragment);
 		if (mUndoMol.getAllAtoms() != 0) {
 			fireMoleculeChanged();
@@ -2781,7 +2781,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 
 	public void setFragments(StereoMolecule[] fragment)
 	{
-		mMol.deleteMolecule();
+		mMol.clear();
 		mFragment = fragment;
 		for (int i = 0; i < fragment.length; i++) {
 			mMol.addMolecule(mFragment[i]);
@@ -2835,7 +2835,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 
 	public void setReaction(Reaction rxn)
 	{
-		mMol.deleteMolecule();
+		mMol.clear();
 		mFragment = new StereoMolecule[rxn.getMolecules()];
 		mReactantCount = rxn.getReactants();
 		for (int i = 0; i < rxn.getMolecules(); i++) {
@@ -2877,7 +2877,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 
 	public void setMarkushStructure(MarkushStructure markush)
 	{
-		mMol.deleteMolecule();
+		mMol.clear();
 		mFragment = new StereoMolecule[markush.getCoreCount() + markush.getRGroupCount()];
 		mReactantCount = markush.getCoreCount();
 		boolean isFragment = false;

@@ -2328,10 +2328,11 @@ public class Molecule implements Serializable {
 
 
 	/**
-	 * Delocalized bonds, i.e. bonds in an aromatic 6-membered ring, are returned as 1.
-	 * Ligand field bonds are returned as 0.
+	 * Returns the formal bond order. Delocalized rings have alternating single and double
+	 * bonds, which are returned as such. Bonds that are explicitly marked as being delocalized
+	 * are returned as 1. Dative bonds are returned as 0.
 	 * @param bond
-	 * @return for organic molecules 1,2, or 3
+	 * @return formal bond order 0 (dative bonds), 1, 2, or 3
 	 */
 	public int getBondOrder(int bond) {
 		switch (mBondType[bond] & cBondTypeMaskSimple) {
@@ -2339,7 +2340,7 @@ public class Molecule implements Serializable {
 		case cBondTypeDelocalized: return 1;
 		case cBondTypeDouble: return 2;
 		case cBondTypeTriple: return 3;
-		default: return 0;	// metal bond
+		default: return 0;	// dative bonds, ligand field bonds
 			}
 		}
 
