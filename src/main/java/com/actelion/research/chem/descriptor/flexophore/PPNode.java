@@ -558,12 +558,42 @@ public class PPNode implements Comparable<PPNode> {
 
 			if(iaf.frequency>1){
 				sb.append(MULT_FREQ);
-				sb.append( iaf.frequency);
+				sb.append(iaf.frequency);
 			}
 		}
 
 		sb.append(")");
 		return sb.toString();
+	}
+
+	/**
+	 *
+	 * @param strNode i.e. 262,392,4358*2,8582,590088,598407
+	 * @return
+	 */
+	public static PPNode read(String strNode) {
+
+		String [] arr = strNode.split(SEPARATOR_ATOMS);
+
+		PPNode n = new PPNode();
+		for (int i = 0; i < arr.length; i++) {
+			String strAtomType = arr[i];
+			if(strAtomType.contains(MULT_FREQ)){
+				String [] arrAtType = strAtomType.split("\\"+MULT_FREQ);
+				int type = Integer.parseInt(arrAtType[0]);
+				int freq = Integer.parseInt(arrAtType[1]);
+				for (int j = 0; j < freq; j++) {
+					n.add(type);
+				}
+			} else {
+				int type = Integer.parseInt(strAtomType);
+				n.add(type);
+			}
+		}
+
+		n.realize();
+
+		return n;
 	}
 
 	private static int getMaximumInteractionType(PPNode n){

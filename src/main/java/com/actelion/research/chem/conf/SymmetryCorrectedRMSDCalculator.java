@@ -6,7 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.descriptor.pharmacophoretree.HungarianAlgorithm;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
@@ -22,6 +24,7 @@ import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalcu
 public class SymmetryCorrectedRMSDCalculator {
 	private Conformer conf1;
 	private Conformer conf2;
+
 	
 	public SymmetryCorrectedRMSDCalculator(Conformer conf1, Conformer conf2) {
 		this.conf1 = conf1;
@@ -51,8 +54,15 @@ public class SymmetryCorrectedRMSDCalculator {
 	
 	private int[][] getAssignments() {
 		List<int[]> assignments = new ArrayList<>();
-		Integer[] atomTypes1 = getAtomTypes(conf1.getMolecule());
-		Integer[] atomTypes2 = getAtomTypes(conf2.getMolecule());
+		StereoMolecule mol1 = new StereoMolecule(conf1.getMolecule());
+		StereoMolecule mol2 = new StereoMolecule(conf2.getMolecule());
+
+		mol1.ensureHelperArrays(Molecule.cHelperParities);
+		mol2.ensureHelperArrays(Molecule.cHelperParities);
+		
+		Integer[] atomTypes1 = getAtomTypes(mol1);
+		Integer[] atomTypes2 = getAtomTypes(mol2);
+	
 		Set<Integer> uniqueAtomTypes1 = new HashSet<>();
 		Collections.addAll(uniqueAtomTypes1, atomTypes1);
 		Set<Integer> uniqueAtomTypes2 = new HashSet<>();
@@ -84,6 +94,7 @@ public class SymmetryCorrectedRMSDCalculator {
 				}
 				counter1++;
 			}
+
 			int[][] ass = HungarianAlgorithm.hgAlgorithm(costMatrix, "min");
 			for(int[] pair : ass) {
 				int p1 = occurences1.get(pair[0]);

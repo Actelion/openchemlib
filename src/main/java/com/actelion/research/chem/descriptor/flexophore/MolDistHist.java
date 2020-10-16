@@ -279,15 +279,15 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 //		if(!finalized)
 //			realize();
 		
-		StringBuffer b = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		
-		b.append("[");
+		sb.append("[");
 		for (int i = 0; i < getNumPPNodes(); i++) {
-			b.append(getNode(i).toString());
+			sb.append(getNode(i).toString());
 			if(i<getNumPPNodes()-1){
-				b.append(" ");
+				sb.append(" ");
 			} else {
-				b.append("]");
+				sb.append("]");
 			}
 		}
 		
@@ -296,30 +296,30 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 				byte [] arrHist = getDistHist(i,j);
 				
 				if(arrHist!=null)
-					b.append(ArrayUtilsCalc.toString(arrHist));
+					sb.append(ArrayUtilsCalc.toString(arrHist));
 			}
 		}
 		
-		return b.toString();
+		return sb.toString();
 	}
 	
 	public String toStringHists(){
 		
 		if(!finalized)
 			realize();
-		
-		StringBuffer b = new StringBuffer();
+
+		StringBuilder sb = new StringBuilder();
 		
 		for (int i = 0; i < getNumPPNodes(); i++) {
 			for (int j = i+1; j < getNumPPNodes(); j++) {
 				byte [] arrHist = getDistHist(i,j);
 				
 				if(arrHist!=null)
-					b.append(ArrayUtilsCalc.toString(arrHist));
+					sb.append(ArrayUtilsCalc.toString(arrHist));
 			}
 		}
 		
-		return b.toString();
+		return sb.toString();
 	}
 
 	
@@ -424,26 +424,15 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 		
 		boolean nodesProcessed = false;
 		
-		List<PPNode> liPPNode = new ArrayList<PPNode>();
+		List<PPNode> liPPNode = new ArrayList<>();
 		while(!nodesProcessed){
 			
 			int end = StringFunctions.nextClosing(strMolDistHist, start, '(', ')');
 			
-			String sub = strMolDistHist.substring(start+1, end);
-		
-			List<Point> li = StringFunctions.match(sub, pattern);
-			
-			PPNode n = new PPNode();
-			
-			for (Point p : li) {
-				
-				String strInteractionType = sub.substring(p.x, p.y);
-				
-				n.add(Integer.parseInt(strInteractionType));
-			}
-			
-			n.realize();
-			
+			String strNode = strMolDistHist.substring(start+1, end);
+
+			PPNode n = PPNode.read(strNode);
+
 			liPPNode.add(n);
 			
 			start = strMolDistHist.indexOf('(', end);
