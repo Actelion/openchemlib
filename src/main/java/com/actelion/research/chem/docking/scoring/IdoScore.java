@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.actelion.research.chem.Coordinates;
@@ -30,6 +31,8 @@ import com.actelion.research.chem.potentialenergy.TorsionConstraint;
 
 public class IdoScore extends AbstractScoringEngine {
 	
+	
+	private static final double STRAIN_CUTOFF = 20.0;
 	private List<PotentialEnergyTerm> ligStrain;
 	private List<PotentialEnergyTerm> constraint;
 	private List<PotentialEnergyTerm> interactionEnergy;	
@@ -37,6 +40,7 @@ public class IdoScore extends AbstractScoringEngine {
 	private int[] receptorAtomTypes;
 	private int[] ligAtomTypes;
 	private ForceFieldMMFF94 ff;
+	private double e0;
 
 	public IdoScore(StereoMolecule receptor, Set<Integer> bindingSiteAtoms, int[] receptorAtomTypes, MoleculeGrid grid) {
 		super(receptor, bindingSiteAtoms, grid);
@@ -44,9 +48,9 @@ public class IdoScore extends AbstractScoringEngine {
 	}
 	
 	@Override
-	public void init(LigandPose candidatePose) {
+	public void init(LigandPose candidatePose, double e0) {
 		this.candidatePose = candidatePose;
-
+		this.e0 = e0;
 		ligStrain = new ArrayList<PotentialEnergyTerm>();
 		constraint = new ArrayList<PotentialEnergyTerm>();
 		interactionEnergy = new ArrayList<PotentialEnergyTerm>();
@@ -56,12 +60,13 @@ public class IdoScore extends AbstractScoringEngine {
 			ligAtomTypesList.add(InteractionAtomTypeCalculator.getAtomType(mol, a));
 		}
 		ligAtomTypes = new int[ligAtomTypesList.size()];
+
 		IntStream.range(0, ligAtomTypes.length).forEach(e -> ligAtomTypes[e] = ligAtomTypesList.get(e));
 
 		torsionHelper = new BondRotationHelper(mol);
 		
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
-		ffOptions.put("dielectric constant", 10.0);
+		ffOptions.put("dielectric constant", 80.0);
 		
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		ff = new ForceFieldMMFF94(mol, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
@@ -105,10 +110,12 @@ public class IdoScore extends AbstractScoringEngine {
 
 		
 		energy+=getBumpTerm();
-
 		ff.setState(candidatePose.getState());
-		ff.addGradient(gradient);
-		energy += ff.getTotalEnergy();
+		double ffEnergy = ff.getTotalEnergy();
+		if(ffEnergy-e0>STRAIN_CUTOFF) {
+			ff.addGradient(gradient);
+			energy+=(ffEnergy-e0);
+		}
 
 
 		return energy;

@@ -75,10 +75,7 @@ class Lnsrch{
 					move(function, dir, lambda, initial,v);
 					fB = function.getFGValue(grad);
 					slopeB = 0; for(int i=0; i<len; i++) slopeB += dir[i]*grad[i];
-					//System.out.println("lets see");
-					//System.out.println(fA);
-					//System.out.println(fB);
-					
+
 					if(Math.abs(slopeB/slope)<=CAPPA && fB<=fA) { //success
 						return new Object[]{fB, grad, Boolean.TRUE};
 					}				
@@ -88,7 +85,7 @@ class Lnsrch{
 						break;
 					}
 					
-					//Adapt step
+					//Adapt step		
 					if(slopeB>slopeA) {
 						double parab = (fA - fB) / (slopeB - slopeA);
 						if(parab>2*step) step = 2 * step;
@@ -103,55 +100,9 @@ class Lnsrch{
 
 				fC = fB;
 				//Cubic interpolation (http://www.mathworks.com/access/helpdesk_r13/help/toolbox/optim/tutori5b.html)
-				for(int counter = 0; counter<5; counter++) {//Cubic interpolation
-					double sss = 3*(fB-fA)/step - slopeA - slopeB;
-		
-					double ttt = sss*sss - slopeA*slopeB;
-					if(ttt<0) return new Object[]{fB, grad, Boolean.FALSE}; //Interpolation error, stop here
 
-					ttt = Math.sqrt(ttt);
-					cube = step * (slopeB + ttt + sss) / (slopeB - slopeA + 2 * ttt);
-
-//					if(cube<0 || cube>step) cube = step/2;
-					if(cube<0 || cube>step) {
-						return new Object[]{fC, grad, Boolean.FALSE}; //Interpolation error, stop here
-					}
-
-					
-					lambda -= cube;	
-					
-					//Get new function and gradient
-					move(function, dir, lambda, initial,v);
-					fC = function.getFGValue(grad);
-					slopeC = 0; for(int i=0; i<len; i++) slopeC += dir[i]*grad[i];
-	
-	
-					if(Math.abs(slopeC/slope)<=CAPPA) {
-						//Success
-						return new Object[]{fB, grad, Boolean.TRUE};
-					}
-					if(fC<=fA || fC<=fB) {
-						double cubStep = Math.min(Math.abs(cube), Math.abs(step-cube));
-						if(cubStep>=STPMIN) {
-							if( (slopeA*slopeB<0 && slopeA*slopeC<0) || (slopeA*slopeB>=0 && (slopeA*slopeC<0 || fA<fC)) ) {
-								//C becomes the right limit -> B
-								fB = fC;
-								slopeB = slopeC;
-								step -= cube;
-							} else {
-								//C becomes the left limit -> A
-								fA = fC;
-								slopeA = slopeC;
-								step = cube;
-								lambda += cube;					
-							}
-						} else {
-	//						if((fC>fA && fC>fB) || cubStep<STPMIN) break;
-							break;
-						}
-					}
-				}  
 				//Cubic Interpolation has failed, reset to best current point
+
 				double fL, sgL;
 				if(fA<=fB && fA<=fC) { //A is min
 					fL = fA;
@@ -174,6 +125,7 @@ class Lnsrch{
 					return new Object[]{f0, grad, Boolean.FALSE};
 				}
 				f0 = fL;
+
 				if(sgL>0) {
 					lambda = 0;
 					for(int i=0; i<dir.length; i++) dir[i] = -dir[i];
@@ -189,6 +141,7 @@ class Lnsrch{
 			f0 = function.getFGValue(grad);
 			if(f0>initialF)
 				move(function, dir, 0, initial,v);
+
 			return new Object[]{f0, grad, Boolean.FALSE};
 
 		} catch(Exception e) {

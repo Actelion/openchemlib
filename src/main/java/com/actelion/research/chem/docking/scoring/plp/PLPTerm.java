@@ -118,12 +118,12 @@ public class PLPTerm implements PotentialEnergyTerm {
 				energy = (E*(r-A))/(B-A);
 			}
 			else if(r<C) {
-				prefactor = 1.0;
+				prefactor = 0.0;
 				grad = cr.scaleC(prefactor);
 				energy = E;
 			}
 			else if(r<=D) {
-				prefactor = -E/(D-C);
+				prefactor = (-E/(D-C))*(1.0/r);
 				grad = cr.scaleC(prefactor);
 				energy = (E*(D-r))/(D-C);
 			}

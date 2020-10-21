@@ -44,7 +44,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	private static final Set<Integer> SIMPLE_METAL_ATOMS = new HashSet(Arrays.asList(12,20)); //Mg and Ca
 	
 	private static final double METAL_INTERACTION_CUTOFF = 2.6;
-	
+	private static final double STRAIN_WEIGHT = 0.1;
 			
 	
 	private Set<Integer> receptorAcceptors;
@@ -95,15 +95,20 @@ public class ChemPLP extends AbstractScoringEngine {
 	@Override
 	public double getFGValue(double[] grad) {
 		double energy = getBumpTerm();
-//		for(PotentialEnergyTerm term : chemscoreHbond)
-//			energy+=term.getFGValue(grad);
-//		for(PotentialEnergyTerm term : chemscoreMetal)
-//			energy+=term.getFGValue(grad);
+		for(PotentialEnergyTerm term : chemscoreHbond)
+			energy+=term.getFGValue(grad);
+		for(PotentialEnergyTerm term : chemscoreMetal) 	
+			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
 		ff.setState(candidatePose.getState());
-		ff.addGradient(grad);
-		energy += ff.getTotalEnergy();
+		double ffEnergy = ff.getTotalEnergy();
+		double[] ffGrad = new double[grad.length];
+		ff.addGradient(ffGrad);
+		for(int i=0;i<ffGrad.length;i++) {
+			grad[i]+=STRAIN_WEIGHT*ffEnergy;
+		}
+		energy+=STRAIN_WEIGHT*ffEnergy;
 		return energy;
 	}
 	
@@ -131,7 +136,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 
 	@Override
-	public void init(LigandPose candidatePose) {
+	public void init(LigandPose candidatePose, double e0) {
 		
 		this.candidatePose = candidatePose;
 		
@@ -150,13 +155,14 @@ public class ChemPLP extends AbstractScoringEngine {
 		
 		
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
-		ffOptions.put("dielectric constant", 10.0);
+		ffOptions.put("dielectric constant", 80.0);
 		
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		ff = new ForceFieldMMFF94(ligand, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 		StereoMolecule receptor = receptorConf.getMolecule();
 		identifyHBondFunctionality(ligand,ligandAcceptors,ligandDonorHs, ligandDonors, new HashSet<Integer>(),ligandAcceptorNeg,
 				ligandDonorHPos);
+
 
 		for(int p : bindingSiteAtoms) {
 			if(receptor.getAtomicNo(p)==1) { // receptor hydrogen atom
@@ -214,6 +220,7 @@ public class ChemPLP extends AbstractScoringEngine {
 							if(ligandDonors.contains(l)) {  //plp hbond donor-acceptor
 								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.HBOND_TERM);
 								plp.add(plpTerm);
+
 							}
 							else if(ligandAcceptors.contains(l)) {  //repulsive donor-donor
 								REPTerm repTerm = REPTerm.create(receptorConf, candidatePose.getLigConf(), p, l);

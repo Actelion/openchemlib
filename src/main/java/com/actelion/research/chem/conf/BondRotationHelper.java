@@ -2,6 +2,9 @@ package com.actelion.research.chem.conf;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -16,9 +19,11 @@ public class BondRotationHelper {
 	private int[] mRotatableBonds;
 	private boolean[] mIsRotatableBond;
 	private int[][] mSmallerSideAtomLists;
+	private int[][] mBiggerSideAtomLists;
 	private int[][] mTorsionAtoms;
 	private int[][] mRearAtoms;
 	private int[] mRotationCenters;
+	private int[] mRotationCentersBig;
 	private String[] mTorsionIDs;
 
 	
@@ -26,7 +31,7 @@ public class BondRotationHelper {
 	public BondRotationHelper(StereoMolecule mol) {
 		mMol = mol;
 		initialize();
-		
+
 		
 	}
 	
@@ -47,7 +52,9 @@ public class BondRotationHelper {
 		mTorsionAtoms = new int[mRotatableBonds.length][];
 		mRearAtoms = new int[mRotatableBonds.length][];
 		mSmallerSideAtomLists = new int[mRotatableBonds.length][];
+		mBiggerSideAtomLists = new int[mRotatableBonds.length][];
 		mRotationCenters = new int[mRotatableBonds.length];
+		mRotationCentersBig = new int[mRotatableBonds.length];
 		mTorsionIDs = new String[mRotatableBonds.length];
 		
 		for(int i=0;i<mRotatableBonds.length;i++) {
@@ -118,7 +125,20 @@ public class BondRotationHelper {
 
 		int rotationCenter = mTorsionAtoms[bondIndex][invert ? 2 : 1];
 		mRotationCenters[bondIndex] = rotationCenter;
+		mRotationCentersBig[bondIndex] = mTorsionAtoms[bondIndex][invert ? 1 : 2];
 		mSmallerSideAtomLists[bondIndex] = smallerSideAtomList;
+		Set<Integer> bigSideAtoms = new HashSet<Integer>();
+		Set<Integer> smallSideAtoms = new HashSet<Integer>();
+		for(int a : smallerSideAtomList)
+			smallSideAtoms.add(a);
+		for(int a=0;a<mMol.getAllAtoms();a++) {
+			if(!smallSideAtoms.contains(a)) {
+				bigSideAtoms.add(a);
+			}
+		}
+		mBiggerSideAtomLists[bondIndex] = bigSideAtoms.stream().mapToInt(Integer::intValue).toArray();
+		
+		
 		
 		}
 	
@@ -214,7 +234,7 @@ public class BondRotationHelper {
 	 * @param alpha
 	 * @param conf
 	 */
-	public void rotateSmallerSide(int bond, double alpha, Conformer conf) {
+	public void rotateAroundBond(int bond, double alpha, Conformer conf, boolean biggerSide) {
 		if(!isRotatableBond(bond))
 			return;
 		int bondIndex=-1;
@@ -224,21 +244,42 @@ public class BondRotationHelper {
 		}
 		if(bondIndex==-1)
 			return;
-		Coordinates t2 = conf.getCoordinates(mTorsionAtoms[bondIndex][2]);
-		Coordinates unit = t2.subC(conf.getCoordinates(mTorsionAtoms[bondIndex][1])).unit();
-		double[][] m = new double[3][3];
-		int rotationCenter = mRotationCenters[bondIndex];
-		PheSAAlignment.getRotationMatrix((rotationCenter == mTorsionAtoms[bondIndex][1]) ? alpha : -alpha,unit,m);
-		Coordinates t2Neg = t2.scaleC(-1.0);
-		for (int atom:mSmallerSideAtomLists[bondIndex]) {
+		
+		int[] atomList;
+		Coordinates t2;
+		Coordinates unit;
+		Coordinates t2Neg;
+		double[][] m;
+		int rotationCenter;
+		if(biggerSide) {
+			atomList = mBiggerSideAtomLists[bondIndex];
+			t2 = conf.getCoordinates(mTorsionAtoms[bondIndex][1]);
+			unit = t2.subC(conf.getCoordinates(mTorsionAtoms[bondIndex][2])).unit();
+			m = new double[3][3];
+			rotationCenter = mRotationCentersBig[bondIndex];
+			PheSAAlignment.getRotationMatrix((rotationCenter == mTorsionAtoms[bondIndex][2]) ? alpha : -alpha,unit,m);
+			t2Neg = t2.scaleC(-1.0);
+		}
+		else {
+			t2 = conf.getCoordinates(mTorsionAtoms[bondIndex][2]);
+			unit = t2.subC(conf.getCoordinates(mTorsionAtoms[bondIndex][1])).unit();
+			m = new double[3][3];
+			rotationCenter = mRotationCenters[bondIndex];
+			PheSAAlignment.getRotationMatrix((rotationCenter == mTorsionAtoms[bondIndex][1]) ? alpha : -alpha,unit,m);
+			t2Neg = t2.scaleC(-1.0);
+			atomList = mSmallerSideAtomLists[bondIndex];
+		}
+		for (int atom:atomList) {
 			if (atom != rotationCenter) {
-				conf.getCoordinates(atom).add(t2Neg);
-				conf.getCoordinates(atom).rotate(m);
-				conf.getCoordinates(atom).add(t2);
+				Coordinates coords = conf.getCoordinates(atom);
+				coords.add(t2Neg);
+				coords.rotate(m);
+				coords.add(t2);
 
 				}
 			}
 		}
+		
 
 
 

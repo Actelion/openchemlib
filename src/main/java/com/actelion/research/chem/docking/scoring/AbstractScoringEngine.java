@@ -59,7 +59,7 @@ public abstract class AbstractScoringEngine  {
 		return bumpTerm;
 		}
 
-	public abstract void init(LigandPose candidatePose);
+	public abstract void init(LigandPose candidatePose, double e0);
 	
 	public abstract void updateState();
 
