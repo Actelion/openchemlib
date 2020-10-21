@@ -585,6 +585,7 @@ public class PheSAAlignment {
 		double maxSimilarity = 0.0;
 		double maxPPSimilarity = 0.0;
 		double maxVolSimilarity = 0.0;
+		double maxShapeSimilarity = 0.0;
 		for(double [] transform:transforms) { 
 			double ppSimilarity = 0.0;//iterate over all initial alignments (necessary since optimizer just finds next local minimum, so we need different initial guesses
 			double volSimilarity = 0.0;
@@ -616,13 +617,14 @@ public class PheSAAlignment {
 			if (similarity>maxSimilarity) {
 				maxSimilarity = similarity;
 				maxVolSimilarity = volSimilarity;
+				maxShapeSimilarity = atomSimilarity;
 				maxPPSimilarity = ppSimilarity;
 				alignment = bestTransform;
 			}
 		}
 			if(maxSimilarity>1.0) // can happen because of manually placed inclusion spheres
 				maxSimilarity = 1.0;
-			return DoubleStream.concat(Arrays.stream(new double[] {maxSimilarity,maxPPSimilarity,maxVolSimilarity}), Arrays.stream(alignment)).toArray();
+			return DoubleStream.concat(Arrays.stream(new double[] {maxSimilarity,maxPPSimilarity,maxShapeSimilarity,maxVolSimilarity}), Arrays.stream(alignment)).toArray();
 		}
 		
 		

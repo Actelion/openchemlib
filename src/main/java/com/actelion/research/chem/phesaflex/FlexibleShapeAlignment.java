@@ -138,7 +138,7 @@ public class FlexibleShapeAlignment {
 	private double[] getResult() { 
 		PheSAAlignment pa = new PheSAAlignment(fitMol,refMol, ppWeight);
 		double[] r = pa.findAlignment(new double[][] {{1.0,0.0,0.0,0.0,0.0,0.0,0.0}},false);
-		return new double[] {r[0],r[1],r[2]};
+		return new double[] {r[0],r[1],r[2], r[3], r[4]};
 	}
 	
 	public double calcMin(StereoMolecule fitMol) {
