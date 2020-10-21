@@ -15,21 +15,17 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.KabschAlignment;
-import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.docking.scoring.chemscore.HBTerm;
-import com.actelion.research.chem.docking.scoring.chemscore.MetalTerm;
 import com.actelion.research.chem.docking.scoring.chemscore.SimpleMetalTerm;
 import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.phesa.pharmacophore.ChargePoint;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
-import com.actelion.research.chem.potentialenergy.EmpiricalLigandStrain;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 /**
@@ -41,10 +37,8 @@ import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 public class ChemPLP extends AbstractScoringEngine {
 	
-	private static final Set<Integer> SIMPLE_METAL_ATOMS = new HashSet(Arrays.asList(12,20)); //Mg and Ca
-	
 	private static final double METAL_INTERACTION_CUTOFF = 2.6;
-	private static final double STRAIN_WEIGHT = 0.1;
+	private static final double STRAIN_CUTOFF = 20;
 			
 	
 	private Set<Integer> receptorAcceptors;
@@ -64,6 +58,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	private List<PotentialEnergyTerm> chemscoreHbond;
 	private List<PotentialEnergyTerm> chemscoreMetal;
 	private ForceFieldMMFF94 ff;
+	private double e0;
 	
 	private Map<Integer,List<Coordinates>> metalInteractionSites;
 	
@@ -103,12 +98,12 @@ public class ChemPLP extends AbstractScoringEngine {
 			energy+=term.getFGValue(grad);
 		ff.setState(candidatePose.getState());
 		double ffEnergy = ff.getTotalEnergy();
-		double[] ffGrad = new double[grad.length];
-		ff.addGradient(ffGrad);
-		for(int i=0;i<ffGrad.length;i++) {
-			grad[i]+=STRAIN_WEIGHT*ffEnergy;
+
+		if((ffEnergy-e0)>STRAIN_CUTOFF) {
+			energy+=ffEnergy;
+			ff.addGradient(grad);
 		}
-		energy+=STRAIN_WEIGHT*ffEnergy;
+
 		return energy;
 	}
 	
@@ -137,7 +132,7 @@ public class ChemPLP extends AbstractScoringEngine {
 
 	@Override
 	public void init(LigandPose candidatePose, double e0) {
-		
+		this.e0 = e0;
 		this.candidatePose = candidatePose;
 		
 		plp = new ArrayList<>();
