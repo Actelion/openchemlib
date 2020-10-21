@@ -60,6 +60,10 @@ public class JEditableChemistryView extends JChemistryView {
 		super.setContent(rxn, drawingObjectList);
 		}
 
+	public boolean isEditable() {
+		return mIsEditable;
+	}
+
 	public void setEditable(boolean b) {
 		if (mIsEditable != b) {
 			mIsEditable = b;
