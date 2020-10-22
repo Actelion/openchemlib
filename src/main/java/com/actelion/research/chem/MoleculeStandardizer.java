@@ -12,11 +12,22 @@ import java.util.List;
  * @author Modest von Korff
  * @version 1.0
  * Apr 5, 2012 MvK: Start implementation
+ * 22.10.2020 MvK: added standardization loosely following publication:
+ * Bento, A. P., Hersey, A., Félix, E., Landrum, G., Gaulton, A., Atkinson, F., ... & Leach, A. R. (2020).
+ * An open source chemical structure curation pipeline using RDKit. Journal of Cheminformatics, 12(1), 1-16.
+ *
+ * Considered was also the Python RDKit code from Greg on Github.
+ *
+ * Except: S=O is not transformed into S+-O-
  */
 public class MoleculeStandardizer {
 
+	// Nothing happens
 	public static final int MODE_0 = 0;
-	public static final int MODE_COMPLETE = 1;
+
+	public static final int MODE_REPAIR = 1;
+
+	public static final int MODE_BALANCE_CHARGES = 2;
 
 	private static final String idCodeNegNAtCarbon = "eF``zLFD@";
 	
@@ -202,27 +213,7 @@ public class MoleculeStandardizer {
 	 * @throws Exception
 	 */
 	public StereoMolecule getStandardized(StereoMolecule mol) throws Exception {
-				
-		StereoMolecule molStandard = new StereoMolecule(mol);
-		
-		molStandard.ensureHelperArrays(Molecule.cHelperRings);
-		
-		// Strip small frags before repair
-		molStandard.stripSmallFragments();
-			
-		// Repair
-		repairAndUnify(molStandard);
-		
-		molStandard.normalizeAmbiguousBonds();
-
-		molStandard.canonizeCharge(true);
-		
-		molStandard.ensureHelperArrays(Molecule.cHelperRings);
-		
-		// Remove everything we added for charge balancing.
-		molStandard.stripSmallFragments();
-				
-		return molStandard;
+		return getStandardized(mol, MODE_BALANCE_CHARGES);
 	}
 
 	public StereoMolecule getStandardized(StereoMolecule mol, int mode) throws Exception {
@@ -231,13 +222,17 @@ public class MoleculeStandardizer {
 
 		molStandard.ensureHelperArrays(Molecule.cHelperRings);
 
-		if(mode>0) {
+		if(mode == MODE_0){
+			return molStandard;
+		}
+
+		if(mode>MODE_REPAIR) {
 			// Strip small frags before repair
 			molStandard.stripSmallFragments();
 		}
 
 		// Repair
-		repairAndUnify(molStandard);
+		repairAndUnify(molStandard, mode);
 
 		molStandard.normalizeAmbiguousBonds();
 
@@ -245,7 +240,7 @@ public class MoleculeStandardizer {
 
 		molStandard.ensureHelperArrays(Molecule.cHelperRings);
 
-		if(mode>0) {
+		if(mode>MODE_REPAIR) {
 			// Remove everything we added for charge balancing.
 			molStandard.stripSmallFragments();
 		}
@@ -261,6 +256,11 @@ public class MoleculeStandardizer {
 	 * @return true if an atom was added.
 	 */
 	public boolean repairAndUnify(StereoMolecule mol){
+		return repairAndUnify(mol, MODE_BALANCE_CHARGES);
+
+	}
+
+	public boolean repairAndUnify(StereoMolecule mol, int mode){
 
 		boolean added = false;
 
@@ -274,7 +274,7 @@ public class MoleculeStandardizer {
 
 		repairBadAmideTautomer(mol);
 
-		// Has to be at second place.
+		// Has to be here.
 		neutralizeNegative(mol);
 
 		neutralizeNegativeNitrogen(mol);
@@ -289,37 +289,41 @@ public class MoleculeStandardizer {
 
 		unifyAzido(mol);
 
-		//
-		// Balance charges
-		//
-		int totalCharge=0;
-		for (int i = 0; i < mol.getAllAtoms(); i++) {
-			totalCharge += mol.getAtomCharge(i);
+		if(mode > 1) {
+			//
+			// Balance charges
+			//
+			int totalCharge = 0;
+			for (int i = 0; i < mol.getAllAtoms(); i++) {
+				totalCharge += mol.getAtomCharge(i);
+			}
+
+			//
+			// add Cl-
+			//
+			while (totalCharge > 0) {
+				int ind = mol.addAtom(17);
+				mol.setAtomCharge(ind, -1);
+				totalCharge--;
+				added = true;
+			}
+
+			//
+			// add Na+
+			//
+			while (totalCharge < 0) {
+				int ind = mol.addAtom(11);
+				mol.setAtomCharge(ind, 1);
+				totalCharge++;
+				added = true;
+			}
+
+			mol.ensureHelperArrays(Molecule.cHelperRings);
+
 		}
 
- 		//
-		// add Cl-
-		//
-		while(totalCharge>0){
-			int ind = mol.addAtom(17);
-			mol.setAtomCharge(ind, -1);
-			totalCharge--;
-			added = true;
-		}
-
-		//
-		// add Na+
-		//
-		while(totalCharge<0){
-			int ind = mol.addAtom(11);
-			mol.setAtomCharge(ind, 1);
-			totalCharge++;
-			added = true;
-		}
-		
-		mol.ensureHelperArrays(Molecule.cHelperRings);
-		
 		return added;
+
 		
 	}
 
