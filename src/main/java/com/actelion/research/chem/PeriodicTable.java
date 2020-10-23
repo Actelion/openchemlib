@@ -65,6 +65,8 @@ public class PeriodicTable {
 	
 	private static Element[] arrData;
 
+	private boolean [] arrAlkaline;
+
 	private Hashtable<Integer, Element> htblDataAtNo;
 
 	private Hashtable<String, Element> htblDataName;
@@ -73,13 +75,14 @@ public class PeriodicTable {
 
 	private static PeriodicTable tbl;
 
+
 	private PeriodicTable() {
 
-		htblDataAtNo = new Hashtable<Integer, Element>();
+		htblDataAtNo = new Hashtable<>();
 
-		htblDataName = new Hashtable<String, Element>();
+		htblDataName = new Hashtable<>();
 
-		htblDataSymbol = new Hashtable<String, Element>();
+		htblDataSymbol = new Hashtable<>();
 
 // Order Number, Element Symbol, Atomic Weight, Covalent Radius, VdW radius
     arrData = new Element [] {
@@ -184,14 +187,25 @@ public class PeriodicTable {
 			new Element(99,"Einsteinium","E",-999.000,0.000,0.000,1.300),
 			new Element(100,"Fermium","Fm",-999.000,0.000,0.000,1.300),
 			new Element(101,"Mendelevium","Mv",-999.000,0.000,0.000,1.300)
-    };
 
-    for (int ii = 0; ii < arrData.length; ii++) {
+    	};
+
+    	for (int i = 0; i < arrData.length; i++) {
 			htblDataAtNo
-					.put(new Integer(arrData[ii].getOrderNumber()), arrData[ii]);
-			htblDataName.put(arrData[ii].getName(), arrData[ii]);
-			htblDataSymbol.put(arrData[ii].getSymbol(), arrData[ii]);
+					.put(new Integer(arrData[i].getOrderNumber()), arrData[i]);
+			htblDataName.put(arrData[i].getName(), arrData[i]);
+			htblDataSymbol.put(arrData[i].getSymbol(), arrData[i]);
 		}
+
+		arrAlkaline = new boolean[arrData.length];
+
+    	arrAlkaline[3]=true;
+    	arrAlkaline[11]=true;
+    	arrAlkaline[19]=true;
+    	arrAlkaline[37]=true;
+    	arrAlkaline[55]=true;
+    	arrAlkaline[87]=true;
+
 	}
 
 	private static PeriodicTable getInstance() {
@@ -199,6 +213,10 @@ public class PeriodicTable {
 			tbl = new PeriodicTable();
 		}
 		return tbl;
+	}
+
+	public static boolean isAlkaline(int atomicNo) {
+		return getInstance().arrAlkaline[atomicNo];
 	}
 
 	/**
