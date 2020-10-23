@@ -326,7 +326,6 @@ public class BondRotationHelper {
 	public void setTorsionIDs(String[] torsionIDs) {
 		this.mTorsionIDs = torsionIDs;
 	}
-	
 
 
 

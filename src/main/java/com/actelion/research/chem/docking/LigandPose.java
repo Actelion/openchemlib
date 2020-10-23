@@ -1,6 +1,5 @@
 package com.actelion.research.chem.docking;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -147,8 +146,7 @@ public class LigandPose implements Evaluable{
 			rotateBy = rotateBy*Math.PI/180.0;
 			int bond = random.nextInt(torsionHelper.getRotatableBonds().length);
 			bond = torsionHelper.getRotatableBonds()[bond];
-			//calculate actual torsion, get difference to desired torsion and take
-			//code snippet from torsionHelper to rotate the atoms
+			
 			torsionHelper.rotateAroundBond(bond, rotateBy,ligConf,random.nextBoolean());
 
 			

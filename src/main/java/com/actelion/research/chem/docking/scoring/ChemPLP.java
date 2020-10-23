@@ -38,7 +38,7 @@ import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 public class ChemPLP extends AbstractScoringEngine {
 	
 	private static final double METAL_INTERACTION_CUTOFF = 2.6;
-	private static final double STRAIN_CUTOFF = 20;
+	private static final double STRAIN_CUTOFF = 50;
 			
 	
 	private Set<Integer> receptorAcceptors;
@@ -83,8 +83,6 @@ public class ChemPLP extends AbstractScoringEngine {
 		
 		
 	}
-	
-
 	
 
 	@Override

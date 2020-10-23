@@ -22,6 +22,7 @@ import com.actelion.research.chem.docking.scoring.AbstractScoringEngine;
 import com.actelion.research.chem.docking.scoring.ChemPLP;
 import com.actelion.research.chem.docking.scoring.IdoScore;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
+import com.actelion.research.chem.forcefield.mmff.PositionConstraint;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
@@ -31,11 +32,12 @@ import com.actelion.research.chem.phesa.PheSAAlignment;
 public class DockingEngine {
 	
 	public enum ScoringFunction {CHEMPLP,IDOSCORE;}
-	private static final int DEFAULT_NR_MC_STEPS = 100;
-	private static final int DEFAULT_START_POSITIONS = 5;
+	private static final int DEFAULT_NR_MC_STEPS = 50;
+	private static final int DEFAULT_START_POSITIONS = 25;
 	private static final double BOLTZMANN_FACTOR = 1.2; //as for AutoDock Vina
 	public static final double GRID_DIMENSION = 6.0;
 	public static final double GRID_RESOLUTION = 0.5;
+	public static final double MINI_CUTOFF = 100; //if energy higher after MC step, don't minimize
 	
 
 	private Matrix rotation; //for initial prealignment to native ligand
@@ -44,6 +46,7 @@ public class DockingEngine {
 	private Random random;
 	private AbstractScoringEngine engine;
 	private int startPositions;
+	private double minEnergy;
 	
 	public DockingEngine(Molecule3D receptor, Molecule3D nativeLig, int mcSteps, int startPositions,
 			ScoringFunction scoringFunction) {
@@ -88,7 +91,7 @@ public class DockingEngine {
 
 		Conformer bestPose = null;
 		double bestEnergy = Double.MAX_VALUE;
-		
+		minEnergy = bestEnergy;
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
 		
@@ -99,11 +102,14 @@ public class DockingEngine {
 		ConformerSet confSet = confSetGen.generateConformerSet(mol);
 		ConformerSet initialPos = new ConformerSet();
 		double eMin = Double.MAX_VALUE;
+
 		for(Conformer conformer : confSet) {
 			if(conformer!=null) {
 				StereoMolecule conf = conformer.toMolecule(new StereoMolecule(mol));
 				conf.ensureHelperArrays(Molecule.cHelperParities);
 				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
+				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
 				Conformer ligConf = new Conformer(conf);
 				initialPos.add(ligConf);
@@ -114,13 +120,14 @@ public class DockingEngine {
 					eMin = e;
 			}
 		}
-
 		for(Conformer ligConf : initialPos) {
+
+
 			PheSAAlignment.preProcess(ligConf, new MolecularVolume(ligConf.toMolecule()));
 			for(double[] transform : PheSAAlignment.initialTransform(1)) {
 				Conformer newLigConf = new Conformer(ligConf);
 				PheSAAlignment.rotateMol(newLigConf, transform);
-				
+					
 				LigandPose pose = initiate(newLigConf,eMin);
 				double energy = mcSearch(pose);
 				if(energy<bestEnergy) {
@@ -129,19 +136,25 @@ public class DockingEngine {
 					}
 				}
 			}
+		
+		
+
 		if(bestPose!=null) {
 			StereoMolecule best = bestPose.toMolecule();
 			double[][] rot = rotation.getTranspose().getArray();
 			PheSAAlignment.rotateMol(best, rot);
 			PheSAAlignment.translateMol(best, new double[] {origCOM.x, origCOM.y, origCOM.z} );
-			System.out.println("bestEnergy");
-			System.out.println(bestEnergy);
+			minEnergy = bestEnergy;
 			return best;
 		}
 		else {
 			throw new DockingFailedException("docking failed");
 		}
 		
+	}
+	
+	public double getEnergy() {
+		return minEnergy;
 	}
 	
 	private double mcSearch(LigandPose pose) {
@@ -156,14 +169,19 @@ public class DockingEngine {
 		oldState = optimizer.optimize(pose);
 		bestState = oldState;
 		oldEnergy = pose.getFGValue(new double[bestState.length]);
-
 		bestEnergy = oldEnergy;
-
 	
 		for(int i=0;i<mcSteps;i++) {
 			pose.randomPerturbation();
-			state = optimizer.optimize(pose);
-			energy = pose.getFGValue(new double[bestState.length]);
+			double energyMC = pose.getFGValue(new double[bestState.length]);
+			if(energyMC<MINI_CUTOFF) {
+				state = optimizer.optimize(pose);	
+				energy = pose.getFGValue(new double[bestState.length]);
+			}
+			else {
+				state = pose.getState();
+				energy=energyMC;
+			}
 
 			if(energy<bestEnergy) {
 				bestEnergy = energy;
