@@ -416,10 +416,8 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	 * @param strMolDistHist
 	 * @return
 	 */
-	public static MolDistHist read(String strMolDistHist){
-		
-		String pattern = "[0-9]+";
-		
+	public static List<PPNode> readNodes(String strMolDistHist){
+
 		int start = strMolDistHist.indexOf('(');
 		
 		boolean nodesProcessed = false;
@@ -441,55 +439,64 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 				nodesProcessed = true;
 			}
 		}
-		
+
+		return liPPNode;
+	}
+
+	public static MolDistHist read(String strMolDistHist){
+
+		String pattern = "[0-9]+";
+
+		List<PPNode> liPPNode = readNodes( strMolDistHist);
+
 		int size = liPPNode.size();
-		
+
 		MolDistHist mdh = new MolDistHist(size);
-		
+
 		for (PPNode ppNode : liPPNode) {
 			mdh.addNode(ppNode);
 		}
-		
+
 		boolean histsProcessed = false;
-		
+
 		List<byte []> liHist = new ArrayList<byte []>();
-		
+
 		int startHist = strMolDistHist.indexOf("][");
-		
+
 		int nHistograms = ((size*size)-size)/2;
-		
+
 		while(!histsProcessed){
-			
+
 			int endHist = StringFunctions.nextClosing(strMolDistHist, startHist, '[', ']');
-			
+
 			String sub = strMolDistHist.substring(startHist, endHist);
-		
+
 			List<Point> li = StringFunctions.match(sub, pattern);
-			
+
 			if(li.size() != ConstantsFlexophoreGenerator.BINS_HISTOGRAM){
 				throw new RuntimeException("Error in histogram.");
 			}
-			
+
 			byte [] arr = new byte [ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
-			
+
 			int cc=0;
 			for (Point p : li) {
-				
+
 				String strCount = sub.substring(p.x, p.y);
-				
+
 				arr[cc++] = (byte)(Integer.parseInt(strCount) & 0xFF);
-				
+
 			}
-			
+
 			liHist.add(arr);
-			
+
 			startHist = strMolDistHist.indexOf('[', endHist);
-			
+
 			if(liHist.size()==nHistograms){
 				histsProcessed=true;
 			}
 		}
-		
+
 		int cc=0;
 		for (int i = 0; i < size; i++) {
 			for (int j = i+1; j < size; j++) {
@@ -497,8 +504,8 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 			}
 		}
 
-		
+
 		return mdh;
 	}
-	
+
 }
