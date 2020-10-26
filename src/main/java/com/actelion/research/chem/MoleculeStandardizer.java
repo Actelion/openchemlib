@@ -25,9 +25,9 @@ public class MoleculeStandardizer {
 	// Nothing happens
 	public static final int MODE_0 = 0;
 
-	public static final int MODE_REPAIR = 1;
+	public static final int MODE_REPAIR_AND_BALANCE = 1;
 
-	public static final int MODE_BALANCE_CHARGES = 2;
+	public static final int MODE_STRIP_SMALL = 2;
 
 	private static final String idCodeNegNAtCarbon = "eF``zLFD@";
 	
@@ -59,6 +59,9 @@ public class MoleculeStandardizer {
 	// OC=NC
 	private static final String idCodeBadAmide = "gCi@DDefDe@";
 
+	// Carboxyl group to detect acidic H.
+	private static final String idCodeCarboxylGroup = "gC``@dfZ@~bnLqLG@HA@";
+
 	private static MoleculeStandardizer instance;
 	
 	
@@ -68,6 +71,7 @@ public class MoleculeStandardizer {
 
 	private StereoMolecule molSulfOxideCharged;
 	private StereoMolecule molBadAmide;
+	private StereoMolecule molCarboxylicGroup;
 
 	private StereoMolecule [] arrNeutralizeNegative;
 
@@ -100,6 +104,9 @@ public class MoleculeStandardizer {
 
 		molBadAmide = parser.getCompactMolecule(idCodeBadAmide);
 		molBadAmide.ensureHelperArrays(Molecule.cHelperRings);
+
+		molCarboxylicGroup = parser.getCompactMolecule(idCodeCarboxylGroup);
+		molCarboxylicGroup.ensureHelperArrays(Molecule.cHelperRings);
 
 	}
 	
@@ -213,7 +220,7 @@ public class MoleculeStandardizer {
 	 * @throws Exception
 	 */
 	public StereoMolecule getStandardized(StereoMolecule mol) throws Exception {
-		return getStandardized(mol, MODE_BALANCE_CHARGES);
+		return getStandardized(mol, MODE_STRIP_SMALL);
 	}
 
 	public StereoMolecule getStandardized(StereoMolecule mol, int mode) throws Exception {
@@ -226,21 +233,21 @@ public class MoleculeStandardizer {
 			return molStandard;
 		}
 
-		if(mode>MODE_REPAIR) {
+		if(mode> MODE_REPAIR_AND_BALANCE) {
 			// Strip small frags before repair
 			molStandard.stripSmallFragments();
 		}
 
 		// Repair
-		repairAndUnify(molStandard, mode);
+		repairAndUnify(molStandard);
 
 		molStandard.normalizeAmbiguousBonds();
 
-		molStandard.canonizeCharge(true);
+		molStandard.canonizeCharge(false);
 
 		molStandard.ensureHelperArrays(Molecule.cHelperRings);
 
-		if(mode>MODE_REPAIR) {
+		if(mode> MODE_REPAIR_AND_BALANCE) {
 			// Remove everything we added for charge balancing.
 			molStandard.stripSmallFragments();
 		}
@@ -255,14 +262,9 @@ public class MoleculeStandardizer {
 	 * @param mol
 	 * @return true if an atom was added.
 	 */
-	public boolean repairAndUnify(StereoMolecule mol){
-		return repairAndUnify(mol, MODE_BALANCE_CHARGES);
 
-	}
 
-	public boolean repairAndUnify(StereoMolecule mol, int mode){
-
-		boolean added = false;
+	public void repairAndUnify(StereoMolecule mol) throws Exception {
 
 		// ChEMBL creates charged sulfoxides S+-O-
 		// Here the neutral form is generated S=O
@@ -289,43 +291,103 @@ public class MoleculeStandardizer {
 
 		unifyAzido(mol);
 
-		if(mode > 1) {
-			//
-			// Balance charges
-			//
-			int totalCharge = 0;
-			for (int i = 0; i < mol.getAllAtoms(); i++) {
-				totalCharge += mol.getAtomCharge(i);
-			}
+		balanceCharges(mol);
+	}
 
-			//
-			// add Cl-
-			//
-			while (totalCharge > 0) {
-				int ind = mol.addAtom(17);
-				mol.setAtomCharge(ind, -1);
-				totalCharge--;
-				added = true;
-			}
 
-			//
-			// add Na+
-			//
-			while (totalCharge < 0) {
-				int ind = mol.addAtom(11);
-				mol.setAtomCharge(ind, 1);
-				totalCharge++;
-				added = true;
-			}
+	private boolean balanceCharges(StereoMolecule mol) throws Exception {
 
-			mol.ensureHelperArrays(Molecule.cHelperRings);
+		boolean added = false;
 
+		//
+		// Balance charges
+		//
+		int totalCharge = 0;
+		for (int i = 0; i < mol.getAllAtoms(); i++) {
+			totalCharge += mol.getAtomCharge(i);
 		}
+
+
+		//
+		// Remove single atom positive ions
+		//
+		while (totalCharge > 0) {
+			boolean removed=false;
+			for (int i = 0; i < mol.getAtoms(); i++) {
+				if(totalCharge >= mol.getAtomCharge(i)){
+					if(mol.getConnAtoms(i)==0){
+						mol.deleteAtom(i);
+						mol.ensureHelperArrays(Molecule.cHelperRings);
+						totalCharge--;
+						removed=true;
+					}
+				}
+			}
+			if(!removed){
+				break;
+			}
+		}
+
+
+//		if(removeAcidicHydrogen(mol)){
+//			totalCharge--;
+//		}
+
+		totalCharge = mol.canonizeCharge(true);
+
+		//
+		// add Cl-
+		//
+		while (totalCharge > 0) {
+			int ind = mol.addAtom(17);
+			mol.setAtomCharge(ind, -1);
+			totalCharge--;
+			added = true;
+		}
+
+		//
+		// add Na+
+		//
+		while (totalCharge < 0) {
+			int ind = mol.addAtom(11);
+			mol.setAtomCharge(ind, 1);
+			totalCharge++;
+			added = true;
+		}
+
+		mol.ensureHelperArrays(Molecule.cHelperRings);
 
 		return added;
 
-		
 	}
+
+	private boolean removeAcidicHydrogen(StereoMolecule mol) {
+
+		boolean removed = false;
+
+		SSSearcher sss = new SSSearcher();
+		sss.setMol(molCarboxylicGroup, mol);
+		if(sss.findFragmentInMolecule()>0) {
+			List<int[]> liArrMatch = sss.getMatchList();
+
+			int [] arr = liArrMatch.get(0);
+
+			for (int atIndex : arr) {
+
+				if(mol.getAtomicNo(atIndex)==8){
+
+					if(mol.getImplicitHydrogens(atIndex)==1){
+						mol.setAtomCharge(atIndex, -1);
+						removed = true;
+						break;
+					}
+				}
+			}
+		}
+
+		return removed;
+	}
+
 
 	/**
 	 * ChEMBL publication
@@ -420,7 +482,6 @@ public class MoleculeStandardizer {
 			}
 
 			for (int[] arrMatch : liArrMatch) {
-
 				if(arrMatch.length>2){
 					throw new RuntimeException("Error in logic of algorithm!");
 				}
