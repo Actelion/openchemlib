@@ -57,7 +57,7 @@ public class MoleculeStandardizer {
 
 	// Wrong tautomer, oxygen not charged
 	// OC=NC
-	private static final String idCodeBadAmide = "gCi@DDefDe@";
+	private static final String idCodeBadAmide = "gCi@DDefDe}AX";
 
 	// Carboxyl group to detect acidic H.
 	private static final String idCodeCarboxylGroup = "gC``@dfZ@~bnLqLG@HA@";
@@ -239,7 +239,7 @@ public class MoleculeStandardizer {
 		}
 
 		// Repair
-		repairAndUnify(molStandard);
+		repairAndUnify(molStandard, mode);
 
 		molStandard.normalizeAmbiguousBonds();
 
@@ -264,7 +264,7 @@ public class MoleculeStandardizer {
 	 */
 
 
-	public void repairAndUnify(StereoMolecule mol) throws Exception {
+	public void repairAndUnify(StereoMolecule mol, int mode) throws Exception {
 
 		// ChEMBL creates charged sulfoxides S+-O-
 		// Here the neutral form is generated S=O
@@ -272,7 +272,8 @@ public class MoleculeStandardizer {
 
 		chargeTrivalentOxygen(mol);
 
-		removeCovalentAlkalineBonds(mol);
+		// Handelt by resolve ambigous bonds in Molecule
+		// removeCovalentAlkalineBonds(mol);
 
 		repairBadAmideTautomer(mol);
 
@@ -291,11 +292,11 @@ public class MoleculeStandardizer {
 
 		unifyAzido(mol);
 
-		balanceCharges(mol);
+		balanceCharges(mol, mode);
 	}
 
 
-	private boolean balanceCharges(StereoMolecule mol) throws Exception {
+	private boolean balanceCharges(StereoMolecule mol, int mode) throws Exception {
 
 		boolean added = false;
 
@@ -311,23 +312,24 @@ public class MoleculeStandardizer {
 		//
 		// Remove single atom positive ions
 		//
-		while (totalCharge > 0) {
-			boolean removed=false;
-			for (int i = 0; i < mol.getAtoms(); i++) {
-				if(totalCharge >= mol.getAtomCharge(i)){
-					if(mol.getConnAtoms(i)==0){
-						mol.deleteAtom(i);
-						mol.ensureHelperArrays(Molecule.cHelperRings);
-						totalCharge--;
-						removed=true;
+		if(mode>MODE_REPAIR_AND_BALANCE) {
+			while (totalCharge > 0) {
+				boolean removed = false;
+				for (int i = 0; i < mol.getAtoms(); i++) {
+					if (totalCharge >= mol.getAtomCharge(i)) {
+						if (mol.getConnAtoms(i) == 0) {
+							mol.deleteAtom(i);
+							mol.ensureHelperArrays(Molecule.cHelperRings);
+							totalCharge--;
+							removed = true;
+						}
 					}
 				}
-			}
-			if(!removed){
-				break;
+				if (!removed) {
+					break;
+				}
 			}
 		}
-
 
 //		if(removeAcidicHydrogen(mol)){
 //			totalCharge--;
@@ -511,52 +513,63 @@ public class MoleculeStandardizer {
 
 	private void repairBadAmideTautomer(StereoMolecule mol){
 
+
+
 		SSSearcher sss = new SSSearcher();
 
-		sss.setMol(molBadAmide, mol);
+		boolean changed = true;
 
-		if(sss.findFragmentInMolecule()>0){
-			List<int []> liArrMatch = sss.getMatchList();
+		while (changed) {
+			changed = false;
+			sss.setMol(molBadAmide, mol);
 
-			if(liArrMatch == null){
-				return;
-			}
+			if (sss.findFragmentInMolecule() > 0) {
+				List<int[]> liArrMatch = sss.getMatchList();
 
-			for (int[] arrMatch : liArrMatch) {
+				if (liArrMatch == null) {
+					return;
+				}
 
-				for (int i = 0; i < arrMatch.length; i++) {
-					int atom = arrMatch[i];
-					if(mol.getAtomicNo(atom)==8){
-						mol.setAtomCharge(atom, 0);
+				for (int[] arrMatch : liArrMatch) {
 
-						int atC = mol.getConnAtom(atom, 0);
+					for (int i = 0; i < arrMatch.length; i++) {
+						int atom = arrMatch[i];
+						if (mol.getAtomicNo(atom) == 8) {
+							mol.setAtomCharge(atom, 0);
 
-						if(mol.getAtomicNo(atC)!=6){
-							throw new RuntimeException("Error in logic of algorithm!");
-						}
+							int atC = mol.getConnAtom(atom, 0);
 
-						int connAtsC = mol.getConnAtoms(atC);
-
-						for (int j = 0; j < connAtsC; j++) {
-							int atConnConn = mol.getConnAtom(atC, j);
-
-							if(mol.getAtomicNo(atConnConn)==7){
-
-								int bndCToN = mol.getBond(atC, atConnConn);
-								if(mol.getBondOrder(bndCToN)!=2){
-									throw new RuntimeException("Error in logic of algorithm!");
-								}
-								mol.changeBond(bndCToN, Molecule.cBondTypeSingle);
-								int bndCToO = mol.getBond(atC, atom);
-								mol.changeBond(bndCToO, Molecule.cBondTypeDouble);
+							if (mol.getAtomicNo(atC) != 6) {
+								throw new RuntimeException("Error in logic of algorithm!");
 							}
+
+							int connAtsC = mol.getConnAtoms(atC);
+
+							for (int j = 0; j < connAtsC; j++) {
+								int atConnConn = mol.getConnAtom(atC, j);
+
+								if (mol.getAtomicNo(atConnConn) == 7) {
+
+									int bndCToN = mol.getBond(atC, atConnConn);
+									if (mol.getBondOrder(bndCToN) != 2) {
+										throw new RuntimeException("Error in logic of algorithm!");
+									}
+									mol.changeBond(bndCToN, Molecule.cBondTypeSingle);
+									int bndCToO = mol.getBond(atC, atom);
+									mol.changeBond(bndCToO, Molecule.cBondTypeDouble);
+
+								}
+							}
+
 						}
 					}
+					changed = true;
+					break;
 				}
 			}
-		}
 
-		mol.ensureHelperArrays(Molecule.cHelperRings);
+			mol.ensureHelperArrays(Molecule.cHelperRings);
+		}
 	}
 
 	private void neutralizeNegative(StereoMolecule mol){
