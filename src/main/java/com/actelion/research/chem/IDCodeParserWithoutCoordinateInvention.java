@@ -209,7 +209,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @param coordsStart first byte indexif coordinates
 	 */
 	public void parse(StereoMolecule mol, byte[] idcode, byte[] coordinates, int idcodeStart, int coordsStart) {
-		mol.deleteMolecule();
+		mol.clear();
 
 		if (idcode==null || idcodeStart >= idcode.length)
 			return;
@@ -704,9 +704,6 @@ public class IDCodeParserWithoutCoordinateInvention {
 							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits) - binCount / 2));
 						}
 
-					double avblDefault = coordsAre3D ? 1.5 : Molecule.getDefaultAverageBondLength();
-					double avbl = mMol.getAverageBondLength(allAtoms, allBonds, avblDefault);
-
 					if (coordinates[coordsStart] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
 						int hydrogenCount = 0;
 
@@ -730,6 +727,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 						allAtoms += hydrogenCount;
 						allBonds += hydrogenCount;
 						}
+
+					double avblDefault = coordsAre3D ? 1.5 : Molecule.getDefaultAverageBondLength();
+					double avbl = mMol.getAverageBondLength(allAtoms, allBonds, avblDefault);
 
 					if (coordsAreAbsolute) {
 						targetAVBL = decodeAVBL(decodeBits(resolutionBits), binCount);

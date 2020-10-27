@@ -3379,7 +3379,10 @@ System.out.println();
 
 		if (keepPositionAndScale) {
 			double avblDefault = mZCoordinatesAvailable ? 1.5 : Molecule.getDefaultAverageBondLength();
-			double avbl = mMol.getAverageBondLength(mMol.getAtoms(), mMol.getBonds(), avblDefault, coords);
+			double avbl = mMol.getAverageBondLength(
+					includeHydrogenCoordinates ? mMol.getAllAtoms() : mMol.getAtoms(),
+					includeHydrogenCoordinates ? mMol.getAllBonds() : mMol.getBonds(),
+					avblDefault, coords);
 			encodeBits(encodeABVL(avbl, binCount), resolutionBits);
 
 			encodeBits(encodeShift(coords[mGraphAtom[0]].x / avbl, binCount), resolutionBits);
