@@ -61,19 +61,29 @@ public class RXNFileParser
 
 	public Reaction getReaction(String buffer) throws Exception
 	{
+	    return getReaction(buffer, false);
+    }
+
+	public Reaction getReaction(String buffer, boolean ignoreIdCode) throws Exception
+	{
 		Reaction theReaction = new Reaction();
 		BufferedReader theReader = new BufferedReader(new StringReader(buffer));
-		parse(theReaction, theReader);
+		parse(theReaction, theReader, ignoreIdCode);
 
 		return theReaction;
 	}
 
 	public Reaction getReaction(File file) throws Exception
 	{
+        return getReaction(file, false);
+    }
+
+	public Reaction getReaction(File file, boolean ignoreIdCode) throws Exception
+	{
 		Reaction theReaction = new Reaction();
 		BufferedReader theReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
         BOMSkipper.skip(theReader);
-		parse(theReaction, theReader);
+		parse(theReaction, theReader, ignoreIdCode);
 
 		return theReaction;
 	}
@@ -81,21 +91,38 @@ public class RXNFileParser
 	public boolean parse(Reaction theReaction, String buffer)
 		throws Exception
 	{
+	    return parse(theReaction, buffer, false);
+    }
+
+	public boolean parse(Reaction theReaction, String buffer, boolean ignoreIdCode)
+		throws Exception
+	{
 		BufferedReader theReader = new BufferedReader(new StringReader(buffer));
 
-		return parse(theReaction, theReader);
+		return parse(theReaction, theReader, ignoreIdCode);
 	}
 
 	public boolean parse(Reaction theReaction, File file)
 		throws Exception
 	{
+	    return parse(theReaction, file, false);
+    }
+
+	public boolean parse(Reaction theReaction, File file, boolean ignoreIdCode)
+		throws Exception
+	{
 		BufferedReader theReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
         BOMSkipper.skip(theReader);
 
-		return parse(theReaction, theReader);
+		return parse(theReaction, theReader, ignoreIdCode);
 	}
 
 	public boolean parse(Reaction theReaction, BufferedReader theReader) throws Exception
+    {
+        return parse(theReaction,theReader,false);
+    }
+
+	public boolean parse(Reaction theReaction, BufferedReader theReader, boolean ignoreIdCode ) throws Exception
     {
         String theLine = theReader.readLine();
         boolean ok = false;
@@ -103,15 +130,15 @@ public class RXNFileParser
             throw new Exception("'$RXN' tag not found");
         }
         if (theLine.equals(RXN_V3_MAGIC)) {
-            ok = parseV3(theReaction,theReader);
+            ok = parseV3(theReaction,theReader,ignoreIdCode);
         } else {
-            ok = parseV2(theReaction,theReader);
+            ok = parseV2(theReaction,theReader,ignoreIdCode);
         }
         return ok;
     }
 
     // First line is already parsed
-    private boolean parseV3(Reaction theReaction, BufferedReader theReader) throws Exception
+    private boolean parseV3(Reaction theReaction, BufferedReader theReader, boolean ignoreIdCode) throws Exception
     {
         String name = theReader.readLine().trim();
         if (name.length() != 0)
@@ -121,7 +148,7 @@ public class RXNFileParser
 
         // preferrably decode the idcode based encoding from the comment line, if present
 	    String comment = theReader.readLine();
-        if (comment.startsWith(RXNFileCreator.RXN_CODE_TAG)) {
+        if (!ignoreIdCode && comment.startsWith(RXNFileCreator.RXN_CODE_TAG)) {
             String encoding = comment.substring(RXNFileCreator.RXN_CODE_TAG.length());
             if (ReactionEncoder.decode(encoding, true, theReaction) != null)
             	return true;
@@ -184,7 +211,7 @@ public class RXNFileParser
      * @throws Exception
      */
     // First line is already parsed
-    private boolean parseV2(Reaction theReaction, BufferedReader theReader) throws Exception
+    private boolean parseV2(Reaction theReaction, BufferedReader theReader, boolean ignoreIdCode) throws Exception
     {
 	    String name = theReader.readLine().trim();
 	    if (name.length() != 0)
@@ -194,7 +221,7 @@ public class RXNFileParser
 
 	    // preferrably decode the idcode based encoding from the comment line, if present
 	    String comment = theReader.readLine();
-	    if (comment.startsWith(RXNFileCreator.RXN_CODE_TAG)) {
+	    if (!ignoreIdCode && comment.startsWith(RXNFileCreator.RXN_CODE_TAG)) {
 		    String encoding = comment.substring(RXNFileCreator.RXN_CODE_TAG.length());
 		    if (ReactionEncoder.decode(encoding, true, theReaction) != null)
 			    return true;

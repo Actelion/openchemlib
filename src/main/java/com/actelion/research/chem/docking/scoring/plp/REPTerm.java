@@ -17,7 +17,7 @@ public class REPTerm implements PotentialEnergyTerm {
 	public static final double A = 3.2;
 	public static final double B = 5.0;
 	public static final double B_sq = B*B;
-	public static final double C = 0.1;
+	public static final double C = 0.05;
 	public static final double D = 20;
 	
 	private int recAtom;

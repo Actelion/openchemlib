@@ -15,21 +15,17 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.KabschAlignment;
-import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.docking.scoring.chemscore.HBTerm;
-import com.actelion.research.chem.docking.scoring.chemscore.MetalTerm;
 import com.actelion.research.chem.docking.scoring.chemscore.SimpleMetalTerm;
 import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.phesa.pharmacophore.ChargePoint;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
-import com.actelion.research.chem.potentialenergy.EmpiricalLigandStrain;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 /**
@@ -41,10 +37,8 @@ import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 public class ChemPLP extends AbstractScoringEngine {
 	
-	private static final Set<Integer> SIMPLE_METAL_ATOMS = new HashSet(Arrays.asList(12,20)); //Mg and Ca
-	
 	private static final double METAL_INTERACTION_CUTOFF = 2.6;
-	
+	private static final double STRAIN_CUTOFF = 50;
 			
 	
 	private Set<Integer> receptorAcceptors;
@@ -64,6 +58,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	private List<PotentialEnergyTerm> chemscoreHbond;
 	private List<PotentialEnergyTerm> chemscoreMetal;
 	private ForceFieldMMFF94 ff;
+	private double e0;
 	
 	private Map<Integer,List<Coordinates>> metalInteractionSites;
 	
@@ -90,20 +85,23 @@ public class ChemPLP extends AbstractScoringEngine {
 	}
 	
 
-	
-
 	@Override
 	public double getFGValue(double[] grad) {
 		double energy = getBumpTerm();
-//		for(PotentialEnergyTerm term : chemscoreHbond)
-//			energy+=term.getFGValue(grad);
-//		for(PotentialEnergyTerm term : chemscoreMetal)
-//			energy+=term.getFGValue(grad);
+		for(PotentialEnergyTerm term : chemscoreHbond)
+			energy+=term.getFGValue(grad);
+		for(PotentialEnergyTerm term : chemscoreMetal) 	
+			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
 		ff.setState(candidatePose.getState());
-		ff.addGradient(grad);
-		energy += ff.getTotalEnergy();
+		double ffEnergy = ff.getTotalEnergy();
+
+		if((ffEnergy-e0)>STRAIN_CUTOFF) {
+			energy+=ffEnergy;
+			ff.addGradient(grad);
+		}
+
 		return energy;
 	}
 	
@@ -131,8 +129,8 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 
 	@Override
-	public void init(LigandPose candidatePose) {
-		
+	public void init(LigandPose candidatePose, double e0) {
+		this.e0 = e0;
 		this.candidatePose = candidatePose;
 		
 		plp = new ArrayList<>();
@@ -150,13 +148,14 @@ public class ChemPLP extends AbstractScoringEngine {
 		
 		
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
-		ffOptions.put("dielectric constant", 10.0);
+		ffOptions.put("dielectric constant", 80.0);
 		
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		ff = new ForceFieldMMFF94(ligand, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 		StereoMolecule receptor = receptorConf.getMolecule();
 		identifyHBondFunctionality(ligand,ligandAcceptors,ligandDonorHs, ligandDonors, new HashSet<Integer>(),ligandAcceptorNeg,
 				ligandDonorHPos);
+
 
 		for(int p : bindingSiteAtoms) {
 			if(receptor.getAtomicNo(p)==1) { // receptor hydrogen atom
@@ -214,6 +213,7 @@ public class ChemPLP extends AbstractScoringEngine {
 							if(ligandDonors.contains(l)) {  //plp hbond donor-acceptor
 								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.HBOND_TERM);
 								plp.add(plpTerm);
+
 							}
 							else if(ligandAcceptors.contains(l)) {  //repulsive donor-donor
 								REPTerm repTerm = REPTerm.create(receptorConf, candidatePose.getLigConf(), p, l);

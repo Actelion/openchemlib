@@ -307,6 +307,7 @@ public class MolecularVolume {
 		for (Coordinates hydrogen : getHydrogens()){
 			hydrogen.sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
 		}
+		calcCOM();
 	}
 	
 	public List<PPGaussian> getExitVectorGaussians() {

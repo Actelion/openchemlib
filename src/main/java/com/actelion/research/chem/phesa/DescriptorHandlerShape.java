@@ -15,6 +15,7 @@ import com.actelion.research.chem.phesaflex.FlexibleShapeAlignment;
 
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 
@@ -124,6 +125,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 					molecularVolumes.add(molVol);
 	            }
 	        }
+			 mol = confSet.first().toMolecule();
+
         return new PheSAMolecule(mol,molecularVolumes);
 		}
 		catch(Exception e) {
@@ -169,8 +172,9 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		}
 			
 		else {
-			if(shapeMolecule.getAllAtoms()-shapeMolecule.getAtoms()>0) {
-				ConformerGenerator.addHydrogenAtoms(shapeMolecule);
+			if(shapeMolecule.getAllAtoms()-shapeMolecule.getAtoms()==0) {
+				System.err.println("missing hydrogens in 3D structure");
+				return FAILED_OBJECT;
 			}
 			confSet.add(new Conformer(shapeMolecule)); //take input conformation
 			
@@ -186,7 +190,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	public float getSimilarity(PheSAMolecule query, PheSAMolecule base) {
  		StereoMolecule[] bestPair = {query.getMolecule(),base.getMolecule()};
-		double[] result = PheSAAlignmentOptimizer.align(query,base,bestPair,ppWeight);
+		double[] result = PheSAAlignmentOptimizer.align(query,base,bestPair,ppWeight,true);
 		this.setPreviousAlignment(bestPair);
 		this.setPreviousPheSAResult(result);
 		if(flexible) {
@@ -271,7 +275,6 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		//StereoMolecule mol = shapeMol.getConformer(shapeMol.getVolumes().get(0));
 		StereoMolecule mol = new StereoMolecule(shapeMol.getMolecule());
 		Canonizer can = new Canonizer(mol, Canonizer.COORDS_ARE_3D);
-		StereoMolecule mol2 = can.getCanMolecule();
 		String idcoords = can.getEncodedCoordinates(true);
 		String idcode = can.getIDCode();
 		shapeString.append(idcode);

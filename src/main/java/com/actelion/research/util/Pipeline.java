@@ -149,8 +149,26 @@ public class Pipeline<T> implements IPipeline<T> {
 	 * all data in flag has to be set.
 	 * @return all data
 	 */
+	public List<T> pollAllWithWait(){
+
+		List<T> li = new ArrayList<>();
+
+		while(!wereAllDataFetched()){
+
+			T row = pollData();
+
+			if(row==null){
+				try {Thread.sleep(10);} catch (InterruptedException e) {e.printStackTrace();}
+				continue;
+			}
+
+			li.add(row);
+		}
+
+		return li;
+	}
 	public List<T> pollAll(){
-		
+
 		if(!isAllDataIn()){
 			throw new RuntimeException("all_data_in flag not set.");
 		}
@@ -179,4 +197,6 @@ public class Pipeline<T> implements IPipeline<T> {
 	public void clear(){
 		queue.clear();
 	}
+
+
 }

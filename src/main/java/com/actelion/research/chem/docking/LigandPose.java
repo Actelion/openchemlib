@@ -1,6 +1,5 @@
 package com.actelion.research.chem.docking;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -31,19 +30,20 @@ public class LigandPose implements Evaluable{
 	private Random random;
 	private Map<Integer,int[][]> rearAtoms;
 	public static long SEED = 12345L;
-	public LigandPose(Conformer ligConf, AbstractScoringEngine engine) {
+	
+	public LigandPose(Conformer ligConf, AbstractScoringEngine engine, double e0) {
 		
 		this.engine = engine;
 		this.ligConf = ligConf;
-		random = new Random(SEED);
-		init();
+		random = new Random();
+		init(e0);
 	}
 	
-	private void init() {
+	private void init(double e0) {
 		mol = ligConf.getMolecule();
 		state = new double[3*mol.getAllAtoms()];
 		torsionHelper = new BondRotationHelper(mol);
-		engine.init(this);
+		engine.init(this,e0);
 		updateState();
 		rearAtoms = new HashMap<Integer,int[][]>();
 		assessRearAtoms();
@@ -113,7 +113,6 @@ public class LigandPose implements Evaluable{
 	
 	public void randomPerturbation() {
 		int num = (int) (3*random.nextDouble());
-
 		if(num==0) { //translation
 			Coordinates shift = DockingUtils.randomVectorInSphere(random).scale(MOVE_AMPLITUDE);
 			for(int a=0;a<ligConf.getMolecule().getAllAtoms();a++) { 
@@ -138,17 +137,17 @@ public class LigandPose implements Evaluable{
 
 			
 		}
-		else if(num==2) {
+		else  {
 			if(torsionHelper.getRotatableBonds().length==0)
 				return;
-			double rnd = 180*random.nextDouble();
+			double rnd = random.nextDouble();
+			rnd*=180.0;
 			double rotateBy = random.nextBoolean() ? rnd : -rnd;
 			rotateBy = rotateBy*Math.PI/180.0;
 			int bond = random.nextInt(torsionHelper.getRotatableBonds().length);
 			bond = torsionHelper.getRotatableBonds()[bond];
-			//calculate actual torsion, get difference to desired torsion and take
-			//code snippet from torsionHelper to rotate the atoms
-			torsionHelper.rotateSmallerSide(bond, rotateBy,ligConf);
+			
+			torsionHelper.rotateAroundBond(bond, rotateBy,ligConf,random.nextBoolean());
 
 			
 		}

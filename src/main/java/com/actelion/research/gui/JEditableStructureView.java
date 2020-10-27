@@ -93,6 +93,10 @@ public class JEditableStructureView extends JStructureView {
 		}
 	}
 
+	public boolean isEditable() {
+		return mIsEditable;
+	}
+
 	public void setEditable(boolean b) {
 		if (mIsEditable != b) {
 		    mIsEditable = b;
