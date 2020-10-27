@@ -4,6 +4,7 @@ import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.statistics.median.MedianStatisticFunctions;
 import com.actelion.research.chem.descriptor.flexophore.PPNode;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
 import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
 import com.actelion.research.util.Formatter;
 import com.actelion.research.util.datamodel.table.TableModelString;
@@ -311,9 +312,16 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 				int interactionTypeBase = base.getInteractionType(j);
 
-				double similarity = 1.0 - interactionSimilarityTable.getDistance(interactionTypeQuery, interactionTypeBase);
+				try {
+					double similarity = 1.0 - interactionSimilarityTable.getDistance(interactionTypeQuery, interactionTypeBase);
 
-				maSimilarity.set(i,j,similarity);
+					maSimilarity.set(i,j,similarity);
+				} catch (Exception e) {
+					System.err.println("Error in PPNodeSimilarity");
+					System.err.println("interactionTypeQuery " + interactionTypeQuery);
+					System.err.println("interactionTypeBase " + interactionTypeBase);
+					throw new RuntimeException(e);
+				}
 			}
 		}
 
@@ -571,5 +579,18 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 		return sim;
 	}
 
+
+	public boolean isValidType(int type){
+		boolean valid = true;
+
+		try {
+			int key = InteractionDistanceStatistics.getInstance().getKey(type);
+			interactionSimilarityTable.getDistance(key, key);
+		} catch (Exception e) {
+			valid = false;
+		}
+
+		return valid;
+	}
 	
 }

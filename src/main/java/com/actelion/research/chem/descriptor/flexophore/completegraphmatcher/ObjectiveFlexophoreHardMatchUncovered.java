@@ -10,6 +10,7 @@ import com.actelion.research.util.graph.complete.IObjectiveCompleteGraph;
 import com.actelion.research.util.graph.complete.SolutionCompleteGraph;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 
@@ -554,6 +555,10 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		validHelpersBase = false;
 		
 		resetSimilarityArrays = true;
+
+		if(!checkAtomTypes(mdhvBase)) {
+			throw new RuntimeException("Base contains Invalid atom type for similarity calculation " + mdhvBase.getMolDistHist().toString() + ".");
+		}
 	}
 	
 	public void setQuery(IMolDistHist iMolDistHistQuery) {
@@ -570,8 +575,33 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		validHelpersQuery = false;
 		
 		resetSimilarityArrays = true;
+
+		if(!checkAtomTypes(mdhvQuery)) {
+			throw new RuntimeException("Base contains Invalid atom type for similarity calculation " + mdhvQuery.getMolDistHist().toString() + ".");
+		}
+
 	}
-	
+
+	private boolean checkAtomTypes(MolDistHistViz mdhv) {
+
+		boolean valid = true;
+		List<PPNodeViz> liNode = mdhv.getNodes();
+
+		stop:
+		for (PPNodeViz ppNodeViz : liNode) {
+			int c = ppNodeViz.getInteractionTypeCount();
+			for (int i = 0; i < c; i++) {
+				int type = ppNodeViz.getInteractionType(i);
+				if(!nodeSimilarity.isValidType(type)){
+					valid = false;
+					break stop;
+				}
+			}
+		}
+
+		return valid;
+	}
+
 	
 	private void calculateHelpersQuery(){
 		

@@ -130,7 +130,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	//
 	private ObjectiveFlexophoreHardMatchUncovered objectiveCompleteGraphHard;
 
-	protected Exception exceptionCreateDescriptor;
+	protected Exception recentException;
 
 	private int versionInteractionTable;
 	private int modePPNodeSimilarityComparison;
@@ -380,7 +380,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		MolDistHistViz mdhv = createVisualDescriptor(fragBiggest);
 		MolDistHist mdh = (mdhv == null) ? null : mdhv.getMolDistHist();
 
-		exceptionCreateDescriptor = null;
+		recentException = null;
 
 		if(mdh == null) {
 			mdh = FAILED_OBJECT;
@@ -388,7 +388,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 			String msg = "Flexophore exceeded maximum number of nodes.";
 
-			exceptionCreateDescriptor = new RuntimeException(msg);
+			recentException = new RuntimeException(msg);
 
 			mdh = FAILED_OBJECT;;
 		}
@@ -404,7 +404,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		int ccFailed = 0;
 
-		exceptionCreateDescriptor = null;
+		recentException = null;
 
 		while (conformationGenerationFailed) {
 
@@ -421,9 +421,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 				}
 
 			} catch (ExceptionConformationGenerationFailed e) {
-				exceptionCreateDescriptor = e;
+				recentException = e;
 			} catch (Exception e) {
-				exceptionCreateDescriptor = e;
+				recentException = e;
+				break;
 			}
 
 			if(threadMaster!=null && threadMaster.threadMustDie()){
@@ -454,7 +455,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 				} catch (Exception e) {
 					e.printStackTrace();
-					exceptionCreateDescriptor = e;
+					recentException = e;
 				}
 				break;
 			}
@@ -463,8 +464,8 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		return mdhv;
 	}
 
-	public Exception getExceptionCreateDescriptor() {
-		return exceptionCreateDescriptor;
+	public Exception getRecentException() {
+		return recentException;
 	}
 
 
