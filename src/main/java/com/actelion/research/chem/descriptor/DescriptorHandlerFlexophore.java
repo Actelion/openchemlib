@@ -205,12 +205,13 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		queueCGM = new ConcurrentLinkedQueue<>();
 
+		objectiveCompleteGraphHard = new ObjectiveFlexophoreHardMatchUncovered(
+				versionInteractionTable, modePPNodeSimilarityComparison, threshSimilarityHardMatch, threshHistogramSimilarity);
+
 		queueCGM.add(getNewCompleteGraphMatcher());
 
 		molDistHistEncoder = new MolDistHistEncoder();
 
-		objectiveCompleteGraphHard = new ObjectiveFlexophoreHardMatchUncovered(
-				versionInteractionTable, modePPNodeSimilarityComparison, threshSimilarityHardMatch, threshHistogramSimilarity);
 
 		creatorMolDistHistViz = new CreatorMolDistHistViz();
 
@@ -219,6 +220,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 	public void setModeQuery(boolean modeQuery){
 		objectiveCompleteGraphHard.setModeQuery(modeQuery);
+		queueCGM.clear();
 	}
 
 	public void setThreadMaster(ThreadMaster threadMaster) {
@@ -242,6 +244,9 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 						modePPNodeSimilarityComparison,
 						threshSimilarityHardMatch,
 						threshHistogramSimilarity);
+
+
+		objective.setModeQuery(objectiveCompleteGraphHard.isModeQuery());
 
 		CompleteGraphMatcher<IMolDistHist> cgMatcher = new CompleteGraphMatcher<>(objective);
 

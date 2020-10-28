@@ -279,8 +279,17 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 //		if(!finalized)
 //			realize();
 		
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder(toStringNodes());
+
+		sb.append(toStringHists());
 		
+		return sb.toString();
+	}
+
+	public String toStringNodes(){
+
+		StringBuilder sb = new StringBuilder();
+
 		sb.append("[");
 		for (int i = 0; i < getNumPPNodes(); i++) {
 			sb.append(getNode(i).toString());
@@ -290,23 +299,11 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 				sb.append("]");
 			}
 		}
-		
-		for (int i = 0; i < getNumPPNodes(); i++) {
-			for (int j = i+1; j < getNumPPNodes(); j++) {
-				byte [] arrHist = getDistHist(i,j);
-				
-				if(arrHist!=null)
-					sb.append(ArrayUtilsCalc.toString(arrHist));
-			}
-		}
-		
+
 		return sb.toString();
 	}
-	
+
 	public String toStringHists(){
-		
-		if(!finalized)
-			realize();
 
 		StringBuilder sb = new StringBuilder();
 		

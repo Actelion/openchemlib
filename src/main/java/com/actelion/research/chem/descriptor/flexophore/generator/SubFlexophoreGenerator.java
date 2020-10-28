@@ -1,10 +1,7 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
 import com.actelion.research.calc.combinatorics.CombinationGenerator;
-import com.actelion.research.chem.descriptor.flexophore.MolDistHist;
-import com.actelion.research.chem.descriptor.flexophore.MolDistHistViz;
-import com.actelion.research.chem.descriptor.flexophore.MolDistHistVizFrag;
-import com.actelion.research.chem.descriptor.flexophore.PPNodeViz;
+import com.actelion.research.chem.descriptor.flexophore.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -193,11 +190,10 @@ public class SubFlexophoreGenerator {
 
 	public static MolDistHist getSubFragment(MolDistHist mdh, int [] arrIndices){
 
-
 		MolDistHist frag = new MolDistHist(arrIndices.length);
 
 		for (int i = 0; i < arrIndices.length; i++) {
-			PPNodeViz node = new PPNodeViz(mdh.getNode(arrIndices[i]));
+			PPNode node = new PPNode(mdh.getNode(arrIndices[i]));
 			frag.addNode(node);
 		}
 
