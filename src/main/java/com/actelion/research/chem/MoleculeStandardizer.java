@@ -57,7 +57,7 @@ public class MoleculeStandardizer {
 
 	// Wrong tautomer, oxygen not charged
 	// OC=NC
-	private static final String idCodeBadAmide = "gCi@DDefDe}AX";
+	private static final String idCodeBadAmide = "gCi@DDefDeeD\u007FhK@";
 
 	// Carboxyl group to detect acidic H.
 	private static final String idCodeCarboxylGroup = "gC``@dfZ@~bnLqLG@HA@";
@@ -243,7 +243,11 @@ public class MoleculeStandardizer {
 
 		molStandard.normalizeAmbiguousBonds();
 
-		molStandard.canonizeCharge(false);
+		// molStandard.canonizeCharge(false);
+
+
+		molStandard.ensureHelperArrays(Molecule.cHelperRings);
+		molStandard.canonizeCharge(true);
 
 		molStandard.ensureHelperArrays(Molecule.cHelperRings);
 
@@ -278,6 +282,7 @@ public class MoleculeStandardizer {
 		repairBadAmideTautomer(mol);
 
 		// Has to be here.
+		// Prepares molecule for canonize charges
 		neutralizeNegative(mol);
 
 		neutralizeNegativeNitrogen(mol);
@@ -292,7 +297,8 @@ public class MoleculeStandardizer {
 
 		unifyAzido(mol);
 
-		balanceCharges(mol, mode);
+		// Prepares molecule for canonize charges
+		// balanceCharges(mol, mode);
 	}
 
 
