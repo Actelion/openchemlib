@@ -42,7 +42,6 @@ public class DistHistHelper {
 
         int n = mdh.getNumPPNodes();
 
-
         int nn = ((n*n)-n)/2;
         IntArray iaMaxRange = new IntArray(nn);
         IntArray iaMedianRange = new IntArray(nn);
@@ -62,7 +61,6 @@ public class DistHistHelper {
                 }
 
                 iaMaxRange.add(indexMax);
-
 
                 int indexMin = -1;
                 for (int k = 0; k < arr.length; k++) {

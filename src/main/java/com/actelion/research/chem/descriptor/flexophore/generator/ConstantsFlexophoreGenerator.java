@@ -14,7 +14,7 @@ public class ConstantsFlexophoreGenerator {
 
 
     /**
-     * Range histogram in Angstrom.
+     * Range histogram in Angstrom. As long as the molecule coordinates are in Angstrom.
      */
     public static final int RANGE_HISTOGRAM = 40;
 
