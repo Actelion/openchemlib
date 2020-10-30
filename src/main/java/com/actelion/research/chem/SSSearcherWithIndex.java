@@ -711,12 +711,12 @@ public class SSSearcherWithIndex {
 
 
 	public int getFirstHittingLongIndexBlockNo() {
-		if (mMoleculeIndexInt == null) {
+		if (mMoleculeIndexLong != null) {
 			for (int i=0; i<mMoleculeIndexLong.length; i++)
 				if ((mFragmentIndexLong[i] & ~mMoleculeIndexLong[i]) != 0)
 					return i;
 			}
-		else {
+		else if (mMoleculeIndexInt != null) {
 			for (int i=0; i<mMoleculeIndexInt.length; i++)
 				if ((mFragmentIndexInt[i] & ~mMoleculeIndexInt[i]) != 0)
 					return i;
@@ -743,15 +743,18 @@ public class SSSearcherWithIndex {
 	 * @return whether the fragment fingerprint bits are all present in the molecule bits
 	 */
 	public boolean isFragmentIndexInMoleculeIndex() {
-		if (mMoleculeIndexInt == null) {
+		if (mMoleculeIndexLong != null) {
 			for (int i=0; i<mMoleculeIndexLong.length; i++)
 				if ((mFragmentIndexLong[i] & ~mMoleculeIndexLong[i]) != 0)
 					return false;
 			}
-		else {
+		else if (mMoleculeIndexInt != null) {
 			for (int i=0; i<mMoleculeIndexInt.length; i++)
 				if ((mFragmentIndexInt[i] & ~mMoleculeIndexInt[i]) != 0)
 					return false;
+			}
+		else {
+			return false;
 			}
 
 		return true;
@@ -783,15 +786,18 @@ public class SSSearcherWithIndex {
 
 
 	public boolean isFragmentInMolecule() {
-		if (mMoleculeIndexInt == null) {
+		if (mMoleculeIndexLong != null) {
 			for (int i=0; i<mMoleculeIndexLong.length; i++)
 				if ((mFragmentIndexLong[i] & ~mMoleculeIndexLong[i]) != 0)
 					return false;
 			}
-		else {
+		else if (mMoleculeIndexInt != null) {
 			for (int i=0; i<mMoleculeIndexInt.length; i++)
 				if ((mFragmentIndexInt[i] & ~mMoleculeIndexInt[i]) != 0)
 					return false;
+			}
+		else {
+			return false;
 			}
 
 		return isFragmentInMoleculeWithoutIndex();
@@ -799,15 +805,18 @@ public class SSSearcherWithIndex {
 
 
 	public int findFragmentInMolecule() {
-		if (mMoleculeIndexInt == null) {
+		if (mMoleculeIndexLong != null) {
 			for (int i=0; i<mMoleculeIndexLong.length; i++)
 				if ((mFragmentIndexLong[i] & ~mMoleculeIndexLong[i]) != 0)
 					return 0;
 			}
-		else {
+		else if (mMoleculeIndexInt != null) {
 			for (int i=0; i<mMoleculeIndexInt.length; i++)
 				if ((mFragmentIndexInt[i] & ~mMoleculeIndexInt[i]) != 0)
 					return 0;
+			}
+		else {
+			return 0;
 			}
 
 		if (mMolecule == null)
@@ -826,15 +835,18 @@ public class SSSearcherWithIndex {
 	    }
 
 	public int findFragmentInMolecule(int countMode, int matchMode, final boolean[] atomExcluded) {
-		if (mMoleculeIndexInt == null) {
+		if (mMoleculeIndexLong != null) {
 			for (int i=0; i<mMoleculeIndexLong.length; i++)
 				if ((mFragmentIndexLong[i] & ~mMoleculeIndexLong[i]) != 0)
 					return 0;
 			}
-		else {
+		else if (mMoleculeIndexInt != null) {
 			for (int i=0; i<mMoleculeIndexInt.length; i++)
 				if ((mFragmentIndexInt[i] & ~mMoleculeIndexInt[i]) != 0)
 					return 0;
+			}
+		else {
+			return 0;
 			}
 
 		if (mMolecule == null)

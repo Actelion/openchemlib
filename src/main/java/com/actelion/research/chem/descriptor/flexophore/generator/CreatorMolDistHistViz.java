@@ -46,8 +46,6 @@ public class CreatorMolDistHistViz {
 
     private int conformationMode;
 
-    private MoleculeStandardizer moleculeStandardizer;
-
     private long seed;
 
     // for debugging
@@ -62,8 +60,6 @@ public class CreatorMolDistHistViz {
         subGraphExtractor = new SubGraphExtractor();
 
         conformerGenerator = new ConformerGenerator(seed, false);
-
-        moleculeStandardizer = new MoleculeStandardizer();
 
         conformationMode = CONF_GEN_TS;
 
@@ -111,7 +107,9 @@ public class CreatorMolDistHistViz {
 
         int nConformations = DescriptorHandlerFlexophore.NUM_CONFORMATIONS;
 
-        StereoMolecule molStand = moleculeStandardizer.getStandardized(molOrig);
+        StereoMolecule molStand = molOrig.getCompactCopy();
+
+        MoleculeStandardizer.standardize(molStand, MoleculeStandardizer.MODE_GET_PARENT);
 
         molStand.ensureHelperArrays(Molecule.cHelperRings);
 
@@ -120,8 +118,7 @@ public class CreatorMolDistHistViz {
         molInPlace.ensureHelperArrays(Molecule.cHelperRings);
 
         conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
-
-
+        
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
 
         //

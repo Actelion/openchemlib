@@ -15,14 +15,14 @@ public class ReactionSearchSpecification implements Serializable {
 
 	private int mSearchType;
 	private String[] mQuery;
-	private long[][] mReactionDescriptor,mReactantDescriptor,mProductDescriptor;
+	private long[][] mReactionDescriptor,mReactantDescriptor,mProductDescriptor,mRetronDescriptor;
 	private float mReactionCenterSimilarity,mPeripherySimilarity;
 
 	/**
-	 * Creates a complete specification for a reaction search (substructure, similarity, or retron) 
-	 * with one or more query reactions (generic or complete).
+	 * Creates a complete specification for a reaction similarity search
+	 * with one or more query reactions.
 	 * @param searchType one of TYPE_...
-	 * @param query list of encoded query reactions or retron structures
+	 * @param query list of encoded query reactions
 	 * @param reactionDescriptor null or query reaction descriptors
 	 * @param reactantDescriptor null or reactant FFP512 descriptors
 	 * @param productDescriptor null or product FFP512 descriptors
@@ -39,6 +39,36 @@ public class ReactionSearchSpecification implements Serializable {
 		mProductDescriptor = productDescriptor;
 		mReactionCenterSimilarity = reactionCenterSimilarity;
 		mPeripherySimilarity = peripherySimilarity;
+		}
+
+	/**
+	 * Creates a complete specification for a reaction substructure search
+	 * with one or more query generic reactions.
+	 * @param searchType one of TYPE_...
+	 * @param query list of encoded query reactions
+	 * @param reactionDescriptor null or query reaction descriptors
+	 * @param reactantDescriptor null or reactant FFP512 descriptors
+	 * @param productDescriptor null or product FFP512 descriptors
+	 */
+	public ReactionSearchSpecification(int searchType, String[] query,
+	                                   long[][] reactionDescriptor, long[][] reactantDescriptor, long[][] productDescriptor) {
+		mSearchType = searchType;
+		mQuery = query;
+		mReactionDescriptor = reactionDescriptor;
+		mReactantDescriptor = reactantDescriptor;
+		mProductDescriptor = productDescriptor;
+	}
+
+	/**
+	 * Creates a complete specification for a retron search
+	 * with one or more query retron substructures.
+	 * @param query list of encoded retron structures
+	 * @param retronDescriptor null or product FFP512 descriptors
+	 */
+	public ReactionSearchSpecification(String[] query, long[][] retronDescriptor) {
+		mSearchType = TYPE_RETRON;
+		mQuery = query;
+		mRetronDescriptor = retronDescriptor;
 		}
 
 	/**
@@ -88,6 +118,14 @@ public class ReactionSearchSpecification implements Serializable {
 		return (mProductDescriptor == null) ? null : mProductDescriptor[index];
 		}
 
+	/**
+	 * @param index
+	 * @return
+	 */
+	public long[] getRetronDescriptor(int index) {
+		return (mReactionDescriptor == null) ? null : mReactionDescriptor[index];
+		}
+
 	public boolean isSimilaritySearch() {
 		return (mSearchType & TYPE_MASK) == TYPE_SIMILARITY;
 		}
@@ -129,6 +167,7 @@ public class ReactionSearchSpecification implements Serializable {
 		mReactionDescriptor = null;
 		mReactantDescriptor = null;
 		mProductDescriptor = null;
+		mRetronDescriptor = null;
 		}
 
 	public float getReactionCenterSimilarity() {
@@ -152,7 +191,7 @@ public class ReactionSearchSpecification implements Serializable {
 
 		for (int i=0; i<count; i++) {
 			if (getEncodedQuery(i) == null || getEncodedQuery(i).length() == 0)   // TODO better validity checking
-				return "Empty reaction among query structures.";
+				return "Empty reaction among query reactions.";
 			}
 
 		if (isSimilaritySearch()) {
@@ -168,15 +207,17 @@ public class ReactionSearchSpecification implements Serializable {
 	@Override
 	public String toString() {
 		int type = mSearchType & TYPE_MASK;
-		String typeString = ((type == TYPE_SUBREACTION)	? "subreaction"
+		String typeString = ((type == TYPE_SUBREACTION) 	? "subreaction"
 						   : (type == TYPE_SIMILARITY)		? "similarity("+mReactionCenterSimilarity+"/"+mPeripherySimilarity+")"
+						   : (type == TYPE_RETRON)      	? "retron"
 						   : (type == TYPE_EXACT_STRICT)	? "exact"
 						   : (type == TYPE_EXACT_NO_STEREO)	? "noStereo" : "undefined");
 
 		return "type:"+typeString
-			 + (mQuery ==null?" reaction:null": mQuery.length==1?" reaction:"+(mQuery[0]==null?"null": mQuery[0]):" reactionCount:"+ mQuery.length)
-			 + (mReactionDescriptor==null?" reactionDescriptors:null":" reactionDescriptorCount:"+mReactionDescriptor.length)
-			 + (mReactantDescriptor==null?" reactantDescriptors:null":" reactantDescriptorCount:"+mReactantDescriptor.length)
-			 + (mProductDescriptor==null?" productDescriptors:null":" productDescriptorCount:"+mProductDescriptor.length);
+			 + (mQuery==null?" reaction:null": mQuery.length==1?" reaction:"+(mQuery[0]==null?"null": mQuery[0]):" reactionCount:"+ mQuery.length)
+			 + (mReactionDescriptor==null?"":" reactionDescriptorCount:"+mReactionDescriptor.length)
+			 + (mReactantDescriptor==null?"":" reactantDescriptorCount:"+mReactantDescriptor.length)
+			 + (mProductDescriptor==null?"":" productDescriptorCount:"+mProductDescriptor.length)
+			 + (mRetronDescriptor==null?"":" retronDescriptorCount:"+mRetronDescriptor.length);
 		}
 	}

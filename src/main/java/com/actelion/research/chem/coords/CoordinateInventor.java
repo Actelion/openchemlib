@@ -74,9 +74,9 @@ public class CoordinateInventor {
 	/**
 	 * Creates an CoordinateInventor, which removes unneeded hydrogen atoms
 	 * and creates new atom coordinates for all(!) atoms.
-	 * If setDefaultTemplates(new InventorDefaultTemplateList()) was called,
-	 * then these templates are used to create 3D-projection kind of coordinates
-	 * for polycyclic structures from these templates (adamantanes, cubane, etc.).
+	 * This constructor creates a CoordinateInventor that uses templates
+	 * of the InventorDefaultTemplateList to create 3D-projection derived coordinates for
+	 * polycyclic structures from these templates (adamantanes, cubane, etc.).
 	 */
 	public CoordinateInventor () {
 		this(MODE_REMOVE_HYDROGEN);
@@ -88,9 +88,9 @@ public class CoordinateInventor {
 	 * MODE_REMOVE_HYDROGEN. If mode includes MODE_KEEP_MARKED_ATOM_COORDS, then marked atoms
 	 * keep their coordinates. If mode includes MODE_PREFER_MARKED_ATOM_COORDS, then coordinates
 	 * of marked atoms are changed only, if perfect coordinates are not possible without.
-	 * If setDefaultTemplates(new InventorDefaultTemplateList()) was called and mode does not
-	 * include MODE_SKIP_DEFAULT_TEMPLATES, then these templates are used to create 3D-projection
-	 * kind of coordinates for polycyclic structures from these templates (adamantanes, cubane, etc.).
+	 * Unless mode includes MODE_SKIP_DEFAULT_TEMPLATES, the CoordinateInventor uses templates
+	 * of the InventorDefaultTemplateList to create 3D-projection derived coordinates for
+	 * polycyclic structures from these templates (adamantanes, cubane, etc.).
 	 * @param mode
 	 */
 	public CoordinateInventor (int mode) {

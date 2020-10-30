@@ -18,11 +18,11 @@ public class ReactionSearch {
 	private volatile StructureSearchController mSearchController;
 	private volatile ProgressController mProgressController;
 	private volatile Reaction[] mQueryReaction;
-	private volatile StereoMolecule[] mQueryReactant,mQueryProduct;
+	private volatile StereoMolecule[] mQueryReactant,mQueryProduct,mQueryRetron;
 	private volatile long[] mQueryHash;
 	private volatile DescriptorHandlerLongFFP512 mDescriptorHandlerFFP512;
 	private volatile DescriptorHandlerReactionFP mDescriptorHandlerRxnFP;
-	private volatile long[][] mQueryReactionDescriptor,mQueryReactantDescriptor,mQueryProductDescriptor;
+	private volatile long[][] mQueryReactionDescriptor,mQueryReactantDescriptor,mQueryProductDescriptor,mQueryRetronDescriptor;
 	private volatile int mMaxSSSMatches,mMaxNonSSSMatches;
 	private ConcurrentLinkedQueue<Integer> mResultQueue;
 	private AtomicInteger mSMPIndex,mMatchCount;
@@ -51,7 +51,8 @@ public class ReactionSearch {
 			if (mSpecification.isSimilaritySearch()) {
 				mDescriptorHandlerRxnFP = DescriptorHandlerReactionFP.getDefaultInstance();
 				}
-			else if (mSpecification.isSubreactionSearch()) {
+			else if (mSpecification.isSubreactionSearch()
+				  || mSpecification.isRetronSearch()) {
 				mDescriptorHandlerFFP512 = DescriptorHandlerLongFFP512.getDefaultInstance();
 				}
 			}
@@ -82,6 +83,8 @@ public class ReactionSearch {
 
 			if (mSpecification.isSubreactionSearch()) {
 				mQueryReaction = new Reaction[queryReactionCount];
+				mQueryReactant = new StereoMolecule[queryReactionCount];
+				mQueryProduct = new StereoMolecule[queryReactionCount];
 				for (int i=0; i<queryReactionCount; i++) {
 					mQueryReactant[i] = mergeMolecules(ReactionEncoder.decodeMolecules(mSpecification.getEncodedQuery(i), true, true, true, false));
 					mQueryReactant[i].ensureHelperArrays(Molecule.cHelperParities);
@@ -94,15 +97,12 @@ public class ReactionSearch {
 				ensureMoleculeDescriptors();
 				}
 			else if (mSpecification.isRetronSearch()) {
-				mQueryReactant = new StereoMolecule[queryReactionCount];
-				mQueryProduct = new StereoMolecule[queryReactionCount];
+				mQueryRetron = new StereoMolecule[queryReactionCount];
 				for (int i=0; i<queryReactionCount; i++) {
-					mQueryReactant[i] = mergeMolecules(ReactionEncoder.decodeMolecules(mSpecification.getEncodedQuery(i), true, false, true, false));
-					mQueryReactant[i].ensureHelperArrays(Molecule.cHelperParities);
-					mQueryProduct[i] = mergeMolecules(ReactionEncoder.decodeMolecules(mSpecification.getEncodedQuery(i), true, false, false, true));
-					mQueryProduct[i].ensureHelperArrays(Molecule.cHelperParities);
+					mQueryRetron[i] = new IDCodeParser(false).getCompactMolecule(mSpecification.getEncodedQuery(i));
+					mQueryRetron[i].ensureHelperArrays(Molecule.cHelperParities);
 					}
-				ensureMoleculeDescriptors();
+				ensureRetronDescriptors();
 				}
 			else if (mSpecification.isSimilaritySearch()) {
 				ensureReactionDescriptors();
@@ -193,6 +193,43 @@ public class ReactionSearch {
 							mQueryReactantDescriptor[index] = mDescriptorHandlerFFP512.createDescriptor(mQueryReactant[index]);
 						if (mQueryProductDescriptor[index] == null)
 							mQueryProductDescriptor[index] = mDescriptorHandlerFFP512.createDescriptor(mQueryProduct[index]);
+						}
+					}
+				};
+			t[i].setPriority(Thread.MIN_PRIORITY);
+			t[i].start();
+			}
+
+		for (int i=0; i<threadCount; i++)
+			try { t[i].join(); } catch (InterruptedException e) {}
+		}
+
+	private void ensureRetronDescriptors() {
+		final int queryReactionCount = mSpecification.getReactionCount();
+		mQueryRetronDescriptor = new long[queryReactionCount][];
+		boolean missingDescriptorFound = false;
+		for (int i=0; i<queryReactionCount; i++) {
+			mQueryRetronDescriptor[i] = mSpecification.getRetronDescriptor(i);
+			if (mQueryRetronDescriptor[i] == null)
+				missingDescriptorFound = true;
+			}
+
+		if (!missingDescriptorFound)
+			return;
+
+		mSMPIndex = new AtomicInteger(queryReactionCount);
+		int threadCount = Math.min(queryReactionCount, Runtime.getRuntime().availableProcessors());
+		Thread[] t = new Thread[threadCount];
+		for (int i=0; i<threadCount; i++) {
+			t[i] = new Thread("Query Descriptor Calculation "+(i+1)) {
+				public void run() {
+					while (true) {
+						int index = mSMPIndex.decrementAndGet();
+						if (index < 0)
+							break;
+
+						if (mQueryRetronDescriptor[index] == null)
+							mQueryRetronDescriptor[index] = mDescriptorHandlerFFP512.createDescriptor(mQueryRetron[index]);
 						}
 					}
 				};
@@ -297,11 +334,10 @@ public class ReactionSearch {
 								}
 							}
 						else {  // retron search
-							for (int i = 0; i<mQueryReaction.length; i++) {
-								if (!mDescriptorHandlerFFP512.calculationFailed(mQueryReactantDescriptor[i])
-								 && !mDescriptorHandlerFFP512.calculationFailed(mQueryProductDescriptor[i])) {
+							for (int i = 0; i<mQueryRetron.length; i++) {
+								if (!mDescriptorHandlerFFP512.calculationFailed(mQueryRetronDescriptor[i])) {
 									long[] productFFP = mDataSource.getProductDescriptor(row);
-									mProductSearcher.setFragment(mQueryProduct[i], mQueryProductDescriptor[i]);
+									mProductSearcher.setFragment(mQueryRetron[i], mQueryRetronDescriptor[i]);
 									mProductSearcher.setMolecule((StereoMolecule)null, productFFP);
 									if (mProductSearcher.isFragmentIndexInMoleculeIndex()) {
 										StereoMolecule product = mergeMolecules(ReactionEncoder.decodeMolecules(
@@ -312,7 +348,7 @@ public class ReactionSearch {
 										int inProductCount = mProductSearcher.findFragmentInMoleculeWithoutIndex(SSSearcher.cCountModeOverlapping);
 										if (inProductCount != 0) {
 											long[] reactantFFP = mDataSource.getReactantDescriptor(row);
-											mReactantSearcher.setFragment(mQueryReactant[i], mQueryReactantDescriptor[i]);
+											mReactantSearcher.setFragment(mQueryRetron[i], mQueryRetronDescriptor[i]);
 											mReactantSearcher.setMolecule((StereoMolecule)null, reactantFFP);
 											int inReactantCount = 0;
 											if (mReactantSearcher.isFragmentIndexInMoleculeIndex()) {
