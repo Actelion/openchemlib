@@ -1,10 +1,7 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
 import com.actelion.research.calc.combinatorics.CombinationGenerator;
-import com.actelion.research.chem.descriptor.flexophore.MolDistHist;
-import com.actelion.research.chem.descriptor.flexophore.MolDistHistViz;
-import com.actelion.research.chem.descriptor.flexophore.MolDistHistVizFrag;
-import com.actelion.research.chem.descriptor.flexophore.PPNodeViz;
+import com.actelion.research.chem.descriptor.flexophore.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,7 +20,128 @@ import java.util.List;
  */
 public class SubFlexophoreGenerator {
 
-	
+
+	private int minBinDistThresh;
+	private int maxDistanceBinThresh;
+	private int minNumDifferentInteractionTypes;
+
+	private ViolatedConditionsCount violatedConditionsCount;
+
+	private HashSet<Integer> hsInteractionType;
+
+	/**
+	 *
+	 * @param minBinDistThresh
+	 * @param maxDistanceBinThresh
+	 * @param minNumDifferentInteractionTypes
+	 */
+	public SubFlexophoreGenerator(int minBinDistThresh, int maxDistanceBinThresh, int minNumDifferentInteractionTypes) {
+		this.minBinDistThresh = minBinDistThresh;
+		this.maxDistanceBinThresh = maxDistanceBinThresh;
+		this.minNumDifferentInteractionTypes = minNumDifferentInteractionTypes;
+
+		violatedConditionsCount = new ViolatedConditionsCount();
+
+		hsInteractionType = new HashSet<>();
+	}
+
+	public List<MolDistHist> generateSubPharmacophoresCheckedRange(MolDistHist mdh, int size){
+
+		List<int[]> liIndSub = CombinationGenerator.getAllOutOf(mdh.getNumPPNodes(), size);
+		if(liIndSub == null)
+			return null;
+
+		List<MolDistHist> liMolDistHistSub = new ArrayList<>();
+
+		for (int[] arrIndSub : liIndSub) {
+			MolDistHist mdhSub = getSubFragmentCheckedRange(mdh, arrIndSub);
+			if(mdhSub==null) {
+				continue;
+			}
+
+			//
+			// check minimum requirements
+			//
+			int nNodes = mdhSub.getNumPPNodes();
+			hsInteractionType.clear();
+			for (int k = 0; k < nNodes; k++) {
+				PPNode node = mdhSub.getNode(k);
+				int nIATypes = node.getInteractionTypeCount();
+				for (int l = 0; l < nIATypes; l++) {
+					int iaType = node.getInteractionType(l);
+					hsInteractionType.add(iaType);
+				}
+			}
+
+			if(hsInteractionType.size()<minNumDifferentInteractionTypes){
+				violatedConditionsCount.ccViolatedMinDiffInteractionTypes++;
+				continue;
+			}
+
+			liMolDistHistSub.add(mdhSub);
+
+		}
+
+		return liMolDistHistSub;
+	}
+
+	public MolDistHist getSubFragmentCheckedRange(MolDistHist mdh, int [] arrIndices){
+
+		MolDistHist frag = new MolDistHist(arrIndices.length);
+
+		for (int i = 0; i < arrIndices.length; i++) {
+			PPNode node = new PPNode(mdh.getNode(arrIndices[i]));
+			frag.addNode(node);
+		}
+
+		boolean minDistReached = false;
+		boolean maxDistViolated = false;
+
+		violated:
+		for (int i = 0; i < arrIndices.length; i++) {
+			for (int j = i+1; j < arrIndices.length; j++) {
+				byte [] arrHist = mdh.getDistHist(arrIndices[i],arrIndices[j]);
+
+				if(!minDistReached) {
+					for (int length = minBinDistThresh; length < arrHist.length; length++) {
+						if (arrHist[length] > 0) {
+							minDistReached = true;
+							break;
+						}
+					}
+				}
+
+				for (int k = arrHist.length - 1; k > maxDistanceBinThresh; k--) {
+					if (arrHist[k] > 0) {
+						maxDistViolated = true;
+						break violated;
+					}
+				}
+				frag.setDistHist(i,j,arrHist);
+			}
+		}
+
+		if(!minDistReached || maxDistViolated){
+
+			if(!minDistReached){
+				violatedConditionsCount.ccMissedMinRange++;
+			}
+			if(maxDistViolated){
+				violatedConditionsCount.ccViolatedMaxRange++;
+			}
+
+			return null;
+		}
+		frag.realize();
+		return frag;
+	}
+
+
+	public ViolatedConditionsCount getViolatedConditionsCount() {
+		return violatedConditionsCount;
+	}
+
+
 	public static List<MolDistHistViz> generateSubPharmacophores(MolDistHistViz mdhv, int minNumPPPoints, int maxNumPPPoints){
 		
 		List<HashSet<MolDistHistViz>> liHsMolDistHistViz = new ArrayList<HashSet<MolDistHistViz>>();
@@ -50,6 +168,12 @@ public class SubFlexophoreGenerator {
 		
 		return liMDHVSubAll;
 	}
+
+
+
+
+
+
 
 	public static List<MolDistHistViz> generateSubPharmacophores(List<MolDistHistViz> liMDHV, int minNumPPPoints, int maxNumPPPoints){
 		
@@ -191,13 +315,13 @@ public class SubFlexophoreGenerator {
 		return liMolDistHistSub;
 	}
 
-	public static MolDistHist getSubFragment(MolDistHist mdh, int [] arrIndices){
 
+	public static MolDistHist getSubFragment(MolDistHist mdh, int [] arrIndices){
 
 		MolDistHist frag = new MolDistHist(arrIndices.length);
 
 		for (int i = 0; i < arrIndices.length; i++) {
-			PPNodeViz node = new PPNodeViz(mdh.getNode(arrIndices[i]));
+			PPNode node = new PPNode(mdh.getNode(arrIndices[i]));
 			frag.addNode(node);
 		}
 
@@ -213,5 +337,36 @@ public class SubFlexophoreGenerator {
 		return frag;
 	}
 
+	public static class ViolatedConditionsCount {
+
+		private long ccMissedMinRange;
+		private long ccViolatedMaxRange;
+		private long ccViolatedMinDiffInteractionTypes;
+
+
+		public ViolatedConditionsCount() {
+			ccMissedMinRange=0;
+			ccViolatedMaxRange=0;
+			ccViolatedMinDiffInteractionTypes=0;
+		}
+
+		public void add(ViolatedConditionsCount v){
+			ccMissedMinRange +=v.ccMissedMinRange;
+			ccViolatedMaxRange +=v.ccViolatedMaxRange;
+			ccViolatedMinDiffInteractionTypes +=v.ccViolatedMinDiffInteractionTypes;
+		}
+
+		public long getCcMissedMinRange() {
+			return ccMissedMinRange;
+		}
+
+		public long getCcViolatedMaxRange() {
+			return ccViolatedMaxRange;
+		}
+
+		public long getCcViolatedMinDiffInteractionTypes() {
+			return ccViolatedMinDiffInteractionTypes;
+		}
+	}
 
 }

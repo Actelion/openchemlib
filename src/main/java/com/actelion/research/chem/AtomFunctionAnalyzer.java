@@ -194,25 +194,19 @@ public class AtomFunctionAnalyzer {
 	}
 
 	public static boolean isAcidicOxygen(StereoMolecule mol, int atom) {
-		
-		boolean acidic=false;
-		
-		if (mol.getAtomicNo(atom) != 8)
-			return false;
-		
-		if (mol.getConnAtoms(atom) != 1)
+		if (mol.getAtomicNo(atom) != 8
+		 || mol.getAtomCharge(atom) != 0
+		 || mol.getConnAtoms(atom) != 1
+		 || mol.getConnBondOrder(atom, 0) != 1)
 			return false;
 
-		if (mol.getConnBondOrder(atom, 0) != 1)
-			return false;
-
-		int indexConnected = mol.getConnAtom(atom, 0);
+		int connAtom = mol.getConnAtom(atom, 0);
 
 		// COOH
-		if(mol.getAtomicNo(indexConnected)==6){
-			int nConnected2C = mol.getConnAtoms(indexConnected);
+		if(mol.getAtomicNo(connAtom)==6){
+			int nConnected2C = mol.getConnAtoms(connAtom);
 			for (int i = 0; i < nConnected2C; i++) {
-				int indexAtom = mol.getConnAtom(indexConnected, i);
+				int indexAtom = mol.getConnAtom(connAtom, i);
 				
 				if(indexAtom==atom){
 					continue;
@@ -222,85 +216,70 @@ public class AtomFunctionAnalyzer {
 					continue;
 				}
 				
-				int indexBond = mol.getBond(indexConnected, indexAtom);
+				int indexBond = mol.getBond(connAtom, indexAtom);
 				
-				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble){
-					acidic=true;
-					break;
-				}
+				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble)
+					return true;
 			}
-		} else if (mol.getAtomicNo(indexConnected) == 7) {
-			if (mol.getAtomCharge(indexConnected) == 1) // (N+)-OH
-				acidic=true;
-		} else if (mol.getAtomicNo(indexConnected) == 16) { // CSOOOH
-			int nConnected2S = mol.getConnAtoms(indexConnected);
+		} else if (mol.getAtomicNo(connAtom) == 7) {
+			if (mol.getAtomCharge(connAtom) == 1) // (N+)-OH
+				return true;
+		} else if (mol.getAtomicNo(connAtom) == 16) { // CSOOOH
+			int nConnected2S = mol.getConnAtoms(connAtom);
 			
 			int nDoubleBondedO2S=0;
 			for (int i = 0; i < nConnected2S; i++) {
-				int indexAtom = mol.getConnAtom(indexConnected, i);
+				int indexAtom = mol.getConnAtom(connAtom, i);
 				
-				if(indexAtom==atom){
+				if(indexAtom==atom)
 					continue;
-				}
-				
-				if(mol.getAtomicNo(indexAtom) != 8){
+
+				if(mol.getAtomicNo(indexAtom) != 8)
 					continue;
-				}
+
+				int indexBond = mol.getBond(connAtom, indexAtom);
 				
-				int indexBond = mol.getBond(indexConnected, indexAtom);
-				
-				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble){
+				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble)
 					nDoubleBondedO2S++;
-				}
 			}
 			
-			if(nDoubleBondedO2S==2){
-				acidic=true;
-			}
-			
-		} else if(isAcidicOxygenAtPhosphoricAcid(mol, atom)){ // CP=O(OH)(OH)
-			acidic=true;
-				
-		}
-		
-		return acidic;
+			if(nDoubleBondedO2S == 2)
+				return true;
+		} else if(isAcidicOxygenAtPhosphoricAcid(mol, atom)) // CP=O(OH)(OH)
+			return true;
+
+		return false;
 	}
 	
 	public static boolean isAcidicOxygenAtPhosphoricAcid(StereoMolecule mol, int atom) {
-		boolean acidic=false;
-		
 		if (mol.getAtomicNo(atom) != 8)
 			return false;
 		
 		if (mol.getConnAtoms(atom)!=1)
 			return false;
 		
-		int indexConnected = mol.getConnAtom(atom, 0);
+		int connAtom = mol.getConnAtom(atom, 0);
 		
-		if(mol.getAtomicNo(indexConnected)==15){ // CP=O(OH)(OH)
-			int nConnected2P = mol.getConnAtoms(indexConnected);
+		if(mol.getAtomicNo(connAtom)==15){ // CP=O(OH)(OH)
+			int nConnected2P = mol.getConnAtoms(connAtom);
 			
 			for (int i = 0; i < nConnected2P; i++) {
-				int indexAtom = mol.getConnAtom(indexConnected, i);
+				int indexAtom = mol.getConnAtom(connAtom, i);
 				
-				if(indexAtom==atom){
+				if(indexAtom==atom)
 					continue;
-				}
-				
-				if(mol.getAtomicNo(indexAtom) != 8){
+
+				if(mol.getAtomicNo(indexAtom) != 8)
 					continue;
-				}
+
+				int indexBond = mol.getBond(connAtom, indexAtom);
 				
-				int indexBond = mol.getBond(indexConnected, indexAtom);
-				
-				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble){
-					acidic=true;
-					break;
-				}
+				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble)
+					return true;
 			}
 		}
 		
-		return acidic;
+		return false;
 	}
 	
 
@@ -374,10 +353,9 @@ public class AtomFunctionAnalyzer {
 	
 	
 	public static boolean isBasicNitrogen(StereoMolecule mol, int atom) {
-		if (mol.getAtomicNo(atom) != 7)
-			return false;
-
-		if (mol.getConnAtoms(atom) + mol.getAtomPi(atom) > 3)
+		if (mol.getAtomicNo(atom) != 7
+		 || mol.getAtomCharge(atom) != 0
+		 || (mol.getConnAtoms(atom) + mol.getAtomPi(atom) > 3))
 			return false;
 
 		if (mol.isAromaticAtom(atom)) {

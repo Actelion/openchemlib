@@ -514,6 +514,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	/**
 	 * The sum of bond orders of explicitly connected neighbour atoms including explicit hydrogen.
 	 * In case of a fragment the occupied valence does not include bonds to atoms of which the cAtomQFExcludeGroup flag is set.
+	 * Atom charge and radical states are not considered.
 	 * @param atom
 	 * @return explicitly used valence
 	 */
@@ -1079,7 +1080,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		int[] atomMap = compressMolTable();
 		mValidHelperArrays = cHelperNone;
 
-		try { canonizeCharge(true); } catch (Exception e) {}
+		try { canonizeCharge(true, true); } catch (Exception e) {}
 
 		return atomMap;
 		}
@@ -2524,9 +2525,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	public boolean normalizeAmbiguousBonds() {
 		ensureHelperArrays(cHelperNeighbours);
 
-		// Molecules from Marvin Sketch, if generated from SMILES, may contains delocalized bonds
+		// Molecules from Marvin Sketch, if generated from SMILES, may contain delocalized bonds
 		// using the Daylight aromaticity model, e.g. with aromatic carbonyl carbons in case of pyridinone.
-		// Before generating idcodes, we need tp convert to cumulated double bonds and use our own
+		// Before generating idcodes, we need to convert to cumulated double bonds and use our own
 		// aromaticity model to locate delocalized bonds.
 		normalizeExplicitlyDelocalizedBonds();
 
@@ -2537,7 +2538,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				int valence = getOccupiedValence(atom);
 				if (valence == 4) {
 					// normalize -N(=O)-OH to -N(+)(=O)-O(-)
-					for (int i = 0; i< mConnAtoms[atom]; i++) {
+					for (int i=0; i<mConnAtoms[atom]; i++) {
 						int connAtom = mConnAtom[atom][i];
 						if (mConnBondOrder[atom][i] == 1
 						 && mAtomicNo[connAtom] == 8
@@ -2552,7 +2553,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 					}
 				else if (valence == 5) {
 					// normalize -N(=O)2 to -N(+)(=O)-O(-), -N#N to -N(+)=N(-),
-					for (int i = 0; i< mConnAtoms[atom]; i++) {
+					for (int i=0; i<mConnAtoms[atom]; i++) {
 						int connAtom = mConnAtom[atom][i];
 						int connBond = mConnBond[atom][i];
 						if (mConnBondOrder[atom][i] == 2
@@ -2683,15 +2684,41 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 	/**
-	 * Canonizes charge distribution in single- and multifragment molecules.
+	 * Normalizes charge distribution in single- and multifragment molecules.
+	 * In a first step polar bonds (both atoms have opposite charge) are neutralized
+	 * by removing both atom charges and increasing the bond order, provided that atom
+	 * valences allow the change.
 	 * Neutralizes positive and an equal amount of negative charges on electronegative atoms,
 	 * provided these are not on 1,2-dipolar structures, in order to ideally achieve a neutral molecule.
 	 * This method does not change the overall charge of the molecule. It does not change the number of
 	 * explicit atoms or bonds or their connectivity except bond orders.
+	 * This method does not deprotonate acidic groups to compensate for quarternary charged nitrogen.
+	 * @param allowUnbalancedCharge throws an exception after polar bond neutralization, if overall charge is not zero
 	 * @return remaining overall molecule charge
 	 */
 	public int canonizeCharge(boolean allowUnbalancedCharge) throws Exception {
+		return canonizeCharge(allowUnbalancedCharge, false);
+		}
+
+	/**
+	 * Normalizes charge distribution in single- and multifragment molecules.
+	 * In a first step polar bonds (both atoms have opposite charge) are neutralized
+	 * by removing both atom charges and increasing the bond order, provided that atom
+	 * valences allow the change.
+	 * Neutralizes positive and an equal amount of negative charges on electronegative atoms,
+	 * provided these are not on 1,2-dipolar structures, in order to ideally achieve a neutral molecule.
+	 * This method may change the overall charge of the molecule if doNeutralize==true.
+	 * It does not change the number of explicit atoms or bonds or their connectivity except bond orders.
+	 * This method does not deprotonate acidic groups to compensate for quarternary charged nitrogen.
+	 * @param allowUnbalancedCharge throws an exception after polar bond neutralization, if overall charge is not zero
+	 * @param doNeutralize if true, then tries to neutralize the molecule if overall charges are not zero
+	 * @return remaining overall molecule charge
+	 */
+	public int canonizeCharge(boolean allowUnbalancedCharge, boolean doNeutralize) throws Exception {
 		ensureHelperArrays(cHelperNeighbours);
+
+		if (doNeutralize)
+			allowUnbalancedCharge = true;
 
 		for (int bond=0; bond<mAllBonds; bond++) {
 			int bondOrder = getBondOrder(bond);
@@ -2718,10 +2745,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				 || (mAtomicNo[atom2] < 9 && getOccupiedValence(atom2) > 3))
 						continue;
 
-				// don't destroy stereo centers like sulfoxides
-				if ((mAtomicNo[atom1] >= 14 && mConnAtoms[atom1] >= 3)
-				 || (mAtomicNo[atom1] >= 14 && mConnAtoms[atom1] >= 3))
-					continue;
+				int oldBondType = mBondType[bond];
 
 				mAtomCharge[atom1] -= 1;
 				mAtomCharge[atom2] += 1;
@@ -2729,6 +2753,17 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 					mBondType[bond] = cBondTypeDouble;
 				else
 					mBondType[bond] = cBondTypeTriple;
+
+				if (oldBondType == cBondTypeDown
+				 || oldBondType == cBondTypeUp) {   // retain stereo information
+					int stereoCenter = mBondAtom[0][bond];
+					int newStereoBond = preferredTHStereoBond(stereoCenter);
+					if (mBondAtom[0][newStereoBond] != stereoCenter) {
+						mBondAtom[1][newStereoBond] = mBondAtom[0][newStereoBond];
+						mBondAtom[1][newStereoBond] = stereoCenter;
+						}
+					}
+
 				mValidHelperArrays = cHelperNone;
 				}
 			}
@@ -2750,14 +2785,16 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		ensureHelperArrays(cHelperNeighbours);
 		int overallChargeChange = 0;
+		int positiveChargeForRemoval = doNeutralize ?
+					overallCharge + negativeAdjustableCharge : negativeAdjustableCharge;
 		for (int atom=0; atom<mAllAtoms; atom++) {
 			if (mAtomCharge[atom] > 0) {
 				if (!hasNegativeNeighbour(atom) && isElectronegative(atom)) {
 					int chargeReduction = Math.min(getImplicitHydrogens(atom), mAtomCharge[atom]);
-					if (chargeReduction != 0 && negativeAdjustableCharge >= chargeReduction) {
+					if (chargeReduction != 0 && positiveChargeForRemoval >= chargeReduction) {
 						overallCharge -= chargeReduction;
 						overallChargeChange -= chargeReduction;
-						negativeAdjustableCharge -= chargeReduction;
+						positiveChargeForRemoval -= chargeReduction;
 						mAtomCharge[atom] -= chargeReduction;
 						mValidHelperArrays &= cHelperNeighbours;
 						}
@@ -2765,24 +2802,25 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				}
 			}
 
-		if (overallChargeChange < 0) {
+		int negativeChargeForRemoval = doNeutralize ? overallCharge : overallChargeChange;
+		if (negativeChargeForRemoval < 0) {
 			int[] negativeAtom = new int[negativeAtomCount];
 			negativeAtomCount = 0;
 			for (int atom=0; atom<mAllAtoms; atom++) {
 				if (mAtomCharge[atom] < 0 && !hasPositiveNeighbour(atom)) {
 					// Ideally priorities for negative atom protonation should
 					// be done based on atom priorities from Canonizer.
-					negativeAtom[negativeAtomCount++] = (mAtomicNo[atom] << 16)
+					negativeAtom[negativeAtomCount++] = (mAtomicNo[atom] << 22)
 													  + atom;
 					}
 				}
 			java.util.Arrays.sort(negativeAtom);
-			for (int i=negativeAtom.length-1; (overallChargeChange < 0) && (i>=negativeAtom.length-negativeAtomCount); i--) {
-				int atom = negativeAtom[i] & 0x0000FFFF;
+			for (int i=negativeAtom.length-1; (negativeChargeForRemoval < 0) && (i>=negativeAtom.length-negativeAtomCount); i--) {
+				int atom = negativeAtom[i] & 0x003FFFFF;
 				if (isElectronegative(atom)) {
-					int chargeReduction = Math.min(-overallChargeChange, -mAtomCharge[atom]);
+					int chargeReduction = Math.min(-negativeChargeForRemoval, -mAtomCharge[atom]);
 					overallCharge += chargeReduction;
-					overallChargeChange += chargeReduction;
+					negativeChargeForRemoval += chargeReduction;
 					mAtomCharge[atom] += chargeReduction;
 					mValidHelperArrays &= cHelperNeighbours;
 					}
