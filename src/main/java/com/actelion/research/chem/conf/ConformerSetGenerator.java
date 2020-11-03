@@ -47,6 +47,7 @@ public class ConformerSetGenerator {
 	
 	public ConformerSet generateConformerSet(StereoMolecule mol) {   
 		StereoMolecule m = new StereoMolecule(mol);
+		m.ensureHelperArrays(Molecule.cHelperCIP);
 		m.stripSmallFragments();
 		ConformerGenerator.addHydrogenAtoms(m);
 		Canonizer can = new Canonizer(m);
