@@ -169,7 +169,8 @@ public class DockingEngine {
 		double bestEnergy = Double.MAX_VALUE;
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
-		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+		if(ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS)==null)
+			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		ConformerSet startPoints = new ConformerSet();
 		double eMin = getStartingPositions(mol, startPoints);
 		for(Conformer ligConf : startPoints) {
