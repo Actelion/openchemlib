@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
 import com.actelion.research.calc.Matrix;
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
@@ -39,7 +40,7 @@ public class DockingEngine {
 	public enum ScoringFunction {CHEMPLP,IDOSCORE;}
 	public enum StartPosition {PHESA, RANDOM;}
 	private static final int DEFAULT_NR_MC_STEPS = 50;
-	private static final int DEFAULT_START_POSITIONS = 25;
+	private static final int DEFAULT_START_POSITIONS = 15;
 	private static final double BOLTZMANN_FACTOR = 1.2; //as for AutoDock Vina
 	public static final double GRID_DIMENSION = 6.0;
 	public static final double GRID_RESOLUTION = 0.5;
@@ -56,12 +57,14 @@ public class DockingEngine {
 	private StartPosition startPosition;
 
 	
-	public DockingEngine(Molecule3D receptor, Molecule3D nativeLig, int mcSteps, int startPositions,
+	public DockingEngine(Molecule3D rec, Molecule3D nativeLig, int mcSteps, int startPositions,
 			ScoringFunction scoringFunction, StartPosition startPosition) {
 
 		this.startPosition = startPosition;
 		nativeLigand = new Molecule3D(nativeLig);
 		nativeLigand.ensureHelperArrays(Molecule.cHelperCIP);
+		Molecule3D receptor = new Molecule3D(rec);
+		receptor.ensureHelperArrays(Molecule.cHelperCIP);
 		MolecularVolume molVol = new MolecularVolume(nativeLigand);
 		origCOM  = new Coordinates(molVol.getCOM());
 		Conformer conf = new Conformer(nativeLigand);
@@ -132,9 +135,8 @@ public class DockingEngine {
 				if(e<eMin)
 					eMin = e;
 			}
-			
 		}
-		
+	
 		else if(startPosition==StartPosition.RANDOM) {
 			for(Conformer conformer : confSet) {
 				if(conformer!=null) {
@@ -311,6 +313,39 @@ public class DockingEngine {
 			c.sub(origCOM);
 			c.rotate(rot);
 		}
+		
+		
+	}
+	
+	public double evaluateNativePose() {
+		Molecule3D nativePose = new Molecule3D(nativeLigand);
+		new Canonizer(nativePose);
+		ConformerSetGenerator confSetGen = new ConformerSetGenerator(100,ConformerGenerator.STRATEGY_LIKELY_RANDOM, false,
+				LigandPose.SEED);
+		ConformerSet confSet = confSetGen.generateConformerSet(nativePose);
+		double eMin = Double.MAX_VALUE;
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+		ConformerSet initialPos = new ConformerSet();
+		for(Conformer conformer : confSet) {
+			if(conformer!=null) {
+				StereoMolecule conf = conformer.toMolecule();
+				conf.ensureHelperArrays(Molecule.cHelperParities);
+				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
+				mmff.addEnergyTerm(constraint);
+				mmff.minimise();
+				Conformer ligConf = new Conformer(conf);
+				initialPos.add(ligConf);
+				if(initialPos.size()>=startPositions)
+					break;
+				double e = mmff.getTotalEnergy();
+				if(e<eMin)
+					eMin = e;
+			}
+		}
+		LigandPose pose = new LigandPose(new Conformer(nativePose), engine, eMin);
+		return pose.getFGValue(new double[pose.getState().length]);
 		
 		
 	}
