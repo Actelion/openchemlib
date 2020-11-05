@@ -27,7 +27,6 @@ public class LigandPose implements Evaluable{
 	private Conformer ligConf;
 	private StereoMolecule mol;
 	private AbstractScoringEngine engine;
-	private Random random;
 	private Map<Integer,int[][]> rearAtoms;
 	public static long SEED = 12345L;
 	
@@ -35,7 +34,6 @@ public class LigandPose implements Evaluable{
 		
 		this.engine = engine;
 		this.ligConf = ligConf;
-		random = new Random();
 		init(e0);
 	}
 	
@@ -111,7 +109,7 @@ public class LigandPose implements Evaluable{
 		return this.getState(new double[state.length]);
 	}
 	
-	public void randomPerturbation() {
+	public void randomPerturbation(Random random) {
 		int num = (int) (3*random.nextDouble());
 		if(num==0) { //translation
 			Coordinates shift = DockingUtils.randomVectorInSphere(random).scale(MOVE_AMPLITUDE);

@@ -667,6 +667,30 @@ public class PheSAAlignment {
 
 	}
 	
+	public static class PheSAResult {
+		private StereoMolecule refMol;
+		private StereoMolecule fitMol;
+		private double sim;
+		
+		public PheSAResult(StereoMolecule refMol, StereoMolecule fitMol, double sim) {
+			this.refMol = refMol;
+			this.fitMol = fitMol;
+			this.sim = sim;
+		}
+		
+		public StereoMolecule getRefMol() {
+			return refMol;
+		}
+		
+		public StereoMolecule getFitMol() {
+			return fitMol;
+		}
+		
+		public double getSim() {
+			return sim;
+		}
+	}
+	
 
 	
 }

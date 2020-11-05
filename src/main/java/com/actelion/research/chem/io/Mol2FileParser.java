@@ -276,6 +276,8 @@ public class Mol2FileParser extends AbstractParser {
 						//order = 1;
 					} else if(o.equals("un")) {
 						continue;
+					} else if(o.equals("nc")) {
+						continue;
 					} else if(o.equals("du")) {
 						continue;
 					} else {

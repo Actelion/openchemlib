@@ -4,7 +4,11 @@ import java.util.Random;
 
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.Molecule3D;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.AtomicGaussian;
 import com.actelion.research.chem.phesa.PheSAAlignment;
@@ -17,6 +21,18 @@ public class DockingUtils {
 		int counter = 0;
 		Coordinates com = new Coordinates();
 		for(int a=0;a<conf.getMolecule().getAtoms();a++) {
+			Coordinates coords = conf.getCoordinates(a);
+			com.add(coords);
+			counter++;
+		}
+		com.scale(1.0/counter);
+		return com;
+	}
+	
+	public static Coordinates getCOM(StereoMolecule conf) {
+		int counter = 0;
+		Coordinates com = new Coordinates();
+		for(int a=0;a<conf.getAtoms();a++) {
 			Coordinates coords = conf.getCoordinates(a);
 			com.add(coords);
 			counter++;
@@ -85,6 +101,39 @@ public class DockingUtils {
 				notDone = false;
 		}
 		return new Coordinates(r1,r2,r3);
+	}
+	
+	public static void repairLig(StereoMolecule lig) {
+		new Canonizer(lig);
+		lig.normalizeAmbiguousBonds();
+		repairQuaternaryNitrogen(lig);
+		repairCarboxylate(lig);
+	}
+	
+	private static void repairQuaternaryNitrogen(StereoMolecule mol){
+		for (int i = 0; i < mol.getAllAtoms(); i++) {
+			if(mol.getAtomicNo(i) == 7) {
+				if(mol.getOccupiedValence(i)==4){
+					if(mol.getAtomCharge(i)==0) {
+						mol.setAtomCharge(i, 1);
+					}
+				}
+			}
+		}
+		mol.ensureHelperArrays(Molecule.cHelperRings);
+	}
+	
+	private static void repairCarboxylate(StereoMolecule mol){
+		for (int i = 0; i < mol.getAllAtoms(); i++) {
+			if(mol.getAtomicNo(i) == 8) {
+				if(mol.getOccupiedValence(i)==1){
+					if(mol.getAtomCharge(i)==0) {
+						mol.setAtomCharge(i, -1);
+					}
+				}
+			}
+		}
+		mol.ensureHelperArrays(Molecule.cHelperRings);
 	}
 	
 

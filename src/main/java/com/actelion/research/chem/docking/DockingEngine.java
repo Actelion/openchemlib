@@ -1,16 +1,19 @@
 package com.actelion.research.chem.docking;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
 import com.actelion.research.calc.Matrix;
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
@@ -26,14 +29,18 @@ import com.actelion.research.chem.forcefield.mmff.PositionConstraint;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
+import com.actelion.research.chem.phesa.DescriptorHandlerShapeOneConf;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
+import com.actelion.research.chem.phesa.PheSAAlignment.PheSAResult;
+import com.actelion.research.chem.phesa.PheSAMolecule;
 
 public class DockingEngine {
 	
 	public enum ScoringFunction {CHEMPLP,IDOSCORE;}
+	public enum StartPosition {PHESA, RANDOM;}
 	private static final int DEFAULT_NR_MC_STEPS = 50;
-	private static final int DEFAULT_START_POSITIONS = 25;
+	private static final int DEFAULT_START_POSITIONS = 15;
 	private static final double BOLTZMANN_FACTOR = 1.2; //as for AutoDock Vina
 	public static final double GRID_DIMENSION = 6.0;
 	public static final double GRID_RESOLUTION = 0.5;
@@ -46,13 +53,18 @@ public class DockingEngine {
 	private Random random;
 	private AbstractScoringEngine engine;
 	private int startPositions;
-	private double minEnergy;
-	
-	public DockingEngine(Molecule3D receptor, Molecule3D nativeLig, int mcSteps, int startPositions,
-			ScoringFunction scoringFunction) {
+	private Molecule3D nativeLigand;
+	private StartPosition startPosition;
 
-		Molecule3D nativeLigand = new Molecule3D(nativeLig);
+	
+	public DockingEngine(Molecule3D rec, Molecule3D nativeLig, int mcSteps, int startPositions,
+			ScoringFunction scoringFunction, StartPosition startPosition) {
+
+		this.startPosition = startPosition;
+		nativeLigand = new Molecule3D(nativeLig);
 		nativeLigand.ensureHelperArrays(Molecule.cHelperCIP);
+		Molecule3D receptor = new Molecule3D(rec);
+		receptor.ensureHelperArrays(Molecule.cHelperCIP);
 		MolecularVolume molVol = new MolecularVolume(nativeLigand);
 		origCOM  = new Coordinates(molVol.getCOM());
 		Conformer conf = new Conformer(nativeLigand);
@@ -76,42 +88,46 @@ public class DockingEngine {
 		}
 		
 		this.mcSteps = mcSteps;
-		this.random = new Random(12354L);
+		this.random = new Random(LigandPose.SEED);
 
 
 	}
 	
 	public DockingEngine(Molecule3D receptor, Molecule3D nativeLigand) {
-		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS,ScoringFunction.CHEMPLP);
+		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS,ScoringFunction.CHEMPLP, StartPosition.PHESA);
 	}
 	
-	
-	
-	public StereoMolecule dockMolecule(StereoMolecule mol) throws DockingFailedException {
-
-		Conformer bestPose = null;
-		double bestEnergy = Double.MAX_VALUE;
-		minEnergy = bestEnergy;
-		Map<String, Object> ffOptions = new HashMap<String, Object>();
-		ffOptions.put("dielectric constant", 80.0);
-		
-		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
-
+	private double getStartingPositions(StereoMolecule mol, ConformerSet initialPos) {
 		ConformerSetGenerator confSetGen = new ConformerSetGenerator(100,ConformerGenerator.STRATEGY_LIKELY_RANDOM, false,
 				LigandPose.SEED);
 		ConformerSet confSet = confSetGen.generateConformerSet(mol);
-		ConformerSet initialPos = new ConformerSet();
 		double eMin = Double.MAX_VALUE;
-
-		for(Conformer conformer : confSet) {
-			if(conformer!=null) {
-				StereoMolecule conf = conformer.toMolecule(new StereoMolecule(mol));
-				conf.ensureHelperArrays(Molecule.cHelperParities);
-				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-				PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+		if(startPosition==StartPosition.PHESA) { //make PheSA Prealignment
+			DescriptorHandlerShapeOneConf dhs = new DescriptorHandlerShapeOneConf();
+			PheSAMolecule refVol = dhs.createDescriptor(nativeLigand);
+			TreeSet<PheSAResult> alignments = new TreeSet<PheSAResult>((e1,e2) -> {
+				return Double.compare(e1.getSim(), e2.getSim());});
+			for(Conformer conformer : confSet) {
+				if(conformer!=null) {
+					PheSAMolecule fitVol = dhs.createDescriptor(conformer.toMolecule());
+					double sim = dhs.getSimilarity(refVol, fitVol);
+					PheSAResult result = new PheSAResult(dhs.getPreviousAlignment()[0],dhs.getPreviousAlignment()[1],
+							sim);
+					alignments.add(result);
+				}
+			}
+			Set<PheSAResult> sortedAlignments = alignments.descendingSet();
+			for(PheSAResult res : sortedAlignments) {
+				StereoMolecule alignedMol = res.getFitMol();
+				if(initialPos.size()>=startPositions)
+					break;
+				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(alignedMol, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				PositionConstraint constraint = new PositionConstraint(alignedMol,50,0.2);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
-				Conformer ligConf = new Conformer(conf);
+				Conformer ligConf = new Conformer(alignedMol);
 				initialPos.add(ligConf);
 				if(initialPos.size()>=startPositions)
 					break;
@@ -120,42 +136,70 @@ public class DockingEngine {
 					eMin = e;
 			}
 		}
-		for(Conformer ligConf : initialPos) {
-
-
-			PheSAAlignment.preProcess(ligConf, new MolecularVolume(ligConf.toMolecule()));
+	
+		else if(startPosition==StartPosition.RANDOM) {
+			for(Conformer conformer : confSet) {
+				if(conformer!=null) {
+					StereoMolecule conf = conformer.toMolecule();
+					conf.ensureHelperArrays(Molecule.cHelperParities);
+					ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+					PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
+					mmff.addEnergyTerm(constraint);
+					mmff.minimise();
+					Conformer ligConf = new Conformer(conf);
+					initialPos.add(ligConf);
+					if(initialPos.size()>=startPositions)
+						break;
+					double e = mmff.getTotalEnergy();
+					if(e<eMin)
+						eMin = e;
+				}
+			}
+			
+		}
+		
+		return eMin;
+		
+	}
+	
+	
+	
+	public DockingResult dockMolecule(StereoMolecule mol) throws DockingFailedException {
+		Conformer bestPose = null;
+		double bestEnergy = Double.MAX_VALUE;
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+		if(ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS)==null)
+			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+		ConformerSet startPoints = new ConformerSet();
+		double eMin = getStartingPositions(mol, startPoints);
+		for(Conformer ligConf : startPoints) {
 			for(double[] transform : PheSAAlignment.initialTransform(1)) {
 				Conformer newLigConf = new Conformer(ligConf);
 				PheSAAlignment.rotateMol(newLigConf, transform);
-					
 				LigandPose pose = initiate(newLigConf,eMin);
 				double energy = mcSearch(pose);
 				if(energy<bestEnergy) {
 					bestEnergy = energy;
 					bestPose = pose.getLigConf();
-					}
 				}
 			}
-		
-		
+		}
+
 
 		if(bestPose!=null) {
 			StereoMolecule best = bestPose.toMolecule();
 			double[][] rot = rotation.getTranspose().getArray();
 			PheSAAlignment.rotateMol(best, rot);
 			PheSAAlignment.translateMol(best, new double[] {origCOM.x, origCOM.y, origCOM.z} );
-			minEnergy = bestEnergy;
-			return best;
+			return new DockingResult(best,bestEnergy);
 		}
 		else {
 			throw new DockingFailedException("docking failed");
 		}
 		
 	}
-	
-	public double getEnergy() {
-		return minEnergy;
-	}
+
 	
 	private double mcSearch(LigandPose pose) {
 		double[] bestState = new double[pose.getState().length];
@@ -172,7 +216,7 @@ public class DockingEngine {
 		bestEnergy = oldEnergy;
 	
 		for(int i=0;i<mcSteps;i++) {
-			pose.randomPerturbation();
+			pose.randomPerturbation(random);
 			double energyMC = pose.getFGValue(new double[bestState.length]);
 			if(energyMC<MINI_CUTOFF) {
 				state = optimizer.optimize(pose);	
@@ -272,6 +316,57 @@ public class DockingEngine {
 		}
 		
 		
+	}
+	
+	public double evaluateNativePose() {
+		Molecule3D nativePose = new Molecule3D(nativeLigand);
+		new Canonizer(nativePose);
+		ConformerSetGenerator confSetGen = new ConformerSetGenerator(100,ConformerGenerator.STRATEGY_LIKELY_RANDOM, false,
+				LigandPose.SEED);
+		ConformerSet confSet = confSetGen.generateConformerSet(nativePose);
+		double eMin = Double.MAX_VALUE;
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+		ConformerSet initialPos = new ConformerSet();
+		for(Conformer conformer : confSet) {
+			if(conformer!=null) {
+				StereoMolecule conf = conformer.toMolecule();
+				conf.ensureHelperArrays(Molecule.cHelperParities);
+				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
+				mmff.addEnergyTerm(constraint);
+				mmff.minimise();
+				Conformer ligConf = new Conformer(conf);
+				initialPos.add(ligConf);
+				if(initialPos.size()>=startPositions)
+					break;
+				double e = mmff.getTotalEnergy();
+				if(e<eMin)
+					eMin = e;
+			}
+		}
+		LigandPose pose = new LigandPose(new Conformer(nativePose), engine, eMin);
+		return pose.getFGValue(new double[pose.getState().length]);
+		
+		
+	}
+	
+	public static class DockingResult  {
+		private double score;
+		private StereoMolecule pose;
+		
+		public DockingResult(StereoMolecule pose, double score) {
+			this.score = score;
+			this.pose = pose;
+		}
+		
+		public double getScore() {
+			return score;
+		}
+		
+		public StereoMolecule getPose() {
+			return pose;
+		}
 	}
 
 	
