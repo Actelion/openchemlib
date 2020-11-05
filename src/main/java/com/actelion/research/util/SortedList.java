@@ -164,7 +164,7 @@ public class SortedList<T extends Comparable<? super T>> {
     * Adds object to the list provided that it doesn't contain
     * an object being considered equal by compareTo().
     * @param object
-    * @return object's list index after addition; -1 if equal object in list 
+    * @return object's list index, no matter wether it was already in the list or after addition
     */
 	public int add(T object) {
 		int index = getIndexOrInsertIndex(object);
