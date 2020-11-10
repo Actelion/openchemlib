@@ -1697,7 +1697,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @param atom
 	 */
 	public void convertStereoBondsToSingleBonds(int atom) {
-		if (mPi[atom] == 2 && mConnAtoms[atom] == 2) {
+		if (mPi[atom] == 2 && mConnAtoms[atom] == 2 && mConnBondOrder[atom][0] == 2) {
 			for (int i=0; i<2; i++) {
 				int alleneEnd = findAlleneEndAtom(atom, mConnAtom[atom][i]);
 				if (alleneEnd != -1)
