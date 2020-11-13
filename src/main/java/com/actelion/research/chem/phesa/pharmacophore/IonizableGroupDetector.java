@@ -163,9 +163,11 @@ public class IonizableGroupDetector {
 		}
 		return chargePoints;
 	}
-		
 
-	
+	public List<ArrayList<Integer>> getIonizableGroups() {
+		return ionizableGroups;
+	}
+
 	private boolean hasCounterChargedNeighbour(int a) {
 		for(int aa=0;aa<mol.getConnAtoms(a);aa++) {
 			if(mol.getAtomCharge(a)*mol.getAtomCharge(mol.getConnAtom(a,aa))<0)
