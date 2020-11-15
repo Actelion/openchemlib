@@ -51,7 +51,7 @@ public class MoleculeStandardizer {
 	}
 
 	/**
-	 * Repairs wrongly charged quaternary nitrogen. Unifies carbonyl acid groups,
+	 * Repairs wrongly uncharged quaternary nitrogen. Unifies carbonyl acid groups,
 	 * sulfonic acid, phosphoric acid, phenolic oxygen. Means: negative charges are removed.
 	 * Adds Na+ or Cl- for final charge equilibration.
 	 * @param mol
@@ -60,6 +60,7 @@ public class MoleculeStandardizer {
 	private static void repairAndUnify(StereoMolecule mol) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 
+		repairCovalentBoundChargedAlkaliAndHalogen(mol);
 		chargeTrivalentOxygen(mol);
 		repairBadAmideTautomer(mol);
 		repairQuaternaryNitrogen(mol);
@@ -106,6 +107,42 @@ public class MoleculeStandardizer {
 					+ CoordinateInventor.MODE_REMOVE_HYDROGEN).invent(mol);
 		}
 	}
+
+	/**
+	 * Remove wrong charges on halogen and (earth)alkali atoms, if they are
+	 * covalently bound.
+	 * @param mol
+	 */
+	private static void repairCovalentBoundChargedAlkaliAndHalogen(StereoMolecule mol) {
+		for (int atom=0; atom<mol.getAtoms(); atom++) {
+			if (mol.isHalogene(atom)) {
+				if (mol.getOccupiedValence(atom) == 1
+				 && mol.getAtomCharge(atom) == -1) {
+					mol.setAtomCharge(atom, 0);
+					mol.setAtomAbnormalValence(atom, -1);
+					}
+				continue;
+				}
+
+			if (mol.isAlkaliMetal(atom)) {
+				if (mol.getOccupiedValence(atom) == 1
+				 && mol.getAtomCharge(atom) == 1) {
+					mol.setAtomCharge(atom, 0);
+					mol.setAtomAbnormalValence(atom, -1);
+					}
+				continue;
+				}
+
+			if (mol.isEarthAlkaliMetal(atom)) {
+				if (mol.getOccupiedValence(atom) == 2
+				 && mol.getAtomCharge(atom) == 2) {
+					mol.setAtomCharge(atom, 0);
+					mol.setAtomAbnormalValence(atom, -1);
+					}
+				continue;
+				}
+			}
+		}
 
 	private static void chargeTrivalentOxygen(StereoMolecule mol) {
 		for (int atom=0; atom<mol.getAtoms(); atom++)
