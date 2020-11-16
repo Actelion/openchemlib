@@ -35,7 +35,9 @@ package com.actelion.research.chem;
 
 import com.actelion.research.util.IntArrayComparator;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.TreeSet;
 
 public class TautomerHelper {
@@ -48,9 +50,13 @@ public class TautomerHelper {
 	private int[] mRegionDCount;
 	private int[] mRegionTCount;
 
-	private ArrayList<StereoMolecule> mTautomerList;
-	private TreeSet<int[]> mBondOrderList;
+	private Iterator<BondOrders> mBondOrderIterator;
+	private TreeSet<BondOrders> mBondOrderSet;
+	private ArrayDeque<BondOrders> mBondOrderDeque;
 
+	/**
+	 * @param mol
+	 */
 	public TautomerHelper(StereoMolecule mol) {
 		mOriginalMol = mol;
 		mOriginalMol.ensureHelperArrays(Molecule.cHelperParities);
@@ -67,8 +73,27 @@ public class TautomerHelper {
 		createAllTautomers();
 		}
 
-	public ArrayList<StereoMolecule> getAllTautomers() {
-		return mTautomerList;
+	/**
+	 * @param tautomer null or another tautomer of same molecule, which receives the new bond orders
+	 * @return
+	 */
+	public StereoMolecule getNextTautomer(StereoMolecule tautomer) {
+		if (mBondOrderIterator == null)
+			mBondOrderIterator = mBondOrderSet.iterator();
+
+		if (!mBondOrderIterator.hasNext())
+			return null;
+
+		if (tautomer == null)
+			tautomer = mOriginalMol.getCompactCopy();
+
+		mBondOrderIterator.next().copyToTautomer(tautomer);
+
+		return tautomer;
+		}
+
+	public int getTautomerCount() {
+		return mBondOrderSet.size();
 		}
 
 	/**
@@ -79,7 +104,7 @@ public class TautomerHelper {
 	 * @return region count
 	 */
 	public int getAtomRegionNumbers(int[] atomRegionNo) {
-		if (mTautomerList.size() == 1)
+		if (mBondOrderSet.size() == 1)
 			return 0;
 
 		int regionCount = assignRegionNumbers(atomRegionNo);
@@ -165,7 +190,7 @@ public class TautomerHelper {
 		}
 
 	private boolean hasAcidicHydrogen(StereoMolecule mol, int atom) {
-		if (mol.getAllHydrogens(atom) <= mol.getAtomCharge(atom))
+		if (mol.getAllHydrogens(atom) <= 0)
 			return false;
 
 		if (mol.isElectronegative(atom))
@@ -196,7 +221,7 @@ public class TautomerHelper {
 	 * @return generic tautomer with normalized tautomer regions and custom label to encode pi,D,T counts
 	 */
 	public StereoMolecule createGenericTautomer() {
-		if (mTautomerList.size() == 1)
+		if (mBondOrderSet.size() == 1)
 			return mOriginalMol;
 
 		StereoMolecule mol = mOriginalMol.getCompactCopy();
@@ -249,28 +274,25 @@ public class TautomerHelper {
 		}
 
 	private void createAllTautomers() {
-		mTautomerList = new ArrayList<>();
-		mBondOrderList = new TreeSet<>(new IntArrayComparator());
+		mBondOrderSet = new TreeSet<>();
+		mBondOrderDeque = new ArrayDeque<>();
 
-		mTautomerList.add(mOriginalMol);
-		mBondOrderList.add(getBondOrders(mOriginalMol));
+		addTautomerIfNew(new BondOrders(mOriginalMol));
 
-		int current = 0;
-		while (current < mTautomerList.size()) {
-			addAllTautomers(mTautomerList.get(current));
-			current++;
+		// This serves as recycled molecule container
+		StereoMolecule tautomer = mOriginalMol.getCompactCopy();
 
-			if (mTautomerList.size() >= MAX_TAUTOMERS) {
-				System.out.println("Tautomer count exceeded maximum: "+new Canonizer(mOriginalMol).getIDCode());
+		while (!mBondOrderDeque.isEmpty()) {
+			mBondOrderDeque.poll().copyToTautomer(tautomer);
+			addAllTautomers(tautomer);
+
+			if (mBondOrderSet.size() >= MAX_TAUTOMERS) {
+				System.out.println("Tautomer count exceeds maximum: "+new Canonizer(mOriginalMol).getIDCode());
 				break;
 				}
 			}
 
-		System.out.println(mTautomerList.size());
-
-
 		// TODO racemize stereo centers
-
 		}
 
 	/**
@@ -312,7 +334,7 @@ public class TautomerHelper {
 											}
 										}
 
-									if (order23 >= order12) {
+									if (order23 >= order12 && hasAcidicHydrogen(mol, atom1)) {
 										addVinylogousTautomers(mol, atom3, false, false, isUsedAtom, bondList);
 										}
 
@@ -358,13 +380,12 @@ public class TautomerHelper {
 		}
 
 	private void addDirectTautomer(StereoMolecule mol, int bondSToD, int bondDToS) {
-		StereoMolecule tautomer = mol.getCompactCopy();
-		tautomer.setBondType(bondSToD, mol.getBondOrder(bondSToD) == 1 ? Molecule.cBondTypeDouble : Molecule.cBondTypeTriple);
-		tautomer.setBondType(bondDToS, mol.getBondOrder(bondDToS) == 2 ? Molecule.cBondTypeSingle : Molecule.cBondTypeDouble);
+		BondOrders bondOrders = new BondOrders(mol);
+		bondOrders.setBond(bondSToD, mol.getBondOrder(bondSToD) == 1 ? 2 : 3);
+		bondOrders.setBond(bondDToS, mol.getBondOrder(bondDToS) == 2 ? 1 : 2);
 		mIsTautomerBond[bondSToD] = true;
 		mIsTautomerBond[bondDToS] = true;
-		if (mBondOrderList.add(getBondOrders(tautomer)))
-			mTautomerList.add(tautomer);
+		addTautomerIfNew(bondOrders);
 		}
 
 	private boolean addVinylogousTautomers(StereoMolecule mol, int atom1, boolean firstBondIsDouble, boolean thirdBondIsDouble, boolean[] isUsedAtom, ArrayList<Integer> bondList) {
@@ -388,19 +409,18 @@ public class TautomerHelper {
 								isUsedAtom[atom3] = true;
 								bondList.add(bond23);
 								if (isValidDonorAtom(atom3) && (!firstBondIsDouble || hasAcidicHydrogen(mol, atom3))) {
-									StereoMolecule tautomer = mol.getCompactCopy();
+									BondOrders bondOrders = new BondOrders(mol);
 									for (int k=0; k<bondList.size(); k++) {
 										int bond = bondList.get(k);
 										boolean makeDouble = (k < 2) ? (firstBondIsDouble ^ (k & 1) == 0)
-																   : (thirdBondIsDouble ^ (k & 1) == 0);
+												: (thirdBondIsDouble ^ (k & 1) == 0);
 										if (makeDouble)
-											tautomer.setBondType(bond, mol.getBondOrder(bond) == 1 ? Molecule.cBondTypeDouble : Molecule.cBondTypeTriple);
+											bondOrders.setBond(bond, mol.getBondOrder(bond) == 1 ? 2 : 3);
 										else
-											tautomer.setBondType(bond, mol.getBondOrder(bond) == 2 ? Molecule.cBondTypeSingle : Molecule.cBondTypeDouble);
+											bondOrders.setBond(bond, mol.getBondOrder(bond) == 2 ? 1 : 2);
 										mIsTautomerBond[bond] = true;
 										}
-									if (mBondOrderList.add(getBondOrders(tautomer)))
-										mTautomerList.add(tautomer);
+									addTautomerIfNew(bondOrders);
 									}
 								else {
 									addVinylogousTautomers(mol, atom3, firstBondIsDouble, thirdBondIsDouble, isUsedAtom, bondList);
@@ -418,10 +438,40 @@ public class TautomerHelper {
 		return false;
 		}
 
-	private int[] getBondOrders(StereoMolecule mol) {
-		int[] bondOrder = new int[mOriginalMol.getBonds()];
-		for (int i=0; i<mOriginalMol.getBonds(); i++)
-			bondOrder[i] = mol.getBondOrder(i);
-		return bondOrder;
+	private void addTautomerIfNew(BondOrders bondOrders) {
+		if (mBondOrderSet.add(bondOrders))
+			mBondOrderDeque.add(bondOrders);
+		}
+
+	class BondOrders implements Comparable<BondOrders> {
+		private int[] encoding;
+
+		public BondOrders(StereoMolecule mol) {
+			encoding = new int[(mOriginalMol.getBonds()+15) / 16];
+			for (int i=0; i<mOriginalMol.getBonds(); i++)
+				encoding[i >> 4] |= (mol.getBondOrder(i) << (2*(i & 15)));
+			}
+
+		@Override
+		public int compareTo(BondOrders o) {
+			return new IntArrayComparator().compare(encoding, o.encoding);
+			}
+
+		public void setBond(int bond, int order) {
+			int high = bond >> 4;
+			int shift = 2 * (bond & 15);
+			encoding[high] &= ~(3 << shift);
+			encoding[high] |= (order << shift);
+			}
+
+		public void copyToTautomer(StereoMolecule tautomer) {
+			for (int i=0; i<mOriginalMol.getBonds(); i++) {
+				int bo = 3 & (encoding[i >> 4] >> (2*(i & 15)));
+				tautomer.setBondType(i, bo == 1 ? Molecule.cBondTypeSingle
+						: bo == 2 ? Molecule.cBondTypeDouble
+						: bo == 3 ? Molecule.cBondTypeTriple
+						: Molecule.cBondTypeMetalLigand);
+				}
+			}
 		}
 	}

@@ -407,19 +407,19 @@ public class IsomericSmilesCreator {
 			if (hCount != 0) {
 				builder.append('H');
 				if (hCount > 1)
-					builder.append(Integer.toString(hCount));
+					builder.append(hCount);
 			}
 		}
 
 		if (charge != 0) {
 			builder.append(charge > 0 ? '+' : '-');
 			if (Math.abs(charge) > 1)
-				builder.append(Integer.toString(Math.abs(charge)));
+				builder.append(Math.abs(charge));
 		}
 
 		if (mapNo != 0) {
 			builder.append(':');
-			builder.append(Integer.toString(mapNo));
+			builder.append(mapNo);
 		}
 
 		if (useBrackets)
@@ -470,7 +470,7 @@ public class IsomericSmilesCreator {
 				}
 				if (closureNumber > 9)
 					builder.append('%');
-				builder.append(Integer.toString(closureNumber));
+				builder.append(closureNumber);
 			}
 		}
 	}

@@ -35,6 +35,7 @@ package com.actelion.research.util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class UniqueList<T extends Comparable<? super T>> extends SortedList<T> implements Serializable {
     static final long serialVersionUID = 0x20121016;
@@ -42,7 +43,15 @@ public class UniqueList<T extends Comparable<? super T>> extends SortedList<T> i
     private ArrayList<T> mOriginalOrder = new ArrayList<T>();
 	private int[] mOriginalIndex;
 
-    public int getSortedIndex(T s) {
+	public UniqueList() {
+		super();
+	}
+
+	public UniqueList(Comparator comparator) {
+		super(comparator);
+	}
+
+	public int getSortedIndex(T s) {
         return super.getIndex(s);
         }
 
@@ -69,16 +78,19 @@ public class UniqueList<T extends Comparable<? super T>> extends SortedList<T> i
 
     @Override
 	public int add(T s) {
+    	int oldSize = size();
 		int index = super.add(s);
-		if (index == -1)
-			return -1;
 
-		int position = mOriginalOrder.size();
+		if (size() != oldSize) {
+			mOriginalOrder.add(s);
+			mOriginalIndex = null;
+			return oldSize;
+			}
 
-		mOriginalOrder.add(s);
-		mOriginalIndex = null;
+		if (mOriginalIndex == null)
+			createOriginalIndex();
 
-		return position;
+		return mOriginalIndex[index];
 		}
 
 	public int add(int position, T s) {
