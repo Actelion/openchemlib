@@ -154,9 +154,7 @@ public class SubFlexophoreGenerator {
 		
 		for (int size = minNumPPPoints; size < maxNumPPPointsReal; size++) {
 			List<MolDistHistViz> liMDHVSub = generateSubPharmacophores(mdhv, size);
-			
 			liHsMolDistHistViz.get(size).addAll(liMDHVSub);
-			
 		}
 					
 		List<MolDistHistViz> liMDHVSubAll = new ArrayList<MolDistHistViz>();
