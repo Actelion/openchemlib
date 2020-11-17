@@ -146,7 +146,7 @@ public class PheSAAlignmentOptimizer {
 		double[] bestTransformPMI = new double[7];
 		MolecularVolume[] bestPairPMI = new MolecularVolume[2];
 		double similarity = 0.0;
-		if(bestScoreTriangle>=0.0) {
+		if(bestScoreTriangle>0.0) {
 			similarity = bestScoreTriangle;
 			result[0] = similarity;
 			result[1] = triangleRes[1];

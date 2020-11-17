@@ -68,7 +68,7 @@ public class PharmacophoreCalculator {
 					if(interactionClass<0) {
 						continue;
 					}
-					if(mol.getAtomicNo(i)==8 && neighbours==1 && (mol.getConnBondOrder(i, 0)==2 || AtomFunctionAnalyzer.isAcidicOxygen(mol, i) )) {
+					if(mol.getAtomicNo(i)==8 && neighbours==1 && (mol.getConnBondOrder(i, 0)==2 || AtomFunctionAnalyzer.isAcidicOxygen(mol, i) || mol.getAtomCharge(i)==-1 )) {
 						int a1 = mol.getConnAtom(i,0);
 						if(!(mol.getAtomicNo(a1)==16 || mol.getAtomicNo(a1)==15)) {		
 							int aa1 = mol.getConnAtom(a1,0);
@@ -76,6 +76,7 @@ public class PharmacophoreCalculator {
 								aa1 = mol.getConnAtom(a1,1);
 							neighbourList.add(aa1);
 							AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,1);
+
 							ppPoints.add(ap);
 							List<Integer> neighbourList2 = new ArrayList<Integer>();
 							for(int neighbour : neighbourList) {
@@ -83,6 +84,7 @@ public class PharmacophoreCalculator {
 							}
 							ap = new AcceptorPoint(mol,i,neighbourList2,interactionClass,2);
 							ppPoints.add(ap);
+
 							}
 						else { 
 							AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
@@ -93,6 +95,7 @@ public class PharmacophoreCalculator {
 					else {
 					AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
 					ppPoints.add(ap);
+
 					}
 			}
 		}
