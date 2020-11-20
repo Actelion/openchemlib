@@ -936,7 +936,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		}
 
 	public void parseMapping(byte[] mapping, int mappingStart) {
-		if (mapping == null || mapping.length <= mappingStart)
+		if (mapping == null || mapping.length <= mappingStart || mapping[mappingStart] < 0x40)
 			return;
 
 		decodeBitsStart(mapping, mappingStart);
