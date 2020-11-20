@@ -36,6 +36,28 @@ import java.util.List;
  */
 public class DistHistHelper {
 
+    public static int getMedianBin(byte [] a){
+
+        int medianBin=-1;
+
+        int sum = 0;
+        for (byte b : a) {
+            sum+=b;
+        }
+        sum /= 2;
+
+        int s2=0;
+        for (int i = 0; i < a.length; i++) {
+            s2+=a[i];
+            if(s2>=sum){
+                medianBin=i;
+                break;
+            }
+        }
+
+        return medianBin;
+    }
+
     public static RangeStatistics getRangeStatistics(MolDistHist mdh){
 
         RangeStatistics rangeStatisticsTotal = new RangeStatistics();

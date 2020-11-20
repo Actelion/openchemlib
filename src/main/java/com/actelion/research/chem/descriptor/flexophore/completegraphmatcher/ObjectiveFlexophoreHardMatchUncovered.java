@@ -421,6 +421,15 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		
 		int heap = solution.getSizeHeap();
 
+		//
+		// the query must hit with all pharmacophore nodes
+		//
+		if(modeQuery) {
+			if (nodesQuery != heap) {
+				return 0;
+			}
+		}
+
 		double sumPairwiseMapping = 0;
 
 		// double productPairwiseMapping = 0;
@@ -462,7 +471,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		double ratioNodesMatchBase = Math.min(heap, nodesBase) / (double)Math.max(heap, nodesBase);
 
 		if(modeQuery) {
-			similarity = avrPairwiseMappingScaled * coverageQuery * ratioNodesMatchQuery;
+			similarity = avrPairwiseMappingScaled * coverageQuery * coverageQuery * ratioNodesMatchQuery * ratioNodesMatchQuery;
 		} else {
 			similarity = avrPairwiseMappingScaled * coverage * ratioNodesMatchQuery * ratioNodesMatchBase;
 		}
