@@ -922,6 +922,18 @@ public class StringFunctions {
         return sb.toString();
     }
 
+    public static String toStringInteger(List<Integer> li, String sep){
+
+        StringBuilder sb = new  StringBuilder();
+        for (int i = 0; i < li.size(); i++) {
+            sb.append(li.get(i));
+            if(i < li.size()-1){
+                sb.append(sep);
+            }
+        }
+        return sb.toString();
+    }
+
 //    public static String toStringInt(List<Integer> li){
 //
 //        StringBuilder sb = new  StringBuilder();

@@ -58,11 +58,8 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	private long createdSolutions;
 	
 	public CompleteGraphMatcher(IObjectiveCompleteGraph<T> objectiveCompleteGraph) {
-		
 		this.objectiveCompleteGraph = objectiveCompleteGraph;
-		
 		init();
-		
 	}
 
 	/**
@@ -103,11 +100,8 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	
 	
 	public void set(T cgBase, T cgQuery){
-		
 		objectiveCompleteGraph.setBase(cgBase);
-		
 		objectiveCompleteGraph.setQuery(cgQuery);
-		
 	}
 	
 	
