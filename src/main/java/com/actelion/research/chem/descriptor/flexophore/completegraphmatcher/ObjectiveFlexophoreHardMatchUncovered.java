@@ -327,16 +327,12 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 						mapping = false;
 						break outer;
 					} else {
-
 						// System.out.println("Match");
-
 					}
 				}
 			}
 		}
-		
 		return mapping;
-		
 	}
 
 	/**
