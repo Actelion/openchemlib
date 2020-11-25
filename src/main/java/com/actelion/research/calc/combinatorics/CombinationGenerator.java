@@ -2,6 +2,7 @@ package com.actelion.research.calc.combinatorics;
 
 import com.actelion.research.util.ArrayUtils;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -169,53 +170,93 @@ public class CombinationGenerator {
 		return permutations;
 	}
 
-	public static void main(String[] args) {
-		List<int[]> li = new ArrayList<>();
-
-//		int [] a1 = {0,1};
-//		int [] a2 = {0};
-//		int [] a3 = {1,2};
-		int [] a1 = {1,2,3,4,5,6,7,8};
-		int [] a2 = {1,2,3};
-		//int [] a3 = {5,6,7};
-		//int [] a4 = {8};
-
-		//li.add(a1);
-		//li.add(a2);
-		
-		
-		//li.add(a3);
-		//li.add(a4);
-
-		//List<int[]> liComb = getCombinations(li);
-		/*
-		List<int[]> liComb = getAllOutOf(9,3);
-		
-		
-		li = new ArrayList<>();
-		for(int[] l : liComb)
-			//getPermutations(l,l.length);
-			System.out.println(Arrays.toString(l));
-		*/
-		int n = 3;
-		int[] elements = IntStream.range(1,n).toArray();
-		List<int[]> liComb = getAllOutOf(7,n-1);
-
-		for(int[] r : liComb) {
-			List<int[]> permutations = getPermutations(r,r.length);
-			System.out.println("#####");
-			//System.out.println(Arrays.toString(r));
-			for(int[] per : permutations) {
-				//System.out.println(Arrays.toString(per));
-				int[] arr = new int[per.length+1];
-				arr[0] = 0;
-				IntStream.range(0, per.length).forEach(e -> {
-				arr[e+1] = per[e]+1;});
-				System.out.println(Arrays.toString(arr));
-			}
+	public static BigInteger getFactorial (int n) {
+		BigInteger fact = BigInteger.ONE;
+		for (int i = n; i > 1; i--) {
+			fact = fact.multiply (new BigInteger (Integer.toString (i)));
 		}
-
+		return fact;
 	}
+
+	/**
+	 * Calculate binomial coefficient or
+	 * n choose k
+	 *
+	 * @param n
+	 * @param k
+	 * @return
+	 */
+	public static BigInteger getBinomialCoefficient(int n, int k){
+
+		BigInteger nFac = getFactorial(n);
+		BigInteger kFac = getFactorial(k);
+
+		BigInteger nMinus_k_Fac = getFactorial(n-k);
+
+		BigInteger dev = nMinus_k_Fac.multiply(kFac);
+
+		BigInteger bc = nFac.divide(dev);
+
+		return bc;
+	}
+
+	public static void main(String[] args) {
+		int n = 12;
+		int k= 3;
+
+		BigInteger bc = getBinomialCoefficient(n,k);
+
+		System.out.println(bc.toString());
+	}
+
+
+//	public static void main(String[] args) {
+//		List<int[]> li = new ArrayList<>();
+//
+////		int [] a1 = {0,1};
+////		int [] a2 = {0};
+////		int [] a3 = {1,2};
+//		int [] a1 = {1,2,3,4,5,6,7,8};
+//		int [] a2 = {1,2,3};
+//		//int [] a3 = {5,6,7};
+//		//int [] a4 = {8};
+//
+//		//li.add(a1);
+//		//li.add(a2);
+//
+//
+//		//li.add(a3);
+//		//li.add(a4);
+//
+//		//List<int[]> liComb = getCombinations(li);
+//		/*
+//		List<int[]> liComb = getAllOutOf(9,3);
+//
+//
+//		li = new ArrayList<>();
+//		for(int[] l : liComb)
+//			//getPermutations(l,l.length);
+//			System.out.println(Arrays.toString(l));
+//		*/
+//		int n = 3;
+//		int[] elements = IntStream.range(1,n).toArray();
+//		List<int[]> liComb = getAllOutOf(7,n-1);
+//
+//		for(int[] r : liComb) {
+//			List<int[]> permutations = getPermutations(r,r.length);
+//			System.out.println("#####");
+//			//System.out.println(Arrays.toString(r));
+//			for(int[] per : permutations) {
+//				//System.out.println(Arrays.toString(per));
+//				int[] arr = new int[per.length+1];
+//				arr[0] = 0;
+//				IntStream.range(0, per.length).forEach(e -> {
+//				arr[e+1] = per[e]+1;});
+//				System.out.println(Arrays.toString(arr));
+//			}
+//		}
+//
+//	}
 
 
 
