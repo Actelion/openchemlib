@@ -83,7 +83,7 @@ public class JChemistryView extends JComponent
 	private ArrayList<StructureListener> mListener;
 	private Dimension mSize;
 	private int					mChemistryType,mUpdateMode,mDisplayMode,mDragMolecule,mCopyOrDragActions,mPasteOrDropActions,mPasteAndDropOptions;
-	private boolean				mShowBorder,mIsDraggingThis,mAllowDropOrPasteWhenDisabled;
+	private boolean				mShowBorder,mIsDraggingThis,mAllowDropOrPasteWhenDisabled,mIsEditable;
 	private Color				mFragmentNoColor;
 	private MoleculeDropAdapter mMoleculeDropAdapter = null;
 	private ReactionDropAdapter mReactionDropAdapter = null;
@@ -117,6 +117,7 @@ public class JChemistryView extends JComponent
 	    addMouseListener(this);
 	    addMouseMotionListener(this);
 	    mDragMolecule = -1;
+		mIsEditable = true;
 	    }
 
     public int getChemistryType() {
@@ -191,6 +192,15 @@ public class JChemistryView extends JComponent
 				mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, getBackground()), getBackground());
 			repaint();
 			}
+		}
+
+	public boolean isEditable() {
+		return mIsEditable;
+		}
+
+	public void setEditable(boolean b) {
+		if (mIsEditable != b)
+			mIsEditable = b;
 		}
 
 	public void setFragmentNoColor(Color c) {
@@ -290,21 +300,21 @@ public class JChemistryView extends JComponent
 			ch.copyReaction(rxn);
 			}
 
-		if (e.getActionCommand().equals(ITEM_PASTE_MOLS)) {
+		if (e.getActionCommand().equals(ITEM_PASTE_MOLS) && mIsEditable) {
 			ClipboardHandler ch = new ClipboardHandler();
 			StereoMolecule mol = ch.pasteMolecule();
 			if (mol != null)
 				pasteOrDropMolecule(mol);
 			}
 
-		if (e.getActionCommand().equals(ITEM_PASTE_RXN)) {
+		if (e.getActionCommand().equals(ITEM_PASTE_RXN) && mIsEditable) {
 			ClipboardHandler ch = new ClipboardHandler();
 			Reaction rxn = ch.pasteReaction();
 			if (rxn != null)
 				pasteOrDropReaction(rxn);
 			}
 
-		if (e.getActionCommand().equals(ITEM_OPEN_RXN)) {
+		if (e.getActionCommand().equals(ITEM_OPEN_RXN) && mIsEditable) {
 			File rxnFile = FileHelper.getFile(this, "Please select a reaction file", FileHelper.cFileTypeRXN);
 			if (rxnFile != null) {
 				try {
@@ -342,7 +352,7 @@ public class JChemistryView extends JComponent
 					item.addActionListener(this);
 					popup.add(item);
 					}
-				if (isEnabled() || mAllowDropOrPasteWhenDisabled) {
+				if ((isEnabled() || mAllowDropOrPasteWhenDisabled) && mIsEditable) {
 					if (mCopyOrDragActions != DnDConstants.ACTION_NONE) {
 						JMenuItem item = new JMenuItem(ITEM_PASTE_MOLS);
 						item.addActionListener(this);
@@ -357,7 +367,7 @@ public class JChemistryView extends JComponent
 					item.addActionListener(this);
 					popup.add(item);
 					}
-				if (isEnabled() || mAllowDropOrPasteWhenDisabled) {
+				if ((isEnabled() || mAllowDropOrPasteWhenDisabled) && mIsEditable) {
 					if (mCopyOrDragActions != DnDConstants.ACTION_NONE) {
 						JMenuItem item = new JMenuItem(ITEM_PASTE_RXN);
 						item.addActionListener(this);
@@ -441,7 +451,7 @@ public class JChemistryView extends JComponent
 		}
 
 	public boolean canDrop() {
-		return (isEnabled() || mAllowDropOrPasteWhenDisabled) && !mIsDraggingThis;
+		return isEditable() && (isEnabled() || mAllowDropOrPasteWhenDisabled) && !mIsDraggingThis;
 		}
 
 	private void initializeDragAndDrop() {

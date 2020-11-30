@@ -29,29 +29,25 @@ public class JEditableStructureView extends JStructureView {
     static final long serialVersionUID = 0x20090727;
 
     private static final String EDIT_MESSAGE = "<double click or drag & drop>";
-    private boolean mIsEditable,mAllowQueryFeatures;
+    private boolean mAllowQueryFeatures;
 
     public JEditableStructureView() {
         super(null);
-        mIsEditable = true;
 		mAllowQueryFeatures = true;
 		}
 
 	public JEditableStructureView(StereoMolecule mol) {
         super(mol);
-        mIsEditable = true;
 		mAllowQueryFeatures = true;
 	    }
 
 	public JEditableStructureView(int dragAction, int dropAction) {
         super(null, dragAction, dropAction);
-        mIsEditable = true;
 		mAllowQueryFeatures = true;
 	    }
 
 	public JEditableStructureView(StereoMolecule mol, int dragAction, int dropAction) {
         super(mol, dragAction, dropAction);
-        mIsEditable = true;
 		mAllowQueryFeatures = true;
 	    }
 
@@ -64,7 +60,7 @@ public class JEditableStructureView extends JStructureView {
 
 		super.paintComponent(g);
 
-		if (isEnabled() && mIsEditable && getMolecule().getAllAtoms() == 0) {
+		if (isEnabled() && isEditable() && getMolecule().getAllAtoms() == 0) {
 	        g.setFont(g.getFont().deriveFont(Font.PLAIN, HiDPIHelper.scale(10)));
 	        FontMetrics metrics = g.getFontMetrics();
 	        Rectangle2D bounds = metrics.getStringBounds(EDIT_MESSAGE, g);
@@ -74,7 +70,7 @@ public class JEditableStructureView extends JStructureView {
 	    }
 
     public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && isEnabled() && mIsEditable) {
+        if (e.getClickCount() == 2 && isEnabled() && isEditable()) {
             Component c = this;
             while (!(c instanceof Frame || c instanceof Dialog))
                 c = c.getParent();
@@ -90,20 +86,6 @@ public class JEditableStructureView extends JStructureView {
 			mAllowQueryFeatures = allow;
 			if (!allow && getMolecule().removeQueryFeatures())
 				structureChanged();
-		}
-	}
-
-	public boolean isEditable() {
-		return mIsEditable;
-	}
-
-	public void setEditable(boolean b) {
-		if (mIsEditable != b) {
-		    mIsEditable = b;
 			}
 		}
-
-	public boolean canDrop() {
-	    return mIsEditable && super.canDrop();
-        }
     }

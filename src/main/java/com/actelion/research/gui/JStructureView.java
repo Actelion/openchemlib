@@ -51,14 +51,14 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	private String mIDCode;
 	private StereoMolecule mMol,mDisplayMol;
     private Depictor2D mDepictor;
-	private boolean mShowBorder, mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mOpaqueBackground;
+	private boolean mShowBorder,mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mOpaqueBackground,
+					mIsEditable,mDisableBorder;
 	private int mChiralTextPosition,mDisplayMode;
 	private String[] mAtomText;
 	private IClipboardHandler mClipboardHandler;
 	protected MoleculeDropAdapter mDropAdapter = null;
 	protected int mAllowedDragAction;
 	protected int mAllowedDropAction;
-	protected boolean borderFlag = true; // Allow subclasses to disable border painting
 
 	public JStructureView() {
         this(null);
@@ -116,6 +116,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		mMol = (mol == null) ? new StereoMolecule() : new StereoMolecule(mol);
 		mDisplayMol = (displayMol == null) ? mMol : displayMol;
 		mDisplayMode = AbstractDepictor.cDModeHiliteAllQueryFeatures;
+		mIsEditable = true;
 		addMouseListener(this);
 		initializeDragAndDrop(dragAction, dropAction);
 	    }
@@ -145,6 +146,10 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		mOpaqueBackground = b;
 		}
 
+	public void setDisableBorder(boolean b) {
+		mDisableBorder = b;
+		}
+
 	/**
 	 * Defines additional atom text to be displayed in top right
 	 * position of some/all atom labels. If the atom is charged, then
@@ -167,6 +172,16 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		super.setEnabled(enable);
 		}
 
+
+	public boolean isEditable() {
+		return mIsEditable;
+	}
+
+	public void setEditable(boolean b) {
+		if (mIsEditable != b)
+			mIsEditable = b;
+		}
+
 	/**
 	 * When fragment status change on drop is allowed then dropping a fragment (molecule)
 	 * on a molecule (fragment) inverts the status of the view's chemical object.
@@ -178,7 +193,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		}
 
 	public boolean canDrop() {
-		return isEnabled() && !mIsDraggingThis;
+		return mIsEditable && isEnabled() && !mIsDraggingThis;
 	    }
 
 	@Override
@@ -221,7 +236,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
             mDepictor.paint(g);
 			}
 
-		if (borderFlag && mShowBorder) {
+		if (mShowBorder && !mDisableBorder) {
 			g.setColor(Color.gray);
 			g.drawRect(insets.left,insets.top,theSize.width - 1,theSize.height - 1);
 			g.drawRect(insets.left + 1,insets.top + 1,theSize.width - 3,theSize.height - 3);
@@ -341,7 +356,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		if (e.getActionCommand().equals(ITEM_COPY)) {
 			mClipboardHandler.copyMolecule(mMol);
 			}
-		if (e.getActionCommand().startsWith(ITEM_PASTE)) {
+		if (e.getActionCommand().startsWith(ITEM_PASTE) && mIsEditable) {
 			StereoMolecule mol = mClipboardHandler.pasteMolecule();
 			if (mol != null) {
 				if (!mAllowFragmentStatusChangeOnPasteOrDrop)
@@ -351,7 +366,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 				structureChanged();
 				}
 			}
-		if (e.getActionCommand().equals(ITEM_CLEAR)) {
+		if (e.getActionCommand().equals(ITEM_CLEAR) && mIsEditable) {
 			mMol.deleteMolecule();
 			mDisplayMol = mMol;
 			structureChanged();
@@ -367,17 +382,19 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 			item1.setEnabled(mMol.getAllAtoms() != 0);
 			popup.add(item1);
 
-			String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
-			JMenuItem item2 = new JMenuItem(itemText);
-			item2.addActionListener(this);
-			popup.add(item2);
+			if (mIsEditable) {
+				String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
+				JMenuItem item2 = new JMenuItem(itemText);
+				item2.addActionListener(this);
+				popup.add(item2);
 
-			popup.addSeparator();
+				popup.addSeparator();
 
-			JMenuItem item3 = new JMenuItem(ITEM_CLEAR);
-			item3.addActionListener(this);
-			item3.setEnabled(mMol.getAllAtoms() != 0);
-			popup.add(item3);
+				JMenuItem item3 = new JMenuItem(ITEM_CLEAR);
+				item3.addActionListener(this);
+				item3.setEnabled(mMol.getAllAtoms() != 0);
+				popup.add(item3);
+				}
 
 			popup.show(this, e.getX(), e.getY());
 			}
