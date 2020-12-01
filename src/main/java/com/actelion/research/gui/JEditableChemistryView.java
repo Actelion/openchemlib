@@ -22,6 +22,7 @@ public class JEditableChemistryView extends JChemistryView {
 	 */
 	public JEditableChemistryView(int chemistryType) {
 		super(chemistryType);
+		setEditable(true);
 		}
 
 	/**

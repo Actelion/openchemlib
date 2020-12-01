@@ -41,6 +41,7 @@ import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.dnd.ReactionDropAdapter;
 import com.actelion.research.gui.dnd.ReactionTransferable;
+import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 import com.actelion.research.util.CursorHelper;
 
@@ -79,11 +80,14 @@ public class JChemistryView extends JComponent
 	private static final int ALLOWED_DRAG_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 	private static final int ALLOWED_DROP_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 
-	private ExtendedDepictor mDepictor;
+	private static final int DRAG_TYPE_NONE = -1;
+	private static final int DRAG_TYPE_REACTION = -2;   // or molecule index >= 0
+
+	private ExtendedDepictor    mDepictor;
 	private ArrayList<StructureListener> mListener;
-	private Dimension mSize;
-	private int					mChemistryType,mUpdateMode,mDisplayMode,mDragMolecule,mCopyOrDragActions,mPasteOrDropActions,mPasteAndDropOptions;
-	private boolean				mShowBorder,mIsDraggingThis,mAllowDropOrPasteWhenDisabled,mIsEditable;
+	private Dimension           mSize;
+	private int					mChemistryType,mUpdateMode,mDisplayMode,mDragType,mCopyOrDragActions,mPasteOrDropActions,mPasteAndDropOptions;
+	private boolean				mIsDragging,mAllowDropOrPasteWhenDisabled,mIsEditable,mShowBorder;
 	private Color				mFragmentNoColor;
 	private MoleculeDropAdapter mMoleculeDropAdapter = null;
 	private ReactionDropAdapter mReactionDropAdapter = null;
@@ -93,7 +97,9 @@ public class JChemistryView extends JComponent
 	 * Creates a new JChemistryView for showing a reaction or molecules.
 	 * A JChemistryView uses an ExtendedDepictor to handle multiple molecules or a reaction.
 	 * For showing one molecule use a JStructureView.
-	 * This default implementation will support copy/paste and drag&drop.
+	 * The default will support copy/paste and drag&drop from this view only,
+	 * but dropping anything onto this view doesn't have an effect.
+	 * Call setEditable(true) to allow changes through drag&drop and pasting.
 	 * @param chemistryType one of ExtendedDepictor.TYPE_MOLECULES and ExtendedDepictor.TYPE_REACTION
 	 */
 	public JChemistryView(int chemistryType) {
@@ -104,6 +110,9 @@ public class JChemistryView extends JComponent
 	 * Creates a new JChemistryView for showing a reaction or molecules.
 	 * A JChemistryView uses an ExtendedDepictor to handle multiple molecules or a reaction.
 	 * For showing one molecule use a JStructureView.
+	 * The default will support copy/paste and drag&drop from this view only,
+	 * but dropping anything onto this view doesn't have an effect.
+	 * Call setEditable(true) to allow changes through drag&drop and pasting.
 	 * @param chemistryType one of the ExtendedDepictor.TYPE_... options
 	 * @param allowedCopyOrDragActions DnDConstants.ACTION_xxx
 	 * @param allowedPasteOrDropActions DnDConstants.ACTION_xxx
@@ -116,8 +125,8 @@ public class JChemistryView extends JComponent
 		initializeDragAndDrop();
 	    addMouseListener(this);
 	    addMouseMotionListener(this);
-	    mDragMolecule = -1;
-		mIsEditable = true;
+	    mDragType = DRAG_TYPE_NONE;
+		mIsEditable = false;
 	    }
 
     public int getChemistryType() {
@@ -141,7 +150,7 @@ public class JChemistryView extends JComponent
 		mDepictor.setDisplayMode(mDisplayMode);
 		mDepictor.setFragmentNoColor(mFragmentNoColor);
 		mUpdateMode = UPDATE_SCALE_COORDS;
-	    mDragMolecule = -1;
+		mDragType = DRAG_TYPE_NONE;
 		repaint();
 		}
 
@@ -150,7 +159,7 @@ public class JChemistryView extends JComponent
 		mDepictor.setDisplayMode(mDisplayMode);
 		mDepictor.setFragmentNoColor(mFragmentNoColor);
 		mUpdateMode = UPDATE_SCALE_COORDS;
-	    mDragMolecule = -1;
+		mDragType = DRAG_TYPE_NONE;
 		repaint();
 		}
 
@@ -159,7 +168,7 @@ public class JChemistryView extends JComponent
 		mDepictor.setDisplayMode(mDisplayMode);
 		mDepictor.setFragmentNoColor(mFragmentNoColor);
 		mUpdateMode = UPDATE_SCALE_COORDS;
-	    mDragMolecule = -1;
+		mDragType = DRAG_TYPE_NONE;
 		repaint();
 		}
 
@@ -253,15 +262,61 @@ public class JChemistryView extends JComponent
 
 		mDepictor.setForegroundColor(getForeground(), getBackground());
 
-		mDepictor.paint(g);
-
-		if (mShowBorder) {
-			g.setColor(Color.gray);
-			g.drawRect(insets.left,insets.top,theSize.width - 1,theSize.height - 1);
-			g.drawRect(insets.left + 1,insets.top + 1,theSize.width - 3,theSize.height - 3);
+		if (mShowBorder && mDragType != DRAG_TYPE_NONE) {
+			Color bg = getBackground();
+			Color color = ColorHelper.perceivedBrightness(bg) < 0.5f ? bg.brighter() : bg.darker();
+			g.setColor(color);
+			Rectangle2D.Double rect = (mDragType == DRAG_TYPE_REACTION) ? getChemistryBounds() : getMoleculeBounds(mDragType);
+			Stroke oldStroke = ((Graphics2D)g).getStroke();
+			((Graphics2D)g).setStroke(new BasicStroke(HiDPIHelper.scale(2), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+			int arc = (int)Math.min(rect.height/4, Math.min(rect.width/4, HiDPIHelper.scale(10)));
+			g.drawRoundRect((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height, arc, arc);
+			((Graphics2D)g).setStroke(oldStroke);
+			if (mDragType == DRAG_TYPE_REACTION) {
+				final String msg = "<press 'ALT' to drag individual molecules>";
+				int fontSize = HiDPIHelper.scale(8);
+				g.setFont(getFont().deriveFont((float)fontSize));
+				int msgWidth = g.getFontMetrics().stringWidth(msg);
+				int x = (int)(rect.x+(rect.width-msgWidth)/2);
+				int y = (int)(rect.y+rect.height-fontSize/2);
+				g.setColor(((Graphics2D)g).getBackground());
+				g.fillRect(x, y, msgWidth, fontSize);
+				g.setColor(color);
+				g.drawString(msg, x, y+fontSize*2/3);
+				}
 			}
 
+		mDepictor.paint(g);
+
 		mUpdateMode = UPDATE_REDRAW_ONLY;
+		}
+
+	/**
+	 * Returns the bounding rectangle of the indicated molecule,
+	 * if multiple molecules are shown, e.g. of a reaction.
+	 * @param i
+	 * @return bounds or null, if i is out of range
+	 */
+	public Rectangle2D.Double getMoleculeBounds(int i) {
+		return mDepictor == null || i >= mDepictor.getMoleculeCount() ?
+				null : mDepictor.getMoleculeDepictor(i).getBoundingRect();
+		}
+
+	public Rectangle2D.Double getChemistryBounds() {
+		if (mDepictor == null || mDepictor.getMoleculeCount() == 0)
+			return null;
+
+		Rectangle2D.Double rect = null;
+		for (int i=0; i<mDepictor.getMoleculeCount(); i++) {
+			Rectangle2D.Double mrect = mDepictor.getMoleculeDepictor(i).getBoundingRect();
+			if (mrect != null) {
+				if (rect == null)
+					rect = mrect;
+				else
+					rect = (Rectangle2D.Double)rect.createUnion(mrect);
+				}
+			}
+		return rect;
 		}
 
 	private void updateBorder(boolean showBorder) {
@@ -335,7 +390,8 @@ public class JChemistryView extends JComponent
 	public void mousePressed(MouseEvent e) {
 		handlePopupTrigger(e);
 
-		setCursor(CursorHelper.getCursor((mDragMolecule == -1) ? CursorHelper.cPointerCursor : CursorHelper.cFistCursor));
+		setCursor(CursorHelper.getCursor((mDragType == DRAG_TYPE_NONE) ?
+				CursorHelper.cPointerCursor : CursorHelper.cFistCursor));
 		}
 
 	@Override
@@ -405,31 +461,41 @@ public class JChemistryView extends JComponent
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		if (mDragMolecule != -1)
-			setCursor(CursorHelper.getCursor(CursorHelper.cFistCursor));
+//		if (mDragType != DRAG_TYPE_NONE)
+//			setCursor(CursorHelper.getCursor(CursorHelper.cFistCursor));
 		}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
 		int x = e.getX();
 		int y = e.getY();
-		if (mDepictor != null) {
-			int dragMolecule = -1;
-			for (int i=0; i<mDepictor.getMoleculeCount(); i++) {
-				Rectangle2D.Double bounds = mDepictor.getMoleculeDepictor(i).getBoundingRect();
-				if (bounds != null && bounds.contains(x, y)) {
-					dragMolecule = i;
-					break;
+		int dragType = DRAG_TYPE_NONE;
+		if (mDepictor != null && (mCopyOrDragActions & DnDConstants.ACTION_COPY) != 0) {
+			boolean dragIndividualMolecule = mChemistryType != ExtendedDepictor.TYPE_REACTION || e.isAltDown();
+			if (dragIndividualMolecule) {
+				for (int i=0; i<mDepictor.getMoleculeCount(); i++) {
+					Rectangle2D.Double bounds = mDepictor.getMoleculeDepictor(i).getBoundingRect();
+					if (bounds != null && bounds.contains(x, y)) {
+						dragType = i;
+						break;
+						}
 					}
 				}
-			if (mDragMolecule != dragMolecule) {
-				mDragMolecule = dragMolecule;
+			else {
+				Rectangle2D.Double bounds = getChemistryBounds();
+				if (bounds != null && bounds.contains(x, y))
+					dragType = DRAG_TYPE_REACTION;
+				}
+
+			if (mDragType != dragType) {
+				mDragType = dragType;
 				repaint();
 				}
 			}
 
-		setCursor(CursorHelper.getCursor((mDragMolecule == -1) ? CursorHelper.cPointerCursor
-															   : CursorHelper.cHandCursor));
+		updateBorder(dragType != DRAG_TYPE_NONE);
+		setCursor(CursorHelper.getCursor((mDragType == DRAG_TYPE_NONE) ?
+				CursorHelper.cPointerCursor : CursorHelper.cHandCursor));
 		}
 
 	public void addStructureListener(StructureListener l) {
@@ -451,7 +517,7 @@ public class JChemistryView extends JComponent
 		}
 
 	public boolean canDrop() {
-		return isEditable() && (isEnabled() || mAllowDropOrPasteWhenDisabled) && !mIsDraggingThis;
+		return isEditable() && (isEnabled() || mAllowDropOrPasteWhenDisabled) && !mIsDragging;
 		}
 
 	private void initializeDragAndDrop() {
@@ -473,16 +539,16 @@ public class JChemistryView extends JComponent
 						boolean drop = canDrop() && isDropOK(e) ;
 						if (!drop)
 							e.rejectDrag();
-						updateBorder(drop);
+//						updateBorder(drop);
 						}
 
 					public void dragExit(DropTargetEvent e) {
-						updateBorder(false);
+//						updateBorder(false);
 						}
 					};
 
 				new DropTarget(this, mPasteOrDropActions, mMoleculeDropAdapter, true);
-//			new DropTarget(this,mAllowedDropAction,mDropAdapter,true, getSystemFlavorMap());
+//			    new DropTarget(this,mAllowedDropAction,mDropAdapter,true, getSystemFlavorMap());
 				}
 
 			if (mChemistryType == ExtendedDepictor.TYPE_REACTION) {
@@ -499,11 +565,11 @@ public class JChemistryView extends JComponent
 						boolean drop = canDrop() && isDropOK(e) ;
 						if (!drop)
 							e.rejectDrag();
-						updateBorder(drop);
+//						updateBorder(drop);
 						}
 
 					public void dragExit(DropTargetEvent e) {
-						updateBorder(false);
+//						updateBorder(false);
 						}
 					};
 
@@ -547,9 +613,8 @@ public class JChemistryView extends JComponent
 		informListeners();
 		}
 
-	public Transferable getMoleculeTransferable(Point pt) {
-		StereoMolecule mol = (mDragMolecule == -1) ? null
-							 : mDepictor.getMolecule(mDragMolecule).getCompactCopy();
+	public Transferable getMoleculeTransferable() {
+		StereoMolecule mol = (mDragType < 0) ? null : mDepictor.getMolecule(mDragType).getCompactCopy();
 		return new MoleculeTransferable(mol);
 		}
 
@@ -572,7 +637,9 @@ public class JChemistryView extends JComponent
 	public void dragExit(DragSourceEvent e) {}
 	public void dragDropEnd(DragSourceDropEvent e) {
 		System.out.println("dragDropEnd()");
-		mIsDraggingThis = false;
+		mIsDragging = false;
+		mDragType = DRAG_TYPE_NONE;
+		repaint();
 		}
 
 	public void dropActionChanged(DragSourceDragEvent e) {
@@ -587,13 +654,13 @@ public class JChemistryView extends JComponent
 		}
 
 	public void dragGestureRecognized(DragGestureEvent e) {
-		if((e.getDragAction() & ALLOWED_DRAG_ACTIONS) != 0) {
-			Transferable transferable = (mChemistryType == ExtendedDepictor.TYPE_REACTION) ?
-					getReactionTransferable() : getMoleculeTransferable(e.getDragOrigin());
+		if((e.getDragAction() & ALLOWED_DRAG_ACTIONS) != 0 && mDragType != DRAG_TYPE_NONE) {
+			Transferable transferable = (mDragType == DRAG_TYPE_REACTION) ?
+					getReactionTransferable() : getMoleculeTransferable();
 			if (transferable != null) {
 				try {
 					e.startDrag(CursorHelper.getCursor(CursorHelper.cFistCursor), transferable, this);
-					mIsDraggingThis = true;
+					mIsDragging = true;
 //					e.startDrag(DragSource.DefaultCopyNoDrop, transferable, this);
 					}
 				catch (InvalidDnDOperationException idoe) {

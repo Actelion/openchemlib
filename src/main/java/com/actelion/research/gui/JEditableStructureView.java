@@ -33,21 +33,25 @@ public class JEditableStructureView extends JStructureView {
 
     public JEditableStructureView() {
         super(null);
+	    setEditable(true);
 		mAllowQueryFeatures = true;
 		}
 
 	public JEditableStructureView(StereoMolecule mol) {
         super(mol);
+		setEditable(true);
 		mAllowQueryFeatures = true;
 	    }
 
 	public JEditableStructureView(int dragAction, int dropAction) {
         super(null, dragAction, dropAction);
+		setEditable(true);
 		mAllowQueryFeatures = true;
 	    }
 
 	public JEditableStructureView(StereoMolecule mol, int dragAction, int dropAction) {
         super(mol, dragAction, dropAction);
+		setEditable(true);
 		mAllowQueryFeatures = true;
 	    }
 
