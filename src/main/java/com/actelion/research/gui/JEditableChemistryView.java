@@ -72,6 +72,18 @@ public class JEditableChemistryView extends JChemistryView {
 		super.mouseClicked(e);
 		}
 
+	private boolean isEmpty() {
+		if (mReaction != null && !mReaction.isEmpty())
+			return false;
+
+		if (mMolecules != null)
+			for (StereoMolecule mol:mMolecules)
+				if (mol.getAllAtoms() != 0)
+					return false;
+
+		return true;
+		}
+
 	@Override
 	public void paintComponent(Graphics g) {
 		Dimension theSize = getSize();
@@ -81,7 +93,7 @@ public class JEditableChemistryView extends JChemistryView {
 
 		super.paintComponent(g);
 
-		if (isEnabled() && isEditable() && mReaction.isEmpty()) {
+		if (isEnabled() && isEditable() && isEmpty()) {
 			g.setFont(g.getFont().deriveFont(Font.PLAIN, HiDPIHelper.scale(10)));
 			FontMetrics metrics = g.getFontMetrics();
 			Rectangle2D bounds = metrics.getStringBounds(EDIT_MESSAGE, g);

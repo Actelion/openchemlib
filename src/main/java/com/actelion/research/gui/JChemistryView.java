@@ -274,15 +274,12 @@ public class JChemistryView extends JComponent
 			((Graphics2D)g).setStroke(oldStroke);
 			if (mDragType == DRAG_TYPE_REACTION) {
 				final String msg = "<press 'ALT' to drag individual molecules>";
-				int fontSize = HiDPIHelper.scale(8);
+				int fontSize = HiDPIHelper.scale(9);
 				g.setFont(getFont().deriveFont((float)fontSize));
 				int msgWidth = g.getFontMetrics().stringWidth(msg);
 				int x = (int)(rect.x+(rect.width-msgWidth)/2);
 				int y = (int)(rect.y+rect.height-fontSize/2);
-				g.setColor(((Graphics2D)g).getBackground());
-				g.fillRect(x, y, msgWidth, fontSize);
-				g.setColor(color);
-				g.drawString(msg, x, y+fontSize*2/3);
+				g.drawString(msg, x, y);
 				}
 			}
 
@@ -580,21 +577,19 @@ public class JChemistryView extends JComponent
 		}
 
 	private void pasteOrDropMolecule(StereoMolecule m) {
-		boolean isFragment = mDepictor.isFragment();
 		StereoMolecule mol = new StereoMolecule(m);
 		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_KEEP_ATOM_COLORS) == 0)
 			mol.removeAtomColors();
 		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_KEEP_BOND_HIGHLIGHTING) == 0)
 			mol.removeBondHiliting();
-		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_ALLOW_FRAGMENT_STATE_CHANGE) == 0)
-			mol.setFragment(isFragment);
+		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_ALLOW_FRAGMENT_STATE_CHANGE) == 0 && mDepictor != null)
+			mol.setFragment(mDepictor.isFragment());
 		setContent(mol);
 		repaint();
 		informListeners();
 		}
 
 	private void pasteOrDropReaction(Reaction r) {
-		boolean isFragment = mDepictor.isFragment();
 		Reaction rxn = new Reaction(r);
 		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_KEEP_ATOM_COLORS) == 0)
 			for (int m=0; m<rxn.getMolecules(); m++)
@@ -602,8 +597,8 @@ public class JChemistryView extends JComponent
 		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_KEEP_BOND_HIGHLIGHTING) == 0)
 			for (int m=0; m<rxn.getMolecules(); m++)
 				rxn.getMolecule(m).removeBondHiliting();
-		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_ALLOW_FRAGMENT_STATE_CHANGE) == 0)
-			rxn.setFragment(isFragment);
+		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_ALLOW_FRAGMENT_STATE_CHANGE) == 0 && mDepictor != null)
+			rxn.setFragment(mDepictor.isFragment());
 		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_REMOVE_CATALYSTS) != 0)
 			rxn.removeCatalysts();
 		if ((mPasteAndDropOptions & PASTE_AND_DROP_OPTION_REMOVE_DRAWING_OBJECTS) != 0)
