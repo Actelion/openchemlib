@@ -39,7 +39,7 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-public class JStructureView extends JPanel implements ActionListener,MouseListener,MouseMotionListener,StructureListener {
+public class JStructureView extends JComponent implements ActionListener,MouseListener,MouseMotionListener,StructureListener {
     static final long serialVersionUID = 0x20061113;
 
     private static final String ITEM_COPY = "Copy Structure";
@@ -155,10 +155,6 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	    mDisplayMode = mode;
 	    }
 
-	public void setOpaqueBackground(boolean b) {
-		mOpaqueBackground = b;
-		}
-
 	public void setDisableBorder(boolean b) {
 		mDisableBorder = b;
 		}
@@ -218,7 +214,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		theSize.width -= insets.left + insets.right;
 		theSize.height -= insets.top + insets.bottom;
 
-        if(theSize.width <= 0 || theSize.height <= 0)
+        if (theSize.width <= 0 || theSize.height <= 0)
             return;
 
         Graphics2D g2 = (Graphics2D)g;
@@ -226,12 +222,10 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
-        if (mOpaqueBackground) {
-        	Color fg = g2.getColor();
-	        g2.setColor(UIManager.getColor(isEnabled() ? "TextField.background" : "TextField.inactiveBackground"));
-	        g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
-	        g2.setColor(fg);
-            }
+		Color fg = g2.getColor();
+		g2.setColor(UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground"));
+		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
+		g2.setColor(fg);
 
 		if (mDisplayMol != null && mDisplayMol.getAllAtoms() != 0) {
 			mDepictor = new Depictor2D(mDisplayMol);
@@ -292,7 +286,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	 */
 	public synchronized void structureChanged(StereoMolecule mol) {
 		if (mol == null) {
-			mMol.deleteMolecule();
+			mMol.clear();
 			}
 		else {
 			mol.copyMolecule(mMol);
@@ -310,7 +304,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	 */
 	public synchronized void structureChanged(StereoMolecule mol, StereoMolecule displayMol) {
 		if (mol == null) {
-			mMol.deleteMolecule();
+			mMol.clear();
 			}
 		else {
 			mol.copyMolecule(mMol);
@@ -346,7 +340,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 
     public void addStructureListener(StructureListener l) {
 		if(mListener == null)
-			mListener = new ArrayList<StructureListener>();
+			mListener = new ArrayList<>();
 
 		mListener.add(l);
 		}
@@ -532,7 +526,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 			}
 		}
 
-	public java.awt.datatransfer.FlavorMap getSystemFlavorMap() {
+/*	public java.awt.datatransfer.FlavorMap getSystemFlavorMap() {
 	    return new OurFlavorMap();
 	    }
 
@@ -543,18 +537,18 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
     // there's nothing I can do about it.
     static class OurFlavorMap implements FlavorMap, FlavorTable {
     	public java.util.Map<DataFlavor,String> getNativesForFlavors(DataFlavor[] dfs) {
-    /*	    System.out.println("getNativesForFlavors " + dfs.length);
-    	    for (int i = 0; i < dfs.length; i++)
-    		    System.out.println(" -> " + dfs[i]);
-    */
+    //	    System.out.println("getNativesForFlavors " + dfs.length);
+    //	    for (int i = 0; i < dfs.length; i++)
+    //		    System.out.println(" -> " + dfs[i]);
+    //
     	    return SystemFlavorMap.getDefaultFlavorMap().getNativesForFlavors(dfs);
     	    }
     
     	public java.util.Map<String,DataFlavor> getFlavorsForNatives(String[] natives) {
-    /*	    System.out.println("getFlavorsForNatives " + natives.length);
-    	    for (int i = 0; i < natives.length; i++)
-    	        System.out.println(" -> " + natives[i]);
-    */
+    //	    System.out.println("getFlavorsForNatives " + natives.length);
+    //	    for (int i = 0; i < natives.length; i++)
+    //	        System.out.println(" -> " + natives[i]);
+    //
     	    return SystemFlavorMap.getDefaultFlavorMap().getFlavorsForNatives(natives);
     	    }
     
@@ -568,5 +562,5 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
     //	    System.out.println("getNativesForFlavor " + flav);
     	    return ((SystemFlavorMap)SystemFlavorMap.getDefaultFlavorMap()).getNativesForFlavor(flav);
     	    }
-        }
+        }*/
     }

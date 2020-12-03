@@ -87,7 +87,7 @@ public class JChemistryView extends JComponent
 	private ArrayList<StructureListener> mListener;
 	private Dimension           mSize;
 	private int					mChemistryType,mUpdateMode,mDisplayMode,mDragType,mCopyOrDragActions,mPasteOrDropActions,mPasteAndDropOptions;
-	private boolean				mIsDragging,mAllowDropOrPasteWhenDisabled,mIsEditable,mShowBorder;
+	private boolean				mIsDragging,mAllowDropOrPasteWhenDisabled,mIsEditable,mShowBorder,mOpaqueBackground;
 	private Color				mFragmentNoColor;
 	private MoleculeDropAdapter mMoleculeDropAdapter = null;
 	private ReactionDropAdapter mReactionDropAdapter = null;
@@ -172,6 +172,10 @@ public class JChemistryView extends JComponent
 		repaint();
 		}
 
+	public void setOpaqueBackground(boolean b) {
+		mOpaqueBackground = b;
+		}
+
 	/**
 	 * fragment status change on drop is allowed then dropping a fragment (molecule)
 	 * on a molecule (fragment) inverts the status of the view's chemical object.
@@ -252,13 +256,15 @@ public class JChemistryView extends JComponent
 
 		mSize = theSize;
 
-//		g.setColor(getBackground());
-//		g.fillRect(0, 0, theSize.width, theSize.height);
-
 		Graphics2D g2 = (Graphics2D)g;
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 		g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+		Color fg = g2.getColor();
+		g2.setColor(UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground"));
+		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
+		g2.setColor(fg);
 
 		mDepictor.setForegroundColor(getForeground(), getBackground());
 
@@ -274,7 +280,7 @@ public class JChemistryView extends JComponent
 			((Graphics2D)g).setStroke(oldStroke);
 			if (mDragType == DRAG_TYPE_REACTION) {
 				final String msg = "<press 'ALT' to drag individual molecules>";
-				int fontSize = HiDPIHelper.scale(9);
+				int fontSize = HiDPIHelper.scale(7);
 				g.setFont(getFont().deriveFont((float)fontSize));
 				int msgWidth = g.getFontMetrics().stringWidth(msg);
 				int x = (int)(rect.x+(rect.width-msgWidth)/2);
@@ -454,7 +460,14 @@ public class JChemistryView extends JComponent
 
 	@Override public void mouseClicked(MouseEvent e) {}
 	@Override public void mouseEntered(MouseEvent e) {}
-	@Override public void mouseExited(MouseEvent e) {}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		if (!mIsDragging) {
+			mDragType = DRAG_TYPE_NONE;
+			repaint();
+		}
+	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
