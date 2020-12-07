@@ -79,6 +79,8 @@ public class CompoundCollectionPane<T> extends JScrollPane
 	private JPanel			    mContentPanel;
 	private boolean			    mIsVertical,mIsEditable,mIsSelectable,mCreateFragments,
 								mIsEnabled,mShowValidationError,mInternalDragAndDropIsMove;
+	private ScrollPaneAutoScrollerWhenDragging mScroller;
+
 
 	/**
 	 * This is a visual component to display and edit a compound collection maintained
@@ -108,6 +110,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 		mDropIndex = -1;
 		init();
 		initializeDragAndDrop(dragAction, dropAction);
+		mScroller = new ScrollPaneAutoScrollerWhenDragging(this, isVertical);
 		}
 
 	public CompoundCollectionModel<T> getModel() {
@@ -424,7 +427,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 								g.drawString("?", bounds.x+(bounds.width-(int)b.getWidth())/2, bounds.y+(bounds.height-(int)b.getHeight())/2+m.getAscent());
 								}
 							}
-	
+
 						Depictor2D d = new Depictor2D(compound, mDisplayMode);
 						d.validateView(g,
 									   new Rectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height),
@@ -706,6 +709,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 
 				@Override
 				public void dragOver(DropTargetDragEvent e) {
+					mScroller.autoScroll();
 					updateDropPosition(getDropIndex(e));
 					}
 
