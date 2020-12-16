@@ -957,20 +957,24 @@ public class IDCodeParserWithoutCoordinateInvention {
 		}
 
 	public boolean coordinatesAre3D(byte[] idcode, byte[] coordinates) {
-		if (coordinates == null || coordinates.length == 0)
+		return coordinatesAre3D(idcode, coordinates, 0, 0);
+		}
+
+	public boolean coordinatesAre3D(byte[] idcode, byte[] coordinates, int idcodeStart, int coordsStart) {
+		if (coordinates == null || coordinates.length <= coordsStart)
 			return false;
 
-		if (coordinates[0] == '!' || coordinates[0] == '#') {
+		if (coordinates[coordsStart] == '!' || coordinates[coordsStart] == '#') {
 			// current version starts with '!' (ASC 33) or '#' (ASC 35) (includs implicit hydrogen coordinates)
 			// further versions may start with ASC 36 to 38
-			decodeBitsStart(coordinates, 1);
+			decodeBitsStart(coordinates, coordsStart+1);
 			return (decodeBits(1) == 1);
 			}
 		else {	// old format uses ACSII 39 and higher
-			int allAtoms = getAtomCount(idcode, 0);
+			int allAtoms = getAtomCount(idcode, idcodeStart);
 			return (allAtoms != 0
-				 && coordinates.length >= 3*allAtoms-3
-				 && coordinates[2*allAtoms-2] != '\'');
+				 && coordinates.length >= coordsStart+3*allAtoms-3
+				 && coordinates[coordsStart+2*allAtoms-2] != '\'');
 			}
 		}
 

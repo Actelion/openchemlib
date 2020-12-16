@@ -548,7 +548,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
-	 * The free valence is the number of potential additional single bonded
+	 * The lowest free valence is the number of potential additional single bonded
 	 * neighbours to reach the atom's lowest valence above or equal its current
 	 * occupied valence. Atom charges are considered. Implicit hydrogens are not considered.
 	 * Thus, the phosphor atoms in PF2 and PF4 both have a lowest free valence of 1.

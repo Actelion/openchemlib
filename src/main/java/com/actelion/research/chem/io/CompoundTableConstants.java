@@ -91,7 +91,7 @@ public interface CompoundTableConstants {
     int cStructureHiliteModeFilter = 0;
     int cStructureHiliteModeCurrentRow = 1;
     int cStructureHiliteModeNone = 2;
-    String[] cStructureHiliteModeText = { "Most Recent Filter", "Current Row Similarity", "No Highlighting" };
+    String[] cStructureHiliteModeText = { "Most Recent Filter", "Similarity To Reference Row", "No Highlighting" };
     String[] cStructureHiliteModeCode = { "hiliteFilter", "hiliteCurrent", "hiliteNone" };
 
     // highlight mode for part-of-reaction highlighting depending on current record similarity

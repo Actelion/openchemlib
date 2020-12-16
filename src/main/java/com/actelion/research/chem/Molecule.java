@@ -3775,6 +3775,7 @@ public class Molecule implements Serializable {
 		case 33: 	// As
 		case 34: 	// Se
 		case 35: 	// Br
+		case 52: 	// Te
 		case 53: 	// I
 			return true;
 			}
