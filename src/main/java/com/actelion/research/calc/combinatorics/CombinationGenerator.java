@@ -148,8 +148,13 @@ public class CombinationGenerator {
 		    input[a] = input[b];
 		    input[b] = tmp;
 	}
-	
-	
+
+	/**
+	 *
+	 * @param elements
+	 * @param n
+	 * @return
+	 */
 	public static List<int[]> getPermutations(int[] elements, int n){
 		List<int[]> permutations = new ArrayList<int[]>();
 		int[] indexes = new int[n];
@@ -201,12 +206,32 @@ public class CombinationGenerator {
 	}
 
 	public static void main(String[] args) {
-		int n = 12;
-		int k= 3;
 
-		BigInteger bc = getBinomialCoefficient(n,k);
+		int l = 3;
 
-		System.out.println(bc.toString());
+		int [] r = new int[l];
+		for (int i = 0; i < l; i++) {
+			r[i]=i;
+		}
+		List<int[]> permutations = getPermutations(r,r.length);
+
+
+
+
+		for(int[] per : permutations) {
+			//System.out.println(Arrays.toString(per));
+			System.out.println(Arrays.toString(per));
+		}
+
+		System.out.println(permutations.size());
+
+
+//		int n = 12;
+//		int k= 3;
+//
+//		BigInteger bc = getBinomialCoefficient(n,k);
+//
+//		System.out.println(bc.toString());
 	}
 
 

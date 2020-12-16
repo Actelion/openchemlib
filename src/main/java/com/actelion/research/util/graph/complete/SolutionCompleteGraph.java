@@ -85,7 +85,6 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 			return -1;
 		}
 		
-		
 		return 0;
 	}
 

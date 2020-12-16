@@ -29,7 +29,9 @@ import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.Obj
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.PPNodeSimilarity;
 import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDistHistViz;
 import com.actelion.research.util.CommandLineParser;
+import com.actelion.research.util.Formatter;
 import com.actelion.research.util.graph.complete.CompleteGraphMatcher;
+import com.actelion.research.util.graph.complete.SolutionCompleteGraph;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -142,6 +144,8 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 	private ThreadMaster threadMaster;
 
+	private CompleteGraphMatcher<IMolDistHist> cgMatcherMostRecent;
+
 	public DescriptorHandlerFlexophore(String parameter) {
 		CommandLineParser cmd = new CommandLineParser(parameter, SEP_PARAMETER);
 		int versionInteractionTable = VERSION_INTERACTION_TABLES;
@@ -236,7 +240,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		this.singleConformationModeQuery = singleConformationModeQuery;
 	}
 
-	private CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher(){
+	public CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher(){
 
 		ObjectiveFlexophoreHardMatchUncovered objective =
 				new ObjectiveFlexophoreHardMatchUncovered(
@@ -500,31 +504,12 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 				return 0;
 			}
 
-			sc = (float)getMinimumSimilarity(mdhvBase, mdhvQuery);
+			sc = (float) getSimilarity(mdhvBase, mdhvQuery);
 
 		}
 
 		return normalizeValue(sc);
-
-		// return sc;
 	}
-
-	private double getMinimumSimilarity(IMolDistHist mdhvBase, IMolDistHist mdhvQuery){
-
-		double sc = 0;
-
-		if(mdhvBase.getNumPPNodes() == mdhvQuery.getNumPPNodes()){
-			double s1 = getSimilarity(mdhvBase, mdhvQuery);
-			double s2 = getSimilarity(mdhvQuery, mdhvBase);
-
-			sc = Math.max(s1, s2);
-		} else {
-			sc = getSimilarity(mdhvBase, mdhvQuery);
-		}
-
-		return sc;
-	}
-
 
 	private double getSimilarity(IMolDistHist iBase, IMolDistHist iQuery){
 
@@ -554,7 +539,13 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		queueCGM.add(cgMatcher);
 
+		cgMatcherMostRecent = cgMatcher;
+
 		return sc;
+	}
+
+	public SolutionCompleteGraph getBestMatchingSolution(){
+		return cgMatcherMostRecent.getBestMatchingSolution();
 	}
 
 	public double getSimilarityNodes(PPNode query, PPNode base) {
@@ -562,7 +553,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	}
 
 
-	public float normalizeValue(double value) {
+	public static float normalizeValue(double value) {
 		return value <= 0.0f ? 0.0f
 				: value >= 1.0f ? 1.0f
 				: (float)(1.0-Math.pow(1-Math.pow(value, CORRECTION_FACTOR) ,1.0/CORRECTION_FACTOR));
