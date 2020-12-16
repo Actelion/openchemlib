@@ -1,15 +1,18 @@
 package com.actelion.research.chem.descriptor.flexophore.completegraphmatcher;
 
 import com.actelion.research.calc.Matrix;
+import com.actelion.research.calc.combinatorics.CombinationGenerator;
 import com.actelion.research.calc.statistics.median.MedianStatisticFunctions;
 import com.actelion.research.chem.descriptor.flexophore.PPNode;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
 import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
 import com.actelion.research.util.Formatter;
+import com.actelion.research.util.StringFunctions;
 import com.actelion.research.util.datamodel.table.TableModelString;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,7 +31,7 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 	public static final int SIMILARITY_MODE_SIMPLE = 0;
 
 	/**
-	 * Hartd thresh means if the similarity of two atom types in a node to node comparison is below a threshold
+	 * Hard thresh means if the similarity of two atom types in a node to node comparison is below a threshold
 	 * the complete node to node similarity becomes 0.
 	 */
 
@@ -303,7 +306,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 		maSimilarity.set(0);
 
-
 		for (int i = 0; i < query.getInteractionTypeCount(); i++) {
 
 			int interactionTypeQuery = query.getInteractionType(i);
@@ -348,40 +350,176 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 		}
 
+		double [] arrMaxSim = getTopValues(maSimilarity, query.getInteractionTypeCount(), base.getInteractionTypeCount(), threshSimilarityHardMatch);
 
-		List<Double> liSimilarities = new ArrayList<>();
+		List<Double> liSimilarities = new ArrayList<>(arrMaxSim.length);
+		for (double v : arrMaxSim) {
+			liSimilarities.add(v);
+		}
 
-		if(base.getInteractionTypeCount() > query.getInteractionTypeCount()) {
 
-			for (int col = 0; col < base.getInteractionTypeCount(); col++) {
+//		if(base.getInteractionTypeCount() > query.getInteractionTypeCount()) {
+//
+//			for (int col = 0; col < base.getInteractionTypeCount(); col++) {
+//
+//				double maxSimInCol = 0;
+//				for (int row = 0; row < query.getInteractionTypeCount(); row++) {
+//					if(maSimilarity.get(row,col)>maxSimInCol){
+//						maxSimInCol = maSimilarity.get(row,col);
+//					}
+//				}
+//
+//				liSimilarities.add(maxSimInCol);
+//
+//				// System.out.println("Sim maxSimInCol " + Formatter.format2(maxSimInCol) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
+//			}
+//		} else {
+//			for (int row = 0; row < query.getInteractionTypeCount(); row++) {
+//
+//				double maxSimInRow = 0;
+//				for (int col = 0; col < base.getInteractionTypeCount(); col++) {
+//					if(maSimilarity.get(row,col) > maxSimInRow){
+//						maxSimInRow = maSimilarity.get(row,col);
+//					}
+//				}
+//				// System.out.println("Sim maxSimInRow " + Formatter.format2(maxSimInRow) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
+//
+//				liSimilarities.add(maxSimInRow);							}
+//		}
+
+		return liSimilarities;
+	}
+
+
+	private static double [] getTopValues(Matrix maSimilarity, int rows, int cols, double thresh){
+
+		double [] arrTopSim = new double[Math.max(rows, cols)];
+
+		if(rows==1 && cols==1){
+			arrTopSim[0]=maSimilarity.get(0,0);
+			return arrTopSim;
+		}
+
+		if(cols > rows) {
+
+			for (int col = 0; col < cols; col++) {
 
 				double maxSimInCol = 0;
-				for (int row = 0; row < query.getInteractionTypeCount(); row++) {
+				for (int row = 0; row < rows; row++) {
 					if(maSimilarity.get(row,col)>maxSimInCol){
 						maxSimInCol = maSimilarity.get(row,col);
 					}
 				}
-
-				liSimilarities.add(maxSimInCol);
-
+				arrTopSim[col]=maxSimInCol;
 				// System.out.println("Sim maxSimInCol " + Formatter.format2(maxSimInCol) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
 			}
-		} else {
-			for (int row = 0; row < query.getInteractionTypeCount(); row++) {
+		} else if(cols < rows){
+			for (int row = 0; row < rows; row++) {
 
 				double maxSimInRow = 0;
-				for (int col = 0; col < base.getInteractionTypeCount(); col++) {
+				for (int col = 0; col < cols; col++) {
 					if(maSimilarity.get(row,col) > maxSimInRow){
 						maxSimInRow = maSimilarity.get(row,col);
 					}
 				}
 				// System.out.println("Sim maxSimInRow " + Formatter.format2(maxSimInRow) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
 
-				liSimilarities.add(maxSimInRow);							}
+				arrTopSim[row]=maxSimInRow;						}
+		} else {
+
+
+			// Find for each column the highest value
+			double [] arrMaxInCol = new double[cols];
+
+
+			int [] arr0 = new int[rows];
+			for (int i = 0; i < arr0.length; i++) {
+				arr0[i]=i;
+			}
+			List<int[]> liPermutations = CombinationGenerator.getPermutations(arr0, rows);
+
+			double sumMax=0;
+			int indexTopPermutation=0;
+
+			for (int i = 0; i < liPermutations.size(); i++) {
+			    int[] arrIndex = liPermutations.get(i);
+				// System.out.println(StringFunctions.toString(arrIndex, ","));
+
+				boolean valid=true;
+				double sumSim=0;
+				for (int j = 0; j < arrIndex.length; j++) {
+
+					double sim = maSimilarity.get(j, arrIndex[j]);
+					if(sim<thresh) {
+						valid=false;
+						break;
+					}
+					sumSim += sim;
+				}
+
+				if(valid && sumSim>sumMax){
+					sumMax = sumSim;
+					indexTopPermutation = i;
+				}
+			}
+
+			int[] arrIndex = liPermutations.get(indexTopPermutation);
+
+			for (int i = 0; i < arrIndex.length; i++) {
+				double sim = maSimilarity.get(i, arrIndex[i]);
+				arrTopSim[i]= sim;
+			}
+
+
+//			for (int col = 0; col < cols; col++) {
+//
+//				double maxSimInCol = 0;
+//				for (int row = 0; row < rows; row++) {
+//					if(maSimilarity.get(row,col)>maxSimInCol){
+//						maxSimInCol = maSimilarity.get(row,col);
+//					}
+//				}
+//				arrMaxInCol[col]=maxSimInCol;
+//				// System.out.println("Sim maxSimInCol " + Formatter.format2(maxSimInCol) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
+//			}
+//
+//			// Find the lowest in arrMaxInCol
+//
+//			boolean [] arrRowTouched = new boolean[rows];
+//			for (int col = 0; col < cols; col++) {
+//
+//				double min=Double.MAX_VALUE;
+//				int indexCol=-1;
+//				for (int col2 = 0; col2 < cols; col2++) {
+//					if(arrMaxInCol[col2]<min){
+//						min = arrMaxInCol[col2];
+//						indexCol=col2;
+//					}
+//				}
+//
+//				arrMaxInCol[indexCol]=Double.MAX_VALUE; // Col touched
+//
+//				double max=-Double.MAX_VALUE;
+//				int indexRow=-1;
+//				for (int row = 0; row < rows; row++) {
+//					if(arrRowTouched[row])
+//						continue;
+//
+//					if(maSimilarity.get(row,indexCol)>max){
+//						max = maSimilarity.get(row,indexCol);
+//						indexRow = row;
+//					}
+//				}
+//				arrRowTouched[indexRow]=true;
+//
+//				arrTopSim[col]=max;
+//			}
 		}
 
-		return liSimilarities;
+
+		return arrTopSim;
 	}
+
 
 	public double getSimilarityHardMatchAverage(PPNode query, PPNode base) {
 		List<Double> liSimilarities = getSimilarityList(query, base);
