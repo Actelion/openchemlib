@@ -415,7 +415,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 			}
 		} else if(cols < rows){
 			for (int row = 0; row < rows; row++) {
-
 				double maxSimInRow = 0;
 				for (int col = 0; col < cols; col++) {
 					if(maSimilarity.get(row,col) > maxSimInRow){
@@ -424,98 +423,109 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 				}
 				// System.out.println("Sim maxSimInRow " + Formatter.format2(maxSimInRow) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
 
-				arrTopSim[row]=maxSimInRow;						}
+				arrTopSim[row]=maxSimInRow;
+			}
 		} else {
 
+			boolean invalidCol=false;
+			double sumCol=0;
 
-			// Find for each column the highest value
-			double [] arrMaxInCol = new double[cols];
+			double [] arrTopSimCol = new double[cols];
 
-
-			int [] arr0 = new int[rows];
-			for (int i = 0; i < arr0.length; i++) {
-				arr0[i]=i;
-			}
-			List<int[]> liPermutations = CombinationGenerator.getPermutations(arr0, rows);
-
-			double sumMax=0;
-			int indexTopPermutation=0;
-
-			for (int i = 0; i < liPermutations.size(); i++) {
-			    int[] arrIndex = liPermutations.get(i);
-				// System.out.println(StringFunctions.toString(arrIndex, ","));
-
-				boolean valid=true;
-				double sumSim=0;
-				for (int j = 0; j < arrIndex.length; j++) {
-
-					double sim = maSimilarity.get(j, arrIndex[j]);
-					if(sim<thresh) {
-						valid=false;
-						break;
+			for (int col = 0; col < cols; col++) {
+				double maxSimInCol = 0;
+				for (int row = 0; row < rows; row++) {
+					double v = maSimilarity.get(row,col);
+					if(v>maxSimInCol){
+						maxSimInCol = v;
 					}
-					sumSim += sim;
 				}
-
-				if(valid && sumSim>sumMax){
-					sumMax = sumSim;
-					indexTopPermutation = i;
+				arrTopSimCol[col]=maxSimInCol;
+				sumCol += maxSimInCol;
+				if(maxSimInCol<thresh){
+					invalidCol=true;
 				}
 			}
 
-			int[] arrIndex = liPermutations.get(indexTopPermutation);
+			double [] arrTopSimRow = new double[rows];
+			boolean invalidRow=false;
+			double sumRow=0;
+			for (int row = 0; row < rows; row++) {
+				double maxSimInRow = 0;
+				for (int col = 0; col < cols; col++) {
 
-			for (int i = 0; i < arrIndex.length; i++) {
-				double sim = maSimilarity.get(i, arrIndex[i]);
-				arrTopSim[i]= sim;
+					double v = maSimilarity.get(row,col);
+					if(v > maxSimInRow){
+						maxSimInRow = v;
+					}
+				}
+				// System.out.println("Sim maxSimInRow " + Formatter.format2(maxSimInRow) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
+
+				arrTopSimRow[row]=maxSimInRow;
+				sumRow += maxSimInRow;
+				if(maxSimInRow<thresh){
+					invalidRow=true;
+				}
+			}
+
+			if(invalidCol && invalidRow){
+				if(sumCol>sumRow){
+					arrTopSim=arrTopSimCol;
+				} else {
+					arrTopSim=arrTopSimRow;
+				}
+			} else if(invalidCol){
+				arrTopSim=arrTopSimRow;
+			} else if(invalidRow){
+				arrTopSim=arrTopSimCol;
+			} else{
+				if(sumCol>sumRow){
+					arrTopSim=arrTopSimCol;
+				} else {
+					arrTopSim=arrTopSimRow;
+				}
 			}
 
 
-//			for (int col = 0; col < cols; col++) {
+
+//			int [] arr0 = new int[rows];
+//			for (int i = 0; i < arr0.length; i++) {
+//				arr0[i]=i;
+//			}
+//			List<int[]> liPermutations = CombinationGenerator.getPermutations(arr0, rows);
 //
-//				double maxSimInCol = 0;
-//				for (int row = 0; row < rows; row++) {
-//					if(maSimilarity.get(row,col)>maxSimInCol){
-//						maxSimInCol = maSimilarity.get(row,col);
+//			double sumMax=0;
+//			int indexTopPermutation=0;
+//
+//			for (int i = 0; i < liPermutations.size(); i++) {
+//			    int[] arrIndex = liPermutations.get(i);
+//				// System.out.println(StringFunctions.toString(arrIndex, ","));
+//
+//				boolean valid=true;
+//				double sumSim=0;
+//				for (int j = 0; j < arrIndex.length; j++) {
+//
+//					double sim = maSimilarity.get(j, arrIndex[j]);
+//					if(sim<thresh) {
+//						valid=false;
+//						break;
 //					}
+//					sumSim += sim;
 //				}
-//				arrMaxInCol[col]=maxSimInCol;
-//				// System.out.println("Sim maxSimInCol " + Formatter.format2(maxSimInCol) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
+//
+//				if(valid && sumSim>sumMax){
+//					sumMax = sumSim;
+//					indexTopPermutation = i;
+//				}
 //			}
 //
-//			// Find the lowest in arrMaxInCol
+//			int[] arrIndex = liPermutations.get(indexTopPermutation);
 //
-//			boolean [] arrRowTouched = new boolean[rows];
-//			for (int col = 0; col < cols; col++) {
-//
-//				double min=Double.MAX_VALUE;
-//				int indexCol=-1;
-//				for (int col2 = 0; col2 < cols; col2++) {
-//					if(arrMaxInCol[col2]<min){
-//						min = arrMaxInCol[col2];
-//						indexCol=col2;
-//					}
-//				}
-//
-//				arrMaxInCol[indexCol]=Double.MAX_VALUE; // Col touched
-//
-//				double max=-Double.MAX_VALUE;
-//				int indexRow=-1;
-//				for (int row = 0; row < rows; row++) {
-//					if(arrRowTouched[row])
-//						continue;
-//
-//					if(maSimilarity.get(row,indexCol)>max){
-//						max = maSimilarity.get(row,indexCol);
-//						indexRow = row;
-//					}
-//				}
-//				arrRowTouched[indexRow]=true;
-//
-//				arrTopSim[col]=max;
+//			for (int i = 0; i < arrIndex.length; i++) {
+//				double sim = maSimilarity.get(i, arrIndex[i]);
+//				arrTopSim[i]= sim;
 //			}
 		}
-
 
 		return arrTopSim;
 	}
