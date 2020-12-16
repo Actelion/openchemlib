@@ -25,6 +25,8 @@ import java.util.List;
  * @author Modest von Korff
  * @version 1.0
  * Jan 7, 2013 MvK Start implementation
+ * Dec 2020, MvK unskewed similarity calculation for similarity hard thresh. Node similarity is now independent from
+ * query base order.
  */
 public class PPNodeSimilarity implements IPPNodeSimilarity {
 
@@ -485,46 +487,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 					arrTopSim=arrTopSimRow;
 				}
 			}
-
-
-
-//			int [] arr0 = new int[rows];
-//			for (int i = 0; i < arr0.length; i++) {
-//				arr0[i]=i;
-//			}
-//			List<int[]> liPermutations = CombinationGenerator.getPermutations(arr0, rows);
-//
-//			double sumMax=0;
-//			int indexTopPermutation=0;
-//
-//			for (int i = 0; i < liPermutations.size(); i++) {
-//			    int[] arrIndex = liPermutations.get(i);
-//				// System.out.println(StringFunctions.toString(arrIndex, ","));
-//
-//				boolean valid=true;
-//				double sumSim=0;
-//				for (int j = 0; j < arrIndex.length; j++) {
-//
-//					double sim = maSimilarity.get(j, arrIndex[j]);
-//					if(sim<thresh) {
-//						valid=false;
-//						break;
-//					}
-//					sumSim += sim;
-//				}
-//
-//				if(valid && sumSim>sumMax){
-//					sumMax = sumSim;
-//					indexTopPermutation = i;
-//				}
-//			}
-//
-//			int[] arrIndex = liPermutations.get(indexTopPermutation);
-//
-//			for (int i = 0; i < arrIndex.length; i++) {
-//				double sim = maSimilarity.get(i, arrIndex[i]);
-//				arrTopSim[i]= sim;
-//			}
 		}
 
 		return arrTopSim;
