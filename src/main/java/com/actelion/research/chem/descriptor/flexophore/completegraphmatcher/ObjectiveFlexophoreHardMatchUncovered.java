@@ -212,7 +212,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	public boolean isValidSolution(SolutionCompleteGraph solution) {
 		
 		boolean mapping = true;
-		
+
 		if(!validHelpersQuery){
 			calculateHelpersQuery();
 		}
@@ -220,7 +220,6 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		if(!validHelpersBase){
 			calculateHelpersBase();
 		}
-		
 		
 		if(resetSimilarityArrays){
 			resetSimilarityMatrices();
@@ -235,44 +234,44 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		// Check for inevitable pharmacophore points.
 		//
 		if(numInevitablePPPoints > 0) {
-			
+
 			int ccInevitablePPPointsInSolution = 0;
-			
+
 			for (int i = 0; i < heap; i++) {
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
-				
+
 				if(mdhvQueryBlurredHist.isInevitablePharmacophorePoint(indexNodeQuery)){
 					ccInevitablePPPointsInSolution++;
 				}
 			}
-			
+
 			int neededMinInevitablePPPoints = Math.min(heap, numInevitablePPPoints);
-			
+
 			if(ccInevitablePPPointsInSolution < neededMinInevitablePPPoints){
 				mapping = false;
 			}
-			
+
 		}
 
 		//
 		// Check for one hetero atom in solution
 		//
 		if(mapping){
-			
+
 			boolean heteroNodeQuery = false;
-			
+
 			boolean heteroNodeBase = false;
 
 			for (int i = 0; i < heap; i++) {
-				
+
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
 				PPNode nodeQuery = mdhvQueryBlurredHist.getNode(indexNodeQuery);
 				if(nodeQuery.hasHeteroAtom()){
 					heteroNodeQuery = true;
 				}
-				
+
 				int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
-				
+
 				PPNode nodeBase = mdhvBaseBlurredHist.getNode(indexNodeBase);
 				if(nodeBase.hasHeteroAtom()){
 					heteroNodeBase = true;
@@ -283,7 +282,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 				}
 
 			}
-			
+
 			if(!heteroNodeQuery || !heteroNodeBase) {
 				mapping = false;
 			}
@@ -295,11 +294,11 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		//
 		if(mapping){
 			for (int i = 0; i < heap; i++) {
-				
+
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
-				
+
 				int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
-				
+
 				if(!areNodesMapping(indexNodeQuery, indexNodeBase)) {
 					mapping = false;
 					break;
@@ -332,6 +331,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 				}
 			}
 		}
+
 		return mapping;
 	}
 
@@ -354,8 +354,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		if(resetSimilarityArrays){
 			resetSimilarityMatrices();
 		}
-		
-		
+
 		boolean match = true;
 
 		double simNodes = getSimilarityNodes(indexNodeQuery, indexNodeBase);
@@ -852,7 +851,8 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		if(arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase] < 0){
 
 			float similarityHistogram =
-					(float)HistogramMatchCalculator.getSimilarity((MolDistHistViz) mdhvQueryBlurredHist, indexNode1Query, indexNode2Query, (MolDistHistViz) mdhvBaseBlurredHist, indexNode1Base, indexNode2Base);
+					(float)HistogramMatchCalculator.getSimilarity(
+							mdhvQueryBlurredHist, indexNode1Query, indexNode2Query, mdhvBaseBlurredHist, indexNode1Base, indexNode2Base);
 
 			arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase]=similarityHistogram;
 		}
@@ -864,7 +864,6 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		return nodeSimilarity.getSimilarity(query, base);
 	}
 
-	
 	/**
 	 * @return
 	 */
@@ -908,8 +907,6 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 			}
 			sb.append("\n");
 		}
-		
-		
 		
 		return sb.toString();
 	}
