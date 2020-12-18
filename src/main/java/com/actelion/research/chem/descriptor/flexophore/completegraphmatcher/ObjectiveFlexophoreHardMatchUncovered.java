@@ -35,7 +35,8 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 
 	// 0.15 best thresh tested on 31.03.2016
 	// private final static double THRESH_HISTOGRAM_SIMILARITY	= 0.15;
-	public final static double THRESH_HISTOGRAM_SIMILARITY	= 0.1;
+	public final static double THRESH_HISTOGRAM_SIMILARITY	= 0.01;
+
 
 	// The thresh for the node similarity depends on the number of interaction types in the node.
 	// 03.03.2016 Top result so far for 0.9
@@ -104,6 +105,10 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	
 	private double similarity;
 
+	private long deltaNanoQueryBlur;
+	private long deltaNanoBaseBlur;
+	private long deltaNanoSimilarity;
+
 	private SlidingWindowDistHist slidingWindowDistHist;
 
 	public ObjectiveFlexophoreHardMatchUncovered(){
@@ -134,6 +139,10 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		slidingWindowDistHist = new SlidingWindowDistHist(ConstantsFlexophoreGenerator.FILTER);
 
 		modeQuery = false;
+
+		deltaNanoQueryBlur=0;
+		deltaNanoBaseBlur=0;
+		deltaNanoSimilarity=0;
 
 		initSimilarityMatrices();
 	}
@@ -402,6 +411,8 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 
 	public float getSimilarity(SolutionCompleteGraph solution) {
 
+		long t0 = System.nanoTime();
+
 		if(!validHelpersQuery){
 			calculateHelpersQuery();
 		}
@@ -499,11 +510,25 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 			System.out.println(sb.toString());
 		}
 
+		deltaNanoSimilarity += System.nanoTime()-t0;
+
 		return (float)similarity;
 
 		// For testing
 		// return (float)1.0;
 
+	}
+
+	public long getDeltaNanoQueryBlur() {
+		return deltaNanoQueryBlur;
+	}
+
+	public long getDeltaNanoBaseBlur() {
+		return deltaNanoBaseBlur;
+	}
+
+	public long getDeltaNanoSimilarity() {
+		return deltaNanoSimilarity;
 	}
 
 	/**
@@ -549,6 +574,8 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 
 	public void setBase(IMolDistHist iMolDistHistBase) {
 
+		long t0 = System.nanoTime();
+
 		mdhvBase = (MolDistHistViz)iMolDistHistBase;
 		mdhvBaseBlurredHist = new MolDistHistViz((MolDistHistViz)iMolDistHistBase);
 
@@ -563,10 +590,14 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 		if(!checkAtomTypes(mdhvBase)) {
 			throw new RuntimeException("Base contains Invalid atom type for similarity calculation " + mdhvBase.getMolDistHist().toString() + ".");
 		}
+
+		deltaNanoBaseBlur += System.nanoTime()-t0;
 	}
 	
 	public void setQuery(IMolDistHist iMolDistHistQuery) {
-		
+
+		long t0 = System.nanoTime();
+
 		mdhvQuery = (MolDistHistViz) iMolDistHistQuery;
 		mdhvQueryBlurredHist = new MolDistHistViz((MolDistHistViz)iMolDistHistQuery);
 
@@ -584,6 +615,7 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 			throw new RuntimeException("Base contains Invalid atom type for similarity calculation " + mdhvQuery.getMolDistHist().toString() + ".");
 		}
 
+		deltaNanoQueryBlur += System.nanoTime()-t0;
 	}
 
 	private boolean checkAtomTypes(MolDistHistViz mdhv) {

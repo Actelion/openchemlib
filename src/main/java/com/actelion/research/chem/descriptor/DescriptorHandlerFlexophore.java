@@ -76,6 +76,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	protected static final int MAX_NUM_HEAVY_ATOMS = 70;
 
 	// until 24.03.2020
+	// until 17.12.2020
 	// private static final double CORRECTION_FACTOR = 0.40;
 
 	private static final double CORRECTION_FACTOR = 0.4;
@@ -141,10 +142,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 	private boolean singleConformationModeQuery;
 
-
 	private ThreadMaster threadMaster;
-
-	private CompleteGraphMatcher<IMolDistHist> cgMatcherMostRecent;
 
 	public DescriptorHandlerFlexophore(String parameter) {
 		CommandLineParser cmd = new CommandLineParser(parameter, SEP_PARAMETER);
@@ -405,6 +403,12 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		return mdh;
 	}
 
+	/**
+	 * This descriptor contains the molecule used for construction. The descriptor also contains information about
+	 * corresponding atoms in the molecule.
+	 * @param fragBiggest
+	 * @return
+	 */
 	public MolDistHistViz createVisualDescriptor(StereoMolecule fragBiggest) {
 
 		MolDistHistViz mdhv = null;
@@ -489,15 +493,11 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 			sc = 0;
 
 		} else {
-
 			IMolDistHist mdhvBase = (IMolDistHist)base;
-
 			IMolDistHist mdhvQuery = (IMolDistHist)query;
 
 			if(mdhvBase.getNumPPNodes() > ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE){
-
 				System.out.println("DescriptorHandlerFlexophore getSimilarity(...) mdhvBase.getNumPPNodes() " + mdhvBase.getNumPPNodes());
-
 				return 0;
 			} else if(mdhvQuery.getNumPPNodes() > ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE){
 				System.out.println("DescriptorHandlerFlexophore getSimilarity(...) mdhvQuery.getNumPPNodes() " + mdhvQuery.getNumPPNodes());
@@ -505,7 +505,6 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 			}
 
 			sc = (float) getSimilarity(mdhvBase, mdhvQuery);
-
 		}
 
 		return normalizeValue(sc);
@@ -539,18 +538,49 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		queueCGM.add(cgMatcher);
 
-		cgMatcherMostRecent = cgMatcher;
-
 		return sc;
 	}
 
-	public SolutionCompleteGraph getBestMatchingSolution(){
-		return cgMatcherMostRecent.getBestMatchingSolution();
+	/**
+	 *
+	 * @param mdhvBase
+	 * @param mdhvQuery
+	 * @return
+	 */
+	public ModelSolutionSimilarity getBestMatch(MolDistHistViz mdhvBase, MolDistHistViz mdhvQuery){
+
+		CompleteGraphMatcher<IMolDistHist> cgMatcher = queueCGM.poll();
+
+		if(cgMatcher == null){
+			cgMatcher = getNewCompleteGraphMatcher();
+		}
+
+		cgMatcher.set(mdhvBase, mdhvQuery);
+		cgMatcher.calculateSimilarity();
+
+		SolutionCompleteGraph scgBest = cgMatcher.getBestMatchingSolution();
+
+		int n = scgBest.getSizeHeap();
+
+		float [] arrSimNode = new float[scgBest.getNodesQuery()];
+
+		Arrays.fill(arrSimNode, -1);
+
+		ObjectiveFlexophoreHardMatchUncovered objectiveCompleteGraphHard = (ObjectiveFlexophoreHardMatchUncovered)cgMatcher.getObjectiveCompleteGraph();
+		objectiveCompleteGraphHard.setMatchingInfoInQueryAndBase(scgBest);
+
+		for (int indexHeap = 0; indexHeap < n; indexHeap++) {
+
+			int indexQuery = scgBest.getIndexQueryFromHeap(indexHeap);
+
+			arrSimNode[indexQuery] = mdhvQuery.getNode(indexQuery).getSimilarityMappingNodes();
+		}
+
+		ModelSolutionSimilarity mss = new ModelSolutionSimilarity(scgBest, arrSimNode);
+
+		return mss;
 	}
 
-	public double getSimilarityNodes(PPNode query, PPNode base) {
-		return objectiveCompleteGraphHard.getSimilarityNodes(query, base);
-	}
 
 
 	public static float normalizeValue(double value) {
@@ -560,15 +590,12 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	}
 
 	public boolean calculationFailed(Object o) {
-
 		if(o instanceof MolDistHist){
 			return ((MolDistHist)o).getNumPPNodes() == 0;
 		} else if(o instanceof MolDistHistViz){
 			return ((MolDistHistViz)o).getNumPPNodes() == 0;
 		}
-
 		return true;
-
 	}
 
 	public DescriptorHandlerFlexophore getThreadSafeCopy() {

@@ -295,7 +295,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 			}
 		}
 
-
 		if(verbose) {
 			System.out.println("Sim " + Formatter.format2(sim));
 			System.out.println();
@@ -309,16 +308,11 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 		maSimilarity.set(0);
 
 		for (int i = 0; i < query.getInteractionTypeCount(); i++) {
-
 			int interactionTypeQuery = query.getInteractionType(i);
-
 			for (int j = 0; j < base.getInteractionTypeCount(); j++) {
-
 				int interactionTypeBase = base.getInteractionType(j);
-
 				try {
 					double similarity = 1.0 - interactionSimilarityTable.getDistance(interactionTypeQuery, interactionTypeBase);
-
 					maSimilarity.set(i,j,similarity);
 				} catch (Exception e) {
 					System.err.println("Error in PPNodeSimilarity");
@@ -331,25 +325,19 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 		if(verbose) {
 			System.out.println("PPNodeSimilarity");
-
 			TableModelString tableModelString = new TableModelString(query.getInteractionTypeCount(), base.getInteractionTypeCount());
-
 			for (int i = 0; i < query.getInteractionTypeCount(); i++) {
 				int interactionType = query.getInteractionType(i);
 				String s = InteractionAtomTypeCalculator.getString(interactionType);
 				tableModelString.setRowName(i, s);
 			}
-
 			for (int i = 0; i < base.getInteractionTypeCount(); i++) {
 				int interactionType = base.getInteractionType(i);
 				String s = InteractionAtomTypeCalculator.getString(interactionType);
 				tableModelString.setColName(i, s);
 			}
-
 			tableModelString.set(maSimilarity, 2);
-
 			System.out.println(tableModelString.toString());
-
 		}
 
 		double [] arrMaxSim = getTopValues(maSimilarity, query.getInteractionTypeCount(), base.getInteractionTypeCount(), threshSimilarityHardMatch);
@@ -358,36 +346,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 		for (double v : arrMaxSim) {
 			liSimilarities.add(v);
 		}
-
-
-//		if(base.getInteractionTypeCount() > query.getInteractionTypeCount()) {
-//
-//			for (int col = 0; col < base.getInteractionTypeCount(); col++) {
-//
-//				double maxSimInCol = 0;
-//				for (int row = 0; row < query.getInteractionTypeCount(); row++) {
-//					if(maSimilarity.get(row,col)>maxSimInCol){
-//						maxSimInCol = maSimilarity.get(row,col);
-//					}
-//				}
-//
-//				liSimilarities.add(maxSimInCol);
-//
-//				// System.out.println("Sim maxSimInCol " + Formatter.format2(maxSimInCol) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
-//			}
-//		} else {
-//			for (int row = 0; row < query.getInteractionTypeCount(); row++) {
-//
-//				double maxSimInRow = 0;
-//				for (int col = 0; col < base.getInteractionTypeCount(); col++) {
-//					if(maSimilarity.get(row,col) > maxSimInRow){
-//						maxSimInRow = maSimilarity.get(row,col);
-//					}
-//				}
-//				// System.out.println("Sim maxSimInRow " + Formatter.format2(maxSimInRow) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
-//
-//				liSimilarities.add(maxSimInRow);							}
-//		}
 
 		return liSimilarities;
 	}
@@ -413,7 +371,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 					}
 				}
 				arrTopSim[col]=maxSimInCol;
-				// System.out.println("Sim maxSimInCol " + Formatter.format2(maxSimInCol) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
 			}
 		} else if(cols < rows){
 			for (int row = 0; row < rows; row++) {
@@ -423,11 +380,11 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 						maxSimInRow = maSimilarity.get(row,col);
 					}
 				}
-				// System.out.println("Sim maxSimInRow " + Formatter.format2(maxSimInRow) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
-
 				arrTopSim[row]=maxSimInRow;
 			}
 		} else {
+			// For rows=cols we search for minimum values in rows and in cols. We take the best result and
+			// exclude results that contain a similarity value below the threshold.
 
 			boolean invalidCol=false;
 			double sumCol=0;
@@ -461,8 +418,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 						maxSimInRow = v;
 					}
 				}
-				// System.out.println("Sim maxSimInRow " + Formatter.format2(maxSimInRow) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
-
 				arrTopSimRow[row]=maxSimInRow;
 				sumRow += maxSimInRow;
 				if(maxSimInRow<thresh){

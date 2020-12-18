@@ -35,7 +35,9 @@ public class ConstantsFlexophoreGenerator {
     /**
      *
      */
-    public static final double [] FILTER = {0.125, 0.125, 0.125,0.25,0.125, 0.125, 0.125};
+    // public static final double [] FILTER = {0.125, 0.125, 0.125,0.25,0.125, 0.125, 0.125};
+
+    public static final double [] FILTER = {0.06, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.06};
 
 
     public static double getResolution(){

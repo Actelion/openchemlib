@@ -27,7 +27,6 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	
 	/**
 	 * The index is the index of the node in the query molecule.
-	 * 
 	 * The value at 'index' is the index of the node in the base molecule.
 	 */
 	private byte [] arrSolution;
@@ -103,7 +102,11 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	public byte getIndexCorrespondingBaseNode(int indexQueryNode) {
 		return arrSolution[indexQueryNode];
 	}
-	
+
+	/**
+	 * The index is the index of the node in the query molecule.
+	 * The value at 'index' is the index of the node in the base molecule.
+	 */
 	public byte [] getSolution (){
 		return arrSolution;
 	}

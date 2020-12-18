@@ -33,18 +33,21 @@ import com.actelion.research.util.graph.complete.ICompleteGraph;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * Class for Flexophore visualization and atom tracking. Information about corresponding atoms is stored in PPNodeViz.
+ */
 public class MolDistHistViz extends DistHist implements Serializable, IMolDistHist, ICompleteGraph {
 	
 	private static final long serialVersionUID = 15052013;
 
 	public static final int DESCRIBE_ALL = 1;
-	
-	public static final int CAPACITY_INEVITABLE_PPPOINTS = 5;
 	/**
 	 * Only mapped atoms are described.
 	 */
 	public static final int DESCRIBE_MAPPED = 2;
-	
+
+	public static final int CAPACITY_INEVITABLE_PPPOINTS = 5;
+
 	public static final String TAG_VIZ_INFO_ENCODED = "Flexophore2VizInfo";
 	
 	private static final int MIN_COUNTS_BLURR = 3;
@@ -120,13 +123,15 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		modeFlexophore = ConstantsFlexophore.MODE_SOFT_PPPOINTS;
 	}
 	
-	public MolDistHistViz(int nNodes, Molecule3D ff) {
+	public MolDistHistViz(int nNodes, Molecule3D molecule3D) {
 		initHistogramArray(nNodes);
 		
 		flagsDescribe = DESCRIBE_ALL;
 		
-		if(ff!=null)
-			molecule3D = new Molecule3D(ff);
+		if(molecule3D!=null) {
+			this.molecule3D = new Molecule3D(molecule3D);
+			this.molecule3D.ensureHelperArrays(Molecule.cHelperRings);
+		}
 		
 		hsIndexInevitablePPPoints = new HashSet<>();
 

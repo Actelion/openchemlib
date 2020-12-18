@@ -36,8 +36,7 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	public static final byte DEFAULT_VAL = -1;
 	
 	private IObjectiveCompleteGraph<T> objectiveCompleteGraph;
-	
-	
+
 	private int maxNumSolutions;
 	
 	private int nodesBase;
@@ -76,14 +75,10 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		objectiveCompleteGraph.setVerbose(verbose);
 	}
 
-//	
-//	/**
-//	 * Only for debugging!!!
-//	 */
-//	public IObjectiveCompleteGraph<T> getObjective(){
-//		return objectiveCompleteGraph;
-//	}
-	
+	public IObjectiveCompleteGraph<T> getObjectiveCompleteGraph() {
+		return objectiveCompleteGraph;
+	}
+
 	private void init(){
 		
 		maxNumSolutions = MAX_NUM_SOLUTIONS;
