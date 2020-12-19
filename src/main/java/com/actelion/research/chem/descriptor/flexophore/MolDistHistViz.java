@@ -170,57 +170,14 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		realize();
 	}
 
-//	public MolDistHistViz(MolDistHist mdh, boolean uniqueAtomTypes) {
-//		if(mdh.getNumPPNodes()==0){
-//			throw new RuntimeException("Empty object given into constructor.");
-//		}
-//
-//		if(!uniqueAtomTypes){
-//			throw new RuntimeException("Use other constructor!");
-//		}
-//
-//		mdh.copy(this);
-//
-//		liPPNodeViz=new ArrayList<>(mdh.getNumPPNodes());
-//
-//		HashSet<Integer> hsInteractionType = new HashSet<>();
-//
-//		for (int i = 0; i < mdh.getNumPPNodes(); i++) {
-//
-//			hsInteractionType.clear();
-//
-//			PPNode ppNode = mdh.getNode(i);
-//			int n = ppNode.getInteractionTypeCount();
-//
-//			for (int j = 0; j < n; j++) {
-//				int t = ppNode.getInteractionType(j);
-//				hsInteractionType.add(t);
-//			}
-//			PPNodeViz node = new PPNodeViz();
-//
-//			for (int interactionType : hsInteractionType) {
-//				node.add(interactionType);
-//			}
-//
-//			liPPNodeViz.add(node);
-//		}
-//
-//		hsIndexInevitablePPPoints = new HashSet<Integer>();
-//
-//		realize();
-//	}
-
 	public static void createIndexTables(){
 		indexTables = MDHIndexTables.getInstance();
 	}
 	
 	public void addInevitablePharmacophorePoint(int indexPPNode){
-		
 		hsIndexInevitablePPPoints.add(indexPPNode);
 	}
-	
-	
-	
+
 	public void removeInevitablePharmacophorePoint(int indexPPNode){
 		hsIndexInevitablePPPoints.remove(indexPPNode);
 	}
@@ -237,8 +194,6 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 			n.setMarked(mark);
 		}
 	}
-
-
 
 	public void setMark(int index, boolean mark){
 		liPPNodeViz.get(index).setMarked(mark);

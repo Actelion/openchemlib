@@ -25,11 +25,10 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.descriptor.flexophore.*;
-import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveFlexophoreHardMatchUncovered;
+import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveBlurFlexophoreHardMatchUncovered;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.PPNodeSimilarity;
 import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDistHistViz;
 import com.actelion.research.util.CommandLineParser;
-import com.actelion.research.util.Formatter;
 import com.actelion.research.util.graph.complete.CompleteGraphMatcher;
 import com.actelion.research.util.graph.complete.SolutionCompleteGraph;
 
@@ -112,7 +111,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	// public static final double THRESH_SIMILARITY_COMPARISON_NODE = 0.001;
 
 	// Production
-	public static final double THRESH_HISTOGRAM_SIMILARITY = ObjectiveFlexophoreHardMatchUncovered.THRESH_HISTOGRAM_SIMILARITY;
+	public static final double THRESH_HISTOGRAM_SIMILARITY = ObjectiveBlurFlexophoreHardMatchUncovered.THRESH_HISTOGRAM_SIMILARITY;
 
 	// Test
 	// public static final double THRESH_HISTOGRAM_SIMILARITY = 0.5;
@@ -129,9 +128,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 
 	//
-	// If you change this, do not forget to change the objective in CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher().
+	// If you change this, do not forget to change the objective in CompleteGraphMatcher<IMolDistHist>
+	// getNewCompleteGraphMatcher().
 	//
-	private ObjectiveFlexophoreHardMatchUncovered objectiveCompleteGraphHard;
+	private ObjectiveBlurFlexophoreHardMatchUncovered objectiveCompleteGraphHard;
 
 	protected Exception recentException;
 
@@ -207,7 +207,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		queueCGM = new ConcurrentLinkedQueue<>();
 
-		objectiveCompleteGraphHard = new ObjectiveFlexophoreHardMatchUncovered(
+		objectiveCompleteGraphHard = new ObjectiveBlurFlexophoreHardMatchUncovered(
 				versionInteractionTable, modePPNodeSimilarityComparison, threshSimilarityHardMatch, threshHistogramSimilarity);
 
 		queueCGM.add(getNewCompleteGraphMatcher());
@@ -240,8 +240,8 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 	public CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher(){
 
-		ObjectiveFlexophoreHardMatchUncovered objective =
-				new ObjectiveFlexophoreHardMatchUncovered(
+		ObjectiveBlurFlexophoreHardMatchUncovered objective =
+				new ObjectiveBlurFlexophoreHardMatchUncovered(
 						versionInteractionTable,
 						modePPNodeSimilarityComparison,
 						threshSimilarityHardMatch,
@@ -257,7 +257,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		return cgMatcher;
 	}
 
-	public ObjectiveFlexophoreHardMatchUncovered getObjectiveCompleteGraphHard() {
+	public ObjectiveBlurFlexophoreHardMatchUncovered getObjectiveCompleteGraphHard() {
 		return objectiveCompleteGraphHard;
 	}
 
@@ -391,7 +391,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		if(mdh == null) {
 			mdh = FAILED_OBJECT;
-		} else if (mdh.getNumPPNodes() > ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE) {
+		} else if (mdh.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE) {
 
 			String msg = "Flexophore exceeded maximum number of nodes.";
 
@@ -496,10 +496,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 			IMolDistHist mdhvBase = (IMolDistHist)base;
 			IMolDistHist mdhvQuery = (IMolDistHist)query;
 
-			if(mdhvBase.getNumPPNodes() > ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE){
+			if(mdhvBase.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE){
 				System.out.println("DescriptorHandlerFlexophore getSimilarity(...) mdhvBase.getNumPPNodes() " + mdhvBase.getNumPPNodes());
 				return 0;
-			} else if(mdhvQuery.getNumPPNodes() > ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE){
+			} else if(mdhvQuery.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE){
 				System.out.println("DescriptorHandlerFlexophore getSimilarity(...) mdhvQuery.getNumPPNodes() " + mdhvQuery.getNumPPNodes());
 				return 0;
 			}
@@ -566,7 +566,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		Arrays.fill(arrSimNode, -1);
 
-		ObjectiveFlexophoreHardMatchUncovered objectiveCompleteGraphHard = (ObjectiveFlexophoreHardMatchUncovered)cgMatcher.getObjectiveCompleteGraph();
+		ObjectiveBlurFlexophoreHardMatchUncovered objectiveCompleteGraphHard = (ObjectiveBlurFlexophoreHardMatchUncovered)cgMatcher.getObjectiveCompleteGraph();
 		objectiveCompleteGraphHard.setMatchingInfoInQueryAndBase(scgBest);
 
 		for (int indexHeap = 0; indexHeap < n; indexHeap++) {

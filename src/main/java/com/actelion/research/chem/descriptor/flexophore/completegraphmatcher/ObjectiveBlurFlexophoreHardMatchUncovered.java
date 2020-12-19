@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * 
  * 
- * ObjectiveFlexophoreHardMatchUncovered
+ * ObjectiveBlurFlexophoreHardMatchUncovered
  * The weighting of the coverage is hard. Which means that uncovered nodes 
  * strongly change the final similarity score.
  * look in <code>getScoreUncoveredNearestNodesBase(SolutionCompleteGraph solution)</code> 
@@ -26,12 +26,10 @@ import java.util.List;
  * Mar 3. 2016 MvK: updates. Lowered thresh for histogram similarity.
  * Mar 31. 2020 MvK: fraction of carbon is considered in pharmacophore node similarity.
  */
-public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveCompleteGraph<IMolDistHist>{
+public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveCompleteGraph<IMolDistHist>{
 
 	public static final String VERSION = "02.04.2020 08:00";
 	public static final String INFO = "";
-
-	public static final int MAX_NUM_NODES_FLEXOPHORE = 64;
 
 	// 0.15 best thresh tested on 31.03.2016
 	// private final static double THRESH_HISTOGRAM_SIMILARITY	= 0.15;
@@ -59,19 +57,19 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	private MolDistHistViz mdhvQueryBlurredHist;
 
 	private int nodesBase;
-	
+
 	private int nodesQuery;
-	
+
 	private byte [] arrTmpHist;
 
 	private boolean validHelpersQuery;
-	
+
 	private boolean validHelpersBase;
-	
+
 	private boolean resetSimilarityArrays;
-	
+
 	private double threshNodeMinSimilarityStart;
-	
+
 	private double threshHistogramSimilarity;
 
 	private PPNodeSimilarity nodeSimilarity;
@@ -80,29 +78,29 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 
 
 	private float [][] arrSimilarityNodes;
-	
+
 	private float [][] arrSimilarityHistograms;
-	
+
 	private double [][] arrRelativeDistanceMatrixQuery;
-	
+
 	private double [][] arrRelativeDistanceMatrixBase;
-	
+
 	private Matrix maHelperAdjacencyQuery;
-	
+
 	private Matrix maHelperAdjacencyBase;
-	
+
 	private double sumDistanceMinSpanTreeQuery;
-	
+
 	private double sumDistanceMinSpanTreeBase;
 
 	private int numInevitablePPPoints;
-	
+
 	private double avrPairwiseMappingScaled;
-	
+
 	private double coverageQuery;
-	
+
 	private double coverageBase;
-	
+
 	private double similarity;
 
 	private long deltaNanoQueryBlur;
@@ -111,16 +109,14 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 
 	private SlidingWindowDistHist slidingWindowDistHist;
 
-	public ObjectiveFlexophoreHardMatchUncovered(){
+	public ObjectiveBlurFlexophoreHardMatchUncovered(){
 		this(DescriptorHandlerFlexophore.VERSION_INTERACTION_TABLES,
 				DescriptorHandlerFlexophore.MODE_PPNODE_SIMILARITY_COMPARISON,
 				DescriptorHandlerFlexophore.THRESH_SIMILARITY_COMPARISON_NODE, THRESH_HISTOGRAM_SIMILARITY);
 
 	}
 
-
-
-	public ObjectiveFlexophoreHardMatchUncovered(
+	public ObjectiveBlurFlexophoreHardMatchUncovered(
 			int versionInteractionTable,
 			int modePPNodeSimilarity,
 			double threshSimilarityNodeHardMatch,
@@ -149,14 +145,14 @@ public class ObjectiveFlexophoreHardMatchUncovered implements IObjectiveComplete
 	
 	private void initSimilarityMatrices(){
 		
-		arrSimilarityNodes = new float [MAX_NUM_NODES_FLEXOPHORE][];
-		for (int i = 0; i < MAX_NUM_NODES_FLEXOPHORE; i++) {
-			arrSimilarityNodes[i] = new float [MAX_NUM_NODES_FLEXOPHORE];
+		arrSimilarityNodes = new float [ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE][];
+		for (int i = 0; i < ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE; i++) {
+			arrSimilarityNodes[i] = new float [ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE];
 			Arrays.fill(arrSimilarityNodes[i], INIT_VAL);
 			
 		}
 
-		int maxNumHistograms = ((MAX_NUM_NODES_FLEXOPHORE*MAX_NUM_NODES_FLEXOPHORE)-MAX_NUM_NODES_FLEXOPHORE)/2;
+		int maxNumHistograms = ((ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE* ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE)- ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE)/2;
 		
 		arrSimilarityHistograms = new float [maxNumHistograms][];
 		for (int i = 0; i < maxNumHistograms; i++) {

@@ -6,4 +6,6 @@ public class ConstantsFlexophore {
     public static final byte MODE_HARD_PPPOINTS = 1;
 
     public static final int FLAG_CENTER_ATOM = 1<<4;
+
+    public static final int MAX_NUM_NODES_FLEXOPHORE = 64;
 }
