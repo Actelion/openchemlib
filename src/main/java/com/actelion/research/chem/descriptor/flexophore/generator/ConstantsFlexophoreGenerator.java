@@ -25,25 +25,13 @@ public class ConstantsFlexophoreGenerator {
 
 
     /**
-     *
-     */
-    public static final double [] FILTER01 = {1};
-    public static final double [] FILTER03 = {0.25, 0.5, 0.25};
-    public static final double [] FILTER05 = {0.125, 0.25,0.25,0.25, 0.125};
-    public static final double [] FILTER07 = {0.125, 0.125, 0.125,0.25,0.125, 0.125, 0.125};
-    public static final double [] FILTER09 = {0.06, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.06};
-
-    public static final double [][] ARR_FILTER_FOR_BLURR = {
-            FILTER03, FILTER03, FILTER05, FILTER07, FILTER07, FILTER07, FILTER09, FILTER09
-    };
-
-    /**
      * Filter for sliding window to blurr distance histograms
      * 07.04.2020
      */
     // public static final double [] FILTER = FILTER05;
+    public static final double [] FILTER07_ = {0.125, 0.125, 0.125,0.25,0.125, 0.125, 0.125};
 
-    public static final double [] FILTER = FILTER07;
+    public static final double [] FILTER = FILTER07_;
 
     public static double getResolution(){
         return RANGE_HISTOGRAM / (double) BINS_HISTOGRAM;

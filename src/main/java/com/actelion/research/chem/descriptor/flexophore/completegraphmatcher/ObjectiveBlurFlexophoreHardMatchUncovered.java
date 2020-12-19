@@ -32,8 +32,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	public static final String INFO = "";
 
 	// 0.15 best thresh tested on 31.03.2016
-	// private final static double THRESH_HISTOGRAM_SIMILARITY	= 0.15;
-	public final static double THRESH_HISTOGRAM_SIMILARITY	= 0.01;
+	public final static double THRESH_HISTOGRAM_SIMILARITY	= 0.15;
 
 
 	// The thresh for the node similarity depends on the number of interaction types in the node.
@@ -42,10 +41,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	// ToDo
 	final static double THRESH_NODE_SIMILARITY_START = 0.5;
 
-
-
 	private static final float INIT_VAL = -1;
-
 
 
 	private boolean modeQuery;

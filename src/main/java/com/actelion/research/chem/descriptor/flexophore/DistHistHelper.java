@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class DistHistHelper {
 
-    public static int getRange(byte [] a){
+    public static int getSpread(byte [] a){
         int start=0;
         for (int i = 0; i < a.length; i++) {
             if(a[i]>0){
@@ -54,6 +54,18 @@ public class DistHistHelper {
         }
 
         return end-start+1;
+    }
+
+    public static int getMaxIndexNotZero(byte [] a){
+        int end=0;
+        for (int i = a.length-1; i >= 0; i--) {
+            if(a[i]>0){
+                end=i;
+                break;
+            }
+        }
+
+        return end;
     }
 
     public static int getMedianBin(byte [] a){
