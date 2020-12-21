@@ -187,7 +187,7 @@ public class PharmacophoreTreeGenerator {
 		
 	}
 	
-	private static void addNode(PharmacophoreNode node, List<PharmacophoreNode> nodes,Map<Integer,List<Integer>> atomToNodes) {
+	public static void addNode(PharmacophoreNode node, List<PharmacophoreNode> nodes,Map<Integer,List<Integer>> atomToNodes) {
 		int index = nodes.size();
 		nodes.add(node);
 		for(int atom:node.getAtoms()) {
@@ -215,8 +215,9 @@ public class PharmacophoreTreeGenerator {
 			//if(!mol.isRingAtom(atom))
 			//	continue;
 			//else {
-				List<Set<Integer>> smallestRings = getSmallestRingsOfAtom(rc,atom);
-				for(Set<Integer> smallRing: smallestRings) {
+				List<Integer> smallestRings = getSmallestRingsOfAtom(rc,atom);
+				for(Integer smallRingIndex: smallestRings) {
+					Set<Integer> smallRing = Arrays.stream(rc.getRingAtoms(smallRingIndex)).boxed().collect(Collectors.toSet());
 					if(!rings.contains(smallRing))
 						rings.add(smallRing);
 						
@@ -280,15 +281,15 @@ public class PharmacophoreTreeGenerator {
 			
 	}
 	
-	private static List<Set<Integer>> getSmallestRingsOfAtom(RingCollection rc, int atom){
-		List<Set<Integer>> rings = new ArrayList<Set<Integer>>();
+	public static List<Integer> getSmallestRingsOfAtom(RingCollection rc, int atom){
+		List<Integer> rings = new ArrayList<Integer>();
 		int smallestRingSize = rc.getAtomRingSize(atom);
 		for(int r=0;r<rc.getSize();r++) {
 			Set<Integer> ringAtoms = Arrays.stream(rc.getRingAtoms(r)).boxed().collect(Collectors.toSet());
 			if(ringAtoms.size()>smallestRingSize)
 				continue;
 			if(ringAtoms.contains(atom)) 
-				rings.add(ringAtoms);
+				rings.add(r);
 				
 			
 		}

@@ -36,10 +36,14 @@ public class PharmacophoreNode {
 	private double size;
 	private double vol;
 	private int role;
+	private boolean isRing;
+	private boolean isAromatic;
 	
-	public PharmacophoreNode(List<Integer> atoms, int[][] atomFunctionalities, double[] atomVolumes, int role) {
+	public PharmacophoreNode(List<Integer> atoms, int[][] atomFunctionalities, double[] atomVolumes, int role, boolean isRing, boolean isAromatic) {
 		this.functionalities = new int[FUNCTIONALITY_WEIGHTS.length];
 		this.atoms = atoms;
+		this.isRing = isRing;
+		this.isAromatic = isAromatic;
 		weights = new ArrayList<Double>();
 		volumes = new ArrayList<Double>();
 		this.role = role;
@@ -69,8 +73,8 @@ public class PharmacophoreNode {
 		
 	}
 	
-	public PharmacophoreNode(List<Integer> atoms, int[][] atomFunctionalities, double[] atomVolumes) {
-		this(atoms, atomFunctionalities, atomVolumes, 0);
+	public PharmacophoreNode(List<Integer> atoms, int[][] atomFunctionalities, double[] atomVolumes, boolean isRing, boolean isAromatic) {
+		this(atoms, atomFunctionalities, atomVolumes, 0, isRing, isAromatic);
 	}
 	
 	public void updateWeights(Map<Integer,List<Integer>> atomToNodes) {
@@ -305,6 +309,22 @@ public class PharmacophoreNode {
 				.boxed().collect(Collectors.toList());
 		int role = Integer.parseInt(strings[4]);
 		return new PharmacophoreNode(atoms,functionalities,volumes,weights,role);
+	}
+
+	public boolean isRing() {
+		return isRing;
+	}
+
+	public void setRing(boolean isRing) {
+		this.isRing = isRing;
+	}
+
+	public boolean isAromatic() {
+		return isAromatic;
+	}
+
+	public void setAromatic(boolean isAromatic) {
+		this.isAromatic = isAromatic;
 	}
 	
 	
