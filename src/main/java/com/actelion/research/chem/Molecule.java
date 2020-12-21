@@ -2446,7 +2446,7 @@ public class Molecule implements Serializable {
 		for (int i=0; i<original.length; i++) {
 			if (original[i] != null) {
 				copy[i] = new int[original[i].length];
-				System.arraycopy(original[i], 0, copy, 0, original[i].length);
+				System.arraycopy(original[i], 0, copy[i], 0, original[i].length);
 			}
 		}
 		return copy;
@@ -2456,7 +2456,7 @@ public class Molecule implements Serializable {
 		for (int i=0; i<original.length; i++) {
 			if (original[i] != null) {
 				copy[i] = new byte[original[i].length];
-				System.arraycopy(original[i], 0, copy, 0, original[i].length);
+				System.arraycopy(original[i], 0, copy[i], 0, original[i].length);
 			}
 		}
 		return copy;
@@ -3775,6 +3775,7 @@ public class Molecule implements Serializable {
 		case 33: 	// As
 		case 34: 	// Se
 		case 35: 	// Br
+		case 52: 	// Te
 		case 53: 	// I
 			return true;
 			}

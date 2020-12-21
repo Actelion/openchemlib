@@ -56,12 +56,13 @@ public class MoleculeDropAdapter implements DropTargetListener
         DEBUG("MoleculeDropAdapter.onDropMolecule(). Override this! " + m);
     }
 
-
+    @Override
     public void dragEnter(DropTargetDragEvent e)
     {
         DEBUG("DragEnter");
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent e)
     {
        DEBUG("DragOver");
@@ -76,17 +77,20 @@ public class MoleculeDropAdapter implements DropTargetListener
     {
         return active_;
     }
+
+    @Override
     public void dropActionChanged(DropTargetDragEvent e)
     {
         DEBUG("dropActionChanged");
     }
 
+    @Override
     public void dragExit(DropTargetEvent e)
     {
         DEBUG("dragExit");
     }
 
-
+    @Override
     public void drop(DropTargetDropEvent e)
     {
         if (active_) {
@@ -130,7 +134,6 @@ public class MoleculeDropAdapter implements DropTargetListener
         return ChemistryFlavors.MOLECULE_FLAVORS;
     }
 
-
     protected StereoMolecule createFromDataFlavor(DataFlavor chosen, Object o) throws Exception
     {
         StereoMolecule mol = null;
@@ -162,7 +165,6 @@ public class MoleculeDropAdapter implements DropTargetListener
         return mol;
     }
     
-            
     protected boolean isDragFlavorSupported(DropTargetDragEvent e)
     {
         for (int i=0; i<ChemistryFlavors.MOLECULE_FLAVORS.length; i++) {

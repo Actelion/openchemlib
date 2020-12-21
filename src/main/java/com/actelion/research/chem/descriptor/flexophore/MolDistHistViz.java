@@ -33,18 +33,21 @@ import com.actelion.research.util.graph.complete.ICompleteGraph;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * Class for Flexophore visualization and atom tracking. Information about corresponding atoms is stored in PPNodeViz.
+ */
 public class MolDistHistViz extends DistHist implements Serializable, IMolDistHist, ICompleteGraph {
 	
 	private static final long serialVersionUID = 15052013;
 
 	public static final int DESCRIBE_ALL = 1;
-	
-	public static final int CAPACITY_INEVITABLE_PPPOINTS = 5;
 	/**
 	 * Only mapped atoms are described.
 	 */
 	public static final int DESCRIBE_MAPPED = 2;
-	
+
+	public static final int CAPACITY_INEVITABLE_PPPOINTS = 5;
+
 	public static final String TAG_VIZ_INFO_ENCODED = "Flexophore2VizInfo";
 	
 	private static final int MIN_COUNTS_BLURR = 3;
@@ -120,13 +123,15 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		modeFlexophore = ConstantsFlexophore.MODE_SOFT_PPPOINTS;
 	}
 	
-	public MolDistHistViz(int nNodes, Molecule3D ff) {
+	public MolDistHistViz(int nNodes, Molecule3D molecule3D) {
 		initHistogramArray(nNodes);
 		
 		flagsDescribe = DESCRIBE_ALL;
 		
-		if(ff!=null)
-			molecule3D = new Molecule3D(ff);
+		if(molecule3D!=null) {
+			this.molecule3D = new Molecule3D(molecule3D);
+			this.molecule3D.ensureHelperArrays(Molecule.cHelperRings);
+		}
 		
 		hsIndexInevitablePPPoints = new HashSet<>();
 
@@ -165,57 +170,14 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		realize();
 	}
 
-//	public MolDistHistViz(MolDistHist mdh, boolean uniqueAtomTypes) {
-//		if(mdh.getNumPPNodes()==0){
-//			throw new RuntimeException("Empty object given into constructor.");
-//		}
-//
-//		if(!uniqueAtomTypes){
-//			throw new RuntimeException("Use other constructor!");
-//		}
-//
-//		mdh.copy(this);
-//
-//		liPPNodeViz=new ArrayList<>(mdh.getNumPPNodes());
-//
-//		HashSet<Integer> hsInteractionType = new HashSet<>();
-//
-//		for (int i = 0; i < mdh.getNumPPNodes(); i++) {
-//
-//			hsInteractionType.clear();
-//
-//			PPNode ppNode = mdh.getNode(i);
-//			int n = ppNode.getInteractionTypeCount();
-//
-//			for (int j = 0; j < n; j++) {
-//				int t = ppNode.getInteractionType(j);
-//				hsInteractionType.add(t);
-//			}
-//			PPNodeViz node = new PPNodeViz();
-//
-//			for (int interactionType : hsInteractionType) {
-//				node.add(interactionType);
-//			}
-//
-//			liPPNodeViz.add(node);
-//		}
-//
-//		hsIndexInevitablePPPoints = new HashSet<Integer>();
-//
-//		realize();
-//	}
-
 	public static void createIndexTables(){
 		indexTables = MDHIndexTables.getInstance();
 	}
 	
 	public void addInevitablePharmacophorePoint(int indexPPNode){
-		
 		hsIndexInevitablePPPoints.add(indexPPNode);
 	}
-	
-	
-	
+
 	public void removeInevitablePharmacophorePoint(int indexPPNode){
 		hsIndexInevitablePPPoints.remove(indexPPNode);
 	}
@@ -232,8 +194,6 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 			n.setMarked(mark);
 		}
 	}
-
-
 
 	public void setMark(int index, boolean mark){
 		liPPNodeViz.get(index).setMarked(mark);

@@ -18,7 +18,10 @@
 
 package com.actelion.research.gui;
 
-import com.actelion.research.chem.*;
+import com.actelion.research.chem.AbstractDepictor;
+import com.actelion.research.chem.Depictor2D;
+import com.actelion.research.chem.IDCodeParser;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDragAdapter;
@@ -26,20 +29,17 @@ import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
+import com.actelion.research.util.CursorHelper;
 
 import javax.swing.*;
-
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-public class JStructureView extends JPanel implements ActionListener,MouseListener,StructureListener {
+public class JStructureView extends JComponent implements ActionListener,MouseListener,MouseMotionListener,StructureListener {
     static final long serialVersionUID = 0x20061113;
 
     private static final String ITEM_COPY = "Copy Structure";
@@ -51,14 +51,14 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	private String mIDCode;
 	private StereoMolecule mMol,mDisplayMol;
     private Depictor2D mDepictor;
-	private boolean mShowBorder, mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mOpaqueBackground;
+	private boolean mShowBorder,mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mOpaqueBackground,
+					mIsEditable,mDisableBorder;
 	private int mChiralTextPosition,mDisplayMode;
 	private String[] mAtomText;
 	private IClipboardHandler mClipboardHandler;
 	protected MoleculeDropAdapter mDropAdapter = null;
 	protected int mAllowedDragAction;
 	protected int mAllowedDropAction;
-	protected boolean borderFlag = true; // Allow subclasses to disable border painting
 
 	public JStructureView() {
         this(null);
@@ -67,6 +67,9 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	/**
 	 * This creates a standard structure view where the displayed molecule is
 	 * used for D&D and clipboard transfer after removing atom colors and bond highlights.
+	 * The default will support copy/paste and drag&drop from this view only,
+	 * but dropping anything onto this view doesn't have an effect.
+	 * Call setEditable(true) to allow changes through drag&drop and pasting.
 	 * @param mol used for display, clipboard copy and d&d
 	 */
 	public JStructureView(StereoMolecule mol) {
@@ -79,6 +82,9 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	 * molecule is structurally different, e.g. uses custom atom labels or additional
 	 * illustrative atoms or bonds, which shall not be copied.
 	 * Custom atom colors or highlighted bonds don't require a displayMol.
+	 * The default will support copy/paste and drag&drop from this view only,
+	 * but dropping anything onto this view doesn't have an effect.
+	 * Call setEditable(true) to allow changes through drag&drop and pasting.
 	 * @param mol used for clipboard copy and d&d; used for display if displayMol is null
 	 * @param displayMol null if mol shall be displayed
 	 */
@@ -93,6 +99,9 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	/**
 	 * This creates a standard structure view where the displayed molecule is
 	 * used for D&D and clipboard transfer after removing atom colors and bond highlights.
+	 * The default will support copy/paste and drag&drop from this view only,
+	 * but dropping anything onto this view doesn't have an effect.
+	 * Call setEditable(true) to allow changes through drag&drop and pasting.
 	 * @param mol used for display, clipboard copy and d&d
 	 * @param dragAction
 	 * @param dropAction
@@ -107,6 +116,9 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	 * molecule is structurally different, e.g. uses custom atom labels or additional
 	 * illustrative atoms or bonds, which shall not be copied.
 	 * Custom atom colors or highlighted bonds don't require a displayMol.
+	 * The default will support copy/paste and drag&drop from this view only,
+	 * but dropping anything onto this view doesn't have an effect.
+	 * Call setEditable(true) to allow changes through drag&drop and pasting.
 	 * @param mol used for clipboard copy and d&d; used for display if displayMol is null
 	 * @param displayMol null if mol shall be displayed
 	 * @param dragAction
@@ -116,7 +128,9 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		mMol = (mol == null) ? new StereoMolecule() : new StereoMolecule(mol);
 		mDisplayMol = (displayMol == null) ? mMol : displayMol;
 		mDisplayMode = AbstractDepictor.cDModeHiliteAllQueryFeatures;
+		mIsEditable = false;
 		addMouseListener(this);
+		addMouseMotionListener(this);
 		initializeDragAndDrop(dragAction, dropAction);
 	    }
 
@@ -141,8 +155,8 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	    mDisplayMode = mode;
 	    }
 
-	public void setOpaqueBackground(boolean b) {
-		mOpaqueBackground = b;
+	public void setDisableBorder(boolean b) {
+		mDisableBorder = b;
 		}
 
 	/**
@@ -167,6 +181,16 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		super.setEnabled(enable);
 		}
 
+
+	public boolean isEditable() {
+		return mIsEditable;
+	}
+
+	public void setEditable(boolean b) {
+		if (mIsEditable != b)
+			mIsEditable = b;
+		}
+
 	/**
 	 * When fragment status change on drop is allowed then dropping a fragment (molecule)
 	 * on a molecule (fragment) inverts the status of the view's chemical object.
@@ -178,7 +202,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		}
 
 	public boolean canDrop() {
-		return isEnabled() && !mIsDraggingThis;
+		return mIsEditable && isEnabled() && !mIsDraggingThis;
 	    }
 
 	@Override
@@ -190,7 +214,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		theSize.width -= insets.left + insets.right;
 		theSize.height -= insets.top + insets.bottom;
 
-        if(theSize.width <= 0 || theSize.height <= 0)
+        if (theSize.width <= 0 || theSize.height <= 0)
             return;
 
         Graphics2D g2 = (Graphics2D)g;
@@ -198,12 +222,10 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
-        if (mOpaqueBackground) {
-        	Color fg = g2.getColor();
-	        g2.setColor(UIManager.getColor(isEnabled() ? "TextField.background" : "TextField.inactiveBackground"));
-	        g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
-	        g2.setColor(fg);
-            }
+		Color fg = g2.getColor();
+		g2.setColor(UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground"));
+		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
+		g2.setColor(fg);
 
 		if (mDisplayMol != null && mDisplayMol.getAllAtoms() != 0) {
 			mDepictor = new Depictor2D(mDisplayMol);
@@ -221,10 +243,17 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
             mDepictor.paint(g);
 			}
 
-		if (borderFlag && mShowBorder) {
-			g.setColor(Color.gray);
-			g.drawRect(insets.left,insets.top,theSize.width - 1,theSize.height - 1);
-			g.drawRect(insets.left + 1,insets.top + 1,theSize.width - 3,theSize.height - 3);
+		if (mShowBorder && !mDisableBorder) {
+			Rectangle2D.Double rect = mDepictor.getBoundingRect();
+			if (rect != null) {
+				Color bg = getBackground();
+				g.setColor(ColorHelper.perceivedBrightness(bg) < 0.5f ? bg.brighter() : bg.darker());
+				Stroke oldStroke = ((Graphics2D)g).getStroke();
+				((Graphics2D)g).setStroke(new BasicStroke(HiDPIHelper.scale(2), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+				int arc = (int)Math.min(rect.height/4, Math.min(rect.width/4, HiDPIHelper.scale(10)));
+				g.drawRoundRect((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height, arc, arc);
+				((Graphics2D)g).setStroke(oldStroke);
+				}
 			}
 		}
 
@@ -257,7 +286,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	 */
 	public synchronized void structureChanged(StereoMolecule mol) {
 		if (mol == null) {
-			mMol.deleteMolecule();
+			mMol.clear();
 			}
 		else {
 			mol.copyMolecule(mMol);
@@ -275,7 +304,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	 */
 	public synchronized void structureChanged(StereoMolecule mol, StereoMolecule displayMol) {
 		if (mol == null) {
-			mMol.deleteMolecule();
+			mMol.clear();
 			}
 		else {
 			mol.copyMolecule(mMol);
@@ -311,7 +340,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 
     public void addStructureListener(StructureListener l) {
 		if(mListener == null)
-			mListener = new ArrayList<StructureListener>();
+			mListener = new ArrayList<>();
 
 		mListener.add(l);
 		}
@@ -325,23 +354,42 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 		mChiralTextPosition = p;
 		}
 
-	public void mouseClicked(MouseEvent e) {}
-	public void mouseEntered(MouseEvent e) {}
-	public void mouseExited(MouseEvent e) {}
+	@Override public void mouseClicked(MouseEvent e) {}
+	@Override public void mouseEntered(MouseEvent e) {}
+	@Override public void mouseExited(MouseEvent e) {}
 
+	@Override
 	public void mousePressed(MouseEvent e) {
 		handlePopupTrigger(e);
 		}
 
+	@Override
 	public void mouseReleased(MouseEvent e) {
 		handlePopupTrigger(e);
 		}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		int x = e.getX();
+		int y = e.getY();
+		boolean isInRect = false;
+		if (mDepictor != null && (mAllowedDragAction & DnDConstants.ACTION_COPY) != 0) {
+			Rectangle2D.Double bounds = mDepictor.getBoundingRect();
+			if (bounds != null && bounds.contains(x, y))
+				isInRect = true;
+			}
+
+		updateBorder(isInRect);
+		setCursor(CursorHelper.getCursor(isInRect ? CursorHelper.cHandCursor : CursorHelper.cPointerCursor));
+		}
+
+	@Override public void mouseDragged(MouseEvent e) {}
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().equals(ITEM_COPY)) {
 			mClipboardHandler.copyMolecule(mMol);
 			}
-		if (e.getActionCommand().startsWith(ITEM_PASTE)) {
+		if (e.getActionCommand().startsWith(ITEM_PASTE) && mIsEditable) {
 			StereoMolecule mol = mClipboardHandler.pasteMolecule();
 			if (mol != null) {
 				if (!mAllowFragmentStatusChangeOnPasteOrDrop)
@@ -351,7 +399,7 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 				structureChanged();
 				}
 			}
-		if (e.getActionCommand().equals(ITEM_CLEAR)) {
+		if (e.getActionCommand().equals(ITEM_CLEAR) && mIsEditable) {
 			mMol.deleteMolecule();
 			mDisplayMol = mMol;
 			structureChanged();
@@ -367,17 +415,19 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 			item1.setEnabled(mMol.getAllAtoms() != 0);
 			popup.add(item1);
 
-			String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
-			JMenuItem item2 = new JMenuItem(itemText);
-			item2.addActionListener(this);
-			popup.add(item2);
+			if (mIsEditable) {
+				String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
+				JMenuItem item2 = new JMenuItem(itemText);
+				item2.addActionListener(this);
+				popup.add(item2);
 
-			popup.addSeparator();
+				popup.addSeparator();
 
-			JMenuItem item3 = new JMenuItem(ITEM_CLEAR);
-			item3.addActionListener(this);
-			item3.setEnabled(mMol.getAllAtoms() != 0);
-			popup.add(item3);
+				JMenuItem item3 = new JMenuItem(ITEM_CLEAR);
+				item3.addActionListener(this);
+				item3.setEnabled(mMol.getAllAtoms() != 0);
+				popup.add(item3);
+				}
 
 			popup.show(this, e.getX(), e.getY());
 			}
@@ -445,11 +495,11 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 					boolean drop = canDrop() && isDropOK(e) ;
 					if (!drop)
 						e.rejectDrag();
-					updateBorder(drop);
+//					updateBorder(drop);
 				}
 
 				public void dragExit(DropTargetEvent e) {
-					updateBorder(false);
+//					updateBorder(false);
 				}
 			};
 
@@ -470,13 +520,13 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
 	protected void onDrop() {}
 
 	private void updateBorder(boolean showBorder) {
-		if(mShowBorder != showBorder){
+		if (mShowBorder != showBorder) {
 			mShowBorder = showBorder;
 			repaint();
+			}
 		}
-	}
 
-	public java.awt.datatransfer.FlavorMap getSystemFlavorMap() {
+/*	public java.awt.datatransfer.FlavorMap getSystemFlavorMap() {
 	    return new OurFlavorMap();
 	    }
 
@@ -487,18 +537,18 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
     // there's nothing I can do about it.
     static class OurFlavorMap implements FlavorMap, FlavorTable {
     	public java.util.Map<DataFlavor,String> getNativesForFlavors(DataFlavor[] dfs) {
-    /*	    System.out.println("getNativesForFlavors " + dfs.length);
-    	    for (int i = 0; i < dfs.length; i++)
-    		    System.out.println(" -> " + dfs[i]);
-    */
+    //	    System.out.println("getNativesForFlavors " + dfs.length);
+    //	    for (int i = 0; i < dfs.length; i++)
+    //		    System.out.println(" -> " + dfs[i]);
+    //
     	    return SystemFlavorMap.getDefaultFlavorMap().getNativesForFlavors(dfs);
     	    }
     
     	public java.util.Map<String,DataFlavor> getFlavorsForNatives(String[] natives) {
-    /*	    System.out.println("getFlavorsForNatives " + natives.length);
-    	    for (int i = 0; i < natives.length; i++)
-    	        System.out.println(" -> " + natives[i]);
-    */
+    //	    System.out.println("getFlavorsForNatives " + natives.length);
+    //	    for (int i = 0; i < natives.length; i++)
+    //	        System.out.println(" -> " + natives[i]);
+    //
     	    return SystemFlavorMap.getDefaultFlavorMap().getFlavorsForNatives(natives);
     	    }
     
@@ -512,5 +562,5 @@ public class JStructureView extends JPanel implements ActionListener,MouseListen
     //	    System.out.println("getNativesForFlavor " + flav);
     	    return ((SystemFlavorMap)SystemFlavorMap.getDefaultFlavorMap()).getNativesForFlavor(flav);
     	    }
-        }
+        }*/
     }

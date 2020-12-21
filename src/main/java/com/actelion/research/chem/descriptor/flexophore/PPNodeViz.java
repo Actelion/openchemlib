@@ -27,6 +27,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Pharmacophore node with information about corresponding atoms in the molecule used for construction.
+ */
 public class PPNodeViz extends PPNode implements Serializable {
 	
 	
@@ -36,7 +39,7 @@ public class PPNodeViz extends PPNode implements Serializable {
 	
 	private static final float SIMILARITY_NODES=-1;
 	
-	// Indices of mapping original  atoms in molecule, used for comparison
+	// Indices of mapping original atoms in molecule.
 	// Only together with MolDistHistViz and visualization of the structure and the descriptor.
 	private HashSet<Integer> hsIndexOriginalAtoms;
 	

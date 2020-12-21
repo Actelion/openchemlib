@@ -14,7 +14,6 @@ public class JEditableChemistryView extends JChemistryView {
 	private static final String EDIT_MESSAGE = "<double click or drag & drop>";
 	private StereoMolecule[] mMolecules;
 	private Reaction mReaction;
-	private boolean mIsEditable;
 
 	/**
 	 * Creates a new JEditableChemistryView for showing & editing a reaction or molecule(s).
@@ -23,7 +22,14 @@ public class JEditableChemistryView extends JChemistryView {
 	 */
 	public JEditableChemistryView(int chemistryType) {
 		super(chemistryType);
-		mIsEditable = true;
+		if (chemistryType == ExtendedDepictor.TYPE_REACTION) {
+			mReaction = new Reaction();
+			}
+		else {
+			mMolecules = new StereoMolecule[1];
+			mMolecules[0] = new StereoMolecule();
+			}
+		setEditable(true);
 		}
 
 	/**
@@ -60,19 +66,9 @@ public class JEditableChemistryView extends JChemistryView {
 		super.setContent(rxn, drawingObjectList);
 		}
 
-	public boolean isEditable() {
-		return mIsEditable;
-	}
-
-	public void setEditable(boolean b) {
-		if (mIsEditable != b) {
-			mIsEditable = b;
-			}
-		}
-
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if (e.getClickCount() == 2 && isEnabled() && mIsEditable) {
+		if (e.getClickCount() == 2 && isEnabled() && isEditable()) {
 			if (getChemistryType() == ExtendedDepictor.TYPE_REACTION)
 				editReaction();
 			else
@@ -81,6 +77,18 @@ public class JEditableChemistryView extends JChemistryView {
 			}
 
 		super.mouseClicked(e);
+		}
+
+	private boolean isEmpty() {
+		if (mReaction != null && !mReaction.isEmpty())
+			return false;
+
+		if (mMolecules != null)
+			for (StereoMolecule mol:mMolecules)
+				if (mol.getAllAtoms() != 0)
+					return false;
+
+		return true;
 		}
 
 	@Override
@@ -92,7 +100,7 @@ public class JEditableChemistryView extends JChemistryView {
 
 		super.paintComponent(g);
 
-		if (isEnabled() && mIsEditable && mReaction.isEmpty()) {
+		if (isEnabled() && isEditable() && isEmpty()) {
 			g.setFont(g.getFont().deriveFont(Font.PLAIN, HiDPIHelper.scale(10)));
 			FontMetrics metrics = g.getFontMetrics();
 			Rectangle2D bounds = metrics.getStringBounds(EDIT_MESSAGE, g);
@@ -100,11 +108,6 @@ public class JEditableChemistryView extends JChemistryView {
 					(insets.top+theSize.height-metrics.getHeight())/2+metrics.getAscent());
 			}
 		}
-
-	@Override
-	public boolean canDrop() {
-		return mIsEditable && super.canDrop();
-	}
 
 	private void editReaction() {
 		Component c = this;

@@ -256,7 +256,7 @@ public class StructureSearch {
 							}
 						else if (mSpecification.isNoStereoSearch()) {
 							for (int i=0; i<mQueryHashCode.length; i++) {
-								if (mQueryHashCode[i] == mDataSource.getNoStereoCode(row, mSpecification.isLargestFragmentOnly())) {
+								if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getNoStereoCode(row, mSpecification.isLargestFragmentOnly())) {
 									isMatch = true;
 									break;
 									}
@@ -264,7 +264,7 @@ public class StructureSearch {
 							}
 						else if (mSpecification.isTautomerSearch()) {
 							for (int i=0; i<mQueryHashCode.length; i++) {
-								if (mQueryHashCode[i] == mDataSource.getTautomerCode(row, mSpecification.isLargestFragmentOnly())) {
+								if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getTautomerCode(row, mSpecification.isLargestFragmentOnly())) {
 									isMatch = true;
 									break;
 									}
@@ -272,7 +272,7 @@ public class StructureSearch {
 							}
 						else if (mSpecification.isNoStereoTautomerSearch()) {
 							for (int i=0; i<mQueryHashCode.length; i++) {
-								if (mQueryHashCode[i] == mDataSource.getNoStereoTautomerCode(row, mSpecification.isLargestFragmentOnly())) {
+								if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getNoStereoTautomerCode(row, mSpecification.isLargestFragmentOnly())) {
 									isMatch = true;
 									break;
 									}
@@ -280,7 +280,7 @@ public class StructureSearch {
 							}
 						else if (mSpecification.isBackboneSearch()) {
 							for (int i=0; i<mQueryHashCode.length; i++) {
-								if (mQueryHashCode[i] == mDataSource.getBackboneCode(row, mSpecification.isLargestFragmentOnly())) {
+								if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getBackboneCode(row, mSpecification.isLargestFragmentOnly())) {
 									isMatch = true;
 									break;
 									}

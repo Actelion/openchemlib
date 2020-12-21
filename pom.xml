@@ -8,7 +8,7 @@
     Please follow the naming scheme YEAR.MONTH.RELEASE_NO_OF_MONTH
     (eg. 2016.4.1 for second release in Apr 2016)
     -->
-    <version>2020.11.3-SNAPSHOT</version>
+    <version>2020.12.2-SNAPSHOT</version>
 
     <name>OpenChemLib</name>
     <description>Open Source Chemistry Library</description>
@@ -73,6 +73,12 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+<!--                                <configuration>-->
+<!--                                    <gpgArguments>-->
+<!--                                        <arg>&#45;&#45;pinentry-mode</arg>-->
+<!--                                        <arg>loopback</arg>-->
+<!--                                    </gpgArguments>-->
+<!--                                </configuration>-->
                             </execution>
                         </executions>
                     </plugin>
@@ -98,7 +104,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.9</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

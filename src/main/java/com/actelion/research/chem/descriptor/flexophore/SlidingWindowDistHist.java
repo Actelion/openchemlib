@@ -1,9 +1,6 @@
 package com.actelion.research.chem.descriptor.flexophore;
 
-import com.actelion.research.calc.filter.SlidingWindow;
-import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveFlexophoreHardMatchUncovered;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
-import com.actelion.research.util.ArrayUtils;
 
 /**
  * SlidingWindowDistHist
@@ -27,7 +24,7 @@ public class SlidingWindowDistHist {
 
         lenFilHalf = arrFilter.length / 2;
 
-        int n = ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE;
+        int n = ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE;
 
         int maxNumDistHist = ((n*n)-n)/2;
 
