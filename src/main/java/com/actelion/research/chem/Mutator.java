@@ -40,7 +40,8 @@ public class Mutator {
 											   | Mutation.MUTATION_CLOSE_RING_AND_AROMATIZE
 											   | Mutation.MUTATION_TOGGLE_AMID_SULFONAMID
 											   | Mutation.MUTATION_MIGRATE
-											   | Mutation.MUTATION_SWAP_SUBSTITUENT;
+											   | Mutation.MUTATION_SWAP_SUBSTITUENT
+											   | Mutation.MUTATION_INVERT_PARITY;
 
 	public static final int MUTATION_ANY = MUTATION_GROW
 										 | MUTATION_SHRINK
@@ -262,6 +263,8 @@ public class Mutator {
 			addProbabilitiesForMigrate(mutationList);
         if ((mutationType & Mutation.MUTATION_SWAP_SUBSTITUENT) != 0)
             addProbabilitiesForSwapSubstituent(mutationList, substituentList);
+		if ((mutationType & Mutation.MUTATION_INVERT_PARITY) != 0)
+			addProbabilitiesForInvertParity(mutationList);
 
         if (cProbabilityFactor != 1)
         	tweakProbabilities(mutationList);
@@ -1071,6 +1074,15 @@ public class Mutator {
             }
         }
 
+	private void addProbabilitiesForInvertParity(ArrayList<Mutation> mutationList) {
+		for (int atom=0; atom<mMol.getAtoms(); atom++)
+			if (mIsPrimaryAtom[atom] && mMol.isAtomStereoCenter(atom))
+				mutationList.add(new Mutation(Mutation.MUTATION_INVERT_PARITY, atom, -1, -1, -1, 1.0));
+		for (int bond=0; bond<mMol.getBonds(); bond++)
+			if ((mIsPrimaryAtom[mMol.getBondAtom(0, bond)] || mIsPrimaryAtom[mMol.getBondAtom(1, bond)])
+			 && mMol.getBondParity(bond) != Molecule.cBondParityNone)
+				mutationList.add(new Mutation(Mutation.MUTATION_INVERT_PARITY, -1, bond, -1, -1, 1.0));
+		}
 
     private ArrayList<MutatorSubstituent> createSubstituentList() {
 		ArrayList<MutatorSubstituent> substituentList = new ArrayList<MutatorSubstituent>();
@@ -1216,6 +1228,14 @@ public class Mutator {
                 mol.addBond(atomMap[atom1], atomMap[atom2], Molecule.cBondTypeSingle);
                 }
             break;
+		case Mutation.MUTATION_INVERT_PARITY:
+			if (mutation.mWhere1 != -1)
+				mol.setAtomParity(mutation.mWhere1, mol.getAtomParity(mutation.mWhere1) != Molecule.cAtomParity1 ?
+						Molecule.cAtomParity1 : Molecule.cAtomParity2, false);
+			if (mutation.mWhere2 != -1)
+				mol.setBondParity(mutation.mWhere2, mol.getBondParity(mutation.mWhere2) != Molecule.cBondParityEor1 ?
+						Molecule.cBondParityEor1 : Molecule.cBondParityZor2, false);
+			break;
 			}
 
 		repairCharges(mol);

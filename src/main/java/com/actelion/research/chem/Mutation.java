@@ -36,6 +36,7 @@ public class Mutation {
     public static final int MUTATION_SWAP_SUBSTITUENT = 4096;
     public static final int MUTATION_DELETE_SUBSTITUENT = 8192;
     public static final int MUTATION_CUTOUT_SFRAGMENT = 16384;
+	public static final int MUTATION_INVERT_PARITY = 32768;
 
 	public static final int[][] cAllowedAtomicNo = 
 		{ { 5, 6, 7, 8, 9, 15, 16, 17, 35, 53 },
@@ -138,6 +139,10 @@ public class Mutation {
             return "CutOut Fragment; rootAtom:"+mWhere1
                   +" new bond from atom1:"+mSpecifier1+" to atom2:"+mSpecifier2
 				  +" Probability:"+DoubleFormat.toString(mProbability);
+	        case MUTATION_INVERT_PARITY:
+	        return "Invert Parity; "
+			      +(mWhere1 != -1 ? "atom:"+mWhere1 : "bond:"+mWhere2)
+		          +" Probability:"+DoubleFormat.toString(mProbability);
             }
         return "Unknown Mutation";
         }

@@ -122,9 +122,9 @@ public class Canonizer {
 	protected static final int cParity1Or = 6;
 	protected static final int cParity2Or = 7;
 
-	public static final int ATOM_BITS = 16;
-	public static final int MAX_ATOMS = 0xFFFF;
-	public static final int MAX_BONDS = 0xFFFF;
+//	public static final int mAtomBits = 16;
+//	public static final int MAX_ATOMS = 0xFFFF;
+//	public static final int MAX_BONDS = 0xFFFF;
 
 	private StereoMolecule mMol;
 	private int[] mCanRank;
@@ -174,7 +174,7 @@ public class Canonizer {
 
 	private String		    mIDCode, mEncodedCoords,mMapping;
 	private StringBuilder	mEncodingBuffer;
-	private	int				mEncodingBitsAvail,mEncodingTempData,mMaxConnAtoms;
+	private	int				mEncodingBitsAvail,mEncodingTempData,mAtomBits,mMaxConnAtoms;
 
 	/**
 	 * Runs a canonicalization procedure for the given molecule that creates unique atom ranks,
@@ -198,15 +198,17 @@ public class Canonizer {
 	 * @param mode 0 or one or more of CONSIDER...TOPICITY, CREATE..., ENCODE_ATOM_CUSTOM_LABELS, ASSIGN_PARITIES_TO_TETRAHEDRAL_N, COORDS_ARE_3D
 	 */
 	public Canonizer(StereoMolecule mol, int mode) {
-		if (mol.getAllAtoms()>MAX_ATOMS)
-			throw new IllegalArgumentException("Cannot canonize a molecule having more than "+MAX_ATOMS+" atoms");
-		if (mol.getAllBonds()>MAX_BONDS)
-			throw new IllegalArgumentException("Cannot canonize a molecule having more than "+MAX_BONDS+" bonds");
+//		if (mol.getAllAtoms()>MAX_ATOMS)
+//			throw new IllegalArgumentException("Cannot canonize a molecule having more than "+MAX_ATOMS+" atoms");
+//		if (mol.getAllBonds()>MAX_BONDS)
+//			throw new IllegalArgumentException("Cannot canonize a molecule having more than "+MAX_BONDS+" bonds");
 
 		mMol = mol;
 		mMode = mode;
 
 		mMol.ensureHelperArrays(Molecule.cHelperRings);
+		mAtomBits = getNeededBits(mMol.getAtoms());
+
 		canFindNitrogenQualifyingForParity();
 
 		mZCoordinatesAvailable = ((mode & COORDS_ARE_3D) != 0) || mMol.is3D();
@@ -558,7 +560,7 @@ System.out.println();
 		if ((mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS+12, mCanRank[atom] << 12);
+				mCanBase[atom].add(mAtomBits+12, mCanRank[atom] << 12);
 				}
 			}
 		if (mNoOfRanks < mMol.getAtoms()) {
@@ -598,7 +600,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		while (mNoOfRanks < mMol.getAtoms()) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS+1, 2*mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits+1, 2*mCanRank[atom]);
 				}
 
 			// promote randomly one atom of lowest shared rank.
@@ -665,8 +667,8 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
 			mMaxConnAtoms = Math.max(mMaxConnAtoms, mMol.getConnAtoms(atom)+mMol.getMetalBondedConnAtoms(atom));
 		int baseValueSize = Math.max(2, bondQueryFeaturesPresent ?
-				(62 + ATOM_BITS + mMaxConnAtoms * (ATOM_BITS+Molecule.cBondQFNoOfBits)) / 63
-			  : (62 + ATOM_BITS + mMaxConnAtoms * (ATOM_BITS+5)) / 63);
+				(62 + mAtomBits + mMaxConnAtoms * (mAtomBits+Molecule.cBondQFNoOfBits)) / 63
+			  : (62 + mAtomBits + mMaxConnAtoms * (mAtomBits+5)) / 63);
 
 		mCanRank = new int[mMol.getAllAtoms()];
 		mCanBase = new CanonizerBaseValue[mMol.getAtoms()];
@@ -706,7 +708,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		if (mNoOfRanks < mMol.getAtoms()) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits, mCanRank[atom]);
 				int[] bondRingSize = new int[mMol.getConnAtoms(atom)];
 				for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 					bondRingSize[i] = mCanRank[mMol.getConnAtom(atom, i)] << 5;
@@ -714,9 +716,9 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 					}
 				Arrays.sort(bondRingSize);
 				for (int i=mMaxConnAtoms; i>bondRingSize.length; i--)
-					mCanBase[atom].add(ATOM_BITS+5, 0);
+					mCanBase[atom].add(mAtomBits+5, 0);
 				for (int i=bondRingSize.length-1; i>=0; i--)
-					mCanBase[atom].add(ATOM_BITS+5, bondRingSize[i]);
+					mCanBase[atom].add(mAtomBits+5, bondRingSize[i]);
 				}
 			mNoOfRanks = canPerformRanking();
 			}
@@ -724,7 +726,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		if (atomListFound && mNoOfRanks < mMol.getAtoms()) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits, mCanRank[atom]);
 				int[] atomList = mMol.getAtomList(atom);
 				int listLength = (atomList == null) ? 0 : Math.min(12, atomList.length);
 				for (int i=12; i>listLength; i--)
@@ -739,7 +741,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		if (bondQueryFeaturesPresent && mNoOfRanks < mMol.getAtoms()) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits, mCanRank[atom]);
 				long[] bondQFList = new long[mMol.getConnAtoms(atom)+mMol.getMetalBondedConnAtoms(atom)];
 				int index = 0;
 				for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
@@ -752,9 +754,9 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 					}
 				Arrays.sort(bondQFList);
 				for (int i=mMaxConnAtoms; i>bondQFList.length; i--)
-					mCanBase[atom].add(ATOM_BITS+Molecule.cBondQFNoOfBits, 0);
+					mCanBase[atom].add(mAtomBits+Molecule.cBondQFNoOfBits, 0);
 				for (int i=bondQFList.length-1; i>=0; i--)
-					mCanBase[atom].add(ATOM_BITS+Molecule.cBondQFNoOfBits, bondQFList[i]);
+					mCanBase[atom].add(mAtomBits+Molecule.cBondQFNoOfBits, bondQFList[i]);
 				}
 			mNoOfRanks = canPerformRanking();
 			}
@@ -769,8 +771,8 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				int rank = (mMol.getAtomCustomLabel(atom) == null) ?
 						   0 : 1+list.getListIndex(mMol.getAtomCustomLabel(atom));
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
-				mCanBase[atom].add(ATOM_BITS, rank);
+				mCanBase[atom].add(mAtomBits, mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits, rank);
 				}
 
 			mNoOfRanks = canPerformRanking();
@@ -779,7 +781,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		if ((mMode & ENCODE_ATOM_SELECTION) != 0 && mNoOfRanks < mMol.getAtoms()) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits, mCanRank[atom]);
 				mCanBase[atom].add(1, mMol.isSelectedAtom(atom) ? 1 : 0);
 				}
 
@@ -814,7 +816,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				if (mCanRank[atom] == highestSharedFreeValenceRank)
 					value = ++increment;
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits, mCanRank[atom]);
 				mCanBase[atom].add(8, value);
 				}
 
@@ -853,7 +855,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		while ((mNoOfRanks < mMol.getAtoms()) && paritiesFound) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits, mCanRank[atom]);
 
 					// In case of stereo centers with ESR type!=ABS then consider
 					// group number and type in addition to the parity.
@@ -909,7 +911,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		while ((mNoOfRanks < mMol.getAtoms()) && paritiesFound) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS+4, (mCanRank[atom] << 4)
+				mCanBase[atom].add(mAtomBits+4, (mCanRank[atom] << 4)
 											  | (mTHParity[atom] << 2));
 				}
 
@@ -954,7 +956,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+				mCanBase[atom].add(mAtomBits, mCanRank[atom]);
 				mCanBase[atom].add(20, 0);
 
 				// Certain groups of parities require normalization before
@@ -1576,11 +1578,11 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 				}
 
 			mCanBase[atom].init(atom);
-			mCanBase[atom].add(ATOM_BITS, mCanRank[atom]);
+			mCanBase[atom].add(mAtomBits, mCanRank[atom]);
 			for (int i=neighbours; i<mMaxConnAtoms; i++)
-				mCanBase[atom].add(ATOM_BITS + 1, 0);
+				mCanBase[atom].add(mAtomBits + 1, 0);
 			for (int i=0; i<neighbours; i++)
-				mCanBase[atom].add(ATOM_BITS + 1, connRank[i]);
+				mCanBase[atom].add(mAtomBits + 1, connRank[i]);
 			}
 		}
 
@@ -2639,8 +2641,8 @@ System.out.println("noOfRanks:"+canRank);
 	private void idCodeCreate() {
 		encodeBitsStart(false);
 		encodeBits(cIDCodeVersion3, 4);
-		int nbits = Math.max(idGetNeededBits(mMol.getAtoms()),
-							 idGetNeededBits(mMol.getBonds()));
+		int nbits = Math.max(getNeededBits(mMol.getAtoms()),
+							 getNeededBits(mMol.getBonds()));
 		encodeBits(nbits, 4);
 
 		if (nbits == 0) {
@@ -2747,7 +2749,7 @@ System.out.println();
 System.out.println("D-Bits:" + idGetNeededBits(maxdif));
 System.out.print("GraphAtomDifs:");
 */
-		int dbits = idGetNeededBits(maxdif);
+		int dbits = getNeededBits(maxdif);
 		encodeBits(dbits, 4);
 		base = 0;
 		for (int atom=1; atom<mMol.getAtoms(); atom++) {
@@ -3002,7 +3004,7 @@ System.out.println();
 				}
 			if (count != 0) {
 				isSecondFeatureBlock = ensureSecondFeatureBlock(isSecondFeatureBlock);
-				int lbits = idGetNeededBits(maxLength);
+				int lbits = getNeededBits(maxLength);
 				encodeBits(1, 1);   //  more data to come
 				encodeBits(2, 4);   //  (18-offset) 18 = datatype 'AtomCustomLabel'
 				encodeBits(count, nbits);
@@ -3491,7 +3493,7 @@ System.out.println();
 			return;
 			}
 
-		int nbits = idGetNeededBits(maxMapNo);
+		int nbits = getNeededBits(maxMapNo);
 		encodeBitsStart(true);
 		encodeBits(nbits, 4);
 		encodeBits(autoMappingFound ? 1 : 0, 1);
@@ -3685,10 +3687,14 @@ System.out.println();
 		}
 
 
-	private int idGetNeededBits(int no) {
+	/**
+	 * @param maxNo highest possible index of some kind
+	 * @return number of bits needed to represent numbers up to maxNo
+	 */
+	public static int getNeededBits(int maxNo) {
 		int bits = 0;
-		while (no > 0) {
-			no >>= 1;
+		while (maxNo > 0) {
+			maxNo >>= 1;
 			bits++;
 			}
 		return bits;
