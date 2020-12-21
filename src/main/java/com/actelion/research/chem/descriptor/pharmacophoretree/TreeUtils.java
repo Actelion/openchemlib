@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TreeUtils {
 	
@@ -60,6 +61,20 @@ public class TreeUtils {
 		}
 		return adjacencyList;
 		
+	}
+	
+	public static Map<Integer,Map<Integer,Integer>> getAdjacencyListWithBondOrders(int n, List<PharmacophoreTree.BiGramInt> edges) {
+		Map<Integer, Map<Integer,Integer>> adjacencyList = new HashMap<Integer,Map<Integer,Integer>>();
+		for(int i=0;i<n;i++)
+			adjacencyList.putIfAbsent(i, new HashMap<Integer, Integer>());
+		
+		for(PharmacophoreTree.BiGramInt edge : edges) {
+			int n1 = edge.edge[0];
+			int n2 = edge.edge[1];
+			adjacencyList.get(n1).put(n2,edge.order);
+			adjacencyList.get(n2).put(n1, edge.order);
+		}
+		return adjacencyList;
 	}
 
 	

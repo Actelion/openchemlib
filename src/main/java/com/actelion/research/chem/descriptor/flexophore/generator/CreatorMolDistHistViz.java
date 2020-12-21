@@ -221,8 +221,9 @@ public class CreatorMolDistHistViz {
 
         List<PPNodeViz> liPPNodeViz = new ArrayList<>();
         for (int i = 0; i < liMultCoordFragIndex.size(); i++) {
+            MultCoordFragIndex mcfi = liMultCoordFragIndex.get(i);
 
-            int [] arrIndexAtomFrag = liMultCoordFragIndex.get(i).getArrIndexFrag();
+            int [] arrIndexAtomFrag = mcfi.getArrIndexFrag();
 
             PPNodeViz ppNodeViz = new PPNodeViz();
             ppNodeViz.setIndex(i);
@@ -388,9 +389,7 @@ public class CreatorMolDistHistViz {
 
             // Calculate center coordinates.
             Coordinates coordCenter = ExtendedMolecule.getCenterGravity(molecule3D, arrAtomIndexList);
-
             multCoordFragIndex.addCoord(coordCenter);
-
         }
     }
 
@@ -400,5 +399,4 @@ public class CreatorMolDistHistViz {
         }
         return INSTANCE;
     }
-
 }

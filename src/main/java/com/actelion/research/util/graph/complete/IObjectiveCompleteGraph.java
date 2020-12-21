@@ -13,19 +13,19 @@ package com.actelion.research.util.graph.complete;
  */
 public interface IObjectiveCompleteGraph<T extends ICompleteGraph> {
 	
-	public T getBase();
+	T getBase();
 	
-	public T getQuery();
+	T getQuery();
 	
-	public void setBase(T cgBase);
+	void setBase(T cgBase);
 	
-	public void setQuery(T cgQuery);
+	void setQuery(T cgQuery);
 	
-	public abstract boolean areNodesMapping(int indexNodeBase, int indexNodeQuery);
+	boolean areNodesMapping(int indexNodeBase, int indexNodeQuery);
 	
-	public abstract boolean isValidSolution(SolutionCompleteGraph solution);
+	boolean isValidSolution(SolutionCompleteGraph solution);
 	
-	public abstract float getSimilarity(SolutionCompleteGraph solution);
+	float getSimilarity(SolutionCompleteGraph solution);
 
 	void setVerbose(boolean v);
 

@@ -25,11 +25,12 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.descriptor.flexophore.*;
-import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveFlexophoreHardMatchUncovered;
+import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveBlurFlexophoreHardMatchUncovered;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.PPNodeSimilarity;
 import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDistHistViz;
 import com.actelion.research.util.CommandLineParser;
 import com.actelion.research.util.graph.complete.CompleteGraphMatcher;
+import com.actelion.research.util.graph.complete.SolutionCompleteGraph;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -74,6 +75,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	protected static final int MAX_NUM_HEAVY_ATOMS = 70;
 
 	// until 24.03.2020
+	// until 17.12.2020
 	// private static final double CORRECTION_FACTOR = 0.40;
 
 	private static final double CORRECTION_FACTOR = 0.4;
@@ -109,7 +111,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	// public static final double THRESH_SIMILARITY_COMPARISON_NODE = 0.001;
 
 	// Production
-	public static final double THRESH_HISTOGRAM_SIMILARITY = ObjectiveFlexophoreHardMatchUncovered.THRESH_HISTOGRAM_SIMILARITY;
+	public static final double THRESH_HISTOGRAM_SIMILARITY = ObjectiveBlurFlexophoreHardMatchUncovered.THRESH_HISTOGRAM_SIMILARITY;
 
 	// Test
 	// public static final double THRESH_HISTOGRAM_SIMILARITY = 0.5;
@@ -126,9 +128,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 
 	//
-	// If you change this, do not forget to change the objective in CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher().
+	// If you change this, do not forget to change the objective in CompleteGraphMatcher<IMolDistHist>
+	// getNewCompleteGraphMatcher().
 	//
-	private ObjectiveFlexophoreHardMatchUncovered objectiveCompleteGraphHard;
+	private ObjectiveBlurFlexophoreHardMatchUncovered objectiveCompleteGraphHard;
 
 	protected Exception recentException;
 
@@ -138,7 +141,6 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 	private double threshHistogramSimilarity;
 
 	private boolean singleConformationModeQuery;
-
 
 	private ThreadMaster threadMaster;
 
@@ -205,7 +207,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		queueCGM = new ConcurrentLinkedQueue<>();
 
-		objectiveCompleteGraphHard = new ObjectiveFlexophoreHardMatchUncovered(
+		objectiveCompleteGraphHard = new ObjectiveBlurFlexophoreHardMatchUncovered(
 				versionInteractionTable, modePPNodeSimilarityComparison, threshSimilarityHardMatch, threshHistogramSimilarity);
 
 		queueCGM.add(getNewCompleteGraphMatcher());
@@ -236,10 +238,10 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		this.singleConformationModeQuery = singleConformationModeQuery;
 	}
 
-	private CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher(){
+	public CompleteGraphMatcher<IMolDistHist> getNewCompleteGraphMatcher(){
 
-		ObjectiveFlexophoreHardMatchUncovered objective =
-				new ObjectiveFlexophoreHardMatchUncovered(
+		ObjectiveBlurFlexophoreHardMatchUncovered objective =
+				new ObjectiveBlurFlexophoreHardMatchUncovered(
 						versionInteractionTable,
 						modePPNodeSimilarityComparison,
 						threshSimilarityHardMatch,
@@ -255,7 +257,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		return cgMatcher;
 	}
 
-	public ObjectiveFlexophoreHardMatchUncovered getObjectiveCompleteGraphHard() {
+	public ObjectiveBlurFlexophoreHardMatchUncovered getObjectiveCompleteGraphHard() {
 		return objectiveCompleteGraphHard;
 	}
 
@@ -389,7 +391,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 
 		if(mdh == null) {
 			mdh = FAILED_OBJECT;
-		} else if (mdh.getNumPPNodes() > ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE) {
+		} else if (mdh.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE) {
 
 			String msg = "Flexophore exceeded maximum number of nodes.";
 
@@ -401,6 +403,12 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		return mdh;
 	}
 
+	/**
+	 * This descriptor contains the molecule used for construction. The descriptor also contains information about
+	 * corresponding atoms in the molecule.
+	 * @param fragBiggest
+	 * @return
+	 */
 	public MolDistHistViz createVisualDescriptor(StereoMolecule fragBiggest) {
 
 		MolDistHistViz mdhv = null;
@@ -485,46 +493,22 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 			sc = 0;
 
 		} else {
-
 			IMolDistHist mdhvBase = (IMolDistHist)base;
-
 			IMolDistHist mdhvQuery = (IMolDistHist)query;
 
-			if(mdhvBase.getNumPPNodes() > ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE){
-
+			if(mdhvBase.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE){
 				System.out.println("DescriptorHandlerFlexophore getSimilarity(...) mdhvBase.getNumPPNodes() " + mdhvBase.getNumPPNodes());
-
 				return 0;
-			} else if(mdhvQuery.getNumPPNodes() > ObjectiveFlexophoreHardMatchUncovered.MAX_NUM_NODES_FLEXOPHORE){
+			} else if(mdhvQuery.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE){
 				System.out.println("DescriptorHandlerFlexophore getSimilarity(...) mdhvQuery.getNumPPNodes() " + mdhvQuery.getNumPPNodes());
 				return 0;
 			}
 
-			sc = (float)getMinimumSimilarity(mdhvBase, mdhvQuery);
-
+			sc = (float) getSimilarity(mdhvBase, mdhvQuery);
 		}
 
 		return normalizeValue(sc);
-
-		// return sc;
 	}
-
-	private double getMinimumSimilarity(IMolDistHist mdhvBase, IMolDistHist mdhvQuery){
-
-		double sc = 0;
-
-		if(mdhvBase.getNumPPNodes() == mdhvQuery.getNumPPNodes()){
-			double s1 = getSimilarity(mdhvBase, mdhvQuery);
-			double s2 = getSimilarity(mdhvQuery, mdhvBase);
-
-			sc = Math.max(s1, s2);
-		} else {
-			sc = getSimilarity(mdhvBase, mdhvQuery);
-		}
-
-		return sc;
-	}
-
 
 	private double getSimilarity(IMolDistHist iBase, IMolDistHist iQuery){
 
@@ -557,27 +541,61 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		return sc;
 	}
 
-	public double getSimilarityNodes(PPNode query, PPNode base) {
-		return objectiveCompleteGraphHard.getSimilarityNodes(query, base);
+	/**
+	 *
+	 * @param mdhvBase
+	 * @param mdhvQuery
+	 * @return
+	 */
+	public ModelSolutionSimilarity getBestMatch(MolDistHistViz mdhvBase, MolDistHistViz mdhvQuery){
+
+		CompleteGraphMatcher<IMolDistHist> cgMatcher = queueCGM.poll();
+
+		if(cgMatcher == null){
+			cgMatcher = getNewCompleteGraphMatcher();
+		}
+
+		cgMatcher.set(mdhvBase, mdhvQuery);
+		cgMatcher.calculateSimilarity();
+
+		SolutionCompleteGraph scgBest = cgMatcher.getBestMatchingSolution();
+
+		int n = scgBest.getSizeHeap();
+
+		float [] arrSimNode = new float[scgBest.getNodesQuery()];
+
+		Arrays.fill(arrSimNode, -1);
+
+		ObjectiveBlurFlexophoreHardMatchUncovered objectiveCompleteGraphHard = (ObjectiveBlurFlexophoreHardMatchUncovered)cgMatcher.getObjectiveCompleteGraph();
+		objectiveCompleteGraphHard.setMatchingInfoInQueryAndBase(scgBest);
+
+		for (int indexHeap = 0; indexHeap < n; indexHeap++) {
+
+			int indexQuery = scgBest.getIndexQueryFromHeap(indexHeap);
+
+			arrSimNode[indexQuery] = mdhvQuery.getNode(indexQuery).getSimilarityMappingNodes();
+		}
+
+		ModelSolutionSimilarity mss = new ModelSolutionSimilarity(scgBest, arrSimNode);
+
+		return mss;
 	}
 
 
-	public float normalizeValue(double value) {
+
+	public static float normalizeValue(double value) {
 		return value <= 0.0f ? 0.0f
 				: value >= 1.0f ? 1.0f
 				: (float)(1.0-Math.pow(1-Math.pow(value, CORRECTION_FACTOR) ,1.0/CORRECTION_FACTOR));
 	}
 
 	public boolean calculationFailed(Object o) {
-
 		if(o instanceof MolDistHist){
 			return ((MolDistHist)o).getNumPPNodes() == 0;
 		} else if(o instanceof MolDistHistViz){
 			return ((MolDistHistViz)o).getNumPPNodes() == 0;
 		}
-
 		return true;
-
 	}
 
 	public DescriptorHandlerFlexophore getThreadSafeCopy() {

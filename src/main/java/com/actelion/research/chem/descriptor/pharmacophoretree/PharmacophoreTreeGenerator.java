@@ -72,7 +72,7 @@ public class PharmacophoreTreeGenerator {
 		
 		for(int i=0;i<ringNodes.size();i++) {
 			Set<Integer> ring = ringNodes.get(i);
-			PharmacophoreNode node = new PharmacophoreNode(new ArrayList<Integer>(ring),functionalities, atomVolumes);
+			PharmacophoreNode node = new PharmacophoreNode(new ArrayList<Integer>(ring),functionalities, atomVolumes,false,false);
 			addNode(node,ppNodes,atomToNodes);
 			
 		}
@@ -101,7 +101,7 @@ public class PharmacophoreTreeGenerator {
 					edgesToDelete.add(new PharmacophoreTree.BiGramInt(c));
 				}
 				PharmacophoreNode node = new PharmacophoreNode(new ArrayList<Integer>(), functionalities,
-					atomVolumes,1);
+					atomVolumes,1,false,false);
 				addNode(node,ppNodes,atomToNodes);
 				int index = ppNodes.size()-1;
 				for(Integer connNode : bccNodes) {
@@ -141,11 +141,11 @@ public class PharmacophoreTreeGenerator {
 					String label = mol.getAtomLabel(currentAtom);
 					PharmacophoreNode node;
 					if(RGROUPS.contains(label)) { //is a link atom
-						node = new PharmacophoreNode(Arrays.asList(currentAtom),functionalities,atomVolumes,7);
+						node = new PharmacophoreNode(Arrays.asList(currentAtom),functionalities,atomVolumes,7,false,false);
 						node.getFunctionalities()[0] = Integer.parseInt(label.split("R")[1]);
 					}
 					else 
-						node = new PharmacophoreNode(Arrays.asList(currentAtom),functionalities,atomVolumes);
+						node = new PharmacophoreNode(Arrays.asList(currentAtom),functionalities,atomVolumes,false,false);
 					addNode(node, ppNodes, atomToNodes);
 					int index = ppNodes.size()-1;
 					if(parents[currentAtom]!=-1) {
@@ -187,7 +187,7 @@ public class PharmacophoreTreeGenerator {
 		
 	}
 	
-	private static void addNode(PharmacophoreNode node, List<PharmacophoreNode> nodes,Map<Integer,List<Integer>> atomToNodes) {
+	public static void addNode(PharmacophoreNode node, List<PharmacophoreNode> nodes,Map<Integer,List<Integer>> atomToNodes) {
 		int index = nodes.size();
 		nodes.add(node);
 		for(int atom:node.getAtoms()) {
@@ -215,8 +215,9 @@ public class PharmacophoreTreeGenerator {
 			//if(!mol.isRingAtom(atom))
 			//	continue;
 			//else {
-				List<Set<Integer>> smallestRings = getSmallestRingsOfAtom(rc,atom);
-				for(Set<Integer> smallRing: smallestRings) {
+				List<Integer> smallestRings = getSmallestRingsOfAtom(rc,atom);
+				for(Integer smallRingIndex: smallestRings) {
+					Set<Integer> smallRing = Arrays.stream(rc.getRingAtoms(smallRingIndex)).boxed().collect(Collectors.toSet());
 					if(!rings.contains(smallRing))
 						rings.add(smallRing);
 						
@@ -280,15 +281,15 @@ public class PharmacophoreTreeGenerator {
 			
 	}
 	
-	private static List<Set<Integer>> getSmallestRingsOfAtom(RingCollection rc, int atom){
-		List<Set<Integer>> rings = new ArrayList<Set<Integer>>();
+	public static List<Integer> getSmallestRingsOfAtom(RingCollection rc, int atom){
+		List<Integer> rings = new ArrayList<Integer>();
 		int smallestRingSize = rc.getAtomRingSize(atom);
 		for(int r=0;r<rc.getSize();r++) {
 			Set<Integer> ringAtoms = Arrays.stream(rc.getRingAtoms(r)).boxed().collect(Collectors.toSet());
 			if(ringAtoms.size()>smallestRingSize)
 				continue;
 			if(ringAtoms.contains(atom)) 
-				rings.add(ringAtoms);
+				rings.add(r);
 				
 			
 		}

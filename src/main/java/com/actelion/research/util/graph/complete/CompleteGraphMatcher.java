@@ -1,5 +1,7 @@
 package com.actelion.research.util.graph.complete;
 
+import com.actelion.research.calc.combinatorics.CombinationGenerator;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,8 +36,7 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	public static final byte DEFAULT_VAL = -1;
 	
 	private IObjectiveCompleteGraph<T> objectiveCompleteGraph;
-	
-	
+
 	private int maxNumSolutions;
 	
 	private int nodesBase;
@@ -69,28 +70,29 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	public void setObjective(IObjectiveCompleteGraph<T> objectiveCompleteGraph){
 		this.objectiveCompleteGraph = objectiveCompleteGraph;
 	}
-//	
-//	/**
-//	 * Only for debugging!!!
-//	 */
-//	public IObjectiveCompleteGraph<T> getObjective(){
-//		return objectiveCompleteGraph;
-//	}
-	
+
+	public void setVerbose(boolean verbose){
+		objectiveCompleteGraph.setVerbose(verbose);
+	}
+
+	public IObjectiveCompleteGraph<T> getObjectiveCompleteGraph() {
+		return objectiveCompleteGraph;
+	}
+
 	private void init(){
 		
 		maxNumSolutions = MAX_NUM_SOLUTIONS;
 		
-		cm = new ContainerMemory<SolutionCompleteGraph>(INIT_CAPACITY_MEMORY, new FactorySolution());
+		cm = new ContainerMemory<>(INIT_CAPACITY_MEMORY, new FactorySolution());
 		
-		liliSolution = new ArrayList<List<SolutionCompleteGraph>>(MAX_NUM_NODES);
+		liliSolution = new ArrayList<>(MAX_NUM_NODES);
 		
-		liliSolution.add(new ArrayList<SolutionCompleteGraph>());
+		liliSolution.add(new ArrayList<>());
 		for (int i = 1; i < MAX_NUM_NODES; i++) {
-			liliSolution.add(new ArrayList<SolutionCompleteGraph>(SIZE_LIST_SOLUTION));
+			liliSolution.add(new ArrayList<>(SIZE_LIST_SOLUTION));
 		}
 		
-		hsSolution = new HashSet<SolutionCompleteGraph>(SIZE_LIST_SOLUTION);
+		hsSolution = new HashSet<>(SIZE_LIST_SOLUTION);
 		
 		arrIndexBaseTmp = new byte [MAX_NUM_NODES];
 		arrIndexQueryTmp = new byte [MAX_NUM_NODES];
@@ -128,7 +130,9 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 			for (byte indexNodeBase = 0; indexNodeBase < nodesBase; indexNodeBase++) {
 			
 				if(objectiveCompleteGraph.areNodesMapping(indexNodeQuery, indexNodeBase)){
-					
+
+					// System.out.println(indexNodeQuery + "\t" + indexNodeBase);
+
 					SolutionCompleteGraph solution = cm.get();
 					
 					solution.setNodesQuery(nodesQuery);
@@ -140,6 +144,8 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 				}
 			}
 		}
+
+		// System.out.println(liSolution.size());
 	}
 	
 	public double calculateSimilarity () {
@@ -150,7 +156,7 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		for (int nodesInSolution = 1; nodesInSolution < nodesBase+1; nodesInSolution++) {
 			
 			List<SolutionCompleteGraph> liSolution = liliSolution.get(nodesInSolution);
-			
+
 			boolean validSolutionFound = false;
 			
 			hsSolution.clear();
@@ -177,14 +183,10 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 				// Remove all smaller solutions
 				//
 				List<SolutionCompleteGraph> li = liliSolution.get(nodesInSolution);
-				
 				for (SolutionCompleteGraph solutionCompleteGraph : li) {
 					cm.back(solutionCompleteGraph);
 				}
-				
 				li.clear();
-				
-				
 			} else {
 				break;
 			}
@@ -198,7 +200,8 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		List<SolutionCompleteGraph> hsSolution = liliSolution.get(maxNumNodesWithSolution);
 				
 		List<SolutionCompleteGraph> li = new ArrayList<SolutionCompleteGraph>();
-		
+
+
 		for (SolutionCompleteGraph solution : hsSolution) {
 			
 			float similarity = objectiveCompleteGraph.getSimilarity(solution);
@@ -244,8 +247,7 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		}
 		
 		for (int i = 0; i < heap; i++) {
-			
-			arrIndexBaseTmp[solution.getIndexBaseFromHeap(i)] = 1;	 
+			arrIndexBaseTmp[solution.getIndexBaseFromHeap(i)] = 1;
 			arrIndexQueryTmp[solution.getIndexQueryFromHeap(i)] = 1;	 
 		}
 		
@@ -270,14 +272,10 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 							if(hsSolution.contains(solutionNew)) {
 								cm.back(solutionNew);
 							} else {
-																
 								if(objectiveCompleteGraph.isValidSolution(solutionNew)){
-									
-									
 									hsSolution.add(solutionNew);
 									validSolutionFound=true;
 									validSolutions++;
-									
 								} else {
 									cm.back(solutionNew);
 								}

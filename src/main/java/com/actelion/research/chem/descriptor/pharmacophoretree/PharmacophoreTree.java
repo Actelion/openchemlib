@@ -480,11 +480,16 @@ public class PharmacophoreTree {
 	
 	public static class BiGramInt {
 		public int[] edge;
+		public int order;
 		int u,v;
 		
 		public BiGramInt(int[] edge) {
+			this(edge,1);
+		}
+		
+		public BiGramInt(int[] edge, int order) {
 			this.edge = edge;
-
+			this.order = order;
 			if(edge[0]<edge[1]) {
 				u = edge[0];
 				v = edge[1];
@@ -498,7 +503,7 @@ public class PharmacophoreTree {
 				
 		}
 		public BiGramInt(int i, int j) {
-			this(new int[] {i,j});
+			this(new int[] {i,j},1);
 		}
 		@Override
 		public boolean equals(Object obj) {
