@@ -29,4 +29,6 @@ public interface IObjectiveCompleteGraph<T extends ICompleteGraph> {
 
 	void setVerbose(boolean v);
 
+	void setMatchingInfoInQueryAndBase(SolutionCompleteGraph solution);
+
 }
