@@ -177,7 +177,7 @@ writer.write("run\tposition\tindex\tdotProduct\n");
 				recordList[i].calculateDotProduct();
 
 			Arrays.sort(recordList, compound, lastCompoundToConsider,
-                        new DiversitySelectorComparator<DiversitySelectorRecord>());
+                        new DiversitySelectorComparator<>());
 			recordList[compound].addToCentroidVector();
 			selectionCycle++;
 /*
