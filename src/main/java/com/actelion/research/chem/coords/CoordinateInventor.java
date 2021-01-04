@@ -1878,9 +1878,15 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 
 
 	private int[] calculateAtomSymmetries() {
+		int atomBits = Canonizer.getNeededBits(mMol.getAtoms());
+		int maxConnAtoms = 2;
+		for (int atom=0; atom<mMol.getAtoms(); atom++)
+			maxConnAtoms = Math.max(maxConnAtoms, mMol.getAllConnAtoms(atom));
+		int baseValueSize = (62 + 2 * atomBits + maxConnAtoms * (atomBits+1)) / 63;
+
 		CanonizerBaseValue[] baseValue = new CanonizerBaseValue[mMol.getAllAtoms()];
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
-			baseValue[atom] = new CanonizerBaseValue(2);
+			baseValue[atom] = new CanonizerBaseValue(baseValueSize);
 			baseValue[atom].init(atom);
 			}
 
@@ -1902,7 +1908,7 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 		int newNoOfRanks = consolidateRanks(baseValue, symRank);
 		do {
 			oldNoOfRanks = newNoOfRanks;
-			calcNextBaseValues(baseValue, symRank);
+			calcNextBaseValues(baseValue, symRank, atomBits, maxConnAtoms);
 			newNoOfRanks = consolidateRanks(baseValue, symRank);
 			} while (oldNoOfRanks != newNoOfRanks);
 
@@ -1910,8 +1916,8 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 		}
 
 
-	private void calcNextBaseValues(CanonizerBaseValue[] baseValue, int[] symRank) {
-		int	connRank[] = new int[ExtendedMolecule.cMaxConnAtoms];
+	private void calcNextBaseValues(CanonizerBaseValue[] baseValue, int[] symRank, int atomBits, int maxConnAtoms) {
+		int	connRank[] = new int[maxConnAtoms];
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 								// generate sorted list of ranks of neighbours
 			for (int i=0; i<mMol.getAllConnAtoms(atom); i++) {
@@ -1925,12 +1931,12 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 				connRank[j] = rank;
 				}
 
-			int neighbours = Math.min(6, mMol.getAllConnAtoms(atom));
+			int neighbours = mMol.getAllConnAtoms(atom);
 			baseValue[atom].init(atom);
-			baseValue[atom].add(Canonizer.ATOM_BITS, symRank[atom]);
-			baseValue[atom].add((6 - neighbours)*(Canonizer.ATOM_BITS + 1), 0);
+			baseValue[atom].add(atomBits, symRank[atom]);
+			baseValue[atom].add((maxConnAtoms - neighbours)*(atomBits + 1), 0);
 			for (int i=0; i<neighbours; i++)
-				baseValue[atom].add(Canonizer.ATOM_BITS + 1, connRank[i]);
+				baseValue[atom].add(atomBits + 1, connRank[i]);
 			}
 		}
 

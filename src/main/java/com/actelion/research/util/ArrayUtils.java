@@ -134,7 +134,6 @@ public class ArrayUtils {
 	}
 
 
-
 	public final static String[] toStringArray(List<String> list) {
 		String[] res = new String[list.size()];
 		int index = 0;

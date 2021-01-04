@@ -60,7 +60,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Aromatic rings are not aliphatic any more. Methyl groups connected to a ring are not considered. The next O or N
  * must have a minimum distance of two bonds to the end standing atom.
  */
-public class DescriptorHandlerFlexophore implements DescriptorHandler {
+public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore {
 
 	public static final boolean DEBUG = false;
 
@@ -257,7 +257,7 @@ public class DescriptorHandlerFlexophore implements DescriptorHandler {
 		return cgMatcher;
 	}
 
-	public ObjectiveBlurFlexophoreHardMatchUncovered getObjectiveCompleteGraphHard() {
+	public ObjectiveBlurFlexophoreHardMatchUncovered getObjectiveCompleteGraph() {
 		return objectiveCompleteGraphHard;
 	}
 

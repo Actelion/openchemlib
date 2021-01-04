@@ -182,7 +182,7 @@ public class ReactionSearch {
 		int threadCount = Math.min(queryReactionCount, Runtime.getRuntime().availableProcessors());
 		Thread[] t = new Thread[threadCount];
 		for (int i=0; i<threadCount; i++) {
-			t[i] = new Thread("Query Descriptor Calculation "+(i+1)) {
+			t[i] = new Thread("Query Molecule Descriptor Calculation "+(i+1)) {
 				public void run() {
 					while (true) {
 						int index = mSMPIndex.decrementAndGet();
@@ -221,7 +221,7 @@ public class ReactionSearch {
 		int threadCount = Math.min(queryReactionCount, Runtime.getRuntime().availableProcessors());
 		Thread[] t = new Thread[threadCount];
 		for (int i=0; i<threadCount; i++) {
-			t[i] = new Thread("Query Descriptor Calculation "+(i+1)) {
+			t[i] = new Thread("Query Retron Descriptor Calculation "+(i+1)) {
 				public void run() {
 					while (true) {
 						int index = mSMPIndex.decrementAndGet();
@@ -258,7 +258,7 @@ public class ReactionSearch {
 		int threadCount = Math.min(queryReactionCount, Runtime.getRuntime().availableProcessors());
     	Thread[] t = new Thread[threadCount];
     	for (int i=0; i<threadCount; i++) {
-    		t[i] = new Thread("Query Descriptor Calculation "+(i+1)) {
+    		t[i] = new Thread("Query Reaction Descriptor Calculation "+(i+1)) {
     			public void run() {
     				while (true) {
         				int index = mSMPIndex.decrementAndGet();
