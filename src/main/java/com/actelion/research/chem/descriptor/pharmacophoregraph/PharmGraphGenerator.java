@@ -11,6 +11,8 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.openmolecules.chem.conf.gen.ConformerGenerator;
+
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
@@ -25,7 +27,7 @@ import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 public class PharmGraphGenerator {
 	private static final int MAX_RING_SIZE = 8;
 	private enum PharmAtomElements {ACCEPTOR(85),DONOR(110),POS_CHARGE(78),NEG_CHARGE(41),AROM(47),LIPO(71),AROM_RING(79),
-		RING(44),L1(92),L2(93),L3(94),L4(95), RING3(31), RING4(32), RING5(30), RING6(34), RING7(49), RING8(50), HETEO_GROUP(80);
+		RING(44),L1(92),L2(93),L3(94),L4(95), RING3(31), RING4(32), RING5(30), RING6(36), RING7(49), RING8(50), HETEO_GROUP(80);
 		int id;
 		PharmAtomElements(int id) {
 			this.id = id;
@@ -37,7 +39,10 @@ public class PharmGraphGenerator {
 	
 	
 	public StereoMolecule generateDescriptor(StereoMolecule mol) {
+		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		mol.stripSmallFragments();
+		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+		ConformerGenerator.addHydrogenAtoms(mol);
 		List<PharmacophoreNode> ppNodes = new ArrayList<PharmacophoreNode>();
 		List<PharmacophoreTree.BiGramInt> nodeEdges = new ArrayList<PharmacophoreTree.BiGramInt>();
 		
@@ -51,7 +56,6 @@ public class PharmGraphGenerator {
 		Map<Integer,Boolean> aromaticity = new HashMap<Integer,Boolean>();
 		FeatureCalculator calculator = new FeatureCalculator(mol);
 		calculator.calculate();
-		System.out.println(mol.getIDCode());
 		int[][] functionalities = calculator.getAtomFunctionalities();
 		processRings(mol, ringNodes, aromaticity, ringNodeEdges,rings, functionalities, atomVolumes);
 	
@@ -147,12 +151,14 @@ public class PharmGraphGenerator {
 		else if(node.isAromatic()) {
 			atomID = pharmGraph.addAtom(PharmAtomElements.AROM_RING.id);
 			nodesToGraphAtoms.put(nodeIndex, atomID);
+			addRingSizeInfo(pharmGraph,atomID,node.getAtoms().size());
 			if(totPolar>0)
 				addPolarInfo(pharmGraph, atomID, acceptors, donors, negCharge, posCharge);
 		}
 		else if(node.isRing()) {
 			atomID = pharmGraph.addAtom(PharmAtomElements.RING.id);
 			nodesToGraphAtoms.put(nodeIndex, atomID);
+			addRingSizeInfo(pharmGraph,atomID,node.getAtoms().size());
 			if(totPolar>0)
 				addPolarInfo(pharmGraph, atomID, acceptors, donors, negCharge, posCharge);
 		}
@@ -184,6 +190,37 @@ public class PharmGraphGenerator {
 			nodesToGraphAtoms.put(nodeIndex, atomID);
 		}
 		return atomID;
+	}
+	
+	private static void addRingSizeInfo(StereoMolecule pharmGraph, int center, int ringSize) {
+		pharmGraph.ensureHelperArrays(Molecule.cHelperNeighbours);
+		switch(ringSize) {
+			case 3: 
+				int id = pharmGraph.addAtom(PharmAtomElements.RING3.id);
+				pharmGraph.addBond(center, id, Molecule.cBondTypeMetalLigand);
+				break;
+			case 4: 
+				id = pharmGraph.addAtom(PharmAtomElements.RING4.id);
+				pharmGraph.addBond(center, id, Molecule.cBondTypeMetalLigand);
+				break;
+			case 5: 
+				id = pharmGraph.addAtom(PharmAtomElements.RING5.id);
+				pharmGraph.addBond(center, id, Molecule.cBondTypeMetalLigand);
+				break;
+			case 6: 
+				id = pharmGraph.addAtom(PharmAtomElements.RING6.id);
+				pharmGraph.addBond(center, id, Molecule.cBondTypeMetalLigand);
+				break;
+			case 7: 
+				id = pharmGraph.addAtom(PharmAtomElements.RING7.id);
+				pharmGraph.addBond(center, id, Molecule.cBondTypeMetalLigand);
+				break;
+			case 8: 
+				id = pharmGraph.addAtom(PharmAtomElements.RING8.id);
+				pharmGraph.addBond(center, id, Molecule.cBondTypeMetalLigand);
+				break;
+		}
+		pharmGraph.ensureHelperArrays(Molecule.cHelperNeighbours);
 	}
 	
 	private static void addPolarInfo(StereoMolecule pharmGraph, int center, int acceptors, int donors, int chargeNeg, 
@@ -318,6 +355,7 @@ public class PharmGraphGenerator {
 							}
 					}
 			}
+			
 			else { 
 				List<Integer> nodes = atomToNodes.get(currentAtom); //get all nodes this atom is part of
 				if(parents[currentAtom]!=-1) { //not root
@@ -334,6 +372,7 @@ public class PharmGraphGenerator {
 				}
 				
 			}
+			
 			for(int a=0;a<mol.getConnAtoms(currentAtom);a++) {
 				int nextAtom = mol.getConnAtom(currentAtom, a);
 				if(visited[nextAtom])
