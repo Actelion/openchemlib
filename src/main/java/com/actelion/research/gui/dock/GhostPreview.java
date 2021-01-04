@@ -28,11 +28,13 @@ public class GhostPreview {
 		g.drawRect(mPreviewBounds.x, mPreviewBounds.y, mPreviewBounds.width, mPreviewBounds.height);
 		
 		// make the graphics 50% translucent
-		Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f); 
+		Composite original = g.getComposite();
+		Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f);
 		g.setComposite(composite);
 		// now draw the preview image
 		g.drawImage(mImage, mPreviewBounds.x, mPreviewBounds.y, mPreviewBounds.width, mPreviewBounds.height, null);
-	    }
+		g.setComposite(original);
+		}
 	
     private Rectangle getPreviewBounds(Rectangle targetBounds, int position) {
         switch (position) {

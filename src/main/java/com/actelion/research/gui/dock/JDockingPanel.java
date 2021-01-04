@@ -231,8 +231,8 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 		}
 
 	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
+	public void paint(Graphics g) {
+		super.paint(g);
 		if (mTargetPosition != -1)
 			mPreview.drawPreview((Graphics2D)g);
 		}
