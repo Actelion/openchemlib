@@ -166,10 +166,10 @@ public class PharmacophoreCalculator {
 	public static boolean isDonorHeavyAtom(StereoMolecule mol, int d) {
 		boolean isDonor = false;
 		if (mol.getAtomicNo(d)==7 || mol.getAtomicNo(d)==8) {
-		if (mol.getAtomCharge(d)>=0 && (mol.getAtomicNo(d)==7 || mol.getAtomicNo(d)==8) ) {
-			if(mol.getAllHydrogens(d)>0)
-			isDonor = true;
-		}
+			if (mol.getAtomCharge(d)>=0 ) {
+				if(mol.getAllHydrogens(d)>0)
+				isDonor = true;
+			}
 		}
 		return isDonor;
 	}
