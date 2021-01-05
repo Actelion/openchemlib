@@ -854,7 +854,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		return score;
 	}
 
-	private float getSimilarityNodes(int indexNodeQuery, int indexNodeBase) {
+	public float getSimilarityNodes(int indexNodeQuery, int indexNodeBase) {
 		
 		if(arrSimilarityNodes[indexNodeQuery][indexNodeBase] < 0 || verbose){
 			
@@ -866,7 +866,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		return arrSimilarityNodes[indexNodeQuery][indexNodeBase];
 	}
 	
-	private float getSimilarityHistogram(int indexNode1Query, int indexNode2Query, int indexNode1Base, int indexNode2Base) {
+	public float getSimilarityHistogram(int indexNode1Query, int indexNode2Query, int indexNode1Base, int indexNode2Base) {
 
 		int indexHistogramQuery = DistHist.getIndex(indexNode1Query, indexNode2Query, nodesQuery);
 

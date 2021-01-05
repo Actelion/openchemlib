@@ -10,4 +10,6 @@ public interface IDescriptorHandlerFlexophore extends DescriptorHandler {
 
     MolDistHistViz createVisualDescriptor(StereoMolecule mol);
 
+    ModelSolutionSimilarity getBestMatch(MolDistHistViz mdhvBase, MolDistHistViz mdhvQuery);
+
 }
