@@ -33,7 +33,7 @@ public class PPNodeVizTriangle implements Comparable<PPNodeVizTriangle> {
 	
 	private PPNodeViz n3;
 	
-	private double area;
+	public double area;
 	
 	/**
 	 * @param n1
