@@ -26,7 +26,7 @@ import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalcu
 
 import java.util.*;
 
-public class PPNode implements Comparable<PPNode> {
+public class PPNode implements Comparable<PPNode>, IPPNode {
 
 	public static final int NUM_BYTES_INTERACTION_TYPE = 3;
 

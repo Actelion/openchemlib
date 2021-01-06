@@ -884,7 +884,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		return arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase];
 	}
 	
-	public double getSimilarityNodes(PPNode query, PPNode base) {
+	public double getSimilarityNodes(IPPNode query, IPPNode base) {
 		return nodeSimilarity.getSimilarity(query, base);
 	}
 

@@ -3,6 +3,7 @@ package com.actelion.research.chem.descriptor.flexophore.completegraphmatcher;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.combinatorics.CombinationGenerator;
 import com.actelion.research.calc.statistics.median.MedianStatisticFunctions;
+import com.actelion.research.chem.descriptor.flexophore.IPPNode;
 import com.actelion.research.chem.descriptor.flexophore.PPNode;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
@@ -143,25 +144,25 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 		this.verbose = v;
 	}
 
-	public double getSimilarity(PPNode query, PPNode base) {
+	public double getSimilarity(IPPNode query, IPPNode base) {
 
 		double similarity = 0;
 
 		switch (similarityMode){
 			case SIMILARITY_MODE_SIMPLE:
-				similarity = getSimilaritySimple(query, base);
+				similarity = getSimilaritySimple((PPNode)query, (PPNode)base);
 				break;
 			case SIMILARITY_MODE_HARD_THRESH:
-				similarity = getSimilarityHardMatchMultiplicative(query, base);
+				similarity = getSimilarityHardMatchMultiplicative((PPNode)query, (PPNode)base);
 				break;
 			case SIMILARITY_MODE_HARD_THRESH_AVR:
-				similarity = getSimilarityHardMatchAverage(query, base);
+				similarity = getSimilarityHardMatchAverage((PPNode)query, (PPNode)base);
 				break;
 			case SIMILARITY_MODE_HARD_THRESH_OPTIMISTIC:
-				similarity = getSimilarityHardMatchOptimistic(query, base);
+				similarity = getSimilarityHardMatchOptimistic((PPNode)query, (PPNode)base);
 				break;
 			case SIMILARITY_MODE_CARBON:
-				similarity = getSimilarityExtraCarbonConsideration(query, base);
+				similarity = getSimilarityExtraCarbonConsideration((PPNode)query, (PPNode)base);
 				break;
 		}
 
@@ -268,7 +269,7 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 	}
 	public double getSimilarityHardMatchMultiplicative(PPNode query, PPNode base) {
 
-		PPNode queryCmp = query;
+		IPPNode queryCmp = query;
 
 		PPNode baseCmp = base;
 
@@ -280,7 +281,7 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 		}
 
-		List<Double> liSimilarities = getSimilarityList(queryCmp, baseCmp);
+		List<Double> liSimilarities = getSimilarityList((PPNode)queryCmp, baseCmp);
 
 		double sim = 0;
 
