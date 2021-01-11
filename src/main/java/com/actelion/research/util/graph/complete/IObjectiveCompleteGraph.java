@@ -1,5 +1,8 @@
 package com.actelion.research.util.graph.complete;
 
+import com.actelion.research.chem.descriptor.flexophore.IPPNode;
+import com.actelion.research.chem.descriptor.flexophore.PPNode;
+
 /**
  * 
  * 
@@ -26,6 +29,10 @@ public interface IObjectiveCompleteGraph<T extends ICompleteGraph> {
 	boolean isValidSolution(SolutionCompleteGraph solution);
 	
 	float getSimilarity(SolutionCompleteGraph solution);
+
+	float getSimilarityHistogram(int indexNode1Query, int indexNode2Query, int indexNode1Base, int indexNode2Base);
+
+	double getSimilarityNodes(IPPNode query, IPPNode base);
 
 	void setVerbose(boolean v);
 

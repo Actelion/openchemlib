@@ -1,5 +1,6 @@
 package com.actelion.research.chem.descriptor.flexophore.completegraphmatcher;
 
+import com.actelion.research.chem.descriptor.flexophore.IPPNode;
 import com.actelion.research.chem.descriptor.flexophore.PPNode;
 
 /**
@@ -11,7 +12,7 @@ import com.actelion.research.chem.descriptor.flexophore.PPNode;
  */
 public interface IPPNodeSimilarity {
 
-    double getSimilarity(PPNode query, PPNode base);
+    double getSimilarity(IPPNode query, IPPNode base);
 
     void setVerbose(boolean v);
 
