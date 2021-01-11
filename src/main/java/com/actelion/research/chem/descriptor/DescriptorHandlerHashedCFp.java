@@ -104,7 +104,7 @@ public class DescriptorHandlerHashedCFp extends AbstractDescriptorHandlerFP<Ster
                     int newMax = max;
                     for (int i=min; i<max; i++) {
                         int atom = atomList[i];
-                        for (int j=0; j<mol.getConnAtoms(atom); j++) {
+                        for (int j=0; j<mol.getConnAtoms(atom) + mol.getMetalBondedConnAtoms(atom); j++) {
                             int connAtom = mol.getConnAtom(atom, j);
                             if (!atomMask[connAtom]) {
                                 atomMask[connAtom] = true;
