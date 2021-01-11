@@ -89,13 +89,16 @@ public class Residue {
 			fragment.setAtomY(atom,record.getY());
 			fragment.setAtomZ(atom,record.getZ());
 		}
-		try {
-			BondsCalculator.createBonds(fragment, true);
-			BondsCalculator.calculateBondOrders(fragment);
-		} catch (Exception e) {
-			System.err.println("Cannot process structure");
-		}
+
 		fragment.ensureHelperArrays(Molecule.cHelperCIP);
+		try {
+			BondsCalculator.createBonds(fragment, true,null);
+			BondsCalculator.calculateBondOrders(fragment,true);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.err.println();
+		}
+
 		return fragment;
 	}
 	
