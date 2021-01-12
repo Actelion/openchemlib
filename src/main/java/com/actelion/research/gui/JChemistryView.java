@@ -34,6 +34,8 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.io.CompoundFileHelper;
+import com.actelion.research.chem.io.RDFileParser;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.gui.clipboard.ClipboardHandler;
@@ -373,11 +375,23 @@ public class JChemistryView extends JComponent
 			}
 
 		if (e.getActionCommand().equals(ITEM_OPEN_RXN) && mIsEditable) {
-			File rxnFile = FileHelper.getFile(this, "Please select a reaction file", FileHelper.cFileTypeRXN);
+			File rxnFile = FileHelper.getFile(this, "Please select a reaction file",
+					FileHelper.cFileTypeRXN | CompoundFileHelper.cFileTypeRD);
 			if (rxnFile != null) {
 				try {
-					Reaction reaction = new RXNFileParser().getReaction(rxnFile);
-					pasteOrDropReaction(reaction);
+					Reaction reaction = null;
+
+					if (FileHelper.getFileType(rxnFile.getName()) == FileHelper.cFileTypeRXN) {
+						reaction = new RXNFileParser().getReaction(rxnFile);
+						}
+					else {
+						RDFileParser rdfParser = new RDFileParser(rxnFile);
+						if (rdfParser.isReactionNext())
+							reaction = rdfParser.getNextReaction();
+						}
+
+					if (reaction != null)
+						pasteOrDropReaction(reaction);
 					}
 				catch (Exception ex) {}
 				}
