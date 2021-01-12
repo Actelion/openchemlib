@@ -151,7 +151,7 @@ public class FingerPrintGenerator
     {
         paths = new Hashtable();
         debugCounter = 0;
-        int atoms = mol.getAllAtoms();
+        int atoms = mol.getAtoms();
         String s;
         boolean[] flags = new boolean[atoms];
         for (int atom = 0; atom < atoms; atom++) {
@@ -178,7 +178,7 @@ public class FingerPrintGenerator
      */
     private void traverseDFS(StereoMolecule mol, int lastAtom, int rootAtom, String path, int depth, boolean flags[])
     {
-        int connAtoms = mol.getConnAtoms(rootAtom);
+        int connAtoms = mol.getConnAtoms(rootAtom) + mol.getMetalBondedConnAtoms(rootAtom);
         int nextAtom = 0, bond = 0;
         StringBuilder newPath = new StringBuilder();
 
@@ -206,6 +206,8 @@ public class FingerPrintGenerator
                     newPath.append("=");
                 } else if (mol.getBondOrder(bond) == 3) {
                     newPath.append("#");
+                } else if (mol.getBondOrder(bond) == 0) {
+                    newPath.append(".");
                 } else
                     System.out.println(
                         "FingerPrintGenerator.depthFirstSearch() " +

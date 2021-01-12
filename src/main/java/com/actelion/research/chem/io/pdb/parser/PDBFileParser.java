@@ -519,7 +519,7 @@ public class PDBFileParser {
 	        //
 	    }
 	    
-	    indexLine--;
+	    //indexLine--;
         List<AtomRecord> hetAtomRecords = new ArrayList<AtomRecord>();
         List<AtomRecord> protAtomRecords = new ArrayList<AtomRecord>();
         modelParser.parse(liRaw, indexLine,protAtomRecords,hetAtomRecords);
