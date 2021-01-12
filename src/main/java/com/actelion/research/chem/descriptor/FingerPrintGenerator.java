@@ -151,7 +151,7 @@ public class FingerPrintGenerator
     {
         paths = new Hashtable();
         debugCounter = 0;
-        int atoms = mol.getAllAtoms();
+        int atoms = mol.getAtoms();
         String s;
         boolean[] flags = new boolean[atoms];
         for (int atom = 0; atom < atoms; atom++) {
