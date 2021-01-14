@@ -178,33 +178,42 @@ public class ArrayUtilsCalc {
     	
     	return var;
 	}
-	
-	public static final double getStandardDeviation(double [] arr) {
-		
+	public static final double getVariance(int [] arr) {
 		double sum=0;
-		
-		double mean = getMean(arr);
-		
+		final double mean = getMean(arr);
     	for (int i = 0; i < arr.length; i++) {
     		sum += (arr[i]-mean)*(arr[i]-mean);
 		}
-    	
+    	final double var = sum / (arr.length - 1);
+    	return var;
+	}
+
+	public static final double getStandardDeviation(double [] arr) {
+		double sum=0;
+		double mean = getMean(arr);
+    	for (int i = 0; i < arr.length; i++) {
+    		sum += (arr[i]-mean)*(arr[i]-mean);
+		}
     	double sdv = Math.sqrt(sum / (arr.length - 1));
-    	
     	return sdv;
 	}
 	
 	public static final double getMean(double [] arr) {
-		
 		double sum = 0;
-		
 		for (int i = 0; i < arr.length; i++) {
 			sum += arr[i];
 		}
-		
 		return sum/arr.length;
 	}
-	
+
+	public static final double getMean(int [] arr) {
+		double sum = 0;
+		for (int i = 0; i < arr.length; i++) {
+			sum += arr[i];
+		}
+		return sum/arr.length;
+	}
+
 	public static ModelMedianDouble getMedian(double [] arr) {
 		
 		Arrays.sort(arr);
