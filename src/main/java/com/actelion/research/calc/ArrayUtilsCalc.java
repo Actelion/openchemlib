@@ -714,6 +714,7 @@ public class ArrayUtilsCalc {
 		return res;
 	}
 
+
 	public final static String [] toArray(List<String> list) {
 		String [] res = new String[list.size()];
 		for (int i = 0; i < list.size(); i++) {
@@ -758,6 +759,7 @@ public class ArrayUtilsCalc {
 		}
 		return res;
 	}
+
 
 	public final static List<Integer> toList(int [] a) {
 		if(a==null)
