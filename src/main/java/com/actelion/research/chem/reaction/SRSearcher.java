@@ -266,6 +266,12 @@ public class SRSearcher {
 		}
 
 	private void splitQuery(Reaction query) {
+		if (query == null) {
+			mQueryReactant = null;
+			mQueryProduct = null;
+			return;
+			}
+
 		if (query.getReactants() == 1) {
 			mQueryReactant = query.getReactant(0);
 			}
@@ -297,6 +303,12 @@ public class SRSearcher {
 		}
 
 	private void splitReaction(Reaction reaction) {
+		if (reaction == null) {
+			mReactant = null;
+			mProduct = null;
+			return;
+			}
+
 		if (reaction.getReactants() == 1) {
 			mReactant = reaction.getReactant(0);
 			}
