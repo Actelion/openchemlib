@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+  <title>Osiris Structure Editor</title>
+  <link type="text/css" href="../styles.css" rel="stylesheet">
+</head>
+
+<body>
+
+<H2>Chemical Editor Concepts</H2>
+<p>The structure editor is used to draw chemical molecules, substructure fragments,
+reactions and simple drawing objects like text, boxes, etc. Its functionality changes
+depending on the kind of object(s) being edited. Thus, the atom mapping tool is only available,
+when a reaction is edited. Query feature dialogs only open, when a substructure is edited, etc.</p>
+<br>
+<H3>Atom and Bond Hot-Keys</H3>
+<p>Hot-keys allow to quickly change atom and bond types or to attach common groups to an atom.
+When the mouse is moved over an atom or bond then the atom or bond is automatically highlighted,
+indicating that mouse clicks or pressing a hot-key affect the highlighted object.</p>
+<p><table BORDER=1 CELLSPACING=0 CELLPADDING=4 CLASS=body width="100%">
+ <tr align="Left">
+  <th>Hot-Key</th>
+  <th>Type</th>
+  <th>Name</th>
+  <th>Explanation</th>
+ </tr>
+ <tr>
+  <td><b>'Delete'</b></td>
+  <td>Atoms<br>Bonds<br>Mapping</td>
+  <td>Delete</td>
+  <td>Deletes highlighted and selected atoms and bonds. When a reaction is edited and
+the mapping tool is selected, then pressing the 'Delete' key removes all atom mapping from the reaction.
+  </td>
+ </tr>
+ <tr>
+  <td><b>'1','2','3', ...</b></td>
+  <td>Atom</td>
+  <td>Atom Chain</td>
+  <td>Attaches a chain of 'n' carbon atoms to the highlighted atom provided that its valence maximum is not exceeded.</td>
+ </tr>
+ <tr>
+  <td><b>'+', '-'</b></td>
+  <td>Atom</td>
+  <td>Charge Modifiers</td>
+  <td>Increases or decreases the charge of the highlighted atom.</td>
+ </tr>
+ <tr>
+  <td><b>'?'</b></td>
+  <td>Atom</td>
+  <td>Connection Point</td>
+  <td>Converts an atom into a connection point of a substituent or building block.</td>
+ </tr>
+ <tr>
+  <td><b>'q'</b></td>
+  <td>Atom,<br>Bond</td>
+  <td>Query Feature Dialog</td>
+  <td>If a substructure query is edited then this key opens a query feature dialog,
+which allows to specify additional atom/bond conditions for the substructure search.</td>
+ </tr>
+ <tr>
+  <td><b>'1','2','3','0'</b></td>
+  <td>Bond</td>
+  <td>Bond Order</td>
+  <td>Changes the highlighted bond into a single, double, triple, or coordinate (0-order) bond.</td>
+ </tr>
+ <tr>
+  <td><b>'u'</b></td>
+  <td>Bond</td>
+  <td>Up Bond</td>
+  <td>Changes the highlighted bond into 'up' stereo bond, if at least one of the associated
+atoms is a relative or absolute stereo center.</td>
+ </tr>
+ <tr>
+  <td><b>'d'</b></td>
+  <td>Bond</td>
+  <td>Down Bond</td>
+  <td>Changes the highlighted bond into 'down' stereo bond, if at least one of the associated
+atoms is a relative or absolute stereo center.</td>
+ </tr>
+ <tr>
+  <td><b>'c'</b></td>
+  <td>Bond</td>
+  <td>Cross Bond</td>
+  <td>Changes the highlighted bond into a double bond with unknown configuration.</td>
+ </tr>
+ <tr>
+  <td><b>'v','4','5','6','7'</b></td>
+  <td>Bond</td>
+  <td>Annelate Ring</td>
+  <td>Annellates a new saturated n-membered ring the highlighted bond ('v' adds a 3-membered ring).</td>
+ </tr>
+ <tr>
+  <td><b>'b'</b></td>
+  <td>Bond</td>
+  <td>Annelate Benzo</td>
+  <td>Annellates a new benzene ring to the highlighted bond.</td>
+ </tr>
+</table></p>
+
+<br>
+<H3>Atom labels & Substituents & Protecting Groups</H3>
+<p>If an atom is highlighted one may type multiple keys to define an atom label or common
+group name. The key sequence is shown in the editor and in black, if it is a valid atom label.
+It is shown in blue, if it is a recognized substituent or protecting group name. It is shown in
+gray, if it can be completed to a known group name and it is shown in red, if no valid completion
+is possible. After typing a valid atom symbol or group name and moving the mouse away or typing
+<i>Enter</i> the atom is converted according to the atom label or a substituent is attached accoringly.
+For the sake of convenience atom labels or group names can be typed in as lower case letters and dashes
+in group names may be omitted. E.g. typing 'n' followed by 'a' converts the atom to a sodium atom
+and typing 'otolyl' attaches an ortho-Tolyl group.</p>
+<p>Known group names are: Ac, Alloc, Allyl, Am, Benzoyl, Benzyl, Boc, BOM, Bn, Bs, Bt, Btm, Bu, Bz,
+Bzh, Bzl, BzOM, Cbz, Cy, cyclobutyl, cycloheptyl, cyclooctyl, cyclopentyl, cyclopropyl, Dan, DEAE, DEIPS,
+DMIPS, DMPM, DMPS, DMTr, DNP, DNS, DPIPS, DPTBS, DTBMS, Et, Fmoc, i-Am, i-Bu, i-Pr, Im, m-Tolyl, MDIPS,
+MDPS, MEM, MMTr, MOM, MPM, MTM, Me, Mes, Ms, N3, n-Am, n-Bu, n-Pr, neo-Am, nitro, NO2, Np, o-Tolyl, p-Tolyl,
+PMB, PMBM, PNB, PPi, Ph, Phenyl, Pht, Piv, Poc, Pr, Pv, s-Am, s-Bu, s-Butyl, SEM, SES, t-Am, t-Bu, t-Butyl,
+TBDMS, TBDPS, TBMPS, TBS, TDS, TFA, THF, THP, TIPS, TMS, Tf, Thexyl, Tos, Troc, Trt, Ts, Xyl.</p>
+
+<br>
+<H3>Buttons and Tools</H3>
+<p>Chemical structures are drawn by selecting an appropriate tool and applying it
+while moving, clicking and dragging the mouse pointer over the drawing area. While the
+selection of a tool has no immidiate effect on the drawn structure, pressing a button
+does. Currently available buttons allow to clean up atom coordinates or to revert the
+most recent structure change.</p>
+<table BORDER=1 CELLSPACING=0 CELLPADDING=4 CLASS=body width="100%">
+ <tr align="Left">
+  <th>Button or Tool</th>
+  <th>Name</th>
+  <th>Explanation</th>
+ </tr>
+ <tr>
+  <td><img src="atomTools.gif" width="48" height="152" border="0"></td>
+  <td>Atom Tools</td>
+  <td>The Atom Tools cover atoms frequently used in organic chemistry. After
+selecting one of these tools, you may place new atoms by clicking into the
+empty space or change existing atom by clicking onto them.</td>
+ </tr>
+ <tr>
+  <td><img src="otherAtomTool.gif" width="22" height="22" border="0"></td>
+  <td>Atom Detail Tool</td>
+  <td>When this tool is selected and an atom is clicked with the left mouse button
+while pressing the 'Ctrl'-key, then a dialog window open that allows to
+specify an unusual/custom atom label, a specific isotop, an abnormal valence
+and/or a radical state. When closing the dialog the clicked atom is changed
+accordingly. The dialog settings are remembered and applied to any other clicked atom,
+as long as the tool is selected.</td>
+ </tr>
+ <tr>
+  <td><img src="chargeTools.gif" width="48" height="22" border="0"></td>
+  <td>Charge Tools</td>
+  <td>These tools let you assign charges to atoms. Multiple clicks on the
+same atom will increase or decrease the charge by 1. The <b>Osiris Structure
+Editor</b> assumes the presence of implicit hydrogens at any charged or non
+charged atoms to meet the atom's default valence. However, implicit hydrogens
+are only shown on hetero atoms.</td>
+ </tr>
+ <tr>
+  <td><img src="ringTools.gif" width="48" height="74" border="0"></td>
+  <td>Ring Tools</td>
+  <td>After selecting one of the predefined rings, one may create a new ring
+or attach a ring to an existing bond or atom to create annelated ring systems
+or a spiro compound, respectively.</td>
+ </tr>
+ <tr>
+  <td><img src="bondTools.gif" width="22" height="74" border="0"></td>
+  <td>Bond Tools</td>
+  <td>Bond Tools allow you to create new bonds and to change existing bonds
+concerning their order or stereo-orientation. By clicking into the open
+space you create a new bond of the selected type including two carbon atoms.
+Clicking onto an existing atom will attach a new carbon. Dragging the mouse from
+one atom to another one will just connect these atoms or increment the bond order
+between them, if they were already connected. If the plain single bond tool is
+selected, bonds may be multiply clicked to cycle through the possible bond orders.
+Where reasonable, it also toggles between double bonds with known or unknown
+configuration, the so-called cross bond.
+When using stereo bonds please consider that the pointed tip of the bond should
+always point to the stereo center.</td>
+ </tr>
+ <tr>
+  <td><img src="chainTool.gif" width="22" height="22" border="0"></td>
+  <td>Chain Tool</td>
+  <td>The Chain Tool provides the fastest way to draw aliphatic carbon chains in
+zig-zag orientation. With the selected Chain Tool click into the empty space or at
+an existing atom and drag the mouse to create a new zig-zag chain and flip its
+orientation.</td>
+ </tr>
+ <tr>
+  <td><img src="esrTools.gif" width="22" height="74" border="0"></td>
+  <td>ESR Tools</td>
+  <td>The editor supports the enhanced stereo recognition (ESR) introduced by
+Molecular Design Ltd. with IsisDraw V2.5. The ESR Tools allow to define for every
+stereo center, whether it is an absolute one or if it belongs to a group of stereo
+centers that have the drawn, but relative configuration. For any group of relative
+stereo centers one may define that the drawn <b>and</b> the inverse configurations are present,
+i.e. that we have a racemic situation concerning the group members. This is indicated by
+green stereo bonds and an ampersand '<b>&</b>' at the stereo centers. Likewise one may
+define groups of relative stereo centers that contain either the drawn configuration <b>or</b>
+the opposite one. Stereo centers of such a group are indicated by blue stereo bonds and
+the word '<b>or</b>' at the stereo centers. In addition to the '<b>&</b>' or '<b>or</b>'
+indicators group numbers show which stereo centers belong to the same group.</td>
+ </tr>
+ <tr>
+  <td><img src="unknownConfigurationTool.gif" width="22" height="22" border="0"></td>
+   <td>Unknown Configuration Tool</td>
+   <td>This symbol is used to denote an unknown stereo configuration at a chiral center.</td>
+ </tr>
+ <tr>
+  <td><img src="cleanUpButton.gif" width="22" height="22" border="0"></td>
+  <td>Cleanup Button</td>
+  <td>A cleanup will generate new coordinates of an existing molecule. It
+rearranges bond and atom positions in order to have a proper 2D structure.
+If a part of the molecule or reaction is selected, the cleanup will retain
+the relative orientation of the non-selected atoms.</td>
+ </tr>
+ <tr>
+  <td><img src="lassoPointerTool.gif" width="22" height="22" border="0"></td>
+  <td>Lasso Pointer Tool</td>
+  <td>This tools allows you to select multiple atoms and bonds to rearrange,
+rotate, resize, delete or duplicate at the same time. Just drag the mouse pointer
+around the atoms of interest. Selected atoms and bonds are shown in red. By pressing
+the control key you switch to the rectangular selection mode and the shift key lets
+you add atoms to the current selection. By clicking onto an atom or bonds and dragging
+the mouse one may more it or all selected atoms, if the clicked one is selected.
+When pressing the shift key while dragging a selected fragment, an automatically created
+copy of the selected fragment is dragged.
+Where the editor needs to support multiple molecules, e.g. if a reaction is edited,
+then every reactant and product is indicated by a large light gray indicator in
+the background ('A', 'B', 'P1', etc.). Where independent fragments shall be treated
+as one molecule, e.g. anion and kation of one salt, one must locate those fragments
+close enough that there is only one indicator behind them.
+If a reaction or molecule query is edited, then one may double click an atom or
+a set of selected atoms to open a query feature dialog to specify additional conditions
+for a fragment to match in a substructure search. The same applies to individual or
+multiple selected bonds. If the edited object is not a query then double clicking of
+an atom or bond will just select the entire fragment.</td>
+ </tr>
+ <tr>
+  <td><img src="deleteTool.gif" width="22" height="22" border="0"></td>
+  <td>Delete Tool</td>
+  <td>It allows you to delete individual atoms or bonds or selected parts of the molecule.
+Selected areas may also be removed by pressing the delete key from the keyboard.</td>
+ </tr>
+ <tr>
+  <td><img src="zoomAndRotateTool.gif" width="22" height="22" border="0"></td>
+  <td>Zoom and Rotate Tool</td>
+  <td>This tool allows to zoom or rotate the entire drawing or a selected subset.
+Just click at the intended origin for the rotation or zooming and drag the mouse vertically
+to zoom or horizontically to rotate.</td>
+ </tr>
+ <tr>
+  <td><img src="mappingTool.gif" width="22" height="22" border="0"></td>
+  <td>Mapping Tool</td>
+  <td>This tool is only available when a reaction is edited. Use this tool to
+map reactant atoms to the respective product atoms. This is done by clicking on
+a reactant atom and dragging the mouse onto the corresponding product atom. The
+editor will acknowledge the link by displaying a red mapping number at both atoms.
+Afterwards it tries to map atoms in the vicinity automatically and displays green
+numbers at automatically mapped atoms. Please assign manually as many reactant-product
+pairs as are needed that the entire reaction is mapped completely and correctly.
+Pressing the 'Delete' key while this tool is selected removes all mapping from the reaction.</td>
+ </tr>
+ <tr>
+  <td><img src="textTool.gif" width="22" height="22" border="0"></td>
+  <td>Text Tool</td>
+  <td>The text tool may only be selected in certain situations. If it is selected
+one may use it to place text elements directly into the drawing. These text elements
+will be integral part of the drawing and, thus, move, resize and rotate with the molecules
+or reaction.</td>
+ </tr>
+</table>
+</body>
+</html>

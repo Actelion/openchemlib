@@ -81,11 +81,12 @@ public interface CompoundTableConstants {
     String[] cSummaryModeCode = { "displayNormal","displayMean","displayMedian","displayMin","displayMax","displaySum" };
 
     int cDataTypeAutomatic = 0;
-    int cDataTypeNumerical = 1;
-    int cDataTypeDate = 2;
-    int cDataTypeString = 3;
-    String[] cDataTypeCode = {"auto", "num", "date", "text"};
-    String[] cDataTypeText = {"Automatic", "Numerical", "Date", "Text"};
+    int cDataTypeFloat = 1;
+    int cDataTypeInteger = 2;
+    int cDataTypeDate = 3;
+    int cDataTypeString = 4;
+    String[] cDataTypeCode = {"auto", "num", "int", "date", "text"};
+    String[] cDataTypeText = {"Automatic", "Floating Point", "Integer", "Date", "Text"};
 
     // highlight mode for part-of-structure highlighting depending on current record similarity
     int cStructureHiliteModeFilter = 0;

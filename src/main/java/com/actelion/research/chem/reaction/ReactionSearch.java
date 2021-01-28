@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReactionSearch {
+	private static final boolean MULTITHREADED_SEARCH = true;
+
 	private volatile ReactionSearchSpecification mSpecification;
 	private volatile ReactionSearchDataSource mDataSource;
 	private volatile StructureSearchController mSearchController;
@@ -81,7 +83,8 @@ public class ReactionSearch {
 			if (queryReactionCount == 0)
 				return null;
 
-			if (mSpecification.isSubreactionSearch()) {
+			if (mSpecification.isSubreactionSearch()
+			 || mSpecification.isSimilaritySearch()) {
 				mQueryReaction = new Reaction[queryReactionCount];
 				mQueryReactant = new StereoMolecule[queryReactionCount];
 				mQueryProduct = new StereoMolecule[queryReactionCount];
@@ -94,7 +97,10 @@ public class ReactionSearch {
 					mQueryReaction[i].addReactant(mQueryReactant[i]);
 					mQueryReaction[i].addProduct(mQueryProduct[i]);
 					}
-				ensureMoleculeDescriptors();
+				if (mSpecification.isSubreactionSearch())
+					ensureMoleculeDescriptors();
+				else
+					ensureReactionDescriptors();
 				}
 			else if (mSpecification.isRetronSearch()) {
 				mQueryRetron = new StereoMolecule[queryReactionCount];
@@ -103,9 +109,6 @@ public class ReactionSearch {
 					mQueryRetron[i].ensureHelperArrays(Molecule.cHelperParities);
 					}
 				ensureRetronDescriptors();
-				}
-			else if (mSpecification.isSimilaritySearch()) {
-				ensureReactionDescriptors();
 				}
 			else if (mSpecification.isExactSearch()) {
 				mQueryHash = new long[queryReactionCount];
@@ -134,23 +137,31 @@ public class ReactionSearch {
 
     	mSMPIndex = new AtomicInteger(mDataSource.getRowCount());
 
-    	mResultQueue = new ConcurrentLinkedQueue<Integer>();
+    	mResultQueue = new ConcurrentLinkedQueue<>();
 
 		if (mProgressController != null && mSpecification.getReactionCount() > 1023)
 			mProgressController.startProgress("Searching structures", 0, mSpecification.getReactionCount());
 
-		int threadCount = Runtime.getRuntime().availableProcessors();
-    	SearchThread[] t = new SearchThread[threadCount];
-    	for (int i=0; i<threadCount; i++) {
-    		t[i] = new SearchThread("Structure Search "+(i+1));
-    		t[i].setPriority(Thread.MIN_PRIORITY);
-    		t[i].start();
-    		}
+		if (MULTITHREADED_SEARCH) {
+			int threadCount = Runtime.getRuntime().availableProcessors();
+			SearchThread[] t = new SearchThread[threadCount];
+			for (int i = 0; i<threadCount; i++) {
+				t[i] = new SearchThread("Structure Search " + (i + 1));
+				t[i].setPriority(Thread.MIN_PRIORITY);
+				t[i].start();
+				}
 
-    	// the controller thread must wait until all others are finished
-    	// before the next task can begin or the dialog is closed
-    	for (int i=0; i<threadCount; i++)
-    		try { t[i].join(); } catch (InterruptedException e) {}
+			// the controller thread must wait until all others are finished
+			// before the next task can begin or the dialog is closed
+			for (int i = 0; i<threadCount; i++)
+				try {
+					t[i].join();
+					}
+				catch (InterruptedException e) {}
+			}
+		else {
+			new SearchThread("Structure Search").run();
+			}
 
     	int[] result = new int[mResultQueue.size()];
     	int i=0;
@@ -254,28 +265,34 @@ public class ReactionSearch {
 		if (!missingDescriptorFound)
 			return;
 
-    	mSMPIndex = new AtomicInteger(mQueryReactionDescriptor.length);
-		int threadCount = Math.min(queryReactionCount, Runtime.getRuntime().availableProcessors());
-    	Thread[] t = new Thread[threadCount];
-    	for (int i=0; i<threadCount; i++) {
-    		t[i] = new Thread("Query Reaction Descriptor Calculation "+(i+1)) {
-    			public void run() {
-    				while (true) {
-        				int index = mSMPIndex.decrementAndGet();
-        				if (index < 0)
-        					break;
+		if (MULTITHREADED_SEARCH && queryReactionCount > 1) {
+	        mSMPIndex = new AtomicInteger(mQueryReactionDescriptor.length);
+			int threadCount = Math.min(queryReactionCount, Runtime.getRuntime().availableProcessors());
+	        Thread[] t = new Thread[threadCount];
+	        for (int i=0; i<threadCount; i++) {
+	            t[i] = new Thread("Query Reaction Descriptor Calculation "+(i+1)) {
+	                public void run() {
+	                    while (true) {
+	                        int index = mSMPIndex.decrementAndGet();
+	                        if (index < 0)
+	                            break;
 
-        				if (mQueryReactionDescriptor[index] == null)
-							mQueryReactionDescriptor[index] = mDescriptorHandlerRxnFP.createDescriptor(mQueryReaction[index]);
-    					}
-    				}
-    			};
-    		t[i].setPriority(Thread.MIN_PRIORITY);
-    		t[i].start();
-    		}
+	                        if (mQueryReactionDescriptor[index] == null)
+								mQueryReactionDescriptor[index] = mDescriptorHandlerRxnFP.createDescriptor(mQueryReaction[index]);
+	                        }
+	                    }
+	                };
+	            t[i].setPriority(Thread.MIN_PRIORITY);
+	            t[i].start();
+	            }
 
-    	for (int i=0; i<threadCount; i++)
-    		try { t[i].join(); } catch (InterruptedException e) {}
+	        for (int i=0; i<threadCount; i++)
+	            try { t[i].join(); } catch (InterruptedException e) {}
+			}
+		else {
+			for (int i=0; i<mQueryReactionDescriptor.length; i++)
+				mQueryReactionDescriptor[i] = mDescriptorHandlerRxnFP.createDescriptor(mQueryReaction[i]);
+			}
 		}
 
 	private StereoMolecule mergeMolecules(StereoMolecule[] mol) {

@@ -35,6 +35,7 @@ package com.actelion.research.calc;
 
 import com.actelion.research.util.DoubleVec;
 import com.actelion.research.util.convert.String2DoubleArray;
+import com.actelion.research.util.datamodel.IntegerDouble;
 import com.actelion.research.util.datamodel.ScorePoint;
 
 import java.awt.*;
@@ -538,12 +539,20 @@ public class Matrix {
 
     public float [] getColAsFloat(int iCol) {
         float [] arr = new float [rows()];
-        for(int ii=0; ii < rows(); ii++){
-            arr[ii] = (float)data[ii][iCol];
+        for(int i=0; i < rows(); i++){
+            arr[i] = (float)data[i][iCol];
         }
         return arr;
     }
     
+    public int [] getColAsInt(int iCol) {
+        int [] arr = new int [rows()];
+        for(int i=0; i < rows(); i++){
+            arr[i] = (int)(data[i][iCol]+0.5);
+        }
+        return arr;
+    }
+
     /**
      * 
      * @param vecIndices
@@ -3029,6 +3038,35 @@ public class Matrix {
 
     public static void setSeparatorRow(String s) {
         OUT_SEPARATOR_ROW = s;
+    }
+
+
+    public void shuffleRows() {
+        Random rnd = new Random();
+        int r = rows();
+        for(int i = r; i > 1; --i) {
+            swapRows(i, rnd.nextInt(i));
+        }
+    }
+
+    public void swapRows(int a, int b) {
+        double [] t = data[a];
+        data[a]=data[b];
+        data[b]=t;
+    }
+
+    public void sortRows(int col){
+        int r= rows();
+        List<IntegerDouble> li = new ArrayList<>(r);
+        for (int i = 0; i < r; i++) {
+            li.add(new IntegerDouble(i, get(i, col)));
+        }
+        Collections.sort(li, IntegerDouble.getComparatorDouble());
+        double [][] dataSorted = new double[r][];
+        for (int i = 0; i < r; i++) {
+            dataSorted[i]=data[li.get(i).getInt()];
+        }
+        data = dataSorted;
     }
 
     /**

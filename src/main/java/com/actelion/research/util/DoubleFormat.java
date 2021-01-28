@@ -57,7 +57,7 @@ public class DoubleFormat {
 	 * @return
 	 */
 	public static String toString(double value, int significantDigits) {
-		return toString(value, significantDigits, false);
+		return toString(value, significantDigits, true);
 		}
 
 	/**

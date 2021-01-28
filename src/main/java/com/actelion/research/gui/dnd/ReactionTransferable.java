@@ -51,7 +51,9 @@ public class ReactionTransferable implements Transferable,ClipboardOwner {
 	public synchronized Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException,IOException {
 //        System.out.println("ReactionTransferable flavor " + flavor);
 		if (flavor.equals(ChemistryFlavors.DF_SERIALIZED_REACTION)) {
-			return new Reaction(mReaction);
+			Reaction rxn = new Reaction(mReaction);
+			rxn.removeDrawingObjects(); // to include drawing objects make sure they are all serializable
+			return rxn;
 		} else if (flavor.equals(ChemistryFlavors.DF_REACTION_SMILES)) {
 			return IsomericSmilesCreator.createReactionSmiles(mReaction);
 		} else if (flavor.equals(DataFlavor.stringFlavor)) {
