@@ -14,6 +14,7 @@ import com.actelion.research.chem.docking.scoring.AbstractScoringEngine;
 import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.Quaternion;
+import com.actelion.research.chem.potentialenergy.PositionConstraint;
 
 
 public class LigandPose implements Evaluable{
@@ -151,6 +152,13 @@ public class LigandPose implements Evaluable{
 		}
 		updateState();
 		
+	}
+	
+	public void addPositionalConstraints(double d) {
+		for(int a=0;a<ligConf.getMolecule().getAtoms();a++) {
+			PositionConstraint constraint = new PositionConstraint(ligConf,a,50.0, d);
+			engine.addConstraint(constraint);
+		}
 	}
 	
 	public Conformer getLigConf() {

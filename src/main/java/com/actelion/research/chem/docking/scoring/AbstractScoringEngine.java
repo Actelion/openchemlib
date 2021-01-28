@@ -1,7 +1,8 @@
 package com.actelion.research.chem.docking.scoring;
 
 import java.util.Set;
-
+import java.util.ArrayList;
+import java.util.List;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
@@ -10,6 +11,7 @@ import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.Evaluable;
+import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 
 public abstract class AbstractScoringEngine  {
@@ -21,11 +23,13 @@ public abstract class AbstractScoringEngine  {
 	protected Set<Integer> bindingSiteAtoms;
 	protected LigandPose candidatePose;
 	protected MoleculeGrid grid;
+	protected List<PotentialEnergyTerm> constraints;
 	
 	public AbstractScoringEngine(StereoMolecule receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid) {
 		this.receptorConf = new Conformer(receptor);
 		this.bindingSiteAtoms = bindingSiteAtoms;
 		this.grid = grid;
+		constraints = new ArrayList<>();
 	}
 	
 	public LigandPose getCandidatePose() {
@@ -58,6 +62,10 @@ public abstract class AbstractScoringEngine  {
 			}
 		return bumpTerm;
 		}
+	
+	public void addConstraint(PotentialEnergyTerm constraint) {
+		this.constraints.add(constraint);
+	}
 
 	public abstract void init(LigandPose candidatePose, double e0);
 	
@@ -66,6 +74,12 @@ public abstract class AbstractScoringEngine  {
 	public abstract double getFGValue(double[] grad);
 	
 	public abstract double getScore();
+
+	public Conformer getReceptorConf() {
+		return receptorConf;
+	}
+	
+	
 	
 
 }

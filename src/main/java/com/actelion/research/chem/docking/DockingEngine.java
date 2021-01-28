@@ -53,11 +53,11 @@ public class DockingEngine {
 	private Random random;
 	private AbstractScoringEngine engine;
 	private int startPositions;
-	private Molecule3D nativeLigand;
+	private StereoMolecule nativeLigand;
 	private StartPosition startPosition;
 
 	
-	public DockingEngine(Molecule3D rec, Molecule3D nativeLig, int mcSteps, int startPositions,
+	public DockingEngine(StereoMolecule rec, StereoMolecule nativeLig, int mcSteps, int startPositions,
 			ScoringFunction scoringFunction, StartPosition startPosition) {
 
 		this.startPosition = startPosition;
@@ -93,7 +93,7 @@ public class DockingEngine {
 
 	}
 	
-	public DockingEngine(Molecule3D receptor, Molecule3D nativeLigand) {
+	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand) {
 		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS,ScoringFunction.CHEMPLP, StartPosition.PHESA);
 	}
 	
@@ -199,6 +199,8 @@ public class DockingEngine {
 		}
 		
 	}
+	
+	
 
 	
 	private double mcSearch(LigandPose pose) {
@@ -302,7 +304,7 @@ public class DockingEngine {
 	 * @param ligand
 	 * @return
 	 */
-	private void preprocess(Molecule3D receptor, Molecule3D ligand) {
+	private void preprocess(StereoMolecule receptor, StereoMolecule ligand) {
 		double[][] rot = rotation.getArray();
 		for(int a=0;a<ligand.getAllAtoms();a++) {
 			Coordinates c = ligand.getCoordinates(a);
@@ -317,23 +319,35 @@ public class DockingEngine {
 		
 		
 	}
+	/**
+	 * the parameter d defines how much the atoms are allowed to move from their original position
+	 * @param d
+	 * @return
+	 */
 	
-	public double evaluateNativePose() {
+	public double refineNativePose(double d, double[] coords) {
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+		if(ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS)==null)
+			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		Molecule3D nativePose = new Molecule3D(nativeLigand);
 		new Canonizer(nativePose);
+		ForceFieldMMFF94 mmff = new ForceFieldMMFF94(nativePose, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+		PositionConstraint constraint = new PositionConstraint(nativePose,50,0.2);
+		mmff.addEnergyTerm(constraint);
+		mmff.minimise();
 		ConformerSetGenerator confSetGen = new ConformerSetGenerator(100,ConformerGenerator.STRATEGY_LIKELY_RANDOM, false,
 				LigandPose.SEED);
 		ConformerSet confSet = confSetGen.generateConformerSet(nativePose);
 		double eMin = Double.MAX_VALUE;
-		Map<String, Object> ffOptions = new HashMap<String, Object>();
-		ffOptions.put("dielectric constant", 80.0);
+
 		ConformerSet initialPos = new ConformerSet();
 		for(Conformer conformer : confSet) {
 			if(conformer!=null) {
 				StereoMolecule conf = conformer.toMolecule();
 				conf.ensureHelperArrays(Molecule.cHelperParities);
-				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-				PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
+				mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				constraint = new PositionConstraint(conf,50,0.2);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
 				Conformer ligConf = new Conformer(conf);
@@ -346,7 +360,24 @@ public class DockingEngine {
 			}
 		}
 		LigandPose pose = new LigandPose(new Conformer(nativePose), engine, eMin);
-		return pose.getFGValue(new double[pose.getState().length]);
+		pose.addPositionalConstraints(d);
+		System.out.println(pose.getFGValue(new double[pose.getState().length]));
+		OptimizerLBFGS optimizer = new OptimizerLBFGS(200,0.001);
+		optimizer.optimize(pose);
+		double energy = pose.getFGValue(new double[pose.getState().length]);
+		System.out.println(energy);
+		StereoMolecule best = pose.getLigConf().toMolecule();
+		double[][] rot = rotation.getTranspose().getArray();
+		PheSAAlignment.rotateMol(best, rot);
+		PheSAAlignment.translateMol(best, new double[] {origCOM.x, origCOM.y, origCOM.z} );
+		for(int a=0;a<best.getAllAtoms();a++) {
+			coords[3*a] = best.getAtomX(a);
+			coords[3*a+1] = best.getAtomY(a);
+			coords[3*a+2] = best.getAtomZ(a);
+		}
+	
+		
+		return energy;
 		
 		
 	}
