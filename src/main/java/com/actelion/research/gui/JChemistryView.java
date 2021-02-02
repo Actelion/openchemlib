@@ -72,6 +72,8 @@ public class JChemistryView extends JComponent
 	private static final String ITEM_COPY_MOLS = "Copy Molecules";
 	private static final String ITEM_PASTE_MOLS = "Paste Molecules";
 
+	private static final long WARNING_MILLIS = 1200;
+
 	private static final long serialVersionUID = 20150204L;
 	private static final int UPDATE_REDRAW_ONLY = 0;
 	private static final int UPDATE_CHECK_COORDS = 1;
@@ -93,6 +95,7 @@ public class JChemistryView extends JComponent
 	private Color				mFragmentNoColor;
 	private MoleculeDropAdapter mMoleculeDropAdapter = null;
 	private ReactionDropAdapter mReactionDropAdapter = null;
+	private String              mWarningMessage;
 
 
 	/**
@@ -293,6 +296,18 @@ public class JChemistryView extends JComponent
 
 		mDepictor.paint(g);
 
+		if (mWarningMessage != null) {
+			int fontSize = HiDPIHelper.scale(12);
+			g.setFont(getFont().deriveFont(Font.BOLD, (float)fontSize));
+			Color original = g.getColor();
+			g.setColor(Color.RED);
+			FontMetrics metrics = g.getFontMetrics();
+			Rectangle2D bounds = metrics.getStringBounds(mWarningMessage, g);
+			g.drawString(mWarningMessage, insets.left+(int)(theSize.width-bounds.getWidth())/2,
+					insets.top+metrics.getHeight());
+			g.setColor(original);
+			}
+
 		mUpdateMode = UPDATE_REDRAW_ONLY;
 		}
 
@@ -365,6 +380,8 @@ public class JChemistryView extends JComponent
 			StereoMolecule mol = ch.pasteMolecule();
 			if (mol != null)
 				pasteOrDropMolecule(mol);
+			else
+				showWarningMessage("No molecule on clipboard!");
 			}
 
 		if (e.getActionCommand().equals(ITEM_PASTE_RXN) && mIsEditable) {
@@ -372,6 +389,8 @@ public class JChemistryView extends JComponent
 			Reaction rxn = ch.pasteReaction();
 			if (rxn != null)
 				pasteOrDropReaction(rxn);
+			else
+				showWarningMessage("No reaction on clipboard!");
 			}
 
 		if (e.getActionCommand().equals(ITEM_OPEN_RXN) && mIsEditable) {
@@ -633,6 +652,16 @@ public class JChemistryView extends JComponent
 		setContent(rxn);
 		repaint();
 		informListeners();
+		}
+
+	protected void showWarningMessage(String msg) {
+		mWarningMessage = msg;
+		repaint();
+		new Thread(() -> {
+			try { Thread.sleep(WARNING_MILLIS); } catch (InterruptedException ie) {}
+			mWarningMessage = null;
+			repaint();
+			} ).start();
 		}
 
 	public Transferable getMoleculeTransferable() {
