@@ -101,6 +101,8 @@ public class ChemPLP extends AbstractScoringEngine {
 			energy+=ffEnergy;
 			ff.addGradient(grad);
 		}
+		for(PotentialEnergyTerm term : constraints)
+			energy+=term.getFGValue(grad);
 
 		return energy;
 	}
@@ -142,6 +144,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		ligandDonors = new HashSet<>();
 		ligandDonorHPos = new HashSet<>();
 		ligandAcceptorNeg = new HashSet<>();
+		constraints = new ArrayList<>();
 		
 		
 		StereoMolecule ligand = candidatePose.getLigConf().getMolecule();
@@ -416,7 +419,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	}
 	
 	
-	private static void identifyHBondFunctionality(StereoMolecule mol, Set<Integer> acceptors, Set<Integer> donorHs, Set<Integer> donors,
+	public static void identifyHBondFunctionality(StereoMolecule mol, Set<Integer> acceptors, Set<Integer> donorHs, Set<Integer> donors,
 			Set<Integer> metals, Set<Integer> chargedAcceptors, Set<Integer> chargedDonorHs) {
 
 		for(int a=0;a<mol.getAllAtoms();a++) {
@@ -488,6 +491,7 @@ public class ChemPLP extends AbstractScoringEngine {
 				new Coordinates(-1.555,1.555,0.0), new Coordinates(-1.555,-1.555,0.0)
 		};
 	}
+
 
 
 
