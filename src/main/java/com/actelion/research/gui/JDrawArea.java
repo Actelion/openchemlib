@@ -74,9 +74,13 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private static final int KEY_IS_VALID_START = 3;
 	private static final int KEY_IS_INVALID = 4;
 
-	private static final String ITEM_COPY = "Copy Structure";
-	private static final String ITEM_PASTE= "Paste Structure";
-	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE+" or Name";
+	private static final String ITEM_COPY_STRUCTURE = "Copy Structure";
+	private static final String ITEM_COPY_REACTION = "Copy Reaction";
+	private static final String ITEM_PASTE_STRUCTURE = "Paste Structure";
+	private static final String ITEM_PASTE_REACTION = "Paste Reaction";
+	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE_STRUCTURE+" or Name";
+
+	private static final long WARNING_MILLIS = 1200;
 
 	private static final float FRAGMENT_MAX_CLICK_DISTANCE = 24.0f;
 	private static final float FRAGMENT_GROUPING_DISTANCE = 1.4f;	// in average bond lengths
@@ -133,7 +137,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown,
 					mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
-	private String mOtherLabel;
+	private String mOtherLabel,mWarningMessage;
 	private String[] mAtomText;
 	private ExtendedDepictor mDepictor;
 	private StereoMolecule mMol;		// molecule being modified directly by the drawing editor
@@ -416,6 +420,17 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				g.setColor(foreground);
 				break;
 		}
+
+		if (mWarningMessage != null) {
+			int fontSize = HiDPIHelper.scale(12);
+			g.setFont(getFont().deriveFont(Font.BOLD, (float)fontSize));
+			Color original = g.getColor();
+			g.setColor(Color.RED);
+			FontMetrics metrics = g.getFontMetrics();
+			Rectangle2D bounds = metrics.getStringBounds(mWarningMessage, g);
+			g.drawString(mWarningMessage, (int)(theSize.width-bounds.getWidth())/2, metrics.getHeight());
+			g.setColor(original);
+		}
 	}
 
 	public static Color lassoColor() {
@@ -562,10 +577,12 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	public void actionPerformed(ActionEvent e)
 	{
 		String command = e.getActionCommand();
-		if (command.equals(ITEM_COPY)) {
+		if (command.equals(ITEM_COPY_STRUCTURE) || command.equals(ITEM_COPY_REACTION)) {
 			copy();
-		} else if (command.startsWith(ITEM_PASTE)) {
-			paste();
+		} else if (command.equals(ITEM_PASTE_REACTION)) {
+			pasteReaction();
+		} else if (command.startsWith(ITEM_PASTE_STRUCTURE)) {
+			pasteMolecule();
 		} else if (command.startsWith("atomColor")) {
 			int index = command.indexOf(':');
 			int atom = Integer.parseInt(command.substring(9, index));
@@ -582,7 +599,12 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		}
 	}
 
-	private void copy()
+	/**
+	 * Checks, whether a copy operation would copy a molecule or reaction.
+	 * @param doCopy if true, then the chemistry object is copied to the clipboard
+	 * @return true, if reaction
+	 */
+	private boolean analyseCopy(boolean doCopy)
 	{
 		boolean isReaction = ((mMode & MODE_REACTION) != 0);
 		boolean selectionFound = false;
@@ -609,24 +631,36 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			}
 		}
 
+		if (!doCopy)
+			return isReaction && (isBothSideSelection || !selectionFound);
+
 		if (isReaction) {
 			if (isBothSideSelection) {
 				copyReaction(true);
+				return true;
 			} else if (selectionFound) {
 				copyMolecule(true);
+				return false;
 			} else {
 				copyReaction(false);
+				return true;
 			}
-		} else {
-			copyMolecule(selectionFound);
 		}
+
+		copyMolecule(selectionFound);
+		return false;
+	}
+
+	private void copy()
+	{
+		analyseCopy(true);
 	}
 
 	private boolean copyReaction(boolean selectionOnly)
 	{
-		Reaction rx = selectionOnly ? getSelectedReaction() : getReaction();
-		if (rx != null && mClipboardHandler != null) {
-			return mClipboardHandler.copyReaction(rx);
+		Reaction rxn = selectionOnly ? getSelectedReaction() : getReaction();
+		if (rxn != null && mClipboardHandler != null) {
+			return mClipboardHandler.copyReaction(rxn);
 		}
 
 		return false;
@@ -711,6 +745,9 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				setReaction(rxn);
 				ret = true;
 			}
+			else {
+				showWarningMessage("No reaction on clipboard!");
+			}
 		}
 		return ret;
 	}
@@ -740,12 +777,25 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 					}
 					moleculeChanged(true);
 				}
+				ret = true;
 			}
-			ret = true;
+			else {
+				showWarningMessage("No molecule on clipboard!");
+			}
 		}
 		return ret;
 	}
 	// end changes CxR
+
+	private void showWarningMessage(String msg) {
+		mWarningMessage = msg;
+		repaint();
+		new Thread(() -> {
+			try { Thread.sleep(WARNING_MILLIS); } catch (InterruptedException ie) {}
+			mWarningMessage = null;
+			repaint();
+		} ).start();
+	}
 
 	public void mousePressed(MouseEvent e)
 	{
@@ -1249,19 +1299,27 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		if (e.isPopupTrigger()) {
 			JPopupMenu popup = null;
 			if (mClipboardHandler != null) {
-				JMenuItem menuItem1 = new JMenuItem(ITEM_COPY);
+				JMenuItem menuItem1 = new JMenuItem(analyseCopy(false) ? ITEM_COPY_REACTION : ITEM_COPY_STRUCTURE);
 				menuItem1.addActionListener(this);
 				if (mMol.getAllAtoms() == 0) {
 					menuItem1.setEnabled(false);
 				}
-				String itemText = (StructureNameResolver.getInstance() == null) ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
-				JMenuItem menuItem2 = new JMenuItem(itemText);
-				menuItem2.addActionListener(this);
-				if (popup == null) {
-					popup = new JPopupMenu();
+
+				JMenuItem menuItem2 = null;
+				if ((mMode & MODE_REACTION) != 0) {
+					menuItem2 = new JMenuItem(ITEM_PASTE_REACTION);
+					menuItem2.addActionListener(this);
 				}
+
+				String itemText = (StructureNameResolver.getInstance() == null) ? ITEM_PASTE_STRUCTURE : ITEM_PASTE_WITH_NAME;
+				JMenuItem menuItem3 = new JMenuItem(itemText);
+				menuItem3.addActionListener(this);
+
+				popup = new JPopupMenu();
 				popup.add(menuItem1);
-				popup.add(menuItem2);
+				if (menuItem2 != null)
+					popup.add(menuItem2);
+				popup.add(menuItem3);
 			}
 			if (mAtomColorSupported && mCurrentHiliteAtom != -1) {
 				int atomColor = mMol.getAtomColor(mCurrentHiliteAtom);

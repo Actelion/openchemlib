@@ -104,8 +104,8 @@ public class JEditableChemistryView extends JChemistryView {
 			g.setFont(g.getFont().deriveFont(Font.PLAIN, HiDPIHelper.scale(10)));
 			FontMetrics metrics = g.getFontMetrics();
 			Rectangle2D bounds = metrics.getStringBounds(EDIT_MESSAGE, g);
-			g.drawString(EDIT_MESSAGE, (int)(insets.left+theSize.width-bounds.getWidth())/2,
-					(insets.top+theSize.height-metrics.getHeight())/2+metrics.getAscent());
+			g.drawString(EDIT_MESSAGE, insets.left+(int)(theSize.width-bounds.getWidth())/2,
+					insets.top+(theSize.height-metrics.getHeight())/2+metrics.getAscent());
 			}
 		}
 

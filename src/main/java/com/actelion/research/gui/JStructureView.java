@@ -47,7 +47,9 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE+" or Name";
 	private static final String ITEM_CLEAR = "Clear Structure";
 
-    private ArrayList<StructureListener> mListener;
+	private static final long WARNING_MILLIS = 1200;
+
+	private ArrayList<StructureListener> mListener;
 	private String mIDCode;
 	private StereoMolecule mMol,mDisplayMol;
     private Depictor2D mDepictor;
@@ -59,6 +61,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	protected MoleculeDropAdapter mDropAdapter = null;
 	protected int mAllowedDragAction;
 	protected int mAllowedDropAction;
+	private String mWarningMessage;
 
 	public JStructureView() {
         this(null);
@@ -255,6 +258,18 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 				((Graphics2D)g).setStroke(oldStroke);
 				}
 			}
+
+		if (mWarningMessage != null) {
+			int fontSize = HiDPIHelper.scale(12);
+			g.setFont(getFont().deriveFont(Font.BOLD, (float)fontSize));
+			Color original = g.getColor();
+			g.setColor(Color.RED);
+			FontMetrics metrics = g.getFontMetrics();
+			Rectangle2D bounds = metrics.getStringBounds(mWarningMessage, g);
+			g.drawString(mWarningMessage, insets.left+(int)(theSize.width-bounds.getWidth())/2,
+					insets.top+metrics.getHeight());
+			g.setColor(original);
+			}
 		}
 
 	public void setIDCode(String idcode) {
@@ -398,12 +413,25 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 				mDisplayMol = mol;
 				structureChanged();
 				}
+			else {
+				showWarningMessage("No molecule on clipboard!");
+				}
 			}
 		if (e.getActionCommand().equals(ITEM_CLEAR) && mIsEditable) {
 			mMol.deleteMolecule();
 			mDisplayMol = mMol;
 			structureChanged();
 			}
+		}
+
+	protected void showWarningMessage(String msg) {
+		mWarningMessage = msg;
+		repaint();
+		new Thread(() -> {
+			try { Thread.sleep(WARNING_MILLIS); } catch (InterruptedException ie) {}
+			mWarningMessage = null;
+			repaint();
+			} ).start();
 		}
 
 	private void handlePopupTrigger(MouseEvent e) {

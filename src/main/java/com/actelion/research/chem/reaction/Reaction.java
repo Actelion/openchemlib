@@ -53,9 +53,9 @@ public class Reaction implements java.io.Serializable {
 	private boolean mIsFragment;	// if there are molecules, then there fragment status takes precedence over this flag
 
 	public Reaction() {
-		mReactant = new ArrayList<StereoMolecule>();
-		mProduct = new ArrayList<StereoMolecule>();
-		mCatalyst = new ArrayList<StereoMolecule>();
+		mReactant = new ArrayList<>();
+		mProduct = new ArrayList<>();
+		mCatalyst = new ArrayList<>();
 		mMaxMapNo = -1;
 		mIsFragment = false;
 		}
@@ -122,7 +122,7 @@ public class Reaction implements java.io.Serializable {
 	 * @return fragment status of molecules or reaction
 	 */
 	public boolean isFragment() {
-		return getMolecules() == 0 ? mIsFragment : determineFragment();
+		return mIsFragment || determineFragment();
 		}
 
 	/**
@@ -153,7 +153,7 @@ public class Reaction implements java.io.Serializable {
 		mDrawingObjectList = new DrawingObjectList(rxn.getDrawingObjects());
 		if (rxn.mName != null)
 			mName = rxn.mName;
-		mIsFragment = rxn.mIsFragment;
+		mIsFragment = rxn.isFragment();
 		}
 
 	public Reaction(StereoMolecule[] mol, int reactantCount) {

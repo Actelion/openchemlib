@@ -20,11 +20,13 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
+import com.actelion.research.chem.AromaticityResolver;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SmilesCreator;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
 import com.actelion.research.chem.io.AbstractParser;
 
@@ -69,31 +71,39 @@ public class Mol2FileParser extends AbstractParser {
 	private void addMol(List<Molecule3D> res, Molecule3D m, Set<Integer> aromaticAtoms, Set<Integer> aromaticBonds) {
 		if(m==null || m.getAllAtoms()==0) return;
 		
-		/*if(true) {
+		if(true) {
 			//Use AromaticityResolver		
-			ExtendedMolecule mol = m.toStereoMolecule();
+			ExtendedMolecule mol = new StereoMolecule(m);
+			int[] bondMap = mol.getHandleHydrogenBondMap();
+			int j =0;
 			for (int b : aromaticBonds) {
 				if(mol.getAtomicNo(mol.getBondAtom(0, b))!=8 && mol.getAtomicNo(mol.getBondAtom(1, b))!=8) {
 					mol.setBondType(b, ExtendedMolecule.cBondTypeDelocalized);
 				}
 			}
-			new AromaticityResolver(mol).locateDelocalizedDoubleBonds();
+			new AromaticityResolver(mol).locateDelocalizedDoubleBonds(null,false,true);
 			
 	
 			for (int i=0; i<mol.getBonds(); i++) {
-				m.setBondOrder(i, mol.getBondOrder(i));
+				m.setBondOrder(i, mol.getBondOrder(bondMap[i]));
 			}
-		} else {*/
+			
+		} 
+		/*
+		else {
 			//Use BondsCalculator.aromatize
 			boolean suc = BondsCalculator.aromatize(m, aromaticAtoms, aromaticBonds);
 			if(!suc) {
 				System.err.println("Could not aromatize the molecule");
 			}
 		//}		
+		 * 
+		 */
+
 		assignCharges(m);
 
 		m.setAllAtomFlag(Molecule3D.LIGAND, true);
-		
+
 		res.add(m);
 
 	}
@@ -311,10 +321,18 @@ public class Mol2FileParser extends AbstractParser {
 			}
 		}
 		count++;
+		int[] bondMap = m.getHandleHydrogenBondMap();
+		int[] atomMap = m.getHandleHydrogenMap();
+		Set<Integer> aromaticAtomsMapped = new HashSet<Integer>();
+		Set<Integer> aromaticBondsMapped = new HashSet<Integer>();
+		aromaticAtoms.stream().forEach(aa -> aromaticAtomsMapped.add(atomMap[aa]));
+		aromaticBonds.stream().forEach(ab -> aromaticBondsMapped.add(bondMap[ab]));
 		if(from>count) {}
 		else if(to>=0 && to<count) {}
-		else addMol(res, m, aromaticAtoms, aromaticBonds);
-
+		else {
+			m.ensureHelperArrays(Molecule.cHelperRings);
+			addMol(res, m, aromaticAtoms, aromaticBonds);
+		}
 		return res;
 	}
 
