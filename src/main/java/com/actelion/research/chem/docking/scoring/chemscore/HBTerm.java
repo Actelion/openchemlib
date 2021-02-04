@@ -85,9 +85,12 @@ public class HBTerm implements PotentialEnergyTerm {
 			h = receptor.getCoordinates(hydrogen);
 		Coordinates r = a.subC(h);
 		double d = r.dist();
+		boolean invert = false;
 		double distTerm = d - D0;
-		if(distTerm<0)
+		if(distTerm<0) {
+			invert=true;
 			distTerm = -distTerm;
+		}
 		if(distTerm<D1) {
 			energy = 1.0;
 		}
@@ -97,6 +100,8 @@ public class HBTerm implements PotentialEnergyTerm {
 		
 		else {
 			double prefactor = -1.0/(D2-D1)*(1.0/d);
+			if(invert)
+				prefactor*=-1;
 			grad = r.scaleC(prefactor);
 			grad.scale(scale);
 			if(distTerm<0)
@@ -145,7 +150,11 @@ public class HBTerm implements PotentialEnergyTerm {
 	    double cosTheta = r0.cosAngle(r1);
 
 	    double angleTerm = Math.acos(cosTheta) - x0;
-
+	    boolean invert = false;
+	    if(angleTerm<0) {
+	    	angleTerm=-angleTerm;
+	    	invert=true;
+	    }
 	    
 	    if(angleTerm<x1)
 	    	energy = 1.0;
@@ -153,9 +162,8 @@ public class HBTerm implements PotentialEnergyTerm {
 	    	energy = 0.0;
 	    else {
 	    	double prefactor = -1.0/(x2-x1); //derivative of energy term with respect to 
-		    if(angleTerm<0) {
+		    if(invert) {
 		    	prefactor = -prefactor;
-		    	angleTerm = -angleTerm;
 		    }
 		    energy = (x2-angleTerm)/(x2-x1);
 
