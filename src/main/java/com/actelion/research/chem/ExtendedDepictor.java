@@ -113,7 +113,17 @@ public class ExtendedDepictor {
         }
 
     public boolean isFragment() {
-    	return mMolecule == null || mMolecule.length == 0 ? false : mMolecule[0].isFragment();
+    	if (mChemistryType == TYPE_REACTION)
+    		return mReaction == null ? false : mReaction.isFragment();
+
+    	if (mMolecule == null)
+    		return false;
+
+    	for (StereoMolecule mol:mMolecule)
+    		if (mol.isFragment())
+    			return true;
+
+     	return false;
 		}
 
     private void initialize() {
