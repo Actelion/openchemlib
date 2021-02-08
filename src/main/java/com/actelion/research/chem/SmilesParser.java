@@ -105,6 +105,8 @@ public class SmilesParser {
 		mMol = mol;
 		mMol.clear();
 
+		mAromaticAtoms = 0;
+
 		TreeMap<Integer,THParity> parityMap = null;
 
 		int[] baseAtom = new int[MAX_BRACKET_LEVELS];
