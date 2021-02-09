@@ -26,7 +26,6 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 	private int mTargetPosition,mPreviousTargetPosition;
 	private GhostPreview mPreview;
 	private Dockable mMaximizedView;
-//	private ArrayList<ActionListener> mActionListenerList;
 
 	/**
 	 * Creates a docking panel to which any Dockables may be added by
@@ -46,22 +45,6 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 		setLayout(new OverlayLayout(this));
 		}
 
-/*	public void addActionListener(ActionListener l) {
-		if (l != null) {
-			if (mActionListenerList == null)
-				mActionListenerList = new ArrayList<ActionListener>();
-			mActionListenerList.add(l);
-			}
-		}
-
-	public void removeActionListener(ActionListener l) {
-		if (l != null && mActionListenerList != null) {
-			mActionListenerList.remove(l);
-			if (mActionListenerList.size() == 0)
-				mActionListenerList = null;
-			}
-		}*/
-
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().startsWith("close_")) {
 			String title = e.getActionCommand().substring(6);
@@ -69,18 +52,18 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 			}
 		else if (e.getActionCommand().startsWith("max_")) {
 			String title = e.getActionCommand().substring(4);
-			maximize(title);
+			maximize(title, null);
 			}
-
-/*		if (mActionListenerList != null)
-			for (ActionListener l:mActionListenerList)
-				l.actionPerformed(e);	*/
 		}
 
 	/**
 	 * Toggle the maximization state of the dockable in the docking panel.
+	 * If it is maximizing, then a toolbar may be provided that is shown in the maximized state.
+	 * Note that a null toolbar causes the maximized state to use the default toolbar with
+	 * maximize and close buttons only.
+	 * @param maximizeToolBar null for default or toolbar that shall be shown in maximized state
 	 */
-	public void maximize(String title) {
+	public void maximize(String title, JToolBar maximizeToolBar) {
 		Dockable dockable = mDockableMap.get(title);
 		if (mMaximizedView != null) {
 			remove(mMaximizedView);
@@ -95,7 +78,7 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 			JComponent content = dockable.borrowContent();
 
 			// create dummy dockable to hold the maximized view
-			mMaximizedView = new Dockable(this, content, title, this, false, dockable.hasMenuButton());
+			mMaximizedView = new Dockable(this, content, title, maximizeToolBar);
 			mMaximizedView.setPopupProvider(dockable.getPopupProvider());
 			mMaximizedView.setVisible(true);
 			add(mMaximizedView);

@@ -67,8 +67,8 @@ public class JChemistryView extends JComponent
 
 	private static final String ITEM_COPY_RXN = "Copy Reaction";
 	private static final String ITEM_PASTE_RXN = "Paste Reaction";
-	private static final String ITEM_OPEN_RXN = "Open Reaction File";
-	private static final String ITEM_SAVE_RXN = "Save Reaction File";
+	private static final String ITEM_OPEN_RXN = "Open Reaction File...";
+	private static final String ITEM_SAVE_RXN = "Save Reaction File...";
 	private static final String ITEM_COPY_MOLS = "Copy Molecules";
 	private static final String ITEM_PASTE_MOLS = "Paste Molecules";
 

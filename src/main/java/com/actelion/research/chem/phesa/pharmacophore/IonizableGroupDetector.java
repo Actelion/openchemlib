@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.actelion.research.chem.AtomFunctionAnalyzer;
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
 
@@ -50,7 +51,7 @@ public class IonizableGroupDetector {
 					continue;
 				int aa = mol.getConnAtom(a,0);
 				if(alreadyDetected(aa)) continue;
-				if(AtomFunctionAnalyzer.isAcidicOxygen(mol, a)) { //COOH,SO3H,PO3H2, N(+)-OH
+				if(isPartOfAcid(mol, a)) { //COOH,SO3H,PO3H2, N(+)-OH
 					if(mol.getAtomicNo(aa)==6) { //COOH
 						ionizableGroup = new ArrayList<Integer>();
 						ionizableGroup.add(a);
@@ -180,6 +181,69 @@ public class IonizableGroupDetector {
 
 		boolean isDetected = ionizableGroups.stream().flatMap(List::stream).collect(Collectors.toList()).contains(a) ? true : false;
 		return isDetected;
+	}
+	
+	/**
+	 * independent if acid is protonated or not
+	 * @param mol
+	 * @param atom
+	 * @return
+	 */
+	private static boolean isPartOfAcid(StereoMolecule mol, int atom) {
+		if (mol.getAtomicNo(atom) != 8
+		 || mol.getConnAtoms(atom) != 1
+		 || mol.getConnBondOrder(atom, 0) != 1)
+			return false;
+
+		int connAtom = mol.getConnAtom(atom, 0);
+
+		// COOH
+		if(mol.getAtomicNo(connAtom)==6){
+			int nConnected2C = mol.getConnAtoms(connAtom);
+			for (int i = 0; i < nConnected2C; i++) {
+				int indexAtom = mol.getConnAtom(connAtom, i);
+				
+				if(indexAtom==atom){
+					continue;
+				}
+				
+				if(mol.getAtomicNo(indexAtom) != 8){
+					continue;
+				}
+				
+				int indexBond = mol.getBond(connAtom, indexAtom);
+				
+				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble)
+					return true;
+			}
+		} else if (mol.getAtomicNo(connAtom) == 7) {
+			if (mol.getAtomCharge(connAtom) == 1) // (N+)-OH
+				return true;
+		} else if (mol.getAtomicNo(connAtom) == 16) { // CSOOOH
+			int nConnected2S = mol.getConnAtoms(connAtom);
+			
+			int nDoubleBondedO2S=0;
+			for (int i = 0; i < nConnected2S; i++) {
+				int indexAtom = mol.getConnAtom(connAtom, i);
+				
+				if(indexAtom==atom)
+					continue;
+
+				if(mol.getAtomicNo(indexAtom) != 8)
+					continue;
+
+				int indexBond = mol.getBond(connAtom, indexAtom);
+				
+				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble)
+					nDoubleBondedO2S++;
+			}
+			
+			if(nDoubleBondedO2S == 2)
+				return true;
+		} else if(AtomFunctionAnalyzer.isAcidicOxygenAtPhosphoricAcid(mol, atom)) // CP=O(OH)(OH)
+			return true;
+
+		return false;
 	}
 
 

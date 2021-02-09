@@ -2,7 +2,6 @@ package com.actelion.research.gui.dock;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 
 /**
  * A lightweight component derived from JPanel that features certain subcomponents
@@ -16,38 +15,23 @@ public class Dockable extends JPanel {
 	private DockableHeader mHeader;
 	private JDockingPanel mDockingPanel;
 	private JComponent mContent;
-	private boolean mIsSelected,mIsVisible,mHasMenuButton;
+	private boolean mIsSelected,mIsVisible;
 
 	/**
 	 * Constructs a <code>TitledComponent</code> with the specified title and content panel.
-	 * 
+	 * @param dockingPanel
 	 * @param content
 	 * @param title the initial title, which must be unique within the JDockingPanel
-	 * @param al the ActionListener to receive close_<title> and max_<title> action commands
-	 * @param isClosable determines whether the title area contains a close button
+	 * @param toolBar containing content specific functionality, e.g. config- and close-buttons
 	 */
-	public Dockable(JDockingPanel dockingPanel, JComponent content, String title, ActionListener al, boolean isClosable) {
-		this(dockingPanel, content, title, al, isClosable, false);
-		}
-
-	/**
-	 * Constructs a <code>TitledComponent</code> with the specified title and content panel.
-	 * 
-	 * @param content
-	 * @param title the initial title, which must be unique within the JDockingPanel
-	 * @param al the ActionListener to receive close_<i>title</i>, max_<i>title</i> and popup_<i>title</i> action events
-	 * @param isClosable determines whether the title area contains a close button
-	 * @param hasMenuButton determines whether the title area contains a pupup button
-	 */
-	public Dockable(JDockingPanel dockingPanel, JComponent content, String title, ActionListener al, boolean isClosable, boolean hasMenuButton) {
+	public Dockable(JDockingPanel dockingPanel, JComponent content, String title, JToolBar toolBar) {
 		super(new BorderLayout());
 		setBorder(new ShadowBorder());
 
 		mDockingPanel = dockingPanel;
 		mContent = content;
-		mHeader = new DockableHeader(this, title, al, isClosable, hasMenuButton);
+		mHeader = new DockableHeader(this, title, toolBar);
 		mIsVisible = false;
-		mHasMenuButton = hasMenuButton;
 		add(mHeader, BorderLayout.NORTH);
 		add(content, BorderLayout.CENTER);
 
@@ -70,6 +54,20 @@ public class Dockable extends JPanel {
 	 */
 	public String getTitle() {
 		return mHeader.getTitle();
+	}
+
+	/**
+	 * @return the header of this dockable
+	 */
+	public DockableHeader getHeader() {
+		return mHeader;
+	}
+
+	/**
+	 * @return the JDockingPanel this Dockable is docked to.
+	 */
+	public JDockingPanel getDockingPanel() {
+		return mDockingPanel;
 	}
 
 	/**
@@ -180,9 +178,5 @@ public class Dockable extends JPanel {
 
 	public void setPopupProvider(PopupProvider p) {
 		mHeader.setPopupProvider(p);
-		}
-
-	public boolean hasMenuButton() {
-		return mHasMenuButton;
 		}
 	}
