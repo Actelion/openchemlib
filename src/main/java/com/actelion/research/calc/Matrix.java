@@ -93,6 +93,21 @@ public class Matrix {
         }
     }
     
+    public Matrix(boolean row, byte [] arr) {
+        if (row) {
+            data = new double[1][arr.length];
+            for (int i = 0; i < arr.length; i++) {
+                data[0][i]=arr[i];
+            }
+        }
+        else {
+            data = new double[arr.length][1];
+            for (int i = 0; i < getRowDim(); i++) {
+                data[i][0] = arr[i];
+            }
+        }
+    }
+
     public Matrix(boolean row, int [] dArray) {
         if (row) {
             data = new double[1][dArray.length];
@@ -392,6 +407,24 @@ public class Matrix {
 		}
     }
 
+    /**
+     * This (target matrix) must have appropriate dimensions.
+     * @param offsetRows
+     * @param maSource
+     */
+    public void copy(int offsetRows, Matrix maSource) {
+
+		if(cols() != maSource.cols()){
+		    throw new RuntimeException("Matrix col dimension error. Number of cols differ!");
+        }
+
+		int cols = cols();
+		int r = maSource.rows();
+        for (int i = 0; i < r; i++) {
+            System.arraycopy(maSource.data[i], 0, data[offsetRows+i], 0, cols);
+        }
+    }
+
     public void copyColumn(Matrix maSource, int colSource, int colDestination) {
 		int rows = maSource.rows();
         for (int i = 0; i < rows; i++) {
@@ -505,7 +538,7 @@ public class Matrix {
         int r = rows();
         int c = cols();
 
-        Matrix ma = new Matrix(r,c);
+        Matrix ma = new Matrix(r,c-1);
 
         for(int i=0; i < r; i++){
 
@@ -570,14 +603,20 @@ public class Matrix {
     }
 
     public Matrix getColumns(List<Integer> liIndex) {
-
         Matrix maReduced = new Matrix(getRowDim(), liIndex.size());
-
         for (int i = 0; i < liIndex.size(); i++) {
             int col = liIndex.get(i);
             maReduced.assignCol(i, this, col);
         }
+        return maReduced;
+    }
 
+    public Matrix getColumns(int [] arrIndex) {
+        Matrix maReduced = new Matrix(getRowDim(), arrIndex.length);
+        for (int i = 0; i < arrIndex.length; i++) {
+            int col = arrIndex[i];
+            maReduced.assignCol(i, this, col);
+        }
         return maReduced;
     }
 

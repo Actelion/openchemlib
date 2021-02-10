@@ -610,6 +610,12 @@ public class DoubleVec implements Comparable<DoubleVec> {
         return dSum;
     }
 
+    /**
+     *
+     * @param d1
+     * @param d2
+     * @return 1 if totally similar, 0 if no overlap.
+     */
     static public double getTanimotoSimilarity(double[] d1, double[] d2) {
 
         double dSum = 0;

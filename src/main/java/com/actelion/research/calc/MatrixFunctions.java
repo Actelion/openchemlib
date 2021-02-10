@@ -387,6 +387,32 @@ public class MatrixFunctions {
         return arr;
     }
 
+    public static Matrix appendRows(List<Matrix> liMatrix) {
+
+        if(liMatrix==null || liMatrix.size()==0){
+            return null;
+        }
+
+        int cols = liMatrix.get(0).cols();
+
+        int rows = 0;
+
+        for (Matrix m : liMatrix) {
+            rows+=m.rows();
+        }
+
+        Matrix mAll = new Matrix(rows, cols);
+
+        int offsetRow=0;
+        for (Matrix m : liMatrix) {
+            mAll.copy(offsetRow, m);
+            offsetRow+=m.rows();
+        }
+
+
+        return mAll;
+    }
+
 
     public static Matrix appendRows(Matrix ma0, Matrix ma1) {
 
