@@ -7,6 +7,7 @@ import info.clearthought.layout.TableLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 public class DockableHeader extends JPanel {
@@ -49,14 +50,17 @@ public class DockableHeader extends JPanel {
 		if (LookAndFeelHelper.isSubstance())
 			toolbar.addSeparator();
 
-		JButton maxButton = new HiDPIIconButton("maxButton.png", "Maximize view", "max_"+getTitle(), 0, null);
-		maxButton.addActionListener(mDockable.getDockingPanel());
+		JButton maxButton = new HiDPIIconButton("maxButton.png", "Maximize view", "max_", 0, null);
+		// since the dockable title can change, we need to construct the action command when the button is pressed
+		maxButton.addActionListener(e -> mDockable.getDockingPanel().actionPerformed(
+				new ActionEvent(maxButton, ActionEvent.ACTION_PERFORMED, "max_"+getTitle())));
 		toolbar.add(maxButton);
 		if (LookAndFeelHelper.isSubstance())
 			toolbar.addSeparator();
 
-		JButton closeButton = new HiDPIIconButton("closeButton.png", null, "close_"+getTitle(), 0, null);
-		closeButton.addActionListener(mDockable.getDockingPanel());
+		JButton closeButton = new HiDPIIconButton("closeButton.png", "Close view", "close_", 0, null);
+		closeButton.addActionListener(e -> mDockable.getDockingPanel().actionPerformed(
+				new ActionEvent(closeButton, ActionEvent.ACTION_PERFORMED, "close_"+getTitle())));
 		toolbar.add(closeButton);
 		if (LookAndFeelHelper.isSubstance())
 			toolbar.addSeparator();
