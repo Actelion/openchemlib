@@ -33,7 +33,6 @@
 
 package com.actelion.research.chem.reaction;
 
-import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SSSearcher;
 import com.actelion.research.chem.StereoMolecule;
@@ -86,8 +85,8 @@ public class MCSReactionMapper implements IReactionMapper
                 fragment.setFragment(true);
 
                 // Do we need this???
-                CoordinateInventor coordinateInventor = new CoordinateInventor();
-                coordinateInventor.invent(fragment);
+//                CoordinateInventor coordinateInventor = new CoordinateInventor();
+//                coordinateInventor.invent(fragment);
 
                 StereoMolecule target = reaction.getReactant(mcsResult.getReactant());
                 // matchlist returns the indices on the
@@ -99,11 +98,15 @@ public class MCSReactionMapper implements IReactionMapper
                     applyMaps(fragment, target, matchList);
 
                     // We mark temporarely the atom with an invalid atom number, so it gets excluded from the SSS in MCS
+                    // TLS 11Feb2021: this is an awful hack that destroys atom lists in the SSS matching. We need to do that better in the new due ReactionMapper!!!
+                    // TLS 11Feb2021: Introduced restoration of atom mass to be able to use atom mass matching by the SSSearcher
                     for (int i = 0; i < matchList.length; i++) {
                         int atom = matchList[i];
                         int t = REACTANTFLAG + target.getAtomicNo(atom);
                         target.setAtomList(atom, new int[]{t});
+                        int atomMass = target.getAtomMass(atom);    // retain original atom mass
                         target.setAtomicNo(atom, REACTANTFLAG_ATOMNUMBER);
+                        target.setAtomMass(atom, atomMass);
                     }
 
                     target = reaction.getProduct(mcsResult.getProduct());
@@ -115,7 +118,9 @@ public class MCSReactionMapper implements IReactionMapper
                         int atom = matchList[i];
                         int t = PRODUCTFLAG + target.getAtomicNo(atom);
                         target.setAtomList(atom, new int[]{t});
+                        int atomMass = target.getAtomMass(atom);    // retain original atom mass
                         target.setAtomicNo(atom, PRODUCTFLAG_ATOMNUMBER);
+                        target.setAtomMass(atom, atomMass);
                     }
 
                     System.out.println(mcsResult);
@@ -134,12 +139,16 @@ public class MCSReactionMapper implements IReactionMapper
                 for (int j = 0; j < mol.getAllAtoms(); j++) {
                     if (mol.getAtomicNo(j) == REACTANTFLAG_ATOMNUMBER) {
                         if(mol.getAtomList(j) != null) {
+                            int atomMass = mol.getAtomMass(j);    // retain original atom mass
                             mol.setAtomicNo(j, mol.getAtomList(j)[0] - REACTANTFLAG);
+                            mol.setAtomMass(j, atomMass);
                             mol.setAtomList(j, null);
                         }
                     } else if (mol.getAtomicNo(j) == PRODUCTFLAG_ATOMNUMBER) {
                         if(mol.getAtomList(j) != null) {
+                            int atomMass = mol.getAtomMass(j);    // retain original atom mass
                             mol.setAtomicNo(j, mol.getAtomList(j)[0] - PRODUCTFLAG);
+                            mol.setAtomMass(j, atomMass);
                             mol.setAtomList(j, null);
                         }
                     }

@@ -125,7 +125,7 @@ public class CommonSubGraphHelper
 //        return null;
 //    }
 
-    public static Result getMCS(Reaction reaction, boolean[] exclude,SSSearcher sss)
+    public static Result getMCS(Reaction reaction, boolean[] exclude, SSSearcher sss)
     {
 //        MCS mcs = new MCS(MCS.PAR_KEEP_RINGS,sss);
         MCS mcs = new MCS(MCS.PAR_CLEAVE_RINGS,sss);

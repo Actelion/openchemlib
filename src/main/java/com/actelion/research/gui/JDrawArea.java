@@ -2060,7 +2060,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 							}
 						}
 
-					tryAutoMapReaction();
+						tryAutoMapReaction();
 					}
 				} else {
 					storeState();
@@ -2094,7 +2094,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 						mMol.setAtomMapNo(atom2, freeMapNo, false);
 					}
 
-				tryAutoMapReaction();
+					tryAutoMapReaction();
 				}
 
 				if (mapNoChanged) {
