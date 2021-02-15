@@ -3,17 +3,22 @@ package com.actelion.research.gui.dock;
 import com.actelion.research.gui.HeaderPaintHelper;
 import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.hidpi.HiDPIIconButton;
+import com.actelion.research.util.CursorHelper;
 import info.clearthought.layout.TableLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 public class DockableHeader extends JPanel {
 	private static final long serialVersionUID = 0x20070723;
 
-	private static final double[][] SIZE = {{TableLayout.FILL,TableLayout.PREFERRED},{TableLayout.FILL,TableLayout.PREFERRED,TableLayout.FILL}};
+	private static final double[][] SIZE = {{TableLayout.FILL,TableLayout.PREFERRED},{TableLayout.PREFERRED}};
+
+	private static final int ALLOWED_DRAG_ACTIONS = DnDConstants.ACTION_MOVE;
 
 	private Dockable mDockable;
 	private JLabel mTitleLabel;
@@ -28,15 +33,20 @@ public class DockableHeader extends JPanel {
 		mTitleLabel = new JLabel(title, SwingConstants.LEADING);
 		mTitleLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 		mTitleLabel.setOpaque(false);
-		add(mTitleLabel, "0,0,0,2");
+		add(mTitleLabel, "0,0");
 
 		mToolBar = toolBar != null ? toolBar : createDefaultToolBar();
-		add(mToolBar,"1,1");
+		add(mToolBar,"1,0");
 
 		setOpaque(true);
-		mMouseAdapter = new HeaderMouseAdapter(this);
-		addMouseListener(mMouseAdapter);
-		addMouseMotionListener(mMouseAdapter);
+		mMouseAdapter = new HeaderMouseAdapter(mTitleLabel, dockable);
+		mTitleLabel.addMouseListener(mMouseAdapter);
+		mTitleLabel.addMouseMotionListener(mMouseAdapter);
+
+		DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(mTitleLabel, ALLOWED_DRAG_ACTIONS, e -> {
+			if (!mDockable.isMaximized() && mDockable.getDockingPanel().getDockableCount() >= 2)
+				e.startDrag(CursorHelper.getCursor(CursorHelper.cFistCursor), new TransferableDockable(mDockable));
+			} );
 		}
 
 	@Override
@@ -139,22 +149,4 @@ public class DockableHeader extends JPanel {
 	public void setPopupProvider(PopupProvider p) {
 		mMouseAdapter.setPopupProvider(p);
 		}
-
-/*	public void actionPerformed(ActionEvent e) {
-		String title = mTitleLabel.getText();
-		if (e.getActionCommand().equals("popup")) {
-			mActionListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "popup_"+title));
-			return;
-			}
-
-		if (e.getActionCommand().equals("max")) {
-			mActionListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "max_"+title));
-			return;
-			}
-
-		if (e.getActionCommand().equals("close")) {
-			mActionListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "close_"+title));
-			return;
-			}
-		}*/
 	}
