@@ -84,7 +84,7 @@ public class JEditableChemistryView extends JChemistryView {
 
 	private boolean isEmpty() {
 		if (getChemistryType() == ExtendedDepictor.TYPE_REACTION)
-			return mReaction != null && !mReaction.isEmpty();
+			return mReaction == null || mReaction.isEmpty();
 
 		if (mMolecules != null)
 			for (StereoMolecule mol:mMolecules)
