@@ -382,7 +382,7 @@ public class DockingEngine {
 		
 	}
 	
-	public static class DockingResult  {
+	public static class DockingResult implements Comparable<DockingResult>  {
 		private double score;
 		private StereoMolecule pose;
 		
@@ -397,6 +397,16 @@ public class DockingEngine {
 		
 		public StereoMolecule getPose() {
 			return pose;
+		}
+
+		@Override
+		public int compareTo(DockingResult o) {
+            if(Double.isNaN(this.score)&& Double.isNaN(o.score)) { return 0; }
+            if(Double.isNaN(this.score)) { return -1; }
+            if(Double.isNaN(o.score)) { return  1; }
+
+            return Double.compare( this.score, o.score);
+           
 		}
 	}
 
