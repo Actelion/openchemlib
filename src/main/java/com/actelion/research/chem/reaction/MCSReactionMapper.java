@@ -33,7 +33,6 @@
 
 package com.actelion.research.chem.reaction;
 
-import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SSSearcher;
 import com.actelion.research.chem.StereoMolecule;
@@ -69,18 +68,16 @@ public class MCSReactionMapper implements IReactionMapper
         return COLORTABLE[colorIndex];
     }
 
-    public Reaction matchReaction(Reaction r)
+    public Reaction matchReaction(Reaction reaction)
     {
-        return mapReaction(r,null);
+        return mapReaction(reaction,null);
     }
 
     @Override
-    public Reaction mapReaction(Reaction r, SSSearcher sss)
+    public Reaction mapReaction(Reaction reaction, SSSearcher sss)
     {
-        Reaction ok = null;
         mapIndex = 0;
         try {
-            Reaction reaction = r;//prepareReaction(r);
             CommonSubGraphHelper.Result mcsResult = CommonSubGraphHelper.getMCS(reaction,null,sss);
             while (mcsResult != null) {
                 int color = getNextColor();
@@ -88,10 +85,10 @@ public class MCSReactionMapper implements IReactionMapper
                 fragment.setFragment(true);
 
                 // Do we need this???
-                CoordinateInventor coordinateInventor = new CoordinateInventor();
-                coordinateInventor.invent(fragment);
+//                CoordinateInventor coordinateInventor = new CoordinateInventor();
+//                coordinateInventor.invent(fragment);
 
-                StereoMolecule target = r.getReactant(mcsResult.getReactant());
+                StereoMolecule target = reaction.getReactant(mcsResult.getReactant());
                 // matchlist returns the indices on the
                 // A matchlist contains the the matched atom index for each atom on the target
                 // (Atom-) Array[0..n] (of fragment) contains indizes of the matched target atoms
@@ -101,11 +98,15 @@ public class MCSReactionMapper implements IReactionMapper
                     applyMaps(fragment, target, matchList);
 
                     // We mark temporarely the atom with an invalid atom number, so it gets excluded from the SSS in MCS
+                    // TLS 11Feb2021: this is an awful hack that destroys atom lists in the SSS matching. We need to do that better in the new due ReactionMapper!!!
+                    // TLS 11Feb2021: Introduced restoration of atom mass to be able to use atom mass matching by the SSSearcher
                     for (int i = 0; i < matchList.length; i++) {
                         int atom = matchList[i];
                         int t = REACTANTFLAG + target.getAtomicNo(atom);
                         target.setAtomList(atom, new int[]{t});
+                        int atomMass = target.getAtomMass(atom);    // retain original atom mass
                         target.setAtomicNo(atom, REACTANTFLAG_ATOMNUMBER);
+                        target.setAtomMass(atom, atomMass);
                     }
 
                     target = reaction.getProduct(mcsResult.getProduct());
@@ -117,7 +118,9 @@ public class MCSReactionMapper implements IReactionMapper
                         int atom = matchList[i];
                         int t = PRODUCTFLAG + target.getAtomicNo(atom);
                         target.setAtomList(atom, new int[]{t});
+                        int atomMass = target.getAtomMass(atom);    // retain original atom mass
                         target.setAtomicNo(atom, PRODUCTFLAG_ATOMNUMBER);
+                        target.setAtomMass(atom, atomMass);
                     }
 
                     System.out.println(mcsResult);
@@ -136,23 +139,26 @@ public class MCSReactionMapper implements IReactionMapper
                 for (int j = 0; j < mol.getAllAtoms(); j++) {
                     if (mol.getAtomicNo(j) == REACTANTFLAG_ATOMNUMBER) {
                         if(mol.getAtomList(j) != null) {
+                            int atomMass = mol.getAtomMass(j);    // retain original atom mass
                             mol.setAtomicNo(j, mol.getAtomList(j)[0] - REACTANTFLAG);
+                            mol.setAtomMass(j, atomMass);
                             mol.setAtomList(j, null);
                         }
                     } else if (mol.getAtomicNo(j) == PRODUCTFLAG_ATOMNUMBER) {
                         if(mol.getAtomList(j) != null) {
+                            int atomMass = mol.getAtomMass(j);    // retain original atom mass
                             mol.setAtomicNo(j, mol.getAtomList(j)[0] - PRODUCTFLAG);
+                            mol.setAtomMass(j, atomMass);
                             mol.setAtomList(j, null);
                         }
                     }
                 }
             }
-            ok = reaction;
+            return reaction;
         } catch (Exception e1) {
             e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            ok = null;
+            return null;
         }
-        return ok;
     }
 
 
@@ -175,12 +181,11 @@ public class MCSReactionMapper implements IReactionMapper
 
     private int[] findMatches(StereoMolecule fragment, StereoMolecule molecule, SSSearcher searcher)
     {
-//        SSSearcher searcher = new SSSearcher();
         searcher.setMol(fragment, molecule); // fragment, molecule
         int a = searcher.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cDefaultMatchMode);
 
         ArrayList<int[]> matchList = searcher.getMatchList(); // found match list of target
-        if (matchList != null) {
+        if (matchList != null && matchList.size() != 0) {
             return matchList.get(0);
         }
         return null;
@@ -188,12 +193,11 @@ public class MCSReactionMapper implements IReactionMapper
 
     private int[] highlightQuery(StereoMolecule fragment, StereoMolecule molecule, int color,SSSearcher searcher)
     {
-//        SSSearcher searcher = new SSSearcher();
         searcher.setMol(fragment, molecule); // fragment, molecule
         int a = searcher.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cDefaultMatchMode);
 
         ArrayList<int[]> matchList = searcher.getMatchList(); // found match list of target
-        if (matchList != null) {
+        if (matchList != null && matchList.size() != 0) {
             for (int[] matching : matchList) {
                 for (int k = 0; k < matching.length; k++) {
                     molecule.setAtomColor(matching[k], color);
@@ -286,7 +290,7 @@ public class MCSReactionMapper implements IReactionMapper
             searcher.setMol(fragment, candidate);
             searcher.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cDefaultMatchMode);
             ArrayList<int[]> matchList = searcher.getMatchList();
-            if (matchList != null) {
+            if (matchList != null && matchList.size() != 0) {
                 int count = 0;
                 for (int[] matching : matchList) {
                     for (int k = 0; k < matching.length; k++) {
@@ -307,6 +311,4 @@ public class MCSReactionMapper implements IReactionMapper
             }
         }
     }
-
-
 }

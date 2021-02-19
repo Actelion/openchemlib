@@ -1,15 +1,20 @@
 package com.actelion.research.gui.dock;
 
-import java.awt.event.MouseEvent;
-import javax.swing.JPopupMenu;
+import com.actelion.research.util.CursorHelper;
+
+import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
+import java.awt.event.MouseEvent;
 
 public class HeaderMouseAdapter extends MouseInputAdapter {
     private PopupProvider mPopupProvider = null;
-    private DockableHeader mHeader;
+    private JLabel mTitleLabel;
+    private Dockable mDockable;
+    private boolean mIsMouseDown;
 
-    public HeaderMouseAdapter(DockableHeader header) {
-        mHeader = header;
+    public HeaderMouseAdapter(JLabel titleLabel, Dockable dockable) {
+        mTitleLabel = titleLabel;
+        mDockable = dockable;
         }
 
     public PopupProvider getPopupProvider() {
@@ -20,19 +25,43 @@ public class HeaderMouseAdapter extends MouseInputAdapter {
         mPopupProvider = p;
         }
 
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        mTitleLabel.setCursor(CursorHelper.getCursor(CursorHelper.cHandCursor));
+        mIsMouseDown = false;
+        }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        if (!mIsMouseDown)
+            mTitleLabel.setCursor(CursorHelper.getCursor(CursorHelper.cPointerCursor));
+        mIsMouseDown = false;
+        }
+
+    @Override
     public void mousePressed(MouseEvent e) {
-        handlePopupTrigger(e);
-        }
-
-    public void mouseReleased(MouseEvent e) {
-        handlePopupTrigger(e);
-        }
-
-    private void handlePopupTrigger(MouseEvent e) {
-        if (mPopupProvider != null && e.isPopupTrigger()) {
-            JPopupMenu popup = mPopupProvider.createPopupMenu(mHeader.getTitle(), mHeader.getDockable().isMaximized());
-            popup.show(mHeader, e.getX(), e.getY());
+        if (!handlePopupTrigger(e)) {
+            mTitleLabel.setCursor(CursorHelper.getCursor(e.getButton() == MouseEvent.BUTTON1 ? CursorHelper.cFistCursor : CursorHelper.cPointerCursor));
+            mIsMouseDown = true;
+            mDockable.getDockingPanel().selectDockable(mDockable);
             }
         }
-    }
 
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        handlePopupTrigger(e);
+        mTitleLabel.setCursor(CursorHelper.getCursor(CursorHelper.cHandCursor));
+        mIsMouseDown = false;
+        }
+
+    private boolean handlePopupTrigger(MouseEvent e) {
+        if (mPopupProvider != null && e.isPopupTrigger()) {
+            mTitleLabel.setCursor(CursorHelper.getCursor(CursorHelper.cPointerCursor));
+            JPopupMenu popup = mPopupProvider.createPopupMenu(mTitleLabel.getText(), mDockable.isMaximized());
+            popup.show(mTitleLabel, e.getX(), e.getY());
+            return true;
+            }
+
+        return false;
+        }
+    }

@@ -37,9 +37,6 @@ import com.actelion.research.chem.SSSearcher;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.mcs.MCS;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 public class CommonSubGraphHelper
 {
 
@@ -128,7 +125,7 @@ public class CommonSubGraphHelper
 //        return null;
 //    }
 
-    public static Result getMCS(Reaction reaction, boolean[] exclude,SSSearcher sss)
+    public static Result getMCS(Reaction reaction, boolean[] exclude, SSSearcher sss)
     {
 //        MCS mcs = new MCS(MCS.PAR_KEEP_RINGS,sss);
         MCS mcs = new MCS(MCS.PAR_CLEAVE_RINGS,sss);
@@ -143,7 +140,7 @@ public class CommonSubGraphHelper
             int pn = reaction.getProducts();
             StereoMolecule res = null;
             int resReactantIndex = -1;
-            int resProcductIndex = -1;
+            int resProductIndex = -1;
             int max = 0;
 
             // Look for the biggest overlap
@@ -158,7 +155,7 @@ public class CommonSubGraphHelper
                         if (max < na) {
                             res = m;
                             resReactantIndex = r;
-                            resProcductIndex = p;
+                            resProductIndex = p;
                             max = na;
 //                            System.out.printf("Reactant %d -> Product %d max = %d\n",r,p,max);
                         }
@@ -177,7 +174,7 @@ public class CommonSubGraphHelper
 //                        if (max < na) {
 //                            res = m;
 //                            resReactantIndex = r;
-//                            resProcductIndex = p;
+//                            resProductIndex = p;
 //                            max = na;
 //                        }
 //                    }
@@ -185,8 +182,8 @@ public class CommonSubGraphHelper
 //            }
 
             if (res != null) {
-                //return new MCSResult(res,resReactantIndex,resProcductIndex);
-                ret = new Result(res, resReactantIndex, resProcductIndex);
+                //return new MCSResult(res,resReactantIndex,resProductIndex);
+                ret = new Result(res, resReactantIndex, resProductIndex);
             }
 
         } catch (Exception e) {

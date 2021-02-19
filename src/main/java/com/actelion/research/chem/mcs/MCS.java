@@ -1,6 +1,5 @@
 package com.actelion.research.chem.mcs;
 
-import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.chem.*;
 import com.actelion.research.util.datamodel.IntVec;
 
@@ -423,8 +422,33 @@ public class MCS
 		}
 		return arrBondMCSMol;
 	}
-	
-    private static StereoMolecule getSubFrag(StereoMolecule frag, IntVec iv)
+
+// The original procedure missed atom charge, mass, etc, which is particularly annoying,
+// when providing a custom SSSearcher(), which matches these properties. TLS 11Feb2021
+	private static StereoMolecule getSubFrag(StereoMolecule frag, IntVec iv) {
+		boolean[] isFragmentAtom = new boolean[frag.getAtoms()];
+		int atoms = 0;
+		int bonds = frag.getBonds();
+		for (int bond=0; bond<bonds; bond++) {
+			if (iv.isBitSet(bond)) {
+				for (int i=0; i<2; i++) {
+					int atom = frag.getBondAtom(i, bond);
+					if (!isFragmentAtom[atom]) {
+						isFragmentAtom[atom] = true;
+						atoms++;
+					}
+				}
+			}
+		}
+
+		StereoMolecule fragSubBonds = new StereoMolecule(atoms, bonds);
+		fragSubBonds.setFragment(true);
+		frag.copyMoleculeByAtoms(fragSubBonds, isFragmentAtom, true, null);
+		fragSubBonds.ensureHelperArrays(Molecule.cHelperRings);
+		return fragSubBonds;
+	}
+
+/*    private static StereoMolecule getSubFrag(StereoMolecule frag, IntVec iv)
     {
 		int bonds = frag.getBonds();
 		HashSet<Integer> hsAtomIndex = new HashSet<Integer>();
@@ -464,7 +488,7 @@ public class MCS
 		}
 		fragSubBonds.ensureHelperArrays(Molecule.cHelperRings);
 		return fragSubBonds;
-	}
+	}*/
 	
     private List<IntVec> getAllPlusOneAtomCombinations(IntVec iv, StereoMolecule frag)
     {

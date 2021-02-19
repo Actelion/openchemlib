@@ -62,8 +62,11 @@ public class JEditableChemistryView extends JChemistryView {
 
 	@Override
 	public void setContent(Reaction rxn, DrawingObjectList drawingObjectList) {
-		mReaction = rxn;
-		super.setContent(rxn, drawingObjectList);
+		if (rxn == null)
+			mReaction.clear();
+		else
+			mReaction = rxn;
+		super.setContent(mReaction, drawingObjectList);
 		}
 
 	@Override
@@ -80,8 +83,8 @@ public class JEditableChemistryView extends JChemistryView {
 		}
 
 	private boolean isEmpty() {
-		if (mReaction != null && !mReaction.isEmpty())
-			return false;
+		if (getChemistryType() == ExtendedDepictor.TYPE_REACTION)
+			return mReaction == null || mReaction.isEmpty();
 
 		if (mMolecules != null)
 			for (StereoMolecule mol:mMolecules)

@@ -3,46 +3,50 @@ package com.actelion.research.gui.dock;
 import com.actelion.research.gui.HeaderPaintHelper;
 import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.hidpi.HiDPIIconButton;
+import com.actelion.research.util.CursorHelper;
 import info.clearthought.layout.TableLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public class DockableHeader extends JPanel implements ActionListener {
+public class DockableHeader extends JPanel {
 	private static final long serialVersionUID = 0x20070723;
 
-	private static final double[][] SIZE = {{TableLayout.FILL,TableLayout.PREFERRED},{TableLayout.FILL,TableLayout.PREFERRED,TableLayout.FILL}};
+	private static final double[][] SIZE = {{TableLayout.FILL,TableLayout.PREFERRED},{TableLayout.PREFERRED}};
+
+	private static final int ALLOWED_DRAG_ACTIONS = DnDConstants.ACTION_MOVE;
 
 	private Dockable mDockable;
 	private JLabel mTitleLabel;
-	private ActionListener mActionListener;
+	private JToolBar mToolBar;
 	private HeaderMouseAdapter mMouseAdapter;
 	private boolean mIsSelected;
 
-	public DockableHeader(Dockable dockable, String title, ActionListener al, boolean isClosable, boolean hasPopupButton) {
+	public DockableHeader(Dockable dockable, String title, JToolBar toolBar) {
 		super(new TableLayout(SIZE));
 
 		mDockable = dockable;
-		mTitleLabel = new JLabel(title, SwingConstants.LEADING) /*{
-			private static final long serialVersionUID = 0x20080423;
-			public Dimension getPreferredSize() {
-				return new Dimension(super.getPreferredSize().width, 16);
-				}
-			}*/;
+		mTitleLabel = new JLabel(title, SwingConstants.LEADING);
 		mTitleLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 		mTitleLabel.setOpaque(false);
-		add(mTitleLabel, "0,0,0,2");
+		add(mTitleLabel, "0,0");
 
-		add(createToolBar(isClosable, hasPopupButton),"1,1");
+		mToolBar = toolBar != null ? toolBar : createDefaultToolBar();
+		add(mToolBar,"1,0");
 
 		setOpaque(true);
-		mActionListener = al;
-		mMouseAdapter = new HeaderMouseAdapter(this);
-		addMouseListener(mMouseAdapter);
-		addMouseMotionListener(mMouseAdapter);
+		mMouseAdapter = new HeaderMouseAdapter(mTitleLabel, dockable);
+		mTitleLabel.addMouseListener(mMouseAdapter);
+		mTitleLabel.addMouseMotionListener(mMouseAdapter);
+
+		DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(mTitleLabel, ALLOWED_DRAG_ACTIONS, e -> {
+			if (!mDockable.isMaximized() && mDockable.getDockingPanel().getDockableCount() >= 2)
+				e.startDrag(CursorHelper.getCursor(CursorHelper.cFistCursor), new TransferableDockable(mDockable));
+			} );
 		}
 
 	@Override
@@ -51,32 +55,25 @@ public class DockableHeader extends JPanel implements ActionListener {
 		updateToolbarSeparators();
 		}
 
-	private JToolBar createToolBar(boolean isClosable, boolean hasPopupButton) {
+	private JToolBar createDefaultToolBar() {
 		JToolBar toolbar = new JToolBar();
 		if (LookAndFeelHelper.isSubstance())
 			toolbar.addSeparator();
 
-		if (hasPopupButton) {
-			JButton popupButton = new HiDPIIconButton("axisButton.png", null, "popup", 0, null);
-			popupButton.addActionListener(this);
-			toolbar.add(popupButton);
-			if (LookAndFeelHelper.isSubstance())
-				toolbar.addSeparator();
-		}
-
-		JButton maxButton = new HiDPIIconButton("maxButton.png", "Maximize view", "max", 0, null);
-		maxButton.addActionListener(this);
+		JButton maxButton = new HiDPIIconButton("maxButton.png", "Maximize view", "max_", 0, null);
+		// since the dockable title can change, we need to construct the action command when the button is pressed
+		maxButton.addActionListener(e -> mDockable.getDockingPanel().actionPerformed(
+				new ActionEvent(maxButton, ActionEvent.ACTION_PERFORMED, "max_"+getTitle())));
 		toolbar.add(maxButton);
 		if (LookAndFeelHelper.isSubstance())
 			toolbar.addSeparator();
 
-		if (isClosable) {
-			JButton closeButton = new HiDPIIconButton("closeButton.png", null, "close", 0, null);
-			closeButton.addActionListener(this);
-			toolbar.add(closeButton);
-			if (LookAndFeelHelper.isSubstance())
-				toolbar.addSeparator();
-		}
+		JButton closeButton = new HiDPIIconButton("closeButton.png", "Close view", "close_", 0, null);
+		closeButton.addActionListener(e -> mDockable.getDockingPanel().actionPerformed(
+				new ActionEvent(closeButton, ActionEvent.ACTION_PERFORMED, "close_"+getTitle())));
+		toolbar.add(closeButton);
+		if (LookAndFeelHelper.isSubstance())
+			toolbar.addSeparator();
 
 		toolbar.setFloatable(false);
 		toolbar.setRollover(true);
@@ -92,29 +89,23 @@ public class DockableHeader extends JPanel implements ActionListener {
 	 * separators, for 'quaqua' we don't.
 	 */
 	private void updateToolbarSeparators() {
-		for (Component c:getComponents()) {
-			if (c instanceof JPanel && ((JPanel) c).getComponentCount() == 1) {
-				Component t = ((JPanel)c).getComponent(0);
-				if (t instanceof JToolBar) {
-					JToolBar toolbar = (JToolBar)t;
-					ArrayList<JButton> buttonList = new ArrayList<JButton>();
-					for (Component b:toolbar.getComponents())
-						if (b instanceof JButton)
-							buttonList.add((JButton) b);
-					toolbar.removeAll();
-					if (LookAndFeelHelper.isSubstance())
-						toolbar.addSeparator();
-					for (JButton b:buttonList) {
-						toolbar.add(b);
-						if (LookAndFeelHelper.isSubstance())
-							toolbar.addSeparator();
-						else if (LookAndFeelHelper.isQuaQua())
-							// after switch from substance to quaqua the toolbar button style is not re-established
-							// (instead if only showing aqua design when rolling over, it uses steady round style)
-							// "toolBarTab" seems the best what we can do.
-							b.putClientProperty("Quaqua.Button.style", "toolBarTab");
-						}
-					}
+		if (mToolBar != null) {
+			ArrayList<JButton> buttonList = new ArrayList<JButton>();
+			for (Component b:mToolBar.getComponents())
+				if (b instanceof JButton)
+					buttonList.add((JButton) b);
+			mToolBar.removeAll();
+			if (LookAndFeelHelper.isSubstance())
+				mToolBar.addSeparator();
+			for (JButton b:buttonList) {
+				mToolBar.add(b);
+				if (LookAndFeelHelper.isSubstance())
+					mToolBar.addSeparator();
+				else if (LookAndFeelHelper.isQuaQua())
+					// after switch from substance to quaqua the toolbar button style is not re-established
+					// (instead if only showing aqua design when rolling over, it uses steady round style)
+					// "toolBarTab" seems the best what we can do.
+					b.putClientProperty("Quaqua.Button.style", "toolBarTab");
 				}
 			}
 		}
@@ -157,23 +148,5 @@ public class DockableHeader extends JPanel implements ActionListener {
 
 	public void setPopupProvider(PopupProvider p) {
 		mMouseAdapter.setPopupProvider(p);
-		}
-
-	public void actionPerformed(ActionEvent e) {
-		String title = mTitleLabel.getText();
-		if (e.getActionCommand().equals("popup")) {
-			mActionListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "popup_"+title));
-			return;
-			}
-
-		if (e.getActionCommand().equals("max")) {
-			mActionListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "max_"+title));
-			return;
-			}
-
-		if (e.getActionCommand().equals("close")) {
-			mActionListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "close_"+title));
-			return;
-			}
 		}
 	}

@@ -2,14 +2,14 @@ package com.actelion.research.gui.dock;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-public class JDockingPanel extends JPanel implements ActionListener,AWTEventListener {
+public class JDockingPanel extends JPanel implements ActionListener {
 	private static final long serialVersionUID = 0x20070720;
 
 	public  static final int DOCK_CENTER = 0;
@@ -18,15 +18,16 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 	public  static final int DOCK_BOTTOM = 3;
 	public  static final int DOCK_RIGHT = 4;
 
+	public static final int ALLOWED_DRAG_DROP_ACTIONS = DnDConstants.ACTION_MOVE;   // currently no copy
+
 	private TreeMap<String,Dockable> mDockableMap;
 	private TreeMap<String,TreeLeaf> mLeafMap;
-	private Dockable mDraggedDockable,mPreviousTargetDockable;
+	private Dockable mPreviousTargetDockable;
 	private TreeRoot mTreeRoot;
 	private TreeLeaf mTargetLeaf;
 	private int mTargetPosition,mPreviousTargetPosition;
 	private GhostPreview mPreview;
 	private Dockable mMaximizedView;
-//	private ArrayList<ActionListener> mActionListenerList;
 
 	/**
 	 * Creates a docking panel to which any Dockables may be added by
@@ -36,31 +37,53 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 		mDockableMap = new TreeMap<>();
 		mLeafMap = new TreeMap<>();
 		mTargetPosition = -1;
-		try {   // applets throw a security exception which must be caught
-			Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK
-																| AWTEvent.MOUSE_MOTION_EVENT_MASK);
-			}
-		catch (java.security.AccessControlException e) {}
 		mPreview = new GhostPreview();
 
+		// Unfortunately, this cannot be used to catch drag events of default JTable with active DropTarget
+//		Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+
 		setLayout(new OverlayLayout(this));
-		}
 
-/*	public void addActionListener(ActionListener l) {
-		if (l != null) {
-			if (mActionListenerList == null)
-				mActionListenerList = new ArrayList<ActionListener>();
-			mActionListenerList.add(l);
-			}
-		}
+		new DropTarget(this, ALLOWED_DRAG_DROP_ACTIONS, new DropTargetAdapter() {
+			@Override
+			public void dragOver(DropTargetDragEvent dtde) {
+				Dockable dockable = getDraggedDockable(dtde);
+				if (dockable != null) {
+					Point p = dtde.getLocation();
+					Rectangle b = dockable.getHeader().getBounds();
+					p.translate(b.x, b.y);  // make p relative to Dockable
+					updatePreview(p, dockable);
+					}
+				}
 
-	public void removeActionListener(ActionListener l) {
-		if (l != null && mActionListenerList != null) {
-			mActionListenerList.remove(l);
-			if (mActionListenerList.size() == 0)
-				mActionListenerList = null;
-			}
-		}*/
+			@Override
+			public void drop(DropTargetDropEvent dtde) {
+				Transferable transferable = dtde.getTransferable();
+				if (mTargetPosition == -1
+				 || !transferable.isDataFlavorSupported(TransferableDockable.DF_DOCKABLE_DEF)) {
+// TODO do we need this?				fireDockableSelected(mDraggedDockable);
+					dtde.rejectDrop();
+					}
+				else {
+					dtde.acceptDrop(ALLOWED_DRAG_DROP_ACTIONS);
+					try {
+						String draggedTitle = (String)transferable.getTransferData(TransferableDockable.DF_DOCKABLE_DEF);
+						for (int i=0; i<mTargetLeaf.getDockableCount(); i++) {
+							if (!draggedTitle.equals(mTargetLeaf.getDockable(i).getTitle())) {
+								String targetTitle = mTargetLeaf.getDockable(i).getTitle();
+								relocateView(draggedTitle, targetTitle, mTargetPosition, 0.5f);
+								break;
+								}
+							}
+						dtde.dropComplete(true);
+						}
+					catch (Exception e) {}
+					}
+
+				mTargetPosition = -1;
+				}
+			}, true);
+		}
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().startsWith("close_")) {
@@ -69,18 +92,18 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 			}
 		else if (e.getActionCommand().startsWith("max_")) {
 			String title = e.getActionCommand().substring(4);
-			maximize(title);
+			maximize(title, null);
 			}
-
-/*		if (mActionListenerList != null)
-			for (ActionListener l:mActionListenerList)
-				l.actionPerformed(e);	*/
 		}
 
 	/**
 	 * Toggle the maximization state of the dockable in the docking panel.
+	 * If it is maximizing, then a toolbar may be provided that is shown in the maximized state.
+	 * Note that a null toolbar causes the maximized state to use the default toolbar with
+	 * maximize and close buttons only.
+	 * @param maximizeToolBar null for default or toolbar that shall be shown in maximized state
 	 */
-	public void maximize(String title) {
+	public void maximize(String title, JToolBar maximizeToolBar) {
 		Dockable dockable = mDockableMap.get(title);
 		if (mMaximizedView != null) {
 			remove(mMaximizedView);
@@ -95,52 +118,12 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 			JComponent content = dockable.borrowContent();
 
 			// create dummy dockable to hold the maximized view
-			mMaximizedView = new Dockable(this, content, title, this, false, dockable.hasMenuButton());
+			mMaximizedView = new Dockable(this, content, title, maximizeToolBar);
 			mMaximizedView.setPopupProvider(dockable.getPopupProvider());
 			mMaximizedView.setVisible(true);
 			add(mMaximizedView);
 
 			validate();
-			}
-		}
-
-	public void eventDispatched(AWTEvent event) {
-		if (!(event.getSource() instanceof DockableHeader)
-		 || !mDockableMap.containsValue(((DockableHeader)event.getSource()).getDockable())
-		 || mMaximizedView != null)
-			return;
-
-		if (event.getID() == MouseEvent.MOUSE_RELEASED) {
-			if (mTargetPosition == -1) {
-				fireDockableSelected(mDraggedDockable);
-				}
-			else {
-				String draggedTitle = mDraggedDockable.getTitle();
-				String targetTitle = null;
-				for (int i=0; i<mTargetLeaf.getDockableCount(); i++) {
-					if (!draggedTitle.equals(mTargetLeaf.getDockable(i).getTitle())) {
-						targetTitle = mTargetLeaf.getDockable(i).getTitle();
-						}
-					}
-				if (targetTitle != null)
-					relocateView(draggedTitle, targetTitle, mTargetPosition, 0.5f);
-				}
-			mTargetPosition = -1;
-			mDraggedDockable = null;
-			return;
-			}
-
-		if (event.getID() == MouseEvent.MOUSE_PRESSED) {
-			mDraggedDockable = ((DockableHeader)event.getSource()).getDockable();
-			selectDockable(mDraggedDockable);
-			return;
-			}
-
-		if (event.getID() == MouseEvent.MOUSE_DRAGGED) {
-			Point p = ((MouseEvent)event).getPoint();
-			Rectangle b = ((DockableHeader)event.getSource()).getBounds();
-			p.translate(b.x, b.y);  // make p relative to Dockable
-			updatePreview(p);
 			}
 		}
 
@@ -152,12 +135,10 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 		actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "selected_"+dockable.getTitle()));
 		}
 
-	private void updatePreview(Point p) {
+	private void updatePreview(Point p, Dockable draggedDockable) {
 		mTargetPosition = -1;
 		Dockable targetDockable = null;
 
-		Rectangle b = getAbsoluteBounds(mDraggedDockable);
-		p.translate(b.x, b.y);  // make p relative to JDockingPanel
 		for (Dockable d:mDockableMap.values()) {
 			if (d.isVisible()) {
 				Rectangle bounds = getAbsoluteBounds(d.getContent());
@@ -169,7 +150,7 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 				}
 			}
 
-		updatePreview(targetDockable);
+		updatePreview(draggedDockable, targetDockable);
 		}
 
 	/**
@@ -204,12 +185,12 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 		return isTopOrLeft ? DOCK_LEFT : DOCK_BOTTOM;
 		}
 
-	private void updatePreview(Dockable targetDockable) {
+	private void updatePreview(Dockable draggedDockable, Dockable targetDockable) {
 		if (targetDockable == null) {
 			mTargetPosition = -1;
 			}
-		else if (targetDockable == mDraggedDockable) {
-			TreeLeaf sourceLeaf = mLeafMap.get(mDraggedDockable.getTitle());
+		else if (targetDockable == draggedDockable) {
+			TreeLeaf sourceLeaf = mLeafMap.get(draggedDockable.getTitle());
 			if (mTargetPosition == DOCK_CENTER
 			 || sourceLeaf.getDockableCount() == 1)
 				mTargetPosition = -1;
@@ -223,7 +204,7 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 		if (mPreviousTargetDockable != targetDockable
 		 || mPreviousTargetPosition != mTargetPosition) {
 			if (mTargetPosition != -1)
-				mPreview.createPreview(mDraggedDockable, targetDockable, mTargetPosition, this);
+				mPreview.createPreview(draggedDockable, targetDockable, mTargetPosition, this);
 			mPreviousTargetDockable = targetDockable;
 			mPreviousTargetPosition = mTargetPosition;
 			repaint();
@@ -500,6 +481,17 @@ public class JDockingPanel extends JPanel implements ActionListener,AWTEventList
 			if (d.isSelected())
 				return d;
 
+		return null;
+		}
+
+	public Dockable getDraggedDockable(DropTargetDragEvent dtde) {
+		Transferable transferable = dtde.getTransferable();
+		if (transferable.isDataFlavorSupported(TransferableDockable.DF_DOCKABLE_DEF)) {
+			try {
+				return getDockable((String)transferable.getTransferData(TransferableDockable.DF_DOCKABLE_DEF));
+				}
+			catch (Exception e) {}
+			}
 		return null;
 		}
 

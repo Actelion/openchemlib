@@ -35,8 +35,14 @@ package com.actelion.research.gui;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
+import com.actelion.research.chem.io.CompoundFileHelper;
+import com.actelion.research.chem.io.RDFileParser;
+import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
-import com.actelion.research.chem.reaction.*;
+import com.actelion.research.chem.reaction.IReactionMapper;
+import com.actelion.research.chem.reaction.MoleculeAutoMapper;
+import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.chem.reaction.ReactionArrow;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
@@ -53,6 +59,7 @@ import java.awt.dnd.DropTarget;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -79,6 +86,8 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private static final String ITEM_PASTE_STRUCTURE = "Paste Structure";
 	private static final String ITEM_PASTE_REACTION = "Paste Reaction";
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE_STRUCTURE+" or Name";
+	private static final String ITEM_LOAD_REACTION = "Open Reaction File...";
+	private static final String ITEM_REMOVE_MAPPING = "Remove Manual Atom Mapping";
 
 	private static final long WARNING_MILLIS = 1200;
 
@@ -125,7 +134,6 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private static final int cRequestCopySelected = 9;
 	private static final int cRequestMoveObject = 10;
 	private static final int cRequestCopyObject = 11;
-	public static final int FAKE_ATOM_NO = 100;
 
 	private Dimension mSize;
 	private int mMode, mChainAtoms, mCurrentTool, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical,
@@ -140,10 +148,10 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private String mOtherLabel,mWarningMessage;
 	private String[] mAtomText;
 	private ExtendedDepictor mDepictor;
-	private StereoMolecule mMol;		// molecule being modified directly by the drawing editor
-	private Molecule mUndoMol;   // molecule in undo buffer
+	private StereoMolecule mMol;	    // molecule being modified directly by the drawing editor
+	private Molecule mUndoMol;          // molecule in undo buffer
 	private StereoMolecule[] mFragment;	// in case of MODE_MULTIPLE_FRAGMENTS contains valid stereo fragments
-	// for internal and external read-only-access (reconstructed at any change)
+										// for internal and external read-only-access (reconstructed at any change)
 	private DrawingObjectList mDrawingObjectList, mUndoDrawingObjectList;
 	private AbstractDrawingObject mCurrentHiliteObject;
 	private Polygon mLassoRegion;
@@ -583,6 +591,10 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			pasteReaction();
 		} else if (command.startsWith(ITEM_PASTE_STRUCTURE)) {
 			pasteMolecule();
+		} else if (e.getActionCommand().equals(ITEM_LOAD_REACTION)) {
+			openReaction();
+		} else if (e.getActionCommand().equals(ITEM_REMOVE_MAPPING)) {
+			removeManualMapping();
 		} else if (command.startsWith("atomColor")) {
 			int index = command.indexOf(':');
 			int atom = Integer.parseInt(command.substring(9, index));
@@ -596,6 +608,27 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			} else {
 				mMol.setAtomColor(atom, color);
 			}
+		}
+	}
+
+	private void removeManualMapping() {
+		boolean changed = false;
+		for (int atom = 0; atom < mMol.getAtoms(); atom++) {
+			if (mMol.getAtomMapNo(atom) != 0 && !mMol.isAutoMappedAtom(atom)) {
+				if (!changed) {
+					storeState();
+					changed = true;
+				}
+
+				mMol.setAtomMapNo(atom, 0, false);
+				}
+			}
+
+		if (changed) {
+			tryAutoMapReaction();
+			fireMoleculeChanged();
+			mUpdateMode = Math.max(mUpdateMode, UPDATE_REDRAW);
+			repaint();
 		}
 	}
 
@@ -785,7 +818,34 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		}
 		return ret;
 	}
-	// end changes CxR
+
+	private void openReaction() {
+		File rxnFile = FileHelper.getFile(this, "Please select a reaction file",
+				FileHelper.cFileTypeRXN | CompoundFileHelper.cFileTypeRD);
+		if (rxnFile != null) {
+			try {
+				Reaction reaction = null;
+
+				if (FileHelper.getFileType(rxnFile.getName()) == FileHelper.cFileTypeRXN) {
+					reaction = new RXNFileParser().getReaction(rxnFile);
+				}
+				else {
+					RDFileParser rdfParser = new RDFileParser(rxnFile);
+					if (rdfParser.isReactionNext())
+						reaction = rdfParser.getNextReaction();
+				}
+
+				if (reaction != null) {
+					for (int i = 0; i < reaction.getMolecules(); i++) {
+						reaction.getMolecule(i).setFragment(mMol.isFragment());
+					}
+					storeState();
+					setReaction(reaction);
+				}
+			}
+			catch (Exception ex) {}
+		}
+	}
 
 	private void showWarningMessage(String msg) {
 		mWarningMessage = msg;
@@ -1298,29 +1358,48 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	{
 		if (e.isPopupTrigger()) {
 			JPopupMenu popup = null;
+
 			if (mClipboardHandler != null) {
+				popup = new JPopupMenu();
+
 				JMenuItem menuItem1 = new JMenuItem(analyseCopy(false) ? ITEM_COPY_REACTION : ITEM_COPY_STRUCTURE);
 				menuItem1.addActionListener(this);
-				if (mMol.getAllAtoms() == 0) {
+				if (mMol.getAllAtoms() == 0)
 					menuItem1.setEnabled(false);
-				}
+				popup.add(menuItem1);
 
 				JMenuItem menuItem2 = null;
 				if ((mMode & MODE_REACTION) != 0) {
 					menuItem2 = new JMenuItem(ITEM_PASTE_REACTION);
 					menuItem2.addActionListener(this);
+					popup.add(menuItem2);
 				}
 
 				String itemText = (StructureNameResolver.getInstance() == null) ? ITEM_PASTE_STRUCTURE : ITEM_PASTE_WITH_NAME;
 				JMenuItem menuItem3 = new JMenuItem(itemText);
 				menuItem3.addActionListener(this);
-
-				popup = new JPopupMenu();
-				popup.add(menuItem1);
-				if (menuItem2 != null)
-					popup.add(menuItem2);
 				popup.add(menuItem3);
+
+				JMenuItem menuItem4 = null;
+				if ((mMode & MODE_REACTION) != 0) {
+					menuItem4 = new JMenuItem(ITEM_LOAD_REACTION);
+					menuItem4.addActionListener(this);
+					popup.addSeparator();
+					popup.add(menuItem4);
+				}
 			}
+
+			if ((mMode & MODE_REACTION) != 0 && mCurrentTool == JDrawToolbar.cToolMapper) {
+				if (popup == null)
+					popup = new JPopupMenu();
+				else
+					popup.addSeparator();
+
+				JMenuItem menuItem = new JMenuItem(ITEM_REMOVE_MAPPING);
+				menuItem.addActionListener(this);
+				popup.add(menuItem);
+			}
+
 			if (mAtomColorSupported && mCurrentHiliteAtom != -1) {
 				int atomColor = mMol.getAtomColor(mCurrentHiliteAtom);
 				if (popup == null) {
@@ -1339,6 +1418,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				addColorToMenu(colorMenu, AbstractDepictor.COLOR_ORANGE, Molecule.cAtomColorOrange, atomColor == Molecule.cAtomColorOrange);
 				popup.add(colorMenu);
 			}
+
 			if (popup != null) {
 				popup.show(this, e.getX(), e.getY());
 			}
@@ -1980,7 +2060,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 							}
 						}
 
-					tryAutoMapReaction();
+						tryAutoMapReaction();
 					}
 				} else {
 					storeState();
@@ -2014,7 +2094,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 						mMol.setAtomMapNo(atom2, freeMapNo, false);
 					}
 
-				tryAutoMapReaction();
+					tryAutoMapReaction();
 				}
 
 				if (mapNoChanged) {
@@ -2024,29 +2104,6 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 
 				repaint();
 				break;
-		}
-	}
-
-	static class MySSSearcher extends SSSearcher
-	{
-		@Override
-		public boolean areAtomsSimilar(int moleculeAtom, int fragmentAtom)
-		{
-			if (mMolecule.getAtomicNo(moleculeAtom) == mFragment.getAtomicNo(fragmentAtom))
-				if (mMolecule.isAromaticAtom(moleculeAtom) || mFragment.isAromaticAtom(fragmentAtom))
-					return true;
-			return super.areAtomsSimilar(moleculeAtom, fragmentAtom);
-		}
-
-		@Override
-		public boolean areBondsSimilar(int moleculeBond, int fragmentBond)
-		{
-			if (mMolecule.isAromaticBond(moleculeBond) || mMolecule.isDelocalizedBond(moleculeBond) ||
-				mFragment.isAromaticBond(fragmentBond) || mFragment.isDelocalizedBond(fragmentBond)
-				)
-				return true;
-			return super.areBondsSimilar(moleculeBond, fragmentBond);
-			//return true;
 		}
 	}
 
@@ -2066,21 +2123,49 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		// We assume that we use the MCS-mapper, which doesn't care about manually mapped atoms.
 		// Thus, we need a hack to ensure that manually mapped atoms are reliably part of
 		// the MCS-mapper's result. Therefore we give every manually mapped atom pair a
-		// unique fake atomicNo.
+		// unique fake atom mass. Original atom masses are copied and later restored.
+		// We also provide an updated SSSearcher(), which requires atom mass equivalence for
+		// atoms to match.
 
-		SSSearcher sss = new MySSSearcher();    // TODO this should go into the mcs-mapper
-//		syncFragments();    commented out, because it seems to conflict with outomatic fragment detection; TLS 11Nov2018
+		SSSearcher sss = new SSSearcher() {
+			@Override
+			public boolean areAtomsSimilar(int moleculeAtom, int fragmentAtom) {
+				if (mMolecule.getAtomicNo(moleculeAtom) == mFragment.getAtomicNo(fragmentAtom)) {
+					if (mMolecule.getAtomMass(moleculeAtom) != mFragment.getAtomMass(fragmentAtom))
+						return false;
 
-		Reaction rxn = getReaction();//new Reaction(reaction);
+					if (mMolecule.isAromaticAtom(moleculeAtom) || mFragment.isAromaticAtom(fragmentAtom))
+						return true;
+					}
+
+				return super.areAtomsSimilar(moleculeAtom, fragmentAtom);
+				}
+
+			@Override
+			public boolean areBondsSimilar(int moleculeBond, int fragmentBond) {
+				if (mMolecule.isAromaticBond(moleculeBond)
+				 || mMolecule.isDelocalizedBond(moleculeBond)
+				 || mFragment.isAromaticBond(fragmentBond)
+				 || mFragment.isDelocalizedBond(fragmentBond))
+					return true;
+
+				return super.areBondsSimilar(moleculeBond, fragmentBond);
+			}
+		};
+//		syncFragments();    commented out, because it seems to conflict with automatic fragment detection; TLS 11Nov2018
+
+		Reaction rxn = getReaction();
 
 		// manual mapNos a put as negative keys!!!
 		TreeMap<Integer,Integer> oldToNewMapNo = new TreeMap<>();
 		int nextMapNo = 1;
 
+		final int fakeAtomMassBase = 512;
+
 		// Mark the manually mapped atoms such that the mapper uses them first priority and
 		// to be able to re-assign them later as manually mapped.
 		int[] fragmentAtom = new int[mFragment.length];
-		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 			int fragment = mFragmentNo[atom];
 			mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], 0, false);
 			if (mMol.getAtomMapNo(atom) != 0 && !mMol.isAutoMappedAtom(atom)) {
@@ -2091,7 +2176,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				if (newMapNo == null)
 					oldToNewMapNo.put(-manualMapNo, newMapNo = new Integer(nextMapNo++));
 
-				mFragment[fragment].setAtomicNo(fragmentAtom[fragment], FAKE_ATOM_NO + newMapNo);
+				mFragment[fragment].setAtomMass(fragmentAtom[fragment], fakeAtomMassBase + newMapNo);
 			}
 			fragmentAtom[fragment]++;
 		}
@@ -2105,13 +2190,13 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			fragmentAtom = new int[mFragment.length];
 			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
 				int fragment = mFragmentNo[atom];
-				boolean hasFakeAtomicNo = (mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) > FAKE_ATOM_NO);
-				if (hasFakeAtomicNo) {
+				boolean hasFakeAtomMass = (mFragment[fragment].getAtomMass(fragmentAtom[fragment]) > fakeAtomMassBase);
+				if (hasFakeAtomMass) {
 					// rescue new mapNo
-					int newMapNo = mFragment[fragment].getAtomicNo(fragmentAtom[fragment]) - FAKE_ATOM_NO;
+					int newMapNo = mFragment[fragment].getAtomMass(fragmentAtom[fragment]) - fakeAtomMassBase;
 
-					// repair atomicNo
-					mFragment[fragment].setAtomicNo(fragmentAtom[fragment], mMol.getAtomicNo(atom));
+					// repair fake atom mass
+					mFragment[fragment].setAtomMass(fragmentAtom[fragment], mMol.getAtomMass(atom));
 
 					mMol.setAtomMapNo(atom, newMapNo, false);
 					mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], newMapNo, false);
@@ -2134,11 +2219,11 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			}
 		}
 		else {
-			// restore original atomic numbers in fragments and copy display molecule's mapping number into fragments
+			// restore original atom masses in fragments and copy molecule's mapping number into fragments
 			fragmentAtom = new int[mFragment.length];
 			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
 				int fragment = mFragmentNo[atom];
-				mFragment[fragment].setAtomicNo(fragmentAtom[fragment], mMol.getAtomicNo(atom));
+				mFragment[fragment].setAtomMass(fragmentAtom[fragment], mMol.getAtomMass(atom));
 				mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], mMol.getAtomMapNo(atom), mMol.isAutoMappedAtom(atom));
 				fragmentAtom[fragment]++;
 			}
@@ -3013,7 +3098,6 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		update(UPDATE_SCALE_COORDS);
 	}
 
-	// Added by CXR 
 	public int getMode()
 	{
 		return mMode;

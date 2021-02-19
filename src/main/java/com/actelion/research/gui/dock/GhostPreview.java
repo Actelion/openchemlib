@@ -27,7 +27,7 @@ public class GhostPreview {
 		g.setColor(Color.BLACK);
 		g.drawRect(mPreviewBounds.x, mPreviewBounds.y, mPreviewBounds.width, mPreviewBounds.height);
 		
-		// make the graphics 50% translucent
+		// make the graphics 20% translucent
 		Composite original = g.getComposite();
 		Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f);
 		g.setComposite(composite);

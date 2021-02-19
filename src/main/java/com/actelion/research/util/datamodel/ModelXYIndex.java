@@ -4,6 +4,7 @@ package com.actelion.research.util.datamodel;
 import com.actelion.research.calc.Matrix;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -151,6 +152,52 @@ public class ModelXYIndex extends ModelXY {
 	}
 
 
+	/**
+	 *
+	 * @return Deep copy.
+	 */
+	public List<XYIndex> getAsListWithIndex(){
+
+		int rows = X.rows();
+
+		List<XYIndex> li = new ArrayList<>(rows);
+
+		for (int i = 0; i < rows; i++) {
+			XYIndex XY = new XYIndex(X.getRowCopy(i), Y.getRowCopy(i));
+
+			if(liIndex!=null){
+				XY.index = liIndex.get(i);
+			}
+			li.add(XY);
+		}
+
+		return li;
+	}
+
+	public ModelXYIndex getSortedByY(int colY){
+
+		List<XYIndex>  li = getAsListWithIndex();
+
+		Collections.sort(li, XY.getComparatorY(colY));
+
+		double [][] arrX = new double[li.size()][];
+		double [][] arrY = new double[li.size()][];
+
+		List<Integer> liIndex = new ArrayList<>(li.size());
+		for (int i = 0; i < li.size(); i++) {
+			arrX[i]=li.get(i).x;
+			arrY[i]=li.get(i).y;
+			liIndex.add(li.get(i).index);
+		}
+
+		ModelXYIndex modelSorted = new ModelXYIndex();
+
+		modelSorted.X = new Matrix(arrX);
+		modelSorted.Y = new Matrix(arrY);
+		modelSorted.liIndex=liIndex;
+
+		return modelSorted;
+	}
 
 
 

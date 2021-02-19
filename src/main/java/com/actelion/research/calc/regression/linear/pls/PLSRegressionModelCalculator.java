@@ -118,6 +118,13 @@ public class PLSRegressionModelCalculator extends ARegressionMethod<ParameterPLS
 		return YHatTest.get(0,0);
 	}
 
+	public double calculateYHat(byte[] arrRow) {
+
+		Matrix YHatTest = SimPLS.invLinReg_Yhat(B, X, new Matrix(true, arrRow), Y);
+
+		return YHatTest.get(0,0);
+	}
+
 	public Matrix calculateYHatWithoutDeCentering(Matrix Xtest){
 
 		Matrix YHatTest = SimPLS.invLinReg_Yhat(B, Xtest);
