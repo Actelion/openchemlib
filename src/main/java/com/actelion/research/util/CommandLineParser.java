@@ -49,6 +49,8 @@ import java.util.List;
  */
 public class CommandLineParser {
 
+    public static final String SEP_TAG = ";";
+
     public static final String HELP = "-h";
 
     private HashMap<String,String> hmCommandValue;
@@ -91,6 +93,20 @@ public class CommandLineParser {
 
     public String get(String command) {
         return hmCommandValue.get(command);
+    }
+
+    public List<String> getAsList(String command) {
+
+        String s = hmCommandValue.get(command);
+
+        String [] a = s.split(SEP_TAG);
+
+        List<String> l = new ArrayList<>();
+        for (String tok : a) {
+            l.add(tok);
+        }
+
+        return l;
     }
 
     public File getAsFile(String command) {
