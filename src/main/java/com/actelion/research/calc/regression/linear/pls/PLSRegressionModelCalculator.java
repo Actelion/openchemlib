@@ -112,16 +112,17 @@ public class PLSRegressionModelCalculator extends ARegressionMethod<ParameterPLS
 
 	@Override
 	public double calculateYHat(double[] arrRow) {
-
 		Matrix YHatTest = SimPLS.invLinReg_Yhat(B, X, new Matrix(true, arrRow), Y);
-
 		return YHatTest.get(0,0);
 	}
 
 	public double calculateYHat(byte[] arrRow) {
-
 		Matrix YHatTest = SimPLS.invLinReg_Yhat(B, X, new Matrix(true, arrRow), Y);
+		return YHatTest.get(0,0);
+	}
 
+	public double calculateYHat(int[] arrRow) {
+		Matrix YHatTest = SimPLS.invLinReg_Yhat(B, X, new Matrix(true, arrRow), Y);
 		return YHatTest.get(0,0);
 	}
 
