@@ -717,15 +717,21 @@ public class IntVec implements Comparable<IntVec> {
     }
 
     public static double mult(IntVec iv1, IntVec iv2) {
-
         double dSum = 0.0;
-
         for (int i = 0; i < iv1.data.length; i++) {
             dSum += iv1.data[i] * iv2.data[i];
         }
-
         return dSum;
     }
+
+    public static double mult(int [] a, int [] b) {
+        double dSum = 0.0;
+        for (int i = 0; i < a.length; i++) {
+            dSum += a[i] * b[i];
+        }
+        return dSum;
+    }
+
 
     public static double multByteWise(IntVec iv1, IntVec iv2) {
         return multByteWise(iv1.data, iv2.data);
@@ -1389,6 +1395,18 @@ public class IntVec implements Comparable<IntVec> {
         double dAtB = mult(iv1, iv2);
         double dAtA = mult(iv1, iv1);
         double dBtB = mult(iv2, iv2);
+
+        sum = dAtB / (dAtA + dBtB - dAtB);
+
+        return sum;
+    }
+
+    static public double getTanimotoDist(int [] a, int [] b) {
+
+        double sum = 0;
+        double dAtB = mult(a, b);
+        double dAtA = mult(a, a);
+        double dBtB = mult(b, b);
 
         sum = dAtB / (dAtA + dBtB - dAtB);
 

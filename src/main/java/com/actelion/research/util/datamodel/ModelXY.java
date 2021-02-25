@@ -2,6 +2,7 @@
 package com.actelion.research.util.datamodel;
 
 import com.actelion.research.calc.Matrix;
+import com.actelion.research.calc.MatrixFunctions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,6 +76,8 @@ public class ModelXY implements IModelCloneable<ModelXY> {
 
 		Y.copy(source.Y);
 	}
+
+
 	
 	/**
 	 * 
@@ -95,13 +98,27 @@ public class ModelXY implements IModelCloneable<ModelXY> {
 	 * @return Deep copy.
 	 */
 	public List<XY> getAsList(){
-
 		int rows = X.rows();
-
 		List<XY> li = new ArrayList<>(rows);
-
 		for (int i = 0; i < rows; i++) {
 			li.add(new XY(X.getRowCopy(i), Y.getRowCopy(i)));
+		}
+		return li;
+	}
+
+	public List<int []> toIntegerListX(){
+		int rows = X.rows();
+		List<int []> li = new ArrayList<>(rows);
+		for (int i = 0; i < rows; i++) {
+
+			double [] a = X.getRow(i);
+
+			int [] b = new int[a.length];
+
+			for (int j = 0; j < a.length; j++) {
+				b[j]=(int)a[j];
+			}
+			li.add(b);
 		}
 		return li;
 	}
@@ -130,5 +147,10 @@ public class ModelXY implements IModelCloneable<ModelXY> {
 		return modelSorted;
 	}
 
+	public static ModelXY appendRows(ModelXY a, ModelXY b){
+			Matrix X = MatrixFunctions.appendRows(a.X, b.X);
+			Matrix Y = MatrixFunctions.appendRows(a.Y, b.Y);
+			return new ModelXY(X,Y);
+	}
 
 }
