@@ -5,6 +5,7 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
+import org.openmolecules.chem.conf.gen.RigidFragmentCache;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +22,9 @@ public class ConformerSetGenerator {
 		mMaxNrConfs = maxNrConfs;
 		mStrategy = strategy;
 		mUseFF = useFF;
-		mConfGen = new ConformerGenerator(seed, useFF);
+		RigidFragmentCache fragCache = RigidFragmentCache.getDefaultInstance();
+		fragCache.loadDefaultCache();
+		mConfGen = new ConformerGenerator(seed,fragCache, useFF);
 	}
 	
 	/**
