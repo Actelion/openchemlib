@@ -25,6 +25,7 @@ public class PheSAAlignment {
 	private MolecularVolume molGauss;
 	private double ppWeight;
 	public enum axis {X,Y,Z};
+	private boolean extendedSimilarity; //if true, also directionality and atomtype similarity are considered
 
 
 	
@@ -34,6 +35,7 @@ public class PheSAAlignment {
 		this.ppWeight = ppWeight;
 		this.refMolGauss = new MolecularVolume(refMol);
 		this.molGauss = new MolecularVolume(mol);
+		extendedSimilarity = false;
 	}
 	
 	public PheSAAlignment(StereoMolecule refMol, StereoMolecule mol) {
@@ -382,7 +384,10 @@ public class PheSAAlignment {
 		for(PPGaussian refPP:refMolGauss.getPPGaussians()){
 			int index = 0;
 			for(PPGaussian fitPP:molGauss.getPPGaussians()){
-				Vtot+=refPP.getWeight()*refPP.getSimilarity(fitPP, fitDirectionalityMod[index])* refPP.getVolumeOverlap(fitPP, fitCenterModCoords[index],10.0);
+				if(extendedSimilarity)
+					Vtot+=refPP.getWeight()*refPP.getSimilarity(fitPP, fitDirectionalityMod[index])* refPP.getVolumeOverlap(fitPP, fitCenterModCoords[index],10.0);
+				else 
+					Vtot+= refPP.getWeight()*refPP.getVolumeOverlap(fitPP, fitCenterModCoords[index],10.0);
 				index+=1;
 			
 		}
@@ -433,7 +438,10 @@ public class PheSAAlignment {
 		double Vtot = 0.0;
 		for(PPGaussian pp:molGauss.getPPGaussians()){
 			for(PPGaussian pp2:molGauss.getPPGaussians()){
-				Vtot+=pp.getWeight()*pp.getSimilarity(pp2)* pp.getVolumeOverlap(pp2);
+				if(extendedSimilarity)
+					Vtot+=pp.getWeight()*pp.getSimilarity(pp2)* pp.getVolumeOverlap(pp2);
+				else 
+					Vtot+=pp.getWeight()* pp.getVolumeOverlap(pp2);
 			}
 		}
 		return Vtot;
