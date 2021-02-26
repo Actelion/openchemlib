@@ -56,23 +56,60 @@ public class SmilesParser {
 		if (ArrayUtils.indexOf(smiles, (byte)'>', index2+1) != -1)
 			throw new Exception("Found more than 2 separators ('>').");
 
-		StereoMolecule reactants = new StereoMolecule();
-		parse(reactants, smiles, 0, index1);
+		Reaction rxn = new Reaction();
 
-		StereoMolecule products = new StereoMolecule();
-		parse(products, smiles, index2+1, smiles.length);
+		int start = 0;
+		while (start < index1) {
+			int index = ArrayUtils.indexOf(smiles, (byte)'.', start+1);
+			if (index != -1 && index+2 < index1 && smiles[index+1] == '.') {
+				StereoMolecule reactant = new StereoMolecule();
+				parse(reactant, smiles, start, index);
+				rxn.addReactant(reactant);
+				start = index + 2;
+				continue;
+				}
 
-		StereoMolecule catalysts = null;
-		if (index2 - index1 > 1) {
-			catalysts = new StereoMolecule();
-			parse(catalysts, smiles, index1+1, index2);
+			StereoMolecule reactants = new StereoMolecule();
+			parse(reactants, smiles, start, index1);
+			rxn.addReactant(reactants);
+			break;
 			}
 
-		Reaction rxn = new Reaction();
-		rxn.addReactant(reactants);
-		rxn.addProduct(products);
-		if (catalysts != null)
-			rxn.addCatalyst(catalysts);
+		if (index2 - index1 > 1) {
+			start = index1+1;
+			while (start < index2) {
+				int index = ArrayUtils.indexOf(smiles, (byte)'.', start+1);
+				if (index != -1 && index+2 < index2 && smiles[index+1] == '.') {
+					StereoMolecule catalyst = new StereoMolecule();
+					parse(catalyst, smiles, start, index);
+					rxn.addCatalyst(catalyst);
+					start = index + 2;
+					continue;
+					}
+
+				StereoMolecule catalysts = new StereoMolecule();
+				parse(catalysts, smiles, start, index2);
+				rxn.addCatalyst(catalysts);
+				break;
+				}
+			}
+
+		start = index2+1;
+		while (start < smiles.length) {
+			int index = ArrayUtils.indexOf(smiles, (byte)'.', start+1);
+			if (index != -1 && index+2 < smiles.length && smiles[index+1] == '.') {
+				StereoMolecule product = new StereoMolecule();
+				parse(product, smiles, start, index);
+				rxn.addProduct(product);
+				start = index + 2;
+				continue;
+				}
+
+			StereoMolecule products = new StereoMolecule();
+			parse(products, smiles, start, smiles.length);
+			rxn.addProduct(products);
+			break;
+			}
 
 		return rxn;
 		}
