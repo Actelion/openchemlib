@@ -78,7 +78,7 @@ public class JEditableStructureView extends JStructureView {
             Component c = this;
             while (!(c instanceof Frame || c instanceof Dialog))
                 c = c.getParent();
-            JDrawDialog theDialog = (c instanceof Frame) ? new JDrawDialog((Frame)c, getMolecule()) : new JDrawDialog((Dialog)c, getMolecule());
+            JDrawDialog theDialog = (c instanceof Frame) ? new JDrawDialog((Frame)c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL) : new JDrawDialog((Dialog)c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL);
             theDialog.getDrawArea().setAllowQueryFeatures(mAllowQueryFeatures);
             theDialog.addStructureListener(this);
             theDialog.setVisible(true);

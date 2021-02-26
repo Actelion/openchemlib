@@ -46,8 +46,16 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
 		this(owner, mol, DEFAULT_TITLE);
 		}
 
+	public JDrawDialog(Dialog owner, StereoMolecule mol, ModalityType modalityType) {
+		this(owner, mol, DEFAULT_TITLE, modalityType);
+		}
+
 	public JDrawDialog(Dialog owner, StereoMolecule mol, String title) {
-		super(owner, title, true);
+		this(owner, mol, title, Dialog.DEFAULT_MODALITY_TYPE);
+		}
+
+	public JDrawDialog(Dialog owner, StereoMolecule mol, String title, ModalityType modalityType) {
+		super(owner, title, modalityType);
 		mMolecule = (mol == null) ? new StereoMolecule() : new StereoMolecule(mol);
 		initialize(owner, 0);
 		}
@@ -71,18 +79,34 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
 		this(owner, mol, DEFAULT_TITLE);
 		}
 
+	public JDrawDialog(Frame owner, StereoMolecule mol, ModalityType modalityType) {
+		this(owner, mol, DEFAULT_TITLE, modalityType);
+		}
+
 	public JDrawDialog(Frame owner, StereoMolecule mol, String title) {
-		super(owner, title, true);
+		this(owner, mol, title, Dialog.DEFAULT_MODALITY_TYPE);
+		}
+
+	public JDrawDialog(Frame owner, StereoMolecule mol, String title, ModalityType modalityType) {
+		super(owner, title, modalityType);
 		mMolecule = (mol == null) ? new StereoMolecule() : new StereoMolecule(mol);
 		initialize(owner, 0);
 		}
 
 	public JDrawDialog(Frame owner, StereoMolecule[] mol) {
 		this(owner, mol, DEFAULT_TITLE);
-	}
+		}
+
+	public JDrawDialog(Frame owner, StereoMolecule[] mol, ModalityType modalityType) {
+		this(owner, mol, DEFAULT_TITLE, modalityType);
+		}
 
 	public JDrawDialog(Frame owner, StereoMolecule[] mol, String title) {
-		super(owner, title, true);
+		this(owner, mol, title, Dialog.DEFAULT_MODALITY_TYPE);
+		}
+
+	public JDrawDialog(Frame owner, StereoMolecule[] mol, String title, ModalityType modalityType) {
+		super(owner, title, modalityType);
 		mMolecule = new StereoMolecule();
 		initialize(owner, JDrawArea.MODE_REACTION);
 		if (mol != null)
@@ -93,8 +117,16 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
 		this(owner, rxn, DEFAULT_TITLE);
 		}
 
+	public JDrawDialog(Frame owner, Reaction rxn, ModalityType modalityType) {
+		this(owner, rxn, DEFAULT_TITLE, modalityType);
+		}
+
 	public JDrawDialog(Frame owner, Reaction rxn, String title) {
-		super(owner, title, true);
+		this(owner, rxn, title, Dialog.DEFAULT_MODALITY_TYPE);
+		}
+
+	public JDrawDialog(Frame owner, Reaction rxn, String title, ModalityType modalityType) {
+		super(owner, title, modalityType);
 		mMolecule = new StereoMolecule();
 		initialize(owner, JDrawArea.MODE_REACTION);
 		if (rxn != null)
