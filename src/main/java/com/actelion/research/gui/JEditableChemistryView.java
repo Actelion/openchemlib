@@ -116,7 +116,7 @@ public class JEditableChemistryView extends JChemistryView {
 		Component c = this;
 		while (!(c instanceof Frame))
 			c = c.getParent();
-		JDrawDialog dialog = new JDrawDialog((Frame)c, new Reaction(mReaction), "Edit Reaction");
+		JDrawDialog dialog = new JDrawDialog((Frame)c, new Reaction(mReaction), "Edit Reaction", Dialog.ModalityType.DOCUMENT_MODAL);
 		dialog.setVisible(true);
 		if (!dialog.isCancelled()) {
 			Reaction newRxn = dialog.getReactionAndDrawings();
@@ -141,7 +141,7 @@ public class JEditableChemistryView extends JChemistryView {
 		StereoMolecule[] mol = new StereoMolecule[mMolecules.length];
 		for (int i=0; i<mMolecules.length; i++)
 			mol[i] = new StereoMolecule(mMolecules[i]);
-		JDrawDialog dialog = new JDrawDialog((Frame)c, mol, "Edit Molecules");
+		JDrawDialog dialog = new JDrawDialog((Frame)c, mol, "Edit Molecules", Dialog.ModalityType.DOCUMENT_MODAL);
 		dialog.setVisible(true);
 		if (!dialog.isCancelled()) {
 			StereoMolecule[] newMols = dialog.getDrawArea().getFragments();
