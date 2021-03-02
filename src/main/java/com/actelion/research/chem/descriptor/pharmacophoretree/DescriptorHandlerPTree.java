@@ -13,6 +13,8 @@ import com.actelion.research.chem.descriptor.pharmacophoretree.PharmacophoreTree
 import com.actelion.research.chem.descriptor.pharmacophoretree.TreeMatcher;
 
 public class DescriptorHandlerPTree implements DescriptorHandler<PharmacophoreTree,StereoMolecule> {
+	
+	private static final int MAX_NODE_SIZE = 40;
 
 	private static DescriptorHandlerPTree INSTANCE;
 	
@@ -96,7 +98,10 @@ public class DescriptorHandlerPTree implements DescriptorHandler<PharmacophoreTr
 	public PharmacophoreTree createDescriptor(StereoMolecule mol) {
 		mol.stripSmallFragments();
 		
-		return PharmacophoreTreeGenerator.generate(mol);
+		PharmacophoreTree pharmTree =  PharmacophoreTreeGenerator.generate(mol);
+		if(pharmTree.getNodes().size()>MAX_NODE_SIZE)
+			pharmTree = FAILED_OBJECT;
+		return pharmTree;
 
 	}
 

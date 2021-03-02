@@ -3,15 +3,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
-
-import com.actelion.research.chem.IDCodeParser;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.conf.BondLengthSet;
 import com.actelion.research.chem.conf.VDWRadii;
@@ -130,7 +129,7 @@ public class PharmacophoreTreeGenerator {
 			int[][] functionalities, double[] atomVolumes) {
 		boolean[] visited = new boolean[mol.getAtoms()];
 		int[] parents = new int[mol.getAtoms()];
-		PriorityQueue<Integer> atoms = new PriorityQueue<Integer> ();
+		Queue<Integer> atoms = new LinkedList<Integer> ();
 		atoms.add(atom);
 		parents[atom] = -1;
 		visited[atom] = true;

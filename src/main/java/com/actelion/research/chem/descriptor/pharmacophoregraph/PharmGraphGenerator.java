@@ -5,9 +5,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -326,7 +327,7 @@ public class PharmGraphGenerator {
 			int[][] functionalities, double[] atomVolumes) {
 		boolean[] visited = new boolean[mol.getAtoms()];
 		int[] parents = new int[mol.getAtoms()];
-		PriorityQueue<Integer> atoms = new PriorityQueue<Integer> ();
+		Queue<Integer> atoms = new LinkedList<Integer> ();
 		atoms.add(atom);
 		parents[atom] = -1; //root does not have parents
 		visited[atom] = true;

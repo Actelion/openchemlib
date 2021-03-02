@@ -35,7 +35,7 @@ public class PheSAAlignment {
 		this.ppWeight = ppWeight;
 		this.refMolGauss = new MolecularVolume(refMol);
 		this.molGauss = new MolecularVolume(mol);
-		extendedSimilarity = false;
+		extendedSimilarity = true;
 	}
 	
 	public PheSAAlignment(StereoMolecule refMol, StereoMolecule mol) {

@@ -13,7 +13,6 @@ import com.actelion.research.chem.descriptor.DescriptorHandler;
 import com.actelion.research.chem.descriptor.DescriptorInfo;
 import com.actelion.research.chem.phesaflex.FlexibleShapeAlignment;
 
-import org.openmolecules.chem.conf.gen.ConformerGenerator;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -98,6 +97,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this.maxConfs = maxConfs;
 		this.ppWeight = ppWeight;
 		init();
+		conformerGenerator = new ConformerSetGenerator();
 
 	}
 		
@@ -137,7 +137,6 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	public void init() {
 		previousAlignment = new StereoMolecule[2];
-		conformerGenerator = new ConformerSetGenerator();
 		
 	}
 	
