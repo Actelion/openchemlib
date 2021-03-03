@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa.pharmacophore;
+package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
@@ -10,12 +10,14 @@ public class ExitVectorPoint implements IPharmacophorePoint {
 	private int exitAtom;
 	private Coordinates directionality;
 	private Coordinates center;
+	private int connectionID; //necessary for screening building blocks
 
 	
 	public ExitVectorPoint(StereoMolecule mol, int c, int e) {
 		coreAtom = c;
 		exitAtom = e;
-		updateCoordinates(mol);
+		connectionID = Integer.parseInt(mol.getAtomCustomLabel(e));
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 	
 	private ExitVectorPoint(String ppString, StereoMolecule mol) {
@@ -34,21 +36,22 @@ public class ExitVectorPoint implements IPharmacophorePoint {
 	}
 
 	@Override
-	public void updateCoordinates(StereoMolecule mol) {
-		center = new Coordinates(mol.getAtomX(coreAtom),mol.getAtomY(coreAtom),mol.getAtomZ(coreAtom));
-		directionality = mol.getCoordinates(exitAtom).subC(mol.getCoordinates(coreAtom));
+	public void updateCoordinates(Coordinates[] coords) {
+		center = new Coordinates(coords[coreAtom].x, coords[coreAtom].y, coords[coreAtom].z);
+		directionality = coords[exitAtom].subC(coords[coreAtom]);
 		directionality.scale(1.0/directionality.getLength());
 		
 	}
 	
 	@Override
-	public void updateCoordinates(Conformer conf) {
-		center = new Coordinates(conf.getX(coreAtom),conf.getY(coreAtom),conf.getZ(coreAtom));
-		directionality = conf.getCoordinates(exitAtom).subC(conf.getCoordinates(coreAtom));
-		directionality.scale(1.0/directionality.getLength());
-		
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+		Coordinates directMod = new Coordinates();
+		directMod.x = directionality.x*rotMatrix[0][0] + directionality.y*rotMatrix[1][0] + directionality.z*rotMatrix[2][0];
+		directMod.y = directionality.x*rotMatrix[0][1] + directionality.y*rotMatrix[1][1] + directionality.z*rotMatrix[2][1];
+		directMod.z = directionality.x*rotMatrix[0][2] + directionality.y*rotMatrix[1][2] + directionality.z*rotMatrix[2][2];
+		return directMod;
 	}
-	
+
 
 
 	@Override
@@ -77,7 +80,8 @@ public class ExitVectorPoint implements IPharmacophorePoint {
 		String[] strings = ppString.split(" ");
 		coreAtom = Integer.decode(strings[1]);
 		exitAtom = Integer.decode(strings[2]);
-		updateCoordinates(mol);
+		connectionID = Integer.parseInt(mol.getAtomCustomLabel(exitAtom));
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 
 	@Override
@@ -94,6 +98,11 @@ public class ExitVectorPoint implements IPharmacophorePoint {
 	@Override
 	public int getCenterID() {
 		return coreAtom;
+	}
+	
+	@Override
+	public void setCenterID(int centerID) {
+		coreAtom = centerID;
 	}
 
 	@Override
@@ -131,6 +140,9 @@ public class ExitVectorPoint implements IPharmacophorePoint {
 		return IPharmacophorePoint.Functionality.EXIT_VECTOR.getIndex();
 	}
 	
+	public int getConnectionID() {
+		return connectionID;
+	}
 
 	
 	

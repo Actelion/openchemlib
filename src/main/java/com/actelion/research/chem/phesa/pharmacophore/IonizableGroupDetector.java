@@ -9,6 +9,7 @@ import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
 
 
 public class IonizableGroupDetector {

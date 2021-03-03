@@ -16,9 +16,9 @@ import com.actelion.research.chem.conf.BondLengthSet;
 import com.actelion.research.chem.conf.VDWRadii;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.phesa.pharmacophore.IPharmacophorePoint;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
+import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 
 
 /**

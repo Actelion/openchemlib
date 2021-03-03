@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa.pharmacophore;
+package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
@@ -12,6 +12,7 @@ import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.EncodeFunctions;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;
+
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -52,11 +53,7 @@ public class PPGaussian extends Gaussian3D {
 	}
 	
 	public Coordinates getRotatedDirectionality(double[][] rotMatrix, double scaleFactor) {
-		Coordinates direct = pp.getDirectionality();
-		Coordinates directMod = new Coordinates();
-		directMod.x = direct.x*rotMatrix[0][0] + direct.y*rotMatrix[1][0] + direct.z*rotMatrix[2][0];
-		directMod.y = direct.x*rotMatrix[0][1] + direct.y*rotMatrix[1][1] + direct.z*rotMatrix[2][1];
-		directMod.z = direct.x*rotMatrix[0][2] + direct.y*rotMatrix[1][2] + direct.z*rotMatrix[2][2];
+		Coordinates directMod = pp.getRotatedDirectionality(rotMatrix);
 		//centerModCoords = this.getCenter().rotateC(rotMatrix); //we operate on the transformed coordinates of the molecule to be fitted
 		directMod.scale(scaleFactor); // scale by the invers
 
@@ -79,6 +76,15 @@ public class PPGaussian extends Gaussian3D {
 		return pp;
 	}
 	
+	@Override
+	public void setAtomId(int atomID) {
+		this.pp.setCenterID(atomID);
+	}
+	
+	@Override
+	public int getAtomId() {
+		return this.pp.getCenterID();
+	}
 
 	public double getSimilarity(PPGaussian ppGauss2, Coordinates directionality) {
 		double ppSimilarity = getInteractionSimilarity(ppGauss2);
@@ -150,16 +156,11 @@ public class PPGaussian extends Gaussian3D {
 	}
 	
 	@Override
-	public void updateCoordinates(StereoMolecule mol) {
-		pp.updateCoordinates(mol);
+	public void updateCoordinates(Coordinates[] coords) {
+		pp.updateCoordinates(coords);
 		center = pp.getCenter();
 	}
-	
-	@Override
-	public void updateCoordinates(Conformer conf) {
-		pp.updateCoordinates(conf);
-		center = pp.getCenter();
-	}
+
 	
 	@Override
 	public void updateAtomIndeces(int[] map) {

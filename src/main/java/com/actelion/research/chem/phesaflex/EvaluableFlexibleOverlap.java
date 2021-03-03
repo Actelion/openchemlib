@@ -12,8 +12,8 @@ import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.QuickMathCalculator;
 import com.actelion.research.chem.phesa.VolumeGaussian;
+import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 import com.actelion.research.chem.phesa.PheSAAlignment;
-import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 
 
 

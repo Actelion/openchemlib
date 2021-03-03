@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa.pharmacophore;
+package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import com.actelion.research.chem.StereoMolecule;
 
@@ -16,6 +16,8 @@ public class PharmacophorePointFactory {
 			return AromRingPoint.fromString(ppString, mol);
 		else if(type.equals("e"))
 			return ExitVectorPoint.fromString(ppString, mol);
+		else if(type.equals("s"))
+			return SimplePharmacophorePoint.fromString(ppString, mol);
 		
 		else 
 			return null;

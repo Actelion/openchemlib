@@ -28,10 +28,14 @@ public class NegativeReceptorImageCreator {
 		//align PMI of ligand with the axes of the coordinate system for efficient grid creation
 		rotation = PheSAAlignment.preProcess(conf, molVol);
 		rotateMols(receptor,ligand,rotation,origCOM);
-		negImg = new NegativeReceptorImage(ligand,receptor, 0.4, new Coordinates(6.0,6.0,6.0));
+		negImg = new NegativeReceptorImage(ligand,receptor, 0.4, new Coordinates(4.0,4.0,4.0));
 		BindingSiteVolume bsVolume = negImg.calculate();
 		double[][] rot = rotation.getTranspose().getArray();
 		bsVolume.getPPGaussians().stream().forEach(e -> {
+			e.getCenter().rotate(rot);
+			e.getCenter().add(origCOM);
+		});
+		bsVolume.getAtomicGaussians().stream().forEach(e -> {
 			e.getCenter().rotate(rot);
 			e.getCenter().add(origCOM);
 		});

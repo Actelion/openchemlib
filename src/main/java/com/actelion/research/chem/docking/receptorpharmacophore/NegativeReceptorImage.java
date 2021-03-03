@@ -4,25 +4,31 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.IntStream;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.descriptor.pharmacophoretree.IonizableGroupDetector2D;
+import com.actelion.research.chem.docking.DockingUtils;
 import com.actelion.research.chem.docking.ScoringTask;
 import com.actelion.research.chem.docking.scoring.ProbeScanning;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.phesa.MolecularVolume;
+import com.actelion.research.chem.phesa.AtomicGaussian;
 import com.actelion.research.chem.phesa.BindingSiteVolume;
-import com.actelion.research.chem.phesa.pharmacophore.ChargePoint;
-import com.actelion.research.chem.phesa.pharmacophore.IPharmacophorePoint;
-import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
+import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
-import com.actelion.research.chem.phesa.pharmacophore.SimplePPGaussian;
+import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
+import com.actelion.research.chem.phesa.pharmacophore.pp.SimplePharmacophorePoint;
 
 import smile.clustering.KMeans;
 
@@ -31,18 +37,24 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	
 	public enum InteractionProbe {NEG_CHARGE, POS_CHARGE, HB_DONOR, HB_ACCEPTOR };
 	
+	private static final int RAYS = 120;
+	private static final double RAY_LENGTH = 8.0;
+	private static final double BURIEDNESS_RATIO_CUTOFF = 0.4;
 	private static final int BUMP_RADIUS = 3;
-	private static final double MIN_INTERACTION_CUTOFF = 2.0;
-	private static final double MAX_INTERACTION_CUTOFF = 4.0;
+	private static final double BUMP_RADIUS2 = 2.0; //to check buriedness
 	private static final double INTERACTION_CUTOFF = 0.0;
 	private static final double INTERACTION_CUTOFF_CHARGE = -1.0;
+	private static final double NONPOLAR_RADIUS = 2.8;
+	private static final double GAUSSIAN_DISTANCE = 1.0;
 	private static final int MAX_NR_INTERACTION_POINTS = 8; //maximum number of interaction points per site
 	private static double MIN_INTERACTION_POINT_DIST = 1.5; //minimum distance between polar interaction points
-	
+
+	private boolean[][][] bumpGrid;	
 	private Set<Integer> receptorAtoms;
 	private StereoMolecule receptor;
 	private Map<Integer,Map<Integer,List<Coordinates>>> receptorInteractionSites;
 	private ProbeScanning probeScanning;
+	private MoleculeGrid receptorGrid;
 
 	public NegativeReceptorImage(StereoMolecule ligand, StereoMolecule receptor) {
 		this(ligand, receptor,0.4,new Coordinates(5.0,5.0,5.0));
@@ -51,9 +63,12 @@ public class NegativeReceptorImage extends MoleculeGrid {
 
 	public NegativeReceptorImage(StereoMolecule ligand, StereoMolecule receptor,double gridWidth, Coordinates extension) {
 		super(ligand,gridWidth,extension);
+		receptorGrid = new MoleculeGrid(receptor,gridWidth,new Coordinates(0.0,0.0,0.0));
 		this.receptor = receptor;
 		receptorAtoms = new HashSet<Integer>();
 		receptorInteractionSites = new HashMap<Integer,Map<Integer,List<Coordinates>>>();
+		int[] recGridSize = receptorGrid.getGridSize();
+		bumpGrid = new boolean[recGridSize[0]][recGridSize[1]][recGridSize[2]];
 		for(int i=0;i<receptor.getAllAtoms();i++) {
 			int[] gridC = getGridCoordinates(receptor.getCoordinates(i));
 			int x = gridC[0];
@@ -71,12 +86,24 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	}
 	
 	public BindingSiteVolume calculate() {
+		List<PPGaussian> ppGaussians = new ArrayList<>();
+		List<AtomicGaussian> shapeGaussians = new ArrayList<>();
 		analyzeBindingSiteAtoms();
-		return createPolarInteractionSites();
+		BindingSiteVolume recVol = new BindingSiteVolume();
+		analyzeBumps();
+		createPolarInteractionSites(ppGaussians);
+		createShapeAtoms(shapeGaussians);
+		prunePoints(this.mol.getCoordinates(0), ppGaussians, shapeGaussians, 2.0);
+		//assign ids to SimplePPs
+		for(int i=0;i<ppGaussians.size();i++) {
+			ppGaussians.get(i).setAtomId(i);
+		}
+		recVol.setAtomicGaussians(shapeGaussians);
+		recVol.setPPGaussians(ppGaussians);
+		return recVol;
 	}
 	
-	private BindingSiteVolume createPolarInteractionSites() {
-		BindingSiteVolume recVol = new BindingSiteVolume();
+	private void createPolarInteractionSites(List<PPGaussian> ppGaussians) {
 		for(int i : receptorInteractionSites.keySet()) {
 			for(int type : receptorInteractionSites.get(i).keySet()) {
 			for(Coordinates c : receptorInteractionSites.get(i).get(type)) {
@@ -109,17 +136,78 @@ public class NegativeReceptorImage extends MoleculeGrid {
 				
 				if(centroids!=null) {
 					for(double[] centroid : centroids) {
-						SimplePPGaussian ppGaussian = new SimplePPGaussian(new Coordinates(centroid[0],
-							centroid[1], centroid[2]), functionality);
-						recVol.addPharmacophorePoint(ppGaussian);
+						SimplePharmacophorePoint spp = new SimplePharmacophorePoint(-1,new Coordinates(centroid[0],
+								centroid[1], centroid[2]), functionality);
+						PPGaussian ppg = new PPGaussian(6, spp);
+						ppGaussians.add(ppg);
 					}
 				}
 				}
 			}
 		}
 		
-		return recVol;
+
 	}
+	
+	private void createShapeAtoms(List<AtomicGaussian> shapeGaussians) {
+		List<AtomicGaussian> gaussians = new ArrayList<>();
+		double radiusSq = NONPOLAR_RADIUS*NONPOLAR_RADIUS;
+		int cutoff = (int) (NONPOLAR_RADIUS / this.gridWidth);
+		for(int x=cutoff;x<this.gridSize[0];x++) {
+			for(int y=cutoff;y<this.gridSize[1];y++) {
+				for(int z=cutoff;z<this.gridSize[2];z++) {
+					boolean clash = false;
+					Coordinates probeCoords = this.getCartCoordinates(new int[] {x,y,z});
+					for(AtomicGaussian ag : gaussians) {
+						double dx = (ag.getCenter().x-probeCoords.x);
+						double dy = (ag.getCenter().y-probeCoords.y);
+						double dz = (ag.getCenter().z-probeCoords.z);
+						double rSq = dx*dx + dy*dy + dz*dz;
+						if(rSq>radiusSq) {
+							continue;
+						}
+						else {
+							double r = Math.sqrt(rSq);
+							if(r<GAUSSIAN_DISTANCE) {
+								clash = true;
+								break;
+							}
+						}
+					}
+					if(!clash) {
+						for(int atom : receptorAtoms) {
+							Coordinates c = receptor.getCoordinates(atom);
+							double dx = (c.x-probeCoords.x);
+							double dy = (c.y-probeCoords.y);
+							double dz = (c.z-probeCoords.z);
+							double rSq = dx*dx + dy*dy + dz*dz;
+							if(rSq>radiusSq) {
+								continue;
+							}
+							else {
+								double r = Math.sqrt(rSq);
+								if(r<NONPOLAR_RADIUS) {
+									clash = true;
+									break;
+								}
+							}
+						}
+					}					
+					boolean isBuried = getBuriedness(new int[] {x,y,z});
+					if(!clash && isBuried) {
+						AtomicGaussian ag = new AtomicGaussian(-1,6,probeCoords);
+						gaussians.add(ag);
+					}
+				}		 
+			}
+		}
+		gaussians.stream().forEach(ag -> {
+			shapeGaussians.add(ag);
+		});
+	}
+	
+	
+	
 	/**
 	 * using the given probe, the vicinity of the given receptor atom is scanned for interaction
 	 * hot spots
@@ -147,6 +235,9 @@ public class NegativeReceptorImage extends MoleculeGrid {
 					if(y<cutoff || y>(this.gridSize[1]-cutoff))
 						continue;
 					if(z<cutoff || z>(this.gridSize[2]-cutoff))
+						continue;
+					boolean isBuried = getBuriedness(new int[] {x,y,z});
+					if(!isBuried)
 						continue;
 					Coordinates probeCoords = this.getCartCoordinates(new int[] {x,y,z});
 					probe.updateCoordinates(probeCoords);
@@ -225,39 +316,65 @@ public class NegativeReceptorImage extends MoleculeGrid {
 		
 	}
 	
-	
-	/*
-	private void analyzeBindingSiteAtoms() {
-		IonizableGroupDetector2D detector = new IonizableGroupDetector2D(receptor);
-		detector.detect();
-		for(int i : detector.getNegIonizableAtoms()) {
-			if(receptorAtoms.contains(i)) {
-				receptorInteractionTypes.putIfAbsent(i, new HashSet<Integer>());
-				receptorInteractionTypes.get(i).add(PharmacophoreCalculator.CHARGE_NEG_ID);
+	private void analyzeBumps() {
+		double radiusSq = BUMP_RADIUS2*BUMP_RADIUS2;
+		for(int x=0;x<this.gridSize[0];x++) {
+			for(int y=0;y<this.gridSize[1];y++) {
+				for(int z=0;z<this.gridSize[2];z++) {
+					Coordinates probeCoords = this.getCartCoordinates(new int[] {x,y,z});
+					for(int atom=0;atom<receptor.getAtoms();atom++) {
+						Coordinates c = receptor.getCoordinates(atom);
+						double dx = (c.x-probeCoords.x);
+						double dy = (c.y-probeCoords.y);
+						double dz = (c.z-probeCoords.z);
+						double rSq = dx*dx + dy*dy + dz*dz;
+						if(rSq>radiusSq) {
+							continue;
+						}
+						else {
+							double r = Math.sqrt(rSq);
+							if(r<BUMP_RADIUS2) {
+								bumpGrid[x][y][z] = true;
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
-		for(int i : detector.getPosIonizableAtoms()) {
-			if(receptorAtoms.contains(i)) {
-				receptorInteractionTypes.putIfAbsent(i, new HashSet<Integer>());
-				receptorInteractionTypes.get(i).add(PharmacophoreCalculator.CHARGE_POS_ID);
-			}
-		}
-		for(int i : receptorAtoms) {
-			if(PharmacophoreCalculator.isAcceptor(receptor, i)) {
-				receptorInteractionTypes.putIfAbsent(i, new HashSet<Integer>());
-				receptorInteractionTypes.get(i).add(PharmacophoreCalculator.ACCEPTOR_ID);
-			}
-			if(PharmacophoreCalculator.isDonorHeavyAtom(receptor, i)) {
 
-				receptorInteractionTypes.putIfAbsent(i, new HashSet<Integer>());
-				receptorInteractionTypes.get(i).add(PharmacophoreCalculator.DONOR_ID);
+	}
+	
+	public boolean getBuriedness(int[] gridCoords) {
+		Random rnd = new Random();
+		int steps = (int) (RAY_LENGTH/this.gridWidth);
+		int intersections = 0;
+		Coordinates center = this.getCartCoordinates(gridCoords);
+		for(int i=0;i<RAYS;i++) {
+			Coordinates ray = DockingUtils.randomVectorInSphere(rnd).scale(this.gridWidth);
+			for(int j=1;j<steps+1;j++) {
+				Coordinates c = center.addC(ray.scaleC(j));
+				int[] gridC = this.getGridCoordinates(c);
+				try {
+					boolean intersect = bumpGrid[gridC[0]][gridC[1]][gridC[2]];
+					if(intersect) {
+						intersections++;
+						break;
+					}
+				}
+				catch(Exception e) {
+					continue;
+				}
+
+				}
 			}
-			
-		}
-		
-			
-		}
-		*/
+		double buriedness = (double)intersections/RAYS;
+		boolean isBuried = buriedness>BURIEDNESS_RATIO_CUTOFF ? true : false;
+		return isBuried;
+	}
+	
+	
+
 	private void analyzeBindingSiteAtoms() {
 		MolecularVolume molVol = new MolecularVolume(receptor);
 		for(PPGaussian ppg : molVol.getPPGaussians()) {
@@ -336,13 +453,61 @@ public class NegativeReceptorImage extends MoleculeGrid {
 		
 	}
 	
-	private static class InteractionData {
-		Map<InteractionProbe,Double> interactionData;
-		
-		public InteractionData() {
-			interactionData = new HashMap<InteractionProbe,Double>();
+	/**
+	 * algorithm to remove disconnected clusters of Shape Gaussians and PP Gaussians and only keep one single cavity
+	 * @param center
+	 */
+	private void prunePoints(Coordinates center, List<PPGaussian> ppGaussians,  List<AtomicGaussian> atomicGaussians, double stepSize) {
+		Set<Gaussian3D> cavityPoints = new HashSet<Gaussian3D>();
+		Queue<Gaussian3D> pq = new LinkedList<Gaussian3D>();
+		Set<Gaussian3D> visited = new HashSet<Gaussian3D>();
+		Set<Gaussian3D> neighbours = getNeighbourPoints(center, ppGaussians, atomicGaussians, stepSize);
+		pq.addAll(neighbours);
+		cavityPoints.addAll(neighbours);
+		while(!pq.isEmpty()) {
+			Gaussian3D point = pq.poll();
+			if(visited.contains(point))
+				continue;
+			visited.add(point);
+			neighbours = getNeighbourPoints(point.getCenter(), ppGaussians, atomicGaussians, stepSize);
+			pq.addAll(neighbours);
+			cavityPoints.addAll(neighbours);
 		}
+		List<PPGaussian> ppgToDelete = new ArrayList<PPGaussian>();
+		for(PPGaussian ppg:ppGaussians) {
+			if(!cavityPoints.contains(ppg))
+				ppgToDelete.add(ppg);
+		}
+		ppGaussians.removeAll(ppgToDelete);
+		
+		List<AtomicGaussian> agToDelete = new ArrayList<AtomicGaussian>();
+		for(AtomicGaussian ag:atomicGaussians) {
+			if(!cavityPoints.contains(ag))
+				agToDelete.add(ag);
+		}
+		atomicGaussians.removeAll(agToDelete);
+		
 	}
+	
+	private Set<Gaussian3D> getNeighbourPoints(Coordinates center, List<PPGaussian> ppGaussians,  List<AtomicGaussian> atomicGaussians, double distCutoff) {
+		double distSqCutoff = distCutoff*distCutoff;
+		Set<Gaussian3D> neighbours = new HashSet<Gaussian3D>();
+		Set<Gaussian3D> allGauss = new HashSet<Gaussian3D>();
+		allGauss.addAll(atomicGaussians);
+		allGauss.addAll(ppGaussians);
+		for(Gaussian3D gauss2 : allGauss) {
+			double distSq = gauss2.getCenter().distSquareTo(center);
+			if(distSq>distSqCutoff)
+				continue;
+			else 
+				neighbours.add(gauss2);
+		}
+		return neighbours;
+		
+	}
+	
+	
+
 	
 
 }

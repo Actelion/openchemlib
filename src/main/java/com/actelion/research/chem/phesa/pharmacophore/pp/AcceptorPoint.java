@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa.pharmacophore;
+package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public class AcceptorPoint implements IPharmacophorePoint {
 		this.neighbours = neighbours;
 		this.interactionClass = interactionClass;
 		this.acceptorID = acceptorID;
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 	
 	private AcceptorPoint(String ppString, StereoMolecule mol) {
@@ -50,63 +50,22 @@ public class AcceptorPoint implements IPharmacophorePoint {
 		return new AcceptorPoint(ppString,mol);
 	}
 
-	@Override
-	public void updateCoordinates(StereoMolecule mol) {
-		center = new Coordinates(mol.getAtomX(acceptorAtom),mol.getAtomY(acceptorAtom),mol.getAtomZ(acceptorAtom));
-		if(neighbours.size()==1) {
-			int aa1 = neighbours.get(0);
-			directionality = center.subC(mol.getCoordinates(aa1));
-		}
-			
-			
-		else if(neighbours.size()==2 && acceptorID!=0) {
-			int aa1 = neighbours.get(0);
-			Coordinates v1 = center.subC(mol.getCoordinates(aa1));
-			int aa2 = neighbours.get(1);
-			Coordinates v2 = mol.getCoordinates(aa2).subC(center);
-			Coordinates rotAxis = v1.cross(v2).unit();
-			double theta = acceptorID == 1 ? 45.0/180.0*Math.PI :  -45.0/180.0*Math.PI;
-			directionality = v1.rotate(rotAxis, theta);
-		}
-		
-		
-		else if(neighbours.size()==3) {
-			int aa1 = neighbours.get(0);
-			int aa2 = neighbours.get(1);
-			int aa3 = neighbours.get(2);
-			Coordinates v1 = center.subC(mol.getCoordinates(aa1)).unit();
-			Coordinates v2 = center.subC(mol.getCoordinates(aa2)).unit();
-			Coordinates v3 = center.subC(mol.getCoordinates(aa3)).unit();
-			directionality = v3.add(v2).add(v1);
-		}
-		
-		
-		else {
-			int aa1 = neighbours.get(0);
-			int aa2 = neighbours.get(1);
-			Coordinates v1 = center.subC(mol.getCoordinates(aa1)).unit();
-			Coordinates v2 = center.subC(mol.getCoordinates(aa2)).unit();
-			directionality = v1.addC(v2);
-		}
-		directionality.unit();
-		// TODO Auto-generated method stub
-		
-	}
+
 	
 	@Override
-	public void updateCoordinates(Conformer conf) {
-		center = new Coordinates(conf.getX(acceptorAtom),conf.getY(acceptorAtom),conf.getZ(acceptorAtom));
+	public void updateCoordinates(Coordinates[] coords) {
+		center = new Coordinates(coords[acceptorAtom].x ,coords[acceptorAtom].y, coords[acceptorAtom].z);
 		if(neighbours.size()==1) {
 			int aa1 = neighbours.get(0);
-			directionality = center.subC(conf.getCoordinates(aa1));
+			directionality = center.subC(coords[aa1]);
 		}
 			
 			
 		else if(neighbours.size()==2 && acceptorID!=0) {
 			int aa1 = neighbours.get(0);
-			Coordinates v1 = center.subC(conf.getCoordinates(aa1));
+			Coordinates v1 = center.subC(coords[aa1]);
 			int aa2 = neighbours.get(1);
-			Coordinates v2 = conf.getCoordinates(aa2).subC(center);
+			Coordinates v2 = coords[aa2].subC(center);
 			Coordinates rotAxis = v1.cross(v2).unit();
 			double theta = acceptorID == 1 ? 45.0/180.0*Math.PI :  -45.0/180.0*Math.PI;
 			directionality = v1.rotate(rotAxis, theta);
@@ -117,9 +76,9 @@ public class AcceptorPoint implements IPharmacophorePoint {
 			int aa1 = neighbours.get(0);
 			int aa2 = neighbours.get(1);
 			int aa3 = neighbours.get(2);
-			Coordinates v1 = center.subC(conf.getCoordinates(aa1)).unit();
-			Coordinates v2 = center.subC(conf.getCoordinates(aa2)).unit();
-			Coordinates v3 = center.subC(conf.getCoordinates(aa3)).unit();
+			Coordinates v1 = center.subC(coords[aa1]).unit();
+			Coordinates v2 = center.subC(coords[aa2]).unit();
+			Coordinates v3 = center.subC(coords[aa3]).unit();
 			directionality = v3.add(v2).add(v1);
 		}
 		
@@ -127,8 +86,8 @@ public class AcceptorPoint implements IPharmacophorePoint {
 		else {
 			int aa1 = neighbours.get(0);
 			int aa2 = neighbours.get(1);
-			Coordinates v1 = center.subC(conf.getCoordinates(aa1)).unit();
-			Coordinates v2 = center.subC(conf.getCoordinates(aa2)).unit();
+			Coordinates v1 = center.subC(coords[aa1]).unit();
+			Coordinates v2 = center.subC(coords[aa2]).unit();
 			directionality = v1.addC(v2);
 		}
 		directionality.unit();
@@ -178,7 +137,7 @@ public class AcceptorPoint implements IPharmacophorePoint {
 		for(int i=4;i<strings.length;i++) {
 			neighbours.add(Integer.decode(strings[i]));
 		}
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 	
 	@Override
@@ -197,6 +156,11 @@ public class AcceptorPoint implements IPharmacophorePoint {
 	@Override
 	public int getCenterID() {
 		return acceptorAtom;
+	}
+	
+	@Override
+	public void setCenterID(int centerID) {
+		acceptorAtom = centerID;
 	}
 	
 	@Override
@@ -395,6 +359,15 @@ public class AcceptorPoint implements IPharmacophorePoint {
 	@Override
 	public int getFunctionalityIndex() {
 		return IPharmacophorePoint.Functionality.ACCEPTOR.getIndex();
+	}
+
+	@Override
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+		Coordinates directMod = new Coordinates();
+		directMod.x = directionality.x*rotMatrix[0][0] + directionality.y*rotMatrix[1][0] + directionality.z*rotMatrix[2][0];
+		directMod.y = directionality.x*rotMatrix[0][1] + directionality.y*rotMatrix[1][1] + directionality.z*rotMatrix[2][1];
+		directMod.z = directionality.x*rotMatrix[0][2] + directionality.y*rotMatrix[1][2] + directionality.z*rotMatrix[2][2];
+		return directMod;
 	}
 
 

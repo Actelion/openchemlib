@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa.pharmacophore;
+package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ public class AromRingPoint implements IPharmacophorePoint {
 	public AromRingPoint(StereoMolecule mol, int a, List<Integer> ringAtoms) {
 		referenceAtom = a;
 		this.ringAtoms = ringAtoms;
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 	
 	public AromRingPoint(AromRingPoint aP) {
@@ -35,26 +35,17 @@ public class AromRingPoint implements IPharmacophorePoint {
 	}
 
 	@Override
-	public void updateCoordinates(StereoMolecule mol) {
+	public void updateCoordinates(Coordinates[] coords) {
 		Coordinates com = new Coordinates(0,0,0);
 		for(int ringAtom : ringAtoms) {
-			com.add(mol.getCoordinates(ringAtom));
+			com.add(coords[ringAtom]);
 		}
 		com.scale(1.0/( ringAtoms.size()));
 
 		center = com;
 	}
 	
-	@Override
-	public void updateCoordinates(Conformer conf) {
-		Coordinates com = new Coordinates(0,0,0);
-		for(int ringAtom : ringAtoms) {
-			com.add(conf.getCoordinates(ringAtom));
-		}
-		com.scale(1.0/( ringAtoms.size()));
 
-		center = com;
-	}
 	
 
 	@Override
@@ -79,7 +70,7 @@ public class AromRingPoint implements IPharmacophorePoint {
 		for(int i=2;i<strings.length;i++) {
 			ringAtoms.add(Integer.decode(strings[i]));
 		}
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 
 	@Override
@@ -110,6 +101,11 @@ public class AromRingPoint implements IPharmacophorePoint {
 	@Override
 	public int getCenterID() {
 		return referenceAtom;
+	}
+	
+	@Override
+	public void setCenterID(int centerID) {
+		referenceAtom = centerID;
 	}
 
 	@Override
@@ -156,6 +152,12 @@ public class AromRingPoint implements IPharmacophorePoint {
 	@Override
 	public int getFunctionalityIndex() {
 		return Functionality.AROM_RING.getIndex();
+	}
+
+	@Override
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+		Coordinates directMod = new Coordinates(directionality);
+		return directMod;
 	}
 
 

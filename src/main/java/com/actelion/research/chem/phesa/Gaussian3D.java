@@ -161,15 +161,11 @@ public abstract class Gaussian3D {
 		return getVolumeOverlap(g2,g2.getCenter(),distCutoff);
 	}
 	
-	public void updateCoordinates(StereoMolecule mol) {
-		center = new Coordinates(mol.getCoordinates(atomId));
+	public void updateCoordinates(Coordinates[] coords) {
+		center = new Coordinates(coords[atomId]);
 
 	}
-	
-	public void updateCoordinates(Conformer conf) {
-		center = new Coordinates(conf.getCoordinates(atomId));
 
-	}
 	
 	public void updateAtomIndeces(int[] map) {
 		atomId = map[atomId];
