@@ -98,7 +98,7 @@ public class ArrayUtils {
 	 * @param list
 	 * @return an array of int
 	 */
-	public final static int[] toIntArray(List<Integer> list) {
+	public final static int[] toIntArray(Collection<Integer> list) {
 		int[] res = new int[list.size()];
 		int index = 0;
 		Iterator iter = list.iterator();
