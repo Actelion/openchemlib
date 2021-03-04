@@ -109,7 +109,7 @@ public class HiDPIHelper {
 	 * @param value
 	 * @return
 	 */
-	public static int scale(int value) {
+	public static int scale(float value) {
 		return Math.round(getUIScaleFactor() * value);
 		}
 
@@ -119,7 +119,7 @@ public class HiDPIHelper {
 	 * @param value
 	 * @return
 	 */
-	public static int scaleRetinaAndUI(int value) {
+	public static int scaleRetinaAndUI(float value) {
 		return Math.round(getUIScaleFactor() * getRetinaScaleFactor() * value);
 		}
 
