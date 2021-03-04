@@ -3,11 +3,11 @@ package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.phesa.pharmacophore.ExitVectorPoint;
-import com.actelion.research.chem.phesa.pharmacophore.IPharmacophorePoint;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
-import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
+import com.actelion.research.chem.phesa.pharmacophore.pp.ExitVectorPoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -259,32 +259,27 @@ public class MolecularVolume {
 
 	
 	public void update(StereoMolecule mol) {
-		updateCoordinates(getAtomicGaussians(),mol);
-		updateCoordinates(getPPGaussians(),mol);
-		updateCoordinates(getVolumeGaussians(),mol);
+		updateCoordinates(getAtomicGaussians(),mol.getAtomCoordinates());
+		updateCoordinates(getPPGaussians(),mol.getAtomCoordinates());
+		updateCoordinates(getVolumeGaussians(),mol.getAtomCoordinates());
 		updateHydrogens(mol);
 	}
 	
 	public void update(Conformer conf) {
-		updateCoordinates(getAtomicGaussians(),conf);
-		updateCoordinates(getPPGaussians(),conf);
-		updateCoordinates(getVolumeGaussians(),conf);
+		updateCoordinates(getAtomicGaussians(),conf.getCoordinates());
+		updateCoordinates(getPPGaussians(),conf.getCoordinates());
+		updateCoordinates(getVolumeGaussians(),conf.getCoordinates());
 		updateHydrogens(conf);
 	}
 	
-	private void updateCoordinates(ArrayList<? extends Gaussian3D> gaussians, StereoMolecule mol) {
+	private void updateCoordinates(ArrayList<? extends Gaussian3D> gaussians, Coordinates[] coords) {
 		for(Gaussian3D gaussian : gaussians) {
-			gaussian.updateCoordinates(mol);
+			gaussian.updateCoordinates(coords);
 		}
 		
 	}
 	
-	private void updateCoordinates(ArrayList<? extends Gaussian3D> gaussians, Conformer conf) {
-		for(Gaussian3D gaussian : gaussians) {
-			gaussian.updateCoordinates(conf);
-		}
-		
-	}
+
 	
 	public void translateToCOM(Coordinates com) {
 

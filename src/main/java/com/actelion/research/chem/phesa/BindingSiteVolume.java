@@ -3,12 +3,12 @@ package com.actelion.research.chem.phesa;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.phesa.pharmacophore.SimplePPGaussian;
+import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
+
 
 public class BindingSiteVolume {
 	
-	private List<SimplePPGaussian> ppGaussians;
+	private List<PPGaussian> ppGaussians;
 	private List<AtomicGaussian> atomicGaussians;
 	
 	public BindingSiteVolume() {
@@ -17,7 +17,7 @@ public class BindingSiteVolume {
 		
 	}
 	
-	public void addPharmacophorePoint(SimplePPGaussian ppGaussian) {
+	public void addPharmacophorePoint(PPGaussian ppGaussian) {
 		ppGaussians.add(ppGaussian);
 	}
 	
@@ -48,7 +48,7 @@ public class BindingSiteVolume {
 		int firstIndex = 1;
 		int lastIndex = 1+nrOfAtomicGaussians;
 		List<AtomicGaussian> atomicGaussians = new ArrayList<AtomicGaussian>();
-		List<SimplePPGaussian> ppGaussians = new ArrayList<SimplePPGaussian>();
+		List<PPGaussian> ppGaussians = new ArrayList<PPGaussian>();
 		
 		for(int i=firstIndex;i<lastIndex;i++) {
 			atomicGaussians.add(AtomicGaussian.fromString(splitString[i].trim()));
@@ -57,7 +57,7 @@ public class BindingSiteVolume {
 		firstIndex = lastIndex+1;
 		lastIndex = firstIndex + nrOfPPGaussians;
 		for(int i=firstIndex;i<lastIndex;i++) {
-			ppGaussians.add(new SimplePPGaussian(splitString[i]));
+			ppGaussians.add(PPGaussian.fromString(splitString[i],null));
 		}
 		BindingSiteVolume receptorVol = new BindingSiteVolume();
 		atomicGaussians.forEach(e -> receptorVol.addAtomVolume(e));
@@ -67,11 +67,11 @@ public class BindingSiteVolume {
 		
 	}
 
-	public List<SimplePPGaussian> getPPGaussians() {
+	public List<PPGaussian> getPPGaussians() {
 		return ppGaussians;
 	}
 
-	public void setPPGaussians(List<SimplePPGaussian> ppGaussians) {
+	public void setPPGaussians(List<PPGaussian> ppGaussians) {
 		this.ppGaussians = ppGaussians;
 	}
 
@@ -82,6 +82,7 @@ public class BindingSiteVolume {
 	public void setAtomicGaussians(List<AtomicGaussian> atomicGaussians) {
 		this.atomicGaussians = atomicGaussians;
 	}
+	
 	
 	
 	

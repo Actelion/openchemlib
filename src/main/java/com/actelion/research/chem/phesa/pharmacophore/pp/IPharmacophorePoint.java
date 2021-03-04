@@ -1,9 +1,8 @@
-package com.actelion.research.chem.phesa.pharmacophore;
+package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 
 import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 
 public interface IPharmacophorePoint {
 	
@@ -24,17 +23,19 @@ public interface IPharmacophorePoint {
 	
 	public Coordinates getCenter();
 	
-	public void updateCoordinates(StereoMolecule mol);
-	
-	public void updateCoordinates(Conformer conf);
+	public void updateCoordinates(Coordinates[] coords);
 	
 	public Coordinates getDirectionality();
+	
+	public Coordinates getRotatedDirectionality(double[][] m);
 	
 	public String encode();
 	
 	public double getSimilarity (IPharmacophorePoint pp);
 		
 	public int getCenterID();
+	
+	public void setCenterID(int id);
 	
 	public void setDirectionality(Coordinates directionality);
 	

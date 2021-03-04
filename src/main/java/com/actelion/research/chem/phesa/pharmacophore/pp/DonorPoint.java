@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa.pharmacophore;
+package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
@@ -17,7 +17,7 @@ public class DonorPoint implements IPharmacophorePoint {
 		donorAtom = d;
 		donorHydrogen = h;
 		this.interactionClass = interactionClass;
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 	
 	private DonorPoint(String ppString, StereoMolecule mol) {
@@ -37,21 +37,14 @@ public class DonorPoint implements IPharmacophorePoint {
 	}
 
 	@Override
-	public void updateCoordinates(StereoMolecule mol) {
-		center = new Coordinates(mol.getAtomX(donorHydrogen),mol.getAtomY(donorHydrogen),mol.getAtomZ(donorHydrogen));
-		directionality = mol.getCoordinates(donorHydrogen).subC(mol.getCoordinates(donorAtom));
+	public void updateCoordinates(Coordinates[] coords) {
+		center = new Coordinates(coords[donorHydrogen].x,coords[donorHydrogen].y,coords[donorHydrogen].z);
+		directionality = coords[donorHydrogen].subC(coords[donorAtom]);
 		directionality.scale(1.0/directionality.getLength());
 		
 	}
 	
-	@Override
-	public void updateCoordinates(Conformer conf) {
-		center = new Coordinates(conf.getX(donorHydrogen),conf.getY(donorHydrogen),conf.getZ(donorHydrogen));
-		directionality = conf.getCoordinates(donorHydrogen).subC(conf.getCoordinates(donorAtom));
-		directionality.scale(1.0/directionality.getLength());
-		
-	}
-	
+
 
 
 	@Override
@@ -83,7 +76,7 @@ public class DonorPoint implements IPharmacophorePoint {
 		donorAtom = Integer.decode(strings[1]);
 		donorHydrogen = Integer.decode(strings[2]);
 		interactionClass = Integer.decode(strings[3]);
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 
 	@Override
@@ -105,6 +98,11 @@ public class DonorPoint implements IPharmacophorePoint {
 	public int getCenterID() {
 		return donorHydrogen;
 	}
+	
+	@Override
+	public void setCenterID(int centerID) {
+		donorHydrogen = centerID;
+	}
 
 	@Override
 	public void setDirectionality(Coordinates directionality) {
@@ -123,6 +121,15 @@ public class DonorPoint implements IPharmacophorePoint {
 	public IPharmacophorePoint copyPharmacophorePoint() {
 		// TODO Auto-generated method stub
 		return new DonorPoint(this);
+	}
+	
+	@Override
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+		Coordinates directMod = new Coordinates();
+		directMod.x = directionality.x*rotMatrix[0][0] + directionality.y*rotMatrix[1][0] + directionality.z*rotMatrix[2][0];
+		directMod.y = directionality.x*rotMatrix[0][1] + directionality.y*rotMatrix[1][1] + directionality.z*rotMatrix[2][1];
+		directMod.z = directionality.x*rotMatrix[0][2] + directionality.y*rotMatrix[1][2] + directionality.z*rotMatrix[2][2];
+		return directMod;
 	}
 
 	@Override

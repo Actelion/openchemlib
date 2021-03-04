@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
 public class PPTriangleCreator {
 	

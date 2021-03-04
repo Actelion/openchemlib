@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa.pharmacophore;
+package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ public class ChargePoint implements IPharmacophorePoint {
 		chargeAtom = a;
 		this.neighbours = neighbours;
 		this.charge = charge;
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 	
 	public ChargePoint(ChargePoint cP) {
@@ -40,11 +40,11 @@ public class ChargePoint implements IPharmacophorePoint {
 	}
 
 	@Override
-	public void updateCoordinates(StereoMolecule mol) {
-		Coordinates com = new Coordinates(mol.getCoordinates(chargeAtom));
+	public void updateCoordinates(Coordinates[] coords) {
+		Coordinates com = new Coordinates(coords[chargeAtom]);
 		if(neighbours!=null) {
 			for(int neighbour:neighbours) {
-				com.add(mol.getCoordinates(neighbour));
+				com.add(coords[neighbour]);
 			}
 			com.scale(1.0/(neighbours.size()+1));
 		}
@@ -52,24 +52,19 @@ public class ChargePoint implements IPharmacophorePoint {
 		center = com;
 	}
 	
-	@Override
-	public void updateCoordinates(Conformer conf) {
-		Coordinates com = new Coordinates(conf.getCoordinates(chargeAtom));
-		if(neighbours!=null) {
-			for(int neighbour:neighbours) {
-				com.add(conf.getCoordinates(neighbour));
-			}
-			com.scale(1.0/(neighbours.size()+1));
-		}
 
-		center = com;
-	}
 	
 
 	@Override
 	public Coordinates getDirectionality() {
 		// TODO Auto-generated method stub
 		return directionality;
+	}
+	
+	@Override
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+		Coordinates directMod = new Coordinates(directionality);
+		return directMod;
 	}
 	
 	private ChargePoint(String ppString, StereoMolecule mol) {
@@ -89,7 +84,7 @@ public class ChargePoint implements IPharmacophorePoint {
 		for(int i=3;i<strings.length;i++) {
 			neighbours.add(Integer.decode(strings[i]));
 		}
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 
 	@Override
@@ -122,6 +117,11 @@ public class ChargePoint implements IPharmacophorePoint {
 	@Override
 	public int getCenterID() {
 		return chargeAtom;
+	}
+	
+	@Override
+	public void setCenterID(int centerID) {
+		chargeAtom = centerID;
 	}
 
 	@Override

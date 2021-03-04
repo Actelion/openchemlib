@@ -9,6 +9,11 @@ import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.phesa.pharmacophore.pp.AcceptorPoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.AromRingPoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.DonorPoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.ExitVectorPoint;
+import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 
 public class PharmacophoreCalculator {
 	

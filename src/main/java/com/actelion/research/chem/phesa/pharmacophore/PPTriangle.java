@@ -5,10 +5,10 @@ import java.util.Arrays;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.phesa.PheSAAlignment;
+import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 
 public class PPTriangle {
 	
-
 	private double[] d = new double[3]; //d12, d13, d23
 	private Coordinates[] c = new Coordinates[3]; //d12, d13, d23
 	private int[] f = new int[3]; //f1, f2, f3
@@ -20,7 +20,6 @@ public class PPTriangle {
 	private Coordinates[] dirs = new Coordinates[3]; // directionalities
 	
 	public PPTriangle (IPharmacophorePoint pp1, IPharmacophorePoint pp2, IPharmacophorePoint pp3, double d12, double d13, double d23, Coordinates molCom) {
-		this.molCom = molCom;
 		f[0] = pp1.getFunctionalityIndex();
 		f[1] = pp2.getFunctionalityIndex();	
 		f[2] = pp3.getFunctionalityIndex();	
@@ -223,9 +222,12 @@ public class PPTriangle {
 		Coordinates fitDir1 = new Coordinates(fitTriangle.dirs[0]);
 		Coordinates fitDir2 = new Coordinates(fitTriangle.dirs[1]);
 		Coordinates fitDir3 = new Coordinates(fitTriangle.dirs[2]);
-		fitDir1.rotate(ur);
-		fitDir2.rotate(ur);
-		fitDir3.rotate(ur);
+		if(fitTriangle.f[0]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[0]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
+			fitDir1.rotate(ur);
+		if(fitTriangle.f[1]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[1]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
+			fitDir2.rotate(ur);
+		if(fitTriangle.f[2]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[2]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
+			fitDir3.rotate(ur);
 		double dirScore = 0.33333*(Math.max(0,fitDir1.dot(dirs[0])) + Math.max(0,fitDir2.dot(dirs[1])) + Math.max(0,fitDir3.dot(dirs[2])));
 		return ppFit*dirScore*comScore;
 	

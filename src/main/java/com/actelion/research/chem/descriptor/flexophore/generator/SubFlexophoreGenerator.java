@@ -29,11 +29,17 @@ public class SubFlexophoreGenerator {
 	private HashSet<Integer> hsInteractionType;
 
 	/**
-	 *
-	 * @param minBinDistThresh
-	 * @param maxDistanceBinThresh
-	 * @param minNumDifferentInteractionTypes
 	 */
+	public SubFlexophoreGenerator(SubFlexophoreGenerator a) {
+		this.minBinDistThresh = a.minBinDistThresh;
+		this.maxDistanceBinThresh = a.maxDistanceBinThresh;
+		this.minNumDifferentInteractionTypes = a.minNumDifferentInteractionTypes;
+
+		violatedConditionsCount = new ViolatedConditionsCount();
+
+		hsInteractionType = new HashSet<>();
+	}
+
 	public SubFlexophoreGenerator(int minBinDistThresh, int maxDistanceBinThresh, int minNumDifferentInteractionTypes) {
 		this.minBinDistThresh = minBinDistThresh;
 		this.maxDistanceBinThresh = maxDistanceBinThresh;

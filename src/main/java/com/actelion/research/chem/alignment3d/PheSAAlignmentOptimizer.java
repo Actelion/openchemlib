@@ -15,12 +15,12 @@ import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.PheSAMolecule;
-import com.actelion.research.chem.phesa.pharmacophore.PPGaussian;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangle;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleCreator;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleMatcher;
-import com.actelion.research.chem.phesa.pharmacophore.PPTriangleMatcher.AlignmentResult;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
+import com.actelion.research.chem.phesa.pharmacophore.PPTriangleMatcher.AlignmentResult;
+import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
 public class PheSAAlignmentOptimizer {
 	

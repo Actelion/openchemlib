@@ -46,7 +46,7 @@ public class FeatureCalculator {
 	
 	private void getAtomFeatures() {
 
-		for(int i=0;i<mol.getAllAtoms();i++) {
+		for(int i=0;i<mol.getAtoms();i++) {
 			if(mol.isAromaticAtom(i))
 				aromAtoms.add(i);
 			else {
@@ -59,7 +59,7 @@ public class FeatureCalculator {
 				if(PharmacophoreCalculator.isAcceptor(mol,i)) {
 					acceptorAtoms.add(i);
 				}
-				else if(PharmacophoreCalculator.isDonorHeavyAtom(mol,i)) {
+				if(PharmacophoreCalculator.isDonorHeavyAtom(mol,i)) {
 					donorAtoms.add(i);
 				}
 				else 
@@ -77,15 +77,15 @@ public class FeatureCalculator {
 			int[] atomFeatures = features[a];
 			if(donorAtoms.contains(a))
 				atomFeatures[PharmacophoreCalculator.DONOR_ID]++;
-			else if (acceptorAtoms.contains(a))
+			if (acceptorAtoms.contains(a))
 					atomFeatures[PharmacophoreCalculator.ACCEPTOR_ID]++;
-			else if (negChargeAtoms.contains(a))
+			if (negChargeAtoms.contains(a))
 				atomFeatures[PharmacophoreCalculator.CHARGE_NEG_ID]++;
-			else if (posChargeAtoms.contains(a))
+			if (posChargeAtoms.contains(a))
 				atomFeatures[PharmacophoreCalculator.CHARGE_POS_ID]++;
-			else if (lipoAtoms.contains(a))
+			if (lipoAtoms.contains(a))
 				atomFeatures[PharmacophoreCalculator.LIPO_ID]++;
-			else if (aromAtoms.contains(a))
+			if (aromAtoms.contains(a))
 				atomFeatures[PharmacophoreCalculator.AROM_ID]++;
 		}
 		return features;

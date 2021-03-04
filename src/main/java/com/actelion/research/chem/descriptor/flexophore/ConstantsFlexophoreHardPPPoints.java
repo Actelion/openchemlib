@@ -1,7 +1,7 @@
 package com.actelion.research.chem.descriptor.flexophore;
 
-import com.actelion.research.chem.phesa.pharmacophore.IPharmacophorePoint;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
+import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 
 public class ConstantsFlexophoreHardPPPoints {
 

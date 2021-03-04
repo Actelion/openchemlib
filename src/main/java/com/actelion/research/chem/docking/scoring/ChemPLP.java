@@ -23,9 +23,9 @@ import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
-import com.actelion.research.chem.phesa.pharmacophore.ChargePoint;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
+import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 /**
