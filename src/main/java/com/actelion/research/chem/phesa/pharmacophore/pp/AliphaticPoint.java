@@ -18,7 +18,7 @@ public class AliphaticPoint implements IPharmacophorePoint {
 		referenceAtom = a;
 		this.atoms = atoms;
 		directionality = new Coordinates(0.0,0.0,0.0);
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 
 	public AliphaticPoint(AliphaticPoint aP) {
@@ -39,14 +39,9 @@ public class AliphaticPoint implements IPharmacophorePoint {
 
 	@Override
 	public void updateCoordinates(Coordinates[] coords) {
-
-	}
-
-
-	public void updateCoordinates(StereoMolecule mol) {
 		Coordinates com = new Coordinates(0,0,0);
 		for(int atom : atoms) {
-			com.add(mol.getCoordinates(atom));
+			com.add(coords[atom]);
 		}
 		com.scale(1.0/( atoms.size()));
 
@@ -54,15 +49,6 @@ public class AliphaticPoint implements IPharmacophorePoint {
 	}
 
 
-	public void updateCoordinates(Conformer conf) {
-		Coordinates com = new Coordinates(0,0,0);
-		for(int atom : atoms) {
-			com.add(conf.getCoordinates(atom));
-		}
-		com.scale(1.0/( atoms.size()));
-
-		center = com;
-	}
 
 
 	@Override
@@ -91,7 +77,7 @@ public class AliphaticPoint implements IPharmacophorePoint {
 		for(int i=2;i<strings.length;i++) {
 			atoms.add(Integer.decode(strings[i]));
 		}
-		updateCoordinates(mol);
+		updateCoordinates(mol.getAtomCoordinates());
 	}
 
 	@Override
@@ -119,14 +105,16 @@ public class AliphaticPoint implements IPharmacophorePoint {
 		return result;
 	}
 
+
+	
 	@Override
 	public int getCenterID() {
 		return referenceAtom;
 	}
-
+	
 	@Override
-	public void setCenterID(int id) {
-
+	public void setCenterID(int centerID) {
+		referenceAtom = centerID;
 	}
 
 	@Override
