@@ -75,15 +75,19 @@ public class JEditableStructureView extends JStructureView {
 
     public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2 && isEnabled() && isEditable()) {
-            Component c = this;
-            while (!(c instanceof Frame || c instanceof Dialog))
-                c = c.getParent();
-            JDrawDialog theDialog = (c instanceof Frame) ? new JDrawDialog((Frame)c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL) : new JDrawDialog((Dialog)c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL);
+            JDrawDialog theDialog = createDrawDialog();
             theDialog.getDrawArea().setAllowQueryFeatures(mAllowQueryFeatures);
             theDialog.addStructureListener(this);
             theDialog.setVisible(true);
             }
         }
+
+    protected JDrawDialog createDrawDialog() {
+		Component c = this;
+		while (!(c instanceof Frame || c instanceof Dialog))
+			c = c.getParent();
+		return (c instanceof Frame) ? new JDrawDialog((Frame) c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL) : new JDrawDialog((Dialog) c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL);
+		}
 
 	public void setAllowQueryFeatures(boolean allow) {
 		if (mAllowQueryFeatures != allow) {
