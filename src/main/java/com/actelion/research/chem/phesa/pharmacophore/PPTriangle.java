@@ -20,6 +20,7 @@ public class PPTriangle {
 	private Coordinates[] dirs = new Coordinates[3]; // directionalities
 	
 	public PPTriangle (IPharmacophorePoint pp1, IPharmacophorePoint pp2, IPharmacophorePoint pp3, double d12, double d13, double d23, Coordinates molCom) {
+		this.molCom = molCom;
 		f[0] = pp1.getFunctionalityIndex();
 		f[1] = pp2.getFunctionalityIndex();	
 		f[2] = pp3.getFunctionalityIndex();	
