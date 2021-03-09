@@ -168,7 +168,15 @@ public class CoordinateInventor {
 
 		mFFP = ffp;
 
-		mFragmentList = new ArrayList<InventorFragment>();
+		mFragmentList = new ArrayList<InventorFragment>() {
+			@Override
+			public boolean add(InventorFragment f) {
+				for (InventorFragment ff:this)
+					if (ff.equals(f))
+						return false;
+				return super.add(f);
+				}
+			};
 		mAtomHandled = new boolean[mMol.getAllAtoms()];
 		mBondHandled = new boolean[mMol.getAllBonds()];
 
@@ -471,7 +479,7 @@ public class CoordinateInventor {
 							}
 						}
 					for (int i=0; i<members; i++) {
-						f.mAtomX[i] = (double)i;
+						f.mAtomX[i] = i;
 						f.mAtomY[i] = 0.0;
 						f.mPriority[i] = 1;
 						}
@@ -518,7 +526,7 @@ public class CoordinateInventor {
 									+ last - 1;
 						InventorFragment f = new InventorFragment(mMol, members, mMode);
 						for (int j=0; j<=last; j++) {
-							f.mAtomX[j] = (double)j;
+							f.mAtomX[j] = j;
 							f.mAtomY[j] = 0.0;
 							f.mPriority[j] = 64;
 							f.mGlobalAtom[j] = alleneAtom[j];
@@ -2214,7 +2222,6 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 			largeFragment[0].arrangeWith(largeFragment[1]);
 			InventorFragment mergedFragment = getMergedFragment(largeFragment[0], largeFragment[1], 0);
 			updateFragmentList(largeFragment[0], largeFragment[1], mergedFragment);
-
 			}
 		}
 

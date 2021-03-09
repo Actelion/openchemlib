@@ -3,6 +3,7 @@ package com.actelion.research.chem.coords;
 import com.actelion.research.chem.StereoMolecule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class InventorFragment {
 	private static final double cCollisionLimitBondRotation = 0.8;
@@ -26,6 +27,7 @@ public class InventorFragment {
 	private double mMaxY;
 	private double mCollisionPanalty;
 	private int[][] mFlipList;
+	private int[] mSortedAtom;
 
 	protected InventorFragment(StereoMolecule mol, int atoms, int mode) {
 		mMol = mol;
@@ -64,6 +66,28 @@ public class InventorFragment {
 	protected int size() {
 		return mGlobalAtom.length;
 	}
+
+	protected boolean equals(InventorFragment f) {
+		if (f.size() != size())
+			return false;
+
+		int[] sorted = getSortedAtoms();
+		int[] sortedF = f.getSortedAtoms();
+		for (int i=0; i<sorted.length; i++)
+			if (sorted[i] != sortedF[i])
+				return false;
+
+		return true;
+		}
+
+	private int[] getSortedAtoms() {
+		if (mSortedAtom == null) {
+			mSortedAtom = mGlobalAtom.clone();
+			Arrays.sort(mSortedAtom);
+			}
+
+		return mSortedAtom;
+		}
 
 	protected double getAtomX(int index) {
 		return mAtomX[index];
