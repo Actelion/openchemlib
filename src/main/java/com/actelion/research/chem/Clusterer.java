@@ -220,6 +220,10 @@ public class Clusterer<T> extends DataProcessor {
 			}
 		}
 
+	public float getSimilarity(int index1, int index2){
+		if(index1==index2) return 1.0f;
+		return mSimilarityMatrix[Math.max(index1,index2)][Math.min(index1,index2)];
+	}
 
 	private void findRepresentatives() {
 		calculateSimilarityMatrix(true);
