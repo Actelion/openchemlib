@@ -56,7 +56,7 @@ public class MolfileParser
 	public static boolean debug = false;
 	private StereoMolecule mMol;
 	private TreeMap<Integer,Integer> mAtomIndexMap,mBondIndexMap;
-	private boolean mTreatAnyAsMetalBond,mDeduceMissingCharges;
+	private boolean mTreatAnyAsMetalBond,mDeduceMissingCharges,mChiralFlag,mIsV3000,mAssumeChiralTrue;
 	private int mMode;
 	private int[] mHydrogenMap;
 
@@ -89,7 +89,7 @@ public class MolfileParser
 
 		try{
 			String line;
-			int natoms,nbonds,nlists,chiral,version;
+			int natoms,nbonds,nlists;
 
 			mHydrogenMap = null;
 
@@ -124,18 +124,20 @@ public class MolfileParser
 				return false;
 			}
 
+			mIsV3000 = false;
+			mChiralFlag = mAssumeChiralTrue;
 			try{
 				natoms = Integer.parseInt(line.substring(0,3).trim());
 				nbonds = Integer.parseInt(line.substring(3,6).trim());
 				nlists = parseIntOrSpaces(line.substring(6,9).trim());
-				chiral = parseIntOrSpaces(line.substring(12,15).trim());
-				version = (line.length() >= 39 && line.substring(34,39).equals("V3000")) ? 3 : 2;
+				mChiralFlag |= (1 == parseIntOrSpaces(line.substring(12,15).trim()));
+				mIsV3000 = (line.length() >= 39 && line.startsWith("V3000", 34));
 			} catch(Exception e){
 				TRACE("Warning [readMoleculeFromBuffer]: Unable to interpret counts line\n");
 				return false;
 			}
 
-			if(version == 3){
+			if(mIsV3000){
 				boolean res = readMoleculeV3FromBuffer(reader);
 				mMol.setName(name);
 				return res;
@@ -147,7 +149,7 @@ public class MolfileParser
 
 			mMol.setName(name);
 
-			if(chiral == 0){
+			if(!mChiralFlag){
 				mMol.setToRacemate();
 			}
 
@@ -271,7 +273,7 @@ public class MolfileParser
 				handleValences(valence);
 
 				// to run the racemization scheduled with mMol.setToRacemate()
-				if(chiral == 0)
+				if(!mChiralFlag)
 					mMol.ensureHelperArrays(Molecule.cHelperParities);
 
 				return true;
@@ -444,6 +446,30 @@ public class MolfileParser
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
 
 		return true;
+	}
+
+	/**
+	 * Some software exports mol/sd-files with an unset chiral flag despite
+	 * the original molecule is a pure enantiomer. This method allows the
+	 * MolfileParser to override the molfile's chiral flag for such cases.
+	 * @param b
+	 */
+	public void setAssumeChiralTrue(boolean b) {
+		mAssumeChiralTrue = b;
+	}
+
+	/**
+	 * @return whether the previous molfile's chiral flag was set
+	 */
+	public boolean isChiralFlagSet() {
+		return mChiralFlag;
+	}
+
+	/**
+	 * @return whether the previous molfile was a V3000
+	 */
+	public boolean isV3000() {
+		return mIsV3000;
 	}
 
 	private void handleValences(int[] valence) {

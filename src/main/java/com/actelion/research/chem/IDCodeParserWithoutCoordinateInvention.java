@@ -183,7 +183,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 */
 	public void parse(StereoMolecule mol, byte[] idcode, byte[] coordinates) {
 		if (idcode == null || idcode.length == 0) {
-			mol.deleteMolecule();
+			mol.clear();
 			return;
 			}
 
