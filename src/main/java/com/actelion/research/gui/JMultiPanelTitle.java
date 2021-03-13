@@ -29,7 +29,7 @@ import java.awt.event.MouseMotionListener;
 public class JMultiPanelTitle extends JComponent implements MouseListener,MouseMotionListener {
     private static final long serialVersionUID = 0x20100813;
 
-    private static final int HEIGHT = HiDPIHelper.scale(10);
+    public static final int HEIGHT = HiDPIHelper.scale(10);
 
 	private MultiPanelDragListener	mDragListener;
 	private String					mTitle;

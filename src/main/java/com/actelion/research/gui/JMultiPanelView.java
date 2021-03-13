@@ -54,7 +54,7 @@ public class JMultiPanelView extends JPanel implements MultiPanelDragListener {
 				mPanelList.get(i).titlePanel.setDragEnabled(true);
 			}
 
-		mLayout.insertRow(2*position, JMultiPanelTitle.height());
+		mLayout.insertRow(2*position, JMultiPanelTitle.HEIGHT);
 		mLayout.insertRow(2*position+1, height);
 
 		super.add(titlePanel, "0, "+(2*position));
@@ -216,7 +216,7 @@ public class JMultiPanelView extends JPanel implements MultiPanelDragListener {
 	private int getAbsoluteY(int y, int[] panelHeight) {
 		int absoluteY = y;
 		for (int i=0; i<mDragTitle; i++)
-			absoluteY += JMultiPanelTitle.height() + panelHeight[i];
+			absoluteY += JMultiPanelTitle.HEIGHT + panelHeight[i];
 		return absoluteY;
 		}
 
