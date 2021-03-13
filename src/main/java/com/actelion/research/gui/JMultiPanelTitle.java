@@ -29,18 +29,11 @@ import java.awt.event.MouseMotionListener;
 public class JMultiPanelTitle extends JComponent implements MouseListener,MouseMotionListener {
     private static final long serialVersionUID = 0x20100813;
 
-    private static final int HEIGHT = 10;
+    private static final int HEIGHT = HiDPIHelper.scale(10);
 
 	private MultiPanelDragListener	mDragListener;
 	private String					mTitle;
 	private boolean					mDragEnabled;
-
-	/**
-	 * @return default title panel height potentially adapted for HiDPI devices
-	 */
-	public static int height() {
-		return HiDPIHelper.scale(HEIGHT);
-		}
 
 	public JMultiPanelTitle(MultiPanelDragListener parent, String title) {
 		mDragListener = parent;
@@ -73,9 +66,9 @@ public class JMultiPanelTitle extends JComponent implements MouseListener,MouseM
         g2.setPaint(storedPaint);
 
 		g.setColor(UIManager.getColor("Label.foreground"));
-		g.setFont(UIManager.getFont("Label.font").deriveFont(Font.PLAIN, height()-1));
+		g.setFont(UIManager.getFont("Label.font").deriveFont(Font.PLAIN, HEIGHT-1));
 		int stringWidth = (int)g.getFontMetrics().getStringBounds(mTitle, g).getWidth();
-		g.drawString(mTitle, (size.width-stringWidth)/2, height()-2);
+		g.drawString(mTitle, (size.width-stringWidth)/2, HEIGHT-2);
 		}
 
 	public void mouseClicked(MouseEvent e) {}
