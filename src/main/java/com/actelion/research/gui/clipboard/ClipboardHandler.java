@@ -39,6 +39,7 @@ import com.actelion.research.chem.io.RXNFileCreator;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.gui.clipboard.external.ChemDrawCDX;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.dnd.ReactionTransferable;
 import com.actelion.research.gui.wmf.WMF;
@@ -460,12 +461,13 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 
 	private boolean copyReactionToClipboard(String ctab, Reaction rxn) throws IOException {
-		if (ctab == null) {
-			RXNFileCreator mc = new RXNFileCreator(rxn);
-			ctab = mc.getRXNfile();
-		}
+//		if (ctab == null) {
+//			RXNFileCreator mc = new RXNFileCreator(rxn);
+//			ctab = mc.getRXNfile();
+//		}
 
-		byte sketch[] = Sketch.createSketchFromReaction(makeRXNCopy(rxn));
+		ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
+		byte[] cdxBuffer = cdx.getChemDrawBuffer(rxn);
 
 		// Serialize to a byte array
 		System.out.println("copyReactionToClipboard");
@@ -476,7 +478,7 @@ public class ClipboardHandler implements IClipboardHandler
 		out.close();
 		bos.close();
 
-		return NativeClipboardAccessor.copyReactionToClipboard(ctab.getBytes(), sketch, bos.toByteArray());
+		return NativeClipboardAccessor.copyMoleculeToClipboard("", cdxBuffer, bos.toByteArray());
 	}
 
 	private boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch) {
