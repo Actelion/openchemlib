@@ -508,7 +508,7 @@ public class MolecularVolume {
 		firstIndex = lastIndex+1;
 		lastIndex = firstIndex + nrOfVolumeGaussians;
 		for(int i=firstIndex;i<lastIndex;i++) {
-			volumeGaussians.add(VolumeGaussian.fromString(splitString[i]));
+			volumeGaussians.add(VolumeGaussian.fromString(splitString[i],refMol));
 		}
 
 

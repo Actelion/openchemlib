@@ -28,25 +28,22 @@ public class VolumeGaussian extends Gaussian3D {
 		this.role = original.role;
 	}
 	
-	private VolumeGaussian(String encodedGaussian) {
-		decode(encodedGaussian);
+	private VolumeGaussian(String encodedGaussian, StereoMolecule mol) {
+		decode(encodedGaussian, mol);
 	}
 	
-	public static VolumeGaussian fromString(String encodedGaussian) {
-		return new VolumeGaussian(encodedGaussian);
+	public static VolumeGaussian fromString(String encodedGaussian, StereoMolecule mol) {
+		return new VolumeGaussian(encodedGaussian, mol);
 	}
 
 
 	@Override
 	public String encode() { //encodes all information of a atomicGaussian using the Base64 encoder
-		double[] coords = new double[] {referenceVector.x,referenceVector.y,referenceVector.z};
 		double[] shift = new double[] {shiftVector.x,shiftVector.y, shiftVector.z};
 		StringBuilder molVolString = new StringBuilder();
 		molVolString.append(Integer.toString(atomicNo));
 		molVolString.append(" ");
 		molVolString.append(Integer.toString(atomId));
-		molVolString.append(" ");
-		molVolString.append(EncoderFloatingPointNumbers.encode(coords,13));
 		molVolString.append(" ");
 		molVolString.append(EncoderFloatingPointNumbers.encode(shift,13));
 		molVolString.append(" ");
@@ -54,17 +51,16 @@ public class VolumeGaussian extends Gaussian3D {
 		return molVolString.toString();
 	}
 	
-	public void decode(String string64)  {
+	public void decode(String string64, StereoMolecule mol)  {
 		String[] strings = string64.split(" ");
 		atomicNo = Integer.decode(strings[0]);
 		atomId = Integer.decode(strings[1]);
-		double [] coords = EncoderFloatingPointNumbers.decode(strings[2]);
-		double [] shift = EncoderFloatingPointNumbers.decode(strings[3]);
-		role = Integer.decode(strings[4]);
+		double [] shift = EncoderFloatingPointNumbers.decode(strings[2]);
+		role = Integer.decode(strings[3]);
 		alpha = calculateWidth(); //the width of the Gaussian depends on the atomic radius of the atom
 		volume = calculateVolume();
 		coeff = calculateHeight();
-		referenceVector = new Coordinates(coords[0],coords[1],coords[2]);
+		referenceVector = new Coordinates(mol.getAtomX(atomId), mol.getAtomY(atomId), mol.getAtomZ(atomId));
 		shiftVector = new Coordinates(shift[0],shift[1],shift[2]);
 		center = referenceVector.addC(shiftVector);
 		weight = 1.0;

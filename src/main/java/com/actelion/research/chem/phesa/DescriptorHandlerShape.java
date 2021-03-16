@@ -40,6 +40,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		
 
 	private static final int CONFORMATIONS = 50;
+	public static final int SIZE_CUTOFF = 200;
 
 
 	private static DescriptorHandlerShape INSTANCE;
@@ -111,6 +112,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 			ArrayList<MolecularVolume> molecularVolumes = new ArrayList<MolecularVolume>(); 
 			
 			StereoMolecule mol = confSet.first().toMolecule();
+			if(mol.getAtoms()>SIZE_CUTOFF)
+				return FAILED_OBJECT;
 			MolecularVolume refMolVol = new MolecularVolume(mol);
 			MolecularVolume molVol;
 			
