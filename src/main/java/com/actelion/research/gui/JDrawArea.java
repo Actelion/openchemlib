@@ -1222,6 +1222,9 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				mMol.setAtomRadical(mCurrentHiliteAtom, newRadical);
 				fireMoleculeChanged();
 				update(UPDATE_CHECK_COORDS);
+			} else if (isFirst && ch == 'l') {
+				mAtomKeyStrokeBuffer.append("Cl");
+				update(UPDATE_REDRAW);
 			} else if (isFirst && ch == 'q' && mMol.isFragment()) {
 				showAtomQFDialog(mCurrentHiliteAtom);
 			} else if (isFirst && ch == '?') {
