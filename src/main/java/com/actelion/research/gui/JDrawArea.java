@@ -269,9 +269,8 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		boolean isScaledView = false;
 		if (mUpdateMode != UPDATE_NONE) {
 			if ((mMode & MODE_MULTIPLE_FRAGMENTS) != 0
-				&& mUpdateMode != UPDATE_SCALE_COORDS_USE_FRAGMENTS) {
+			 && mUpdateMode != UPDATE_SCALE_COORDS_USE_FRAGMENTS)
 				analyzeFragmentMembership();
-			}
 
 			mDepictor = ((mMode & MODE_REACTION) != 0) ?
 				new ExtendedDepictor(new Reaction(mFragment, mReactantCount), mDrawingObjectList, false, USE_GRAPHICS_2D)
@@ -299,7 +298,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				case UPDATE_INVENT_COORDS:
 				case UPDATE_SCALE_COORDS:
 				case UPDATE_SCALE_COORDS_USE_FRAGMENTS:
-					cleanupCoordinates(g, mDepictor);
+					cleanupCoordinates(g);
 					break;
 				case UPDATE_CHECK_COORDS:
 					DepictorTransformation t1 = mDepictor.updateCoords(g, new Rectangle2D.Double(0, 0, theSize.width, theSize.height), 0);
@@ -2155,7 +2154,6 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				return super.areBondsSimilar(moleculeBond, fragmentBond);
 			}
 		};
-//		syncFragments();    commented out, because it seems to conflict with automatic fragment detection; TLS 11Nov2018
 
 		Reaction rxn = getReaction();
 
@@ -3154,7 +3152,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		mAtomColorSupported = acs;
 	}
 
-	private void cleanupCoordinates(Graphics g, ExtendedDepictor depictor)
+	private void cleanupCoordinates(Graphics g)
 	{
 		int selectedAtomCount = 0;
 		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
@@ -3164,52 +3162,29 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		}
 		boolean selectedOnly = (selectedAtomCount != 0 && selectedAtomCount != mMol.getAllAtoms());
 
-		boolean cleanFragmentsIndependently = false;
-		if ((mMode & MODE_MULTIPLE_FRAGMENTS) != 0) {
-			cleanFragmentsIndependently = true;
-			if (selectedOnly) {
-				int fragmentNo = -1;
-				for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
-					if (!mMol.isSelectedAtom(atom)) {
-						if (fragmentNo == -1) {
-							fragmentNo = mFragmentNo[atom];
-							}
-						else if (fragmentNo != mFragmentNo[atom]) {
-							// we have atoms from multiple fragments, which need to keep their relative coordinates
-							cleanFragmentsIndependently = false;
-							break;
-							}
-						}
-					}
-				}
-			}
-
-		if (cleanFragmentsIndependently)
-			cleanupMultiFragmentCoordinates(g, depictor, selectedOnly);
+		if ((mMode & MODE_MULTIPLE_FRAGMENTS) != 0)
+			cleanupMultiFragmentCoordinates(g, selectedOnly);
 		else
-			cleanupMoleculeCoordinates(g, depictor, selectedOnly);
-
-		if (selectedOnly)
-			mMol.removeAtomMarkers();
+			cleanupMoleculeCoordinates(g, selectedOnly);
 	}
 
-	private void cleanupMoleculeCoordinates(Graphics g, ExtendedDepictor depictor, boolean selectedOnly)
+	private void cleanupMoleculeCoordinates(Graphics g, boolean selectedOnly)
 	{
 		if (mUpdateMode == UPDATE_INVENT_COORDS) {
-			if (selectedOnly) {
-				for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+			if (selectedOnly)
+				for (int atom = 0; atom < mMol.getAllAtoms(); atom++)
 					mMol.setAtomMarker(atom, !mMol.isSelectedAtom(atom));
-				}
-			}
 
 			new CoordinateInventor(selectedOnly ? CoordinateInventor.MODE_KEEP_MARKED_ATOM_COORDS : 0).invent(mMol);
-//			mMol.setStereoBondsFromParity(); not needed anymore
+
+			if (selectedOnly)
+				mMol.removeAtomMarkers();
 		}
 
-		depictor.updateCoords(g, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
+		mDepictor.updateCoords(g, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
 	}
 
-	private void cleanupMultiFragmentCoordinates(Graphics g, ExtendedDepictor depictor, boolean selectedOnly)
+	private void cleanupMultiFragmentCoordinates(Graphics g, boolean selectedOnly)
 	{
 		if (selectedOnly && mUpdateMode == UPDATE_INVENT_COORDS) {
 			int[] fragmentAtom = new int[mFragment.length];
@@ -3261,7 +3236,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			rawX += spacing + boundingRect[fragment].width;
 		}
 
-		depictor.updateCoords(g, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
+		mDepictor.updateCoords(g, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
 
 		int[] fragmentAtom = new int[mFragment.length];
 		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
@@ -3287,21 +3262,6 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		mFragmentNo = fragmentNo;
 
 		mFragment = mMol.getFragments(fragmentNo, fragments);
-	}
-
-	private void syncFragments()
-	{
-		mMol.ensureHelperArrays(Molecule.cHelperParities);
-		int[] fragmentNo = new int[mMol.getAllAtoms()];
-		int fragments = mMol.getFragmentNumbers(fragmentNo, false, true);
-//		fragments = joinCloseFragments(fragmentNo, fragments);
-		sortFragmentsByPosition(fragmentNo, fragments);
-		mFragmentNo = fragmentNo;
-
-		mFragment = mMol.getFragments(fragmentNo, fragments);
-		for (StereoMolecule m : mFragment) {
-			m.ensureHelperArrays(Molecule.cHelperParities);
-		}
 	}
 
 	private int joinCloseFragments(int[] fragmentNo, int fragments)
@@ -3533,7 +3493,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		}
 	}
 
-	// This class is needed for inter-jvm drag&drop. Although not neccessary for standard environments, it prevents
+// This class is needed for inter-jvm drag&drop. Although not neccessary for standard environments, it prevents
 // nasty "no native data was transfered" errors. It still might create ClassNotFoundException in the first place by
 // the SystemFlavorMap, but as I found it does not hurt, since the context classloader will be installed after
 // the first call. I know, that this depends heavely on a specific behaviour of the systemflavormap, but for now
