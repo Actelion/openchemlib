@@ -18,10 +18,7 @@
 
 package com.actelion.research.gui;
 
-import com.actelion.research.chem.AbstractDepictor;
-import com.actelion.research.chem.Depictor2D;
-import com.actelion.research.chem.IDCodeParser;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDragAdapter;
@@ -43,6 +40,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
     static final long serialVersionUID = 0x20061113;
 
     private static final String ITEM_COPY = "Copy Structure";
+	private static final String ITEM_COPY_SMILES = "Copy Structure As SMILES-String";
 	private static final String ITEM_PASTE= "Paste Structure";
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE+" or Name";
 	private static final String ITEM_CLEAR = "Clear Structure";
@@ -404,6 +402,11 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		if (e.getActionCommand().equals(ITEM_COPY)) {
 			mClipboardHandler.copyMolecule(mMol);
 			}
+		if (e.getActionCommand().equals(ITEM_COPY_SMILES)) {
+			final String smiles = new IsomericSmilesCreator(mMol).getSmiles();
+			final StringSelection data = new StringSelection(smiles);
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, data);
+			}
 		if (e.getActionCommand().startsWith(ITEM_PASTE) && mIsEditable) {
 			StereoMolecule mol = mClipboardHandler.pasteMolecule();
 			if (mol != null) {
@@ -442,6 +445,11 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			item1.addActionListener(this);
 			item1.setEnabled(mMol.getAllAtoms() != 0);
 			popup.add(item1);
+
+			JMenuItem itemCopySmiles = new JMenuItem(ITEM_COPY_SMILES);
+			itemCopySmiles.addActionListener(this);
+			itemCopySmiles.setEnabled(mMol.getAllAtoms() != 0);
+			popup.add(itemCopySmiles);
 
 			if (mIsEditable) {
 				String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
