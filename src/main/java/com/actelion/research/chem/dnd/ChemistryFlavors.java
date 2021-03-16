@@ -59,7 +59,8 @@ public class ChemistryFlavors {
         DF_MDLMOLFILE,
         DF_MDLMOLFILEV3,
         DF_SMILES,
-        DF_IDCODE
+        DF_IDCODE,
+        DataFlavor.stringFlavor
     };
 
     public static final DataFlavor DF_SERIALIZED_REACTION = new SerializedClassFlavor(com.actelion.research.chem.reaction.Reaction.class, "Native OpenChemLib Reaction");

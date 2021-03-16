@@ -70,8 +70,9 @@ public class MoleculeTransferable implements Transferable,ClipboardOwner {
             return new MolfileCreator(mMol).getMolfile();
         } else if (flavor.equals(ChemistryFlavors.DF_SMILES)) {
             return new IsomericSmilesCreator(mMol).getSmiles();
-        } else if (flavor.equals(ChemistryFlavors.DF_IDCODE)) {
-            return new Canonizer(mMol).getIDCode();
+        } else if (flavor.equals(ChemistryFlavors.DF_IDCODE) || flavor.equals(DataFlavor.stringFlavor)) {
+            final Canonizer canonizer = new Canonizer(mMol);
+            return String.format("%s %s", canonizer.getIDCode(), canonizer.getEncodedCoordinates(true));
         } else
             throw new UnsupportedFlavorException(flavor);
     }
