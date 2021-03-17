@@ -98,14 +98,13 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this.maxConfs = maxConfs;
 		this.ppWeight = ppWeight;
 		init();
-		conformerGenerator = new ConformerSetGenerator();
+		conformerGenerator = new ConformerSetGenerator(maxConfs);
 
 	}
 		
 	
-	public PheSAMolecule createDescriptor(ConformerSet fullSet) {
+	public PheSAMolecule createDescriptor(ConformerSet confSet) {
 		try {
-			ConformerSet confSet = fullSet.getSubset(maxConfs);
 
 			init();
 			

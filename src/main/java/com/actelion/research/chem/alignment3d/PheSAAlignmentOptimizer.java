@@ -24,7 +24,7 @@ import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
 public class PheSAAlignmentOptimizer {
 	
-	private static int OPTIMIZATIONS = 20;
+	private static int OPTIMIZATIONS = 50;
 	private static double EXIT_VECTOR_WEIGHT = 10.0;
 	
 	private PheSAAlignmentOptimizer() {}

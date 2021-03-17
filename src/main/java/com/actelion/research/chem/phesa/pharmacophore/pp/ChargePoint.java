@@ -12,7 +12,7 @@ public class ChargePoint implements IPharmacophorePoint {
 	private List<Integer> neighbours;
 	private int charge;
 	private Coordinates center;
-	private Coordinates directionality = new Coordinates(0.0,0.0,0.0);
+	private Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 	
 	public ChargePoint(StereoMolecule mol, int a, List<Integer> neighbours, int charge) {
 		if(charge!=1 && charge!=-1) 

@@ -11,7 +11,7 @@ public class AromRingPoint implements IPharmacophorePoint {
 	private int referenceAtom;
 	private List<Integer> ringAtoms;
 	private Coordinates center;
-	private Coordinates directionality = new Coordinates(0.0,0.0,0.0);
+	private Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 	
 	public AromRingPoint(StereoMolecule mol, int a, List<Integer> ringAtoms) {
 		referenceAtom = a;

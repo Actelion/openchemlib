@@ -12,7 +12,7 @@ public class AliphaticPoint implements IPharmacophorePoint {
 	private int referenceAtom;
 	private List<Integer> atoms;
 	private Coordinates center;
-	private Coordinates directionality = new Coordinates(0.0,0.0,0.0);
+	private Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 
 	public AliphaticPoint(StereoMolecule mol, int a, List<Integer> atoms) {
 		referenceAtom = a;
