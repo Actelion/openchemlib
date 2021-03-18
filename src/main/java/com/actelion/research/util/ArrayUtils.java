@@ -119,8 +119,16 @@ public class ArrayUtils {
 		return li;
 	}
 
+	public final static List<String> toList(String [] arr) {
+		List<String> li = new ArrayList<>(arr.length);
+		for (String t : arr) {
+			li.add(t);
+		}
+		return li;
+	}
+
 	public final static List<Integer> toList(int [] arr) {
-		List<Integer> li = new ArrayList<Integer>(arr.length);
+		List<Integer> li = new ArrayList<>(arr.length);
 		for (int t : arr) {
 			li.add(t);
 		}
