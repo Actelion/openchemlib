@@ -138,6 +138,7 @@ public abstract class AbstractDepictor {
 	public static final int	cDModeNoImplicitAtomLabelColors = 0x0800;
 	public static final int	cDModeNoStereoProblem = 0x1000;
 	public static final int	cDModeNoColorOnESRAndCIP = 0x2000;
+	public static final int cDModeNoImplicitHydrogen = 0x4000;
 
 	private static final double cFactorTextSize = 0.6;
 	private static final double cFactorChiralTextSize = 0.5;
@@ -1749,21 +1750,23 @@ public abstract class AbstractDepictor {
             }
 
 		int hydrogensToAdd = 0;
-		if (mMol.isFragment()) {
-/*			if ((mMol.getAtomicNo(atom) != 6
-			  || !mAtomIsConnected[atom]
-			  || mMol.getAtomCharge(atom) != 0
-			  || mMol.getAtomRadical(atom) != 0)
-			 && (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)*/
-			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)
-				hydrogensToAdd = mMol.getImplicitHydrogens(atom);
-			}
-		else {
-			if (mMol.getAtomicNo(atom) != 6
-			 || mMol.getAtomMass(atom) != 0
-			 || !mAtomIsConnected[atom]
-			 || mMol.getAtomRadical(atom) != 0)
-				hydrogensToAdd = mMol.getImplicitHydrogens(atom);
+		if ((mDisplayMode & cDModeNoImplicitHydrogen) == 0) {
+			if (mMol.isFragment()) {
+/*  			if ((mMol.getAtomicNo(atom) != 6
+				  || !mAtomIsConnected[atom]
+				  || mMol.getAtomCharge(atom) != 0
+				  || mMol.getAtomRadical(atom) != 0)
+				 && (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)*/
+				if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)
+					hydrogensToAdd = mMol.getImplicitHydrogens(atom);
+				}
+			else {
+				if (mMol.getAtomicNo(atom) != 6
+				 || mMol.getAtomMass(atom) != 0
+				 || !mAtomIsConnected[atom]
+				 || mMol.getAtomRadical(atom) != 0)
+					hydrogensToAdd = mMol.getImplicitHydrogens(atom);
+				}
 			}
 
 		boolean largeIsoString = false;

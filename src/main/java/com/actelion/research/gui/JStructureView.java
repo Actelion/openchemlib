@@ -147,13 +147,20 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		return mClipboardHandler;
 	    }
 
+	public int getDisplayMode() {
+		return mDisplayMode;
+		}
+
 	/**
 	 * Sets the display mode for the Depictor. The default is
 	 * AbstractDepictor.cDModeHiliteAllQueryFeatures.
 	 * @param mode
 	 */
 	public void setDisplayMode(int mode) {
-	    mDisplayMode = mode;
+		if (mDisplayMode != mode) {
+		    mDisplayMode = mode;
+		    repaint();
+			}
 	    }
 
 	public void setDisableBorder(boolean b) {
