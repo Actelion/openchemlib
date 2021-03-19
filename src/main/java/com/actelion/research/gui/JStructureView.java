@@ -288,7 +288,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		if (mIDCode == null && idcode == null)
 			return;
 
-		if (mIDCode != null && idcode != null && mIDCode.equals(idcode))
+		if (mIDCode != null && mIDCode.equals(idcode))
 			return;
 
 		new IDCodeParser(true).parse(mMol, idcode, coordinates);
@@ -428,7 +428,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 				}
 			}
 		if (e.getActionCommand().equals(ITEM_CLEAR) && mIsEditable) {
-			mMol.deleteMolecule();
+			mMol.clear();
 			mDisplayMol = mMol;
 			structureChanged();
 			}
