@@ -169,8 +169,8 @@ public class SmilesParser {
 		while (position < endIndex) {
 			char theChar = (char)smiles[position++];
 
-			if (Character.isLetter(theChar) || theChar == '*') {
-				int atomicNo = 0;
+			if (Character.isLetter(theChar) || theChar == '*' || theChar == '?') {
+				int atomicNo = -1;
 				int explicitHydrogens = -1;
 				boolean isWildCard = false;
 				boolean parityFound = false;
@@ -180,6 +180,13 @@ public class SmilesParser {
 						int noOfDigits = Character.isDigit(smiles[position+1]) ? 2 : 1;
 						atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position-1, 1+noOfDigits));
 						position += noOfDigits;
+						}
+					else if (theChar == '*') {
+						atomicNo = 6;
+						isWildCard = true;
+						}
+					else if (theChar == '?') {
+						atomicNo = 0;
 						}
 					else {
 						int labelLength = Character.isLowerCase(smiles[position]) ? 2 : 1;
@@ -209,6 +216,9 @@ public class SmilesParser {
 				else if (theChar == '*') {
 					atomicNo = 6;
 					isWildCard = true;
+					}
+				else if (theChar == '?') {
+					atomicNo = 0;
 					}
 				else {
 					switch (Character.toUpperCase(theChar)) {
@@ -249,7 +259,7 @@ public class SmilesParser {
 						}
 					}
 
-				if (atomicNo == 0)
+				if (atomicNo == 0 && theChar != '?')
 					throw new Exception("SmilesParser: unknown element label found");
 
 				int atom = mMol.addAtom(atomicNo);	// this may be a hydrogen, if defined as [H]
