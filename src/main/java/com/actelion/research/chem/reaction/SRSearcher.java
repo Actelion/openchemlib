@@ -162,6 +162,11 @@ public class SRSearcher {
 		splitReaction(reaction);
 		}
 
+	public void stop() {
+		mReactantSearcher.stop();
+		mProductSearcher.stop();
+		}
+
 	private void preprocessQuery() {
 		if (!mQueryIsPreprocessed) {
 			mQueryMaxMapNo = getHighestMapNo(mQueryReactant, mQueryProduct);
