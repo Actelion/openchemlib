@@ -84,6 +84,7 @@ public class JChemistryView extends JComponent
 	private static final int ALLOWED_DRAG_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 	private static final int ALLOWED_DROP_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 
+	private static final int DRAG_MARGIN = 4;
 	private static final int DRAG_TYPE_NONE = -1;
 	private static final int DRAG_TYPE_REACTION = -2;   // or molecule index >= 0
 
@@ -267,29 +268,27 @@ public class JChemistryView extends JComponent
 		g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
 		Color fg = g2.getColor();
-		g2.setColor(UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground"));
+		Color bg = UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground");
+		g2.setColor(bg);
 		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
 		g2.setColor(fg);
 
 		mDepictor.setForegroundColor(getForeground(), getBackground());
 
 		if (mShowBorder && mDragType != DRAG_TYPE_NONE) {
-			Color bg = getBackground();
-			Color color = ColorHelper.perceivedBrightness(bg) < 0.5f ? bg.brighter() : bg.darker();
+			Color color = ColorHelper.perceivedBrightness(bg) < 0.5f ? ColorHelper.brighter(bg, 0.85f) : ColorHelper.darker(bg, 0.85f);
 			g.setColor(color);
 			Rectangle2D.Double rect = (mDragType == DRAG_TYPE_REACTION) ? getChemistryBounds() : getMoleculeBounds(mDragType);
-			Stroke oldStroke = ((Graphics2D)g).getStroke();
-			((Graphics2D)g).setStroke(new BasicStroke(HiDPIHelper.scale(2), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 			int arc = (int)Math.min(rect.height/4, Math.min(rect.width/4, HiDPIHelper.scale(10)));
-			g.drawRoundRect((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height, arc, arc);
-			((Graphics2D)g).setStroke(oldStroke);
+			g.fillRoundRect((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height, arc, arc);
 			if (mDragType == DRAG_TYPE_REACTION) {
 				final String msg = "<press 'ALT' to drag individual molecules>";
 				int fontSize = HiDPIHelper.scale(7);
+				g.setColor(fg);
 				g.setFont(getFont().deriveFont((float)fontSize));
 				int msgWidth = g.getFontMetrics().stringWidth(msg);
 				int x = (int)(rect.x+(rect.width-msgWidth)/2);
-				int y = (int)(rect.y+rect.height-fontSize/2);
+				int y = (int)Math.max(fontSize, rect.y - fontSize);
 				g.drawString(msg, x, y);
 				}
 			}
@@ -512,8 +511,10 @@ public class JChemistryView extends JComponent
 	public void mouseMoved(MouseEvent e) {
 		int x = e.getX();
 		int y = e.getY();
+		boolean isInDragRegion = (x >= DRAG_MARGIN) && (x < getWidth() - DRAG_MARGIN)
+							  && (y >= DRAG_MARGIN) && (y < getHeight() - DRAG_MARGIN);
 		int dragType = DRAG_TYPE_NONE;
-		if (mDepictor != null && (mCopyOrDragActions & DnDConstants.ACTION_COPY) != 0) {
+		if (isInDragRegion && mDepictor != null && (mCopyOrDragActions & DnDConstants.ACTION_COPY) != 0) {
 			boolean dragIndividualMolecule = mChemistryType != ExtendedDepictor.TYPE_REACTION || e.isAltDown();
 			if (dragIndividualMolecule) {
 				for (int i=0; i<mDepictor.getMoleculeCount(); i++) {

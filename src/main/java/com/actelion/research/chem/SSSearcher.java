@@ -112,6 +112,8 @@ public class SSSearcher {
 	private int mRequiredHelperLevel;
 	private int mExcludeGroupCount;
 
+	private volatile boolean mStop;
+
 	/**
 	 * Instantiates a SSSearcher object for running sub-structure searches
 	 * with one or more sub-structure fragments on one or more molecules.
@@ -171,6 +173,12 @@ public class SSSearcher {
 		mMolecule.ensureHelperArrays(Molecule.cHelperNeighbours);
 		}
 
+	/**
+	 * Asks the substructure search to stop without completing as soon as possible.
+	 */
+	public void stop() {
+		mStop = true;
+		}
 
 	/**
 	 * Defines the fragment to be used in isFragmentInMolecule(...)
@@ -423,6 +431,7 @@ System.out.println();
 	 * @return count of sub-structure matches of fragment in molecule
 	 */
 	public int findFragmentInMolecule(int countMode, int matchMode, final boolean[] atomExcluded) {
+		mStop = false;
 		mMatchList = new ArrayList<int[]>();
 		mSortedMatchSet.clear();
 
@@ -464,7 +473,7 @@ System.out.println();
 		// - otherwise the current connAtom index of the parent atom in the matching graph
 
 		int current = 0;
-		while (true) {
+		while (!mStop) {
 /*
 System.out.print("  index:"); for (int i=0; i<mFragmentGraphSize; i++) System.out.print(" "+(index[i]==-1?"-":""+index[i])); System.out.println();
 System.out.print("		"); for (int i=0; i<current; i++) System.out.print("  "); System.out.println(" ^");

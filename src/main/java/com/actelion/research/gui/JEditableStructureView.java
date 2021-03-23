@@ -77,6 +77,7 @@ public class JEditableStructureView extends JStructureView {
         if (e.getClickCount() == 2 && isEnabled() && isEditable()) {
             JDrawDialog theDialog = createDrawDialog();
             theDialog.getDrawArea().setAllowQueryFeatures(mAllowQueryFeatures);
+            theDialog.getDrawArea().setDisplayMode(getDisplayMode());
             theDialog.addStructureListener(this);
             theDialog.setVisible(true);
             }

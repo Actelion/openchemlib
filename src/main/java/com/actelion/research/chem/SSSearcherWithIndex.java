@@ -1081,4 +1081,8 @@ public class SSSearcherWithIndex {
 	    		}
 			}
 	    }
+
+	public void stop() {
+		mSSSearcher.stop();
+		}
 	}

@@ -47,6 +47,8 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
 	private static final long WARNING_MILLIS = 1200;
 
+	private static final int DRAG_MARGIN = 4;
+
 	private ArrayList<StructureListener> mListener;
 	private String mIDCode;
 	private StereoMolecule mMol,mDisplayMol;
@@ -147,13 +149,20 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		return mClipboardHandler;
 	    }
 
+	public int getDisplayMode() {
+		return mDisplayMode;
+		}
+
 	/**
 	 * Sets the display mode for the Depictor. The default is
 	 * AbstractDepictor.cDModeHiliteAllQueryFeatures.
 	 * @param mode
 	 */
 	public void setDisplayMode(int mode) {
-	    mDisplayMode = mode;
+		if (mDisplayMode != mode) {
+		    mDisplayMode = mode;
+		    repaint();
+			}
 	    }
 
 	public void setDisableBorder(boolean b) {
@@ -224,8 +233,19 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
 		Color fg = g2.getColor();
-		g2.setColor(UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground"));
+		Color bg = UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground");
+		g2.setColor(bg);
 		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
+
+		if (mShowBorder && !mDisableBorder) {
+			Rectangle2D.Double rect = mDepictor.getBoundingRect();
+			if (rect != null) {
+				g.setColor(ColorHelper.perceivedBrightness(bg) < 0.5f ? ColorHelper.brighter(bg, 0.85f) : ColorHelper.darker(bg, 0.85f));
+				int arc = (int)Math.min(rect.height/4, Math.min(rect.width/4, HiDPIHelper.scale(10)));
+				g.fillRoundRect((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height, arc, arc);
+				}
+			}
+
 		g2.setColor(fg);
 
 		if (mDisplayMol != null && mDisplayMol.getAllAtoms() != 0) {
@@ -242,19 +262,6 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			mDepictor.validateView(g, new Rectangle2D.Double(insets.left, insets.top, theSize.width,theSize.height),
 								   AbstractDepictor.cModeInflateToMaxAVBL | mChiralTextPosition | avbl);
             mDepictor.paint(g);
-			}
-
-		if (mShowBorder && !mDisableBorder) {
-			Rectangle2D.Double rect = mDepictor.getBoundingRect();
-			if (rect != null) {
-				Color bg = getBackground();
-				g.setColor(ColorHelper.perceivedBrightness(bg) < 0.5f ? bg.brighter() : bg.darker());
-				Stroke oldStroke = ((Graphics2D)g).getStroke();
-				((Graphics2D)g).setStroke(new BasicStroke(HiDPIHelper.scale(2), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				int arc = (int)Math.min(rect.height/4, Math.min(rect.width/4, HiDPIHelper.scale(10)));
-				g.drawRoundRect((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height, arc, arc);
-				((Graphics2D)g).setStroke(oldStroke);
-				}
 			}
 
 		if (mWarningMessage != null) {
@@ -281,7 +288,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		if (mIDCode == null && idcode == null)
 			return;
 
-		if (mIDCode != null && idcode != null && mIDCode.equals(idcode))
+		if (mIDCode != null && mIDCode.equals(idcode))
 			return;
 
 		new IDCodeParser(true).parse(mMol, idcode, coordinates);
@@ -385,8 +392,10 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	public void mouseMoved(MouseEvent e) {
 		int x = e.getX();
 		int y = e.getY();
+		boolean isInDragRegion = (x >= DRAG_MARGIN) && (x < getWidth() - DRAG_MARGIN)
+							  && (y >= DRAG_MARGIN) && (y < getHeight() - DRAG_MARGIN);
 		boolean isInRect = false;
-		if (mDepictor != null && (mAllowedDragAction & DnDConstants.ACTION_COPY) != 0) {
+		if (isInDragRegion && mDepictor != null && (mAllowedDragAction & DnDConstants.ACTION_COPY) != 0) {
 			Rectangle2D.Double bounds = mDepictor.getBoundingRect();
 			if (bounds != null && bounds.contains(x, y))
 				isInRect = true;
@@ -421,7 +430,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 				}
 			}
 		if (e.getActionCommand().equals(ITEM_CLEAR) && mIsEditable) {
-			mMol.deleteMolecule();
+			mMol.clear();
 			mDisplayMol = mMol;
 			structureChanged();
 			}
