@@ -679,6 +679,7 @@ public class PheSAAlignment {
 		private StereoMolecule refMol;
 		private StereoMolecule fitMol;
 		private double sim;
+		private double[] contributions;
 		
 		public PheSAResult(StereoMolecule refMol, StereoMolecule fitMol, double sim) {
 			this.refMol = refMol;
@@ -696,6 +697,14 @@ public class PheSAAlignment {
 		
 		public double getSim() {
 			return sim;
+		}
+		
+		public void setContributions(double[] contributions) {
+			this.contributions = contributions;
+		}
+		
+		public double[] getContributions() {
+			return contributions;
 		}
 	}
 	
