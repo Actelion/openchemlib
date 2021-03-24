@@ -6,10 +6,9 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 import org.openmolecules.chem.conf.gen.RigidFragmentCache;
+import org.openmolecules.chem.conf.so.ConformationSelfOrganizer;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ConformerSetGenerator {
@@ -17,12 +16,14 @@ public class ConformerSetGenerator {
 	private int mMaxNrConfs;
 	private int mStrategy;
 	private boolean mUseFF;
-	private static  long DEFAULT_SEED = 12345L;
+	private long mSeed;
+	private static long DEFAULT_SEED = 12345L;
 	
 	public ConformerSetGenerator(int maxNrConfs, int strategy, boolean useFF, long seed) {
 		mMaxNrConfs = maxNrConfs;
 		mStrategy = strategy;
 		mUseFF = useFF;
+		mSeed = seed;
 		RigidFragmentCache fragCache = RigidFragmentCache.getDefaultInstance();
 		fragCache.loadDefaultCache();
 	}
@@ -51,43 +52,51 @@ public class ConformerSetGenerator {
 		this(200,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,seed);
 		
 	}
-	
+
+	/**
+	 * Generates a set of distinct conformers of the canonical largest fragment of the passed molecule.
+	 * @param mol
+	 * @return
+	 */
 	public ConformerSet generateConformerSet(StereoMolecule mol) {   
 		ConformerSet confSet = new ConformerSet();
-		StereoMolecule m = new StereoMolecule(mol);
-		m.ensureHelperArrays(Molecule.cHelperCIP);
-		m.stripSmallFragments();
-		ConformerGenerator.addHydrogenAtoms(m);
-		Canonizer can = new Canonizer(m);
-		m = can.getCanMolecule(true);
-		m.ensureHelperArrays(Molecule.cHelperCIP);
+		StereoMolecule canMol = new StereoMolecule(mol);
+		canMol.stripSmallFragments();
+		ConformerGenerator.addHydrogenAtoms(canMol);
+		Canonizer can = new Canonizer(canMol);
+		canMol = can.getCanMolecule(true);
+		canMol.ensureHelperArrays(Molecule.cHelperCIP);
 		int maxTorsionSets = (int) Math.max(2 * mMaxNrConfs, (1000 * Math.sqrt(mMaxNrConfs)));
-		ConformerGenerator cg = new ConformerGenerator(12345L,false);
-		cg.initializeConformers(m, mStrategy, maxTorsionSets, false);
-		Map<String, Object> ffOptions = new HashMap<String, Object>();
-		if(mUseFF)
-				ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
-		for (int i = 0; i < mMaxNrConfs; i++) {
-			Conformer conformer = null;
-			conformer = cg.getNextConformer();
-			if (conformer == null)
-				break;
-			if(mUseFF) {
-				StereoMolecule molecule = conformer.toMolecule(mol);
-				ffOptions.put("dielectric constant", 4.0);
-				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(molecule, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-				mmff.minimise();
-				for(int a=0;a<molecule.getAllAtoms();a++) {
-					conformer.setX(a, molecule.getAtomX(a));
-					conformer.setY(a, molecule.getAtomY(a));
-					conformer.setZ(a, molecule.getAtomZ(a));
+		ConformerGenerator cg = new ConformerGenerator(mSeed,false);
+
+		Map<String, Object> ffOptions = null;
+		if(mUseFF) {
+			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+			ffOptions = new HashMap<String, Object>();
+			ffOptions.put("dielectric constant", 4.0);
+		}
+
+		if (cg.initializeConformers(canMol, mStrategy, maxTorsionSets, false)) {
+			for (int i = 0; i < mMaxNrConfs; i++) {
+				Conformer conformer = cg.getNextConformer();
+				if (conformer == null && i==0) {
+					ConformationSelfOrganizer sampler = new ConformationSelfOrganizer(canMol, true);
+					conformer = sampler.generateOneConformer(mSeed);
 				}
-				
+
+				if (conformer == null)
+					break;
+
+				if(mUseFF) {
+					conformer.copyTo(canMol);
+					ForceFieldMMFF94 mmff = new ForceFieldMMFF94(canMol, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+					mmff.minimise();
+					conformer.copyFrom(canMol);
+				}
+				confSet.add(conformer);
 			}
-			confSet.add(conformer);
 		}
 
 		return confSet;
 	}
 }
-

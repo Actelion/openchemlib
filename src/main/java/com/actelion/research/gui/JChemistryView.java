@@ -84,7 +84,7 @@ public class JChemistryView extends JComponent
 	private static final int ALLOWED_DRAG_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 	private static final int ALLOWED_DROP_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 
-	private static final int DRAG_MARGIN = 4;
+	private static final int DRAG_MARGIN = 12;
 	private static final int DRAG_TYPE_NONE = -1;
 	private static final int DRAG_TYPE_REACTION = -2;   // or molecule index >= 0
 
@@ -511,14 +511,12 @@ public class JChemistryView extends JComponent
 	public void mouseMoved(MouseEvent e) {
 		int x = e.getX();
 		int y = e.getY();
-		boolean isInDragRegion = (x >= DRAG_MARGIN) && (x < getWidth() - DRAG_MARGIN)
-							  && (y >= DRAG_MARGIN) && (y < getHeight() - DRAG_MARGIN);
 		int dragType = DRAG_TYPE_NONE;
-		if (isInDragRegion && mDepictor != null && (mCopyOrDragActions & DnDConstants.ACTION_COPY) != 0) {
+		if (mDepictor != null && (mCopyOrDragActions & DnDConstants.ACTION_COPY) != 0) {
 			boolean dragIndividualMolecule = mChemistryType != ExtendedDepictor.TYPE_REACTION || e.isAltDown();
 			if (dragIndividualMolecule) {
 				for (int i=0; i<mDepictor.getMoleculeCount(); i++) {
-					Rectangle2D.Double bounds = mDepictor.getMoleculeDepictor(i).getBoundingRect();
+					Rectangle bounds = shrink(mDepictor.getMoleculeDepictor(i).getBoundingRect());
 					if (bounds != null && bounds.contains(x, y)) {
 						dragType = i;
 						break;
@@ -526,7 +524,7 @@ public class JChemistryView extends JComponent
 					}
 				}
 			else {
-				Rectangle2D.Double bounds = getChemistryBounds();
+				Rectangle bounds = shrink(getChemistryBounds());
 				if (bounds != null && bounds.contains(x, y))
 					dragType = DRAG_TYPE_REACTION;
 				}
@@ -540,6 +538,13 @@ public class JChemistryView extends JComponent
 		updateBorder(dragType != DRAG_TYPE_NONE);
 		setCursor(CursorHelper.getCursor((mDragType == DRAG_TYPE_NONE) ?
 				CursorHelper.cPointerCursor : CursorHelper.cHandCursor));
+		}
+
+	private Rectangle shrink(Rectangle2D.Double rect) {
+		int margin = HiDPIHelper.scale(DRAG_MARGIN);
+		int marginX = Math.min(margin, (int)rect.width / 6);
+		int marginY = Math.min(margin, (int)rect.height / 6);
+		return new Rectangle((int)rect.x+marginX, (int)rect.y+marginY, (int)rect.width-2*marginX, (int)rect.height-2*marginY);
 		}
 
 	public void addStructureListener(StructureListener l) {

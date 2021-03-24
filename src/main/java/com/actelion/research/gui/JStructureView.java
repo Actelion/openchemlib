@@ -47,7 +47,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
 	private static final long WARNING_MILLIS = 1200;
 
-	private static final int DRAG_MARGIN = 4;
+	private static final int DRAG_MARGIN = 12;
 
 	private ArrayList<StructureListener> mListener;
 	private String mIDCode;
@@ -392,11 +392,9 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	public void mouseMoved(MouseEvent e) {
 		int x = e.getX();
 		int y = e.getY();
-		boolean isInDragRegion = (x >= DRAG_MARGIN) && (x < getWidth() - DRAG_MARGIN)
-							  && (y >= DRAG_MARGIN) && (y < getHeight() - DRAG_MARGIN);
 		boolean isInRect = false;
-		if (isInDragRegion && mDepictor != null && (mAllowedDragAction & DnDConstants.ACTION_COPY) != 0) {
-			Rectangle2D.Double bounds = mDepictor.getBoundingRect();
+		if (mDepictor != null && (mAllowedDragAction & DnDConstants.ACTION_COPY) != 0) {
+			Rectangle bounds = shrink(mDepictor.getBoundingRect());
 			if (bounds != null && bounds.contains(x, y))
 				isInRect = true;
 			}
@@ -404,6 +402,13 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		updateBorder(isInRect);
 		setCursor(CursorHelper.getCursor(isInRect ? CursorHelper.cHandCursor : CursorHelper.cPointerCursor));
 		}
+
+	private Rectangle shrink(Rectangle2D.Double rect) {
+		int margin = HiDPIHelper.scale(DRAG_MARGIN);
+		int marginX = Math.min(margin, (int)rect.width / 6);
+		int marginY = Math.min(margin, (int)rect.height / 6);
+		return new Rectangle((int)rect.x+marginX, (int)rect.y+marginY, (int)rect.width-2*marginX, (int)rect.height-2*marginY);
+	}
 
 	@Override public void mouseDragged(MouseEvent e) {}
 
