@@ -8,6 +8,8 @@ import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.conf.ConformerSetGenerator;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
+import java.util.Arrays;
+
 public class GlobularityCalculator {
 	private static final boolean MINIMIZE = false;
 
@@ -36,23 +38,14 @@ public class GlobularityCalculator {
 	 * @return
 	 */
 	public static double assessGlobularityFromSVD(Conformer conf) {
-		double[] singularValue = getSingularValues(conf);
-		return singularValue[0] == 0.0 ? Double.NaN : singularValue[2] / singularValue[0];
-		}
-
-	/**
-	 * Calculates the globularity of a conformer (flat=0, round=1) from 3D coordinates
-	 * @param conf
-	 * @return
-	 */
-	private static double[] getSingularValues(Conformer conf) {
+		int atomCount = conf.getSize();
 		Coordinates cog = new Coordinates();	// center of gravity
-		for (int i=0; i<conf.getSize(); i++)
+		for (int i=0; i<atomCount; i++)
 			cog.add(conf.getCoordinates(i));
-		cog.scale(1.0/conf.getSize());
+		cog.scale(1.0/atomCount);
 
 		double[][] squareMatrix = new double[3][3];
-		for (int i=0; i<conf.getMolecule().getAtoms(); i++) {
+		for (int i=0; i<atomCount; i++) {
 			conf.getCoordinates(i).sub(cog);
 			squareMatrix[0][0] += conf.getX(i) * conf.getX(i);
 			squareMatrix[0][1] += conf.getX(i) * conf.getY(i);
@@ -66,6 +59,44 @@ public class GlobularityCalculator {
 			}
 
 		SingularValueDecomposition svd = new SingularValueDecomposition(squareMatrix, null, null);
-		return svd.getSingularValues();
+
+		double[][] u = svd.getU();
+		double[] temp = new double[3];
+		for (int i=0; i<atomCount; i++) {
+			Arrays.fill(temp, 0);
+			Coordinates c = conf.getCoordinates(i);
+			for (int j = 0; j<3; j++) {
+				temp[j] += c.x * u[0][j];
+				temp[j] += c.y * u[1][j];
+				temp[j] += c.z * u[2][j];
+				}
+			c.set(temp[0], temp[1], temp[2]);
+			}
+		double xmin = Double.MAX_VALUE;
+		double xmax = Double.MIN_VALUE;
+		double ymin = Double.MAX_VALUE;
+		double ymax = Double.MIN_VALUE;
+		double zmin = Double.MAX_VALUE;
+		double zmax = Double.MIN_VALUE;
+		for (int i=0; i<atomCount; i++) {
+			Coordinates c = conf.getCoordinates(i);
+			if (xmin > c.x)
+				xmin = c.x;
+			if (xmax < c.x)
+				xmax = c.x;
+			if (ymin > c.y)
+				ymin = c.y;
+			if (ymax < c.y)
+				ymax = c.y;
+			if (zmin > c.z)
+				zmin = c.z;
+			if (zmax < c.z)
+				zmax = c.z;
+			}
+		double dx = xmax - xmin;
+		double dy = ymax - ymin;
+		double dz = zmax - zmin;
+
+		return dx == 0.0 ? Double.NaN : dz / dx;
 		}
 	}
