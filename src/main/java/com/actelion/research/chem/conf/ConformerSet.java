@@ -4,6 +4,7 @@ package com.actelion.research.chem.conf;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.util.ArrayUtils;
 
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -35,7 +36,26 @@ public class ConformerSet extends TreeSet<Conformer> {
 			}
 		}
 	}
-	
+
+	public ConformerSet(byte[] idcode, byte[] coords) {
+		super();
+		if (idcode != null && coords != null) {
+			IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
+			StereoMolecule mol = parser.getCompactMolecule(idcode, coords);
+			Conformer firstConformer = new Conformer(mol);
+			add(firstConformer);
+
+			int index = ArrayUtils.indexOf(coords, (byte)32,0);
+			while (index != -1) {
+				Conformer conf = new Conformer(firstConformer);
+				try {
+					parser.parseCoordinates(coords, index+1, mol, conf.getCoordinates());
+					add(conf);
+				} catch (Exception e) {}
+			}
+		}
+	}
+
 	public ConformerSet getSubset(int size) {
 		ConformerSet treeSet = new ConformerSet();
 		this.stream().limit(size).forEach(c->treeSet.add(c));

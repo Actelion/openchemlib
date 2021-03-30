@@ -22,6 +22,16 @@ public class GlobularityCalculator {
 	 */
 	public static double assessGlobularity(StereoMolecule mol, int maxConformerCount) {
 		ConformerSet cs = new ConformerSetGenerator(maxConformerCount, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MINIMIZE,0).generateConformerSet(mol);
+		return assessGlobularity(cs);
+		}
+
+	/**
+	 * Generates conformers from a 2D- or 3D-molecule and then calculates the globularity
+	 * (flat=0, round=1) from the conformer's atom coordinates.
+	 * @param cs conformer set from which to calculate and average the globularity
+	 * @return globularity (flat=0, round=1)
+	 */
+	public static double assessGlobularity(ConformerSet cs) {
 		if (cs == null || cs.size() == 0)
 			return Double.NaN;
 
