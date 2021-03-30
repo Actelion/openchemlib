@@ -2847,16 +2847,23 @@ public class Matrix {
     }
 
     public Matrix getSQRT() {
-    	
         Matrix ma = new Matrix(getRowDim(), getColDim());
-        
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < data[0].length; j++) {
                 ma.data[i][j] = Math.sqrt(data[i][j]);
             }
         }
-        
         return ma;
+    }
+
+    public double getSquaredSum() {
+        double s = 0;
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data[0].length; j++) {
+                s += data[i][j] * data[i][j];
+            }
+        }
+        return s;
     }
 
     public Matrix getStandardDeviationCols() {
