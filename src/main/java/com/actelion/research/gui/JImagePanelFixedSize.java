@@ -18,6 +18,7 @@
 
 package com.actelion.research.gui;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedInputStream;
@@ -49,21 +50,10 @@ public class JImagePanelFixedSize extends JPanel {
 		}
 
 	private void readImage(String fileName) {
-		Toolkit tk = Toolkit.getDefaultToolkit();
-		mImage = null;
 		try {
 			BufferedInputStream in=new BufferedInputStream(getClass().getResourceAsStream(fileName));
-			byte[] imageData = new byte[102400]; // make it as big as necessary
-			in.read(imageData);
-			mImage = tk.createImage(imageData);
+			mImage = ImageIO.read(in);
 			}
 		catch (Exception e) {}
-
-		MediaTracker t = new MediaTracker(this);
-		t.addImage(mImage, 0);
-		try {
-			t.waitForAll();
-			}
-		catch (InterruptedException e) {}
 		}
 	}
