@@ -259,7 +259,7 @@ public class SmilesParser {
 						}
 					}
 
-				if (atomicNo == 0 && theChar != '?')
+				if (atomicNo == -1 && theChar != '?')
 					throw new Exception("SmilesParser: unknown element label found");
 
 				int atom = mMol.addAtom(atomicNo);	// this may be a hydrogen, if defined as [H]
