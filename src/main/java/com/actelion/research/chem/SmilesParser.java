@@ -44,6 +44,7 @@ public class SmilesParser {
 	private static final int MAX_BRACKET_LEVELS = 64;
 	private static final int MAX_RE_CONNECTIONS = 64;
 	private static final int MAX_AROMATIC_RING_SIZE = 15;
+	private static final boolean SMARTS_FEATURES = true;    // whether some SMARTS features are supported in SMILES
 	private StereoMolecule mMol;
 	private boolean[] mIsAromaticBond;
 	private int mAromaticAtoms,mAromaticBonds;
@@ -169,7 +170,10 @@ public class SmilesParser {
 		while (position < endIndex) {
 			char theChar = (char)smiles[position++];
 
-			if (Character.isLetter(theChar) || theChar == '*' || theChar == '?') {
+			if (Character.isLetter(theChar)
+			 || theChar == '*'
+			 || theChar == '?'
+			 || (theChar == '#' && squareBracketOpen && SMARTS_FEATURES)) {
 				int atomicNo = -1;
 				int explicitHydrogens = -1;
 				boolean isWildCard = false;
@@ -187,6 +191,17 @@ public class SmilesParser {
 						}
 					else if (theChar == '?') {
 						atomicNo = 0;
+						}
+					else if (theChar == '#') {
+						int number = 0;
+						while (position < endIndex
+						 && Character.isDigit(smiles[position])) {
+							number = 10 * number + smiles[position] - '0';
+							position++;
+							}
+						if (number < 1 || number >= Molecule.cAtomLabel.length)
+							throw new Exception("SmilesParser: Atomic number out of range.");
+						atomicNo = number;
 						}
 					else {
 						int labelLength = Character.isLowerCase(smiles[position]) ? 2 : 1;
@@ -927,6 +942,7 @@ public class SmilesParser {
 	
 						mMol.setAtomCharge(atom, mMol.getAtomCharge(atom) + 1);
 						mMol.setAtomCharge(connAtom, mMol.getAtomCharge(connAtom) - 1);
+						mMol.setAtomAbnormalValence(atom, -1);
 						break;
 						}
 					}

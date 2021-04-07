@@ -24,7 +24,7 @@ public class MoleculeStandardizer {
 	 * potentially MODE_ADD_NA_AND_CL.
 	 * @param idcode
 	 * @param coordinates if null the result may change.
-	 * @param mode combination of MODE_GET_PARENT and MODE_ADD_NA_AND_CL
+	 * @param mode 0 or any combination of MODE_GET_PARENT and MODE_ADD_NA_AND_CL
 	 * @return
 	 * @throws Exception
 	 */
@@ -34,6 +34,25 @@ public class MoleculeStandardizer {
 		return mol;
 	}
 
+	/**
+	 * Standardises a molecule and fixes some structural errors.
+	 * Typically this is done before canonicalization.
+	 * It includes the following changes:<br>
+	 * - different forms of functional groups (e.g. nitro) are normalized to a preferred one<br>
+	 * - charged acidic or basic atoms are (de-)protonated to remove charges and neutralize the molecule, if possible.<br>
+	 * - alkali/earthalkali/halogene atoms, if charged despite being covalently bound, get uncharged<br>
+	 * - trivalent, uncharged oxygens get a positive charge<br>
+	 * - unusual amide tautomeric structures, if not in a ring, are inverted<br>
+	 * - uncharged isocyano groups get proper charges to validate valences<br>
+	 * - wrongly charged azido groups get proper charges to validate valences<br>
+	 * - uncharged, quarternary nitrogens get a positive charge<br>
+	 * If mode includes MODE_GET_PARENT, then only the largest, normalized fragment is kept.
+	 * If mode includes MODE_ADD_NA_AND_CL, then molecules, that are still charged after normalization,
+	 * e.g. quarternary ammonium, are neutralized by adding the right amount of Na+ or Cl- ions.
+	 * @param mol
+	 * @param mode 0 or any combination of MODE_GET_PARENT and MODE_ADD_NA_AND_CL
+	 * @throws Exception
+	 */
 	public static void standardize(StereoMolecule mol, int mode) throws Exception {
 		if((mode & MODE_GET_PARENT) != 0) {
 			mol.stripSmallFragments();
