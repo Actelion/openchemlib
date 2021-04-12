@@ -541,6 +541,9 @@ public class JChemistryView extends JComponent
 		}
 
 	private Rectangle shrink(Rectangle2D.Double rect) {
+		if (rect == null)
+			return null;
+
 		int margin = HiDPIHelper.scale(DRAG_MARGIN);
 		int marginX = Math.min(margin, (int)rect.width / 6);
 		int marginY = Math.min(margin, (int)rect.height / 6);

@@ -98,9 +98,10 @@ public interface CompoundTableConstants {
 
     // highlight mode for part-of-reaction highlighting depending on current record similarity
     int cReactionHiliteModeReactionCenter = 0;
+    int cReactionHiliteModeMapping = 1;
     int cReactionHiliteModeNone = 2;
-    String[] cReactionHiliteModeText = { "Reaction Center", "No Highlighting" };
-    String[] cReactionHiliteModeCode = { "hiliteReactionCenter", "hiliteNone" };
+    String[] cReactionHiliteModeText = { "Reaction Center", "Mapped Atoms", "No Highlighting" };
+    String[] cReactionHiliteModeCode = { "hiliteReactionCenter", "hiliteMapping", "hiliteNone" };
 
     String NEWLINE_REGEX = "\\r?\\n|\\r";	// regex for platform independent new line char(s)
 	String NEWLINE_STRING = "<NL>";	// used in .dwar, .txt and .cvs files to indicate next line within a cell

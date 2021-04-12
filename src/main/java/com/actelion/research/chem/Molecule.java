@@ -1022,15 +1022,32 @@ public class Molecule implements Serializable {
 	 * @return atom mapping from original mol to this molecule after incorporation of mol
 	 */
 	public int[] addMolecule(Molecule mol) {
+		return addMolecule(mol, mol.mAllAtoms, mol.mAllBonds);
+		}
+
+
+	/**
+	 * Copies first atoms and first bonds of mol to the end of this Molecule's atom and bond
+	 * tables. If mol is a fragment then this Molecule's fragment flag is set to true
+	 * and all query features of mol are also copied. Typically, this is used to add a
+	 * molecule without explicit hydrogen atoms. If parities of copied molecules are valid,
+	 * then you may call setParitiesValid() on this molecule after adding molecules.
+	 * High level function for constructing a molecule.
+	 * @param mol
+	 * @param atoms count of atoms to be copied
+	 * @param bonds count of bonds to be copied
+	 * @return atom mapping from original mol to this molecule after incorporation of mol
+	 */
+	public int[] addMolecule(Molecule mol, int atoms, int bonds) {
 		mIsFragment |= mol.mIsFragment;
 
 		int[] atomMap = new int[mol.mAllAtoms];
 		int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
 		int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
-		for (int atom=0; atom<mol.mAllAtoms; atom++) {
+		for (int atom=0; atom<atoms; atom++) {
 			atomMap[atom] = mol.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
 			}
-		for (int bond=0; bond<mol.mAllBonds; bond++) {
+		for (int bond=0; bond<bonds; bond++) {
 			mol.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
 			}
 
@@ -1980,7 +1997,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Returns an atom mapping number within the context of a reaction.
-	 * Atoms that that share the same mapping number on the reactant and product side
+	 * Atoms that share the same mapping number on the reactant and product side
 	 * are considered to be the same atom.
 	 * @param atom
 	 * @return
@@ -2923,7 +2940,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * Defines an atom mapping number within the context of a reaction.
-	 * Atoms that that share the same mapping number on the reactant and product side
+	 * Atoms that share the same mapping number on the reactant and product side
 	 * are considered to be the same atom.
 	 * @param atom
 	 * @param mapNo
