@@ -1,5 +1,8 @@
 package com.actelion.research.chem.phesa;
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
@@ -7,6 +10,9 @@ import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.ArrayList;
@@ -680,11 +686,13 @@ public class PheSAAlignment {
 		private StereoMolecule fitMol;
 		private double sim;
 		private double[] contributions;
+		private static final String DELIMITER = ";";
 		
 		public PheSAResult(StereoMolecule refMol, StereoMolecule fitMol, double sim) {
 			this.refMol = refMol;
 			this.fitMol = fitMol;
 			this.sim = sim;
+			this.contributions = new double[4];
 		}
 		
 		public StereoMolecule getRefMol() {
@@ -705,6 +713,51 @@ public class PheSAAlignment {
 		
 		public double[] getContributions() {
 			return contributions;
+		}
+		
+		public String encode() {
+			Encoder encoder = Base64.getEncoder();
+			StringBuilder sb = new StringBuilder();
+			Canonizer can = new Canonizer(refMol, Canonizer.COORDS_ARE_3D);
+			String idcoords = can.getEncodedCoordinates(true);
+			String idcode = can.getIDCode();
+			sb.append(idcode);
+			sb.append(DELIMITER);
+			sb.append(idcoords);
+			sb.append(DELIMITER);
+			Canonizer can2 = new Canonizer(fitMol, Canonizer.COORDS_ARE_3D);
+			String idcoords2 = can2.getEncodedCoordinates(true);
+			String idcode2 = can2.getIDCode();
+			sb.append(idcode2);
+			sb.append(DELIMITER);
+			sb.append(idcoords2);
+			sb.append(DELIMITER);
+			sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(sim)));
+			sb.append(DELIMITER);
+			sb.append(encoder.encodeToString(EncodeFunctions.doubleArrayToByteArray(contributions)));
+			return sb.toString();
+		}
+		
+		public static PheSAResult decode(String resultString) {
+			Decoder decoder = Base64.getDecoder();
+			String[] s = resultString.split(DELIMITER);
+			String idcode = s[0];
+			String idcoords = s[1];
+			StereoMolecule refMol = new StereoMolecule();
+			IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
+			parser.parse(refMol, idcode, idcoords);
+			refMol.ensureHelperArrays(Molecule.cHelperCIP);
+			idcode = s[2];
+			idcoords = s[3];
+			StereoMolecule fitMol = new StereoMolecule();
+			parser = new IDCodeParserWithoutCoordinateInvention();
+			parser.parse(fitMol, idcode, idcoords);
+			fitMol.ensureHelperArrays(Molecule.cHelperCIP);
+			double sim = EncodeFunctions.byteArrayToDouble(decoder.decode(s[4].getBytes()));
+			double[] contributions = EncodeFunctions.byteArrayToDoubleArray(decoder.decode(s[5].getBytes()));
+			PheSAResult pheSAResult = new PheSAResult(refMol,fitMol,sim);
+			pheSAResult.setContributions(contributions);
+			return pheSAResult;
 		}
 	}
 	
