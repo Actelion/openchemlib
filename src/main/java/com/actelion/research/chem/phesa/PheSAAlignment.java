@@ -11,6 +11,7 @@ import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Base64.Encoder;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.ArrayList;
@@ -714,6 +715,7 @@ public class PheSAAlignment {
 		}
 		
 		public String encode() {
+			Encoder encoder = Base64.getEncoder();
 			StringBuilder sb = new StringBuilder();
 			Canonizer can = new Canonizer(refMol, Canonizer.COORDS_ARE_3D);
 			String idcoords = can.getEncodedCoordinates(true);
@@ -729,9 +731,9 @@ public class PheSAAlignment {
 			sb.append(DELIMITER);
 			sb.append(idcoords2);
 			sb.append(DELIMITER);
-			sb.append(EncodeFunctions.doubleToByteArray(sim));
+			sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(sim)));
 			sb.append(DELIMITER);
-			sb.append(EncodeFunctions.doubleArrayToByteArray(contributions));
+			sb.append(encoder.encodeToString(EncodeFunctions.doubleArrayToByteArray(contributions)));
 			return sb.toString();
 		}
 		
