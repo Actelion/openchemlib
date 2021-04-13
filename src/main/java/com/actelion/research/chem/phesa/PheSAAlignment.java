@@ -11,6 +11,7 @@ import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
@@ -738,6 +739,7 @@ public class PheSAAlignment {
 		}
 		
 		public static PheSAResult decode(String resultString) {
+			Decoder decoder = Base64.getDecoder();
 			String[] s = resultString.split(DELIMITER);
 			String idcode = s[0];
 			String idcoords = s[1];
@@ -751,8 +753,8 @@ public class PheSAAlignment {
 			parser = new IDCodeParserWithoutCoordinateInvention();
 			parser.parse(fitMol, idcode, idcoords);
 			fitMol.ensureHelperArrays(Molecule.cHelperCIP);
-			double sim = EncodeFunctions.byteArrayToDouble(s[4].getBytes());
-			double[] contributions = EncodeFunctions.byteArrayToDoubleArray(s[5].getBytes());
+			double sim = EncodeFunctions.byteArrayToDouble(decoder.decode(s[4].getBytes()));
+			double[] contributions = EncodeFunctions.byteArrayToDoubleArray(decoder.decode(s[5].getBytes()));
 			PheSAResult pheSAResult = new PheSAResult(refMol,fitMol,sim);
 			pheSAResult.setContributions(contributions);
 			return pheSAResult;
