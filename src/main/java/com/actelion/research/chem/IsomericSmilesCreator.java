@@ -370,7 +370,10 @@ public class IsomericSmilesCreator {
 		int parent = smilesAtom.parent;
 
 		String label = mMol.getAtomLabel(atom);
-		if (mMol.isAromaticAtom(atom))
+		if (mMol.isAromaticAtom(atom)
+		 && (mMol.getAtomPi(atom) != 0
+		  || (mMol.getAtomAbnormalValence(atom) == -1
+		   && mMol.getAtomRadical(atom) == Molecule.cAtomRadicalStateNone)))
 			label = label.toLowerCase();
 
 		if (smilesAtom.isSideChainStart)
@@ -389,7 +392,10 @@ public class IsomericSmilesCreator {
 				|| isotop != 0
 				|| mapNo != 0
 				|| mMol.getAtomAbnormalValence(atom) != -1
-				|| (mMol.isAromaticAtom(atom) && mMol.getAtomPi(atom)==0 && mMol.getImplicitHydrogens(atom)!=0);
+				|| mMol.getAtomRadical(atom) != Molecule.cAtomRadicalStateNone
+				|| (mMol.isAromaticAtom(atom)
+				 && mMol.getAtomPi(atom) == 0
+				 && mMol.getImplicitHydrogens(atom) != 0);
 
 		if (useBrackets)
 			builder.append('[');

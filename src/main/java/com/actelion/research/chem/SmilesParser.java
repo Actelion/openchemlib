@@ -531,16 +531,21 @@ public class SmilesParser {
 						boolean compatibleValenceFound = false;
 						int usedValence = mMol.getOccupiedValence(atom);
 						usedValence -= mMol.getElectronValenceCorrection(atom, usedValence);
+						usedValence += explicitHydrogen;
 						for (byte valence:Molecule.cAtomValence[mMol.getAtomicNo(atom)]) {
 							if (usedValence <= valence) {
 								compatibleValenceFound = true;
-								if (valence != usedValence+explicitHydrogen)
-									mMol.setAtomAbnormalValence(atom, usedValence+explicitHydrogen);
+								if (valence == usedValence + 2)
+									mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateT);
+								else if (valence == usedValence + 1)
+									mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+								else if (valence != usedValence)
+									mMol.setAtomAbnormalValence(atom, usedValence);
 								break;
 								}
 							}
 						if (!compatibleValenceFound)
-							mMol.setAtomAbnormalValence(atom, usedValence+explicitHydrogen);
+							mMol.setAtomAbnormalValence(atom, usedValence);
 						}
 					else {
 						for (int i=0; i<explicitHydrogen; i++)
@@ -599,7 +604,9 @@ public class SmilesParser {
 				}
 			}
 
-			// assume all bonds of small rings to be aromatic if the ring consists of aromatic atoms only
+		boolean[] isAromaticRingAtom = new boolean[mMol.getAtoms()];
+
+		// assume all bonds of small rings to be aromatic if the ring consists of aromatic atoms only
 		RingCollection ringSet = new RingCollection(mMol, RingCollection.MODE_SMALL_AND_LARGE_RINGS);
 		boolean[] isAromaticRing = new boolean[ringSet.getSize()];
 		for (int ring=0; ring<ringSet.getSize(); ring++) {
@@ -612,6 +619,9 @@ public class SmilesParser {
 					}
 				}
 			if (isAromaticRing[ring]) {
+				for (int i=0; i<ringAtom.length; i++)
+					isAromaticRingAtom[ringAtom[i]] = true;
+
 				int[] ringBond = ringSet.getRingBonds(ring);
 				for (int i=0; i<ringBond.length; i++) {
 					if (!mIsAromaticBond[ringBond[i]]) {
@@ -622,15 +632,32 @@ public class SmilesParser {
 				}
 			}
 
-			// if ring bonds with two aromaticity markers are left, check whether
-			// these are a member of a large ring that has all atoms marked as aromatic.
-			// If yes then assume all of its bonds aromatic.
+		// if ring bonds with two aromaticity markers are left, check whether
+		// these are a member of a large ring that has all atoms marked as aromatic.
+		// If yes then assume all of its bonds aromatic.
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			if (!mIsAromaticBond[bond]
 			 && ringSet.getBondRingSize(bond) != 0
 			 && mMol.isMarkedAtom(mMol.getBondAtom(0, bond))
 			 && mMol.isMarkedAtom(mMol.getBondAtom(1, bond))) {
 				addLargeAromaticRing(bond);
+				}
+			}
+
+		// If both atoms of a bond are marked as aromatic and
+		// if none of the two atoms is a member of a fully aromatic ring,
+		// then assume the bond to be an aromatic one.
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
+			if (!mIsAromaticBond[bond]) {
+				int atom1 = mMol.getBondAtom(0, bond);
+				int atom2 = mMol.getBondAtom(1, bond);
+				if (!isAromaticRingAtom[atom1]
+				 && !isAromaticRingAtom[atom2]
+				 && mMol.isMarkedAtom(atom1)
+				 && mMol.isMarkedAtom(atom2)) {
+					mIsAromaticBond[bond] = true;
+					mAromaticBonds++;
+					}
 				}
 			}
 
