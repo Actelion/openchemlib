@@ -690,6 +690,7 @@ public class PheSAAlignment {
 			this.refMol = refMol;
 			this.fitMol = fitMol;
 			this.sim = sim;
+			this.contributions = new double[4];
 		}
 		
 		public StereoMolecule getRefMol() {
