@@ -564,8 +564,13 @@ public class RingCollection {
 										 boolean includeTautomericBonds) {
 			// returns true if it can successfully determine and set the ring's aromaticity
 		int ringAtom[] = mRingAtomSet.get(ringNo);
+		for (int atom:ringAtom)
+			if (!qualifiesAsAromatic(mMol.getAtomicNo(atom)))
+				return true;
+
 		int ringBond[] = mRingBondSet.get(ringNo);
 		int ringBonds = ringBond.length;
+
 		int bondSequence = 0;
 		int aromaticButNotDelocalizedSequence = 0;
 		boolean unhandledAnnelatedRingFound = false;
@@ -741,5 +746,17 @@ public class RingCollection {
 			}
 
 		return false;
+		}
+
+
+	public static boolean qualifiesAsAromatic(int atomicNo) {
+		return atomicNo == 5
+			|| atomicNo == 6
+			|| atomicNo == 7
+			|| atomicNo == 8
+			|| atomicNo == 15   // P
+			|| atomicNo == 16   // S
+			|| atomicNo == 33   // As
+			|| atomicNo == 34;   // Se
 		}
 	}

@@ -368,7 +368,9 @@ public class Molecule implements Serializable {
 	 101,	186,	163,	 99 };					//  Thr,Trp,Tyr,Val,
 
 	public static final int cDefaultAtomValence = 6;
-	public static final byte[][] cAtomValence = {null,
+	private static final byte[] cDefaultAtomValences = { cDefaultAtomValence };
+	private static final byte[] cAminoAcidValences = { 2 };
+	private static final byte[][] cAtomValence = {null,
 			{1}, {0}, {1}, {2}, {3}, {4}, {3}, {2}, {1}, {0},			// H to Ne
 			{1}, {2}, {3}, {4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0},	// Na to Ar
 			{1}, {2}, null, null, null, null, null, null, null, null,	// K to Ni
@@ -452,6 +454,19 @@ public class Molecule implements Serializable {
 		return 0;
 		}
 
+	/**
+	 * For any known atomicNo this returns all allowed atom valences.
+	 * For amino acid pseudo atoms it returns {2} and for all other atomicNos
+	 * this returns {cDefaultAtomValence}.
+	 * @param atomicNo
+	 * @return array of allowed valences with a guaranteed minimum size of 1
+	 */
+	public static byte[] getAllowedValences(int atomicNo) {
+    	return (atomicNo >= 0)
+		    && (atomicNo < cAtomValence.length)
+		    && (cAtomValence[atomicNo] != null) ? cAtomValence[atomicNo]
+			: (atomicNo >= 171 && atomicNo <= 190) ? cAminoAcidValences : cDefaultAtomValences;
+		}
 
 	public static double getAngle(double x1, double y1, double x2, double y2) {
 		double angle;
@@ -3867,7 +3882,7 @@ public class Molecule implements Serializable {
 			|| (atomicNo >= 52 && atomicNo <= 53);	// Te,I
 		}
 
-	
+
 	protected void removeMappingNo(int mapNo) {
 		for (int atom=0; atom<mAllAtoms; atom++)
 			if (Math.abs(mAtomMapNo[atom]) == Math.abs(mapNo))

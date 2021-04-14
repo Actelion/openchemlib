@@ -395,7 +395,7 @@ public class IsomericSmilesCreator {
 				|| mMol.getAtomRadical(atom) != Molecule.cAtomRadicalStateNone
 				|| (mMol.isAromaticAtom(atom)
 				 && mMol.getAtomPi(atom) == 0
-				 && mMol.getImplicitHydrogens(atom) != 0);
+				 && mMol.getPlainHydrogens(atom) != 0);
 
 		if (useBrackets)
 			builder.append('[');
@@ -409,7 +409,7 @@ public class IsomericSmilesCreator {
 			builder.append(getAtomParitySymbol(atom, parent));
 
 		if (useBrackets) {
-			int hCount = mMol.getImplicitHydrogens(atom);
+			int hCount = mMol.getPlainHydrogens(atom);
 			if (hCount != 0) {
 				builder.append('H');
 				if (hCount > 1)

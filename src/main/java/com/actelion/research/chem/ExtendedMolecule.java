@@ -564,16 +564,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		int valence = getAtomAbnormalValence(atom);
 		if (valence == -1) {
-			byte[] valenceList = (mAtomicNo[atom] < cAtomValence.length) ? cAtomValence[mAtomicNo[atom]] : null;
-			if (valenceList == null) {
-				valence = cDefaultAtomValence;
-			}
-			else {
-				int i= 0;
-				while ((occupiedValence > valenceList[i] + correction) && (i<valenceList.length-1))
-					i++;
-				valence = valenceList[i];
-				}
+			byte[] valenceList = getAllowedValences(mAtomicNo[atom]);
+			int i= 0;
+			while ((occupiedValence > valenceList[i] + correction) && (i<valenceList.length-1))
+				i++;
+			valence = valenceList[i];
 			}
 
 		return valence + correction - occupiedValence;
@@ -596,48 +591,17 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if (neglectExplicitHydrogen)
 			occupiedValence -= mAllConnAtoms[atom] - mConnAtoms[atom];
 
-		byte[] valenceList = (mAtomicNo[atom] < cAtomValence.length) ?
-				cAtomValence[mAtomicNo[atom]] : null;
-
-		int valence = (valenceList == null) ? cDefaultAtomValence : valenceList[0];
-		if (occupiedValence <= valence)
+		byte[] valences = getAllowedValences(mAtomicNo[atom]);
+		if (occupiedValence <= valences[0])
 			return -1;
 
-/*	The error may not be the additional hydrogens but an omitted charge.
- *  Therefore, don't correct and just explain what we have.
- *  This old handling caused problems with implicit hydrogens in 3D id-coordinates
- *  because the number og implicit hydrogens was not correctly reproduced during idcode parsing.
- *  TLS 20-Jun-2015
- *
-		// If we don't neglect hydrogen and don't have allowed higher valences
-		// then consider explicit hydrogens as errors.
-		if (!neglectExplicitHydrogen
-		 && (valenceList == null || valenceList.length == 1)) {
-			occupiedValence -= mAllConnAtoms[atom] - mConnAtoms[atom];
-			return (occupiedValence <= valence) ? -1 : occupiedValence;
-			}
-
-		if (valenceList != null)
-			for (int i=1; (valence<occupiedValence) && (i<valenceList.length); i++)
-				valence = valenceList[i];
-
-		// If we don't neglect hydrogen and the maximum allowed higher valence
-		// is still exceeded then consider explicit hydrogens as errors.
-		if (!neglectExplicitHydrogen)
-			occupiedValence -= mAllConnAtoms[atom] - mConnAtoms[atom];
-
-		return Math.max(valence, occupiedValence);
- *
- * new handling below:
- */
-
 		// stepwise try higher allowed valences
-		if (valenceList != null)
-			for (int i=1; (valence<occupiedValence) && (i<valenceList.length); i++)
-				valence = valenceList[i];
+		for (int i=1; i<valences.length; i++)
+			if (valences[i] >= occupiedValence)
+				return valences[i];
 
 		// if we have a compatible higher allowed valence, then use that, otherwise the occupied valence
-		return Math.max(valence, occupiedValence);
+		return occupiedValence;
 		}
 
 	/**
@@ -1248,7 +1212,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * Calculates and return the number of implicit hydrogens at atom.
-	 * If atom is itself a hydrogen atom, a metal except Al, or a noble gase,
+	 * If atom is itself a hydrogen atom, a metal except Al, or a noble gas,
 	 * then 0 is returned. For all other atom kinds the number of
 	 * implicit hydrogens is basically the lowest typical valence that is compatible
 	 * with the occupied valence, minus the occupied valence corrected by atom charge
@@ -1282,21 +1246,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		occupiedValence -= getElectronValenceCorrection(atom, occupiedValence);
 		int maxValence = getAtomAbnormalValence(atom);
 		if (maxValence == -1) {
-			if (mAtomicNo[atom] >= 171 && mAtomicNo[atom] <= 190) {
-				maxValence = 2;
-				}
-			else {
-				byte[] valenceList = (mAtomicNo[atom] < cAtomValence.length) ?
-						cAtomValence[mAtomicNo[atom]] : null;
-				if (valenceList == null) {
-					maxValence = cDefaultAtomValence;
-					}
-				else {
-					maxValence = valenceList[0];
-					for (int i=1; (maxValence<occupiedValence) && (i<valenceList.length); i++)
-						maxValence = valenceList[i];
-					}
-				}
+			byte[] valenceList = Molecule.getAllowedValences(mAtomicNo[atom]);
+			maxValence = valenceList[0];
+			for (int i=1; (maxValence<occupiedValence) && (i<valenceList.length); i++)
+				maxValence = valenceList[i];
 			}
 
 		return Math.max(0, maxValence - occupiedValence);
@@ -3234,9 +3187,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			if (oneBondFound[atom2])
 				isSimpleHydrogen[atom2] = false;
 
-			if (isSimpleHydrogen[atom1] && isMetalAtom(atom2))
+			if (isSimpleHydrogen[atom1] && isMetalAtom(atom2) && mAtomicNo[atom2] != 13)    // Al
 				isSimpleHydrogen[atom1] = false;
-			if (isSimpleHydrogen[atom2] && isMetalAtom(atom1))
+			if (isSimpleHydrogen[atom2] && isMetalAtom(atom1) && mAtomicNo[atom1] != 13)
 				isSimpleHydrogen[atom2] = false;
 
 			oneBondFound[atom1] = true;

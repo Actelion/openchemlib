@@ -64,9 +64,7 @@ public class TautomerHelper {
 		mIsTautomerBond = new boolean[mOriginalMol.getBonds()];
 		mHasFreeValence = new boolean[mOriginalMol.getAtoms()];
 		for (int i=0; i<mOriginalMol.getAtoms(); i++) {
-			int atomicNo = mOriginalMol.getAtomicNo(i);
-			int valence = (atomicNo < Molecule.cAtomValence.length && Molecule.cAtomValence[atomicNo] != null) ?
-					Molecule.cAtomValence[atomicNo][0] : Molecule.cDefaultAtomValence;
+			int valence = Molecule.getAllowedValences(mOriginalMol.getAtomicNo(i))[0];
 			mHasFreeValence[i] = (mOriginalMol.getNonHydrogenNeighbourCount(i) < valence);
 			}
 

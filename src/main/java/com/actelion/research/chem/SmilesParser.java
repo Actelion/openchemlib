@@ -519,38 +519,43 @@ public class SmilesParser {
 
 		int[] handleHydrogenAtomMap = mMol.getHandleHydrogenMap();
 
-		// If the number of explicitly defined hydrogens conflicts with the occupied and default valence, then set an abnormal valence.
+		// If the number of explicitly defined hydrogens conflicts with the occupied and default valence,
+		// then try to change radical state to compensate. If that is impossible, then set an abnormal valence.
 		mMol.setHydrogenProtection(true);	// We may have a fragment. Therefore, prevent conversion of explicit H into a query feature.
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
-			if (mol.getAtomCustomLabel(atom) != null) {	// if we have the exact number of hydrogens
-				if (!mMol.isMarkedAtom(atom)) {	// don't correct aromatic atoms
-					int explicitHydrogen = mMol.getAtomCustomLabelBytes(atom)[0];
-					if (mMol.getAtomicNo(atom) < Molecule.cAtomValence.length
-					 && Molecule.cAtomValence[mMol.getAtomicNo(atom)] != null) {
-						boolean compatibleValenceFound = false;
-						int usedValence = mMol.getOccupiedValence(atom);
-						usedValence -= mMol.getElectronValenceCorrection(atom, usedValence);
-						usedValence += explicitHydrogen;
-						for (byte valence:Molecule.cAtomValence[mMol.getAtomicNo(atom)]) {
-							if (usedValence <= valence) {
-								compatibleValenceFound = true;
-								if (valence == usedValence + 2)
-									mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateT);
-								else if (valence == usedValence + 1)
-									mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
-								else if (valence != usedValence)
-									mMol.setAtomAbnormalValence(atom, usedValence);
-								break;
-								}
+			if (mMol.getAtomCustomLabel(atom) != null) {	// if we have the exact number of hydrogens
+				int explicitHydrogen = mMol.getAtomCustomLabelBytes(atom)[0];
+
+				if (!mMol.isMarkedAtom(atom)) {
+					// We don't correct aromatic atoms, because for aromatic atoms the number of
+					// explicit hydrogens encodes whether a pi-bond needs to be placed at the atom
+					// when resolving aromaticity.
+					byte[] valences = Molecule.getAllowedValences(mMol.getAtomicNo(atom));
+					boolean compatibleValenceFound = false;
+					int usedValence = mMol.getOccupiedValence(atom);
+					usedValence -= mMol.getElectronValenceCorrection(atom, usedValence);
+					usedValence += explicitHydrogen;
+					for (byte valence:valences) {
+						if (usedValence <= valence) {
+							compatibleValenceFound = true;
+							if (valence == usedValence + 2)
+								mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateT);
+							else if (valence == usedValence + 1)
+								mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+							else if (valence != usedValence || valence != valences[0])
+								mMol.setAtomAbnormalValence(atom, usedValence);
+							break;
 							}
-						if (!compatibleValenceFound)
-							mMol.setAtomAbnormalValence(atom, usedValence);
 						}
-					else {
-						for (int i=0; i<explicitHydrogen; i++)
-							mol.addBond(atom, mol.addAtom(1), 1);
-						}
+					if (!compatibleValenceFound)
+						mMol.setAtomAbnormalValence(atom, usedValence);
+					}
+
+				if (!mMol.supportsImplicitHydrogen(atom)) {
+					// If implicit hydrogens are not supported, then add explicit ones.
+					for (int i=0; i<explicitHydrogen; i++)
+						mMol.addBond(atom, mMol.addAtom(1), 1);
 					}
 				}
 			}
@@ -860,6 +865,9 @@ public class SmilesParser {
 
 
 	private boolean qualifiesForPi(int atom) {
+		if (!RingCollection.qualifiesAsAromatic(mMol.getAtomicNo(atom)))
+			return false;
+
 		if ((mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) != 0)
 		 || !mMol.isMarkedAtom(atom))	// already marked as hetero-atom of another ring
 			return false;
@@ -877,16 +885,6 @@ public class SmilesParser {
 			if (freeValence == 2)
 				return false;	// e.g. -S(=O)- correction to account for tetravalent S,Se
 			}
-
-		if (mMol.getAtomicNo(atom) != 5
-		 && mMol.getAtomicNo(atom) != 6
-		 && mMol.getAtomicNo(atom) != 7
-		 && mMol.getAtomicNo(atom) != 8
-		 && mMol.getAtomicNo(atom) != 15	// P
-		 && mMol.getAtomicNo(atom) != 16	// S
-		 && mMol.getAtomicNo(atom) != 33	// As
-		 && mMol.getAtomicNo(atom) != 34)	// Se
-			return false;
 
 		return true;
 		}
