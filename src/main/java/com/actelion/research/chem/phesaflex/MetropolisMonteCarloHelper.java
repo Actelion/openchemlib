@@ -37,14 +37,13 @@ public class MetropolisMonteCarloHelper {
 	
 	public MetropolisMonteCarloHelper(StereoMolecule mol) {
 		this.mol = mol;
-		init();
 		
 	}
 	/**
 	 * 
 	 * @return: boolean, indicating if MMC Helper could successfully be initialized
 	 */
-	private boolean init() {
+	public boolean init() {
 		boolean success = true;
 		bondRotationHelper = new BondRotationHelper(mol);
 		random = new Random(seed);
