@@ -40,8 +40,12 @@ public class MetropolisMonteCarloHelper {
 		init();
 		
 	}
-	
-	private void init() {
+	/**
+	 * 
+	 * @return: boolean, indicating if MMC Helper could successfully be initialized
+	 */
+	private boolean init() {
+		boolean success = true;
 		bondRotationHelper = new BondRotationHelper(mol);
 		random = new Random(seed);
 		boolean[] isRotatableBond = new boolean[mol.getBonds()];
@@ -62,6 +66,9 @@ public class MetropolisMonteCarloHelper {
 				rmax = relevance;
 		}
 		slope = (MIN_ANGLE-MAX_ANGLE)/(rmax-rmin);
+		if(rotatableBonds.length==0)
+			success = false;
+		return success;
 	}
 	
 	public void step() {
