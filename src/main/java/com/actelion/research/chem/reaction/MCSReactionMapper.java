@@ -154,6 +154,7 @@ public class MCSReactionMapper implements IReactionMapper
                     }
                 }
             }
+            reaction.setFragment(false);
             return reaction;
         } catch (Exception e1) {
             e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.

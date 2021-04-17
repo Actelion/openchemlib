@@ -364,47 +364,52 @@ public class Reaction implements java.io.Serializable {
 	 * @throws Exception
 	 */
 	public void validateMapping() throws Exception {
-		StereoMolecule reactant, product;
+		StereoMolecule reactant,product;
+		int maxMapNo = getHighestMapNo();
 
-		for (int i = 0; i < mReactant.size(); i++) {
+		boolean[] mapNoInReactant = new boolean[maxMapNo+1];
+		for (int i=0; i<mReactant.size(); i++) {
 			reactant = mReactant.get(i);
-			for (int j = 0; j < reactant.getAllAtoms(); j++) {
+			for (int j=0; j<reactant.getAllAtoms(); j++) {
 				int mapNo = reactant.getAtomMapNo(j);
 				if (mapNo != 0) {
-					int found = 0;
-					for (int k = 0; k < mProduct.size(); k++) {
-						product = mProduct.get(k);
-						for (int l = 0; l < product.getAllAtoms(); l++)
-							if (product.getAtomMapNo(l) == mapNo)
-								found++;
-						}
-
-					if (found == 0)
-						reactant.setAtomMapNo(j, 0, false);
-					else if (found > 1)
-						throw new Exception("Duplicate mapping no in products");
+					if (mapNoInReactant[mapNo])
+						throw new Exception("Duplicate mapping no in reactants");
+					mapNoInReactant[mapNo] = true;
 					}
 				}
 			}
 
-		for (int i = 0; i < mProduct.size(); i++) {
+		boolean[] mapNoInProduct = new boolean[maxMapNo+1];
+		for (int i=0; i<mProduct.size(); i++) {
 			product = mProduct.get(i);
-			for (int j = 0; j < product.getAllAtoms(); j++) {
+			for (int j=0; j<product.getAllAtoms(); j++) {
 				int mapNo = product.getAtomMapNo(j);
 				if (mapNo != 0) {
-					int found = 0;
-					for (int k = 0; k < mReactant.size(); k++) {
-						reactant = mReactant.get(k);
-						for (int l = 0; l < reactant.getAllAtoms(); l++)
-							if (reactant.getAtomMapNo(l) == mapNo)
-								found++;
-						}
-
-					if (found == 0)
-						product.setAtomMapNo(j, 0, false);
-					else if (found > 1)
-						throw new Exception("Duplicate mapping no in reactants");
+					if (mapNoInProduct[mapNo])
+						throw new Exception("Duplicate mapping no in products");
+					mapNoInProduct[mapNo] = true;
 					}
+				}
+			}
+
+		int[] newMapNo = new int[maxMapNo+1];
+		int mapNo = 0;
+		for (int i=1; i<=maxMapNo; i++)
+			if (mapNoInReactant[i] && mapNoInProduct[i])
+				newMapNo[i] = ++mapNo;
+
+		if (mapNo != maxMapNo) {
+			for (int i=0; i<mReactant.size(); i++) {
+				reactant = mReactant.get(i);
+				for (int j=0; j<reactant.getAllAtoms(); j++)
+					reactant.setAtomMapNo(j, newMapNo[reactant.getAtomMapNo(j)], reactant.isAutoMappedAtom(j));
+				}
+
+			for (int i=0; i<mProduct.size(); i++) {
+				product = mProduct.get(i);
+				for (int j=0; j<product.getAllAtoms(); j++)
+					product.setAtomMapNo(j, newMapNo[product.getAtomMapNo(j)], product.isAutoMappedAtom(j));
 				}
 			}
 		}
