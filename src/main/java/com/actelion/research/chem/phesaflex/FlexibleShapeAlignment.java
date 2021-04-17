@@ -89,24 +89,27 @@ public class FlexibleShapeAlignment {
 		double t0 = getTanimoto(eval,shapeAlign);
 
 		MetropolisMonteCarloHelper mcHelper = new MetropolisMonteCarloHelper(fitMol);
+		boolean success = mcHelper.init();
 		double told = t0;
-		for(int i=0;i<MC_STEPS;i++) {
-			double [] vold = Arrays.stream(v).toArray(); // now copy v
-			mcHelper.step();
-			eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, ppWeight, isHydrogen, v, ffOptions);
-			eval.setE0(e0);
-			opt = new OptimizerLBFGS(200,0.001);
-			opt.optimize(eval);
-			double tnew = getTanimoto(eval,shapeAlign);
-			if(!mcHelper.accept(told, tnew)) {
-				v = vold;
-				eval.setState(v);
+		if(success) {
+			for(int i=0;i<MC_STEPS;i++) {
+				double [] vold = Arrays.stream(v).toArray(); // now copy v
+				mcHelper.step();
+				eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, ppWeight, isHydrogen, v, ffOptions);
+				eval.setE0(e0);
+				opt = new OptimizerLBFGS(200,0.001);
+				opt.optimize(eval);
+				double tnew = getTanimoto(eval,shapeAlign);
+				if(!mcHelper.accept(told, tnew)) {
+					v = vold;
+					eval.setState(v);
+				}
+				else {
+					eval.getState(v);
+					told = tnew;
+				}
+	
 			}
-			else {
-				eval.getState(v);
-				told = tnew;
-			}
-
 		}
 		result = getResult();
 		
