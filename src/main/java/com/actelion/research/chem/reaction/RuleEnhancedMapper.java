@@ -38,6 +38,8 @@ public class RuleEnhancedMapper {
 		mBestProductMapNo = new int[mProduct.getAtoms()];
 		mBestMapNo = 0;
 
+		int firstCenterMapNo = 0;
+
 		for (RootAtomPair root:rootAtomPairs) {
 			if (root.isFirstOfEquivalentPairs) {
 				int score = 16 * mapFromRootAtoms(root);
@@ -48,6 +50,7 @@ public class RuleEnhancedMapper {
 					if (pair.isNotYetMapped())
 						score += 16 * mapFromRootAtoms(pair);
 
+				firstCenterMapNo = mMapNo + 1;
 				if (mMapNo < mMappableAtomCount)
 					score += new RuleEnhancedCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo).completeMapping();
 
@@ -57,7 +60,7 @@ public class RuleEnhancedMapper {
 				}
 			}
 
-		copyMapNosToReaction(rxn, mReactantMapNo, mProductMapNo);
+		copyMapNosToReaction(rxn, mReactantMapNo, mProductMapNo, firstCenterMapNo);
 		System.out.println("--------------------------------------------------------------");
 		}
 
@@ -280,7 +283,7 @@ public class RuleEnhancedMapper {
 	 * Copies the generated mapping numbers from the two temporary molecules into the original reaction.
 	 * @param rxn
 	 */
-	private void copyMapNosToReaction(Reaction rxn, int[] reactantMapNo, int[] productMapNo) {
+	private void copyMapNosToReaction(Reaction rxn, int[] reactantMapNo, int[] productMapNo, int firstCenterMapNo) {
 		int reactantIndex = 0;
 		int reactantAtom = 0;
 		for (int atom=0; atom<mReactant.getAtoms(); atom++) {
@@ -289,7 +292,7 @@ public class RuleEnhancedMapper {
 				reactantAtom = 0;
 				reactant = rxn.getReactant(++reactantIndex);
 				}
-			reactant.setAtomMapNo(reactantAtom, reactantMapNo[atom], true);
+			reactant.setAtomMapNo(reactantAtom, reactantMapNo[atom], reactantMapNo[atom] < firstCenterMapNo);
 			reactantAtom++;
 			}
 
@@ -301,7 +304,7 @@ public class RuleEnhancedMapper {
 				productAtom = 0;
 				product = rxn.getProduct(++productIndex);
 				}
-			product.setAtomMapNo(productAtom, productMapNo[atom], true);
+			product.setAtomMapNo(productAtom, productMapNo[atom], productMapNo[atom] < firstCenterMapNo);
 			productAtom++;
 			}
 		}
