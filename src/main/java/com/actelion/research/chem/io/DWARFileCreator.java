@@ -57,6 +57,7 @@ public class DWARFileCreator {
 	 * - add custom column properties, if you need to with addColumnProperty()
 	 * - call writeHeader() once to create the file and write file & table headers<br>
 	 * - for every row call setRowStructure() and setRowValue() for cell values and then writeCurrentRow()
+	 * - optionally call writeTemplate() to add runtime properties
 	 * - call writeEnd() to close the file
 	 */
 	public DWARFileCreator(BufferedWriter writer) {
@@ -274,6 +275,19 @@ public class DWARFileCreator {
 			}
 		}
 		mWriter.newLine();
+	}
+
+	public void writeTemplate(ArrayList<String> properties) throws IOException {
+		if (properties != null && properties.size() != 0) {
+			mWriter.write(CompoundTableConstants.cPropertiesStart);
+			mWriter.newLine();
+			for (String propertyLine:properties) {
+				mWriter.write(propertyLine);
+				mWriter.newLine();
+			}
+			mWriter.write(CompoundTableConstants.cPropertiesStart);
+			mWriter.newLine();
+		}
 	}
 
 	public void writeEnd() throws IOException {

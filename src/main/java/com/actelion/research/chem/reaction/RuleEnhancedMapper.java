@@ -4,8 +4,8 @@ import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.ByteArrayComparator;
+import com.actelion.research.util.UniqueList;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeMap;
 
@@ -13,7 +13,7 @@ public class RuleEnhancedMapper {
 	private static final int MAX_EXVIRONMENT_RADIUS = 8;
 	private static final int MIN_ROOT_ATOM_RADIUS = 2;
 	private StereoMolecule mReactant,mProduct;
-	private int mMapNo,mBestMapNo;
+	private int mMapNo,mBestMapNo,mMappableAtomCount;
 	private int[] mReactantMapNo,mProductMapNo,mBestReactantMapNo,mBestProductMapNo;
 	private Canonizer mReactantCanonizer,mProductCanonizer;
 	private ByteArrayComparator mSimilarityComparator;
@@ -28,7 +28,7 @@ public class RuleEnhancedMapper {
 		copyReactionToMolecules(rxn);
 		initializeAtomEnvironments();
 
-		ArrayList<RootAtomPair> rootAtomPairs = findRootAtomPairs();
+		RootAtomPair[] rootAtomPairs = findRootAtomPairs();
 
 		mReactantMapNo = new int[mReactant.getAtoms()];
 		mProductMapNo = new int[mProduct.getAtoms()];
@@ -36,24 +36,31 @@ public class RuleEnhancedMapper {
 
 		mBestReactantMapNo = new int[mReactant.getAtoms()];
 		mBestProductMapNo = new int[mProduct.getAtoms()];
-		mMapNo = 0;
+		mBestMapNo = 0;
+
+		int firstCenterMapNo = 0;
 
 		for (RootAtomPair root:rootAtomPairs) {
 			if (root.isFirstOfEquivalentPairs) {
-				int score = mapFromRootAtoms(root);
+				int score = 16 * mapFromRootAtoms(root);
 				for (RootAtomPair pair:rootAtomPairs)
 					if (pair.isNotYetMapped() && pair.isFirstOfEquivalentPairs)
-						score += mapFromRootAtoms(pair);
+						score += 16 * mapFromRootAtoms(pair);
 				for (RootAtomPair pair:rootAtomPairs)
 					if (pair.isNotYetMapped())
-						score += mapFromRootAtoms(pair);
+						score += 16 * mapFromRootAtoms(pair);
 
+				firstCenterMapNo = mMapNo + 1;
+				if (mMapNo < mMappableAtomCount)
+					score += new RuleEnhancedCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo).completeMapping();
+
+				// for now we are happy with just one similaroty based mapping round
 				System.out.println("Mapping round with root("+root.reactantAtom+","+root.productAtom+") completed:"+score);
 				break;
 				}
 			}
 
-		copyMapNosToReaction(rxn, mReactantMapNo, mProductMapNo);
+		copyMapNosToReaction(rxn, mReactantMapNo, mProductMapNo, firstCenterMapNo);
 		System.out.println("--------------------------------------------------------------");
 		}
 
@@ -65,9 +72,9 @@ public class RuleEnhancedMapper {
 	 * - if multiple symmetrically equivalent pairs exist, exactly one of them is marked as allowed root pair<br>
 	 * @return
 	 */
-	private ArrayList<RootAtomPair> findRootAtomPairs() {
+	private RootAtomPair[] findRootAtomPairs() {
 		int priority = 1;
-		ArrayList<RootAtomPair> list = new ArrayList<>();
+		UniqueList<RootAtomPair> list = new UniqueList<>();
 
 		boolean[] isFirstOfReactantRank = new boolean[mReactant.getAtoms()];
 		boolean[] isFirstOfProductRank = new boolean[mProduct.getAtoms()];
@@ -90,36 +97,50 @@ public class RuleEnhancedMapper {
 				}
 			}
 
-		for (int rootRadius=MAX_EXVIRONMENT_RADIUS-1; rootRadius>=0; rootRadius--) {
+		// With highest priority take manually mapped seed atoms
+		int maxMapNo = 0;
+		for (int atom=0; atom<mProduct.getAtoms(); atom++)
+			if (mProduct.getAtomMapNo(atom) != 0 && !mProduct.isAutoMappedAtom(atom))
+				maxMapNo = Math.max(maxMapNo, mProduct.getAtomMapNo(atom));
+		if (maxMapNo != 0) {
+			int[] mapNoToProductAtom = new int[maxMapNo+1];
+			for (int atom=0; atom<mProduct.getAtoms(); atom++)
+				if (mProduct.getAtomMapNo(atom) != 0 && !mProduct.isAutoMappedAtom(atom))
+					mapNoToProductAtom[mProduct.getAtomMapNo(atom)] = atom+1;
+			for (int atom=0; atom<mReactant.getAtoms(); atom++) {
+				int reactantMapNo = mReactant.getAtomMapNo(atom);
+				if (reactantMapNo != 0
+				 && reactantMapNo <= maxMapNo
+				 && !mReactant.isAutoMappedAtom(atom)
+				 && mapNoToProductAtom[reactantMapNo] != 0)
+					list.add(new RootAtomPair(priority++, atom, mapNoToProductAtom[reactantMapNo]-1,true));
+				}
+			}
+
+		// With second priority, we create starting pairs if we just have one atom of a kind
+		for (byte[] reactantEnv:mEnvToReactantAtomMap[0].keySet()) {
+			int[] productAtoms = mEnvToProductAtomMap[0].get(reactantEnv);
+			if (productAtoms != null && productAtoms.length == 1) {
+				int[] reactantAtoms = mEnvToReactantAtomMap[0].get(reactantEnv);
+				if (reactantAtoms.length == 1)
+					list.add(new RootAtomPair(priority++, reactantAtoms[0], productAtoms[0],true));
+				}
+			}
+
+		for (int rootRadius=MAX_EXVIRONMENT_RADIUS-1; rootRadius>=MIN_ROOT_ATOM_RADIUS; rootRadius--) {
 			for (byte[] reactantEnv:mEnvToReactantAtomMap[rootRadius].keySet()) {
 				int[] productAtoms = mEnvToProductAtomMap[rootRadius].get(reactantEnv);
 				if (productAtoms != null) {
-					boolean productAtomsAreEquivalent = areAtomsEquivalent(productAtoms, mProductCanonizer);
 					int[] reactantAtoms = mEnvToReactantAtomMap[rootRadius].get(reactantEnv);
-					boolean reactantAtomsAreEquivalent = areAtomsEquivalent(reactantAtoms, mReactantCanonizer);
-					for (int reactantAtom:reactantAtoms) {
-						for (int productAtom:productAtoms) {
-							if (rootRadius >= MIN_ROOT_ATOM_RADIUS
-							 || reactantAtomsAreEquivalent
-							 || productAtomsAreEquivalent)
-								list.add(new RootAtomPair(priority++, reactantAtom, productAtom,
-										isFirstOfReactantRank[reactantAtom] && isFirstOfProductRank[productAtom]));
-							}
-						}
+					for (int reactantAtom:reactantAtoms)
+						for (int productAtom:productAtoms)
+							list.add(new RootAtomPair(priority++, reactantAtom, productAtom,
+									isFirstOfReactantRank[reactantAtom] && isFirstOfProductRank[productAtom]));
 					}
 				}
 			}
 
-		return list;
-		}
-
-	private boolean areAtomsEquivalent(int[] atoms, Canonizer canonizer) {
-		for (int i=1; i<atoms.length; i++)
-			for (int j=0; j<i; j++)
-				if (canonizer.getSymmetryRank(atoms[i]) != canonizer.getSymmetryRank(atoms[j]))
-					return false;
-
-		return true;
+		return list.toArray(new RootAtomPair[0]);
 		}
 
 	/**
@@ -135,6 +156,15 @@ public class RuleEnhancedMapper {
 
 		mReactantMapNo = new int[mReactant.getAtoms()];
 		mProductMapNo = new int[mProduct.getAtoms()];
+
+		mMappableAtomCount = 0;
+		for (byte[] reactantEnv:mEnvToReactantAtomMap[0].keySet()) {
+			int[] productAtoms = mEnvToProductAtomMap[0].get(reactantEnv);
+			if (productAtoms != null) {
+				int[] reactantAtoms = mEnvToReactantAtomMap[0].get(reactantEnv);
+				mMappableAtomCount += Math.min(productAtoms.length, reactantAtoms.length);
+				}
+			}
 
 		mSimilarityComparator = new ByteArrayComparator();
 		}
@@ -196,8 +226,15 @@ public class RuleEnhancedMapper {
 					max = newMax;
 					}
 
-				mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
-				environment[rootAtom][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes();
+				if (sphere == 0) {
+					environment[rootAtom][sphere] = new byte[2];
+					environment[rootAtom][sphere][0] = (byte)mol.getAtomicNo(rootAtom);
+					environment[rootAtom][sphere][1] = (byte)mol.getAtomMass(rootAtom);
+					}
+				else {
+					mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
+					environment[rootAtom][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes();
+					}
 				}
 
 			mol.setAtomSelection(rootAtom, false);
@@ -246,7 +283,7 @@ public class RuleEnhancedMapper {
 	 * Copies the generated mapping numbers from the two temporary molecules into the original reaction.
 	 * @param rxn
 	 */
-	private void copyMapNosToReaction(Reaction rxn, int[] reactantMapNo, int[] productMapNo) {
+	private void copyMapNosToReaction(Reaction rxn, int[] reactantMapNo, int[] productMapNo, int firstCenterMapNo) {
 		int reactantIndex = 0;
 		int reactantAtom = 0;
 		for (int atom=0; atom<mReactant.getAtoms(); atom++) {
@@ -255,7 +292,7 @@ public class RuleEnhancedMapper {
 				reactantAtom = 0;
 				reactant = rxn.getReactant(++reactantIndex);
 				}
-			reactant.setAtomMapNo(reactantAtom, reactantMapNo[atom], true);
+			reactant.setAtomMapNo(reactantAtom, reactantMapNo[atom], reactantMapNo[atom] < firstCenterMapNo);
 			reactantAtom++;
 			}
 
@@ -267,11 +304,19 @@ public class RuleEnhancedMapper {
 				productAtom = 0;
 				product = rxn.getProduct(++productIndex);
 				}
-			product.setAtomMapNo(productAtom, productMapNo[atom], true);
+			product.setAtomMapNo(productAtom, productMapNo[atom], productMapNo[atom] < firstCenterMapNo);
 			productAtom++;
 			}
 		}
 
+	/**
+	 * Maps a many atoms a possible starting from the given root atom pair.
+	 * Mapping is done by incrementally adding the most similar neighbours to
+	 * the currently mapped area provided the the respective bond orders are
+	 * exactly matching.
+	 * @param root
+	 * @return number mapped atoms
+	 */
 	private int mapFromRootAtoms(RootAtomPair root) {
 		int[] graphAtom = new int[mReactant.getAtoms()];
 		int[] productAtom = new int[mReactant.getAtoms()];
@@ -279,16 +324,19 @@ public class RuleEnhancedMapper {
 		graphAtom[0] = root.reactantAtom;
 		productAtom[0] = root.productAtom;
 
-if (mReactant.getAtomicNo(root.reactantAtom) != mProduct.getAtomicNo(root.productAtom))
-	System.out.println("...");
-
 		mMapNo++;
 		mReactantMapNo[root.reactantAtom] = mMapNo;
 		mProductMapNo[root.productAtom] = mMapNo;
 
+		int bestReactantAtom = -1;
+		int bestProductAtom = -1;
+
 		int current = 0;
 		int highest = 0;
 		while (current <= highest) {
+			// we take the best match of reaction & product neighbours as next graph members
+			int bestMatch = 0;
+
 			for (int i=0; i<mReactant.getConnAtoms(graphAtom[current]); i++) {
 				int reactantCandidate = mReactant.getConnAtom(graphAtom[current], i);
 				if (mReactantMapNo[reactantCandidate] != 0)
@@ -296,8 +344,6 @@ if (mReactant.getAtomicNo(root.reactantAtom) != mProduct.getAtomicNo(root.produc
 
 				int bondType = mReactant.getBondTypeSimple(mReactant.getConnBond(graphAtom[current], i));
 
-				int bestMatch = 0;
-				int bestProductCandidate = -1;
 				for (int j=0; j<mProduct.getConnAtoms(productAtom[current]); j++) {
 					int productCandidate = mProduct.getConnAtom(productAtom[current], j);
 					if (mProductMapNo[productCandidate] == 0) {
@@ -305,23 +351,26 @@ if (mReactant.getAtomicNo(root.reactantAtom) != mProduct.getAtomicNo(root.produc
 						if (bondType == mProduct.getBondTypeSimple(candidateBond)) {
 							int match = getAtomSimilarity(reactantCandidate, productCandidate);
 							if (bestMatch < match) {
+								bestReactantAtom = reactantCandidate;
+								bestProductAtom = productCandidate;
 								bestMatch = match;
-								bestProductCandidate = productCandidate;
 								}
 							}
-						}   // TODO track multiple options and try all recursively; then end this method with best option mapped
-					}
-
-				if (bestProductCandidate != -1) {
-					highest++;
-					graphAtom[highest] = reactantCandidate;
-					productAtom[highest] = bestProductCandidate;
-					mMapNo++;
-					mReactantMapNo[reactantCandidate] = mMapNo;
-					mProductMapNo[bestProductCandidate] = mMapNo;
+						}   // TODO may track multiple options and try all recursively; then end this method with best option mapped
 					}
 				}
-			current++;
+
+			if (bestMatch != 0) {
+				highest++;
+				graphAtom[highest] = bestReactantAtom;
+				productAtom[highest] = bestProductAtom;
+				mMapNo++;
+				mReactantMapNo[bestReactantAtom] = mMapNo;
+				mProductMapNo[bestProductAtom] = mMapNo;
+				}
+			else {
+				current++;
+				}
 			}
 
 /*		if (mMapNo > mBestMapNo) {
@@ -341,7 +390,7 @@ if (mReactant.getAtomicNo(root.reactantAtom) != mProduct.getAtomicNo(root.produc
 		return highest+1;
 		}
 
-	class RootAtomPair {
+	class RootAtomPair implements Comparable<RootAtomPair> {
 		public int priority,reactantAtom,productAtom;
 		public boolean isFirstOfEquivalentPairs;
 
@@ -355,6 +404,14 @@ if (mReactant.getAtomicNo(root.reactantAtom) != mProduct.getAtomicNo(root.produc
 		public boolean isNotYetMapped() {
 			return mReactantMapNo[reactantAtom] == 0
 				&& mProductMapNo[productAtom] == 0;
+			}
+
+		@Override
+		public int compareTo(RootAtomPair pair) {
+			return this.reactantAtom < pair.reactantAtom ? -1
+				 : this.reactantAtom > pair.reactantAtom ? 1
+				 : this.productAtom < pair.productAtom ? -1
+				 : this.productAtom > pair.productAtom ? 1 : 0;
 			}
 		}
 	}
