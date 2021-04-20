@@ -9,6 +9,8 @@ public class PPTriangleMatcher {
 	private static final double CUTOFF = 2.0; //if lengths of edges of two triangles differ by more than 2.5A, it is
 											  // not considered as a match
 	
+	private static final double SCORE_CUTOFF = 0.3;
+	
 	private PPTriangleMatcher() {}
 	
 	public static List<AlignmentResult> getMatchingTransforms(Map<Integer,ArrayList<PPTriangle>> triangleSetRef, 
@@ -24,7 +26,8 @@ public class PPTriangleMatcher {
 					if(doEdgeLengthsMatch(refTriangle,fitTriangle)) {
 						double[][] transform = new double[5][3];
 						double score = refTriangle.getMatchingTransform(fitTriangle, transform);
-						results.add(new AlignmentResult(score, transform,refConformerId,conformerId));
+						if(score>SCORE_CUTOFF)
+							results.add(new AlignmentResult(score, transform,refConformerId,conformerId));
 					}
 				}
 			}
