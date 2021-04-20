@@ -443,12 +443,13 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 						double sim = refPP.getSimilarity(fitPP);
 						atomOverlap *= sim;
 						totalOverlap += atomOverlap;
-						gradientPrefactor = atomOverlap*-2*refPP.getWidth()*fitPP.getWidth()/(refPP.getWidth()+fitPP.getWidth());
-						grad[3*a] += (2*xj-2*xi)*gradientPrefactor*sim;
-						grad[3*a+1] += (2*yj-2*yi)*gradientPrefactor*sim;
-						grad[3*a+2] += (2*zj-2*zi)*gradientPrefactor*sim;
-						fitPP.getPharmacophorePoint().getDirectionalityDerivativeCartesian(grad, v, fitPP.getPharmacophorePoint().getDirectionality(), sim);					}
-
+						if(!rigid) {
+							gradientPrefactor = atomOverlap*-2*refPP.getWidth()*fitPP.getWidth()/(refPP.getWidth()+fitPP.getWidth());
+							grad[3*a] += (2*xj-2*xi)*gradientPrefactor*sim;
+							grad[3*a+1] += (2*yj-2*yi)*gradientPrefactor*sim;
+							grad[3*a+2] += (2*zj-2*zi)*gradientPrefactor*sim;
+							fitPP.getPharmacophorePoint().getDirectionalityDerivativeCartesian(grad, v, fitPP.getPharmacophorePoint().getDirectionality(), sim);					}
+					}
 				}
 
 				}
