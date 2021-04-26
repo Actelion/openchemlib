@@ -36,8 +36,8 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
     private static final String DEFAULT_TITLE = "OSIRIS Structure Editor";
 
 	private StereoMolecule mMolecule;
-	private JDrawToolbar   mToolBar;
-	private JDrawArea      mArea;
+	protected JDrawToolbar   mToolBar;
+	protected JDrawArea      mArea;
 	private JPanel         mButtonPanel;
 	private boolean        mIsCancelled;
 	private ArrayList<StructureListener> mListener;

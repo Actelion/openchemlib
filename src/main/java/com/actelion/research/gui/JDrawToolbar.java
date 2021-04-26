@@ -87,19 +87,19 @@ public class JDrawToolbar extends JComponent
 	protected static final int cToolAtomI = 32;
 	protected static final int cToolAtomOther = 33;
 
-    private static final int cESRMenuBorder = 4;
-    private static final int cESRMenuX = HiDPIHelper.scale(20);
-    private static final int cESRMenuY = HiDPIHelper.scale(64);
-	private static final float cButtonBorder = HiDPIHelper.getUIScaleFactor()*3f;
-	private static final float cButtonSize = HiDPIHelper.getUIScaleFactor()*21f;
+    protected static final int cESRMenuBorder = 4;
+	protected static final int cESRMenuX = HiDPIHelper.scale(20);
+	protected static final int cESRMenuY = HiDPIHelper.scale(64);
+	protected static final float cButtonBorder = HiDPIHelper.getUIScaleFactor()*3f;
+	protected static final float cButtonSize = HiDPIHelper.getUIScaleFactor()*21f;
     protected static final int cToolESRAbs = 101;
     protected static final int cToolESROr = 102;
     protected static final int cToolESRAnd  = 103;
 
 	private JDrawArea	mArea;
 	private Image		mImageUp,mImageDown,mESRImageUp,mESRImageDown;
-	private int			mCurrentTool,mPressedButton,mMode,mESRSelected,mESRHilited;
-    private boolean     mESRMenuVisible;
+	protected int			mCurrentTool,mPressedButton,mMode,mESRSelected,mESRHilited;
+    protected boolean     mESRMenuVisible;
 
 	public JDrawToolbar(JDrawArea theArea) {
 		mArea = theArea;
@@ -188,7 +188,7 @@ public class JDrawToolbar extends JComponent
 	public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        g.drawImage(mImageUp,0,0,this);
+		g.drawImage(mImageUp,0,0,this);
         drawPressedButton(g, mCurrentTool);
         if (mPressedButton != -1)
             drawPressedButton(g, mPressedButton);
@@ -288,7 +288,7 @@ public class JDrawToolbar extends JComponent
             repaint();
         }
 
- 	private int getButtonNo(MouseEvent e) {
+ 	protected int getButtonNo(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
 		if (x<0 || x>=2*cButtonSize+cButtonBorder || y<0 || y>cButtonsPerColumn*cButtonSize) return -1;
@@ -310,18 +310,18 @@ public class JDrawToolbar extends JComponent
             }
         }
 
-    private void setButtonClip(Graphics g, int button) {
+    protected void setButtonClip(Graphics g, int button) {
         Point l = getButtonLocation(button);
         g.setClip(l.x, l.y,Math.round(cButtonSize-1),Math.round(cButtonSize-1));
         }
 
-	private void drawPressedButton(Graphics g, int button) {
+	protected void drawPressedButton(Graphics g, int button) {
         setButtonClip(g, button);
 		g.drawImage(mImageDown,0,0,this);
         g.setClip(0,0,Integer.MAX_VALUE,Integer.MAX_VALUE);
 		}
 
-    private Point getButtonLocation(int button) {
+    protected Point getButtonLocation(int button) {
         return new Point(Math.round(cButtonSize * (button / cButtonsPerColumn) + cButtonBorder-2),
 						 Math.round(cButtonSize * (button % cButtonsPerColumn) + cButtonBorder-2));
         }

@@ -113,10 +113,7 @@ public class JEditableChemistryView extends JChemistryView {
 		}
 
 	private void editReaction() {
-		Component c = this;
-		while (!(c instanceof Frame))
-			c = c.getParent();
-		JDrawDialog dialog = new JDrawDialog((Frame)c, new Reaction(mReaction), "Edit Reaction", Dialog.ModalityType.DOCUMENT_MODAL);
+		JDrawDialog dialog = createDrawDialog("Edit Reaction", new Reaction(mReaction));
 		dialog.setVisible(true);
 		if (!dialog.isCancelled()) {
 			Reaction newRxn = dialog.getReactionAndDrawings();
@@ -135,13 +132,10 @@ public class JEditableChemistryView extends JChemistryView {
 		}
 
 	private void editMolecules() {
-		Component c = this;
-		while (!(c instanceof Frame))
-			c = c.getParent();
 		StereoMolecule[] mol = new StereoMolecule[mMolecules.length];
 		for (int i=0; i<mMolecules.length; i++)
 			mol[i] = new StereoMolecule(mMolecules[i]);
-		JDrawDialog dialog = new JDrawDialog((Frame)c, mol, "Edit Molecules", Dialog.ModalityType.DOCUMENT_MODAL);
+		JDrawDialog dialog = createDrawDialog("Edit Molecules", mol);
 		dialog.setVisible(true);
 		if (!dialog.isCancelled()) {
 			StereoMolecule[] newMols = dialog.getDrawArea().getFragments();
@@ -149,4 +143,20 @@ public class JEditableChemistryView extends JChemistryView {
 			informListeners();
 			}
 		}
-	}
+
+	protected JDrawDialog createDrawDialog(String title, Reaction reaction) {
+		Component c = this;
+		while (!(c instanceof Frame || c instanceof Dialog))
+			c = c.getParent();
+
+		return new JDrawDialog((Frame)c, reaction, "Edit Reaction", Dialog.ModalityType.DOCUMENT_MODAL);
+		}
+
+	protected JDrawDialog createDrawDialog(String title, StereoMolecule[] mol) {
+		Component c = this;
+		while (!(c instanceof Frame || c instanceof Dialog))
+			c = c.getParent();
+
+		return new JDrawDialog((Frame)c, mol, "Edit Molecules", Dialog.ModalityType.DOCUMENT_MODAL);
+		}
+}
