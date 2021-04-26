@@ -434,7 +434,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
      * returns a list of all header/footer rows of the DWAR file. If this method is
      * called before all rows have been read, then the header lines including column
      * properties and the column title line are returned. If this method is
-     * called before all rows have been read, then all lines after the data table, i.e. the
+     * called after all rows have been read, then all lines after the data table, i.e. the
      * runtime properties, are returned.
      * @return
      */

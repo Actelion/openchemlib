@@ -44,6 +44,7 @@ import java.util.TreeMap;
 
 public class DWARFileCreator {
 	private BufferedWriter mWriter;
+	private DWARFileParser mMasterCopyParser;
 	private String[] mRow;
 	private ArrayList<String> mColumnTitleList;
 	private TreeMap<Integer,Properties> mColumnPropertiesMap;
@@ -51,18 +52,31 @@ public class DWARFileCreator {
 	/**
 	 * Use a DWARFileCreator for writing native DataWarrior files without a CompoundTableModel.
 	 * (if you have a populated CompoundTableModel, use the CompoundTableSaver instead).
+	 * You may provide a freshly instantiated DWARFileParser as master copy that will provide header,
+	 * explanation text, macros, column properties, and runtime properties for the new file.
 	 * To use the DWARFileCreator you need to follow these steps:<br>
-	 * - instantiate a new DWARFileCreator for every file<br>
+	 * - instantiate a new DWARFileCreator for a new output file<br>
+	 * - optionally call setMasterCopy()<br>
 	 * - define individual columns with addStructureColumn(), addDescriptorColumn(), and addAlphanumericalColumn()<br>
 	 * - add custom column properties, if you need to with addColumnProperty()
 	 * - call writeHeader() once to create the file and write file & table headers<br>
-	 * - for every row call setRowStructure() and setRowValue() for cell values and then writeCurrentRow()
-	 * - optionally call writeTemplate() to add runtime properties
-	 * - call writeEnd() to close the file
+	 * - for every row call setRowStructure() and setRowValue() for cell values and then writeCurrentRow()<br>
+	 * - if you didn't call setMasterCopy(), then optionally call writeTemplate() to add runtime properties<br>
+	 * - call writeEnd() to close the file<br>
 	 */
 	public DWARFileCreator(BufferedWriter writer) {
 		mWriter = writer;
 		mColumnTitleList = new ArrayList<String>();
+	}
+
+	/**
+	 * If the file to be created shall resemble another DataWarrior file regarding file
+	 * explanation, macro content, columns names, column properties, runtime properties (template),
+	 * then one may define a master copy with this method that serves as a blue print.
+	 * @param parser DWARFileParser initialized with MODE_BUFFER_HEAD_AND_TAIL
+	 */
+	public void setMasterCopy(DWARFileParser parser) {
+		mMasterCopyParser = parser;
 	}
 
 	/**
@@ -180,6 +194,21 @@ public class DWARFileCreator {
 		mWriter.write("</datawarrior-fileinfo>");
 		mWriter.newLine();
 
+		if (mMasterCopyParser == null) {
+			writeColumnPropertiesAndTitles();
+		}
+		else {
+			for (String line:mMasterCopyParser.getHeadOrTail()) {
+				if (line.trim().matches("<rowcount=\"\\d+\">"))
+					line = "<rowcount=\""+rowCount+"\">";
+				mWriter.write(line);
+				mWriter.newLine();
+			}
+		}
+	}
+
+
+	private void writeColumnPropertiesAndTitles() throws IOException {
 		if (mColumnPropertiesMap != null) {
 			mWriter.write("<column properties>");
 			mWriter.newLine();
@@ -291,6 +320,14 @@ public class DWARFileCreator {
 	}
 
 	public void writeEnd() throws IOException {
+		if (mMasterCopyParser != null) {
+			while (mMasterCopyParser.advanceToNext());
+			for (String line:mMasterCopyParser.getHeadOrTail()) {
+				mWriter.write(line);
+				mWriter.newLine();
+			}
+		}
+
 		mWriter.close();
 	}
 
