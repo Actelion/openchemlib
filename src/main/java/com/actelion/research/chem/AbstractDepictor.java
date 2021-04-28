@@ -543,7 +543,7 @@ public abstract class AbstractDepictor {
 		mG = g;
 		calculateParameters();
 
-		int[][] esrGroupMemberCount = mMol.getERSGroupMemberCounts();
+		int[][] esrGroupMemberCount = mMol.getESRGroupMemberCounts();
 
 		boolean explicitAtomColors = false;
 		mAtomColor = new int[mMol.getAllAtoms()];
@@ -814,10 +814,6 @@ public abstract class AbstractDepictor {
 		int atom1 = mMol.getBondAtom(0,bnd);
 		int atom2 = mMol.getBondAtom(1,bnd);
 
-		boolean isExcludeGroup = ((mMol.getAtomQueryFeatures(atom1)
-								 | mMol.getAtomQueryFeatures(atom2))
-								  & Molecule.cAtomQFExcludeGroup) != 0;
-
         onDrawBond(bnd,getAtomX(atom1),getAtomY(atom1),getAtomX(atom2),getAtomY(atom2));
 
 		// if one of the bond atoms is part of an exclude group
@@ -857,7 +853,23 @@ public abstract class AbstractDepictor {
 
 		switch (bondOrder) {
 		case 1:
-            switch (mMol.getBondType(bnd)) {
+			int bondType = mMol.getBondType(bnd);
+			if ((mDisplayMode & cDModeSuppressESR) != 0
+			 && (bondType == Molecule.cBondTypeUp || bondType == Molecule.cBondTypeDown)) {
+				int stereoCenter = mMol.getBondAtom(0, bnd);
+				int esrType = mMol.getAtomESRType(stereoCenter);
+				if (esrType != Molecule.cESRTypeAbs) {
+					int esrGroup = mMol.getAtomESRGroup(stereoCenter);
+					int count = 0;
+					for (int atom=0; atom<mMol.getAtoms(); atom++)
+						if (mMol.getAtomESRType(atom) == esrType
+						 && mMol.getAtomESRGroup(atom) == esrGroup)
+							count++;
+					if (count == 1)
+						bondType = Molecule.cBondTypeSingle;
+					}
+				}
+            switch (bondType) {
 			case Molecule.cBondTypeSingle:
 				mpHandleLine(theLine, atom1, atom2);
 				break;

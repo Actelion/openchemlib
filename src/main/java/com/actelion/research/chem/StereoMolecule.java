@@ -409,7 +409,7 @@ public class StereoMolecule extends ExtendedMolecule {
         return scCount;
         }
 
-	public int[][] getERSGroupMemberCounts() {
+	public int[][] getESRGroupMemberCounts() {
 		ensureHelperArrays(cHelperParities);
 
 		int[] maxESRGroup = new int[3];

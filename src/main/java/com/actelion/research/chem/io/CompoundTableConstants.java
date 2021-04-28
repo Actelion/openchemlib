@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.io;
 
+import java.awt.*;
+
 public interface CompoundTableConstants {
     String cColumnUnassignedItemText = "<Unassigned>";
     String cColumnUnassignedCode = "<none>";
@@ -50,10 +52,14 @@ public interface CompoundTableConstants {
     String cColumnType2DCoordinates = "idcoordinates2D";
     String cColumnType3DCoordinates = "idcoordinates3D";
     String cColumnTypeAtomColorInfo = "atomColorInfo";
+    String cColumnTypeFlagColors = "flagColors";
     String cColumnTypeReactionMapping = "atomMapping";
     String cColumnTypeReactionObjects = "reactionObjects";
     String cColumnTypeNegRecImage = "negRecImg";
         // in addition to these all DescriptorHandler.SHORT_NAMEs are valid column types
+
+    // Flag values are ORed values from (1:green, 2:yellow, 4:orange, 8:red, ...)
+    Color[] cFlagColor = { Color.GREEN, Color.YELLOW, Color.ORANGE, Color.RED, Color.CYAN, Color.BLUE, Color.MAGENTA, Color.BLACK, new Color(192,192,192) };
 
     String cReactionPartReaction = "reaction";  // this may only be used, if a molecule type descriptor is calculated from all merged reaction molecules
     String cReactionPartReactants = "reactants";
