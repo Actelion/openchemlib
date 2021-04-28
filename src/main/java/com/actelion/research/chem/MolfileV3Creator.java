@@ -167,7 +167,7 @@ public class MolfileV3Creator
 						minDistance = distance;
 					}
 				}
-			scalingFactor = 2.0 * TARGET_AVBL / minDistance;
+			scalingFactor = 2.0 * TARGET_AVBL / Math.max(TARGET_AVBL / 2, minDistance);
 			}
 
 		return scalingFactor;
