@@ -177,7 +177,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 	    setDescriptorHandlerFactory(DescriptorHandlerStandard2DFactory.getFactory());
 
     	if ((mMode & MODE_BUFFER_HEAD_AND_TAIL) != 0)
-    		mHeadOrTailLineList = new ArrayList<String>();
+    		mHeadOrTailLineList = new ArrayList<>();
 
     	int coordinateMode = mMode & MODE_COORDINATE_MASK;
 	
@@ -210,7 +210,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 
         line = readHeadOrTailLine();
 
-        if (line != null
+        while (line != null
          && (line.equals(cFileExplanationStart)
           || line.equals(cMacroListStart))) {
             line = readHeadOrTailLine();
@@ -221,7 +221,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
             line = readHeadOrTailLine();
         	}
 
-        mColumnPropertyMap = new TreeMap<String,Properties>();
+        mColumnPropertyMap = new TreeMap<>();
 
         if (line != null
          && line.equals(cColumnPropertyStart)) {
@@ -246,7 +246,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
             line = readHeadOrTailLine();
             }
 
-        mSpecialFieldMap = new TreeMap<String,SpecialField>();	// only take those columns that have a special type
+        mSpecialFieldMap = new TreeMap<>();	// only take those columns that have a special type
         for (String columnName:mColumnPropertyMap.keySet()) {
         	Properties properties = mColumnPropertyMap.get(columnName);
         	String specialType = properties.getProperty(cColumnPropertySpecialType);
