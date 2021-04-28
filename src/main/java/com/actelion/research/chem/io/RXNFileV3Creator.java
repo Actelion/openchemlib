@@ -39,12 +39,13 @@
 
 package com.actelion.research.chem.io;
 
-import java.io.*;
-
-import com.actelion.research.chem.ChemistryHelper;
 import com.actelion.research.chem.MolfileV3Creator;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 
 public class RXNFileV3Creator
 {
@@ -104,7 +105,7 @@ public class RXNFileV3Creator
         }
 
         if (bondCount != 0)
-            return avbl / bondCount;
+            return bondCount / avbl;
 
         return 1.0;
     }
