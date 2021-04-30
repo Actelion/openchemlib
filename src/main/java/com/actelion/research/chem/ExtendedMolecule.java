@@ -61,8 +61,12 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * To interpret a stereo center as fisher projection, all non stereo
 	 * bonds must be vertical and all stereo bonds must be horizontal.
 	 * FISCHER_PROJECTION_LIMIT is the allowed tolerance (currently 5.0 degrees).
+	 * In addition in large rings we don't assume Fisher projections,
+	 * because coordinates, if just in a circle, may have subsequent almost vertical bonds.
 	 */
 	public static final float FISCHER_PROJECTION_LIMIT = (float)Math.PI / 36;
+	public static final float FISCHER_PROJECTION_RING_LIMIT = 24;
+
 	public static final float STEREO_ANGLE_LIMIT = (float)Math.PI / 36;   // 5 degrees
 
 	public static final int cMaxConnAtoms = 16; // ExtendedMolecule is not restricted anymore
@@ -1659,10 +1663,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			return;
 			}
 
-		for (int i=0; i<mAllConnAtoms[atom]; i++) {
-			int connBond = mConnBond[atom][i];
-			if (isStereoBond(connBond, atom))
-				mBondType[connBond] = cBondTypeSingle;
+		// avoid flattening allene stereo bonds
+		if (mPi[atom] == 0 || mAtomicNo[atom] >= 15) {
+			for (int i=0; i<mAllConnAtoms[atom]; i++) {
+				int connBond = mConnBond[atom][i];
+				if (isStereoBond(connBond, atom))
+					mBondType[connBond] = cBondTypeSingle;
+				}
 			}
 		}
 
@@ -1709,7 +1716,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			 && getBondOrder(mConnBond[atom][i]) == 1)
 				mBondType[mConnBond[atom][i]] = cBondTypeSingle;
 
-		if (setFisherProjectionStereoBondsFromParity(atom, sortedConnMap, angle))
+		// Don't allow Fisher projection for large rings, which may have multiple almost vertical bonds
+		if (getAtomRingSize(atom) <= FISCHER_PROJECTION_RING_LIMIT
+		 && setFisherProjectionStereoBondsFromParity(atom, sortedConnMap, angle))
 			return;
 
 		// If there is exactly one stereo bond at the atom then take this
@@ -1853,6 +1862,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return cAtomParity1,cAtomParity2 or cAtomParityUnknown
 	 */
 	public int getFisherProjectionParity(int atom, int[] sortedConnMap, double[] angle, int[] direction) {
+		if (getAtomRingSize(atom) > FISCHER_PROJECTION_RING_LIMIT)
+			return cAtomParityUnknown;
+
 		int allConnAtoms = mAllConnAtoms[atom];
 		if (direction == null)
 			direction = new int[allConnAtoms];
@@ -1962,10 +1974,16 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if (preferredAtom == -1)
 			return;
 
-		for (int i=0; i<2; i++)
-			for (int j=0; j<mAllConnAtoms[mConnAtom[atom][i]]; j++)
-				if (mConnAtom[mConnAtom[atom][i]][j] != atom)
-					mBondType[mConnBond[mConnAtom[atom][i]][j]] = cBondTypeSingle;
+		for (int i=0; i<2; i++) {
+			int alleneAtom = mConnAtom[atom][i];
+			for (int j = 0; j<mAllConnAtoms[alleneAtom]; j++) {
+				int connAtom = mConnAtom[alleneAtom][j];
+				int connBond = mConnBond[alleneAtom][j];
+				if (connAtom != atom
+				 && mBondAtom[0][connBond] == alleneAtom)
+					mBondType[connBond] = cBondTypeSingle;
+				}
+			}
 
 		if (mBondAtom[1][preferredBond] != preferredAtom) {
 			mBondAtom[0][preferredBond] = mBondAtom[1][preferredBond];

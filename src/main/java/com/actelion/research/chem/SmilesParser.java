@@ -757,6 +757,14 @@ public class SmilesParser {
 			if (!connectConjugatedRadicalPairs(isAromaticBond))
 				break;
 
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			if (mMol.isMarkedAtom(atom) && mMol.getImplicitHydrogens(atom) != 0) {
+				mMol.setAtomMarker(atom, false);
+				mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+				mAromaticAtoms--;
+				}
+			}
+
 		if (mAromaticAtoms != 0)
 			throw new Exception("Assignment of aromatic double bonds failed");
 		if (mAromaticBonds != 0)

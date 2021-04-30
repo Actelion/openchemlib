@@ -93,14 +93,23 @@ public class Canonizer {
 	// the given configuration within all OR groups.
 	public static final int DISTINGUISH_RACEMIC_OR_GROUPS = 256;
 
-	// If we have fragments instead of molecules, then there we typically have free valences
-	// instead of implicit hydrogens. If two otherwise equivalent (symmetrical) atoms have
+	// If we have fragments instead of molecules, then unused valences are not meant to be
+	// filled by implicit hydrogen atoms. That means that atoms may have free valences.
+	// If two otherwise equivalent (symmetrical) atoms have
 	// free valences, then these may differ in the context of a super-structure match.
 	// A stereo center in the super-structure may not be a stereo center in the fragment alone.
 	// Same is true for stereo bonds. To discover all potential stereo features within a
 	// substructure fragment use more CONSIDER_FREE_VALENCES, which breaks the ties
 	// between equivalent atoms that have free valences.
 	public static final int TIE_BREAK_FREE_VALENCE_ATOMS = 512;
+
+	// ENCODE_ATOM_CUSTOM_LABELS (above) causes customs labels to encode into the idcode in
+	// a canonical way, i.e. the label is considered when ranking. Two otherwise symmetrical
+	// atoms are considered different, if one has a custom label, or both have different custom
+	// labels. The ENCODE_ATOM_CUSTOM_LABELS_WITHOUT_RANKING option does not consider such
+	// atoms being different. This option can be used to mark an atom witghout influencing
+	// ranking and graph generation. This is typically used for diagnostics.
+	public static final int ENCODE_ATOM_CUSTOM_LABELS_WITHOUT_RANKING = 1024;
 
 	protected static final int cIDCodeVersion2 = 8;
 		// productive version till May 2006 based on the molfile version 2
@@ -131,10 +140,10 @@ public class Canonizer {
 	private int[] mCanRankBeforeTieBreaking;
 	private int[] mPseudoTHGroup;
 	private int[] mPseudoEZGroup;
-	private byte[] mTHParity;
-	private byte[] mEZParity;
-	private byte[] mTHConfiguration;	// is tetrahedral parity based on atom numbers in graph
-	private byte[] mEZConfiguration;	// is double bond parity based on atom numbers in graph
+	private byte[] mTHParity;	        // is tetrahedral parity based on atom symmetry ranks
+	private byte[] mEZParity;           // is double bond parity based on atom symmetry ranks
+	private byte[] mTHConfiguration;	// is tetrahedral parity based on atom indexes in canonical graph
+	private byte[] mEZConfiguration;	// is double bond parity based on atom indexes in canonical graph
 	private byte[] mTHCIPParity;
 	private byte[] mEZCIPParity;
 	private byte[] mTHESRType;
@@ -529,6 +538,10 @@ System.out.println();
 		mTHParityIsMesoInverted = new boolean[mMol.getAtoms()];
 		mTHParityNeedsNormalization = new boolean[mMol.getAtoms()];
 		mTHParityNormalizationGroupList = new ArrayList<>();
+
+		if (mMesoHelper != null)
+			mMesoHelper.normalizeESRGroupSwappingAndRemoval(mCanRank);
+
 		canMarkESRGroupsForParityNormalization();
 
 		// rollback stereo information
@@ -652,6 +665,11 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 			}
 		}
 
+	/**
+	 * This ranks all atoms based on inherent atom properties, their neighbourhood
+	 * and connecting bond types until all atom and connectivity differences have
+	 * caused different atom ranks. Only stereo chemistry is not considered in this step.
+	 */
 	private void canInitializeRanking() {
 		boolean bondQueryFeaturesPresent = false;
 		if (mMol.isFragment()) {
@@ -838,12 +856,14 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		}
 
 
+	/**
+	 * Detects all stereo centers and their parities while considering
+	 * absolute ESR group numbers and the drawn configuration of stereo
+	 * centers within OR or AND groups. The calculated parities are not
+	 * canonized and only intended for meso fragment detection and complete
+	 * detection of all stereo centers.
+	 */
 	private void canRecursivelyFindAllParities() {
-		// detects all stereo centers and their parities while considering 
-		// absolute ESR group numbers and the drawn configuration of stereo
-		// centers within OR or AND groups. The calculated parities are not
-		// canonized and only intended for meso fragment detection and complete
-		// detection of all stereo centers.
 		mIsOddParityRound = true;
 
 		// Find absolute stereo features based on current ranking
@@ -894,11 +914,12 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		}
 
 
+	/**
+	 * Detects stereo center's parities considering the drawn configuration.
+	 * Any ESR group assignments are neglected. From these parities the CIP
+	 * assignments are calculated. These may be for display purposes only.
+	 */
 	private void canRecursivelyFindCIPParities() {
-		// Detects stereo center's parities considering the drawn configuration.
-		// Any ESR group assignments are neglected. From these parities the CIP
-		// assignments are calculated. These may be for display purposes only.
-
 		mIsOddParityRound = true;
 
 		// Find absolute stereo features based on current ranking
@@ -930,10 +951,12 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		}
 
 
+	/**
+	 * Detects parities for full normalization and idcode generation
+	 * (does not consider absolute group numbers nor drawn configuration of
+	 *  stereo centers within OR or AND groups, before they are normalized)
+	 */
 	private void canRecursivelyFindCanonizedParities() {
-			// detects parities for full normalization and idcode generation
-			// (does not consider absolute group numbers nor drawn configuration of
-			//  stereo centers within OR or AND groups, before they are normalized)
 		mIsOddParityRound = true;
 
 		int[][][] esrGroupMember = compileESRGroupMembers();
@@ -1031,9 +1054,9 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 		return esrGroupMember;
 		}
 
-
 	/**
-	 * This determines for relative parities within any ESR group, whether the
+	 * This determines for relative parities within any ESR group
+	 * and for any meso fragment group, whether the
 	 * parity should be inverted for normalization in the idcode.
 	 * The rule is that the highest ranking atom or bond gets parity2
 	 * and the others are adapted accordingly.
@@ -1071,8 +1094,8 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 			if (allParitiesDetermined
 			 && maxRank != -1) {
 				for (int atom:groupAtom) {
-					if (mTHParity[atom] == Molecule.cAtomParity1
-					 || mTHParity[atom] == Molecule.cAtomParity2)
+					if ((mTHParity[atom] == Molecule.cAtomParity1
+					  || mTHParity[atom] == Molecule.cAtomParity2))
 						mTHParityIsMesoInverted[atom] = invertParities;
 					mTHParityNeedsNormalization[atom] = false;
 					}
@@ -2441,6 +2464,11 @@ System.out.println("noOfRanks:"+canRank);
 
 		for(int i=0; i<mMol.getBonds(); i++) {
 			mMol.copyBond(mol, mGraphBond[i], 0, 0, mGraphIndex, false);
+			if (!mol.isStereoBond(i) && mol.getBondAtom(0, i) > mol.getBondAtom(1, i)) {
+				int temp = mol.getBondAtom(0, i);
+				mol.setBondAtom(0, i, mol.getBondAtom(1, i));
+				mol.setBondAtom(1, i, temp);
+				}
 			mol.setBondESR(i, mEZESRType[mGraphBond[i]], mEZESRGroup[mGraphBond[i]]);
 			}
 
@@ -2451,6 +2479,16 @@ System.out.println("noOfRanks:"+canRank);
 					int hydrogen = mMol.copyAtom(mol, mMol.getConnAtom(atom, j), 0, 0);
 					mMol.copyBond(mol, mMol.getConnBond(atom, j), 0, 0, mGraphIndex[atom], hydrogen, false);
 					}
+				}
+			}
+
+		for (int bond=0; bond<mol.getAllBonds(); bond++) {
+			int atom = mol.getBondAtom(0, bond);
+			if (mTHParityIsMesoInverted[mGraphAtom[atom]]) {
+				if (mol.getBondType(bond) == Molecule.cBondTypeUp)
+					mol.setBondType(bond, Molecule.cBondTypeDown);
+				else if (mol.getBondType(bond) == Molecule.cBondTypeDown)
+					mol.setBondType(bond, Molecule.cBondTypeUp);
 				}
 			}
 
@@ -2608,7 +2646,6 @@ System.out.println("noOfRanks:"+canRank);
 		if (mIDCode == null) {
 			generateGraph();
 			idGenerateConfigurations();
-//			idNormalizeConfigurations();
 			idNormalizeESRGroupNumbers();
 			idCodeCreate();
 			}
@@ -2992,7 +3029,8 @@ System.out.println();
 				}
 			}
 
-		if ((mMode & ENCODE_ATOM_CUSTOM_LABELS) != 0) {
+		if ((mMode & ENCODE_ATOM_CUSTOM_LABELS) != 0
+		 ||	(mMode & ENCODE_ATOM_CUSTOM_LABELS_WITHOUT_RANKING) != 0) {
 			count = 0;
 			int maxLength = 0;
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
@@ -3824,7 +3862,9 @@ System.out.println();
 
 	/**
 	 * Creates parities based on atom indices of original molecule and
-	 * stores them into the molecule. It also sets the stereo center flag.
+	 * copies them back into that molecule. It also sets the stereo center flag.
+	 * These atom parities are not normalized (e.g. in racemic or meso groups)
+	 * and reflect the original molecule's up/down bonds.
 	 */
 	public void setParities() {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {

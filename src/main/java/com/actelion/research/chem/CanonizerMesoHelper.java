@@ -176,7 +176,7 @@ public class CanonizerMesoHelper {
 
 
 	private void findMesoFragments() {
-		ArrayList<int[]> mesoFragmentList = new ArrayList<int[]>();
+		TreeSet<MesoFragmentMembers> mesoFragmentList = new TreeSet<>();
 
 		// Detect mirror planes by finding a seed atom (an atom with
 		// at least 2 neighbours sharing the same canRankWithoutStereo)
@@ -190,7 +190,7 @@ public class CanonizerMesoHelper {
 					for (int j=0; j<i; j++) {
 						int atom2 = mMol.getConnAtom(seedAtom, j);
 						if (mayBeMirrorAtoms(atom1, atom2))
-							addNewMesoFragment(tryFindMesoFragment(atom1, atom2), mesoFragmentList);
+							tryAddNewMesoFragment(atom1, atom2, mesoFragmentList);
 						}
 					}
 				}
@@ -206,41 +206,17 @@ public class CanonizerMesoHelper {
 			int atom1 = mMol.getBondAtom(0, seedBond);
 			int atom2 = mMol.getBondAtom(1, seedBond);
 			if (mayBeMirrorAtoms(atom1, atom2))
-				addNewMesoFragment(tryFindMesoFragment(atom1, atom2), mesoFragmentList);
+				tryAddNewMesoFragment(atom1, atom2, mesoFragmentList);
 			}
 
-			// remove fragments that don't include a stereo center
-		for (int i=mesoFragmentList.size()-1; i>=0; i--) {
-			int[] atomList = mesoFragmentList.get(i);
-			boolean found = false;
-			for (int j=0; j<atomList.length; j++) {
-				if (mIsStereoCenter[atomList[j]]) {
-					found = true;
-					break;
-					}
-				}
-			if (!found)
-				mesoFragmentList.remove(atomList);
-			}
-
-		mMesoFragmentAtom = mesoFragmentList.toArray(new int[0][0]);
-		Arrays.sort(mMesoFragmentAtom, new Comparator<int[]>() {
-			public int compare(int[] a1, int[] a2) {
-				if (a1.length != a2.length)
-					return (a1.length < a2.length) ? -1 : 1;
-
-				for (int i=0; i<a1.length; i++)
-					if (a1[i] != a2[i])
-						return (a1[i] < a2[i]) ? -1 : 1;
-
-				return 0;
-				}
-			} );
-
+		mMesoFragmentAtom = new int[mesoFragmentList.size()][];
 		mIsMesoFragmentMember = new boolean[mMol.getAtoms()];
-		for (int i=0; i<mMesoFragmentAtom.length; i++)
-			for (int j=0; j<mMesoFragmentAtom[i].length; j++)
-				mIsMesoFragmentMember[mMesoFragmentAtom[i][j]] = true;
+		int fragmentNo = 0;
+		for (MesoFragmentMembers members:mesoFragmentList) {
+			mMesoFragmentAtom[fragmentNo++] = members.memberAtom;
+			for (int i=0; i<members.memberAtom.length; i++)
+				mIsMesoFragmentMember[members.memberAtom[i]] = true;
+			}
 /*
 System.out.println("--mesofragments found:--------------------------------------------");
 for (int i=0; i<mMesoFragmentAtom.length; i++) {
@@ -257,39 +233,10 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 		}
 
 
-	private void addNewMesoFragment(boolean[] atomMask, ArrayList<int[]> mesoFragmentList) {
-		if (atomMask == null)
-			return;
-
-		int count = 0;
-		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			if (atomMask[atom])
-				count++;
-		int[] newAtomList = new int[count];
-		count = 0;
-		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			if (atomMask[atom])
-				newAtomList[count++] = atom;
-
-		boolean found = false;
-		for (int[] atomList:mesoFragmentList) {
-			if (atomList.length == newAtomList.length) {
-				boolean differs = false;
-				for (int k=0; k<atomList.length; k++) {
-					if (atomList[k] != newAtomList[k]) {
-						differs = true;
-						break;
-						}
-					}
-				if (!differs) {
-					found = true;
-					break;
-					}
-				}
-			}
-
-		if (!found)
-			mesoFragmentList.add(newAtomList);
+	private void tryAddNewMesoFragment(int atom1, int atom2, TreeSet<MesoFragmentMembers> mesoFragmentList) {
+		MesoFragmentMembers members = tryFindMesoFragment(atom1, atom2);
+		if (members != null && members.hasStereoCenters(mIsStereoCenter))
+			mesoFragmentList.add(members);
 		}
 
 
@@ -298,21 +245,21 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 	 * Stops atom matching at non-ring single bonds, thus locates and assigns one meso fragment.		
 	 * @param atom1
 	 * @param atom2
-	 * @return flag list defining fragment member atoms 
+	 * @return a MesoFragmentMembers object, if a meso fragment was found
 	 */
-	private boolean[] tryFindMesoFragment(int atom1, int atom2) {
+	private MesoFragmentMembers tryFindMesoFragment(int atom1, int atom2) {
 		int[] graphAtom = new int[mMol.getAtoms()];
 		int[] matchAtom = new int[mMol.getAtoms()];
-		boolean[] isFragmentMember = new boolean[mMol.getAtoms()];
 		boolean[] isOrthogonal = new boolean[mMol.getAtoms()];
 		boolean[] hasOrthogonality = new boolean[mMol.getAtoms()];
 		MesoFragmentBranch[] branch = new MesoFragmentBranch[mMol.getAtoms()];
+		MesoFragmentMembers members = new MesoFragmentMembers(mMol.getAtoms());
 
 		graphAtom[0] = atom1;
 		matchAtom[atom1] = atom2;
 		matchAtom[atom2] = -2;  // -2 := on mirror side
-		isFragmentMember[atom1] = true;
-		isFragmentMember[atom2] = true;
+		members.add(atom1);
+		members.add(atom2);
 
 		int current = 0;
 		int highest = 0;
@@ -323,7 +270,7 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 			if (matchAtom[currentAtom] == currentAtom) {
 				for (int i=0; i<mMol.getConnAtoms(currentAtom); i++) {
 					int candidate = mMol.getConnAtom(currentAtom, i);
-					if (!isFragmentMember[candidate]) {
+					if (!members.isMember[candidate]) {
 
 						// if candidate is a period 2 element (C,N,O rather than Si,P,S)
 						// and if candidateBond is double-bond then these belong
@@ -336,12 +283,12 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 							hasOrthogonality[candidate] = hasOrthogonality[currentAtom] || (mMol.getAtomPi(candidate) == 2);
 							isOrthogonal[candidate] = hasOrthogonality[currentAtom] ?
 													  !isOrthogonal[currentAtom] : false;
-							isFragmentMember[candidate] = true;
+							members.add(candidate);
 							}
 
 						else if (hasOrthogonality[currentAtom]
 							  && isOrthogonal[currentAtom]) {
-							int opponent = findMirrorAtom(candidate, matchAtom[currentAtom], isFragmentMember);
+							int opponent = findMirrorAtom(candidate, matchAtom[currentAtom], members.isMember);
 							if (opponent == -1)
 								return null;
 							
@@ -349,15 +296,15 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 							matchAtom[candidate] = opponent;
 							matchAtom[opponent] = -2;
 							hasOrthogonality[candidate] = false;
-							isFragmentMember[candidate] = true;
-							isFragmentMember[opponent] = true;
+							members.add(candidate);
+							members.add(opponent);
 							}
 
 						else if (mMol.isRingBond(mMol.getConnBond(currentAtom, i))) {
 							graphAtom[++highest] = candidate;
 							matchAtom[candidate] = candidate;
 							hasOrthogonality[candidate] = false;
-							isFragmentMember[candidate] = true;
+							members.add(candidate);
 
 							// Tetrahedral atoms with more than two neighbours
 							// must have two symmetrical atoms sticking out of
@@ -367,17 +314,17 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 								boolean found = false;
 								for (int j=1; j<mMol.getConnAtoms(candidate); j++) {
 									int symAtom1 = mMol.getConnAtom(candidate, j);
-									if (!isFragmentMember[symAtom1]) {
+									if (!members.isMember[symAtom1]) {
 										for (int k=0; k<j; k++) {
 											int symAtom2 = mMol.getConnAtom(candidate, k);
-											if (!isFragmentMember[symAtom2]) {
+											if (!members.isMember[symAtom2]) {
 												if (mayBeMirrorAtoms(symAtom1, symAtom2)) {
 													graphAtom[++highest] = symAtom1;
 													matchAtom[symAtom1] = symAtom2;
 													matchAtom[symAtom2] = -2;
 													hasOrthogonality[symAtom1] = false;
-													isFragmentMember[symAtom1] = true;
-													isFragmentMember[symAtom2] = true;
+													members.add(symAtom1);
+													members.add(symAtom2);
 													found = true;
 													}
 												}
@@ -397,7 +344,7 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 				boolean[] connIsOnMirrorPlane = new boolean[mMol.getConnAtoms(currentAtom)];
 				for (int i=0; i<mMol.getConnAtoms(currentAtom); i++) {
 					int candidate = mMol.getConnAtom(currentAtom, i);
-					if (isFragmentMember[candidate]) {
+					if (members.isMember[candidate]) {
 						connIsOnMirrorPlane[i] = (matchAtom[candidate] == candidate);
 						}
 					else {
@@ -414,7 +361,7 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 				for (int i=0; i<mMol.getConnAtoms(currentAtom); i++) {
 					if (connIsOnMirrorPlane[i]) {
 						int candidate = mMol.getConnAtom(currentAtom, i);
-						if (isFragmentMember[candidate]) {
+						if (members.isMember[candidate]) {
 							// If we have a ring closure to an atom on the mirror plane, then
 							// make sure the current atom's match atom also connects to the candidate
 							if (mMol.getBond(candidate, matchAtom[currentAtom]) == -1)
@@ -425,7 +372,7 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 							matchAtom[candidate] = candidate;
 							isOrthogonal[candidate] = false;
 							hasOrthogonality[candidate] = true;
-							isFragmentMember[candidate] = true;
+							members.add(candidate);
 							}
 						}
 					}
@@ -435,8 +382,8 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 				for (int i=(b == null) ? 0 : b.neighbourIndex; i<mMol.getConnAtoms(currentAtom); i++) {
 					if (!connIsOnMirrorPlane[i]) {
 						int candidate = mMol.getConnAtom(currentAtom, i);
-						if (!isFragmentMember[candidate]) {
-							int opponent = findMirrorAtom(candidate, matchAtom[currentAtom], isFragmentMember);
+						if (!members.isMember[candidate]) {
+							int opponent = findMirrorAtom(candidate, matchAtom[currentAtom], members.isMember);
 							if (opponent == -1)
 								return null;
 
@@ -444,8 +391,8 @@ for (int i=0; i<mMesoFragmentAtom.length; i++) {
 							matchAtom[candidate] = opponent;
 							matchAtom[opponent] = -2;
 							hasOrthogonality[candidate] = false;
-							isFragmentMember[candidate] = true;
-							isFragmentMember[opponent] = true;
+							members.add(candidate);
+							members.add(opponent);
 							}
 						}
 					}
@@ -471,7 +418,7 @@ for (int j=0; j<=highest; j++)
 	System.out.print(" "+graphAtom[j]);
 System.out.println();
 */
-		return isFragmentMember;
+		return members;
 		}
 /*
 private void printFragmentMsg(String msg, int atom1, int atom2, int current, int highest, int[] graphAtom, int[] matchAtom, boolean[] isOrthogonal, boolean[] hasOrthogonality) {
@@ -558,7 +505,7 @@ System.out.println();
 					//		 1.) create new AND group and put all ABS atoms into it
 					//	 ENDIF
 					//	 2.) convert all atoms of one of the AND groups into ABS atoms
-					//		 (select the AND group in a nomalized way)
+					//		 (select the AND group in a normalized way)
 					// ENDIF
 					matrix.cutTiesOfIndependentGroups(fragment);
 					int orCount = countESRGroups(fragment, Molecule.cESRTypeOr);
@@ -753,10 +700,14 @@ System.out.println();
 		}
 
 
+	/**
+	 * Changes the lowest ranking ESR group of the fragment to ABS atoms.
+	 * Checks first if we have OR groups. If this is the case we must convert one of those.
+	 * @param fragment
+	 * @param canRank
+	 * @return
+	 */
 	private boolean removeESRGroupFromFragment(int fragment, int[] canRank) {
-			// Check first if we have OR groups. If this is the case we must
-			// convert one of those.
-			// Changes the lowest ranking ESR group of the fragment to ABS atoms.
 //System.out.println("removeESRGroupFromFragment() entry");
 		int[] fragmentAtom = mMesoFragmentAtom[fragment];
 
@@ -1164,6 +1115,53 @@ class MesoFragmentBranch {
 
 	public boolean hasNextMirrorAtom() {
 		return mirrorAtomIndex < mirrorAtom.length;
+		}
+	}
+
+class MesoFragmentMembers implements Comparable<MesoFragmentMembers> {
+	public boolean[] isMember;
+	public int[] memberAtom;
+
+	public MesoFragmentMembers(int atoms) {
+		isMember = new boolean[atoms];
+		}
+
+	public void add(int atom) {
+		isMember[atom] = true;
+		}
+
+	private void consolidate() {
+		int count = 0;
+		for (boolean is:isMember)
+			if (is)
+				count++;
+		memberAtom = new int[count];
+		count = 0;
+		for (int atom=0; atom<isMember.length; atom++)
+			if (isMember[atom])
+				memberAtom[count++] = atom;
+		}
+
+	public boolean hasStereoCenters(boolean[] isStereoCenter) {
+		consolidate();
+
+		for (int j=0; j<memberAtom.length; j++)
+			if (isStereoCenter[memberAtom[j]])
+				return true;
+
+		return false;
+		}
+
+	@Override
+	public int compareTo(MesoFragmentMembers members) {
+		if (memberAtom.length != members.memberAtom.length)
+			return (memberAtom.length < members.memberAtom.length) ? -1 : 1;
+
+		for (int i=0; i<memberAtom.length; i++)
+			if (memberAtom[i] != members.memberAtom[i])
+				return (memberAtom[i] < members.memberAtom[i]) ? -1 : 1;
+
+		return 0;
 		}
 	}
 

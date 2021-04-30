@@ -181,7 +181,14 @@ public class AromaticityResolver {
                 }
             }
 
-        return (mAromaticAtoms == mPiElectronsAdded);
+/*		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			if (mIsDelocalizedAtom[atom] && mMol.getImplicitHydrogens(atom) != 0) {
+				mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+				mPiElectronsAdded++;
+				}
+			}*/
+
+		return (mAromaticAtoms == mPiElectronsAdded);
 		}
 
 
@@ -354,6 +361,7 @@ public class AromaticityResolver {
 
 		for (int i=0; i<2; i++) {
 			int bondAtom = mMol.getBondAtom(i, bond);
+			mIsDelocalizedAtom[bondAtom] = false;
 			for (int j=0; j<mMol.getConnAtoms(bondAtom); j++) {
 				int connBond = mMol.getConnBond(bondAtom, j);
                 if (mIsDelocalizedBond[connBond]) {
