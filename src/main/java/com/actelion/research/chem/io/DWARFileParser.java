@@ -495,13 +495,13 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 		int index2 = mLine.indexOf('\t');
 		while (index2 != -1) {
 			if (column<mFieldData.length)
-				mFieldData[column] = mLine.substring(index1, index2).replace(NEWLINE_STRING, cLineSeparator);
+				mFieldData[column] = mLine.substring(index1, index2).replace(NEWLINE_STRING, cLineSeparator).replace(TAB_STRING, "\t");
 			column++;
 			index1 = index2+1;
 			index2 = mLine.indexOf('\t', index1);
 			}
 		if (column<mFieldData.length)
-			mFieldData[column] = mLine.substring(index1).replace(NEWLINE_STRING, cLineSeparator);
+			mFieldData[column] = mLine.substring(index1).replace(NEWLINE_STRING, cLineSeparator).replace(TAB_STRING, "\t");
 
 		return true;
 		}

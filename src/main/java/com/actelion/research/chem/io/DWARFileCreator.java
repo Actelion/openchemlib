@@ -42,6 +42,9 @@ import java.util.ArrayList;
 import java.util.Properties;
 import java.util.TreeMap;
 
+import static com.actelion.research.chem.io.CompoundTableConstants.NEWLINE_STRING;
+import static com.actelion.research.chem.io.CompoundTableConstants.TAB_STRING;
+
 public class DWARFileCreator {
 	private BufferedWriter mWriter;
 	private DWARFileParser mMasterCopyParser;
@@ -283,8 +286,10 @@ public class DWARFileCreator {
 	 * @param column
 	 */
 	public void setRowValue(String value, int column) {
+		value = value.replaceAll("\\r?\\n|\\r", NEWLINE_STRING);
+		value = value.replace("\t", TAB_STRING);
 		mRow[column] = value;
-	}
+		}
 
 	/**
 	 * Call this once per row after setting individual cell content with
