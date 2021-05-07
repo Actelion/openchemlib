@@ -1,6 +1,5 @@
-package com.actelion.research.chem.reaction;
+package com.actelion.research.chem.reaction.mapping;
 
-import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.StereoMolecule;
 
 import java.util.ArrayList;
@@ -15,13 +14,13 @@ import java.util.TreeMap;
  * This class assumes a stoichiometrical reaction and, thus, always the same number of unmapped
  * reactant atoms and products atoms in the same atom class.
  */
-public class RuleEnhancedCenterMapper {
+public class ReactionCenterMapper {
 	private ArrayList<UnmappedCenterAtoms> mAtomClasses;
 	private StereoMolecule mReactant,mProduct;
 	private int[] mReactantMapNo,mProductMapNo;
 	private int mStartMapNo,mMapNo;
 
-	public RuleEnhancedCenterMapper(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, int mapNo) {
+	public ReactionCenterMapper(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, int mapNo) {
 		mReactant = reactant;
 		mProduct = product;
 		mReactantMapNo = reactantMapNo;
@@ -122,6 +121,7 @@ public class RuleEnhancedCenterMapper {
 			}
 
 		if (bestScore != 0) {
+			mMapNo = mStartMapNo;
 			for (int i=0; i<atomCount; i++) {
 				mMapNo++;
 				mReactantMapNo[reactantAtom[i]] = mMapNo;
@@ -132,8 +132,13 @@ public class RuleEnhancedCenterMapper {
 		return bestScore;
 		}
 
-	/** Tries and scores all possible mapping permutations for all of hitherto unmapped atoms.
-	 * The best scoring combination is kept and its score returned.
+	public int getMappedAtomCount() {
+		return mMapNo - mStartMapNo;
+		}
+
+	/**
+	 * @param reactantAtom list of reactant atoms to be mapped sorted by atomicNo
+	 * @param productAtom list of product atoms (permuted within atomicNo sets)
 	 */
 	private int scoreCenterMapping(int[] reactantAtom, int[] productAtom) {
 		int score = 1;
@@ -156,15 +161,6 @@ public class RuleEnhancedCenterMapper {
 		return score;
 		}
 
-	private boolean areAtomsEquivalent(int[] atoms, Canonizer canonizer) {
-		for (int i=1; i<atoms.length; i++)
-			for (int j=0; j<i; j++)
-				if (canonizer.getSymmetryRank(atoms[i]) != canonizer.getSymmetryRank(atoms[j]))
-					return false;
-
-		return true;
-		}
-
 	class UnmappedCenterAtoms {
 		private int[] mReactantAtom = new int[0];
 		private int[] mProductAtom = new int[0];
@@ -173,13 +169,13 @@ public class RuleEnhancedCenterMapper {
 
 		public void addReactantAtom(int atom) {
 			mReactantAtom = addAtom(atom, mReactantAtom);
-			if (mReactantAtom.length <=mProductAtom.length)
+			if (mReactantAtom.length <= mProductAtom.length)
 				mMappableAtomCount = mReactantAtom.length;
 			}
 
 		public void addProductAtom(int atom) {
 			mProductAtom = addAtom(atom, mProductAtom);
-			if (mProductAtom.length <=mReactantAtom.length)
+			if (mProductAtom.length <= mReactantAtom.length)
 				mMappableAtomCount = mProductAtom.length;
 			}
 

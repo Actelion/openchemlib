@@ -77,6 +77,13 @@ public class Reaction implements java.io.Serializable {
 		mCatalyst.clear();
 		}
 
+	public void removeAtomMapping(boolean keepManualMapping) {
+		for (StereoMolecule mol:mReactant)
+			mol.removeAtomMapping(keepManualMapping);
+		for (StereoMolecule mol:mProduct)
+			mol.removeAtomMapping(keepManualMapping);
+		}
+
 	public void removeDrawingObjects() {
 		mDrawingObjectList = null;
 		}

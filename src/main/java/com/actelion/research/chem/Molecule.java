@@ -2424,13 +2424,13 @@ public class Molecule implements Serializable {
 	/**
 	 * This is the bond type without stereo information.
 	 * @param bond
-	 * @return cBondTypeSingle,cBondTypeDouble,cBondTypeTriple,cBondTypeDelocalized
+	 * @return cBondTypeSingle,cBondTypeDouble,cBondTypeTriple,(cBondTypeDelocalized if used)
 	 */
 	public int getBondTypeSimple(int bond) {
 		return mBondType[bond] & cBondTypeMaskSimple;
 		}
 
-	
+
 	/**
 	 * Gets the overall chirality of the molecule, which is a calculated information considering:
 	 * Recognition of stereo centers and stereo bonds, defined ESR features, meso detection.
@@ -3880,6 +3880,13 @@ public class Molecule implements Serializable {
 			|| (atomicNo >= 14 && atomicNo <= 17)	// Si,P,S,Cl
 			|| (atomicNo >= 32 && atomicNo <= 35)	// Ge,As,Se,Br
 			|| (atomicNo >= 52 && atomicNo <= 53);	// Te,I
+		}
+
+
+	public void removeAtomMapping(boolean keepManualMapping) {
+		for (int atom=0; atom<mAllAtoms; atom++)
+			if (!keepManualMapping || mAtomMapNo[atom] < 0)
+				mAtomMapNo[atom] = 0;
 		}
 
 
