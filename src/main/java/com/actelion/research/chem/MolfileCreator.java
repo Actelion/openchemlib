@@ -91,6 +91,7 @@ public class MolfileCreator {
      */
     public MolfileCreator(ExtendedMolecule mol, boolean allowScaling, double scalingFactor, StringBuilder builder) {
 		mDoubleFormat = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.ENGLISH)); //English local ('.' for the dot)
+        final String nl = System.lineSeparator();
 
         mol.ensureHelperArrays(Molecule.cHelperParities);
 
@@ -125,14 +126,14 @@ public class MolfileCreator {
         mBuilder = (builder == null) ? new StringBuilder() : builder;
 
         String name = (mol.getName() != null) ? mol.getName() : "";
-        mBuilder.append(name+"\n");
-        mBuilder.append("Actelion Java MolfileCreator 1.0\n\n");
+        mBuilder.append(name+nl);
+        mBuilder.append("Actelion Java MolfileCreator 1.0"+nl+nl);
 
         appendThreeDigitInt(mol.getAllAtoms());
         appendThreeDigitInt(mol.getAllBonds());
         mBuilder.append("  0  0");
         appendThreeDigitInt((!isRacemic) ? 1 : 0);
-        mBuilder.append("  0  0  0  0  0999 V2000\n");
+        mBuilder.append("  0  0  0  0  0999 V2000"+nl);
 
         boolean hasCoordinates = (mol.getAllAtoms() == 1);
         for(int atom=1; atom<mol.getAllAtoms(); atom++) {
@@ -221,7 +222,7 @@ public class MolfileCreator {
 
             mBuilder.append("  0  0  0");
             appendThreeDigitInt(mol.getAtomMapNo(atom));
-            mBuilder.append("  0  0\n");
+            mBuilder.append("  0  0"+nl);
             }
 
         for (int bond=0; bond<mol.getAllBonds(); bond++) {
@@ -270,7 +271,7 @@ public class MolfileCreator {
             appendThreeDigitInt(stereo);
             mBuilder.append("  0");
             appendThreeDigitInt(topology);
-            mBuilder.append("  0\n");
+            mBuilder.append("  0"+nl);
             }
 
         int no = 0;
@@ -299,7 +300,7 @@ public class MolfileCreator {
                     no--;
                     if (++count == 8 || no == 0) {
                         count = 0;
-                        mBuilder.append("\n");
+                        mBuilder.append(nl);
                         }
                     }
                 }
@@ -325,7 +326,7 @@ public class MolfileCreator {
                     no--;
                     if (++count == 8 || no == 0) {
                         count = 0;
-                        mBuilder.append("\n");
+                        mBuilder.append(nl);
                         }
                     }
                 }
@@ -360,7 +361,7 @@ public class MolfileCreator {
                     no--;
                     if (++count == 8 || no == 0) {
                         count = 0;
-                        mBuilder.append("\n");
+                        mBuilder.append(nl);
                         }
                     }
                 }
@@ -403,7 +404,7 @@ public class MolfileCreator {
                         no--;
                         if (++count == 8 || no == 0) {
                             count = 0;
-                            mBuilder.append("\n");
+                            mBuilder.append(nl);
                             }
                         }
                     }
@@ -433,7 +434,7 @@ public class MolfileCreator {
                             break;
                             }
                         }
-                    mBuilder.append("\n");
+                    mBuilder.append(nl);
                     }
                 }
 
@@ -460,14 +461,14 @@ public class MolfileCreator {
                         no--;
                         if (++count == 8 || no == 0) {
                             count = 0;
-                            mBuilder.append("\n");
+                            mBuilder.append(nl);
                             }
                         }
                     }
                 }
             }
 
-        mBuilder.append("M  END\n");
+        mBuilder.append("M  END"+nl);
         }
 
 

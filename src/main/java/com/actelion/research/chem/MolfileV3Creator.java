@@ -101,13 +101,14 @@ public class MolfileV3Creator
      */
     public MolfileV3Creator(StereoMolecule mol, boolean allowScaling, double scalingFactor, StringBuilder builder) {
 		mol.ensureHelperArrays(Molecule.cHelperParities);
+		final String nl = System.lineSeparator();
 
 		mMolfile = (builder == null) ? new StringBuilder() : builder;
 
 		String name = (mol.getName() != null) ? mol.getName() : "";
-		mMolfile.append(name + "\n");
-		mMolfile.append("Actelion Java MolfileCreator 2.0\n\n");
-		mMolfile.append("  0  0  0  0  0  0              0 V3000\n");
+		mMolfile.append(name + nl);
+		mMolfile.append("Actelion Java MolfileCreator 2.0"+nl+nl);
+		mMolfile.append("  0  0  0  0  0  0              0 V3000"+nl);
 
 		mScalingFactor = 1.0;
 
@@ -120,7 +121,7 @@ public class MolfileV3Creator
 			}
 
 		writeBody(mol, hasCoordinates);
-		mMolfile.append("M  END\n");
+		mMolfile.append("M  END"+nl);
 		}
 
 	private static boolean hasCoordinates(StereoMolecule mol) {
@@ -203,9 +204,10 @@ public class MolfileV3Creator
     	}
 
     private void writeBody(StereoMolecule mol, boolean hasCoordinates) {
-        mMolfile.append("M  V30 BEGIN CTAB\n");
-        mMolfile.append("M  V30 COUNTS " + mol.getAllAtoms() + " " + mol.getAllBonds() + " 0 0 0\n");
-        mMolfile.append("M  V30 BEGIN ATOM\n");
+		final String nl = System.lineSeparator();
+        mMolfile.append("M  V30 BEGIN CTAB"+nl);
+        mMolfile.append("M  V30 COUNTS " + mol.getAllAtoms() + " " + mol.getAllBonds() + " 0 0 0"+nl);
+        mMolfile.append("M  V30 BEGIN ATOM"+nl);
 
         for (int atom=0; atom<mol.getAllAtoms(); atom++) {
             mMolfile.append("M  V30 " + (atom + 1));
@@ -339,11 +341,11 @@ public class MolfileV3Creator
                 	}
             	}
 
-            mMolfile.append("\n");
+            mMolfile.append(nl);
         	}
 
-        mMolfile.append("M  V30 END ATOM\n");
-        mMolfile.append("M  V30 BEGIN BOND\n");
+        mMolfile.append("M  V30 END ATOM"+nl);
+        mMolfile.append("M  V30 BEGIN BOND"+nl);
 
         for (int bond=0; bond<mol.getAllBonds(); bond++) {
             mMolfile.append("M  V30 " + (bond + 1));
@@ -423,10 +425,10 @@ public class MolfileV3Creator
                 mMolfile.append(" TOPO=" + topology);
             	}
 
-            mMolfile.append("\n");
+            mMolfile.append(nl);
         	}
 
-        mMolfile.append("M  V30 END BOND\n");
+        mMolfile.append("M  V30 END BOND"+nl);
 
         boolean paritiesFound = false;
         int absAtomsCount = 0;
@@ -471,7 +473,7 @@ public class MolfileV3Creator
         	}
 
         if(paritiesFound) {
-            mMolfile.append("M  V30 BEGIN COLLECTION\n");
+            mMolfile.append("M  V30 BEGIN COLLECTION"+nl);
             if(absAtomsCount != 0) {
                 mMolfile.append("M  V30 MDLV30/STEABS ATOMS=(" + absAtomsCount);
                 for(int atom = 0;atom < mol.getAtoms();atom++) {
@@ -481,7 +483,7 @@ public class MolfileV3Creator
                         mMolfile.append(" " + (atom + 1));
                     	}
                 	}
-                mMolfile.append(")\n");
+                mMolfile.append(")"+nl);
             	}
             if(absBondsCount != 0) {
                 mMolfile.append("M  V30 MDLV30/STEABS BONDS=(" + absBondsCount);
@@ -493,7 +495,7 @@ public class MolfileV3Creator
                         mMolfile.append(" " + (bond + 1));
                     	}
                 	}
-                mMolfile.append(")\n");
+                mMolfile.append(")"+nl);
             	}
             for(int group = 0;group < Molecule.cESRMaxGroups;group++) {
                 if(orAtomsCount[group] != 0) {
@@ -506,7 +508,7 @@ public class MolfileV3Creator
                             mMolfile.append(" " + (atom + 1));
                         	}
                     	}
-                    mMolfile.append(")\n");
+                    mMolfile.append(")"+nl);
                 	}
                 if(andAtomsCount[group] != 0) {
                     mMolfile.append("M  V30 MDLV30/STERAC" + (group + 1) + " ATOMS=(" + andAtomsCount[group]);
@@ -518,7 +520,7 @@ public class MolfileV3Creator
                             mMolfile.append(" " + (atom + 1));
                         	}
                     	}
-                    mMolfile.append(")\n");
+                    mMolfile.append(")"+nl);
                 	}
                 if(orBondsCount[group] != 0) {
                     mMolfile.append("M  V30 MDLV30/STEREL" + (group + 1) + " BONDS=(" + orBondsCount[group]);
@@ -531,7 +533,7 @@ public class MolfileV3Creator
                             mMolfile.append(" " + (bond + 1));
                         	}
                     	}
-                    mMolfile.append(")\n");
+                    mMolfile.append(")"+nl);
                 	}
                 if(andBondsCount[group] != 0) {
                     mMolfile.append("M  V30 MDLV30/STERAC" + (group + 1) + " BONDS=(" + andBondsCount[group]);
@@ -544,13 +546,13 @@ public class MolfileV3Creator
                             mMolfile.append(" " + (bond + 1));
                         	}
                     	}
-                    mMolfile.append(")\n");
+                    mMolfile.append(")"+nl);
                 	}
             	}
-            mMolfile.append("M  V30 END COLLECTION\n");
+            mMolfile.append("M  V30 END COLLECTION"+nl);
         	}
 
-        mMolfile.append("M  V30 END CTAB\n");
+        mMolfile.append("M  V30 END CTAB"+nl);
     	}
 
     /**
