@@ -12,7 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConformerSetGenerator {
-	
+
+	public static final int CONFORMERS=200;
+
 	private int mMaxNrConfs;
 	private int mStrategy;
 	private boolean mUseFF;
@@ -39,17 +41,17 @@ public class ConformerSetGenerator {
 	}
 	
 	public ConformerSetGenerator() {
-		this(200,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,DEFAULT_SEED);
+		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,DEFAULT_SEED);
 		
 	}
 	
 	public ConformerSetGenerator(boolean useFF) {
-		this(200,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,DEFAULT_SEED);
+		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,DEFAULT_SEED);
 		
 	}
 	
 	public ConformerSetGenerator(boolean useFF, long seed) {
-		this(200,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,seed);
+		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,seed);
 		
 	}
 
