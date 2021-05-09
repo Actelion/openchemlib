@@ -24,8 +24,9 @@ public class ChemicalRule {
 	private float mPanalty;
 	private StereoMolecule mReactant,mProduct;
 	private ChemicalRuleBond[] mRuleBonds;
+	private int[] mReactantAtomSymmetryConstraint;
 
-	public ChemicalRule(String name, String idcode, int panalty) {
+	public ChemicalRule(String name, String idcode, float panalty) {
 		mName = name;
 		mIDCode = idcode;
 		mPanalty = panalty;
@@ -36,7 +37,7 @@ public class ChemicalRule {
 		mReactant = rxn.getReactant(0);
 		mProduct = rxn.getProduct(0);
 		mReactant.ensureHelperArrays(Molecule.cHelperNeighbours);
-		mProduct.ensureHelperArrays(Molecule.cHelperNeighbours);
+		mProduct.ensureHelperArrays(Molecule.cHelperSymmetrySimple);
 
 		// key: lower bondAtom mapNo, higher bondAtom mapNo
 		// value: reactantAtom1, reactantAtom2, productBondOrder
@@ -46,6 +47,10 @@ public class ChemicalRule {
 		int[] mapNoToReactantAtom = new int[mReactant.getAtoms()+1];
 		for (int atom=0; atom<mReactant.getAtoms(); atom++)
 			mapNoToReactantAtom[mReactant.getAtomMapNo(atom)] = atom;
+
+		mReactantAtomSymmetryConstraint = new int[mReactant.getAtoms()];
+		for (int atom=0; atom<mProduct.getAtoms(); atom++)
+			mReactantAtomSymmetryConstraint[mapNoToReactantAtom[mProduct.getAtomMapNo(atom)]] = mProduct.getSymmetryRank(atom);
 
 		for (int bond=0; bond<mProduct.getBonds(); bond++) {
 			int mapNo1 = mProduct.getAtomMapNo(mProduct.getBondAtom(0, bond));
@@ -101,6 +106,10 @@ public class ChemicalRule {
 	public float getPanalty() {
 		return mPanalty;
 	}
+
+	public int[] getReactantAtomSymmetryConstraints() {
+		return mReactantAtomSymmetryConstraint;
+		}
 /*
 	public ChemicalRuleBond[] getBondsToModify() {
 		return mRuleBonds;

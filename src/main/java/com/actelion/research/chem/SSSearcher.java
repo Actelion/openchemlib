@@ -54,7 +54,7 @@ public class SSSearcher {
 	pyrol but not indol!!!
   - match modes used for the actual atom by atom check must be more or equally restrictive
 	than the match mode used for index creation. Otherwise index keys may filter out
-	molecules which would be considered a match with the less strict matching consitions
+	molecules which would be considered a match with the less strict matching conditions
 	of the atom by atom check.
 */
 
@@ -62,11 +62,12 @@ public class SSSearcher {
 	public static final int cIndexMatchMode = cMatchDBondToDelocalized;
 	public static final int cDefaultMatchMode = cMatchAromDBondToDelocalized;
 
-	public final static int cCountModeExistance		= 1;
-	public final static int cCountModeFirstMatch	= 2;
-	public final static int cCountModeSeparated		= 3;
-	public final static int cCountModeOverlapping	= 4;
-	public final static int cCountModeRigorous		= 5;
+	public final static int cCountModeExistance		= 1;    // check only, don't create matchList
+	public final static int cCountModeFirstMatch	= 2;    // create matchList with just one match
+	public final static int cCountModeSeparated		= 3;    // create list of all non-overlapping matches / not optimized for maximum match count
+	public final static int cCountModeOverlapping	= 4;    // create list not containing multiple matches sharing exactly the same atoms
+	public final static int cCountModeRigorous		= 5;    // create list of all possible matches neglecting any symmetries
+	public final static int cCountModeUnique		= 6;    // create list of all distinguishable matches considering symmetries
 
 	// default behaviour for unusual atom masses and atom charges is that
 	// - if no atom charge/mass is specified in the query then all charges/masses match
@@ -100,6 +101,7 @@ public class SSSearcher {
 	private int[] mMatchTable;
 	private int[] mExcludeGroupNo;
 	private int[] mExcludeGroupGraphIndex;
+	private int[] mFragmentAtomContextRank;
 
 	// depending on the fragment count mode this may contain atom lists
 	// of all till now located matching sub-fragments
@@ -219,6 +221,8 @@ public class SSSearcher {
 		mExcludeGroupCount = 0;
 		mExcludeGroupNo = null;
 
+		mFragmentAtomContextRank = null;
+
 		if (mFragmentExcludeAtoms != 0) {
 			if (mFragmentExcludeAtoms != 0)
 				for (int bond = 0; bond < mFragment.getBonds(); bond++)
@@ -234,6 +238,21 @@ public class SSSearcher {
 			}
 		}
 
+
+	/**
+	 * If countMode is cCountModeUnique, then matches are considered distinct, if<br>
+	 * - either the list of matching molecule atoms to the query fragment is a different one<br>
+	 * - or if the mutual combination of fragment and molecule atom's symmetry rank is different
+	 *   (when the list of matched molecule atoms is the same)<br>
+	 * For certain situations fragment atoms must be considered different, even if their symmetry rank
+	 * is equal, e.g. in the context of a reaction where equivalent reactant atoms end up in different
+	 * product environments. This method allows to specify an additiponal criterion for the uniqueness
+	 * algorithm to be considered. In case of reactions, these might be the symmetry ranks of the products
+	 * atoms mapped to the reactant atoms.
+	 */
+	public void setFragmentSymmetryConstraints(int[] fragmentContextRank) {
+		mFragmentAtomContextRank = fragmentContextRank;
+		}
 
 	/**
 	 * Build a graph of the query fragment(s) including ring closures as redundant nodes.
@@ -425,7 +444,7 @@ System.out.println();
 	 * are counted and listed only once. If count mode is different from cCountModeExistance,
 	 * then an atom mapping from fragment to molecule is collected and can be retrieved with getMatchList().
 	 * If the query fragment does not contain atoms other than exclude group atoms, then no match is returned.
-	 * @param countMode one of cCountModeExistance, cCountModeFirstMatch, cCountModeOverlapping, cCountModeRigorous
+	 * @param countMode one of cCountModeExistance, cCountModeFirstMatch, cCountModeSeparated, cCountModeOverlapping, cCountModeUnique, cCountModeRigorous
 	 * @param matchMode cDefaultMatchMode or combination of cMatchAtomCharge, cMatchAtomMass, cMatchDBondToDelocalized, cMatchAromDBondToDelocalized
 	 * @param atomExcluded defines atoms of molecule to be excluded from sub-structure matching
 	 * @return count of sub-structure matches of fragment in molecule
@@ -453,6 +472,9 @@ for (int j=0; j<moleculeAtoms; j++)
 { System.out.print("conns of "+j+":"); for (int i=0; i<mMolecule.getConnAtoms(j); i++) System.out.print(" "+mMolecule.getConnAtom(j, i)); System.out.println(); }
 System.out.println();
 */
+
+		if (countMode == cCountModeUnique)
+			mRequiredHelperLevel = Molecule.cHelperSymmetrySimple;
 
 		setupAtomAndBondFeatures(matchMode);
 
@@ -569,53 +591,46 @@ System.out.println();
 
 
 	private void addMatchIfQualifies(int countMode) {
-		int[] match = copyOf(mMatchTable, mMatchTable.length);
-
 		if (countMode == cCountModeFirstMatch
 		 || countMode == cCountModeRigorous) {
 			// count every match (even permutations of same atoms)
-			mMatchList.add(match);
-			return;
+			mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
 			}
-
-		if (mFragmentExcludeAtoms != 0	// store matches as indication that we have found something
-		 || countMode == cCountModeOverlapping
-		 || countMode == cCountModeSeparated) {
-			match = getSortedMatch(match);
-			if (countMode == cCountModeOverlapping) {
-				if (!mSortedMatchSet.contains(match)) {
-					mSortedMatchSet.add(match);
+		else if (countMode == cCountModeOverlapping) {
+			int[] sortedMatch = getSortedMatch(copyOf(mMatchTable, mMatchTable.length));
+			if (!mSortedMatchSet.contains(sortedMatch)) {
+				mSortedMatchSet.add(sortedMatch);
+				mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+				}
+			}
+		else if (countMode == cCountModeSeparated
+			  || countMode == cCountModeUnique) {
+			int[] sortedMatch = (countMode == cCountModeUnique) ?
+					  getSortedSymmetryMatch(copyOf(mMatchTable, mMatchTable.length))
+					: getSortedMatch(copyOf(mMatchTable, mMatchTable.length));
+			if (!mSortedMatchSet.contains(sortedMatch)) {
+				boolean found = false;
+				for (int[] existing:mSortedMatchSet) {
+					int existingIndex = 0;
+					for (int atom:sortedMatch) {
+						while (existingIndex < existing.length && existing[existingIndex] < atom)
+							existingIndex++;
+						if (existingIndex < existing.length) {
+							if (atom == existing[existingIndex]) {
+								found = true;
+								break;
+								}
+							}
+						}
+					if (found)
+						break;
+					}
+				if (!found) {
+					mSortedMatchSet.add(sortedMatch);
 					mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
 					}
 				}
-			else if (countMode == cCountModeSeparated) {
-				if (!mSortedMatchSet.contains(match)) {
-					boolean found = false;
-					for (int[] existing:mSortedMatchSet) {
-						int existingIndex = 0;
-						for (int atom:match) {
-							while (existingIndex < existing.length && existing[existingIndex] < atom)
-								existingIndex++;
-							if (existingIndex < existing.length) {
-								if (atom == existing[existingIndex]) {
-									found = true;
-									break;
-									}
-								}
-							}
-						if (found)
-							break;
-						}
-					if (!found) {
-						mSortedMatchSet.add(match);
-						mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
-						}
-					}
-				}
-			return;
 			}
-
-		return;
 		}
 
 
@@ -638,6 +653,30 @@ System.out.println();
 			}
 
 		Arrays.sort(match);
+		return match;
+		}
+
+	/**
+	 * @return sorted match atoms without excluded atoms
+	 */
+	private int[] getSortedSymmetryMatch(int[] match) {
+		int count = 0;
+		for (int atom:match)
+			if (atom == -1)
+				count++;
+
+		int[] symmetryMatch = new int[match.length - count];
+		int index = 0;
+		for (int i=0; i<match.length; i++) {
+			if (match[i] != -1) {
+				symmetryMatch[index] = (mFragment.getSymmetryRank(i) << 16) | mMolecule.getSymmetryRank(match[i]);
+				if (mFragmentAtomContextRank != null)
+					symmetryMatch[index] |= mFragmentAtomContextRank[i] << 24;
+				index++;
+				}
+			}
+
+		Arrays.sort(symmetryMatch);
 		return match;
 		}
 

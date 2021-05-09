@@ -6,30 +6,45 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
 
 public class ChemicalRuleEnhancedReactionMapper {
+	// Chemical rule reactions must be stoichiometrically complete and they must be completely mapped!!!
 	private static final ChemicalRule[] CHEMICAL_RULE = {
-		new ChemicalRule("a","gGP@DkUjPLVDXNBHp\\BQ`xLcApEFC`jLG@!gGP@DkUjPLVDXNBHp\\BQ`xLcApEFC`jLG@#qkNT qVci#!Rb@KW@gx@b@JH_SLrP`", 0),
-		new ChemicalRule("b","gFP@LdPLjA@!gFp@DiTujhB#qiZf qMSf#!R?`BH?X`BIo[~_sNr``", 0),
-		new ChemicalRule("c","gJP`@deVdB!gK``AddvPH#qir` qreH#!R@Jp@dpBl@ILslgp", 0),
-		new ChemicalRule("d","gGQ@@eKtrAkDH!gGQ@@djsRIKVPP#qMsT qM\\V#!R_yL@dw~l@Jp@dsNR_@", 0),
-		new ChemicalRule("e","daXJ@@PjyITuiX@`!dahJ@@SJYIMMfPB#IaLJfxP IaAhl[`#!ROrp?Ds|lOqNk?g?l_zLsSGp", 0),
-// bad	new ChemicalRule("f","gJQ`@bdjt`P!gKa`@ldfrA@#qbqh qqlP#!R_zq?dw~l_yLsXgp", 0),
-		new ChemicalRule("g","gBa`@lde@XS@!gCA`@mDPOdku`#qbq qJt#!R_zq?dxgFLvHB", 0),
-		new ChemicalRule("h","daXL@@Klb`JSSHA@!daXL@@[dfTBijh@`#IyjFDp` IyjEL``#!R?g~HO[\\}[Lfw?K_}m?psLap", 0),
-		new ChemicalRule("i","daXD@@kHh`Ttl@P!daxD@@yIeRfZj`B#IqBbay` IqBbnXP#!R?g}wOP`}]tKCV\\aBrCtsXep", 0),
-		new ChemicalRule("j","gBi@DDcXCnR`!gBi@HDFXCnY`#qbq qfQ#!R_vpy`W}lLvK|", 0),
-		new ChemicalRule("k","gB`@DcTB!gB`@DcTB#qbq qfQ#!R_vsY`W}lLvK|", 0),
-		new ChemicalRule("l","daxH@@RUUjjPB!daDH@@RVU[jij@H#IGfhlR@ IGfbdK@#!R@IL@k@BS@Jp@dpBl@ILs|kp", 0),
-		new ChemicalRule("m","gFQHBGAISiPH!gGQHJGAIUjhB#qNT] qNTk#!R@AL@[@@Sa_x@DsNro@", 0),
-		new ChemicalRule("n","gOp`@|dRaqij`H!gOp`@tiUMij`H#qosJ` qgSqh#!RTv]`YRqg?g~HPh`}L{H|", 0),
-		new ChemicalRule("o","gGQHDDqIUjdB!gGQHHDqAeMjhB#qbqk qfQ]#!R_zq?dw~l_yM?kCM|?@", 0),
-// check	new ChemicalRule("p","gGQ@@eJuRA@!gFQ@@diuPD#qqUc qrcM#!R_zp@kG~S@IM?kCLb?@", 0),
-		new ChemicalRule("r","gOQdEjHbAFQRBrtAaJ!gNQdEbHbABCTKPFDH#qbMwX qbM~X#!RCwpb@@M`CpL}cg@CL|jB", 0),
-		new ChemicalRule("s","gOp`ATigujj`H!gOp`ATiVKjj`H#qnyS` qY~eP#!R?`@_YQ|ZFBqSFHc}L{IB", 0),
-		new ChemicalRule("t","gOP`@dcUZdB!gNp`@tiTMjj@`#q{ir` qkLrx#!R@ANZXPAl@AL@[@@SLtj|", 0),
-		new ChemicalRule("u","daXB`Hrn@HrPEILt`D!daXB`DJn@HRUMjV@H#IxVaLJ` IylJhPP#!R_zL@hs`Q_zq?dw~l_yLsBkp", 0),
+// replaced by copeOrOxyCope		new ChemicalRule("a","gGP@DkUjPLVDXNBHp\\BQ`xLcApEFC`jLG@!gGP@DkUjPLVDXNBHp\\BQ`xLcApEFC`jLG@#qkNT qVci#!Rb@KW@gx@b@JH_SLrP`", 0.5f),
+		new ChemicalRule("b","gFP@LdPLjA@!gFp@DiTujhB#qiZf qMSf#!R?`BH?X`BIo[~_sNr``", 0.5f),
+		new ChemicalRule("c","gJP`@deVdB!gK``AddvPH#qir` qreH#!R@Jp@dpBl@ILslgp", 0.5f),
+		new ChemicalRule("d","gGQ@@eKtrAkDH!gGQ@@djsRIKVPP#qMsT qM\\V#!R_yL@dw~l@Jp@dsNR_@", 0.5f),
+		new ChemicalRule("e","daXJ@@PjyITuiX@`!dahJ@@SJYIMMfPB#IaLJfxP IaAhl[`#!ROrp?Ds|lOqNk?g?l_zLsSGp", 0.5f),
+// bad	new ChemicalRule("f","gJQ`@bdjt`P!gKa`@ldfrA@#qbqh qqlP#!R_zq?dw~l_yLsXgp", 0.5f),
+		new ChemicalRule("g","gBa`@lde@XS@!gCA`@mDPOdku`#qbq qJt#!R_zq?dxgFLvHB", 0.5f),
+		new ChemicalRule("h","daXL@@Klb`JSSHA@!daXL@@[dfTBijh@`#IyjFDp` IyjEL``#!R?g~HO[\\}[Lfw?K_}m?psLap", 0.5f),
+		new ChemicalRule("i","daXD@@kHh`Ttl@P!daxD@@yIeRfZj`B#IqBbay` IqBbnXP#!R?g}wOP`}]tKCV\\aBrCtsXep", 0.5f),
+		new ChemicalRule("j","gBi@DDcXCnR`!gBi@HDFXCnY`#qbq qfQ#!R_vpy`W}lLvK|", 0.5f),
+		new ChemicalRule("k","gB`@DcTB!gB`@DcTB#qbq qfQ#!R_vsY`W}lLvK|", 0.5f),
+		new ChemicalRule("l","daxH@@RUUjjPB!daDH@@RVU[jij@H#IGfhlR@ IGfbdK@#!R@IL@k@BS@Jp@dpBl@ILs|kp", 0.5f),
+		new ChemicalRule("m","gFQHBGAISiPH!gGQHJGAIUjhB#qNT] qNTk#!R@AL@[@@Sa_x@DsNro@", 0.5f),
+		new ChemicalRule("n","gOp`@|dRaqij`H!gOp`@tiUMij`H#qosJ` qgSqh#!RTv]`YRqg?g~HPh`}L{H|", 0.5f),
+		new ChemicalRule("o","gGQHDDqIUjdB!gGQHHDqAeMjhB#qbqk qfQ]#!R_zq?dw~l_yM?kCM|?@", 0.5f),
+// check	new ChemicalRule("p","gGQ@@eJuRA@!gFQ@@diuPD#qqUc qrcM#!R_zp@kG~S@IM?kCLb?@", 0.5f),
+		new ChemicalRule("r","gOQdEjHbAFQRBrtAaJ!gNQdEbHbABCTKPFDH#qbMwX qbM~X#!RCwpb@@M`CpL}cg@CL|jB", 0.5f),
+		new ChemicalRule("s","gOp`ATigujj`H!gOp`ATiVKjj`H#qnyS` qY~eP#!R?`@_YQ|ZFBqSFHc}L{IB", 0.5f),
+		new ChemicalRule("t","gOP`@dcUZdB!gNp`@tiTMjj@`#q{ir` qkLrx#!R@ANZXPAl@AL@[@@SLtj|", 0.5f),
+		new ChemicalRule("u","daXB`Hrn@HrPEILt`D!daXB`DJn@HRUMjV@H#IxVaLJ` IylJhPP#!R_zL@hs`Q_zq?dw~l_yLsBkp", 0.5f),
 
-		new ChemicalRule("aldol", "gFP`Adduf@payIzK@!gFP`ATeQfDU}K@#qisT qirc#!R@Jp@dqK~@Jp@dsNj@`", 0),
-		};
+		new ChemicalRule("copeOrOxyCope", "gGQ@DeZmRAcDc@H@!gGQ@HeZmRAcHc@H@#qkNT qi\\V#!R@FL?Xs}lOvL?[CLbO@", 7.5f),
+		new ChemicalRule("aldol", "gFP`Adduf@payIzK@!gFP`ATeQfDU}K@#qisT qirc#!R@Jp@dqK~@Jp@dsNj@`", 3.5f),
+		new ChemicalRule("propargylEnone", "gCa@@dmXFD@!gCa@@dkHD#qNT qLV#!RXIq`pp@sLwI|", 5.5f),
+		new ChemicalRule("arndtEistert", "daiDaJYBBHj^{HhAYMpAaA@!daiD`FzLBHPVsZl@p`@#IyHHZ[@ IzDGBi`#!R@W|h_U\\}X{GUJU\\}TEpsHap", 11.5f),
+		new ChemicalRule("curtius", "gO]IcVaDF[s{HhCIe@`!gN]HMWADHJfm`XP@#q~Jk` qytUX#!R?g}HoU_]U\\eWwQ@\\Lwq\\", 9.5f),
+		new ChemicalRule("diazomethanHomologation", "gFU@lQioIIs\\AyH!gFU@CPdimXD#qbM^ qbqk#!Rk}rop?v~k|L@kKNB@`", 7.5f),
+
+		// two step
+		new ChemicalRule("imineFormationAzaCope", "daZH@LAIMUjd@pRL@!daZH@HAAn]jd@p`@#IGfaLJ` IFDzfK@#!RXpAl@HYrXs}lOvL?[C|sTdH", 8.5f),
+
+		// multi step with cyclisation/condensation
+		new ChemicalRule("symAldolNitrogenRing", "dovJ@GBfttf\\v\\qjViPCADGbDodnGp!doNJ@JCSmtefWTCaYjje@H#IlZXi]]yL~C IqMVCzaIim?#!R@hb}b@A~Owz}uzyl_]\\Bus}~@GxBbLfaOwzUicMbX`", -29.5f),
+
+		// oxidative rearrangements
+		new ChemicalRule("oxydativePropargylAmine13Shift", "gKi@HDEZpLHOQP!gJY@BDeVXQL#qMr` qNTh#!R|Wk@H|@\\@BrStnH", 6.5f)
+	};
 
 	private static boolean sInitialized;
 
@@ -75,7 +90,8 @@ public class ChemicalRuleEnhancedReactionMapper {
 
 		for (ChemicalRule rule:CHEMICAL_RULE) {
 			reactantSearcher.setFragment(rule.getReactant());
-			if (0 != reactantSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cDefaultMatchMode)) {
+			reactantSearcher.setFragmentSymmetryConstraints(rule.getReactantAtomSymmetryConstraints());
+			if (0 != reactantSearcher.findFragmentInMolecule(SSSearcher.cCountModeUnique, SSSearcher.cDefaultMatchMode)) {
 				productSearcher.setFragment(rule.getProduct());
 				if (productSearcher.isFragmentInMolecule()) {
 mHistory.append(rule.getName()+":");
@@ -86,7 +102,7 @@ float historyScore = -10000;
 						int[] reactantMapNo = new int[mReactant.getAtoms()];
 						int[] productMapNo = new int[mProduct.getAtoms()];
 						mapper.map(reactant, mProduct, reactantMapNo, productMapNo);
-						float score = mapper.calculateScore() + rule.getPanalty();
+						float score = mapper.calculateScore() - rule.getPanalty();
 if (historyScore < score) historyScore = score;
 						if (mScore < score) {
 							mScore = score;

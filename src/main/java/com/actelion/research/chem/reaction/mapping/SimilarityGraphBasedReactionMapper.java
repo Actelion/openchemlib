@@ -717,6 +717,11 @@ if (reactantRoot == 4) {
 		 && connAtomsOfAtomicNo(mReactant, reactantAtom, 7) > connAtomsOfAtomicNo(mProduct, productAtom, 7))
 			return false;
 
+		// if a 3-membered ring is formed or broken
+		if (mReactant.getBondRingSize(mReactant.getBond(reactantAtom, reactantConn)) == 3
+		  ^ mProduct.getBondRingSize(mProduct.getBond(productAtom, productConn)) == 3)
+			return false;
+
 		return true;
 		}
 
