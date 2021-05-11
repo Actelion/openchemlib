@@ -34,6 +34,8 @@ public interface IObjectiveCompleteGraph<T extends ICompleteGraph> {
 
 	double getSimilarityNodes(IPPNode query, IPPNode base);
 
+	double getSimilarityNodes(int indexNodeQuery, int indexNodeBase);
+
 	void setVerbose(boolean v);
 
 	void setMatchingInfoInQueryAndBase(SolutionCompleteGraph solution);

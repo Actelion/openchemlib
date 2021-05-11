@@ -854,7 +854,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		return score;
 	}
 
-	public float getSimilarityNodes(int indexNodeQuery, int indexNodeBase) {
+	public double getSimilarityNodes(int indexNodeQuery, int indexNodeBase) {
 		
 		if(arrSimilarityNodes[indexNodeQuery][indexNodeBase] < 0 || verbose){
 			
