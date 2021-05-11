@@ -2716,22 +2716,31 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				 || (mAtomicNo[atom2] < 9 && getOccupiedValence(atom2) > 3))
 						continue;
 
-				int oldBondType = mBondType[bond];
+				boolean hasImplicitHydrogen = (getImplicitHydrogens(atom1) != 0);
 
 				mAtomCharge[atom1] -= 1;
 				mAtomCharge[atom2] += 1;
-				if (bondOrder == 1)
-					mBondType[bond] = cBondTypeDouble;
-				else
-					mBondType[bond] = cBondTypeTriple;
 
-				if (oldBondType == cBondTypeDown
-				 || oldBondType == cBondTypeUp) {   // retain stereo information
-					int stereoCenter = mBondAtom[0][bond];
-					int newStereoBond = preferredTHStereoBond(stereoCenter);
-					if (mBondAtom[0][newStereoBond] != stereoCenter) {
-						mBondAtom[1][newStereoBond] = mBondAtom[0][newStereoBond];
-						mBondAtom[1][newStereoBond] = stereoCenter;
+				// If the formerly positive atom had an implicit hydrogen, then removing
+				// both charges mean shifting the implicit hydrogen to atom2.
+				// If it had no implicit hydrogen, but an open valence, then we shift
+				// the electron pair from the negative atom into the bond and increase the
+				// bond order.
+				if (!hasImplicitHydrogen) {
+					int oldBondType = mBondType[bond];
+					if (bondOrder == 1)
+						mBondType[bond] = cBondTypeDouble;
+					else
+						mBondType[bond] = cBondTypeTriple;
+
+					if (oldBondType == cBondTypeDown
+					 || oldBondType == cBondTypeUp) {   // retain stereo information
+						int stereoCenter = mBondAtom[0][bond];
+						int newStereoBond = preferredTHStereoBond(stereoCenter);
+						if (mBondAtom[0][newStereoBond] != stereoCenter) {
+							mBondAtom[1][newStereoBond] = mBondAtom[0][newStereoBond];
+							mBondAtom[1][newStereoBond] = stereoCenter;
+							}
 						}
 					}
 

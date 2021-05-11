@@ -2498,6 +2498,10 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private boolean areAtomsMappingCompatible(int atom1, int atom2)
 	{
 		if (mMol.isFragment()) {
+			if ((mMol.getAtomQueryFeatures(atom1) & Molecule.cAtomQFExcludeGroup) != 0
+			 || (mMol.getAtomQueryFeatures(atom1) & Molecule.cAtomQFExcludeGroup) != 0)
+				return false;
+
 			int[] atomList1 = mMol.getAtomList(atom1);
 			int[] atomList2 = mMol.getAtomList(atom2);
 			if (atomList1 == null ^ atomList2 == null) {
