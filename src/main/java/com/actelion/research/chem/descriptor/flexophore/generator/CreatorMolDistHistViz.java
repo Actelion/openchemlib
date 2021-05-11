@@ -121,6 +121,10 @@ public class CreatorMolDistHistViz {
         
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
 
+//        for (int i = 0; i < molInPlace.getAtoms(); i++) {
+//            System.out.println(molInPlace.getInteractionAtomType(i));
+//        }
+
         //
         // Handle carbon atoms connected to hetero atoms
         //
