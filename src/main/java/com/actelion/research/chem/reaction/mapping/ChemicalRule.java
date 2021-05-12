@@ -6,6 +6,8 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.util.SortedList;
 
+import java.util.Arrays;
+
 /**
  * A ChemicalRule is basically a chemical reaction (transformation) defined by a reaction substructure
  * and a product substructure with full stoichiometry and completely mapped atoms.
@@ -24,6 +26,7 @@ public class ChemicalRule {
 	private float mPanalty;
 	private StereoMolecule mReactant,mProduct;
 	private ChemicalRuleBond[] mRuleBonds;
+	private int[] mInvertedTHParity;
 	private int[] mReactantAtomSymmetryConstraint;
 
 	public ChemicalRule(String name, String idcode, float panalty) {
@@ -45,35 +48,84 @@ public class ChemicalRule {
 		SortedList<ChemicalRuleBond> bondList = new SortedList<>();
 
 		int[] mapNoToReactantAtom = new int[mReactant.getAtoms()+1];
+		mapNoToReactantAtom[0] = -1;    // to cause exceptions in case of faulty logic
 		for (int atom=0; atom<mReactant.getAtoms(); atom++)
 			mapNoToReactantAtom[mReactant.getAtomMapNo(atom)] = atom;
 
-		mReactantAtomSymmetryConstraint = new int[mReactant.getAtoms()];
-		for (int atom=0; atom<mProduct.getAtoms(); atom++)
-			mReactantAtomSymmetryConstraint[mapNoToReactantAtom[mProduct.getAtomMapNo(atom)]] = mProduct.getSymmetryRank(atom);
+		calculateReactantAtomSymmetryConstraints(mapNoToReactantAtom);
 
-		for (int bond=0; bond<mProduct.getBonds(); bond++) {
-			int mapNo1 = mProduct.getAtomMapNo(mProduct.getBondAtom(0, bond));
-			int mapNo2 = mProduct.getAtomMapNo(mProduct.getBondAtom(1, bond));
-			int atom1 = mapNoToReactantAtom[mapNo1];
-			int atom2 = mapNoToReactantAtom[mapNo2];
-			int productBondType = ((mProduct.getBondQueryFeatures(bond) & Molecule.cBondQFBondTypes) != 0) ?
-					ChemicalRuleBond.BOND_TYPE_KEEP_UNCHANGED : mProduct.getBondTypeSimple(bond);
-			bondList.add(new ChemicalRuleBond(atom1, atom2, mapNo1, mapNo2, productBondType));
-		}
+		boolean[] reactantBondFoundInProduct = new boolean[mReactant.getBonds()];
+		for (int productBond=0; productBond<mProduct.getBonds(); productBond++) {
+			int mapNo1 = mProduct.getAtomMapNo(mProduct.getBondAtom(0, productBond));
+			int mapNo2 = mProduct.getAtomMapNo(mProduct.getBondAtom(1, productBond));
+			if (mapNo1 != 0 && mapNo2 != 0) {   // exclude atoms are not mapped and don't go into the bond list
+				int atom1 = mapNoToReactantAtom[mapNo1];
+				int atom2 = mapNoToReactantAtom[mapNo2];
+				int productBondType = mProduct.getBondTypeSimple(productBond);
+				int reactantBond = mReactant.getBond(atom1, atom2);
+				if (reactantBond == -1) {
+					bondList.add(new ChemicalRuleBond(atom1, atom2, mapNo1, mapNo2, productBondType));
+					}
+				else {
+					if ((mReactant.getBondQueryFeatures(reactantBond) & Molecule.cBondQFBondTypes) == 0) {
+						int reactantBondType = mReactant.getBondTypeSimple(reactantBond);
+						if (reactantBondType != productBondType)
+							bondList.add(new ChemicalRuleBond(atom1, atom2, mapNo1, mapNo2, productBondType));
+						}
+					reactantBondFoundInProduct[reactantBond] = true;
+					}
+				}
+			}
 
 		for (int bond=0; bond<mReactant.getBonds(); bond++) {
-			int atom1 = mReactant.getBondAtom(0, bond);
-			int atom2 = mReactant.getBondAtom(1, bond);
-			int mapNo1 = mReactant.getAtomMapNo(atom1);
-			int mapNo2 = mReactant.getAtomMapNo(atom2);
-			ChemicalRuleBond ruleBond = new ChemicalRuleBond(atom1, atom2, mapNo1, mapNo2, ChemicalRuleBond.BOND_TYPE_DELETE);
-			if (!bondList.contains(ruleBond))   // if we don't have a product bond for these two atoms, we need to delete...
-				bondList.add(ruleBond);
-		}
+			if (!reactantBondFoundInProduct[bond]) {
+				int atom1 = mReactant.getBondAtom(0, bond);
+				int atom2 = mReactant.getBondAtom(1, bond);
+				int mapNo1 = mReactant.getAtomMapNo(atom1);
+				int mapNo2 = mReactant.getAtomMapNo(atom2);
+				if (mapNo1 != 0 && mapNo2 != 0)   // exclude atoms are not mapped and don't go into the bond list
+					bondList.add(new ChemicalRuleBond(atom1, atom2, mapNo1, mapNo2, ChemicalRuleBond.BOND_TYPE_DELETE));
+				}
+			}
 
 		mRuleBonds = bondList.toArray(new ChemicalRuleBond[0]);
-	}
+
+		mInvertedTHParity = new int[0];
+		for (int productAtom=0; productAtom<mProduct.getAtoms(); productAtom++) {
+			int productParity = mProduct.getAtomParity(productAtom);
+			if (productParity == Molecule.cAtomParity1
+			 || productParity == Molecule.cAtomParity2) {
+				int reactantAtom = mapNoToReactantAtom[mProduct.getAtomMapNo(productAtom)];
+				if (reactantAtom != -1) {
+					int reactantParity = mReactant.getAtomParity(reactantAtom);
+					if (isTHParityInversion(productAtom, mapNoToReactantAtom) == (reactantParity == productParity))
+						addInvertedParityAtom(reactantAtom);
+					}
+				}
+			}
+		}
+
+	private boolean isTHParityInversion(int reactantAtom, int[] mapNoToProduct) {
+		boolean inversion = false;
+		if (mReactant.getAtomPi(reactantAtom) == 0) {
+			for (int i=1; i<mReactant.getConnAtoms(reactantAtom); i++) {
+				for (int j=0; j<i; j++) {
+					int connAtom1 = mReactant.getConnAtom(reactantAtom, i);
+					int connAtom2 = mReactant.getConnAtom(reactantAtom, j);
+					int connMapNo1 = mReactant.getAtomMapNo(connAtom1);
+					int connMapNo2 = mReactant.getAtomMapNo(connAtom2);
+					if ((mapNoToProduct[connMapNo1] > mapNoToProduct[connMapNo2]) ^ (connAtom1 > connAtom2))
+						inversion = !inversion;
+					}
+				}
+			}
+		return inversion;
+		}
+
+	private void addInvertedParityAtom(int atom) {
+		mInvertedTHParity = Arrays.copyOf(mInvertedTHParity, mInvertedTHParity.length+1);
+		mInvertedTHParity[mInvertedTHParity.length-1] = atom;
+		}
 
 	public void apply(StereoMolecule reactant, int[] match) {
 		reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
@@ -87,8 +139,19 @@ public class ChemicalRule {
 				reactant.markBondForDeletion(reactantBond);
 			else if (ruleBond.newBondType != ChemicalRuleBond.BOND_TYPE_KEEP_UNCHANGED)
 				reactant.setBondType(reactantBond, ruleBond.newBondType);
-		}
+			}
 		reactant.deleteMarkedAtomsAndBonds();
+
+		if (mInvertedTHParity.length != 0) {
+			reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
+			for (int atom:mInvertedTHParity) {
+				int reactantAtom = match[atom];
+				int reactantParity = reactant.getAtomParity(reactantAtom);
+				reactant.setAtomParity(reactantAtom, reactantParity == Molecule.cAtomParity1 ?
+						Molecule.cAtomParity2 : Molecule.cAtomParity1, false);
+				reactant.setStereoBondFromAtomParity(reactantAtom);
+			}
+		}
 	}
 
 	public StereoMolecule getReactant() {
@@ -106,6 +169,39 @@ public class ChemicalRule {
 	public float getPanalty() {
 		return mPanalty;
 	}
+
+	/**
+	 * If the rule's reactant matches the real reactant multiple times,
+	 * then some of these matches may be symmetrically equivalent. To avoid building and
+	 * scoring redundant mapping graphs, these should be sorted out early. Reasons for
+	 * redundant matches may be:<br>
+	 * - if the rule reactant is one fragment, this may be symmetrical Cn or Dn<br>
+	 * - the rule reactant may contain multiple equivalent fragments, e.g. metathese<br>
+	 * - matching atoms in the real reactant my be symmetrical<br>
+	 * Otherwise, there certain causes may exist, that break these symmetries:<br>
+	 * - a symmetrical rule fragment must not considered symmetrical, if it doesn't react
+	 *   symmetrically, i.e. if its matching rule product atoms are not equivalent anymore.
+	 * - in case of multiple symmetrical fragments in the rule's reactant (e.g. metathese),
+	 *   inverted/rotated individual fragment matches cause different products, that means
+	 *   that the relative match orientation of multiple symmetrical fragments breaks symmetry,
+	 *   if the real matching atoms are not equivalent.<br>
+	 * This method calculates symmetry breaking values using these two reasons to be passed to
+	 * the reactant rule substructure searcher.
+	 */
+	private void calculateReactantAtomSymmetryConstraints(int[] mapNoToReactantAtom) {
+		// break symmetries because of un-symmetrical rule products
+		mReactantAtomSymmetryConstraint = new int[mReactant.getAtoms()];
+		for (int atom=0; atom<mProduct.getAtoms(); atom++)
+			mReactantAtomSymmetryConstraint[mapNoToReactantAtom[mProduct.getAtomMapNo(atom)]] = mProduct.getSymmetryRank(atom);
+
+		int[] fragmentNo = new int[mReactant.getAllAtoms()];
+		int fragmentCount = mReactant.getFragmentNumbers(fragmentNo, false, false);
+		if (fragmentCount > 1) {
+			int[] atomIndex = new int[fragmentCount];
+			for (int atom=0; atom<mReactant.getAtoms(); atom++)
+				mReactantAtomSymmetryConstraint[atom] |= (atomIndex[fragmentNo[atom]]++) << 5;
+			}
+		}
 
 	public int[] getReactantAtomSymmetryConstraints() {
 		return mReactantAtomSymmetryConstraint;

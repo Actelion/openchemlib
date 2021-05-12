@@ -246,9 +246,10 @@ public class SSSearcher {
 	 *   (when the list of matched molecule atoms is the same)<br>
 	 * For certain situations fragment atoms must be considered different, even if their symmetry rank
 	 * is equal, e.g. in the context of a reaction where equivalent reactant atoms end up in different
-	 * product environments. This method allows to specify an additiponal criterion for the uniqueness
-	 * algorithm to be considered. In case of reactions, these might be the symmetry ranks of the products
-	 * atoms mapped to the reactant atoms.
+	 * product environments. This method allows to specify an additional criterion for the uniqueness
+	 * comparison to be considered. In case of reactions, these might be the symmetry ranks of the
+	 * products atoms mapped to the reactant atoms.
+	 * Note: The current implementation only uses the 8 least significant bits of the context rank.
 	 */
 	public void setFragmentSymmetryConstraints(int[] fragmentContextRank) {
 		mFragmentAtomContextRank = fragmentContextRank;
@@ -603,11 +604,8 @@ System.out.println();
 				mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
 				}
 			}
-		else if (countMode == cCountModeSeparated
-			  || countMode == cCountModeUnique) {
-			int[] sortedMatch = (countMode == cCountModeUnique) ?
-					  getSortedSymmetryMatch(copyOf(mMatchTable, mMatchTable.length))
-					: getSortedMatch(copyOf(mMatchTable, mMatchTable.length));
+		else if (countMode == cCountModeSeparated) {
+			int[] sortedMatch = getSortedMatch(copyOf(mMatchTable, mMatchTable.length));
 			if (!mSortedMatchSet.contains(sortedMatch)) {
 				boolean found = false;
 				for (int[] existing:mSortedMatchSet) {
@@ -629,6 +627,13 @@ System.out.println();
 					mSortedMatchSet.add(sortedMatch);
 					mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
 					}
+				}
+			}
+		else if (countMode == cCountModeUnique) {
+			int[] sortedMatch = getSortedSymmetryMatch(copyOf(mMatchTable, mMatchTable.length));
+			if (!mSortedMatchSet.contains(sortedMatch)) {
+				mSortedMatchSet.add(sortedMatch);
+				mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
 				}
 			}
 		}
@@ -677,7 +682,7 @@ System.out.println();
 			}
 
 		Arrays.sort(symmetryMatch);
-		return match;
+		return symmetryMatch;
 		}
 
 	public boolean areAtomsSimilar(int moleculeAtom, int fragmentAtom) {
@@ -811,7 +816,7 @@ System.out.println();
 				if (fragmentParity == Molecule.cAtomParityNone)
 			   		continue;
 
-				// consider as match if assymetric fragment atom matches on non-stereo-center
+				// consider as match if asymetrical fragment atom matches on non-stereo-center
 				if (moleculeParity == Molecule.cAtomParityNone)
 			   		continue;
 
@@ -823,7 +828,7 @@ System.out.println();
 			   		continue;
 
 				if (moleculeParity == Molecule.cAtomParityUnknown)
-			   		continue;
+			   		return false;
 
 				if (mFragment.getAtomESRType(fragmentAtom) == Molecule.cESRTypeAnd) {
 					esrGroupAtomCount++;

@@ -82,6 +82,12 @@ public class SimilarityGraphBasedReactionMapper {
 		return mGraphMapNoCount;
 		}
 
+	/**
+	 * Calculates and returns a score <= 0 for the current mapping. Higher value (closer to 0) are better.
+	 * The score adds -2 for every broken or added bond, and -1 for every changed bond order. It also
+	 * adds -1 for every inverted stereo center.
+ 	 * @return
+	 */
 	public int calculateScore() {
 		int score = 0;
 
@@ -118,7 +124,66 @@ public class SimilarityGraphBasedReactionMapper {
 			if (!pbh)
 				score -= 2;
 
+		// if we change a stereo center's parity, we must have broken or formed bonds
+		for (int reactantAtom=0; reactantAtom<mReactant.getAtoms(); reactantAtom++) {
+			int productAtom = mapNoToProduct[mReactantMapNo[reactantAtom]];
+			if (productAtom != -1) {
+				int reactantParity = mReactant.getAtomParity(reactantAtom);
+				if (reactantParity != Molecule.cAtomParityNone) {
+					int productParity = mProduct.getAtomParity(productAtom);
+					if (reactantParity == Molecule.cAtomParityUnknown) {
+						if (productParity == Molecule.cAtomParity1
+						 || productParity == Molecule.cAtomParity2)
+							score -= 5; // one broken and one formed bond plus additional panelty!
+						// must be more expensive than Mitsunobu, which itself must be more expensive than simple esterification (one broken and one formed bond)
+						}
+					else {
+						if (productParity == Molecule.cAtomParityUnknown
+						 || isTHParityInversion(reactantAtom, mapNoToProduct) == (reactantParity == productParity))
+							score -= 5; // one broken and one formed bond plus additional panelty!
+						}
+					}
+				}
+			}
+
 		return score;
+		}
+
+	private boolean isTHParityInversion(int reactantAtom, int[] mapNoToProduct) {
+		boolean inversion = false;
+		if (mReactant.getAtomPi(reactantAtom) == 0) {
+			for (int i=1; i<mReactant.getConnAtoms(reactantAtom); i++) {
+				for (int j=0; j<i; j++) {
+					int connAtom1 = mReactant.getConnAtom(reactantAtom,i);
+					int connAtom2 = mReactant.getConnAtom(reactantAtom,j);
+					int connMapNo1 = mReactantMapNo[connAtom1];
+					int connMapNo2 = mReactantMapNo[connAtom2];
+					if (connMapNo1 != -1 && connMapNo2 != -1
+					 && ((mapNoToProduct[connMapNo1] > mapNoToProduct[connMapNo2]) ^ (connAtom1 > connAtom2)))
+						inversion = !inversion;
+					}
+				}
+			}
+/*		else {  // no allene parities for now
+			for (int i=0; i<mReactant.getConnAtoms(reactantAtom); i++) {
+				int connAtom = mReactant.getConnAtom(reactantAtom, i);
+				int neighbours = 0;
+				int[] neighbour = new int[3];
+				int[] neighbourMapNo = new int[3];
+				for (int j=0; j<mReactant.getConnAtoms(connAtom); j++) {
+					neighbour[neighbours] = mReactant.getConnAtom(connAtom, j);
+					neighbourMapNo[neighbours] = mReactantMapNo[neighbour[neighbours]];
+					if (neighbour[neighbours] != reactantAtom)
+						neighbours++;
+					}
+				if (neighbours == 2
+				 && neighbourMapNo[0] != -1 && neighbourMapNo[1] != -1
+				 && ((mapNoToProduct[neighbourMapNo[0]] > mapNoToProduct[neighbourMapNo[1]])
+					^(neighbour[0] > neighbour[1])))
+					inversion = !inversion;
+				}
+			}*/
+		return inversion;
 		}
 
 	/**

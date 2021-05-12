@@ -114,7 +114,8 @@ public class MoleculeAutoMapper implements AutoMapper {
 	private void matchFragments() {
 		// locate disconnected unmapped areas as fragments
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			mMol.setAtomMarker(atom, mMol.getAtomMapNo(atom) == 0);
+			mMol.setAtomMarker(atom, mMol.getAtomMapNo(atom) == 0
+					&& (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0);
 		for (int atom=mMol.getAtoms(); atom<mMol.getAllAtoms(); atom++)
 			mMol.setAtomMarker(atom, false);
 		int[] fragmentNo = new int[mMol.getAllAtoms()];
@@ -137,7 +138,8 @@ public class MoleculeAutoMapper implements AutoMapper {
 		// create mapping from fragment's atom indices to mMol atom index
 		int[] fragmentAtom = new int[fragmentCount];
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (mMol.getAtomMapNo(atom) == 0) {
+			if (mMol.getAtomMapNo(atom) == 0
+			 && (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0) {
 				int fNo = fragmentNo[atom];
 				int fAtom = fragmentAtom[fNo]++;
 
@@ -356,9 +358,12 @@ public class MoleculeAutoMapper implements AutoMapper {
 	 */
 	private int[] getUnmappedNeighbors(int atom) {
 		int count = 0;
-		for (int i=0; i<mMol.getConnAtoms(atom); i++)
-			if (mMol.getAtomMapNo(mMol.getConnAtom(atom, i)) == 0)
+		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+			int connAtom = mMol.getConnAtom(atom, i);
+			if (mMol.getAtomMapNo(connAtom) == 0
+			 && (mMol.getAtomQueryFeatures(connAtom) & Molecule.cAtomQFExcludeGroup) == 0)
 				count++;
+			}
 
 		if (count == 0)
 			return null;
@@ -367,7 +372,8 @@ public class MoleculeAutoMapper implements AutoMapper {
 		count = 0;
 		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 			int connAtom = mMol.getConnAtom(atom, i);
-			if (mMol.getAtomMapNo(connAtom) == 0)
+			if (mMol.getAtomMapNo(connAtom) == 0
+			 && (mMol.getAtomQueryFeatures(connAtom) & Molecule.cAtomQFExcludeGroup) == 0)
 				neighborInfo[count++] = (mMol.getAtomicNo(connAtom) << 24)
 									  + (mMol.getAtomMass(connAtom) << 16)
 									  + connAtom;
