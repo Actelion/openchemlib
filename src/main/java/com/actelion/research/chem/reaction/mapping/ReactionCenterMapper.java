@@ -15,6 +15,8 @@ import java.util.TreeMap;
  * reactant atoms and products atoms in the same atom class.
  */
 public class ReactionCenterMapper {
+	private static final int MAX_PERMUTATION_COUNT = 20000;
+
 	private ArrayList<UnmappedCenterAtoms> mAtomClasses;
 	private StereoMolecule mReactant,mProduct;
 	private int[] mReactantMapNo,mProductMapNo;
@@ -79,7 +81,7 @@ public class ReactionCenterMapper {
 			atomClassIndex++;
 			}
 
-		if (totalPermutationCount > 256) {
+		if (totalPermutationCount > MAX_PERMUTATION_COUNT) {
 			System.out.println("permutationCount:"+totalPermutationCount);
 			return 0;
 			}
@@ -171,7 +173,7 @@ public class ReactionCenterMapper {
 		}
 
 	class UnmappedCenterAtoms {
-		private static final int MAX_ATOMS_PER_TYPE = 5;
+		private static final int MAX_ATOMS_PER_TYPE = 6;
 
 		private int[] mReactantAtom = new int[0];
 		private int[] mProductAtom = new int[0];
