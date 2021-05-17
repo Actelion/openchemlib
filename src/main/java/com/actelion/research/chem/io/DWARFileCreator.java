@@ -181,6 +181,40 @@ public class DWARFileCreator {
 	}
 
 	/**
+	 * This method, when called after calling setMasterCopy() or after completing
+	 * defining columns, returns the list of defined column names in the correct order.
+	 * Especially, when using a master copy, this method informs about the expected columns
+	 * and their order to be used for adding the data.
+	 * @return manually defined column titles or from master copy, if used
+	 */
+	public String[] getColumnTitles() {
+		if (mMasterCopyParser != null) {
+			ArrayList<String> headAndTail = mMasterCopyParser.getHeadOrTail();
+			return headAndTail.get(headAndTail.size()-1).split("\\t");
+			}
+		else {
+			return mColumnTitleList.toArray(new String[0]);
+			}
+		}
+
+	/**
+	 * This method, when called after calling setMasterCopy() or after completing
+	 * defining columns, returns the column properties of the given column.
+	 * @return manually defined column properties or from master copy, if used
+	 */
+	public Properties getColumnProperties(String columnTitle) {
+		if (mMasterCopyParser != null) {
+			return mMasterCopyParser.getColumnProperties(columnTitle);
+			}
+		else {
+			for (int i=0; i<mColumnTitleList.size(); i++)
+				if (mColumnTitleList.get(i).equals(columnTitle))
+					return mColumnPropertiesMap.get(i);
+			return null;
+			}
+		}
+
+	/**
 	 * Call this after defining columns and specifying column properties
 	 * @param rowCount -1 if row count is not known
 	 * @throws IOException
