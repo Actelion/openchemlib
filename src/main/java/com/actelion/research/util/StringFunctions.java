@@ -33,6 +33,8 @@
 
 package com.actelion.research.util;
 
+import com.actelion.research.util.datamodel.DoubleArray;
+
 import java.awt.Point;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -42,6 +44,7 @@ import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class StringFunctions {
 
@@ -55,6 +58,18 @@ public class StringFunctions {
 	public static final String [] REGEX_META_CHARACTERS = {"*","%","@","&","+", "(", ")"};
 
 	public static final String SEP = "; ";
+
+
+
+	public static double [] parse2Double(String s, String sepRegEx){
+		String [] a = s.split(sepRegEx);
+		double [] arrDouble = new double[a.length];
+		for (int i = 0; i < a.length; i++) {
+			arrDouble[i]=Double.parseDouble(a[i]);
+		}
+		return arrDouble;
+	}
+
 
 	public static String getAppendedSorted(String s1, String s2) {
 
