@@ -6,8 +6,13 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
 
 public class ChemicalRuleEnhancedReactionMapper {
-	// Chemical rule reactions must be stoichiometrically complete and they must be completely mapped!!!
-	// Exception: If a rule contains exclude atoms, these must not be mapped.
+	private static final int MAX_MATCH_COUNT = 512;  // Protection for combinatorial explosion, e.g. for metathesis or DielsAlder in fullerene
+
+	// Chemical rule reactions must neither be stoichiometrically complete, nor must they be completely mapped!!!
+	// If rules contains exclude atoms, these must not be mapped.
+	// Of course, when a rule is applied, then only the mapped region of the rule is used as a template to
+	// change bonding of the reaction the rule is applied to. Nevertheless, the rule's entire reactant is used
+	// for the substructure search that identifies applicability.
 	private static final ChemicalRule[] CHEMICAL_RULE = {
 // replaced by cope		new ChemicalRule("a","gGP@DkUjPLVDXNBHp\\BQ`xLcApEFC`jLG@!gGP@DkUjPLVDXNBHp\\BQ`xLcApEFC`jLG@#qkNT qVci#!Rb@KW@gx@b@JH_SLrP`", 0.5f),
 		new ChemicalRule("c","gJP`@deVdB!gK``AddvPH#qir` qreH#!R@Jp@dpBl@ILslgp", 3.5f),
@@ -30,7 +35,13 @@ public class ChemicalRuleEnhancedReactionMapper {
 
 		new ChemicalRule("Sakurai", "gOQH@wAINvZ@pdcFe@x@!gOQH@wAIgJi@pdcFe@x@#qreKx qrLkx#!R_g~HO_fQbOvw?[_|L}r\\", 4.5f),
 		new ChemicalRule("Mitsunobu", "gFP`ATfRjdPp`}KEYg]d@!gFP`ATfRjd`pekL{l`#qrLk qZLn#!Rw`Bg?Hc|i}uUYcMb``", 4.5f),
-		new ChemicalRule("Aldol", "gOP`@\\b`JZXCrVtWh|cECA\u007FlP!gFP`ATeQfDUaJ#qYETp qTqk#!R_[]|mw}~Ugy|m?vwLsI\\", 3.5f),
+
+		new ChemicalRule("Aldol-Addition", "gOQ@AdTAcS@^Pvb}GdThXJg@HUfI\u007FlP!gGQ@@dsuRAcJg@HUaH#qYEbp qYub#!Rw[\\\\mw?^akFC|CtwLtI\\", 1.5f),
+		new ChemicalRule("Aldol-Condensation", "gOQ@AdTAcS@^Pvb}GdThXJg@HUfI\u007FlP!gFQ@@`rrpdlHHpipBEXb@#qYEbp q^aU#!Rw[\\\\mw?^akFC|CtwLtI\\", 2.5f),
+		new ChemicalRule("Acetal-Aldol-Addition", "dmdB@@serQS@sJjfd@p`Xir\\@`j\\@aUJHI@!daxL@@[df[ZjT@qQdxACdxABjTQb@#qB@`OuX qBtM{#!RM?rH?C]}_`CW?Ev^@T@wwS^B_`@sHop", 1.5f),
+		new ChemicalRule("Acetal-Aldol-Condensation", "dmdB@@serQS@sJjfd@p`Xir\\@`j\\@aUJHI@!gNp`CTjUiV@qQS`DJg@HUVHR@#qB@`OuX qqj{`#!RM?rH?C]}_`CW?Ev^@T@wwS^B_`@sHop", 1.5f),
+		new ChemicalRule("Acetal-Aldol-Condensation-Cyclization", "dkLB@@ZURYUvUjejhHYpaHpr\\@aUJHp`!didD@@EIfU[hBA@CFAS`DJqq@#IXljNPY@@@ IXljXxT#!R_`CW@h`BuwvH_[yOb@I~@M_|bOsW_Wx@LuJb", 7.5f),
+
 		new ChemicalRule("propargylEnone", "gCa@@dmXFD@!gCa@@dkHD#qNT qLV#!RXIq`pp@sLwI|", 5.5f),
 		new ChemicalRule("Arndt-Eistert", "daiDaJYBBHj^{HhAYMpAaA@!daiD`FzLBHPVsZl@p`@#IyHHZ[@ IzDGBi`#!R@W|h_U\\}X{GUJU\\}TEpsHap", 11.5f),
 		new ChemicalRule("Curtius", "gO]IcVaDF[s{HhCIe@`!gN]HMWADHJfm`XP@#q~Jk` qytUX#!R?g}HoU_]U\\eWwQ@\\Lwq\\", 9.5f),
@@ -40,8 +51,10 @@ public class ChemicalRuleEnhancedReactionMapper {
 		new ChemicalRule("ene-Metathesis","daX@@LdPLSSPHEelRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLSSPHEelRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!RNIu^@O{wD^EGhkzO?aBsdcp", 3.5f),
 		new ChemicalRule("yne-Metathesis","daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!RZmoi@Fjo|SFe|IkGiUBSLop", 3.5f),
 		new ChemicalRule("ene-yne-Metathesis","dcd@@LdPLPLWSSPIdulrXwKlVRFCHXFa`zFAXXMa`udqnWP!dcT@@LdbbplTsTtFPx}[MeMr{Ela`jFAhXNa`VFCXXO}[J[et#qe@N@S@ qeHP@s@#!R_c}~@Gx?QgF}bKwW@h`yoosW?Hb}usNRO@", 7.5f),
+		new ChemicalRule("Alkyne-Cyclisation", "gG`@DcO|CFAFC`@!gFp@DiTt@@CFAFC`@#qi\\V qiSt#!Rb@JNyk\\Bl^{~@CORp`", 8.5f),
 
-			// two step
+		// two step
+		new ChemicalRule("Elimination-Claisen", "daxD@@qJY^ji@OhJ@!daXD@@YIUMjX@`#IkFPn`P IkBGfR@#!RmpK~_?x@m?vw?[\\BmpHsXkp", 5.5f),
 		new ChemicalRule("imineFormationAzaCope", "daZH@LAIMUjd@pRL@!daZH@HAAn]jd@p`@#IGfaLJ` IFDzfK@#!RXpAl@HYrXs}lOvL?[C|sTdH", 8.5f),
 
 		// multi step with cyclisation/condensation
@@ -53,6 +66,8 @@ public class ChemicalRuleEnhancedReactionMapper {
 		new ChemicalRule("OxyCope", "gNq@@dr}SHFD@!gNq@@djkUHD#qynZ` qykbp#!Ro`AH`c]|\\KtwoS]|LvIB", 4.5f),
 
 		// rearrangements
+		new ChemicalRule("Vinylcyclopropane", "gKP@DklVj@`!gKP@Di\\Vj@`#qaVh qTqh#!Rm?t@?h`BbOtsdop", 3.5f),
+		new ChemicalRule("Furan-CH2-OH-Rearrangement", "gOp`@tiguif`H!gOp`@tfWMZZ`H#qZna@ qZtM@#!RTXC@z]BRe?s|bKx@L}KB", 6.5f),
 		new ChemicalRule("rearrangement1032", "gOp`ATieMji`H!gOp`ATeekZj`H#qaSnx qa]~P#!ROh]`lkoYCONJ_quT|qJl", 5.5f),
 
 		// oxidative rearrangements
@@ -107,8 +122,8 @@ public class ChemicalRuleEnhancedReactionMapper {
 			reactantSearcher.setFragmentSymmetryConstraints(rule.getReactantAtomSymmetryConstraints());
 			if (0 != reactantSearcher.findFragmentInMolecule(SSSearcher.cCountModeUnique, SSSearcher.cDefaultMatchMode)) {
 				productSearcher.setFragment(rule.getProduct());
-				if (productSearcher.isFragmentInMolecule()) {
-mHistory.append(rule.getName()+":");
+				if (productSearcher.isFragmentInMolecule()
+				 && reactantSearcher.getMatchList().size() <= MAX_MATCH_COUNT) {
 float historyScore = -10000;
 					for (int[] reactantMatch:reactantSearcher.getMatchList()) {
 						mReactant.copyMolecule(reactant);
@@ -116,7 +131,7 @@ float historyScore = -10000;
 						int[] reactantMapNo = new int[mReactant.getAtoms()];
 						int[] productMapNo = new int[mProduct.getAtoms()];
 						mapper.map(reactant, mProduct, reactantMapNo, productMapNo);
-						float score = mapper.calculateScore() - rule.getPanalty();
+						float score = mapper.getScore() - rule.getPanalty();
 if (historyScore < score) historyScore = score;
 						if (mScore < score) {
 							mScore = score;
@@ -126,19 +141,16 @@ if (historyScore < score) historyScore = score;
 							mAppliedRule = rule;
 							}
 						}
-mHistory.append(historyScore);
-mHistory.append("\n");
+mHistory.append(rule.getName()+historyScore+"\n");
 					}
 				}
 			}
 
-		// map and score the reaction without applying and rules
+		// map and score the reaction without applying any rules
 		int[] reactantMapNo = new int[mReactant.getAtoms()];
 		int[] productMapNo = new int[mProduct.getAtoms()];
 		mapper.map(mReactant, mProduct, reactantMapNo, productMapNo);
-		int score = mapper.calculateScore();
-mHistory.append("no rule:"+score);
-mHistory.append("\n");
+		int score = mapper.getScore();
 		if (mScore <= score) {
 			mAppliedRule = null;
 			mScore = score;
@@ -146,6 +158,7 @@ mHistory.append("\n");
 			bestProductMapNo = productMapNo;
 			bestGraphMapNoCount = mapper.getGraphMapNoCount();
 			}
+mHistory.append("no rule:"+score+"\n");
 
 		if (mScore != Integer.MIN_VALUE)
 			mapper.copyMapNosToReaction(rxn, bestReactantMapNo, bestProductMapNo, bestGraphMapNoCount);

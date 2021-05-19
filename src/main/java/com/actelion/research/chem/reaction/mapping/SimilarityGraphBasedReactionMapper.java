@@ -10,13 +10,21 @@ import com.actelion.research.util.ByteArrayComparator;
 import java.util.Arrays;
 
 public class SimilarityGraphBasedReactionMapper {
+	// When building the mapping graph, next neighbors are added based on directed environment similarity.
+	// To determine this similarity, directed radial substructures are precalculated for every atom from
+	// the perspective of every of one its neighbour atoms (fromAtom). The smallest fragment just contains
+	// the neighbor and the atom itself. The next fragment is build from the first by adding all direct
+	// neighbours to the atom (except the fromAtom). of neighbor is considered to belong to the graph
+	// already
 	private static final int MAX_ENVIRONMENT_DISTANCE = 8;
+	private static final int SKELETON_PENALTY = 3;
 
 	private StereoMolecule mReactant,mProduct;
-	private int mMapNo,mGraphMapNoCount,mMappableAtomCount;
+	private int mMapNo,mGraphMapNoCount,mMappableAtomCount,mScore;
 	private int[] mReactantMapNo,mProductMapNo,mReactantRingMembership,mProductRingMembership;
 	private ByteArrayComparator mSimilarityComparator;
 	private byte[][][][] mReactantConnAtomEnv,mProductConnAtomEnv;   // indexes: atom,connIndex,radius,idcode bytes
+	private byte[][][][] mReactantSkelAtomEnv,mProductSkelAtomEnv;   // indexes: atom,connIndex,radius,idcode bytes
 
 	/**
 	 * Entirely maps the given reaction by setting all reactant's and product's mapping numbers.
@@ -42,30 +50,50 @@ public class SimilarityGraphBasedReactionMapper {
 		mReactant = reactant;
 		mProduct = product;
 
-		mReactantConnAtomEnv = classifyNeighbourAtomEnvironment(mReactant);
-		mProductConnAtomEnv = classifyNeighbourAtomEnvironment(mProduct);
+		mReactantMapNo = new int[reactantMapNo.length];
+		mProductMapNo = new int[productMapNo.length];
+
+		mReactantConnAtomEnv = classifyNeighbourAtomEnvironment(mReactant, false);
+		mReactantSkelAtomEnv = classifyNeighbourAtomEnvironment(mReactant, true);
+		mProductConnAtomEnv = classifyNeighbourAtomEnvironment(mProduct, false);
+		mProductSkelAtomEnv = classifyNeighbourAtomEnvironment(mProduct, true);
 
 		initializeRingMembership();
 
-		RootAtomPairs rootAtomPairs = new RootAtomPairs(reactant, product);
-		mMappableAtomCount = rootAtomPairs.getMappableAtomCount();
-
-		mReactantMapNo = reactantMapNo;
-		mProductMapNo = productMapNo;
-		mMapNo = 0;
-
 		mSimilarityComparator = new ByteArrayComparator();
+		mScore = Integer.MIN_VALUE;
 
-		for (RootAtomPair pair:rootAtomPairs.get())
-			if (mReactantMapNo[pair.reactantAtom] == 0 && mProductMapNo[pair.productAtom] == 0)
+		RootAtomPairSource rootAtomPairSource = new RootAtomPairSource(reactant, product, mReactantMapNo, mProductMapNo);
+
+		int no = 0;
+		while (rootAtomPairSource.hasNextPairSequence()) {
+			mMapNo = rootAtomPairSource.getManualMapCount();
+			mMappableAtomCount = rootAtomPairSource.getMappableAtomCount();
+
+			RootAtomPair pair = rootAtomPairSource.nextPair();
+			while (pair != null) {
 				mapFromRootAtoms(pair);
+				pair = rootAtomPairSource.nextPair();
+				}
 
-		mGraphMapNoCount = mMapNo;
+			mGraphMapNoCount = mMapNo;
 
-		if (mMapNo < mMappableAtomCount) {
-			ReactionCenterMapper centerMapper = new ReactionCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo);
-			int score = centerMapper.completeMapping();
-			mMapNo += centerMapper.getMappedAtomCount();
+			if (mMapNo < mMappableAtomCount) {
+				ReactionCenterMapper centerMapper = new ReactionCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo);
+				centerMapper.completeMapping();
+				mMapNo += centerMapper.getMappedAtomCount();
+				}
+
+			int score = calculateScore();
+			if (mScore < score) {
+				mScore = score;
+				for (int i=0; i<reactantMapNo.length; i++)
+					reactantMapNo[i] = mReactantMapNo[i];
+				for (int i=0; i<productMapNo.length; i++)
+					productMapNo[i] = mProductMapNo[i];
+				}
+
+			no++;
 			}
 		}
 
@@ -82,7 +110,11 @@ public class SimilarityGraphBasedReactionMapper {
 	 * adds -1 for every inverted stereo center.
  	 * @return
 	 */
-	public int calculateScore() {
+	public int getScore() {
+		return mScore;
+		}
+
+	private int calculateScore() {
 		int score = 0;
 
 		int[] mapNoToProduct = new int[mMapNo+1];
@@ -240,18 +272,59 @@ public class SimilarityGraphBasedReactionMapper {
 		return MAX_ENVIRONMENT_DISTANCE;
 		}
 
-	private byte[][][][] classifyNeighbourAtomEnvironment(StereoMolecule mol) {
+	/**
+	 * Compares reactantAtom to productAtom starting from and extending away from the respective root atoms.
+	 * Similarity is increased, if reactantRoot and productRoot are stereo centers and reactantAtom matches
+	 * productAtom in regard to the stereo configuration.
+	 * @param reactantRoot
+	 * @param reactantAtom
+	 * @param productRoot
+	 * @param productAtom
+	 * @return 0: mismatch, 2:atomicNo-match, 4:directNeighbourMatch, 6:TwoShellMatch, etc.
+	 */
+	private int getSkeletonSimilarity(int reactantRoot, int reactantAtom, int productRoot, int productAtom) {
+		int reactantConnIndex = -1;
+		for (int i=0; i<mReactant.getConnAtoms(reactantAtom); i++) {
+			if (mReactant.getConnAtom(reactantAtom, i) == reactantRoot) {
+				reactantConnIndex = i;
+				break;
+				}
+			}
+
+		int productConnIndex = -1;
+		for (int i=0; i<mProduct.getConnAtoms(productAtom); i++) {
+			if (mProduct.getConnAtom(productAtom, i) == productRoot) {
+				productConnIndex = i;
+				break;
+				}
+			}
+
+		for (int radius=SKELETON_PENALTY; radius<MAX_ENVIRONMENT_DISTANCE; radius++) {
+			if (mReactantSkelAtomEnv[reactantAtom][reactantConnIndex][radius] == null
+			 || mSimilarityComparator.compare(mReactantSkelAtomEnv[reactantAtom][reactantConnIndex][radius], mProductSkelAtomEnv[productAtom][productConnIndex][radius]) != 0)
+				return radius - SKELETON_PENALTY;
+			}
+
+		return MAX_ENVIRONMENT_DISTANCE;
+		}
+
+	private byte[][][][] classifyNeighbourAtomEnvironment(StereoMolecule mol, boolean skeletonOnly) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
 
 		byte[][][][] environment = new byte[mol.getAtoms()][MAX_ENVIRONMENT_DISTANCE][][];
 
 		int[] atomList = new int[mol.getAtoms()];
+		int[] atomMap = new int[mol.getAtoms()];
 		boolean[] atomMask = new boolean[mol.getAtoms()];
 		for (int rootAtom=0; rootAtom<mol.getAtoms(); rootAtom++) {
 			environment[rootAtom] = new byte[mol.getConnAtoms(rootAtom)][MAX_ENVIRONMENT_DISTANCE][];
+
+			if (skeletonOnly && mol.getAtomicNo(rootAtom) != 6)
+				continue;
+
 			for (int connIndex=0; connIndex<mol.getConnAtoms(rootAtom); connIndex++) {
-				int exitAtom = mol.getConnAtom(rootAtom, connIndex);
+				int fromAtom = mol.getConnAtom(rootAtom, connIndex);
 
 				if (atomMask == null)
 					atomMask = new boolean[mol.getAtoms()];
@@ -262,12 +335,12 @@ public class SimilarityGraphBasedReactionMapper {
 				int max = 2;
 
 				// we need to mark the root atom, because otherwise close-by root atoms may end up with the same fragment
-				mol.setAtomSelection(exitAtom, true);
+				mol.setAtomSelection(fromAtom, true);
 
-				for (int sphere = 0; sphere<MAX_ENVIRONMENT_DISTANCE && max<mol.getAtoms(); sphere++) {
+				for (int sphere=0; sphere<MAX_ENVIRONMENT_DISTANCE && max<mol.getAtoms(); sphere++) {
 					if (sphere == 0) {
-						atomList[0] = exitAtom;
-						atomMask[exitAtom] = true;
+						atomList[0] = fromAtom;
+						atomMask[fromAtom] = true;
 						atomList[1] = rootAtom;
 						atomMask[rootAtom] = true;
 						}
@@ -277,7 +350,8 @@ public class SimilarityGraphBasedReactionMapper {
 							int atom = atomList[i];
 							for (int j=0; j<mol.getConnAtoms(atom); j++) {
 								int connAtom = mol.getConnAtom(atom, j);
-								if (!atomMask[connAtom]) {
+								if (!atomMask[connAtom]
+								 && (!skeletonOnly || mol.getAtomicNo(connAtom) == 6)) {
 									atomMask[connAtom] = true;
 									atomList[newMax++] = connAtom;
 									}
@@ -297,12 +371,21 @@ public class SimilarityGraphBasedReactionMapper {
 						environment[rootAtom][connIndex][sphere][1] = (byte)mol.getAtomMass(rootAtom);
 						}
 					else {
-						mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
+						mol.copyMoleculeByAtoms(fragment, atomMask, true, atomMap);
+						fragment.setAtomCharge(atomMap[fromAtom], 0);
+						fragment.setAtomRadical(atomMap[fromAtom], 0);
+						for (int atom=0; atom<mol.getAtoms(); atom++)
+							if (atomMap[atom] != -1
+							 && mol.getConnAtoms(atom) > fragment.getConnAtoms(atomMap[atom]))
+								fragment.setAtomQueryFeature(atomMap[atom], Molecule.cAtomQFMoreNeighbours, true);
+						if (skeletonOnly)
+							for (int bond=0; bond<fragment.getBonds(); bond++)
+								fragment.setBondType(bond, Molecule.cBondTypeSingle);
 						environment[rootAtom][connIndex][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes();
 						}
 					}
 
-				mol.setAtomSelection(exitAtom, false);
+				mol.setAtomSelection(fromAtom, false);
 				}
 			}
 		return environment;
@@ -385,9 +468,11 @@ public class SimilarityGraphBasedReactionMapper {
 		productAtom[0] = root.productAtom;
 		productParent[root.productAtom] = root.productAtom; // no -1 to simplify leavesRing()
 
-		mMapNo++;
-		mReactantMapNo[root.reactantAtom] = mMapNo;
-		mProductMapNo[root.productAtom] = mMapNo;
+		if (mReactantMapNo[root.reactantAtom] == 0) {
+			mMapNo++;
+			mReactantMapNo[root.reactantAtom] = mMapNo;
+			mProductMapNo[root.productAtom] = mMapNo;
+			}
 
 		int current = 0;
 		int highest = 0;
@@ -409,24 +494,28 @@ public class SimilarityGraphBasedReactionMapper {
 					if (mProductMapNo[productCandidate] == 0
 					 && mReactant.getAtomicNo(reactantCandidate) == mProduct.getAtomicNo(productCandidate)) {
 						int candidateBond = mProduct.getConnBond(productRoot, j);
-						if (bondType == getBondType(mProduct, candidateBond)) {
+						int skelSimilarity = getSkeletonSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
+						if (bondType == getBondType(mProduct, candidateBond)
+						 || skelSimilarity != 0) {
 							if (passesBasicRules(reactantRoot, reactantCandidate, productRoot, productCandidate)) {
-								int similarity = getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
-								if (similarity != 0
-								 && passesSimilarityDependentRules(reactantRoot, reactantCandidate, productRoot, productCandidate, similarity)) {
-									match[i][j] = 256 * similarity;
-									// we prefer that atom, which restores the correct TH parity
-									if (matchesStereo(graphParent[reactantRoot], reactantRoot, reactantCandidate, productParent[productRoot], productRoot, productCandidate))
-										match[i][j]++;
-									// we preferably endo/endo or exo/exo matches
-									if (leavesRing(graphParent[reactantRoot], reactantRoot, reactantCandidate, mReactantRingMembership)
-									 == leavesRing(productParent[productRoot], productRoot, productCandidate, mProductRingMembership))
-										match[i][j] += 2;
+								int similarity = Math.max(skelSimilarity, getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate));
+								if (similarity != 0) {
+									boolean isStereoMatch = matchesStereo(graphParent[reactantRoot], reactantRoot, reactantCandidate, productParent[productRoot], productRoot, productCandidate);
+									if (passesSimilarityDependentRules(reactantRoot, reactantCandidate, productRoot, productCandidate, similarity, isStereoMatch)) {
+										match[i][j] = 256 * similarity;
+										// we prefer that atom, which restores the correct TH parity
+										if (isStereoMatch)
+											match[i][j]++;
+										// we preferably endo/endo or exo/exo matches
+										if (leavesRing(graphParent[reactantRoot], reactantRoot, reactantCandidate, mReactantRingMembership)
+										 == leavesRing(productParent[productRoot], productRoot, productCandidate, mProductRingMembership))
+											match[i][j] += 2;
 /*
 if (reactantRoot == 4) {
  System.out.print("graph:"); for (int k=0; k<current; k++) System.out.print(" "+graphAtom[k]+"("+productAtom[k]+")");
  System.out.println(" match:"+match[i][j]+ " r:"+reactantCandidate+" p:"+productCandidate);
 }*/
+										}
 									}
 								}
 							}
@@ -499,7 +588,24 @@ if (reactantRoot == 4) {
 		 && connAtomsOfAtomicNo(mReactant, reactantAtom, 8) < connAtomsOfAtomicNo(mProduct, productAtom, 8))
 			return false;
 
-/* strangely this causes lots of false mapping
+		// If the number of neighbours at an atom behind an oxygen changes, then the oxygen itself may in question
+		if (mReactant.getAtomicNo(reactantConn) == 8
+		 && mReactant.getConnAtoms(reactantConn) == 2
+		 && mProduct.getConnAtoms(productConn) == 2) {
+//			int reactantConnConn = mReactant.getConnAtom(reactantConn, mReactant.getConnAtom(reactantConn, 0) == reactantAtom ? 1 : 0);
+//			int productConnConn = mProduct.getConnAtom(productConn, mProduct.getConnAtom(productConn, 0) == productAtom ? 1 : 0);
+//			if (mReactant.getConnAtoms(reactantConnConn) != mProduct.getConnAtoms(productConnConn))
+//				return false;
+
+			int reactantConnIndex = mReactant.getConnAtom(reactantConn, 0) == reactantAtom ? 0 : 1;
+			int productConnIndex = mProduct.getConnAtom(productConn, 0) == productAtom ? 0 : 1;
+			if (mSimilarityComparator.compare(mReactantSkelAtomEnv[reactantConn][reactantConnIndex][3],
+											  mProductSkelAtomEnv[productConn][productConnIndex][3]) != 0)
+				return false;
+			}
+
+
+/* strangely this causes lots of false mappings
 		// attached hydroxies may not be the same
 		if (mReactant.getAtomPi(reactantAtom) == 0
 		 && mReactant.getAtomicNo(reactantConn) == 8
@@ -536,7 +642,7 @@ if (reactantRoot == 4) {
 		return true;
 		}
 
-	private boolean passesSimilarityDependentRules(int reactantAtom, int reactantConn, int productAtom, int productConn, int similarity) {
+	private boolean passesSimilarityDependentRules(int reactantAtom, int reactantConn, int productAtom, int productConn, int similarity, boolean isStereoMatch) {
 		if (mReactant.getAtomicNo(reactantConn) == 8
 		 && mReactant.getAtomPi(reactantConn) == 0
 		 && hasOxo(mReactant, reactantAtom)
@@ -544,11 +650,17 @@ if (reactantRoot == 4) {
 		 && similarity != MAX_ENVIRONMENT_DISTANCE)
 			return false;
 
+		if (!isStereoMatch
+		 && (mReactant.getAtomicNo(reactantConn) != 6
+		  || !hasNonCarbonNeighbour(mReactant, reactantAtom)))
+			return false;
+
 		return true;
 		}
 
 	/**
-	 * Returns true, if we have a stereo center (or EZ-bond) and if the
+	 * Returns true, if we have no stereo situation or if the stereo center (or EZ-bond) is retained
+	 * by continuing the graph with the candidate.
 	 * @param reactantParent
 	 * @param reactantAtom
 	 * @param reactantConn
@@ -558,23 +670,29 @@ if (reactantRoot == 4) {
 	 * @return
 	 */
 	private boolean matchesStereo(int reactantParent, int reactantAtom, int reactantConn, int productParent, int productAtom, int productConn) {
-		if (mReactant.isAtomStereoCenter(reactantAtom) && mReactant.getConnAtoms(reactantAtom) == 3
-		 && mProduct.isAtomStereoCenter(productAtom) && mProduct.getConnAtoms(productAtom) == 3) {
+		if (mReactant.getConnAtoms(reactantAtom) == 3
+		 && (mReactant.getAtomParity(reactantAtom) == Molecule.cAtomParity1 || mReactant.getAtomParity(reactantAtom) == Molecule.cAtomParity2)
+		 && mProduct.getConnAtoms(productAtom) == 3
+		 && (mProduct.getAtomParity(productAtom) == Molecule.cAtomParity1 || mProduct.getAtomParity(productAtom) == Molecule.cAtomParity2)) {
 			boolean reactantInversion = (reactantParent > reactantConn);
+			int lastNeighbour = -1;
 			for (int i=0; i<mReactant.getConnAtoms(reactantAtom); i++) {
-				int lastNeighbour = mReactant.getConnAtom(reactantAtom, i);
+				lastNeighbour = mReactant.getConnAtom(reactantAtom, i);
 				if (lastNeighbour != reactantParent && lastNeighbour != reactantConn) {
-					if (i == 1)
+					if ((lastNeighbour > reactantConn && lastNeighbour < reactantParent)
+					 || (lastNeighbour < reactantConn && lastNeighbour > reactantParent))
 						reactantInversion = !reactantInversion;
+					break;
 					}
 				}
-
 			boolean productInversion = (productParent > productConn);
 			for (int i=0; i<mProduct.getConnAtoms(productAtom); i++) {
-				int lastNeighbour = mProduct.getConnAtom(productAtom, i);
+				lastNeighbour = mProduct.getConnAtom(productAtom, i);
 				if (lastNeighbour != productParent && lastNeighbour != productConn) {
-					if (i == 1)
+					if ((lastNeighbour > productConn && lastNeighbour < productParent)
+					 || (lastNeighbour < productConn && lastNeighbour > productParent))
 						productInversion = !productInversion;
+					break;
 					}
 				}
 
@@ -589,6 +707,13 @@ if (reactantRoot == 4) {
 		for (int i=0; i<mol.getConnAtoms(atom); i++)
 			if (mol.getConnBondOrder(atom, i) == 2
 			 && mol.getAtomicNo(mol.getConnAtom(atom, i)) == 8)
+				return true;
+		return false;
+		}
+
+	private boolean hasNonCarbonNeighbour(StereoMolecule mol, int atom) {
+		for (int i=0; i<mol.getConnAtoms(atom); i++)
+			if (mol.getAtomicNo(mol.getConnAtom(atom, i)) != 6)
 				return true;
 		return false;
 		}

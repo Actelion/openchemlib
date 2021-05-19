@@ -2661,7 +2661,7 @@ System.out.println("noOfRanks:"+canRank);
 
 
 	/**
-	 * Returned symmetry rank before tie breaking. For this the Canonizer
+	 * Returns the symmetry rank before tie breaking. For this the Canonizer
 	 * mode must contain the CREATE_SYMMETRY_RANK option. If ranking
 	 * shall reflect atom diastereotopicity or even enantiotopicity, use
 	 * mode CONSIDER_DIASTEREOTOPICITY or CONSIDER_STEREOHETEROTOPICITY,
@@ -2670,8 +2670,20 @@ System.out.println("noOfRanks:"+canRank);
 	 * @return rank
 	 */
 	public int getSymmetryRank(int atom) {
-		// requires to use the 'createSymmetryRank' option
 		return (mCanRankBeforeTieBreaking == null) ? -1 : mCanRankBeforeTieBreaking[atom];
+		}
+
+
+	/**
+	 * Returns the symmetry ranks before tie breaking. For this the Canonizer
+	 * mode must contain the CREATE_SYMMETRY_RANK option. If ranking
+	 * shall reflect atom diastereotopicity or even enantiotopicity, use
+	 * mode CONSIDER_DIASTEREOTOPICITY or CONSIDER_STEREOHETEROTOPICITY,
+	 * respectively.
+	 * @return ranks
+	 */
+	public int[] getSymmetryRanks() {
+		return mCanRankBeforeTieBreaking;
 		}
 
 

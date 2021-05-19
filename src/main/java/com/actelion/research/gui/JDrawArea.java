@@ -88,6 +88,8 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE_STRUCTURE+" or Name";
 	private static final String ITEM_LOAD_REACTION = "Open Reaction File...";
 	private static final String ITEM_REMOVE_MAPPING = "Remove Manual Atom Mapping";
+	private static final String ITEM_FLIP_HORIZONTALLY = "Flip Horizontally";
+	private static final String ITEM_FLIP_VERTICALLY = "Flip Vertically";
 
 	private static final long WARNING_MILLIS = 1200;
 
@@ -594,6 +596,10 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			openReaction();
 		} else if (e.getActionCommand().equals(ITEM_REMOVE_MAPPING)) {
 			removeManualMapping();
+		} else if (e.getActionCommand().equals(ITEM_FLIP_HORIZONTALLY)) {
+			flip(true);
+		} else if (e.getActionCommand().equals(ITEM_FLIP_VERTICALLY)) {
+			flip(false);
 		} else if (command.startsWith("atomColor")) {
 			int index = command.indexOf(':');
 			int atom = Integer.parseInt(command.substring(9, index));
@@ -1272,10 +1278,8 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				char ch = e.getKeyChar();
 				if (ch == 'h') {
 					flip(true);
-					update(UPDATE_REDRAW);
 				} if (ch == 'v') {
 					flip(false);
-					update(UPDATE_REDRAW);
 				}
 			}
 
@@ -1400,6 +1404,20 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				JMenuItem menuItem = new JMenuItem(ITEM_REMOVE_MAPPING);
 				menuItem.addActionListener(this);
 				popup.add(menuItem);
+			}
+
+			if (mCurrentTool == JDrawToolbar.cToolZoom) {
+				if (popup == null)
+					popup = new JPopupMenu();
+				else
+					popup.addSeparator();
+
+				JMenuItem menuItem1 = new JMenuItem(ITEM_FLIP_HORIZONTALLY);
+				menuItem1.addActionListener(this);
+				popup.add(menuItem1);
+				JMenuItem menuItem2 = new JMenuItem(ITEM_FLIP_VERTICALLY);
+				menuItem2.addActionListener(this);
+				popup.add(menuItem2);
 			}
 
 			if (mAtomColorSupported && mCurrentHiliteAtom != -1) {
@@ -3555,58 +3573,58 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		return AbstractDepictor.cModeInflateToMaxAVBL + HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
 	}
 
-	private Point2D calculateCenterOfGravity()
+	private Point2D calculateCenterOfGravity(boolean selectedOnly)
 	{
-		int atoms = mMol.getAllAtoms();
+		int atoms = 0;
 		double sumx = 0;
 		double sumy = 0;
-		for (int atom = 0; atom < atoms; atom++) {
-			sumx += mMol.getAtomX(atom);
-			sumy += mMol.getAtomY(atom);
+		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+			if (!selectedOnly || mMol.isSelectedAtom(atom)) {
+				sumx += mMol.getAtomX(atom);
+				sumy += mMol.getAtomY(atom);
+				atoms++;
+			}
 		}
-		return atoms > 0 ? new Point2D.Double(sumx / atoms, sumy / atoms) : null;
+		return atoms > 1 ? new Point2D.Double(sumx / atoms, sumy / atoms) : null;
 	}
 
 	private void flip(boolean horiz)
 	{
-		Point2D pt = calculateCenterOfGravity();
-		if (pt != null) {
-			// center
-			moveCoords((float)-pt.getX(), (float)-pt.getY());
-			if (horiz) {
-				scaleCoords(-1,1);
-			} else {
-				scaleCoords(1,-1);
+		boolean selectedOnly = false;
+		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+			if (mMol.isSelectedAtom(atom)) {
+				selectedOnly = true;
+				break;
 			}
-			moveCoords((float)pt.getX(), (float)pt.getY());
+		}
+
+		Point2D cog = calculateCenterOfGravity(selectedOnly);
+		if (cog != null) {
+			storeState();
+
+			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
+				if (!selectedOnly || mMol.isSelectedAtom(atom)) {
+					if (horiz) {
+						mMol.setAtomX(atom, 2 * cog.getX() - mMol.getAtomX(atom));
+					}
+					else {
+						mMol.setAtomY(atom, 2 * cog.getY() - mMol.getAtomY(atom));
+					}
+				}
+			}
 
 			// invert stereo bonds
 			for (int bond=0; bond<mMol.getAllBonds(); bond++) {
-				if (mMol.getBondType(bond) == Molecule.cBondTypeUp)
-					mMol.setBondType(bond, Molecule.cBondTypeDown);
-				else if (mMol.getBondType(bond) == Molecule.cBondTypeDown)
-					mMol.setBondType(bond, Molecule.cBondTypeUp);
+				if (!selectedOnly || mMol.isSelectedBond(bond)) {
+					if (mMol.getBondType(bond) == Molecule.cBondTypeUp)
+						mMol.setBondType(bond, Molecule.cBondTypeDown);
+					else if (mMol.getBondType(bond) == Molecule.cBondTypeDown)
+						mMol.setBondType(bond, Molecule.cBondTypeUp);
+				}
 			}
+
+			update(UPDATE_REDRAW);
 		}
 	}
-
-	private void scaleCoords(float scalex, float scaley)
-	{
-		int atoms = mMol.getAllAtoms();
-		for (int atom = 0; atom < atoms; atom++) {
-			mMol.setAtomX(atom, mMol.getAtomX(atom) * scalex);
-			mMol.setAtomY(atom, mMol.getAtomY(atom) * scaley);
-		}
-	}
-
-	private void moveCoords(float cx, float cy)
-	{
-		int atoms = mMol.getAllAtoms();
-		for (int atom = 0; atom < atoms; atom++) {
-			mMol.setAtomX(atom, mMol.getAtomX(atom) + cx);
-			mMol.setAtomY(atom, mMol.getAtomY(atom) + cy);
-		}
-	}
-
 }
 
