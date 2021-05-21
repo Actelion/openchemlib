@@ -43,13 +43,17 @@ public class PharmacophoreCalculator {
 			ppPoints.add(arp);
 		}
 		for(int i=0;i<mol.getAllAtoms();i++) {
+			/*
 			if(mol.getAtomicNo(i)==0) { //end point of exit vector
+				if(mol.getConnAtoms(i)==0)
+					continue;
 				for(int c=0;c<mol.getConnAtoms(i);c++) {
 					int j = mol.getConnAtom(i, 0);
 					ExitVectorPoint evp = new ExitVectorPoint(mol,j,i);
 					ppPoints.add(evp);
 					}
 				}
+				*/
 			
 			if (mol.getAtomicNo(i)==1) {
 				if(isDonorHydrogen(mol,i)) {

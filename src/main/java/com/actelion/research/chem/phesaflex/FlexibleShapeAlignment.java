@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.forcefield.mmff.PositionConstraint;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
@@ -139,9 +140,10 @@ public class FlexibleShapeAlignment {
 	
 	
 	private double[] getResult() { 
+		TransformationSequence sequence = new TransformationSequence();
 		PheSAAlignment pa = new PheSAAlignment(fitMol,refMol, ppWeight);
-		double[] r = pa.findAlignment(new double[][] {{1.0,0.0,0.0,0.0,0.0,0.0,0.0}},false);
-		return new double[] {r[0],r[1],r[2], r[3], r[4]};
+		double[] r = pa.findAlignment(new double[][] {{1.0,0.0,0.0,0.0,0.0,0.0,0.0}},sequence,false);
+		return new double[] {r[0],r[1],r[2], r[3]};
 	}
 	
 	public double calcMin(StereoMolecule fitMol) {

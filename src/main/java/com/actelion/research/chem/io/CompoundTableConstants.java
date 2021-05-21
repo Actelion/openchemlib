@@ -56,6 +56,7 @@ public interface CompoundTableConstants {
     String cColumnTypeReactionMapping = "atomMapping";
     String cColumnTypeReactionObjects = "reactionObjects";
     String cColumnTypeNegRecImage = "negRecImg";
+    String cColumnTypeTransformation = "transformation";
         // in addition to these all DescriptorHandler.SHORT_NAMEs are valid column types
 
     // Flag values are ORed values from (1:green, 2:yellow, 4:orange, 8:red, ...)

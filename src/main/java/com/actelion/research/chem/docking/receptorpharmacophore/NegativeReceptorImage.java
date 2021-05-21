@@ -22,7 +22,7 @@ import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalcu
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.AtomicGaussian;
-import com.actelion.research.chem.phesa.BindingSiteVolume;
+import com.actelion.research.chem.phesa.ShapeVolume;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
@@ -85,11 +85,11 @@ public class NegativeReceptorImage extends MoleculeGrid {
 		probeScanning = new ProbeScanning(receptor, receptorAtoms, this);
 	}
 	
-	public BindingSiteVolume calculate() {
+	public ShapeVolume calculate() {
 		List<PPGaussian> ppGaussians = new ArrayList<>();
 		List<AtomicGaussian> shapeGaussians = new ArrayList<>();
 		analyzeBindingSiteAtoms();
-		BindingSiteVolume recVol = new BindingSiteVolume();
+		ShapeVolume recVol = new ShapeVolume();
 		analyzeBumps();
 		createPolarInteractionSites(ppGaussians);
 		createShapeAtoms(shapeGaussians);

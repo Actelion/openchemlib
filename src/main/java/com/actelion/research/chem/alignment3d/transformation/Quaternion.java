@@ -1,4 +1,4 @@
-package com.actelion.research.chem.phesa;
+package com.actelion.research.chem.alignment3d.transformation;
 import java.util.Random;
 
 import com.actelion.research.calc.Matrix;

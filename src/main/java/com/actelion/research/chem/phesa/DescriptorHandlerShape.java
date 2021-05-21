@@ -1,10 +1,15 @@
 package com.actelion.research.chem.phesa;
 
 import com.actelion.research.chem.Canonizer;
+import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer;
+import com.actelion.research.chem.alignment3d.transformation.Rotation;
+import com.actelion.research.chem.alignment3d.transformation.Transformation;
+import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
+import com.actelion.research.chem.alignment3d.transformation.Translation;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.conf.ConformerSetGenerator;
@@ -15,6 +20,7 @@ import com.actelion.research.chem.phesaflex.FlexibleShapeAlignment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
 
@@ -39,7 +45,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 
 		
 
-	private static final int CONFORMATIONS = 50;
+	private static final int CONFORMATIONS = 200;
 	public static final int SIZE_CUTOFF = 200;
 
 
@@ -50,6 +56,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 
 	private  boolean singleBaseConformation; // take conformation of base molecule as is and don't generate conformers
 	
+	private List<Transformation> preProcessTransformations;
 	
 	private StereoMolecule[] previousAlignment;// = new StereoMolecule[2];
 	
@@ -99,11 +106,17 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this.ppWeight = ppWeight;
 		init();
 		conformerGenerator = new ConformerSetGenerator(maxConfs);
+		preProcessTransformations = new ArrayList<>();
 
 	}
 		
 	
+	public List<Transformation> getPreProcessTransformations() {
+		return preProcessTransformations;
+	}
+
 	public PheSAMolecule createDescriptor(ConformerSet confSet) {
+		preProcessTransformations.clear();
 		try {
 
 			init();
@@ -123,7 +136,12 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	            } else {
 					molVol = new MolecularVolume(refMolVol,conformer);
-					PheSAAlignment.preProcess(conformer, molVol);
+					Coordinates com = molVol.getCOM();
+					Rotation rotation = molVol.preProcess(conformer);
+					TransformationSequence transformation = new TransformationSequence();
+					transformation.addTransformation(rotation.getInvert());
+					transformation.addTransformation(new Translation(new double[] {com.x,com.y,com.z}));
+					preProcessTransformations.add(transformation);
 					molecularVolumes.add(molVol);
 	            }
 	        }

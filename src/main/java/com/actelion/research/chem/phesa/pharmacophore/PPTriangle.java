@@ -4,6 +4,9 @@ import java.util.Arrays;
 
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.alignment3d.transformation.Rotation;
+import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
+import com.actelion.research.chem.alignment3d.transformation.Translation;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 
@@ -147,8 +150,16 @@ public class PPTriangle {
 		return initialTranslate;
 	}
 	
-	
-	public double getMatchingTransform(PPTriangle fitTriangle, double[][] ur) {
+	/**
+	 * 
+	 * @param fitTriangle
+	 * @param ur: the final transformation to align the molecule to the ref molecule using the PP-triangle alignment
+	 * @param useDirectionality
+	 * @return
+	 */
+	public double getMatchingTransform(PPTriangle fitTriangle, TransformationSequence transform, boolean useDirectionality) {
+		double[][] ur = new double[3][3];
+		//fitTriangle and refTriangle both should have the center of mass at (0,0,0) and lie in the xy-plane
 		if(initialRot==null && initialTranslate==null)
 			preAlign();
 		if(fitTriangle.initialRot==null && fitTriangle.initialTranslate==null)
@@ -174,7 +185,10 @@ public class PPTriangle {
 		
 		PheSAAlignment.multiplyMatrix(u, fitTriangle.initialRot, ur);
 		
-
+		transform.addTransformation(new Translation(fitTriangle.initialTranslate));
+		transform.addTransformation(new Rotation(ur));
+		transform.addTransformation(new Translation(new double[] {-initialTranslate[0],-initialTranslate[1],-initialTranslate[2]}));
+		/*
 		ur[3][0] = fitTriangle.initialTranslate[0];  
 		ur[3][1] = fitTriangle.initialTranslate[1];  
 		ur[3][2] = fitTriangle.initialTranslate[2];  
@@ -182,7 +196,7 @@ public class PPTriangle {
 		ur[4][0] = -initialTranslate[0];  
 		ur[4][1] = -initialTranslate[1];  
 		ur[4][2] = -initialTranslate[2];  
-		
+		*/
 		
 		//first move com to origin
 		
@@ -220,16 +234,20 @@ public class PPTriangle {
 		double a_b = a.subC(b).dist();
 
 		double comScore = (1-((1-Math.exp(-0.25*Math.sqrt(ra*rb)))*(1-Sdirec)))*Math.exp(-0.125*(a_b*a_b));
-		Coordinates fitDir1 = new Coordinates(fitTriangle.dirs[0]);
-		Coordinates fitDir2 = new Coordinates(fitTriangle.dirs[1]);
-		Coordinates fitDir3 = new Coordinates(fitTriangle.dirs[2]);
-		if(fitTriangle.f[0]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[0]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
-			fitDir1.rotate(ur);
-		if(fitTriangle.f[1]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[1]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
-			fitDir2.rotate(ur);
-		if(fitTriangle.f[2]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[2]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
-			fitDir3.rotate(ur);
-		double dirScore = 0.33333*(Math.max(0,fitDir1.dot(dirs[0])) + Math.max(0,fitDir2.dot(dirs[1])) + Math.max(0,fitDir3.dot(dirs[2])));
+		double dirScore = 1.0;
+		if(useDirectionality) {
+			Coordinates fitDir1 = new Coordinates(fitTriangle.dirs[0]);
+			Coordinates fitDir2 = new Coordinates(fitTriangle.dirs[1]);
+			Coordinates fitDir3 = new Coordinates(fitTriangle.dirs[2]);
+			if(fitTriangle.f[0]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[0]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
+				fitDir1.rotate(ur);
+			if(fitTriangle.f[1]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[1]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
+				fitDir2.rotate(ur);
+			if(fitTriangle.f[2]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[2]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
+				fitDir3.rotate(ur);
+			dirScore = 0.33333*(Math.max(0,fitDir1.dot(dirs[0])) + Math.max(0,fitDir2.dot(dirs[1])) + Math.max(0,fitDir3.dot(dirs[2])));
+		}
+
 		return ppFit*dirScore*comScore;
 	
 	}

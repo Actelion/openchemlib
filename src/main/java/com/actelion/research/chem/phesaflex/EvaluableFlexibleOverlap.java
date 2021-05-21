@@ -11,6 +11,7 @@ import com.actelion.research.chem.phesa.AtomicGaussian;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.QuickMathCalculator;
+import com.actelion.research.chem.phesa.ShapeVolume;
 import com.actelion.research.chem.phesa.VolumeGaussian;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 import com.actelion.research.chem.phesa.PheSAAlignment;
@@ -163,9 +164,9 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 	public double getFGValueShape(double[] grad) {
 		
-		MolecularVolume molGauss = shapeAlign.getMolGauss();
+		ShapeVolume molGauss = shapeAlign.getMolGauss();
 
-		MolecularVolume refMolGauss = shapeAlign.getRefMolGauss();
+		ShapeVolume refMolGauss = shapeAlign.getRefMolGauss();
 
 		for(int i=0;i<grad.length;i++) {
 			grad[i] = 0;
@@ -209,8 +210,8 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 
 		
 		}
-		
-		for(VolumeGaussian refVG:refMolGauss.getVolumeGaussians()){
+		if(refMolGauss instanceof MolecularVolume) {
+			for(VolumeGaussian refVG:((MolecularVolume)refMolGauss).getVolumeGaussians()){
 			double xi = refVG.getCenter().x;
 			double yi = refVG.getCenter().y;
 			double zi = refVG.getCenter().z;
@@ -243,7 +244,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 
 		
 		}
-
+		}
 
 		return totalOverlap; 
 	
@@ -251,9 +252,9 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 	public double getFGValuePP(double[] grad) {
 		
-		MolecularVolume molGauss = shapeAlign.getMolGauss();
+		ShapeVolume molGauss = shapeAlign.getMolGauss();
 
-		MolecularVolume refMolGauss = shapeAlign.getRefMolGauss();
+		ShapeVolume refMolGauss = shapeAlign.getRefMolGauss();
 
 		for(int i=0;i<grad.length;i++) {
 			grad[i] = 0;
@@ -305,7 +306,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 	}
 	
-	public double getFGValueShapeSelf(double[] grad, MolecularVolume molGauss,boolean rigid) {
+	public double getFGValueShapeSelf(double[] grad, ShapeVolume molGauss,boolean rigid) {
 		
 		for(int i=0;i<grad.length;i++) {
 			grad[i] = 0;
@@ -319,17 +320,22 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 			for(AtomicGaussian  fitAt:molGauss.getAtomicGaussians()){
 				totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
 			}
-			for(VolumeGaussian fitAt:molGauss.getVolumeGaussians()){
+			if(molGauss instanceof MolecularVolume) {
+			for(VolumeGaussian fitAt:((MolecularVolume)molGauss).getVolumeGaussians()){
 				totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
 			}
+			}
 	    }
-	    for(AtomicGaussian refAt:molGauss.getAtomicGaussians()){
-	    	for(VolumeGaussian fitAt:molGauss.getVolumeGaussians()){
+		if(molGauss instanceof MolecularVolume) {
+	    for(VolumeGaussian refAt: ((MolecularVolume)molGauss).getVolumeGaussians()){
+	    	for(VolumeGaussian fitAt : ((MolecularVolume)molGauss).getVolumeGaussians()){
 	    		totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
 	    	}
 	    }
+		}
 
 		return totalOverlap; 
+
 		
 	
 	}
@@ -391,7 +397,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 
 	
 	
-	public double getFGValueSelfPP(double[] grad, MolecularVolume molVol,boolean rigid) {
+	public double getFGValueSelfPP(double[] grad, ShapeVolume molVol,boolean rigid) {
 		double xi,yi,zi,xj,yj,zj;
 		
 		for(int i=0;i<grad.length;i++) {

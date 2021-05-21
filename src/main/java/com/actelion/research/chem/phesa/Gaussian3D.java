@@ -8,6 +8,7 @@ import java.util.Arrays;
 
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.Coordinates;
 
@@ -130,6 +131,9 @@ public abstract class Gaussian3D {
 		return centerModCoords;
 	}
 	
+	public void transform(Transformation transform) {
+		transform.apply(center);
+	}
 
 		
 
@@ -163,7 +167,10 @@ public abstract class Gaussian3D {
 	
 	public void updateCoordinates(Coordinates[] coords) {
 		center = new Coordinates(coords[atomId]);
-
+	}
+	
+	public void updateCoordinates(Coordinates coords) {
+		center = new Coordinates(coords);
 	}
 
 	
