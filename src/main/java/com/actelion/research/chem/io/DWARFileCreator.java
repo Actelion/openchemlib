@@ -220,7 +220,7 @@ public class DWARFileCreator {
 		if (mMasterCopyParser == null) {
 			mWriter.write("<datawarrior-fileinfo>");
 			mWriter.newLine();
-			mWriter.write("<version=\"3.1\">");
+			mWriter.write("<version=\"3.3\">");
 			mWriter.newLine();
 			if (rowCount > 0) {
 				mWriter.write("<rowcount=\""+rowCount+"\">");
@@ -232,8 +232,14 @@ public class DWARFileCreator {
 		}
 		else {
 			for (String line:mMasterCopyParser.getHeadOrTail()) {
-				if (line.trim().matches("<rowcount=\"\\d+\">"))
-					line = "<rowcount=\""+rowCount+"\">";
+				if (line.trim().matches("<rowcount=\"\\d+\">")) {
+					if (rowCount < 0)
+						continue;
+					line = "<rowcount=\"" + rowCount + "\">";
+					}
+				if (line.trim().matches("<created=\"\\d+\">")) {
+					line = "<created=\"" + System.currentTimeMillis() + "\">";
+					}
 				mWriter.write(line);
 				mWriter.newLine();
 			}
