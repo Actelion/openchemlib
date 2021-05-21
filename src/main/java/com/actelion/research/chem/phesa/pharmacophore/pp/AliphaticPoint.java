@@ -12,21 +12,18 @@ public class AliphaticPoint implements IPharmacophorePoint {
 	private int referenceAtom;
 	private List<Integer> atoms;
 	private Coordinates center;
-	private Coordinates directionality = new Coordinates(1.0,0.0,0.0);
+	private static final Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 
 	public AliphaticPoint(StereoMolecule mol, int a, List<Integer> atoms) {
 		referenceAtom = a;
 		this.atoms = atoms;
-		directionality = new Coordinates(0.0,0.0,0.0);
 		updateCoordinates(mol.getAtomCoordinates());
 	}
 
 	public AliphaticPoint(AliphaticPoint aP) {
 		referenceAtom = aP.referenceAtom;
-		directionality = new Coordinates(aP.directionality);
 		center = new Coordinates(aP.center);
 		atoms = new ArrayList<Integer>();
-		directionality = new Coordinates(0.0,0.0,0.0);
 		for(int ringAtom : aP.atoms) {
 			atoms.add(ringAtom);
 		}
@@ -57,7 +54,7 @@ public class AliphaticPoint implements IPharmacophorePoint {
 	}
 
 	@Override
-	public Coordinates getRotatedDirectionality(double[][] m) {
+	public Coordinates getRotatedDirectionality(double[][] m,double scaleFactor) {
 		return null;
 	}
 

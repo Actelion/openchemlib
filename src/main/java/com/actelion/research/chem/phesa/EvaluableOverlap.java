@@ -1,7 +1,10 @@
 package com.actelion.research.chem.phesa;
 
 import java.util.ArrayList;
+import java.util.List;
+
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
@@ -108,11 +111,14 @@ public class EvaluableOverlap implements Evaluable  {
 
 	@Override
 	public double getFGValue(double[] grad) {
-		MolecularVolume refMolGauss = shapeAlign.getRefMolGauss();
-		MolecularVolume fitMolGauss = shapeAlign.getMolGauss();
+		ShapeVolume refMolGauss = shapeAlign.getRefMolGauss();
+		ShapeVolume fitMolGauss = shapeAlign.getMolGauss();
 		double value = 0.0;
 		double[] atomGrad = new double[grad.length];
-		value += (1.0-ppWeight)*this.getFGValueOverlap(atomGrad,refMolGauss.getAtomicGaussians(),fitMolGauss.getAtomicGaussians(), refMolGauss.getVolumeGaussians(),
+		List<VolumeGaussian> volumeGaussians = new ArrayList<>();
+		if(refMolGauss instanceof MolecularVolume)
+			volumeGaussians = ((MolecularVolume)refMolGauss).getVolumeGaussians();
+		value += (1.0-ppWeight)*this.getFGValueOverlap(atomGrad,refMolGauss.getAtomicGaussians(),fitMolGauss.getAtomicGaussians(),volumeGaussians,
 						qDersAt,rDersAt,sDersAt,uDersAt,fitAtGaussModCoords);
 			
 		
@@ -130,7 +136,7 @@ public class EvaluableOverlap implements Evaluable  {
 	}
 	
 	
-	private void getQuatGradient(double[][] q0Ders, double[][] q1Ders, double[][] q2Ders, double[][] q3Ders, ArrayList<? extends Gaussian3D> refMolGauss,ArrayList<? extends Gaussian3D> fitMolGauss,Coordinates[] fitModCoords,
+	private void getQuatGradient(double[][] q0Ders, double[][] q1Ders, double[][] q2Ders, double[][] q3Ders, List<? extends Gaussian3D> refMolGauss,List<? extends Gaussian3D> fitMolGauss,Coordinates[] fitModCoords,
 			double q0, double q1, double q2, double q3, double invnorm2) {
 
 		    /**
@@ -211,7 +217,7 @@ public class EvaluableOverlap implements Evaluable  {
 	 * @param grad 
 	 */
 	
-	private double getFGValueOverlap(double[] grad,ArrayList<AtomicGaussian> refMolGauss,ArrayList<AtomicGaussian> fitMolGauss,ArrayList<VolumeGaussian> volGaussians,
+	private double getFGValueOverlap(double[] grad,List<AtomicGaussian> refMolGauss,List<AtomicGaussian> fitMolGauss,List<VolumeGaussian> volGaussians,
 			double[][] qDers,double[][] rDers,double[][] sDers,double[][] uDers, Coordinates[] fitGaussModCoords) {
 		double q=transform[0];
 	    double r=transform[1];
@@ -342,7 +348,7 @@ public class EvaluableOverlap implements Evaluable  {
 	}
 	    
 	    
-	   private double getFGValueOverlapPP(double[] grad, ArrayList<PPGaussian> refMolGauss,ArrayList<PPGaussian> fitMolGauss, double[][] qDers,double[][] rDers,double[][] sDers,double[][] uDers, Coordinates[] fitGaussModCoords, Coordinates[] fitPPDirectionalityMod) {
+	   private double getFGValueOverlapPP(double[] grad, List<PPGaussian> refMolGauss,List<PPGaussian> fitMolGauss, double[][] qDers,double[][] rDers,double[][] sDers,double[][] uDers, Coordinates[] fitGaussModCoords, Coordinates[] fitPPDirectionalityMod) {
 			double q=transform[0];
 		    double r=transform[1];
 		    double s=transform[2];

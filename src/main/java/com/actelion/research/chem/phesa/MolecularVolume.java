@@ -1,7 +1,10 @@
 package com.actelion.research.chem.phesa;
 
+import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.Quaternion;
+import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
@@ -26,24 +29,16 @@ import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 
 
-public class MolecularVolume {
+public class MolecularVolume extends ShapeVolume{
 	static public final double p = 2.82842712475; // height of Atomic Gaussian, 2*sqrt(2), commonly used in the literature: Haque and Pande, DOI 10.1002/jcc.11307 
 	static public final double alpha_pref = 2.41798793102; // taken from DOI 10.1002/jcc.11307
 
-	
-	
-
-	private double volume;
-	private Coordinates com;
-	private ArrayList<AtomicGaussian> atomicGaussians;
-	private ArrayList<PPGaussian> ppGaussians;
 	private ArrayList<VolumeGaussian> volumeGaussians; //exclusion and inclusion spheres
 	private ArrayList<Coordinates> hydrogens;
 
 	
 	public MolecularVolume(List<AtomicGaussian> atomicGaussiansInp,List<PPGaussian> ppGaussiansInp,List<VolumeGaussian> volGaussians, 
 			List<Coordinates> hydrogenCoords) {
-		this.volume = 0.0;
 		this.atomicGaussians = new ArrayList<AtomicGaussian>();
 		for(AtomicGaussian ag : atomicGaussiansInp) {
 			atomicGaussians.add(new AtomicGaussian(ag));
@@ -89,7 +84,6 @@ public class MolecularVolume {
 
 	
 	public MolecularVolume(StereoMolecule mol) {
-		this.volume = 0.0;
 		this.hydrogens = new ArrayList<Coordinates>();
 		this.volumeGaussians = new ArrayList<VolumeGaussian>();
 		this.calc(mol);
@@ -104,12 +98,20 @@ public class MolecularVolume {
 
 	}
 	
+	/**
+	 * calculate the Overlap of the two molecular volumes as a function a transform vector that is applied to the query molecule
+	 * overlap Volume of two molecular Volumes  formulated as a summed overlap of atomic Gaussians
+	 * taken from Grant, Gallardo, Pickup, Journal of Computational Chemistry, 17, 1653-1666, 1996
+	 * returns a double[2]: the first double is the total overlap, whereas the second value is the specific 
+	 * contribution of additional volume gaussians (inclusion, exclusion)
+	 * @param transform
+	 * @return
+	 */
 	
-	
+
 	
 	
 	public MolecularVolume(MolecularVolume original) {
-		this.volume = new Double(original.volume);
 		this.atomicGaussians = new ArrayList<AtomicGaussian>();
 		this.ppGaussians = new ArrayList<PPGaussian>();
 		this.volumeGaussians = new ArrayList<VolumeGaussian>();
@@ -135,6 +137,76 @@ public class MolecularVolume {
 	}
 	
 
+	/**
+	 * calculate the self-overlap of the base molecule
+	 * @return
+	 */
+	
+	@Override
+	public double getSelfAtomOverlap(){
+			double Vtot = 0.0;
+			for(AtomicGaussian at:atomicGaussians){
+				for(AtomicGaussian at2:atomicGaussians){
+					Vtot += at.getVolumeOverlap(at2);
+				}
+				for(VolumeGaussian vg : volumeGaussians) {
+					if(vg.getRole()!=VolumeGaussian.INCLUSION)
+						continue;
+					Vtot += vg.getRole()*at.getVolumeOverlap(vg);
+				}
+			}
+			
+			for(VolumeGaussian vg:volumeGaussians){
+				if(vg.getRole()!=VolumeGaussian.INCLUSION)
+					continue;
+				for(VolumeGaussian vg2 : volumeGaussians) {
+					//only consider self-overlap of inclusion spheres
+					if(vg2.getRole()!=VolumeGaussian.INCLUSION)
+						continue;
+					Vtot += vg2.getVolumeOverlap(vg);
+				}
+			}
+	
+			return Vtot;
+		}
+	
+	public double[] getTotalAtomOverlap(double[] transform, MolecularVolume fitVol){
+		double[] result = new double[2];
+		Quaternion quat = new Quaternion(transform[0],transform[1],transform[2],transform[3]);
+		double Vtot = 0.0;
+		double Vvol = 0.0;
+		double[][] rotMatrix = quat.getRotMatrix().getArray();
+		List<AtomicGaussian> fitGaussians = fitVol.atomicGaussians;
+		Coordinates[] fitCenterModCoords = new Coordinates[fitGaussians.size()];
+		double normFactor = 1/(transform[0]*transform[0]+transform[1]*transform[1]+transform[2]*transform[2]+transform[3]*transform[3]);
+		for(int k=0;k<fitGaussians.size();k++) {
+    			fitCenterModCoords[k] = fitGaussians.get(k).getRotatedCenter(rotMatrix, normFactor, new double[] {transform[4], transform[5], transform[6]}); //we operate on the transformed coordinates of the molecule to be fitted
+		}
+
+		for(AtomicGaussian refAt:atomicGaussians){
+			int index = 0;
+			for(AtomicGaussian fitAt:fitVol.atomicGaussians){
+				Vtot += refAt.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
+				index+=1;	
+			}
+		}
+		
+		for(VolumeGaussian refVol:volumeGaussians){
+			int index = 0;
+			for(AtomicGaussian fitAt:fitVol.atomicGaussians){
+				double overlap = refVol.getRole()*refVol.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
+				Vtot += overlap;
+				Vvol += overlap;
+				index+=1;	
+			}
+		}
+		if(Vtot<0)
+			Vtot = 0.0;
+		result[0] = Vtot;
+		result[1] = Vvol;
+		return result;
+
+	}
 	
 
 	
@@ -166,6 +238,12 @@ public class MolecularVolume {
 		}
 	}
 	
+	@Override
+	protected void rotate180DegreeAroundAxis(PheSAAlignment.axis a) {
+		super.rotate180DegreeAroundAxis(a);
+		rotateGaussians180DegreeAroundAxis(volumeGaussians,a);
+	}
+	
 	/**
 	 * calculates the pharmacophore points and corresponding volumes of a 3d molecule
 	 * @param mol
@@ -187,8 +265,8 @@ public class MolecularVolume {
 	/**
 	 * calculates volume weighted center of mass of the molecular Volume
 	 */
-	
-	private void calcCOM(){ 
+	@Override
+	public void calcCOM(){ 
 		double volume = 0.0;
 		double comX = 0.0;
 		double comY = 0.0;
@@ -209,29 +287,68 @@ public class MolecularVolume {
 		comX = comX/volume;
 		comY = comY/volume;
 		comZ = comZ/volume;
-		this.volume = volume;
 		this.com = new Coordinates(comX,comY,comZ);
 
 	}
 	
-	
-	public Coordinates getCOM() {
-		this.calcCOM();
-		return this.com;
+	@Override
+	public Matrix getCovarianceMatrix() {
+		Matrix massMatrix = new Matrix(3,3); 
+		double volume = 0.0;
+		for (AtomicGaussian ag : atomicGaussians){
+			volume += ag.getVolume();
+			double value = ag.getVolume()*ag.getCenter().x*ag.getCenter().x;
+			massMatrix.addToElement(0,0,value);
+			value = ag.getVolume()*ag.getCenter().x*ag.getCenter().y;
+			massMatrix.addToElement(0,1,value);
+			value = ag.getVolume()*ag.getCenter().x*ag.getCenter().z;
+			massMatrix.addToElement(0,2,value);
+			value = ag.getVolume()*ag.getCenter().y*ag.getCenter().y;
+			massMatrix.addToElement(1,1,value);
+			value = ag.getVolume()*ag.getCenter().y*ag.getCenter().z;
+			massMatrix.addToElement(1,2,value);
+			value = ag.getVolume()*ag.getCenter().z*ag.getCenter().z;
+			massMatrix.addToElement(2,2,value);	
+		}
+		for (VolumeGaussian vg : volumeGaussians){
+			volume += vg.getRole()*vg.getVolume();
+			double value = vg.getRole()*vg.getVolume()*vg.getCenter().x*vg.getCenter().x;
+			massMatrix.addToElement(0,0,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().x*vg.getCenter().y;
+			massMatrix.addToElement(0,1,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().x*vg.getCenter().z;
+			massMatrix.addToElement(0,2,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().y*vg.getCenter().y;
+			massMatrix.addToElement(1,1,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().y*vg.getCenter().z;
+			massMatrix.addToElement(1,2,value);
+			value = vg.getRole()*vg.getVolume()*vg.getCenter().z*vg.getCenter().z;
+			massMatrix.addToElement(2,2,value);	
+		}
+		massMatrix.set(0,0,massMatrix.get(0,0)/volume);
+		massMatrix.set(0,1,massMatrix.get(0,1)/volume);
+		massMatrix.set(0,2,massMatrix.get(0,2)/volume);
+		massMatrix.set(1,1,massMatrix.get(1,1)/volume);
+		massMatrix.set(1,2,massMatrix.get(1,2)/volume);
+		massMatrix.set(2,2,massMatrix.get(2,2)/volume);
+		massMatrix.set(1,0,massMatrix.get(0,1));
+		massMatrix.set(2,0,massMatrix.get(0,2));
+		massMatrix.set(2,1,massMatrix.get(1,2));
+		
+		return massMatrix;
 	}
 
-	public ArrayList<AtomicGaussian> getAtomicGaussians() {
-		return this.atomicGaussians;
-	}
-	
-	public ArrayList<PPGaussian> getPPGaussians() {
-		return this.ppGaussians;
-	}
 	
 	public ArrayList<VolumeGaussian> getVolumeGaussians() {
 		return this.volumeGaussians;
 	}
 	
+	@Override 
+	protected void transformGaussians(Transformation transform) {
+		super.transformGaussians(transform);
+		transformGaussians(volumeGaussians,transform);
+
+	}
 
 
 	public ArrayList<Coordinates> getHydrogens() {
@@ -256,8 +373,7 @@ public class MolecularVolume {
 			
 	}
 	
-
-	
+	@Override
 	public void update(StereoMolecule mol) {
 		updateCoordinates(getAtomicGaussians(),mol.getAtomCoordinates());
 		updateCoordinates(getPPGaussians(),mol.getAtomCoordinates());
@@ -265,22 +381,24 @@ public class MolecularVolume {
 		updateHydrogens(mol);
 	}
 	
+	@Override
 	public void update(Conformer conf) {
 		updateCoordinates(getAtomicGaussians(),conf.getCoordinates());
 		updateCoordinates(getPPGaussians(),conf.getCoordinates());
 		updateCoordinates(getVolumeGaussians(),conf.getCoordinates());
 		updateHydrogens(conf);
 	}
-	
-	private void updateCoordinates(ArrayList<? extends Gaussian3D> gaussians, Coordinates[] coords) {
-		for(Gaussian3D gaussian : gaussians) {
-			gaussian.updateCoordinates(coords);
-		}
-		
+	public  Matrix createCanonicalOrientation(Conformer conf) {
+		Matrix rotMat = super.createCanonicalOrientation(conf);
+		for(VolumeGaussian vg : getVolumeGaussians())
+			vg.rotateShift(rotMat);
+		return rotMat;
 	}
 	
 
 	
+
+	@Override
 	public void translateToCOM(Coordinates com) {
 
 
@@ -305,9 +423,6 @@ public class MolecularVolume {
 		calcCOM();
 	}
 	
-	public List<PPGaussian> getExitVectorGaussians() {
-		return ppGaussians.stream().filter(e -> (e.getPharmacophorePoint() instanceof ExitVectorPoint)).collect(Collectors.toList());
-	}
 
 	
 
@@ -423,9 +538,9 @@ public class MolecularVolume {
 	}
 
 	public static MolecularVolume decodeCoordsOnly(String string, MolecularVolume reference)  {
-		ArrayList<AtomicGaussian> referenceAtomicGaussians = reference.getAtomicGaussians(); 
-		ArrayList<PPGaussian> referencePPGaussians = reference.getPPGaussians(); 
-		ArrayList<VolumeGaussian> referenceVolGaussians = reference.getVolumeGaussians();
+		List<AtomicGaussian> referenceAtomicGaussians = reference.getAtomicGaussians(); 
+		List<PPGaussian> referencePPGaussians = reference.getPPGaussians(); 
+		List<VolumeGaussian> referenceVolGaussians = reference.getVolumeGaussians();
 		
 		
 		String[] splitString = string.split("  ");

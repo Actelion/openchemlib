@@ -11,7 +11,7 @@ public class AromRingPoint implements IPharmacophorePoint {
 	private int referenceAtom;
 	private List<Integer> ringAtoms;
 	private Coordinates center;
-	private Coordinates directionality = new Coordinates(1.0,0.0,0.0);
+	private static final Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 	
 	public AromRingPoint(StereoMolecule mol, int a, List<Integer> ringAtoms) {
 		referenceAtom = a;
@@ -21,7 +21,6 @@ public class AromRingPoint implements IPharmacophorePoint {
 	
 	public AromRingPoint(AromRingPoint aP) {
 		referenceAtom = aP.referenceAtom;
-		directionality = new Coordinates(aP.directionality);
 		center = new Coordinates(aP.center);
 		ringAtoms = new ArrayList<Integer>();
 		for(int ringAtom : aP.ringAtoms) {
@@ -155,7 +154,7 @@ public class AromRingPoint implements IPharmacophorePoint {
 	}
 
 	@Override
-	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix,double scaleFactor) {
 		Coordinates directMod = new Coordinates(directionality);
 		return directMod;
 	}

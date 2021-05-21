@@ -64,6 +64,10 @@ public class PheSAMolecule {
 		return conformer;
 	}
 	
+	public StereoMolecule getConformer(int index) {
+		return getConformer(shape.get(index));
+	}
+	
 	public StereoMolecule getMolecule() {
 		return this.mol;
 	}

@@ -8,6 +8,8 @@ import java.util.List;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.Transformation;
+import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.EncodeFunctions;
 import com.actelion.research.chem.phesa.Gaussian3D;
@@ -53,10 +55,7 @@ public class PPGaussian extends Gaussian3D {
 	}
 	
 	public Coordinates getRotatedDirectionality(double[][] rotMatrix, double scaleFactor) {
-		Coordinates directMod = pp.getRotatedDirectionality(rotMatrix);
-		//centerModCoords = this.getCenter().rotateC(rotMatrix); //we operate on the transformed coordinates of the molecule to be fitted
-		directMod.scale(scaleFactor); // scale by the invers
-
+		Coordinates directMod = pp.getRotatedDirectionality(rotMatrix,scaleFactor);
 		return directMod;
 	}
 	
@@ -154,6 +153,21 @@ public class PPGaussian extends Gaussian3D {
 	public double calculateHeight() {
 		return MolecularVolume.p;
 	}
+	
+	@Override 
+	public void transform(Transformation transformation) {
+		if(!(transformation instanceof TransformationSequence)) {
+			this.pp.applyTransformation(transformation);
+			this.center = pp.getCenter();
+		}
+		else {
+			TransformationSequence seq = (TransformationSequence) transformation;
+			for(Transformation trans : seq.getTransformations()) {
+				this.pp.applyTransformation(trans);
+				this.center = pp.getCenter();
+			}
+			}
+		}
 	
 	@Override
 	public void updateCoordinates(Coordinates[] coords) {

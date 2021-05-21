@@ -124,11 +124,10 @@ public class DonorPoint implements IPharmacophorePoint {
 	}
 	
 	@Override
-	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix,double scaleFactor) {
 		Coordinates directMod = new Coordinates();
-		directMod.x = directionality.x*rotMatrix[0][0] + directionality.y*rotMatrix[1][0] + directionality.z*rotMatrix[2][0];
-		directMod.y = directionality.x*rotMatrix[0][1] + directionality.y*rotMatrix[1][1] + directionality.z*rotMatrix[2][1];
-		directMod.z = directionality.x*rotMatrix[0][2] + directionality.y*rotMatrix[1][2] + directionality.z*rotMatrix[2][2];
+		directMod = directionality.rotateC(rotMatrix);
+		directMod.scale(scaleFactor); // scale by the invers
 		return directMod;
 	}
 

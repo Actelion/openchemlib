@@ -20,7 +20,7 @@ public class SimplePharmacophorePoint implements IPharmacophorePoint {
 	private Coordinates center;
 	private int atomID;
 	private IPharmacophorePoint.Functionality functionality;
-	private Coordinates directionality = new Coordinates(0.0,0.0,0.0);
+	private static final Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 	
 	
 	public SimplePharmacophorePoint(int atomID, Coordinates center, IPharmacophorePoint.Functionality functionality) {
@@ -137,7 +137,7 @@ public class SimplePharmacophorePoint implements IPharmacophorePoint {
 	}
 	
 	@Override
-	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix,double scaleFactor) {
 		Coordinates directMod = new Coordinates(directionality);
 		return directMod;
 	}

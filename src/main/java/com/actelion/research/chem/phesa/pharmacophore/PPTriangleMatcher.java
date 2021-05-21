@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.AlignmentResult;
+import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
+
 public class PPTriangleMatcher {
 	
 	private static final double CUTOFF = 2.0; //if lengths of edges of two triangles differ by more than 2.5A, it is
@@ -15,6 +18,12 @@ public class PPTriangleMatcher {
 	
 	public static List<AlignmentResult> getMatchingTransforms(Map<Integer,ArrayList<PPTriangle>> triangleSetRef, 
 			Map<Integer,ArrayList<PPTriangle>> triangleSetFit, int refConformerId, int conformerId) {
+		return getMatchingTransforms(triangleSetRef, 
+				triangleSetFit, refConformerId, conformerId, true);
+	}
+	
+	public static List<AlignmentResult> getMatchingTransforms(Map<Integer,ArrayList<PPTriangle>> triangleSetRef, 
+			Map<Integer,ArrayList<PPTriangle>> triangleSetFit, int refConformerId, int conformerId, boolean useDirectionality) {
 		List<AlignmentResult> results = new ArrayList<AlignmentResult>();
 		for(int tHash : triangleSetRef.keySet())  {
 			if(!triangleSetFit.containsKey(tHash))
@@ -24,8 +33,8 @@ public class PPTriangleMatcher {
 			for(PPTriangle refTriangle : refTriangles) {
 				for(PPTriangle fitTriangle : fitTriangles) {
 					if(doEdgeLengthsMatch(refTriangle,fitTriangle)) {
-						double[][] transform = new double[5][3];
-						double score = refTriangle.getMatchingTransform(fitTriangle, transform);
+						TransformationSequence transform = new TransformationSequence();
+						double score = refTriangle.getMatchingTransform(fitTriangle, transform,useDirectionality);
 						if(score>SCORE_CUTOFF)
 							results.add(new AlignmentResult(score, transform,refConformerId,conformerId));
 					}
@@ -48,39 +57,6 @@ public class PPTriangleMatcher {
 			return false;
 	}
 	
-	public static class AlignmentResult{
-		private double similarity;
-		private double[][] transform;
-		private int conformerIndex;
-		private int refConformerIndex;
-		
-		public AlignmentResult(double similarity, double[][] transform, int refConformerIndex, int conformerIndex) {
-			this.similarity = similarity;
-			this.transform = transform;
-			this.refConformerIndex = refConformerIndex;
-			this.conformerIndex = conformerIndex;
-		}
-		
-		
-		public double[][] getTransform() {
-			return transform;
-		}
 
-		
-		public double getSimilarity() {
-			return similarity;
-		}
-		
-		public int getConformerIndex() {
-			return conformerIndex;
-		}
-		
-		public int getRefConformerIndex() {
-			return refConformerIndex;
-		}
-		
-		
-		
-	}
 
 }

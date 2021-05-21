@@ -51,7 +51,7 @@ public class DockingUtils {
 			u.set(1,1,-u.get(1, 1));
 			u.set(2,1,-u.get(2, 1));
 		}
-		PheSAAlignment.rotateMol(conf,u);
+		PheSAAlignment.rotateMol(conf,u.getArray());
 		return u;
 		
 	}

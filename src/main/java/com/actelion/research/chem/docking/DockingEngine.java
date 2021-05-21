@@ -18,6 +18,10 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.Quaternion;
+import com.actelion.research.chem.alignment3d.transformation.Rotation;
+import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
+import com.actelion.research.chem.alignment3d.transformation.Translation;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.conf.ConformerSetGenerator;
@@ -68,7 +72,7 @@ public class DockingEngine {
 		MolecularVolume molVol = new MolecularVolume(nativeLigand);
 		origCOM  = new Coordinates(molVol.getCOM());
 		Conformer conf = new Conformer(nativeLigand);
-		rotation = PheSAAlignment.preProcess(conf, molVol);
+		molVol.preProcess(conf);
 		this.startPositions = startPositions;
 		preprocess(receptor,nativeLigand);
 		
@@ -176,7 +180,13 @@ public class DockingEngine {
 		for(Conformer ligConf : startPoints) {
 			for(double[] transform : PheSAAlignment.initialTransform(1)) {
 				Conformer newLigConf = new Conformer(ligConf);
-				PheSAAlignment.rotateMol(newLigConf, transform);
+				Quaternion q = new Quaternion(transform[0],transform[1],transform[2],transform[3]);
+				Rotation rot = new Rotation(q.getRotMatrix().getArray());
+				Translation trans = new Translation(new double[] {transform[4],transform[5],transform[6]});
+				TransformationSequence t = new TransformationSequence();
+				t.addTransformation(rot);
+				t.addTransformation(trans);
+				t.apply(newLigConf);
 				LigandPose pose = initiate(newLigConf,eMin);
 				double energy = mcSearch(pose);
 				if(energy<bestEnergy) {

@@ -12,7 +12,7 @@ public class ChargePoint implements IPharmacophorePoint {
 	private List<Integer> neighbours;
 	private int charge;
 	private Coordinates center;
-	private Coordinates directionality = new Coordinates(1.0,0.0,0.0);
+	private static final Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 	
 	public ChargePoint(StereoMolecule mol, int a, List<Integer> neighbours, int charge) {
 		if(charge!=1 && charge!=-1) 
@@ -26,7 +26,6 @@ public class ChargePoint implements IPharmacophorePoint {
 	public ChargePoint(ChargePoint cP) {
 		chargeAtom = cP.chargeAtom;
 		charge = cP.charge;
-		directionality = new Coordinates(cP.directionality);
 		center = new Coordinates(cP.center);
 		neighbours = new ArrayList<Integer>();
 		for(int neighbour : cP.neighbours) {
@@ -62,7 +61,7 @@ public class ChargePoint implements IPharmacophorePoint {
 	}
 	
 	@Override
-	public Coordinates getRotatedDirectionality(double[][] rotMatrix) {
+	public Coordinates getRotatedDirectionality(double[][] rotMatrix,double scaleFactor) {
 		Coordinates directMod = new Coordinates(directionality);
 		return directMod;
 	}

@@ -8,12 +8,12 @@ import java.util.Random;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.docking.scoring.AbstractScoringEngine;
 import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.phesa.PheSAAlignment;
-import com.actelion.research.chem.phesa.Quaternion;
 import com.actelion.research.chem.potentialenergy.PositionConstraint;
 
 
@@ -131,7 +131,7 @@ public class LigandPose implements Evaluable{
 			Matrix m = q.getRotMatrix();
 			Coordinates com = DockingUtils.getCOM(ligConf);
 			ligConf.translate(-com.x, -com.y, -com.z);
-			PheSAAlignment.rotateMol(ligConf, m);
+			PheSAAlignment.rotateMol(ligConf, m.getArray());
 			ligConf.translate(com.x, com.y, com.z);
 
 			
