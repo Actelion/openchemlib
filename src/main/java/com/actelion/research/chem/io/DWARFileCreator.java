@@ -80,6 +80,9 @@ public class DWARFileCreator {
 	 */
 	public void setMasterCopy(DWARFileParser parser) {
 		mMasterCopyParser = parser;
+		ArrayList<String> headAndTail = mMasterCopyParser.getHeadOrTail();
+		for (String title:headAndTail.get(headAndTail.size()-1).split("\\t"))
+			mColumnTitleList.add(title);
 	}
 
 	/**
@@ -188,13 +191,7 @@ public class DWARFileCreator {
 	 * @return manually defined column titles or from master copy, if used
 	 */
 	public String[] getColumnTitles() {
-		if (mMasterCopyParser != null) {
-			ArrayList<String> headAndTail = mMasterCopyParser.getHeadOrTail();
-			return headAndTail.get(headAndTail.size()-1).split("\\t");
-			}
-		else {
-			return mColumnTitleList.toArray(new String[0]);
-			}
+		return mColumnTitleList.toArray(new String[0]);
 		}
 
 	/**
@@ -242,6 +239,8 @@ public class DWARFileCreator {
 				mWriter.newLine();
 			}
 		}
+
+		mRow = new String[mColumnTitleList.size()];
 	}
 
 
@@ -272,8 +271,6 @@ public class DWARFileCreator {
 			mWriter.write(mColumnTitleList.get(i));
 		}
 		mWriter.newLine();
-
-		mRow = new String[mColumnTitleList.size()];
 	}
 
 	/**
