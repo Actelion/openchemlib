@@ -65,7 +65,6 @@ public class SimilarityGraphBasedReactionMapper {
 
 		RootAtomPairSource rootAtomPairSource = new RootAtomPairSource(reactant, product, mReactantMapNo, mProductMapNo);
 
-		int no = 0;
 		while (rootAtomPairSource.hasNextPairSequence()) {
 			mMapNo = rootAtomPairSource.getManualMapCount();
 			mMappableAtomCount = rootAtomPairSource.getMappableAtomCount();
@@ -92,8 +91,6 @@ public class SimilarityGraphBasedReactionMapper {
 				for (int i=0; i<productMapNo.length; i++)
 					productMapNo[i] = mProductMapNo[i];
 				}
-
-			no++;
 			}
 		}
 
@@ -604,7 +601,6 @@ if (reactantRoot == 4) {
 				return false;
 			}
 
-
 /* strangely this causes lots of false mappings
 		// attached hydroxies may not be the same
 		if (mReactant.getAtomPi(reactantAtom) == 0
@@ -648,6 +644,12 @@ if (reactantRoot == 4) {
 		 && hasOxo(mReactant, reactantAtom)
 		 && hasOxo(mProduct, productAtom)
 		 && similarity != MAX_ENVIRONMENT_DISTANCE)
+			return false;
+
+		if (mReactant.getAtomicNo(reactantAtom) == 8
+		 && (hasOxo(mReactant, reactantConn)
+		  || hasOxo(mProduct, productConn))
+		 && similarity < 2)
 			return false;
 
 		if (!isStereoMatch
@@ -706,7 +708,7 @@ if (reactantRoot == 4) {
 	private boolean hasOxo(StereoMolecule mol, int atom) {
 		for (int i=0; i<mol.getConnAtoms(atom); i++)
 			if (mol.getConnBondOrder(atom, i) == 2
-			 && mol.getAtomicNo(mol.getConnAtom(atom, i)) == 8)
+			 && mol.getAtomicNo(mol.getConnAtom(atom, i)) != 6)
 				return true;
 		return false;
 		}
