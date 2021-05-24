@@ -65,9 +65,16 @@ public class ReactionCenterMapper {
 	/** Tries and scores all possible mapping permutations for all of hitherto unmapped atoms.
 	 * The best scoring combination is kept and its score returned.
 	 */
-	public int completeMapping() {
+	public float completeMapping() {
+		// For efficient scoring we build a reactionAtomToProductAtom map,
+		// which is updated with the center atom assignments for every scoring.
+		MappingScorer scorer = new MappingScorer(mReactant, mProduct);
+		int[] reactantToProductAtom = scorer.createReactantToProductAtomMap(mReactantMapNo, mProductMapNo);
+
+		if (mAtomClasses.size() == 0)
+			return scorer.scoreMapping(reactantToProductAtom);
+
 		int atomCount = 0;
-		int mapNoAfterObvious = mMapNo;
 		int[] cumulatedAtomCount = new int[mAtomClasses.size()];
 		int[] permutationCount = new int[mAtomClasses.size()];
 		int totalPermutationCount = 1;
@@ -98,7 +105,7 @@ public class ReactionCenterMapper {
 
 		int[] productAtom = new int[atomCount];
 
-		int bestScore = 0;
+		float bestScore = -1e10f;
 		int[] bestProductAtom = null;
 		int[] permutationIndex = new int[mAtomClasses.size()];
 		boolean nextPermutationAvailable = (mAtomClasses.size() != 0);
@@ -123,14 +130,22 @@ public class ReactionCenterMapper {
 			for (int i=0; i<atomCount; i++)
 				mProductMapNo[productAtom[i]] = ++mapNo;
 
-			int score = scoreCenterMapping(reactantAtom, productAtom);
+			// update reaction center mapping to current permutation
+			for (int i = 0; i<reactantAtom.length; i++)
+				reactantToProductAtom[reactantAtom[i]] = productAtom[i];
+
+			float score = scorer.scoreMapping(reactantToProductAtom);
+//System.out.print("c-score:"+score);
+//for (int i=0; i<reactantAtom.length; i++)
+// System.out.print(" "+reactantAtom[i]+":"+productAtom[i]);
+//System.out.println();
 			if (bestScore < score) {
 				bestScore = score;
 				bestProductAtom = productAtom.clone();
 				}
 			}
 
-		if (bestScore != 0) {
+		if (bestScore != -1e10) {
 			int mapNo = mapNoAfterObviousMapping;
 			for (int i=0; i<atomCount; i++)
 				mProductMapNo[bestProductAtom[i]] = ++mapNo;
@@ -143,34 +158,6 @@ public class ReactionCenterMapper {
 		return mMapNo - mStartMapNo;
 		}
 
-	/**
-	 * @param reactantAtom list of reactant atoms to be mapped sorted by atomicNo
-	 * @param productAtom list of product atoms (permuted within atomicNo sets)
-	 */
-	private int scoreCenterMapping(int[] reactantAtom, int[] productAtom) {
-		for (int i=0; i<productAtom.length; i++) {
-			int pAtom = productAtom[i];
-			}
-
-		int score = 1;
-		for (int i=0; i<reactantAtom.length; i++) {
-			int rAtom = reactantAtom[i];
-			int pAtom = productAtom[i];
-			for (int j=0; j<mReactant.getConnAtoms(rAtom); j++) {
-				int rConnAtom = mReactant.getConnAtom(rAtom, j);
-				for (int k=0; k<mProduct.getConnAtoms(pAtom); k++) {
-					int pConnAtom = mProduct.getConnAtom(pAtom, k);
-					if (mReactantMapNo[rConnAtom] != 0
-					 && mReactantMapNo[rConnAtom] == mProductMapNo[pConnAtom]) {
-						score++;
-						break;
-						}
-					}
-				}
-			}
-
-		return score;
-		}
 
 	class UnmappedCenterAtoms {
 		private static final int MAX_ATOMS_PER_TYPE = 6;

@@ -16,12 +16,21 @@ public class SimilarityGraphBasedReactionMapper {
 	// the neighbor and the atom itself. The next fragment is build from the first by adding all direct
 	// neighbours to the atom (except the fromAtom). of neighbor is considered to belong to the graph
 	// already
-	private static final int MAX_ENVIRONMENT_DISTANCE = 8;
+	private static final int SIMILARITY_SHIFT = 8;  // bit shift to allow for lower significant features to distinguish equal environment similarities
 	private static final int SKELETON_PENALTY = 3;
+	private static final int MAX_ENVIRONMENT_RADIUS = 8;
+	private static final int MAX_ENVIRONMENT_SIMILARITY = MAX_ENVIRONMENT_RADIUS << SIMILARITY_SHIFT;
+	private static final int MAX_SKELETON_SIMILARITY = (MAX_ENVIRONMENT_RADIUS - SKELETON_PENALTY) << SIMILARITY_SHIFT;
+
+	// Fine-tune environment similarity score modifiers
+	private static final int PI_AND_HETERO_PLUS = 0;    // only for skeleton similarity TODO check, why negative effect?!
+	private static final int STEREO_MATCH_PLUS = 64;
+	private static final int ENDO_RING_PLUS = 128;
 
 	private StereoMolecule mReactant,mProduct;
-	private int mMapNo,mGraphMapNoCount,mMappableAtomCount,mScore;
+	private int mMapNo,mGraphMapNoCount,mMappableAtomCount;
 	private int[] mReactantMapNo,mProductMapNo,mReactantRingMembership,mProductRingMembership;
+	private float mScore;
 	private ByteArrayComparator mSimilarityComparator;
 	private byte[][][][] mReactantConnAtomEnv,mProductConnAtomEnv;   // indexes: atom,connIndex,radius,idcode bytes
 	private byte[][][][] mReactantSkelAtomEnv,mProductSkelAtomEnv;   // indexes: atom,connIndex,radius,idcode bytes
@@ -61,7 +70,7 @@ public class SimilarityGraphBasedReactionMapper {
 		initializeRingMembership();
 
 		mSimilarityComparator = new ByteArrayComparator();
-		mScore = Integer.MIN_VALUE;
+		mScore = -1e10f;
 
 		RootAtomPairSource rootAtomPairSource = new RootAtomPairSource(reactant, product, mReactantMapNo, mProductMapNo);
 
@@ -77,13 +86,17 @@ public class SimilarityGraphBasedReactionMapper {
 
 			mGraphMapNoCount = mMapNo;
 
+			float score = 0;
 			if (mMapNo < mMappableAtomCount) {
 				ReactionCenterMapper centerMapper = new ReactionCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo);
-				centerMapper.completeMapping();
+				score = centerMapper.completeMapping();
 				mMapNo += centerMapper.getMappedAtomCount();
 				}
-
-			int score = calculateScore();
+			else {
+				MappingScorer scorer = new MappingScorer(mReactant, mProduct);
+				score = scorer.scoreMapping(scorer.createReactantToProductAtomMap(mReactantMapNo, mProductMapNo));
+				}
+// TODO confirm that MappingScorer can replace internal scoring
 			if (mScore < score) {
 				mScore = score;
 				for (int i=0; i<reactantMapNo.length; i++)
@@ -107,7 +120,7 @@ public class SimilarityGraphBasedReactionMapper {
 	 * adds -1 for every inverted stereo center.
  	 * @return
 	 */
-	public int getScore() {
+	public float getScore() {
 		return mScore;
 		}
 
@@ -262,11 +275,11 @@ public class SimilarityGraphBasedReactionMapper {
 				}
 			}
 
-		for (int radius=0; radius<MAX_ENVIRONMENT_DISTANCE; radius++)
+		for (int radius=0; radius<MAX_ENVIRONMENT_RADIUS; radius++)
 			if (mSimilarityComparator.compare(mReactantConnAtomEnv[reactantAtom][reactantConnIndex][radius], mProductConnAtomEnv[productAtom][productConnIndex][radius]) != 0)
-				return radius;
+				return radius << SIMILARITY_SHIFT;
 
-		return MAX_ENVIRONMENT_DISTANCE;
+		return MAX_ENVIRONMENT_SIMILARITY;
 		}
 
 	/**
@@ -296,26 +309,35 @@ public class SimilarityGraphBasedReactionMapper {
 				}
 			}
 
-		for (int radius=SKELETON_PENALTY; radius<MAX_ENVIRONMENT_DISTANCE; radius++) {
+		for (int radius=SKELETON_PENALTY; radius<MAX_ENVIRONMENT_RADIUS; radius++) {
 			if (mReactantSkelAtomEnv[reactantAtom][reactantConnIndex][radius] == null
 			 || mSimilarityComparator.compare(mReactantSkelAtomEnv[reactantAtom][reactantConnIndex][radius], mProductSkelAtomEnv[productAtom][productConnIndex][radius]) != 0)
-				return radius - SKELETON_PENALTY;
+				return (radius - SKELETON_PENALTY) << SIMILARITY_SHIFT;
 			}
 
-		return MAX_ENVIRONMENT_DISTANCE;
+		return MAX_SKELETON_SIMILARITY;
+		}
+
+	private int getPiAndHeteroBondCount(StereoMolecule mol, int atom) {
+		int count = mol.getAtomPi(atom);
+		for (int i=0; i<mol.getConnAtoms(atom); i++)
+			if (mol.isElectronegative(mol.getConnAtom(atom, i)))
+				count++;
+
+		return count;
 		}
 
 	private byte[][][][] classifyNeighbourAtomEnvironment(StereoMolecule mol, boolean skeletonOnly) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
 
-		byte[][][][] environment = new byte[mol.getAtoms()][MAX_ENVIRONMENT_DISTANCE][][];
+		byte[][][][] environment = new byte[mol.getAtoms()][MAX_ENVIRONMENT_RADIUS][][];
 
 		int[] atomList = new int[mol.getAtoms()];
 		int[] atomMap = new int[mol.getAtoms()];
 		boolean[] atomMask = new boolean[mol.getAtoms()];
 		for (int rootAtom=0; rootAtom<mol.getAtoms(); rootAtom++) {
-			environment[rootAtom] = new byte[mol.getConnAtoms(rootAtom)][MAX_ENVIRONMENT_DISTANCE][];
+			environment[rootAtom] = new byte[mol.getConnAtoms(rootAtom)][MAX_ENVIRONMENT_RADIUS][];
 
 			if (skeletonOnly && mol.getAtomicNo(rootAtom) != 6)
 				continue;
@@ -334,7 +356,7 @@ public class SimilarityGraphBasedReactionMapper {
 				// we need to mark the root atom, because otherwise close-by root atoms may end up with the same fragment
 				mol.setAtomSelection(fromAtom, true);
 
-				for (int sphere=0; sphere<MAX_ENVIRONMENT_DISTANCE && max<mol.getAtoms(); sphere++) {
+				for (int sphere=0; sphere<MAX_ENVIRONMENT_RADIUS && max<mol.getAtoms(); sphere++) {
 					if (sphere == 0) {
 						atomList[0] = fromAtom;
 						atomMask[fromAtom] = true;
@@ -495,18 +517,22 @@ public class SimilarityGraphBasedReactionMapper {
 						if (bondType == getBondType(mProduct, candidateBond)
 						 || skelSimilarity != 0) {
 							if (passesBasicRules(reactantRoot, reactantCandidate, productRoot, productCandidate)) {
-								int similarity = Math.max(skelSimilarity, getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate));
+								int envSimilarity = getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
+								int similarity = Math.max(skelSimilarity, envSimilarity);
 								if (similarity != 0) {
 									boolean isStereoMatch = matchesStereo(graphParent[reactantRoot], reactantRoot, reactantCandidate, productParent[productRoot], productRoot, productCandidate);
 									if (passesSimilarityDependentRules(reactantRoot, reactantCandidate, productRoot, productCandidate, similarity, isStereoMatch)) {
-										match[i][j] = 256 * similarity;
+										match[i][j] = similarity;
 										// we prefer that atom, which restores the correct TH parity
 										if (isStereoMatch)
-											match[i][j]++;
+											match[i][j] += STEREO_MATCH_PLUS;
 										// we preferably endo/endo or exo/exo matches
 										if (leavesRing(graphParent[reactantRoot], reactantRoot, reactantCandidate, mReactantRingMembership)
 										 == leavesRing(productParent[productRoot], productRoot, productCandidate, mProductRingMembership))
-											match[i][j] += 2;
+											match[i][j] += ENDO_RING_PLUS;
+										// we add a bonus if the pi-electron-plust-hetero-neighbour-count value matches at the first atom
+										if (getPiAndHeteroBondCount(mReactant, reactantCandidate) == getPiAndHeteroBondCount(mProduct, productCandidate))
+											match[i][j] += PI_AND_HETERO_PLUS;
 /*
 if (reactantRoot == 4) {
  System.out.print("graph:"); for (int k=0; k<current; k++) System.out.print(" "+graphAtom[k]+"("+productAtom[k]+")");
@@ -517,9 +543,9 @@ if (reactantRoot == 4) {
 								}
 							}
 						// if we have a changing bond order, but the rest of the substituent has maximal similarity
-						else if (getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate) == MAX_ENVIRONMENT_DISTANCE) {
-//							match[i][j] = 4 * MAX_ENVIRONMENT_RADIUS - 1;
-							match[i][j] = 3;
+						else if (getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate) == MAX_ENVIRONMENT_SIMILARITY) {
+//							match[i][j] = MAX_ENVIRONMENT_SIMILARITY - 1;
+							match[i][j] = 3 << SIMILARITY_SHIFT;
 							}
 						}   // TODO may track multiple options and try all recursively; then end this method with best option mapped
 					}
@@ -616,12 +642,6 @@ if (reactantRoot == 4) {
 		 && mReactant.getConnAtoms(reactantConn) > 1)
 			return false;
 */
-		// potential replacement of -O-R (R:H,C,any) at non-carbon atoms
-		if (mReactant.getAtomicNo(reactantConn) == 8
-		 && mReactant.getAtomicNo(reactantAtom) != 6
-		 && getAtomSimilarity(reactantAtom, reactantConn, productAtom, productConn) != MAX_ENVIRONMENT_DISTANCE)
-			return false;
-
 		// imine formation
 		if (mReactant.getAtomicNo(reactantConn) == 7
 		 && connAtomsOfAtomicNo(mReactant, reactantAtom, 7) < connAtomsOfAtomicNo(mProduct, productAtom, 7))
@@ -643,18 +663,34 @@ if (reactantRoot == 4) {
 		 && mReactant.getAtomPi(reactantConn) == 0
 		 && hasOxo(mReactant, reactantAtom)
 		 && hasOxo(mProduct, productAtom)
-		 && similarity != MAX_ENVIRONMENT_DISTANCE)
+		 && similarity != MAX_ENVIRONMENT_SIMILARITY)
 			return false;
 
+		// Since carboxylates,sulfonates, etc are potential leaving groups, we dont follow a bond to oxygen,
+		// if on the other side is a keto on the reactant side and similarity is not high
+		if (mReactant.getAtomicNo(reactantConn) == 8
+		 && mReactant.getConnAtoms(reactantConn) == 2
+		 && hasOxo(mReactant, getNextNeighbour(mReactant, reactantAtom, reactantConn))
+		 && similarity < (3 << SIMILARITY_SHIFT))
+			return false;
+
+		// A bond from oxygen to keto (C=O, S=O, C=N, etc) won't be followed,
+		// unless the first target fragment shells are identical
 		if (mReactant.getAtomicNo(reactantAtom) == 8
 		 && (hasOxo(mReactant, reactantConn)
 		  || hasOxo(mProduct, productConn))
-		 && similarity < 2)
+		 && similarity < (2 << SIMILARITY_SHIFT))
 			return false;
 
 		if (!isStereoMatch
 		 && (mReactant.getAtomicNo(reactantConn) != 6
 		  || !hasNonCarbonNeighbour(mReactant, reactantAtom)))
+			return false;
+
+		// potential replacement of -O-R (R:H,C,any) at non-carbon atoms
+		if (mReactant.getAtomicNo(reactantConn) == 8
+		 && mReactant.getAtomicNo(reactantAtom) != 6
+		 && similarity != MAX_ENVIRONMENT_SIMILARITY)
 			return false;
 
 		return true;
@@ -705,10 +741,10 @@ if (reactantRoot == 4) {
 		return true;
 		}
 
-	private boolean hasOxo(StereoMolecule mol, int atom) {
+	public static boolean hasOxo(StereoMolecule mol, int atom) {
 		for (int i=0; i<mol.getConnAtoms(atom); i++)
 			if (mol.getConnBondOrder(atom, i) == 2
-			 && mol.getAtomicNo(mol.getConnAtom(atom, i)) != 6)
+			 && mol.getAtomicNo(mol.getConnAtom(atom, i)) > 6)
 				return true;
 		return false;
 		}
@@ -736,6 +772,15 @@ if (reactantRoot == 4) {
 				}
 			}
 		return oxoLikeFound && hydroxyFound;
+		}
+
+	private int getNextNeighbour(StereoMolecule mol, int rootAtom, int atom) {
+		for (int i=0; i<mol.getConnAtoms(atom); i++) {
+			int connAtom = mol.getConnAtom(atom, i);
+			if (connAtom != rootAtom)
+				return connAtom;
+			}
+		return -1;
 		}
 
 	private int connAtomsOfAtomicNo(StereoMolecule mol, int atom, int atomicNo) {
