@@ -1,9 +1,6 @@
 package com.actelion.research.chem.reaction.mapping;
 
-import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.RingCollection;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.util.ByteArrayComparator;
 
@@ -89,7 +86,7 @@ public class SimilarityGraphBasedReactionMapper {
 			float score = 0;
 			if (mMapNo < mMappableAtomCount) {
 				ReactionCenterMapper centerMapper = new ReactionCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo);
-				score = centerMapper.completeMapping();
+				score = centerMapper.completeAndScoreMapping();
 				mMapNo += centerMapper.getMappedAtomCount();
 				}
 			else {
@@ -427,6 +424,9 @@ public class SimilarityGraphBasedReactionMapper {
 			StereoMolecule product = rxn.getProduct(i);
 			mProduct.addMolecule(product, product.getAtoms(), product.getBonds());
 			}
+
+		mReactant.normalizeAmbiguousBonds();
+		mProduct.normalizeAmbiguousBonds();
 		}
 
 	public StereoMolecule getReactant() {

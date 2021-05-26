@@ -15,7 +15,7 @@ import java.util.TreeMap;
  * reactant atoms and products atoms in the same atom class.
  */
 public class ReactionCenterMapper {
-	private static final int MAX_PERMUTATION_COUNT = 20000;
+	private static final int MAX_PERMUTATION_COUNT = 4000000;
 
 	private ArrayList<UnmappedCenterAtoms> mAtomClasses;
 	private StereoMolecule mReactant,mProduct;
@@ -57,15 +57,15 @@ public class ReactionCenterMapper {
 
 		mAtomClasses = new ArrayList<>();
 		for (UnmappedCenterAtoms uca:atomClassMap.values())
-			if (uca.mMappableAtomCount != 0)
-				if (!uca.mapObviousAtoms())
-					mAtomClasses.add(uca);
+			if (!uca.mapObviousAtoms())
+				mAtomClasses.add(uca);
 		}
 
 	/** Tries and scores all possible mapping permutations for all of hitherto unmapped atoms.
 	 * The best scoring combination is kept and its score returned.
+	 * If there are no unmapped atoms, then the score of the current mapping is returned.
 	 */
-	public float completeMapping() {
+	public float completeAndScoreMapping() {
 		// For efficient scoring we build a reactionAtomToProductAtom map,
 		// which is updated with the center atom assignments for every scoring.
 		MappingScorer scorer = new MappingScorer(mReactant, mProduct);
@@ -74,46 +74,47 @@ public class ReactionCenterMapper {
 		if (mAtomClasses.size() == 0)
 			return scorer.scoreMapping(reactantToProductAtom);
 
-		int atomCount = 0;
-		int[] cumulatedAtomCount = new int[mAtomClasses.size()];
-		int[] permutationCount = new int[mAtomClasses.size()];
-		int totalPermutationCount = 1;
-		int atomClassIndex = 0;
-		for (UnmappedCenterAtoms uca:mAtomClasses) {
-			atomCount += uca.mappableAtomCount();
-			permutationCount[atomClassIndex] = uca.initializePermutations();
-			totalPermutationCount *= permutationCount[atomClassIndex];
-			if (atomClassIndex != 0)
-				cumulatedAtomCount[atomClassIndex] = cumulatedAtomCount[atomClassIndex-1] + uca.mappableAtomCount();
-			atomClassIndex++;
-			}
-
+		double totalPermutationCount = 1;
+		for (UnmappedCenterAtoms uca:mAtomClasses)
+			totalPermutationCount *= uca.getPermutationCount();
 		if (totalPermutationCount > MAX_PERMUTATION_COUNT) {
-			System.out.println("permutationCount:"+totalPermutationCount);
+			System.out.println("permutationCount exceeds maximum:"+totalPermutationCount);
 			return 0;
 			}
 
-		int atomOffset = 0;
-		int[] reactantAtom = new int[atomCount];
-		for (UnmappedCenterAtoms uca:mAtomClasses)
-			atomOffset += uca.getReactantAtoms(reactantAtom, atomOffset);
-
-		// already assign mapNos to reactant atoms
-		int mapNoAfterObviousMapping = mMapNo;
-		for (int i=0; i<atomCount; i++)
-			mReactantMapNo[reactantAtom[i]] = ++mMapNo;
-
-		int[] productAtom = new int[atomCount];
+		int atomCount = 0;
+		int[] cumulatedAtomCount = new int[mAtomClasses.size()];
+		int[] permutationCount = new int[mAtomClasses.size()];
+		for (int i=0; i<mAtomClasses.size(); i++) {
+			UnmappedCenterAtoms uca = mAtomClasses.get(i);
+			permutationCount[i] = uca.initializePermutations();
+			cumulatedAtomCount[i] = atomCount;
+			atomCount += uca.getMappableAtomCount();
+			}
 
 		float bestScore = -1e10f;
+		int[] bestReactantAtom = null;
 		int[] bestProductAtom = null;
 		int[] permutationIndex = new int[mAtomClasses.size()];
 		boolean nextPermutationAvailable = (mAtomClasses.size() != 0);
 		while (nextPermutationAvailable) {
-			int index = 0;
-			atomOffset = 0;
-			for (UnmappedCenterAtoms uca:mAtomClasses)
-				atomOffset += uca.getPermutedProductAtoms(permutationIndex[index++], productAtom, atomOffset);
+			for (int i=0; i<mAtomClasses.size(); i++)
+				mAtomClasses.get(i).completeReactantToProductAtomMap(permutationIndex[i], reactantToProductAtom);
+
+			float score = scorer.scoreMapping(reactantToProductAtom);
+			if (bestScore < score) {
+				bestScore = score;
+
+				bestReactantAtom = new int[atomCount];
+				bestProductAtom = new int[atomCount];
+				int atomOffset = 0;
+				for (int i=0; i<mAtomClasses.size(); i++) {
+					UnmappedCenterAtoms uca = mAtomClasses.get(i);
+					uca.getReactantAtoms(permutationIndex[i], bestReactantAtom, atomOffset);
+					uca.getProductAtoms(permutationIndex[i], bestProductAtom, atomOffset);
+					atomOffset += uca.mMappableAtomCount;
+					}
+				}
 
 			nextPermutationAvailable = false;
 			for (int i=0; i<permutationIndex.length; i++) {
@@ -124,31 +125,15 @@ public class ReactionCenterMapper {
 					}
 				permutationIndex[i] = 0;
 				}
-
-			// assign product mapNos for scoring
-			int mapNo = mapNoAfterObviousMapping;
-			for (int i=0; i<atomCount; i++)
-				mProductMapNo[productAtom[i]] = ++mapNo;
-
-			// update reaction center mapping to current permutation
-			for (int i = 0; i<reactantAtom.length; i++)
-				reactantToProductAtom[reactantAtom[i]] = productAtom[i];
-
-			float score = scorer.scoreMapping(reactantToProductAtom);
-//System.out.print("c-score:"+score);
-//for (int i=0; i<reactantAtom.length; i++)
-// System.out.print(" "+reactantAtom[i]+":"+productAtom[i]);
-//System.out.println();
-			if (bestScore < score) {
-				bestScore = score;
-				bestProductAtom = productAtom.clone();
-				}
 			}
 
 		if (bestScore != -1e10) {
-			int mapNo = mapNoAfterObviousMapping;
-			for (int i=0; i<atomCount; i++)
-				mProductMapNo[bestProductAtom[i]] = ++mapNo;
+			int mapNo = mMapNo;
+			for (int i=0; i<atomCount; i++) {
+				mapNo++;
+				mReactantMapNo[bestReactantAtom[i]] = mapNo;
+				mProductMapNo[bestProductAtom[i]] = mapNo;
+				}
 			}
 
 		return bestScore;
@@ -160,8 +145,6 @@ public class ReactionCenterMapper {
 
 
 	class UnmappedCenterAtoms {
-		private static final int MAX_ATOMS_PER_TYPE = 6;
-
 		private int[] mReactantAtom = new int[0];
 		private int[] mProductAtom = new int[0];
 		private int mMappableAtomCount = 0;
@@ -179,16 +162,15 @@ public class ReactionCenterMapper {
 				mMappableAtomCount = mProductAtom.length;
 			}
 
-		public int mappableAtomCount() {
-			return mMappableAtomCount;
-			}
-
 		/**
 		 * If we have only one atom of this kind, or if we have all equal un-bonded atoms
 		 * on one reaction side, then we can safely map these atoms.
 		 * @return true if all mappable atoms were mapped
 		 */
 		public boolean mapObviousAtoms() {
+			if (mMappableAtomCount == 0)
+				return true;
+
 			if (mReactantAtom.length == 1 && mProductAtom.length == 1) {
 				mMapNo++;
 				mReactantMapNo[mReactantAtom[0]] = mMapNo;
@@ -222,6 +204,18 @@ public class ReactionCenterMapper {
 			return false;
 			}
 
+		public double getPermutationCount() {
+			int totalAtomCount = Math.max(mReactantAtom.length, mProductAtom.length);
+			double permutationCount = 1;
+			for (int i=totalAtomCount-mMappableAtomCount+1; i<=totalAtomCount; i++)
+				permutationCount *= i;
+			return permutationCount;
+			}
+
+		public int getMappableAtomCount() {
+			return mMappableAtomCount;
+			}
+
 		private boolean areEqualSingleAtoms(int[] atoms, StereoMolecule mol) {
 			for (int atom:atoms)
 				if (mol.getConnAtoms(atom) != 0)
@@ -237,51 +231,65 @@ public class ReactionCenterMapper {
 
 		public int initializePermutations() {
 			mPermutationList = new ArrayList<>();    // contains pointer array from reactant to product
-
 			int[] solution = new int[mMappableAtomCount];
-			for (int i=0; i<mMappableAtomCount; i++)
-				solution[i] = i;
-
-			if (mMappableAtomCount <= MAX_ATOMS_PER_TYPE)
-				permute(solution, 0, solution.length-1);
-			else
-				mPermutationList.add(solution);
-
+			boolean[] isUsed = new boolean[Math.max(mReactantAtom.length, mProductAtom.length)];
+			permute(0, isUsed, solution);
 			return mPermutationList.size();
 			}
 
-		public int getReactantAtoms(int[] reactantAtom, int reactantAtomOffset) {
-			for (int i=0; i<mMappableAtomCount; i++)
-				reactantAtom[reactantAtomOffset+i] = mReactantAtom[i];
-
-			return mMappableAtomCount;
+		private void permute(int index, boolean[] isUsed, int[] solution) {
+			for (int i=0; i<isUsed.length; i++) {
+				if (!isUsed[i]) {
+					isUsed[i] = true;
+					solution[index] = i;
+					if (index+1 == solution.length)
+						mPermutationList.add(solution.clone());
+					else
+						permute(index+1, isUsed, solution);
+					isUsed[i] = false;
+					}
+				}
 			}
 
-		public int getPermutedProductAtoms(int permutationIndex, int[] productAtom, int productAtomOffset) {
+		// For the given permutation and all known reactant atoms this method
+		// writes -1 or the proper product atom into the mapping array
+		public void completeReactantToProductAtomMap(int permutationIndex, int[] reactantToProductAtomMap) {
 			int[] permutation = mPermutationList.get(permutationIndex);
-			for (int i=0; i<mMappableAtomCount; i++)
-				productAtom[productAtomOffset+i] = mProductAtom[permutation[i]];
-
-			return mMappableAtomCount;
-			}
-
-		private void permute(int[] solution, int l, int r) {
-			if (l == r) {
-				mPermutationList.add(solution.clone());
+			if (mReactantAtom.length <= mProductAtom.length) {
+				for (int i=0; i<mMappableAtomCount; i++)
+					reactantToProductAtomMap[mReactantAtom[i]] = mProductAtom[permutation[i]];
 				}
 			else {
-				for (int i=l; i<=r; i++) {
-					int temp = solution[l];
-					solution[l] = solution[i];
-					solution[i] = temp;
-
-					permute(solution, l+1, r);
-
-					solution[i] = solution[l];
-					solution[l] = temp;
+				for (int atom:mReactantAtom)
+					reactantToProductAtomMap[atom] = -1;
+				for (int i=0; i<mMappableAtomCount; i++)
+					reactantToProductAtomMap[mReactantAtom[permutation[i]]] = mProductAtom[i];
 				}
 			}
-		}
+
+		public void getReactantAtoms(int permutationIndex, int[] reactantAtom, int reactantAtomOffset) {
+			if (mReactantAtom.length <= mProductAtom.length) {
+				for (int i=0; i<mMappableAtomCount; i++)
+					reactantAtom[reactantAtomOffset + i] = mReactantAtom[i];
+				}
+			else {
+				int[] permutation = mPermutationList.get(permutationIndex);
+				for (int i=0; i<mMappableAtomCount; i++)
+					reactantAtom[reactantAtomOffset+i] = mReactantAtom[permutation[i]];
+				}
+			}
+
+		public void getProductAtoms(int permutationIndex, int[] productAtom, int productAtomOffset) {
+			if (mReactantAtom.length > mProductAtom.length) {
+				for (int i=0; i<mMappableAtomCount; i++)
+					productAtom[productAtomOffset + i] = mProductAtom[i];
+				}
+			else {
+				int[] permutation = mPermutationList.get(permutationIndex);
+				for (int i=0; i<mMappableAtomCount; i++)
+					productAtom[productAtomOffset + i] = mProductAtom[permutation[i]];
+				}
+			}
 
 		private int[] addAtom(int atom, int[] atoms) {
 			int[] newAtoms = new int[atoms.length + 1];

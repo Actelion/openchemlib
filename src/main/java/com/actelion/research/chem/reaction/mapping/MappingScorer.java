@@ -69,7 +69,7 @@ public class MappingScorer {
 			if (!productBondHandled[pBond])
 				penalty += getBondCreateOrBreakPenalty(mProduct, pBond);
 
-		for (int rAtom=0; rAtom<mProduct.getAtoms(); rAtom++)
+		for (int rAtom=0; rAtom<mReactant.getAtoms(); rAtom++)
 			if (mReactant.getAtomParity(rAtom) != Molecule.cAtomParityNone)
 				penalty += getParityInversionPanalty(rAtom, reactantToProductAtom);
 
@@ -89,13 +89,16 @@ public class MappingScorer {
 		boolean isHetero2 = mol.isElectronegative(atom2);
 		boolean hasOxo1 = SimilarityGraphBasedReactionMapper.hasOxo(mol, atom1);
 		boolean hasOxo2 = SimilarityGraphBasedReactionMapper.hasOxo(mol, atom2);
+		if ((isHetero1 && mol.isMetalAtom(atom2))
+		 || (isHetero2 && mol.isMetalAtom(atom1)))
+			return 1.7f;
 		if ((isHetero1 && hasOxo2)
-				|| (isHetero2 && hasOxo1))
+		 || (isHetero2 && hasOxo1))
 			return 1.8f;
 		if (isHetero1 || isHetero2)
 			return 1.9f;
 
-		return mol.isAromaticBond(bond) ? 4f : 1f + mol.getBondTypeSimple(bond);
+		return mol.isAromaticBond(bond) ? 3f : 1.9f + (float)mol.getBondOrder(bond) / 10f;
 		}
 
 	private int getBondType(StereoMolecule mol, int bond) {

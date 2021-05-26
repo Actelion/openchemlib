@@ -53,15 +53,16 @@ public class ChemicalRuleEnhancedReactionMapper {
 		new ChemicalRule("Alkyne-Cyclisation", "gG`@DcO|CFAFC`@!gFp@DiTt@@CFAFC`@#qi\\V qiSt#!Rb@JNyk\\Bl^{~@CORp`", 8.5f),
 
 		// two step
-		new ChemicalRule("Elimination-Claisen", "daxD@@qJY^ji@OhJ@!daXD@@YIUMjX@`#IkFPn`P IkBGfR@#!RmpK~_?x@m?vw?[\\BmpHsXkp", 5.5f),
+		new ChemicalRule("Elimination-Claisen", "gNp`AldTQji@~a`!gOP`@teTZdCzN@#qtHUX qtSi@#!RupI~Owx@uwwW_]_|LyK|", 4.5f),
 		new ChemicalRule("imineFormationAzaCope", "daZH@LAIMUjd@pRL@!daZH@HAAn]jd@p`@#IGfaLJ` IFDzfK@#!RXpAl@HYrXs}lOvL?[C|sTdH", 8.5f),
+		new ChemicalRule("didehydroCopeWithAromatisation", "gNp@Di]ejDcjbrlwK`!gOp@DjWkB@@H#qrLkx q\\oQp#!R?`Bw?[\\BmpK~@K\\BL~JB", 4.5f),
 
 		// multi step with cyclisation/condensation
 		new ChemicalRule("symAldolNitrogenRing", "dovJ@GBfttf\\v\\qjViPCADGbDodnGp!doNJ@JCSmtefWTCaYjje@H#IlZXi]]yL~C IqMVCzaIim?#!R@hb}b@A~Owz}uzyl_]\\Bus}~@GxBbLfaOwzUicMbX`", 0.5f),
 
 		// pericyclic
 		new ChemicalRule("Diels-Alder","gFP@LdPLjA@!gFp@DiTujhB#qiZf qMSf#!R?`BH?X`BIo[~_sNr``", 3.5f),
-		new ChemicalRule("Cope", "gGQ@DeZmRAcDc@H@!gGQ@HeZmRAcHc@H@#qkNT qi\\V#!R@FL?Xs}lOvL?[CLbO@", 7.5f),
+		new ChemicalRule("Cope", "gGQ@DeZmRAbhcApIF@P@!gGQ@HeZmRAbhc@HIFC`@#qkNT qi\\V#!R@BM_Hu}lWrM_[COBO@", 5.5f),
 		new ChemicalRule("OxyCope", "gNq@@dr}SHFD@!gNq@@djkUHD#qynZ` qykbp#!Ro`AH`c]|\\KtwoS]|LvIB", 4.5f),
 
 		// rearrangements
