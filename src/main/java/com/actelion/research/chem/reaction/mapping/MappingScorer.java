@@ -6,14 +6,20 @@ import com.actelion.research.chem.StereoMolecule;
 import java.util.Arrays;
 
 public class MappingScorer {
+	// Simple scoring just adds bond order changes (delocalized=1.5) of every added, broken, or changed bond.
+	// Otherwise, added and broken bonds score with higher penalties and simple chemical rules slighly adjust scoring,
+	// e.g. prefer changes of C-hetero to C-C bonds.
+	private static final boolean SCORE_SIMPLE = false;
+	private static final boolean SCORE_HYDROGEN = false;
+
 	private StereoMolecule mReactant,mProduct;
 
 	/**
-	 * Instantiates a mappinf scorer thatjudjes the quality of a mapping by adding panalties for every bond
+	 * Instantiates a mapping scorer that judges the quality of a mapping by adding penalties for every bond
 	 * being broken, created, or changed. In principal the panelty for any created or broken bond is 2.0,
 	 * and for any changed bond order is 1.0. A change from/to delocalized to/from single or double is considered
 	 * a change. Broken or created bonds at typical break locations, e.g. ester cleavage, get slightly lower
-	 * panalties than 2.0.
+	 * penalties than 2.0. Changes of implicit hydrogen counts contribute with a factor of 2.0.
 	 * @param reactant
 	 * @param product
 	 */
@@ -36,12 +42,21 @@ public class MappingScorer {
 		}
 
 	/**
-	 *
 	 * @param reactantToProductAtom
 	 * @return the mapping score considering all
 	 */
 	public float scoreMapping(int[] reactantToProductAtom) {
 		float penalty = 0;
+
+		// For all atoms assigned in reactantToProductAtom that undergo any bond changes,
+		// we add/remove fractional bond orders for new/broken bonds and
+		// we add fractional bond order changes or changed bonds
+		// to reflect the corresponding change in implicit hydrogen bond counts.
+		float[] hydrogenBondPenalty = new float[mProduct.getAtoms()];
+		boolean[] isAssignedProductAtom = new boolean[mProduct.getAtoms()];
+		for (int atom:reactantToProductAtom)
+			if (atom != -1)
+				isAssignedProductAtom[atom] = true;
 
 		boolean[] productBondHandled = new boolean[mProduct.getBonds()];
 		for (int rBond=0; rBond<mReactant.getBonds(); rBond++) {
@@ -50,28 +65,56 @@ public class MappingScorer {
 			int pAtom1 = reactantToProductAtom[rAtom1];
 			int pAtom2 = reactantToProductAtom[rAtom2];
 
+			float rBondOrder = getFractionalBondOrder(mReactant, rBond);
+
 			if (pAtom1 == -1 || pAtom2 == -1) {
-				penalty += getBondCreateOrBreakPenalty(mReactant, rBond);
+				if (pAtom1 != -1 || pAtom2 != -1)
+					penalty += getBondCreateOrBreakPenalty(mReactant, rBond);
+
+				if (pAtom1 != -1)
+					hydrogenBondPenalty[pAtom1] += rBondOrder;
+				if (pAtom2 != -1)
+					hydrogenBondPenalty[pAtom2] += rBondOrder;
 				continue;
 				}
 
 			int pBond = mProduct.getBond(pAtom1, pAtom2);
 			if (pBond == -1) {
 				penalty += getBondCreateOrBreakPenalty(mReactant, rBond);
+				hydrogenBondPenalty[pAtom1] += rBondOrder;
+				hydrogenBondPenalty[pAtom2] += rBondOrder;
 				continue;
 				}
+
+			float bondOrderChange = rBondOrder - getFractionalBondOrder(mProduct, pBond);
+			hydrogenBondPenalty[pAtom1] += bondOrderChange;
+			hydrogenBondPenalty[pAtom2] += bondOrderChange;
 
 			productBondHandled[pBond] = true;
 			penalty += getBondChangePenalty(rBond, pBond);
 			}
 
-		for (int pBond=0; pBond<mProduct.getBonds(); pBond++)
-			if (!productBondHandled[pBond])
+		for (int pBond=0; pBond<mProduct.getBonds(); pBond++) {
+			if (!productBondHandled[pBond]) {
 				penalty += getBondCreateOrBreakPenalty(mProduct, pBond);
+				float pBondOrder = getFractionalBondOrder(mProduct, pBond);
+				int pAtom1 = mProduct.getBondAtom(0, pBond);
+				int pAtom2 = mProduct.getBondAtom(1, pBond);
+				if (isAssignedProductAtom[pAtom1])
+					hydrogenBondPenalty[pAtom1] -= pBondOrder;
+				if (isAssignedProductAtom[pAtom2])
+					hydrogenBondPenalty[pAtom2] -= pBondOrder;
+				}
+			}
 
 		for (int rAtom=0; rAtom<mReactant.getAtoms(); rAtom++)
 			if (mReactant.getAtomParity(rAtom) != Molecule.cAtomParityNone)
-				penalty += getParityInversionPanalty(rAtom, reactantToProductAtom);
+				penalty += getParityInversionPenalty(rAtom, reactantToProductAtom);
+
+		// TODO adjust factor or optimize scoring in general
+		if (SCORE_HYDROGEN)
+			for (int pAtom=0; pAtom<mProduct.getAtoms(); pAtom++)
+				penalty += 0.5f * Math.abs(hydrogenBondPenalty[pAtom]);
 
 		return -penalty;
 		}
@@ -83,6 +126,9 @@ public class MappingScorer {
 	 * @return
 	 */
 	private float getBondCreateOrBreakPenalty(StereoMolecule mol, int bond) {
+		if (SCORE_SIMPLE)
+			return (float)mol.getBondOrder(bond);
+
 		int atom1 = mol.getBondAtom(0, bond);
 		int atom2 = mol.getBondAtom(1, bond);
 		boolean isHetero1 = mol.isElectronegative(atom1);
@@ -101,6 +147,11 @@ public class MappingScorer {
 		return mol.isAromaticBond(bond) ? 3f : 1.9f + (float)mol.getBondOrder(bond) / 10f;
 		}
 
+
+	private float getFractionalBondOrder(StereoMolecule mol, int bond) {
+		return mol. isDelocalizedBond(bond) ? 1.5f : mol.getBondOrder(bond);
+		}
+
 	private int getBondType(StereoMolecule mol, int bond) {
 		if (mol.isDelocalizedBond(bond))
 			return 0;
@@ -109,15 +160,18 @@ public class MappingScorer {
 
 	/**
 	 * penalty for a changed bond
-	 * @param reactantBond
-	 * @param productBond
+	 * @param rBond
+	 * @param pBond
 	 * @return
 	 */
-	private float getBondChangePenalty(int reactantBond, int productBond) {
-		return getBondType(mReactant, reactantBond) == getBondType(mProduct, productBond) ? 0f : 1f;
+	private float getBondChangePenalty(int rBond, int pBond) {
+		if (SCORE_SIMPLE)
+			return Math.abs(getFractionalBondOrder(mReactant, rBond) - getFractionalBondOrder(mProduct, pBond));
+
+		return getBondType(mReactant, rBond) == getBondType(mProduct, pBond) ? 0f : 1f;
 		}
 
-	private float getParityInversionPanalty(int reactantAtom, int[] reactantToProductAtom) {
+	private float getParityInversionPenalty(int reactantAtom, int[] reactantToProductAtom) {
 		// if we change a stereo center's parity, we must have broken or formed bonds
 		int productAtom = reactantToProductAtom[reactantAtom];
 		if (productAtom != -1
@@ -128,13 +182,14 @@ public class MappingScorer {
 			if (reactantParity == Molecule.cAtomParityUnknown) {
 				if (productParity == Molecule.cAtomParity1
 				 || productParity == Molecule.cAtomParity2)
-					return 5.0f;  // one broken and one formed bond plus additional panelty!
-								// must be more expensive than Mitsunobu, which itself must be more expensive than simple esterification (one broken and one formed bond)
+					return SCORE_SIMPLE ? 4.0f : 5.0f;
+							// one broken and one formed bond plus additional panelty!
+							// must be more expensive than Mitsunobu, which itself must be more expensive than simple esterification (one broken and one formed bond)
 				}
 			else {
 				if (productParity == Molecule.cAtomParityUnknown
 				 || isTHParityInversion(reactantAtom, reactantToProductAtom) == (reactantParity == productParity))
-					return 5.0f; // one broken and one formed bond plus additional panelty!
+					return SCORE_SIMPLE ? 4.0f : 5.0f;
 				}
 			}
 		return 0f;
