@@ -102,6 +102,12 @@ public class ReactionCenterMapper {
 				mAtomClasses.get(i).completeReactantToProductAtomMap(permutationIndex[i], reactantToProductAtom);
 
 			float score = scorer.scoreMapping(reactantToProductAtom);
+//System.out.print("score:"+score);
+//for (int i=0; i<mAtomClasses.size(); i++)
+// for (int j=0; j<mAtomClasses.get(i).mReactantAtom.length; j++)
+//  System.out.print(" "+mAtomClasses.get(i).mReactantAtom[j]+":"+reactantToProductAtom[mAtomClasses.get(i).mReactantAtom[j]]);
+//System.out.println();
+
 			if (bestScore < score) {
 				bestScore = score;
 

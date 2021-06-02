@@ -71,6 +71,7 @@ public class ChemicalRuleEnhancedReactionMapper {
 		new ChemicalRule("rearrangement1032", "gOp`ATieMji`H!gOp`ATeekZj`H#qaSnx qa]~P#!ROh]`lkoYCONJ_quT|qJl", 5.5f),
 
 		// 1,2-shifts
+		new ChemicalRule("Pinacol-Rearrangement", "gNp`ATffjj@pPh!gOP`@tfXZhCAA`#qb^ix qb^oH#!R?m}WoRb}Og?~wu^BLsH\\", 6.5f),
 		new ChemicalRule("1,3-WaterEliminationWith12Shift", "gJQ@@dmU@_SP!gKa@@`vtA}A@#qiTp qjap#!R?`ADddRm?basHdH", 6.5f),
 
 		// oxidative rearrangements

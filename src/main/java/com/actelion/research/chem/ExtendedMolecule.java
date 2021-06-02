@@ -526,11 +526,17 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperNeighbours);
 
 		int valence = 0;
-		for (int i=0; i<mAllConnAtoms[atom]; i++)
+		int delocalizedCount = 0;
+		for (int i=0; i<mAllConnAtoms[atom]; i++) {
 			if (!mIsFragment || (mAtomQueryFeatures[mConnAtom[atom][i]] & cAtomQFExcludeGroup) == 0)
 				valence += mConnBondOrder[atom][i];
+			int bond = mConnBond[atom][i];
+			if (mBondType[bond] == cBondTypeDelocalized
+			 || (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) == cBondQFDelocalized))
+				delocalizedCount++;
+			}
 
-		return valence;
+		return valence + (delocalizedCount >= 2 ? 1 : 0);
 		}
 
 

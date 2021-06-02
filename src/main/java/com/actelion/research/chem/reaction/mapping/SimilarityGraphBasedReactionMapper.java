@@ -20,7 +20,7 @@ public class SimilarityGraphBasedReactionMapper {
 	private static final int MAX_SKELETON_SIMILARITY = (MAX_ENVIRONMENT_RADIUS - SKELETON_PENALTY) << SIMILARITY_SHIFT;
 
 	// Fine-tune environment similarity score modifiers
-	private static final int PI_AND_HETERO_PLUS = 0;    // only for skeleton similarity TODO check, why negative effect?!
+	private static final int PI_AND_HETERO_PLUS = 1;    // only for skeleton similarity
 	private static final int STEREO_MATCH_PLUS = 64;
 	private static final int ENDO_RING_PLUS = 128;
 
@@ -374,8 +374,13 @@ public class SimilarityGraphBasedReactionMapper {
 								}
 							}
 
-						if (newMax == max)
+						if (newMax == max) {
+							// We consider small, but exactly matching groups to be of highest possible similarity
+							if (!skeletonOnly)
+								for (int i=sphere; i<MAX_ENVIRONMENT_RADIUS; i++)
+									environment[rootAtom][connIndex][i] = environment[rootAtom][connIndex][i-1];
 							break;
+							}
 
 						min = max;
 						max = newMax;
@@ -520,6 +525,7 @@ public class SimilarityGraphBasedReactionMapper {
 								int envSimilarity = getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
 								int similarity = Math.max(skelSimilarity, envSimilarity);
 								if (similarity != 0) {
+//								if (similarity >= (2 << SIMILARITY_SHIFT)) {
 									boolean isStereoMatch = matchesStereo(graphParent[reactantRoot], reactantRoot, reactantCandidate, productParent[productRoot], productRoot, productCandidate);
 									if (passesSimilarityDependentRules(reactantRoot, reactantCandidate, productRoot, productCandidate, similarity, isStereoMatch)) {
 										match[i][j] = similarity;
@@ -530,7 +536,7 @@ public class SimilarityGraphBasedReactionMapper {
 										if (leavesRing(graphParent[reactantRoot], reactantRoot, reactantCandidate, mReactantRingMembership)
 										 == leavesRing(productParent[productRoot], productRoot, productCandidate, mProductRingMembership))
 											match[i][j] += ENDO_RING_PLUS;
-										// we add a bonus if the pi-electron-plust-hetero-neighbour-count value matches at the first atom
+										// we add a bonus if the pi-electron-plus-hetero-neighbour-count value matches at the first atom
 										if (getPiAndHeteroBondCount(mReactant, reactantCandidate) == getPiAndHeteroBondCount(mProduct, productCandidate))
 											match[i][j] += PI_AND_HETERO_PLUS;
 /*

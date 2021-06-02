@@ -42,6 +42,7 @@ import com.actelion.research.chem.reaction.ReactionEncoder;
 
 public class RXNFileCreator {
 	public static final String RXN_CODE_TAG = "OCL_RXN_V1.0:";
+	private static final String NL = System.lineSeparator();
 
     private StringBuffer rxnbuffer = null;
 
@@ -54,18 +55,18 @@ public class RXNFileCreator {
         Reaction rxn = new Reaction(r);
         try {
             StringWriter theWriter = new StringWriter();
-            theWriter.write("$RXN\n");
+            theWriter.write("$RXN"+NL);
             theWriter.write(programName != null ? programName : "");
-			theWriter.write("\n\n");
+			theWriter.write(NL+NL);
 			theWriter.write(RXN_CODE_TAG+ ReactionEncoder.encode(r, true,
                     ReactionEncoder.INCLUDE_MAPPING | ReactionEncoder.INCLUDE_COORDS | ReactionEncoder.INCLUDE_CATALYSTS));
-			theWriter.write("\n");
-            theWriter.write("  "+rxn.getReactants()+"  "+rxn.getProducts() + "\n");
+			theWriter.write(NL);
+            theWriter.write("  "+rxn.getReactants()+"  "+rxn.getProducts() + NL);
 
             double scale = getScalingFactor(rxn);
 
             for (int i=0; i<rxn.getMolecules(); i++) {
-                theWriter.write("$MOL\n");
+                theWriter.write("$MOL"+NL);
                 new MolfileCreator(rxn.getMolecule(i),true, scale, null).writeMolfile(theWriter);
             }
             rxnbuffer = theWriter.getBuffer();
