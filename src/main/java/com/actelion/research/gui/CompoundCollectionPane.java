@@ -603,12 +603,14 @@ public class CompoundCollectionPane<T> extends JScrollPane
 		}
 
 	public void structureChanged(StereoMolecule mol) {
+		String reason = (mCompoundFilter == null) ? null
+				: (mCompoundFilter instanceof SubstructureFilter) ? "match the substructure" : "qualify";
 		if (mEditedIndex == -1) {	// new structure
 			if (mol.getAllAtoms() != 0) {
 				if (mCompoundFilter == null || mCompoundFilter.moleculeQualifies(mol))
 					mModel.addMolecule(mModel.getSize(), mol);
 				else
-					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be added, because it doesn't fullfil all criteria.");
+					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be added, because it doesn't "+reason+".");
 				}
 			}
 		else {
@@ -618,7 +620,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 				if (mCompoundFilter == null || mCompoundFilter.moleculeQualifies(mol))
 					mModel.setMolecule(mEditedIndex, mol);
 				else
-					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be changed, because the changed structure doesn't fullfil all criteria.");
+					JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be changed, because the changed structure doesn't "+reason+".");
 				}
 			}
 		}
@@ -690,7 +692,8 @@ public class CompoundCollectionPane<T> extends JScrollPane
 							mModel.addMolecule(mDropIndex, mol);
 							}
 						else {
-							JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be added, because it doesn't qualify.");
+							String reason = (mCompoundFilter instanceof SubstructureFilter) ? "match the substructure" : "qualify";
+							JOptionPane.showMessageDialog(getParentFrame(),"The compound could not be added, because it doesn't "+reason+".");
 							}
 						}
 					updateDropPosition(-1);
