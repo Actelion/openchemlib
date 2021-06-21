@@ -50,6 +50,7 @@ public class Pipeline2FileWriter<T> {
                 } finally {
                     try {
                         fw.close();
+                        System.out.println("Pipeline2FileWriter finished writing " + fiOut.getAbsolutePath() + ".");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
