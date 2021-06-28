@@ -662,8 +662,11 @@ public class Reactor {
 				}
 			}
 
-		// copy all bonds of generic product
+		// copy all bonds of generic product, except for bridge bonds
 		for (int gpBond=0; gpBond<genericProduct.getBonds(); gpBond++) {
+			if (genericProduct.isBondBridge(gpBond))
+				continue;
+
 			int productBond = genericProduct.copyBond(product, gpBond, esrGroupCountAND, esrGroupCountOR, newAtomNo, false);
 
 			// If we have multiple allowed bond types on generic product bond, then we need to calculate
