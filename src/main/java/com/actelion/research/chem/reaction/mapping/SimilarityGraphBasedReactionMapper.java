@@ -14,7 +14,7 @@ public class SimilarityGraphBasedReactionMapper {
 	// neighbours to the atom (except the fromAtom). of neighbor is considered to belong to the graph
 	// already
 	private static final int SIMILARITY_SHIFT = 8;  // bit shift to allow for lower significant features to distinguish equal environment similarities
-	private static final int SKELETON_PENALTY = 3;
+	private static final int SKELETON_PENALTY = 2;
 	private static final int MAX_ENVIRONMENT_RADIUS = 8;
 	private static final int MAX_ENVIRONMENT_SIMILARITY = MAX_ENVIRONMENT_RADIUS << SIMILARITY_SHIFT;
 	private static final int MAX_SKELETON_SIMILARITY = (MAX_ENVIRONMENT_RADIUS - SKELETON_PENALTY) << SIMILARITY_SHIFT;
@@ -253,7 +253,7 @@ public class SimilarityGraphBasedReactionMapper {
 	 * @param reactantAtom
 	 * @param productRoot
 	 * @param productAtom
-	 * @return 0: mismatch, 2:atomicNo-match, 4:directNeighbourMatch, 6:TwoShellMatch, etc.
+	 * @return radius<<SIMILARITY_SHIFT; radius 0: mismatch, 1:atomicNo-match, 2:directNeighbourMatch, 3:TwoShellMatch, etc.
 	 */
 	private int getAtomSimilarity(int reactantRoot, int reactantAtom, int productRoot, int productAtom) {
 		int reactantConnIndex = -1;
@@ -287,7 +287,7 @@ public class SimilarityGraphBasedReactionMapper {
 	 * @param reactantAtom
 	 * @param productRoot
 	 * @param productAtom
-	 * @return 0: mismatch, 2:atomicNo-match, 4:directNeighbourMatch, 6:TwoShellMatch, etc.
+	 * @return radius<<SIMILARITY_SHIFT; radius 0: mismatch, 1:atomicNo-match, 2:directNeighbourMatch, 3:TwoShellMatch, etc.
 	 */
 	private int getSkeletonSimilarity(int reactantRoot, int reactantAtom, int productRoot, int productAtom) {
 		int reactantConnIndex = -1;
@@ -525,7 +525,6 @@ public class SimilarityGraphBasedReactionMapper {
 								int envSimilarity = getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
 								int similarity = Math.max(skelSimilarity, envSimilarity);
 								if (similarity != 0) {
-//								if (similarity >= (2 << SIMILARITY_SHIFT)) {
 									boolean isStereoMatch = matchesStereo(graphParent[reactantRoot], reactantRoot, reactantCandidate, productParent[productRoot], productRoot, productCandidate);
 									if (passesSimilarityDependentRules(reactantRoot, reactantCandidate, productRoot, productCandidate, similarity, isStereoMatch)) {
 										match[i][j] = similarity;
@@ -607,6 +606,11 @@ if (reactantRoot == 4) {
 	// to apply a veto, e.g. to prevent the match of the wrong oxygen atom in carboxylic acids
 	// or esters.
 	private boolean passesBasicRules(int reactantAtom, int reactantConn, int productAtom, int productConn) {
+		// if the next carbon atom looses/gains more than one neighbour, it may be a different carbon, e.g. from rearrangement
+		if (mReactant.getAtomicNo(reactantConn) == 6
+		 && Math.abs(mReactant.getConnAtoms(reactantConn) - mProduct.getConnAtoms(productConn)) > 1)
+			return false;
+
 		// reductive ester cleavage
 		if (mReactant.getAtomicNo(reactantConn) == 8
 		 && mReactant.getConnAtoms(reactantConn) == 2
@@ -697,6 +701,11 @@ if (reactantRoot == 4) {
 		if (mReactant.getAtomicNo(reactantConn) == 8
 		 && mReactant.getAtomicNo(reactantAtom) != 6
 		 && similarity != MAX_ENVIRONMENT_SIMILARITY)
+			return false;
+
+		if (mReactant.getAtomicNo(reactantAtom) == 5
+		 && mReactant.getAtomicNo(reactantConn) == 6
+		 && similarity < (3 << SIMILARITY_SHIFT))
 			return false;
 
 		return true;

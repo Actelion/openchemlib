@@ -135,6 +135,7 @@ float historyScore = -10000;
 						rule.apply(reactant, reactantMatch);
 						int[] reactantMapNo = new int[mReactant.getAtoms()];
 						int[] productMapNo = new int[mProduct.getAtoms()];
+//System.out.println(new MolfileCreator(reactant).getMolfile());
 						mapper.map(reactant, mProduct, reactantMapNo, productMapNo);
 						float score = mapper.getScore() - rule.getPanalty();
 if (historyScore < score) historyScore = score;
