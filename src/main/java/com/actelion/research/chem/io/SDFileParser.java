@@ -387,7 +387,7 @@ public class SDFileParser extends CompoundFileParser {
 			return null;
 
 		int i = index+2;
-		while (Character.isDigit(line.charAt(i)))
+		while (line.length()>i && Character.isDigit(line.charAt(i)))
 			i++;
 		
 		return (i == index+2) ? null : line.substring(index, i);
