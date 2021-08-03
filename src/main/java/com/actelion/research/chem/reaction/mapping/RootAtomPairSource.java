@@ -16,6 +16,7 @@ public class RootAtomPairSource {
 	private static final int MAX_PAIR_SEQUENCES = 64;
 	private static final int MAX_ENVIRONMENT_RADIUS = 7;
 	private static final int MIN_ENVIRONMENT_RADIUS = 2;
+	private static final int PSEUDO_MAP_NO_SKIPPED_PAIR = -99999;
 
 	private ArrayList<RootAtomPair> mPairBuffer;
 	private StereoMolecule mReactant,mProduct;
@@ -141,7 +142,7 @@ public class RootAtomPairSource {
 	/**
 	 * RootAtomPairs are returned in similarity order. The first returned pair is that
 	 * pair of atoms that is more similar than any other mutual combination of reactant
-	 * and product atoms. When, however, multiple pairs are equavalent, then one the choice
+	 * and product atoms. When, however, multiple pairs are equivalent, then the choice
 	 * is arbitrary. This class makes sure that symmetrically redundant choices are removed
 	 * and chooses one of multiple remaining choices in a way that is different from the
 	 * previous
@@ -306,9 +307,45 @@ public class RootAtomPairSource {
 	 * Root atom pairs meet these conditions:<br>
 	 * - they match in terms of circular fragment on reactant and products side<br>
 	 * - if multiple symmetrically equivalent pairs exist, exactly one of them is marked as allowed root pair<br>
+	 * - each of the reactant and product atoms have at least one unmapped neighbour<br>
 	 * @return pair of currently obvious root atom pairs
 	 */
 	public RootAtomPair nextPair() {
+		RootAtomPair pair = nextRawPair();
+		while (pair != null) {
+			boolean reactantAtomHasUnmappedNeighbours = false;
+			for (int i=0; i<mReactant.getConnAtoms(pair.reactantAtom); i++)
+				if (mReactantMapNo[mReactant.getConnAtom(pair.reactantAtom, i)] == 0)
+					reactantAtomHasUnmappedNeighbours = true;
+
+			boolean productAtomHasUnmappedNeighbours = false;
+			for (int i=0; i<mProduct.getConnAtoms(pair.productAtom); i++)
+				if (mProductMapNo[mProduct.getConnAtom(pair.productAtom, i)] == 0)
+					productAtomHasUnmappedNeighbours = true;
+
+			if (reactantAtomHasUnmappedNeighbours && productAtomHasUnmappedNeighbours)
+				break;
+
+			// we need to mark refused pairs as being used to avaid getting them again
+			mReactantMapNo[pair.reactantAtom] = PSEUDO_MAP_NO_SKIPPED_PAIR;
+			mProductMapNo[pair.productAtom] = PSEUDO_MAP_NO_SKIPPED_PAIR;
+
+			pair = nextRawPair();
+			}
+
+		if (pair == null) { // remove pseudo map numbers once not needed anymore
+			for (int i=0; i<mReactantMapNo.length; i++)
+				if (mReactantMapNo[i] == PSEUDO_MAP_NO_SKIPPED_PAIR)
+					mReactantMapNo[i] = 0;
+			for (int i=0; i<mProductMapNo.length; i++)
+				if (mProductMapNo[i] == PSEUDO_MAP_NO_SKIPPED_PAIR)
+					mProductMapNo[i] = 0;
+			}
+
+		return pair;
+		}
+
+	private RootAtomPair nextRawPair() {
 		while (mPairBuffer.size() != 0) {
 			RootAtomPair pair = mPairBuffer.remove(0);
 			if (mReactantMapNo[pair.reactantAtom] == 0 && mProductMapNo[pair.productAtom] == 0)
@@ -318,29 +355,28 @@ public class RootAtomPairSource {
 		while (mCurrentRadius >= 0) {
 			// We create starting pairs of reasonably similar atoms with similarity derived priority
 			while (mCurrentRadius >= MIN_ENVIRONMENT_RADIUS
-					&& mCurrentEnvIndex0 < mEnvKey[mCurrentRadius].length) {
+				&& mCurrentEnvIndex0 < mEnvKey[mCurrentRadius].length) {
 				byte[] envKey = mEnvKey[mCurrentRadius][mCurrentEnvIndex0];
 				int[][] atoms = mEnvToAtomsMap[mCurrentRadius].get(envKey);
 				if (mReactant.getAtomicNo(atoms[0][0]) == 6) {
-					// with equal environment size, we prefer carbon root atoms TODO
 					RootAtomPair pair = makePairsFromSimilarAtoms(atoms[0], atoms[1]);
 					if (pair != null)
 						return pair;
 					}
-				mCurrentEnvIndex0++;
+				mCurrentEnvIndex0++;    // go to next environment key once all potential pairs with current envoronment are depleted
 				}
 
 			while (mCurrentRadius >= MIN_ENVIRONMENT_RADIUS
-			 && mCurrentEnvIndex1 < mEnvKey[mCurrentRadius].length) {
+			    && mCurrentEnvIndex1 < mEnvKey[mCurrentRadius].length) {
 				byte[] envKey = mEnvKey[mCurrentRadius][mCurrentEnvIndex1];
 				int[][] atoms = mEnvToAtomsMap[mCurrentRadius].get(envKey);
-					// with equal environment size, we prefer carbon root atoms TODO
 				if (mReactant.getAtomicNo(atoms[0][0]) != 6) {
+					// with equal environment size, we prefer carbon root atoms TODO
 					RootAtomPair pair = makePairsFromSimilarAtoms(atoms[0], atoms[1]);
 					if (pair != null)
 						return pair;
 					}
-				mCurrentEnvIndex1++;
+				mCurrentEnvIndex1++;    // go to next environment key once all potential pairs with current envoronment are depleted
 				}
 
 			// We create a low priority starting pairs if we just have one atom of a kind
@@ -682,8 +718,8 @@ class RootAtomPair implements Comparable<RootAtomPair> {
 	@Override
 	public int compareTo(RootAtomPair pair) {
 		return this.reactantAtom < pair.reactantAtom ? -1
-				: this.reactantAtom > pair.reactantAtom ? 1
-				: this.productAtom < pair.productAtom ? -1
-				: this.productAtom > pair.productAtom ? 1 : 0;
+			 : this.reactantAtom > pair.reactantAtom ? 1
+			 : this.productAtom < pair.productAtom ? -1
+			 : this.productAtom > pair.productAtom ? 1 : 0;
 		}
 	}

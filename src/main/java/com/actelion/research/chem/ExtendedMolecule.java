@@ -525,10 +525,24 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	public int getOccupiedValence(int atom) {
 		ensureHelperArrays(cHelperNeighbours);
 
+		boolean piElectronsFound = false;
+		boolean delocalizedBondFound = false;
 		int valence = 0;
-		for (int i=0; i<mAllConnAtoms[atom]; i++)
-			if (!mIsFragment || (mAtomQueryFeatures[mConnAtom[atom][i]] & cAtomQFExcludeGroup) == 0)
-				valence += mConnBondOrder[atom][i];
+		for (int i=0; i<mAllConnAtoms[atom]; i++) {
+			if (!mIsFragment || (mAtomQueryFeatures[mConnAtom[atom][i]] & cAtomQFExcludeGroup) == 0) {
+				int order = mConnBondOrder[atom][i];
+				valence += order;
+				if (order > 1)
+					piElectronsFound = true;
+
+				int bond = mConnBond[atom][i];
+				if (mBondType[bond] == cBondTypeDelocalized)
+					delocalizedBondFound = true;
+				}
+			}
+
+		if (delocalizedBondFound && !piElectronsFound)
+			valence++;
 
 		return valence;
 		}
@@ -1522,7 +1536,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean isDelocalizedBond(int bond) {
-		return (mBondFlags[bond] & cBondFlagDelocalized) != 0;
+		return (mBondFlags[bond] & cBondFlagDelocalized) != 0
+			 || (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) == cBondQFDelocalized);
 		}
 
 

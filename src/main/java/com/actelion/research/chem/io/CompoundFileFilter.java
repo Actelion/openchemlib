@@ -10,13 +10,13 @@
 * modification, are permitted provided that the following conditions are met:
 *
 * 1. Redistributions of source code must retain the above copyright notice, this
-*    list of conditions and the following disclaimer.
+*	list of conditions and the following disclaimer.
 * 2. Redistributions in binary form must reproduce the above copyright notice,
-*    this list of conditions and the following disclaimer in the documentation
-*    and/or other materials provided with the distribution.
+*	this list of conditions and the following disclaimer in the documentation
+*	and/or other materials provided with the distribution.
 * 3. Neither the name of the the copyright holder nor the
-*    names of its contributors may be used to endorse or promote products
-*    derived from this software without specific prior written permission.
+*	names of its contributors may be used to endorse or promote products
+*	derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,10 +33,10 @@
 
 package com.actelion.research.chem.io;
 
+import javax.swing.filechooser.FileFilter;
 import java.io.File;
-import java.util.Hashtable;
-import java.util.Enumeration;
-import javax.swing.filechooser.*;
+import java.util.Iterator;
+import java.util.TreeMap;
 
 /**
  * A convenience implementation of FileFilter that filters out
@@ -48,227 +48,184 @@ import javax.swing.filechooser.*;
  * Example - create a new filter that filerts out all files
  * but gif and jpg image files:
  *
- *     JFileChooser chooser = new JFileChooser();
- *     CompoundFileFilter filter = new CompoundFileFilter(
- *                   new String{"gif", "jpg"}, "JPEG & GIF Images")
- *     chooser.addChoosableFileFilter(filter);
- *     chooser.showOpenDialog(this);
- *
- * @version 1.9 04/23/99
- * @author Jeff Dinkins
+ *	 JFileChooser chooser = new JFileChooser();
+ *	 CompoundFileFilter filter = new CompoundFileFilter(
+ *				   new String{"gif", "jpg"}, "JPEG & GIF Images")
+ *	 chooser.addChoosableFileFilter(filter);
+ *	 chooser.showOpenDialog(this);
  */
 public class CompoundFileFilter extends FileFilter {
+	private TreeMap<String,CompoundFileFilter> mFilterMap;
+	private String mDescription = null;
+	private String mFullDescription = null;
+	private boolean mUseExtensionsInDescription = true;
 
-    private static String TYPE_UNKNOWN = "Type Unknown";
-    private static String HIDDEN_FILE = "Hidden File";
-
-    private Hashtable filters = null;
-    private String description = null;
-    private String fullDescription = null;
-    private boolean useExtensionsInDescription = true;
-
-    /**
-     * Creates a file filter. If no filters are added, then all
-     * files are accepted.
-     *
-     * @see #addExtension
-     */
-    public CompoundFileFilter() {
-	this.filters = new Hashtable();
-    }
-
-    /**
-     * Creates a file filter that accepts files with the given extension.
-     * Example: new CompoundFileFilter("jpg");
-     *
-     * @see #addExtension
-     */
-    public CompoundFileFilter(String extension) {
-	this(extension,null);
-    }
-
-    /**
-     * Creates a file filter that accepts the given file type.
-     * Example: new CompoundFileFilter("jpg", "JPEG Image Images");
-     *
-     * Note that the "." before the extension is not needed. If
-     * provided, it will be ignored.
-     *
-     * @see #addExtension
-     */
-    public CompoundFileFilter(String extension, String description) {
-	this();
-	if(extension!=null) addExtension(extension);
- 	if(description!=null) setDescription(description);
-    }
-
-    /**
-     * Creates a file filter from the given string array.
-     * Example: new CompoundFileFilter(String {"gif", "jpg"});
-     *
-     * Note that the "." before the extension is not needed adn
-     * will be ignored.
-     *
-     * @see #addExtension
-     */
-    public CompoundFileFilter(String[] filters) {
-	this(filters, null);
-    }
-
-    /**
-     * Creates a file filter from the given string array and description.
-     * Example: new CompoundFileFilter(String {"gif", "jpg"}, "Gif and JPG Images");
-     *
-     * Note that the "." before the extension is not needed and will be ignored.
-     *
-     * @see #addExtension
-     */
-    public CompoundFileFilter(String[] filters, String description) {
-	this();
-	for (int i = 0; i < filters.length; i++) {
-	    // add filters one by one
-	    addExtension(filters[i]);
-	}
- 	if(description!=null) setDescription(description);
-    }
-
-    /**
-     * Return true if this file should be shown in the directory pane,
-     * false if it shouldn't.
-     *
-     * Files that begin with "." are ignored.
-     *
-     * @see #getExtension
-     * @see FileFilter#accepts
-     */
-    public boolean accept(File f) {
-	if(f != null) {
-	    if(f.isDirectory()) {
-		return true;
-	    }
-	    String extension = getExtension(f);
-	    if(extension != null && filters.get(getExtension(f)) != null) {
-		return true;
-	    };
-	}
-	return false;
-    }
-
-    /**
-     * Return the extension portion of the file's name .
-     *
-     * @see #getExtension
-     * @see FileFilter#accept
-     */
-     public String getExtension(File f) {
-	if(f != null) {
-	    String filename = f.getName();
-	    int i = filename.lastIndexOf('.');
-	    if(i>0 && i<filename.length()-1) {
-		return filename.substring(i+1).toLowerCase();
-	    };
-	}
-	return null;
-    }
-
-    /**
-     * Adds a filetype "dot" extension to filter against.
-     *
-     * For example: the following code will create a filter that filters
-     * out all files except those that end in ".jpg" and ".tif":
-     *
-     *   CompoundFileFilter filter = new CompoundFileFilter();
-     *   filter.addExtension("jpg");
-     *   filter.addExtension("tif");
-     *
-     * Note that the "." before the extension is not needed and will be ignored.
-     */
-    public void addExtension(String extension) {
-	if(filters == null) {
-	    filters = new Hashtable(5);
-	}
-	filters.put(extension.toLowerCase(), this);
-	fullDescription = null;
-    }
-
-
-    /**
-     * Returns the human readable description of this filter. For
-     * example: "JPEG and GIF Image Files (*.jpg, *.gif)"
-     *
-     * @see setDescription
-     * @see setExtensionListInDescription
-     * @see isExtensionListInDescription
-     * @see FileFilter#getDescription
-     */
-    public String getDescription() {
-	if(fullDescription == null) {
-	    if(description == null || isExtensionListInDescription()) {
- 		fullDescription = description==null ? "(" : description + " (";
-		// build the description from the extension list
-		Enumeration extensions = filters.keys();
-		if(extensions != null) {
-		    fullDescription += "." + (String) extensions.nextElement();
-		    while (extensions.hasMoreElements()) {
-			fullDescription += ", ." + (String) extensions.nextElement();
-		    }
+	/**
+	 * Creates a file filter. If no filters are added, then all
+	 * files are accepted.
+	 */
+	public CompoundFileFilter() {
+		mFilterMap = new TreeMap();
 		}
-		fullDescription += ")";
-	    } else {
-		fullDescription = description;
-	    }
-	}
-	return fullDescription;
-    }
 
-    /**
-     * Sets the human readable description of this filter. For
-     * example: filter.setDescription("Gif and JPG Images");
-     *
-     * @see setDescription
-     * @see setExtensionListInDescription
-     * @see isExtensionListInDescription
-     */
-    public void setDescription(String description) {
-	this.description = description;
-	fullDescription = null;
-    }
+	/**
+	 * Creates a file filter that accepts files with the given extension.
+	 * Example: new CompoundFileFilter("jpg");
+	 */
+	public CompoundFileFilter(String extension) {
+		this(extension,null);
+		}
+
+	/**
+	 * Creates a file filter that accepts the given file type.
+	 * Example: new CompoundFileFilter("jpg", "JPEG Image Images");
+	 *
+	 * Note that the "." before the extension is not needed. If
+	 * provided, it will be ignored.
+	 */
+	public CompoundFileFilter(String extension, String description) {
+		this();
+		if (extension != null)
+			addExtension(extension);
+		if (description!=null)
+			setDescription(description);
+		}
+
+	/**
+	 * Creates a file filter from the given string array.
+	 * Example: new CompoundFileFilter(String {"gif", "jpg"});
+	 *
+	 * Note that the "." before the extension is not needed and will be ignored.
+	 */
+	public CompoundFileFilter(String[] filters) {
+		this(filters, null);
+		}
+
+	/**
+	 * Creates a file filter from the given string array and description.
+	 * Example: new CompoundFileFilter(String {"gif", "jpg"}, "Gif and JPG Images");
+	 *
+	 * Note that the "." before the extension is not needed and will be ignored.
+	 */
+	public CompoundFileFilter(String[] filters, String description) {
+		this();
+		for (int i=0; i < filters.length; i++)
+			// add filters one by one
+			addExtension(filters[i]);
+
+		if(description!=null)
+		    setDescription(description);
+	}
+
+	/**
+	 * Return true if this file should be shown in the directory pane, false if it shouldn't.
+	 * Files that begin with "." are ignored.
+	 */
+	@Override
+	public boolean accept(File f) {
+		if (f != null) {
+			if (f.isDirectory())
+				return true;
+
+			String extension = getExtension(f);
+			if (extension != null && mFilterMap.get(getExtension(f)) != null)
+				return true;
+			}
+
+		return false;
+		}
+
+	/**
+	 * Return the extension portion of the file's name .
+	 *
+	 * @see #getExtension
+	 * @see FileFilter#accept
+	 */
+	public String getExtension(File f) {
+		return CompoundFileHelper.getExtension(f);
+		}
+
+	/**
+	 * Adds a filetype "dot" extension to filter against.
+	 *
+	 * For example: the following code will create a filter that filters
+	 * out all files except those that end in ".jpg" and ".tif":
+	 *
+	 *   CompoundFileFilter filter = new CompoundFileFilter();
+	 *   filter.addExtension("jpg");
+	 *   filter.addExtension("tif");
+	 *
+	 * Note that the "." before the extension is not needed and will be ignored.
+	 */
+	public void addExtension(String extension) {
+		if (mFilterMap == null)
+			mFilterMap = new TreeMap<>();
+
+		mFilterMap.put(extension.toLowerCase(), this);
+		mFullDescription = null;
+		}
+
+
+	/**
+	 * Returns the human readable description of this filter. For
+	 * example: "JPEG and GIF Image Files (*.jpg, *.gif)"
+	 */
+	public String getDescription() {
+		if (mFullDescription == null) {
+			if (mDescription == null || isExtensionListInDescription()) {
+				mFullDescription = (mDescription == null) ? "(" : mDescription + " (";
+
+				// build the description from the extension list
+				Iterator<String> iterator = mFilterMap.keySet().stream().sorted().iterator();
+				mFullDescription += iterator.next();
+				while (iterator.hasNext())
+					mFullDescription += ", " + iterator.next();
+
+				mFullDescription += ")";
+				}
+			else {
+				mFullDescription = mDescription;
+				}
+			}
+		return mFullDescription;
+		}
+
+	/**
+	 * Sets the human readable description of this filter. For
+	 * example: filter.setDescription("Gif and JPG Images");
+	 */
+	public void setDescription(String description) {
+		mDescription = description;
+		mFullDescription = null;
+		}
 
 	public void addDescription(String description) {
-	if (this.description == null)	
-		this.description = description;
+	if (mDescription == null)
+		mDescription = description;
 	else
-		this.description = this.description.concat(", "+description);
+		mDescription = mDescription.concat(", "+description);
+		}
+
+	/**
+	 * Determines whether the extension list (.jpg, .gif, etc) should
+	 * show up in the human readable description.
+	 *
+	 * Only relevent if a description was provided in the constructor
+	 * or using setDescription();
+	 */
+	public void setExtensionListInDescription(boolean b) {
+		mUseExtensionsInDescription = b;
+		mFullDescription = null;
+		}
+
+	/**
+	 * Returns whether the extension list (.jpg, .gif, etc) should
+	 * show up in the human readable description.
+	 *
+	 * Only relevent if a description was provided in the constructor
+	 * or using setDescription();
+	 */
+	public boolean isExtensionListInDescription() {
+		return mUseExtensionsInDescription;
+		}
 	}
-
-    /**
-     * Determines whether the extension list (.jpg, .gif, etc) should
-     * show up in the human readable description.
-     *
-     * Only relevent if a description was provided in the constructor
-     * or using setDescription();
-     *
-     * @see getDescription
-     * @see setDescription
-     * @see isExtensionListInDescription
-     */
-    public void setExtensionListInDescription(boolean b) {
-	useExtensionsInDescription = b;
-	fullDescription = null;
-    }
-
-    /**
-     * Returns whether the extension list (.jpg, .gif, etc) should
-     * show up in the human readable description.
-     *
-     * Only relevent if a description was provided in the constructor
-     * or using setDescription();
-     *
-     * @see getDescription
-     * @see setDescription
-     * @see setExtensionListInDescription
-     */
-    public boolean isExtensionListInDescription() {
-	return useExtensionsInDescription;
-    }
-}

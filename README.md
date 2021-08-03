@@ -10,6 +10,8 @@ Different to other cheminformatics frameworks, *OpenChemLib* also provides user 
 
 git clone https://github.com/Actelion/openchemlib.git
 
-## Folder 'examples'
+### Folder 'examples'
 Contains examples for working with the *OpenChemLib* library.
 
+### Logo
+![logo](logo.png)

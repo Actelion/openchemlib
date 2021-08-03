@@ -137,7 +137,7 @@ public class DateAnalysis {
 		}
 	}
 
-	private int interpreteMonth(String item) {
+	public static int interpreteMonth(String item) {
 		item = item.toLowerCase();
 		if (item.startsWith("jan"))
 			return 1;

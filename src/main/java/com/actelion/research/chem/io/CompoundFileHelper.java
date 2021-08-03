@@ -69,10 +69,14 @@ public abstract class CompoundFileHelper {
 	public static final int cFileTypeMOL = 0x00010000;
 	public static final int cFileTypeMOL2 = 0x00020000;
 	public static final int cFileTypePDB = 0x00040000;
+	public static final int cFileTypeSDGZ = 0x00080000;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
 
-	public static final int cFileTypeDataWarriorCompatibleData = cFileTypeDataWarrior | cFileTypeText | cFileTypeRD | cFileTypeSD;
+	// explicitly supported compression format (SD-files only)
+	public static final String cGZipExtention = ".gz";
+
+	public static final int cFileTypeDataWarriorCompatibleData = cFileTypeDataWarrior | cFileTypeText | cFileTypeRD | cFileTypeSD | cFileTypeSDGZ;
 	public static final int cFileTypeDataWarriorTemplateContaining = cFileTypeDataWarrior | cFileTypeDataWarriorQuery | cFileTypeDataWarriorTemplate;
 
 	private static File sCurrentDirectory;
@@ -330,6 +334,10 @@ public abstract class CompoundFileHelper {
 			filter.addExtension("sdf");
 			filter.addDescription("MDL SD-files");
 			}
+		if ((filetypes & cFileTypeSDGZ) != 0) {
+			filter.addExtension("sdf.gz");
+			filter.addDescription("gzipped MDL SD-files)");
+			}
 		if ((filetypes & cFileTypeRD) != 0) {
 			filter.addExtension("rdf");
 			filter.addDescription("MDL RD-files");
@@ -359,7 +367,7 @@ public abstract class CompoundFileHelper {
 			}
 
         if (filetypes == cFileTypeDataWarriorCompatibleData) {
-            filter.setDescription("DataWarrior compatible data files");
+            filter.setDescription("DataWarrior compatible files");
             }
         if (filetypes == cFileTypeDataWarriorTemplateContaining) {
             filter.setDescription("Files containing a DataWarrior template");
@@ -384,6 +392,36 @@ public abstract class CompoundFileHelper {
 		}
 
 	/**
+	 * Return the extension portion of the file's name.
+	 * Known joint extensions (currently only ".sdf.gz") are returned where they exist.
+	 * @return extension without the dot
+	 */
+	public static String getExtension(File file) {
+		int index = -1;
+		String filename = (file == null) ? null : file.getName();
+		if (filename != null)
+			index = getExtensionIndex(filename);
+
+		return (index == -1) ? null : filename.substring(index+1).toLowerCase();
+		}
+
+	/**
+	 * Returns the index of the dot separating filename from its extension.
+	 * Known joint extensions (currently only ".sdf.gz") are recognized.
+	 * @param filename
+	 * @return index of extension dot or -1
+	 */
+	private static int getExtensionIndex(String filename) {
+		int i = filename.lastIndexOf('.');
+
+		if (i>0 && i<filename.length()-1
+		 && filename.substring(i).equalsIgnoreCase(CompoundFileHelper.cGZipExtention))
+			i = filename.lastIndexOf('.', i-1);
+
+		return (i>0 && i<filename.length()-1) ? i : -1;
+		}
+
+	/**
 	 * Provided that fileName has a leading file path, then path and separator are removed.
 	 * Provided that fileName has a recognized extension, then the extension is removed.
 	 * @param filePath file name with or without complete path and with or without extension
@@ -391,12 +429,11 @@ public abstract class CompoundFileHelper {
 	 */
 	public static String removePathAndExtension(String filePath) {
 		int i1 = filePath.lastIndexOf(File.separatorChar);
-		int i2 = (getFileType(filePath) != cFileTypeUnknown) ?
-				filePath.lastIndexOf('.') : -1;
+		int i2 = (getFileType(filePath) != cFileTypeUnknown) ? getExtensionIndex(filePath) : -1;
 		if (i1 == -1)
 			return (i2 == -1) ? filePath : filePath.substring(0, i2);
 		else
-			return (i2 == -1) ? filePath.substring(i1+1) : filePath.substring(i1+1, i2);
+			return (i2 == -1 || i2 < i1) ? filePath.substring(i1+1) : filePath.substring(i1+1, i2);
 		}
 
 	/**
@@ -411,7 +448,7 @@ public abstract class CompoundFileHelper {
 		}
 
 	public static int getFileType(String filename) {
-        int index = filename.lastIndexOf('.');
+        int index = getExtensionIndex(filename);
 
         if (index == -1)
             return cFileTypeUnknown;
@@ -433,6 +470,8 @@ public abstract class CompoundFileHelper {
             return cFileTypeTextCommaSeparated;
         if (extension.equals(".sdf"))
             return cFileTypeSD;
+		if (extension.equals(".sdf.gz"))
+			return cFileTypeSDGZ;
         if (extension.equals(".rdf"))
             return cFileTypeRD;
         if (extension.equals(".rxn"))
@@ -534,6 +573,9 @@ public abstract class CompoundFileHelper {
 			break;
 		case cFileTypePDB:
 			extension = ".pdb";
+			break;
+			case cFileTypeSDGZ:
+			extension = ".sdf.gz";
 			break;
 			}
 		return extension;

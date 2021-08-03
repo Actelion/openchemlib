@@ -14,8 +14,6 @@ public class ChemicalRuleEnhancedReactionMapper {
 	// change bonding of the reaction the rule is applied to. Nevertheless, the rule's entire reactant is used
 	// for the substructure search that identifies applicability.
 	private static final ChemicalRule[] CHEMICAL_RULE = {
-// replaced by cope		new ChemicalRule("a","gGP@DkUjPLVDXNBHp\\BQ`xLcApEFC`jLG@!gGP@DkUjPLVDXNBHp\\BQ`xLcApEFC`jLG@#qkNT qVci#!Rb@KW@gx@b@JH_SLrP`", 0.5f),
-		new ChemicalRule("c","gJP`@deVdB!gK``AddvPH#qir` qreH#!R@Jp@dpBl@ILslgp", 3.5f),
 		new ChemicalRule("d","gGQ@@eKtrAkDH!gGQ@@djsRIKVPP#qMsT qM\\V#!R_yL@dw~l@Jp@dsNR_@", 3.5f),
 		new ChemicalRule("e","daXJ@@PjyITuiX@`!dahJ@@SJYIMMfPB#IaLJfxP IaAhl[`#!ROrp?Ds|lOqNk?g?l_zLsSGp", 1.5f),
 // bad	new ChemicalRule("f","gJQ`@bdjt`P!gKa`@ldfrA@#qbqh qqlP#!R_zq?dw~l_yLsXgp", 0.5f),
@@ -41,6 +39,7 @@ public class ChemicalRuleEnhancedReactionMapper {
 		new ChemicalRule("Acetal-Aldol-Addition", "dmdB@@serQS@sJjfd@p`Xir\\@`j\\@aUJHI@!daxL@@[df[ZjT@qQdxACdxABjTQb@#qB@`OuX qBtM{#!RM?rH?C]}_`CW?Ev^@T@wwS^B_`@sHop", 1.5f),
 		new ChemicalRule("Acetal-Aldol-Condensation", "dmdB@@serQS@sJjfd@p`Xir\\@`j\\@aUJHI@!gNp`CTjUiV@qQS`DJg@HUVHR@#qB@`OuX qqj{`#!RM?rH?C]}_`CW?Ev^@T@wwS^B_`@sHop", 1.5f),
 		new ChemicalRule("Acetal-Aldol-Condensation-Cyclization", "dkLB@@ZURYUvUjejhHYpaHpr\\@aUJHp`!didD@@EIfU[hBA@CFAS`DJqq@#IXljNPY@@@ IXljXxT#!R_`CW@h`BuwvH_[yOb@I~@M_|bOsW_Wx@LuJb", 7.5f),
+		new ChemicalRule("Enolester-Cleavage", "gOQ`@fdscT`_Qp!gOQ`@cdTASS@P#q}Kr` q}cNP#!R?g~H?[_}bOrH?WzeLyH\\", 5.3f),
 
 		new ChemicalRule("propargylEnone", "gCa@@dmXFD@!gCa@@dkHD#qNT qLV#!RXIq`pp@sLwI|", 5.5f),
 		new ChemicalRule("Arndt-Eistert", "daiDaJYBBHj^{HhAYMpAaA@!daiD`FzLBHPVsZl@p`@#IyHHZ[@ IzDGBi`#!R@W|h_U\\}X{GUJU\\}TEpsHap", 11.5f),
@@ -54,15 +53,16 @@ public class ChemicalRuleEnhancedReactionMapper {
 		new ChemicalRule("Alkyne-Cyclisation", "gG`@DcO|CFAFC`@!gFp@DiTt@@CFAFC`@#qi\\V qiSt#!Rb@JNyk\\Bl^{~@CORp`", 8.5f),
 
 		// two step
-		new ChemicalRule("Elimination-Claisen", "daxD@@qJY^ji@OhJ@!daXD@@YIUMjX@`#IkFPn`P IkBGfR@#!RmpK~_?x@m?vw?[\\BmpHsXkp", 5.5f),
+		new ChemicalRule("Elimination-Claisen", "gNp`AldTQji@~a`!gOP`@teTZdCzN@#qtHUX qtSi@#!RupI~Owx@uwwW_]_|LyK|", 4.5f),
 		new ChemicalRule("imineFormationAzaCope", "daZH@LAIMUjd@pRL@!daZH@HAAn]jd@p`@#IGfaLJ` IFDzfK@#!RXpAl@HYrXs}lOvL?[C|sTdH", 8.5f),
+		new ChemicalRule("didehydroCopeWithAromatisation", "gNp@Di]ejDcjbrlwK`!gOp@DjWkB@@H#qrLkx q\\oQp#!R?`Bw?[\\BmpK~@K\\BL~JB", 4.5f),
 
 		// multi step with cyclisation/condensation
 		new ChemicalRule("symAldolNitrogenRing", "dovJ@GBfttf\\v\\qjViPCADGbDodnGp!doNJ@JCSmtefWTCaYjje@H#IlZXi]]yL~C IqMVCzaIim?#!R@hb}b@A~Owz}uzyl_]\\Bus}~@GxBbLfaOwzUicMbX`", 0.5f),
 
 		// pericyclic
 		new ChemicalRule("Diels-Alder","gFP@LdPLjA@!gFp@DiTujhB#qiZf qMSf#!R?`BH?X`BIo[~_sNr``", 3.5f),
-		new ChemicalRule("Cope", "gGQ@DeZmRAcDc@H@!gGQ@HeZmRAcHc@H@#qkNT qi\\V#!R@FL?Xs}lOvL?[CLbO@", 7.5f),
+		new ChemicalRule("Cope", "gGQ@DeZmRAbhcApIF@P@!gGQ@HeZmRAbhc@HIFC`@#qkNT qi\\V#!R@BM_Hu}lWrM_[COBO@", 5.5f),
 		new ChemicalRule("OxyCope", "gNq@@dr}SHFD@!gNq@@djkUHD#qynZ` qykbp#!Ro`AH`c]|\\KtwoS]|LvIB", 4.5f),
 
 		// rearrangements
@@ -70,7 +70,12 @@ public class ChemicalRuleEnhancedReactionMapper {
 		new ChemicalRule("Furan-CH2-OH-Rearrangement", "gOp`@tiguif`H!gOp`@tfWMZZ`H#qZna@ qZtM@#!RTXC@z]BRe?s|bKx@L}KB", 6.5f),
 		new ChemicalRule("rearrangement1032", "gOp`ATieMji`H!gOp`ATeekZj`H#qaSnx qa]~P#!ROh]`lkoYCONJ_quT|qJl", 5.5f),
 
+		// 1,2-shifts
+		new ChemicalRule("Pinacol-Rearrangement", "gNp`ATffjj@pPh!gOP`@tfXZhCAA`#qb^ix qb^oH#!R?m}WoRb}Og?~wu^BLsH\\", 6.5f),
+		new ChemicalRule("1,3-WaterEliminationWith12Shift", "gJQ@@dmU@_SP!gKa@@`vtA}A@#qiTp qjap#!R?`ADddRm?basHdH", 6.5f),
+
 		// oxidative rearrangements
+		new ChemicalRule("Epoxydation", "gB``ADcdCB@!gC``AhtUPGtt@#qqb qtQ#!R_vsFWg}lLvK|", 6.3f),
 		new ChemicalRule("oxydativePropargylAmine13Shift", "gKi@HDEZpLHOQP!gJY@BDeVXQL#qMr` qNTh#!R|Wk@H|@\\@BrStnH", 6.5f),
 		new ChemicalRule("Baeyer-Villiger", "gFQ`@[dTAZ`LHP!gFQ`@jdrMPGtl@#qrak qrlK#!R?g~H?[_}AZfw?COBG@", 7.5f),
 	};
@@ -130,6 +135,7 @@ float historyScore = -10000;
 						rule.apply(reactant, reactantMatch);
 						int[] reactantMapNo = new int[mReactant.getAtoms()];
 						int[] productMapNo = new int[mProduct.getAtoms()];
+//System.out.println(new MolfileCreator(reactant).getMolfile());
 						mapper.map(reactant, mProduct, reactantMapNo, productMapNo);
 						float score = mapper.getScore() - rule.getPanalty();
 if (historyScore < score) historyScore = score;
@@ -150,7 +156,7 @@ mHistory.append(rule.getName()+historyScore+"\n");
 		int[] reactantMapNo = new int[mReactant.getAtoms()];
 		int[] productMapNo = new int[mProduct.getAtoms()];
 		mapper.map(mReactant, mProduct, reactantMapNo, productMapNo);
-		int score = mapper.getScore();
+		float score = mapper.getScore();
 		if (mScore <= score) {
 			mAppliedRule = null;
 			mScore = score;

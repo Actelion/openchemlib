@@ -1439,6 +1439,25 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				popup.add(colorMenu);
 			}
 
+			if (System.getProperty("development") != null) {
+				if (popup == null) {
+					popup = new JPopupMenu();
+				} else {
+					popup.addSeparator();
+				}
+				JMenuItem menuItem1 = new JMenuItem("Show Atom & Bond Numbers");
+				menuItem1.addActionListener(ev -> setDisplayMode(AbstractDepictor.cDModeAtomNo | AbstractDepictor.cDModeBondNo));
+				popup.add(menuItem1);
+
+				JMenuItem menuItem2 = new JMenuItem("Show Symmetry");
+				menuItem2.addActionListener(ev -> setDisplayMode(AbstractDepictor.cDModeShowSymmetrySimple));
+				popup.add(menuItem2);
+
+				JMenuItem menuItem3 = new JMenuItem("Show Normal");
+				menuItem3.addActionListener(ev -> setDisplayMode(mCurrentTool == JDrawToolbar.cToolMapper ? AbstractDepictor.cDModeShowMapping : 0));
+				popup.add(menuItem3);
+				}
+
 			if (popup != null) {
 				popup.show(this, e.getX(), e.getY());
 			}

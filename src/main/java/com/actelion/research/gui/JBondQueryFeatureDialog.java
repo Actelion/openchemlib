@@ -33,13 +33,14 @@
 
 package com.actelion.research.gui;
 
+import com.actelion.research.chem.ExtendedMolecule;
+import com.actelion.research.chem.Molecule;
 import info.clearthought.layout.TableLayout;
 
-import java.awt.*;
-import java.awt.event.*;
 import javax.swing.*;
-
-import com.actelion.research.chem.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
     static final long serialVersionUID = 0x20070822;
@@ -283,11 +284,16 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
             queryFeatures &= ~Molecule.cBondQFBondTypes;
             }
         else {
+        	// priority in order of bond orders
             int bondOrder = -1;
             if (mCBSingle.isSelected()) {
                 mMol.setBondType(bond, Molecule.cBondTypeSingle);
 				bondOrder = 1;
                 }
+            else if (mCBDelocalized.isSelected() && !mMol.isDelocalizedBond(bond)) {
+	            mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
+	            bondOrder = 4;
+	            }
             else if (mCBDouble.isSelected()) {
                 mMol.setBondType(bond, Molecule.cBondTypeDouble);
 				bondOrder = 2;
@@ -296,12 +302,7 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
                 mMol.setBondType(bond, Molecule.cBondTypeTriple);
 				bondOrder = 3;
                 }
-            else if (mCBDelocalized.isSelected()) {
-                if (!mMol.isDelocalizedBond(bond))
-                    mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
-				bondOrder = 4;
-                }
-			else if (mCBMetalLigand.isSelected()) {
+ 			else if (mCBMetalLigand.isSelected()) {
 				mMol.setBondType(bond, Molecule.cBondTypeMetalLigand);
 				bondOrder = 0;
 				}
