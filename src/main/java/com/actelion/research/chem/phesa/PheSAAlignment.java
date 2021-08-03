@@ -4,6 +4,7 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
 import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
@@ -106,20 +107,26 @@ public class PheSAAlignment {
 	 * @return
 	 */
 	public static double[][] initialTransform(int mode) {
-		double c = 0.707106781;
-		double[][] transforms1 = {{1.0,0.0,0.0,0.0,0.0,0.0,0.0},{0.0,1.0,0.0,0.0,0.0,0.0,0.0},{0.0,0.0,1.0,0.0,0.0,0.0,0.0},
-				{0.0,0.0,0.0,1.0,0.0,0.0,0.0}};
-		double[][] transforms2 = {{1,0,0,0,0,0,0},{0,1,0,0,0,0,0},{0,0,1,0,0,0,0},
-				{0,0,0,1,0,0,0},
-				{c,c,0,0,0,0,0},
-				{c,0,c,0,0,0,0},
-				{c,0,0,c,0,0,0},
-				{-0.5,0.5,0.5,-0.5,0,0,0},
-				{0.5,-0.5,0.5,-0.5,0,0,0},
-				{0.5,0.5,0.5,-0.5,0,0,0},
-				{0.5,-0.5,-0.5,-0.5,0,0,0},
-				{0.5,0.5,-0.5,-0.5,0,0,0}
-				};
+		double[][] transforms1 = {
+				{0.00, 0.00, 0.00,0.0,0.0,0.0},
+				{3.14, 0.00, 0.00,0.0,0.0,0.0},
+				{0.00, 3.14, 0.00,0.0,0.0,0.0},
+				{0.00, 0.00, 3.14,0.0,0.0,0.0}
+		};
+		double[][] transforms2 = {
+				{0.00, 0.00, 0.00,0.0,0.0,0.0},
+				{3.14, 0.00, 0.00,0.0,0.0,0.0},
+				{0.00, 3.14, 0.00,0.0,0.0,0.0},
+				{0.00, 0.00, 3.14,0.0,0.0,0.0},
+				{1.57, 0.00, 0.00,0.0,0.0,0.0},
+				{0.00, 1.57, 0.00,0.0,0.0,0.0},
+				{0.00, 0.00, 1.57,0.0,0.0,0.0},
+				{-1.21, -1.21, 1.21,0.0,0.0,0.0},
+				{-1.21, 1.21, -1.21,0.0,0.0,0.0},
+				{1.21, 1.21, -1.21,0.0,0.0,0.0},
+				{-1.21, -1.21, -1.21,0.0,0.0,0.0},
+				{1.21, -1.21, -1.21,0.0,0.0,0.0}
+		};
 		
 	
 		switch(mode){
@@ -131,7 +138,7 @@ public class PheSAAlignment {
 			
 		default:
 		
-			double [][] transform = {{1.0,0.0,0.0,0.0,0.0,0.0,0.0}};
+			double [][] transform = {{0.00, 0.00, 0.00,0.0,0.0,0.0}};
 			return transform;
 		}
 	
@@ -289,21 +296,22 @@ public class PheSAAlignment {
 		double Obb = getSelfAtomOverlapFit();
 		double ppOaa = getSelfPPOverlapRef();
 		double ppObb = getSelfPPOverlapFit();
-		EvaluableOverlap eval = new EvaluableOverlap(this, new double[7],ppWeight);
+		EvaluableOverlap eval = new EvaluableOverlap(this, new double[6],ppWeight);
 		OptimizerLBFGS opt = new OptimizerLBFGS(200,0.001);
 		double maxSimilarity = 0.0;
 		double maxPPSimilarity = 0.0;
 		double maxVolSimilarity = 0.0;
 		double maxShapeSimilarity = 0.0;
-		double[] bestTransform = new double[7];
+		double[] bestTransform = new double[6];
 		for(double [] transform:initialTransforms) { 
 			double ppSimilarity = 0.0;//iterate over all initial alignments (necessary since optimizer just finds next local minimum, so we need different initial guesses
 			double atomSimilarity = 0.0;
 			double volSimilarity = 0.0;
 			double[] currentTransform;
 			eval.setState(transform);
-			if(optimize)
+			if(optimize) {
 				currentTransform = opt.optimize(eval);
+			}
 			else
 				currentTransform = transform;
 			double atomOverlap = 0.0;
@@ -341,8 +349,9 @@ public class PheSAAlignment {
 				bestTransform = currentTransform;
 			}
 		}
-		Quaternion rotor = new Quaternion(bestTransform[0],bestTransform[1],bestTransform[2],bestTransform[3]);
-		Translation translate = new Translation(new double[] {bestTransform[4],bestTransform[5],bestTransform[6]});
+		ExponentialMap eMap = new ExponentialMap(bestTransform[0],bestTransform[1],bestTransform[2]);
+		Quaternion rotor = eMap.toQuaternion();
+		Translation translate = new Translation(new double[] {bestTransform[3],bestTransform[4],bestTransform[5]});
 		TransformationSequence transformation = new TransformationSequence(rotor);
 		transformation.addTransformation(translate);
 		for(Transformation trans : transformation.getTransformations())

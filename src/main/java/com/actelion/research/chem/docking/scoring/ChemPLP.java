@@ -38,7 +38,7 @@ import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 public class ChemPLP extends AbstractScoringEngine {
 	
 	private static final double METAL_INTERACTION_CUTOFF = 2.6;
-	private static final double STRAIN_CUTOFF = 50;
+	private static final double STRAIN_CUTOFF = 20;
 			
 	
 	private Set<Integer> receptorAcceptors;
@@ -94,9 +94,8 @@ public class ChemPLP extends AbstractScoringEngine {
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
-		ff.setState(candidatePose.getState());
+		ff.setState(candidatePose.getCartState());
 		double ffEnergy = ff.getTotalEnergy();
-
 		if((ffEnergy-e0)>STRAIN_CUTOFF) {
 			energy+=ffEnergy;
 			ff.addGradient(grad);
@@ -109,21 +108,19 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 	@Override 
 	public void updateState() {
-		ff.setState(candidatePose.getState());
+		ff.setState(candidatePose.getCartState());
 	}
 	
 	@Override
 	public double getScore() {
 		double[] grad = new double[3*candidatePose.getLigConf().getMolecule().getAllAtoms()];
 		double energy = getBumpTerm();
-		
 		for(PotentialEnergyTerm term : chemscoreHbond)
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : chemscoreMetal) 
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
-
 	
 
 		return energy;
@@ -152,6 +149,11 @@ public class ChemPLP extends AbstractScoringEngine {
 		
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
+		//ffOptions.put("angle bend", false);
+		//ffOptions.put("stretch bend", false);
+		//ffOptions.put("bond stretch", false);
+		//ffOptions.put("out of plane", false);
+
 		
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		ff = new ForceFieldMMFF94(ligand, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);

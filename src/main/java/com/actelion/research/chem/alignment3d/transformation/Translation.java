@@ -16,6 +16,20 @@ public class Translation implements Transformation {
 	public Translation(double[] translation) {
 		this.translation = translation;
 	}
+	
+	public Translation(Coordinates translation) {
+		this.translation = new double[3];
+		this.translation[0] = translation.x;
+		this.translation[1] = translation.y;
+		this.translation[2] = translation.z;
+	}
+	
+	public Translation(double x, double y, double z) {
+		this.translation = new double[3];
+		this.translation[0] = x;
+		this.translation[1] = y;
+		this.translation[2] = z;
+	}
 
 	@Override
 	public void apply(Coordinates coords) {

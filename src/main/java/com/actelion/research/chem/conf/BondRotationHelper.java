@@ -25,11 +25,16 @@ public class BondRotationHelper {
 	private int[] mRotationCenters;
 	private int[] mRotationCentersBig;
 	private String[] mTorsionIDs;
-
-	
+	private boolean includeTerminalPolarH;
+	private int[] terminalPolarHBond;
 	
 	public BondRotationHelper(StereoMolecule mol) {
+		this(mol,false);
+	}
+	
+	public BondRotationHelper(StereoMolecule mol, boolean includeTerminalPolarH) {
 		mMol = mol;
+		this.includeTerminalPolarH = includeTerminalPolarH;
 		initialize();
 
 		
@@ -43,6 +48,8 @@ public class BondRotationHelper {
 			disconnectedFragmentSize[disconnectedFragmentNo[atom]]++;
 		mIsRotatableBond = new boolean[mMol.getBonds()];
 		TorsionDB.findRotatableBonds(mMol,true, mIsRotatableBond);
+		if(includeTerminalPolarH)
+			terminalPolarHBond = findTerminalBondsPolarHs(mIsRotatableBond);
 		List<Integer> rotBonds = new ArrayList<Integer>();
 		IntStream.range(0, mIsRotatableBond.length).forEach(e -> {
 			if(mIsRotatableBond[e])
@@ -59,12 +66,31 @@ public class BondRotationHelper {
 		
 		for(int i=0;i<mRotatableBonds.length;i++) {
 			int bond = mRotatableBonds[i];
+			boolean isSpecialBond = false;
+			if(terminalPolarHBond!=null) {
+				for(int b : terminalPolarHBond) {
+					if(b==bond)
+						isSpecialBond=true;
+				}
+			}
 			int[] torsionAtoms = new int[4];
 			int[] rearAtoms = new int[2];
 			TorsionDetail detail = new TorsionDetail();
 			String torsionID = TorsionDB.getTorsionID(mMol, bond, torsionAtoms, detail);
 			mTorsionIDs[i] = torsionID;
-			if (torsionID != null) {
+			if(isSpecialBond) {
+				int a1 = mMol.getBondAtom(0, bond);
+				int a2 = mMol.getBondAtom(1, bond);
+				int a0 = mMol.getConnAtom(a1, 0)==a2 ? mMol.getConnAtom(a1, 1) : mMol.getConnAtom(a1, 0);
+				int a3 = mMol.getConnAtom(a2, 0)==a1 ? mMol.getConnAtom(a2, 1) : mMol.getConnAtom(a2, 0);
+				rearAtoms[0] = a2;
+				rearAtoms[1] = a1;
+				torsionAtoms[0] = a0;
+				torsionAtoms[1] = a1;
+				torsionAtoms[2] = a2;
+				torsionAtoms[3] = a3;
+			}
+			else if (torsionID != null) {
 				rearAtoms[0] = detail.getRearAtom(0);
 				rearAtoms[1] = detail.getRearAtom(1);
 				}
@@ -79,6 +105,28 @@ public class BondRotationHelper {
 		}
 
 		
+	}
+	
+	private int[] findTerminalBondsPolarHs(boolean[] isRotatableBond) {
+		List<Integer> terminalHBonds = new ArrayList<>();
+		for(int b=0;b<mMol.getBonds();b++) {
+			int a1 = mMol.getBondAtom(0, b);
+			int a2 = mMol.getBondAtom(1, b);
+			if(mMol.getAtomicNo(a1)==7 || mMol.getAtomicNo(a1)==8) {
+				if(mMol.getNonHydrogenNeighbourCount(a1)==1 && mMol.getAllHydrogens(a1)>0) {
+					isRotatableBond[b]=true;
+					terminalHBonds.add(b);
+					continue;
+				}
+			}
+			if(mMol.getAtomicNo(a2)==7 || mMol.getAtomicNo(a2)==8) {
+				if(mMol.getNonHydrogenNeighbourCount(a2)==1 && mMol.getAllHydrogens(a2)>0) {
+					isRotatableBond[b]=true;
+					terminalHBonds.add(b);
+				}
+			}
+		}
+		return terminalHBonds.stream().mapToInt(Integer::intValue).toArray();
 	}
 	
 	//populates smallerSideAtomList array and returns the rotation center
@@ -234,16 +282,8 @@ public class BondRotationHelper {
 	 * @param alpha
 	 * @param conf
 	 */
-	public void rotateAroundBond(int bond, double alpha, Conformer conf, boolean biggerSide) {
-		if(!isRotatableBond(bond))
-			return;
-		int bondIndex=-1;
-		for(int i=0;i<mRotatableBonds.length;i++) {
-			if(mRotatableBonds[i]==bond)
-				bondIndex = i;
-		}
-		if(bondIndex==-1)
-			return;
+	public void rotateAroundBond(int bondIndex, double alpha, Conformer conf, boolean biggerSide) {
+
 		
 		int[] atomList;
 		Coordinates t2;
@@ -261,6 +301,7 @@ public class BondRotationHelper {
 			t2Neg = t2.scaleC(-1.0);
 		}
 		else {
+			
 			t2 = conf.getCoordinates(mTorsionAtoms[bondIndex][2]);
 			unit = t2.subC(conf.getCoordinates(mTorsionAtoms[bondIndex][1])).unit();
 			m = new double[3][3];
@@ -272,6 +313,7 @@ public class BondRotationHelper {
 		for (int atom:atomList) {
 			if (atom != rotationCenter) {
 				Coordinates coords = conf.getCoordinates(atom);
+
 				coords.add(t2Neg);
 				coords.rotate(m);
 				coords.add(t2);

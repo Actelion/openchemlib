@@ -119,17 +119,6 @@ public abstract class Gaussian3D {
 		this.weight = weight;
 	}
 	
-	public Coordinates getRotatedCenter(double[][] rotMatrix, double scaleFactor, double[] translation) {
-		Coordinates centerCoords = this.getCenter();
-		Coordinates centerModCoords = new Coordinates();
-		centerModCoords.x = centerCoords.x*rotMatrix[0][0] + centerCoords.y*rotMatrix[1][0] + centerCoords.z*rotMatrix[2][0];
-		centerModCoords.y = centerCoords.x*rotMatrix[0][1] + centerCoords.y*rotMatrix[1][1] + centerCoords.z*rotMatrix[2][1];
-		centerModCoords.z = centerCoords.x*rotMatrix[0][2] + centerCoords.y*rotMatrix[1][2] + centerCoords.z*rotMatrix[2][2];
-		//centerModCoords = this.getCenter().rotateC(rotMatrix); //we operate on the transformed coordinates of the molecule to be fitted
-		centerModCoords.scale(scaleFactor); // scale by the inverse squared norm of the quaternion, necessary if quaternion is not a unit quaternion
-		centerModCoords.add(translation[0], translation[1], translation[2]);
-		return centerModCoords;
-	}
 	
 	public void transform(Transformation transform) {
 		transform.apply(center);
@@ -169,10 +158,6 @@ public abstract class Gaussian3D {
 		center = new Coordinates(coords[atomId]);
 	}
 	
-	public void updateCoordinates(Coordinates coords) {
-		center = new Coordinates(coords);
-	}
-
 	
 	public void updateAtomIndeces(int[] map) {
 		atomId = map[atomId];

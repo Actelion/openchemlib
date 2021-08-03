@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
 import com.actelion.research.chem.alignment3d.transformation.Quaternion;
+import com.actelion.research.chem.alignment3d.transformation.RotationDerivatives;
 import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
@@ -26,14 +28,15 @@ public class EvaluableOverlap implements Evaluable  {
 
 	private PheSAAlignment shapeAlign;
 	private double[] transform;
-    private double [][] qDersAt;
-    private double [][] rDersAt;
-    private double [][] sDersAt;
-    private double [][] uDersAt;
-    private double [][] qDersPP;
-    private double [][] rDersPP;
-    private double [][] sDersPP;
-    private double [][] uDersPP;
+	private Coordinates[] cachedCoords; //coords before rotation + translation is applied, but COM at coordinate origin: Xi-p  
+	private Coordinates[] cachedCoordsPP;
+	private Coordinates origCOM;
+    private double [][] dv0At;
+    private double [][] dv1At;
+    private double [][] dv2At;
+    private double [][] dv0PP;
+    private double [][] dv1PP;
+    private double [][] dv2PP;
     private double[][] results;
     private Coordinates[] fitAtGaussModCoords;
     private Coordinates[] fitPPGaussModCoords;
@@ -50,34 +53,67 @@ public class EvaluableOverlap implements Evaluable  {
 		this.transform = transform;
 	    this.fitAtGaussModCoords = new Coordinates[shapeAlign.getMolGauss().getAtomicGaussians().size()];
 	    this.fitPPGaussModCoords = new Coordinates[shapeAlign.getMolGauss().getPPGaussians().size()];
-	    this.qDersAt = new double[fitAtGaussModCoords.length][3];
-	    this.rDersAt = new double[fitAtGaussModCoords.length][3];
-	    this.sDersAt = new double[fitAtGaussModCoords.length][3];
-	    this.uDersAt = new double[fitAtGaussModCoords.length][3];
-	    this.qDersPP = new double[fitPPGaussModCoords.length][3];
-	    this.rDersPP = new double[fitPPGaussModCoords.length][3];
-	    this.sDersPP = new double[fitPPGaussModCoords.length][3];
-	    this.uDersPP = new double[fitPPGaussModCoords.length][3];
+	    this.dv0At = new double[fitAtGaussModCoords.length][3];
+	    this.dv1At = new double[fitAtGaussModCoords.length][3];
+	    this.dv2At = new double[fitAtGaussModCoords.length][3];
+	    this.dv0PP = new double[fitPPGaussModCoords.length][3];
+	    this.dv1PP = new double[fitPPGaussModCoords.length][3];
+	    this.dv2PP = new double[fitPPGaussModCoords.length][3];
 	    this.fitPPDirectionalityMod = new Coordinates[shapeAlign.getMolGauss().getPPGaussians().size()];
 		this.results = new double[shapeAlign.getRefMolGauss().getAtomicGaussians().size()][shapeAlign.getRefMolGauss().getAtomicGaussians().size()];
+		cachedCoords = new Coordinates[shapeAlign.getMolGauss().getAtomicGaussians().size()];
+		cachedCoordsPP = new Coordinates[shapeAlign.getMolGauss().getPPGaussians().size()];
+		origCOM = new Coordinates();
+		for(int i=0;i<shapeAlign.getMolGauss().getAtomicGaussians().size();i++) {
+			cachedCoords[i] = shapeAlign.getMolGauss().getAtomicGaussians().get(i).center;
+		}
+		for(int i=0;i<shapeAlign.getMolGauss().getPPGaussians().size();i++) {
+			cachedCoordsPP[i] = shapeAlign.getMolGauss().getPPGaussians().get(i).center;
+		}
+		for(Coordinates coords : cachedCoords){
+			origCOM.add(coords);
+		}
+		origCOM.scale(1.0/cachedCoords.length);
+		for(Coordinates coords : cachedCoords) {
+			coords.sub(origCOM);
+		}
+		for(Coordinates coords : cachedCoordsPP) {
+			coords.sub(origCOM);
+		}
+		
+
 		
 	}
 	
 	public EvaluableOverlap(EvaluableOverlap e) {
 		this.shapeAlign = e.shapeAlign;
 		this.transform = e.transform;	
-		this.qDersAt = e.qDersAt;
-		this.rDersAt = e.rDersAt;
-		this.sDersAt = e.sDersAt;
-		this.uDersAt = e.uDersAt;
-		this.qDersPP = e.qDersPP;
-		this.rDersPP = e.rDersPP;
-		this.sDersPP = e.sDersPP;
-		this.uDersPP = e.uDersPP;
+	    this.dv0At = e.dv0At;
+	    this.dv1At = e.dv1At;
+	    this.dv2At = e.dv2At;
+	    this.dv0PP = e.dv0PP;
+	    this.dv0PP = e.dv1PP;
+	    this.dv0PP = e.dv2PP;
 		this.fitAtGaussModCoords = e.fitAtGaussModCoords;
 		this.fitPPGaussModCoords = e.fitPPGaussModCoords;
 		this.results = e.results;
 
+	}
+	
+	private void getTransformedCoordinates(Coordinates[] modCoords,List<? extends Gaussian3D> fitMolGauss) {
+		 ExponentialMap em = new ExponentialMap(transform[0],transform[1],transform[2]);
+		 Quaternion q = em.toQuaternion();
+		 double[][] rotMatrix = q.getRotMatrix().getArray();
+		 for(int k=0;k<fitMolGauss.size();k++) {
+		    Coordinates center = new Coordinates(fitMolGauss.get(k).center);
+		    center.sub(origCOM);
+		    center.rotate(rotMatrix);
+		    center.add(origCOM);
+		    center.x += transform[3];
+		    center.y += transform[4];
+		    center.z += transform[5]; 
+		    modCoords[k] = center;
+		  }
 	}
 	
 	@Override
@@ -119,12 +155,12 @@ public class EvaluableOverlap implements Evaluable  {
 		if(refMolGauss instanceof MolecularVolume)
 			volumeGaussians = ((MolecularVolume)refMolGauss).getVolumeGaussians();
 		value += (1.0-ppWeight)*this.getFGValueOverlap(atomGrad,refMolGauss.getAtomicGaussians(),fitMolGauss.getAtomicGaussians(),volumeGaussians,
-						qDersAt,rDersAt,sDersAt,uDersAt,fitAtGaussModCoords);
+						dv0At,dv1At,dv2At,fitAtGaussModCoords);
 			
 		
 		double[] ppGrad = new double[grad.length];
 		value += ppWeight*this.getFGValueOverlapPP(ppGrad,refMolGauss.getPPGaussians(),fitMolGauss.getPPGaussians(),
-						qDersPP,rDersPP,sDersPP,uDersPP,fitPPGaussModCoords,fitPPDirectionalityMod);
+						dv0PP,dv1PP,dv2PP,fitPPGaussModCoords,fitPPDirectionalityMod);
 
 		for(int i=0;i<grad.length;i++) 
 			grad[i] = (1.0-ppWeight)*atomGrad[i]+ ppWeight*ppGrad[i];
@@ -136,52 +172,41 @@ public class EvaluableOverlap implements Evaluable  {
 	}
 	
 	
-	private void getQuatGradient(double[][] q0Ders, double[][] q1Ders, double[][] q2Ders, double[][] q3Ders, List<? extends Gaussian3D> refMolGauss,List<? extends Gaussian3D> fitMolGauss,Coordinates[] fitModCoords,
-			double q0, double q1, double q2, double q3, double invnorm2) {
+	private void getEMapGradient(double[][] dRdv0, double[][] dRdv1, double[][] dRdv2, Coordinates[] cachedCoords) {
 
 		    /**
-		     * we first calculate the partial derivatives with respect to the four elements of the quaternion q,r,s,u
+		     * we first calculate the partial derivatives with respect to the three elements of the exponential map
 		     * the final gradient has 7 elements, the first four elements are the gradients for the quaternion (rotation),
 		     * the last three elements are for the translation
 		     */
+		
+		double[] v = new double[] {transform[0],transform[1],transform[2]}; //exponential map
+		RotationDerivatives rotationDerivatives = new RotationDerivatives(v);
+		 for(int a=0;a<cachedCoords.length;a++){
+			Coordinates xi = cachedCoords[a];
+			double[][] dRdvi = new double[3][3];
+			rotationDerivatives.dRdv(0, dRdvi);
+			Coordinates dRij_dv0 = xi.rotateC(dRdvi);
+			rotationDerivatives.dRdv(1, dRdvi);
+			Coordinates dRij_dv1 = xi.rotateC(dRdvi);
+			rotationDerivatives.dRdv(2, dRdvi);
+			Coordinates dRij_dv2 = xi.rotateC(dRdvi);
 	
-			int i=0;
-		    for(Coordinates fitCenterModCoord:fitModCoords){
-		        double xk=fitCenterModCoord.x;
-		        double yk=fitCenterModCoord.y;
-		        double zk=fitCenterModCoord.z;   
-		        
-		        double dxdq0 =  invnorm2*2.0*(q0*xk - q3*yk + q2*zk);
-		        double dydq0 =  invnorm2*2.0*(q3*xk + q0*yk - q1*zk);
-		        double dzdq0 =  invnorm2*2.0*(-q2*xk + q1*yk + q0*zk);
-		        
-		        double dxdq1 =  invnorm2*2.0*(q1*xk + q2*yk + q3*zk);
-		        double dydq1 =  invnorm2*2.0*(q2*xk - q1*yk - q0*zk);
-		        double dzdq1 =  invnorm2*2.0*(q3*xk + q0*yk - q1*zk);
-		        
-		        double dxdq2 =  invnorm2*2.0*(-q2*xk + q1*yk + q0*zk);
-		        double dydq2 =  invnorm2*2.0*(q1*xk + q2*yk + q3*zk);
-		        double dzdq2 =  invnorm2*2.0*(-q0*xk + q3*yk - q2*zk);
-		        
-		        double dxdq3 =  invnorm2*2.0*(-q3*xk - q0*yk + q1*zk);
-		        double dydq3 =  invnorm2*2.0*(q0*xk - q3*yk + q2*zk);
-		        double dzdq3 =  invnorm2*2.0*(q1*xk + q2*yk + q3*zk);
+			dRdv0[a][0] = dRij_dv0.x;
+			dRdv0[a][1] = dRij_dv0.y;
+			dRdv0[a][2] = dRij_dv0.z;
+			
+			dRdv1[a][0] = dRij_dv1.x;
+			dRdv1[a][1] = dRij_dv1.y;
+			dRdv1[a][2] = dRij_dv1.z;
+			
+			dRdv2[a][0] = dRij_dv2.x;
+			dRdv2[a][1] = dRij_dv2.y;
+			dRdv2[a][2] = dRij_dv2.z;
+		}
+		 
+		 
 
-		        
-		        q0Ders[i][0] = dxdq0;
-		        q0Ders[i][1] = dydq0;
-		        q0Ders[i][2] = dzdq0;
-		        q1Ders[i][0] = dxdq1;
-		        q1Ders[i][1] = dydq1;
-		        q1Ders[i][2] = dzdq1;
-		        q2Ders[i][0] = dxdq2;
-		        q2Ders[i][1] = dydq2;
-		        q2Ders[i][2] = dzdq2;
-		        q3Ders[i][0] = dxdq3;
-		        q3Ders[i][1] = dydq3;
-		        q3Ders[i][2] = dzdq3;
-		        i+=1;
-		    }
 		
 	}
 	
@@ -218,18 +243,8 @@ public class EvaluableOverlap implements Evaluable  {
 	 */
 	
 	private double getFGValueOverlap(double[] grad,List<AtomicGaussian> refMolGauss,List<AtomicGaussian> fitMolGauss,List<VolumeGaussian> volGaussians,
-			double[][] qDers,double[][] rDers,double[][] sDers,double[][] uDers, Coordinates[] fitGaussModCoords) {
-		double q=transform[0];
-	    double r=transform[1];
-	    double s=transform[2];
-	    double u=transform[3];
-	    Quaternion quat = new Quaternion(q,r,s,u);
-	    double norm2 = quat.normSquared();
-	    double norm = Math.sqrt(norm2);
-	    double invnorm2 = 1.0/norm2;
-	    double invnorm = 1/norm;
-	    
-	    //System.out.println(Arrays.toString(transform));
+			double[][] dRdv0, double[][] dRdv1, double[][] dRdv2, Coordinates[] fitGaussModCoords) {
+
 
 	    /**
 	     * we first calculate the partial derivatives with respect to the four elements of the quaternion q,r,s,u
@@ -237,15 +252,9 @@ public class EvaluableOverlap implements Evaluable  {
 	     * the last three elements are for the translation
 	     */
 	    
-	    double[][] rotMatrix = quat.getRotMatrix().getArray();
+	    getTransformedCoordinates(fitGaussModCoords, fitMolGauss);
 
-
-	    for(int k=0;k<fitMolGauss.size();k++) {
-	    	fitGaussModCoords[k]=  fitMolGauss.get(k).getRotatedCenter(rotMatrix, invnorm2, new double[] {transform[4],transform[5],transform[6]});    //we operate on the transformed coordinates of the molecule to be fitted
-
-	    }
-
-	    this.getQuatGradient(qDers, rDers, sDers, uDers, refMolGauss, fitMolGauss, fitGaussModCoords,q,r,s,u,invnorm2);
+	    this.getEMapGradient(dRdv0, dRdv1, dRdv2,cachedCoords);
 
 
 		/**
@@ -276,18 +285,16 @@ public class EvaluableOverlap implements Evaluable  {
 				if (atomOverlap>0.0) {
 					totalOverlap += atomOverlap;
 					double gradientPrefactor = atomOverlap*-2*refAt.getWidth()*fitAt.getWidth()/(refAt.getWidth()+fitAt.getWidth());
-					double qder = qDers[j][0]*dx+qDers[j][1]*dy+qDers[j][2]*dz; 
-					double rder = rDers[j][0]*dx+rDers[j][1]*dy+rDers[j][2]*dz; 
-					double sder = sDers[j][0]*dx+sDers[j][1]*dy+sDers[j][2]*dz; 
-					double uder = uDers[j][0]*dx+uDers[j][1]*dy+uDers[j][2]*dz; 
+					double dv0 = dRdv0[j][0]*dx+dRdv0[j][1]*dy+dRdv0[j][2]*dz; 
+					double dv1 = dRdv1[j][0]*dx+dRdv1[j][1]*dy+dRdv1[j][2]*dz; 
+					double dv2 = dRdv2[j][0]*dx+dRdv2[j][1]*dy+dRdv2[j][2]*dz; 
 
-					grad[0] += gradientPrefactor*qder;
-					grad[1] += gradientPrefactor*rder;
-					grad[2] += gradientPrefactor*sder;
-					grad[3] += gradientPrefactor*uder;
-					grad[4] += gradientPrefactor*dx;
-					grad[5] += gradientPrefactor*dy;
-					grad[6] += gradientPrefactor*dz;
+					grad[0] += gradientPrefactor*dv0;
+					grad[1] += gradientPrefactor*dv1;
+					grad[2] += gradientPrefactor*dv2;
+					grad[3] += gradientPrefactor*dx;
+					grad[4] += gradientPrefactor*dy;
+					grad[5] += gradientPrefactor*dz;
 				    }
 
 
@@ -316,57 +323,45 @@ public class EvaluableOverlap implements Evaluable  {
 					if (Math.abs(atomOverlap)>0.0) {
 						totalOverlap += atomOverlap;
 						double gradientPrefactor = atomOverlap*-2*refVol.getWidth()*fitAt.getWidth()/(refVol.getWidth()+fitAt.getWidth());
-						double qder = qDers[j][0]*dx+qDers[j][1]*dy+qDers[j][2]*dz; 
-						double rder = rDers[j][0]*dx+rDers[j][1]*dy+rDers[j][2]*dz; 
-						double sder = sDers[j][0]*dx+sDers[j][1]*dy+sDers[j][2]*dz; 
-						double uder = uDers[j][0]*dx+uDers[j][1]*dy+uDers[j][2]*dz; 
+						double dv0 = dRdv0[j][0]*dx+dRdv0[j][1]*dy+dRdv0[j][2]*dz; 
+						double dv1 = dRdv1[j][0]*dx+dRdv1[j][1]*dy+dRdv1[j][2]*dz; 
+						double dv2 = dRdv2[j][0]*dx+dRdv2[j][1]*dy+dRdv2[j][2]*dz; 
 
-						grad[0] += gradientPrefactor*qder;
-						grad[1] += gradientPrefactor*rder;
-						grad[2] += gradientPrefactor*sder;
-						grad[3] += gradientPrefactor*uder;
-						grad[4] += gradientPrefactor*dx;
-						grad[5] += gradientPrefactor*dy;
-						grad[6] += gradientPrefactor*dz;
+						grad[0] += gradientPrefactor*dv0;
+						grad[1] += gradientPrefactor*dv1;
+						grad[2] += gradientPrefactor*dv2;
+						grad[3] += gradientPrefactor*dx;
+						grad[4] += gradientPrefactor*dy;
+						grad[5] += gradientPrefactor*dz;
 					    }
 
 
 					}
 				
 			}
-		grad[0] += PENALTY*(1-invnorm)*this.transform[0]; //penalty term to force quaternion into unity
-		grad[1] += PENALTY*(1-invnorm)*this.transform[1];
-		grad[2] += PENALTY*(1-invnorm)*this.transform[2];
-		grad[3] += PENALTY*(1-invnorm)*this.transform[3];
 
 
 
 
-		return (-1.0*totalOverlap+0.5*PENALTY*(norm-1)*(norm-1)); //the negative overlap is returned as the objective, since we minimize the objective in the optimization algorithm
+
+		return (-1.0*totalOverlap); //the negative overlap is returned as the objective, since we minimize the objective in the optimization algorithm
 
 	
 	}
 	    
 	    
-	   private double getFGValueOverlapPP(double[] grad, List<PPGaussian> refMolGauss,List<PPGaussian> fitMolGauss, double[][] qDers,double[][] rDers,double[][] sDers,double[][] uDers, Coordinates[] fitGaussModCoords, Coordinates[] fitPPDirectionalityMod) {
-			double q=transform[0];
-		    double r=transform[1];
-		    double s=transform[2];
-		    double u=transform[3];
-		    Quaternion quat = new Quaternion(q,r,s,u);
-		    double norm2 = quat.normSquared();
-		    double norm = Math.sqrt(norm2);
-		    double invnorm2 = 1.0/norm2;
-		    double invnorm = 1/norm;
+	   private double getFGValueOverlapPP(double[] grad, List<PPGaussian> refMolGauss,List<PPGaussian> fitMolGauss, double[][] dRdv0, double[][] dRdv1, double[][] dRdv2, Coordinates[] fitGaussModCoords, Coordinates[] fitPPDirectionalityMod) {
+		   	ExponentialMap eMap = new ExponentialMap(transform[0],transform[1],transform[2]);
 		    
-		    double[][] rotMatrix = quat.getRotMatrix().getArray();
+		    double[][] rotMatrix = eMap.toQuaternion().getRotMatrix().getArray();
 
 
 		    for(int k=0;k<fitMolGauss.size();k++) {
-		    	fitGaussModCoords[k]=  fitMolGauss.get(k).getRotatedCenter(rotMatrix, invnorm2, new double[] {transform[4],transform[5],transform[6]});    //we operate on the transformed coordinates of the molecule to be fitted
-		    	fitPPDirectionalityMod[k] = fitMolGauss.get(k).getRotatedDirectionality(rotMatrix, invnorm2);
+		    	fitPPDirectionalityMod[k] = fitMolGauss.get(k).getRotatedDirectionality(rotMatrix, 1.0);
 		    }
-		    this.getQuatGradient(qDers, rDers, sDers, uDers, refMolGauss, fitMolGauss, fitGaussModCoords,q,r,s,u,invnorm2);
+		    getTransformedCoordinates(fitGaussModCoords,fitMolGauss);
+
+		    this.getEMapGradient(dRdv0, dRdv1, dRdv2,cachedCoordsPP);
 
 
 			/**
@@ -403,30 +398,22 @@ public class EvaluableOverlap implements Evaluable  {
 						atomOverlap *= sim;
 						totalOverlap += atomOverlap;
 						double gradientPrefactor = atomOverlap*-2*refAt.getWidth()*fitAt.getWidth()/(refAt.getWidth()+fitAt.getWidth());
-						double qder = qDers[j][0]*dx+qDers[j][1]*dy+qDers[j][2]*dz; 
-						double rder = rDers[j][0]*dx+rDers[j][1]*dy+rDers[j][2]*dz; 
-						double sder = sDers[j][0]*dx+sDers[j][1]*dy+sDers[j][2]*dz; 
-						double uder = uDers[j][0]*dx+uDers[j][1]*dy+uDers[j][2]*dz; 
+						double dv0 = dRdv0[j][0]*dx+dRdv0[j][1]*dy+dRdv0[j][2]*dz; 
+						double dv1 = dRdv1[j][0]*dx+dRdv1[j][1]*dy+dRdv1[j][2]*dz; 
+						double dv2 = dRdv2[j][0]*dx+dRdv2[j][1]*dy+dRdv2[j][2]*dz;   
 
-					    grad[0] += sim*gradientPrefactor*qder+atomOverlap*(qDers[j][0]*xi+qDers[j][1]*yi+qDers[j][2]*zi)/3.0;
-					    grad[1] += sim*gradientPrefactor*rder+atomOverlap*(rDers[j][0]*xi+rDers[j][1]*yi+rDers[j][2]*zi)/3.0;
-					    grad[2] += sim*gradientPrefactor*sder+atomOverlap*(sDers[j][0]*xi+sDers[j][1]*yi+sDers[j][2]*zi)/3.0;
-					    grad[3] += sim*gradientPrefactor*uder+atomOverlap*(uDers[j][0]*xi+uDers[j][1]*yi+uDers[j][2]*zi)/3.0;
-					    grad[4] += sim*gradientPrefactor*dx+atomOverlap*xi/3.0;
-					    grad[5] += sim*gradientPrefactor*dy+atomOverlap*yi/3.0;
-					    grad[6] += sim*gradientPrefactor*dz+atomOverlap*zi/3.0;
+					    grad[0] += sim*gradientPrefactor*dv0+atomOverlap*(dRdv0[j][0]*xi+dRdv0[j][1]*yi+dRdv0[j][2]*zi)/3.0;
+					    grad[1] += sim*gradientPrefactor*dv1+atomOverlap*(dRdv1[j][0]*xi+dRdv1[j][1]*yi+dRdv1[j][2]*zi)/3.0;
+					    grad[2] += sim*gradientPrefactor*dv2+atomOverlap*(dRdv2[j][0]*xi+dRdv2[j][1]*yi+dRdv2[j][2]*zi)/3.0;
+					    grad[3] += sim*gradientPrefactor*dx+atomOverlap*xi/3.0;
+					    grad[4] += sim*gradientPrefactor*dy+atomOverlap*yi/3.0;
+					    grad[5] += sim*gradientPrefactor*dz+atomOverlap*zi/3.0;
 								    	
 					    }
 					}
 				}
 
-			grad[0] += PENALTY*(1-invnorm)*this.transform[0]; //penalty term to force quaternion into unity
-			grad[1] += PENALTY*(1-invnorm)*this.transform[1];
-			grad[2] += PENALTY*(1-invnorm)*this.transform[2];
-			grad[3] += PENALTY*(1-invnorm)*this.transform[3];
-
-
-			return (-1.0*totalOverlap+0.5*PENALTY*(norm-1)*(norm-1)); //the negative overlap is returned as the objective, since we minimize the objective in the optimization algorithm
+			return (-1.0*totalOverlap); //the negative overlap is returned as the objective, since we minimize the objective in the optimization algorithm
 			
 		
 		}

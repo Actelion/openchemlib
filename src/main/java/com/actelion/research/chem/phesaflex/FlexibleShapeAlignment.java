@@ -142,7 +142,7 @@ public class FlexibleShapeAlignment {
 	private double[] getResult() { 
 		TransformationSequence sequence = new TransformationSequence();
 		PheSAAlignment pa = new PheSAAlignment(fitMol,refMol, ppWeight);
-		double[] r = pa.findAlignment(new double[][] {{1.0,0.0,0.0,0.0,0.0,0.0,0.0}},sequence,false);
+		double[] r = pa.findAlignment(new double[][] {{0.00, 0.00, 0.00,0.0,0.0,0.0}},sequence,false);
 		return new double[] {r[0],r[1],r[2], r[3]};
 	}
 	

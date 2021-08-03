@@ -3,6 +3,7 @@ package com.actelion.research.chem.phesa;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
 import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.conf.Conformer;
@@ -172,16 +173,24 @@ public class MolecularVolume extends ShapeVolume{
 	
 	public double[] getTotalAtomOverlap(double[] transform, MolecularVolume fitVol){
 		double[] result = new double[2];
-		Quaternion quat = new Quaternion(transform[0],transform[1],transform[2],transform[3]);
+		ExponentialMap eMap = new ExponentialMap(transform[0],transform[1],transform[2]);
 		double Vtot = 0.0;
 		double Vvol = 0.0;
-		double[][] rotMatrix = quat.getRotMatrix().getArray();
+		Coordinates com = fitVol.getCOM();
+		double[][] rotMatrix = eMap.toQuaternion().getRotMatrix().getArray();
 		List<AtomicGaussian> fitGaussians = fitVol.atomicGaussians;
 		Coordinates[] fitCenterModCoords = new Coordinates[fitGaussians.size()];
-		double normFactor = 1/(transform[0]*transform[0]+transform[1]*transform[1]+transform[2]*transform[2]+transform[3]*transform[3]);
 		for(int k=0;k<fitGaussians.size();k++) {
-    			fitCenterModCoords[k] = fitGaussians.get(k).getRotatedCenter(rotMatrix, normFactor, new double[] {transform[4], transform[5], transform[6]}); //we operate on the transformed coordinates of the molecule to be fitted
+				Coordinates center = new Coordinates(fitGaussians.get(k).getCenter());
+				center.sub(com);
+			    center.rotate(rotMatrix);
+			    center.add(com);
+			    center.x += transform[3];
+			    center.y += transform[4];
+			    center.z += transform[5];
+			    fitCenterModCoords[k] = center;
 		}
+
 
 		for(AtomicGaussian refAt:atomicGaussians){
 			int index = 0;

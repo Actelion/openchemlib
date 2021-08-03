@@ -2,13 +2,16 @@ package com.actelion.research.chem.docking;
 
 import java.util.Random;
 
+
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
+import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.conf.AtomAssembler;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.AtomicGaussian;
 import com.actelion.research.chem.phesa.PheSAAlignment;
@@ -103,11 +106,12 @@ public class DockingUtils {
 		return new Coordinates(r1,r2,r3);
 	}
 	
-	public static void repairLig(StereoMolecule lig) {
+	public static void repairMolecule3D(StereoMolecule lig) {
 		new Canonizer(lig);
 		lig.normalizeAmbiguousBonds();
 		repairQuaternaryNitrogen(lig);
 		repairCarboxylate(lig);
+		assignLikelyProtonationStates(lig);
 	}
 	
 	private static void repairQuaternaryNitrogen(StereoMolecule mol){
@@ -121,6 +125,32 @@ public class DockingUtils {
 			}
 		}
 		mol.ensureHelperArrays(Molecule.cHelperRings);
+	}
+	
+	public static void assignLikelyProtonationStates(StereoMolecule mol) {
+		for(int a=0;a<mol.getAtoms();a++) {
+			if(mol.getAtomicNo(a)==7) {
+				if (AtomFunctionAnalyzer.isBasicNitrogen(mol, a))
+					mol.setAtomCharge(a, +1);
+					
+			}
+			if(mol.getAtomicNo(a)==8) {
+				if (AtomFunctionAnalyzer.isAcidicOxygen(mol, a))
+					mol.setAtomCharge(a, -1);
+					
+			}
+		}
+		addImplicitHydrogens(mol);
+	}
+	
+	
+	public static void addImplicitHydrogens(StereoMolecule mol) {
+
+		 new AtomAssembler(mol).addImplicitHydrogens();
+
+
+		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+
 	}
 	
 	private static void repairCarboxylate(StereoMolecule mol){
