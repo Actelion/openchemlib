@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.Conformer;
 
 public class ChargePoint implements IPharmacophorePoint {
 	private int chargeAtom;
@@ -15,8 +14,8 @@ public class ChargePoint implements IPharmacophorePoint {
 	private static final Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 	
 	public ChargePoint(StereoMolecule mol, int a, List<Integer> neighbours, int charge) {
-		if(charge!=1 && charge!=-1) 
-			throw new IllegalArgumentException("charge should be +1 or -1");
+		if(charge==0) 
+			throw new IllegalArgumentException("charge should not be 0 ");
 		chargeAtom = a;
 		this.neighbours = neighbours;
 		this.charge = charge;

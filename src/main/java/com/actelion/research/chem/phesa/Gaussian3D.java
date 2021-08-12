@@ -127,7 +127,7 @@ public abstract class Gaussian3D {
 		
 
 	
-	public double getVolumeOverlap(Gaussian3D g2,Coordinates c2, double distCutoff) {
+	public final double getVolumeOverlap(Gaussian3D g2,Coordinates c2, double distCutoff) {
 		double alphaSum = getWidth() + g2.getWidth();
 		double Vij = 0.0;
 		double Kij=0.0;
@@ -146,11 +146,11 @@ public abstract class Gaussian3D {
 		return Vij;
 	}
 		
-	public double getVolumeOverlap(Gaussian3D g2) {
+	public final double getVolumeOverlap(Gaussian3D g2) {
 		return getVolumeOverlap(g2,DIST_CUTOFF);
 	}
 	
-	public double getVolumeOverlap(Gaussian3D g2, double distCutoff) {
+	public final double getVolumeOverlap(Gaussian3D g2, double distCutoff) {
 		return getVolumeOverlap(g2,g2.getCenter(),distCutoff);
 	}
 	

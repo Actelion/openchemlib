@@ -113,11 +113,9 @@ public class DockingEngine {
 		//ffOptions.put("out of plane", false);
 
 		ConformerSet confSet = new ConformerSet();
-		System.out.println("shape docking");
 		long t0 = System.currentTimeMillis();
 		List<StereoMolecule> alignedMol = shapeDocking.dock(mol);
 		long t1 = System.currentTimeMillis();
-		System.out.println(t1-t0);
 		alignedMol.stream().forEach(e -> confSet.add(new Conformer(e)));
 		for(Conformer c : confSet) {
 			if(c!=null) {
@@ -147,7 +145,6 @@ public class DockingEngine {
 	public DockingResult dockMolecule(StereoMolecule mol) throws DockingFailedException {
 		Conformer bestPose = null;
 		double bestEnergy = Double.MAX_VALUE;
-		
 		if(ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS)==null)
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		List<Conformer> startPoints = new ArrayList<>();
@@ -176,7 +173,6 @@ public class DockingEngine {
 				}
 			}
 		}
-
 		if(bestPose!=null) {
 			StereoMolecule best = bestPose.toMolecule();
 			Rotation rot = rotation.getInvert();

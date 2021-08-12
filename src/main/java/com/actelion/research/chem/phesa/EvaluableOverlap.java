@@ -182,15 +182,17 @@ public class EvaluableOverlap implements Evaluable  {
 		
 		double[] v = new double[] {transform[0],transform[1],transform[2]}; //exponential map
 		RotationDerivatives rotationDerivatives = new RotationDerivatives(v);
+		double[][] dRdvi_1 = new double[3][3];
+		double[][] dRdvi_2 = new double[3][3];
+		double[][] dRdvi_3 = new double[3][3];
+		rotationDerivatives.dRdv(0, dRdvi_1);
+		rotationDerivatives.dRdv(1, dRdvi_2);
+		rotationDerivatives.dRdv(2, dRdvi_3);
 		 for(int a=0;a<cachedCoords.length;a++){
 			Coordinates xi = cachedCoords[a];
-			double[][] dRdvi = new double[3][3];
-			rotationDerivatives.dRdv(0, dRdvi);
-			Coordinates dRij_dv0 = xi.rotateC(dRdvi);
-			rotationDerivatives.dRdv(1, dRdvi);
-			Coordinates dRij_dv1 = xi.rotateC(dRdvi);
-			rotationDerivatives.dRdv(2, dRdvi);
-			Coordinates dRij_dv2 = xi.rotateC(dRdvi);
+			Coordinates dRij_dv0 = xi.rotateC(dRdvi_1);
+			Coordinates dRij_dv1 = xi.rotateC(dRdvi_2);
+			Coordinates dRij_dv2 = xi.rotateC(dRdvi_3);
 	
 			dRdv0[a][0] = dRij_dv0.x;
 			dRdv0[a][1] = dRij_dv0.y;

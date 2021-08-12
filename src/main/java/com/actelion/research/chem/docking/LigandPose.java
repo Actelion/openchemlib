@@ -32,7 +32,9 @@ public class LigandPose implements Evaluable{
 	private Conformer ligConf;
 	private Coordinates[] origCoords;
 	private Coordinates[] cachedCoords; //used for gradient calculation: ligand coordinates with adjusted dihedral angles, but before rotation and translation
-	private double[][] dRdvi;
+	private double[][] dRdvi1;
+	private double[][] dRdvi2;
+	private double[][] dRdvi3;
 	private StereoMolecule mol;
 	private AbstractScoringEngine engine;
 	public static long SEED = 12345L;
@@ -63,7 +65,9 @@ public class LigandPose implements Evaluable{
 		for(Coordinates coords : origCoords) {
 			coords.sub(origCOM);
 		}
-		dRdvi = new double[3][3];
+		dRdvi1 = new double[3][3];
+		dRdvi2 = new double[3][3];
+		dRdvi3 = new double[3][3];
 		
 	}
 	
@@ -98,16 +102,16 @@ public class LigandPose implements Evaluable{
 		//vi': atomic position (after adjustment of torsion values)
 		double[] p = new double[] {state[3],state[4],state[5]};
 		RotationDerivatives transformDerivatives = new RotationDerivatives(p);
+		transformDerivatives.dRdv(0, dRdvi1);
+		transformDerivatives.dRdv(1, dRdvi2);
+		transformDerivatives.dRdv(2, dRdvi3);
 		for(int a=0;a<ligConf.getMolecule().getAllAtoms();a++) {
 			Coordinates vi = cachedCoords[a];
-			transformDerivatives.dRdv(0, dRdvi);
-			Coordinates Tj_vi = vi.rotateC(dRdvi);
+			Coordinates Tj_vi = vi.rotateC(dRdvi1);
 			gradient[3] += coordGrad[3*a]*Tj_vi.x+coordGrad[3*a+1]*Tj_vi.y+coordGrad[3*a+2]*Tj_vi.z;
-			transformDerivatives.dRdv(1, dRdvi);
-			Tj_vi = vi.rotateC(dRdvi);
+			Tj_vi = vi.rotateC(dRdvi2);
 			gradient[4] += coordGrad[3*a]*Tj_vi.x+coordGrad[3*a+1]*Tj_vi.y+coordGrad[3*a+2]*Tj_vi.z;
-			transformDerivatives.dRdv(2, dRdvi);
-			Tj_vi = vi.rotateC(dRdvi);
+			Tj_vi = vi.rotateC(dRdvi3);
 			gradient[5] += coordGrad[3*a]*Tj_vi.x+coordGrad[3*a+1]*Tj_vi.y+coordGrad[3*a+2]*Tj_vi.z;
 		}
 		//3. torsional gradient

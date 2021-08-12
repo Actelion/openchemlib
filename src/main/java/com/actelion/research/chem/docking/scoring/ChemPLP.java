@@ -23,6 +23,7 @@ import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
+import com.actelion.research.chem.phesa.pharmacophore.ChargedGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
@@ -160,7 +161,6 @@ public class ChemPLP extends AbstractScoringEngine {
 		StereoMolecule receptor = receptorConf.getMolecule();
 		identifyHBondFunctionality(ligand,ligandAcceptors,ligandDonorHs, ligandDonors, new HashSet<Integer>(),ligandAcceptorNeg,
 				ligandDonorHPos);
-
 
 		for(int p : bindingSiteAtoms) {
 			if(receptor.getAtomicNo(p)==1) { // receptor hydrogen atom
@@ -436,7 +436,7 @@ public class ChemPLP extends AbstractScoringEngine {
 			else if (mol.isMetalAtom(a))
 				metals.add(a);
 		}
-		IonizableGroupDetector detector = new IonizableGroupDetector(mol);
+		ChargedGroupDetector detector = new ChargedGroupDetector(mol);
 		List<ChargePoint> chargePoints = detector.detect();
 		
 		getChargedDonorsAcceptors(mol,chargePoints,acceptors,donorHs, chargedAcceptors,
@@ -448,30 +448,33 @@ public class ChemPLP extends AbstractScoringEngine {
 	private static void getChargedDonorsAcceptors(StereoMolecule mol, List<ChargePoint> chargePoints, Set<Integer> acceptors, Set<Integer> donorHs,
 			Set<Integer> chargedAcceptors, Set<Integer> chargedDonorHs) {
 		for(int a : acceptors) {
-			if(isPartOfChargedGroup(a,chargePoints))
+			if(isPartOfChargedGroup(mol,a,chargePoints))
 				chargedAcceptors.add(a);
 				
 		}
 		
 		for(int h : donorHs) {
 			int d = mol.getConnAtom(h, 0);
-			if(isPartOfChargedGroup(d,chargePoints))
+			if(isPartOfChargedGroup(mol,d,chargePoints))
 				chargedDonorHs.add(h);
 				
 		}
 	}
 	
 	
-	private static boolean isPartOfChargedGroup(int atom, List<ChargePoint> chargePoints) {
+	private static boolean isPartOfChargedGroup(StereoMolecule mol, int atom, List<ChargePoint> chargePoints) {
 		boolean isCharged = false;
 		for(ChargePoint cp : chargePoints) {
 			if(cp.getChargeAtom()==atom) {
 				isCharged=true;
 				break;
 			}
-			else if(cp.getNeighbours().contains(atom)) {
-				isCharged=true;
-				break;
+			else {
+				int chargeAtom = cp.getChargeAtom();
+				for(int a=0;a<mol.getConnAtoms(atom);a++) {
+					if(chargeAtom==mol.getConnAtom(atom, a))
+						isCharged=true;
+				}
 			}
 				
 				
