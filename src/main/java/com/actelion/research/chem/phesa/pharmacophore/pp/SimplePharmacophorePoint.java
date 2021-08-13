@@ -146,5 +146,10 @@ public class SimplePharmacophorePoint implements IPharmacophorePoint {
 	public int getFunctionalityIndex() {
 		return functionality.getIndex();
 	}
+	
+	@Override
+	public double getVectorSimilarity(IPharmacophorePoint pp2,Coordinates directionalityMod) {
+		return 1.0;
+	}
 
 }

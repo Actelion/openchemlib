@@ -12,7 +12,7 @@ import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
 public class PPTriangleCreator {
 	
-	private static final double SIDE_LENGTH_CUTOFF = 3.0;
+	private static final double SIDE_LENGTH_CUTOFF = 2.5;
 
 	
 	private PPTriangleCreator() {

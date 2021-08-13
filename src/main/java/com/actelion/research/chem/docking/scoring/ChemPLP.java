@@ -23,6 +23,7 @@ import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
+import com.actelion.research.chem.phesa.pharmacophore.ChargedGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
@@ -38,7 +39,7 @@ import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 public class ChemPLP extends AbstractScoringEngine {
 	
 	private static final double METAL_INTERACTION_CUTOFF = 2.6;
-	private static final double STRAIN_CUTOFF = 50;
+	private static final double STRAIN_CUTOFF = 20;
 			
 	
 	private Set<Integer> receptorAcceptors;
@@ -94,9 +95,8 @@ public class ChemPLP extends AbstractScoringEngine {
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
-		ff.setState(candidatePose.getState());
+		ff.setState(candidatePose.getCartState());
 		double ffEnergy = ff.getTotalEnergy();
-
 		if((ffEnergy-e0)>STRAIN_CUTOFF) {
 			energy+=ffEnergy;
 			ff.addGradient(grad);
@@ -109,21 +109,19 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 	@Override 
 	public void updateState() {
-		ff.setState(candidatePose.getState());
+		ff.setState(candidatePose.getCartState());
 	}
 	
 	@Override
 	public double getScore() {
 		double[] grad = new double[3*candidatePose.getLigConf().getMolecule().getAllAtoms()];
 		double energy = getBumpTerm();
-		
 		for(PotentialEnergyTerm term : chemscoreHbond)
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : chemscoreMetal) 
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
-
 	
 
 		return energy;
@@ -152,13 +150,17 @@ public class ChemPLP extends AbstractScoringEngine {
 		
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
+		//ffOptions.put("angle bend", false);
+		//ffOptions.put("stretch bend", false);
+		//ffOptions.put("bond stretch", false);
+		//ffOptions.put("out of plane", false);
+
 		
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		ff = new ForceFieldMMFF94(ligand, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 		StereoMolecule receptor = receptorConf.getMolecule();
 		identifyHBondFunctionality(ligand,ligandAcceptors,ligandDonorHs, ligandDonors, new HashSet<Integer>(),ligandAcceptorNeg,
 				ligandDonorHPos);
-
 
 		for(int p : bindingSiteAtoms) {
 			if(receptor.getAtomicNo(p)==1) { // receptor hydrogen atom
@@ -434,7 +436,7 @@ public class ChemPLP extends AbstractScoringEngine {
 			else if (mol.isMetalAtom(a))
 				metals.add(a);
 		}
-		IonizableGroupDetector detector = new IonizableGroupDetector(mol);
+		ChargedGroupDetector detector = new ChargedGroupDetector(mol);
 		List<ChargePoint> chargePoints = detector.detect();
 		
 		getChargedDonorsAcceptors(mol,chargePoints,acceptors,donorHs, chargedAcceptors,
@@ -446,30 +448,33 @@ public class ChemPLP extends AbstractScoringEngine {
 	private static void getChargedDonorsAcceptors(StereoMolecule mol, List<ChargePoint> chargePoints, Set<Integer> acceptors, Set<Integer> donorHs,
 			Set<Integer> chargedAcceptors, Set<Integer> chargedDonorHs) {
 		for(int a : acceptors) {
-			if(isPartOfChargedGroup(a,chargePoints))
+			if(isPartOfChargedGroup(mol,a,chargePoints))
 				chargedAcceptors.add(a);
 				
 		}
 		
 		for(int h : donorHs) {
 			int d = mol.getConnAtom(h, 0);
-			if(isPartOfChargedGroup(d,chargePoints))
+			if(isPartOfChargedGroup(mol,d,chargePoints))
 				chargedDonorHs.add(h);
 				
 		}
 	}
 	
 	
-	private static boolean isPartOfChargedGroup(int atom, List<ChargePoint> chargePoints) {
+	private static boolean isPartOfChargedGroup(StereoMolecule mol, int atom, List<ChargePoint> chargePoints) {
 		boolean isCharged = false;
 		for(ChargePoint cp : chargePoints) {
 			if(cp.getChargeAtom()==atom) {
 				isCharged=true;
 				break;
 			}
-			else if(cp.getNeighbours().contains(atom)) {
-				isCharged=true;
-				break;
+			else {
+				int chargeAtom = cp.getChargeAtom();
+				for(int a=0;a<mol.getConnAtoms(atom);a++) {
+					if(chargeAtom==mol.getConnAtom(atom, a))
+						isCharged=true;
+				}
 			}
 				
 				

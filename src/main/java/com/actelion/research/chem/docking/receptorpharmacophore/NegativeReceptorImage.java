@@ -37,6 +37,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	
 	public enum InteractionProbe {NEG_CHARGE, POS_CHARGE, HB_DONOR, HB_ACCEPTOR };
 	
+	private static final long SEED = 12345L;
 	private static final int RAYS = 120;
 	private static final double RAY_LENGTH = 8.0;
 	private static final double BURIEDNESS_RATIO_CUTOFF = 0.4;
@@ -44,8 +45,8 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	private static final double BUMP_RADIUS2 = 2.0; //to check buriedness
 	private static final double INTERACTION_CUTOFF = 0.0;
 	private static final double INTERACTION_CUTOFF_CHARGE = -1.0;
-	private static final double NONPOLAR_RADIUS = 2.8;
-	private static final double GAUSSIAN_DISTANCE = 1.0;
+	private static final double NONPOLAR_RADIUS = 2.5;
+	private static final double GAUSSIAN_DISTANCE = 1.3;
 	private static final int MAX_NR_INTERACTION_POINTS = 8; //maximum number of interaction points per site
 	private static double MIN_INTERACTION_POINT_DIST = 1.5; //minimum distance between polar interaction points
 
@@ -93,7 +94,11 @@ public class NegativeReceptorImage extends MoleculeGrid {
 		analyzeBumps();
 		createPolarInteractionSites(ppGaussians);
 		createShapeAtoms(shapeGaussians);
-		prunePoints(this.mol.getCoordinates(0), ppGaussians, shapeGaussians, 2.0);
+		List<Coordinates> startingPoints = new ArrayList<>();
+		for(int a=0;a<mol.getAtoms() && a<3;a++) {
+			startingPoints.add(mol.getCoordinates(a));
+		}
+		prunePoints(startingPoints, ppGaussians, shapeGaussians, 2.0);
 		//assign ids to SimplePPs
 		for(int i=0;i<ppGaussians.size();i++) {
 			ppGaussians.get(i).setAtomId(i);
@@ -152,6 +157,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	private void createShapeAtoms(List<AtomicGaussian> shapeGaussians) {
 		List<AtomicGaussian> gaussians = new ArrayList<>();
 		double radiusSq = NONPOLAR_RADIUS*NONPOLAR_RADIUS;
+		double gaussDistSq = GAUSSIAN_DISTANCE*GAUSSIAN_DISTANCE;
 		int cutoff = (int) (NONPOLAR_RADIUS / this.gridWidth);
 		for(int x=cutoff;x<this.gridSize[0];x++) {
 			for(int y=cutoff;y<this.gridSize[1];y++) {
@@ -163,7 +169,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 						double dy = (ag.getCenter().y-probeCoords.y);
 						double dz = (ag.getCenter().z-probeCoords.z);
 						double rSq = dx*dx + dy*dy + dz*dz;
-						if(rSq>radiusSq) {
+						if(rSq>gaussDistSq ) {
 							continue;
 						}
 						else {
@@ -346,7 +352,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	}
 	
 	public boolean getBuriedness(int[] gridCoords) {
-		Random rnd = new Random();
+		Random rnd = new Random(SEED);
 		int steps = (int) (RAY_LENGTH/this.gridWidth);
 		int intersections = 0;
 		Coordinates center = this.getCartCoordinates(gridCoords);
@@ -457,11 +463,15 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	 * algorithm to remove disconnected clusters of Shape Gaussians and PP Gaussians and only keep one single cavity
 	 * @param center
 	 */
-	private void prunePoints(Coordinates center, List<PPGaussian> ppGaussians,  List<AtomicGaussian> atomicGaussians, double stepSize) {
+	private void prunePoints(List<Coordinates> centers, List<PPGaussian> ppGaussians,  List<AtomicGaussian> atomicGaussians, double stepSize) {
 		Set<Gaussian3D> cavityPoints = new HashSet<Gaussian3D>();
 		Queue<Gaussian3D> pq = new LinkedList<Gaussian3D>();
 		Set<Gaussian3D> visited = new HashSet<Gaussian3D>();
-		Set<Gaussian3D> neighbours = getNeighbourPoints(center, ppGaussians, atomicGaussians, stepSize);
+		Set<Gaussian3D> neighbours = new HashSet<>();
+		for(Coordinates center:centers) {
+			neighbours.addAll(getNeighbourPoints(center, ppGaussians, atomicGaussians, stepSize));
+		}
+	
 		pq.addAll(neighbours);
 		cavityPoints.addAll(neighbours);
 		while(!pq.isEmpty()) {

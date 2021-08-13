@@ -9,10 +9,11 @@ import com.actelion.research.chem.alignment3d.transformation.TransformationSeque
 
 public class PPTriangleMatcher {
 	
-	private static final double CUTOFF = 2.0; //if lengths of edges of two triangles differ by more than 2.5A, it is
+	private static final double CUTOFF = 2.5; //if lengths of edges of two triangles differ by more than 2.5A, it is
 											  // not considered as a match
 	
 	private static final double SCORE_CUTOFF = 0.3;
+	private static final double SCORE_CUTOFF_DIREC = 0.6;
 	
 	private PPTriangleMatcher() {}
 	
@@ -24,6 +25,9 @@ public class PPTriangleMatcher {
 	
 	public static List<AlignmentResult> getMatchingTransforms(Map<Integer,ArrayList<PPTriangle>> triangleSetRef, 
 			Map<Integer,ArrayList<PPTriangle>> triangleSetFit, int refConformerId, int conformerId, boolean useDirectionality) {
+		double cutoff = SCORE_CUTOFF;
+		if(!useDirectionality)
+			cutoff=SCORE_CUTOFF_DIREC;
 		List<AlignmentResult> results = new ArrayList<AlignmentResult>();
 		for(int tHash : triangleSetRef.keySet())  {
 			if(!triangleSetFit.containsKey(tHash))
@@ -35,7 +39,7 @@ public class PPTriangleMatcher {
 					if(doEdgeLengthsMatch(refTriangle,fitTriangle)) {
 						TransformationSequence transform = new TransformationSequence();
 						double score = refTriangle.getMatchingTransform(fitTriangle, transform,useDirectionality);
-						if(score>SCORE_CUTOFF)
+						if(score>cutoff)
 							results.add(new AlignmentResult(score, transform,refConformerId,conformerId));
 					}
 				}
