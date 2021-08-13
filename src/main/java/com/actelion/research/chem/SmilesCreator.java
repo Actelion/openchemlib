@@ -14,6 +14,10 @@ Atom description in SMILES:
 
 package com.actelion.research.chem;
 
+/**
+ * Use the IsomericSmilesCreator instead!!!
+ */
+@Deprecated
 public class SmilesCreator
 {
    private ExtendedMolecule mMol;
@@ -35,7 +39,9 @@ public class SmilesCreator
        -> increment this.mDisconnections, 
           if inMol consists of several isolated molecules (or atoms).
        -> Build mSmiles.
+   * This class is deprecated. Use the IsomericSmilesCreator instead!!!
    */
+   @Deprecated
    public String generateSmiles (ExtendedMolecule inMol)
    {
       int atoms, bonds;

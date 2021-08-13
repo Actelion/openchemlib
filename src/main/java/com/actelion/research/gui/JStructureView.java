@@ -234,6 +234,8 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
 		Color fg = g2.getColor();
 		Color bg = UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground");
+		if (bg == null)
+			bg = getBackground();
 		g2.setColor(bg);
 		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
 
@@ -422,7 +424,9 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(data, data);
 			}
 		if (e.getActionCommand().startsWith(ITEM_PASTE) && mIsEditable) {
-			StereoMolecule mol = mClipboardHandler.pasteMolecule();
+			int smartsMode = mAllowFragmentStatusChangeOnPasteOrDrop ? SmilesParser.SMARTS_MODE_GUESS
+						   : mMol.isFragment() ? SmilesParser.SMARTS_MODE_IS_SMARTS : SmilesParser.SMARTS_MODE_IS_SMILES;
+			StereoMolecule mol = mClipboardHandler.pasteMolecule(true, smartsMode);
 			if (mol != null) {
 				if (!mAllowFragmentStatusChangeOnPasteOrDrop)
 					mol.setFragment(mMol.isFragment());

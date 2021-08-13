@@ -35,7 +35,6 @@ package com.actelion.research.gui.clipboard;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.dnd.ChemistryFlavors;
-import com.actelion.research.chem.io.RXNFileCreator;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.chem.reaction.Reaction;
@@ -79,25 +78,26 @@ public class ClipboardHandler implements IClipboardHandler
 	 */
 	@Override
 	public ArrayList<StereoMolecule> pasteMolecules() {
-		return pasteMolecules(true, true);
+		return pasteMolecules(true, true, SmilesParser.SMARTS_MODE_GUESS);
 	}
 
 	/**
 	 * Get one Molecule from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
 	 * Further supported formats on Windows are: MDLSK,MDLCT,MDL_MOL,CF_ENHMETAFILE with embedded sketch.
 	 * If no supported format is found and the clipboard contains text, which can be interpreted as molfile,
-	 * SMILES, IUPAC name or idcode, then the corresponding molecule is returned.
+	 * SMILES (with SMARTS features), IUPAC name or idcode, then the corresponding molecule is returned.
 	 * Otherwise, if a StructureNameResolver is present, then it tries to interpret the name.
 	 * If the clipboard molecule has 3D coordinates, then new 2D-coords are invented and used instead.
 	 * @return Molecule found or null if no molecule present on the clipboard
 	 */
 	@Override
 	public StereoMolecule pasteMolecule() {
-		return pasteMolecule(true);
+		return pasteMolecule(true, SmilesParser.SMARTS_MODE_GUESS);
 	}
 
-	public StereoMolecule pasteMolecule(boolean prefer2D) {
-		ArrayList<StereoMolecule> molList = pasteMolecules(prefer2D, false);
+	@Override
+	public StereoMolecule pasteMolecule(boolean prefer2D, int smartsMode) {
+		ArrayList<StereoMolecule> molList = pasteMolecules(prefer2D, false, smartsMode);
 		return molList.size() == 0 ? null : molList.get(0);
 	}
 
@@ -111,9 +111,10 @@ public class ClipboardHandler implements IClipboardHandler
 	 * corresponding molecules, which may be limited to a certain number.
 	 * @param prefer2D if true and if the clipboard molecule has 3D coordinates, then new 2D-coords are invented
 	 * @param allowMultiple whether multiple molecules may be generated from clipboard text, if no serialized mol or special molecule format present
+	 * @param smartsMode SmilesParser.SMARTS_MODE for parsing strings as SMILES, i.e. how SMARTS features are considered
 	 * @return list of molecules found or generated from SMILES, names, etc; empty list if no molecule present on the clipboard
 	 */
-	private ArrayList<StereoMolecule> pasteMolecules(boolean prefer2D, boolean allowMultiple) {
+	private ArrayList<StereoMolecule> pasteMolecules(boolean prefer2D, boolean allowMultiple, int smartsMode) {
 		ArrayList<StereoMolecule> molList = new ArrayList<>();
 
 		StereoMolecule mol = Platform.isWindows() ? pasteMoleculeWindowsNative(prefer2D) : pasteMoleculeLinux();
@@ -153,7 +154,7 @@ public class ClipboardHandler implements IClipboardHandler
 							if (mol == null || mol.getAllAtoms() == 0) {
 								mol = new StereoMolecule();
 								try {
-									new SmilesParser().parse(mol, line);
+									new SmilesParser(smartsMode, false).parse(mol, line);
 								}
 								catch (Exception e) {
 									mol = null;

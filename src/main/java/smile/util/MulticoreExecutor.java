@@ -16,9 +16,6 @@
 
 package smile.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -33,7 +30,6 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @author Haifeng Li
  */
 public class MulticoreExecutor {
-    private static final Logger logger = LoggerFactory.getLogger(MulticoreExecutor.class);
 
     /** Utility classes should not have public constructors. */
     private MulticoreExecutor() {
@@ -59,7 +55,7 @@ public class MulticoreExecutor {
                     n = Integer.parseInt(env);
                 }
             } catch (Exception ex) {
-                logger.error("Failed to create multi-core execution thread pool", ex);
+                System.err.println("Failed to create multi-core execution thread pool:"+ ex);
             }
 
             if (n < 1) {

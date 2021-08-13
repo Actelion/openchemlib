@@ -15,8 +15,6 @@
  *******************************************************************************/
 package smile.math.matrix;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import smile.math.Math;
 
 /**
@@ -33,8 +31,6 @@ import smile.math.Math;
  * @author Haifeng Li
  */
 public class Lanczos {
-    private static final Logger logger = LoggerFactory.getLogger(Lanczos.class);
-
     /**
      * Find k largest approximate eigen pairs of a symmetric matrix by the
      * Lanczos algorithm.
@@ -291,7 +287,7 @@ public class Lanczos {
             enough = enough || first >= n;
         }
 
-        logger.info("Lanczos: " + iter + " iterations for Matrix of size " + n);
+        System.out.println("Lanczos: " + iter + " iterations for Matrix of size " + n);
 
         store(q, j, wptr[1]);
 
@@ -342,7 +338,7 @@ public class Lanczos {
 
         // fatal error
         if (rnm <= 0.0) {
-            logger.error("Lanczos method was unable to find a starting vector within range.");
+            System.err.println("Lanczos method was unable to find a starting vector within range.");
             return -1;
         }
 
@@ -546,11 +542,11 @@ public class Lanczos {
             }
         }
 
-        logger.info("Lancozs method found {} converged eigenvalues of the {}-by-{} matrix", neig, step + 1, step + 1);
+        System.out.println("Lancozs method found "+neig+" converged eigenvalues of the "+(step+1)+"-by-"+(step+1)+" matrix");
         if (neig != 0) {
             for (int i = 0; i <= step; i++) {
                 if (bnd[i] <= 16.0 * Math.EPSILON * Math.abs(ritz[i])) {
-                    logger.info("ritz[{}] = {}", i, ritz[i]);
+                    System.out.println("ritz["+i+"] = "+ritz[i]);
                 }
             }
         }
