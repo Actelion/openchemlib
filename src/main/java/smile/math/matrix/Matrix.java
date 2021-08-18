@@ -337,8 +337,7 @@ public interface Matrix extends Serializable {
             return (EVD) method.invoke(null, this, k, "LA", kappa, maxIter);
         } catch (Exception e) {
             if (!(e instanceof ClassNotFoundException)) {
-                org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(Matrix.class);
-                logger.info("Matrix.eigen({}, {}, {}):", k, kappa, maxIter, e);
+                System.out.println("Matrix.eigen("+k+", "+kappa+", "+maxIter+"):"+e);
             }
             return Lanczos.eigen(this, k, kappa, maxIter);
         }

@@ -16,9 +16,6 @@
 
 package smile.math.matrix;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Constructor;
 
 /**
@@ -27,8 +24,6 @@ import java.lang.reflect.Constructor;
  * @author Haifeng Li
  */
 class Factory {
-    private static final Logger logger = LoggerFactory.getLogger(Factory.class);
-
     private static Class<?> nlmatrix;
     private static Constructor<?> nlmatrixArray;
     private static Constructor<?> nlmatrixArray2D;
@@ -42,28 +37,28 @@ class Factory {
             try {
                 nlmatrixArray2D = nlmatrix.getConstructor(double[][].class);
             } catch (NoSuchMethodException e) {
-                logger.error("NLMatrix(double[][]) does not exist");
+                System.err.println("NLMatrix(double[][]) does not exist");
             }
 
             try {
                 nlmatrixArray = nlmatrix.getConstructor(double[].class);
             } catch (NoSuchMethodException e) {
-                logger.error("NLMatrix(double[]) does not exist");
+                System.err.println("NLMatrix(double[]) does not exist");
             }
 
             try {
                 nlmatrixZeros = nlmatrix.getConstructor(Integer.TYPE, Integer.TYPE);
             } catch (NoSuchMethodException e) {
-                logger.error("NLMatrix(int, int) does not exist");
+                System.err.println("NLMatrix(int, int) does not exist");
             }
 
             try {
                 nlmatrixOnes = nlmatrix.getConstructor(Integer.TYPE, Integer.TYPE, Double.TYPE);
             } catch (NoSuchMethodException e) {
-                logger.error("NLMatrix(int, int, double) does not exist");
+                System.err.println("NLMatrix(int, int, double) does not exist");
             }
         } catch (ClassNotFoundException e) {
-            logger.info("smile-netlib module is not available in the classpath. Pure Java matrix library will be employed.");
+            System.out.println("smile-netlib module is not available in the classpath. Pure Java matrix library will be employed.");
         }
     }
 
@@ -73,7 +68,7 @@ class Factory {
             try {
                 return (DenseMatrix) nlmatrixArray2D.newInstance((Object) A);
             } catch (Exception e) {
-                logger.error("Failed to call NLMatrix(double[][]): {}", e);
+                System.err.println("Failed to call NLMatrix(double[][]): "+e);
             }
         }
 
@@ -86,7 +81,7 @@ class Factory {
             try {
                 return (DenseMatrix) nlmatrixArray.newInstance(A);
             } catch (Exception e) {
-                logger.error("Failed to call NLMatrix(double[]): {}", e);
+                System.err.println("Failed to call NLMatrix(double[]): "+e);
             }
         }
 
@@ -99,7 +94,7 @@ class Factory {
             try {
                 return (DenseMatrix) nlmatrixZeros.newInstance(nrows, ncols);
             } catch (Exception e) {
-                logger.error("Failed to call NLMatrix(int, int): {}", e);
+                System.err.println("Failed to call NLMatrix(int, int): "+e);
             }
         }
 
@@ -112,7 +107,7 @@ class Factory {
             try {
                 return (DenseMatrix) nlmatrixOnes.newInstance(nrows, ncols, value);
             } catch (Exception e) {
-                logger.error("Failed to call NLMatrix(int, int, double): {}", e);
+                System.err.println("Failed to call NLMatrix(int, int, double): "+e);
             }
         }
 

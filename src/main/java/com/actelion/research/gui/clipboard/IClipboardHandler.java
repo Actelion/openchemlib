@@ -39,6 +39,7 @@ import java.util.ArrayList;
 
 public interface IClipboardHandler {
 	public StereoMolecule pasteMolecule();
+	public StereoMolecule pasteMolecule(boolean prefer2D, int smartsMode);
 	public ArrayList<StereoMolecule> pasteMolecules();
 	public Reaction pasteReaction();
 	public boolean copyMolecule(String molfile);

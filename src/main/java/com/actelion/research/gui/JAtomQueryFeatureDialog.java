@@ -276,9 +276,10 @@ public class JAtomQueryFeatureDialog extends JDialog
 
 		mTFAtomList.setText(mMol.getAtomList(mAtom) == null ? "" : mMol.getAtomListString(mAtom));
 
-		if ((queryFeatures & Molecule.cAtomQFAromatic) != 0)
+		int aromState = queryFeatures & Molecule.cAtomQFAromState;
+		if (aromState == Molecule.cAtomQFAromatic)
 			mChoiceArom.setSelectedIndex(1);
-		else if ((queryFeatures & Molecule.cAtomQFNotAromatic) != 0)
+		else if (aromState == Molecule.cAtomQFNotAromatic)
 			mChoiceArom.setSelectedIndex(2);
 
 		int ringState = queryFeatures & Molecule.cAtomQFRingState;

@@ -15,10 +15,8 @@
  *******************************************************************************/
 package smile.clustering;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import smile.math.distance.Distance;
 import smile.math.Math;
+import smile.math.distance.Distance;
 import smile.util.MulticoreExecutor;
 
 import java.util.ArrayList;
@@ -56,7 +54,6 @@ import java.util.concurrent.Callable;
  */
 public class CLARANS <T> extends PartitionClustering<T> {
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = LoggerFactory.getLogger(CLARANS.class);
 
     /**
      * The total distortion.
@@ -153,7 +150,7 @@ public class CLARANS <T> extends PartitionClustering<T> {
         try {
             MulticoreExecutor.run(tasks);
         } catch (Exception e) {
-            logger.error("Failed to run CLARANS on multi-core", e);
+            System.out.println("Failed to run CLARANS on multi-core:"+e);
 
             for (CLARANSTask task : tasks) {
                 task.call();
