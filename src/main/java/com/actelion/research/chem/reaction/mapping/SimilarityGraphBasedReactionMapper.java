@@ -421,12 +421,14 @@ public class SimilarityGraphBasedReactionMapper {
 		mReactant = new StereoMolecule();
 		for (int i=0; i<rxn.getReactants(); i++) {
 			StereoMolecule reactant = rxn.getReactant(i);
+			reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
 			mReactant.addMolecule(reactant, reactant.getAtoms(), reactant.getBonds());
 			}
 
 		mProduct = new StereoMolecule();
 		for (int i=0; i<rxn.getProducts(); i++) {
 			StereoMolecule product = rxn.getProduct(i);
+			product.ensureHelperArrays(Molecule.cHelperNeighbours);
 			mProduct.addMolecule(product, product.getAtoms(), product.getBonds());
 			}
 
