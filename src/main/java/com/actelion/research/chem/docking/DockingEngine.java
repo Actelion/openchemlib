@@ -39,6 +39,13 @@ import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.ShapeVolume;
 
 public class DockingEngine {
+/**
+ * applies molecular docking to find the binding pose of a ligand molecule into the binding site of the protein
+ * nativeLigand: defines the location of the binding site
+ * this class is not thread safe! every thread requires it's own instance
+ * @author wahljo1
+ *
+ */
 	
 	public enum ScoringFunction {CHEMPLP,IDOSCORE;}
 	private static final int DEFAULT_NR_MC_STEPS = 50;

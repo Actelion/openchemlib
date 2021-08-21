@@ -100,7 +100,7 @@ public class ChargedGroupDetector {
 							
 						}
 					}
-					if(nDBs>1) {
+					if(nDBs>1 && charge>0) {
 						ChargePoint cp = new ChargePoint(mol,carbonCenter,neighbours,charge);
 						chargePoints.add(cp);
 						ArrayList<Integer> group = new ArrayList<>();

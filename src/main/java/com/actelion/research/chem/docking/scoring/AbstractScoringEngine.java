@@ -13,7 +13,11 @@ import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
-
+/**
+ * this class is not thread safe!
+ * @author wahljo1
+ *
+ */
 public abstract class AbstractScoringEngine  {
 	
 	private double BUMP_PENALTY = 500;
