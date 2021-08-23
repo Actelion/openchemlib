@@ -2,17 +2,21 @@ package com.actelion.research.chem.docking;
 
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
@@ -34,9 +38,11 @@ import com.actelion.research.chem.forcefield.mmff.PositionConstraint;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
+import com.actelion.research.chem.phesa.EncodeFunctions;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.ShapeVolume;
+import com.actelion.research.chem.phesa.PheSAAlignment.PheSAResult;
 
 public class DockingEngine {
 /**
@@ -375,6 +381,7 @@ public class DockingEngine {
 	public static class DockingResult implements Comparable<DockingResult>  {
 		private double score;
 		private StereoMolecule pose;
+		private static final String DELIMITER = ";";
 		
 		public DockingResult(StereoMolecule pose, double score) {
 			this.score = score;
@@ -387,6 +394,34 @@ public class DockingEngine {
 		
 		public StereoMolecule getPose() {
 			return pose;
+		}
+		
+		public String encode() {
+			Encoder encoder = Base64.getEncoder();
+			StringBuilder sb = new StringBuilder();
+			Canonizer can = new Canonizer(pose, Canonizer.COORDS_ARE_3D);
+			String idcoords = can.getEncodedCoordinates(true);
+			String idcode = can.getIDCode();
+			sb.append(idcode);
+			sb.append(DELIMITER);
+			sb.append(idcoords);
+			sb.append(DELIMITER);
+			sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(score)));
+			return sb.toString();
+		}
+		
+		public static DockingResult decode(String resultString) {
+			Decoder decoder = Base64.getDecoder();
+			String[] s = resultString.split(DELIMITER);
+			String idcode = s[0];
+			String idcoords = s[1];
+			StereoMolecule pose = new StereoMolecule();
+			IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
+			parser.parse(pose, idcode, idcoords);
+			pose.ensureHelperArrays(Molecule.cHelperCIP);
+			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[2].getBytes()));
+			DockingResult dockingResult = new DockingResult(pose,score);
+			return dockingResult;
 		}
 
 		@Override
