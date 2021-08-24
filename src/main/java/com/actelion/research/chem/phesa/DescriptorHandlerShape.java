@@ -1,5 +1,6 @@
 package com.actelion.research.chem.phesa;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
@@ -68,6 +69,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	protected boolean flexible;
 	
+	protected ThreadMaster threadMaster;
+	
 	// Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
 	
 	
@@ -106,8 +109,13 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this.ppWeight = ppWeight;
 		init();
 		conformerGenerator = new ConformerSetGenerator(maxConfs);
+		conformerGenerator.setThreadMaster(threadMaster);
 		preProcessTransformations = new ArrayList<>();
 
+	}
+	
+	public void setThreadMaster(ThreadMaster tm) {
+		this.threadMaster = tm;
 	}
 		
 	

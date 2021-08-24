@@ -14,6 +14,7 @@ import java.util.Base64.Encoder;
 
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
@@ -70,6 +71,7 @@ public class DockingEngine {
 	private int startPositions;
 	private StereoMolecule nativeLigand;
 	private ShapeDocking shapeDocking;
+	private ThreadMaster threadMaster;
 
 	
 	public DockingEngine(StereoMolecule rec, StereoMolecule nativeLig, int mcSteps, int startPositions,
@@ -115,6 +117,10 @@ public class DockingEngine {
 		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS,ScoringFunction.CHEMPLP);
 	}
 	
+	public void setThreadMaster(ThreadMaster tm) {
+		threadMaster = tm;
+	}
+	
 	private double getStartingPositions(StereoMolecule mol, List<Conformer> initialPos) {
 
 		double eMin = Double.MAX_VALUE;
@@ -145,6 +151,8 @@ public class DockingEngine {
 				double e = mmff.getTotalEnergy();
 				if(e<eMin)
 					eMin = e;
+				if(threadMaster!=null && threadMaster.threadMustDie())
+					break;
 			}
 		}
 		
@@ -184,6 +192,8 @@ public class DockingEngine {
 					bestEnergy = energy;
 					bestPose = pose.getLigConf();
 				}
+				if(threadMaster!=null && threadMaster.threadMustDie())
+					break;
 			}
 		}
 		if(bestPose!=null) {
