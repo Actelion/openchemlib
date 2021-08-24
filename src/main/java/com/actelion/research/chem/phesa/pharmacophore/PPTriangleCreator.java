@@ -13,6 +13,7 @@ import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 public class PPTriangleCreator {
 	
 	private static final double SIDE_LENGTH_CUTOFF = 2.5;
+	private static final int MAX_TRIANGLES = 1000;
 
 	
 	private PPTriangleCreator() {
@@ -41,7 +42,8 @@ public class PPTriangleCreator {
 		}
 		PPTriangle triangle;
 		Map<Integer,ArrayList<PPTriangle>> triangles = new HashMap<Integer,ArrayList<PPTriangle>>();
-		for(int i=0;i<n;i++) {
+		int counter = 0;
+		for(int i=0;i<n && counter<MAX_TRIANGLES;i++) {
 			if(toSkip.contains(i))
 				continue;
 			IPharmacophorePoint pp1 = pharmacophorePoints.get(i);
@@ -59,6 +61,7 @@ public class PPTriangleCreator {
 					if(d12<SIDE_LENGTH_CUTOFF  || d13<SIDE_LENGTH_CUTOFF  || d23<SIDE_LENGTH_CUTOFF )
 						continue; //skip triangles with very short sides
 					triangle = new PPTriangle(pp1,pp2,pp3,d12,d13,d23,com);
+					counter++;
 					int key = triangle.getHash();
 					if(triangles.containsKey(key))
 						triangles.get(key).add(triangle);
