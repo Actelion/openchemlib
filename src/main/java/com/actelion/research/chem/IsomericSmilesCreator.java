@@ -663,7 +663,7 @@ public class IsomericSmilesCreator {
 				int closureNumber = ((mClosureBuffer[i] & 0x3FFC0000) >> 20);
 				if (!mClosureOpened[bond]) {
 					mClosureOpened[bond] = true;
-					appendBondOrderSymbol(bond, builder);
+					appendBondOrderSymbol(bond, smilesAtom.atom, builder);
 				}
 				if (closureNumber > 9)
 					builder.append('%');
@@ -677,26 +677,62 @@ public class IsomericSmilesCreator {
 			builder.append(smilesAtom.ezHalfParity == 1 ? '/' : '\\');
 			return;
 		}
-		appendBondOrderSymbol(mMol.getBond(smilesAtom.atom, smilesAtom.parent), builder);
+		appendBondOrderSymbol(mMol.getBond(smilesAtom.atom, smilesAtom.parent), smilesAtom.parent, builder);
 	}
 
-	private void appendBondOrderSymbol(int bond, StringBuilder builder) {
-		if (!mMol.isAromaticBond(bond)) {
-			int order = mMol.getBondType(bond) & Molecule.cBondTypeMaskSimple;
-			if (order == Molecule.cBondTypeSingle) {
+	private void appendBondOrderSymbol(int bond, int parentAtom, StringBuilder builder) {
+		int startLength = builder.length();
+		if (mMode == MODE_CREATE_SMARTS) {
+			int bondTypes = mMol.getBondQueryFeatures(Molecule.cBondQFBondTypes);
+			if (bondTypes != 0) {
+				if ((bondTypes & Molecule.cBondTypeSingle) != 0)
+					builder.append('-');
+				if ((bondTypes & Molecule.cBondTypeDouble) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append('=');
+					}
+				if ((bondTypes & Molecule.cBondTypeTriple) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append('#');
+					}
+				if ((bondTypes & Molecule.cBondTypeDelocalized) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append(':');
+					}
+				if ((bondTypes & Molecule.cBondTypeMetalLigand) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append(mMol.isMetalAtom(parentAtom) ? "<-" : "->");
+					}
+				}
+			}
+		if (startLength == builder.length() && !mMol.isAromaticBond(bond)) {
+			int bondType = mMol.getBondType(bond) & Molecule.cBondTypeMaskSimple;
+			if (bondType == Molecule.cBondTypeSingle) {
 				if (mMol.isAromaticAtom(mMol.getBondAtom(0, bond))
 				 && mMol.isAromaticAtom(mMol.getBondAtom(1, bond)))
 					builder.append('-');
-			} else if (order == Molecule.cBondTypeDouble)
+			} else if (bondType == Molecule.cBondTypeDouble)
 				builder.append('=');
-			else if (order == Molecule.cBondTypeTriple)
+			else if (bondType == Molecule.cBondTypeTriple)
 				builder.append('#');
 //				else if (order == Molecule.cBondTypeQuadruple)	// not supported by Molecule
 //					builder.append('$');
-			else if (order == Molecule.cBondTypeDelocalized)
+			else if (bondType == Molecule.cBondTypeDelocalized)
 				builder.append(':');
-			else if (order == Molecule.cBondTypeMetalLigand)
-				builder.append("->");   // TODO handle direction correctly
+			else if (bondType == Molecule.cBondTypeMetalLigand)
+				builder.append(mMol.isMetalAtom(parentAtom) ? "<-" : "->");
+		}
+		if (mMode == MODE_CREATE_SMARTS) {
+			String gap = (startLength == builder.length()) ? "" : ";";
+			int ringState = mMol.getBondQueryFeatures(bond) & Molecule.cBondQFRingState;
+			if (ringState == Molecule.cBondQFRing)
+				builder.append(gap+"@");
+			else if (ringState == Molecule.cBondQFNotRing)
+				builder.append(gap+"!@");
 		}
 	}
 
