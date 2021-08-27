@@ -38,6 +38,7 @@ import com.actelion.research.chem.dnd.ChemistryFlavors;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.gui.clipboard.external.ChemDrawCDX;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.dnd.ReactionTransferable;
@@ -294,9 +295,43 @@ public class ClipboardHandler implements IClipboardHandler
 	 * @return Reaction or null if no reaction present
 	 */
 	public Reaction pasteReaction() {
-		Reaction rxn;
+		Reaction rxn = Platform.isWindows() ? pasteReactionWindowsNative() : pasteReactionLinux();
 
-		return Platform.isWindows() ? pasteReactionWindowsNative() : pasteReactionLinux();
+		if (rxn == null) {
+			// get StringFlavor from clipboard and try parsing it as rxn-idcode, rxn-file, or reaction-smiles
+			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+			String text = null;
+			try {
+				text = (String)t.getTransferData(DataFlavor.stringFlavor);
+			}
+			catch (Exception ioe) {}
+			if (text != null) {
+				try {
+					rxn = ReactionEncoder.decode(text, true);
+					if (rxn != null && rxn.isEmpty())
+						rxn = null;
+					}
+				catch (Exception e) {}
+				if (rxn == null) {
+					try {
+						rxn = new RXNFileParser().getReaction(text);
+						if (rxn != null && rxn.isEmpty())
+							rxn = null;
+					}
+					catch (Exception e) {}
+				}
+				if (rxn == null) {
+					try {
+						rxn = new SmilesParser().parseReaction(text);
+						if (rxn != null && rxn.isEmpty())
+							rxn = null;
+					}
+					catch (Exception e) {}
+				}
+			}
+		}
+
+		return rxn;
 	}
 
 	public Reaction pasteReactionWindowsNative() {

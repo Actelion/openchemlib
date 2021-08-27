@@ -3,9 +3,10 @@ package com.actelion.research.chem.reaction.mapping;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SSSearcher;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 
-public class ChemicalRuleEnhancedReactionMapper {
+public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	private static final int MAX_MATCH_COUNT = 512;  // Protection for combinatorial explosion, e.g. for metathesis or DielsAlder in fullerene
 
 	// Chemical rule reactions must neither be stoichiometrically complete, nor must they be completely mapped!!!
@@ -96,6 +97,12 @@ public class ChemicalRuleEnhancedReactionMapper {
 					sInitialized = true;
 				}
 			}
+		}
+
+	@Override
+	public Reaction mapReaction(Reaction rxn, SSSearcher sss) {
+		map(rxn);
+		return rxn;
 		}
 
 	public void map(Reaction rxn) {

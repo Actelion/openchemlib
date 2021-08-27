@@ -161,9 +161,8 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
         mButtonPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         getContentPane().add(mButtonPanel, BorderLayout.SOUTH);
 
-		mListener = new ArrayList<StructureListener>();
+		mListener = new ArrayList<>();
 
-        mArea.setReactionMapper(new MCSReactionMapper());
 		pack();
 		setLocationRelativeTo(owner);
 
@@ -181,10 +180,6 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
 	public void setAccessory(Component accessory) {
 	    mButtonPanel.add(accessory, BorderLayout.NORTH);
 		pack();
-		}
-
-	public void setReactionMapper(IReactionMapper mapper) {
-		mArea.setReactionMapper(mapper);
 		}
 
 	public StereoMolecule getStructure() {

@@ -87,6 +87,10 @@ public class SmilesParser {
 		mCreateSmartsWarnings = createSmartsWarnings;
 		}
 
+	public Reaction parseReaction(String smiles) throws Exception {
+		return smiles == null ? null : parseReaction(smiles.getBytes());
+	}
+
 	public Reaction parseReaction(byte[] smiles) throws Exception {
 		int index1 = ArrayUtils.indexOf(smiles, (byte)'>');
 		int index2 = (index1 == -1) ? -1 : ArrayUtils.indexOf(smiles, (byte)'>', index1+1);
