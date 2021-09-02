@@ -25,7 +25,7 @@ public class SimilarityGraphBasedReactionMapper {
 	private static final int ENDO_RING_PLUS = 128;
 
 	private StereoMolecule mReactant,mProduct;
-	private int mMapNo,mGraphMapNoCount,mMappableAtomCount;
+	private int mMapNo,mGraphMapNoCount,mMappableAtomCount,mAtomPairSequenceCount;
 	private int[] mReactantMapNo,mProductMapNo,mReactantRingMembership,mProductRingMembership;
 	private float mScore;
 	private ByteArrayComparator mSimilarityComparator;
@@ -102,6 +102,8 @@ public class SimilarityGraphBasedReactionMapper {
 					productMapNo[i] = mProductMapNo[i];
 				}
 			}
+
+		mAtomPairSequenceCount = rootAtomPairSource.getPairSequenceCount();
 		}
 
 	/**
@@ -110,6 +112,13 @@ public class SimilarityGraphBasedReactionMapper {
 	public int getGraphMapNoCount() {
 		return mGraphMapNoCount;
 		}
+
+	/**
+	 * @return number of atom pair sequences tried in the course of the last mapping run
+	 */
+	public int getAtomPairSequenceCount() {
+		return mAtomPairSequenceCount;
+	}
 
 	/**
 	 * Calculates and returns a score <= 0 for the current mapping. Higher value (closer to 0) are better.

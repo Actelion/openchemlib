@@ -154,7 +154,8 @@ if (historyScore < score) historyScore = score;
 							mAppliedRule = rule;
 							}
 						}
-mHistory.append(rule.getName()+historyScore+"\n");
+String pairSequences = mapper.getAtomPairSequenceCount() <= 1 ? "" : " (rootPairSets:"+mapper.getAtomPairSequenceCount()+")";
+mHistory.append(rule.getName()+historyScore+pairSequences+"\n");
 					}
 				}
 			}
@@ -171,7 +172,8 @@ mHistory.append(rule.getName()+historyScore+"\n");
 			bestProductMapNo = productMapNo;
 			bestGraphMapNoCount = mapper.getGraphMapNoCount();
 			}
-mHistory.append("no rule:"+score+"\n");
+String pairSequences = mapper.getAtomPairSequenceCount() <= 1 ? "" : " (rootPairSets:"+mapper.getAtomPairSequenceCount()+")";
+mHistory.append("no rule:"+score+pairSequences+"\n");
 
 		if (mScore != Integer.MIN_VALUE)
 			mapper.copyMapNosToReaction(rxn, bestReactantMapNo, bestProductMapNo, bestGraphMapNoCount);
