@@ -127,6 +127,9 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 		mAppliedRule = null;
 		mHistory = new StringBuilder();
 
+if (SimilarityGraphBasedReactionMapper.DEBUG)
+ System.out.println("Reaction\tScore");
+
 		StereoMolecule reactant = new StereoMolecule(); // reusable container
 
 		for (ChemicalRule rule:CHEMICAL_RULE) {
@@ -145,6 +148,7 @@ float historyScore = -10000;
 //System.out.println(new MolfileCreator(reactant).getMolfile());
 						mapper.map(reactant, mProduct, reactantMapNo, productMapNo);
 						float score = mapper.getScore() - rule.getPanalty();
+
 if (historyScore < score) historyScore = score;
 						if (mScore < score) {
 							mScore = score;
@@ -164,6 +168,7 @@ mHistory.append(rule.getName()+historyScore+"\n");
 		int[] productMapNo = new int[mProduct.getAtoms()];
 		mapper.map(mReactant, mProduct, reactantMapNo, productMapNo);
 		float score = mapper.getScore();
+
 		if (mScore <= score) {
 			mAppliedRule = null;
 			mScore = score;
