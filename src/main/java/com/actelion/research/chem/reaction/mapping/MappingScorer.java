@@ -52,7 +52,8 @@ public class MappingScorer {
 		// we add/remove fractional bond orders for new/broken bonds and
 		// we add fractional bond order changes of changed bonds
 		// to reflect the corresponding change in implicit hydrogen bond counts.
-		float[] hydrogenBondPenalty = new float[mProduct.getAtoms()];
+		float[] hydrogenBondPenalty = SCORE_HYDROGEN ? new float[mProduct.getAtoms()] : null;
+
 		boolean[] isAssignedProductAtom = new boolean[mProduct.getAtoms()];
 		for (int atom:reactantToProductAtom)
 			if (atom != -1)
@@ -71,24 +72,32 @@ public class MappingScorer {
 				if (pAtom1 != -1 || pAtom2 != -1)
 					penalty += getBondCreateOrBreakPenalty(mReactant, rBond);
 
-				if (pAtom1 != -1)
-					hydrogenBondPenalty[pAtom1] += rBondOrder;
-				if (pAtom2 != -1)
-					hydrogenBondPenalty[pAtom2] += rBondOrder;
+				if (SCORE_HYDROGEN) {
+					if (pAtom1 != -1)
+						hydrogenBondPenalty[pAtom1] += rBondOrder;
+					if (pAtom2 != -1)
+						hydrogenBondPenalty[pAtom2] += rBondOrder;
+					}
 				continue;
 				}
 
 			int pBond = mProduct.getBond(pAtom1, pAtom2);
 			if (pBond == -1) {
 				penalty += getBondCreateOrBreakPenalty(mReactant, rBond);
-				hydrogenBondPenalty[pAtom1] += rBondOrder;
-				hydrogenBondPenalty[pAtom2] += rBondOrder;
+
+				if (SCORE_HYDROGEN) {
+					hydrogenBondPenalty[pAtom1] += rBondOrder;
+					hydrogenBondPenalty[pAtom2] += rBondOrder;
+					}
+
 				continue;
 				}
 
-			float bondOrderChange = rBondOrder - getFractionalBondOrder(mProduct, pBond);
-			hydrogenBondPenalty[pAtom1] += bondOrderChange;
-			hydrogenBondPenalty[pAtom2] += bondOrderChange;
+			if (SCORE_HYDROGEN) {
+				float bondOrderChange = rBondOrder - getFractionalBondOrder(mProduct, pBond);
+				hydrogenBondPenalty[pAtom1] += bondOrderChange;
+				hydrogenBondPenalty[pAtom2] += bondOrderChange;
+				}
 
 			productBondHandled[pBond] = true;
 			penalty += getBondChangePenalty(rBond, pBond);
@@ -97,13 +106,16 @@ public class MappingScorer {
 		for (int pBond=0; pBond<mProduct.getBonds(); pBond++) {
 			if (!productBondHandled[pBond]) {
 				penalty += getBondCreateOrBreakPenalty(mProduct, pBond);
-				float pBondOrder = getFractionalBondOrder(mProduct, pBond);
-				int pAtom1 = mProduct.getBondAtom(0, pBond);
-				int pAtom2 = mProduct.getBondAtom(1, pBond);
-				if (isAssignedProductAtom[pAtom1])
-					hydrogenBondPenalty[pAtom1] -= pBondOrder;
-				if (isAssignedProductAtom[pAtom2])
-					hydrogenBondPenalty[pAtom2] -= pBondOrder;
+
+				if (SCORE_HYDROGEN) {
+					float pBondOrder = getFractionalBondOrder(mProduct, pBond);
+					int pAtom1 = mProduct.getBondAtom(0, pBond);
+					int pAtom2 = mProduct.getBondAtom(1, pBond);
+					if (isAssignedProductAtom[pAtom1])
+						hydrogenBondPenalty[pAtom1] -= pBondOrder;
+					if (isAssignedProductAtom[pAtom2])
+						hydrogenBondPenalty[pAtom2] -= pBondOrder;
+					}
 				}
 			}
 
