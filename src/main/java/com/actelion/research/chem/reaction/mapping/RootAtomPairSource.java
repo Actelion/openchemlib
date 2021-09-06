@@ -139,10 +139,6 @@ public class RootAtomPairSource {
 		return true;
 		}
 
-	public int getPairSequenceCount() {
-		return mSequenceCount;
-		}
-
 	/**
 	 * RootAtomPairs are returned in similarity order. The first returned pair is that
 	 * pair of atoms that is more similar than any other mutual combination of reactant

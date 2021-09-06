@@ -135,7 +135,7 @@ public class MappingScorer {
 		boolean isHetero2 = mol.isElectronegative(atom2);
 
 		if (!isHetero1 && !isHetero2)
-			return mol.isAromaticBond(bond) ? 3f : 1.9f + (float)mol.getBondOrder(bond) / 10f;
+			return mol.isAromaticBond(bond) ? 2.1f : 1.9f + (float)mol.getBondOrder(bond) / 10f;
 
 		if (isHetero1 && isHetero2)    // e.g. m-CPBA
 			return 1.7f;

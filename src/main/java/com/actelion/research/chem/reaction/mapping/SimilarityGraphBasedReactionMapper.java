@@ -75,7 +75,10 @@ public class SimilarityGraphBasedReactionMapper {
 
 		RootAtomPairSource rootAtomPairSource = new RootAtomPairSource(reactant, product, mReactantMapNo, mProductMapNo);
 
+		mAtomPairSequenceCount = 0;
+
 		while (rootAtomPairSource.hasNextPairSequence()) {
+			mAtomPairSequenceCount++;
 			mMapNo = rootAtomPairSource.getManualMapCount();
 			mMappableAtomCount = rootAtomPairSource.getMappableAtomCount();
 
@@ -117,8 +120,6 @@ if (DEBUG) {
 					productMapNo[i] = mProductMapNo[i];
 				}
 			}
-
-		mAtomPairSequenceCount = rootAtomPairSource.getPairSequenceCount();
 		}
 
 	/**
@@ -524,10 +525,10 @@ if (DEBUG) {
 						if (bondType == getBondType(mProduct, candidateBond)
 						 || skelSimilarity != 0) {
 							if (passesBasicRules(reactantRoot, reactantCandidate, productRoot, productCandidate)) {
-								int envSimilarity = getCombinedAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
+//								int envSimilarity = getCombinedAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
 
 								// introducing the non-pi similarity does not really seem to improve matters
-//								int envSimilarity = getCombinedAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
+								int envSimilarity = getAtomSimilarity(reactantRoot, reactantCandidate, productRoot, productCandidate);
 //System.out.println("skel:"+skelSimilarity+" conn:"+envSimilarity+" comb:"+envSimilarityCandidate);
 
 								int similarity = Math.max(skelSimilarity, envSimilarity);
