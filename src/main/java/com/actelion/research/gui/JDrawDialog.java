@@ -19,15 +19,16 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.reaction.IReactionMapper;
-import com.actelion.research.chem.reaction.MCSReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.gui.clipboard.ClipboardHandler;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
@@ -58,6 +59,22 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
 		super(owner, title, modalityType);
 		mMolecule = (mol == null) ? new StereoMolecule() : new StereoMolecule(mol);
 		initialize(owner, 0);
+		}
+
+	public JDrawDialog(Dialog owner, StereoMolecule[] mol, String title, ModalityType modalityType) {
+		super(owner, title, modalityType);
+		mMolecule = new StereoMolecule();
+		initialize(owner, JDrawArea.MODE_MULTIPLE_FRAGMENTS);
+		if (mol != null)
+			mArea.setFragments(mol);
+		}
+
+	public JDrawDialog(Dialog owner, Reaction rxn, String title, ModalityType modalityType) {
+		super(owner, title, modalityType);
+		mMolecule = new StereoMolecule();
+		initialize(owner, JDrawArea.MODE_REACTION);
+		if (rxn != null)
+			mArea.setReaction(rxn);
 		}
 
 	public JDrawDialog(Frame owner) {
@@ -108,7 +125,7 @@ public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
 	public JDrawDialog(Frame owner, StereoMolecule[] mol, String title, ModalityType modalityType) {
 		super(owner, title, modalityType);
 		mMolecule = new StereoMolecule();
-		initialize(owner, JDrawArea.MODE_REACTION);
+		initialize(owner, JDrawArea.MODE_MULTIPLE_FRAGMENTS);
 		if (mol != null)
 			mArea.setFragments(mol);
 		}

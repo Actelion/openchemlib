@@ -300,16 +300,16 @@ if (DEBUG) {
 			 && mSimilarityComparator.compare(mReactantConnAtomEnv[reactantAtom][reactantConnIndex][radius],
 				mProductConnAtomEnv[productAtom][productConnIndex][radius]) == 0)
 			radius++;
-		while (radius+NO_PI_PENALTY < MAX_ENVIRONMENT_RADIUS
-			 && mReactantNoPiAtomEnv[reactantAtom][reactantConnIndex][radius+NO_PI_PENALTY] != null
-			 && mSimilarityComparator.compare(mReactantNoPiAtomEnv[reactantAtom][reactantConnIndex][radius+NO_PI_PENALTY],
-				mProductNoPiAtomEnv[productAtom][productConnIndex][radius+NO_PI_PENALTY]) == 0)
-			radius++;
-		while (radius+SKELETON_PENALTY < MAX_ENVIRONMENT_RADIUS
-			 && mReactantSkelAtomEnv[reactantAtom][reactantConnIndex][radius+SKELETON_PENALTY] != null
-			 && mSimilarityComparator.compare(mReactantSkelAtomEnv[reactantAtom][reactantConnIndex][radius+SKELETON_PENALTY],
-				mProductSkelAtomEnv[productAtom][productConnIndex][radius+SKELETON_PENALTY]) == 0)
-			radius++;
+//		while (radius+NO_PI_PENALTY < MAX_ENVIRONMENT_RADIUS
+//			 && mReactantNoPiAtomEnv[reactantAtom][reactantConnIndex][radius+NO_PI_PENALTY] != null
+//			 && mSimilarityComparator.compare(mReactantNoPiAtomEnv[reactantAtom][reactantConnIndex][radius+NO_PI_PENALTY],
+//				mProductNoPiAtomEnv[productAtom][productConnIndex][radius+NO_PI_PENALTY]) == 0)
+//			radius++;
+//		while (radius+SKELETON_PENALTY < MAX_ENVIRONMENT_RADIUS
+//			 && mReactantSkelAtomEnv[reactantAtom][reactantConnIndex][radius+SKELETON_PENALTY] != null
+//			 && mSimilarityComparator.compare(mReactantSkelAtomEnv[reactantAtom][reactantConnIndex][radius+SKELETON_PENALTY],
+//				mProductSkelAtomEnv[productAtom][productConnIndex][radius+SKELETON_PENALTY]) == 0)
+//			radius++;
 
 		return radius << SIMILARITY_SHIFT;
 		}
