@@ -87,6 +87,28 @@ public class SmilesParser {
 		mCreateSmartsWarnings = createSmartsWarnings;
 		}
 
+	public StereoMolecule parseMolecule(String smiles) {
+		return smiles == null ? null : parseMolecule(smiles.getBytes());
+		}
+
+	/**
+	 * Convenience method to quickly obtain a StereoMolecule from a SMILES string.
+	 * If you process many SMILES, then the parse() methods are preferred, because
+	 * they avoid the steady instantiation new StereoMolecules.
+	 * @param smiles
+	 * @return
+	 */
+	public StereoMolecule parseMolecule(byte[] smiles) {
+		StereoMolecule mol = new StereoMolecule();
+		try {
+			parse(mol, smiles);
+			}
+		catch (Exception e) {
+			return null;
+			}
+		return mol;
+		}
+
 	public Reaction parseReaction(String smiles) throws Exception {
 		return smiles == null ? null : parseReaction(smiles.getBytes());
 	}
@@ -409,8 +431,11 @@ public class SmilesParser {
 
 						if (smiles[position] == 'D') {   // non-H-neighbours
 							position++;
-							int neighbours = smiles[position] - '0';
-							position++;
+							int neighbours = 1;
+							if (Character.isDigit(smiles[position])) {
+								neighbours = smiles[position] - '0';
+								position++;
+								}
 							int qf = (neighbours == 0) ? Molecule.cAtomQFNot0Neighbours
 								   : (neighbours == 1) ? Molecule.cAtomQFNot1Neighbour
 								   : (neighbours == 2) ? Molecule.cAtomQFNot2Neighbours
@@ -432,15 +457,17 @@ public class SmilesParser {
 
 						if (smiles[position] == 'R') {
 							position++;
-							int ringCount = -1;
-							if (Character.isDigit(smiles[position])) {
-								ringCount = smiles[position] - '0';
-								position++;
+							if (!Character.isDigit(smiles[position])) {
+								if (isNot)
+									atomQueryFeatures |= Molecule.cBondQFRingState & ~Molecule.cAtomQFNotChain;
+								else
+									atomQueryFeatures |= Molecule.cAtomQFNotChain;
+								continue;
 								}
+							int ringCount = smiles[position] - '0';
+							position++;
 							if (isNot) {
-								if (ringCount == -1)
-									atomQueryFeatures |= Molecule.cAtomQFRingState & ~Molecule.cAtomQFNotChain;
-								else if (ringCount == 0)
+								if (ringCount == 0)
 									atomQueryFeatures |= Molecule.cAtomQFNotChain;
 								else if (ringCount == 1)
 									atomQueryFeatures |= Molecule.cAtomQFNot2RingBonds;
@@ -454,9 +481,7 @@ public class SmilesParser {
 							else {
 								if (ringCount >= 3)
 									ringCount = 3;
-								if (ringCount == -1)
-									atomQueryFeatures |= Molecule.cAtomQFNotChain;
-								else if (ringCount == 0)
+								if (ringCount == 0)
 									atomQueryFeatures |= Molecule.cAtomQFRingState & ~Molecule.cAtomQFNotChain;
 								else if (ringCount == 1)
 									atomQueryFeatures |= Molecule.cAtomQFRingState & ~Molecule.cAtomQFNot2RingBonds;
@@ -472,11 +497,17 @@ public class SmilesParser {
 
 						if (smiles[position] == 'r') {
 							position++;
+							if (!Character.isDigit(smiles[position])) {
+								if (isNot)
+									atomQueryFeatures |= Molecule.cBondQFRingState & ~Molecule.cAtomQFNotChain;
+								else
+									atomQueryFeatures |= Molecule.cAtomQFNotChain;
+								continue;
+								}
 							int ringSize = smiles[position] - '0';
-							int ringCode = (ringSize >= 3) ? ringSize-2 : 0;
 							position++;
-							if (!isNot && ringCode <= 7)
-								atomQueryFeatures |= (ringCode << Molecule.cAtomQFRingSizeShift);
+							if (!isNot && ringSize >= 3 && ringSize <= 7)
+								atomQueryFeatures |= (ringSize << Molecule.cAtomQFRingSizeShift);
 							else
 								smartsWarning((isNot ? "!r" : "r") + ringSize);
 							continue;

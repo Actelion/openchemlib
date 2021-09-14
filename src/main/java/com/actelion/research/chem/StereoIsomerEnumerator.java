@@ -28,11 +28,11 @@ public class StereoIsomerEnumerator {
 	private boolean[][] mAtomIsParity1,mBondIsParity1;
 
 	/**
-	 * If the passed molecules has stereo-chemically undefined configurations
+	 * If the passed molecule has stereo-chemically undefined configurations
 	 * (double bonds, stereo centers) or/and one or more AND/OR groups of
 	 * defined relative stereo configurations, then it represents multiple
 	 * stereo isomers. The StereoIsomerEnumerator generates all individual
-	 * stereo isomers of the passes molecule. If the passed molecule does
+	 * stereo isomers of the passed molecule. If the passed molecule does
 	 * not include absolute stereo centers (or atrop isomeric configuration),
 	 * but unknown stereo centers or groups with defined relative configuration,
 	 * then we have pairs of enantiomers. In this case the StereoIsomerEnumerator

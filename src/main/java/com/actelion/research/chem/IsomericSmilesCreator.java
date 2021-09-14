@@ -444,7 +444,7 @@ public class IsomericSmilesCreator {
 		int isotop = mMol.getAtomMass(atom);
 		int mapNo = (mMode & MODE_INCLUDE_MAPPING) != 0 ? mMol.getAtomMapNo(atom) : 0;
 
-		String smartsFeatures = (mMode & MODE_CREATE_SMARTS) != 0 ? getAtomSMARTSFeatures(atom, buffer) : "";
+		String smartsFeatures = (mMode & MODE_CREATE_SMARTS) != 0 ? getAtomSMARTSFeatures(atom, buffer) : null;
 
 		boolean useBrackets =
 				(!isAnyAtom && !isOrganic(mMol.getAtomicNo(atom)))
@@ -456,7 +456,7 @@ public class IsomericSmilesCreator {
 				|| mapNo != 0
 				|| mMol.getAtomAbnormalValence(atom) != -1
 				|| mMol.getAtomRadical(atom) != Molecule.cAtomRadicalStateNone
-				|| smartsFeatures.length() != 0;
+				|| smartsFeatures != null;
 
 		if (useBrackets)
 			builder.append('[');
@@ -482,6 +482,9 @@ public class IsomericSmilesCreator {
 			if (Math.abs(charge) > 1)
 				builder.append(Math.abs(charge));
 			}
+
+		if (smartsFeatures != null)
+			builder.append(smartsFeatures);
 
 		if (mapNo != 0) {
 			builder.append(':');
@@ -589,7 +592,8 @@ public class IsomericSmilesCreator {
 		}
 
 		int ringSize = (queryFeatures & Molecule.cAtomQFRingSize) >> Molecule.cAtomQFRingSizeShift;
-		buffer.append(";r"+(ringSize == 0 ? 0 : ringSize-2));
+		if (ringSize != 0)
+			buffer.append(";r"+ringSize);
 
 		int neighbourFeatures = queryFeatures & Molecule.cAtomQFNeighbours;
 		switch (neighbourFeatures) {
@@ -625,7 +629,7 @@ public class IsomericSmilesCreator {
 		if ((queryFeatures & Molecule.cAtomQFMoreNeighbours) != 0)
 			buffer.append(";!D"+mMol.getConnAtoms(atom));  // Convert into exact explicit neighbour count 'D'
 
-		return buffer.toString();
+		return buffer.length() == 0 ? null : buffer.toString();
 		}
 
 	/**
