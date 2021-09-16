@@ -50,12 +50,10 @@ public class IsomericSmilesCreator {
 	private int[] mAtomRank;
 	private int[] mClosureNumber;
 	private int[] mSmilesIndex;
-	private int[] mClosureBuffer;
 	private int[][] mKnownTHCountInESRGroup;
 	private List<SmilesAtom> mGraphAtomList;
 	private boolean[] mAtomUsed;
 	private boolean[] mBondUsed;
-	private boolean[] mClosureOpened;
 	private boolean[] mPseudoStereoGroupInversion;
 	private boolean[] mPseudoStereoGroupInitialized;
 
@@ -205,33 +203,56 @@ public class IsomericSmilesCreator {
 	}
 
 	private void findRingClosures() {
-		boolean[] closureNumberUsed = new boolean[mMol.getBonds()];
-		mClosureNumber = new int[mMol.getBonds()];
-
+		// find closure neighbours of every atom and put them in canonical order. i.e. order of appearance in SMILES
 		for (SmilesAtom smilesAtom:mGraphAtomList) {
-			for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
-				int bond = mMol.getConnBond(smilesAtom.atom, i);
-				closureNumberUsed[mClosureNumber[bond]] = false;
-			}
+			int closureCount = 0;
+			for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++)
+				if (!mBondUsed[mMol.getConnBond(smilesAtom.atom, i)])
+					closureCount++;
 
-			int index = getUnusedConnBondIndex(smilesAtom.atom);
-			while (index != -1) {
-				int closureBond = mMol.getConnBond(smilesAtom.atom, index);
-				mBondUsed[closureBond] = true;
+			if (closureCount != 0) {
+				smilesAtom.closureNeighbour = new int[closureCount];
 
-				int closureNumber = 1;
-				while (closureNumberUsed[closureNumber])
-					closureNumber++;
+				closureCount = 0;
+				for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
+					if (!mBondUsed[mMol.getConnBond(smilesAtom.atom, i)]) {
+						int neighbour = mMol.getConnAtom(smilesAtom.atom, i);
+						smilesAtom.closureNeighbour[closureCount++] = (mSmilesIndex[neighbour] << 16) | neighbour;
+					}
+				}
 
-				mClosureNumber[closureBond] = closureNumber;
-				closureNumberUsed[closureNumber] = true;
-
-				index = getUnusedConnBondIndex(smilesAtom.atom);
+				Arrays.sort(smilesAtom.closureNeighbour);
+				for (int i=0; i<smilesAtom.closureNeighbour.length; i++)
+					smilesAtom.closureNeighbour[i] = 0x0000FFFF & smilesAtom.closureNeighbour[i];
 			}
 		}
 
-		mClosureOpened = new boolean[mMol.getBonds()];
-		mClosureBuffer = new int[8];
+		// assign closure digits to closure bonds
+		boolean[] closureNumberUsed = new boolean[mMol.getBonds()];
+		mClosureNumber = new int[mMol.getBonds()];
+		for (SmilesAtom smilesAtom:mGraphAtomList) {
+			if (smilesAtom.closureNeighbour != null) {
+				for (int neighbour:smilesAtom.closureNeighbour) {
+					for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
+						if (neighbour == mMol.getConnAtom(smilesAtom.atom, i)) {
+							int bond = mMol.getConnBond(smilesAtom.atom, i);
+							if (!mBondUsed[bond]) { // opening closure bond
+								mBondUsed[bond] = true;
+
+								// assign and allocation closure digit
+								mClosureNumber[bond] = 1;
+								while (closureNumberUsed[mClosureNumber[bond]])
+									mClosureNumber[bond]++;
+								closureNumberUsed[mClosureNumber[bond]] = true;
+							}
+							else {  // closing closure bond: release closure digit
+								closureNumberUsed[mClosureNumber[bond]] = false;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	private void calculateEZBonds() {
@@ -388,16 +409,6 @@ public class IsomericSmilesCreator {
 				bestRank = rank;
 			}
 		}
-		return bestIndex;
-	}
-
-	private int getUnusedConnBondIndex(int atom) {
-		int bestIndex = -1;
-		for (int i=0; i<mMol.getConnAtoms(atom); i++)
-			if (!mBondUsed[mMol.getConnBond(atom, i)]
-			 && (bestIndex == -1 || mAtomRank[mMol.getConnAtom(atom, bestIndex)] < mAtomRank[mMol.getConnAtom(atom, i)]))
-				bestIndex = i;
-
 		return bestIndex;
 	}
 
@@ -651,30 +662,46 @@ public class IsomericSmilesCreator {
 	}
 
 	private void appendClosureBonds(SmilesAtom smilesAtom, StringBuilder builder) {
-		int closureCount = 0;
-		for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
-			int bond = mMol.getConnBond(smilesAtom.atom, i);
-			if (mClosureNumber[bond] != 0) {
-				int isOpenFlag = mClosureOpened[bond] ? 0 : 0x40000000;
-				mClosureBuffer[closureCount++] = isOpenFlag | (mClosureNumber[bond] << 20) | bond;
-			}
-		}
-		if (closureCount != 0) {
-			// when sorting, then put and handle open closures first
-			Arrays.sort(mClosureBuffer, 0, closureCount); // we must sort to be canonical
-			for (int i=0; i<closureCount; i++) {
-				int bond = mClosureBuffer[i] & 0x0003FFFF;
-				int closureNumber = ((mClosureBuffer[i] & 0x3FFC0000) >> 20);
-				if (!mClosureOpened[bond]) {
-					mClosureOpened[bond] = true;
-					appendBondOrderSymbol(bond, smilesAtom.atom, builder);
+		if (smilesAtom.closureNeighbour != null) {
+			for (int neighbour:smilesAtom.closureNeighbour) {
+				for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
+					if (neighbour == mMol.getConnAtom(smilesAtom.atom, i)) {
+						int bond = mMol.getConnBond(smilesAtom.atom, i);
+						appendBondOrderSymbol(bond, smilesAtom.atom, builder);
+						if (mClosureNumber[bond] > 9)
+							builder.append('%');
+						builder.append(mClosureNumber[bond]);
+					}
 				}
-				if (closureNumber > 9)
-					builder.append('%');
-				builder.append(closureNumber);
 			}
 		}
 	}
+
+//	private void appendClosureBonds(SmilesAtom smilesAtom, StringBuilder builder) {
+//		int closureCount = 0;
+//		for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
+//			int bond = mMol.getConnBond(smilesAtom.atom, i);
+//			if (mClosureNumber[bond] != 0) {
+//				int isOpenFlag = mClosureOpened[bond] ? 0 : 0x40000000;
+//				mClosureBuffer[closureCount++] = isOpenFlag | (mClosureNumber[bond] << 20) | bond;
+//			}
+//		}
+//		if (closureCount != 0) {
+//			// when sorting, then put and handle open closures first
+//			Arrays.sort(mClosureBuffer, 0, closureCount); // we must sort to be canonical
+//			for (int i=0; i<closureCount; i++) {
+//				int bond = mClosureBuffer[i] & 0x0003FFFF;
+//				int closureNumber = ((mClosureBuffer[i] & 0x3FFC0000) >> 20);
+//				if (!mClosureOpened[bond]) {
+//					mClosureOpened[bond] = true;
+//					appendBondOrderSymbol(bond, smilesAtom.atom, builder);
+//				}
+//				if (closureNumber > 9)
+//					builder.append('%');
+//				builder.append(closureNumber);
+//			}
+//		}
+//	}
 
 	private void appendBondOrderSymbol(SmilesAtom smilesAtom, StringBuilder builder) {
 		if (smilesAtom.ezHalfParity != 0) {
@@ -818,23 +845,24 @@ public class IsomericSmilesCreator {
 
 	/**
 	 * @param atom for which to return a neighbor's smiles rank
-	 * @param neighborIndex index for getConnAtoms() to get neighbor atom and bond
+	 * @param neighbourIndex index for getConnAtoms() to get neighbor atom and bond
 	 * @return neighbor's position rank in smiles from a perspective of atom using closure digit positions for closure neighbors
 	 */
-	private int getSmilesRank(int atom, int neighborIndex) {
-		int bond = mMol.getConnBond(atom, neighborIndex);
+	private int getSmilesRank(int atom, int neighbourIndex) {
+		int bond = mMol.getConnBond(atom, neighbourIndex);
+		int neighbour = mMol.getConnAtom(atom, neighbourIndex);
 		if (mClosureNumber[bond] != 0) {
-			// if neighbor is attached via a closure digit, then the rank is based primarily on atom's position
+			// if neighbour is attached via a closure digit, then the rank is based primarily on atom's position
 			// in the smiles and secondary on the count of other closures at atom that precede this closure
 			int rank = 8 * mSmilesIndex[atom] + 1;
-			for (int i=0; i<neighborIndex; i++)
-				if (mClosureNumber[mMol.getConnAtom(atom, i)] != 0)
-					rank++;
+			int[] closureNeighbour = mGraphAtomList.get(mSmilesIndex[atom]).closureNeighbour;
+			for (int i=0; i<closureNeighbour.length && neighbour != closureNeighbour[i]; i++)
+				rank++;
 			return rank;
 			}
 
-		// if the neighbor is not a closure return a rank based on its atom index in the smiles
-		return 8 * mSmilesIndex[mMol.getConnAtom(atom, neighborIndex)];
+		// if the neighbour is not a closure return a rank based on its atom index in the smiles
+		return 8 * mSmilesIndex[neighbour];
 	}
 
 	private boolean isOrganic (int atomicNo) {
@@ -848,6 +876,7 @@ public class IsomericSmilesCreator {
 class SmilesAtom {
 	public int atom,parent,ezHalfParity;
 	public boolean isSideChainStart,isSideChainEnd;
+	public int[] closureNeighbour;
 
 	public SmilesAtom(int atom, int parent, boolean isSideChainStart, boolean isSideChainEnd) {
 		this.atom = atom;

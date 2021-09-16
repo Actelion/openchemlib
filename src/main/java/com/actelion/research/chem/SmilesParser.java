@@ -38,6 +38,7 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.SortedList;
 
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 
@@ -657,7 +658,7 @@ public class SmilesParser {
 	
 						// using position as hydrogenPosition is close enough
 						int hydrogenCount = (explicitHydrogens == HYDROGEN_IMPLICIT_ZERO) ? 0 : explicitHydrogens;
-						parityMap.put(atom, new THParity(atom, fromAtom, hydrogenCount, position, isClockwise));
+						parityMap.put(atom, new THParity(atom, fromAtom, hydrogenCount, position-1, isClockwise));
 						}
 					}
 
@@ -1487,11 +1488,21 @@ public class SmilesParser {
 		return paritiesFound;
 		}
 
+	private class ParityNeighbour {
+		int mAtom,mPosition;
+		boolean mIsHydrogen;
+
+		public ParityNeighbour(int atom, int position, boolean isHydrogen) {
+			mAtom = atom;
+			mPosition = position;
+			mIsHydrogen = isHydrogen;
+			}
+		}
+
 	private class THParity {
-		int mCentralAtom,mImplicitHydrogen,mFromAtom,mNeighborCount;
-		int[] mNeighborAtom,mNeighborPosition;
-		boolean[] mNeighborIsHydrogen;
+		int mCentralAtom,mImplicitHydrogen,mFromAtom;
 		boolean mIsClockwise,mError;
+		ArrayList<ParityNeighbour> mNeighbourList;
 
 		/**
 		 * Instantiates a new parity object during smiles traversal.
@@ -1503,26 +1514,23 @@ public class SmilesParser {
 		public THParity(int centralAtom, int fromAtom, int implicitHydrogen, int hydrogenPosition, boolean isClockwise) {
 			if (implicitHydrogen != 0 && implicitHydrogen != 1) {
 				mError = true;
-				}
+			}
 			else {
 				mCentralAtom = centralAtom;
 				mFromAtom = fromAtom;
 				mImplicitHydrogen = implicitHydrogen;
 				mIsClockwise = isClockwise;
-				mNeighborCount = 0;
-				mNeighborIsHydrogen = new boolean[4];
-				mNeighborAtom = new int[4];
-				mNeighborPosition = new int[4];
+				mNeighbourList = new ArrayList<>();
 
 				// If we have a fromAtom and we have an implicit hydrogen,
-				// then make the implicit hydrogen a normal neighbor.
+				// then make the implicit hydrogen a normal neighbour.
 				if (fromAtom != -1 && implicitHydrogen == 1) {
 					// We put it at the end of the atom list with MAX_VALUE
 					addNeighbor(Integer.MAX_VALUE, hydrogenPosition, true);
 					mImplicitHydrogen = 0;
-					}
 				}
 			}
+		}
 
 		/**
 		 * Adds a currently traversed neighbor or ring closure to parity object,
@@ -1536,19 +1544,14 @@ public class SmilesParser {
 		 * @param isHydrogen
 		 */
 		public void addNeighbor(int atom, int position, boolean isHydrogen) {
-			if (mError)
-				return;
+			if (!mError) {
+				if (mNeighbourList.size() == 4 || (mNeighbourList.size() == 3 && mFromAtom != -1)) {
+					mError = true;
+					return;
+					}
 
-			if (mNeighborCount == 4
-			 || (mNeighborCount == 3 && mFromAtom != -1)) {
-				mError = true;
-				return;
+				mNeighbourList.add(new ParityNeighbour(atom, position, isHydrogen));
 				}
-
-			mNeighborIsHydrogen[mNeighborCount] = isHydrogen;
-			mNeighborAtom[mNeighborCount] = atom;
-			mNeighborPosition[mNeighborCount] = position;
-			mNeighborCount++;
 			}
 
 		public int calculateParity(int[] handleHydrogenAtomMap) {
@@ -1559,71 +1562,66 @@ public class SmilesParser {
 			// uses after calling handleHydrogens, which is called from ensureHelperArrays().
 			if (mFromAtom != -1)
 				mFromAtom = handleHydrogenAtomMap[mFromAtom];
-			for (int i=0; i<mNeighborCount; i++)
-				if (mNeighborAtom[i] != Integer.MAX_VALUE)
-					mNeighborAtom[i] = handleHydrogenAtomMap[mNeighborAtom[i]];
+			for (ParityNeighbour neighbour:mNeighbourList)
+				if (neighbour.mAtom != Integer.MAX_VALUE)
+					neighbour.mAtom = handleHydrogenAtomMap[neighbour.mAtom];
 
 			if (mFromAtom == -1 && mImplicitHydrogen == 0) {
 				// If we have no implicit hydrogen and the central atom is the first atom in the smiles,
 				// then we assume that we have to take the first neighbor as from-atom (not described in Daylight theory manual).
 				// Assumption: take the first neighbor as front atom, i.e. skip it when comparing positions
 				int minPosition = Integer.MAX_VALUE;
-				int minIndex = -1;
-				for (int i=0; i<mNeighborCount; i++) {
-					if (minPosition > mNeighborPosition[i]) {
-						minPosition = mNeighborPosition[i];
-						minIndex = i;
+				ParityNeighbour minNeighbour = null;
+				for (ParityNeighbour neighbour:mNeighbourList) {
+					if (minPosition > neighbour.mPosition) {
+						minPosition = neighbour.mPosition;
+						minNeighbour = neighbour;
 						}
 					}
-				mFromAtom = mNeighborAtom[minIndex];
-				for (int i=minIndex+1; i<mNeighborCount; i++) {
-					mNeighborAtom[i-1] = mNeighborAtom[i];
-					mNeighborPosition[i-1] = mNeighborPosition[i];
-					mNeighborIsHydrogen[i-1] = mNeighborIsHydrogen[i];
-					}
-				mNeighborCount--;
+				mFromAtom = minNeighbour.mAtom;
+				mNeighbourList.remove(minNeighbour);
 				}
 
-			int totalNeighborCount = (mFromAtom == -1? 0 : 1) + mImplicitHydrogen + mNeighborCount;
+			int totalNeighborCount = (mFromAtom == -1? 0 : 1) + mImplicitHydrogen + mNeighbourList.size();
 			if (totalNeighborCount > 4 || totalNeighborCount < 3)
 				return Molecule.cAtomParityUnknown;
 
 			// We look from the hydrogen towards the central carbon if the fromAtom is a hydrogen or
 			// if there is no fromAtom but the central atom has an implicit hydrogen.
 			boolean fromAtomIsHydrogen = (mFromAtom == -1 && mImplicitHydrogen == 1)
-									  || (mFromAtom != -1 && mMol.isSimpleHydrogen(mFromAtom));
+					|| (mFromAtom != -1 && mMol.isSimpleHydrogen(mFromAtom));
 
-			int hydrogenNeighborIndex = -1;
-			for (int i=0; i<mNeighborCount; i++) {
-				if (mNeighborIsHydrogen[i]) {
-					if (hydrogenNeighborIndex != -1 || fromAtomIsHydrogen)
+			ParityNeighbour hydrogenNeighbour = null;
+			for (ParityNeighbour neighbour:mNeighbourList) {
+				if (neighbour.mIsHydrogen) {
+					if (hydrogenNeighbour != null || fromAtomIsHydrogen)
 						return Molecule.cAtomParityUnknown;
-					hydrogenNeighborIndex = i;
-					}
+					hydrogenNeighbour = neighbour;
 				}
+			}
 
 			// hydrogens are moved to the end of the atom list. If the hydrogen passes an odd number of
 			// neighbor atoms on its way to the list end, we are effectively inverting the atom order.
 			boolean isHydrogenTraversalInversion = false;
-			if (hydrogenNeighborIndex != -1)
-				for (int i=0; i<mNeighborCount; i++)
-					if (!mNeighborIsHydrogen[i]
-					 && mNeighborAtom[hydrogenNeighborIndex] < mNeighborAtom[i])
+			if (hydrogenNeighbour != null)
+				for (ParityNeighbour neighbour:mNeighbourList)
+					if (neighbour != hydrogenNeighbour
+					 && hydrogenNeighbour.mAtom < neighbour.mAtom)
 						isHydrogenTraversalInversion = !isHydrogenTraversalInversion;
 
 			// If fromAtom is not a hydrogen, we consider it moved to highest atom index,
 			// because
 			boolean fromAtomTraversalInversion = false;
 			if (mFromAtom != -1 && !fromAtomIsHydrogen)
-				for (int i=0; i<mNeighborCount; i++)
-					if (mFromAtom < mNeighborAtom[i])
+				for (ParityNeighbour neighbour:mNeighbourList)
+					if (mFromAtom < neighbour.mAtom)
 						fromAtomTraversalInversion = !fromAtomTraversalInversion;
 
 			int parity = (mIsClockwise
-						^ isInverseOrder(mNeighborAtom, mNeighborPosition, mNeighborCount)
-						^ fromAtomTraversalInversion
-						^ isHydrogenTraversalInversion) ?
-								Molecule.cAtomParity2 : Molecule.cAtomParity1;
+					^ isInverseOrder()
+					^ fromAtomTraversalInversion
+					^ isHydrogenTraversalInversion) ?
+					Molecule.cAtomParity2 : Molecule.cAtomParity1;
 /*
 System.out.println();
 System.out.println("central:"+mCentralAtom+(mIsClockwise?" @@":" @")+" from:"
@@ -1637,19 +1635,19 @@ System.out.println("parity:"+parity);
 			return parity;
 			}
 
-		private boolean isInverseOrder(int[] atom, int[] position, int count) {
+		private boolean isInverseOrder() {
 			boolean inversion = false;
-			for (int i=1; i<count; i++) {
+			for (int i=1; i<mNeighbourList.size(); i++) {
 				for (int j=0; j<i; j++) {
-					if (atom[j] > atom[i])
+					if (mNeighbourList.get(j).mAtom > mNeighbourList.get(i).mAtom)
 						inversion = !inversion;
-					if (position[j] > position[i])
+					if (mNeighbourList.get(j).mPosition > mNeighbourList.get(i).mPosition)
 						inversion = !inversion;
-					}
 				}
-			return inversion;
 			}
+			return inversion;
 		}
+	}
 
 	private static void testStereo() {
 		final String[][] data = { { "F/C=C/I", "F/C=C/I" },
