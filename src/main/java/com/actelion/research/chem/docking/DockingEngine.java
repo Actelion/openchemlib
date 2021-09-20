@@ -121,7 +121,7 @@ public class DockingEngine {
 		threadMaster = tm;
 	}
 	
-	private double getStartingPositions(StereoMolecule mol, List<Conformer> initialPos) {
+	private double getStartingPositions(StereoMolecule mol, List<Conformer> initialPos) throws DockingFailedException {
 
 		double eMin = Double.MAX_VALUE;
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
@@ -140,7 +140,14 @@ public class DockingEngine {
 			if(c!=null) {
 				StereoMolecule conf = c.toMolecule();
 				conf.ensureHelperArrays(Molecule.cHelperParities);
-				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				
+				ForceFieldMMFF94 mmff;
+				try {
+					mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				}
+				catch(Exception e) {
+					throw new DockingFailedException("could not assess atom types");
+				}
 				PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
