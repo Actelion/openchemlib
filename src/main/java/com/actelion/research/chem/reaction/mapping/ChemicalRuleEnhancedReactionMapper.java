@@ -3,9 +3,10 @@ package com.actelion.research.chem.reaction.mapping;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SSSearcher;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 
-public class ChemicalRuleEnhancedReactionMapper {
+public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	private static final int MAX_MATCH_COUNT = 512;  // Protection for combinatorial explosion, e.g. for metathesis or DielsAlder in fullerene
 
 	// Chemical rule reactions must neither be stoichiometrically complete, nor must they be completely mapped!!!
@@ -98,6 +99,12 @@ public class ChemicalRuleEnhancedReactionMapper {
 			}
 		}
 
+	@Override
+	public Reaction mapReaction(Reaction rxn, SSSearcher sss) {
+		map(rxn);
+		return rxn;
+		}
+
 	public void map(Reaction rxn) {
 		SimilarityGraphBasedReactionMapper mapper = new SimilarityGraphBasedReactionMapper();
 		mapper.mergeReactantsAndProducts(rxn);
@@ -120,6 +127,9 @@ public class ChemicalRuleEnhancedReactionMapper {
 		mAppliedRule = null;
 		mHistory = new StringBuilder();
 
+if (SimilarityGraphBasedReactionMapper.DEBUG)
+ System.out.println("Reaction\tScore");
+
 		StereoMolecule reactant = new StereoMolecule(); // reusable container
 
 		for (ChemicalRule rule:CHEMICAL_RULE) {
@@ -138,6 +148,7 @@ float historyScore = -10000;
 //System.out.println(new MolfileCreator(reactant).getMolfile());
 						mapper.map(reactant, mProduct, reactantMapNo, productMapNo);
 						float score = mapper.getScore() - rule.getPanalty();
+
 if (historyScore < score) historyScore = score;
 						if (mScore < score) {
 							mScore = score;
@@ -147,7 +158,8 @@ if (historyScore < score) historyScore = score;
 							mAppliedRule = rule;
 							}
 						}
-mHistory.append(rule.getName()+historyScore+"\n");
+String pairSequences = mapper.getAtomPairSequenceCount() <= 1 ? "" : " (rootPairSets:"+mapper.getAtomPairSequenceCount()+")";
+mHistory.append(rule.getName()+historyScore+pairSequences+"\n");
 					}
 				}
 			}
@@ -157,6 +169,7 @@ mHistory.append(rule.getName()+historyScore+"\n");
 		int[] productMapNo = new int[mProduct.getAtoms()];
 		mapper.map(mReactant, mProduct, reactantMapNo, productMapNo);
 		float score = mapper.getScore();
+
 		if (mScore <= score) {
 			mAppliedRule = null;
 			mScore = score;
@@ -164,7 +177,8 @@ mHistory.append(rule.getName()+historyScore+"\n");
 			bestProductMapNo = productMapNo;
 			bestGraphMapNoCount = mapper.getGraphMapNoCount();
 			}
-mHistory.append("no rule:"+score+"\n");
+String pairSequences = mapper.getAtomPairSequenceCount() <= 1 ? "" : " (rootPairSets:"+mapper.getAtomPairSequenceCount()+")";
+mHistory.append("no rule:"+score+pairSequences+"\n");
 
 		if (mScore != Integer.MIN_VALUE)
 			mapper.copyMapNosToReaction(rxn, bestReactantMapNo, bestProductMapNo, bestGraphMapNoCount);

@@ -16,7 +16,7 @@ public class MappingScorer {
 
 	/**
 	 * Instantiates a mapping scorer that judges the quality of a mapping by adding penalties for every bond
-	 * being broken, created, or changed. In principal the panelty for any created or broken bond is 2.0,
+	 * being broken, created, or changed. In principle the panelty for any created or broken bond is 2.0,
 	 * and for any changed bond order is 1.0. A change from/to delocalized to/from single or double is considered
 	 * a change. Broken or created bonds at typical break locations, e.g. ester cleavage, get slightly lower
 	 * penalties than 2.0. Changes of implicit hydrogen counts contribute with a factor of 2.0.
@@ -43,16 +43,17 @@ public class MappingScorer {
 
 	/**
 	 * @param reactantToProductAtom
-	 * @return the mapping score considering all
+	 * @return the mapping score considering all (score is negative value; 0: no bond changes)
 	 */
 	public float scoreMapping(int[] reactantToProductAtom) {
 		float penalty = 0;
 
 		// For all atoms assigned in reactantToProductAtom that undergo any bond changes,
 		// we add/remove fractional bond orders for new/broken bonds and
-		// we add fractional bond order changes or changed bonds
+		// we add fractional bond order changes of changed bonds
 		// to reflect the corresponding change in implicit hydrogen bond counts.
-		float[] hydrogenBondPenalty = new float[mProduct.getAtoms()];
+		float[] hydrogenBondPenalty = SCORE_HYDROGEN ? new float[mProduct.getAtoms()] : null;
+
 		boolean[] isAssignedProductAtom = new boolean[mProduct.getAtoms()];
 		for (int atom:reactantToProductAtom)
 			if (atom != -1)
@@ -71,24 +72,32 @@ public class MappingScorer {
 				if (pAtom1 != -1 || pAtom2 != -1)
 					penalty += getBondCreateOrBreakPenalty(mReactant, rBond);
 
-				if (pAtom1 != -1)
-					hydrogenBondPenalty[pAtom1] += rBondOrder;
-				if (pAtom2 != -1)
-					hydrogenBondPenalty[pAtom2] += rBondOrder;
+				if (SCORE_HYDROGEN) {
+					if (pAtom1 != -1)
+						hydrogenBondPenalty[pAtom1] += rBondOrder;
+					if (pAtom2 != -1)
+						hydrogenBondPenalty[pAtom2] += rBondOrder;
+					}
 				continue;
 				}
 
 			int pBond = mProduct.getBond(pAtom1, pAtom2);
 			if (pBond == -1) {
 				penalty += getBondCreateOrBreakPenalty(mReactant, rBond);
-				hydrogenBondPenalty[pAtom1] += rBondOrder;
-				hydrogenBondPenalty[pAtom2] += rBondOrder;
+
+				if (SCORE_HYDROGEN) {
+					hydrogenBondPenalty[pAtom1] += rBondOrder;
+					hydrogenBondPenalty[pAtom2] += rBondOrder;
+					}
+
 				continue;
 				}
 
-			float bondOrderChange = rBondOrder - getFractionalBondOrder(mProduct, pBond);
-			hydrogenBondPenalty[pAtom1] += bondOrderChange;
-			hydrogenBondPenalty[pAtom2] += bondOrderChange;
+			if (SCORE_HYDROGEN) {
+				float bondOrderChange = rBondOrder - getFractionalBondOrder(mProduct, pBond);
+				hydrogenBondPenalty[pAtom1] += bondOrderChange;
+				hydrogenBondPenalty[pAtom2] += bondOrderChange;
+				}
 
 			productBondHandled[pBond] = true;
 			penalty += getBondChangePenalty(rBond, pBond);
@@ -97,13 +106,16 @@ public class MappingScorer {
 		for (int pBond=0; pBond<mProduct.getBonds(); pBond++) {
 			if (!productBondHandled[pBond]) {
 				penalty += getBondCreateOrBreakPenalty(mProduct, pBond);
-				float pBondOrder = getFractionalBondOrder(mProduct, pBond);
-				int pAtom1 = mProduct.getBondAtom(0, pBond);
-				int pAtom2 = mProduct.getBondAtom(1, pBond);
-				if (isAssignedProductAtom[pAtom1])
-					hydrogenBondPenalty[pAtom1] -= pBondOrder;
-				if (isAssignedProductAtom[pAtom2])
-					hydrogenBondPenalty[pAtom2] -= pBondOrder;
+
+				if (SCORE_HYDROGEN) {
+					float pBondOrder = getFractionalBondOrder(mProduct, pBond);
+					int pAtom1 = mProduct.getBondAtom(0, pBond);
+					int pAtom2 = mProduct.getBondAtom(1, pBond);
+					if (isAssignedProductAtom[pAtom1])
+						hydrogenBondPenalty[pAtom1] -= pBondOrder;
+					if (isAssignedProductAtom[pAtom2])
+						hydrogenBondPenalty[pAtom2] -= pBondOrder;
+					}
 				}
 			}
 
@@ -133,18 +145,31 @@ public class MappingScorer {
 		int atom2 = mol.getBondAtom(1, bond);
 		boolean isHetero1 = mol.isElectronegative(atom1);
 		boolean isHetero2 = mol.isElectronegative(atom2);
-		boolean hasOxo1 = SimilarityGraphBasedReactionMapper.hasOxo(mol, atom1);
-		boolean hasOxo2 = SimilarityGraphBasedReactionMapper.hasOxo(mol, atom2);
+
+		if (!isHetero1 && !isHetero2)
+			return mol.isAromaticBond(bond) ? 2.1f : 1.9f + (float)mol.getBondOrder(bond) / 10f;
+
+		if (isHetero1 && isHetero2)    // e.g. m-CPBA
+			return 1.7f;
+
 		if ((isHetero1 && mol.isMetalAtom(atom2))
 		 || (isHetero2 && mol.isMetalAtom(atom1)))
 			return 1.7f;
-		if ((isHetero1 && hasOxo2)
-		 || (isHetero2 && hasOxo1))
-			return 1.8f;
-		if (isHetero1 || isHetero2)
-			return 1.9f;
 
-		return mol.isAromaticBond(bond) ? 3f : 1.9f + (float)mol.getBondOrder(bond) / 10f;
+		if ((isHetero1 && SimilarityGraphBasedReactionMapper.hasOxo(mol, atom2, atom1))
+		 || (isHetero2 && SimilarityGraphBasedReactionMapper.hasOxo(mol, atom1, atom2)))
+			return 1.8f;
+
+		if ((isHetero1 && SimilarityGraphBasedReactionMapper.hasNonCarbonNeighbour(mol, atom2, atom1))
+		 || (isHetero2 && SimilarityGraphBasedReactionMapper.hasNonCarbonNeighbour(mol, atom1, atom2)))
+			return 1.85f;
+
+		if ((isHetero1 && mol.isAromaticAtom(atom2))
+		 || (isHetero2 && mol.isAromaticAtom(atom1)))   // phenol-oxygen stays in arom-nonArom-ether formation
+			return 1.95f;
+
+		// any other hetero-to-carbon bond
+		return 1.9f;
 		}
 
 

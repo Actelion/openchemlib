@@ -1,12 +1,18 @@
 package com.actelion.research.gui.dock;
 
 import javax.swing.*;
+import javax.swing.plaf.SplitPaneUI;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Vector;
 
 public class TreeFork extends TreeContainer {
 	private TreeElement mLeftChildElement;
 	private TreeElement mRightChildElement;
+	private Vector<DividerChangeListener> mDividerChangeListeners;
 
 	/**
 	 * Constructor to create a fork element that is inserted between the specified
@@ -14,40 +20,53 @@ public class TreeFork extends TreeContainer {
 	 * @param oldLeaf
 	 * @param newLeaf
 	 * @param newLeafPosition
-	 * @param proportionalDividerLocation
+	 * @param dividerLocation
 	 */
-	public TreeFork(TreeLeaf oldLeaf, TreeLeaf newLeaf, int newLeafPosition, double proportionalDividerLocation) {
+	public TreeFork(TreeLeaf oldLeaf, TreeLeaf newLeaf, int newLeafPosition, double dividerLocation, Vector<DividerChangeListener> listeners) {
 		JSplitPane splitPane = null;
 		switch (newLeafPosition) {
 		case JDockingPanel.DOCK_TOP:
 			splitPane = new MySplitPane(JSplitPane.VERTICAL_SPLIT,
-					newLeaf.getComponent(), oldLeaf.getComponent(), proportionalDividerLocation);
+					newLeaf.getComponent(), oldLeaf.getComponent(), dividerLocation);
 			mLeftChildElement = newLeaf;
 			mRightChildElement = oldLeaf;
 			break;
 		case JDockingPanel.DOCK_LEFT:
 			splitPane = new MySplitPane(JSplitPane.HORIZONTAL_SPLIT,
-					newLeaf.getComponent(), oldLeaf.getComponent(), proportionalDividerLocation);
+					newLeaf.getComponent(), oldLeaf.getComponent(), dividerLocation);
 			mLeftChildElement = newLeaf;
 			mRightChildElement = oldLeaf;
 			break;
 		case JDockingPanel.DOCK_BOTTOM:
 			splitPane = new MySplitPane(JSplitPane.VERTICAL_SPLIT,
-					oldLeaf.getComponent(), newLeaf.getComponent(), proportionalDividerLocation);
+					oldLeaf.getComponent(), newLeaf.getComponent(), dividerLocation);
 			mLeftChildElement = oldLeaf;
 			mRightChildElement = newLeaf;
 			break;
 		case JDockingPanel.DOCK_RIGHT:
 			splitPane = new MySplitPane(JSplitPane.HORIZONTAL_SPLIT,
-					oldLeaf.getComponent(), newLeaf.getComponent(), proportionalDividerLocation);
+					oldLeaf.getComponent(), newLeaf.getComponent(), dividerLocation);
 			mLeftChildElement = oldLeaf;
 			mRightChildElement = newLeaf;
 			break;
 			}
-//		splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, pce -> {} );
+		splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, e -> {
+			if (mDividerChangeListeners != null && ((MySplitPane)mComponent).isDragged())
+				for (DividerChangeListener l:mDividerChangeListeners)
+					l.dividerLocationChanged(this);
+			} );
+		mDividerChangeListeners = listeners;
 		mComponent = splitPane;
 		oldLeaf.setParent(this);
 		newLeaf.setParent(this);
+		}
+
+	public void updateDividerChangeListeners(Vector<DividerChangeListener> listeners) {
+		mDividerChangeListeners = listeners;
+		if (mLeftChildElement instanceof TreeFork)
+			((TreeFork)mLeftChildElement).updateDividerChangeListeners(listeners);
+		if (mLeftChildElement instanceof TreeFork)
+			((TreeFork)mRightChildElement).updateDividerChangeListeners(listeners);
 		}
 
 	public void removeWithLeaf(TreeLeaf leaf) {
@@ -156,6 +175,7 @@ class MySplitPane extends JSplitPane {
 	private static final long serialVersionUID = 0x20070726;
 
 	private double mProportionalLocation;
+	private boolean mMouseDown;
 
 	public MySplitPane(int newOrientation, Component newLeftComponent, Component newRightComponent, double proportionalLocation) {
 		super(newOrientation, true, newLeftComponent, newRightComponent);
@@ -163,6 +183,22 @@ class MySplitPane extends JSplitPane {
 		setResizeWeight(proportionalLocation);
 		setBorder(null);
 		mProportionalLocation = proportionalLocation;
+
+		SplitPaneUI spui = getUI();
+		if (spui instanceof BasicSplitPaneUI) {
+			((BasicSplitPaneUI) spui).getDivider().addMouseListener(new MouseAdapter() {
+				public void mousePressed(MouseEvent e) {
+					mMouseDown = true;
+					}
+				public void mouseReleased(MouseEvent e) {
+					mMouseDown = false;
+					}
+				} );
+			}
+		}
+
+	public boolean isDragged() {
+		return mMouseDown;
 		}
 
 	@Override

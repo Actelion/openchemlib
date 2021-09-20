@@ -1,17 +1,16 @@
 package com.actelion.research.gui.dock;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.util.ArrayList;
-
 import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Vector;
 
 public class TreeRoot extends TreeContainer {
     private TreeElement mChildElement;
 
     /**
      * Constructor to create a root element to which the first leaf should be connected.
-     * @param parent
+     * @param rootComponent
      */
     public TreeRoot(JComponent rootComponent, TreeElement child) {
         mComponent = rootComponent;
@@ -19,6 +18,11 @@ public class TreeRoot extends TreeContainer {
         mChildElement = child;
         mChildElement.setParent(this);
         }
+
+    public void setDividerChangeListeners(Vector<DividerChangeListener> listeners) {
+        if (mChildElement instanceof TreeFork)
+            ((TreeFork)mChildElement).updateDividerChangeListeners(listeners);
+    }
 
     public TreeElement getChild() {
         return mChildElement;
