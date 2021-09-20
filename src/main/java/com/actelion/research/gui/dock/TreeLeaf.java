@@ -1,5 +1,7 @@
 package com.actelion.research.gui.dock;
 
+import com.actelion.research.gui.hidpi.HiDPIHelper;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -80,7 +82,13 @@ public class TreeLeaf extends TreeElement implements ChangeListener {
 	public void addContent(Dockable dockable, boolean isDragging) {
 		if (mComponent instanceof Dockable) {
 			Dockable existingDockable = (Dockable)mComponent;
-			JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.BOTTOM);
+			JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.BOTTOM) {
+				@Override public Dimension getMinimumSize() {
+					// of not modified, the minimum size == preferred size.
+					// Then width is at least the width of the longest tab name.
+					return new Dimension(HiDPIHelper.scale(100),HiDPIHelper.scale(100));
+					}
+				};
 			tabbedPane.putClientProperty("Quaqua.TabbedPane.contentBorderPainted", Boolean.FALSE);
 			tabbedPane.add(existingDockable, existingDockable.getTitle());
 			tabbedPane.add(dockable, dockable.getTitle());
