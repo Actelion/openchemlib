@@ -439,9 +439,9 @@ public class DockingEngine {
 			else {
 				for(String name : contributions.keySet()) {
 					sb.append(name);
-					sb.append(DELIMITER2);
-					sb.append(sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(contributions.get(name)))));
 					sb.append(DELIMITER3);
+					sb.append(sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(contributions.get(name)))));
+					sb.append(DELIMITER2);
 				}
 				sb.setLength(sb.length() - 1);
 			}
