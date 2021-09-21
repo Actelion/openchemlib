@@ -462,11 +462,9 @@ public class DockingEngine {
 			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[2].getBytes()));
 			Map<String,Double> contributions = null;
 			if(!s[3].equals(NULL_CONTRIBUTION)) {
-				System.out.println(s[3]);
 				contributions = new HashMap<String,Double>();
 				String[] splitted = s[3].split(DELIMITER2);
 				for(String contr : splitted) {
-					System.out.println(contr);
 					String[] splitted2 = contr.split(DELIMITER3);
 					String name = splitted2[0];
 					double value = EncodeFunctions.byteArrayToDouble(decoder.decode(splitted2[1].getBytes()));
