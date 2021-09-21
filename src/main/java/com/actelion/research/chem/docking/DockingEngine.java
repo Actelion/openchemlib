@@ -17,6 +17,7 @@ import org.openmolecules.chem.conf.gen.ConformerGenerator;
 import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.IDCodeParser;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
@@ -400,7 +401,7 @@ public class DockingEngine {
 		private Map<String,Double> contributions;
 		private static final String DELIMITER = ";";
 		private static final String DELIMITER2 = ":";
-		private static final String DELIMITER3 = " ";
+		private static final String DELIMITER3 = "%";
 		private static final String NULL_CONTRIBUTION = "#";
 		
 		public DockingResult(StereoMolecule pose, double score, Map<String,Double> contributions) {
@@ -440,7 +441,7 @@ public class DockingEngine {
 				for(String name : contributions.keySet()) {
 					sb.append(name);
 					sb.append(DELIMITER3);
-					sb.append(sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(contributions.get(name)))));
+					sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(contributions.get(name))));
 					sb.append(DELIMITER2);
 				}
 				sb.setLength(sb.length() - 1);
@@ -461,9 +462,11 @@ public class DockingEngine {
 			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[2].getBytes()));
 			Map<String,Double> contributions = null;
 			if(!s[3].equals(NULL_CONTRIBUTION)) {
+				System.out.println(s[3]);
 				contributions = new HashMap<String,Double>();
 				String[] splitted = s[3].split(DELIMITER2);
 				for(String contr : splitted) {
+					System.out.println(contr);
 					String[] splitted2 = contr.split(DELIMITER3);
 					String name = splitted2[0];
 					double value = EncodeFunctions.byteArrayToDouble(decoder.decode(splitted2[1].getBytes()));
@@ -485,6 +488,8 @@ public class DockingEngine {
            
 		}
 	}
+	
+
 
 	
 	
