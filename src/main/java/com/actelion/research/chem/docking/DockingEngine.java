@@ -210,7 +210,7 @@ public class DockingEngine {
 			rot.apply(best);
 			translate.apply(best);
 
-			return new DockingResult(best,bestEnergy);
+			return new DockingResult(best,bestEnergy,null);
 		}
 		else {
 			throw new DockingFailedException("docking failed");
@@ -398,11 +398,16 @@ public class DockingEngine {
 	public static class DockingResult implements Comparable<DockingResult>  {
 		private double score;
 		private StereoMolecule pose;
+		private Map<String,Double> contributions;
 		private static final String DELIMITER = ";";
+		private static final String DELIMITER2 = ":";
+		private static final String DELIMITER3 = " ";
+		private static final String NULL_CONTRIBUTION = "#";
 		
-		public DockingResult(StereoMolecule pose, double score) {
+		public DockingResult(StereoMolecule pose, double score, Map<String,Double> contributions) {
 			this.score = score;
 			this.pose = pose;
+			this.contributions = contributions;
 		}
 		
 		public double getScore() {
@@ -412,6 +417,11 @@ public class DockingEngine {
 		public StereoMolecule getPose() {
 			return pose;
 		}
+		
+		public Map<String,Double> getContributions() {
+			return contributions;
+		}
+		
 		
 		public String encode() {
 			Encoder encoder = Base64.getEncoder();
@@ -424,6 +434,19 @@ public class DockingEngine {
 			sb.append(idcoords);
 			sb.append(DELIMITER);
 			sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(score)));
+			sb.append(DELIMITER);
+			if(contributions==null || contributions.keySet().size()==0)
+				sb.append(NULL_CONTRIBUTION);
+			else {
+				for(String name : contributions.keySet()) {
+					sb.append(name);
+					sb.append(DELIMITER2);
+					sb.append(sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(contributions.get(name)))));
+					sb.append(DELIMITER3);
+				}
+				sb.setLength(sb.length() - 1);
+			}
+			
 			return sb.toString();
 		}
 		
@@ -437,7 +460,19 @@ public class DockingEngine {
 			parser.parse(pose, idcode, idcoords);
 			pose.ensureHelperArrays(Molecule.cHelperCIP);
 			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[2].getBytes()));
-			DockingResult dockingResult = new DockingResult(pose,score);
+			Map<String,Double> contributions = null;
+			if(!s[3].equals(NULL_CONTRIBUTION)) {
+				contributions = new HashMap<String,Double>();
+				String[] splitted = s[3].split(DELIMITER2);
+				for(String contr : splitted) {
+					String[] splitted2 = contr.split(DELIMITER3);
+					String name = splitted2[0];
+					double value = EncodeFunctions.byteArrayToDouble(decoder.decode(splitted2[1].getBytes()));
+					contributions.put(name, value);
+				}
+			}
+				
+			DockingResult dockingResult = new DockingResult(pose,score,contributions);
 			return dockingResult;
 		}
 
