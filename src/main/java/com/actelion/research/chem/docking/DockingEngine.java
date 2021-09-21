@@ -209,8 +209,8 @@ public class DockingEngine {
 			Translation translate = new Translation(new double[] {origCOM.x, origCOM.y, origCOM.z});
 			rot.apply(best);
 			translate.apply(best);
-
-			return new DockingResult(best,bestEnergy,null);
+			
+			return new DockingResult(best,bestEnergy,engine.getContributions());
 		}
 		else {
 			throw new DockingFailedException("docking failed");
@@ -272,7 +272,6 @@ public class DockingEngine {
 		}
 
 		pose.setState(bestState);
-		engine.getScore();
 		return bestEnergy;
 		
 	}
