@@ -98,7 +98,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		ff.setState(candidatePose.getCartState());
 		double ffEnergy = ff.getTotalEnergy();
 		if((ffEnergy-e0)>STRAIN_CUTOFF) {
-			energy+=ffEnergy;
+			energy+=ffEnergy-e0;
 			ff.addGradient(grad);
 		}
 		for(PotentialEnergyTerm term : constraints)

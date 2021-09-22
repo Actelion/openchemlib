@@ -178,6 +178,7 @@ public class DockingEngine {
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		List<Conformer> startPoints = new ArrayList<>();
 		double eMin = getStartingPositions(mol, startPoints);
+		Map<String,Double> contributions = null;
 		for(Conformer ligConf : startPoints) {
 			for(double[] transform : PheSAAlignment.initialTransform(0)) {
 				Conformer newLigConf = new Conformer(ligConf);
@@ -199,6 +200,7 @@ public class DockingEngine {
 				if(energy<bestEnergy) {
 					bestEnergy = energy;
 					bestPose = pose.getLigConf();
+					contributions = pose.getContributions();
 				}
 				if(threadMaster!=null && threadMaster.threadMustDie())
 					break;
@@ -210,8 +212,7 @@ public class DockingEngine {
 			Translation translate = new Translation(new double[] {origCOM.x, origCOM.y, origCOM.z});
 			rot.apply(best);
 			translate.apply(best);
-			
-			return new DockingResult(best,bestEnergy,engine.getContributions());
+			return new DockingResult(best,bestEnergy,contributions);
 		}
 		else {
 			throw new DockingFailedException("docking failed");
