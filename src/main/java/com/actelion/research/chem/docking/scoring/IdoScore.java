@@ -140,6 +140,12 @@ public class IdoScore extends AbstractScoringEngine {
 			
 	}
 
+	@Override
+	public Map<String, Double> getContributions() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 
 
 

@@ -1,5 +1,6 @@
 package com.actelion.research.chem.conf;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
@@ -20,6 +21,7 @@ public class ConformerSetGenerator {
 	private boolean mUseFF;
 	private long mSeed;
 	private static long DEFAULT_SEED = 12345L;
+	private ThreadMaster threadMaster;
 	
 	public ConformerSetGenerator(int maxNrConfs, int strategy, boolean useFF, long seed) {
 		mMaxNrConfs = maxNrConfs;
@@ -29,6 +31,7 @@ public class ConformerSetGenerator {
 		RigidFragmentCache fragCache = RigidFragmentCache.getDefaultInstance();
 		fragCache.loadDefaultCache();
 	}
+	
 	
 	/**
 	 * STRATEGY_LIKELY_RANDOM was evaluated to be the best strategy for reproducing bioactive
@@ -54,6 +57,10 @@ public class ConformerSetGenerator {
 		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,seed);
 		
 	}
+	
+	public void setThreadMaster(ThreadMaster tm) {
+		this.threadMaster = tm;
+	}
 
 	/**
 	 * Generates a set of distinct conformers of the canonical largest fragment of the passed molecule.
@@ -70,7 +77,7 @@ public class ConformerSetGenerator {
 		canMol.ensureHelperArrays(Molecule.cHelperCIP);
 		int maxTorsionSets = (int) Math.max(2 * mMaxNrConfs, (1000 * Math.sqrt(mMaxNrConfs)));
 		ConformerGenerator cg = new ConformerGenerator(mSeed,false);
-
+		cg.setThreadMaster(this.threadMaster);
 		Map<String, Object> ffOptions = null;
 		if(mUseFF) {
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
@@ -96,6 +103,8 @@ public class ConformerSetGenerator {
 					conformer.copyFrom(canMol);
 				}
 				confSet.add(conformer);
+				if(threadMaster!=null && threadMaster.threadMustDie())
+					break;
 			}
 		}
 

@@ -3,6 +3,8 @@ package com.actelion.research.chem.docking.scoring;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
@@ -13,7 +15,11 @@ import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
-
+/**
+ * this class is not thread safe!
+ * @author wahljo1
+ *
+ */
 public abstract class AbstractScoringEngine  {
 	
 	private double BUMP_PENALTY = 500;
@@ -74,6 +80,8 @@ public abstract class AbstractScoringEngine  {
 	public abstract double getFGValue(double[] grad);
 	
 	public abstract double getScore();
+	
+	public abstract Map<String,Double> getContributions();
 
 	public Conformer getReceptorConf() {
 		return receptorConf;

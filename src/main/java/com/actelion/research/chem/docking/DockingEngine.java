@@ -2,17 +2,23 @@ package com.actelion.research.chem.docking;
 
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.IDCodeParser;
+import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
@@ -34,11 +40,20 @@ import com.actelion.research.chem.forcefield.mmff.PositionConstraint;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
+import com.actelion.research.chem.phesa.EncodeFunctions;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.ShapeVolume;
+import com.actelion.research.chem.phesa.PheSAAlignment.PheSAResult;
 
 public class DockingEngine {
+/**
+ * applies molecular docking to find the binding pose of a ligand molecule into the binding site of the protein
+ * nativeLigand: defines the location of the binding site
+ * this class is not thread safe! every thread requires it's own instance
+ * @author wahljo1
+ *
+ */
 	
 	public enum ScoringFunction {CHEMPLP,IDOSCORE;}
 	private static final int DEFAULT_NR_MC_STEPS = 50;
@@ -57,6 +72,7 @@ public class DockingEngine {
 	private int startPositions;
 	private StereoMolecule nativeLigand;
 	private ShapeDocking shapeDocking;
+	private ThreadMaster threadMaster;
 
 	
 	public DockingEngine(StereoMolecule rec, StereoMolecule nativeLig, int mcSteps, int startPositions,
@@ -102,7 +118,11 @@ public class DockingEngine {
 		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS,ScoringFunction.CHEMPLP);
 	}
 	
-	private double getStartingPositions(StereoMolecule mol, List<Conformer> initialPos) {
+	public void setThreadMaster(ThreadMaster tm) {
+		threadMaster = tm;
+	}
+	
+	private double getStartingPositions(StereoMolecule mol, List<Conformer> initialPos) throws DockingFailedException {
 
 		double eMin = Double.MAX_VALUE;
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
@@ -121,7 +141,14 @@ public class DockingEngine {
 			if(c!=null) {
 				StereoMolecule conf = c.toMolecule();
 				conf.ensureHelperArrays(Molecule.cHelperParities);
-				ForceFieldMMFF94 mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				
+				ForceFieldMMFF94 mmff;
+				try {
+					mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+				}
+				catch(Exception e) {
+					throw new DockingFailedException("could not assess atom types");
+				}
 				PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
@@ -132,6 +159,8 @@ public class DockingEngine {
 				double e = mmff.getTotalEnergy();
 				if(e<eMin)
 					eMin = e;
+				if(threadMaster!=null && threadMaster.threadMustDie())
+					break;
 			}
 		}
 		
@@ -149,6 +178,7 @@ public class DockingEngine {
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		List<Conformer> startPoints = new ArrayList<>();
 		double eMin = getStartingPositions(mol, startPoints);
+		Map<String,Double> contributions = null;
 		for(Conformer ligConf : startPoints) {
 			for(double[] transform : PheSAAlignment.initialTransform(0)) {
 				Conformer newLigConf = new Conformer(ligConf);
@@ -170,7 +200,10 @@ public class DockingEngine {
 				if(energy<bestEnergy) {
 					bestEnergy = energy;
 					bestPose = pose.getLigConf();
+					contributions = pose.getContributions();
 				}
+				if(threadMaster!=null && threadMaster.threadMustDie())
+					break;
 			}
 		}
 		if(bestPose!=null) {
@@ -179,8 +212,7 @@ public class DockingEngine {
 			Translation translate = new Translation(new double[] {origCOM.x, origCOM.y, origCOM.z});
 			rot.apply(best);
 			translate.apply(best);
-
-			return new DockingResult(best,bestEnergy);
+			return new DockingResult(best,bestEnergy,contributions);
 		}
 		else {
 			throw new DockingFailedException("docking failed");
@@ -242,7 +274,6 @@ public class DockingEngine {
 		}
 
 		pose.setState(bestState);
-		engine.getScore();
 		return bestEnergy;
 		
 	}
@@ -368,10 +399,16 @@ public class DockingEngine {
 	public static class DockingResult implements Comparable<DockingResult>  {
 		private double score;
 		private StereoMolecule pose;
+		private Map<String,Double> contributions;
+		private static final String DELIMITER = ";";
+		private static final String DELIMITER2 = ":";
+		private static final String DELIMITER3 = "%";
+		private static final String NULL_CONTRIBUTION = "#";
 		
-		public DockingResult(StereoMolecule pose, double score) {
+		public DockingResult(StereoMolecule pose, double score, Map<String,Double> contributions) {
 			this.score = score;
 			this.pose = pose;
+			this.contributions = contributions;
 		}
 		
 		public double getScore() {
@@ -380,6 +417,64 @@ public class DockingEngine {
 		
 		public StereoMolecule getPose() {
 			return pose;
+		}
+		
+		public Map<String,Double> getContributions() {
+			return contributions;
+		}
+		
+		
+		public String encode() {
+			Encoder encoder = Base64.getEncoder();
+			StringBuilder sb = new StringBuilder();
+			Canonizer can = new Canonizer(pose, Canonizer.COORDS_ARE_3D);
+			String idcoords = can.getEncodedCoordinates(true);
+			String idcode = can.getIDCode();
+			sb.append(idcode);
+			sb.append(DELIMITER);
+			sb.append(idcoords);
+			sb.append(DELIMITER);
+			sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(score)));
+			sb.append(DELIMITER);
+			if(contributions==null || contributions.keySet().size()==0)
+				sb.append(NULL_CONTRIBUTION);
+			else {
+				for(String name : contributions.keySet()) {
+					sb.append(name);
+					sb.append(DELIMITER3);
+					sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(contributions.get(name))));
+					sb.append(DELIMITER2);
+				}
+				sb.setLength(sb.length() - 1);
+			}
+			
+			return sb.toString();
+		}
+		
+		public static DockingResult decode(String resultString) {
+			Decoder decoder = Base64.getDecoder();
+			String[] s = resultString.split(DELIMITER);
+			String idcode = s[0];
+			String idcoords = s[1];
+			StereoMolecule pose = new StereoMolecule();
+			IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
+			parser.parse(pose, idcode, idcoords);
+			pose.ensureHelperArrays(Molecule.cHelperCIP);
+			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[2].getBytes()));
+			Map<String,Double> contributions = null;
+			if(!s[3].equals(NULL_CONTRIBUTION)) {
+				contributions = new HashMap<String,Double>();
+				String[] splitted = s[3].split(DELIMITER2);
+				for(String contr : splitted) {
+					String[] splitted2 = contr.split(DELIMITER3);
+					String name = splitted2[0];
+					double value = EncodeFunctions.byteArrayToDouble(decoder.decode(splitted2[1].getBytes()));
+					contributions.put(name, value);
+				}
+			}
+				
+			DockingResult dockingResult = new DockingResult(pose,score,contributions);
+			return dockingResult;
 		}
 
 		@Override
@@ -392,6 +487,8 @@ public class DockingEngine {
            
 		}
 	}
+	
+
 
 	
 	

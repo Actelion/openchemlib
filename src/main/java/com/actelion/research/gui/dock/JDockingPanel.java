@@ -28,6 +28,7 @@ public class JDockingPanel extends JPanel implements ActionListener {
 	private int mTargetPosition,mPreviousTargetPosition;
 	private GhostPreview mPreview;
 	private Dockable mMaximizedView;
+	private Vector<DividerChangeListener> mDividerChangeListeners;
 
 	/**
 	 * Creates a docking panel to which any Dockables may be added by
@@ -83,6 +84,23 @@ public class JDockingPanel extends JPanel implements ActionListener {
 				mTargetPosition = -1;
 				}
 			}, true);
+		}
+
+	public void addDividerChangeLister(DividerChangeListener l) {
+		if (mDividerChangeListeners == null)
+			mDividerChangeListeners = new Vector<>();
+
+		mDividerChangeListeners.add(l);
+		if (mTreeRoot != null)
+			mTreeRoot.setDividerChangeListeners(mDividerChangeListeners);
+		}
+
+	public void removeDividerChangeLister(DividerChangeListener l) {
+		if (mDividerChangeListeners != null) {
+			mDividerChangeListeners.remove(l);
+			if (mTreeRoot != null)
+				mTreeRoot.setDividerChangeListeners(mDividerChangeListeners);
+			}
 		}
 
 	public void actionPerformed(ActionEvent e) {
@@ -309,7 +327,7 @@ public class JDockingPanel extends JPanel implements ActionListener {
 		else {
 			TreeLeaf newLeaf = new TreeLeaf(dockable, this, isDragging);
 			TreeContainer parent = treeLeaf.getParent();
-			TreeFork treeFork = new TreeFork(treeLeaf, newLeaf, position, dividerPosition);
+			TreeFork treeFork = new TreeFork(treeLeaf, newLeaf, position, dividerPosition, mDividerChangeListeners);
 			parent.replaceChildElement(treeLeaf, treeFork);
 			mLeafMap.put(dockable.getTitle(), newLeaf);
 			}
@@ -428,6 +446,34 @@ public class JDockingPanel extends JPanel implements ActionListener {
 				((JTabbedPane)parent).setSelectedComponent(dockable);
 
 			}
+		}
+
+	/**
+	 * Checks, whether a dockable with the given title exists, and whether it is visible (selected if in a JTabbedPane)
+	 * and whether it is in the left or right branch (depending on parameter left) of a JSplitPane.
+	 * @param title
+	 * @param left if true, then
+	 * @return true the respective dockable is visible and in the left part of a JSplitPane
+	 */
+	public boolean isVisibleInSplitPane(String title, boolean left) {
+		Component view = mDockableMap.get(title);
+		if (view == null)
+			return false;
+
+		Component pane = view.getParent();
+		if (pane instanceof JTabbedPane) {
+			if (view != ((JTabbedPane)pane).getSelectedComponent())
+				return false;
+
+			view = pane;
+			pane = pane.getParent();
+			}
+
+		if (pane instanceof JSplitPane)
+			return (left && view == ((JSplitPane)pane).getLeftComponent())
+				|| (!left && view == ((JSplitPane)pane).getRightComponent());
+
+		return false;
 		}
 
 	/**
@@ -596,7 +642,7 @@ public class JDockingPanel extends JPanel implements ActionListener {
 			Dockable dockable = dockables.get(size2);
 			bottomLeft = new TreeLeaf(dockable, this, false);
 			TreeContainer parent = topLeft.getParent();
-			TreeFork treeFork = new TreeFork(topLeft, bottomLeft, DOCK_BOTTOM, .5);	
+			TreeFork treeFork = new TreeFork(topLeft, bottomLeft, DOCK_BOTTOM, .5, mDividerChangeListeners);
 			parent.replaceChildElement(topLeft, treeFork);
 			mLeafMap.put(dockable.getTitle(), bottomLeft);
 			mDockableMap.put(dockable.getTitle(), dockable);
@@ -606,7 +652,7 @@ public class JDockingPanel extends JPanel implements ActionListener {
 			Dockable dockable = dockables.get(size1);
 			topRight = new TreeLeaf(dockable, this, false);
 			TreeContainer parent = topLeft.getParent();
-			TreeFork treeFork = new TreeFork(topLeft, topRight, DOCK_RIGHT, .5);	
+			TreeFork treeFork = new TreeFork(topLeft, topRight, DOCK_RIGHT, .5, mDividerChangeListeners);
 			parent.replaceChildElement(topLeft, treeFork);
 			mLeafMap.put(dockable.getTitle(), topRight);
 			mDockableMap.put(dockable.getTitle(), dockable);
@@ -616,7 +662,7 @@ public class JDockingPanel extends JPanel implements ActionListener {
 			Dockable dockable = dockables.get(size3);
 			bottomRight = new TreeLeaf(dockable, this, false);
 			TreeContainer parent = bottomLeft.getParent();
-			TreeFork treeFork = new TreeFork(bottomLeft, bottomRight, DOCK_RIGHT, .5);	
+			TreeFork treeFork = new TreeFork(bottomLeft, bottomRight, DOCK_RIGHT, .5, mDividerChangeListeners);
 			parent.replaceChildElement(bottomLeft, treeFork);
 			mLeafMap.put(dockable.getTitle(), bottomRight);
 			mDockableMap.put(dockable.getTitle(), dockable);

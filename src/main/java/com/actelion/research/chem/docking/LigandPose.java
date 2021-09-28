@@ -136,6 +136,10 @@ public class LigandPose implements Evaluable{
 			
 	}
 	
+	public Map<String,Double> getContributions() {
+		return engine.getContributions();
+	}
+	
 	public void setInitialState() {
 		int elements = 3+3+torsionHelper.getRotatableBonds().length; //3 translational, 3 rotational, 3 torsion
 		state = new double[elements];

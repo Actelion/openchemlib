@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.AlignmentResult;
@@ -19,6 +20,7 @@ public class ShapeDocking {
 	private Transformation transformation;
 	private ShapeVolume negRecImage;
 	private DescriptorHandlerShape dhs;
+	private ThreadMaster threadMaster;
 	
 	/**
 	 * 
@@ -30,6 +32,10 @@ public class ShapeDocking {
 		this.negRecImage = negRecImage;
 		this.transformation = transformation;
 		dhs = new DescriptorHandlerShape(500,0.5);
+	}
+	
+	public void setThreadMaster(ThreadMaster tm) {
+		this.threadMaster = tm;
 	}
 	
 	public List<StereoMolecule> dock(StereoMolecule candidate) {

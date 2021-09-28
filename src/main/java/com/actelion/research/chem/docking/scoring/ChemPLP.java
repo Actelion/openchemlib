@@ -98,7 +98,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		ff.setState(candidatePose.getCartState());
 		double ffEnergy = ff.getTotalEnergy();
 		if((ffEnergy-e0)>STRAIN_CUTOFF) {
-			energy+=ffEnergy;
+			energy+=ffEnergy-e0;
 			ff.addGradient(grad);
 		}
 		for(PotentialEnergyTerm term : constraints)
@@ -495,6 +495,34 @@ public class ChemPLP extends AbstractScoringEngine {
 				new Coordinates(1.555,1.555,0.0), new Coordinates(1.555,-1.555,0.0),
 				new Coordinates(-1.555,1.555,0.0), new Coordinates(-1.555,-1.555,0.0)
 		};
+	}
+
+
+	@Override
+	public Map<String, Double> getContributions() {
+		Map<String,Double> contributions = new HashMap<String,Double>();
+		double[] grad = new double[3*candidatePose.getLigConf().getMolecule().getAllAtoms()];
+		double hbond = 0.0;
+		for(PotentialEnergyTerm term : chemscoreHbond)
+			hbond+=term.getFGValue(grad);
+		contributions.put("HBOND", hbond);
+		double metal = 0.0;
+		for(PotentialEnergyTerm term : chemscoreMetal) 
+			metal+=term.getFGValue(grad);
+		contributions.put("METAL", metal);
+		double plpContr = 0.0;
+		for(PotentialEnergyTerm term : plp) 
+			plpContr+=term.getFGValue(grad);
+		contributions.put("PLP", plpContr);
+		double strain = 0.0;
+		ff.setState(candidatePose.getCartState());
+		double ffEnergy = ff.getTotalEnergy();
+		if((ffEnergy-e0)>STRAIN_CUTOFF) {
+			strain+=ffEnergy;
+			ff.addGradient(grad);
+		}
+		contributions.put("STRAIN", strain);
+		return contributions;
 	}
 
 
