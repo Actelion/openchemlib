@@ -144,7 +144,7 @@ public class JEditableChemistryView extends JChemistryView {
 			}
 		}
 
-	private JDrawDialog createDrawDialog(String title, Reaction reaction) {
+	protected JDrawDialog createDrawDialog(String title, Reaction reaction) {
 		Component c = this;
 		while (!(c instanceof Frame || c instanceof Dialog))
 			c = c.getParent();
@@ -155,7 +155,7 @@ public class JEditableChemistryView extends JChemistryView {
 			return new JDrawDialog((Dialog)c, reaction, "Edit Reaction", Dialog.ModalityType.DOCUMENT_MODAL);
 		}
 
-	private JDrawDialog createDrawDialog(String title, StereoMolecule[] mol) {
+	protected JDrawDialog createDrawDialog(String title, StereoMolecule[] mol) {
 		Component c = this;
 		while (!(c instanceof Frame || c instanceof Dialog))
 			c = c.getParent();
