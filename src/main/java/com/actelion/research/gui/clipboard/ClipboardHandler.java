@@ -35,6 +35,7 @@ package com.actelion.research.gui.clipboard;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.dnd.ChemistryFlavors;
+import com.actelion.research.chem.io.RXNFileCreator;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.chem.reaction.Reaction;
@@ -462,10 +463,10 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 
 	private boolean copyReactionToClipboard(String ctab, Reaction rxn) throws IOException {
-//		if (ctab == null) {
-//			RXNFileCreator mc = new RXNFileCreator(rxn);
-//			ctab = mc.getRXNfile();
-//		}
+		if (ctab == null) {
+			RXNFileCreator mc = new RXNFileCreator(rxn);
+			ctab = mc.getRXNfile();
+		}
 
 		ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
 		byte[] cdxBuffer = cdx.getChemDrawBuffer(rxn);
@@ -479,7 +480,7 @@ public class ClipboardHandler implements IClipboardHandler
 		out.close();
 		bos.close();
 
-		return NativeClipboardAccessor.copyMoleculeToClipboard("", cdxBuffer, bos.toByteArray());
+		return NativeClipboardAccessor.copyReactionToClipboard(ctab.getBytes(), cdxBuffer, bos.toByteArray());
 	}
 
 	private boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch) {
