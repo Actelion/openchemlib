@@ -48,8 +48,8 @@ public class SmilesParser {
 	public static final int SMARTS_MODE_GUESS = 1;
 	public static final int SMARTS_MODE_IS_SMARTS = 2;
 
-	private static final int START_RE_CONNECTIONS = 16;
-	private static final int MAX_RE_CONNECTIONS = 512;
+	private static final int INITIAL_CONNECTIONS = 16;
+	private static final int MAX_CONNECTIONS = 100; // largest allowed one in SMILES is 99
 	private static final int MAX_BRACKET_LEVELS = 64;
 	private static final int MAX_AROMATIC_RING_SIZE = 15;
 
@@ -232,17 +232,17 @@ public class SmilesParser {
 		int[] baseAtom = new int[MAX_BRACKET_LEVELS];
 		baseAtom[0] = -1;
 
-		int[] ringClosureAtom = new int[START_RE_CONNECTIONS];
-		int[] ringClosurePosition = new int[START_RE_CONNECTIONS];
-		int[] ringClosureBondType = new int[START_RE_CONNECTIONS];
-		int[] ringClosureBondQueryFeatures = new int[START_RE_CONNECTIONS];
-		for (int i = 0; i<START_RE_CONNECTIONS; i++)
+		int[] ringClosureAtom = new int[INITIAL_CONNECTIONS];
+		int[] ringClosurePosition = new int[INITIAL_CONNECTIONS];
+		int[] ringClosureBondType = new int[INITIAL_CONNECTIONS];
+		int[] ringClosureBondQueryFeatures = new int[INITIAL_CONNECTIONS];
+		for (int i = 0; i<INITIAL_CONNECTIONS; i++)
 			ringClosureAtom[i] = -1;
 
 		int atomMass = 0;
 		int fromAtom = -1;
 		boolean squareBracketOpen = false;
-		boolean percentFound = false;
+		boolean isDoubleDigit = false;
 		boolean smartsFeatureFound = false;
 		int bracketLevel = 0;
 		int bondType = Molecule.cBondTypeSingle;
@@ -776,21 +776,21 @@ public class SmilesParser {
 										|| smiles[position-2] == '#'
 										|| smiles[position-2] == ':'
 										|| smiles[position-2] == '>');
-					if (percentFound
+					if (isDoubleDigit
 					 && position < endIndex
 					 && Character.isDigit(smiles[position])) {
 						number = 10 * number + smiles[position] - '0';
+						isDoubleDigit = false;
 						position++;
 						}
-					percentFound = false;
 					if (number >= ringClosureAtom.length) {
-						if (number >= MAX_RE_CONNECTIONS)
+						if (number >=MAX_CONNECTIONS)
 							throw new Exception("SmilesParser: ringClosureAtom number out of range");
 
 						int oldSize = ringClosureAtom.length;
 						int newSize = ringClosureAtom.length;
 						while (newSize <= number)
-							newSize += START_RE_CONNECTIONS;
+							newSize = Math.min(MAX_CONNECTIONS, newSize + INITIAL_CONNECTIONS);
 
 						ringClosureAtom = Arrays.copyOf(ringClosureAtom, newSize);
 						ringClosurePosition = Arrays.copyOf(ringClosurePosition, newSize);
@@ -867,7 +867,7 @@ public class SmilesParser {
 				}
 
 			if (theChar == '%') {
-				percentFound = true;
+				isDoubleDigit = true;
 				continue;
 				}
 
