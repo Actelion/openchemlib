@@ -39,6 +39,7 @@ import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.SortedList;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.TreeMap;
 
 
@@ -47,8 +48,9 @@ public class SmilesParser {
 	public static final int SMARTS_MODE_GUESS = 1;
 	public static final int SMARTS_MODE_IS_SMARTS = 2;
 
+	private static final int START_RE_CONNECTIONS = 16;
+	private static final int MAX_RE_CONNECTIONS = 512;
 	private static final int MAX_BRACKET_LEVELS = 64;
-	private static final int MAX_RE_CONNECTIONS = 256;
 	private static final int MAX_AROMATIC_RING_SIZE = 15;
 
 	private static final int HYDROGEN_ANY = -1;
@@ -230,11 +232,11 @@ public class SmilesParser {
 		int[] baseAtom = new int[MAX_BRACKET_LEVELS];
 		baseAtom[0] = -1;
 
-		int[] ringClosureAtom = new int[MAX_RE_CONNECTIONS];
-		int[] ringClosurePosition = new int[MAX_RE_CONNECTIONS];
-		int[] ringClosureBondType = new int[MAX_RE_CONNECTIONS];
-		int[] ringClosureBondQueryFeatures = new int[MAX_RE_CONNECTIONS];
-		for (int i=0; i<MAX_RE_CONNECTIONS; i++)
+		int[] ringClosureAtom = new int[START_RE_CONNECTIONS];
+		int[] ringClosurePosition = new int[START_RE_CONNECTIONS];
+		int[] ringClosureBondType = new int[START_RE_CONNECTIONS];
+		int[] ringClosureBondQueryFeatures = new int[START_RE_CONNECTIONS];
+		for (int i = 0; i<START_RE_CONNECTIONS; i++)
 			ringClosureAtom[i] = -1;
 
 		int atomMass = 0;
@@ -781,8 +783,22 @@ public class SmilesParser {
 						position++;
 						}
 					percentFound = false;
-					if (number >= MAX_RE_CONNECTIONS)
-						throw new Exception("SmilesParser: ringClosureAtom number out of range");
+					if (number >= ringClosureAtom.length) {
+						if (number >= MAX_RE_CONNECTIONS)
+							throw new Exception("SmilesParser: ringClosureAtom number out of range");
+
+						int oldSize = ringClosureAtom.length;
+						int newSize = ringClosureAtom.length;
+						while (newSize <= number)
+							newSize += START_RE_CONNECTIONS;
+
+						ringClosureAtom = Arrays.copyOf(ringClosureAtom, newSize);
+						ringClosurePosition = Arrays.copyOf(ringClosurePosition, newSize);
+						ringClosureBondType = Arrays.copyOf(ringClosureBondType, newSize);
+						ringClosureBondQueryFeatures = Arrays.copyOf(ringClosureBondQueryFeatures, newSize);
+						for (int i=oldSize; i<newSize; i++)
+							ringClosureAtom[i] = -1;
+						}
 					if (ringClosureAtom[number] == -1) {
 						ringClosureAtom[number] = baseAtom[bracketLevel];
 						ringClosurePosition[number] = position-1;
@@ -870,8 +886,8 @@ public class SmilesParser {
 		// Check for unsatisfied open bonds
 		if (bondType != Molecule.cBondTypeSingle)
 			throw new Exception("SmilesParser: dangling open bond");
-		for (int i=0; i<MAX_RE_CONNECTIONS; i++)
-			if (ringClosureAtom[i] != -1)
+		for (int rca:ringClosureAtom)
+			if (rca != -1)
 				throw new Exception("SmilesParser: dangling ring closure");
 
 		int[] handleHydrogenAtomMap = mMol.getHandleHydrogenMap();
