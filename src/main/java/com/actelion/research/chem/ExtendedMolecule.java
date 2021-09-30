@@ -232,7 +232,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * The neighbours (connected atoms) of any atom are sorted by their relevance:<br>
 	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non natural abundance isotops, custom labelled hydrogen, etc.)<br>
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
-	 * 3. loosely connected atoms (bond order 0, i.e. metall ligand bond)<br>
+	 * 3. loosely connected atoms (bond order 0, i.e. metal ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
 	 * @param atom
 	 * @return count of category 1 & 2 neighbour atoms (excludes neighbours connected with zero bond order)
@@ -3141,13 +3141,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return getHandleHydrogenAtomMap(findSimpleHydrogens());
 		}
 
-		/**
-		 * If ensureHelperArrays() (and with it handleHydrogens()) was not called yet
-		 * on a fresh molecule and if the molecule contains simple hydrogen atoms within
-		 * non-hydrogens atoms, then this function returns a map from current atom indexes
-		 * to those new atom indexes that would result from a call to handleHydrogens.
-		 * @return
-		 */
+	/**
+	 * If ensureHelperArrays() (and with it handleHydrogens()) was not called yet
+	 * on a fresh molecule and if the molecule contains simple hydrogen atoms within
+	 * non-hydrogens atoms, then this function returns a map from current atom indexes
+	 * to those new atom indexes that would result from a call to handleHydrogens.
+	 * @return
+	 */
 	public int[] getHandleHydrogenAtomMap(boolean[] isSimpleHydrogen) {
 		int[] map = new int[mAllAtoms];
 		for (int i=0; i<mAllAtoms; i++)
@@ -3162,6 +3162,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				int tempIndex = map[i];
 				map[i] = map[lastNonHAtom];
 				map[lastNonHAtom] = tempIndex;
+
+				// swap simple H flags also
+				boolean temp = isSimpleHydrogen[i];
+				isSimpleHydrogen[i] = isSimpleHydrogen[lastNonHAtom];
+				isSimpleHydrogen[lastNonHAtom] = temp;
 
 				do lastNonHAtom--;
 				while (isSimpleHydrogen[lastNonHAtom]);

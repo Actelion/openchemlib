@@ -372,7 +372,7 @@ public class CoordinateInventor {
 
 	private void locateInitialFragments() {
 		// take every atom with more than 4 neighbours including first neighbour shell
-		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (mMol.getAllConnAtoms(atom) > 4) {
 				InventorFragment f = new InventorFragment(mMol, 1+mMol.getAllConnAtoms(atom), mMode);
 
@@ -437,7 +437,7 @@ public class CoordinateInventor {
 			}
 
 			// take every large ring that has ring bonds that are not member of a fragment added already
-		for (int bond=0; bond<mMol.getAllBonds(); bond++) {
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			if (mMol.isRingBond(bond) && !mBondHandled[bond]) {
 				InventorChain theRing = getSmallestRingFromBond(bond);
 				int[] ringAtom = theRing.getRingAtoms();
@@ -1183,9 +1183,7 @@ public class CoordinateInventor {
 		int current = 1;
 		int highest = 1;
 		while (current <= highest) {
-//			if (graphLevel[graphAtom[current]] > RingCollection.MAX_LARGE_RING_SIZE)
-//				return null;		// disabled ring size limit;  TLS 20130613
-			for (int i=0; i<mMol.getAllConnAtoms(graphAtom[current]); i++) {
+			for (int i=0; i<mMol.getConnAtoms(graphAtom[current]); i++) {
 				int candidate = mMol.getConnAtom(graphAtom[current], i);
 				if ((current > 1) && candidate == atom1) {
 					InventorChain theRing = new InventorChain(graphLevel[graphAtom[current]]);
@@ -1222,9 +1220,7 @@ public class CoordinateInventor {
 		int current = 1;
 		int highest = 1;
 		while (current <= highest) {
-//			if (graphLevel[graphAtom[current]] > RingCollection.MAX_LARGE_RING_SIZE)
-//				return 0;		// disabled ring size limit;  TLS 20130613
-			for (int i=0; i<mMol.getAllConnAtoms(graphAtom[current]); i++) {
+			for (int i=0; i<mMol.getConnAtoms(graphAtom[current]); i++) {
 				int candidate = mMol.getConnAtom(graphAtom[current], i);
 				if (candidate == atom3)
 					return 1 + graphLevel[graphAtom[current]];
