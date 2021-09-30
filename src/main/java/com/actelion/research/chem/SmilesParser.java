@@ -48,7 +48,7 @@ public class SmilesParser {
 	public static final int SMARTS_MODE_IS_SMARTS = 2;
 
 	private static final int MAX_BRACKET_LEVELS = 64;
-	private static final int MAX_RE_CONNECTIONS = 64;
+	private static final int MAX_RE_CONNECTIONS = 256;
 	private static final int MAX_AROMATIC_RING_SIZE = 15;
 
 	private static final int HYDROGEN_ANY = -1;
