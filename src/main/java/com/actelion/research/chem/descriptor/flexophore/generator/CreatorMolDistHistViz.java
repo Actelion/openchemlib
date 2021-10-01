@@ -9,6 +9,7 @@ import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphExtract
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
+import org.openmolecules.chem.conf.gen.RigidFragmentCache;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -60,6 +61,7 @@ public class CreatorMolDistHistViz {
         subGraphExtractor = new SubGraphExtractor();
 
         conformerGenerator = new ConformerGenerator(seed, false);
+        RigidFragmentCache.getDefaultInstance().loadDefaultCache();
 
         conformationMode = CONF_GEN_TS;
 

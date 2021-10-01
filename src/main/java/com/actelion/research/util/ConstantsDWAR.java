@@ -115,6 +115,10 @@ public class ConstantsDWAR {
 
 	public static final String TAG_COOR2 = "idcoordinates2D";
 
+	public static final String IDCODE_EMPTY = "dH";
+
+
+
 	/**
 	 * Can be one or multiple sets of 3D coordinates.
 	 */
