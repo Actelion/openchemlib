@@ -197,7 +197,7 @@ public class ContainerFragBondsSolutions {
         }
 
 		if(ELUSIVE)
-			System.out.println("ContainerFragBondsSolutions maximumNumberBondsInFragment " + maximumNumberBondsInFragment);
+			System.out.println("ContainerFragBondsSolutions maximum number of bonds in a single fragment " + maximumNumberBondsInFragment + ".");
 
         return arrCapacity;
 	}
