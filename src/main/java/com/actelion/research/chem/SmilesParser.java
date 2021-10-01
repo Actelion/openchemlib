@@ -44,9 +44,12 @@ import java.util.TreeMap;
 
 
 public class SmilesParser {
+	private static final int SMARTS_MODE_MASK = 3;
 	public static final int SMARTS_MODE_IS_SMILES = 0;
 	public static final int SMARTS_MODE_GUESS = 1;
 	public static final int SMARTS_MODE_IS_SMARTS = 2;
+
+	public static final int MODE_SKIP_COORDINATE_TEMPLATES = 4;
 
 	private static final int INITIAL_CONNECTIONS = 16;
 	private static final int MAX_CONNECTIONS = 100; // largest allowed one in SMILES is 99
@@ -61,8 +64,8 @@ public class SmilesParser {
 
 	private StereoMolecule mMol;
 	private boolean[] mIsAromaticBond;
-	private int mAromaticAtoms,mAromaticBonds,mSmartsMode;
-	private boolean mCreateSmartsWarnings;
+	private int mAromaticAtoms,mAromaticBonds,mSmartsMode,mCoordinateMode;
+	private boolean mCreateSmartsWarnings,mSkipTemplates;
 	private StringBuilder mSmartsWarningBuffer;
 
 	/**
@@ -82,12 +85,17 @@ public class SmilesParser {
 	 * single bond and without any implicit hydrogen atoms. If smartsMode is SMARTS_MODE_IS_GUESS,
 	 * then
 	 * molecules is never set.
-	 * @param smartsMode one of SMARTS_MODE...
+	 * @param mode one of SMARTS_MODE... and optionally other mode flags
 	 * @param createSmartsWarnings if true, then getSmartsWarning() may be used after parsing a SMILES or SMARTS
 	 */
-	public SmilesParser(int smartsMode, boolean createSmartsWarnings) {
-		mSmartsMode = smartsMode;
+	public SmilesParser(int mode, boolean createSmartsWarnings) {
+		mSmartsMode = mode & SMARTS_MODE_MASK;
 		mCreateSmartsWarnings = createSmartsWarnings;
+		mCoordinateMode = CoordinateInventor.MODE_DEFAULT;
+		if ((mode & MODE_SKIP_COORDINATE_TEMPLATES) != 0)
+			mCoordinateMode |= CoordinateInventor.MODE_SKIP_DEFAULT_TEMPLATES;
+
+		mSkipTemplates = ((mode & MODE_SKIP_COORDINATE_TEMPLATES) != 0);
 		}
 
 	public StereoMolecule parseMolecule(String smiles) {
@@ -972,7 +980,7 @@ public class SmilesParser {
 		mMol.setParitiesValid(0);
 
 		if (createCoordinates) {
-			new CoordinateInventor().invent(mMol);
+			new CoordinateInventor(mCoordinateMode).invent(mMol);
 
 			if (readStereoFeatures)
 				mMol.setUnknownParitiesToExplicitlyUnknown();

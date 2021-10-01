@@ -43,6 +43,7 @@ public class CoordinateInventor {
 	public static final int MODE_KEEP_MARKED_ATOM_COORDS = 4;
 	public static final int MODE_PREFER_MARKED_ATOM_COORDS = 8;
 	protected static final int MODE_CONSIDER_MARKED_ATOMS = MODE_KEEP_MARKED_ATOM_COORDS | MODE_PREFER_MARKED_ATOM_COORDS;
+	public static final int MODE_DEFAULT = MODE_REMOVE_HYDROGEN;
 
 	private static final byte FLIP_AS_LAST_RESORT = 1;
 	private static final byte FLIP_POSSIBLE = 2;
@@ -79,7 +80,7 @@ public class CoordinateInventor {
 	 * polycyclic structures from these templates (adamantanes, cubane, etc.).
 	 */
 	public CoordinateInventor () {
-		this(MODE_REMOVE_HYDROGEN);
+		this(MODE_DEFAULT);
 		}
 
 
