@@ -8,6 +8,11 @@ import com.actelion.research.chem.Coordinates;
 /**
  * @author J.Wahl, February 2018
  * Describes rotation using quaternion formulation
+ * convention: q0 -> scalar
+ * q1,q2,q3 -> vector part
+ * http://www.cs.cmu.edu/~spiff/exp-map/
+ * Grassi,98
+ * --> we take the transpose because of different convention!
  */
 
 public class Quaternion {
@@ -98,29 +103,32 @@ public class Quaternion {
 		q2 = r.q0*q2 + r.q1*q3 + r.q2*q0 - r.q3*q1;
 		q3 = r.q0*q3 - r.q1*q2 + r.q2*q1 + r.q3*q0;
 	}
-	
+	/**
+	 * from Grassia: q0 corresponds to qw (scalar part)
+	 * @return
+	 */
 	public Matrix getRotMatrix(){ 
 		Matrix rotMat = new Matrix(3,3);
 		double[][] data = rotMat.getArray();
 		double q1q1 = q1*q1;
 		double q2q2 = q2*q2;
-		double q3q3 = q3*q3;
-		double q0q0 = q0*q0;
 		double q0q1 = q0*q1;
 		double q1q2 = q1*q2;
+		double q3q3 = q3*q3;
 		double q0q3 = q0*q3;
 		double q1q3 = q1*q3;
 		double q0q2 = q0*q2;
 		double q2q3 = q2*q3;
-		data[0][0] = q0q0+q1q1-q2q2-q3q3;
+		data[0][0] = 1.0-2*(q2q2+q3q3);
 		data[1][0] = 2*(q1q2-q0q3);
 		data[2][0] = 2*(q1q3+q0q2);
 		data[0][1] = 2*(q1q2+q0q3);
-		data[1][1] = q0q0-q1q1+q2q2-q3q3;
+		data[1][1] = 1.0-2*(q1q1+q3q3);
 		data[2][1] = 2*(q2q3-q0q1);
 		data[0][2] = 2*(q1q3-q0q2);
 		data[1][2] = 2*(q2q3+q0q1);
-		data[2][2] = q0q0-q1q1-q2q2+q3q3;
+		data[2][2] = 1.0-2*(q1q1+q2q2);
+
 		
 		
 		return rotMat;
@@ -159,6 +167,12 @@ public class Quaternion {
 		q3 *= s;
 		
 		return new Quaternion(q0,q1,q2,q3);
+	}
+	
+	@Override 
+	public String toString() {
+		String s = q0 + " " + q1 + " " + q2 + " " + q3;
+		return s;
 	}
 	
 	

@@ -110,7 +110,7 @@ public class IdoScore extends AbstractScoringEngine {
 
 		
 		energy+=getBumpTerm();
-		ff.setState(candidatePose.getState());
+		ff.setState(candidatePose.getCartState());
 		double ffEnergy = ff.getTotalEnergy();
 		if(ffEnergy-e0>STRAIN_CUTOFF) {
 			ff.addGradient(gradient);
@@ -138,6 +138,12 @@ public class IdoScore extends AbstractScoringEngine {
 
 		return energy;
 			
+	}
+
+	@Override
+	public Map<String, Double> getContributions() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 

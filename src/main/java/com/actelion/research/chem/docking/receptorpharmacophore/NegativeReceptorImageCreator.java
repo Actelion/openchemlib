@@ -33,9 +33,9 @@ public class NegativeReceptorImageCreator {
 		ShapeVolume bsVolume = negImg.calculate();
 		Rotation rot = rotation.getInvert();
 		Translation trans = new Translation(new double[] {origCOM.x,origCOM.y,origCOM.z});
-		transformation.addTransformation(rot);
+	    transformation.addTransformation(rot);
 		transformation.addTransformation(trans);
-		//bsVolume.transform(transformation);
+
 
 
 		return bsVolume;

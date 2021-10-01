@@ -42,6 +42,8 @@ import java.util.TreeSet;
 
 public class TautomerHelper {
 	private static final int MAX_TAUTOMERS = 100000;
+	private static int sMaxTautomers = MAX_TAUTOMERS;
+	private static boolean sSuppressWarning = false;
 
 	private StereoMolecule mOriginalMol;
 	private boolean[] mIsTautomerBond;
@@ -53,6 +55,14 @@ public class TautomerHelper {
 	private Iterator<BondOrders> mBondOrderIterator;
 	private TreeSet<BondOrders> mBondOrderSet;
 	private ArrayDeque<BondOrders> mBondOrderDeque;
+
+	public static void setMaxTautomers(int maxTautomers) {
+		sMaxTautomers = maxTautomers;
+		}
+
+	public static void setSuppressWarning(boolean suppressWarning) {
+		sSuppressWarning = suppressWarning;
+		}
 
 	/**
 	 * @param mol
@@ -284,8 +294,9 @@ public class TautomerHelper {
 			mBondOrderDeque.poll().copyToTautomer(tautomer);
 			addAllTautomers(tautomer);
 
-			if (mBondOrderSet.size() >= MAX_TAUTOMERS) {
-				System.out.println("Tautomer count exceeds maximum: "+new Canonizer(mOriginalMol).getIDCode());
+			if (mBondOrderSet.size() >= sMaxTautomers) {
+				if (!sSuppressWarning)
+					System.out.println("Tautomer count exceeds maximum: "+new Canonizer(mOriginalMol).getIDCode());
 				break;
 				}
 			}

@@ -39,10 +39,7 @@ import com.actelion.research.chem.io.CompoundFileHelper;
 import com.actelion.research.chem.io.RDFileParser;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
-import com.actelion.research.chem.reaction.IReactionMapper;
-import com.actelion.research.chem.reaction.MoleculeAutoMapper;
-import com.actelion.research.chem.reaction.Reaction;
-import com.actelion.research.chem.reaction.ReactionArrow;
+import com.actelion.research.chem.reaction.*;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
@@ -87,6 +84,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private static final String ITEM_PASTE_REACTION = "Paste Reaction";
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE_STRUCTURE+" or Name";
 	private static final String ITEM_LOAD_REACTION = "Open Reaction File...";
+	private static final String ITEM_ADD_AUTO_MAPPING = "Auto-Map Reaction";
 	private static final String ITEM_REMOVE_MAPPING = "Remove Manual Atom Mapping";
 	private static final String ITEM_FLIP_HORIZONTALLY = "Flip Horizontally";
 	private static final String ITEM_FLIP_VERTICALLY = "Flip Vertically";
@@ -137,6 +135,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private static final int cRequestMoveObject = 10;
 	private static final int cRequestCopyObject = 11;
 
+	private static IReactionMapper sMapper;
 	private Dimension mSize;
 	private int mMode, mChainAtoms, mCurrentTool, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical,
 		mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest,
@@ -161,7 +160,6 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private IClipboardHandler mClipboardHandler;
 	private JDialog mHelpDialog;
 	private StringBuilder mAtomKeyStrokeBuffer;
-	private IReactionMapper mMapper;
 
 	/**
 	 * @param mol  an empty or valid stereo molecule
@@ -233,9 +231,9 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		repaint();
 	}
 
-	public void setReactionMapper(IReactionMapper mapper)
+	public static void setReactionMapper(IReactionMapper mapper)
 	{
-		mMapper = mapper;
+		sMapper = mapper;
 	}
 
 	public void paintComponent(Graphics g)
@@ -594,6 +592,11 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			pasteMolecule();
 		} else if (e.getActionCommand().equals(ITEM_LOAD_REACTION)) {
 			openReaction();
+		} else if (e.getActionCommand().equals(ITEM_ADD_AUTO_MAPPING)) {
+			autoMapReaction();
+			fireMoleculeChanged();
+			mUpdateMode = Math.max(mUpdateMode, UPDATE_REDRAW);
+			repaint();
 		} else if (e.getActionCommand().equals(ITEM_REMOVE_MAPPING)) {
 			removeManualMapping();
 		} else if (e.getActionCommand().equals(ITEM_FLIP_HORIZONTALLY)) {
@@ -630,7 +633,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			}
 
 		if (changed) {
-			tryAutoMapReaction();
+			autoMapReaction();
 			fireMoleculeChanged();
 			mUpdateMode = Math.max(mUpdateMode, UPDATE_REDRAW);
 			repaint();
@@ -1401,9 +1404,13 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				else
 					popup.addSeparator();
 
-				JMenuItem menuItem = new JMenuItem(ITEM_REMOVE_MAPPING);
-				menuItem.addActionListener(this);
-				popup.add(menuItem);
+				JMenuItem menuItem1 = new JMenuItem(ITEM_ADD_AUTO_MAPPING);
+				menuItem1.addActionListener(this);
+				popup.add(menuItem1);
+
+				JMenuItem menuItem2 = new JMenuItem(ITEM_REMOVE_MAPPING);
+				menuItem2.addActionListener(this);
+				popup.add(menuItem2);
 			}
 
 			if (mCurrentTool == JDrawToolbar.cToolZoom) {
@@ -2099,7 +2106,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 							}
 						}
 
-						tryAutoMapReaction();
+						autoMapReaction();
 					}
 				} else {
 					storeState();
@@ -2133,7 +2140,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 						mMol.setAtomMapNo(atom2, freeMapNo, false);
 					}
 
-					tryAutoMapReaction();
+					autoMapReaction();
 				}
 
 				if (mapNoChanged) {
@@ -2152,12 +2159,15 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	 * uses the MCS-mapper to map the reaction and returns the rxn's mapping
 	 * into the display molecule.
 	 */
-	private void tryAutoMapReaction()
+	private void autoMapReaction()
 	{
-		if (mMapper == null) {
-			new MoleculeAutoMapper(mMol).autoMap();
-			return;
-		}
+		if (sMapper == null)
+			sMapper = new MCSReactionMapper();
+
+//		if (sMapper == null) {
+//			new MoleculeAutoMapper(mMol).autoMap();
+//			return;
+//		}
 
 		// We assume that we use the MCS-mapper, which doesn't care about manually mapped atoms.
 		// Thus, we need a hack to ensure that manually mapped atoms are reliably part of
@@ -2219,7 +2229,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			fragmentAtom[fragment]++;
 		}
 
-		rxn = mMapper.mapReaction(rxn, sss);
+		rxn = sMapper.mapReaction(rxn, sss);
 
 		if (rxn != null) {
 			// assign new mapping numbers: manually mapped atom starting from 1. Automapped atoms follow.

@@ -1,6 +1,7 @@
 package com.actelion.research.chem.phesa;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -8,6 +9,7 @@ import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
 import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.alignment3d.transformation.Rotation;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
@@ -15,6 +17,7 @@ import com.actelion.research.chem.alignment3d.transformation.TransformationSeque
 import com.actelion.research.chem.alignment3d.transformation.Translation;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.PheSAAlignment.axis;
+import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.ExitVectorPoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
@@ -89,6 +92,20 @@ public class ShapeVolume {
 		Matrix rotation =  createCanonicalOrientation(conf);
 		Rotation rot = new Rotation(rotation.getArray());
 		return rot;
+	}
+	
+	public void removeRings() {
+		List<Integer> toRemove = new ArrayList<>();
+		int i=0;
+		for(PPGaussian ppg : ppGaussians) {
+			if (ppg.getPharmacophorePoint().getFunctionalityIndex()==PharmacophoreCalculator.AROM_ID)
+				toRemove.add(i);
+			i++;
+		}
+		Collections.reverse(toRemove);
+		for(int index : toRemove) {
+			ppGaussians.remove(index);
+		}
 	}
 	
 	public  Matrix createCanonicalOrientation(Conformer conf) {
@@ -268,7 +285,7 @@ public class ShapeVolume {
 		for (Gaussian3D gaussian : gaussians) {
 			Coordinates coords1 = new Coordinates(gaussian.getCenter());
 			coords1.rotate(rot);
-			gaussian.updateCoordinates(coords1);
+			gaussian.setCenter(coords1);
 		}
 		
 	}
@@ -277,7 +294,7 @@ public class ShapeVolume {
 		for (Gaussian3D gaussian : gaussians) {
 			Coordinates coords1 = new Coordinates(gaussian.getCenter());
 			PheSAAlignment.rotateCoordsAroundAxis180(coords1, a);
-			gaussian.updateCoordinates(coords1);
+			gaussian.setCenter(coords1);
 		}
 	}
 	
@@ -425,15 +442,22 @@ public class ShapeVolume {
 
 	public double[] getTotalAtomOverlap(double[] transform, ShapeVolume fitVol){
 		double[] result = new double[2];
-		Quaternion quat = new Quaternion(transform[0],transform[1],transform[2],transform[3]);
+		ExponentialMap eMap = new ExponentialMap(transform[0],transform[1],transform[2]);
 		double Vtot = 0.0;
 		double Vvol = 0.0;
-		double[][] rotMatrix = quat.getRotMatrix().getArray();
+		Coordinates com = fitVol.getCOM();
+		double[][] rotMatrix = eMap.toQuaternion().getRotMatrix().getArray();
 		List<AtomicGaussian> fitGaussians = fitVol.atomicGaussians;
 		Coordinates[] fitCenterModCoords = new Coordinates[fitGaussians.size()];
-		double normFactor = 1/(transform[0]*transform[0]+transform[1]*transform[1]+transform[2]*transform[2]+transform[3]*transform[3]);
 		for(int k=0;k<fitGaussians.size();k++) {
-    			fitCenterModCoords[k] = fitGaussians.get(k).getRotatedCenter(rotMatrix, normFactor, new double[] {transform[4], transform[5], transform[6]}); //we operate on the transformed coordinates of the molecule to be fitted
+				Coordinates center = new Coordinates(fitGaussians.get(k).getCenter());
+				center.sub(com);
+			    center.rotate(rotMatrix);
+			    center.add(com);
+			    center.x += transform[3];
+			    center.y += transform[4];
+			    center.z += transform[5];
+			    fitCenterModCoords[k] = center;
 		}
 
 		for(AtomicGaussian refAt:atomicGaussians){
@@ -454,17 +478,26 @@ public class ShapeVolume {
 		
 		
 	public double getTotalPPOverlap(double[] transform, ShapeVolume fitVol){
-		Quaternion quat = new Quaternion(transform[0],transform[1],transform[2],transform[3]);
+		ExponentialMap eMap = new ExponentialMap(transform[0],transform[1],transform[2]);
 		double Vtot = 0.0;
-		double[][] rotMatrix = quat.getRotMatrix().getArray();
+		Coordinates com = fitVol.getCOM();
+		double[][] rotMatrix = eMap.toQuaternion().getRotMatrix().getArray();
 		List<PPGaussian> fitPPGaussians = fitVol.ppGaussians;
 		Coordinates[] fitCenterModCoords = new Coordinates[fitPPGaussians.size()];
 		Coordinates[] fitDirectionalityMod = new Coordinates[fitPPGaussians.size()];
-		double normFactor = 1/(transform[0]*transform[0]+transform[1]*transform[1]+transform[2]*transform[2]+transform[3]*transform[3]);
-	    for(int k=0;k<fitPPGaussians.size();k++) {
-	    	fitCenterModCoords[k]=  fitPPGaussians.get(k).getRotatedCenter(rotMatrix, normFactor, new double[] {transform[4],transform[5],transform[6]});    //we operate on the transformed coordinates of the molecule to be fitted
-	    	fitDirectionalityMod[k] = fitPPGaussians.get(k).getRotatedDirectionality(rotMatrix, normFactor);
-	    }
+
+		for(int k=0;k<fitPPGaussians.size();k++) {
+				Coordinates center = new Coordinates(fitPPGaussians.get(k).getCenter());
+				center.sub(com);
+			    center.rotate(rotMatrix);
+			    center.add(com);
+			    center.x += transform[3];
+			    center.y += transform[4];
+			    center.z += transform[5];
+			    fitCenterModCoords[k] = center;
+			    fitDirectionalityMod[k] = fitPPGaussians.get(k).getRotatedDirectionality(rotMatrix, 1.0);
+		}
+
 
 		for(PPGaussian refPP:ppGaussians){
 			int index = 0;

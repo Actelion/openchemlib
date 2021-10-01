@@ -40,28 +40,47 @@ import java.util.Arrays;
 import java.util.List;
 
 public class IsomericSmilesCreator {
+	public static final int MODE_CREATE_SMARTS = 1;
+	public static final int MODE_INCLUDE_MAPPING = 2;
+
 	private StereoMolecule mMol;
 	private Canonizer mCanonizer;
 	private String mSmiles;
-	private boolean mIncludeMapping;
+	private int mMode;
 	private int[] mAtomRank;
 	private int[] mClosureNumber;
 	private int[] mSmilesIndex;
-	private int[] mClosureBuffer;
 	private int[][] mKnownTHCountInESRGroup;
 	private List<SmilesAtom> mGraphAtomList;
 	private boolean[] mAtomUsed;
 	private boolean[] mBondUsed;
-	private boolean[] mClosureOpened;
 	private boolean[] mPseudoStereoGroupInversion;
 	private boolean[] mPseudoStereoGroupInitialized;
+
+	/**
+	 * Convenience method to generate a canonical and isomeric SMILES from a given molecule.
+	 * @param mol
+	 * @return
+	 */
+	public static String createSmiles(StereoMolecule mol) {
+		return new IsomericSmilesCreator(mol, 0).getSmiles();
+		}
+
+	/**
+	 * Convenience method to generate a canonical and isomeric SMILES from a given molecule.
+	 * @param mol
+	 * @return
+	 */
+	public static String createSmarts(StereoMolecule mol) {
+		return new IsomericSmilesCreator(mol, MODE_CREATE_SMARTS).getSmiles();
+	}
 
 	public static String createReactionSmiles(Reaction rxn) {
 		StringBuilder sb = new StringBuilder();
 		for (int i=0; i<rxn.getReactants(); i++) {
 			if (i != 0)
 				sb.append('.');
-			sb.append(new IsomericSmilesCreator(rxn.getReactant(i), true).getSmiles());
+			sb.append(new IsomericSmilesCreator(rxn.getReactant(i), MODE_INCLUDE_MAPPING).getSmiles());
 		}
 		sb.append('>');
 		for (int i=0; i<rxn.getCatalysts(); i++) {
@@ -73,7 +92,7 @@ public class IsomericSmilesCreator {
 		for (int i=0; i<rxn.getProducts(); i++) {
 			if (i != 0)
 				sb.append('.');
-			sb.append(new IsomericSmilesCreator(rxn.getProduct(i), true).getSmiles());
+			sb.append(new IsomericSmilesCreator(rxn.getProduct(i), MODE_INCLUDE_MAPPING).getSmiles());
 		}
 		return sb.toString();
 	}
@@ -87,13 +106,23 @@ public class IsomericSmilesCreator {
 	}
 
 	/**
+	 * Creates an IsomericSmilesCreator with the given mode.
+	 * @param mol
+	 * @param mode combination of MODE_... flags
+	 */
+	public IsomericSmilesCreator(StereoMolecule mol, int mode) {
+		mMol = mol;
+		mMode = mode;
+	}
+
+	/**
 	 * Creates an IsomericSmilesCreator, which may include atom mapping numbers into generated smiles.
 	 * @param mol
 	 * @param includeAtomMapping
 	 */
+	@Deprecated
 	public IsomericSmilesCreator(StereoMolecule mol, boolean includeAtomMapping) {
-		mMol = mol;
-		mIncludeMapping = includeAtomMapping;
+		this(mol, includeAtomMapping ? MODE_INCLUDE_MAPPING : 0);
 	}
 
 	public String getSmiles() {
@@ -126,26 +155,27 @@ public class IsomericSmilesCreator {
 		findRingClosures();
 		calculateEZBonds();
 
-		StringBuilder sb = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
+		StringBuilder buffer = new StringBuilder();
 		boolean isFirst = true;
 		for (SmilesAtom smilesAtom:mGraphAtomList) {
 			if (smilesAtom.parent == -1) {
 				if (isFirst)
 					isFirst = false;
 				else
-					sb.append('.');
+					builder.append('.');
 			}
-			addAtomString(smilesAtom, sb);
+			addAtomString(smilesAtom, builder, buffer);
 		}
 
-		return sb.toString();
+		return builder.toString();
 	}
 
 	private void generateCanonicalTree() {
 		mAtomRank = mCanonizer.getFinalRank();
 		mAtomUsed = new boolean[mMol.getAtoms()];
 		mBondUsed = new boolean[mMol.getBonds()];
-		mGraphAtomList = new ArrayList<SmilesAtom>();
+		mGraphAtomList = new ArrayList<>();
 
 		int atom = findUnusedStartAtom();
 		while (atom != -1) {
@@ -173,33 +203,56 @@ public class IsomericSmilesCreator {
 	}
 
 	private void findRingClosures() {
-		boolean[] closureNumberUsed = new boolean[mMol.getBonds()];
-		mClosureNumber = new int[mMol.getBonds()];
-
+		// find closure neighbours of every atom and put them in canonical order. i.e. order of appearance in SMILES
 		for (SmilesAtom smilesAtom:mGraphAtomList) {
-			for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
-				int bond = mMol.getConnBond(smilesAtom.atom, i);
-				closureNumberUsed[mClosureNumber[bond]] = false;
-			}
+			int closureCount = 0;
+			for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++)
+				if (!mBondUsed[mMol.getConnBond(smilesAtom.atom, i)])
+					closureCount++;
 
-			int index = getUnusedConnBondIndex(smilesAtom.atom);
-			while (index != -1) {
-				int closureBond = mMol.getConnBond(smilesAtom.atom, index);
-				mBondUsed[closureBond] = true;
+			if (closureCount != 0) {
+				smilesAtom.closureNeighbour = new int[closureCount];
 
-				int closureNumber = 1;
-				while (closureNumberUsed[closureNumber])
-					closureNumber++;
+				closureCount = 0;
+				for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
+					if (!mBondUsed[mMol.getConnBond(smilesAtom.atom, i)]) {
+						int neighbour = mMol.getConnAtom(smilesAtom.atom, i);
+						smilesAtom.closureNeighbour[closureCount++] = (mSmilesIndex[neighbour] << 16) | neighbour;
+					}
+				}
 
-				mClosureNumber[closureBond] = closureNumber;
-				closureNumberUsed[closureNumber] = true;
-
-				index = getUnusedConnBondIndex(smilesAtom.atom);
+				Arrays.sort(smilesAtom.closureNeighbour);
+				for (int i=0; i<smilesAtom.closureNeighbour.length; i++)
+					smilesAtom.closureNeighbour[i] = 0x0000FFFF & smilesAtom.closureNeighbour[i];
 			}
 		}
 
-		mClosureOpened = new boolean[mMol.getBonds()];
-		mClosureBuffer = new int[8];
+		// assign closure digits to closure bonds
+		boolean[] closureNumberUsed = new boolean[mMol.getBonds()];
+		mClosureNumber = new int[mMol.getBonds()];
+		for (SmilesAtom smilesAtom:mGraphAtomList) {
+			if (smilesAtom.closureNeighbour != null) {
+				for (int neighbour:smilesAtom.closureNeighbour) {
+					for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
+						if (neighbour == mMol.getConnAtom(smilesAtom.atom, i)) {
+							int bond = mMol.getConnBond(smilesAtom.atom, i);
+							if (!mBondUsed[bond]) { // opening closure bond
+								mBondUsed[bond] = true;
+
+								// assign and allocation closure digit
+								mClosureNumber[bond] = 1;
+								while (closureNumberUsed[mClosureNumber[bond]])
+									mClosureNumber[bond]++;
+								closureNumberUsed[mClosureNumber[bond]] = true;
+							}
+							else {  // closing closure bond: release closure digit
+								closureNumberUsed[mClosureNumber[bond]] = false;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	private void calculateEZBonds() {
@@ -291,7 +344,18 @@ public class IsomericSmilesCreator {
 
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (!mAtomUsed[atom]) {
-				int rank = ((mMol.getConnAtoms(atom) == 0 ? 127 : mMol.getConnAtoms(atom)) << 24) + mAtomRank[atom];
+				int rank = mAtomRank[atom];
+
+				// prefer non-exclude group atoms
+				if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+					rank += 0x40000000;
+
+				// prefer lower neighbour count except zero neighbours
+				if (mMol.getConnAtoms(atom) == 0)
+					rank += 0x3F000000;
+				else
+					rank += mMol.getConnAtoms(atom) << 24;
+
 				if (startRank > rank) {
 					startRank = rank;
 					startAtom = atom;
@@ -313,7 +377,7 @@ public class IsomericSmilesCreator {
 		boolean isFirst = true;
 		int parent = mGraphAtomList.get(graphIndex).atom;
 		int neighborIndex = getUnusedConnAtomIndex(parent);
-		while(neighborIndex != -1) {
+		while (neighborIndex != -1) {
 			int atom = mMol.getConnAtom(parent, neighborIndex);
 			int bond =  mMol.getConnBond(parent, neighborIndex);
 			neighborIndex = getUnusedConnAtomIndex(atom);
@@ -329,7 +393,7 @@ public class IsomericSmilesCreator {
 	 * Find and return the preferred unused neighbor index.
 	 * Higher bond orders are preferred to ensure that finally all remaining
 	 * ring closures are single bonds. Within equal bond order neighbors
-	 * those with a higher atom rank a preferred.
+	 * those with a higher atom rank are preferred.
 	 * @param atom
 	 * @return highest ranking unused neighbor index
 	 */
@@ -348,16 +412,6 @@ public class IsomericSmilesCreator {
 		return bestIndex;
 	}
 
-	private int getUnusedConnBondIndex(int atom) {
-		int bestIndex = -1;
-		for (int i=0; i<mMol.getConnAtoms(atom); i++)
-			if (!mBondUsed[mMol.getConnBond(atom, i)]
-			 && (bestIndex == -1 || mAtomRank[mMol.getConnAtom(atom, bestIndex)] < mAtomRank[mMol.getConnAtom(atom, i)]))
-				bestIndex = i;
-
-		return bestIndex;
-	}
-
 	private void addToGraph(SmilesAtom smilesAtom, int listIndex) {
 		mGraphAtomList.add(listIndex, smilesAtom);
 		mAtomUsed[smilesAtom.atom] = true;
@@ -365,12 +419,17 @@ public class IsomericSmilesCreator {
 			mBondUsed[mMol.getBond(smilesAtom.atom, smilesAtom.parent)] = true;
 	}
 
-	private void addAtomString(SmilesAtom smilesAtom, StringBuilder builder) {
+	private void addAtomString(SmilesAtom smilesAtom, StringBuilder builder, StringBuilder buffer) {
 		int atom = smilesAtom.atom;
 		int parent = smilesAtom.parent;
 
-		String label = mMol.getAtomLabel(atom);
-		if (mMol.isAromaticAtom(atom)
+		boolean isAnyAtom = (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0;
+		int[] atomList = mMol.getAtomList(atom);
+
+		String label = (atomList != null) ? createMultiAtomLabel(atom, atomList, buffer) : isAnyAtom ? "*" : mMol.getAtomLabel(atom);
+		if (!isAnyAtom
+		 && atomList == null
+		 && mMol.isAromaticAtom(atom)
 		 && (mMol.getAtomPi(atom) != 0
 		  || (mMol.getAtomAbnormalValence(atom) == -1
 		   && mMol.getAtomRadical(atom) == Molecule.cAtomRadicalStateNone)))
@@ -383,19 +442,32 @@ public class IsomericSmilesCreator {
 			appendBondOrderSymbol(smilesAtom, builder);
 
 		int charge = mMol.getAtomCharge(atom);
-		int isotop = mMol.getAtomMass(atom);
-		int mapNo = mIncludeMapping ? mMol.getAtomMapNo(atom) : 0;
+		if (charge == 0 && (mMode & MODE_CREATE_SMARTS) != 0) {
+			// Because SMARTS don't know a charge query feature, we set the atom charge in case of neg/pos charge required.
+			// There is no way to require an uncharged atom (Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos).
+			int chargeFeatures = mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFCharge;
+			if (chargeFeatures == (Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargePos))
+				charge = -1;    // 'require negative charge' is translated into charge := -1
+			else if (chargeFeatures == (Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargeNeg))
+				charge = 1;    // 'require positive charge' is translated into charge := +1
+			}
 
-		boolean useBrackets = !isOrganic(mMol.getAtomicNo(atom))
+		int isotop = mMol.getAtomMass(atom);
+		int mapNo = (mMode & MODE_INCLUDE_MAPPING) != 0 ? mMol.getAtomMapNo(atom) : 0;
+
+		String smartsFeatures = (mMode & MODE_CREATE_SMARTS) != 0 ? getAtomSMARTSFeatures(atom, buffer) : null;
+
+		boolean useBrackets =
+				(!isAnyAtom && !isOrganic(mMol.getAtomicNo(atom)))
+				|| atomList != null
 				|| qualifiesForAtomParity(atom)
+				|| (mMol.isAromaticAtom(atom) && mMol.getAtomPi(atom) == 0)
 				|| charge != 0
 				|| isotop != 0
 				|| mapNo != 0
 				|| mMol.getAtomAbnormalValence(atom) != -1
 				|| mMol.getAtomRadical(atom) != Molecule.cAtomRadicalStateNone
-				|| (mMol.isAromaticAtom(atom)
-				 && mMol.getAtomPi(atom) == 0
-				 && mMol.getPlainHydrogens(atom) != 0);
+				|| smartsFeatures != null;
 
 		if (useBrackets)
 			builder.append('[');
@@ -408,25 +480,27 @@ public class IsomericSmilesCreator {
 		if (qualifiesForAtomParity(atom))
 			builder.append(getAtomParitySymbol(atom, parent));
 
-		if (useBrackets) {
+		if ((mMode & MODE_CREATE_SMARTS) == 0 && useBrackets) {
 			int hCount = mMol.getPlainHydrogens(atom);
-			if (hCount != 0) {
-				builder.append('H');
-				if (hCount > 1)
-					builder.append(hCount);
+			if (hCount == 1)
+				builder.append("H");
+			else if (hCount > 1)
+				builder.append("H"+hCount);
 			}
-		}
 
 		if (charge != 0) {
 			builder.append(charge > 0 ? '+' : '-');
 			if (Math.abs(charge) > 1)
 				builder.append(Math.abs(charge));
-		}
+			}
+
+		if (smartsFeatures != null)
+			builder.append(smartsFeatures);
 
 		if (mapNo != 0) {
 			builder.append(':');
 			builder.append(mapNo);
-		}
+			}
 
 		if (useBrackets)
 			builder.append(']');
@@ -436,6 +510,138 @@ public class IsomericSmilesCreator {
 		if (smilesAtom.isSideChainEnd)
 			builder.append(')');
 	}
+
+	private String createMultiAtomLabel(int atom, int[] atomicNo, StringBuilder buffer) {
+		buffer.setLength(0);
+		boolean isAromatic = mMol.isAromaticAtom(atom);
+
+		for (int a:atomicNo) {
+			if (buffer.length() != 0)
+				buffer.append(',');
+			String label = Molecule.cAtomLabel[a];
+				buffer.append(isAromatic ? label.toLowerCase() : label);
+			}
+
+		return buffer.toString();
+		}
+
+	private String getAtomSMARTSFeatures(int atom, StringBuilder buffer) {
+		buffer.setLength(0);
+
+		int queryFeatures = mMol.getAtomQueryFeatures(atom);
+
+		// SMARTS don't distinguish between a charged atom and atom charge query features
+		int chargeFeatures = queryFeatures & Molecule.cAtomQFCharge;
+		switch (chargeFeatures) {
+			case Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos:
+				buffer.append("+0");   // 'require negative charge' is translated into charge := -1
+				break;
+			case Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargePos:
+				if (mMol.getAtomCharge(atom) == 0)
+					buffer.append("-");   // 'require negative charge' is translated into charge := -1
+				break;
+			case Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargeNeg:
+				if (mMol.getAtomCharge(atom) == 0)
+					buffer.append("+");   // 'require positive charge' is translated into charge := +1
+				break;
+			}
+
+		int aromState = queryFeatures & Molecule.cAtomQFAromState;
+		if (aromState == Molecule.cAtomQFAromatic)
+			buffer.append(";a");
+		else if (aromState == Molecule.cAtomQFNotAromatic)
+			buffer.append(";A");
+
+		int hydrogenQueryFeatures = queryFeatures & Molecule.cAtomQFHydrogen;
+		if (hydrogenQueryFeatures != 0) {
+			if (hydrogenQueryFeatures == (Molecule.cAtomQFNot1Hydrogen | Molecule.cAtomQFNot2Hydrogen | Molecule.cAtomQFNot3Hydrogen))
+				buffer.append(";H0");
+			else if (hydrogenQueryFeatures == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot2Hydrogen | Molecule.cAtomQFNot3Hydrogen))
+				buffer.append(";H1");
+			else if (hydrogenQueryFeatures == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen | Molecule.cAtomQFNot3Hydrogen))
+				buffer.append(";H2");
+			else if (hydrogenQueryFeatures == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen | Molecule.cAtomQFNot2Hydrogen))
+				buffer.append(";H3");
+			else if (hydrogenQueryFeatures == Molecule.cAtomQFNot0Hydrogen)
+				buffer.append(";!H0");
+			else if (hydrogenQueryFeatures == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen))
+				buffer.append(";!H0;!H1");
+			else if (hydrogenQueryFeatures == (Molecule.cAtomQFNot2Hydrogen | Molecule.cAtomQFNot3Hydrogen))
+				buffer.append(";!H2;!H3");
+			else if (hydrogenQueryFeatures == Molecule.cAtomQFNot3Hydrogen)
+				buffer.append(";!H3");
+			}
+
+		// Atom membership of SSSR rings cannot be directly translated into number of ring bonds.
+		// We try to get close...
+		int ringState = queryFeatures & Molecule.cAtomQFRingState;
+		switch (ringState) {
+			case Molecule.cAtomQFNotChain:
+				buffer.append(";!R0");
+				break;
+			case Molecule.cAtomQFNot2RingBonds:
+				buffer.append(";!R1");
+				break;
+			case Molecule.cAtomQFNot3RingBonds:
+				buffer.append(";!R2");
+				break;
+			case Molecule.cAtomQFNot4RingBonds:
+				buffer.append(";!R3");
+				break;
+			case Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
+				buffer.append(";R0");
+				break;
+			case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
+				buffer.append(";R1");
+				break;
+			case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds:
+				buffer.append(";R2");
+				break;
+			case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds:
+				buffer.append(";R3");
+				break;
+		}
+
+		int ringSize = (queryFeatures & Molecule.cAtomQFRingSize) >> Molecule.cAtomQFRingSizeShift;
+		if (ringSize != 0)
+			buffer.append(";r"+ringSize);
+
+		int neighbourFeatures = queryFeatures & Molecule.cAtomQFNeighbours;
+		switch (neighbourFeatures) {
+			case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot1Neighbour:
+				buffer.append(";D1");   // exactly 1
+				break;
+			case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot2Neighbours:
+				buffer.append(";D2");   // exactly 2
+				break;
+			case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot3Neighbours:
+				buffer.append(";D3");   // exactly 3
+				break;
+			case Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours:
+				buffer.append(";!D3;!D4");   // less than 3
+				break;
+			case Molecule.cAtomQFNot4Neighbours:
+				buffer.append(";!D4");   // less than 4
+				break;
+			case Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour:
+				buffer.append(";!D0;!D1");   // more than 1
+				break;
+			case Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot2Neighbours:
+				buffer.append(";!D0;!D1;!D2");   // more than 2
+				break;
+			case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours:
+				buffer.append(";!D0;!D1;!D2;!D3");   // more than 3
+				break;
+		}
+
+		if ((queryFeatures & Molecule.cAtomQFNoMoreNeighbours) != 0)
+			buffer.append(";D"+mMol.getConnAtoms(atom));   // Convert into exact explicit neighbour count 'D'
+
+		if ((queryFeatures & Molecule.cAtomQFMoreNeighbours) != 0)
+			buffer.append(";!D"+mMol.getConnAtoms(atom));  // Convert into exact explicit neighbour count 'D'
+
+		return buffer.length() == 0 ? null : buffer.toString();
+		}
 
 	/**
 	 * Don't store nitrogen parities in SMILES unless we have a quarternary nitrogen.
@@ -456,52 +662,108 @@ public class IsomericSmilesCreator {
 	}
 
 	private void appendClosureBonds(SmilesAtom smilesAtom, StringBuilder builder) {
-		int closureCount = 0;
-		for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
-			int bond = mMol.getConnBond(smilesAtom.atom, i);
-			if (mClosureNumber[bond] != 0) {
-				int isOpenFlag = mClosureOpened[bond] ? 0 : 0x40000000;
-				mClosureBuffer[closureCount++] = isOpenFlag | (mClosureNumber[bond] << 20) | bond;
-			}
-		}
-		if (closureCount != 0) {
-			// when sorting, then put and handle open closures first
-			Arrays.sort(mClosureBuffer, 0, closureCount); // we must sort to be canonical
-			for (int i=0; i<closureCount; i++) {
-				int bond = mClosureBuffer[i] & 0x0003FFFF;
-				int closureNumber = ((mClosureBuffer[i] & 0x3FFC0000) >> 20);
-				if (!mClosureOpened[bond]) {
-					mClosureOpened[bond] = true;
-					appendBondOrderSymbol(bond, builder);
+		if (smilesAtom.closureNeighbour != null) {
+			for (int neighbour:smilesAtom.closureNeighbour) {
+				for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
+					if (neighbour == mMol.getConnAtom(smilesAtom.atom, i)) {
+						int bond = mMol.getConnBond(smilesAtom.atom, i);
+						appendBondOrderSymbol(bond, smilesAtom.atom, builder);
+						if (mClosureNumber[bond] > 9)
+							builder.append('%');
+						builder.append(mClosureNumber[bond]);
+					}
 				}
-				if (closureNumber > 9)
-					builder.append('%');
-				builder.append(closureNumber);
 			}
 		}
 	}
+
+//	private void appendClosureBonds(SmilesAtom smilesAtom, StringBuilder builder) {
+//		int closureCount = 0;
+//		for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
+//			int bond = mMol.getConnBond(smilesAtom.atom, i);
+//			if (mClosureNumber[bond] != 0) {
+//				int isOpenFlag = mClosureOpened[bond] ? 0 : 0x40000000;
+//				mClosureBuffer[closureCount++] = isOpenFlag | (mClosureNumber[bond] << 20) | bond;
+//			}
+//		}
+//		if (closureCount != 0) {
+//			// when sorting, then put and handle open closures first
+//			Arrays.sort(mClosureBuffer, 0, closureCount); // we must sort to be canonical
+//			for (int i=0; i<closureCount; i++) {
+//				int bond = mClosureBuffer[i] & 0x0003FFFF;
+//				int closureNumber = ((mClosureBuffer[i] & 0x3FFC0000) >> 20);
+//				if (!mClosureOpened[bond]) {
+//					mClosureOpened[bond] = true;
+//					appendBondOrderSymbol(bond, smilesAtom.atom, builder);
+//				}
+//				if (closureNumber > 9)
+//					builder.append('%');
+//				builder.append(closureNumber);
+//			}
+//		}
+//	}
 
 	private void appendBondOrderSymbol(SmilesAtom smilesAtom, StringBuilder builder) {
 		if (smilesAtom.ezHalfParity != 0) {
 			builder.append(smilesAtom.ezHalfParity == 1 ? '/' : '\\');
 			return;
 		}
-		appendBondOrderSymbol(mMol.getBond(smilesAtom.atom, smilesAtom.parent), builder);
+		appendBondOrderSymbol(mMol.getBond(smilesAtom.atom, smilesAtom.parent), smilesAtom.parent, builder);
 	}
 
-	private void appendBondOrderSymbol(int bond, StringBuilder builder) {
-		if (!mMol.isAromaticBond(bond)) {
-			int order = mMol.getBondType(bond) & Molecule.cBondTypeMaskSimple;
-			if (order == Molecule.cBondTypeSingle) {
+	private void appendBondOrderSymbol(int bond, int parentAtom, StringBuilder builder) {
+		int startLength = builder.length();
+		if (mMode == MODE_CREATE_SMARTS) {
+			int bondTypes = mMol.getBondQueryFeatures(Molecule.cBondQFBondTypes);
+			if (bondTypes != 0) {
+				if ((bondTypes & Molecule.cBondTypeSingle) != 0)
+					builder.append('-');
+				if ((bondTypes & Molecule.cBondTypeDouble) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append('=');
+					}
+				if ((bondTypes & Molecule.cBondTypeTriple) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append('#');
+					}
+				if ((bondTypes & Molecule.cBondTypeDelocalized) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append(':');
+					}
+				if ((bondTypes & Molecule.cBondTypeMetalLigand) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append(mMol.isMetalAtom(parentAtom) ? "<-" : "->");
+					}
+				}
+			}
+		if (startLength == builder.length() && !mMol.isAromaticBond(bond)) {
+			int bondType = mMol.getBondType(bond) & Molecule.cBondTypeMaskSimple;
+			if (bondType == Molecule.cBondTypeSingle) {
 				if (mMol.isAromaticAtom(mMol.getBondAtom(0, bond))
 				 && mMol.isAromaticAtom(mMol.getBondAtom(1, bond)))
 					builder.append('-');
-			} else if (order == Molecule.cBondTypeDouble)
+			} else if (bondType == Molecule.cBondTypeDouble)
 				builder.append('=');
-			else if (order == Molecule.cBondTypeTriple)
+			else if (bondType == Molecule.cBondTypeTriple)
 				builder.append('#');
 //				else if (order == Molecule.cBondTypeQuadruple)	// not supported by Molecule
 //					builder.append('$');
+			else if (bondType == Molecule.cBondTypeDelocalized)
+				builder.append(':');
+			else if (bondType == Molecule.cBondTypeMetalLigand)
+				builder.append(mMol.isMetalAtom(parentAtom) ? "<-" : "->");
+		}
+		if (mMode == MODE_CREATE_SMARTS) {
+			String gap = (startLength == builder.length()) ? "" : ";";
+			int ringState = mMol.getBondQueryFeatures(bond) & Molecule.cBondQFRingState;
+			if (ringState == Molecule.cBondQFRing)
+				builder.append(gap+"@");
+			else if (ringState == Molecule.cBondQFNotRing)
+				builder.append(gap+"!@");
 		}
 	}
 
@@ -583,23 +845,24 @@ public class IsomericSmilesCreator {
 
 	/**
 	 * @param atom for which to return a neighbor's smiles rank
-	 * @param neighborIndex index for getConnAtoms() to get neighbor atom and bond
+	 * @param neighbourIndex index for getConnAtoms() to get neighbor atom and bond
 	 * @return neighbor's position rank in smiles from a perspective of atom using closure digit positions for closure neighbors
 	 */
-	private int getSmilesRank(int atom, int neighborIndex) {
-		int bond = mMol.getConnBond(atom, neighborIndex);
+	private int getSmilesRank(int atom, int neighbourIndex) {
+		int bond = mMol.getConnBond(atom, neighbourIndex);
+		int neighbour = mMol.getConnAtom(atom, neighbourIndex);
 		if (mClosureNumber[bond] != 0) {
-			// if neighbor is attached via a closure digit, then the rank is based primarily on atom's position
+			// if neighbour is attached via a closure digit, then the rank is based primarily on atom's position
 			// in the smiles and secondary on the count of other closures at atom that precede this closure
 			int rank = 8 * mSmilesIndex[atom] + 1;
-			for (int i=0; i<neighborIndex; i++)
-				if (mClosureNumber[mMol.getConnAtom(atom, i)] != 0)
-					rank++;
+			int[] closureNeighbour = mGraphAtomList.get(mSmilesIndex[atom]).closureNeighbour;
+			for (int i=0; i<closureNeighbour.length && neighbour != closureNeighbour[i]; i++)
+				rank++;
 			return rank;
 			}
 
-		// if the neighbor is not a closure return a rank based on its atom index in the smiles
-		return 8 * mSmilesIndex[mMol.getConnAtom(atom, neighborIndex)];
+		// if the neighbour is not a closure return a rank based on its atom index in the smiles
+		return 8 * mSmilesIndex[neighbour];
 	}
 
 	private boolean isOrganic (int atomicNo) {
@@ -613,6 +876,7 @@ public class IsomericSmilesCreator {
 class SmilesAtom {
 	public int atom,parent,ezHalfParity;
 	public boolean isSideChainStart,isSideChainEnd;
+	public int[] closureNeighbour;
 
 	public SmilesAtom(int atom, int parent, boolean isSideChainStart, boolean isSideChainEnd) {
 		this.atom = atom;

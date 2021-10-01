@@ -100,7 +100,6 @@ public class OptimizerLBFGS   {
 		boolean restart = true;
 		int mUse = 0;
 		int iteration ;
-
 		for (iteration = 1; iteration <= maxIterations; iteration++) {
 			if (restart) {
 
@@ -192,7 +191,6 @@ public class OptimizerLBFGS   {
 			eval.setState(initial);
 			f = f0;
 		}
-
 		return eval.getState();
 	}
 

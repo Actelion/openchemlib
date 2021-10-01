@@ -243,8 +243,9 @@ public class Mol2FileParser extends AbstractParser {
 	
 						int a = m.addAtom(atomicNo);
 						m.setAtomX(a, x);
-						m.setAtomY(a, y);
-						m.setAtomZ(a, z);
+						//invert y and z coordinates for compatibility with Java coordinate system (analogously to Molfileparser)
+						m.setAtomY(a, -y);
+						m.setAtomZ(a, -z);
 						m.setAtomName(a, atomName);
 						m.setAtomChainId(a, chainId);
 						m.setAtomAmino(a, amino);

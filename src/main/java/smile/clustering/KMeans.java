@@ -15,8 +15,6 @@
  *******************************************************************************/
 package smile.clustering;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import smile.math.Math;
 import smile.util.MulticoreExecutor;
 
@@ -61,20 +59,13 @@ import java.util.concurrent.Callable;
  * <li> Anna D. Peterson, Arka P. Ghosh and Ranjan Maitra. A systematic evaluation of different methods for initializing the K-means clustering algorithm. 2010.</li>
  * </ol>
  * 
- * @see XMeans
- * @see GMeans
  * @see CLARANS
- * @see SIB
- * @see smile.vq.SOM
- * @see smile.vq.NeuralGas
- * @see BIRCH
  * @see BBDTree
  * 
  * @author Haifeng Li
  */
 public class KMeans extends PartitionClustering<double[]> {
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = LoggerFactory.getLogger(KMeans.class);
 
     /**
      * The total distortion.
@@ -244,7 +235,7 @@ public class KMeans extends PartitionClustering<double[]> {
                 }
             }
         } catch (Exception ex) {
-            logger.error("Failed to run K-Means on multi-core", ex);
+            System.err.println("Failed to run K-Means on multi-core: "+ex);
 
             for (int i = 0; i < runs; i++) {
                 KMeans kmeans = lloyd(data, k, maxIter);
@@ -371,7 +362,7 @@ public class KMeans extends PartitionClustering<double[]> {
                         wcss += ss;
                     }
                 } catch (Exception ex) {
-                    logger.error("Failed to run K-Means on multi-core", ex);
+                    System.err.println("Failed to run K-Means on multi-core: "+ex);
 
                     wcss = Double.NaN;
                 }

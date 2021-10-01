@@ -12,6 +12,12 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
 
 
+/**
+ * derives potentially ionizable Groups, independent of the chosen explicit protonation state
+ * @author wahljo1
+ *
+ */
+
 public class IonizableGroupDetector {
 	
 	private StereoMolecule mol;

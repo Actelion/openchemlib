@@ -245,9 +245,10 @@ public class Canonizer {
 	/**
 	 * Locate those tetrahedral nitrogen atoms with at least 3 neighbors that
 	 * qualify for tetrahedral parity calculation because:<br>
-	 * - they are quarternary nitrogen atoms<br>
-	 * or - their configuration inversion is hindered in a polycyclic structure<br>
-	 * or - flag ASSIGN_PARITIES_TO_TETRAHEDRAL_N is set
+	 * - being a quarternary nitrogen atom<br>
+	 * - being an aziridin nitrogen atom<br>
+	 * - the configuration inversion is hindered in a polycyclic structure<br>
+	 * - flag ASSIGN_PARITIES_TO_TETRAHEDRAL_N is set
 	 */
 	private void canFindNitrogenQualifyingForParity() {
 		mNitrogenQualifiesForParity = new boolean[mMol.getAtoms()];
@@ -258,6 +259,11 @@ public class Canonizer {
 					continue;
 					}
 				if (mMol.getConnAtoms(atom) == 3) {
+					if (mMol.getAtomRingSize(atom) == 3) {
+						mNitrogenQualifiesForParity[atom] = true;
+						continue;
+						}
+
 					if (mMol.getAtomCharge(atom) == 1) {
 						mNitrogenQualifiesForParity[atom] = true;
 						continue;

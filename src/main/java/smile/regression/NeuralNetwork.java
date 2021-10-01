@@ -17,8 +17,6 @@
 
 package smile.regression;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import smile.math.Math;
 
 import java.io.Serializable;
@@ -39,7 +37,6 @@ import java.io.Serializable;
  */
 public class NeuralNetwork implements OnlineRegression<double[]> {
    private static final long serialVersionUID = 1L;
-   private static final Logger logger = LoggerFactory.getLogger(NeuralNetwork.class);
 
    public enum ActivationFunction {
        /**
@@ -234,7 +231,7 @@ public class NeuralNetwork implements OnlineRegression<double[]> {
 
            for (int i = 1; i <= epochs; i++) {
                net.learn(x, y);
-               logger.info("Neural network learns epoch {}", i);
+               System.out.println("Neural network learns epoch "+i);
            }
 
            return net;

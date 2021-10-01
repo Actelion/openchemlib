@@ -71,6 +71,16 @@ public class PPTriangle {
 				}
 			}	
 		}
+		else if(f[0]==f[1]) {
+			if(d[0]>d[1]) { //d12<=d13
+				swap(0,1);
+			}
+		}
+		else if(f[1]==f[2]) {
+			if(d[1]>d[2]) { //d12<=d13
+				swap(1,2);
+			}
+		}
 	}
 	
 	private void swap(int i, int j) {
@@ -233,7 +243,7 @@ public class PPTriangle {
 				Sdirec = 0.0;
 		double a_b = a.subC(b).dist();
 
-		double comScore = (1-((1-Math.exp(-0.25*Math.sqrt(ra*rb)))*(1-Sdirec)))*Math.exp(-0.125*(a_b*a_b));
+		double comScore = 1.0;
 		double dirScore = 1.0;
 		if(useDirectionality) {
 			Coordinates fitDir1 = new Coordinates(fitTriangle.dirs[0]);
@@ -246,6 +256,7 @@ public class PPTriangle {
 			if(fitTriangle.f[2]==IPharmacophorePoint.Functionality.ACCEPTOR.getIndex() || fitTriangle.f[2]==IPharmacophorePoint.Functionality.DONOR.getIndex() )
 				fitDir3.rotate(ur);
 			dirScore = 0.33333*(Math.max(0,fitDir1.dot(dirs[0])) + Math.max(0,fitDir2.dot(dirs[1])) + Math.max(0,fitDir3.dot(dirs[2])));
+			comScore = (1-((1-Math.exp(-0.25*Math.sqrt(ra*rb)))*(1-Sdirec)))*Math.exp(-0.125*(a_b*a_b));
 		}
 
 		return ppFit*dirScore*comScore;

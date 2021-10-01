@@ -769,6 +769,9 @@ System.out.println();
 		if (mFragment.getAtomMass(fragmentAtom) != 0
 		 && mFragment.getAtomMass(fragmentAtom) != mMolecule.getAtomMass(moleculeAtom))
 			return false;
+		if (mFragment.getAtomRadical(fragmentAtom) != 0
+		 && mFragment.getAtomRadical(fragmentAtom) != mMolecule.getAtomRadical(moleculeAtom))
+			return false;
 		int ringSize = (mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFRingSize) >> Molecule.cAtomQFRingSizeShift;
 		if (ringSize != 0) {
 			if (mMolecule.isFragment()

@@ -64,10 +64,6 @@ public class JDrawPanel extends JPanel {
 		add(mToolBar, BorderLayout.WEST);
 	}
 
-    public void setReactionMapper(IReactionMapper mapper) {
-        mArea.setReactionMapper(mapper);
-    }
-
     public JDrawArea getDrawArea() {
 		return mArea;
 	}
