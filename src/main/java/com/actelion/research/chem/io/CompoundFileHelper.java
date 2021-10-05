@@ -69,7 +69,9 @@ public abstract class CompoundFileHelper {
 	public static final int cFileTypeMOL = 0x00010000;
 	public static final int cFileTypeMOL2 = 0x00020000;
 	public static final int cFileTypePDB = 0x00040000;
-	public static final int cFileTypeSDGZ = 0x00080000;
+	public static final int cFileTypeMMTF = 0x00080000;
+	public static final int cFileTypeProtein = 0x000C0000;
+	public static final int cFileTypeSDGZ = 0x00100000;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
 
@@ -379,6 +381,10 @@ public abstract class CompoundFileHelper {
 			filter.addExtension("pdb");
 			filter.addDescription("Protein Data Bank files");
 			}
+		if ((filetypes & cFileTypeMMTF) != 0) {
+			filter.addExtension("mmtf");
+			filter.addDescription("Binary Protein Data Bank files");
+			}
 		if ((filetypes & cFileTypeMOL) != 0) {
 			filter.addExtension("mol");
 			filter.addDescription("MDL Molfiles");
@@ -490,6 +496,8 @@ public abstract class CompoundFileHelper {
 			return cFileTypeMOL2;
 		if (extension.equals(".pdb"))
 			return cFileTypePDB;
+		if (extension.equals(".mmtf"))
+			return cFileTypeMMTF;
 
         return cFileTypeUnknown;
         }
@@ -574,7 +582,10 @@ public abstract class CompoundFileHelper {
 		case cFileTypePDB:
 			extension = ".pdb";
 			break;
-			case cFileTypeSDGZ:
+		case cFileTypeMMTF:
+			extension = ".mmtf";
+			break;
+		case cFileTypeSDGZ:
 			extension = ".sdf.gz";
 			break;
 			}

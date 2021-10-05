@@ -624,7 +624,7 @@ public class SmilesParser {
 
 				// mark aromatic atoms
 				if (Character.isLowerCase(theChar)) {
-					if (atomicNo != 5 && atomicNo != 6 && atomicNo != 7 && atomicNo != 8 && atomicNo != 15 &&atomicNo != 16)
+					if (atomicNo != 5 && atomicNo != 6 && atomicNo != 7 && atomicNo != 8 && atomicNo != 15 &&atomicNo != 16 && atomicNo != 33  && atomicNo != 34)
 						throw new Exception("SmilesParser: atomicNo "+atomicNo+" must not be aromatic");
 
 					mMol.setAtomMarker(atom, true);
