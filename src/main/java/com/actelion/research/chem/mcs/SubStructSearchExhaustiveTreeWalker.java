@@ -281,7 +281,7 @@ public class SubStructSearchExhaustiveTreeWalker {
 	
 	/**
 	 * Generates a tree from the fragment
-	 * @param possMapFrag2MolStart
+	 * @param
 	 * @return an array with one field for each fragment atom. 
 	 */
 	private void determineProcessingArray(){
