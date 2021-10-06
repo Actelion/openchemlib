@@ -66,9 +66,14 @@ public class KabschAlignment {
 		for(Coordinates c2 : coords2)
 			c2.sub(com2);
 		
-		trans1 = com2.scaleC(-1.0);
-		trans2 = new Coordinates(com1);
-
+		Coordinates t1 = com2.scaleC(-1.0);
+		trans1.x = t1.x;
+		trans1.y = t1.y;
+		trans1.z = t1.z;
+		
+		trans2.x = com1.x;
+		trans2.y = com1.y;
+		trans2.z = com1.z;
 		
 		Matrix m = new Matrix(3,3);
 		double [][] c1 = Arrays.stream(coords1).map(e -> new double[] {e.x,e.y,e.z}).toArray(double[][]::new);
@@ -97,21 +102,23 @@ public class KabschAlignment {
 		ma.set(2,2,det);
 		
 		
-		rot = ma.multiply(ut);
-		rot = v.multiply(rot);
-		assert(rot.det()>0.0);
-		rot = rot.getTranspose();
+		Matrix r = ma.multiply(ut);
+		r = v.multiply(r);
+		assert(r.det()>0.0);
+		r = r.getTranspose();
 		
 		
 		
 	    for(Coordinates c : coords2) {
-	    	c.rotate(rot.getArray());
+	    	c.rotate(r.getArray());
 	    	c.add(com1);
 	    }
 	    
 	    for(Coordinates c : coords1) {
 	    	c.add(com1);
 	    }
+	    
+	    rot.set(r.getArray());
 	    
 
 		
