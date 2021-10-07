@@ -370,7 +370,7 @@ public class Molecule implements Serializable {
 	public static final int cDefaultAtomValence = 6;
 	private static final byte[] cDefaultAtomValences = { cDefaultAtomValence };
 	private static final byte[] cAminoAcidValences = { 2 };
-	private static final byte[][] cAtomValence = {null,
+	public static final byte[][] cAtomValence = {null,
 			{1}, {0}, {1}, {2}, {3}, {4}, {3}, {2}, {1}, {0},			// H to Ne
 			{1}, {2}, {3}, {4}, {3, 5}, {2, 4, 6}, {1, 3, 5, 7}, {0},	// Na to Ar
 			{1}, {2}, null, null, null, null, null, null, null, null,	// K to Ni
