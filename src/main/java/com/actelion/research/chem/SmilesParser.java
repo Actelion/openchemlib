@@ -954,7 +954,23 @@ public class SmilesParser {
 						}
 					}
 				}
+			else if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS) {
+				// if we don't have a hydrogen count on the atom, but we have explicit hydrogen atoms
+				// and if we decode a SMARTS, then we convert explicit hydrogens into an 'at least n hydrogen'
+				int explicitHydrogen = mMol.getExplicitHydrogens(atom);
+				if (explicitHydrogen >= 1)
+					mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot0Hydrogen, true);
+				if (explicitHydrogen >= 2)
+					mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot1Hydrogen, true);
+				if (explicitHydrogen >= 3)
+					mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot2Hydrogen, true);
+				if (explicitHydrogen >= 4)
+					mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot3Hydrogen, true);
+				}
 			}
+
+		if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS)
+			mMol.removeExplicitHydrogens();
 
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 
