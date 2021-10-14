@@ -5,15 +5,20 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
+import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
@@ -21,7 +26,9 @@ import com.actelion.research.chem.IDCodeParser;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
+import com.actelion.research.chem.SSSearcher;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.KabschAlignment;
 import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
 import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.alignment3d.transformation.Rotation;
@@ -35,15 +42,18 @@ import com.actelion.research.chem.docking.scoring.AbstractScoringEngine;
 import com.actelion.research.chem.docking.scoring.ChemPLP;
 import com.actelion.research.chem.docking.scoring.IdoScore;
 import com.actelion.research.chem.docking.shape.ShapeDocking;
+import com.actelion.research.chem.forcefield.mmff.MMFFExternalPositionConstraint;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
-import com.actelion.research.chem.forcefield.mmff.PositionConstraint;
+import com.actelion.research.chem.forcefield.mmff.MMFFPositionConstraint;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
+import com.actelion.research.chem.mcs.MCS;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
 import com.actelion.research.chem.phesa.EncodeFunctions;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.ShapeVolume;
+import com.actelion.research.chem.potentialenergy.PositionConstraint;
 import com.actelion.research.chem.phesa.PheSAAlignment.PheSAResult;
 
 public class DockingEngine {
@@ -62,6 +72,7 @@ public class DockingEngine {
 	public static final double GRID_DIMENSION = 6.0;
 	public static final double GRID_RESOLUTION = 0.5;
 	public static final double MINI_CUTOFF = 100; //if energy higher after MC step, don't minimize
+	public static final int MCS_EXHAUSTIVENESS = 3; //MCS docking requires more starting positions, but less MC sampling (reduced DOF)
 	
 
 	private Rotation rotation; //for initial prealignment to native ligand
@@ -73,6 +84,9 @@ public class DockingEngine {
 	private StereoMolecule nativeLigand;
 	private ShapeDocking shapeDocking;
 	private ThreadMaster threadMaster;
+	private StereoMolecule mcsRef;
+	private List<Integer> mcsConstrainedBonds;
+	private List<Integer> mcsConstrainedAtoms;
 
 	
 	public DockingEngine(StereoMolecule rec, StereoMolecule nativeLig, int mcSteps, int startPositions,
@@ -122,20 +136,24 @@ public class DockingEngine {
 		threadMaster = tm;
 	}
 	
+	
+	/**
+	 * generate initial poses: 
+	 * 1) shape docking into the negative receptor image
+	 * 2) constrained optimization of initial poses to reduce strain energy
+	 * @param mol
+	 * @param initialPos
+	 * @return
+	 * @throws DockingFailedException
+	 */
 	private double getStartingPositions(StereoMolecule mol, List<Conformer> initialPos) throws DockingFailedException {
 
 		double eMin = Double.MAX_VALUE;
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
-		//ffOptions.put("angle bend", false);
-		//ffOptions.put("stretch bend", false);
-		//ffOptions.put("bond stretch", false);
-		//ffOptions.put("out of plane", false);
 
 		ConformerSet confSet = new ConformerSet();
-		long t0 = System.currentTimeMillis();
 		List<StereoMolecule> alignedMol = shapeDocking.dock(mol);
-		long t1 = System.currentTimeMillis();
 		alignedMol.stream().forEach(e -> confSet.add(new Conformer(e)));
 		for(Conformer c : confSet) {
 			if(c!=null) {
@@ -149,7 +167,7 @@ public class DockingEngine {
 				catch(Exception e) {
 					throw new DockingFailedException("could not assess atom types");
 				}
-				PositionConstraint constraint = new PositionConstraint(conf,50,0.2);
+				MMFFPositionConstraint constraint = new MMFFPositionConstraint(conf,50,0.2);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
 				Conformer ligConf = new Conformer(conf);
@@ -168,7 +186,136 @@ public class DockingEngine {
 		return eMin;
 		
 	}
+	/**
+	 * 1) find MCS between reference molecule and candidate molecule
+	 * 2) 
+	 * @param mol
+	 */
+	private double getStartingPositionsMCS(StereoMolecule mol, List<Conformer> initialPos) {
+		double eMin = Double.MAX_VALUE;
+		int rotBondsMol = mol.getRotatableBondCount();
+		int rotBondsRef = nativeLigand.getRotatableBondCount();
+		MCS mcs = new MCS();
+		//in MCS, the first molecule should have more rotatable bonds than the second 
+		boolean[] bondMCSMol = null;
+		boolean[] bondMCSFrag = null;
+		boolean isNativeLigFrag;//if native ligand is smaller than the candidate molecule
+		if(rotBondsMol > rotBondsRef) {
+			mcs.set(mol,nativeLigand);
+			bondMCSMol = new boolean[mol.getAllBonds()];
+			bondMCSFrag = new boolean[nativeLigand.getAllBonds()];
+			isNativeLigFrag = true;
+		}
+		else {
+			mcs.set(mol,nativeLigand);
+			bondMCSMol = new boolean[mol.getAllBonds()];
+			bondMCSFrag = new boolean[nativeLigand.getAllBonds()];
+			isNativeLigFrag = false;
+		}
+
+		StereoMolecule mcsMol = mcs.getMCS();
+		SSSearcher sss = new SSSearcher();
+		sss.setFragment(mcsMol);
+		sss.setMolecule(nativeLigand);
+		sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cMatchDBondToDelocalized);
+		int[] map1 = sss.getMatchList().get(0);
+		sss.setMolecule(mol);
+		sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cMatchDBondToDelocalized);
+		int[] map2 = sss.getMatchList().get(0);
+		mcsConstrainedAtoms = new ArrayList<>();
+		for(int a: map2) {
+			mcsConstrainedAtoms.add(a);
+		}
+		//map from reference to mol
+		Map<Integer,Integer> map = new HashMap<Integer,Integer>();
+		for(int i=0;i<map1.length;i++) {
+			map.put(map1[i], map2[i]);
+		}
+		//find bonds not part of MCS
+		mcs.getMCSBondArray(bondMCSMol, bondMCSFrag);
+		mcsConstrainedBonds = new ArrayList<>();
+		boolean[] bondArray = null;
+		if(isNativeLigFrag) 
+			bondArray = bondMCSMol;
+		else 
+			bondArray = bondMCSFrag;
+		for(int b=0;b<bondArray.length;b++) {
+				if(bondArray[b])
+					mcsConstrainedBonds.add(b);
+		}
+		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+		ConformerSetGenerator csGen = new ConformerSetGenerator();
+		ConformerSet confSet = csGen.generateConformerSet(mol);
+		Map<Conformer,Double> confsWithRMSDs = new HashMap<Conformer,Double>();
+		for(Conformer conf : confSet) {
+			//align MCS using Kabsch algorithm
+			Coordinates[] coords1 = new Coordinates[map1.length];
+			Coordinates[] coords2 = new Coordinates[map1.length];
+			int counter = 0;
+			for(int key : map.keySet()) {
+				coords1[counter] = new Coordinates(nativeLigand.getCoordinates(key));
+				coords2[counter] = new Coordinates(conf.getCoordinates(map.get(key)));
+				counter++;
+			}
+			int[][] mapping = new int[coords1.length][2];
+			counter = 0;
+			for(int[] m : mapping) {
+				m[0] = counter;
+				m[1] = counter;
+				counter++;
+			}
+			Coordinates trans1 = new Coordinates();
+			Matrix rot = new Matrix(3,3); 
+			Coordinates trans2 = new Coordinates();
+			KabschAlignment alignment = new KabschAlignment(coords1,coords2,mapping);
+			alignment.align(trans1,rot,trans2);
+			double rmsd = getCoreRMSD(coords1,coords2);
+			for(Coordinates coord : conf.getCoordinates()) {
+				coord.add(trans1);
+				coord.rotate(rot.getArray());
+				coord.add(trans2);
+			}
+			confsWithRMSDs.put(conf, rmsd);
+		}
+		
+		LinkedHashMap<Conformer,Double> sortedConfs = confsWithRMSDs.entrySet().stream().sorted(Map.Entry.<Conformer,Double>comparingByValue()).collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue,
+				(e1, e2) -> e1, LinkedHashMap::new));
+		Iterator<Entry<Conformer,Double>> iterator = sortedConfs.entrySet().iterator();
+		boolean done = false;
+		Entry<Conformer,Double> entry;
+		int c=0;
+		while(!done && c<startPositions*MCS_EXHAUSTIVENESS) {
+			c++;
+			try	{
+				entry = iterator.next();
+			}
+			catch(Exception e) {
+				done = true;
+				continue;
+			}
+			Conformer conf = entry.getKey();
+			StereoMolecule aligned = new StereoMolecule();
+			aligned = conf.toMolecule(null);
+			aligned.ensureHelperArrays(Molecule.cHelperParities);
+			ForceFieldMMFF94 mmff;
+			List<MMFFExternalPositionConstraint> constraints = new ArrayList<>();
+			MMFFPositionConstraint constraint = new MMFFPositionConstraint(aligned,50,0.2);
+			mmff = new ForceFieldMMFF94(aligned, ForceFieldMMFF94.MMFF94SPLUS,ffOptions);
+			mmff.addEnergyTerm(constraint);
+			mmff.minimise();
+			double e = mmff.getTotalEnergy();
+			for(int a=0;a<aligned.getAllAtoms();a++) {
+				conf.setCoordinates(a, new Coordinates(aligned.getCoordinates(a)));
+			}
+			initialPos.add(conf);
+			if(e<eMin)
+				eMin = e;
+		}
+		return eMin;
 	
+	}
 	
 	
 	public DockingResult dockMolecule(StereoMolecule mol) throws DockingFailedException {
@@ -177,35 +324,38 @@ public class DockingEngine {
 		if(ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS)==null)
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		List<Conformer> startPoints = new ArrayList<>();
-		double eMin = getStartingPositions(mol, startPoints);
+		double eMin = 0.0;
+		int steps = mcSteps;
+		if(mcsRef!=null) {
+			eMin = getStartingPositionsMCS(mol, startPoints);
+			steps=steps/MCS_EXHAUSTIVENESS;
+		}
+		else {
+			eMin = getStartingPositions(mol, startPoints);
+		}
+
 		Map<String,Double> contributions = null;
 		for(Conformer ligConf : startPoints) {
-			for(double[] transform : PheSAAlignment.initialTransform(0)) {
-				Conformer newLigConf = new Conformer(ligConf);
-				ExponentialMap eMap = new ExponentialMap(transform[0],transform[1],transform[2]);
-				Quaternion q = eMap.toQuaternion();
-				Coordinates com = DockingUtils.getCOM(newLigConf);
-				Rotation rot = new Rotation(q.getRotMatrix().getArray());
-				Translation trans = new Translation(new double[] {transform[3],transform[4],transform[5]});
-				TransformationSequence t = new TransformationSequence();
-				Translation t1 = new Translation(-com.x,-com.y,-com.z);
-				Translation t2 = new Translation(com.x,com.y,com.z);
-				t.addTransformation(t1);
-				t.addTransformation(rot);
-				t.addTransformation(t2);
-				t.addTransformation(trans);
-				t.apply(newLigConf);
-				LigandPose pose = initiate(newLigConf,eMin);
-				double energy = mcSearch(pose);
-				if(energy<bestEnergy) {
-					bestEnergy = energy;
-					bestPose = pose.getLigConf();
-					contributions = pose.getContributions();
+			Conformer newLigConf = new Conformer(ligConf);		
+			LigandPose pose = initiate(newLigConf,eMin);
+			if(mcsRef!=null) {
+				pose.setMCSBondConstraints(mcsConstrainedBonds);
+				for(int a : mcsConstrainedAtoms) {
+					PositionConstraint constr = new PositionConstraint(newLigConf,a,50,1.0);
+					pose.addConstraint(constr);
 				}
-				if(threadMaster!=null && threadMaster.threadMustDie())
-					break;
+				
 			}
+			double energy = mcSearch(pose,steps);
+			if(energy<bestEnergy) {
+				bestEnergy = energy;
+				bestPose = pose.getLigConf();
+				contributions = pose.getContributions();
+			}
+			if(threadMaster!=null && threadMaster.threadMustDie())
+				break;
 		}
+		
 		if(bestPose!=null) {
 			StereoMolecule best = bestPose.toMolecule();
 			Rotation rot = rotation.getInvert();
@@ -222,8 +372,13 @@ public class DockingEngine {
 	
 	
 
-	
-	private double mcSearch(LigandPose pose) {
+	/**
+	 * use monte carlo steps to permute molecular rotation, translation, torsion angles
+	 * promising poses (below a certain cutoff) are optimized
+	 * @param pose
+	 * @return
+	 */
+	private double mcSearch(LigandPose pose, int steps) {
 		double[] bestState = new double[pose.getState().length];
 		double[] oldState = new double[pose.getState().length];
 		double[] state = new double[pose.getState().length];
@@ -236,7 +391,7 @@ public class DockingEngine {
 		oldEnergy = pose.getFGValue(new double[bestState.length]);
 		bestEnergy = oldEnergy;
 	
-		for(int i=0;i<mcSteps;i++) {
+		for(int i=0;i<steps;i++) {
 			pose.randomPerturbation(random);
 			double energyMC = pose.getFGValue(new double[bestState.length]);
 			if(energyMC<MINI_CUTOFF) {
@@ -274,6 +429,8 @@ public class DockingEngine {
 		}
 
 		pose.setState(bestState);
+		pose.removeConstraints();
+		bestEnergy = pose.getFGValue(new double[bestState.length]);
 		return bestEnergy;
 		
 	}
@@ -284,6 +441,10 @@ public class DockingEngine {
 		return pose;
 		
 		
+	}
+	
+	public void setMCSReference(StereoMolecule referencePose) {
+		mcsRef = referencePose;
 	}
 	
 	public static void getBindingSiteAtoms(StereoMolecule receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid,
@@ -341,15 +502,12 @@ public class DockingEngine {
 	public double refineNativePose(double d, double[] coords) {
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
-		//ffOptions.put("angle bend", false);
-		//ffOptions.put("stretch bend", false);
-		//ffOptions.put("bond stretch", false);
 		if(ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS)==null)
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		Molecule3D nativePose = new Molecule3D(nativeLigand);
 		new Canonizer(nativePose);
 		ForceFieldMMFF94 mmff = new ForceFieldMMFF94(nativePose, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-		PositionConstraint constraint = new PositionConstraint(nativePose,50,0.2);
+		MMFFPositionConstraint constraint = new MMFFPositionConstraint(nativePose,50,0.2);
 		mmff.addEnergyTerm(constraint);
 		mmff.minimise();
 		ConformerSetGenerator confSetGen = new ConformerSetGenerator(100,ConformerGenerator.STRATEGY_LIKELY_RANDOM, false,
@@ -363,7 +521,7 @@ public class DockingEngine {
 				StereoMolecule conf = conformer.toMolecule();
 				conf.ensureHelperArrays(Molecule.cHelperParities);
 				mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-				constraint = new PositionConstraint(conf,50,0.2);
+				constraint = new MMFFPositionConstraint(conf,50,0.2);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
 				Conformer ligConf = new Conformer(conf);
@@ -394,6 +552,18 @@ public class DockingEngine {
 		return energy;
 		
 		
+	}
+	
+	private static double getCoreRMSD(Coordinates[] coords1, Coordinates[] coords2) {
+		double rmsd = 0.0;
+		for(int i=0;i<coords1.length;i++) { 
+			Coordinates c1 = coords1[i];
+			Coordinates c2 = coords2[i];
+			rmsd+=c1.distanceSquared(c2);
+		}
+		rmsd/=coords1.length;
+		rmsd = Math.sqrt(rmsd);
+		return rmsd;
 	}
 	
 	public static class DockingResult implements Comparable<DockingResult>  {
@@ -486,6 +656,7 @@ public class DockingEngine {
             return Double.compare( this.score, o.score);
            
 		}
+		
 	}
 	
 

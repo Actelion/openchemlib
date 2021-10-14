@@ -72,6 +72,10 @@ public abstract class AbstractScoringEngine  {
 	public void addConstraint(PotentialEnergyTerm constraint) {
 		this.constraints.add(constraint);
 	}
+	
+	public void removeConstraints() {
+		this.constraints = new ArrayList<>();
+	}
 
 	public abstract void init(LigandPose candidatePose, double e0);
 	

@@ -7,7 +7,7 @@ import java.util.Map;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
-import com.actelion.research.chem.forcefield.mmff.PositionConstraint;
+import com.actelion.research.chem.forcefield.mmff.MMFFPositionConstraint;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
@@ -166,7 +166,7 @@ public class FlexibleShapeAlignment {
 		int cycles = 0;
 		while(notRelaxed && cycles<maxCycles) {
 			ForceFieldMMFF94 forceField = new ForceFieldMMFF94(fitMol, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-			PositionConstraint constraint = new PositionConstraint(fitMol,50,init);
+			MMFFPositionConstraint constraint = new MMFFPositionConstraint(fitMol,50,init);
 			forceField.addEnergyTerm(constraint);
 			forceField.minimise();
 			double e = forceField.getTotalEnergy();
