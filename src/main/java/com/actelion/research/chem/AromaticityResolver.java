@@ -332,8 +332,9 @@ public class AromaticityResolver {
 			if (mIsDelocalizedAtom[atom]
 			 && mMol.getLowestFreeValence(atom) == 0
 			 && (!mayChangeAtomCharges
-			  || !mMol.isElectronegative(atom)
-			  || mMol.getAtomCharge(atom) > 0))
+			  || (mMol.getAtomicNo(atom) == 5 && mMol.getAtomCharge(atom) < 0)
+			  || (mMol.getAtomicNo(atom) == 6 || mMol.getAtomicNo(atom) == 14)
+			  || (mMol.isElectronegative(atom) && mMol.getAtomCharge(atom) > 0)))
 				protectAtom(atom);
 		}
 
@@ -679,39 +680,23 @@ public class AromaticityResolver {
 	 */
 	private boolean checkAtomTypePi1(int atom, boolean correctCharge) {
 		int atomicNo = mMol.getAtomicNo(atom);
-		if ((atomicNo >=5 && atomicNo <= 8)
+		if ((atomicNo >= 5 && atomicNo <= 8)
 		 || atomicNo == 15 || atomicNo == 16 || atomicNo == 33 || atomicNo == 34 || atomicNo == 52) {	// P,S,As,Se,Te
-
-// Old logic seems fishy to me; TLS 10Dec2020
-//			int freeValence = mMol.getFreeValence(atom);
-//			if (freeValence == 1 || freeValence == 2)	// we allow one more free valence, because the atom may have a missing charge
-//  			return true;
 
 			int freeValence = mMol.getLowestFreeValence(atom);
 			if (freeValence != 0)
 				return true;
 
-			if (mMol.getAtomCharge(atom) == 0) {
-				if ((atomicNo == 15 || atomicNo == 33) /* && freeValence == 3 */) {
-					if (correctCharge)
-						mMol.setAtomCharge(atom, 1);
-					return true;
-					}
-				if ((atomicNo == 16 || atomicNo == 34 || atomicNo == 52) /* && freeValence == 4 */) {
-					if (correctCharge)
-						mMol.setAtomCharge(atom, 1);
-					return true;
-					}
-				if (atomicNo == 5 /* && freeValence == 0 */) {
-					if (correctCharge)
-						mMol.setAtomCharge(atom, -1);
-					return true;
-					}
-				if ((atomicNo == 7 || atomicNo == 8) /* && freeValence == 0 */) {
-					if (correctCharge)
-						mMol.setAtomCharge(atom, 1);
-					return true;
-					}
+			int charge = mMol.getAtomCharge(atom);
+			if (atomicNo == 5 && charge >= 0) {
+				if (correctCharge)
+					mMol.setAtomCharge(atom, charge-1);
+				return true;
+				}
+			if (atomicNo != 5 && charge <= 0) {
+				if (correctCharge)
+					mMol.setAtomCharge(atom, charge+1);
+				return true;
 				}
 			}
 

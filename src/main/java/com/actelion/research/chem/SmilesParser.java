@@ -50,6 +50,7 @@ public class SmilesParser {
 	public static final int SMARTS_MODE_IS_SMARTS = 2;
 
 	public static final int MODE_SKIP_COORDINATE_TEMPLATES = 4;
+	public static final int MODE_MAKE_HYDROGEN_EXPLICIT = 8;
 
 	private static final int INITIAL_CONNECTIONS = 16;
 	private static final int MAX_CONNECTIONS = 100; // largest allowed one in SMILES is 99
@@ -65,7 +66,7 @@ public class SmilesParser {
 	private StereoMolecule mMol;
 	private boolean[] mIsAromaticBond;
 	private int mAromaticAtoms,mAromaticBonds,mSmartsMode,mCoordinateMode;
-	private boolean mCreateSmartsWarnings,mSkipTemplates;
+	private boolean mCreateSmartsWarnings, mMakeHydrogenExplicit;
 	private StringBuilder mSmartsWarningBuffer;
 
 	/**
@@ -91,11 +92,12 @@ public class SmilesParser {
 	public SmilesParser(int mode, boolean createSmartsWarnings) {
 		mSmartsMode = mode & SMARTS_MODE_MASK;
 		mCreateSmartsWarnings = createSmartsWarnings;
+		mMakeHydrogenExplicit = ((mode & MODE_MAKE_HYDROGEN_EXPLICIT) != 0);
 		mCoordinateMode = CoordinateInventor.MODE_DEFAULT;
 		if ((mode & MODE_SKIP_COORDINATE_TEMPLATES) != 0)
 			mCoordinateMode |= CoordinateInventor.MODE_SKIP_DEFAULT_TEMPLATES;
-
-		mSkipTemplates = ((mode & MODE_SKIP_COORDINATE_TEMPLATES) != 0);
+		if (mMakeHydrogenExplicit)
+			mCoordinateMode &= ~CoordinateInventor.MODE_REMOVE_HYDROGEN;
 		}
 
 	public StereoMolecule parseMolecule(String smiles) {
@@ -637,7 +639,7 @@ public class SmilesParser {
 				// put explicitHydrogen into atomCustomLabel to keep atom-relation when hydrogens move to end of atom list in handleHydrogen()
 				if (explicitHydrogens != HYDROGEN_ANY && atomicNo != 1) {	// no custom labels for hydrogen to get useful results in getHandleHydrogenMap()
 					byte[] bytes = new byte[1];
-					bytes[0] = (byte)explicitHydrogens;
+					bytes[0] = (byte)(explicitHydrogens == HYDROGEN_IMPLICIT_ZERO ? 0 : explicitHydrogens);
 					mMol.setAtomCustomLabel(atom, bytes);
 					}
 
@@ -908,7 +910,11 @@ public class SmilesParser {
 			if (mMol.getAtomCustomLabel(atom) != null) {	// if we have the exact number of hydrogens
 				int explicitHydrogen = mMol.getAtomCustomLabelBytes(atom)[0];
 
-				if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS) {
+				if (mMakeHydrogenExplicit) {
+					for (int i=0; i<explicitHydrogen; i++)
+						mMol.addBond(atom, mMol.addAtom(1), 1);
+					}
+				else if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS) {
 					if (explicitHydrogen == 0)
 						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot0Hydrogen, true);
 					if (explicitHydrogen == 1)
@@ -919,9 +925,6 @@ public class SmilesParser {
 						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot3Hydrogen, true);
 					}
 				else {
-					if (explicitHydrogen == HYDROGEN_IMPLICIT_ZERO)
-						explicitHydrogen = 0;
-
 					if (!mMol.isMarkedAtom(atom)) {
 						// We don't correct aromatic atoms, because for aromatic atoms the number of
 						// explicit hydrogens encodes whether a pi-bond needs to be placed at the atom
@@ -954,7 +957,7 @@ public class SmilesParser {
 						}
 					}
 				}
-			else if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS) {
+			else if (!mMakeHydrogenExplicit && (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS)) {
 				// if we don't have a hydrogen count on the atom, but we have explicit hydrogen atoms
 				// and if we decode a SMARTS, then we convert explicit hydrogens into an 'at least n hydrogen'
 				int explicitHydrogen = mMol.getExplicitHydrogens(atom);
@@ -969,7 +972,7 @@ public class SmilesParser {
 				}
 			}
 
-		if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS)
+		if (!mMakeHydrogenExplicit && (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS))
 			mMol.removeExplicitHydrogens();
 
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
@@ -1359,9 +1362,8 @@ public class SmilesParser {
 		 || !mMol.isMarkedAtom(atom))	// already marked as hetero-atom of another ring
 			return false;
 
-		int explicitHydrogens = (mMol.getAtomCustomLabel(atom) == null
-							  || mMol.getAtomCustomLabelBytes(atom)[0] == HYDROGEN_IMPLICIT_ZERO) ?
-											0 : mMol.getAtomCustomLabelBytes(atom)[0];
+		int explicitHydrogens = (mMol.getAtomCustomLabel(atom) == null) ?
+								0 : mMol.getAtomCustomLabelBytes(atom)[0];
 		int freeValence = mMol.getFreeValence(atom) - explicitHydrogens;
 		if (freeValence < 1)
 			return false;
