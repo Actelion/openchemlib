@@ -2,14 +2,14 @@ package com.actelion.research.chem.forcefield.mmff;
 
 import com.actelion.research.chem.StereoMolecule;
 
-public class PositionConstraint implements EnergyTerm {
+public class MMFFPositionConstraint implements EnergyTerm {
 	private double[] refPos;
 	private boolean[] constrained;
 	private double k;
 	private double d;
 	
 	
-	public PositionConstraint (StereoMolecule mol, double k, double d) {
+	public MMFFPositionConstraint (StereoMolecule mol, double k, double d) {
 		refPos = new double[3*mol.getAllAtoms()];
 		constrained = new boolean[mol.getAllAtoms()];
 		for(int a=0;a<mol.getAllAtoms();a++) {

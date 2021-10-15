@@ -15,9 +15,9 @@ public class PositionConstraint implements PotentialEnergyTerm {
 		refPos = new double[3];
 		this.atom = atom;
 		this.conf = conf;
-		refPos[0] = conf.getMolecule().getAtomX(atom);
-		refPos[1] = conf.getMolecule().getAtomY(atom);
-		refPos[2] = conf.getMolecule().getAtomZ(atom);
+		refPos[0] = conf.getX(atom);
+		refPos[1] = conf.getY(atom);
+		refPos[2] = conf.getZ(atom);
 		
 		this.k = k;
 		this.d = d;
