@@ -1,10 +1,5 @@
 package com.actelion.research.chem.phesa.pharmacophore;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
@@ -12,8 +7,12 @@ import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalcu
 import com.actelion.research.chem.phesa.pharmacophore.pp.AcceptorPoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.AromRingPoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.DonorPoint;
-import com.actelion.research.chem.phesa.pharmacophore.pp.ExitVectorPoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class PharmacophoreCalculator {
 	
@@ -79,35 +78,35 @@ public class PharmacophoreCalculator {
 					}
 					if(mol.getAtomicNo(i)==8 && neighbours==1 && (mol.getConnBondOrder(i, 0)==2 || AtomFunctionAnalyzer.isAcidicOxygen(mol, i) || mol.getAtomCharge(i)==-1 )) {
 						int a1 = mol.getConnAtom(i,0);
-						if(!(mol.getAtomicNo(a1)==16 || mol.getAtomicNo(a1)==15)) {		
-							int aa1 = mol.getConnAtom(a1,0);
-							if(aa1==i) 
-								aa1 = mol.getConnAtom(a1,1);
-							neighbourList.add(aa1);
-							AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,1);
+						if (mol.getConnAtoms(a1) > 1) { // added this check to prevent OOB exceptions with cropped proteins; TLS 17Oct2021
+							if(!(mol.getAtomicNo(a1)==16 || mol.getAtomicNo(a1)==15)) {
+								int aa1 = mol.getConnAtom(a1,0);
+								if(aa1==i)
+									aa1 = mol.getConnAtom(a1,1);
+								neighbourList.add(aa1);
+								AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass,1);
 
-							ppPoints.add(ap);
-							List<Integer> neighbourList2 = new ArrayList<Integer>();
-							for(int neighbour : neighbourList) {
-								neighbourList2.add(neighbour);
-							}
-							ap = new AcceptorPoint(mol,i,neighbourList2,interactionClass,2);
-							ppPoints.add(ap);
+								ppPoints.add(ap);
+								List<Integer> neighbourList2 = new ArrayList<Integer>();
+								for(int neighbour : neighbourList) {
+									neighbourList2.add(neighbour);
+								}
+								ap = new AcceptorPoint(mol,i,neighbourList2,interactionClass,2);
+								ppPoints.add(ap);
 
+								}
+							else {
+								AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
+								ppPoints.add(ap);
 							}
-						else { 
-							AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
-							ppPoints.add(ap);
 						}
-	
 					}
-					else {
-					AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
-					ppPoints.add(ap);
-
+					else if (neighbourList.size() != 0) { // added this check to prevent OOB exceptions with cropped proteins; TLS 17Oct2021
+						AcceptorPoint ap = new AcceptorPoint(mol,i,neighbourList,interactionClass);
+						ppPoints.add(ap);
 					}
+				}
 			}
-		}
 		}
 		return ppPoints;
 	}
@@ -124,7 +123,7 @@ public class PharmacophoreCalculator {
 				}
 			}
 			else if (mol.getAtomicNo(a)==7){ // atom is not aromatic
-				if(mol.getConnBondOrder(a, 0)==3) //nitrile
+				if(mol.getConnAtoms(a) == 1 && mol.getConnBondOrder(a, 0)==3) //nitrile
 					return true;
 				if (mol.isFlatNitrogen(a)) { 
 					for(int b=0;b<mol.getConnAtoms(a);b++) {

@@ -1,36 +1,22 @@
 package com.actelion.research.chem.docking.receptorpharmacophore;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Random;
-import java.util.Set;
-import java.util.stream.IntStream;
-
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.descriptor.pharmacophoretree.IonizableGroupDetector2D;
 import com.actelion.research.chem.docking.DockingUtils;
-import com.actelion.research.chem.docking.ScoringTask;
 import com.actelion.research.chem.docking.scoring.ProbeScanning;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
-import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.AtomicGaussian;
-import com.actelion.research.chem.phesa.ShapeVolume;
 import com.actelion.research.chem.phesa.Gaussian3D;
+import com.actelion.research.chem.phesa.MolecularVolume;
+import com.actelion.research.chem.phesa.ShapeVolume;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
-import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 import com.actelion.research.chem.phesa.pharmacophore.pp.SimplePharmacophorePoint;
-
 import smile.clustering.KMeans;
+
+import java.util.*;
+import java.util.stream.IntStream;
 
 
 public class NegativeReceptorImage extends MoleculeGrid {
@@ -324,9 +310,19 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	
 	private void analyzeBumps() {
 		double radiusSq = BUMP_RADIUS2*BUMP_RADIUS2;
-		for(int x=0;x<this.gridSize[0];x++) {
-			for(int y=0;y<this.gridSize[1];y++) {
-				for(int z=0;z<this.gridSize[2];z++) {
+
+// Replaced because of out-of-bounds exceptions; TLS 17Oct2021
+//		for(int x=0;x<this.gridSize[0];x++) {
+//			for(int y=0;y<this.gridSize[1];y++) {
+//				for(int z=0;z<this.gridSize[2];z++) {
+
+		int xmax = Math.min(this.gridSize[0], bumpGrid.length);
+		int ymax = Math.min(this.gridSize[1], bumpGrid[0].length);
+		int zmax = Math.min(this.gridSize[2], bumpGrid[0][0].length);
+		for(int x=0;x<xmax;x++) {
+			for(int y=0;y<ymax;y++) {
+				for(int z=0;z<zmax;z++) {
+
 					Coordinates probeCoords = this.getCartCoordinates(new int[] {x,y,z});
 					for(int atom=0;atom<receptor.getAtoms();atom++) {
 						Coordinates c = receptor.getCoordinates(atom);
