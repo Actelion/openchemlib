@@ -90,8 +90,11 @@ public class DockingEngine {
 
 	
 	public DockingEngine(StereoMolecule rec, StereoMolecule nativeLig, int mcSteps, int startPositions,
-			ScoringFunction scoringFunction) {
-
+			ScoringFunction scoringFunction) throws DockingFailedException {
+		for(int ra=0;ra<rec.getAtoms();ra++) {
+			if(rec.getImplicitHydrogens(ra)>0)
+				throw new DockingFailedException("please add hydrogen atoms to receptor structure!");
+		}
 		nativeLigand = new Molecule3D(nativeLig);
 		nativeLigand.ensureHelperArrays(Molecule.cHelperCIP);
 		Molecule3D receptor = new Molecule3D(rec);
@@ -128,7 +131,7 @@ public class DockingEngine {
 
 	}
 	
-	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand) {
+	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand) throws DockingFailedException {
 		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS,ScoringFunction.CHEMPLP);
 	}
 	
