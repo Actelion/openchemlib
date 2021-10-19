@@ -173,6 +173,8 @@ public interface CompoundTableConstants {
     String cColumnPropertyReferenceTypeTopDown = "topdown";	// a connection is only referenced from top record
     String cColumnPropertyFormula = "formula";
     String cColumnPropertySuperposeMolecule = "superposeMol";	// idcode+coords to be displayed in every cell
+    String cColumnPropertyProteinCavity = "proteinCavity";	// idcode+coords of protein cavity to be displayed in every cell
+    String cColumnPropertyNaturalLigand = "naturalLigand";	// idcode+coords of natural ligand, if proteinCavity is given (not shown, used for surface creation)
     String cColumnPropertySuperpose = "superpose";  // cSuperposeValueReferenceRow or null
     String cColumnPropertySuperposeAlign = "align";  // cSuperposeAlignValueShape or null
     String cColumnPropertyCommentUploadStatus = "commentUploadStatus";
