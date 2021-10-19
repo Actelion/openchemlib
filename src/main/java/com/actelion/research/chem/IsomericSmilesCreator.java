@@ -42,6 +42,7 @@ import java.util.List;
 public class IsomericSmilesCreator {
 	public static final int MODE_CREATE_SMARTS = 1;
 	public static final int MODE_INCLUDE_MAPPING = 2;
+	public static final int MODE_KEKULIZED_OUTPUT = 4;  // no lower case atom labels and single/double bonds to represent aromaticity
 
 	private StereoMolecule mMol;
 	private Canonizer mCanonizer;
@@ -430,6 +431,7 @@ public class IsomericSmilesCreator {
 		if (!isAnyAtom
 		 && atomList == null
 		 && mMol.isAromaticAtom(atom)
+		 && (mMode & MODE_KEKULIZED_OUTPUT) == 0
 		 && (mMol.getAtomPi(atom) != 0
 		  || (mMol.getAtomAbnormalValence(atom) == -1
 		   && mMol.getAtomRadical(atom) == Molecule.cAtomRadicalStateNone)))
@@ -461,7 +463,7 @@ public class IsomericSmilesCreator {
 				(!isAnyAtom && !isOrganic(mMol.getAtomicNo(atom)))
 				|| atomList != null
 				|| qualifiesForAtomParity(atom)
-				|| (mMol.isAromaticAtom(atom) && mMol.getAtomPi(atom) == 0)
+				|| (mMol.isAromaticAtom(atom) && mMol.getAtomPi(atom) == 0 && (mMode & MODE_KEKULIZED_OUTPUT) == 0)
 				|| charge != 0
 				|| isotop != 0
 				|| mapNo != 0
@@ -513,13 +515,13 @@ public class IsomericSmilesCreator {
 
 	private String createMultiAtomLabel(int atom, int[] atomicNo, StringBuilder buffer) {
 		buffer.setLength(0);
-		boolean isAromatic = mMol.isAromaticAtom(atom);
+		boolean isLowerCase = mMol.isAromaticAtom(atom) && (mMode & MODE_KEKULIZED_OUTPUT) == 0;
 
 		for (int a:atomicNo) {
 			if (buffer.length() != 0)
 				buffer.append(',');
 			String label = Molecule.cAtomLabel[a];
-				buffer.append(isAromatic ? label.toLowerCase() : label);
+				buffer.append(isLowerCase ? label.toLowerCase() : label);
 			}
 
 		return buffer.toString();
@@ -740,11 +742,12 @@ public class IsomericSmilesCreator {
 					}
 				}
 			}
-		if (startLength == builder.length() && !mMol.isAromaticBond(bond)) {
+		if (startLength == builder.length() && (!mMol.isAromaticBond(bond) || (mMode & MODE_KEKULIZED_OUTPUT) != 0)) {
 			int bondType = mMol.getBondType(bond) & Molecule.cBondTypeMaskSimple;
 			if (bondType == Molecule.cBondTypeSingle) {
 				if (mMol.isAromaticAtom(mMol.getBondAtom(0, bond))
-				 && mMol.isAromaticAtom(mMol.getBondAtom(1, bond)))
+				 && mMol.isAromaticAtom(mMol.getBondAtom(1, bond))
+				 && (mMode & MODE_KEKULIZED_OUTPUT) == 0)
 					builder.append('-');
 			} else if (bondType == Molecule.cBondTypeDouble)
 				builder.append('=');
