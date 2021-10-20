@@ -270,7 +270,7 @@ public class Reactor {
 		StereoMolecule genericReactant = mGenericReaction.getReactant(no);
 
 		mSSSearcher.setMol(genericReactant, mReactant[no]);
-		int matchMode = SSSearcher.cMatchDBondToDelocalized + (mAllowChargeCorrections ? 0 : SSSearcher.cMatchAtomCharge);
+		int matchMode = SSSearcher.cDefaultMatchMode + (mAllowChargeCorrections ? 0 : SSSearcher.cMatchAtomCharge);
 		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, matchMode) == 0) {
 			mMatchList[no] = new ArrayList<>();
 			mReactantMatchCombinationCount = 0;
