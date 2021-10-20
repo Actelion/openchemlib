@@ -50,6 +50,7 @@ public class RingCollection {
 	public static final int MODE_SMALL_AND_LARGE_RINGS_AND_AROMATICITY = MODE_SMALL_RINGS
 																	   | MODE_LARGE_RINGS
 																	   | MODE_AROMATICITY;
+	public static final int MODE_INCLUDE_TAUTOMERIC_BONDS = 8;
 
 	private ExtendedMolecule mMol;
 	private ArrayList<int[]> mRingAtomSet;
@@ -171,7 +172,7 @@ public class RingCollection {
 			mIsAromatic = new boolean[mRingAtomSet.size()];
 			mIsDelocalized = new boolean[mRingAtomSet.size()];
 			mHeteroPosition = new int[mRingAtomSet.size()];
-			determineAromaticity(mIsAromatic, mIsDelocalized, mHeteroPosition, false);
+			determineAromaticity(mIsAromatic, mIsDelocalized, mHeteroPosition, (mode & MODE_INCLUDE_TAUTOMERIC_BONDS) != 0);
 			}
 
 		// find large rings by examining every potential ring bond
@@ -729,7 +730,7 @@ public class RingCollection {
 	public boolean qualifiesAsAmideTypeBond(int bond) {
 		for (int i=0; i<2; i++) {
 			int atom1 = mMol.getBondAtom(i, bond);
-			if (mMol.getAtomicNo(atom1) == 7
+			if ((mMol.getAtomicNo(atom1) == 7)
 			 && mMol.getConnAtoms(atom1) == 2) {
 				int atom2 = mMol.getBondAtom(1-i, bond);
 				if (mMol.getAtomicNo(atom2) == 6) {

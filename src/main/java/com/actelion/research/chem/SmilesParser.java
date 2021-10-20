@@ -1215,6 +1215,22 @@ public class SmilesParser {
 				} while (qualifyingBondFound);
 			}
 
+		// Some SMILES still contain kekulized aromatic rings with lowercase hetero atoms, e.g. C1=CC=C[se]1
+		// If we recognize those rings to be aromatic, we remove the aromaticity marker from all ring atoms.
+		if (mAromaticAtoms != 0) {
+			RingCollection daylightTypeRingSet = new RingCollection(mMol, RingCollection.MODE_SMALL_RINGS_AND_AROMATICITY | RingCollection.MODE_INCLUDE_TAUTOMERIC_BONDS);
+			for (int ring=0; ring<daylightTypeRingSet.getSize(); ring++) {
+				if (daylightTypeRingSet.isAromatic(ring)) {
+					int[] ringAtom = daylightTypeRingSet.getRingAtoms(ring);
+					for (int atom:ringAtom)
+						if (mMol.isMarkedAtom(atom)) {
+							mMol.setAtomMarker(atom, false);
+							mAromaticAtoms--;
+						}
+					}
+				}
+			}
+
 		while (mAromaticAtoms >= 2)
 			if (!connectConjugatedRadicalPairs(isAromaticBond))
 				break;
