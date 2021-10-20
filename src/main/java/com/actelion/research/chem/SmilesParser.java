@@ -54,7 +54,7 @@ public class SmilesParser {
 
 	private static final int INITIAL_CONNECTIONS = 16;
 	private static final int MAX_CONNECTIONS = 100; // largest allowed one in SMILES is 99
-	private static final int MAX_BRACKET_LEVELS = 64;
+	private static final int BRACKET_LEVELS = 32;
 	private static final int MAX_AROMATIC_RING_SIZE = 15;
 
 	private static final int HYDROGEN_ANY = -1;
@@ -239,7 +239,7 @@ public class SmilesParser {
 
 		TreeMap<Integer,THParity> parityMap = null;
 
-		int[] baseAtom = new int[MAX_BRACKET_LEVELS];
+		int[] baseAtom = new int[BRACKET_LEVELS];
 		baseAtom[0] = -1;
 
 		int[] ringClosureAtom = new int[INITIAL_CONNECTIONS];
@@ -857,8 +857,10 @@ public class SmilesParser {
 			if (theChar == '(') {
 				if (baseAtom[bracketLevel] == -1)
 					throw new Exception("Smiles with leading parenthesis are not supported");
-				baseAtom[bracketLevel+1] = baseAtom[bracketLevel];
 				bracketLevel++;
+				if (baseAtom.length == bracketLevel)
+					baseAtom = Arrays.copyOf(baseAtom, baseAtom.length + BRACKET_LEVELS);
+				baseAtom[bracketLevel] = baseAtom[bracketLevel-1];
 				continue;
 				}
 
