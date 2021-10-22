@@ -1215,7 +1215,7 @@ public class SmilesParser {
 				} while (qualifyingBondFound);
 			}
 
-		// Some SMILES still contain kekulized aromatic rings with lowercase hetero atoms, e.g. C1=CC=C[se]1
+		/* Some SMILES still contain kekulized aromatic rings with lowercase hetero atoms, e.g. C1=CC=C[se]1
 		// If we recognize those rings to be aromatic, we remove the aromaticity marker from all ring atoms.
 		if (mAromaticAtoms != 0) {
 			RingCollection daylightTypeRingSet = new RingCollection(mMol, RingCollection.MODE_SMALL_RINGS_AND_AROMATICITY | RingCollection.MODE_INCLUDE_TAUTOMERIC_BONDS);
@@ -1229,7 +1229,7 @@ public class SmilesParser {
 						}
 					}
 				}
-			}
+			} taken out, because OpenChemLib should not start interpreting invalid SMILES; TLS 20-Oct-2021 */
 
 		while (mAromaticAtoms >= 2)
 			if (!connectConjugatedRadicalPairs(isAromaticBond))
