@@ -1521,20 +1521,19 @@ public class Mutator {
 		}
 
 	private void repairStereoChemistry(StereoMolecule mol) {
+		for (int bond=0; bond<mol.getAllBonds(); bond++)
+			if (mol.isStereoBond(bond))
+				mol.setBondType(bond, Molecule.cBondTypeSingle);
+
         for (int atom=0; atom<mol.getAtoms(); atom++) {
-            switch (mol.getAtomParity(atom)) {
-            case Molecule.cAtomParityUnknown:
-                int parity = (mRandom.nextDouble() < 0.5) ? Molecule.cAtomParity1 : Molecule.cAtomParity2;
-                boolean isPseudo = mol.isAtomParityPseudo(atom);
-                mol.setAtomParity(atom, parity, isPseudo);
-            case Molecule.cAtomParity1:
-            case Molecule.cAtomParity2:
+        	int parity = mol.getAtomParity(atom);
+        	if (parity == Molecule.cAtomParityUnknown) {
+		        parity = (mRandom.nextDouble()<0.5) ? Molecule.cAtomParity1 : Molecule.cAtomParity2;
+		        boolean isPseudo = mol.isAtomParityPseudo(atom);
+		        mol.setAtomParity(atom, parity, isPseudo);
+	            }
+        	if (parity != Molecule.cAtomParityNone)
                 mol.setStereoBondFromAtomParity(atom);
-                break;
-            case Molecule.cAtomParityNone:
-                mol.convertStereoBondsToSingleBonds(atom);
-                break;
-                }
             }
         for (int bond=0; bond<mol.getBonds(); bond++) {
         	if (mol.isBINAPChiralityBond(bond)) {
@@ -1546,10 +1545,6 @@ public class Mutator {
 	            case Molecule.cBondParityEor1:
 	            case Molecule.cBondParityZor2:
 	                mol.setStereoBondFromBondParity(bond);
-	                break;
-	            case Molecule.cBondParityNone:
-	                mol.convertStereoBondsToSingleBonds(mol.getBondAtom(0, bond));
-	                mol.convertStereoBondsToSingleBonds(mol.getBondAtom(1, bond));
 	                break;
 	                }
         		}

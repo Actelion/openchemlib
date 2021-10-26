@@ -1664,8 +1664,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
-	 * Converts any stereo bond attached with its pointed tip
-	 * to this atom into a single bond.
+	 * Converts any stereo bond being attached with the pointed tip to the given potential stereocenter
+	 * (TH or allene) into a single bond. For allenic stereo centers, stereo bonds at the allene end atoms
+	 * are converted. Atoms with PI electrons are not touched, unless they are P,S,...
 	 * @param atom
 	 */
 	public void convertStereoBondsToSingleBonds(int atom) {
@@ -1673,12 +1674,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			for (int i=0; i<2; i++) {
 				int alleneEnd = findAlleneEndAtom(atom, mConnAtom[atom][i]);
 				if (alleneEnd != -1)
-					convertStereoBondsToSingleBonds(alleneEnd);
+					for (int j=0; j<mConnAtoms[alleneEnd];j++)
+						if (isStereoBond(mConnBond[alleneEnd][j]))
+							mBondType[mConnBond[alleneEnd][j]] = cBondTypeSingle;
 				}
 			return;
 			}
 
-		// avoid flattening allene stereo bonds
 		if (mPi[atom] == 0 || mAtomicNo[atom] >= 15) {
 			for (int i=0; i<mAllConnAtoms[atom]; i++) {
 				int connBond = mConnBond[atom][i];
