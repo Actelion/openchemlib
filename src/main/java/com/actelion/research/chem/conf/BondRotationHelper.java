@@ -29,29 +29,25 @@ public class BondRotationHelper {
 	private int[] terminalPolarHBond;
 	
 	public BondRotationHelper(StereoMolecule mol) {
-		this(mol,false,true);
+		this(mol,false);
 	}
 	
 	public BondRotationHelper(StereoMolecule mol, boolean includeTerminalPolarH) {
-		this(mol,includeTerminalPolarH,true);
-	}
-	
-	public BondRotationHelper(StereoMolecule mol, boolean includeTerminalPolarH, boolean skipAllRings) {
 		mMol = mol;
 		this.includeTerminalPolarH = includeTerminalPolarH;
-		initialize(skipAllRings);
+		initialize();
 
 		
 	}
 	
-	public void initialize(boolean skipAllRings) {
+	public void initialize() {
 		int[] disconnectedFragmentNo = new int[mMol.getAllAtoms()];
 		int disconnectedFragmentCount = mMol.getFragmentNumbers(disconnectedFragmentNo, false, true);
 		int disconnectedFragmentSize[] = new int[disconnectedFragmentCount];
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
 			disconnectedFragmentSize[disconnectedFragmentNo[atom]]++;
 		mIsRotatableBond = new boolean[mMol.getBonds()];
-		TorsionDB.findRotatableBonds(mMol,skipAllRings, mIsRotatableBond);
+		TorsionDB.findRotatableBonds(mMol,true, mIsRotatableBond);
 		if(includeTerminalPolarH)
 			terminalPolarHBond = findTerminalBondsPolarHs(mIsRotatableBond);
 		List<Integer> rotBonds = new ArrayList<Integer>();
