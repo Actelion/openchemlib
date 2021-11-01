@@ -37,11 +37,8 @@ public class KNNRegression extends ARegressionMethod<ParameterKNN> {
     private Matrix YTrain;
 
     public KNNRegression() {
-
         setParameterRegressionMethod(new ParameterKNN(NEIGHBOURS));
-
         similarityCalculatorDoubleArray = new SimilarityCalculatorDoubleArray();
-
         similarityMulticore = new SimilarityMulticore<>(similarityCalculatorDoubleArray);
     }
 
@@ -59,20 +56,18 @@ public class KNNRegression extends ARegressionMethod<ParameterKNN> {
         YTrain = modelXYIndexTrain.Y;
 
         liXTrain = MatrixFunctions.createIdentifiedObject(modelXYIndexTrain.X);
-
         similarityMulticore.run(liXTrain, liXTrain);
-
         Matrix maSimilarity = similarityMulticore.getSimilarityMatrix();
-
-        // Matrix maSimilarity = MatrixFunctions.calculateSimilarityMatrixRowWise(XTrain, XTrain);
-
-        // System.out.println(maSimilarity.toString(3));
-
         Matrix maYHat = calculateYHat(maSimilarity, YTrain, getParameter().getNeighbours());
-
         return maYHat;
     }
 
+    /**
+     * Not thread save. Should not be called from several threads.
+     * @param X
+     * @return
+     */
+    @Override
     public Matrix calculateYHat(Matrix X){
 
         List<IdentifiedObject<double []>> liX = MatrixFunctions.createIdentifiedObject(X);
@@ -86,6 +81,11 @@ public class KNNRegression extends ARegressionMethod<ParameterKNN> {
         return calculateYHat(maSimMatrixTrainTest, YTrain, getParameter().getNeighbours());
     }
 
+    /**
+     * Thread save method. Can be called from different threads.
+     * @param arrRow
+     * @return
+     */
     @Override
     public double calculateYHat(double[] arrRow) {
 
@@ -113,12 +113,14 @@ public class KNNRegression extends ARegressionMethod<ParameterKNN> {
 
         double [] arrNYTrain = new double[k];
 
+
         for (int i = 0; i < k; i++) {
             int indexTrain = arrIndex[i];
             arrNYTrain[i]= YTrain.get(indexTrain, 0);
         }
 
         double yHat = calculateYHat(arrSim, arrNYTrain);
+
 
         return yHat;
     }
