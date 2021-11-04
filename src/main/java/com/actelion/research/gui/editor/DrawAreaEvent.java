@@ -31,8 +31,32 @@
 *
 */
 
-package com.actelion.research.gui;
+package com.actelion.research.gui.editor;
 
-public interface DrawAreaListener {
-    public void contentChanged(DrawAreaEvent e);
+import java.util.EventObject;
+
+public class DrawAreaEvent extends EventObject {
+    private static final long serialVersionUID = 0x20090611;
+
+    public static final int TYPE_MOLECULE_CHANGED = 1;
+    public static final int TYPE_SELECTION_CHANGED = 2;
+    public static final int TYPE_HILITE_ATOM_CHANGED = 3;
+    public static final int TYPE_HILITE_BOND_CHANGED = 4;
+
+	private boolean	mIsUserChange;
+	private int mType;
+
+    public DrawAreaEvent(Object source, int type, boolean isUserChange) {
+		super(source);
+		mType = type;
+		mIsUserChange = isUserChange;
+	    }
+
+	public int getType() {
+		return mType;
+		}
+
+	public boolean isUserChange() {
+		return mIsUserChange;
+		}
 	}

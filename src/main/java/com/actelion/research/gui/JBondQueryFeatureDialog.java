@@ -42,6 +42,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@Deprecated
 public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
     static final long serialVersionUID = 0x20070822;
 

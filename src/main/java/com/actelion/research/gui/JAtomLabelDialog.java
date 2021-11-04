@@ -33,15 +33,16 @@
 
 package com.actelion.research.gui;
 
-import info.clearthought.layout.TableLayout;
-
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-
 import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.Molecule;
+import info.clearthought.layout.TableLayout;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+@Deprecated
 public class JAtomLabelDialog extends JDialog implements ActionListener {
     public static final long serialVersionUID = 0x20080213;
 

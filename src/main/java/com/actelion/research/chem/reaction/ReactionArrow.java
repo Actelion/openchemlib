@@ -36,6 +36,8 @@ package com.actelion.research.chem.reaction;
 import com.actelion.research.chem.AbstractDrawingObject;
 import com.actelion.research.chem.DepictorTransformation;
 import com.actelion.research.chem.Molecule;
+import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericPolygon;
 import com.actelion.research.util.ColorHelper;
 
 import javax.swing.*;
@@ -85,10 +87,12 @@ public class ReactionArrow extends AbstractDrawingObject {
             }
         }
 
+	@Override
     public String getTypeString() {
         return TYPE_STRING;   
     	}
 
+	@Override
     public String getDescriptorDetail() {
 		StringBuilder detail = new StringBuilder();
         detail.append(" x1=\""+mPoint[0].x  + "\"");
@@ -98,6 +102,7 @@ public class ReactionArrow extends AbstractDrawingObject {
         return detail.toString();
         }
 
+	@Override
 	public AbstractDrawingObject clone() {
 		ReactionArrow arrow = new ReactionArrow();
 		arrow.mPoint[0].x = this.mPoint[0].x;
@@ -121,6 +126,7 @@ public class ReactionArrow extends AbstractDrawingObject {
 		mPoint[1].y = y2;
 		}
 
+	@Override
 	public void translate(double x, double y) {
 		switch (mHiliteStatus) {
 		case PART_ARROW_START:
@@ -137,72 +143,64 @@ public class ReactionArrow extends AbstractDrawingObject {
 			}
 		}
 
-	public void draw(Graphics g, DepictorTransformation t) {
-		g.setColor(mIsSelected ? ColorHelper.getContrastColor(Color.red, UIManager.getColor("TextArea.background"))
+	@Override
+	public void draw(GenericDrawContext context, DepictorTransformation t) {
+		context.setColor(mIsSelected ? ColorHelper.getContrastColor(Color.red, UIManager.getColor("TextArea.background"))
 							   : UIManager.getColor("TextArea.foreground"));
 		double x1 = (t == null) ? mPoint[0].x : t.transformX(mPoint[0].x);
 		double y1 = (t == null) ? mPoint[0].y : t.transformY(mPoint[0].y);
 		double x2 = (t == null) ? mPoint[1].x : t.transformX(mPoint[1].x);
 		double y2 = (t == null) ? mPoint[1].y : t.transformY(mPoint[1].y);
-		g.drawLine((int)x1, (int)y1, (int)x2, (int)y2);
-		int dx = (int)(x2 - x1);
-		int dy = (int)(y2 - y1);
-		int[] px = new int[4];
-		int[] py = new int[4];
-		px[0] = (int)x2;
-		py[0] = (int)y2;
-		px[1] = (int)(x2 - dx/5 + dy/10);
-		py[1] = (int)(y2 - dy/5 - dx/10);
-		px[2] = (int)(x2 - dx/15);
-		py[2] = (int)(y2 - dy/15);
-		px[3] = (int)(x2 - dx/5 - dy/10);
-		py[3] = (int)(y2 - dy/5 + dx/10);
-		g.fillPolygon(px, py, 4);
+		double dx = x2 - x1;
+		double dy = y2 - y1;
+		context.setLineWidth(Math.max(1f, 0.02f*(float)Math.sqrt(dx*dx+dy*dy)));
+		context.drawLine(x1, y1, x2, y2);
+		GenericPolygon p = new GenericPolygon(4);
+		p.addPoint(x2+dx/40, y2+dy/40);
+		p.addPoint(x2 - dx/5 + dy/10, y2 - dy/5 - dx/10);
+		p.addPoint(x2 - dx/20,y2 - dy/20);
+		p.addPoint(x2 - dx/5 - dy/10, y2 - dy/5 + dx/10);
+		context.fillPolygon(p);
 		}
 
-	public void hilite(Graphics g) {
-		g.setColor(SELECTION_COLOR);
+	@Override
+	public void hilite(GenericDrawContext context) {
+		context.setColor(SELECTION_COLOR);
 		switch (mHiliteStatus) {
 		case PART_ARROW_START:
-			g.fillOval((int)mPoint[0].x-8, (int)mPoint[0].y-8, 16, 16);
+			context.fillCircle(mPoint[0].x-8, mPoint[0].y-8, 16);
 			break;
 		case PART_ARROW_END:
-			g.fillOval((int)mPoint[1].x-8, (int)mPoint[1].y-8, 16, 16);
+			context.fillCircle(mPoint[1].x-8, mPoint[1].y-8, 16);
 			break;
 		case PART_ARROW:
 			double length = getLength();
 			double f = Math.max(length/8.0f, 3.0f);
 			double angle = Molecule.getAngle(mPoint[0].x, mPoint[0].y, mPoint[1].x, mPoint[1].y);
-			int dx = (int)(f * Math.cos(angle));
-			int dy = -(int)(f * Math.sin(angle));
-			int x[] = new int[4];
-			int y[] = new int[4];
-			x[0] = (int)(mPoint[0].x + dx);
-			y[0] = (int)(mPoint[0].y + dy);
-			x[1] = (int)(mPoint[1].x + dx);
-			y[1] = (int)(mPoint[1].y + dy);
-			x[2] = (int)(mPoint[1].x - dx);
-			y[2] = (int)(mPoint[1].y - dy);
-			x[3] = (int)(mPoint[0].x - dx);
-			y[3] = (int)(mPoint[0].y - dy);
-			g.fillPolygon(x, y, 4);
+			double dx = f * Math.cos(angle);
+			double dy = -f * Math.sin(angle);
+			GenericPolygon p = new GenericPolygon(4);
+			p.addPoint(mPoint[0].x + dx, mPoint[0].y + dy);
+			p.addPoint(mPoint[1].x + dx, mPoint[1].y + dy);
+			p.addPoint(mPoint[1].x - dx, mPoint[1].y - dy);
+			p.addPoint(mPoint[0].x - dx, mPoint[0].y - dy);
+			context.fillPolygon(p);
 			break;
 			}
 		}
 
-	public void draw2D(Graphics2D g, DepictorTransformation t) {
-		draw(g, t);
-		}
-
+	@Override
 	public boolean contains(double x, double y) {
 		return (findPart(x, y) != PART_NONE);
 		}
 
+	@Override
 	public boolean checkHiliting(double x, double y) {
 		mHiliteStatus = findPart(x, y);
 		return (mHiliteStatus != PART_NONE);
 		}
 
+	@Override
 	public void clearHiliting() {
 		mHiliteStatus = PART_NONE;
 		}
@@ -223,7 +221,8 @@ public class ReactionArrow extends AbstractDrawingObject {
 		return PART_NONE;
 		}
 
-	public Rectangle2D.Double getBoundingRect() {
+	@Override
+	public Rectangle2D.Double getBoundingRect(GenericDrawContext context) {
 		double length = getLength();
 		double f = Math.max(length/8.0, 3.0);
 		double angle = Molecule.getAngle(mPoint[0].x, mPoint[0].y, mPoint[1].x, mPoint[1].y);

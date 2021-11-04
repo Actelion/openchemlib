@@ -33,6 +33,9 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericShape;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -53,9 +56,8 @@ public abstract class AbstractDrawingObject {
 	protected double			mTransformationValue1[];
 	protected double			mTransformationValue2[];
 
-	abstract public void draw(Graphics g, DepictorTransformation t);
-	abstract public void draw2D(Graphics2D g, DepictorTransformation t);
-	abstract public void hilite(Graphics g);
+	abstract public void draw(GenericDrawContext context, DepictorTransformation t);
+	abstract public void hilite(GenericDrawContext context);
 	abstract public void clearHiliting();
 
 	/**
@@ -117,7 +119,7 @@ public abstract class AbstractDrawingObject {
 		mIsSelected = s;
 		}
 
-	public Rectangle2D.Double getBoundingRect() {
+	public Rectangle2D.Double getBoundingRect(GenericDrawContext context) {
 		if (mPoint == null)
 			return null;
 
@@ -145,12 +147,12 @@ public abstract class AbstractDrawingObject {
 		return bounds;
 		}
 
-	public boolean isSurroundedBy(Shape shape) {
+	public boolean isSurroundedBy(GenericShape shape) {
 		if (mPoint == null)
 			return false;
 
 		for (int i=0; i<mPoint.length; i++)
-			if (!shape.contains(mPoint[i]))
+			if (!shape.contains(mPoint[i].x, mPoint[i].y))
 				return false;
 
 		return true;

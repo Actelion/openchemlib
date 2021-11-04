@@ -33,11 +33,12 @@
 
 package com.actelion.research.gui;
 
-import java.awt.*;
-import javax.swing.*;
-import com.actelion.research.chem.*;
-import com.actelion.research.chem.reaction.IReactionMapper;
+import com.actelion.research.chem.StereoMolecule;
 
+import javax.swing.*;
+import java.awt.*;
+
+@Deprecated
 public class JDrawPanel extends JPanel {
     static final long serialVersionUID = 0x20061019;
 

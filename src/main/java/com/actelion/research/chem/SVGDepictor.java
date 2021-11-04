@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.gui.generic.GenericPolygon;
+
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -125,13 +127,13 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void drawPolygon(double[] x, double[] y, int count)
+    protected void drawPolygon(GenericPolygon p)
     {
         StringBuilder s = new StringBuilder("<polygon points=\"");
-        for (int i = 0; i < count; i++) {
-            s.append((int) x[i]);
+        for (int i=0; i<p.getSize(); i++) {
+            s.append(Math.round(p.getX(i)));
             s.append(",");
-            s.append((int) y[i]);
+            s.append(Math.round(p.getY(i)));
             s.append(" ");
         }
         s.append("\" " +

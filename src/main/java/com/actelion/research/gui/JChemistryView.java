@@ -43,7 +43,9 @@ import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.dnd.ReactionDropAdapter;
 import com.actelion.research.gui.dnd.ReactionTransferable;
+import com.actelion.research.gui.generic.GenericDrawContext;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
 import com.actelion.research.util.CursorHelper;
 
@@ -152,7 +154,7 @@ public class JChemistryView extends JComponent
 		}
 
 	public void setContent(StereoMolecule mol, DrawingObjectList drawingObjectList) {
-		mDepictor = new ExtendedDepictor(mol, drawingObjectList, true);
+		mDepictor = new ExtendedDepictor(mol, drawingObjectList);
 		mDepictor.setDisplayMode(mDisplayMode);
 		mDepictor.setFragmentNoColor(mFragmentNoColor);
 		mUpdateMode = UPDATE_SCALE_COORDS;
@@ -161,7 +163,7 @@ public class JChemistryView extends JComponent
 		}
 
 	public void setContent(StereoMolecule[] mol, DrawingObjectList drawingObjectList) {
-		mDepictor = new ExtendedDepictor(mol, drawingObjectList, true);
+		mDepictor = new ExtendedDepictor(mol, drawingObjectList);
 		mDepictor.setDisplayMode(mDisplayMode);
 		mDepictor.setFragmentNoColor(mFragmentNoColor);
 		mUpdateMode = UPDATE_SCALE_COORDS;
@@ -170,7 +172,7 @@ public class JChemistryView extends JComponent
 		}
 
 	public void setContent(Reaction rxn, DrawingObjectList drawingObjectList) {
-		mDepictor = new ExtendedDepictor(rxn, drawingObjectList, rxn == null ? false : rxn.isReactionLayoutRequired(), true);
+		mDepictor = new ExtendedDepictor(rxn, drawingObjectList, rxn == null ? false : rxn.isReactionLayoutRequired());
 		mDepictor.setDisplayMode(mDisplayMode);
 		mDepictor.setFragmentNoColor(mFragmentNoColor);
 		mUpdateMode = UPDATE_SCALE_COORDS;
@@ -249,15 +251,17 @@ public class JChemistryView extends JComponent
 		theSize.width -= insets.left + insets.right;
 		theSize.height -= insets.top + insets.bottom;
 
+		GenericDrawContext context = new SwingDrawContext((Graphics2D)g);
+
 		if (mSize == null
 		 || mSize.width != theSize.width
 		 || mSize.height != theSize.height
 		 || mUpdateMode == UPDATE_SCALE_COORDS) {
-			mDepictor.validateView(g, new Rectangle2D.Double(insets.left, insets.top, theSize.width, theSize.height),
+			mDepictor.validateView(context, new Rectangle2D.Double(insets.left, insets.top, theSize.width, theSize.height),
 									AbstractDepictor.cModeInflateToMaxAVBL);
 			}
 		else if (mUpdateMode == UPDATE_CHECK_COORDS) {
-			mDepictor.validateView(g, new Rectangle2D.Double(insets.left, insets.top, theSize.width, theSize.height), 0);
+			mDepictor.validateView(context, new Rectangle2D.Double(insets.left, insets.top, theSize.width, theSize.height), 0);
 			}
 
 		mSize = theSize;
@@ -293,7 +297,7 @@ public class JChemistryView extends JComponent
 				}
 			}
 
-		mDepictor.paint(g);
+		mDepictor.paint(context);
 
 		if (mWarningMessage != null) {
 			int fontSize = HiDPIHelper.scale(12);
