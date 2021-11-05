@@ -132,6 +132,10 @@ public class CommandLineParser {
         return Integer.parseInt(get(command));
     }
 
+    public long getAsLong(String command) {
+        return Long.parseLong(get(command));
+    }
+
     /**
      * Use contains(...) if only the flag is used.
      * @param command

@@ -324,6 +324,10 @@ public class Formatter {
 	}
 	
 	public static void main(String[] args) {
+
+		System.out.println(format3(Double.NaN));
+
+
 		System.out.println(parseDateTime("10.10.2013 12:23:20"));
 		System.out.println(parseDateTime("10.10.2013 12:23"));
 		System.out.println(parseDateTime("10.10.2013"));

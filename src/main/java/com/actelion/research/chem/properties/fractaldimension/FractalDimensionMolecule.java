@@ -50,6 +50,9 @@ import java.util.List;
  * <p>Modest v. Korff</p>
  * <p>
  * Created by korffmo1 on 28.08.18.
+ * 04.11.2021 Changed resultFracDimCalc.fractalDimension = Math.log10(nMaxFrags) / Math.log10(nBondsAtMaxNumFrag);
+ * into resultFracDimCalc.fractalDimension = Math.log10(nMaxFrags) / Math.log10(nBondsAtMaxNumFrags+1);
+ * otherwise we have a division by zero error nBondsAtMaxNumFrags=1. Resulted in infinite complexity score.
  */
 public class FractalDimensionMolecule {
 
@@ -108,7 +111,7 @@ public class FractalDimensionMolecule {
         int nBondsAtMaxNumFrags = pBnds_MaxNumUniqueFrags.x;
         int nMaxFrags = pBnds_MaxNumUniqueFrags.y;
 
-        resultFracDimCalc.fractalDimension = Math.log10(nMaxFrags) / Math.log10(nBondsAtMaxNumFrags);
+        resultFracDimCalc.fractalDimension = Math.log10(nMaxFrags) / Math.log10(nBondsAtMaxNumFrags+1);
 
         resultFracDimCalc.bondsAtMaxFrag = nBondsAtMaxNumFrags;
 
