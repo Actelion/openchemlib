@@ -172,9 +172,12 @@ public class JProgressPanel extends JPanel implements ActionListener,ProgressCon
 				break;
 			case START_PROGRESS:
 				mProgressBar.setVisible(true);
-				mProgressBar.setMinimum(Math.round(mUpdateFactor*v1));
-				mProgressBar.setMaximum(Math.round(mUpdateFactor*v2));
-				mProgressBar.setValue(Math.round(mUpdateFactor*v1));
+				mProgressBar.setIndeterminate(v1 == v2);
+				if (v1 != v2) {
+					mProgressBar.setMinimum(Math.round(mUpdateFactor * v1));
+					mProgressBar.setMaximum(Math.round(mUpdateFactor * v2));
+					mProgressBar.setValue(Math.round(mUpdateFactor * v1));
+					}
 				if (mCancelButton != null)
 					mCancelButton.setVisible(true);
 				mProgressLabel.setText(text);

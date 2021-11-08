@@ -135,6 +135,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		mDisplayMol = (displayMol == null) ? mMol : displayMol;
 		mDisplayMode = AbstractDepictor.cDModeHiliteAllQueryFeatures;
 		mIsEditable = false;
+		updateBackground();
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		initializeDragAndDrop(dragAction, dropAction);
@@ -187,6 +188,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
 	public void setEnabled(boolean enable) {
 		if (enable != isEnabled()) {
+			updateBackground();
 			repaint();
 			if (mDropAdapter != null)
 				mDropAdapter.setActive(enable);
@@ -236,9 +238,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
 		Color fg = g2.getColor();
-		Color bg = UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground");
-		if (bg == null)
-			bg = getBackground();
+		Color bg = getBackground();
 		g2.setColor(bg);
 		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
 
@@ -259,9 +259,9 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
             mDepictor.setAtomText(mAtomText);
 
 			if (!isEnabled())
-                mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, getBackground()), getBackground());
+                mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, bg), bg);
 			else
-				mDepictor.setForegroundColor(getForeground(), getBackground());
+				mDepictor.setForegroundColor(getForeground(), bg);
 
 			int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
 			SwingDrawContext context = new SwingDrawContext((Graphics2D)g);
@@ -457,6 +457,12 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			mWarningMessage = null;
 			repaint();
 			} ).start();
+		}
+
+	private void updateBackground() {
+		Color bg = UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground");
+		if (bg != null)
+			setBackground(bg);
 		}
 
 	private void handlePopupTrigger(MouseEvent e) {

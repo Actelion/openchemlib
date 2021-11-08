@@ -44,7 +44,7 @@ public interface VDWRadii {
 	 * Pyykkö and Atsumi, doi: 10.1002/chem.200901472
 	 */
 	public static final float[] COVALENT_RADIUS = new float[] {
-			0.00f, 0.32f, 0.46f, 1.33f, // ?,H,He,Li
+			0.25f, 0.32f, 0.46f, 1.33f, // ?,H,He,Li
 			1.02f, 0.85f, 0.75f, 0.71f, // Be,B,C,N
 			0.63f, 0.64f, 0.96f, 1.60f, // O,F,Ne,Na
 			1.39f, 1.26f, 1.16f, 1.11f, // Mg,Al,Si,P
