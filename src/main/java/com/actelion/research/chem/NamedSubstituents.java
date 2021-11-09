@@ -37,25 +37,27 @@ import java.util.TreeMap;
 
 public class NamedSubstituents {
 	private static final String[][] SUBSTITUENT_LIST = {
-			{ "Ac", "gCaHA`AIf`@" },
+			// if multiple options are given, then the first one is the preferred
+			{ "Acyl", "gCaHA`AIf`@" },
 			{ "Alloc", "gNph@l@ILzuR@@" },
-			{ "Allyl", "gC`HL@IVt@@" },
-			{ "Bn;Bzl;Benzyl", "daD@`F@DjUZxHH@@" },
+			{ "Allyl", "Al" },
+			{ "Benzyl;Bn", "daD@`F@DjUZxHH@@" },
 			{ "Boc", "daxD`@S@AIgijj@@" },
 			{ "BOM;BzOM", "deTH`@H@Re[TYj`@@@" },
 			{ "Bs", "dmtDpAdLS`aPAIe]jf`@e`@@" },
 			{ "Bt", "dew@`@aJ@DiY]paej`@@@" },
 			{ "Btm", "did@P@BJ@Die_ahH@@@" },
-			{ "Bu;n-Bu", "gJPHB@IRuP@" },
-			{ "Bz;Benzoyl", "didH`@p@RYm^Eh@@@@" },
+			{ "Butyl;nButyl", "gJPHB@IRuP@" },
+			{ "Benzoyl;Bz", "didH`@p@RYm^Eh@@@@" },
 			{ "Bzh", "dg|@`N@LdbRbtJUB]aAP@@@@" },
 			{ "Cbz", "dmtD`@S@AIgYVUZh@@@@" },
-			{ "Cy", "gOpHL@IToWUU@@" },
-			{ "cyclobutyl", "gKPHL@IThuT@@" },
-			{ "cycloheptyl", "daD@`L@DjWVzjj`@" },
-			{ "cyclooctyl", "did@`L@DjWWajjj@@" },
-			{ "cyclopentyl", "gFpHL@ITimUP@" },
-			{ "cyclopropyl", "gBPHL@Qxjh@" },
+			{ "cButyl", "gKPHL@IThuT@@" },
+			{ "cHeptyl", "daD@`L@DjWVzjj`@" },
+			{ "cHexyl", "gOpHL@IToWUU@@" },
+			{ "cOctyl", "did@`L@DjWWajjj@@" },
+			{ "cPentyl", "gFpHL@ITimUP@" },
+			{ "cPropyl", "gBPHL@Qxjh@" },
+			{ "COOH", "gC`h@l@ILt@@ !Bb@K~@Hc}" },
 			{ "DEAE", "daz@`@x@RiUjj`@" },
 			{ "DEIPS", "diD@P@\\B@DjfVjj`@" },
 			{ "DMIPS", "gNpD@xD@RjZjh@" },
@@ -67,15 +69,15 @@ public class NamedSubstituents {
 			{ "DPIPS", "fdyAA@H@\\B@FRRIQSQIHzp_Qjh@h@@@@@" },
 			{ "DPTBS", "fleAA@H@\\B@FRRIQSRIIWNbEMU@EP@@@@@" },
 			{ "DTBMS", "dmT@P@\\B@Djffjjjh@@" },
-			{ "Et", "eMBD@ch@" },
+			{ "Ethyl", "eMBD@ch@" },
 			{ "Fmoc", "fde@b@@Hp@IL{LrjxeVCzKUT@@@P@@@" },
-			{ "i-Am", "gGPHJ@YIDZj@@" },
-			{ "i-Bu", "gJPHB@ITuP@" },
+			{ "iAmyl", "gGPHJ@YIDZj@@" },
+			{ "iButyl", "gJPHB@ITuP@" },
 			{ "Im", "gFtHAj@IRnKSP@" },
-			{ "i-Pr", "gC`HL@Qz`@" },
+			{ "iPropyl", "gC`HL@Qz`@" },
 			{ "MDIPS", "diD@P@\\B@DjfZjj`@" },
 			{ "MDPS", "foA@A@@NA@CIIEEBdeeVLzj@@@@@@" },
-			{ "Me", "eFBH@c@@" },
+			{ "Methyl", "eFBH@c@@" },
 			{ "MEM", "gNphAR@IRoUT@@" },
 			{ "Mes", "deT@`J@DjY{[`bB`@@" },
 			{ "MMTr", "ffcAB@@Z@Dim]ifuWYrI\\uh@Jh@@@@@@" },
@@ -83,31 +85,32 @@ public class NamedSubstituents {
 			{ "MPM;PMB", "deTH`@d@Rfuunh@J@@" },
 			{ "Ms", "gJPdH`DD@cuh@" },
 			{ "MTM", "gC`D@DX@Rfh@" },
-			{ "m-Tolyl", "daD@`N@DjWjXHB@@" },
+			{ "mTolyl", "daD@`N@DjWjXHB@@" },
 			{ "N3", "gClHaE`@RnReX@" },
-			{ "n-Am;Am", "gGPHJ@IRmU@@" },
-			{ "neo-Am", "gGPHJ@IUMU@@" },
-			{ "nitro;NO2", "gChhhE`BRnRYh@" },
+			{ "nAmyl;Amyl", "gGPHJ@IRmU@@" },
+			{ "neoAm", "gGPHJ@IUMU@@" },
+			{ "NO2,Nitro", "gChhhE`BRnRYh@" },
 			{ "Np", "deVDaHAI@HeNR[e_aZ@B@@" },
-			{ "n-Pr;Pr", "gC`HL@IST@@" },
-			{ "o-Tolyl", "daD@`J@DjYvxH`@@" },
-			{ "Ph;Phenyl", "gOpHL@IToVD@@@" },
+			{ "nPropyl;Propyl", "gC`HL@IST@@" },
+			{ "oTolyl", "daD@`J@DjYvxH`@@" },
+			{ "Phenyl", "gOpHL@IToVD@@@" },
 			{ "Pht", "dcLL`@RU@Dfyed]ZBA`@@" },
 			{ "Piv;Pv", "gNqHA`AIffj`@" },
 			{ "PMBM", "dcLD`@T`AJUm]FZh@J@@" },
 			{ "PNB", "dcNLaHAEt@bTyInUvxV`@f@@" },
 			{ "Poc", "didD`@S@AIgexVjj`@" },
 			{ "PPi", "diDFsHSB[`|J|A@Lxn{lddqdZih@@" },
-			{ "p-Tolyl", "daD@`N@DjWzXHB@@" },
-			{ "s-Am", "gGPHL@YIDZj@@" },
-			{ "s-Bu;s-Butyl", "gJPHL@ITuP@" },
+			{ "pTolyl", "daD@`N@DjWzXHB@@" },
+			{ "sAmyl", "gGPHL@YIDZj@@" },
+			{ "sButyl", "gJPHL@ITuP@" },
 			{ "SEM", "diDHPFApD@rRQUJjj`@" },
 			{ "SES", "dedDpHP@``AgCIICeHmUT@@" },
-			{ "t-Am", "gGPHB@IUMU@@" },
+			{ "SO3H", "gJQdHl@``D^m@@" },
+			{ "tAmyl", "gGPHB@IUMU@@" },
 			{ "TBDMS;TBS", "dax@P@\\B@Djfjjh@@" },
 			{ "TBDPS", "fdy@A@@NA@CIIEEEIde]XOhuPAT@@@@@" },
 			{ "TBMPS", "dg\\HPHApH@rRQJJPjg]UAT@@@" },
-			{ "t-Bu;t-Butyl", "gJPHB@Q}T@@" },
+			{ "tButyl,tBu", "gJPHB@Q}T@@" },
 			{ "TDS", "ded@P@\\B@LddTeeUUP@@" },
 			{ "Tf", "daxDhHP@``BiAiCiCIICHmU@@" },
 			{ "TFA", "gNqBJIARFdF@YEHYUL@@" },
@@ -116,7 +119,7 @@ public class NamedSubstituents {
 			{ "THP", "gOqH@PAJYZzjh@" },
 			{ "TIPS", "dmT@P@\\B@DjfYjjjh@@" },
 			{ "TMS", "gJPD@xD@czh@" },
-			{ "Tos;Ts", "dmtDPHP@``CIICLeaeZ@B@@" },
+			{ "Tosyl;Ts", "dmtDPHP@``CIICLeaeZ@B@@" },
 			{ "Troc", "diDDHJxHaHcH`PCHiBeJjf@@" },
 			{ "Trt", "fbm@B@A@FRQIRKQPiIZdoIcdHJ`@@@@@@" },
 			{ "Xyl", "did@`J@DjYynBHH@@" },
@@ -124,12 +127,43 @@ public class NamedSubstituents {
 	private static TreeMap<String,String> sIDCodeMap = null;
 
 	private static void createMap() {
-		sIDCodeMap = new TreeMap<String,String>();
+		sIDCodeMap = new TreeMap<>();
 		for (String[] sp:SUBSTITUENT_LIST) {
 			String[] key = sp[0].split(";");
 			for (String k:key)
 				sIDCodeMap.put(normalize(k), sp[1]);
 			}
+		}
+
+	/**
+	 * Checks, whether the given nameStart either exactly matches one of the dictionary names
+	 * or whether exactly one dictionary name starts with the given nameStart.
+	 * If one of these conditions occurr, then the full dictionary name is returned.
+	 * @param nameStart
+	 * @return null, "", or dictionary name if no, multiple, or exactly one name matches nameStart
+	 */
+	public static String identify(String nameStart) {
+		if (nameStart == null || nameStart.length() == 0)
+			return null;
+
+		String name = null;
+		nameStart = normalize(nameStart);
+
+		for (String[] sp:SUBSTITUENT_LIST) {
+			String[] key = sp[0].split(";");
+			for (String k:key) {
+				if (normalize(k).equals(nameStart))
+					return k;
+				if (normalize(k).startsWith(nameStart)) {
+					if (name == null)
+						name = k;
+					else
+						return "";
+					}
+				}
+			}
+
+		return name;
 		}
 
 	private static String normalize(String s) {

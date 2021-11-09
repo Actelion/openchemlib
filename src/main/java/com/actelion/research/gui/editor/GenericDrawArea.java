@@ -143,7 +143,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown,
 			mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
-	private String mOtherLabel, mWarningMessage;
+	private String mOtherLabel,mWarningMessage,mAtomKeyStrokeSuggestion;
 	private String[] mAtomText;
 	private ExtendedDepictor mDepictor;
 	private StereoMolecule mMol;        // molecule being modified directly by the drawing editor
@@ -319,12 +319,22 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			String s = mAtomKeyStrokeBuffer.toString();
 			int validity = getAtomKeyStrokeValidity(s);
 			context.setColor((validity == KEY_IS_ATOM_LABEL) ? foreground
-					: (validity == KEY_IS_SUBSTITUENT) ? Color.BLUE
-					: (validity == KEY_IS_VALID_START) ? Color.GRAY : Color.RED);
-			if (validity == KEY_IS_INVALID)
-				s = s + "<unknown>";
-			context.setFont(24, false, false);
+						   : (validity == KEY_IS_SUBSTITUENT) ? Color.BLUE : Color.GRAY);
+			if (validity == KEY_IS_ATOM_LABEL)
+				s = Molecule.cAtomLabel[Molecule.getAtomicNoFromLabel(s)];
+			else if (validity == KEY_IS_SUBSTITUENT)
+				s = mAtomKeyStrokeSuggestion.substring(0, s.length());
+			int fontSize = 3*context.getFontSize()/2;
+			context.setFont(fontSize, false, false);
 			context.drawString(x, y, s);
+			if (validity == KEY_IS_INVALID) {
+				context.setColor(Color.RED);
+				context.drawCenteredString(x+context.getBounds(s).getWidth()/2, y+fontSize, "<unknown>");
+				}
+			if (validity == KEY_IS_SUBSTITUENT) {
+				context.setColor(Color.GRAY);
+				context.drawString(x+context.getBounds(s).getWidth(), y, mAtomKeyStrokeSuggestion.substring(s.length()));
+			}
 		}
 
 		context.setColor(foreground);
@@ -2522,23 +2532,16 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		return repaintNeeded;
 	}
 
-	private int getAtomKeyStrokeValidity (String s){
+	private int getAtomKeyStrokeValidity(String s){
 		if (Molecule.getAtomicNoFromLabel(s) != 0)
 			return KEY_IS_ATOM_LABEL;
-		if (NamedSubstituents.getSubstituentIDCode(s) != null)
-			return KEY_IS_SUBSTITUENT;
-		if (isValidAtomKeyStrokeStart(s))
+		mAtomKeyStrokeSuggestion = NamedSubstituents.identify(s);
+		if (mAtomKeyStrokeSuggestion == null)
+			return isValidAtomKeyStrokeStart(s) ? KEY_IS_VALID_START : KEY_IS_INVALID;
+		if (mAtomKeyStrokeSuggestion.length() == 0)
 			return KEY_IS_VALID_START;
-		return KEY_IS_INVALID;
-	}
-
-	/**
-	 * @param s
-	 * @return true if s is either a valid atom symbol or a valid substituent name
-	 */
-	private boolean isValidAtomKeyStroke (String s){
-		return Molecule.getAtomicNoFromLabel(s) != 0
-				|| NamedSubstituents.getSubstituentIDCode(s) != null;
+		else
+			return KEY_IS_SUBSTITUENT;
 	}
 
 	/**
@@ -2547,11 +2550,11 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	 */
 	private boolean isValidAtomKeyStrokeStart (String s){
 		if (s.length()<3)
-			for (int i = 1; i<Molecule.cAtomLabel.length; i++)
+			for (int i=1; i<Molecule.cAtomLabel.length; i++)
 				if (Molecule.cAtomLabel[i].startsWith(s))
 					return true;
 
-		return NamedSubstituents.isValidSubstituentNameStart(s);
+		return false;
 	}
 
 	private void expandAtomKeyStrokes (String keyStrokes){
@@ -2566,6 +2569,9 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 				return;
 			}
 		}
+
+		if (mAtomKeyStrokeSuggestion != null && mAtomKeyStrokeSuggestion.length() != 0)
+			keyStrokes = mAtomKeyStrokeSuggestion;
 
 		StereoMolecule substituent = NamedSubstituents.getSubstituent(keyStrokes);
 		if (substituent != null) {
