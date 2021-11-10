@@ -18,11 +18,10 @@
 package com.actelion.research.gui.dnd;
 
 import com.actelion.research.chem.AbstractDepictor;
-import com.actelion.research.chem.Depictor2D;
 import com.actelion.research.chem.ExtendedDepictor;
-import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.dnd.ChemistryFlavors;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.gui.swing.SwingDrawContext;
 
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
@@ -166,13 +165,14 @@ public abstract class ReactionDragAdapter implements DragSourceListener /*,DragS
 				Object o = t.getTransferData(ChemistryFlavors.DF_SERIALIZED_REACTION);
 				if (o instanceof Reaction) {
 					Reaction rxn = (Reaction) o;
-					ExtendedDepictor depict = new ExtendedDepictor(rxn, null, false, true);
+					ExtendedDepictor depict = new ExtendedDepictor(rxn, null, false);
 					BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 					Graphics g = img.getGraphics();
 					((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 					((Graphics2D)g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-					depict.validateView(g, new Rectangle2D.Double(0, 0, width, height), AbstractDepictor.cModeInflateToMaxAVBL);
-					depict.paint(g);
+					SwingDrawContext context = new SwingDrawContext((Graphics2D)g);
+					depict.validateView(context, new Rectangle2D.Double(0, 0, width, height), AbstractDepictor.cModeInflateToMaxAVBL);
+					depict.paint(context);
 					return img;
 				}
 			} catch (IOException e1) {

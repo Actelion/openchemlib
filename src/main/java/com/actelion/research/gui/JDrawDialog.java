@@ -31,6 +31,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
+@Deprecated
 public class JDrawDialog extends JDialog implements ActionListener,KeyListener {
     static final long serialVersionUID = 0x20061019;
 

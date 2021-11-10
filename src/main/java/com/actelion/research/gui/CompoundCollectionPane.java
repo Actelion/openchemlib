@@ -429,12 +429,12 @@ public class CompoundCollectionPane<T> extends JScrollPane
 							}
 
 						Depictor2D d = new Depictor2D(compound, mDisplayMode);
-						d.validateView(g,
+						d.validateView((Graphics2D)g,
 									   new Rectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height),
 									   AbstractDepictor.cModeInflateToMaxAVBL);
 
 						d.setForegroundColor(foreground, background);
-						d.paint(g);
+						d.paint((Graphics2D)g);
 
 						if (mSelectedIndex == i || mHighlightedIndex == i) {
 							g.setColor(!mIsEnabled ? ColorHelper.getContrastColor(Color.GRAY, background)

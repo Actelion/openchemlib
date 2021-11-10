@@ -194,12 +194,10 @@ public class FileHelper extends CompoundFileHelper {
 		final AtomicBoolean exists = new AtomicBoolean(false);
 		final AtomicBoolean done = new AtomicBoolean(false);
 
-		new Thread(new Runnable() {
-			@Override public void run() {
-				exists.set(file.exists());
-				done.set(true);
-				}
-			}).start();
+		new Thread(() -> {
+			exists.set(file.exists());
+			done.set(true);
+			} ).start();
 
 		long start = System.currentTimeMillis();
 		do {

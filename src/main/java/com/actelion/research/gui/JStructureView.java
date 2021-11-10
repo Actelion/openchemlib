@@ -24,13 +24,16 @@ import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDragAdapter;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
+import com.actelion.research.gui.generic.GenericDepictor;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
 import com.actelion.research.util.CursorHelper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -52,7 +55,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	private ArrayList<StructureListener> mListener;
 	private String mIDCode;
 	private StereoMolecule mMol,mDisplayMol;
-    private Depictor2D mDepictor;
+    private GenericDepictor mDepictor;
 	private boolean mShowBorder,mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mOpaqueBackground,
 					mIsEditable,mDisableBorder;
 	private int mChiralTextPosition,mDisplayMode;
@@ -132,6 +135,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		mDisplayMol = (displayMol == null) ? mMol : displayMol;
 		mDisplayMode = AbstractDepictor.cDModeHiliteAllQueryFeatures;
 		mIsEditable = false;
+		updateBackground();
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		initializeDragAndDrop(dragAction, dropAction);
@@ -184,6 +188,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
 	public void setEnabled(boolean enable) {
 		if (enable != isEnabled()) {
+			updateBackground();
 			repaint();
 			if (mDropAdapter != null)
 				mDropAdapter.setActive(enable);
@@ -233,9 +238,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
 		Color fg = g2.getColor();
-		Color bg = UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground");
-		if (bg == null)
-			bg = getBackground();
+		Color bg = getBackground();
 		g2.setColor(bg);
 		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
 
@@ -251,19 +254,20 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		g2.setColor(fg);
 
 		if (mDisplayMol != null && mDisplayMol.getAllAtoms() != 0) {
-			mDepictor = new Depictor2D(mDisplayMol);
+			mDepictor = new GenericDepictor(mDisplayMol);
             mDepictor.setDisplayMode(mDisplayMode);
             mDepictor.setAtomText(mAtomText);
 
 			if (!isEnabled())
-                mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, getBackground()), getBackground());
+                mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, bg), bg);
 			else
-				mDepictor.setForegroundColor(getForeground(), getBackground());
+				mDepictor.setForegroundColor(getForeground(), bg);
 
 			int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
-			mDepictor.validateView(g, new Rectangle2D.Double(insets.left, insets.top, theSize.width,theSize.height),
+			SwingDrawContext context = new SwingDrawContext((Graphics2D)g);
+			mDepictor.validateView(context, new Rectangle2D.Double(insets.left, insets.top, theSize.width,theSize.height),
 								   AbstractDepictor.cModeInflateToMaxAVBL | mChiralTextPosition | avbl);
-            mDepictor.paint(g);
+            mDepictor.paint(context);
 			}
 
 		if (mWarningMessage != null) {
@@ -453,6 +457,12 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			mWarningMessage = null;
 			repaint();
 			} ).start();
+		}
+
+	private void updateBackground() {
+		Color bg = UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground");
+		if (bg != null)
+			setBackground(bg);
 		}
 
 	private void handlePopupTrigger(MouseEvent e) {

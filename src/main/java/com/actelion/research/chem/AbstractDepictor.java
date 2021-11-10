@@ -33,6 +33,7 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.gui.generic.GenericPolygon;
 import com.actelion.research.util.ColorHelper;
 
 import java.awt.*;
@@ -41,7 +42,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public abstract class AbstractDepictor {
+public abstract class AbstractDepictor<T> {
 	/*
 	 * If displayMode includes cDModeColorizeAtomLabels, then all atom labels are drawn
 	 * in a default color, which may be overridden by explicit atom colors or atom error colors.
@@ -167,7 +168,7 @@ public abstract class AbstractDepictor {
 	private Color					mOverruleForeground,mOverruleBackground,mBondBGHiliteColor,mBondFGHiliteColor,
 									mExcludeGroupFGColor,mExcludeGroupBGColor,mCustomForeground,mCustomBackground,
 									mRGBColor;
-	protected Object				mG;
+	protected T                     mContext;
 
 	public AbstractDepictor(StereoMolecule mol) {
 		this(mol, 0);
@@ -265,13 +266,13 @@ public abstract class AbstractDepictor {
 	 * Returns full transformation that moves/scales original molecule into viewRect.
 	 * This method considers atom labels when generating the bounding box. This includes
 	 * atom labels of drawn implicit hydrogen atoms.
-	 * @param g
+	 * @param context
 	 * @param viewRect
 	 * @param mode is typically (cModeInflateToMaxAVBL | maximum_desired_bond_length)
 	 * @return
 	 */
-	public DepictorTransformation updateCoords(Graphics g, Rectangle2D.Double viewRect, int mode) {
-		validateView(g, viewRect, mode);
+	public DepictorTransformation updateCoords(T context, Rectangle2D.Double viewRect, int mode) {
+		validateView(context, viewRect, mode);
 		if (mTransformation.isVoidTransformation()) {
 			return null;
 			}
@@ -312,12 +313,12 @@ public abstract class AbstractDepictor {
 	 * such that the molecule is centered in viewRect and reduced in size if it doesn't fit.
 	 * If mode contains cModeInflateToMaxAVBL, then it is scaled to reach the desired mean bond length,
 	 * or to fill viewRect, whatever is reached first.
-	 * @param g
+	 * @param context
 	 * @param viewRect
 	 * @param mode (<0> or cModeInflateToMaxAVBL) + <desired mean bond length>
 	 * @return incremental transformation being applied to depictor's current transformation 
 	 */
-	public DepictorTransformation validateView(Object g, Rectangle2D.Double viewRect, int mode) {
+	public DepictorTransformation validateView(T context, Rectangle2D.Double viewRect, int mode) {
 		if (mMol.getAllAtoms() == 0)
 			return null;
 
@@ -329,7 +330,7 @@ public abstract class AbstractDepictor {
 		mpDot.clear();
 		mpTabuZone.clear();
 
-	    mG = g;
+	    mContext = context;
 		calculateParameters();
 
 		mpSetNormalLabelSize();
@@ -534,13 +535,14 @@ public abstract class AbstractDepictor {
 		mChiralTextSize = averageBondLength * cFactorChiralTextSize + 0.5f;
 		}
 
-	public synchronized void paint(Object g) {
+
+	public synchronized void paint(T context) {
 		if (mMol.getAllAtoms() == 0)
 		    return;
 
 		mMol.ensureHelperArrays(requiredHelperArrays());
 
-		mG = g;
+		mContext = context;
 		calculateParameters();
 
 		int[][] esrGroupMemberCount = mMol.getESRGroupMemberCounts();
@@ -2339,29 +2341,26 @@ public abstract class AbstractDepictor {
 
 
 	private void drawWedge(DepictorLine theWedge,int atom1, int atom2) {
-		double p1x[],p1y[],p2x[],p2y[];
-		double xdiff,ydiff;
+		double xdiff = (theWedge.y1 - theWedge.y2) / 9;
+		double ydiff = (theWedge.x2 - theWedge.x1) / 9;
+		double xe1 = (theWedge.x2 + xdiff);
+		double ye1 = (theWedge.y2 + ydiff);
+		double xe2 = (theWedge.x2 - xdiff);
+		double ye2 = (theWedge.y2 - ydiff);
+		double xm1 = (theWedge.x1 + xe1) / 2;
+		double ym1 = (theWedge.y1 + ye1) / 2;
+		double xm2 = (theWedge.x1 + xe2) / 2;
+		double ym2 = (theWedge.y1 + ye2) / 2;
 
-		xdiff = (theWedge.y1 - theWedge.y2) / 9;
-		ydiff = (theWedge.x2 - theWedge.x1) / 9;
-		p1x = new double[3];
-		p1y = new double[3];
-		p2x = new double[4];
-		p2y = new double[4];
-		p1x[0] = theWedge.x1;
-		p1y[0] = theWedge.y1;
-		p2x[2] = (theWedge.x2 + xdiff);
-		p2y[2] = (theWedge.y2 + ydiff);
-		p2x[3] = (theWedge.x2 - xdiff);
-		p2y[3] = (theWedge.y2 - ydiff);
-		p1x[1] = (p1x[0] + p2x[2]) / 2;
-		p1y[1] = (p1y[0] + p2y[2]) / 2;
-		p1x[2] = (p1x[0] + p2x[3]) / 2;
-		p1y[2] = (p1y[0] + p2y[3]) / 2;
-		p2x[0] = p1x[2];
-		p2y[0] = p1y[2];
-		p2x[1] = p1x[1];
-		p2y[1] = p1y[1];
+		GenericPolygon p1 = new GenericPolygon(3);
+		GenericPolygon p2 = new GenericPolygon(4);
+		p1.addPoint(theWedge.x1, theWedge.y1);
+		p1.addPoint(xm1, ym1);
+		p1.addPoint(xm2, ym2);
+		p2.addPoint(xm2, ym2);
+		p2.addPoint(xm1, ym1);
+		p2.addPoint(xe1, ye1);
+		p2.addPoint(xe2, ye2);
 
 		int color1,color2;
 		if (mMol.isBondForegroundHilited(mMol.getBond(atom1, atom2))) {
@@ -2379,9 +2378,9 @@ public abstract class AbstractDepictor {
 			}
 
         setColor(color1);
-		drawPolygon(p1x,p1y,3);
+		drawPolygon(p1);
 		setColor(color2);
-		drawPolygon(p2x,p2y,4);
+		drawPolygon(p2);
 		setColor(mStandardForegroundColor);
 		}
 
@@ -2554,27 +2553,9 @@ public abstract class AbstractDepictor {
             }
         }
 
-/*	private void drawBlackArc(MyRect theArc,double arcAngle,boolean inverted) {
-		double xdif = (theArc.x2 - theArc.x1);
-		double ydif = (theArc.y2 - theArc.y1);
-		double length = Math.sqrt(xdif*xdif + ydif*ydif);
-		double theAngle = (inverted) ? (Math.PI - cArcAngle) / 2
-									 : (cArcAngle - Math.PI) / 2;
-		double radius = (length / 2) / Math.cos(theAngle);
-		double centerX = theArc.x1 + radius * Math.sin(arcAngle + theAngle);
-		double centerY = theArc.y1 + radius * Math.cos(arcAngle + theAngle);
-
-		mG.drawArc((int)(centerX - radius + 0.5),(int)(centerY - radius + 0.5),
-				   (int)(2 * radius + 0.5),(int)(2 * radius + 0.5),
-				   (int)((arcAngle - theAngle) * 180 / Math.PI) - 90,
-				   (inverted) ? (int)(-cArcAngle * 180 / Math.PI + 0.5)
-				              : (int)(cArcAngle * 180 / Math.PI + 0.5));
-		}	*/
-
-
 	protected abstract void drawBlackLine(DepictorLine theLine);
     protected abstract void drawDottedLine(DepictorLine theLine);
-	protected abstract void drawPolygon(double[] x, double[] y, int count);
+	protected abstract void drawPolygon(GenericPolygon p);
 	protected abstract void drawString(String theString,double x,double y);
 	protected abstract void fillCircle(double x, double y, double d);
 	protected abstract double getLineWidth();

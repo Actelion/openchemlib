@@ -46,6 +46,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
 
+@Deprecated
 public class JAtomQueryFeatureDialog extends JDialog
 					 implements ActionListener,ItemListener {
     static final long serialVersionUID = 0x20060720;

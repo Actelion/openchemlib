@@ -33,29 +33,15 @@
 
 package com.actelion.research.gui;
 
+import com.actelion.research.chem.TextDrawingObject;
 import info.clearthought.layout.TableLayout;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-
-import com.actelion.research.chem.TextDrawingObject;
-
+@Deprecated
 public class JTextDrawingObjectDialog extends JDialog implements ActionListener {
     static final long serialVersionUID = 0x20110325;
 

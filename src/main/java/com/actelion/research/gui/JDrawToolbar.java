@@ -34,7 +34,6 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.gui.hidpi.HiDPIHelper;
-import com.actelion.research.gui.hidpi.HiDPIIconButton;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -46,6 +45,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
 
+@Deprecated
 public class JDrawToolbar extends JComponent
         implements MouseListener,MouseMotionListener {
     static final long serialVersionUID = 0x20090402;
@@ -98,7 +98,7 @@ public class JDrawToolbar extends JComponent
 
 	private JDrawArea	mArea;
 	private Image		mImageUp,mImageDown,mESRImageUp,mESRImageDown;
-	protected int			mCurrentTool,mPressedButton,mMode,mESRSelected,mESRHilited;
+	protected int		mCurrentTool,mPressedButton,mMode,mESRSelected,mESRHilited;
     protected boolean     mESRMenuVisible;
 
 	public JDrawToolbar(JDrawArea theArea) {
@@ -125,8 +125,6 @@ public class JDrawToolbar extends JComponent
 
 
 	private void init() {
-		MediaTracker t = new MediaTracker(this);
-
 		mImageDown = createImage("drawButtonsDown.gif");
 		mImageUp = createImage("drawButtonsUp.gif");
         mESRImageDown = createImage("ESRButtonsDown.gif");

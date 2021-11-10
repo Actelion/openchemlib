@@ -3,15 +3,15 @@ package com.actelion.research.gui.dock;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 
-import java.awt.*;
-
 import javax.swing.border.AbstractBorder;
+import java.awt.*;
 
 public class ShadowBorder extends AbstractBorder {
     private static final long serialVersionUID = 0x20070807;
 
     private static int sBorderWidth,sThinSize;
     private Insets mInsets;
+    private Color mColor;
 
     /**
      * Creates a border with a grey 1 pixel line on left and top
@@ -36,6 +36,10 @@ public class ShadowBorder extends AbstractBorder {
     	return sBorderWidth;
 		}
 
+	public void setColor(Color c) {
+    	mColor = c;
+		}
+
     /**
      * Creates a border with a grey 1 pixel line on left and top
      * and a 3 pixel wide shadow on right and bottom.
@@ -50,13 +54,15 @@ public class ShadowBorder extends AbstractBorder {
         return mInsets;
         }
 
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
     	super.paintBorder(c, g, x, y, w, h);
 
     	Color[] shadow = new Color[shadowSize()];
-        shadow[0] = c.getBackground().darker();
+        shadow[0] = mColor != null ? mColor : c.getBackground().darker();
+        Color parentBG = c.getParent().getBackground();
         for (int i=1; i<shadow.length; i++)
-	        shadow[i] = ColorHelper.intermediateColor(shadow[0], c.getBackground(), 0.3f+0.7f*(float)Math.pow((float)i/shadow.length, 1.6));
+	        shadow[i] = ColorHelper.intermediateColor(shadow[0], parentBG, 0.3f+0.7f*(float)Math.pow((float)i/shadow.length, 1.6));
 
         g.translate(x, y);
 
@@ -69,7 +75,7 @@ public class ShadowBorder extends AbstractBorder {
         h -= mInsets.top;
         w -= mInsets.left;
 
-		g.setColor(c.getBackground());
+		g.setColor(parentBG);
 		g.fillRect(r+1, t-1, shadow.length-1, shadow.length);
 		g.fillRect(l-1, b+1, shadow.length, shadow.length-1);
 //		g.fillRect(r+shadow.length-1, t+shadow.length-2, 1, 1);
