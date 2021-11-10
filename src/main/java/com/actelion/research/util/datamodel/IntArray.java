@@ -107,6 +107,11 @@ public class IntArray implements Serializable {
     	
     	hash = h;
     }
+
+
+    public int getCapacity(){
+		return data.length;
+	}
     
     /**
      * Computational expensive operation!
