@@ -86,7 +86,7 @@ public class ContainerBitArray {
 		
 		li = new ArrayList<IBitArray>(capacity);
 		
-		
+
 		
 		addResources(capacity);
 	}
@@ -140,16 +140,18 @@ public class ContainerBitArray {
 	public IBitArray get(){
 		
 		if(arrAvailable.length()==0){
-			
-			addResources(capacityAdd);
-			
-			if(ELUSIVE){
-				System.out.println("ContainerBitArray capacity increased by " + capacityAdd + " objects.");
-			}
 
-			if(capacityAdd<MAX_CAPACITY_ADD) {
-				capacityAdd <<= 1;
-			}
+			throw new CapacityReachedError("Maximum capacity " + arrAvailable.getCapacity() + " reached!");
+
+//			addResources(capacityAdd);
+//
+//			if(ELUSIVE){
+//				System.out.println("ContainerBitArray capacity increased by " + capacityAdd + " objects.");
+//			}
+//
+//			if(capacityAdd<MAX_CAPACITY_ADD) {
+//				capacityAdd <<= 1;
+//			}
 			
 		}
 		
@@ -195,6 +197,12 @@ public class ContainerBitArray {
 	 */
 	public static void setELUSIVE(boolean elusive) {
 		ELUSIVE = elusive;
+	}
+
+	public static class CapacityReachedError extends RuntimeException {
+		public CapacityReachedError(String msg) {
+			super(msg);
+		}
 	}
 
 }
