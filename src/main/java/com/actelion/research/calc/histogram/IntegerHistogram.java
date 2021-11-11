@@ -23,7 +23,7 @@ public class IntegerHistogram {
 	private int [][] arrBins;
 	
 	private int [] arrCounts;
-	
+
 	public IntegerHistogram(int [][] arrBins) {
 		this(arrBins, true);
 	}
@@ -41,7 +41,6 @@ public class IntegerHistogram {
 				}
 			}
 		}
-		
 	}
 	
 	/**
@@ -49,16 +48,11 @@ public class IntegerHistogram {
 	 * @param v
 	 */
 	public void add(int v){
-		
 		for (int i = 0; i < arrBins.length; i++) {
-			
 			if((v >= arrBins[i][0]) && (v < arrBins[i][1])){
 				arrCounts[i]++;
 			}
-			
-			
 		}
-		
 	}
 	
 	public void add(int [] a){
@@ -75,14 +69,12 @@ public class IntegerHistogram {
 
 	public int getTotalCounts(){
 		int c = 0;
-		
 		for (int i = 0; i < arrBins.length; i++) {
 			c += arrCounts[i];
 		}
-		
 		return c;
 	}
-	
+
 	public int [] getBinWithNPercentOfAllCounts(int percent){
 		
 		int nTotal = getTotalCounts();
