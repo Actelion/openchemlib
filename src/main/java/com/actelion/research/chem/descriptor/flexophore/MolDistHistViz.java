@@ -737,20 +737,18 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		}
 		return num;
 	}
-	
+
+	/**
+	 * Canonizes the {@link MolDistHistViz}
+	 * Must be called after changes in the nodes or distance histograms.
+	 */
 	public void realize() {
-		// super.realize();
-		
 		for(PPNodeViz node : liPPNodeViz){
 			node.realize();
 		}
-		
 		canonize();
-		
 		calculate();
-		
 		finalized=true;
-		
 	}
 	
 	public void blurrSingleBinHistograms(){
@@ -985,6 +983,10 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		return sb.toString();
 	}
 
+	/**
+	 *
+	 * @return A canonized representation of the object.
+	 */
 	public String toString(){
 		
 		if(!finalized)
@@ -1013,7 +1015,35 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		
 		return b.toString();
 	}
-	
+
+	/**
+	 * Only nodes without coordinates
+	 * @return
+	 */
+	public String toStringPPNodes(){
+
+		if(!finalized)
+			realize();
+
+		StringBuffer b = new StringBuffer();
+
+		b.append("[");
+		for (int i = 0; i < getNumPPNodes(); i++) {
+
+			PPNodeViz ppNodeViz = getNode(i);
+
+			b.append(ppNodeViz.toStringLongPPNode());
+
+			if(i<getNumPPNodes()-1){
+				b.append(" ");
+			} else {
+				b.append("]");
+			}
+		}
+
+		return b.toString();
+	}
+
 	public String toStringShort(){
 		
 		if(!finalized)

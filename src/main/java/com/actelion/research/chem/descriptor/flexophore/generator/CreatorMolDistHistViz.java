@@ -221,7 +221,7 @@ public class CreatorMolDistHistViz {
         return mdhv;
     }
 
-    private static MolDistHistViz create(List<MultCoordFragIndex> liMultCoordFragIndex, Molecule3D molecule3D){
+    public static MolDistHistViz create(List<MultCoordFragIndex> liMultCoordFragIndex, Molecule3D molecule3D){
 
         MolDistHistViz molDistHistViz = new MolDistHistViz(liMultCoordFragIndex.size(), molecule3D);
 
@@ -387,7 +387,7 @@ public class CreatorMolDistHistViz {
      * @param molecule3D
      * @param liMultCoordFragIndex
      */
-    private static void calcFragmentCenter(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
+    public static void calcFragmentCenter(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
 
         for (MultCoordFragIndex multCoordFragIndex : liMultCoordFragIndex) {
 

@@ -261,7 +261,15 @@ public class PPNodeViz extends PPNode implements Serializable {
 	public void setSimilarityMappingNodes(float similarityMappingNodes) {
 		this.similarityMappingNodes = similarityMappingNodes;
 	}
-	
+
+	/**
+	 *
+	 * @return
+	 */
+	public String toStringLongPPNode(){
+		return super.toStringLong();
+	}
+
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append("(");
