@@ -266,13 +266,67 @@ public class IsomericSmilesCreator {
 				  || mMol.getBondParity(bond) == Molecule.cBondParityZor2)) {
 					SmilesAtom parentSA = mGraphAtomList.get(mSmilesIndex[currentSA.parent]);
 
-					int halfParity1 = parentSA.ezHalfParity;
-					if (halfParity1 == 0)
-						halfParity1 = parentSA.ezHalfParity = 1;
+					// halfParities translate 1-to-1 into the bond symbol ('/' or '\').
+					// The value of halfParity1 is arbitrary, but for canonical SMILES its value must be reproducible.
+					int halfParity1 = 0;
+					boolean leftInversion = false;
+					if (parentSA.parent != -1) {  // If the parent graph includes the single bond beyond the stereo double bond
+						halfParity1 = parentSA.ezHalfParity;
+						if (halfParity1 == 0)
+							halfParity1 = parentSA.ezHalfParity = 1;
+						}
+					else {  // Rare, but possible: the graph starts with one of the double bond atoms
+						halfParity1 = 1;
 
-					int halfParity = halfParity1;	// we assume an E-double bond
+						// parity has to be inverted, because first DB-neighbour atom is following bond symbol, rather than preceding it
+						// This requires an inverted bond symbol to retain the meaning. We invert parity and, thus, the second halfParity instead.
+						leftInversion = true;
 
-					if (mMol.getConnAtoms(parentSA.atom) == 3) {
+						SmilesAtom firstSA = null;
+						SmilesAtom secondSA = null;
+						int firstSmilesIndex = Integer.MAX_VALUE;
+						for (int i=0; i<mMol.getConnAtoms(parentSA.atom); i++) {
+							int connAtom = mMol.getConnAtom(parentSA.atom, i);
+							if (connAtom != currentSA.atom) {
+								if (firstSA == null) {
+									firstSA = mGraphAtomList.get(mSmilesIndex[connAtom]);
+									firstSmilesIndex = mSmilesIndex[connAtom];
+									}
+								else {
+									if (firstSmilesIndex < mSmilesIndex[connAtom]) {
+										secondSA = mGraphAtomList.get(mSmilesIndex[connAtom]);
+										}
+									else {
+										secondSA = firstSA;
+										firstSA = mGraphAtomList.get(mSmilesIndex[connAtom]);
+										}
+									}
+								}
+							}
+						if (secondSA == null) {     // one neighbour atom
+							if (firstSA.ezHalfParity == 0)
+								firstSA.ezHalfParity = 1;
+							halfParity1 = firstSA.ezHalfParity;
+							}
+						else {      // two neighbour atoms
+							// We assume here that it is not possible that both half parity are already assigned to conflicting values
+							if (secondSA.ezHalfParity != 0) {
+								firstSA.ezHalfParity = 3 - secondSA.ezHalfParity;
+								}
+							else if (firstSA.ezHalfParity != 0) {
+								secondSA.ezHalfParity = 3 - firstSA.ezHalfParity;
+								}
+							else {
+								firstSA.ezHalfParity = 1;
+								secondSA.ezHalfParity = 2;
+								}
+							halfParity1 = firstSA.ezHalfParity;
+							}
+						}
+
+					int parity = leftInversion ? 3-halfParity1 : halfParity1;	// we assume an E-double bond
+
+					if (mMol.getConnAtoms(parentSA.atom) == 3 && parentSA.parent != -1) {
 						for (int i=0; i<mMol.getConnAtoms(parentSA.atom); i++) {
 							int connAtom = mMol.getConnAtom(parentSA.atom, i);
 							if (connAtom != parentSA.parent && connAtom != currentSA.atom) {
@@ -286,20 +340,20 @@ public class IsomericSmilesCreator {
 								if (branchSA.parent == parentSA.atom)
 									branchSA.ezHalfParity = halfParity1;	// same half-parity
 
-								if (connAtom < parentSA.parent)
-									halfParity = 3 - halfParity;	// invert
+								if (connAtom < parentSA.parent) // the other neighbour is the reference in OpenChemLib
+									parity = 3 - parity;	// invert
 								break;
 							}
 						}
 					}
 
 					if (mMol.getBondParity(bond) == Molecule.cBondParityZor2)
-						halfParity = 3 - halfParity;
+						parity = 3 - parity;
 
 					for (int i=0; i<mMol.getConnAtoms(currentSA.atom); i++) {
 						int childAtom = mMol.getConnAtom(currentSA.atom, i);
 						if (childAtom != currentSA.parent) {
-							int halfParity2 = halfParity;
+							int halfParity2 = parity;
 							if (mMol.getConnAtoms(currentSA.atom) == 3) {
 								for (int j=0; j<mMol.getConnAtoms(currentSA.atom); j++) {
 									int connAtom = mMol.getConnAtom(currentSA.atom, j);
