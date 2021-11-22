@@ -838,52 +838,39 @@ public class IsomericSmilesCreator {
 					neighbour[neighbours] = mMol.getConnAtom(connAtom,j);
 					if (neighbour[neighbours] != atom)
 						neighbours++;
-				}
+					}
 				if (neighbours == 2
-						&& ((mSmilesIndex[neighbour[0]] < mSmilesIndex[neighbour[1]])
-						^(neighbour[0] < neighbour[1])))
+				 && ((mSmilesIndex[neighbour[0]] < mSmilesIndex[neighbour[1]]) ^ (neighbour[0] < neighbour[1])))
 					inversion = !inversion;
+				}
 			}
-		}
 		else {
-			// we map 3 neighbors of stereo center to 3 neighbors in smiles
-			// (excluding from-atom and including implicit H, if exists)
-			int[] neighborAtom = new int[3];
-			int[] neighborRank = new int[3];
+			int[] neighborAtom = new int[4];
+			int[] neighborRank = new int[4];
 			int index = 0;
+
+			if (parent != -1) {
+				neighborAtom[index] = parent;
+				neighborRank[index++] = 8 * mSmilesIndex[parent];
+				}
+			if (mMol.getImplicitHydrogens(atom) != 0) {
+				neighborAtom[index] = Integer.MAX_VALUE; // index must be higher than any non-hydrogen neighbor
+				neighborRank[index++] = 8 * mSmilesIndex[atom]; // smaller than any potential closure neighbor
+				}
+			else if (mMol.getConnAtoms(atom) == 3) {    // rare 3-neighbour stereo center as with S,P,N
+				neighborAtom[index] = Integer.MAX_VALUE; // index must be higher than any non-hydrogen neighbor
+				neighborRank[index++] = 8 * mSmilesIndex[atom]; // smaller than any potential closure neighbor
+				}
 			for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 				int connAtom = mMol.getConnAtom(atom, i);
 				if (connAtom != parent) {
 					neighborAtom[index] = connAtom;
 					neighborRank[index++] = getSmilesRank(atom, i);
+					}
 				}
+
+			inversion = isInverseOrder(neighborAtom, neighborRank);
 			}
-			if (index == 2) {	// we have an implicit hydrogen (or lone pair in case of chiral sulfur)
-				if (mMol.getImplicitHydrogens(atom) == 0)    // no hydrogen
-					neighborAtom[index] = atom; // we use the central atom's index for the lone pair
-				else
-					neighborAtom[index] = Integer.MAX_VALUE; // index must be higher than any non-hydrogen neighbor
-				neighborRank[index++] = 8 * mSmilesIndex[atom]; // smaller than any potential closure neighbor
-			}
-
-			if (neighborRank[0] > neighborRank[1])
-				inversion = !inversion;
-			if (neighborRank[0] > neighborRank[2])
-				inversion = !inversion;
-			if (neighborRank[1] > neighborRank[2])
-				inversion = !inversion;
-
-			if (neighborAtom[0] > neighborAtom[1])
-				inversion = !inversion;
-			if (neighborAtom[0] > neighborAtom[2])
-				inversion = !inversion;
-			if (neighborAtom[1] > neighborAtom[2])
-				inversion = !inversion;
-
-			for (int i=0; i<3; i++)
-				if (parent > neighborAtom[i])
-					inversion = !inversion;
-		}
 
 		boolean isClockwise = ((mMol.getAtomParity(atom) == Molecule.cAtomParity1) ^ inversion);
 
@@ -899,6 +886,19 @@ public class IsomericSmilesCreator {
 
 		return isClockwise ? "@@" : "@";
 	}
+
+	private boolean isInverseOrder(int[] neighborAtom, int[] neighborRank) {
+		boolean inversion = false;
+		for (int i=1; i<4; i++) {
+			for (int j=0; j<i; j++) {
+				if (neighborAtom[j] > neighborAtom[i])
+					inversion = !inversion;
+				if (neighborRank[j] > neighborRank[i])
+					inversion = !inversion;
+				}
+			}
+		return inversion;
+		}
 
 	/**
 	 * @param atom for which to return a neighbor's smiles rank
@@ -922,7 +922,7 @@ public class IsomericSmilesCreator {
 		return 8 * mSmilesIndex[neighbour];
 	}
 
-	private boolean isOrganic (int atomicNo) {
+	private boolean isOrganic(int atomicNo) {
 		return (atomicNo >= 5 && atomicNo <= 9)     // B,C,N,O,F
 			|| (atomicNo >= 15 && atomicNo <= 17)   // P,S,Cl
 			|| atomicNo == 35                       // Br
