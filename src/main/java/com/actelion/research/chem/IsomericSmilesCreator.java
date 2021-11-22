@@ -57,6 +57,7 @@ public class IsomericSmilesCreator {
 	private boolean[] mBondUsed;
 	private boolean[] mPseudoStereoGroupInversion;
 	private boolean[] mPseudoStereoGroupInitialized;
+	private int[] mEZHalfParity;
 
 	/**
 	 * Convenience method to generate a canonical and isomeric SMILES from a given molecule.
@@ -181,7 +182,7 @@ public class IsomericSmilesCreator {
 		int atom = findUnusedStartAtom();
 		while (atom != -1) {
 			int graphIndex = mGraphAtomList.size();
-			addToGraph(new SmilesAtom(atom, -1, false, false), graphIndex);
+			addToGraph(new SmilesAtom(atom, -1, -1, false, false), graphIndex);
 			if (mMol.getConnAtoms(atom) != 0) {
 				addHighestRankingChain(graphIndex, false);
 
@@ -233,12 +234,14 @@ public class IsomericSmilesCreator {
 		mClosureNumber = new int[mMol.getBonds()];
 		for (SmilesAtom smilesAtom:mGraphAtomList) {
 			if (smilesAtom.closureNeighbour != null) {
-				for (int neighbour:smilesAtom.closureNeighbour) {
-					for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
-						if (neighbour == mMol.getConnAtom(smilesAtom.atom, i)) {
-							int bond = mMol.getConnBond(smilesAtom.atom, i);
+				smilesAtom.closureOpens = new boolean[smilesAtom.closureNeighbour.length];
+				for (int i=0; i<smilesAtom.closureNeighbour.length; i++) {
+					for (int j=0; j<mMol.getConnAtoms(smilesAtom.atom); j++) {
+						if (smilesAtom.closureNeighbour[i] == mMol.getConnAtom(smilesAtom.atom, j)) {
+							int bond = mMol.getConnBond(smilesAtom.atom, j);
 							if (!mBondUsed[bond]) { // opening closure bond
 								mBondUsed[bond] = true;
+								smilesAtom.closureOpens[i] = true;
 
 								// assign and allocation closure digit
 								mClosureNumber[bond] = 1;
@@ -257,70 +260,76 @@ public class IsomericSmilesCreator {
 	}
 
 	private void calculateEZBonds() {
+		mEZHalfParity = new int[mMol.getBonds()];
 		for (SmilesAtom currentSA:mGraphAtomList) {
 			if (currentSA.parent != -1) {
-				int bond = mMol.getBond(currentSA.atom, currentSA.parent);
-				if (!mMol.isBINAPChiralityBond(bond)
-				 && !mMol.isSmallRingBond(bond)
-				 && (mMol.getBondParity(bond) == Molecule.cBondParityEor1
-				  || mMol.getBondParity(bond) == Molecule.cBondParityZor2)) {
+				int ezBond = mMol.getBond(currentSA.atom, currentSA.parent);
+				if (!mMol.isBINAPChiralityBond(ezBond)
+				 && !mMol.isSmallRingBond(ezBond)
+				 && (mMol.getBondParity(ezBond) == Molecule.cBondParityEor1
+				  || mMol.getBondParity(ezBond) == Molecule.cBondParityZor2)) {
 					SmilesAtom parentSA = mGraphAtomList.get(mSmilesIndex[currentSA.parent]);
 
 					// halfParities translate 1-to-1 into the bond symbol ('/' or '\').
 					// The value of halfParity1 is arbitrary, but for canonical SMILES its value must be reproducible.
 					int halfParity1 = 0;
 					boolean leftInversion = false;
-					if (parentSA.parent != -1) {  // If the parent graph includes the single bond beyond the stereo double bond
-						halfParity1 = parentSA.ezHalfParity;
+					if (parentSA.parent != -1) {
+						// If there is a bond leading to the first double bond atom, we take the halfParity from that.
+						// Usually, it won't have a halfParity yet. In this case just give it reproducibly halfParity 1.
+						halfParity1 = mEZHalfParity[parentSA.bond];
 						if (halfParity1 == 0)
-							halfParity1 = parentSA.ezHalfParity = 1;
+							halfParity1 = mEZHalfParity[parentSA.bond] = 1;
 						}
-					else {  // Rare, but possible: the graph starts with one of the double bond atoms
-						halfParity1 = 1;
-
+					else {
+						// If the graph starts with one of the double bond atoms (rare, but possible), then this atom has no parent atom.
+						// Instead it has a ring closure digit and the atom is attached later as ring closure. In this case the
 						// parity has to be inverted, because first DB-neighbour atom is following bond symbol, rather than preceding it
 						// This requires an inverted bond symbol to retain the meaning. We invert parity and, thus, the second halfParity instead.
 						leftInversion = true;
 
-						SmilesAtom firstSA = null;
-						SmilesAtom secondSA = null;
+						int firstNeighbourIndex = -1;
+						int secondNeighbourIndex = -1;;
 						int firstSmilesIndex = Integer.MAX_VALUE;
 						for (int i=0; i<mMol.getConnAtoms(parentSA.atom); i++) {
 							int connAtom = mMol.getConnAtom(parentSA.atom, i);
 							if (connAtom != currentSA.atom) {
-								if (firstSA == null) {
-									firstSA = mGraphAtomList.get(mSmilesIndex[connAtom]);
+								if (firstNeighbourIndex == -1) {
+									firstNeighbourIndex = i;
 									firstSmilesIndex = mSmilesIndex[connAtom];
 									}
 								else {
 									if (firstSmilesIndex < mSmilesIndex[connAtom]) {
-										secondSA = mGraphAtomList.get(mSmilesIndex[connAtom]);
+										secondNeighbourIndex = i;
 										}
 									else {
-										secondSA = firstSA;
-										firstSA = mGraphAtomList.get(mSmilesIndex[connAtom]);
+										secondNeighbourIndex = firstNeighbourIndex;
+										firstNeighbourIndex = i;
 										}
 									}
 								}
 							}
-						if (secondSA == null) {     // one neighbour atom
-							if (firstSA.ezHalfParity == 0)
-								firstSA.ezHalfParity = 1;
-							halfParity1 = firstSA.ezHalfParity;
+						if (secondNeighbourIndex == -1) {     // one neighbour atom
+							int neighbourBond = mMol.getConnBond(parentSA.atom, firstNeighbourIndex);
+							if (mEZHalfParity[neighbourBond] == 0)
+								mEZHalfParity[neighbourBond] = 1;
+							halfParity1 = mEZHalfParity[neighbourBond];
 							}
 						else {      // two neighbour atoms
 							// We assume here that it is not possible that both half parity are already assigned to conflicting values
-							if (secondSA.ezHalfParity != 0) {
-								firstSA.ezHalfParity = 3 - secondSA.ezHalfParity;
+							int firstNeighbourBond = mMol.getConnAtom(parentSA.atom, firstNeighbourIndex);
+							int secondNeighbourBond = mMol.getConnAtom(parentSA.atom, secondNeighbourIndex);
+							if (mEZHalfParity[secondNeighbourBond] != 0) {
+								mEZHalfParity[firstNeighbourBond] = 3 - mEZHalfParity[secondNeighbourBond];
 								}
-							else if (firstSA.ezHalfParity != 0) {
-								secondSA.ezHalfParity = 3 - firstSA.ezHalfParity;
+							else if (mEZHalfParity[firstNeighbourBond] != 0) {
+								mEZHalfParity[secondNeighbourBond] = 3 - mEZHalfParity[firstNeighbourBond];
 								}
 							else {
-								firstSA.ezHalfParity = 1;
-								secondSA.ezHalfParity = 2;
+								mEZHalfParity[firstNeighbourBond] = 1;
+								mEZHalfParity[secondNeighbourBond] = 2;
 								}
-							halfParity1 = firstSA.ezHalfParity;
+							halfParity1 = mEZHalfParity[firstNeighbourBond];
 							}
 						}
 
@@ -338,7 +347,7 @@ public class IsomericSmilesCreator {
 								//  is relative to the carbon atom, not the double bond" (opensmiles.org).
 								SmilesAtom branchSA = mGraphAtomList.get(mSmilesIndex[connAtom]);
 								if (branchSA.parent == parentSA.atom)
-									branchSA.ezHalfParity = halfParity1;	// same half-parity
+									mEZHalfParity[branchSA.bond] = halfParity1;	// same half-parity
 
 								if (connAtom < parentSA.parent) // the other neighbour is the reference in OpenChemLib
 									parity = 3 - parity;	// invert
@@ -347,7 +356,7 @@ public class IsomericSmilesCreator {
 						}
 					}
 
-					if (mMol.getBondParity(bond) == Molecule.cBondParityZor2)
+					if (mMol.getBondParity(ezBond) == Molecule.cBondParityZor2)
 						parity = 3 - parity;
 
 					for (int i=0; i<mMol.getConnAtoms(currentSA.atom); i++) {
@@ -365,8 +374,8 @@ public class IsomericSmilesCreator {
 								}
 							}
 
-							if (mMol.isBondParityPseudo(bond)) {
-								int group = mCanonizer.getPseudoEZGroup(bond);
+							if (mMol.isBondParityPseudo(ezBond)) {
+								int group = mCanonizer.getPseudoEZGroup(ezBond);
 								if (!mPseudoStereoGroupInitialized[group]) {
 									mPseudoStereoGroupInitialized[group] = true;
 									mPseudoStereoGroupInversion[group] = (halfParity2 == 2);
@@ -375,10 +384,16 @@ public class IsomericSmilesCreator {
 									halfParity2 = 3 - halfParity2;	// invert
 							}
 
-							SmilesAtom childSA = mGraphAtomList.get(mSmilesIndex[childAtom]);
-							if (childSA.parent == currentSA.atom)
-								childSA.ezHalfParity = halfParity2;
-//							else we have a ring closure
+						// If the graph continues normally and includes the childAtom down the line
+						// or if the have a closure bond, which connects from current atom to child atom,
+						// then we use the halfParity2 as generated.
+						// If, however, the closure leads from the childAtom to the current atom, we
+						// need to invert the halfParity2, since we put the '/' or '\' on the closing closure bond.
+						int childBond = mMol.getBond(currentSA.atom, childAtom);
+						if (!currentSA.isOpeningClosureTo(childAtom))
+							mEZHalfParity[childBond] = halfParity2;
+						else    // we have a ring closure
+							mEZHalfParity[childBond] = 3-halfParity2;
 						}
 					}
 				}
@@ -436,7 +451,7 @@ public class IsomericSmilesCreator {
 			int atom = mMol.getConnAtom(parent, neighborIndex);
 			int bond =  mMol.getConnBond(parent, neighborIndex);
 			neighborIndex = getUnusedConnAtomIndex(atom);
-			addToGraph(new SmilesAtom(atom, parent,
+			addToGraph(new SmilesAtom(atom, bond, parent,
 					isSideChain && isFirst,
 					isSideChain && neighborIndex == -1), ++graphIndex);
 			parent = atom;
@@ -495,7 +510,7 @@ public class IsomericSmilesCreator {
 			builder.append('(');
 
 		if (parent != -1)
-			appendBondOrderSymbol(smilesAtom, builder);
+			appendBondOrderSymbol(mMol.getBond(smilesAtom.atom, smilesAtom.parent), smilesAtom.parent, builder);
 
 		int charge = mMol.getAtomCharge(atom);
 		if (charge == 0 && (mMode & MODE_CREATE_SMARTS) != 0) {
@@ -719,11 +734,12 @@ public class IsomericSmilesCreator {
 
 	private void appendClosureBonds(SmilesAtom smilesAtom, StringBuilder builder) {
 		if (smilesAtom.closureNeighbour != null) {
-			for (int neighbour:smilesAtom.closureNeighbour) {
-				for (int i=0; i<mMol.getConnAtoms(smilesAtom.atom); i++) {
-					if (neighbour == mMol.getConnAtom(smilesAtom.atom, i)) {
-						int bond = mMol.getConnBond(smilesAtom.atom, i);
-						appendBondOrderSymbol(bond, smilesAtom.atom, builder);
+			for (int i=0; i<smilesAtom.closureNeighbour.length; i++) {
+				for (int j=0; j<mMol.getConnAtoms(smilesAtom.atom); j++) {
+					if (smilesAtom.closureNeighbour[i] == mMol.getConnAtom(smilesAtom.atom, j)) {
+						int bond = mMol.getConnBond(smilesAtom.atom, j);
+						if (!smilesAtom.closureOpens[i])
+							appendBondOrderSymbol(bond, smilesAtom.atom, builder);
 						if (mClosureNumber[bond] > 9)
 							builder.append('%');
 						builder.append(mClosureNumber[bond]);
@@ -759,21 +775,24 @@ public class IsomericSmilesCreator {
 //		}
 //	}
 
-	private void appendBondOrderSymbol(SmilesAtom smilesAtom, StringBuilder builder) {
-		if (smilesAtom.ezHalfParity != 0) {
-			builder.append(smilesAtom.ezHalfParity == 1 ? '/' : '\\');
-			return;
-		}
-		appendBondOrderSymbol(mMol.getBond(smilesAtom.atom, smilesAtom.parent), smilesAtom.parent, builder);
-	}
+//	private void appendBondOrderSymbol(SmilesAtom smilesAtom, StringBuilder builder) {
+//		if (smilesAtom.ezHalfParity != 0) {
+//			builder.append(smilesAtom.ezHalfParity == 1 ? '/' : '\\');
+//			return;
+//		}
+//		appendBondOrderSymbol(mMol.getBond(smilesAtom.atom, smilesAtom.parent), smilesAtom.parent, builder);
+//	}
 
 	private void appendBondOrderSymbol(int bond, int parentAtom, StringBuilder builder) {
 		int startLength = builder.length();
+		if (mEZHalfParity[bond] != 0)
+			builder.append(mEZHalfParity[bond] == 1 ? '/' : '\\');
 		if (mMode == MODE_CREATE_SMARTS) {
 			int bondTypes = mMol.getBondQueryFeatures(Molecule.cBondQFBondTypes);
 			if (bondTypes != 0) {
-				if ((bondTypes & Molecule.cBondTypeSingle) != 0)
+				if ((bondTypes & Molecule.cBondTypeSingle) != 0 && mEZHalfParity[bond] == 0) {
 					builder.append('-');
+					}
 				if ((bondTypes & Molecule.cBondTypeDouble) != 0) {
 					if (builder.length() != startLength)
 						builder.append(',');
@@ -801,7 +820,8 @@ public class IsomericSmilesCreator {
 			if (bondType == Molecule.cBondTypeSingle) {
 				if (mMol.isAromaticAtom(mMol.getBondAtom(0, bond))
 				 && mMol.isAromaticAtom(mMol.getBondAtom(1, bond))
-				 && (mMode & MODE_KEKULIZED_OUTPUT) == 0)
+				 && (mMode & MODE_KEKULIZED_OUTPUT) == 0
+				 && mEZHalfParity[bond] == 0)
 					builder.append('-');
 			} else if (bondType == Molecule.cBondTypeDouble)
 				builder.append('=');
@@ -931,14 +951,25 @@ public class IsomericSmilesCreator {
 }
 
 class SmilesAtom {
-	public int atom,parent,ezHalfParity;
+	public int atom,bond,parent;
 	public boolean isSideChainStart,isSideChainEnd;
 	public int[] closureNeighbour;
+	public boolean[] closureOpens;
 
-	public SmilesAtom(int atom, int parent, boolean isSideChainStart, boolean isSideChainEnd) {
+	public SmilesAtom(int atom, int bond, int parent, boolean isSideChainStart, boolean isSideChainEnd) {
 		this.atom = atom;
+		this.bond = bond;
 		this.parent = parent;
 		this.isSideChainStart = isSideChainStart;
 		this.isSideChainEnd = isSideChainEnd;
+	}
+
+	public boolean isOpeningClosureTo(int atom) {
+		if (closureNeighbour != null)
+			for (int i=0; i<closureNeighbour.length; i++)
+				if (atom == closureNeighbour[i] && closureOpens[i])
+					return true;
+
+		return false;
 	}
 }
