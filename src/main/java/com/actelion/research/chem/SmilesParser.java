@@ -66,6 +66,7 @@ public class SmilesParser {
 	private StereoMolecule mMol;
 	private boolean[] mIsAromaticBond;
 	private int mAromaticAtoms,mAromaticBonds,mSmartsMode,mCoordinateMode;
+	private long mRandomSeed;
 	private boolean mCreateSmartsWarnings, mMakeHydrogenExplicit;
 	private StringBuilder mSmartsWarningBuffer;
 
@@ -98,6 +99,18 @@ public class SmilesParser {
 			mCoordinateMode |= CoordinateInventor.MODE_SKIP_DEFAULT_TEMPLATES;
 		if (mMakeHydrogenExplicit)
 			mCoordinateMode &= ~CoordinateInventor.MODE_REMOVE_HYDROGEN;
+		}
+
+	/**
+	 * Depending on the parse() parameters, the SmilesParser may or may not generate new atom coordinates
+	 * after parsing the SMILES. In difficult cases the employed CoordinateInventor uses random decisions
+	 * when optimizing colliding coordinates. In strained and bridged ring systems, generated coordinates
+	 * may not correctly represent all E/Z-bond configurations.
+	 * Calling this method with a seed != 0 causes the creation of reproducible atom coordinates.
+	 * @param seed value different from 0 in order to always create the same reproducible atom coordinates
+	 */
+	public void setRandomSeed(long seed) {
+		mRandomSeed = seed;
 		}
 
 	public StereoMolecule parseMolecule(String smiles) {
@@ -1001,7 +1014,10 @@ public class SmilesParser {
 		mMol.setParitiesValid(0);
 
 		if (createCoordinates) {
-			new CoordinateInventor(mCoordinateMode).invent(mMol);
+			CoordinateInventor inventor = new CoordinateInventor(mCoordinateMode);
+			if (mRandomSeed != 0)
+				inventor.setRandomSeed(mRandomSeed);
+			inventor.invent(mMol);
 
 			if (readStereoFeatures)
 				mMol.setUnknownParitiesToExplicitlyUnknown();
