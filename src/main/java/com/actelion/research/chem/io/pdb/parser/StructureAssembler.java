@@ -1,20 +1,13 @@
 package com.actelion.research.chem.io.pdb.parser;
 
+import com.actelion.research.chem.Molecule3D;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.Molecule3D;
-import com.actelion.research.chem.io.pdb.converter.AminoAcidsLabeledContainer;
-import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
-import com.actelion.research.chem.Molecule3D;
 
 /**
  * @author JW
@@ -45,7 +38,6 @@ public class StructureAssembler {
 		this.hetAtomRecords = hetAtomRecords;
 		groups = new HashMap<String,List<AtomRecord>>();
 		mols = new HashMap<String,List<Molecule3D>>();
-		
 	}
 	
 	
@@ -84,13 +76,8 @@ public class StructureAssembler {
 			catch(Exception e) {
 				continue;
 			}
-			
 		}
-		
-			
-	
 	}
-	
 	
 	private Molecule3D buildProtein() {
 		ProteinSynthesizer proteinSynthesizer = new ProteinSynthesizer();
@@ -144,7 +131,7 @@ public class StructureAssembler {
 			mol1.addMolecule(mol2);
 			return mol1;})
 				.get();
-		protein.ensureHelperArrays(Molecule.cHelperCIP);
+//		protein.ensureHelperArrays(Molecule.cHelperCIP);    // very expensive. Should not be done here just in case somebody might need parities
 		return protein;
 		}
 	
@@ -164,16 +151,9 @@ public class StructureAssembler {
 					mols.putIfAbsent(LIGAND_GROUP, new ArrayList<Molecule3D>());
 					mols.get(LIGAND_GROUP).add(fragment);
 				}
-					
-				
-				
 			}
 		}
-
 	}
-				
-	
-		
 	
 	private void coupleBonds(Molecule3D mol) {
 		for(int[] bond:bondList) {
@@ -223,10 +203,4 @@ public class StructureAssembler {
 				}
 		}
 	}
-	
-
-
-	
-	
-
 }

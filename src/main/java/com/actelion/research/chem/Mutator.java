@@ -1531,6 +1531,7 @@ public class Mutator {
 		        parity = (mRandom.nextDouble()<0.5) ? Molecule.cAtomParity1 : Molecule.cAtomParity2;
 		        boolean isPseudo = mol.isAtomParityPseudo(atom);
 		        mol.setAtomParity(atom, parity, isPseudo);
+		        mol.setAtomESR(atom, Molecule.cESRTypeAbs, 0);
 	            }
         	if (parity != Molecule.cAtomParityNone)
                 mol.setStereoBondFromAtomParity(atom);

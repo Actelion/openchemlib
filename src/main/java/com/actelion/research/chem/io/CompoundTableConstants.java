@@ -175,6 +175,7 @@ public interface CompoundTableConstants {
     String cColumnPropertySuperposeMolecule = "superposeMol";	// idcode+coords to be displayed in every cell
     String cColumnPropertyProteinCavity = "proteinCavity";	// idcode+coords of protein cavity to be displayed in every cell
     String cColumnPropertyNaturalLigand = "naturalLigand";	// idcode+coords of natural ligand, if proteinCavity is given (not shown, used for surface creation)
+    String cColumnPropertyShowNaturalLigand = "showNaturalLigand";	// whether to show the natural ligand in addition to row's structure; default is true
     String cColumnPropertySuperpose = "superpose";  // cSuperposeValueReferenceRow or null
     String cColumnPropertySuperposeAlign = "align";  // cSuperposeAlignValueShape or null
     String cColumnPropertyCommentUploadStatus = "commentUploadStatus";
