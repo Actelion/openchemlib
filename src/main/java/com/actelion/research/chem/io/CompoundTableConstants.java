@@ -178,6 +178,7 @@ public interface CompoundTableConstants {
     String cColumnPropertyShowNaturalLigand = "showNaturalLigand";	// whether to show the natural ligand in addition to row's structure; default is true
     String cColumnPropertySuperpose = "superpose";  // cSuperposeValueReferenceRow or null
     String cColumnPropertySuperposeAlign = "align";  // cSuperposeAlignValueShape or null
+    String cColumnProperty3DFragmentSplit = "split3D"; // if "true": unconnected fragments of 3D-structure are shown as differently colored V3DMolecules
     String cColumnPropertyCommentUploadStatus = "commentUploadStatus";
     String cColumnPropertyCommentDepartment = "commentDepartment";
 
