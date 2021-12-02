@@ -17,9 +17,9 @@ public class InventorFragment {
 	protected int[] mPriority;
 	protected double[] mAtomX;
 	protected double[] mAtomY;
+	protected boolean mKeepMarkedAtoms;
 
 	private StereoMolecule mMol;
-	private int mMode;
 	private boolean	mMinMaxAvail;
 	private double mMinX;
 	private double mMinY;
@@ -29,18 +29,18 @@ public class InventorFragment {
 	private int[][] mFlipList;
 	private int[] mSortedAtom;
 
-	protected InventorFragment(StereoMolecule mol, int atoms, int mode) {
+	protected InventorFragment(StereoMolecule mol, int atoms, boolean keepMarkedAtoms) {
 		mMol = mol;
-		mMode = mode;
+		mKeepMarkedAtoms = keepMarkedAtoms;
 		mGlobalAtom = new int[atoms];
 		mPriority = new int[atoms];
 		mAtomX = new double[atoms];
 		mAtomY = new double[atoms];
 	}
 
-	protected InventorFragment(InventorFragment f, int mode) {
+	protected InventorFragment(InventorFragment f) {
 		mMol = f.mMol;
-		mMode = mode;
+		mKeepMarkedAtoms = f.mKeepMarkedAtoms;
 		mGlobalAtom = new int[f.size()];
 		mPriority = new int[f.size()];
 		mAtomX = new double[f.size()];
@@ -191,7 +191,7 @@ public class InventorFragment {
 			boolean flipOtherSide = (highest+1 > mGlobalAtom.length/2);
 
 			// if we retain core atoms and the smaller side contains core atoms, then flip the larger side
-			if ((mMode & CoordinateInventor.MODE_CONSIDER_MARKED_ATOMS) != 0) {
+			if (mKeepMarkedAtoms) {
 				boolean coreOnSide = false;
 				boolean coreOffSide = false;
 				for (int i = 0; i< mGlobalAtom.length; i++) {
