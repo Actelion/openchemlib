@@ -195,7 +195,8 @@ public class InventorFragment {
 				boolean coreOnSide = false;
 				boolean coreOffSide = false;
 				for (int i = 0; i< mGlobalAtom.length; i++) {
-					if (mMol.isMarkedAtom(mGlobalAtom[i])) {
+					int atom = mGlobalAtom[i];
+					if (mMol.isMarkedAtom(atom) && atom != atom1 && atom != atom2) {
 						if (isOnSide[mGlobalAtom[i]])
 							coreOnSide = true;
 						else
