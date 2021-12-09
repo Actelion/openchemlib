@@ -108,12 +108,13 @@ public class CoordinateInventor {
 
 
 	/**
-	 * By providing a custom template list containing substructures with predefined atom
-	 * coordinates, any occurence of any of these substructures will receive the
-	 * relative atom coordinates of the provided template, unless the substructure
-	 * shares more than one atom with a previously found substructure or the substructure
-	 * shares more than one atom with the non marked atoms and mode is
-	 * MODE_????_MARKED_ATOM_COORDS.
+	 * A custom template list contains substructures with predefined atom coordinates.
+	 * When such a list is provided, and if a molecules contains one of the list's substructures,
+	 * then the matching atoms will receive the relative atom coordinates of the provided template,
+	 * unless the substructure shares two or more atoms with another earlier found template or
+	 * if mode is MODE_????_MARKED_ATOM_COORDS and the substructure match contains two or more
+	 * non-marked (and therefore untouchable) atoms. If a template substructure contains an E- or Z-
+	 * double bound, then the query feature 'match EZ-parity' should be set.
 	 * @param templateList
 	 */
 	public void setCustomTemplateList(List<InventorTemplate> templateList) {
