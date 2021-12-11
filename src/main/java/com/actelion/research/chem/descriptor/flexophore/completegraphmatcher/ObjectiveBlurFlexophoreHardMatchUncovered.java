@@ -835,12 +835,10 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		
 		double simHists = getSimilarityHistogram(indexNode1Query, indexNode2Query, indexNode1Base, indexNode2Base);
 		
-		if(simHists==0){
-
-			System.out.println("ObjectiveFlexophoreHardMatchUncovered getScorePairwiseMapping(int indexNode1Query, int indexNode2Query, int indexNode1Base, int indexNode2Base)");
-
-			System.out.println("Sim hists = 0");
-		}
+//		if(simHists==0){
+//			System.out.println("ObjectiveFlexophoreHardMatchUncovered getScorePairwiseMapping(int indexNode1Query, int indexNode2Query, int indexNode1Base, int indexNode2Base)");
+//			System.out.println("Sim hists = 0");
+//		}
 
 		if(verbose){
 			System.out.println("simHists " + Formatter.format2(simHists));
