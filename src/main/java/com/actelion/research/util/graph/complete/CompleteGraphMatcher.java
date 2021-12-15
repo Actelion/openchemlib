@@ -153,7 +153,6 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		initSearch();
 
 		if(nodesBase==1 && nodesQuery==1) {
-			SolutionCompleteGraph solution = liliSolution.get(1).get(0);
 			double sim = objectiveCompleteGraph.getSimilarityNodes(0,0);
 			return sim;
 		}

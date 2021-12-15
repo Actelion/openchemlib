@@ -511,6 +511,56 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 	}
 
+	/**
+	 *
+	 * @param solution a valid solution for IMolDistHis base and IMolDistHis query. Query and base must be set before
+	 *                 starting the similarity calculation.
+	 * @param indexHeap heap index of the node for which the histogram similarities to all other nodes will be calculated.
+	 *                  indexHeap is the index from the list of matching query and base nodes.
+	 * @return histogram similarity for a single node. Calculated as average from the sum of histogram similarities.
+	 */
+	public float getSimilarityHistogramsForNode(SolutionCompleteGraph solution, int indexHeap) {
+		int heap = solution.getSizeHeap();
+
+		//
+		// the query must hit with all pharmacophore nodes
+		//
+		if(modeQuery) {
+			if (nodesQuery != heap) {
+				return 0;
+			}
+		}
+
+		double sumPairwiseMapping = 0;
+
+		int indexNode1Query = solution.getIndexQueryFromHeap(indexHeap);
+
+		int indexNode1Base = solution.getIndexCorrespondingBaseNode(indexNode1Query);
+
+		for (int i = 0; i < heap; i++) {
+			if(indexHeap==i)
+				continue;
+
+			int indexNode2Query = solution.getIndexQueryFromHeap(i);
+
+			int indexNode2Base = solution.getIndexCorrespondingBaseNode(indexNode2Query);
+
+			double simHists = getSimilarityHistogram(indexNode1Query, indexNode2Query, indexNode1Base, indexNode2Base);
+
+			sumPairwiseMapping += simHists;
+
+			if(verbose) {
+				System.out.println("scorePairwiseMapping " + Formatter.format2(simHists));
+			}
+		}
+
+		double mappings = heap-1;
+
+		double avrPairwiseMapping = sumPairwiseMapping/mappings;
+
+		return (float)avrPairwiseMapping;
+	}
+
 	public long getDeltaNanoQueryBlur() {
 		return deltaNanoQueryBlur;
 	}
