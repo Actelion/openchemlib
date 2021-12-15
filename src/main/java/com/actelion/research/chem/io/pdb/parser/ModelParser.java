@@ -1,6 +1,5 @@
 package com.actelion.research.chem.io.pdb.parser;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -88,15 +87,16 @@ public class ModelParser {
         
         String insertionCode = line.substring(26,27).trim();
 
+        //invert y and z coordinates for compatibility with Java coordinate system (analogously to Molfileparser & Mol2FileParser)
         double x = Double.parseDouble(line.substring(30,38).trim());
-        double y = Double.parseDouble(line.substring(38,46).trim());
-        double z = Double.parseDouble(line.substring(46,54).trim());
+        double y = -Double.parseDouble(line.substring(38,46).trim());
+        double z = -Double.parseDouble(line.substring(46,54).trim());
 
-        double occupancy = Double.parseDouble(line.substring(54,60).trim());
+        double occupancy = (line.length() < 60) ? 1.0 : Double.parseDouble(line.substring(54,60).trim());
 
-        double tempFactor = Double.parseDouble(line.substring(60,66).trim());
+        double tempFactor = (line.length() < 66) ? 50.0 : Double.parseDouble(line.substring(60,66).trim());
 
-        String element = line.substring(76,78).trim();
+        String element = (line.length() < 78) ? atomName.substring(0, 1) : line.substring(76,78).trim();
         element = element.toLowerCase();
         element = element.substring(0, 1).toUpperCase() + element.substring(1);
 

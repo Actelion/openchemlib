@@ -66,6 +66,7 @@ public class SmilesParser {
 	private StereoMolecule mMol;
 	private boolean[] mIsAromaticBond;
 	private int mAromaticAtoms,mAromaticBonds,mSmartsMode,mCoordinateMode;
+	private long mRandomSeed;
 	private boolean mCreateSmartsWarnings, mMakeHydrogenExplicit;
 	private StringBuilder mSmartsWarningBuffer;
 
@@ -98,6 +99,18 @@ public class SmilesParser {
 			mCoordinateMode |= CoordinateInventor.MODE_SKIP_DEFAULT_TEMPLATES;
 		if (mMakeHydrogenExplicit)
 			mCoordinateMode &= ~CoordinateInventor.MODE_REMOVE_HYDROGEN;
+		}
+
+	/**
+	 * Depending on the parse() parameters, the SmilesParser may or may not generate new atom coordinates
+	 * after parsing the SMILES. In difficult cases the employed CoordinateInventor uses random decisions
+	 * when optimizing colliding coordinates. In strained and bridged ring systems, generated coordinates
+	 * may not correctly represent all E/Z-bond configurations.
+	 * Calling this method with a seed != 0 causes the creation of reproducible atom coordinates.
+	 * @param seed value different from 0 in order to always create the same reproducible atom coordinates
+	 */
+	public void setRandomSeed(long seed) {
+		mRandomSeed = seed;
 		}
 
 	public StereoMolecule parseMolecule(String smiles) {
@@ -669,11 +682,11 @@ public class SmilesParser {
 
 					if (parityFound) {	// if this atom is a stereo center
 						if (parityMap == null)
-							parityMap = new TreeMap<Integer,THParity>();
+							parityMap = new TreeMap<>();
 	
 						// using position as hydrogenPosition is close enough
 						int hydrogenCount = (explicitHydrogens == HYDROGEN_IMPLICIT_ZERO) ? 0 : explicitHydrogens;
-						parityMap.put(atom, new THParity(atom, fromAtom, hydrogenCount, position-1, isClockwise));
+						parityMap.put(atom, new THParity(atom, position-2, fromAtom, hydrogenCount, position-1, isClockwise));
 						}
 					}
 
@@ -1001,7 +1014,10 @@ public class SmilesParser {
 		mMol.setParitiesValid(0);
 
 		if (createCoordinates) {
-			new CoordinateInventor(mCoordinateMode).invent(mMol);
+			CoordinateInventor inventor = new CoordinateInventor(mCoordinateMode);
+			if (mRandomSeed != 0)
+				inventor.setRandomSeed(mRandomSeed);
+			inventor.invent(mMol);
 
 			if (readStereoFeatures)
 				mMol.setUnknownParitiesToExplicitlyUnknown();
@@ -1553,45 +1569,47 @@ public class SmilesParser {
 
 	private class ParityNeighbour {
 		int mAtom,mPosition;
-		boolean mIsHydrogen;
 
-		public ParityNeighbour(int atom, int position, boolean isHydrogen) {
+		public ParityNeighbour(int atom, int position) {
 			mAtom = atom;
 			mPosition = position;
-			mIsHydrogen = isHydrogen;
 			}
 		}
 
 	private class THParity {
-		int mCentralAtom,mImplicitHydrogen,mFromAtom;
+		private static final int PSEUDO_ATOM_HYDROGEN = Integer.MAX_VALUE - 1;
+		private static final int PSEUDO_ATOM_LONE_PAIR = Integer.MAX_VALUE;
+
+		int mCentralAtom,mCentralAtomPosition;
 		boolean mIsClockwise,mError;
 		ArrayList<ParityNeighbour> mNeighbourList;
 
 		/**
 		 * Instantiates a new parity object during smiles traversal.
-		 * @param centralAtom index of atoms processed
+		 * @param centralAtom index of atom processed
+		 * @param centralAtomPosition position in SMILES of central atom
 		 * @param fromAtom index of parent atom of centralAtom (-1 if centralAtom is first atom in smiles)
-		 * @param implicitHydrogen Daylight syntax: hydrogen atoms defined within square bracket of other atom
+		 * @param explicitHydrogen Daylight syntax: hydrogen atoms defined within square bracket of other atom
+		 * @param hydrogenPosition position in SMILES of central atom
 		 * @param isClockwise true if central atom is marked with @@ rather than @
 		 */
-		public THParity(int centralAtom, int fromAtom, int implicitHydrogen, int hydrogenPosition, boolean isClockwise) {
-			if (implicitHydrogen != 0 && implicitHydrogen != 1) {
+		public THParity(int centralAtom, int centralAtomPosition, int fromAtom, int explicitHydrogen, int hydrogenPosition, boolean isClockwise) {
+			if (explicitHydrogen != 0 && explicitHydrogen != 1) {
 				mError = true;
-			}
+				}
 			else {
 				mCentralAtom = centralAtom;
-				mFromAtom = fromAtom;
-				mImplicitHydrogen = implicitHydrogen;
+				mCentralAtomPosition = centralAtomPosition;
 				mIsClockwise = isClockwise;
 				mNeighbourList = new ArrayList<>();
 
-				// If we have a fromAtom and we have an implicit hydrogen,
-				// then make the implicit hydrogen a normal neighbour.
-				if (fromAtom != -1 && implicitHydrogen == 1) {
-					// We put it at the end of the atom list with MAX_VALUE
-					addNeighbor(Integer.MAX_VALUE, hydrogenPosition, true);
-					mImplicitHydrogen = 0;
-				}
+				// If we have a fromAtom, an explicit hydrogen, or a lone pair,
+				// then add it as a normal neighbour.
+				if (fromAtom != -1)
+					addNeighbor(fromAtom, centralAtomPosition-1, false);
+
+				if (fromAtom != -1 && explicitHydrogen == 1)
+					addNeighbor(PSEUDO_ATOM_HYDROGEN, centralAtomPosition+1, false);
 			}
 		}
 
@@ -1603,19 +1621,19 @@ public class SmilesParser {
 		 * determination.
 		 * We need to track the atom, because neighbors are not necessarily added in atom
 		 * sequence (ring closure with connection back to stereo center).
+		 * @param atom
 		 * @param position
-		 * @param isHydrogen
 		 */
-		public void addNeighbor(int atom, int position, boolean isHydrogen) {
+		public void addNeighbor(int atom, int position, boolean unused) {
 			if (!mError) {
-				if (mNeighbourList.size() == 4 || (mNeighbourList.size() == 3 && mFromAtom != -1)) {
+				if (mNeighbourList.size() == 4) {
 					mError = true;
 					return;
-					}
-
-				mNeighbourList.add(new ParityNeighbour(atom, position, isHydrogen));
 				}
+
+				mNeighbourList.add(new ParityNeighbour(atom, position));
 			}
+		}
 
 		public int calculateParity(int[] handleHydrogenAtomMap) {
 			if (mError)
@@ -1623,68 +1641,19 @@ public class SmilesParser {
 
 			// We need to translate smiles-parse-time atom indexes to those that the molecule
 			// uses after calling handleHydrogens, which is called from ensureHelperArrays().
-			if (mFromAtom != -1)
-				mFromAtom = handleHydrogenAtomMap[mFromAtom];
 			for (ParityNeighbour neighbour:mNeighbourList)
-				if (neighbour.mAtom != Integer.MAX_VALUE)
+				if (neighbour.mAtom != PSEUDO_ATOM_HYDROGEN && neighbour.mAtom != PSEUDO_ATOM_LONE_PAIR)
 					neighbour.mAtom = handleHydrogenAtomMap[neighbour.mAtom];
 
-			if (mFromAtom == -1 && mImplicitHydrogen == 0) {
-				// If we have no implicit hydrogen and the central atom is the first atom in the smiles,
-				// then we assume that we have to take the first neighbor as from-atom (not described in Daylight theory manual).
-				// Assumption: take the first neighbor as front atom, i.e. skip it when comparing positions
-				int minPosition = Integer.MAX_VALUE;
-				ParityNeighbour minNeighbour = null;
-				for (ParityNeighbour neighbour:mNeighbourList) {
-					if (minPosition > neighbour.mPosition) {
-						minPosition = neighbour.mPosition;
-						minNeighbour = neighbour;
-						}
-					}
-				mFromAtom = minNeighbour.mAtom;
-				mNeighbourList.remove(minNeighbour);
-				}
-
-			int totalNeighborCount = (mFromAtom == -1? 0 : 1) + mImplicitHydrogen + mNeighbourList.size();
-			if (totalNeighborCount > 4 || totalNeighborCount < 3)
+			if (mNeighbourList.size() == 3)
+				// All hydrogens atoms within SMILES all stereo centers all hydrogens must be explicit (as explicit atoms or as H count in square brackets).
+				// Therefore, three neighbour atoms is a rare situation, e.g. CC[S@](=O)C or frozen out CC[N@H]C
+				// In these cases we add the electron pair as pseudo neighbour
+				mNeighbourList.add(new ParityNeighbour(PSEUDO_ATOM_LONE_PAIR, mCentralAtomPosition));
+			else if (mNeighbourList.size() != 4)
 				return Molecule.cAtomParityUnknown;
 
-			// We look from the hydrogen towards the central carbon if the fromAtom is a hydrogen or
-			// if there is no fromAtom but the central atom has an implicit hydrogen.
-			boolean fromAtomIsHydrogen = (mFromAtom == -1 && mImplicitHydrogen == 1)
-					|| (mFromAtom != -1 && mMol.isSimpleHydrogen(mFromAtom));
-
-			ParityNeighbour hydrogenNeighbour = null;
-			for (ParityNeighbour neighbour:mNeighbourList) {
-				if (neighbour.mIsHydrogen) {
-					if (hydrogenNeighbour != null || fromAtomIsHydrogen)
-						return Molecule.cAtomParityUnknown;
-					hydrogenNeighbour = neighbour;
-				}
-			}
-
-			// hydrogens are moved to the end of the atom list. If the hydrogen passes an odd number of
-			// neighbor atoms on its way to the list end, we are effectively inverting the atom order.
-			boolean isHydrogenTraversalInversion = false;
-			if (hydrogenNeighbour != null)
-				for (ParityNeighbour neighbour:mNeighbourList)
-					if (neighbour != hydrogenNeighbour
-					 && hydrogenNeighbour.mAtom < neighbour.mAtom)
-						isHydrogenTraversalInversion = !isHydrogenTraversalInversion;
-
-			// If fromAtom is not a hydrogen, we consider it moved to highest atom index,
-			// because
-			boolean fromAtomTraversalInversion = false;
-			if (mFromAtom != -1 && !fromAtomIsHydrogen)
-				for (ParityNeighbour neighbour:mNeighbourList)
-					if (mFromAtom < neighbour.mAtom)
-						fromAtomTraversalInversion = !fromAtomTraversalInversion;
-
-			int parity = (mIsClockwise
-					^ isInverseOrder()
-					^ fromAtomTraversalInversion
-					^ isHydrogenTraversalInversion) ?
-					Molecule.cAtomParity2 : Molecule.cAtomParity1;
+			int parity = (mIsClockwise ^ isInverseOrder()) ? Molecule.cAtomParity1 : Molecule.cAtomParity2;
 /*
 System.out.println();
 System.out.println("central:"+mCentralAtom+(mIsClockwise?" @@":" @")+" from:"
@@ -1696,7 +1665,7 @@ System.out.println();
 System.out.println("parity:"+parity);
 */
 			return parity;
-			}
+		}
 
 		private boolean isInverseOrder() {
 			boolean inversion = false;
@@ -1733,21 +1702,23 @@ System.out.println("parity:"+parity);
 								  { "[C@](Cl)(F)(I)1.Br1", "F[C@](Cl)(Br)I" },
 								  { "Br[C@](Cl)(I)1.F1", "F[C@](Cl)(Br)I" },
 								  { "[C@H](F)(I)1.Br1", "F[C@H](Br)I" },
-								  { "Br[C@@H](F)1.I1", "F[C@H](Br)I" } };
+								  { "Br[C@@H](F)1.I1", "F[C@H](Br)I" },
+
+								  { "C[S@@](CC)=O", "CC[S@](C)=O" },
+								  { "[S@](=O)(C)CC", "CC[S](C)=O" } };
 		StereoMolecule mol = new StereoMolecule();
 		for (String[] test:data) {
 			try {
 				new SmilesParser().parse(mol, test[0]);
 				String smiles = new IsomericSmilesCreator(mol).getSmiles();
-				System.out.print(test[0]+" "+smiles);
+				System.out.print("IN:"+test[0]+" OUT:"+smiles);
 				if (!test[1].equals(smiles))
-					System.out.println(" should be: "+test[1]);
+					System.out.println(" EXPECTED: "+test[1]+" ERROR!");
 				else
 					System.out.println(" OK");
 				}
 			catch (Exception e) {
-				if (!test[2].equals("error"))
-					System.out.println("ERROR! "+test[1]+" smiles:"+test[0]+" exception:"+e.getMessage());
+				e.printStackTrace();
 				}
 			}
 		}
