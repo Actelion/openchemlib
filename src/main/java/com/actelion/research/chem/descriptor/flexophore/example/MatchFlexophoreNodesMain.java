@@ -7,7 +7,11 @@ import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.ModelSolutionSimilarity;
 import com.actelion.research.chem.descriptor.flexophore.MolDistHistViz;
 import com.actelion.research.chem.descriptor.flexophore.PPNodeViz;
+import com.actelion.research.gui.table.ChemistryRenderPanel;
+import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.Formatter;
+
+import javax.swing.*;
 
 
 public class MatchFlexophoreNodesMain {
@@ -26,21 +30,24 @@ public class MatchFlexophoreNodesMain {
         pairMatch(idcode, idcodeQuery);
     }
 
-    public static void pairMatch(String idcode, String idcodeQuery) {
+    public static void pairMatch(String idcodeBase, String idcodeQuery) {
         DescriptorHandlerFlexophore dhFlexophore = new DescriptorHandlerFlexophore();
         IDCodeParser parser = new IDCodeParser();
 
-        MolDistHistViz mdh = create(parser, dhFlexophore, idcode);
+        MolDistHistViz mdhvBase = create(parser, dhFlexophore, idcodeBase);
 
-        System.out.println("Num pp nodes base " + mdh.getNumPPNodes());
+
+
+
+        System.out.println("Num pp nodes base " + mdhvBase.getNumPPNodes());
 
         MolDistHistViz mdhQuery = create(parser, dhFlexophore, idcodeQuery);
         System.out.println("Num pp nodes query " + mdhQuery.getNumPPNodes());
 
-        System.out.println(mdh.toString());
+        System.out.println(mdhvBase.toString());
         System.out.println(mdhQuery.toString());
 
-        ModelSolutionSimilarity modelSolutionSimilarity = dhFlexophore.getBestMatch(mdh, mdhQuery);
+        ModelSolutionSimilarity modelSolutionSimilarity = dhFlexophore.getBestMatch(mdhvBase, mdhQuery);
         int heap = modelSolutionSimilarity.getSizeHeap();
 
         // System.out.println(Formatter.format3(sim) + "\t" + Formatter.format3(simDH));
@@ -51,9 +58,18 @@ public class MatchFlexophoreNodesMain {
             int indexQuery = modelSolutionSimilarity.getIndexQueryFromHeap(i);
             int indexBase = modelSolutionSimilarity.getIndexBaseFromHeap(i);
 
-            PPNodeViz ppv = mdh.getNode(indexBase);
+            PPNodeViz ppvBase = mdhvBase.getNode(indexBase);
+
+            int [] arrAtomIndexBase = ArrayUtils.toIntArray(ppvBase.getListIndexOriginalAtoms());
+
+
+
             PPNodeViz ppvQuery = mdhQuery.getNode(indexQuery);
-            System.out.println(ppv.toString());
+
+            int [] arrAtomIndexQuery = ArrayUtils.toIntArray(ppvQuery.getListIndexOriginalAtoms());
+
+
+            System.out.println(ppvBase.toString());
             System.out.println(ppvQuery.toString());
             // System.out.println(Formatter.format3((double)ppv.getSimilarityMappingNodes()) + "\t" + Formatter.format3((double)ppvQuery.getSimilarityMappingNodes()));
             System.out.println(Formatter.format3((double)modelSolutionSimilarity.getSimilarityNode(indexQuery)));
@@ -62,8 +78,6 @@ public class MatchFlexophoreNodesMain {
         }
 
         System.out.println("Un-normalized similarity " + Formatter.format3(modelSolutionSimilarity.getSimilarity()));
-
-
 
     }
 
