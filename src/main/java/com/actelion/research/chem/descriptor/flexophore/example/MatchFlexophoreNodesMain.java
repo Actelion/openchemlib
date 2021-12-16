@@ -7,7 +7,12 @@ import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.ModelSolutionSimilarity;
 import com.actelion.research.chem.descriptor.flexophore.MolDistHistViz;
 import com.actelion.research.chem.descriptor.flexophore.PPNodeViz;
+import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveBlurFlexophoreHardMatchUncovered;
+import com.actelion.research.gui.table.ChemistryRenderPanel;
+import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.Formatter;
+
+import javax.swing.*;
 
 
 public class MatchFlexophoreNodesMain {
@@ -26,44 +31,60 @@ public class MatchFlexophoreNodesMain {
         pairMatch(idcode, idcodeQuery);
     }
 
-    public static void pairMatch(String idcode, String idcodeQuery) {
+    public static void pairMatch(String idcodeBase, String idcodeQuery) {
         DescriptorHandlerFlexophore dhFlexophore = new DescriptorHandlerFlexophore();
+
+        ObjectiveBlurFlexophoreHardMatchUncovered objectiveBlurFlexophoreHardMatchUncovered = dhFlexophore.getObjectiveCompleteGraph();
+
         IDCodeParser parser = new IDCodeParser();
 
-        MolDistHistViz mdh = create(parser, dhFlexophore, idcode);
+        MolDistHistViz mdhvBase = create(parser, dhFlexophore, idcodeBase);
 
-        System.out.println("Num pp nodes base " + mdh.getNumPPNodes());
 
-        MolDistHistViz mdhQuery = create(parser, dhFlexophore, idcodeQuery);
-        System.out.println("Num pp nodes query " + mdhQuery.getNumPPNodes());
 
-        System.out.println(mdh.toString());
-        System.out.println(mdhQuery.toString());
 
-        ModelSolutionSimilarity modelSolutionSimilarity = dhFlexophore.getBestMatch(mdh, mdhQuery);
+        System.out.println("Num pp nodes base " + mdhvBase.getNumPPNodes());
+
+        MolDistHistViz mdhvQuery = create(parser, dhFlexophore, idcodeQuery);
+        System.out.println("Num pp nodes query " + mdhvQuery.getNumPPNodes());
+
+        System.out.println(mdhvBase.toString());
+        System.out.println(mdhvQuery.toString());
+
+        ModelSolutionSimilarity modelSolutionSimilarity = dhFlexophore.getBestMatch(mdhvBase, mdhvQuery);
         int heap = modelSolutionSimilarity.getSizeHeap();
 
         // System.out.println(Formatter.format3(sim) + "\t" + Formatter.format3(simDH));
         // System.out.println(Formatter.format3(sim) +"\t"+ Formatter.format3(simNormalized));
+
+        objectiveBlurFlexophoreHardMatchUncovered.setBase(mdhvBase);
+        objectiveBlurFlexophoreHardMatchUncovered.setQuery(mdhvQuery);
 
         for (int i = 0; i <heap; i++) {
 
             int indexQuery = modelSolutionSimilarity.getIndexQueryFromHeap(i);
             int indexBase = modelSolutionSimilarity.getIndexBaseFromHeap(i);
 
-            PPNodeViz ppv = mdh.getNode(indexBase);
-            PPNodeViz ppvQuery = mdhQuery.getNode(indexQuery);
-            System.out.println(ppv.toString());
+            PPNodeViz ppvBase = mdhvBase.getNode(indexBase);
+
+            int [] arrAtomIndexBase = ArrayUtils.toIntArray(ppvBase.getListIndexOriginalAtoms());
+
+            PPNodeViz ppvQuery = mdhvQuery.getNode(indexQuery);
+
+            int [] arrAtomIndexQuery = ArrayUtils.toIntArray(ppvQuery.getListIndexOriginalAtoms());
+
+            System.out.println(ppvBase.toString());
             System.out.println(ppvQuery.toString());
             // System.out.println(Formatter.format3((double)ppv.getSimilarityMappingNodes()) + "\t" + Formatter.format3((double)ppvQuery.getSimilarityMappingNodes()));
-            System.out.println(Formatter.format3((double)modelSolutionSimilarity.getSimilarityNode(indexQuery)));
+
+            float simHistogram = objectiveBlurFlexophoreHardMatchUncovered.getSimilarityHistogramsForNode(modelSolutionSimilarity, i);
+
+            System.out.println("Node similarity " + Formatter.format3((double)modelSolutionSimilarity.getSimilarityNode(indexQuery)) + ", histogram similarity " + Formatter.format3((double)simHistogram) + ".");
 
             System.out.println();
         }
 
         System.out.println("Un-normalized similarity " + Formatter.format3(modelSolutionSimilarity.getSimilarity()));
-
-
 
     }
 

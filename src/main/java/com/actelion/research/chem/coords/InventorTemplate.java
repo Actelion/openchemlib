@@ -6,11 +6,17 @@ public class InventorTemplate {
 	private StereoMolecule mFragment;
 	private long[] mFFP;
 	private double mAVBL;
+	private boolean mKeepAbsoluteOrientation;
 
-	public InventorTemplate(StereoMolecule fragment, long[] ffp) {
+	public InventorTemplate(StereoMolecule fragment, long[] ffp, boolean keepAbsoluteOrientation) {
 		mFragment = fragment;
 		mFFP = ffp;
+		mKeepAbsoluteOrientation = keepAbsoluteOrientation;
 		}
+
+	public boolean keepAbsoluteOrientation() {
+		return mKeepAbsoluteOrientation;
+	}
 
 	public void normalizeCoordinates() {
 		mAVBL = mFragment.getAverageBondLength();
