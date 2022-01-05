@@ -181,6 +181,7 @@ public interface CompoundTableConstants {
     String cColumnProperty3DFragmentSplit = "split3D"; // if "true": unconnected fragments of 3D-structure are shown as differently colored V3DMolecules
     String cColumnPropertyCommentUploadStatus = "commentUploadStatus";
     String cColumnPropertyCommentDepartment = "commentDepartment";
+    String cColumnPropertyCalculated = "calculated"; //for columns that can be calculated by a task
 
     String cSuperposeValueReferenceRow = "refRow";  // "reference" or null
     String cSuperposeAlignValueShape = "shape";  // "reference" or null
