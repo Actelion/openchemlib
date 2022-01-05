@@ -4,31 +4,14 @@
  */
 package com.actelion.research.chem.io;
 
-import java.io.File;
+import com.actelion.research.chem.*;
+
 import java.io.LineNumberReader;
 import java.io.Reader;
 import java.io.Writer;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
-
-import com.actelion.research.chem.AromaticityResolver;
-import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.ExtendedMolecule;
-import com.actelion.research.chem.Molecule3D;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.SmilesCreator;
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
-import com.actelion.research.chem.io.AbstractParser;
+import java.util.*;
 
 /**
  * 
@@ -87,8 +70,7 @@ public class Mol2FileParser extends AbstractParser {
 			for (int i=0; i<mol.getBonds(); i++) {
 				m.setBondOrder(i, mol.getBondOrder(bondMap[i]));
 			}
-			
-		} 
+		}
 		/*
 		else {
 			//Use BondsCalculator.aromatize
@@ -105,7 +87,6 @@ public class Mol2FileParser extends AbstractParser {
 		m.setAllAtomFlag(Molecule3D.LIGAND, true);
 
 		res.add(m);
-
 	}
 	
 	private void assignCharges(Molecule3D mol) {
@@ -140,9 +121,7 @@ public class Mol2FileParser extends AbstractParser {
 	
 	
 	public static String getChargeType(int type) {
-		
 		if(hmIndex_CHARGETYPE==null){
-			
 			hmIndex_CHARGETYPE = new HashMap<Integer, String>();
 			hmIndex_CHARGETYPE.put(iNO_CHARGES, sNO_CHARGES);
 			hmIndex_CHARGETYPE.put(iDEL_RE, sDEL_RE);
@@ -163,8 +142,7 @@ public class Mol2FileParser extends AbstractParser {
 	
 	
 	/**
-	 * @see com.actelion.research.chem.parsers.AbstractParser#parse(java.io.Reader,
-	 *      com.actelion.research.chem.Molecule3D)
+	 * @see com.actelion.research.chem.io.AbstractParser#loadGroup(String, java.io.Reader, int, int)
 	 */
 	@Override
 	public List<Molecule3D> loadGroup(String fileName, Reader in, int from, int to) throws Exception {
@@ -303,10 +281,7 @@ public class Mol2FileParser extends AbstractParser {
 						} else {
 							throw new RuntimeException("Unknown bond type " + order + ".");
 						}
-						
 					}
-
-					
 
 					int a1 = i1.intValue();
 					int a2 = i2.intValue();
@@ -356,9 +331,7 @@ public class Mol2FileParser extends AbstractParser {
 	 */
 	public void save(List<Molecule3D> mols, int chargeType, Writer writer) throws Exception {
 		DecimalFormat df = new DecimalFormat("0.0000");
-		
-		
-		
+
 		for (Molecule3D mol : mols) {
 			
 			//Count the number of bonds and atoms (except lone pairs)
@@ -373,8 +346,7 @@ public class Mol2FileParser extends AbstractParser {
 				if(mol.getAtomicNo(mol.getBondAtom(1, i))<=0) continue;
 				nBonds++;
 			}
-			
-			
+
 			// Write the molecule
 			writer.write("@<TRIPOS>MOLECULE" + NEWLINE);
 			writer.write(mol.getName() + NEWLINE);
@@ -423,9 +395,7 @@ public class Mol2FileParser extends AbstractParser {
 				writer.write(NEWLINE);
 			}
 		}
-
 	}
-
 
 	
 	public static void main(String[] args) throws Exception {
@@ -434,7 +404,4 @@ public class Mol2FileParser extends AbstractParser {
 		System.out.println("models=" +res.size()+" atm="+res.get(0).getAllAtoms()+" "+res.get(0).getAtoms());
 		//new Mol2FileParser().save(res.get(0), "c:/t.mol2");
 	}
-
-	
-
 }

@@ -162,7 +162,7 @@ public abstract class AbstractDepictor<T> {
 	private Rectangle2D.Double		mBoundingRect = new Rectangle2D.Double();
 	private DepictorTransformation	mTransformation;
 	private Point2D.Double			mChiralTextLocation;
-	private int[]					mAtomColor;
+	private int[]					mAtomColor,mAtomHiliteColor;
 	private String[]				mAtomText;
 	private Point2D.Double[]		mAlternativeCoords;
 	private Color					mOverruleForeground,mOverruleBackground,mBondBGHiliteColor,mBondFGHiliteColor,
@@ -198,13 +198,6 @@ public abstract class AbstractDepictor<T> {
 		}
 
 
-/*	@Deprecated
-	public void setDefaultColor(int c) {
-		mStandardForegroundColor = c;
-	    updateBondHiliteColor();
-		}*/
-
-
 	/**
 	 * If the foreground color is set, the molecule is drawn in the foreground
 	 * color except for non carbon atoms, which are drawn in atomicNo specific
@@ -232,6 +225,16 @@ public abstract class AbstractDepictor<T> {
 	    mOverruleForeground = foreground;
 	    mOverruleBackground = background;
 	    updateBondHiliteColor();
+		}
+
+
+	/**
+	 * If you want this tructure view to also draw an atom background with specific colors for every atom,
+	 * then you need to call this method before calling paint().
+	 * @param argb values with a==0 are not considered (may be null)
+	 */
+	public void setAtomHighlightColors(int[] argb) {
+		mAtomHiliteColor = argb;
 		}
 
 
@@ -561,6 +564,7 @@ public abstract class AbstractDepictor<T> {
 
 		setColor(COLOR_INITIALIZE);	// to initialize the color tracking mechanism
 
+		hiliteAtomBackgrounds();
 		hiliteExcludeGroups();
 		hiliteBondBackgrounds();
 		indicateQueryFeatures();
@@ -593,7 +597,7 @@ public abstract class AbstractDepictor<T> {
 				  && ((mDisplayMode & cDModeNoImplicitAtomLabelColors) == 0)
 				  && mMol.getAtomList(i) == null
 				  && mMol.getAtomicNo(i) < ATOM_LABEL_COLOR.length) {
-				setRGBColor(getContrastColor(ATOM_LABEL_COLOR[mMol.getAtomicNo(i)]));
+				setRGBColor(getContrastColor(ATOM_LABEL_COLOR[mMol.getAtomicNo(i)], i));
 	    		mpDrawAtom(i, esrGroupMemberCount);
 				setColor(mStandardForegroundColor);
 				}
@@ -607,9 +611,10 @@ public abstract class AbstractDepictor<T> {
 		}
 
 
-	private Color getContrastColor(int rgb) {
+	private Color getContrastColor(int rgb, int atom) {
 		Color bg = (mOverruleBackground != null) ? mOverruleBackground
-				 : (mCustomBackground != null) ? mCustomBackground : Color.WHITE;
+				: (mAtomHiliteColor != null && atom < mAtomHiliteColor.length && (mAtomHiliteColor[atom] & 0xFF000000) != 0) ? new Color(mAtomHiliteColor[atom])
+				: (mCustomBackground != null) ? mCustomBackground : Color.WHITE;
 		Color fg = new Color(rgb);
 		return ColorHelper.getContrastColor(fg, bg);
 		}
@@ -662,6 +667,22 @@ public abstract class AbstractDepictor<T> {
 			if (mMol.getMoleculeColor() != Molecule.cMoleculeColorNeutral)
 				setColor(COLOR_CHIRALITY_TEXT);
 			drawString(chiralText, mChiralTextLocation.x, mChiralTextLocation.y+0.3f*mChiralTextSize);
+			}
+		}
+
+
+	private void hiliteAtomBackgrounds() {
+		if (mAtomHiliteColor == null
+		 || (mAtomHiliteColor.length < mMol.getAtoms()))
+			return;
+
+		double d = mTransformation.getScaling() * mMol.getAverageBondLength();
+		double r = d/2;
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			if ((mAtomHiliteColor[atom] & 0xFF000000) != 0) {
+				setColor(new Color(mAtomHiliteColor[atom]));
+	            fillCircle(getAtomX(atom)-r, getAtomY(atom)-r, d);
+				}
 			}
 		}
 
@@ -1592,7 +1613,6 @@ public abstract class AbstractDepictor<T> {
         if (!mIsValidatingView)
             onDrawAtom(atom,mMol.getAtomLabel(atom), getAtomX(atom), getAtomY(atom));
 
-
 		String propStr = null;
 		if (mMol.getAtomCharge(atom) != 0) {
 			String valStr = (Math.abs(mMol.getAtomCharge(atom)) == 1) ? ""
@@ -1611,8 +1631,6 @@ public abstract class AbstractDepictor<T> {
 				isoStr = append(isoStr, "!a");
 			if ((queryFeatures & Molecule.cAtomQFMoreNeighbours) != 0)
 				isoStr = append(isoStr, "s");
-//			if ((queryFeatures & Molecule.cAtomQFNoMoreNeighbours) != 0)
-//				isoStr = append(isoStr, "!s");
             if ((queryFeatures & Molecule.cAtomQFHydrogen) != 0) {
                 int hydrogens = (queryFeatures & Molecule.cAtomQFHydrogen);
     			if (hydrogens == Molecule.cAtomQFNot1Hydrogen+Molecule.cAtomQFNot2Hydrogen+Molecule.cAtomQFNot3Hydrogen)
@@ -1766,11 +1784,6 @@ public abstract class AbstractDepictor<T> {
 		int hydrogensToAdd = 0;
 		if ((mDisplayMode & cDModeNoImplicitHydrogen) == 0) {
 			if (mMol.isFragment()) {
-/*  			if ((mMol.getAtomicNo(atom) != 6
-				  || !mAtomIsConnected[atom]
-				  || mMol.getAtomCharge(atom) != 0
-				  || mMol.getAtomRadical(atom) != 0)
-				 && (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)*/
 				if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)
 					hydrogensToAdd = mMol.getImplicitHydrogens(atom);
 				}
