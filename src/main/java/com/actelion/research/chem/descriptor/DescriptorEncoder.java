@@ -43,7 +43,7 @@ public class DescriptorEncoder {
     private static final int BITS = 6;
     private static final int PAIR_BITS = 4;
 
-    // CODE Strings must contain highest ASCII character as the end
+    // CODE Strings must contain highest ASCII character at the end; unused characters: " ' \ `
     private static final byte[] sCode = "0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".getBytes();
     private static final byte[] sCodeMultipleMin = "!#$%&()*+,-./".getBytes();
     private static final byte[] sCodeMultipleMax = ":;<=>?[]^{|}~".getBytes();
@@ -87,6 +87,67 @@ public class DescriptorEncoder {
 		}
 
 	/**
+	 * Encodes any int[][] containing positive values.
+	 * @param data not necessarily rectangular 2-dimensional array without null values
+	 * @return byte[] of encoded character sequence
+	 */
+	public byte[] encodeIntArray2D(int[][] data) {
+		int maxCount = data.length;
+		int maxValue = 0;
+		int valueCount = 0;
+		for (int i=0; i<data.length; i++) {
+			if (maxCount < data[i].length)
+				maxCount = data[i].length;
+			for (int j = 0; j<data[i].length; j++)
+				if (maxValue<data[i][j])
+					maxValue = data[i][j];
+			valueCount += data[i].length;
+			}
+		int countBits = getNeededBits(maxCount);
+		int valueBits = getNeededBits(maxValue);
+
+		encodeStart(10 + (1+data.length)*countBits + valueCount*valueBits);
+		encodeBits(countBits, 5);
+		encodeBits(valueBits, 5);
+		encodeBits(data.length, countBits);
+		for (int i=0; i<data.length; i++) {
+			encodeBits(data[i].length, countBits);
+			for (int j=0; j<data[i].length; j++)
+				encodeBits(data[i][j], valueBits);
+			}
+		encodeBitsEnd();
+		encodeDuplicateBytes();
+		return mBytes;
+	}
+
+	/**
+	 * Decodes a 2-dimensional int[][] with positive values.
+	 * @param bytes encoded character sequence
+	 * @return int[][] decoded 2-dimensional int array
+	 */
+	public int[][] decodeIntArray2D(byte[] bytes) {
+		if (bytes.length == 0)
+			return null;
+
+		bytes = decodeDuplicateBytes(bytes);
+		decodeStart(bytes);
+
+		int countBits = decodeBits(5);
+		int valueBits = decodeBits(5);
+		int outerSize = decodeBits(countBits);
+
+		int[][] data = new int[outerSize][];
+		for (int i=0; i<outerSize; i++) {
+			int innerSize = decodeBits(countBits);
+			data[i] = new int[innerSize];
+			for (int j=0; j<innerSize; j++)
+				data[i][j] = decodeBits(valueBits);
+			}
+
+		return data;
+		}
+
+	/**
 	 * Encodes a binary fingerprint stored as long[].
 	 * @param data binary fingerprint
 	 * @return byte[] of encoded character sequence
@@ -99,7 +160,7 @@ public class DescriptorEncoder {
 		encodeBitsEnd();
 		encodeDuplicateBytes();
 		return mBytes;
-	}
+		}
 
 	/**
      * Decodes a binary fingerprint from a String into an int[].
@@ -134,7 +195,7 @@ public class DescriptorEncoder {
 	 */
 	public long[] decodeLong(String s) {
 		return decodeLong(s.getBytes());
-	}
+		}
 
 	/**
 	 * Decodes a binary fingerprint from a String into a long[].

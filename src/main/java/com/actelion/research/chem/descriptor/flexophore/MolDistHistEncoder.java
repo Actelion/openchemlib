@@ -24,8 +24,6 @@ import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.util.datamodel.IntVec;
 
-import java.util.StringTokenizer;
-
 public class MolDistHistEncoder {
 	
 	private static MolDistHistEncoder INSTANCE;
@@ -45,10 +43,11 @@ public class MolDistHistEncoder {
 				
 		String strNodes = encodeByteVec(mdh.getArrNode());
 				
-		String strDistHist = distHistEncoder.encodeHistograms(mdh);
-		
-		return strNodes + " " + strDistHist;
+		String strDistHist = " " + distHistEncoder.encodeHistograms(mdh);
 
+		String atoms = mdh.getNodeAtoms() == null ? "" : " " + new DescriptorEncoder().encodeIntArray2D(mdh.getNodeAtoms());
+		
+		return strNodes + strDistHist + atoms;
 	}
 	
 	public MolDistHist decode(byte [] arr){
@@ -61,16 +60,9 @@ public class MolDistHistEncoder {
 			return DescriptorHandlerFlexophore.FAILED_OBJECT;
 		}
 		
-		StringTokenizer st = new StringTokenizer(s);
+		String[] st = s.split(" ");
 		
-		String sNodes = st.nextToken();
-		
-		String sHistograms = "";
-		if(st.hasMoreTokens()){
-			sHistograms = st.nextToken();
-		}
-		
-		byte [] arrNodes = decodeNodes(sNodes);
+		byte [] arrNodes = decodeNodes(st[0]);
 
 		int nNodes=0;
 		int pos=0;
@@ -92,9 +84,12 @@ public class MolDistHistEncoder {
 				
 		mdh.setArrNode(arrNodesTrunc);
 		
-		if(sHistograms.length()>0)
-			distHistEncoder.decodeHistograms(sHistograms, mdh);
-				
+		if(st.length >= 3 && st[1].length() != 0)
+			distHistEncoder.decodeHistograms(st[1], mdh);
+
+		if (st.length >= 3)
+			mdh.setNodeAtoms(new DescriptorEncoder().decodeIntArray2D(st[2].getBytes()));
+
 		return mdh;
 
 	}

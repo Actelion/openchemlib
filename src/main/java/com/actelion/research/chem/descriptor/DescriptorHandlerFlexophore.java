@@ -28,11 +28,13 @@ import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveBlurFlexophoreHardMatchUncovered;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.PPNodeSimilarity;
 import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDistHistViz;
+import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.CommandLineParser;
 import com.actelion.research.util.graph.complete.CompleteGraphMatcher;
 import com.actelion.research.util.graph.complete.SolutionCompleteGraph;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -141,6 +143,7 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	private double threshHistogramSimilarity;
 
 	private boolean singleConformationModeQuery;
+	private boolean includeNodeAtoms;
 
 	private ThreadMaster threadMaster;
 
@@ -216,8 +219,10 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 
 
 		creatorMolDistHistViz = new CreatorMolDistHistViz();
+	}
 
-
+	public void setIncludeNodeAtoms(boolean b) {
+		includeNodeAtoms = b;
 	}
 
 	public void setModeQuery(boolean modeQuery){
@@ -368,7 +373,6 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	}
 
 	public MolDistHist createDescriptor(Object mol) {
-
 		StereoMolecule fragBiggest = (StereoMolecule)mol;
 
 		fragBiggest.stripSmallFragments();
@@ -380,9 +384,6 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 		} else if(fragBiggest.getAtoms() > MAX_NUM_HEAVY_ATOMS){
 			return FAILED_OBJECT;
 		}
-
-//        IDCodeParser parser = new IDCodeParser();
-//		fragBiggest = parser.getCompactMolecule(new Canonizer(fragBiggest).getIDCode());
 
 		MolDistHistViz mdhv = createVisualDescriptor(fragBiggest);
 		MolDistHist mdh = (mdhv == null) ? null : mdhv.getMolDistHist();
@@ -398,6 +399,13 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 			recentException = new RuntimeException(msg);
 
 			mdh = FAILED_OBJECT;;
+		}
+		else if (includeNodeAtoms) {
+			List<PPNodeViz> nodeList = mdhv.getNodes();
+			int[][] nodeAtom = new int[nodeList.size()][];
+			for (int i=0; i<nodeList.size(); i++)
+				nodeAtom[i] = ArrayUtils.toIntArray(nodeList.get(i).getListIndexOriginalAtoms());
+			mdh.setNodeAtoms(nodeAtom);
 		}
 
 		return mdh;
@@ -562,6 +570,9 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 
 		int n = scgBest.getSizeHeap();
 
+		if (n == 0) // added to prevent NegativeArraySizeException in next statement; TLS 10Jan2022
+			return null;
+
 		float [] arrSimNode = new float[scgBest.getNodesQuery()];
 
 		Arrays.fill(arrSimNode, -1);
@@ -608,6 +619,7 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 				singleConformationModeQuery);
 
 		dh.setModeQuery(objectiveCompleteGraphHard.isModeQuery());
+		dh.setIncludeNodeAtoms(includeNodeAtoms);
 
 		return dh;
 	}
