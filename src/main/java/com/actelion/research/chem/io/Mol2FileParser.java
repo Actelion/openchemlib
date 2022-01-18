@@ -59,12 +59,12 @@ public class Mol2FileParser extends AbstractParser {
 			ExtendedMolecule mol = new StereoMolecule(m);
 			int[] bondMap = mol.getHandleHydrogenBondMap();
 			int j =0;
-			for (int b : aromaticBonds) {
-				if(mol.getAtomicNo(mol.getBondAtom(0, b))!=8 && mol.getAtomicNo(mol.getBondAtom(1, b))!=8) {
-					mol.setBondType(b, ExtendedMolecule.cBondTypeDelocalized);
-				}
-			}
-			new AromaticityResolver(mol).locateDelocalizedDoubleBonds(null,false,true);
+			//for (int b : aromaticBonds) {
+			//	if(mol.getAtomicNo(mol.getBondAtom(0, b))!=8 && mol.getAtomicNo(mol.getBondAtom(1, b))!=8) {
+			//		mol.setBondType(b, ExtendedMolecule.cBondTypeDelocalized);
+			//	}
+			//}
+			new AromaticityResolver(mol).locateDelocalizedDoubleBonds(null,true,true);
 			
 	
 			for (int i=0; i<mol.getBonds(); i++) {
@@ -286,10 +286,11 @@ public class Mol2FileParser extends AbstractParser {
 					int a1 = i1.intValue();
 					int a2 = i2.intValue();
 					int b = m.addBond(a1, a2,order);
+
 					//m.setBondOrder(b, order);
-					if(o.equals("ar")) {
-						aromaticBonds.add(b);
-					}
+					//if(o.equals("ar")) {
+					//	aromaticBonds.add(b);
+					//}
 					
 					break;
 				}
