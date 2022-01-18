@@ -581,8 +581,6 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 		return mss;
 	}
 
-
-
 	public static float normalizeValue(double value) {
 		return value <= 0.0f ? 0.0f
 				: value >= 1.0f ? 1.0f
