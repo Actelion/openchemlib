@@ -51,6 +51,8 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 
 	private byte modeFlexophore;
 
+	private int[][] nodeAtoms;  // original atom index list for every node
+
 	public MolDistHist () {
 		initHistogramArray(0);
 		init();
@@ -258,12 +260,26 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 		finalized = false;
 	}
 	
-	
 	public int getConnAtom(int at, int index) {
 		if(index >= at)
 			index++;
 		
 		return index;
+	}
+
+	/**
+	 * @return the original atom indexes in node order, provided they have beed added when creating this MolDistHist
+	 */
+	public int[][] getNodeAtoms() {
+		return nodeAtoms;
+	}
+
+	/**
+	 * Adds the original atom indexes in node order to this MolDistHist
+	 * @param nodeAtoms
+	 */
+	public void setNodeAtoms(int[][] nodeAtoms) {
+		this.nodeAtoms = nodeAtoms;
 	}
 
 	@Override
@@ -274,7 +290,6 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	}
 	
 	public String toString(){
-
 //		Causes errors in debug mode
 //		if(!finalized)
 //			realize();

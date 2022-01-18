@@ -65,6 +65,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	protected int mAllowedDragAction;
 	protected int mAllowedDropAction;
 	private String mWarningMessage;
+	private int[] mAtomHiliteColor;
 
 	public JStructureView() {
         this(null);
@@ -216,6 +217,15 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		mAllowFragmentStatusChangeOnPasteOrDrop = allow;
 		}
 
+	/**
+	 * If you want this tructure view to also draw an atom background with specific colors for every atom,
+	 * then you need to call this method before or just after one of the structureChanged() calls.
+	 * @param argb values with a==0 are not considered (may be null)
+	 */
+	public void setAtomHighlightColors(int[] argb) {
+		mAtomHiliteColor = argb;
+		}
+
 	public boolean canDrop() {
 		return mIsEditable && isEnabled() && !mIsDraggingThis;
 	    }
@@ -257,6 +267,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			mDepictor = new GenericDepictor(mDisplayMol);
             mDepictor.setDisplayMode(mDisplayMode);
             mDepictor.setAtomText(mAtomText);
+            mDepictor.setAtomHighlightColors(mAtomHiliteColor);
 
 			if (!isEnabled())
                 mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, bg), bg);
