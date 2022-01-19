@@ -5,6 +5,7 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.ModelSolutionSimilarity;
+import com.actelion.research.chem.descriptor.flexophore.MolDistHist;
 import com.actelion.research.chem.descriptor.flexophore.MolDistHistViz;
 import com.actelion.research.chem.descriptor.flexophore.PPNodeViz;
 import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveBlurFlexophoreHardMatchUncovered;
@@ -42,6 +43,7 @@ public class MatchFlexophoreNodesMain {
 
         MolDistHistViz mdhvBase = create(parser, dhFlexophore, idcodeBase);
 
+        // Fetch original tom indices
         System.out.println("Num pp nodes base " + mdhvBase.getNumPPNodes());
         List<int[]> liBaseArrayIndexAtom = new ArrayList<>();
         for (int i = 0; i < mdhvBase.getNumPPNodes(); i++) {
@@ -49,7 +51,7 @@ public class MatchFlexophoreNodesMain {
             liBaseArrayIndexAtom.add(arrIndexAt);
         }
 
-
+        // Fetch original tom indices
         MolDistHistViz mdhvQuery = create(parser, dhFlexophore, idcodeQuery);
         System.out.println("Num pp nodes query " + mdhvQuery.getNumPPNodes());
         List<int[]> liQueryArrayIndexAtom = new ArrayList<>();
@@ -61,7 +63,13 @@ public class MatchFlexophoreNodesMain {
         System.out.println(mdhvBase.toString());
         System.out.println(mdhvQuery.toString());
 
-        ModelSolutionSimilarity modelSolutionSimilarity = dhFlexophore.getBestMatch(mdhvBase.getMolDistHist(), mdhvQuery.getMolDistHist());
+        //
+        // Just to show that it works with MolDistHist as with MolDistHistViz
+        //
+        MolDistHist mdhBase = mdhvBase.getMolDistHist();
+        MolDistHist mdhQuery = mdhvQuery.getMolDistHist();
+
+        ModelSolutionSimilarity modelSolutionSimilarity = dhFlexophore.getBestMatch(mdhBase, mdhQuery);
         int heap = modelSolutionSimilarity.getSizeHeap();
 
         // System.out.println(Formatter.format3(sim) + "\t" + Formatter.format3(simDH));
