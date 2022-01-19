@@ -13,6 +13,8 @@ import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.Formatter;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MatchFlexophoreNodesMain {
@@ -40,18 +42,26 @@ public class MatchFlexophoreNodesMain {
 
         MolDistHistViz mdhvBase = create(parser, dhFlexophore, idcodeBase);
 
-
-
-
         System.out.println("Num pp nodes base " + mdhvBase.getNumPPNodes());
+        List<int[]> liBaseArrayIndexAtom = new ArrayList<>();
+        for (int i = 0; i < mdhvBase.getNumPPNodes(); i++) {
+            int [] arrIndexAt = mdhvBase.getNode(i).getArrayIndexOriginalAtoms();
+            liBaseArrayIndexAtom.add(arrIndexAt);
+        }
+
 
         MolDistHistViz mdhvQuery = create(parser, dhFlexophore, idcodeQuery);
         System.out.println("Num pp nodes query " + mdhvQuery.getNumPPNodes());
+        List<int[]> liQueryArrayIndexAtom = new ArrayList<>();
+        for (int i = 0; i < mdhvQuery.getNumPPNodes(); i++) {
+            int [] arrIndexAt = mdhvQuery.getNode(i).getArrayIndexOriginalAtoms();
+            liQueryArrayIndexAtom.add(arrIndexAt);
+        }
 
         System.out.println(mdhvBase.toString());
         System.out.println(mdhvQuery.toString());
 
-        ModelSolutionSimilarity modelSolutionSimilarity = dhFlexophore.getBestMatch(mdhvBase, mdhvQuery);
+        ModelSolutionSimilarity modelSolutionSimilarity = dhFlexophore.getBestMatch(mdhvBase.getMolDistHist(), mdhvQuery.getMolDistHist());
         int heap = modelSolutionSimilarity.getSizeHeap();
 
         // System.out.println(Formatter.format3(sim) + "\t" + Formatter.format3(simDH));
@@ -67,14 +77,17 @@ public class MatchFlexophoreNodesMain {
 
             PPNodeViz ppvBase = mdhvBase.getNode(indexBase);
 
-            int [] arrAtomIndexBase = ArrayUtils.toIntArray(ppvBase.getListIndexOriginalAtoms());
+            int [] arrAtomIndexBase = liBaseArrayIndexAtom.get(indexBase);
 
             PPNodeViz ppvQuery = mdhvQuery.getNode(indexQuery);
 
-            int [] arrAtomIndexQuery = ArrayUtils.toIntArray(ppvQuery.getListIndexOriginalAtoms());
+            int [] arrAtomIndexQuery = liQueryArrayIndexAtom.get(indexQuery);
 
             System.out.println(ppvBase.toString());
+            System.out.println(ArrayUtils.toString(arrAtomIndexBase));
+
             System.out.println(ppvQuery.toString());
+            System.out.println(ArrayUtils.toString(arrAtomIndexQuery));
             // System.out.println(Formatter.format3((double)ppv.getSimilarityMappingNodes()) + "\t" + Formatter.format3((double)ppvQuery.getSimilarityMappingNodes()));
 
             float simHistogram = objectiveBlurFlexophoreHardMatchUncovered.getSimilarityHistogramsForNode(modelSolutionSimilarity, i);

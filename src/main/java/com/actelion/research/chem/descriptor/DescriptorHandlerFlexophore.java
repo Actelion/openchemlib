@@ -592,6 +592,46 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 		return mss;
 	}
 
+	public ModelSolutionSimilarity getBestMatch(MolDistHist mdhBase, MolDistHist mdhQuery){
+
+		MolDistHistViz mdhvBase = new MolDistHistViz(mdhBase);
+		MolDistHistViz mdhvQuery = new MolDistHistViz(mdhQuery);
+
+		CompleteGraphMatcher<IMolDistHist> cgMatcher = queueCGM.poll();
+
+		if(cgMatcher == null){
+			cgMatcher = getNewCompleteGraphMatcher();
+		}
+
+		cgMatcher.set(mdhvBase, mdhvQuery);
+		cgMatcher.calculateSimilarity();
+
+		SolutionCompleteGraph scgBest = cgMatcher.getBestMatchingSolution();
+
+		int n = scgBest.getSizeHeap();
+
+		if (n == 0) // added to prevent NegativeArraySizeException in next statement; TLS 10Jan2022
+			return null;
+
+		float [] arrSimNode = new float[scgBest.getNodesQuery()];
+
+		Arrays.fill(arrSimNode, -1);
+
+		ObjectiveBlurFlexophoreHardMatchUncovered objectiveCompleteGraphHard = (ObjectiveBlurFlexophoreHardMatchUncovered)cgMatcher.getObjectiveCompleteGraph();
+		objectiveCompleteGraphHard.setMatchingInfoInQueryAndBase(scgBest);
+
+		for (int indexHeap = 0; indexHeap < n; indexHeap++) {
+
+			int indexQuery = scgBest.getIndexQueryFromHeap(indexHeap);
+
+			arrSimNode[indexQuery] = mdhvQuery.getNode(indexQuery).getSimilarityMappingNodes();
+		}
+
+		ModelSolutionSimilarity mss = new ModelSolutionSimilarity(scgBest, arrSimNode);
+
+		return mss;
+	}
+
 	public static float normalizeValue(double value) {
 		return value <= 0.0f ? 0.0f
 				: value >= 1.0f ? 1.0f

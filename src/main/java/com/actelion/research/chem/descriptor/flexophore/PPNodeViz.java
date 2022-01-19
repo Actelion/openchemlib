@@ -21,6 +21,7 @@
 package com.actelion.research.chem.descriptor.flexophore;
 
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.util.ArrayUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -161,6 +162,10 @@ public class PPNodeViz extends PPNode implements Serializable {
 		return new ArrayList<Integer>(hsIndexOriginalAtoms);
 	}
 	
+	public int [] getArrayIndexOriginalAtoms() {
+		return ArrayUtils.toIntArray(hsIndexOriginalAtoms);
+	}
+
 	public int getMappingIndex() {
 		return mappingIndex;
 	}

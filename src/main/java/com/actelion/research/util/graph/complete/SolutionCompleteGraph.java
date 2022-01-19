@@ -5,8 +5,6 @@ import java.util.Arrays;
 import com.actelion.research.util.BurtleHasher;
 
 /**
- * 
- * 
  * SolutionCompleteGraph
  * <p>Copyright: Actelion Ltd., Inc. All Rights Reserved
  * This software is the proprietary information of Actelion Pharmaceuticals, Ltd.
@@ -16,11 +14,17 @@ import com.actelion.research.util.BurtleHasher;
  * Oct 1, 2012 MvK: Start implementation
  */
 public class SolutionCompleteGraph extends AMemorizedObject implements Comparable<SolutionCompleteGraph>{
-	
+
+	//
+	// Stores the solution as pairwise node indices
+	//
+
+	// Contains the node index in MolDistHist for base
 	private byte [] heapIndexBase;
 	
 	private int sizeHeap;
-	
+
+	// Contains the node index in MolDistHist for query
 	private byte [] heapIndexQuery;
 
 	private byte maxIndexNodeQuery;
@@ -28,6 +32,7 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	/**
 	 * The index is the index of the node in the query molecule.
 	 * The value at 'index' is the index of the node in the base molecule.
+	 * Contains the same information as heapIndexBase and heapIndexQuery. Used for fast lookup.
 	 */
 	private byte [] arrSolution;
 
