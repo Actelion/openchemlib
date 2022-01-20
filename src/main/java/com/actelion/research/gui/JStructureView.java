@@ -56,8 +56,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	private String mIDCode;
 	private StereoMolecule mMol,mDisplayMol;
     private GenericDepictor mDepictor;
-	private boolean mShowBorder,mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mOpaqueBackground,
-					mIsEditable,mDisableBorder;
+	private boolean mShowBorder,mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mIsEditable,mDisableBorder;
 	private int mChiralTextPosition,mDisplayMode;
 	private String[] mAtomText;
 	private IClipboardHandler mClipboardHandler;
@@ -66,6 +65,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	protected int mAllowedDropAction;
 	private String mWarningMessage;
 	private int[] mAtomHiliteColor;
+	private float[] mAtomHiliteRadius;
 
 	public JStructureView() {
         this(null);
@@ -141,6 +141,12 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		addMouseMotionListener(this);
 		initializeDragAndDrop(dragAction, dropAction);
 	    }
+
+	@Override
+	public void updateUI() {
+		super.updateUI();
+		updateBackground();
+		}
 
     /**
      * Call this in order to get clipboard support:
@@ -218,12 +224,15 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		}
 
 	/**
-	 * If you want this tructure view to also draw an atom background with specific colors for every atom,
+	 * If you want this structure view to also draw an atom background with specific colors for every atom,
 	 * then you need to call this method before or just after one of the structureChanged() calls.
-	 * @param argb values with a==0 are not considered (may be null)
+	 * @param argb if alpha < 1 then the background is mixed in accordingly
+	 * @param radius <= 1.0; if null, then a default of 0.5 of the average bond length is used
 	 */
-	public void setAtomHighlightColors(int[] argb) {
+	public void setAtomHighlightColors(int[] argb, float[] radius) {
 		mAtomHiliteColor = argb;
+		mAtomHiliteRadius = radius;
+		repaint();
 		}
 
 	public boolean canDrop() {
@@ -267,7 +276,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			mDepictor = new GenericDepictor(mDisplayMol);
             mDepictor.setDisplayMode(mDisplayMode);
             mDepictor.setAtomText(mAtomText);
-            mDepictor.setAtomHighlightColors(mAtomHiliteColor);
+            mDepictor.setAtomHighlightColors(mAtomHiliteColor, mAtomHiliteRadius);
 
 			if (!isEnabled())
                 mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, bg), bg);
