@@ -75,8 +75,8 @@ public class MatchFlexophoreNodesMain {
         // System.out.println(Formatter.format3(sim) + "\t" + Formatter.format3(simDH));
         // System.out.println(Formatter.format3(sim) +"\t"+ Formatter.format3(simNormalized));
 
-        objectiveBlurFlexophoreHardMatchUncovered.setBase(mdhvBase);
-        objectiveBlurFlexophoreHardMatchUncovered.setQuery(mdhvQuery);
+        objectiveBlurFlexophoreHardMatchUncovered.setBase(mdhBase);
+        objectiveBlurFlexophoreHardMatchUncovered.setQuery(mdhQuery);
 
         for (int i = 0; i <heap; i++) {
 

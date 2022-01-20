@@ -618,8 +618,13 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 		long t0 = System.nanoTime();
 
-		mdhvBase = (MolDistHistViz)iMolDistHistBase;
-		mdhvBaseBlurredHist = new MolDistHistViz((MolDistHistViz)iMolDistHistBase);
+		if(iMolDistHistBase instanceof MolDistHistViz) {
+			mdhvBase = (MolDistHistViz) iMolDistHistBase;
+			mdhvBaseBlurredHist = new MolDistHistViz((MolDistHistViz) iMolDistHistBase);
+		} else if(iMolDistHistBase instanceof MolDistHist) {
+			mdhvBase = new MolDistHistViz((MolDistHist) iMolDistHistBase);
+			mdhvBaseBlurredHist = new MolDistHistViz((MolDistHist) iMolDistHistBase);
+		}
 
 		slidingWindowDistHist.apply(mdhvBaseBlurredHist);
 
@@ -640,8 +645,13 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 		long t0 = System.nanoTime();
 
-		mdhvQuery = (MolDistHistViz) iMolDistHistQuery;
-		mdhvQueryBlurredHist = new MolDistHistViz((MolDistHistViz)iMolDistHistQuery);
+		if(iMolDistHistQuery instanceof MolDistHistViz) {
+			mdhvQuery = (MolDistHistViz) iMolDistHistQuery;
+			mdhvQueryBlurredHist = new MolDistHistViz((MolDistHistViz) iMolDistHistQuery);
+		} else if(iMolDistHistQuery instanceof MolDistHist) {
+			mdhvQuery = new MolDistHistViz((MolDistHist) iMolDistHistQuery);
+			mdhvQueryBlurredHist = new MolDistHistViz((MolDistHist) iMolDistHistQuery);
+		}
 
 		slidingWindowDistHist.apply(mdhvQueryBlurredHist);
 
