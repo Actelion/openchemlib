@@ -375,7 +375,7 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	public MolDistHist createDescriptor(Object mol) {
 		StereoMolecule fragBiggest = (StereoMolecule)mol;
 
-		fragBiggest.stripSmallFragments();
+		int[] oldToNewAtom = fragBiggest.stripSmallFragments();
 
 		fragBiggest.ensureHelperArrays(StereoMolecule.cHelperCIP);
 
@@ -393,18 +393,24 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 		if(mdh == null) {
 			mdh = FAILED_OBJECT;
 		} else if (mdh.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE) {
-
 			String msg = "Flexophore exceeded maximum number of nodes.";
-
 			recentException = new RuntimeException(msg);
-
 			mdh = FAILED_OBJECT;;
 		}
 		else if (includeNodeAtoms) {
 			List<PPNodeViz> nodeList = mdhv.getNodes();
 			int[][] nodeAtom = new int[nodeList.size()][];
-			for (int i=0; i<nodeList.size(); i++)
+			for (int i=0; i<nodeList.size(); i++) {
 				nodeAtom[i] = ArrayUtils.toIntArray(nodeList.get(i).getListIndexOriginalAtoms());
+				if (oldToNewAtom != null) {
+					int[] newToOldAtom = new int[fragBiggest.getAtoms()];
+					for (int j=0; j<oldToNewAtom.length; j++)
+						if (oldToNewAtom[j] != -1)
+							newToOldAtom[oldToNewAtom[j]] = j;
+					for (int j=0; j<nodeAtom[i].length; j++)
+						nodeAtom[i][j] = newToOldAtom[nodeAtom[i][j]];
+				}
+			}
 			mdh.setNodeAtoms(nodeAtom);
 		}
 

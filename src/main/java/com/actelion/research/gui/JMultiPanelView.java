@@ -38,7 +38,7 @@ public class JMultiPanelView extends JPanel implements MultiPanelDragListener {
 		mLayout = new TableLayout(size);
 		setLayout(mLayout);
         setOpaque(false);
-		mPanelList = new ArrayList<MultiPanelObject>();
+		mPanelList = new ArrayList<>();
 		}
 
 	public void add(JComponent c, String title) {

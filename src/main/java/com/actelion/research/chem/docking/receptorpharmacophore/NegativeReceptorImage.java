@@ -24,6 +24,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	public enum InteractionProbe {NEG_CHARGE, POS_CHARGE, HB_DONOR, HB_ACCEPTOR };
 	
 	private static final long SEED = 12345L;
+	private static final int STARTING_POINTS_CAVITY_DETECTION = 10;
 	private static final int RAYS = 120;
 	private static final double RAY_LENGTH = 8.0;
 	private static final double BURIEDNESS_RATIO_CUTOFF = 0.4;
@@ -81,7 +82,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 		createPolarInteractionSites(ppGaussians);
 		createShapeAtoms(shapeGaussians);
 		List<Coordinates> startingPoints = new ArrayList<>();
-		for(int a=0;a<mol.getAtoms() && a<3;a++) {
+		for(int a=0;a<mol.getAtoms() && a<STARTING_POINTS_CAVITY_DETECTION;a++) {
 			startingPoints.add(mol.getCoordinates(a));
 		}
 		prunePoints(startingPoints, ppGaussians, shapeGaussians, 2.0);

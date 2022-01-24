@@ -45,7 +45,7 @@ public class MolDistHistEncoder {
 				
 		String strDistHist = " " + distHistEncoder.encodeHistograms(mdh);
 
-		String atoms = mdh.getNodeAtoms() == null ? "" : " " + new DescriptorEncoder().encodeIntArray2D(mdh.getNodeAtoms());
+		String atoms = mdh.getNodeAtoms() == null ? "" : " " + new String(new DescriptorEncoder().encodeIntArray2D(mdh.getNodeAtoms()));
 		
 		return strNodes + strDistHist + atoms;
 	}
@@ -75,7 +75,7 @@ public class MolDistHistEncoder {
 				break;
 			}
 		}
-		
+
 		byte [] arrNodesTrunc = new byte [pos];
 		
 		System.arraycopy(arrNodes, 0, arrNodesTrunc, 0, arrNodesTrunc.length);
@@ -84,7 +84,7 @@ public class MolDistHistEncoder {
 				
 		mdh.setArrNode(arrNodesTrunc);
 		
-		if(st.length >= 3 && st[1].length() != 0)
+		if(st.length >= 2 && st[1].length() != 0)
 			distHistEncoder.decodeHistograms(st[1], mdh);
 
 		if (st.length >= 3)

@@ -163,6 +163,7 @@ public abstract class AbstractDepictor<T> {
 	private DepictorTransformation	mTransformation;
 	private Point2D.Double			mChiralTextLocation;
 	private int[]					mAtomColor,mAtomHiliteColor;
+	private float[]                 mAtomHiliteRadius;
 	private String[]				mAtomText;
 	private Point2D.Double[]		mAlternativeCoords;
 	private Color					mOverruleForeground,mOverruleBackground,mBondBGHiliteColor,mBondFGHiliteColor,
@@ -231,10 +232,12 @@ public abstract class AbstractDepictor<T> {
 	/**
 	 * If you want this tructure view to also draw an atom background with specific colors for every atom,
 	 * then you need to call this method before calling paint().
-	 * @param argb values with a==0 are not considered (may be null)
+	 * @param argb values with a==0 are not considered
+	 * @param radius <= 1.0; if null, then a default of 0.5 of the average bond length is used
 	 */
-	public void setAtomHighlightColors(int[] argb) {
+	public void setAtomHighlightColors(int[] argb, float[] radius) {
 		mAtomHiliteColor = argb;
+		mAtomHiliteRadius = radius;
 		}
 
 
@@ -310,6 +313,11 @@ public abstract class AbstractDepictor<T> {
 		}
 
 
+	public StereoMolecule getMolecule() {
+		return mMol;
+		}
+
+
 	/**
 	 * A depictor maintains a DepictorTransformation object, which defines translation and scaling
 	 * of molecule coordinates into the viewRect. This method updates the depictor's transformation
@@ -369,7 +377,7 @@ public abstract class AbstractDepictor<T> {
 		if (mMol.getAllAtoms() == 0)
 			return null;
 
-		simpleCalculateBounds();
+		mBoundingRect = simpleCalculateBounds();
 
 		double avbl = mTransformation.getScaling() * mMol.getAverageBondLength();
 		DepictorTransformation t = new DepictorTransformation(mBoundingRect, viewRect, avbl, mode);
@@ -400,7 +408,7 @@ public abstract class AbstractDepictor<T> {
     }
 
 
-    private void simpleCalculateBounds() {
+    public Rectangle2D.Double simpleCalculateBounds() {
 	    double minx = getAtomX(0);	// determine size of molecule
 	    double maxx = getAtomX(0);
 	    double miny = getAtomY(0);
@@ -413,7 +421,7 @@ public abstract class AbstractDepictor<T> {
 			if (maxy < getAtomY(i)) maxy = getAtomY(i);
 			}
 
-		mBoundingRect = new Rectangle2D.Double(minx, miny, maxx-minx, maxy-miny);
+		return new Rectangle2D.Double(minx, miny, maxx-minx, maxy-miny);
 		}
 
 
@@ -485,19 +493,29 @@ public abstract class AbstractDepictor<T> {
 		}
 
 
-	private double getAtomX(int atom) {
+	/**
+	 * @param atom
+	 * @return atom x-coordinate in Depictor's display space
+	 */
+	public double getAtomX(int atom) {
 		return mTransformation.transformX(mMol.getAtomX(atom));
 		}
 
 
-	private double getAtomY(int atom) {
+	/**
+	 * @param atom
+	 * @return atom y-coordinate in Depictor's display space
+	 */
+	public double getAtomY(int atom) {
 		return mTransformation.transformY(mMol.getAtomY(atom));
 		}
 
 
+	/**
+	 * Requires a call of updateCoords() or validateView() before calling this method.
+	 * @return the bounding rectangle in device coordinates (of the moved/scaled molecule)
+	 */
 	public final Rectangle2D.Double getBoundingRect() {
-			// requires a prior call of updateCoords() or validateView()
-			// returns the bounding rectangle in device coordinates (of the moved/scaled molecule)
 		return mBoundingRect;
 		}
 
@@ -564,7 +582,9 @@ public abstract class AbstractDepictor<T> {
 
 		setColor(COLOR_INITIALIZE);	// to initialize the color tracking mechanism
 
-		hiliteAtomBackgrounds();
+		if (mAtomHiliteColor != null && (mAtomHiliteColor.length >= mMol.getAtoms()))
+			hiliteAtomBackgrounds(mAtomHiliteColor, mAtomHiliteRadius);
+
 		hiliteExcludeGroups();
 		hiliteBondBackgrounds();
 		indicateQueryFeatures();
@@ -608,6 +628,11 @@ public abstract class AbstractDepictor<T> {
 		mpDrawAllDots();
         mpDrawBondQueryFeatures();
 		mpDrawAllBonds(esrGroupMemberCount);
+		}
+
+
+	public Color getBackgroundColor() {
+		return mOverruleBackground != null ? mOverruleBackground : mCustomBackground != null ? mCustomBackground : Color.WHITE;
 		}
 
 
@@ -658,7 +683,7 @@ public abstract class AbstractDepictor<T> {
 		if (chiralText != null) {
 			if (mChiralTextLocation.x == 0.0 && mChiralTextLocation.y == 0.0) {
 				double avbl = mTransformation.getScaling() * mMol.getAverageBondLength();
-				simpleCalculateBounds();
+				mBoundingRect = simpleCalculateBounds();
 				expandBoundsByTabuZones(avbl);
 				setChiralTextLocation(null, avbl, 0);
 				}
@@ -671,17 +696,25 @@ public abstract class AbstractDepictor<T> {
 		}
 
 
-	private void hiliteAtomBackgrounds() {
-		if (mAtomHiliteColor == null
-		 || (mAtomHiliteColor.length < mMol.getAtoms()))
-			return;
+	/**
+	 * May be overridden to get a more appealing highlighting than just round circles
+	 * @param argb if alpha < 1 then the background is mixed in accordingly
+	 * @param radius <= 1.0; if null, then a default of 0.5 of the average bond length is used
+	 */
+	public void hiliteAtomBackgrounds(int[] argb, float[] radius) {
+		Color background = (mOverruleBackground != null) ? mOverruleBackground
+				: (mCustomBackground != null) ? mCustomBackground : Color.WHITE;
 
-		double d = mTransformation.getScaling() * mMol.getAverageBondLength();
-		double r = d/2;
+		double avbl = mTransformation.getScaling() * mMol.getAverageBondLength();
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if ((mAtomHiliteColor[atom] & 0xFF000000) != 0) {
-				setColor(new Color(mAtomHiliteColor[atom]));
-	            fillCircle(getAtomX(atom)-r, getAtomY(atom)-r, d);
+			int alpha = (argb[atom] & 0xFF000000) >> 24;
+			if (alpha != 0) {
+				Color color = new Color(argb[atom]);
+				if (alpha != 255)
+					color = ColorHelper.intermediateColor(background, color, (float)alpha/255f);
+				double r = (radius == null) ? 0.5 * avbl : 0.6 * radius[atom] * avbl;
+				setColor(color);
+	            fillCircle(getAtomX(atom)-r, getAtomY(atom)-r, 2*r);
 				}
 			}
 		}
