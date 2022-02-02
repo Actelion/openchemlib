@@ -700,6 +700,9 @@ public class SmilesParser {
 				}
 
 			if (isBondSymbol(theChar)) {
+				if (squareBracketOpen)
+					throw new Exception("SmilesParser: unexpected bond symbol inside square brackets: '"+theChar+"'");
+
 				int excludedBonds = 0;
 				while (isBondSymbol(theChar)) {
 					if (theChar == '!') {

@@ -77,12 +77,20 @@ public class IsomericSmilesCreator {
 		return new IsomericSmilesCreator(mol, MODE_CREATE_SMARTS).getSmiles();
 	}
 
+	public static String createReactionSmarts(Reaction rxn) {
+		return createReactionSmiles(rxn, MODE_INCLUDE_MAPPING | MODE_CREATE_SMARTS);
+	}
+
 	public static String createReactionSmiles(Reaction rxn) {
+		return createReactionSmiles(rxn, MODE_INCLUDE_MAPPING);
+	}
+
+	public static String createReactionSmiles(Reaction rxn, int mode) {
 		StringBuilder sb = new StringBuilder();
 		for (int i=0; i<rxn.getReactants(); i++) {
 			if (i != 0)
 				sb.append('.');
-			sb.append(new IsomericSmilesCreator(rxn.getReactant(i), MODE_INCLUDE_MAPPING).getSmiles());
+			sb.append(new IsomericSmilesCreator(rxn.getReactant(i), mode).getSmiles());
 		}
 		sb.append('>');
 		for (int i=0; i<rxn.getCatalysts(); i++) {
@@ -94,7 +102,7 @@ public class IsomericSmilesCreator {
 		for (int i=0; i<rxn.getProducts(); i++) {
 			if (i != 0)
 				sb.append('.');
-			sb.append(new IsomericSmilesCreator(rxn.getProduct(i), MODE_INCLUDE_MAPPING).getSmiles());
+			sb.append(new IsomericSmilesCreator(rxn.getProduct(i), mode).getSmiles());
 		}
 		return sb.toString();
 	}
