@@ -35,6 +35,9 @@ package com.actelion.research.chem.properties.fractaldimension;
 
 import com.actelion.research.util.Formatter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * ResultFracDimCalc
  * <p>Modest v. Korff</p>
@@ -154,6 +157,21 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
         sb.append(TAG_MESSAGE);
 
         return sb.toString();
+    }
+
+    public static List<String> getHeaderTags() {
+
+        List<String> li = new ArrayList<>();
+
+        li.add(TAG_SMILES);
+        li.add(TAG_ID);
+        li.add(TAG_SUM_UNIQUE_FRAGMENTS_CALC);
+        li.add(TAG_BONDS_AT_MAX_FRAGS_CALC);
+        li.add(TAG_MAX_NUM_UNIQUE_FRAGMENTS_CALC);
+        li.add(TAG_FRACTAL_DIM);
+        li.add(TAG_MESSAGE);
+
+        return li;
     }
 
 
