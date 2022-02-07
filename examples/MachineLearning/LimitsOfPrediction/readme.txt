@@ -1,7 +1,7 @@
 03.12.2021
 Data and result files for machine learning experiments in drug discovery
 
-All files with the extennsion .dwar are DataWarrior files.
+All files with the extension .dwar are DataWarrior files.
 DataWarrior is an open source tool for data visualization (http://www.openmolecules.org/datawarrior/)
 
 Input data files with molecular structures, descriptors and properties
