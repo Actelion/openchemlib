@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
+import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.forcefield.mmff.MMFFPositionConstraint;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
@@ -75,20 +76,19 @@ public class FlexibleShapeAlignment {
 		
 		restrainedRelaxation(fitMol,e0);
 		
-		double[] v = new double[3*fitMol.getAllAtoms()];
 
 		boolean[] isHydrogen = new boolean[fitMol.getAllAtoms()];
 		for(int at=0;at<fitMol.getAllAtoms();at++) {
 			
 			isHydrogen[at] = fitMol.getAtomicNo(at)==1 ? true : false;
 		}
-		EvaluableFlexibleOverlap eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, ppWeight, isHydrogen, v, ffOptions);
+		EvaluableFlexibleOverlap eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, ppWeight, isHydrogen, ffOptions);
 		eval.setE0(e0);
 		OptimizerLBFGS opt = new OptimizerLBFGS(200,0.001);
 		opt.optimize(eval);
-		eval.getState(v);
+		//eval.getState(v);
 		double t0 = getTanimoto(eval,shapeAlign);
-
+		/*
 		MetropolisMonteCarloHelper mcHelper = new MetropolisMonteCarloHelper(fitMol);
 		boolean success = mcHelper.init();
 		double told = t0;
@@ -112,7 +112,15 @@ public class FlexibleShapeAlignment {
 	
 			}
 		}
+		*/
 		result = getResult();
+		
+		Conformer alignedConf = eval.getFitConf();
+		for(int a=0;a<alignedConf.getMolecule().getAllAtoms();a++) {
+			fitMol.setAtomX(a, alignedConf.getX(a));
+			fitMol.setAtomY(a, alignedConf.getY(a));
+			fitMol.setAtomZ(a, alignedConf.getZ(a));
+		}
 		
 		return result;
 	}

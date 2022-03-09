@@ -33,16 +33,15 @@
 
 package com.actelion.research.chem.properties.complexity;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-
 import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.mcs.ContainerListWithIntVec;
 import com.actelion.research.chem.mcs.ListWithIntVec;
 import com.actelion.research.util.SizeOf;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 public class UniqueFragmentEstimator {
 	
@@ -356,9 +355,6 @@ public class UniqueFragmentEstimator {
 	/**
 	 * 
 	 * ContainerSolutions
-	 * <p>Copyright: Actelion Ltd., Inc. All Rights Reserved
-	 * This software is the proprietary information of Actelion Pharmaceuticals, Ltd.
-	 * Use is subject to license terms.</p>
 	 * @author Modest von Korff
 	 * @version 1.0
 	 * Mar 1, 2013 MvK Start implementation

@@ -1,17 +1,48 @@
+/*
+ * Copyright (c) 1997 - 2016
+ * Actelion Pharmaceuticals Ltd.
+ * Gewerbestrasse 16
+ * CH-4123 Allschwil, Switzerland
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ * 3. Neither the name of the the copyright holder nor the
+ *    names of its contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @author Thomas Sander
+ */
+
 package com.actelion.research.chem.conf;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.List;
-import java.util.stream.IntStream;
-
-import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.phesa.PheSAAlignment;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 public class BondRotationHelper {
 	
@@ -36,8 +67,6 @@ public class BondRotationHelper {
 		mMol = mol;
 		this.includeTerminalPolarH = includeTerminalPolarH;
 		initialize();
-
-		
 	}
 	
 	public void initialize() {
@@ -101,10 +130,7 @@ public class BondRotationHelper {
 			mRearAtoms[i] = rearAtoms;
 			findSmallerSideAtomList(disconnectedFragmentSize[disconnectedFragmentNo[mMol.getBondAtom(0, bond)]],
 					disconnectedFragmentNo, i);
-			
 		}
-
-		
 	}
 	
 	private int[] findTerminalBondsPolarHs(boolean[] isRotatableBond) {
@@ -185,9 +211,6 @@ public class BondRotationHelper {
 			}
 		}
 		mBiggerSideAtomLists[bondIndex] = bigSideAtoms.stream().mapToInt(Integer::intValue).toArray();
-		
-		
-		
 		}
 	
 	
@@ -278,13 +301,12 @@ public class BondRotationHelper {
 	
 	/**
 	 * rotate torsion angle of a conformer
-	 * @param bond
+	 * @param bondIndex
 	 * @param alpha
 	 * @param conf
+	 * @param biggerSide
 	 */
 	public void rotateAroundBond(int bondIndex, double alpha, Conformer conf, boolean biggerSide) {
-
-		
 		int[] atomList;
 		Coordinates t2;
 		Coordinates unit;
@@ -317,14 +339,10 @@ public class BondRotationHelper {
 				coords.add(t2Neg);
 				coords.rotate(m);
 				coords.add(t2);
-
 				}
 			}
 		}
 		
-
-
-
 	public void setRotatableBonds(int[] rotatableBonds) {
 		mRotatableBonds = rotatableBonds;
 	}
@@ -368,7 +386,4 @@ public class BondRotationHelper {
 	public void setTorsionIDs(String[] torsionIDs) {
 		this.mTorsionIDs = torsionIDs;
 	}
-
-
-
 }
