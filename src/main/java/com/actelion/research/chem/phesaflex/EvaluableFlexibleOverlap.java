@@ -59,19 +59,20 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	private Coordinates origCOM;
 	private BondRotationHelper torsionHelper;
     
-	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule refMol, StereoMolecule fitMol, double ppWeight, boolean[] isHydrogen, Map<String, Object> ffOptions) {
+	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule refMol, Conformer fitConf, BondRotationHelper torsionHelper,
+			double ppWeight, boolean[] isHydrogen, Map<String, Object> ffOptions) {
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		this.ffOptions = ffOptions;
 		this.shapeAlign = shapeAlign;
-		this.fitConf = new Conformer(fitMol);
+		this.fitConf = fitConf;
 		this.isHydrogen = isHydrogen;
 		this.ppWeight = ppWeight;
 		this.refMol = refMol;
+		this.torsionHelper = torsionHelper;
 		init();
 	}
 	
 	private void init() {
-		torsionHelper = new BondRotationHelper(fitConf.getMolecule(),true);
 		ff = new ForceFieldMMFF94(fitConf.getMolecule(), ForceFieldMMFF94.MMFF94SPLUS, this.ffOptions);
 		this.oAA = this.getFGValueShapeSelf(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
 		this.oAApp = this.getFGValueSelfPP(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);

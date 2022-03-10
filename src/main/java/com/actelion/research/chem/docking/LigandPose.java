@@ -22,6 +22,7 @@ import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.conf.TorsionDB;
 import com.actelion.research.chem.docking.scoring.AbstractScoringEngine;
 import com.actelion.research.chem.optimization.Evaluable;
+import com.actelion.research.chem.optimization.MCHelper;
 import com.actelion.research.chem.potentialenergy.PositionConstraint;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
@@ -42,7 +43,8 @@ public class LigandPose implements Evaluable{
 	private AbstractScoringEngine engine;
 	public static long SEED = 12345L;
 	private Coordinates origCOM;
-	private int[] mcsRotBondIndeces; //for MCS docking, only bonds not part of the MCS are sampled
+	private MCHelper mcHelper;
+	//private int[] mcsRotBondIndeces; //for MCS docking, only bonds not part of the MCS are sampled
 	
 	
 	public LigandPose(Conformer ligConf, AbstractScoringEngine engine, double e0) {
@@ -64,10 +66,11 @@ public class LigandPose implements Evaluable{
 			if(!constraints.contains(rb))
 				allowedIndices.add(rbIndex);
 		}
-		mcsRotBondIndeces = new int[allowedIndices.size()];
+		int [] mcsRotBondIndeces = new int[allowedIndices.size()];
 		for(int i=0;i<allowedIndices.size();i++) {
 			mcsRotBondIndeces[i]=allowedIndices.get(i);
 		}
+		mcHelper.setMcsRotBondIndeces(mcsRotBondIndeces);
 		
 	}
 	
@@ -92,6 +95,7 @@ public class LigandPose implements Evaluable{
 		dRdvi1 = new double[3][3];
 		dRdvi2 = new double[3][3];
 		dRdvi3 = new double[3][3];
+		mcHelper = new MCHelper(torsionHelper,null,new Random(SEED));
 		
 	}
 	
@@ -260,7 +264,7 @@ public class LigandPose implements Evaluable{
 		}
 		return cartState;
 	}
-	
+	/*
 	public double getGyrationRadius() {
 		Coordinates com = DockingUtils.getCOM(ligConf);
 		double r = 0.0;
@@ -273,83 +277,13 @@ public class LigandPose implements Evaluable{
 		r/=counter;
 		return Math.sqrt(r);
 	}
-	
+	*/
 	public double[] getState() {
 		return this.getState(new double[state.length]);
 	}
 	
-	public void randomPerturbation(Random random) {
-		if(mcsRotBondIndeces==null) {
-			int num = (int) (3*random.nextDouble());
-			if(num==0) { //translation
-				Coordinates shift = DockingUtils.randomVectorInSphere(random).scale(MOVE_AMPLITUDE);
-				state[0]+=shift.x;
-				state[1]+=shift.y;
-				state[2]+=shift.z;
-				/*
-				for(int a=0;a<ligConf.getMolecule().getAllAtoms();a++) { 
-					Coordinates c = ligConf.getCoordinates(a);
-					c.add(shift);
-				}
-				*/
-			}
-			else if(num==1) {
-				double r = getGyrationRadius();
-				Coordinates rot = DockingUtils.randomVectorInSphere(random).scale(MOVE_AMPLITUDE/r);
-				double angle = rot.dist();
-				Quaternion q = new Quaternion(1.0,0.0,0.0,0.0);
-				if(angle>0.0001) {
-					Coordinates axis = rot.scale(1.0/angle);
-					q = new Quaternion(axis,angle);
-				}
-				ExponentialMap em = new ExponentialMap(state[3],state[4],state[5]);
-				Quaternion qOrig = em.toQuaternion();
-				q.multiply(qOrig);
-				ExponentialMap emNew = new ExponentialMap(q);
-				state[3] = emNew.getP().x;
-				state[4] = emNew.getP().y;
-				state[5] = emNew.getP().z;
-	
-				
-			}
-			else  {
-				if(torsionHelper.getRotatableBonds().length==0)
-					return;
-				double rnd = random.nextDouble();
-				rnd*=180.0;
-				double rotateBy = random.nextBoolean() ? rnd : -rnd;
-				rotateBy = rotateBy*Math.PI/180.0;
-				int bond = random.nextInt(torsionHelper.getRotatableBonds().length);
-				double previousAngle = state[6+bond];
-				double newAngle = previousAngle+rotateBy; 
-				if(newAngle>Math.PI) {
-					newAngle -= 2*Math.PI;
-				}
-				state[6+bond] = newAngle;
-				
-			}
-		}
-		//mcs docking
-		else {
-			if(torsionHelper.getRotatableBonds().length==0)
-				return;
-			else if(mcsRotBondIndeces.length==0)
-				return;
-			double rnd = random.nextDouble();
-			rnd*=180.0;
-			double rotateBy = random.nextBoolean() ? rnd : -rnd;
-			rotateBy = rotateBy*Math.PI/180.0;
-			int bond = mcsRotBondIndeces[random.nextInt(mcsRotBondIndeces.length)];
-			double previousAngle = state[6+bond];
-			double newAngle = previousAngle+rotateBy; 
-			if(newAngle>Math.PI) {
-				newAngle -= 2*Math.PI;
-			}
-			state[6+bond] = newAngle;
-			
-			
-		}
-		
+	public void randomPerturbation() {
+		mcHelper.randomPerturbation(ligConf, state);
 		updateLigandCoordinates();
 		
 	}

@@ -303,7 +303,6 @@ public class DockingEngine {
 			aligned = conf.toMolecule(null);
 			aligned.ensureHelperArrays(Molecule.cHelperParities);
 			ForceFieldMMFF94 mmff;
-			List<MMFFExternalPositionConstraint> constraints = new ArrayList<>();
 			MMFFPositionConstraint constraint = new MMFFPositionConstraint(aligned,50,0.2);
 			mmff = new ForceFieldMMFF94(aligned, ForceFieldMMFF94.MMFF94SPLUS,ffOptions);
 			mmff.addEnergyTerm(constraint);
@@ -395,7 +394,7 @@ public class DockingEngine {
 		bestEnergy = oldEnergy;
 	
 		for(int i=0;i<steps;i++) {
-			pose.randomPerturbation(random);
+			pose.randomPerturbation();
 			double energyMC = pose.getFGValue(new double[bestState.length]);
 			if(energyMC<MINI_CUTOFF) {
 				state = optimizer.optimize(pose);	

@@ -3,12 +3,15 @@ package com.actelion.research.chem.phesaflex;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
+import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.forcefield.mmff.MMFFPositionConstraint;
+import com.actelion.research.chem.optimization.MCHelper;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
@@ -82,21 +85,26 @@ public class FlexibleShapeAlignment {
 			
 			isHydrogen[at] = fitMol.getAtomicNo(at)==1 ? true : false;
 		}
-		EvaluableFlexibleOverlap eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, ppWeight, isHydrogen, ffOptions);
+		Conformer fitConf = new Conformer(fitMol);
+		BondRotationHelper  torsionHelper = new BondRotationHelper(fitConf.getMolecule(),true);
+		EvaluableFlexibleOverlap eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitConf, torsionHelper, 
+				ppWeight, isHydrogen, ffOptions);
 		eval.setE0(e0);
 		OptimizerLBFGS opt = new OptimizerLBFGS(200,0.001);
 		opt.optimize(eval);
 		//eval.getState(v);
 		double t0 = getTanimoto(eval,shapeAlign);
-		/*
-		MetropolisMonteCarloHelper mcHelper = new MetropolisMonteCarloHelper(fitMol);
-		boolean success = mcHelper.init();
+		Random random = new Random(12345L);
+		MCHelper mcHelper = new MCHelper(torsionHelper, null, random);
+		//MetropolisMonteCarloHelper mcHelper = new MetropolisMonteCarloHelper(fitMol);
+		boolean success = torsionHelper.getRotatableBonds().length!=0;
+		double[] v = eval.getState();
 		double told = t0;
 		if(success) {
 			for(int i=0;i<MC_STEPS;i++) {
 				double [] vold = Arrays.stream(v).toArray(); // now copy v
-				mcHelper.step();
-				eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitMol, ppWeight, isHydrogen, v, ffOptions);
+				mcHelper.torsionPerturbation(fitConf, v);
+				eval.setState(v);
 				eval.setE0(e0);
 				opt = new OptimizerLBFGS(200,0.001);
 				opt.optimize(eval);
@@ -112,8 +120,6 @@ public class FlexibleShapeAlignment {
 	
 			}
 		}
-		*/
-		result = getResult();
 		
 		Conformer alignedConf = eval.getFitConf();
 		for(int a=0;a<alignedConf.getMolecule().getAllAtoms();a++) {
@@ -121,6 +127,7 @@ public class FlexibleShapeAlignment {
 			fitMol.setAtomY(a, alignedConf.getY(a));
 			fitMol.setAtomZ(a, alignedConf.getZ(a));
 		}
+		result = getResult();
 		
 		return result;
 	}
