@@ -708,7 +708,7 @@ public abstract class AbstractDepictor<T> {
 
 		double avbl = mTransformation.getScaling() * mMol.getAverageBondLength();
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			int alpha = (argb[atom] & 0xFF000000) >> 24;
+			int alpha = (argb[atom] & 0xFF000000) >>> 24;
 			if (alpha != 0) {
 				Color color = new Color(argb[atom]);
 				if (alpha != 255)
