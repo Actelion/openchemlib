@@ -633,36 +633,6 @@ public class Reactor {
 				}
 			}
 
-		// copy corrected atom parities of generic product reaction center atoms
-		boolean esrGroupsChanged = false;
-		for (int j=0; j<genericProduct.getAtoms(); j++) {
-			// copy atom parities of unmapped generic product atoms and potentially convert them according to new neighbour order
-			if (genericProduct.getAtomMapNo(j) == 0) {
-				int parity = genericProduct.translateTHParity(j, newAtomNo);
-				product.setAtomParity(newAtomNo[j], parity, false);
-				}
-			// copy corrected atom parities of generic product reaction center atoms
-			else if (mIsReactionCenter[genericProductNo][j]) {
-				if ((genericProduct.getAtomQueryFeatures(j) & Molecule.cAtomQFRxnParityHint) == 0
-				 && useConfigurationFromGenericReaction(genericProduct, j)) {
-					int parity = genericProduct.translateTHParity(j, newAtomNo);
-					product.setAtomParity(newAtomNo[j], parity, false);
-					if (parity == Molecule.cAtomParity1
-					 || parity == Molecule.cAtomParity2) {
-						int esrType = genericProduct.getAtomESRType(j);
-						int esrGroup = genericProduct.getAtomESRGroup(j);
-						if (esrType == Molecule.cESRTypeAnd)
-							esrGroup += esrGroupCountAND;
-						else if (esrType == Molecule.cESRTypeOr)
-							esrGroup += esrGroupCountOR;
-
-						product.setAtomESR(newAtomNo[j], esrType, esrGroup);
-						esrGroupsChanged = true;
-						}
-					}
-				}
-			}
-
 		// copy all bonds of generic product, except for bridge bonds
 		for (int gpBond=0; gpBond<genericProduct.getBonds(); gpBond++) {
 			if (genericProduct.isBondBridge(gpBond))
@@ -722,10 +692,50 @@ public class Reactor {
 				}
 			}
 
+		product.ensureHelperArrays(Molecule.cHelperNeighbours);
+
+		// copy corrected atom parities of generic product reaction center atoms
+		boolean esrGroupsChanged = false;
+		for (int j=0; j<genericProduct.getAtoms(); j++) {
+			// copy atom parities of unmapped generic product atoms and potentially convert them according to new neighbour order
+			if (genericProduct.getAtomMapNo(j) == 0) {
+				int parity = genericProduct.translateTHParity(j, newAtomNo);
+				product.setAtomParity(newAtomNo[j], parity, false);
+				}
+			// copy corrected atom parities of generic product reaction center atoms
+			else if (mIsReactionCenter[genericProductNo][j]
+				  && copyConfigurationFromGenericProduct(genericProduct, j, product, newAtomNo[j])) {
+				int parity = genericProduct.translateTHParity(j, newAtomNo);
+				product.setAtomParity(newAtomNo[j], parity, false);
+				if (parity == Molecule.cAtomParity1
+						|| parity == Molecule.cAtomParity2) {
+					int esrType = genericProduct.getAtomESRType(j);
+					int esrGroup = genericProduct.getAtomESRGroup(j);
+					if (esrType == Molecule.cESRTypeAnd)
+						esrGroup += esrGroupCountAND;
+					else if (esrType == Molecule.cESRTypeOr)
+						esrGroup += esrGroupCountOR;
+
+					product.setAtomESR(newAtomNo[j], esrType, esrGroup);
+					esrGroupsChanged = true;
+					}
+				}
+			}
+
 		if (esrGroupsChanged) {
 			esrGroupCountAND = product.renumberESRGroups(Molecule.cESRTypeAnd);
 			esrGroupCountOR = product.renumberESRGroups(Molecule.cESRTypeOr);
 			}
+
+		// copy pseudo parities of generic product if there are no parity hints
+		boolean[] pseudoParityHandled = new boolean[genericProduct.getAllAtoms()];
+		for (int j=0; j<genericProduct.getAtoms(); j++)
+			if (mIsReactionCenter[genericProductNo][j]
+			 && !pseudoParityHandled[j]
+			 && genericProduct.isAtomParityPseudo(j)
+			 && (genericProduct.getAtomQueryFeatures(j) & Molecule.cAtomQFRxnParityHint) == 0
+			 && genericProduct.getConnAtoms(j) == product.getConnAtoms(newAtomNo[j]))
+				copyPseudoParitiesFromGenericProduct(genericProduct, j, product, newAtomNo, pseudoParityHandled);
 
 		// delete all fragments from product which are not connected to generic product
 		boolean[] includeAtom = new boolean[product.getAllAtoms()];
@@ -788,22 +798,101 @@ public class Reactor {
 //		return false;
 //		}
 
-	private boolean useConfigurationFromGenericReaction(StereoMolecule genericProduct, int productAtom) {
-		int mapNo = genericProduct.getAtomMapNo(productAtom);
-		if (mapNo != 0) {
-			for (int i = 0; i < mGenericReaction.getReactants(); i++) {
-				StereoMolecule reactant = mGenericReaction.getReactant(i);
-				for (int reactantAtom = 0; reactantAtom < reactant.getAtoms(); reactantAtom++) {
-					if (reactant.getAtomMapNo(reactantAtom) == mapNo) {
-						// If the reactant atom is explicitly set to match the stereo center,
-						// we assume that the product also contains a well specified stereo center to be copied.
-						if ((reactant.getAtomQueryFeatures(reactantAtom) & Molecule.cAtomQFMatchStereo) != 0)
-							return true;
+	private void copyPseudoParitiesFromGenericProduct(StereoMolecule genericProduct, int firstPseudoParityAtom, StereoMolecule product, int[] newAtomNo, boolean[] pseudoParityHandled) {
+		int[] relatedAtom = new int[genericProduct.getAtoms()];
+		int relatedAtomCount = findRelatedPseudoParityAtoms(genericProduct, firstPseudoParityAtom, relatedAtom);
 
-						// If we have an explicit change of the ESR type, we also assume that this is intentional
-						// and copy the stereo configuration from the product.
-						if (reactant.getAtomESRType(reactantAtom) != genericProduct.getAtomESRType(productAtom))
-							return true;
+		boolean matchingAbsParityFound = false;
+		boolean invertedAbsParityFound = false;
+		ArrayList<int[]> pseudoParityList = new ArrayList<>();
+
+		for (int i=0; i<relatedAtomCount; i++) {
+			if (genericProduct.isAtomParityPseudo(relatedAtom[i])) {
+				int pseudoParity = genericProduct.translateTHParity(relatedAtom[i], newAtomNo);
+				if (pseudoParity == Molecule.cAtomParity1
+				 || pseudoParity == Molecule.cAtomParity2) {
+					// Real product parities may not be pseudo if the real reactant has additional features.
+					// These are given and cannot be inverted because of pseudo parity requirements in the generic product.
+					// We check for compatibility and only apply relative pseudo parities, if possible.
+					int parity = product.getAtomParity(newAtomNo[relatedAtom[i]]);
+					if (parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2) {
+						if (pseudoParity == parity)
+							matchingAbsParityFound = true;
+						else
+							invertedAbsParityFound = true;
+						}
+					}
+
+				// We collect a list of all pseudo parity atoms with their translated pseudo parities.
+				// If where we have existing real parities on the same atoms and if these
+				// - either match the required pseudo parities, then we can add pseudo parities to atoms without a real parity
+				// - or match the all inverted pseudo parities, then we can add inverted pseudo parities to atoms without a real parity
+				int[] ps = new int[2];
+				ps[0] = relatedAtom[i];
+				ps[1] = pseudoParity;
+				pseudoParityList.add(ps);
+				}
+			}
+
+		if (pseudoParityList != null && (!matchingAbsParityFound || !invertedAbsParityFound)) {
+			for (int[] pseudoParity : pseudoParityList) {
+				int ps = pseudoParity[1];
+				if ((ps == Molecule.cAtomParity1 || ps == Molecule.cAtomParity2) && invertedAbsParityFound)
+					ps = (ps == Molecule.cAtomParity1) ? Molecule.cAtomParity2 : Molecule.cAtomParity1;
+				product.setAtomParity(newAtomNo[pseudoParity[0]], ps, true);
+				}
+			}
+		}
+
+	private int findRelatedPseudoParityAtoms(StereoMolecule genericProduct, int firstAtom, int[] relatedAtom) {
+		boolean[] isRelated = new boolean[genericProduct.getAtoms()];
+		relatedAtom[0] = firstAtom;
+		int relatedAtoms = 1;
+		isRelated[firstAtom] = true;
+		for (int current=0; current<relatedAtoms; current++) {
+			for (int i=0; i<genericProduct.getConnAtoms(relatedAtom[current]); i++) {
+				int connBond = genericProduct.getConnBond(relatedAtom[current],i);
+				if (genericProduct.isRingBond(connBond) || genericProduct.getBondOrder(connBond) == 2 || genericProduct.isBINAPChiralityBond(connBond)) {
+					int connAtom = genericProduct.getConnAtom(relatedAtom[current],i);
+					if (!isRelated[connAtom]) {
+						relatedAtom[relatedAtoms++] = connAtom;
+						isRelated[connAtom] = true;
+						}
+					}
+				}
+			}
+		return relatedAtoms;
+		}
+
+	private boolean copyConfigurationFromGenericProduct(StereoMolecule genericProduct, int genericProductAtom, StereoMolecule product, int productAtom) {
+		// If we have a hint on the generic product atom, then we have already taken the generic reactant atom parity.
+		// Otherwise, if we have a stereo center on the generic product atom, we may consider copying that...
+		if (genericProduct.getAtomParity(genericProductAtom) != Molecule.cAtomParityNone
+		 && !genericProduct.isAtomParityPseudo(genericProductAtom)
+		 && (genericProduct.getAtomQueryFeatures(genericProductAtom) & Molecule.cAtomQFRxnParityHint) == 0) {
+			int mapNo = genericProduct.getAtomMapNo(genericProductAtom);
+			if (mapNo != 0) {
+				for (int i=0; i<mGenericReaction.getReactants(); i++) {
+					StereoMolecule genericReactant = mGenericReaction.getReactant(i);
+					for (int reactantAtom=0; reactantAtom<genericReactant.getAtoms(); reactantAtom++) {
+						if (genericReactant.getAtomMapNo(reactantAtom) == mapNo) {
+							// If the generic reactant atom is not even a pseudo stereo center,
+							// then we assume that any product configuration is intentional and correct
+							if (genericProduct.getConnAtoms(genericProductAtom) == product.getConnAtoms(productAtom))
+								return true;
+
+							// If the reactant atom is explicitly set to match the stereo center,
+							// we assume that the product also contains a well specified stereo center to be copied.
+							if ((genericReactant.getAtomQueryFeatures(reactantAtom) & Molecule.cAtomQFMatchStereo) != 0)
+								return true;
+
+							// If we have an explicit change of the ESR type, we also assume that this is intentional
+							// and copy the stereo configuration from the product.
+							if (genericReactant.getAtomESRType(reactantAtom) != genericProduct.getAtomESRType(genericProductAtom))
+								return true;
+
+							return false;
+							}
 						}
 					}
 				}
