@@ -31,8 +31,8 @@ import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
 public class PheSAAlignmentOptimizer {
 	
-	private static int TRIANGLE_OPTIMIZATIONS = 100;
-	private static int PMI_OPTIMIZATIONS = 20;
+	private static int TRIANGLE_OPTIMIZATIONS = 50;
+	private static int PMI_OPTIMIZATIONS = 10;
 	private static double EXIT_VECTOR_WEIGHT = 10.0;
 	private static final int BEST_RESULT_SIZE = 20;
 	
@@ -75,7 +75,7 @@ public class PheSAAlignmentOptimizer {
 		for(ShapeVolume shapeVol : fitVols) {
 			shapeVol.removeRings();
 		}
-		NavigableSet<AlignmentResult> alignmentSolutions = createAlignmentSolutions(Collections.singletonList(ref),fitVols,ppWeight,optimize,true,false); 
+		NavigableSet<AlignmentResult> alignmentSolutions = createAlignmentSolutions(Collections.singletonList(ref),fitVols,ppWeight,optimize,true,false,true); 
 		List<AlignmentResult> results = new ArrayList<>();
 		int counter = 0;
 		for(AlignmentResult solution : alignmentSolutions.descendingSet() ) {
@@ -87,11 +87,17 @@ public class PheSAAlignmentOptimizer {
 		}
 		return results;
 	}
-	
 	public static NavigableSet<AlignmentResult> createAlignmentSolutions(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, double ppWeight, boolean optimize,
 			boolean tversky, boolean useDirectionality) {
+		return createAlignmentSolutions(refVols, fitVols, ppWeight, optimize,
+				tversky, useDirectionality, false);
+	}
+	
+	public static NavigableSet<AlignmentResult> createAlignmentSolutions(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, double ppWeight, boolean optimize,
+			boolean tversky, boolean useDirectionality, boolean exhaustive) {
+		int triangleOpti = exhaustive ? 2*TRIANGLE_OPTIMIZATIONS : TRIANGLE_OPTIMIZATIONS;
+		int pmiOpti = exhaustive ? 2*PMI_OPTIMIZATIONS : PMI_OPTIMIZATIONS;
 		NavigableSet<AlignmentResult> alignmentSolutions = new TreeSet<AlignmentResult>();
-
 		for(ShapeVolume molVol : refVols) {
 			for(PPGaussian ppg : molVol.getPPGaussians()) {
 				if(ppg.getPharmacophorePoint().getFunctionalityIndex()==PharmacophoreCalculator.EXIT_VECTOR_ID) {
@@ -100,7 +106,7 @@ public class PheSAAlignmentOptimizer {
 			}
 		}
 
-		NavigableSet<AlignmentResult> triangleSolutions = getBestTriangleAlignments(refVols,fitVols,ppWeight,optimize,tversky,useDirectionality);
+		NavigableSet<AlignmentResult> triangleSolutions = getBestTriangleAlignments(refVols,fitVols,ppWeight,optimize,tversky,useDirectionality,triangleOpti);
 		alignmentSolutions.addAll(triangleSolutions);
 		NavigableSet<AlignmentResult> pmiSolutions = new TreeSet<AlignmentResult>();
 		for(int i=0;i<refVols.size();i++) {
@@ -121,7 +127,7 @@ public class PheSAAlignmentOptimizer {
 		//optimize best PMI alignments
 		int counter = 0;
 		for(AlignmentResult pmiAlignment : pmiSolutions.descendingSet()) {
-			if(counter++>PMI_OPTIMIZATIONS)
+			if(counter++>pmiOpti)
 				break;
 			ShapeVolume refVol = refVols.get(pmiAlignment.getRefConformerIndex());
 			ShapeVolume fitVol = new ShapeVolume(fitVols.get(pmiAlignment.getConformerIndex()));
@@ -172,7 +178,7 @@ public class PheSAAlignmentOptimizer {
 
 	
 	private static NavigableSet<AlignmentResult> getBestTriangleAlignments(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, double ppWeight, 
-			boolean optimize, boolean tversky, boolean useDirectionality) {
+			boolean optimize, boolean tversky, boolean useDirectionality, int nrOptimizations) {
 		TreeSet<AlignmentResult> triangleResults = new TreeSet<AlignmentResult>();
 		for(int i=0;i<refVols.size();i++) {
 			ShapeVolume refVol = refVols.get(i);
@@ -189,7 +195,7 @@ public class PheSAAlignmentOptimizer {
 			double[][] alignments = PheSAAlignment.initialTransform(0);
 			int counter = 0;
 			for(AlignmentResult result: triangleResults.descendingSet()) {
-				if(counter++>TRIANGLE_OPTIMIZATIONS)
+				if(counter++>nrOptimizations)
 					break;
 				ShapeVolume refVol = refVols.get(result.getRefConformerIndex());
 				ShapeVolume fitVol = new ShapeVolume(fitVols.get(result.getConformerIndex()));

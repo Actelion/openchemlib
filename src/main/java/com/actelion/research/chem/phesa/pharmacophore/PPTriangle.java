@@ -1,7 +1,5 @@
 package com.actelion.research.chem.phesa.pharmacophore;
 
-import java.util.Arrays;
-
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.alignment3d.transformation.Rotation;
@@ -72,12 +70,12 @@ public class PPTriangle {
 			}	
 		}
 		else if(f[0]==f[1]) {
-			if(d[0]>d[1]) { //d12<=d13
+			if(d[1]>d[2]) { //d13>d23
 				swap(0,1);
 			}
 		}
 		else if(f[1]==f[2]) {
-			if(d[1]>d[2]) { //d12<=d13
+			if(d[0]>d[1]) { //d12>d13
 				swap(1,2);
 			}
 		}

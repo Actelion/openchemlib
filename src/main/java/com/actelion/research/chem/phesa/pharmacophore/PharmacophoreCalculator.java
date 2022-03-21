@@ -162,7 +162,7 @@ public class PharmacophoreCalculator {
 	public static boolean isDonorHydrogen(StereoMolecule mol, int h) {
 		if(mol.getAtomicNo(h)==1) {
 			int dh = mol.getConnAtom(h, 0);
-			if (mol.getAtomCharge(dh)>=0 && (mol.getAtomicNo(dh)==7 || mol.getAtomicNo(dh)==8) ) { //charge is not positive -> no acceptor
+			if (mol.getAtomCharge(dh)>=0 && (mol.getAtomicNo(dh)==7 || mol.getAtomicNo(dh)==8) ) { 
 				return true;
 			}
 			else return false;
