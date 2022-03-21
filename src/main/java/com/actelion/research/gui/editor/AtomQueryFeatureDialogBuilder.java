@@ -169,7 +169,7 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
 		if (includeReactionHints) {
 			mDialog.add(mDialog.createLabel("Stereo center hint for product:"), 1,27,3,27);
 			mChoiceReactionParityHint = mDialog.createComboBox();
-			mChoiceReactionParityHint.addItem("Make unknown in product");
+			mChoiceReactionParityHint.addItem("Copy from generic product");
 			mChoiceReactionParityHint.addItem("Keep reactant configuration");
 			mChoiceReactionParityHint.addItem("Invert reactant configuration");
 			mChoiceReactionParityHint.addItem("Racemise configuration");
