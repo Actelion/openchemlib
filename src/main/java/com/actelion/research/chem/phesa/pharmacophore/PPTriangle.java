@@ -36,6 +36,7 @@ public class PPTriangle {
 		dirs[2] = pp3.getDirectionality();
 		canonizeOrder();
 
+
 	}
 	
 	private void canonizeOrder() {
@@ -83,31 +84,29 @@ public class PPTriangle {
 	
 	private void swap(int i, int j) {
 		int fiold = f[i];
-		double diold = d[i];
 		Coordinates dirold = new Coordinates(dirs[i]);
 		dirs[i] = new Coordinates(dirs[j]);
 		f[i] = f[j];
-		d[i] = d[j];
 		f[j] = fiold;
-		d[j] = diold;
 		dirs[j] = dirold;
+		Coordinates ciold = new Coordinates(c[i]);
+		c[i] = new Coordinates(c[j]); 
+		c[j] = new Coordinates(ciold); 
 		if(i==0 && j==1) {
-			Coordinates ciold = new Coordinates(c[1]);
-			c[1] = new Coordinates(c[2]); 
-			c[2] = new Coordinates(ciold); 
+			double dold=d[2];
+			d[2]=d[1];
+			d[1]=dold;
 		}
-		
 		else if(i==0 && j==2) {
-			Coordinates ciold = new Coordinates(c[0]);
-			c[0] = new Coordinates(c[2]); 
-			c[2] = new Coordinates(ciold); 
+			double dold=d[2];
+			d[2]=d[0];
+			d[0]=dold;
 		}
-		
 		else if(i==1 && j==2) {
-			Coordinates ciold = new Coordinates(c[0]);
-			c[0] = new Coordinates(c[1]); 
-			c[1] = new Coordinates(ciold); 
-		}
+			double dold=d[1];
+			d[1]=d[0];
+			d[0]=dold;
+		}	
 			
 
 	}

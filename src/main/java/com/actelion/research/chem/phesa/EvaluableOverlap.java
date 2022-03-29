@@ -385,8 +385,10 @@ public class EvaluableOverlap implements Evaluable  {
 					atomOverlap = refAt.getWeight()*refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refAt.getAtomicNo(),fitAt.getAtomicNo());
 					if (atomOverlap>0.0) {
-						//double sim = refAt.getSimilarity(fitAt, fitPPDirectionalityVector);
-						//atomOverlap *= sim;
+						double sim = refAt.getInteractionSimilarity(fitAt);
+						if(sim==0.0)
+							continue;
+						atomOverlap *= sim;
 						totalOverlap += atomOverlap;
 						double gradientPrefactor = atomOverlap*-2*refAt.getWidth()*fitAt.getWidth()/(refAt.getWidth()+fitAt.getWidth());
 						double dv0 = dRdv0[j][0]*dx+dRdv0[j][1]*dy+dRdv0[j][2]*dz; 

@@ -111,7 +111,7 @@ public class DockingUtils {
 		lig.normalizeAmbiguousBonds();
 		repairQuaternaryNitrogen(lig);
 		repairCarboxylate(lig);
-		assignLikelyProtonationStates(lig);
+		addImplicitHydrogens(lig);
 	}
 	
 	private static void repairQuaternaryNitrogen(StereoMolecule mol){

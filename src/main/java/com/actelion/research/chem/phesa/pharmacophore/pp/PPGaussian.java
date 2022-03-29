@@ -97,12 +97,12 @@ public class PPGaussian extends Gaussian3D {
 		return getSimilarity(ppGauss2, ppGauss2.getPharmacophorePoint().getDirectionality());
 		
 	}
-	/*
+	
 	public double getInteractionSimilarity(PPGaussian ppGauss2) {
 
 		return pp.getSimilarity(ppGauss2.pp);
 	}
-	*/
+	
 	@Override 
 	
 	public void setCenter(Coordinates center) {
