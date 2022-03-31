@@ -47,6 +47,11 @@
 
     <packaging>jar</packaging>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.scm.id>ssh</project.scm.id>
+    </properties>
+
     <!-- Disable doclint for Java 8 -->
     <profiles>
         <profile>
@@ -73,12 +78,12 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
-                                <configuration>
-                                    <gpgArguments>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
-                                </configuration>
+<!--                                <configuration>-->
+<!--                                    <gpgArguments>-->
+<!--                                        <arg>&#45;&#45;pinentry-mode</arg>-->
+<!--                                        <arg>loopback</arg>-->
+<!--                                    </gpgArguments>-->
+<!--                                </configuration>-->
                             </execution>
                         </executions>
                     </plugin>

@@ -7,8 +7,15 @@ Different to other cheminformatics frameworks, *OpenChemLib* also provides user 
 *OpenChemLib* requires JRE 8 or newer including JavaFX. Otherwise, there are no dependencies.
 
 ### How to download the project
-
+```bash
 git clone https://github.com/Actelion/openchemlib.git
+```
+
+### Build the project
+To build the project run the following from within the project directory.
+```bash
+./mvnw package
+```
 
 ### Folder 'examples'
 Contains examples for working with the *OpenChemLib* library.
