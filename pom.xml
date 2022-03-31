@@ -49,7 +49,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.scm.id>ssh</project.scm.id>
     </properties>
 
     <!-- Disable doclint for Java 8 -->
