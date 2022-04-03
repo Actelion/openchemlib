@@ -151,57 +151,51 @@ public class SmilesParser {
 		Reaction rxn = new Reaction();
 
 		int start = 0;
-		while (start < index1) {
-			int index = ArrayUtils.indexOf(smiles, (byte)'.', start+1);
-			if (index != -1 && index+2 < index1 && smiles[index+1] == '.') {
-				StereoMolecule reactant = new StereoMolecule();
-				parse(reactant, smiles, start, index);
-				rxn.addReactant(reactant);
-				start = index + 2;
-				continue;
+		for (int i=start; i<index1-1; i++) {
+			if (smiles[i] == '.' && smiles[i+1] == '.') {
+				if (i > start) {
+					StereoMolecule reactant = new StereoMolecule();
+					parse(reactant, smiles, start, i);
+					rxn.addReactant(reactant);
+					}
+				start = i + 2;
 				}
-
-			StereoMolecule reactants = new StereoMolecule();
-			parse(reactants, smiles, start, index1);
-			rxn.addReactant(reactants);
-			break;
 			}
+		StereoMolecule reactants = new StereoMolecule();
+		parse(reactants, smiles, start, index1);
+		rxn.addReactant(reactants);
 
 		if (index2 - index1 > 1) {
 			start = index1+1;
-			while (start < index2) {
-				int index = ArrayUtils.indexOf(smiles, (byte)'.', start+1);
-				if (index != -1 && index+2 < index2 && smiles[index+1] == '.') {
-					StereoMolecule catalyst = new StereoMolecule();
-					parse(catalyst, smiles, start, index);
-					rxn.addCatalyst(catalyst);
-					start = index + 2;
-					continue;
+			for (int i=start; i<index2-1; i++) {
+				if (smiles[i] == '.' && smiles[i+1] == '.') {
+					if (i > start) {
+						StereoMolecule catalyst = new StereoMolecule();
+						parse(catalyst, smiles, start, i);
+						rxn.addCatalyst(catalyst);
+						}
+					start = i + 2;
 					}
-
-				StereoMolecule catalysts = new StereoMolecule();
-				parse(catalysts, smiles, start, index2);
-				rxn.addCatalyst(catalysts);
-				break;
 				}
+			StereoMolecule catalysts = new StereoMolecule();
+			parse(catalysts, smiles, start, index2);
+			rxn.addCatalyst(catalysts);
 			}
 
 		start = index2+1;
-		while (start < smiles.length) {
-			int index = ArrayUtils.indexOf(smiles, (byte)'.', start+1);
-			if (index != -1 && index+2 < smiles.length && smiles[index+1] == '.') {
-				StereoMolecule product = new StereoMolecule();
-				parse(product, smiles, start, index);
-				rxn.addProduct(product);
-				start = index + 2;
-				continue;
+		for (int i=start; i<smiles.length-1; i++) {
+			if (smiles[i] == '.' && smiles[i+1] == '.') {
+				if (i > start) {
+					StereoMolecule product = new StereoMolecule();
+					parse(product, smiles, start, i);
+					rxn.addProduct(product);
+					}
+				start = i + 2;
 				}
-
-			StereoMolecule products = new StereoMolecule();
-			parse(products, smiles, start, smiles.length);
-			rxn.addProduct(products);
-			break;
 			}
+		StereoMolecule products = new StereoMolecule();
+		parse(products, smiles, start, smiles.length);
+		rxn.addProduct(products);
 
 		return rxn;
 		}
