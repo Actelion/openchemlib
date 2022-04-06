@@ -1,6 +1,9 @@
 package com.actelion.research.util;
 
+import java.awt.*;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class BrowserControl {
 	/**
@@ -21,7 +24,19 @@ public class BrowserControl {
 				} else if (Platform.isMacintosh()) {
 					cmd = OSX_PATH + " " + url;
 					Runtime.getRuntime().exec(cmd);
-				} else {
+					}
+				else if (Desktop.isDesktopSupported()) {
+					Desktop desktop = Desktop.getDesktop();
+					if (desktop.isSupported(Desktop.Action.BROWSE)) {
+						try {
+							desktop.browse(new URI(url));
+							}
+						catch(URISyntaxException use) {
+							use.printStackTrace();
+							}
+						}
+					}
+/*				else {
 					// Under Unix, Netscape has to be running for the "-remote"
 					// command to work.  So, we try sending the command and
 					// check for an exit value.  If the exit command is 0,
@@ -44,7 +59,7 @@ public class BrowserControl {
 								+ "'");
 						System.err.println("Caught: " + x);
 					}
-				}
+				}*/
 			} catch (IOException x) {
 				// couldn't exec browser
 				System.err.println("Could not invoke browser, command=" + cmd);
@@ -70,8 +85,8 @@ public class BrowserControl {
 	private static final String UNIX_PATH = "firefox";
 
 	// The flag to display a url.
-	private static final String UNIX_PARAM_START = "-remote \"openURL(";
-    private static final String UNIX_PARAM_END = ")\"";
+//	private static final String UNIX_PARAM_START = "-remote \"openURL(";
+//  private static final String UNIX_PARAM_END = ")\"";
 
 	// The open command MacOSX.
 	private static final String OSX_PATH = "open";
