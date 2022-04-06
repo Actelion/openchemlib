@@ -22,8 +22,7 @@ import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
 public class EvaluableOverlap implements Evaluable  {
 
-	private static final int PENALTY = 80; 
-	
+
 	private double ppWeight;
 
 	private PheSAAlignment shapeAlign;
@@ -40,7 +39,6 @@ public class EvaluableOverlap implements Evaluable  {
     private double[][] results;
     private Coordinates[] fitAtGaussModCoords;
     private Coordinates[] fitPPGaussModCoords;
-    private Coordinates[] fitPPDirectionalityMod;
 
     
     public EvaluableOverlap(PheSAAlignment shapeAlign, double[] transform) {
@@ -59,7 +57,6 @@ public class EvaluableOverlap implements Evaluable  {
 	    this.dv0PP = new double[fitPPGaussModCoords.length][3];
 	    this.dv1PP = new double[fitPPGaussModCoords.length][3];
 	    this.dv2PP = new double[fitPPGaussModCoords.length][3];
-	    this.fitPPDirectionalityMod = new Coordinates[shapeAlign.getMolGauss().getPPGaussians().size()];
 		this.results = new double[shapeAlign.getRefMolGauss().getAtomicGaussians().size()][shapeAlign.getRefMolGauss().getAtomicGaussians().size()];
 		cachedCoords = new Coordinates[shapeAlign.getMolGauss().getAtomicGaussians().size()];
 		cachedCoordsPP = new Coordinates[shapeAlign.getMolGauss().getPPGaussians().size()];
@@ -160,7 +157,7 @@ public class EvaluableOverlap implements Evaluable  {
 		
 		double[] ppGrad = new double[grad.length];
 		value += ppWeight*this.getFGValueOverlapPP(ppGrad,refMolGauss.getPPGaussians(),fitMolGauss.getPPGaussians(),
-						dv0PP,dv1PP,dv2PP,fitPPGaussModCoords,fitPPDirectionalityMod);
+						dv0PP,dv1PP,dv2PP,fitPPGaussModCoords);
 
 		for(int i=0;i<grad.length;i++) 
 			grad[i] = (1.0-ppWeight)*atomGrad[i]+ ppWeight*ppGrad[i];
@@ -351,16 +348,12 @@ public class EvaluableOverlap implements Evaluable  {
 	
 	}
 	    
-	    
-	   private double getFGValueOverlapPP(double[] grad, List<PPGaussian> refMolGauss,List<PPGaussian> fitMolGauss, double[][] dRdv0, double[][] dRdv1, double[][] dRdv2, Coordinates[] fitGaussModCoords, Coordinates[] fitPPDirectionalityMod) {
+	   
+	   private double getFGValueOverlapPP(double[] grad, List<PPGaussian> refMolGauss,List<PPGaussian> fitMolGauss, double[][] dRdv0, double[][] dRdv1, double[][] dRdv2, Coordinates[] fitGaussModCoords) {
 		   	ExponentialMap eMap = new ExponentialMap(transform[0],transform[1],transform[2]);
 		    
 		    double[][] rotMatrix = eMap.toQuaternion().getRotMatrix().getArray();
 
-
-		    for(int k=0;k<fitMolGauss.size();k++) {
-		    	fitPPDirectionalityMod[k] = fitMolGauss.get(k).getRotatedDirectionality(rotMatrix, 1.0);
-		    }
 		    getTransformedCoordinates(fitGaussModCoords,fitMolGauss);
 
 		    this.getEMapGradient(dRdv0, dRdv1, dRdv2,cachedCoordsPP);
@@ -377,13 +370,9 @@ public class EvaluableOverlap implements Evaluable  {
 				PPGaussian refAt = refMolGauss.get(i);
 				for(int j=0; j<fitMolGauss.size();j++){
 					PPGaussian fitAt = fitMolGauss.get(j);
-					Coordinates fitPPDirectionalityVector = fitPPDirectionalityMod[j];
 					double atomOverlap = 0.0;
 					fitCenterModCoord = fitGaussModCoords[j];
 					double alphaSum = refAt.getWidth() + fitAt.getWidth();
-					double xi = refAt.getCenter().x;
-					double yi = refAt.getCenter().y;
-					double zi = refAt.getCenter().z;
 					double dx = refAt.getCenter().x-fitCenterModCoord.x;
 					double dy = refAt.getCenter().y-fitCenterModCoord.y;
 					double dz = refAt.getCenter().z-fitCenterModCoord.z;
@@ -396,7 +385,9 @@ public class EvaluableOverlap implements Evaluable  {
 					atomOverlap = refAt.getWeight()*refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refAt.getAtomicNo(),fitAt.getAtomicNo());
 					if (atomOverlap>0.0) {
-						double sim = refAt.getSimilarity(fitAt, fitPPDirectionalityVector);
+						double sim = refAt.getInteractionSimilarity(fitAt);
+						if(sim==0.0)
+							continue;
 						atomOverlap *= sim;
 						totalOverlap += atomOverlap;
 						double gradientPrefactor = atomOverlap*-2*refAt.getWidth()*fitAt.getWidth()/(refAt.getWidth()+fitAt.getWidth());
@@ -404,12 +395,12 @@ public class EvaluableOverlap implements Evaluable  {
 						double dv1 = dRdv1[j][0]*dx+dRdv1[j][1]*dy+dRdv1[j][2]*dz; 
 						double dv2 = dRdv2[j][0]*dx+dRdv2[j][1]*dy+dRdv2[j][2]*dz;   
 
-					    grad[0] += sim*gradientPrefactor*dv0+atomOverlap*(dRdv0[j][0]*xi+dRdv0[j][1]*yi+dRdv0[j][2]*zi)/3.0;
-					    grad[1] += sim*gradientPrefactor*dv1+atomOverlap*(dRdv1[j][0]*xi+dRdv1[j][1]*yi+dRdv1[j][2]*zi)/3.0;
-					    grad[2] += sim*gradientPrefactor*dv2+atomOverlap*(dRdv2[j][0]*xi+dRdv2[j][1]*yi+dRdv2[j][2]*zi)/3.0;
-					    grad[3] += sim*gradientPrefactor*dx+atomOverlap*xi/3.0;
-					    grad[4] += sim*gradientPrefactor*dy+atomOverlap*yi/3.0;
-					    grad[5] += sim*gradientPrefactor*dz+atomOverlap*zi/3.0;
+						grad[0] += gradientPrefactor*dv0;
+						grad[1] += gradientPrefactor*dv1;
+						grad[2] += gradientPrefactor*dv2;
+						grad[3] += gradientPrefactor*dx;
+						grad[4] += gradientPrefactor*dy;
+						grad[5] += gradientPrefactor*dz;
 								    	
 					    }
 					}
@@ -419,6 +410,7 @@ public class EvaluableOverlap implements Evaluable  {
 			
 		
 		}
+
 
 
 	public EvaluableOverlap clone() {

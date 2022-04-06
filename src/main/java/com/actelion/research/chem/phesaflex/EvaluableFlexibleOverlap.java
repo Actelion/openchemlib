@@ -382,13 +382,13 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 					
 					if (atomOverlap>0.0) {
 						totalOverlap += atomOverlap;
-						gradientPrefactor = atomOverlap*-refAt.getWidth()*fitAt.getWidth()/(refAt.getWidth()+fitAt.getWidth());
+						gradientPrefactor = atomOverlap*-2*refAt.getWidth()*fitAt.getWidth()/(refAt.getWidth()+fitAt.getWidth());
 					}
 
 				}
-				grad[3*a] += (2*xj-2*xi)*gradientPrefactor;
-				grad[3*a+1] += (2*yj-2*yi)*gradientPrefactor;
-				grad[3*a+2] += (2*zj-2*zi)*gradientPrefactor;
+				grad[3*a] += (xj-xi)*gradientPrefactor;
+				grad[3*a+1] += (yj-yi)*gradientPrefactor;
+				grad[3*a+2] += (zj-zi)*gradientPrefactor;
 				}
 
 		
@@ -420,9 +420,9 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 					}
 
 				}
-				grad[3*a] += (2*xj-2*xi)*gradientPrefactor;
-				grad[3*a+1] += (2*yj-2*yi)*gradientPrefactor;
-				grad[3*a+2] += (2*zj-2*zi)*gradientPrefactor;
+				grad[3*a] += (xj-xi)*gradientPrefactor;
+				grad[3*a+1] += (yj-yi)*gradientPrefactor;
+				grad[3*a+2] += (zj-zi)*gradientPrefactor;
 				}
 
 		
@@ -473,9 +473,9 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 						atomOverlap *= sim;
 						totalOverlap += atomOverlap;
 						gradientPrefactor = atomOverlap*-2*refPP.getWidth()*fitPP.getWidth()/(refPP.getWidth()+fitPP.getWidth());
-						grad[3*a] += (2*xj-2*xi)*gradientPrefactor*sim;
-						grad[3*a+1] += (2*yj-2*yi)*gradientPrefactor*sim;
-						grad[3*a+2] += (2*zj-2*zi)*gradientPrefactor*sim;
+						grad[3*a] += (xj-xi)*gradientPrefactor*sim;
+						grad[3*a+1] += (yj-yi)*gradientPrefactor*sim;
+						grad[3*a+2] += (zj-zi)*gradientPrefactor*sim;
 						fitPP.getPharmacophorePoint().getDirectionalityDerivativeCartesian(grad, coords, fitPP.getPharmacophorePoint().getDirectionality(), sim);					}
 
 				}

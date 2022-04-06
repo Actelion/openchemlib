@@ -86,7 +86,7 @@ public class PPGaussian extends Gaussian3D {
 	}
 
 	public double getSimilarity(PPGaussian ppGauss2, Coordinates directionality) {
-		double ppSimilarity = getInteractionSimilarity(ppGauss2);
+		double ppSimilarity = 1.0;
 		double vectorSim = getVectorSimilarity(ppGauss2,directionality);
 		double similarity = (Math.max(0, vectorSim)+2*ppSimilarity)/3.0;
 		return similarity;

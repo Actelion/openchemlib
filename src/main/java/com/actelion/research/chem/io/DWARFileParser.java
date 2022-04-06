@@ -238,8 +238,13 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 
                 else if (line.startsWith("<"+cColumnProperty)) {
                     String[] property = extractValue(line).split("\\t");
-                    mColumnPropertyMap.get(columnName).setProperty(property[0], property[1]);
+                    if(property.length==1) {
+                    	mColumnPropertyMap.get(columnName).setProperty(property[0],"");
                     }
+                    else {
+                    	mColumnPropertyMap.get(columnName).setProperty(property[0], property[1]);
+                    }
+                }
 
                 line = readHeadOrTailLine();
                 }
