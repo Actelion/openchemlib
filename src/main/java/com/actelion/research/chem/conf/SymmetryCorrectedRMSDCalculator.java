@@ -117,12 +117,10 @@ public class SymmetryCorrectedRMSDCalculator {
 				for(int occ2 : occurences2) {
 					double distSq = conf1.getCoordinates(occ1).distanceSquared(conf2.getCoordinates(occ2));
 					costMatrix[counter1][counter2] = distSq;
-					costMatrix[counter2][counter1] = distSq;
 					counter2++;
 				}
 				counter1++;
 			}
-
 			int[][] ass = HungarianAlgorithm.hgAlgorithm(costMatrix, "min");
 			for(int[] pair : ass) {
 				int p1 = occurences1.get(pair[0]);

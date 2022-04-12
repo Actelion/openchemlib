@@ -139,9 +139,10 @@ class Lnsrch{
 			//Already restarted, return best current point
 			move(function, dir, lambda, initial,v);
 			f0 = function.getFGValue(grad);
-			if(f0>initialF)
+			if(f0>initialF) {
 				move(function, dir, 0, initial,v);
-
+				f0 = initialF;
+			}
 			return new Object[]{f0, grad, Boolean.FALSE};
 
 		} catch(Exception e) {
@@ -158,7 +159,7 @@ class Lnsrch{
 
 		}
 
-	eval.setState(transform);
+		eval.setState(transform);
 
 
 }

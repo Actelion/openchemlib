@@ -295,9 +295,6 @@ public class EvaluableOverlap implements Evaluable  {
 					grad[4] += gradientPrefactor*dy;
 					grad[5] += gradientPrefactor*dz;
 				    }
-
-
-
 				}
 		}
 			for(int k=0; k<volGaussians.size();k++){
@@ -350,20 +347,14 @@ public class EvaluableOverlap implements Evaluable  {
 	    
 	   
 	   private double getFGValueOverlapPP(double[] grad, List<PPGaussian> refMolGauss,List<PPGaussian> fitMolGauss, double[][] dRdv0, double[][] dRdv1, double[][] dRdv2, Coordinates[] fitGaussModCoords) {
-		   	ExponentialMap eMap = new ExponentialMap(transform[0],transform[1],transform[2]);
-		    
-		    double[][] rotMatrix = eMap.toQuaternion().getRotMatrix().getArray();
-
 		    getTransformedCoordinates(fitGaussModCoords,fitMolGauss);
 
 		    this.getEMapGradient(dRdv0, dRdv1, dRdv2,cachedCoordsPP);
-
 
 			/**
 			 * derivative of ShapeOverlap with respect to the four elements of the quaternion and three elements of translation
 			 * 
 			 */
-		    
 		    double totalOverlap = 0.0;
 		    Coordinates fitCenterModCoord;
 			for(int i=0; i<refMolGauss.size();i++){

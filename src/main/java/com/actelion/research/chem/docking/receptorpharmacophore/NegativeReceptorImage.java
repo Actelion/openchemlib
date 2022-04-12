@@ -18,6 +18,15 @@ import smile.clustering.KMeans;
 import java.util.*;
 import java.util.stream.IntStream;
 
+/**
+ * creates a negative receptor image in a binding site, using atomic gaussians for shape and pharmacophore gaussians to
+ * indicate optimal sites of interaction for a ligand
+ * - probe atoms are used around receptor pharmacophore features to localize optimal sites of interaction
+ * - interaction sites are clustered  
+ * @author wahljo1
+ *
+ */
+
 
 public class NegativeReceptorImage extends MoleculeGrid {
 	
@@ -140,7 +149,10 @@ public class NegativeReceptorImage extends MoleculeGrid {
 		
 
 	}
-	
+	/**
+	 * fill accessible parts of the binding site with shape gaussian, without incorporating surface points (check buriedness)
+	 * @param shapeGaussians
+	 */
 	private void createShapeAtoms(List<AtomicGaussian> shapeGaussians) {
 		List<AtomicGaussian> gaussians = new ArrayList<>();
 		double radiusSq = NONPOLAR_RADIUS*NONPOLAR_RADIUS;
@@ -161,7 +173,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 						}
 						else {
 							double r = Math.sqrt(rSq);
-							if(r<GAUSSIAN_DISTANCE) {
+							if(r<GAUSSIAN_DISTANCE) { // too close to another automic gaussian
 								clash = true;
 								break;
 							}
@@ -377,9 +389,12 @@ public class NegativeReceptorImage extends MoleculeGrid {
 	}
 	
 	
-
+	/**
+	 * go through list of receptor pharmacophore features and calculate preferable sites of interaction
+	 */
 	private void analyzeBindingSiteAtoms() {
 		MolecularVolume molVol = new MolecularVolume(receptor);
+		final double hbondDistance = 2.8;
 		for(PPGaussian ppg : molVol.getPPGaussians()) {
 			int a = ppg.getAtomId();
 			IPharmacophorePoint pp = ppg.getPharmacophorePoint();
@@ -393,19 +408,19 @@ public class NegativeReceptorImage extends MoleculeGrid {
 					if(receptor.getBondOrder(receptor.getBond(a, receptor.getConnAtom(a,0)))==2) {//sp2 oxygen
 						if(siteCoords.size()==0) { //add interaction point along C=0 axis
 							Coordinates v = receptor.getCoordinates(a).subC(receptor.getCoordinates( receptor.getConnAtom(a,0))).unitC();
-							Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(2.8));
+							Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(hbondDistance));
 							siteCoords.add(c);
 						}
 					}
 				}
-				Coordinates c = receptor.getCoordinates(a).addC(pp.getDirectionality().scaleC(2.8));
+				Coordinates c = receptor.getCoordinates(a).addC(pp.getDirectionality().scaleC(hbondDistance )); // interaction points at lone pairs
 				siteCoords.add(c);
 			}
 			else if(ppg.getPharmacophorePoint().getFunctionalityIndex()==IPharmacophorePoint.Functionality.NEG_CHARGE.getIndex()) {
 				//either -O(-) or -C(=O)-O(-)
 				if(receptor.getConnAtoms(a)==1) {
 					Coordinates v = receptor.getCoordinates(a).subC(receptor.getCoordinates( receptor.getConnAtom(a,0))).unitC();
-					Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(2.8));
+					Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(hbondDistance ));
 					siteCoords.add(c);
 				}
 				else if(receptor.getConnAtoms(a)==3) {
@@ -448,7 +463,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 				}
 			}
 			else if(ppg.getPharmacophorePoint().getFunctionalityIndex()==IPharmacophorePoint.Functionality.DONOR.getIndex()) { 
-				Coordinates c = receptor.getCoordinates(a).addC(pp.getDirectionality().scaleC(1.8));
+				Coordinates c = receptor.getCoordinates(a).addC(pp.getDirectionality().scaleC(hbondDistance-1.0));
 				siteCoords.add(c);
 			}
 				

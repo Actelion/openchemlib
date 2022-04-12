@@ -76,7 +76,6 @@ public class LigandPose implements Evaluable{
 	
 	private void init(double e0) {
 		mol = ligConf.getMolecule();
-		//rotationCenter = calcCOM();
 		torsionHelper = new BondRotationHelper(mol,true);
 		engine.init(this,e0);
 		setInitialState();
@@ -89,9 +88,6 @@ public class LigandPose implements Evaluable{
 			origCOM.add(cachedCoords[a]);
 		}
 		origCOM.scale(1.0/cachedCoords.length);
-		for(Coordinates coords : origCoords) {
-			coords.sub(origCOM);
-		}
 		dRdvi1 = new double[3][3];
 		dRdvi2 = new double[3][3];
 		dRdvi3 = new double[3][3];
@@ -157,7 +153,6 @@ public class LigandPose implements Evaluable{
 						dx_dphi.z*coordGrad[3*i+2];
 			}
 			
-				//state[5+b+1] = TorsionDB.calculateTorsionExtended(ligConf, atoms);
 		}
 		
 		return energy;
@@ -196,15 +191,16 @@ public class LigandPose implements Evaluable{
 		for(int a=0;a<ligConf.getMolecule().getAllAtoms();a++) {
 			cachedCoords[a] = new Coordinates(ligConf.getCoordinates(a));
 		}
-	
 		ExponentialMap eMap = new ExponentialMap(state[3],state[4],state[5]);
 		Quaternion q = eMap.toQuaternion();
-		Translation trans = new Translation(origCOM);
+		Translation trans1 = new Translation(origCOM.scaleC(-1.0));
+		Translation trans2 = new Translation(origCOM);
 		Rotation rot = new Rotation(q.getRotMatrix().getArray());
 		Translation t = new Translation(state[0],state[1],state[2]);
 		TransformationSequence transformation = new TransformationSequence();
+		transformation.addTransformation(trans1);
 		transformation.addTransformation(rot);
-		transformation.addTransformation(trans);
+		transformation.addTransformation(trans2);
 		transformation.addTransformation(t);
 		transformation.apply(ligConf);
 	}

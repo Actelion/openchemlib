@@ -1,6 +1,8 @@
 package com.actelion.research.chem.phesaflex;
 
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import com.actelion.research.chem.Coordinates;
@@ -74,8 +76,6 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 	private void init() {
 		ff = new ForceFieldMMFF94(fitConf.getMolecule(), ForceFieldMMFF94.MMFF94SPLUS, this.ffOptions);
-		this.oAA = this.getFGValueShapeSelf(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
-		this.oAApp = this.getFGValueSelfPP(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
 		setInitialState();
 		origCoords = new Coordinates[fitConf.getMolecule().getAllAtoms()];
 		cachedCoords = new Coordinates[fitConf.getMolecule().getAllAtoms()];
@@ -86,12 +86,11 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 			origCOM.add(cachedCoords[a]);
 		}
 		origCOM.scale(1.0/cachedCoords.length);
-		for(Coordinates coords : origCoords) {
-			coords.sub(origCOM);
-		}
 		dRdvi1 = new double[3][3];
 		dRdvi2 = new double[3][3];
 		dRdvi3 = new double[3][3];
+		this.oAA = this.getFGValueShapeSelf(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
+		this.oAApp = this.getFGValueSelfPP(shapeAlign.getRefMolGauss(),true);
 	}
 	
 	public void setInitialState() {
@@ -128,6 +127,8 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		this.precalcExp = e.precalcExp;
 		init();
 	}
+	
+
 	
 	@Override
 	public void setState(double[] v){
@@ -181,12 +182,14 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 		ExponentialMap eMap = new ExponentialMap(v[3],v[4],v[5]);
 		Quaternion q = eMap.toQuaternion();
-		Translation trans = new Translation(origCOM);
+		Translation trans1 = new Translation(origCOM.scaleC(-1.0));
+		Translation trans2 = new Translation(origCOM);
 		Rotation rot = new Rotation(q.getRotMatrix().getArray());
 		Translation t = new Translation(v[0],v[1],v[2]);
 		TransformationSequence transformation = new TransformationSequence();
+		transformation.addTransformation(trans1);
 		transformation.addTransformation(rot);
-		transformation.addTransformation(trans);
+		transformation.addTransformation(trans2);
 		transformation.addTransformation(t);
 		transformation.apply(fitConf);
 	}
@@ -233,39 +236,32 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double[] overlapGrad = new double[coordGrad.length]; 
 		double[] energyGrad = new double[coordGrad.length]; 
 		double[] selfOverlapGradFit = new double[coordGrad.length];
-		double[] overlapGradPP = new double[coordGrad.length]; 
-		double[] selfOverlapGradFitPP = new double[coordGrad.length];
 		double oBB = this.getFGValueShapeSelf(selfOverlapGradFit, shapeAlign.getMolGauss(),false);
 		double oAB = this.getFGValueShape(overlapGrad);
-		double oBBpp = this.getFGValueSelfPP(selfOverlapGradFitPP, shapeAlign.getMolGauss(),false);
-		double oABpp = this.getFGValuePP(overlapGradPP);
+		double oBBpp = this.getFGValueSelfPP(shapeAlign.getMolGauss(),false);
+		double oABpp = this.getFGValuePP();
 		ff.setState(getCartState());
 		ff.addGradient(energyGrad);
 		ePot = ff.getTotalEnergy();
 		double[] dOBB = selfOverlapGradFit;
 		double[] dOAB = overlapGrad;
 		double[] dOBB_dOAB = new double[coordGrad.length];
-		double[] dOBBpp = selfOverlapGradFitPP;
-		double[] dOABpp = overlapGradPP;
-		double[] dOBBpp_dOABpp = new double[coordGrad.length];
 		T = (1.0-ppWeight)*(oAB/(oBB+oAA-oAB))+ppWeight*(oABpp/(oBBpp+oAApp-oABpp));
 		//double value = SCALE*Math.exp(DELTA*(ePot-e0))*T + (ePot-e0);
 		double strainEnergy = ePot-e0;
 		double strainPrefactor = strainEnergy < FlexibleShapeAlignment.ENERGY_CUTOFF ? 0.0 : strainEnergy-FlexibleShapeAlignment.ENERGY_CUTOFF;
 		double value = -T + LAMBDA*strainPrefactor*strainPrefactor;
-
-		for(int i=0;i<grad.length;i++) {
+		for(int i=0;i<coordGrad.length;i++) {
 			dOBB_dOAB[i] = dOBB[i]-dOAB[i];
-			dOBBpp_dOABpp[i] = dOBBpp[i]-dOABpp[i];
 		}
-		double[] dT = new double[grad.length];
-		for(int j=0;j<grad.length;j++) {
-			dT[j] = (1.0-ppWeight)*dOAB[j]*(1/(oAA+oBB-oAB))-(1.0-ppWeight)*oAB*Math.pow(oAA+oBB-oAB,-2)*dOBB_dOAB[j] + 
-					ppWeight*dOABpp[j]*(1/(oAApp+oBBpp-oABpp))-ppWeight*oAB*Math.pow(oAApp+oBBpp-oABpp,-2)*dOBBpp_dOABpp[j];
+		double[] dT = new double[coordGrad.length];
+		for(int j=0;j<coordGrad.length;j++) {
+			dT[j] = (1.0-ppWeight)*dOAB[j]*(1/(oAA+oBB-oAB))-(1.0-ppWeight)*oAB*Math.pow(oAA+oBB-oAB,-2)*dOBB_dOAB[j];// + 
+					//ppWeight*dOABpp[j]*(1/(oAApp+oBBpp-oABpp))-ppWeight*oAB*Math.pow(oAApp+oBBpp-oABpp,-2)*dOBBpp_dOABpp[j];
 		}
-		for(int k=0;k<grad.length;k++) {
+		for(int k=0;k<coordGrad.length;k++) {
 
-			grad[k] = -dT[k] + strainPrefactor*2*LAMBDA*energyGrad[k];
+			coordGrad[k] = -dT[k] + strainPrefactor*2*LAMBDA*energyGrad[k];
 		}
 		//to inner coordinates
 		//1. with respect to translational DOG
@@ -309,7 +305,6 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 			
 				//state[5+b+1] = TorsionDB.calculateTorsionExtended(ligConf, atoms);
 		}
-
 		return value;
 		
 		
@@ -433,16 +428,12 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 	}
 	
-	public double getFGValuePP(double[] grad) {
-		
+	public double getFGValuePP() {
+
 		ShapeVolume molGauss = shapeAlign.getMolGauss();
 
 		ShapeVolume refMolGauss = shapeAlign.getRefMolGauss();
 
-		for(int i=0;i<grad.length;i++) {
-			grad[i] = 0;
-		}
-		double[] coords = getCartState();
 		/**
 		 * derivative of ShapeOverlap with respect to the four elements of the quaternion and three elements of translation
 		 * 
@@ -453,35 +444,28 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 			double yi = refPP.getCenter().y;
 			double zi = refPP.getCenter().z;
 			for(PPGaussian fitPP:molGauss.getPPGaussians()){
-				int a = fitPP.getAtomId();
 				double atomOverlap = 0.0;
-				double xj = fitConf.getX(a);
-				double yj = fitConf.getY(a);
-				double zj = fitConf.getZ(a);
+				Coordinates fitCenterModCoord = fitPP.getCenter();
+				double xj = fitCenterModCoord.x;
+				double yj = fitCenterModCoord.y;
+				double zj = fitCenterModCoord.z;
 				double dx = xi-xj;
 				double dy = yi-yj;
 				double dz = zi-zj;
 				double Rij2 = dx*dx + dy*dy + dz*dz;
 				double alphaSum = refPP.getWidth() + fitPP.getWidth();
-				double gradientPrefactor=0.0;
 				if(Rij2<Gaussian3D.DIST_CUTOFF) {
 					atomOverlap = refPP.getWeight()*refPP.getHeight()*fitPP.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refPP.getWidth() * fitPP.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refPP.getAtomicNo(),fitPP.getAtomicNo());
-					
 					if (atomOverlap>0.0) {
-						double sim = refPP.getSimilarity(fitPP);
+						double sim = refPP.getInteractionSimilarity(fitPP);
 						atomOverlap *= sim;
 						totalOverlap += atomOverlap;
-						gradientPrefactor = atomOverlap*-2*refPP.getWidth()*fitPP.getWidth()/(refPP.getWidth()+fitPP.getWidth());
-						grad[3*a] += (xj-xi)*gradientPrefactor*sim;
-						grad[3*a+1] += (yj-yi)*gradientPrefactor*sim;
-						grad[3*a+2] += (zj-zi)*gradientPrefactor*sim;
-						fitPP.getPharmacophorePoint().getDirectionalityDerivativeCartesian(grad, coords, fitPP.getPharmacophorePoint().getDirectionality(), sim);					}
+					}
 
 				}
 
 				}
-
 		
 		}
 
@@ -501,18 +485,18 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	    double totalOverlap = 0.0;
 	    for(AtomicGaussian refAt:molGauss.getAtomicGaussians()){
 			for(AtomicGaussian  fitAt:molGauss.getAtomicGaussians()){
-				totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
+				totalOverlap+=getGradientContributionSelf(refAt,fitAt,grad,rigid);
 			}
 			if(molGauss instanceof MolecularVolume) {
 			for(VolumeGaussian fitAt:((MolecularVolume)molGauss).getVolumeGaussians()){
-				totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
+				totalOverlap+=getGradientContributionSelf(refAt,fitAt,grad,rigid);
 			}
 			}
 	    }
 		if(molGauss instanceof MolecularVolume) {
 	    for(VolumeGaussian refAt: ((MolecularVolume)molGauss).getVolumeGaussians()){
 	    	for(VolumeGaussian fitAt : ((MolecularVolume)molGauss).getVolumeGaussians()){
-	    		totalOverlap+=getGradientContribution(refAt,fitAt,grad,rigid);
+	    		totalOverlap+=getGradientContributionSelf(refAt,fitAt,grad,rigid);
 	    	}
 	    }
 		}
@@ -523,20 +507,20 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	
 	}
 	
-	public double getGradientContribution(Gaussian3D refAt, Gaussian3D fitAt, double[] grad,boolean rigid) {
+	public double getGradientContributionSelf(Gaussian3D refAt, Gaussian3D fitAt, double[] grad,boolean rigid) {
 		double xi,yi,zi,xj,yj,zj;
 		int b = fitAt.getAtomId();
 		double atomOverlap = 0.0;
 		int a = refAt.getAtomId();
-		if(rigid) {
+		if(rigid) { // rigid is always a self overlap of the ref molecule
 			xi = refAt.getCenter().x;
 			yi = refAt.getCenter().y;
 			zi = refAt.getCenter().z;
 		}
-		else {
-			xi = refMol.getAtomX(a);
-			yi = refMol.getAtomY(a);
-			zi = refMol.getAtomZ(a);
+		else  {
+			xi = fitConf.getX(a);
+			yi = fitConf.getY(a);
+			zi = fitConf.getZ(a);
 		}
 
 		if(rigid) {
@@ -580,31 +564,25 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 
 	
 	
-	public double getFGValueSelfPP(double[] grad, ShapeVolume molVol,boolean rigid) {
+	public double getFGValueSelfPP(ShapeVolume molVol,boolean rigid) {
 		double xi,yi,zi,xj,yj,zj;
-		
-		for(int i=0;i<grad.length;i++) {
-			grad[i] = 0;
-		}
-		double[] coord = getCartState();
+
 		/**
 		 * derivative of ShapeOverlap with respect to Cartesian coordinates
 		 */ 
 	    double totalOverlap = 0.0;
 	    for(PPGaussian refPP:molVol.getPPGaussians()){
-	    	int a = refPP.getAtomId();
 			if(rigid) {
 				xi = refPP.getCenter().x;
 				yi = refPP.getCenter().y;
 				zi = refPP.getCenter().z;
 			}
 			else {
-				xi = fitConf.getX(a);
-				yi = fitConf.getY(a);
-				zi = fitConf.getZ(a);
+				xi = refPP.getCenter().x;
+				yi = refPP.getCenter().y;
+				zi = refPP.getCenter().z;
 			}
 			for(PPGaussian fitPP:molVol.getPPGaussians()){
-				int b = fitPP.getAtomId();
 				double atomOverlap = 0.0;
 
 				if(rigid) {
@@ -613,31 +591,23 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 					zj = fitPP.getCenter().z;
 				}
 				else {
-					xj = fitConf.getX(b);
-					yj = fitConf.getY(b);
-					zj = fitConf.getZ(b);
+					xj = fitPP.getCenter().x;
+					yj = fitPP.getCenter().y;
+					zj = fitPP.getCenter().z;
 				}
 				double dx = xi-xj;
 				double dy = yi-yj;
 				double dz = zi-zj;
 				double Rij2 = dx*dx + dy*dy + dz*dz;
 				double alphaSum = fitPP.getWidth() + fitPP.getWidth();
-				double gradientPrefactor = 0.0;
-				
 				if(Rij2<Gaussian3D.DIST_CUTOFF) {
 					atomOverlap = refPP.getWeight()*refPP.getHeight()*fitPP.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refPP.getWidth() * fitPP.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refPP.getAtomicNo(),fitPP.getAtomicNo());
 					
 					if (atomOverlap>0.0) {
-						double sim = refPP.getSimilarity(fitPP);
+						double sim = refPP.getInteractionSimilarity(fitPP);
 						atomOverlap *= sim;
 						totalOverlap += atomOverlap;
-						if(!rigid) {
-							gradientPrefactor = atomOverlap*-2*refPP.getWidth()*fitPP.getWidth()/(refPP.getWidth()+fitPP.getWidth());
-							grad[3*a] += (2*xj-2*xi)*gradientPrefactor*sim;
-							grad[3*a+1] += (2*yj-2*yi)*gradientPrefactor*sim;
-							grad[3*a+2] += (2*zj-2*zi)*gradientPrefactor*sim;
-							fitPP.getPharmacophorePoint().getDirectionalityDerivativeCartesian(grad, coord, fitPP.getPharmacophorePoint().getDirectionality(), sim);					}
 					}
 				}
 				}

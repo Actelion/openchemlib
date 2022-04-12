@@ -7,6 +7,7 @@ import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer;
+import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.PheSASetting;
 import com.actelion.research.chem.alignment3d.transformation.Rotation;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
@@ -62,6 +63,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	private StereoMolecule[] previousAlignment;// = new StereoMolecule[2];
 	
 	private double[] previousPhesaResult;
+	
+	private PheSASetting phesaSetting;
 
 	protected int maxConfs;
 	
@@ -111,9 +114,18 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		conformerGenerator = new ConformerSetGenerator(maxConfs);
 		conformerGenerator.setThreadMaster(threadMaster);
 		preProcessTransformations = new ArrayList<>();
+		phesaSetting = new PheSASetting();
 
 	}
 	
+	public PheSASetting getPhesaSetting() {
+		return phesaSetting;
+	}
+
+	public void setPhesaSetting(PheSASetting phesaSetting) {
+		this.phesaSetting = phesaSetting;
+	}
+
 	public void setThreadMaster(ThreadMaster tm) {
 		this.threadMaster = tm;
 	}
@@ -124,7 +136,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	}
 
 	public PheSAMolecule createDescriptor(ConformerSet confSet) {
-		preProcessTransformations.clear();
+		preProcessTransformations = new ArrayList<>();
 		try {
 
 			init();
@@ -217,7 +229,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	public float getSimilarity(PheSAMolecule query, PheSAMolecule base) {
  		StereoMolecule[] bestPair = {query.getMolecule(),base.getMolecule()};
-		double[] result = PheSAAlignmentOptimizer.align(query,base,bestPair,ppWeight,true);
+		double[] result = PheSAAlignmentOptimizer.align(query,base,bestPair,phesaSetting);
 		this.setPreviousAlignment(bestPair);
 		this.setPreviousPheSAResult(result);
 		if(flexible) {

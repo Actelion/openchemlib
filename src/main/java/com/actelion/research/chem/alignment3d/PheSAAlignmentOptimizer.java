@@ -3,11 +3,13 @@ package com.actelion.research.chem.alignment3d;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.actelion.research.calc.Matrix;
@@ -28,13 +30,17 @@ import com.actelion.research.chem.phesa.pharmacophore.PPTriangleCreator;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleMatcher;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
+import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 public class PheSAAlignmentOptimizer {
 	
-	private static int TRIANGLE_OPTIMIZATIONS = 50;
-	private static int PMI_OPTIMIZATIONS = 10;
+	public static int TRIANGLE_OPTIMIZATIONS = 50;
+	public static int PMI_OPTIMIZATIONS = 10;
 	private static double EXIT_VECTOR_WEIGHT = 10.0;
 	private static final int BEST_RESULT_SIZE = 20;
+	
+	public enum SimilarityMode {TVERSKY, TANIMOTO
+		}
 	
 	private PheSAAlignmentOptimizer() {}
 	
@@ -44,6 +50,8 @@ public class PheSAAlignmentOptimizer {
 	}
 	
 	public static double alignTwoMolsInPlace(StereoMolecule refMol, StereoMolecule fitMol, double ppWeight) {
+		PheSASetting setting = new PheSASetting();
+		setting.setPpWeight(ppWeight);
 		double similarity = 0.0;
 		MolecularVolume refVol = new MolecularVolume(refMol);
 		MolecularVolume fitVol = new MolecularVolume(fitMol);
@@ -53,7 +61,7 @@ public class PheSAAlignmentOptimizer {
 		Rotation rotation = refVol.preProcess(refConf);
 		rotation = rotation.getInvert();
 		fitVol.preProcess(fitConf);
-		AlignmentResult bestSolution = createAlignmentSolutions(Collections.singletonList(refVol), Collections.singletonList(fitVol),ppWeight,true,false,true).last();
+		AlignmentResult bestSolution = createAlignmentSolutions(Collections.singletonList(refVol), Collections.singletonList(fitVol),setting).get(0);
 		similarity = bestSolution.getSimilarity();
 		
 		for(int a=0;a<fitMol.getAllAtoms();a++) {
@@ -71,14 +79,14 @@ public class PheSAAlignmentOptimizer {
 		
 	}
 	
-	public static List<AlignmentResult> alignToNegRecImg(ShapeVolume ref, List<? extends ShapeVolume> fitVols, double ppWeight, boolean optimize) {
+	public static List<AlignmentResult> alignToNegRecImg(ShapeVolume ref, List<? extends ShapeVolume> fitVols, PheSASetting setting) {
 		for(ShapeVolume shapeVol : fitVols) {
 			shapeVol.removeRings();
 		}
-		NavigableSet<AlignmentResult> alignmentSolutions = createAlignmentSolutions(Collections.singletonList(ref),fitVols,ppWeight,optimize,true,false,true); 
+		List<AlignmentResult> alignmentSolutions = createAlignmentSolutions(Collections.singletonList(ref),fitVols,setting); 
 		List<AlignmentResult> results = new ArrayList<>();
 		int counter = 0;
-		for(AlignmentResult solution : alignmentSolutions.descendingSet() ) {
+		for(AlignmentResult solution : alignmentSolutions) {
 			if(counter++>=BEST_RESULT_SIZE) {
 				break;
 			}
@@ -87,17 +95,11 @@ public class PheSAAlignmentOptimizer {
 		}
 		return results;
 	}
-	public static NavigableSet<AlignmentResult> createAlignmentSolutions(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, double ppWeight, boolean optimize,
-			boolean tversky, boolean useDirectionality) {
-		return createAlignmentSolutions(refVols, fitVols, ppWeight, optimize,
-				tversky, useDirectionality, false);
-	}
+
 	
-	public static NavigableSet<AlignmentResult> createAlignmentSolutions(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, double ppWeight, boolean optimize,
-			boolean tversky, boolean useDirectionality, boolean exhaustive) {
-		int triangleOpti = exhaustive ? 2*TRIANGLE_OPTIMIZATIONS : TRIANGLE_OPTIMIZATIONS;
-		int pmiOpti = exhaustive ? 2*PMI_OPTIMIZATIONS : PMI_OPTIMIZATIONS;
-		NavigableSet<AlignmentResult> alignmentSolutions = new TreeSet<AlignmentResult>();
+	public static List<AlignmentResult> createAlignmentSolutions(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, PheSASetting setting) {
+		int pmiOpti = setting.nrOptimizationsPMI;
+		List<AlignmentResult> alignmentSolutions = new ArrayList<AlignmentResult>();
 		for(ShapeVolume molVol : refVols) {
 			for(PPGaussian ppg : molVol.getPPGaussians()) {
 				if(ppg.getPharmacophorePoint().getFunctionalityIndex()==PharmacophoreCalculator.EXIT_VECTOR_ID) {
@@ -105,52 +107,58 @@ public class PheSAAlignmentOptimizer {
 				}
 			}
 		}
-
-		NavigableSet<AlignmentResult> triangleSolutions = getBestTriangleAlignments(refVols,fitVols,ppWeight,optimize,tversky,useDirectionality,triangleOpti);
+	
+		List<AlignmentResult> triangleSolutions = new ArrayList<AlignmentResult>();
+		if(setting.useTriangle)
+			triangleSolutions = getBestTriangleAlignments(refVols,fitVols,setting);
 		alignmentSolutions.addAll(triangleSolutions);
-		NavigableSet<AlignmentResult> pmiSolutions = new TreeSet<AlignmentResult>();
+		List<AlignmentResult> pmiSolutions = new ArrayList<AlignmentResult>();
 		for(int i=0;i<refVols.size();i++) {
 			ShapeVolume refVol = refVols.get(i);
 			for(int j=0;j<fitVols.size();j++) {
 				ShapeVolume fitVol = new ShapeVolume(fitVols.get(j));
-				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol, ppWeight);
+				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol, setting.ppWeight);
 				TransformationSequence pmiTransformation = new TransformationSequence();
 				double[][] transforms = PheSAAlignment.initialTransform(2);
-				//if(tversky)
-				//	transforms = createSubAlignments(refVol,PheSAAlignment.initialTransform(2));
-				double[] r = shapeAlignment.findAlignment(transforms,pmiTransformation,false,tversky);
+				double[] r = shapeAlignment.findAlignment(transforms,pmiTransformation,false,setting.getSimMode()==SimilarityMode.TVERSKY ? true : false);
 				AlignmentResult pmiAlignment = new AlignmentResult(r[0],pmiTransformation,i,j);
 				pmiAlignment.setSimilarityContributions(r);
 				pmiSolutions.add(pmiAlignment);
 			}
 		}
 		//optimize best PMI alignments
+		List<AlignmentResult> sortedPMISolutions = pmiSolutions.stream()
+				.sorted(Comparator.reverseOrder())
+				.collect(Collectors.toList());
 		int counter = 0;
-		for(AlignmentResult pmiAlignment : pmiSolutions.descendingSet()) {
+		for(AlignmentResult pmiAlignment : sortedPMISolutions) {
 			if(counter++>pmiOpti)
 				break;
 			ShapeVolume refVol = refVols.get(pmiAlignment.getRefConformerIndex());
 			ShapeVolume fitVol = new ShapeVolume(fitVols.get(pmiAlignment.getConformerIndex()));
 			TransformationSequence bestTransform = pmiAlignment.getTransform();
 			fitVol.transform(bestTransform);
-			PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol,ppWeight);
+			PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol,setting.ppWeight);
 			TransformationSequence optimizedTransform = new TransformationSequence();
-			double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(0),optimizedTransform,true,tversky);
+			double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(0),optimizedTransform,true,setting.simMode==SimilarityMode.TVERSKY ? true : false);
 			pmiAlignment.getTransform().addTransformation(optimizedTransform);
 			AlignmentResult optimizedPMIAlignment = new AlignmentResult(r[0],pmiAlignment.getTransform(),pmiAlignment.getRefConformerIndex(),pmiAlignment.getConformerIndex());
 			optimizedPMIAlignment.setSimilarityContributions(r);
 			alignmentSolutions.add(optimizedPMIAlignment);
 			
 		}
-		return alignmentSolutions;
+		List<AlignmentResult> sortedSolutions = alignmentSolutions.stream()
+				.sorted(Comparator.reverseOrder())
+				.collect(Collectors.toList());
+		return sortedSolutions;
 		
 	}
 	
-	public static double[] align(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestAlignment, double ppWeight, boolean optimize) {
+	public static double[] align(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestAlignment, PheSASetting setting) {
 		double[] result = new double[4]; //overall sim, ppSimilarity and additional volume similarity contribution
 		
-		NavigableSet<AlignmentResult> alignmentSolutions = createAlignmentSolutions(refShape.getVolumes(),fitShape.getVolumes(),ppWeight,optimize,false,true); 
-		AlignmentResult bestResult = alignmentSolutions.last();
+		List<AlignmentResult> alignmentSolutions = createAlignmentSolutions(refShape.getVolumes(),fitShape.getVolumes(),setting); 
+		AlignmentResult bestResult = alignmentSolutions.get(0);
 		StereoMolecule refMol = refShape.getConformer(bestResult.getRefConformerIndex());
 		StereoMolecule fitMol = fitShape.getConformer(bestResult.getConformerIndex());
 		bestResult.getTransform().apply(fitMol);
@@ -177,41 +185,45 @@ public class PheSAAlignmentOptimizer {
 	
 
 	
-	private static NavigableSet<AlignmentResult> getBestTriangleAlignments(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, double ppWeight, 
-			boolean optimize, boolean tversky, boolean useDirectionality, int nrOptimizations) {
-		TreeSet<AlignmentResult> triangleResults = new TreeSet<AlignmentResult>();
+	private static List<AlignmentResult> getBestTriangleAlignments(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, PheSASetting setting) {
+		List<AlignmentResult> triangleResults = new ArrayList<AlignmentResult>();
 		for(int i=0;i<refVols.size();i++) {
 			ShapeVolume refVol = refVols.get(i);
 			Map<Integer,ArrayList<PPTriangle>> refTriangles = PPTriangleCreator.create(refVol.getPPGaussians(), refVol.getCOM());
 			for(int j=0;j<fitVols.size();j++) {
 				ShapeVolume fitVol = fitVols.get(j);
 				Map<Integer,ArrayList<PPTriangle>> fitTriangles = PPTriangleCreator.create(fitVol.getPPGaussians(),fitVol.getCOM());
-				triangleResults.addAll(PPTriangleMatcher.getMatchingTransforms(refTriangles, fitTriangles,i,j,useDirectionality));
+				triangleResults.addAll(PPTriangleMatcher.getMatchingTransforms(refTriangles, fitTriangles,i,j,setting.useDirectionality));
 			}
 		}
-		NavigableSet<AlignmentResult> optimizedResults = new TreeSet<AlignmentResult>();
+		List<AlignmentResult> sortedTriangleResults = triangleResults.stream()
+				.sorted(Comparator.reverseOrder())
+				.collect(Collectors.toList());
+		List<AlignmentResult> optimizedResults = new ArrayList<AlignmentResult>();
 		if(triangleResults.size()!=0) { // found triangle alignments
 
 			double[][] alignments = PheSAAlignment.initialTransform(0);
 			int counter = 0;
-			for(AlignmentResult result: triangleResults.descendingSet()) {
-				if(counter++>nrOptimizations)
+			for(AlignmentResult result: triangleResults) {
+				if(counter++>setting.nrOptimizationsTriangle)
 					break;
 				ShapeVolume refVol = refVols.get(result.getRefConformerIndex());
 				ShapeVolume fitVol = new ShapeVolume(fitVols.get(result.getConformerIndex()));
 				TransformationSequence bestTransform = result.getTransform();
 				fitVol.transform(bestTransform);
-				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol,ppWeight);
+				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol,setting.ppWeight);
 				TransformationSequence optTransform = new TransformationSequence();
-				double[] r = shapeAlignment.findAlignment(alignments,optTransform,optimize, tversky);
+				double[] r = shapeAlignment.findAlignment(alignments,optTransform,true, setting.simMode==SimilarityMode.TVERSKY ? true : false);
 				bestTransform.addTransformation(optTransform);
 				AlignmentResult optimizedResult = new AlignmentResult(r[0], bestTransform, result.getRefConformerIndex(), result.getConformerIndex());
 				optimizedResult.setSimilarityContributions(r);
 				optimizedResults.add(optimizedResult);
 			}
 		}
-
-		return optimizedResults;
+		List<AlignmentResult> sortedSolutions = optimizedResults.stream()
+				.sorted(Comparator.reverseOrder())
+				.collect(Collectors.toList());
+		return sortedSolutions;
 	}
 	
 	private static double[][] createSubAlignments(ShapeVolume refVol, double[][] baseTransforms) {
@@ -286,6 +298,97 @@ public class PheSAAlignmentOptimizer {
 		
 		
 	}
+
+	/**
+	 * @author wahljo1
+	 *
+	 */
+	public static class PheSASetting {
+		public double getPpWeight() {
+			return ppWeight;
+		}
+		public void setPpWeight(double ppWeight) {
+			this.ppWeight = ppWeight;
+		}
+		public SimilarityMode getSimMode() {
+			return simMode;
+		}
+		public void setSimMode(SimilarityMode simMode) {
+			this.simMode = simMode;
+		}
+		public boolean isUseDirectionality() {
+			return useDirectionality;
+		}
+		public void setUseDirectionality(boolean useDirectionality) {
+			this.useDirectionality = useDirectionality;
+		}
+
+		public int getNrOptimizationsPMI() {
+			return nrOptimizationsPMI;
+		}
+		public void setNrOptimizationsPMI(int nrOptimizationsPMI) {
+			this.nrOptimizationsPMI = nrOptimizationsPMI;
+		}
+		public int getNrOptimizationsTriangle() {
+			return nrOptimizationsTriangle;
+		}
+		public void setNrOptimizationsTriangle(int nrOptimizationsTriangle) {
+			this.nrOptimizationsTriangle = nrOptimizationsTriangle;
+		}
+
+		private double ppWeight;
+		private SimilarityMode simMode; 
+		private boolean useDirectionality;
+		private boolean useTriangle;
+		public boolean isUseTriangle() {
+			return useTriangle;
+		}
+		public void setUseTriangle(boolean useTriangle) {
+			this.useTriangle = useTriangle;
+		}
+
+		private int nrOptimizationsPMI;
+		private int nrOptimizationsTriangle;
+		private static final String DELIMITER1 =";";
+		
+		public PheSASetting() {
+			this.ppWeight = 0.5;
+			this.simMode = SimilarityMode.TANIMOTO;
+			this.useDirectionality = true;
+			this.useTriangle = true;
+			this.nrOptimizationsPMI = PheSAAlignmentOptimizer.PMI_OPTIMIZATIONS;
+			this.nrOptimizationsTriangle = PheSAAlignmentOptimizer.TRIANGLE_OPTIMIZATIONS;
+		}
+		
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append(Double.toString(ppWeight));
+			sb.append(DELIMITER1);
+			sb.append(simMode.toString());
+			sb.append(DELIMITER1);
+			sb.append(Boolean.toString(useDirectionality));
+			sb.append(DELIMITER1);
+			sb.append(Boolean.toString(useTriangle));
+			sb.append(DELIMITER1);
+			sb.append(Integer.toString(nrOptimizationsPMI));
+			sb.append(DELIMITER1);
+			sb.append(Integer.toString(nrOptimizationsTriangle));
+			return sb.toString();
+		}
+		
+		public static PheSASetting fromString(String encoded) {
+			PheSASetting setting = new PheSASetting();
+			String[] split = encoded.split(DELIMITER1);
+			setting.setPpWeight(Double.parseDouble(split[0]));
+			setting.setSimMode(SimilarityMode.valueOf(split[1]));
+			setting.setUseDirectionality(Boolean.parseBoolean(split[2]));
+			setting.setUseTriangle(Boolean.parseBoolean(split[3]));
+			setting.setNrOptimizationsPMI(Integer.parseInt(split[4]));
+			setting.setNrOptimizationsTriangle(Integer.parseInt(split[5]));
+			return setting;
+		}
+	}
+	
 
 	
 
