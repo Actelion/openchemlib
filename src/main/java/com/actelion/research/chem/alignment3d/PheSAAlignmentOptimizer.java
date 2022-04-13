@@ -39,7 +39,7 @@ public class PheSAAlignmentOptimizer {
 	private static double EXIT_VECTOR_WEIGHT = 10.0;
 	private static final int BEST_RESULT_SIZE = 20;
 	
-	public enum SimilarityMode {TVERSKY, TANIMOTO
+	public enum SimilarityMode {REF_TVERSKY,TVERSKY, TANIMOTO
 		}
 	
 	private PheSAAlignmentOptimizer() {}
@@ -120,7 +120,7 @@ public class PheSAAlignmentOptimizer {
 				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol, setting.ppWeight);
 				TransformationSequence pmiTransformation = new TransformationSequence();
 				double[][] transforms = PheSAAlignment.initialTransform(2);
-				double[] r = shapeAlignment.findAlignment(transforms,pmiTransformation,false,setting.getSimMode()==SimilarityMode.TVERSKY ? true : false);
+				double[] r = shapeAlignment.findAlignment(transforms,pmiTransformation,false,setting.getSimMode());
 				AlignmentResult pmiAlignment = new AlignmentResult(r[0],pmiTransformation,i,j);
 				pmiAlignment.setSimilarityContributions(r);
 				pmiSolutions.add(pmiAlignment);
@@ -140,7 +140,7 @@ public class PheSAAlignmentOptimizer {
 			fitVol.transform(bestTransform);
 			PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol,setting.ppWeight);
 			TransformationSequence optimizedTransform = new TransformationSequence();
-			double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(0),optimizedTransform,true,setting.simMode==SimilarityMode.TVERSKY ? true : false);
+			double[] r = shapeAlignment.findAlignment(PheSAAlignment.initialTransform(0),optimizedTransform,true,setting.simMode);
 			pmiAlignment.getTransform().addTransformation(optimizedTransform);
 			AlignmentResult optimizedPMIAlignment = new AlignmentResult(r[0],pmiAlignment.getTransform(),pmiAlignment.getRefConformerIndex(),pmiAlignment.getConformerIndex());
 			optimizedPMIAlignment.setSimilarityContributions(r);
@@ -204,7 +204,7 @@ public class PheSAAlignmentOptimizer {
 
 			double[][] alignments = PheSAAlignment.initialTransform(0);
 			int counter = 0;
-			for(AlignmentResult result: triangleResults) {
+			for(AlignmentResult result: sortedTriangleResults) {
 				if(counter++>setting.nrOptimizationsTriangle)
 					break;
 				ShapeVolume refVol = refVols.get(result.getRefConformerIndex());
@@ -213,7 +213,7 @@ public class PheSAAlignmentOptimizer {
 				fitVol.transform(bestTransform);
 				PheSAAlignment shapeAlignment = new PheSAAlignment(refVol,fitVol,setting.ppWeight);
 				TransformationSequence optTransform = new TransformationSequence();
-				double[] r = shapeAlignment.findAlignment(alignments,optTransform,true, setting.simMode==SimilarityMode.TVERSKY ? true : false);
+				double[] r = shapeAlignment.findAlignment(alignments,optTransform,true, setting.simMode);
 				bestTransform.addTransformation(optTransform);
 				AlignmentResult optimizedResult = new AlignmentResult(r[0], bestTransform, result.getRefConformerIndex(), result.getConformerIndex());
 				optimizedResult.setSimilarityContributions(r);
