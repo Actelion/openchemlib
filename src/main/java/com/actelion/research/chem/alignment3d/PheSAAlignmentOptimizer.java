@@ -39,7 +39,7 @@ public class PheSAAlignmentOptimizer {
 	private static double EXIT_VECTOR_WEIGHT = 10.0;
 	private static final int BEST_RESULT_SIZE = 20;
 	
-	public enum SimilarityMode {REF_TVERSKY,TVERSKY, TANIMOTO
+	public enum SimilarityMode {REFTVERSKY,TVERSKY, TANIMOTO
 		}
 	
 	private PheSAAlignmentOptimizer() {}
