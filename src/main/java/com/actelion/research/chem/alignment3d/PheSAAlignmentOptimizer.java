@@ -349,7 +349,7 @@ public class PheSAAlignmentOptimizer {
 
 		private int nrOptimizationsPMI;
 		private int nrOptimizationsTriangle;
-		private static final String DELIMITER1 =";";
+		private static final String DELIMITER1 ="_";
 		
 		public PheSASetting() {
 			this.ppWeight = 0.5;
