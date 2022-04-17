@@ -2302,7 +2302,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return axial chirality bond or -1 if axial chirality conditions are not met 
 	 */
 	public int findBINAPChiralityBond(int atom) {
-		if (mConnAtoms[atom] == 3 && isAromaticAtom(atom) && getAtomRingSize(atom) >= 6)
+		if (mConnAtoms[atom] == 3 && isAromaticAtom(atom) && getAtomRingSize(atom) >= 5)
 			for (int i = 0; i< mConnAtoms[atom]; i++)
 				if (isBINAPChiralityBond(mConnBond[atom][i]))
 					return mConnBond[atom][i];
@@ -2447,28 +2447,71 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		int atom1 = mBondAtom[0][bond];
 		if (!isAromaticAtom(atom1)
-		 || getAtomRingSize(atom1) < 6)
+		 || getAtomRingSize(atom1) < 5)
 			return false;
 
 		int atom2 = mBondAtom[1][bond];
 		if (!isAromaticAtom(atom2)
-		 || getAtomRingSize(atom2) < 6)
+		 || getAtomRingSize(atom2) < 5)
 			return false;
 
-		int orthoSubstituentCount = 0;
-		for (int j = 0; j< mConnAtoms[atom1]; j++) {
-			int connAtom = mConnAtom[atom1][j];
-			if (connAtom != atom2 && mConnAtoms[connAtom] > 2)
-				orthoSubstituentCount++;
-			}
-		for (int j = 0; j< mConnAtoms[atom2]; j++) {
-			int connAtom = mConnAtom[atom2][j];
-			if (connAtom != atom1 && mConnAtoms[connAtom] > 2)
-				orthoSubstituentCount++;
-			}
-		return (orthoSubstituentCount > 2);
+		int orthoSubstituentCount1 = getOrthoSubstituentCount(atom1, atom2);
+		int orthoSubstituentCount2 = getOrthoSubstituentCount(atom2, atom1);
+
+		// with aromatic 6-membered (or larger) rings only, we have a simple logic
+		if (getAtomRingSize(atom1) > 5 && getAtomRingSize(atom2) > 5)
+			return orthoSubstituentCount1 + orthoSubstituentCount2 > 2;
+
+		int secondOrderOrthoSubstituentCount1 = getSecondOrderOrthoSubstituentCount(atom1, atom2);
+		int secondOrderOrthoSubstituentCount2 = getSecondOrderOrthoSubstituentCount(atom2, atom1);
+
+		// for 5-membered rings we need stronger constraints (currently we don't distignuid 5-5 and 5-6)
+
+		if (orthoSubstituentCount1 == 2 && secondOrderOrthoSubstituentCount2 >= 1)
+			return true;
+		if (orthoSubstituentCount2 == 2 && secondOrderOrthoSubstituentCount1 >= 1)
+			return true;
+
+		if (secondOrderOrthoSubstituentCount1 == 2 && (orthoSubstituentCount2 >= 1 || secondOrderOrthoSubstituentCount2 >= 1))
+			return true;
+		if (secondOrderOrthoSubstituentCount2 == 2 && (orthoSubstituentCount1 >= 1 || secondOrderOrthoSubstituentCount1 >= 1))
+			return true;
+
+		return false;
 		}
 
+	private int getOrthoSubstituentCount(int atom, int otherBondAtom) {
+		int count = 0;
+		for (int i=0; i<mConnAtoms[atom]; i++) {
+			int connAtom = mConnAtom[atom][i];
+			if (connAtom != otherBondAtom && mConnAtoms[connAtom] > 2) {
+				count++;
+				break;
+				}
+			}
+		return count;
+		}
+
+	private int getSecondOrderOrthoSubstituentCount(int atom, int otherBondAtom) {
+		int count = 0;
+		for (int i=0; i<mConnAtoms[atom]; i++) {
+			int connAtom = mConnAtom[atom][i];
+			if (connAtom != otherBondAtom) {
+				int innerCount = 0;
+				for (int j=0; j<mConnAtoms[connAtom]; j++) {
+					int nextConnAtom = mConnAtom[connAtom][j];
+					if (nextConnAtom != atom
+					 && isAromaticBond(mConnBond[connAtom][j])
+					 && mConnAtoms[nextConnAtom] > 2)
+						innerCount++;
+					}
+				// if we have two next neighbours with 3 neighbours each, then one of them must be a second order ortho
+				if (innerCount == 2)
+					count++;
+				}
+			}
+		return count;
+		}
 
 	protected boolean validateBondType(int bond, int type) {
 		boolean ok = super.validateBondType(bond, type);
