@@ -24,7 +24,17 @@ public class SwingEditorToolbar extends JPanel implements GenericCanvas {
 		setMinimumSize(new Dimension(w,h));
 		setPreferredSize(new Dimension(w,h));
 		setSize(w,h);
-	}
+		}
+
+	@Override
+	public double getCanvasWidth() {
+		return getWidth();
+		}
+
+	@Override
+	public double getCanvasHeight() {
+		return getHeight();
+		}
 
 	@Override
 	public void paintComponent(Graphics g) {

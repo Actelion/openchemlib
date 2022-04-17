@@ -135,10 +135,10 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 	private static IReactionMapper sMapper;
 	private int mMode, mChainAtoms, mCurrentTool, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical,
-			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mWidth, mHeight,
+			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest,
 			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
-	private double mX1, mY1, mX2, mY2;
+	private double mX1, mY1, mX2, mY2, mWidth, mHeight;
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
 	private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown,
 			mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
@@ -226,9 +226,9 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	}
 
 	public void paintContent(GenericDrawContext context) {
-		if (mWidth != mCanvas.getWidth() || mHeight != mCanvas.getHeight()) {
-			mWidth = mCanvas.getWidth();
-			mHeight = mCanvas.getHeight();
+		if (mWidth != mCanvas.getCanvasWidth() || mHeight != mCanvas.getCanvasHeight()) {
+			mWidth = mCanvas.getCanvasWidth();
+			mHeight = mCanvas.getCanvasHeight();
 			if (mUpdateMode<UPDATE_CHECK_COORDS) {
 				mUpdateMode = UPDATE_CHECK_COORDS;
 			}
@@ -788,7 +788,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 		if (mol.getAllBonds() != 0)
 			new GenericDepictor(mol).updateCoords(mCanvas.getDrawContext(),
-					new Rectangle2D.Double(0, 0, mCanvas.getWidth(), mCanvas.getHeight()),
+					new Rectangle2D.Double(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()),
 					AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
 
 		storeState();
@@ -804,7 +804,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			update(UPDATE_SCALE_COORDS);
 		} else {
 			if (p != null)
-				mol.translateCoords(p.x - mCanvas.getWidth()/2, p.y - mCanvas.getHeight()/2);
+				mol.translateCoords(p.x - mCanvas.getCanvasWidth()/2, p.y - mCanvas.getCanvasHeight()/2);
 			int originalAtoms = mMol.getAllAtoms();
 			mMol.addMolecule(mol);
 			for (int atom = 0; atom<mMol.getAllAtoms(); atom++)
@@ -1277,7 +1277,6 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			}
 		}
 		if (e.getWhat() == GenericKeyEvent.KEY_RELEASED) {
-
 			if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
 				mShiftIsDown = false;
 				updateCursor();
@@ -3042,7 +3041,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 				mMol.removeAtomMarkers();
 		}
 
-		mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, mCanvas.getWidth(), mCanvas.getHeight()), maxUpdateMode());
+		mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()), maxUpdateMode());
 	}
 
 	private void cleanupMultiFragmentCoordinates(GenericDrawContext context, boolean selectedOnly){
@@ -3073,14 +3072,14 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		double arrowWidth = ((mMode & MODE_REACTION) == 0) ?
 				0f
 				: (mUpdateMode == UPDATE_SCALE_COORDS_USE_FRAGMENTS) ?
-				DEFAULT_ARROW_LENGTH * mCanvas.getWidth()
+				DEFAULT_ARROW_LENGTH * mCanvas.getCanvasWidth()
 				: ((ReactionArrow)mDrawingObjectList.get(0)).getLength() * AbstractDepictor.cOptAvBondLen / avbl;
 
 		double rawX = 0.5 * spacing;
 		for (int fragment = 0; fragment<=mFragment.length; fragment++) {
 			if ((mMode & MODE_REACTION) != 0 && fragment == mReactantCount) {
 				((ReactionArrow)mDrawingObjectList.get(0)).setCoordinates(
-						rawX - spacing / 2, mCanvas.getHeight() / 2, rawX - spacing / 2 + arrowWidth, mCanvas.getHeight() / 2);
+						rawX - spacing / 2, mCanvas.getCanvasHeight() / 2, rawX - spacing / 2 + arrowWidth, mCanvas.getCanvasHeight() / 2);
 				rawX += arrowWidth;
 			}
 
@@ -3089,14 +3088,14 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			}
 
 			double dx = rawX - boundingRect[fragment].x;
-			double dy = 0.5 * (mCanvas.getHeight() - boundingRect[fragment].height)
+			double dy = 0.5 * (mCanvas.getCanvasHeight() - boundingRect[fragment].height)
 					- boundingRect[fragment].y;
 			mFragment[fragment].translateCoords(dx, dy);
 
 			rawX += spacing + boundingRect[fragment].width;
 		}
 
-		mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, mCanvas.getWidth(), mCanvas.getHeight()), maxUpdateMode());
+		mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()), maxUpdateMode());
 
 		int[] fragmentAtom = new int[mFragment.length];
 		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {

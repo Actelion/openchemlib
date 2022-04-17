@@ -1,6 +1,10 @@
 package com.actelion.research.gui.generic;
 
 public class GenericKeyEvent {
+	public static final int KEY_CODE_CTRL = 1;
+	public static final int KEY_CODE_ALT = 2;
+	public static final int KEY_CODE_SHIFT = 3;
+
 	public static final int KEY_PRESSED = 1;
 	public static final int KEY_RELEASED = 2;
 	public static final int KEY_TYPED = 3;
