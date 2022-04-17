@@ -78,7 +78,6 @@ public class FlexibleShapeAlignment {
 		}
 		
 		restrainedRelaxation(fitMol,e0);
-		
 
 		boolean[] isHydrogen = new boolean[fitMol.getAllAtoms()];
 		for(int at=0;at<fitMol.getAllAtoms();at++) {
@@ -89,11 +88,11 @@ public class FlexibleShapeAlignment {
 		BondRotationHelper  torsionHelper = new BondRotationHelper(fitConf.getMolecule(),true);
 		EvaluableFlexibleOverlap eval = new EvaluableFlexibleOverlap(shapeAlign, refMol, fitConf, torsionHelper, 
 				ppWeight, isHydrogen, ffOptions);
+		eval.setState(eval.getState());
 		eval.setE0(e0);
 		OptimizerLBFGS opt = new OptimizerLBFGS(200,0.001);
-		opt.optimize(eval);
+		double t0 = opt.optimize(eval)[0];
 		//eval.getState(v);
-		double t0 = getTanimoto(eval,shapeAlign);
 		Random random = new Random(12345L);
 		MCHelper mcHelper = new MCHelper(torsionHelper, null, random);
 		//MetropolisMonteCarloHelper mcHelper = new MetropolisMonteCarloHelper(fitMol);
@@ -128,7 +127,6 @@ public class FlexibleShapeAlignment {
 			fitMol.setAtomZ(a, alignedConf.getZ(a));
 		}
 		result = getResult();
-		
 		return result;
 	}
 	
@@ -138,9 +136,9 @@ public class FlexibleShapeAlignment {
 		double Oab = eval.getFGValueShape(new double[3*fitMol.getAllAtoms()]);
 		double Tshape = Oab/(Oaa+Obb-Oab);
 		double correctionFactor = shapeAlign.getRefMolGauss().getPPGaussians().size()/shapeAlign.getRefMolGauss().getPPGaussians().stream().mapToDouble(g -> g.getWeight()).sum();
-		double ObbPP = eval.getFGValueSelfPP(new double[3*fitMol.getAllAtoms()], shapeAlign.getMolGauss(),false);
-		double OaaPP = eval.getFGValueSelfPP(new double[3*refMol.getAllAtoms()], shapeAlign.getRefMolGauss(),true);
-		double OabPP = eval.getFGValuePP(new double[3*fitMol.getAllAtoms()]);
+		double ObbPP = eval.getFGValueSelfPP(shapeAlign.getMolGauss(),false);
+		double OaaPP = eval.getFGValueSelfPP(shapeAlign.getRefMolGauss(),true);
+		double OabPP = eval.getFGValuePP();
 		double Tpp = OabPP/(OaaPP+ObbPP-OabPP);
 		Tpp*=correctionFactor;
 		if(Tshape>1.0) //can happen because of weights
@@ -185,7 +183,7 @@ public class FlexibleShapeAlignment {
 			forceField.addEnergyTerm(constraint);
 			forceField.minimise();
 			double e = forceField.getTotalEnergy();
-			notRelaxed = (e<e0) && (e-e0>ENERGY_CUTOFF);
+			notRelaxed = (e>e0) && (e-e0>ENERGY_CUTOFF);
 			init += 0.2;
 			cycles++;
 

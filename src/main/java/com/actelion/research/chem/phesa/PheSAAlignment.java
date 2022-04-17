@@ -4,6 +4,7 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.SimilarityMode;
 import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
 import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
@@ -288,10 +289,14 @@ public class PheSAAlignment {
 	}
 	
 	public double[] findAlignment(double[][] initialTransforms, TransformationSequence optimizedTransform, boolean optimize) {
-		return findAlignment(initialTransforms,optimizedTransform,optimize,false);
+		return findAlignment(initialTransforms,optimizedTransform,optimize,SimilarityMode.TANIMOTO);
 	}
 	
-	public double[] findAlignment(double[][] initialTransforms, TransformationSequence optimizedTransform,boolean optimize, boolean tversky) {
+	public double[] findAlignment(double[][] initialTransforms, TransformationSequence optimizedTransform,boolean optimize, SimilarityMode simMode) {
+		boolean tversky = true;
+		if(simMode==SimilarityMode.TANIMOTO)
+			tversky=false;
+		double tverskyCoeff = simMode==SimilarityMode.TVERSKY ? TVERSKY_COEFFICIENT : 1.0-TVERSKY_COEFFICIENT;
 		double Oaa = getSelfAtomOverlapRef();
 		double Obb = getSelfAtomOverlapFit();
 		double ppOaa = getSelfPPOverlapRef();
@@ -322,7 +327,7 @@ public class PheSAAlignment {
 				ppSimilarity = 1.0;
 			else {
 				if(tversky)
-					ppSimilarity = ppOverlap/(TVERSKY_COEFFICIENT*ppObb+(1.0-TVERSKY_COEFFICIENT)*ppOaa);
+					ppSimilarity = ppOverlap/(tverskyCoeff*ppObb+(1.0-tverskyCoeff)*ppOaa);
 				else
 					ppSimilarity=(ppOverlap/(ppOaa+ppObb-ppOverlap));
 			}
@@ -334,7 +339,7 @@ public class PheSAAlignment {
 			atomOverlap = result[0];
 			double additionalVolOverlap = result[1];
 			if(tversky)
-				atomSimilarity = atomOverlap/(TVERSKY_COEFFICIENT*Obb+(1.0-TVERSKY_COEFFICIENT)*Oaa);
+				atomSimilarity = atomOverlap/(tverskyCoeff*Obb+(1.0-tverskyCoeff)*Oaa);
 			else
 				atomSimilarity = atomOverlap/(Oaa+Obb-atomOverlap);
 			if(!tversky && atomSimilarity>1.0) //can happen because of weights
@@ -356,7 +361,7 @@ public class PheSAAlignment {
 		transformation.addTransformation(translate);
 		for(Transformation trans : transformation.getTransformations())
 			optimizedTransform.addTransformation(trans);
-		if(maxSimilarity>1.0) // can happen because of manually placed inclusion spheres
+		if(!tversky && maxSimilarity>1.0) // can happen because of manually placed inclusion spheres
 			maxSimilarity = 1.0;
 		return Arrays.stream(new double[] {maxSimilarity,maxPPSimilarity,maxShapeSimilarity,maxVolSimilarity}).toArray();
 		}

@@ -9,7 +9,7 @@ import com.actelion.research.chem.alignment3d.transformation.TransformationSeque
 
 public class PPTriangleMatcher {
 	
-	private static final double CUTOFF = 2.5; //if lengths of edges of two triangles differ by more than 2.5A, it is
+	private static final double CUTOFF = 2.0; //if lengths of edges of two triangles differ by more than 2.5A, it is
 											  // not considered as a match
 	
 	private static final double SCORE_CUTOFF = 0.3;
