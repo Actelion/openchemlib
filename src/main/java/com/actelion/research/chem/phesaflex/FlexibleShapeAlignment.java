@@ -114,7 +114,7 @@ public class FlexibleShapeAlignment {
 				eval.setE0(e0);
 				opt = new OptimizerLBFGS(200,0.001);
 				opt.optimize(eval);
-				double tnew = getTanimoto(eval,shapeAlign);
+				double tnew = getSimilarity(eval,shapeAlign);
 				if(!mcHelper.accept(told, tnew)) {
 					v = vold;
 					eval.setState(v);
