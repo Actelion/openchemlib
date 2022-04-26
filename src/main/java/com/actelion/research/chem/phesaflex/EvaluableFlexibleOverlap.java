@@ -1,12 +1,11 @@
 package com.actelion.research.chem.phesaflex;
 
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.PheSASetting;
 import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
 import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.alignment3d.transformation.Rotation;
@@ -52,7 +51,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
     private double oAApp;
     private ForceFieldMMFF94 ff;
     private Map<String, Object> ffOptions;
-    private double ppWeight;
+    private PheSASetting settings;
 	private Coordinates[] origCoords;
 	private Coordinates[] cachedCoords; //used for gradient calculation: ligand coordinates with adjusted dihedral angles, but before rotation and translation
 	private double[][] dRdvi1;
@@ -62,13 +61,13 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 	private BondRotationHelper torsionHelper;
     
 	public EvaluableFlexibleOverlap(PheSAAlignment shapeAlign, StereoMolecule refMol, Conformer fitConf, BondRotationHelper torsionHelper,
-			double ppWeight, boolean[] isHydrogen, Map<String, Object> ffOptions) {
+			PheSASetting settings, boolean[] isHydrogen, Map<String, Object> ffOptions) {
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		this.ffOptions = ffOptions;
 		this.shapeAlign = shapeAlign;
 		this.fitConf = fitConf;
 		this.isHydrogen = isHydrogen;
-		this.ppWeight = ppWeight;
+		this.settings = settings;
 		this.refMol = refMol;
 		this.torsionHelper = torsionHelper;
 		init();
@@ -246,7 +245,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		double[] dOBB = selfOverlapGradFit;
 		double[] dOAB = overlapGrad;
 		double[] dOBB_dOAB = new double[coordGrad.length];
-		T = (1.0-ppWeight)*(oAB/(oBB+oAA-oAB))+ppWeight*(oABpp/(oBBpp+oAApp-oABpp));
+		T = (1.0-settings.getPpWeight())*(oAB/(oBB+oAA-oAB))+settings.getPpWeight()*(oABpp/(oBBpp+oAApp-oABpp));
 		//double value = SCALE*Math.exp(DELTA*(ePot-e0))*T + (ePot-e0);
 		double strainEnergy = ePot-e0;
 		double strainPrefactor = strainEnergy < FlexibleShapeAlignment.ENERGY_CUTOFF ? 0.0 : strainEnergy-FlexibleShapeAlignment.ENERGY_CUTOFF;
@@ -256,7 +255,7 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		}
 		double[] dT = new double[coordGrad.length];
 		for(int j=0;j<coordGrad.length;j++) {
-			dT[j] = (1.0-ppWeight)*dOAB[j]*(1/(oAA+oBB-oAB))-(1.0-ppWeight)*oAB*Math.pow(oAA+oBB-oAB,-2)*dOBB_dOAB[j];// + 
+			dT[j] = (1.0-settings.getPpWeight())*dOAB[j]*(1/(oAA+oBB-oAB))-(1.0-settings.getPpWeight())*oAB*Math.pow(oAA+oBB-oAB,-2)*dOBB_dOAB[j];// + 
 					//ppWeight*dOABpp[j]*(1/(oAApp+oBBpp-oABpp))-ppWeight*oAB*Math.pow(oAApp+oBBpp-oABpp,-2)*dOBBpp_dOABpp[j];
 		}
 		for(int k=0;k<coordGrad.length;k++) {
