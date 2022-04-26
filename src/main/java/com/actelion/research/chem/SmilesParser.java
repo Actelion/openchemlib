@@ -938,8 +938,9 @@ public class SmilesParser {
 						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot3Hydrogen, true);
 					}
 				else {
-					if (!mMol.isMarkedAtom(atom)) {
-						// We don't correct aromatic atoms, because for aromatic atoms the number of
+					if (!mMol.isMarkedAtom(atom)
+					 || mMol.getAtomicNo(atom) == 6) {
+						// We don't correct aromatic non-carbon atoms, because for these the number of
 						// explicit hydrogens encodes whether a pi-bond needs to be placed at the atom
 						// when resolving aromaticity.
 						byte[] valences = Molecule.getAllowedValences(mMol.getAtomicNo(atom));
@@ -947,6 +948,8 @@ public class SmilesParser {
 						int usedValence = mMol.getOccupiedValence(atom);
 						usedValence -= mMol.getElectronValenceCorrection(atom, usedValence);
 						usedValence += explicitHydrogen;
+						if (mMol.isMarkedAtom(atom))    // later we will use a valence for the pi-bond
+							usedValence++;
 						for (byte valence:valences) {
 							if (usedValence <= valence) {
 								compatibleValenceFound = true;
