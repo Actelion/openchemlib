@@ -234,6 +234,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this.setPreviousPheSAResult(result);
 		if(flexible) {
 			FlexibleShapeAlignment fsa = new FlexibleShapeAlignment(bestPair[0],bestPair[1]);
+			fsa.setSettings(phesaSetting);
 			result = fsa.align();
 			this.setPreviousPheSAResult(result);
 		}
