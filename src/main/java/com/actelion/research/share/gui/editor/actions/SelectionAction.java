@@ -35,6 +35,7 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.DialogResult;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.chem.IDrawingObject;
@@ -48,7 +49,6 @@ import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
 
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 
@@ -500,8 +500,8 @@ public class SelectionAction extends BondHighlightAction//DrawAction
 
         List<IDrawingObject> drawables = model.getDrawingObjects();
         for (IDrawingObject d : drawables) {
-            Rectangle2D r = d.getBoundingRect();
-            if (polygon.contains(r.getCenterX(), r.getCenterY()))
+            GenericRectangle r = d.getBoundingRect();
+            if (polygon.contains(r.x+r.width/2, r.y+r.height/2))
                 d.setSelected(true);
         }
     }
@@ -540,8 +540,8 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     private void selectDrawingObjectsInRectangle(java.awt.geom.Rectangle2D rc) {
         for (IDrawingObject dw : model.getDrawingObjects()) {
             dw.setSelected(false);
-            java.awt.geom.Rectangle2D r = dw.getBoundingRect();
-            if (rc.contains(r.getCenterX(), r.getCenterY()))
+            GenericRectangle r = dw.getBoundingRect();
+            if (rc.contains(r.x+r.width/2, r.y+r.height/2))
                 dw.setSelected(true);
         }
     }

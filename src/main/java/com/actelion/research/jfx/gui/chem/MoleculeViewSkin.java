@@ -34,6 +34,7 @@ package com.actelion.research.jfx.gui.chem;
 
 import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.jfx.gui.misc.ClipboardHelper;
 import com.actelion.research.jfx.gui.misc.Selector;
 import com.actelion.research.util.ColorHelper;
@@ -58,8 +59,6 @@ import javafx.scene.control.Skin;
 import javafx.scene.input.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-
-import java.awt.geom.Rectangle2D;
 
 /**
  * Project:
@@ -246,7 +245,7 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
             java.awt.Color fg = (ColorHelper.perceivedBrightness(bg)>0.5) ? java.awt.Color.BLACK : java.awt.Color.WHITE;
             depictor.setForegroundColor(fg, bg);
         }
-	    depictor.validateView(null, new Rectangle2D.Double(0, 0, (float) w, (float) h), AbstractDepictor.cModeInflateToMaxAVBL + (int) (d));
+	    depictor.validateView(null, new GenericRectangle(0, 0, (float) w, (float) h), AbstractDepictor.cModeInflateToMaxAVBL + (int) (d));
         depictor.paint(ctx);
     }
 
@@ -444,7 +443,7 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
                 glassPane.getChildren().add(dragCanvas);
             }
             dragDepictor = new JFXCanvasDepictor(mol);
-            dragDepictor.validateView(null, new Rectangle2D.Double(0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT), JFXCanvasDepictor.cModeInflateToMaxAVBL);
+            dragDepictor.validateView(null, new GenericRectangle(0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT), JFXCanvasDepictor.cModeInflateToMaxAVBL);
             dragCanvas.setOpacity(0.7);
             dragCanvas.toFront();
             dragCanvas.setMouseTransparent(true);

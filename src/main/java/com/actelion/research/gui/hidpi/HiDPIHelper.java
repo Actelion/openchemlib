@@ -95,8 +95,16 @@ public class HiDPIHelper {
 		if (sUIScaleFactor == -1) {
 			if (getRetinaScaleFactor() != 1f)
 				sUIScaleFactor = 1f;
-			else
-				sUIScaleFactor = Platform.isMacintosh() ? 1f : (float) UIManager.getFont("Label.font").getSize() / 12f;
+			else {
+				float f = 0;
+				String dpiFactor = System.getProperty("dpifactor");
+				if (dpiFactor != null)
+					try { f = Float.parseFloat(dpiFactor); } catch (NumberFormatException nfe) {}
+				if (f != 0)
+					sUIScaleFactor = f;
+				else
+					sUIScaleFactor = Platform.isMacintosh() ? 1f : (float)UIManager.getFont("Label.font").getSize() / 12f;
+				}
 //System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"+sUIScaleFactor);
 			}
 

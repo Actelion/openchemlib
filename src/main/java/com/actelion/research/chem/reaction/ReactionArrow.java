@@ -37,13 +37,10 @@ import com.actelion.research.chem.AbstractDrawingObject;
 import com.actelion.research.chem.DepictorTransformation;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.gui.generic.GenericPolygon;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.util.ColorHelper;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 
 public class ReactionArrow extends AbstractDrawingObject {
 	public static final String TYPE_STRING = "arrow";
@@ -56,9 +53,9 @@ public class ReactionArrow extends AbstractDrawingObject {
 	int		mHiliteStatus;
 
 	public ReactionArrow() {
-		mPoint = new Point2D.Double[2];
-		mPoint[0] = new Point2D.Double();
-		mPoint[1] = new Point2D.Double();
+		mPoint = new GenericPoint[2];
+		mPoint[0] = new GenericPoint();
+		mPoint[1] = new GenericPoint();
 		mHiliteStatus = PART_NONE;
 		}
 
@@ -145,8 +142,8 @@ public class ReactionArrow extends AbstractDrawingObject {
 
 	@Override
 	public void draw(GenericDrawContext context, DepictorTransformation t) {
-		context.setColor(mIsSelected ? ColorHelper.getContrastColor(Color.red, UIManager.getColor("TextArea.background"))
-							   : UIManager.getColor("TextArea.foreground"));
+		context.setRGB(mIsSelected ? ColorHelper.getContrastColor(0x00FF0000, context.getBackgroundRGB())
+							   : context.getForegroundRGB());
 		double x1 = (t == null) ? mPoint[0].x : t.transformX(mPoint[0].x);
 		double y1 = (t == null) ? mPoint[0].y : t.transformY(mPoint[0].y);
 		double x2 = (t == null) ? mPoint[1].x : t.transformX(mPoint[1].x);
@@ -165,7 +162,7 @@ public class ReactionArrow extends AbstractDrawingObject {
 
 	@Override
 	public void hilite(GenericDrawContext context) {
-		context.setColor(SELECTION_COLOR);
+		context.setRGB(context.getSelectionBackgroundRGB());
 		switch (mHiliteStatus) {
 		case PART_ARROW_START:
 			context.fillCircle(mPoint[0].x-8, mPoint[0].y-8, 16);
@@ -222,14 +219,14 @@ public class ReactionArrow extends AbstractDrawingObject {
 		}
 
 	@Override
-	public Rectangle2D.Double getBoundingRect(GenericDrawContext context) {
+	public GenericRectangle getBoundingRect(GenericDrawContext context) {
 		double length = getLength();
 		double f = Math.max(length/8.0, 3.0);
 		double angle = Molecule.getAngle(mPoint[0].x, mPoint[0].y, mPoint[1].x, mPoint[1].y);
 		double dx = Math.abs(f * Math.cos(angle));
 		double dy = Math.abs(f * Math.sin(angle));
 
-		Rectangle2D.Double bounds = new Rectangle2D.Double();
+		GenericRectangle bounds = new GenericRectangle();
 		if (mPoint[0].x < mPoint[1].x) {
 			bounds.x = mPoint[0].x - dx;
 			bounds.width = mPoint[1].x - mPoint[0].x + 2*dx;

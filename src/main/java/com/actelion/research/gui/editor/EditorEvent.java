@@ -33,28 +33,22 @@
 
 package com.actelion.research.gui.editor;
 
-import java.util.EventObject;
+import com.actelion.research.gui.generic.GenericEvent;
 
-public class DrawAreaEvent extends EventObject {
+public class EditorEvent extends GenericEvent {
     private static final long serialVersionUID = 0x20090611;
 
-    public static final int TYPE_MOLECULE_CHANGED = 1;
-    public static final int TYPE_SELECTION_CHANGED = 2;
-    public static final int TYPE_HILITE_ATOM_CHANGED = 3;
-    public static final int TYPE_HILITE_BOND_CHANGED = 4;
+    public static final int WHAT_MOLECULE_CHANGED = 1;
+    public static final int WHAT_SELECTION_CHANGED = 2;
+    public static final int WHAT_HILITE_ATOM_CHANGED = 3;
+    public static final int WHAT_HILITE_BOND_CHANGED = 4;
 
 	private boolean	mIsUserChange;
-	private int mType;
 
-    public DrawAreaEvent(Object source, int type, boolean isUserChange) {
-		super(source);
-		mType = type;
+    public EditorEvent(Object source, int what, boolean isUserChange) {
+		super(what, source);
 		mIsUserChange = isUserChange;
 	    }
-
-	public int getType() {
-		return mType;
-		}
 
 	public boolean isUserChange() {
 		return mIsUserChange;

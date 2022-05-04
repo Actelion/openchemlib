@@ -34,6 +34,7 @@
 package com.actelion.research.share.gui.editor.chem;
 
 import com.actelion.research.chem.DepictorTransformation;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 
 /**
@@ -47,7 +48,7 @@ public interface IDrawingObject
     void setSelected(boolean b);
     boolean isSelected();
     void move(float v, float v1);
-    java.awt.geom.Rectangle2D getBoundingRect();
+    GenericRectangle getBoundingRect();
     void setRect(float x,float y, float w, float h);
     void scale(float scaling);
     void draw(IDrawContext ctx,DepictorTransformation t);

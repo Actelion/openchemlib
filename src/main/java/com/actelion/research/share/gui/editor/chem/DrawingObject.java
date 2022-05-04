@@ -34,6 +34,7 @@
 package com.actelion.research.share.gui.editor.chem;
 
 
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 
 /**
@@ -72,7 +73,7 @@ public abstract class DrawingObject
 
     public abstract void draw(IDrawContext ctx);
 //    public abstract boolean pointWouldSelect(Point2D pt);
-	public abstract java.awt.geom.Rectangle2D getBoundingRect();
+	public abstract GenericRectangle getBoundingRect();
     public abstract void move(float dx, float dy);
    	public abstract void scale(float f);
 

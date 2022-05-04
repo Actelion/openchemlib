@@ -34,12 +34,9 @@
 package com.actelion.research.chem;
 
 import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericPoint;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.generic.GenericShape;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 
 
 public abstract class AbstractDrawingObject {
@@ -47,9 +44,7 @@ public abstract class AbstractDrawingObject {
 	protected static final String DESCRIPTOR_END = "></DrawingObject>";
 	protected static final String DESCRIPTOR_TYPE = " type=\"";
 
-    protected static final Color SELECTION_COLOR = UIManager.getColor("TextArea.selectionBackground");
-
-	protected Point2D.Double[]	mPoint;
+	protected GenericPoint[]	mPoint;
 	protected boolean			mIsSelected,mProtectedFromDeletion;
 
 	protected double			mTransformationReferenceX,mTransformationReferenceY;
@@ -119,13 +114,11 @@ public abstract class AbstractDrawingObject {
 		mIsSelected = s;
 		}
 
-	public Rectangle2D.Double getBoundingRect(GenericDrawContext context) {
+	public GenericRectangle getBoundingRect(GenericDrawContext context) {
 		if (mPoint == null)
 			return null;
 
-		Rectangle2D.Double bounds = new Rectangle2D.Double();
-		bounds.x = mPoint[0].x;
-		bounds.y = mPoint[0].y;
+		GenericRectangle bounds = new GenericRectangle(mPoint[0].x, mPoint[0].y, 0, 0);
 
 		for (int i=1; i<mPoint.length; i++) {
 			if (bounds.x > mPoint[i].x) {

@@ -1,9 +1,5 @@
 package com.actelion.research.gui.generic;
 
-import com.actelion.research.gui.editor.DialogEventConsumer;
-
-public interface GenericComponent {
+public interface GenericComponent extends GenericEventSource<GenericActionEvent> {
 	void setEnabled(boolean b);
-	DialogEventConsumer getEventConsumer();
-	void setEventConsumer(DialogEventConsumer consumer);
 }

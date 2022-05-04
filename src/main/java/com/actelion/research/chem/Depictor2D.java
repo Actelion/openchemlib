@@ -61,13 +61,15 @@ public class Depictor2D extends AbstractDepictor<Graphics2D> {
 	public Depictor2D(StereoMolecule mol, int displayMode) {
 		super(mol, displayMode);
 		}
-	
+
+	@Override
 	protected void init() {
 		super.init();
 		mFonts = new ArrayList<Font>();
 		mLineWidth = 1.0f;
 		}
 
+	@Override
 	protected void drawBlackLine(DepictorLine theLine) {
 		// Lines on OSX are shifted left and down when drawn in Graphics2D by 0.5. We must compensate.
 		if (isMac)
@@ -76,6 +78,7 @@ public class Depictor2D extends AbstractDepictor<Graphics2D> {
 			mContext.draw(new Line2D.Double(theLine.x1, theLine.y1, theLine.x2, theLine.y2));
 		}
 
+	@Override
     protected void drawDottedLine(DepictorLine theLine) {
         Stroke stroke = mContext.getStroke();
         mContext.setStroke(new BasicStroke(
@@ -91,12 +94,14 @@ public class Depictor2D extends AbstractDepictor<Graphics2D> {
         mContext.setStroke(stroke);
         }
 
+	@Override
 	protected void drawString(String theString, double x, double y) {
 		double strWidth = getStringWidth(theString);
 		mContext.drawGlyphVector(mCurrentGlyphVector, (float)(x-strWidth/2.0),
 										(float)(y+(float)mpTextSize/3.0));
 		}
 
+	@Override
 	protected void drawPolygon(GenericPolygon p) {
 		GeneralPath polygon = new GeneralPath(GeneralPath.WIND_NON_ZERO, p.getSize());
 		polygon.moveTo(p.getX(0), p.getY(0));
@@ -117,6 +122,7 @@ public class Depictor2D extends AbstractDepictor<Graphics2D> {
 		mContext.draw(polygon);
 		}
 
+	@Override
 	protected void fillCircle(double x, double y, double d) {
 		if (isMac)
 			mContext.fill(new Ellipse2D.Double(x-0.5f, y-0.5f, d, d));
@@ -124,6 +130,7 @@ public class Depictor2D extends AbstractDepictor<Graphics2D> {
 			mContext.fill(new Ellipse2D.Double(x, y, d, d));
 		}
 
+	@Override
 	protected double getStringWidth(String theString) {
 		if (mContext != null) {
 			if (!theString.equals(mCurrentString)
@@ -137,6 +144,7 @@ public class Depictor2D extends AbstractDepictor<Graphics2D> {
 		return mCurrentStringWidth;
 		}
 
+	@Override
 	protected void setTextSize(int theSize) {
 		mpTextSize = (int)theSize;
 		if (mContext != null) {
@@ -155,22 +163,27 @@ public class Depictor2D extends AbstractDepictor<Graphics2D> {
 			}
 		}
 
+	@Override
     public int getTextSize() {
         return mpTextSize;
         }
 
+	@Override
 	protected double getLineWidth() {
 		return mLineWidth;
 		}
 
+	@Override
 	protected void setLineWidth(double lineWidth) {
 		mLineWidth = (float)lineWidth;
 		mContext.setStroke(new BasicStroke((float)lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		}
 
-	protected void setColor(Color theColor) {
-	    mContext.setColor(theColor);
-		mContext.setPaint(theColor);
+	@Override
+	protected void setRGB(int rgb) {
+		Color color = new Color(rgb);
+	    mContext.setColor(color);
+		mContext.setPaint(color);
 		}
 	}
 

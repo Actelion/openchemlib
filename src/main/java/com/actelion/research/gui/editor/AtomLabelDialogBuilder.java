@@ -35,16 +35,12 @@ package com.actelion.research.gui.editor;
 
 import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.Molecule;
-import com.actelion.research.gui.generic.GenericComboBox;
-import com.actelion.research.gui.generic.GenericDialog;
-import com.actelion.research.gui.generic.GenericDialogHelper;
-import com.actelion.research.gui.generic.GenericTextField;
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.*;
 
 import javax.swing.*;
 
-public class AtomLabelDialogBuilder implements DialogEventConsumer {
-    public static final long serialVersionUID = 0x20080213;
-
+public class AtomLabelDialogBuilder implements GenericEventListener<GenericActionEvent> {
     private static final String[] RADICAL_STATES = { "None", "One electron (duplet)", "Two electrons (triplet)", "Two electrons (singulet)" };
 
 	private GenericDialog mDialog;
@@ -52,12 +48,22 @@ public class AtomLabelDialogBuilder implements DialogEventConsumer {
     private int mAtom;
     private GenericTextField mTextFieldLabel,mTextFieldMass,mTextFieldValence;
     private GenericComboBox mComboBoxRadical;
+    private boolean mOKSelected;
 
-	public AtomLabelDialogBuilder(GenericDialogHelper dialogHelper, ExtendedMolecule mol, int atom) {
+	public AtomLabelDialogBuilder(GenericUIHelper dialogHelper, StereoMolecule mol, int atom) {
 		mDialog = dialogHelper.createDialog("Atom Properties", this);
+		build();
 		mMol = mol;
 		mAtom = atom;
-		build();
+		}
+
+	/**
+	 * @return true if OK was pressed and potential change was applied to molecule
+	 */
+	public boolean showDialog() {
+		mOKSelected = false;
+		mDialog.showDialog();
+		return mOKSelected;
 		}
 
 	private void build() {
@@ -69,19 +75,19 @@ public class AtomLabelDialogBuilder implements DialogEventConsumer {
         mDialog.setLayout(hLayout, vLayout);
 
         mTextFieldLabel = mDialog.createTextField(1,1);
-        mTextFieldLabel.setEventConsumer(this);
+        mTextFieldLabel.addEventConsumer(this);
 		mDialog.add(mDialog.createLabel("Atom Label:"), 1,1);
 		mDialog.add(mTextFieldLabel, 3,1);
 		mDialog.add(mDialog.createLabel("(examples: 'D', 'Li', 'Cys', 'R12', 'R3@C')"), 1,3,3,3);
 
         mTextFieldMass = mDialog.createTextField(1,1);
-        mTextFieldMass.setEventConsumer(this);
+        mTextFieldMass.addEventConsumer(this);
 		mDialog.add(mDialog.createLabel("Atom Mass:"), 1,5);
 		mDialog.add(mTextFieldMass, 3,5);
 		mDialog.add(mDialog.createLabel("(empty for natural abundance)"), 1,7,3,7);
 
         mTextFieldValence = mDialog.createTextField(1,1);
-        mTextFieldValence.setEventConsumer(this);
+        mTextFieldValence.addEventConsumer(this);
 		mDialog.add(mDialog.createLabel("Abnormal Valence:"), 1,9);
 		mDialog.add(mTextFieldValence, 3,9);
 		mDialog.add(mDialog.createLabel("(empty for default valence)"), 1,11,3,11);
@@ -105,21 +111,22 @@ public class AtomLabelDialogBuilder implements DialogEventConsumer {
         									  state == Molecule.cAtomRadicalStateT ? 2 :
         									  state == Molecule.cAtomRadicalStateS ? 3 : 0);
         	}
+        else {
+	        mComboBoxRadical.setSelectedIndex(0);
+	        }
 		mDialog.add(mDialog.createLabel("Radical State:"), 1,13);
 		mDialog.add(mComboBoxRadical, 3,13);
-
-		mDialog.showDialog();
 		}
 
 	@Override
-	public void dialogEventHappened(DialogEvent e) {
+	public void eventHappened(GenericActionEvent e) {
 		if (e.getSource() instanceof JTextField) {
 			processAtomLabel();
 			}
-		else if (e.getWhat() == DialogEvent.WHAT_CANCEL) {
+		else if (e.getWhat() == GenericActionEvent.WHAT_CANCEL) {
 			mDialog.disposeDialog();
 			}
-		else if (e.getWhat() == DialogEvent.WHAT_OK) {
+		else if (e.getWhat() == GenericActionEvent.WHAT_OK) {
 			processAtomLabel();
 			mDialog.disposeDialog();
 			}
@@ -179,6 +186,7 @@ public class AtomLabelDialogBuilder implements DialogEventConsumer {
                 if (customLabel != null)
                 	mMol.setAtomCustomLabel(mAtom, customLabel);
 
+                mOKSelected = true;
                 mDialog.disposeDialog();
 			    }
 			}

@@ -34,14 +34,11 @@
 package com.actelion.research.gui.editor;
 
 import com.actelion.research.chem.TextDrawingObject;
-import com.actelion.research.gui.generic.GenericComboBox;
-import com.actelion.research.gui.generic.GenericDialog;
-import com.actelion.research.gui.generic.GenericDialogHelper;
-import com.actelion.research.gui.generic.GenericTextField;
+import com.actelion.research.gui.generic.*;
 
 import java.awt.*;
 
-public class TextDrawingObjectDialogBuilder implements DialogEventConsumer {
+public class TextDrawingObjectDialogBuilder implements GenericEventListener<GenericActionEvent> {
     static final long serialVersionUID = 0x20110325;
 
     private static final int[] TEXT_STYLE = { Font.PLAIN, Font.ITALIC, Font.BOLD, Font.ITALIC | Font.BOLD};
@@ -52,11 +49,21 @@ public class TextDrawingObjectDialogBuilder implements DialogEventConsumer {
 	private GenericTextField    mTextArea;
 	private TextDrawingObject	mTextObject;
 	private GenericComboBox     mComboBoxTextSize,mComboBoxStyle;
+	private boolean             mOKSelected;
 
-	public TextDrawingObjectDialogBuilder(GenericDialogHelper dialogHelper, TextDrawingObject textObject) {
+	public TextDrawingObjectDialogBuilder(GenericUIHelper dialogHelper, TextDrawingObject textObject) {
 		mDialog = dialogHelper.createDialog("Edit Text", this);
 		mTextObject = textObject;
 		build();
+		}
+
+	/**
+	 * @return true if OK was pressed and potential change was applied to molecule
+	 */
+	public boolean showDialog() {
+		mOKSelected = false;
+		mDialog.showDialog();
+		return mOKSelected;
 		}
 
 	private void build() {
@@ -90,13 +97,11 @@ public class TextDrawingObjectDialogBuilder implements DialogEventConsumer {
 		mTextArea = mDialog.createTextField(20, 3);
 		mTextArea.setText(mTextObject.getText());
 		mDialog.add(mTextArea, 1,5,3,5);
-
-		mDialog.showDialog();
 		}
 
 	@Override
-	public void dialogEventHappened(DialogEvent e) {
-		if (e.getWhat() == DialogEvent.WHAT_OK) {
+	public void eventHappened(GenericActionEvent e) {
+		if (e.getWhat() == GenericActionEvent.WHAT_OK) {
 			int textSize;
 			try {
 				textSize = Integer.parseInt(mComboBoxTextSize.getSelectedItem());
@@ -107,6 +112,7 @@ public class TextDrawingObjectDialogBuilder implements DialogEventConsumer {
 				}
 			int textStyle = TEXT_STYLE[mComboBoxStyle.getSelectedIndex()];
 			mTextObject.setValues(mTextArea.getText(), textSize, textStyle);
+			mOKSelected = true;
 			}
 
 		mDialog.disposeDialog();

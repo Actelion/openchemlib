@@ -50,18 +50,15 @@ import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 import com.actelion.research.util.CursorHelper;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.TreeMap;
 
-public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,GenericMouseListener {
+public class GenericDrawArea implements GenericEventListener {
 	public static final int MODE_MULTIPLE_FRAGMENTS = 1;
 	public static final int MODE_MARKUSH_STRUCTURE = 2;
 	public static final int MODE_REACTION = 4;
@@ -75,6 +72,12 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	private static final int KEY_IS_VALID_START = 3;
 	private static final int KEY_IS_INVALID = 4;
 
+	private static final int RGB_BLUE = 0xFF0000FF;
+	private static final int RGB_RED = 0xFFFF0000;
+	private static final int RGB_DARK_RED = 0xFF800000;
+	private static final int RGB_BLACK = 0xFF000000;
+	private static final int RGB_GRAY = 0xFF808080;
+
 	private static final String ITEM_COPY_STRUCTURE = "Copy Structure";
 	private static final String ITEM_COPY_REACTION = "Copy Reaction";
 	private static final String ITEM_PASTE_STRUCTURE = "Paste Structure";
@@ -85,6 +88,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	private static final String ITEM_REMOVE_MAPPING = "Remove Manual Atom Mapping";
 	private static final String ITEM_FLIP_HORIZONTALLY = "Flip Horizontally";
 	private static final String ITEM_FLIP_VERTICALLY = "Flip Vertically";
+	private static final String ITEM_FLIP_ROTATE180 = "Rotate 180°";
 
 	// development items
 	private static final String ITEM_SHOW_ATOM_BOND_NUMBERS = "Show Atom & Bond Numbers";
@@ -118,7 +122,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	// are generated from scratch, then molecules and objects are scaled to fill
 	// the view unless the maximum average bond length reaches the optimum.
 
-	private static final Color DEFAULT_SELECTION_BACKGROUND = new Color(128, 164, 192);
+	private static final int DEFAULT_SELECTION_BACKGROUND = 0xFF80A4C0;
 
 	private static final int cRequestNone = 0;
 	private static final int cRequestNewBond = 1;
@@ -140,8 +144,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
 	private double mX1, mY1, mX2, mY2, mWidth, mHeight;
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
-	private boolean mShiftIsDown, mAltIsDown, mControlIsDown, mMouseIsDown,
-			mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
+	private boolean mAltIsDown, mShiftIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
 	private String mOtherLabel,mWarningMessage,mAtomKeyStrokeSuggestion;
 	private String[] mAtomText;
@@ -153,20 +156,20 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	private DrawingObjectList mDrawingObjectList, mUndoDrawingObjectList;
 	private AbstractDrawingObject mCurrentHiliteObject;
 	private GenericPolygon mLassoRegion;
-	private ArrayList<DrawAreaListener> mListeners;
+	private ArrayList<GenericEventListener> mListeners;
 	private IClipboardHandler mClipboardHandler;
 	private StringBuilder mAtomKeyStrokeBuffer;
-	private GenericDialogHelper mHelper;
+	private GenericUIHelper mUIHelper;
 	private GenericCanvas mCanvas;
 
 	/**
 	 * @param mol  an empty or valid stereo molecule
 	 * @param mode 0 or a meaningful combination of the mode flags, e.g. MODE_REACTION | MODE_DRAWING_OBJECTS
 	 */
-	public GenericDrawArea(StereoMolecule mol, int mode, GenericDialogHelper helper, GenericCanvas canvas) {
+	public GenericDrawArea(StereoMolecule mol, int mode, GenericUIHelper helper, GenericCanvas canvas) {
 		mMol = mol;
 		mMode = mode;
-		mHelper = helper;
+		mUIHelper = helper;
 		mCanvas = canvas;
 
 		mListeners = new ArrayList<>();
@@ -207,6 +210,10 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		dumpBytesOfGif("/rectPlusCursor.gif");	*/
 	}
 
+	public GenericUIHelper getUIHelper() {
+		return mUIHelper;
+	}
+
 	/**
 	 * Call this after initialization to get clipboard support
 	 *
@@ -234,10 +241,10 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			}
 		}
 
-		Color background = UIManager.getColor("TextArea.background");
-		Color foreground = UIManager.getColor("TextArea.foreground");
+		int background = context.getBackgroundRGB();
+		int foreground = context.getForegroundRGB();
 
-		context.setColor(background);
+		context.setRGB(background);
 		context.fillRectangle(0, 0, mWidth, mHeight);
 
 		if ((mMode & MODE_REACTION) != 0 && mDrawingObjectList.size() == 0) {
@@ -265,9 +272,11 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 					: new ExtendedDepictor(mMol, mDrawingObjectList);
 
 			mDepictor.setForegroundColor(foreground, background);
-			mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) ? null
+
+			mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) ? 0
 					: LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(background, 0.85f)
 					: ColorHelper.darker(background, 0.85f));
+
 			mDepictor.setDisplayMode(mDisplayMode
 					| AbstractDepictor.cDModeHiliteAllQueryFeatures
 					| ((mCurrentTool == GenericEditorToolbar.cToolMapper) ?
@@ -285,14 +294,14 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 					cleanupCoordinates(context);
 					break;
 				case UPDATE_CHECK_COORDS:
-					DepictorTransformation t1 = mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, mWidth, mHeight), 0);
+					DepictorTransformation t1 = mDepictor.updateCoords(context, new GenericRectangle(0, 0, mWidth, mHeight), 0);
 					if (t1 != null && (mMode & MODE_MULTIPLE_FRAGMENTS) != 0) {
 						// in fragment mode depictor transforms mFragment[] rather than mMol
 						t1.applyTo(mMol);
 					}
 					break;
 				case UPDATE_CHECK_VIEW:
-					DepictorTransformation t2 = mDepictor.validateView(context, new Rectangle2D.Double(0, 0, mWidth, mHeight), 0);
+					DepictorTransformation t2 = mDepictor.validateView(context, new GenericRectangle(0, 0, mWidth, mHeight), 0);
 					isScaledView = (t2 != null && !t2.isVoidTransformation());
 					break;
 			}
@@ -318,8 +327,8 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			int y = (int)mMol.getAtomY(mCurrentHiliteAtom);
 			String s = mAtomKeyStrokeBuffer.toString();
 			int validity = getAtomKeyStrokeValidity(s);
-			context.setColor((validity == KEY_IS_ATOM_LABEL) ? foreground
-						   : (validity == KEY_IS_SUBSTITUENT) ? Color.BLUE : Color.GRAY);
+			context.setRGB((validity == KEY_IS_ATOM_LABEL) ? foreground
+						   : (validity == KEY_IS_SUBSTITUENT) ? RGB_BLUE : RGB_GRAY);
 			if (validity == KEY_IS_ATOM_LABEL)
 				s = Molecule.cAtomLabel[Molecule.getAtomicNoFromLabel(s)];
 			else if (validity == KEY_IS_SUBSTITUENT)
@@ -328,16 +337,16 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			context.setFont(fontSize, false, false);
 			context.drawString(x, y, s);
 			if (validity == KEY_IS_INVALID) {
-				context.setColor(Color.RED);
+				context.setRGB(RGB_RED);
 				context.drawCenteredString(x+context.getBounds(s).getWidth()/2, y+fontSize, "<unknown>");
 				}
 			if (validity == KEY_IS_SUBSTITUENT) {
-				context.setColor(Color.GRAY);
+				context.setRGB(RGB_GRAY);
 				context.drawString(x+context.getBounds(s).getWidth(), y, mAtomKeyStrokeSuggestion.substring(s.length()));
 			}
 		}
 
-		context.setColor(foreground);
+		context.setRGB(foreground);
 		switch (mPendingRequest) {
 			case cRequestNewBond:
 				int x1, y1, x2, y2, xdiff, ydiff;
@@ -389,18 +398,18 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 				}
 				break;
 			case cRequestLassoSelect:
-				context.setColor(lassoColor());
+				context.setRGB(lassoColor(context));
 				context.drawPolygon(mLassoRegion);
-				context.setColor(foreground);
+				context.setRGB(foreground);
 				break;
 			case cRequestSelectRect:
 				int x = (mX1<mX2) ? (int)mX1 : (int)mX2;
 				int y = (mY1<mY2) ? (int)mY1 : (int)mY2;
 				int w = (int)Math.abs(mX2 - mX1);
 				int h = (int)Math.abs(mY2 - mY1);
-				context.setColor(lassoColor());
+				context.setRGB(lassoColor(context));
 				context.drawRectangle(x, y, w, h);
-				context.setColor(foreground);
+				context.setRGB(foreground);
 				break;
 			case cRequestMapAtoms:
 				x1 = (int)mX1;
@@ -412,52 +421,52 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 					x2 = (int)mMol.getAtomX(mCurrentHiliteAtom);
 					y2 = (int)mMol.getAtomY(mCurrentHiliteAtom);
 				}
-				context.setColor(mapToolColor());
+				context.setRGB(mapToolColor(context));
 				context.drawLine(x1, y1, x2, y2);
-				context.setColor(foreground);
+				context.setRGB(foreground);
 				break;
 		}
 
 		if (mWarningMessage != null) {
 			context.setFont(12, true, false);
-			Color original = context.getColor();
-			context.setColor(Color.RED);
+			int saveRGB = context.getRGB();
+			context.setRGB(RGB_RED);
 			context.drawCenteredString(mWidth / 2, context.getFontSize(), mWarningMessage);
-			context.setColor(original);
+			context.setRGB(saveRGB);
 		}
 	}
 
-	public static Color lassoColor() {
-		Color selectionColor = selectionColor();
+	public static int lassoColor(GenericDrawContext context) {
+		int selectionColor = selectionColor(context);
 		return ColorHelper.createColor(selectionColor, LookAndFeelHelper.isDarkLookAndFeel() ? 0.65f : 0.35f);
 	}
 
-	public static Color selectionColor() {
-		Color selectionColor = UIManager.getColor("TextArea.selectionBackground");
-		return (selectionColor != null) ? selectionColor : DEFAULT_SELECTION_BACKGROUND;
+	public static int selectionColor(GenericDrawContext context) {
+		int selectionColor = context.getSelectionBackgroundRGB();
+		return (selectionColor != 0) ? selectionColor : DEFAULT_SELECTION_BACKGROUND;
 	}
 
-	public static Color mapToolColor() {
-		Color background = UIManager.getColor("TextArea.background");
-		return ColorHelper.getContrastColor(new Color(128, 0, 0), background);
+	public static int mapToolColor(GenericDrawContext context) {
+		int background = context.getBackgroundRGB();
+		return ColorHelper.getContrastColor(RGB_DARK_RED, background);
 	}
 
-	public static Color chainHiliteColor() {
-		Color background = UIManager.getColor("TextArea.background");
-		Color selectionColor = selectionColor();
+	public static int chainHiliteColor(GenericDrawContext context) {
+		int background = context.getBackgroundRGB();
+		int selectionColor = selectionColor(context);
 		return ColorHelper.intermediateColor(selectionColor, background, 0.5f);
 	}
 
 	private void drawHiliting(GenericDrawContext context) {
 		if (mHiliteBondSet != null) {
-			context.setColor(chainHiliteColor());
+			context.setRGB(chainHiliteColor(context));
 			for (int i = 0; i<mHiliteBondSet.length; i++) {
 				hiliteBond(context, mHiliteBondSet[i]);
 			}
 		}
 
 		if (mCurrentHiliteAtom != -1) {
-			context.setColor(selectionColor());
+			context.setRGB(selectionColor(context));
 			hiliteAtom(context, mCurrentHiliteAtom);
 			if (mCurrentTool == GenericEditorToolbar.cToolMapper) {
 				int mapNo = mMol.getAtomMapNo(mCurrentHiliteAtom);
@@ -473,7 +482,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		}
 
 		if (mCurrentHiliteBond != -1) {
-			context.setColor(selectionColor());
+			context.setRGB(selectionColor(context));
 			hiliteBond(context, mCurrentHiliteBond);
 		}
 
@@ -504,7 +513,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		context.setLineWidth(oldWidth);
 		}
 
-	public void addDrawAreaListener(DrawAreaListener l) {
+	public void addDrawAreaListener(GenericEventListener<EditorEvent> l) {
 		mListeners.add(l);
 	}
 
@@ -562,7 +571,16 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	}
 
 	@Override
-	public void dialogEventHappened(DialogEvent e) {
+	public void eventHappened(GenericEvent e) {
+		if (e instanceof GenericActionEvent)
+			eventHappened((GenericActionEvent)e);
+		else if (e instanceof GenericKeyEvent)
+			eventHappened((GenericKeyEvent)e);
+		else if (e instanceof GenericMouseEvent)
+			eventHappened((GenericMouseEvent)e);
+	}
+
+	private void eventHappened(GenericActionEvent e) {
 		String command = e.getMessage();
 		if (command.equals(ITEM_COPY_STRUCTURE) || command.equals(ITEM_COPY_REACTION)) {
 			copy();
@@ -583,6 +601,8 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			flip(true);
 		} else if (command.equals(ITEM_FLIP_VERTICALLY)) {
 			flip(false);
+		} else if (command.equals(ITEM_FLIP_ROTATE180)) {
+			rotate180();
 		} else if (command.startsWith("atomColor")) {
 			int index = command.indexOf(':');
 			int atom = Integer.parseInt(command.substring(9, index));
@@ -788,7 +808,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 		if (mol.getAllBonds() != 0)
 			new GenericDepictor(mol).updateCoords(mCanvas.getDrawContext(),
-					new Rectangle2D.Double(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()),
+					new GenericRectangle(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()),
 					AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
 
 		storeState();
@@ -818,7 +838,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		}
 
 	private void openReaction() {
-		File rxnFile = mHelper.openChemistryFile(true);
+		File rxnFile = mUIHelper.openChemistryFile(true);
 		if (rxnFile != null) {
 			try {
 				Reaction reaction = null;
@@ -856,8 +876,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		}).start();
 	}
 
-	@Override
-	public void mouseActionHappened(GenericMouseEvent e) {
+	private void eventHappened(GenericMouseEvent e) {
 		if (e.getWhat() == GenericMouseEvent.MOUSE_PRESSED) {
 			if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0)
 				expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
@@ -899,7 +918,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		}
 
 		if (e.getWhat() == GenericMouseEvent.MOUSE_ENTERED) {
-			mHelper.grabFocus();
+			mUIHelper.grabFocus();
 			updateCursor();
 		}
 
@@ -1113,30 +1132,28 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	}
 
 	public void showHelpDialog() {
-		mHelper.showHelpDialog("/html/editor/editor.html");
+		mUIHelper.showHelpDialog("/html/editor/editor.html", "Structure Editor Help");
 	}
 
-	@Override
-	public void keyActionHappened(GenericKeyEvent e) {
+	private void eventHappened(GenericKeyEvent e) {
 		if (e.getWhat() == GenericKeyEvent.KEY_PRESSED) {
-			if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+			if (e.getKey() == GenericKeyEvent.KEY_SHIFT) {
 				mShiftIsDown = true;
 				updateCursor();
 			}
-			if (e.getKeyCode() == KeyEvent.VK_ALT) {
+			if (e.getKey() == GenericKeyEvent.KEY_ALT) {
 				mAltIsDown = true;
 				updateCursor();
 			}
-			if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-				mControlIsDown = true;
+			if (e.getKey() == GenericKeyEvent.KEY_CTRL) {
 				updateCursor();
 			}
 
-			if (mControlIsDown && e.getKeyCode() == KeyEvent.VK_Z) {
+			if (e.isCtrlDown() && e.getKey() == 'z') {
 				restoreState();
 				fireMoleculeChanged();
 				update(UPDATE_CHECK_VIEW);
-			} else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+			} else if (e.getKey() == GenericKeyEvent.KEY_DELETE) {
 				storeState();
 				if (mCurrentTool == GenericEditorToolbar.cToolMapper) {
 					boolean found = false;
@@ -1156,11 +1173,11 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 						update(UPDATE_REDRAW);
 					}
 				}
-			} else if (e.getKeyCode() == KeyEvent.VK_HELP || (mCurrentHiliteAtom == -1 && e.getKeyChar() == '?')) {
+			} else if (e.getKey() == GenericKeyEvent.KEY_HELP || (mCurrentHiliteAtom == -1 && e.getKey() == '?')) {
 				showHelpDialog();
 				return;
 			} else if (mCurrentHiliteBond != -1) {
-				char ch = e.getKeyChar();
+				int ch = e.getKey();
 				if (ch == 'q' && mMol.isFragment()) {
 					showBondQFDialog(mCurrentHiliteBond);
 				} else if (ch == 'v') { // ChemDraw uses the same key
@@ -1195,7 +1212,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 					}
 				}
 			} else if (mCurrentHiliteAtom != -1) {
-				char ch = e.getKeyChar();
+				int ch = e.getKey();
 				boolean isFirst = (mAtomKeyStrokeBuffer.length() == 0);
 				if (isFirst && (ch == '+' || ch == '-')) {
 					storeState();
@@ -1248,10 +1265,10 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 						fireMoleculeChanged();
 						update(UPDATE_CHECK_COORDS);
 					}
-				} else if (!isFirst && e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+				} else if (!isFirst && e.getKey() == GenericKeyEvent.KEY_ESCAPE) {
 					mAtomKeyStrokeBuffer.setLength(0);
 					update(UPDATE_REDRAW);
-				} else if (!isFirst && e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+				} else if (!isFirst && e.getKey() == GenericKeyEvent.KEY_BACK_SPACE) {
 					mAtomKeyStrokeBuffer.setLength(mAtomKeyStrokeBuffer.length() - 1);
 					update(UPDATE_REDRAW);
 				} else if ((ch>=65 && ch<=90)
@@ -1265,7 +1282,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 				}
 			} else if (mCurrentHiliteAtom == -1 && mCurrentHiliteBond == -1) {
 				if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE | MODE_MULTIPLE_FRAGMENTS)) == 0) {
-					char ch = e.getKeyChar();
+					int ch = e.getKey();
 					if (ch == 'h') {
 						flip(true);
 					}
@@ -1277,22 +1294,21 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			}
 		}
 		if (e.getWhat() == GenericKeyEvent.KEY_RELEASED) {
-			if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+			if (e.getKey() == GenericKeyEvent.KEY_SHIFT) {
 				mShiftIsDown = false;
 				updateCursor();
 			}
-			if (e.getKeyCode() == KeyEvent.VK_ALT) {
+			if (e.getKey() == GenericKeyEvent.KEY_ALT) {
 				mAltIsDown = false;
 				updateCursor();
 			}
-			if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-				mControlIsDown = false;
+			if (e.getKey() == GenericKeyEvent.KEY_CTRL) {
 				updateCursor();
 			}
-			if (e.isIsMenuShortcut()) {
-				if (e.getKeyCode() == KeyEvent.VK_C) {
+			if (e.isMenuShortcut()) {
+				if (e.getKey() == 'c') {
 					copy();
-				} else if (e.getKeyCode() == KeyEvent.VK_V) {
+				} else if (e.getKey() == 'v') {
 					paste();
 				}
 			}
@@ -1308,7 +1324,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		GenericPopupMenu popup = null;
 
 		if (mClipboardHandler != null) {
-			popup = mHelper.createPopupMenu(this);
+			popup = mUIHelper.createPopupMenu(this);
 
 			String item1 = analyseCopy(false) ? ITEM_COPY_REACTION : ITEM_COPY_STRUCTURE;
 			popup.addItem(item1, null, mMol.getAllAtoms() != 0);
@@ -1325,7 +1341,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 		if ((mMode & MODE_REACTION) != 0 && mCurrentTool == GenericEditorToolbar.cToolMapper) {
 			if (popup == null)
-				popup = mHelper.createPopupMenu(this);
+				popup = mUIHelper.createPopupMenu(this);
 			else
 				popup.addSeparator();
 
@@ -1335,23 +1351,24 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 		if (mCurrentTool == GenericEditorToolbar.cToolZoom) {
 			if (popup == null)
-				popup = mHelper.createPopupMenu(this);
+				popup = mUIHelper.createPopupMenu(this);
 			else
 				popup.addSeparator();
 
 			popup.addItem(ITEM_FLIP_HORIZONTALLY, null, true);
 			popup.addItem(ITEM_FLIP_VERTICALLY, null, true);
+			popup.addItem(ITEM_FLIP_ROTATE180, null, true);
 			}
 
 		if (mAtomColorSupported && mCurrentHiliteAtom != -1) {
 			int atomColor = mMol.getAtomColor(mCurrentHiliteAtom);
 			if (popup == null)
-				popup = mHelper.createPopupMenu(this);
+				popup = mUIHelper.createPopupMenu(this);
 			else
 				popup.addSeparator();
 
 			popup.startSubMenu("Set Atom Color");
-			popup.addRadioButtonItem("	  ", "atomColor" + mCurrentHiliteAtom + ":" + Molecule.cAtomColorNone, Color.BLACK, atomColor == Molecule.cAtomColorNone);
+			popup.addRadioButtonItem("	  ", "atomColor" + mCurrentHiliteAtom + ":" + Molecule.cAtomColorNone, RGB_BLACK, atomColor == Molecule.cAtomColorNone);
 			popup.addRadioButtonItem("	  ", "atomColor" + mCurrentHiliteAtom + ":" + Molecule.cAtomColorBlue, AbstractDepictor.COLOR_BLUE, atomColor == Molecule.cAtomColorBlue);
 			popup.addRadioButtonItem("	  ", "atomColor" + mCurrentHiliteAtom + ":" + Molecule.cAtomColorDarkRed, AbstractDepictor.COLOR_DARK_RED, atomColor == Molecule.cAtomColorDarkRed);
 			popup.addRadioButtonItem("	  ", "atomColor" + mCurrentHiliteAtom + ":" + Molecule.cAtomColorRed, AbstractDepictor.COLOR_RED, atomColor == Molecule.cAtomColorRed);
@@ -1364,7 +1381,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 		if (System.getProperty("development") != null) {
 			if (popup == null)
-				popup = mHelper.createPopupMenu(this);
+				popup = mUIHelper.createPopupMenu(this);
 			else
 				popup.addSeparator();
 
@@ -1484,7 +1501,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 				update(UPDATE_REDRAW);
 			}
 		} else if (mCurrentTool == GenericEditorToolbar.cToolAtomOther) {
-			mHelper.showMessage("Please hold 'Ctrl' while pressing the left mouse button\nto open the atom property dialog.");
+			mUIHelper.showMessage("Please hold 'Ctrl' while pressing the left mouse button\nto open the atom property dialog.");
 		}
 	}
 
@@ -1492,18 +1509,22 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		if (mAllowQueryFeatures) {
 			storeState();
 			boolean showReactionHints = ((mMode & MODE_REACTION) != 0);
-			new AtomQueryFeatureDialogBuilder(mHelper, mMol, atom, showReactionHints);
-			fireMoleculeChanged();
-			update(UPDATE_REDRAW);
+			AtomQueryFeatureDialogBuilder builder = new AtomQueryFeatureDialogBuilder(mUIHelper, mMol, atom, showReactionHints);
+			if (builder.showDialog()) {
+				fireMoleculeChanged();
+				update(UPDATE_REDRAW);
+				}
 			}
 		}
 
 	private void showBondQFDialog ( int bond) {
 		if (mAllowQueryFeatures) {
 			storeState();
-			new BondQueryFeatureDialogBuilder(mHelper, mMol, bond);
-			fireMoleculeChanged();
-			update(UPDATE_REDRAW);
+			BondQueryFeatureDialogBuilder builder = new BondQueryFeatureDialogBuilder(mUIHelper, mMol, bond);
+			if (builder.showDialog()) {
+				fireMoleculeChanged();
+				update(UPDATE_REDRAW);
+				}
 			}
 		}
 
@@ -1823,14 +1844,16 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 					int atom = mMol.findAtom(mX1, mY1);
 					if (atom != -1) {
 						storeState();
-						new AtomLabelDialogBuilder(mHelper, mMol, atom);
-						mOtherAtom = mMol.getAtomicNo(atom);
-						mOtherMass = mMol.getAtomMass(atom);
-						mOtherValence = mMol.getAtomAbnormalValence(atom);
-						mOtherRadical = mMol.getAtomRadical(atom);
-						mOtherLabel = mMol.getAtomCustomLabel(atom);
-						fireMoleculeChanged();
-						update(UPDATE_REDRAW);
+						AtomLabelDialogBuilder builder = new AtomLabelDialogBuilder(mUIHelper, mMol, atom);
+						if (builder.showDialog()) {
+							mOtherAtom = mMol.getAtomicNo(atom);
+							mOtherMass = mMol.getAtomMass(atom);
+							mOtherValence = mMol.getAtomAbnormalValence(atom);
+							mOtherRadical = mMol.getAtomRadical(atom);
+							mOtherLabel = mMol.getAtomCustomLabel(atom);
+							fireMoleculeChanged();
+							update(UPDATE_REDRAW);
+						}
 					}
 				} else {
 					storeState();
@@ -1949,7 +1972,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 					}
 				}
 				if (selectionChanged) {
-					fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_SELECTION_CHANGED, true));
+					fireEvent(new EditorEvent(this, EditorEvent.WHAT_SELECTION_CHANGED, true));
 				}
 				mCanvas.repaint();
 				break;
@@ -2520,11 +2543,11 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 			mCurrentHiliteAtom = theAtom;
 			mAtomKeyStrokeBuffer.setLength(0);
-			fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_HILITE_ATOM_CHANGED, true));
+			fireEvent(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));
 		}
 		if (mCurrentHiliteBond != theBond) {
 			mCurrentHiliteBond = theBond;
-			fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_HILITE_BOND_CHANGED, true));
+			fireEvent(new EditorEvent(this, EditorEvent.WHAT_HILITE_BOND_CHANGED, true));
 		}
 		mCurrentHiliteObject = hiliteObject;
 
@@ -2622,7 +2645,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	}
 
 	private void editTextObject (TextDrawingObject object){
-		new TextDrawingObjectDialogBuilder(mHelper, object);
+		new TextDrawingObjectDialogBuilder(mUIHelper, object);
 
 		boolean nonWhiteSpaceFound = false;
 		for (int i = 0; i<object.getText().length(); i++) {
@@ -2749,7 +2772,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 		if (mDrawingObjectList != null) {
 			for (int i = mDrawingObjectList.size() - 1; i>=0; i--) {
-				AbstractDrawingObject object = (AbstractDrawingObject)mDrawingObjectList.get(i);
+				AbstractDrawingObject object = mDrawingObjectList.get(i);
 				if (object.isSelected() && !(object instanceof ReactionArrow)) {
 					mDrawingObjectList.add(object.clone());
 				}
@@ -2758,30 +2781,31 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 	}
 
 	private void fireMoleculeChanged () {
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, true));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, true));
 	}
 
-	private void fireEvent(DrawAreaEvent e){
-		for (DrawAreaListener l : mListeners) {
-			l.contentChanged(e);
+	private void fireEvent(EditorEvent e) {
+		for (GenericEventListener<EditorEvent> l : mListeners) {
+			l.eventHappened(e);
 		}
 	}
 
 	/**
-	 * Use this to inform the JDrawArea after changing its molecule from outside.
+	 * Use this to inform the GenericDrawArea after changing its molecule from outside.
 	 */
 	public void moleculeChanged() {
 		moleculeChanged(false);
 	}
 
 	/**
-	 * Ideally don't use this from outside JDrawArea. Use moleculeChanged() instead.
-	 *
+	 * Causes to redraw the molecule(s) or the reaction.
+	 * Causes a new analyses of fragment membership.
+	 * Fires molecule change events.
 	 * @param userChange is true if the change was done within the editor
 	 */
-	public void moleculeChanged(boolean userChange){
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, userChange));
+	private void moleculeChanged(boolean userChange) {
 		update(UPDATE_SCALE_COORDS);
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, userChange));
 	}
 
 	public StereoMolecule getMolecule ()
@@ -2817,7 +2841,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			}
 		}
 
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, false));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 
 		mMode = MODE_MULTIPLE_FRAGMENTS;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
@@ -2871,7 +2895,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			}
 		}
 
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, false));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 
 		mMode = MODE_MULTIPLE_FRAGMENTS | MODE_REACTION;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
@@ -2914,7 +2938,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			}
 		}
 
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, false));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 
 		mMode = MODE_MULTIPLE_FRAGMENTS | MODE_MARKUSH_STRUCTURE;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
@@ -3041,7 +3065,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 				mMol.removeAtomMarkers();
 		}
 
-		mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()), maxUpdateMode());
+		mDepictor.updateCoords(context, new GenericRectangle(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()), maxUpdateMode());
 	}
 
 	private void cleanupMultiFragmentCoordinates(GenericDrawContext context, boolean selectedOnly){
@@ -3054,7 +3078,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			}
 		}
 
-		Rectangle2D.Double[] boundingRect = new Rectangle2D.Double[mFragment.length];
+		GenericRectangle[] boundingRect = new GenericRectangle[mFragment.length];
 //		float fragmentWidth = 0.0f;
 		for (int fragment = 0; fragment<mFragment.length; fragment++) {
 			if (mUpdateMode == UPDATE_INVENT_COORDS) {
@@ -3095,7 +3119,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 			rawX += spacing + boundingRect[fragment].width;
 		}
 
-		mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()), maxUpdateMode());
+		mDepictor.updateCoords(context, new GenericRectangle(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()), maxUpdateMode());
 
 		int[] fragmentAtom = new int[mFragment.length];
 		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
@@ -3304,7 +3328,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 		if (mCurrentCursor != cursor) {
 			mCurrentCursor = cursor;
-			mHelper.setCursor(cursor);
+			mUIHelper.setCursor(cursor);
 		}
 	}
 
@@ -3357,7 +3381,7 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 		return atoms>1 ? new Point2D.Double(sumx / atoms, sumy / atoms) : null;
 	}
 
-	private void flip ( boolean horiz){
+	private void rotate180() {
 		boolean selectedOnly = false;
 		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
 			if (mMol.isSelectedAtom(atom)) {
@@ -3372,13 +3396,37 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 
 			for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
 				if (!selectedOnly || mMol.isSelectedAtom(atom)) {
-					if (horiz) {
-						mMol.setAtomX(atom, 2 * cog.getX() - mMol.getAtomX(atom));
-					} else {
-						mMol.setAtomY(atom, 2 * cog.getY() - mMol.getAtomY(atom));
+					mMol.setAtomX(atom, 2 * cog.getX() - mMol.getAtomX(atom));
+					mMol.setAtomY(atom, 2 * cog.getY() - mMol.getAtomY(atom));
 					}
 				}
+			update(UPDATE_REDRAW);
 			}
+		}
+
+	private void flip(boolean horiz) {
+		boolean selectedOnly = false;
+		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
+			if (mMol.isSelectedAtom(atom)) {
+				selectedOnly = true;
+				break;
+				}
+			}
+
+		Point2D cog = calculateCenterOfGravity(selectedOnly);
+		if (cog != null) {
+			storeState();
+
+			for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
+				if (!selectedOnly || mMol.isSelectedAtom(atom)) {
+					if (horiz) {
+						mMol.setAtomX(atom, 2 * cog.getX() - mMol.getAtomX(atom));
+						}
+					else {
+						mMol.setAtomY(atom, 2 * cog.getY() - mMol.getAtomY(atom));
+						}
+					}
+				}
 
 			// invert stereo bonds
 			for (int bond = 0; bond<mMol.getAllBonds(); bond++) {
@@ -3387,8 +3435,8 @@ public class GenericDrawArea implements DialogEventConsumer,GenericKeyListener,G
 						mMol.setBondType(bond, Molecule.cBondTypeDown);
 					else if (mMol.getBondType(bond) == Molecule.cBondTypeDown)
 						mMol.setBondType(bond, Molecule.cBondTypeUp);
+					}
 				}
-			}
 
 			update(UPDATE_REDRAW);
 			}

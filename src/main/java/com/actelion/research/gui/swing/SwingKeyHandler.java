@@ -1,50 +1,46 @@
 package com.actelion.research.gui.swing;
 
+import com.actelion.research.gui.generic.GenericEventHandler;
 import com.actelion.research.gui.generic.GenericKeyEvent;
-import com.actelion.research.gui.generic.GenericKeyListener;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
 
-public class SwingKeyHandler implements KeyListener {
-	private ArrayList<GenericKeyListener> mListeners;
+public class SwingKeyHandler extends GenericEventHandler<GenericKeyEvent> implements KeyListener {
 
-	public SwingKeyHandler() {
-		mListeners = new ArrayList<>();
-	}
-
-	public void addListener(GenericKeyListener gkl) {
-		mListeners.add(gkl);
-	}
-
-	public void removeListener(GenericKeyListener gkl) {
-		mListeners.remove(gkl);
+	public SwingKeyHandler(Object source) {
+		super(source);
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		fireKeyEvent(createEvent(GenericKeyEvent.KEY_TYPED, e));
+//		fireKeyEvent(createEvent(GenericKeyEvent.KEY_TYPED, e));
 		}
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		fireKeyEvent(createEvent(GenericKeyEvent.KEY_PRESSED, e));
+		fireEvent(createEvent(GenericKeyEvent.KEY_PRESSED, e));
 		}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		fireKeyEvent(createEvent(GenericKeyEvent.KEY_RELEASED, e));
+		fireEvent(createEvent(GenericKeyEvent.KEY_RELEASED, e));
 		}
 
-	private void fireKeyEvent(GenericKeyEvent gke) {
-		for (GenericKeyListener gkl:mListeners)
-			gkl.keyActionHappened(gke);
-	}
-
 	private GenericKeyEvent createEvent(int what, KeyEvent e) {
-		return new GenericKeyEvent(what, e.getKeyCode(), e.getKeyChar(),
-				(e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0);
+		int key = e.getKeyCode() == KeyEvent.VK_ALT ? GenericKeyEvent.KEY_ALT
+				: e.getKeyCode() == KeyEvent.VK_CONTROL ? GenericKeyEvent.KEY_CTRL
+				: e.getKeyCode() == KeyEvent.VK_SHIFT ? GenericKeyEvent.KEY_SHIFT
+				: e.getKeyCode() == KeyEvent.VK_DELETE ? GenericKeyEvent.KEY_DELETE
+				: e.getKeyCode() == KeyEvent.VK_BACK_SPACE ? GenericKeyEvent.KEY_BACK_SPACE
+				: e.getKeyCode() == KeyEvent.VK_HELP ? GenericKeyEvent.KEY_HELP
+				: e.getKeyCode() == KeyEvent.VK_ESCAPE ? GenericKeyEvent.KEY_ESCAPE
+				: e.getKeyChar();
+		boolean isAltDown = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
+		boolean isCtrlDown = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
+		boolean isShiftDown = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
+		boolean isShortcut = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
+		return new GenericKeyEvent(what, key, isAltDown, isCtrlDown, isShiftDown, isShortcut, getSource());
 	}
 }

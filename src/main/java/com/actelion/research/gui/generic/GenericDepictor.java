@@ -3,10 +3,6 @@ package com.actelion.research.gui.generic;
 import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.StereoMolecule;
 
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-
 public class GenericDepictor extends AbstractDepictor<GenericDrawContext> {
 	private int     mTextSize;
 	private float	mLineWidth;
@@ -67,7 +63,7 @@ public class GenericDepictor extends AbstractDepictor<GenericDrawContext> {
 	public void hiliteAtomBackgrounds(int[] atomARGB, float[] radius) {
 		double avbl = getTransformation().getScaling() * getMolecule().getAverageBondLength();
 		double maxRadius = (radius == null) ? 0.6 * avbl : 0.75 * avbl;
-		Rectangle2D.Double rect = simpleCalculateBounds();
+		GenericRectangle rect = simpleCalculateBounds();
 
 		int imageX = (int)Math.floor(rect.x - maxRadius);
 		int imageY = (int)Math.floor(rect.y - maxRadius);
@@ -117,7 +113,7 @@ public class GenericDepictor extends AbstractDepictor<GenericDrawContext> {
 			}
 		}
 
-		BufferedImage image = new BufferedImage(imageW, imageH, BufferedImage.TYPE_INT_ARGB);
+		GenericImage image = mContext.createARGBImage(imageW, imageH);
 		int index = 0;
 		for (int y = 0; y<imageH; y++) {
 			for (int x=0; x<imageW; x++) {
@@ -144,7 +140,7 @@ public class GenericDepictor extends AbstractDepictor<GenericDrawContext> {
 			}
 		}
 
-		mContext.drawImage(imageX, imageY, image);
+		mContext.drawImage(image, imageX, imageY);
 	}
 
 	private void mixInColor(float[] imageARGB, int index, float[] pixelARGB) {
@@ -176,7 +172,7 @@ public class GenericDepictor extends AbstractDepictor<GenericDrawContext> {
 		mContext.setLineWidth(mLineWidth);
 	}
 
-	protected void setColor(Color theColor) {
-		mContext.setColor(theColor);
+	protected void setRGB(int rgb) {
+		mContext.setRGB(rgb);
 	}
 }

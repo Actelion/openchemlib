@@ -33,14 +33,17 @@
 
 package com.actelion.research.share.gui.editor.chem;
 
-import com.actelion.research.chem.*;
+import com.actelion.research.chem.AbstractDepictor;
+import com.actelion.research.chem.DepictorTransformation;
+import com.actelion.research.chem.ExtendedMolecule;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.Arrow;
 import com.actelion.research.share.gui.DrawConfig;
 
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -188,7 +191,7 @@ public abstract class AbstractExtendedDepictor<T, C>
     }
 
 
-    public DepictorTransformation updateCoords(T g, Rectangle2D.Double viewRect, int mode)
+    public DepictorTransformation updateCoords(T g, GenericRectangle viewRect, int mode)
     {
         // returns full transformation that moves/scales original molecules/objects into viewRect
         validateView(g, viewRect, mode);
@@ -204,8 +207,8 @@ public abstract class AbstractExtendedDepictor<T, C>
             if (mDrawingObjectList != null)
                 for (int i = 0; i < mDrawingObjectList.size(); i++) {
                     IDrawingObject d = mDrawingObjectList.get(i);
-                    Rectangle2D b  = d.getBoundingRect();
-                    Rectangle2D.Double t = new Rectangle2D.Double(b.getX(), b.getY(), b.getWidth(), b.getHeight());
+                    GenericRectangle b  = d.getBoundingRect();
+                    GenericRectangle t = new GenericRectangle(b.getX(), b.getY(), b.getWidth(), b.getHeight());
                     mTransformation.applyTo(t);
                 }
             if (mDepictor != null)
@@ -218,27 +221,27 @@ public abstract class AbstractExtendedDepictor<T, C>
         }
     }
 
-    public DepictorTransformation validateView(T g, Rectangle2D.Double viewRect, int mode)
+    public DepictorTransformation validateView(T g, GenericRectangle viewRect, int mode)
     {
         // returns incremental transformation that moves/scales already transformed molecules/objects into viewRect
         if (mDoLayoutMolecules)
             doLayoutMolecules(g);
 
-        Rectangle2D.Double boundingRect = null;
+        GenericRectangle boundingRect = null;
         if (mDepictor != null) {
             for (int i = 0; i < mDepictor.length; i++) {
                 mDepictor[i].validateView(g, null, 0);
                 boundingRect = (boundingRect == null) ? mDepictor[i].getBoundingRect()
-                        : (Rectangle2D.Double) boundingRect.createUnion(mDepictor[i].getBoundingRect());
+                        : boundingRect.union(mDepictor[i].getBoundingRect());
             }
         }
         if (mDrawingObjectList != null) {
             for (int i = 0; i < mDrawingObjectList.size(); i++) {
-                Rectangle2D b = mDrawingObjectList.get(i).getBoundingRect();
-                Rectangle2D.Double objectBounds = new Rectangle2D.Double(b.getX(), b.getY(), b.getWidth(), b.getHeight());
+                GenericRectangle b = mDrawingObjectList.get(i).getBoundingRect();
+                GenericRectangle objectBounds = new GenericRectangle(b.getX(), b.getY(), b.getWidth(), b.getHeight());
                 mTransformation.applyTo(objectBounds);
                 boundingRect = (boundingRect == null) ? objectBounds
-                        : (Rectangle2D.Double) boundingRect.createUnion(objectBounds);
+                        : boundingRect.union(objectBounds);
             }
         }
 
@@ -281,7 +284,7 @@ public abstract class AbstractExtendedDepictor<T, C>
 
     private void doLayoutMolecules(T g)
     {
-        Rectangle2D.Double[] boundingRect = new Rectangle2D.Double[mMolecule.length];
+        GenericRectangle[] boundingRect = new GenericRectangle[mMolecule.length];
         double totalWidth = 0.0f;
         double totalHeight = 0.0f;
         for (int i = 0; i < mMolecule.length; i++) {

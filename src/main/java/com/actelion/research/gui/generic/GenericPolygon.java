@@ -3,30 +3,35 @@ package com.actelion.research.gui.generic;
 import java.util.Arrays;
 
 public class GenericPolygon implements GenericShape {
-	private double[] mPoint;
+	private double[] mX,mY;
 	private int mIndex;
 
 	public GenericPolygon(int size) {
-		mPoint = new double[2*size];
-		mIndex = 0; // is twice of used point count
+		mX = new double[size];
+		mY = new double[size];
+		mIndex = 0;
 	}
 
 	public GenericPolygon() {
-		mPoint = new double[128];
-		mIndex = 0; // is twice of used point count
+		mX = new double[64];
+		mY = new double[64];
+		mIndex = 0;
 	}
 
 	public void addPoint(double x, double y) {
-		if (mIndex == mPoint.length)
-			mPoint = Arrays.copyOf(mPoint, 2 * mIndex);
+		if (mIndex == mX.length) {
+			mX = Arrays.copyOf(mX, 2*mIndex);
+			mY = Arrays.copyOf(mY, 2*mIndex);
+			}
 
-		mPoint[mIndex++] = x;
-		mPoint[mIndex++] = y;
+		mX[mIndex] = x;
+		mY[mIndex] = y;
+		mIndex++;
 	}
 
 	public void removeLastPoint() {
-		if (mIndex >= 2)
-			mIndex -= 2;
+		if (mIndex > 0)
+			mIndex--;
 	}
 
 	public void clear() {
@@ -38,10 +43,10 @@ public class GenericPolygon implements GenericShape {
 //		for (int i=0, j=nvert-1; i<nvert; j=i++) {
 //			if (((verty[i]>y) != (verty[j]>y))
 //			 && (x < (vertx[j]-vertx[i]) * (y-verty[i]) / (verty[j]-verty[i]) + vertx[i]))
-		int j = mIndex - 2;
-		for (int i=0; i<mIndex; i+=2) {
-			if (((mPoint[i+1]>y) != (mPoint[j+1]>y))
-					&& (x < (mPoint[j]-mPoint[i]) * (y-mPoint[i+1]) / (mPoint[j+1]-mPoint[i+1]) + mPoint[i]))
+		int j = mIndex - 1;
+		for (int i=0; i<mIndex; i++) {
+			if (((mY[i]>y) != (mY[j]>y))
+					&& (x < (mX[j]-mX[i]) * (y-mY[i]) / (mY[j]-mY[i]) + mX[i]))
 				result = !result;
 			j = i;
 		}
@@ -49,18 +54,22 @@ public class GenericPolygon implements GenericShape {
 	}
 
 	public int getSize() {
-		return mIndex / 2;
+		return mIndex;
 	}
 
 	public double getX(int i) {
-		return mPoint[2*i];
+		return mX[i];
 	}
 
 	public double getY(int i) {
-		return mPoint[2*i+1];
+		return mY[i];
 	}
 
-	public double[] getPoints() {
-		return mPoint;
+	public double[] getX() {
+		return mX;
+	}
+
+	public double[] getY() {
+		return mY;
 	}
 }

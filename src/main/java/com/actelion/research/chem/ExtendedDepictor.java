@@ -38,9 +38,9 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionArrow;
 import com.actelion.research.gui.generic.GenericDepictor;
 import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericRectangle;
 
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 
 
 
@@ -56,7 +56,7 @@ public class ExtendedDepictor {
     private int						mDisplayMode,mReactantCount,mMarkushCoreCount,mChemistryType;
     private boolean					mReactionLayoutNeeded;
     private DepictorTransformation	mTransformation;
-    private Color                   mFragmentNoColor;
+    private int                     mFragmentNoColor;
 
     public ExtendedDepictor(StereoMolecule mol, DrawingObjectList drawingObjectList) {
         if (mol != null) {
@@ -145,9 +145,9 @@ public class ExtendedDepictor {
         mDisplayMode = displayMode;
         }
 
-    public void setFragmentNoColor(Color c) {
+    public void setFragmentNoColor(int argb) {
         // use setFragmentNoColor(null) if you don't want fragment numbers to be shown
-        mFragmentNoColor = c;
+        mFragmentNoColor = argb;
         }
 
     public int getMoleculeCount() {
@@ -167,14 +167,20 @@ public class ExtendedDepictor {
         return mDepictor[i];
         }
 
-    public void setForegroundColor(Color foreGround, Color background) {
+    @Deprecated
+    // Use rgb version of this method instead
+	public void setForegroundColor(Color foreGround, Color background) {
+	    setForegroundColor(foreGround.getRGB(), background.getRGB());
+		}
+
+	public void setForegroundColor(int foreground, int background) {
         if (mDepictor != null)
             for (GenericDepictor d:mDepictor)
-                d.setForegroundColor(foreGround, background);
+                d.setForegroundColor(foreground, background);
 
 		if (mCatalystDepictor != null)
 			for (GenericDepictor d:mCatalystDepictor)
-				d.setForegroundColor(foreGround, background);
+				d.setForegroundColor(foreground, background);
         }
 
 	public void setOverruleColor(Color foreGround, Color background) {
@@ -188,22 +194,22 @@ public class ExtendedDepictor {
 		}
 
     public void paint(GenericDrawContext context) {
-        Color saveColor = context.getColor();
+        int saveRGB = context.getRGB();
         int fontSize = context.getFontSize();
         try {
             paintFragmentNumbers(context);
             paintStructures(context);
             paintDrawingObjects(context);
         } finally {
-            context.setColor(saveColor);
+            context.setRGB(saveRGB);
             context.setFont(fontSize, false, false);
         }
     }
 
     public void paintFragmentNumbers(GenericDrawContext context) {
-        if (mFragmentNoColor != null && mMolecule != null) {
+        if (mFragmentNoColor != 0 && mMolecule != null) {
             double averageBondLength = calculateAverageBondLength();
-            context.setColor(mFragmentNoColor);
+            context.setRGB(mFragmentNoColor);
             context.setFont((int)(1.6*averageBondLength), true, false);
             for (int i=0; i<mMolecule.length; i++) {
                 if (mMolecule[i].getAllAtoms() != 0) {
@@ -276,7 +282,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             }
         }
 
-    public DepictorTransformation updateCoords(GenericDrawContext context, Rectangle2D.Double viewRect, int mode) {
+	public DepictorTransformation updateCoords(GenericDrawContext context, GenericRectangle viewRect, int mode) {
     // returns full transformation that moves/scales original molecules/objects into viewRect
         validateView(context, viewRect, mode);
 
@@ -306,32 +312,32 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             }
         }
 
-    public DepictorTransformation validateView(GenericDrawContext context, Rectangle2D.Double viewRect, int mode) {
+    public DepictorTransformation validateView(GenericDrawContext context, GenericRectangle viewRect, int mode) {
     // returns incremental transformation that moves/scales already transformed molecules/objects into viewRect
         if (mReactionLayoutNeeded)
             layoutReaction(context);
 
-        Rectangle2D.Double boundingRect = null;
+        GenericRectangle boundingRect = null;
         if (mDepictor != null) {
             for (int i=0; i<mDepictor.length; i++) {
                 mDepictor[i].validateView(context, null, 0);
                 boundingRect = (boundingRect == null) ? mDepictor[i].getBoundingRect()
-                            : (Rectangle2D.Double)boundingRect.createUnion(mDepictor[i].getBoundingRect());
+                            : boundingRect.union(mDepictor[i].getBoundingRect());
                 }
             }
 		if (mCatalystDepictor != null) {
 			for (int i=0; i<mCatalystDepictor.length; i++) {
 				mCatalystDepictor[i].validateView(context, null, 0);
 				boundingRect = (boundingRect == null) ? mCatalystDepictor[i].getBoundingRect()
-						: (Rectangle2D.Double)boundingRect.createUnion(mCatalystDepictor[i].getBoundingRect());
+						: boundingRect.union(mCatalystDepictor[i].getBoundingRect());
 				}
 			}
         if (mDrawingObjectList != null) {
             for (int i=0; i<mDrawingObjectList.size(); i++) {
-                Rectangle2D.Double objectBounds = mDrawingObjectList.get(i).getBoundingRect(context);
+	            GenericRectangle objectBounds = mDrawingObjectList.get(i).getBoundingRect(context);
                 mTransformation.applyTo(objectBounds);
                 boundingRect = (boundingRect == null) ? objectBounds
-                        : (Rectangle2D.Double)boundingRect.createUnion(objectBounds);
+                        : boundingRect.union(objectBounds);
                 }
             }
 
@@ -383,7 +389,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
         }
 
     private void layoutReaction(GenericDrawContext context) {
-        Rectangle2D.Double[] boundingRect = new Rectangle2D.Double[mMolecule.length];
+        GenericRectangle[] boundingRect = new GenericRectangle[mMolecule.length];
         double totalWidth = 0.0;
         double totalHeight = 0.0;
         for (int i=0; i<mMolecule.length; i++) {
@@ -395,7 +401,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
 
         final double catalystScale = 0.7;
 		double catalystSpacing = 0.5 * AbstractDepictor.cOptAvBondLen;
-		Rectangle2D.Double[] catalystBoundingRect = new Rectangle2D.Double[mCatalyst.length];
+	    GenericRectangle[] catalystBoundingRect = new GenericRectangle[mCatalyst.length];
 		double totalCatalystWidth = 0.0;
 		double totalCatalystHeight = 0.0;
 		for (int i=0; i<mCatalyst.length; i++) {

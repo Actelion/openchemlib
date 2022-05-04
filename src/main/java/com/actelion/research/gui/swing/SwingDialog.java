@@ -1,7 +1,5 @@
 package com.actelion.research.gui.swing;
 
-import com.actelion.research.gui.editor.DialogEvent;
-import com.actelion.research.gui.editor.DialogEventConsumer;
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import info.clearthought.layout.TableLayout;
@@ -14,7 +12,7 @@ import java.awt.event.ActionListener;
 public class SwingDialog extends JDialog implements ActionListener,GenericDialog {
 	private Component mParent;
 	private JPanel  mContent;
-	private DialogEventConsumer mConsumer;
+	private GenericEventListener<GenericActionEvent> mConsumer;
 
 	public SwingDialog(Frame parent, String title) {
 		super(parent, title, true);
@@ -27,12 +25,7 @@ public class SwingDialog extends JDialog implements ActionListener,GenericDialog
 		}
 
 	@Override
-	public DialogEventConsumer getEventConsumer() {
-		return mConsumer;
-	}
-
-	@Override
-	public void setEventConsumer(DialogEventConsumer consumer) {
+	public void setEventConsumer(GenericEventListener<GenericActionEvent> consumer) {
 		mConsumer = consumer;
 	}
 
@@ -93,9 +86,9 @@ public class SwingDialog extends JDialog implements ActionListener,GenericDialog
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if ("OK".equals(e.getActionCommand()))
-			mConsumer.dialogEventHappened(new DialogEvent(this, DialogEvent.WHAT_OK,0));
+			mConsumer.eventHappened(new GenericActionEvent(this, GenericActionEvent.WHAT_OK, 0));
 		else if ("Cancel".equals(e.getActionCommand()))
-			mConsumer.dialogEventHappened(new DialogEvent(this, DialogEvent.WHAT_CANCEL, 0));
+			mConsumer.eventHappened(new GenericActionEvent(this, GenericActionEvent.WHAT_CANCEL, 0));
 		}
 
 	@Override

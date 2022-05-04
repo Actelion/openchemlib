@@ -1,7 +1,7 @@
 package com.actelion.research.gui.swing;
 
-import com.actelion.research.gui.editor.DialogEvent;
-import com.actelion.research.gui.editor.DialogEventConsumer;
+import com.actelion.research.gui.generic.GenericActionEvent;
+import com.actelion.research.gui.generic.GenericEventListener;
 import com.actelion.research.gui.generic.GenericPopupMenu;
 
 import javax.swing.*;
@@ -14,11 +14,11 @@ public class SwingPopupMenu extends SwingComponent implements ActionListener,Gen
 	private JMenu mSubMenu;
 	private JComponent mOwner;
 
-	public SwingPopupMenu(JComponent owner, DialogEventConsumer consumer) {
+	public SwingPopupMenu(JComponent owner, GenericEventListener<GenericActionEvent> consumer) {
 		super(new JPopupMenu());
 		mPopupMenu = (JPopupMenu)getComponent();
 		mOwner = owner;
-		setEventConsumer(consumer);
+		addEventConsumer(consumer);
 	}
 
 	@Override
@@ -35,12 +35,12 @@ public class SwingPopupMenu extends SwingComponent implements ActionListener,Gen
 		}
 
 	@Override
-	public void addRadioButtonItem(String text, String command, Color color, boolean isSelected) {
+	public void addRadioButtonItem(String text, String command, int colorRGB, boolean isSelected) {
 		JRadioButtonMenuItem item = new JRadioButtonMenuItem(text, isSelected);
 		if (command != null)
 			item.setActionCommand(command);
-		if (color != null)
-			item.setBackground(color);
+		if (colorRGB != 0)
+			item.setBackground(new Color(colorRGB));
 		item.addActionListener(this);
 		if (mSubMenu != null)
 			mSubMenu.add(item);
@@ -69,7 +69,7 @@ public class SwingPopupMenu extends SwingComponent implements ActionListener,Gen
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		getEventConsumer().dialogEventHappened(new DialogEvent(this, DialogEvent.WHAT_ITEM_SELECTED, e.getActionCommand()));
+		fireEvent(new GenericActionEvent(this, GenericActionEvent.WHAT_ITEM_SELECTED, e.getActionCommand()));
 	}
 
 	@Override

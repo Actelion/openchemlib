@@ -45,12 +45,8 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionArrow;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
-import com.actelion.research.gui.editor.DrawAreaEvent;
-import com.actelion.research.gui.editor.DrawAreaListener;
-import com.actelion.research.gui.generic.GenericDrawContext;
-import com.actelion.research.gui.generic.GenericPolygon;
-import com.actelion.research.gui.generic.GenericRectangle;
-import com.actelion.research.gui.generic.GenericShape;
+import com.actelion.research.gui.editor.EditorEvent;
+import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.hidpi.ScaledEditorKit;
 import com.actelion.research.gui.swing.SwingDrawContext;
@@ -165,7 +161,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	private DrawingObjectList mDrawingObjectList, mUndoDrawingObjectList;
 	private AbstractDrawingObject mCurrentHiliteObject;
 	private GenericPolygon mLassoRegion;
-	private ArrayList<DrawAreaListener> mListeners;
+	private ArrayList<GenericEventListener<EditorEvent>> mListeners;
 	private IClipboardHandler mClipboardHandler;
 	private JDialog mHelpDialog;
 	private StringBuilder mAtomKeyStrokeBuffer;
@@ -184,7 +180,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		addMouseListener(this);
 		addMouseMotionListener(this);
 
-		mListeners = new ArrayList<DrawAreaListener>();
+		mListeners = new ArrayList<>();
 
 		mCurrentTool = JDrawToolbar.cToolStdBond;
 		mCurrentHiliteAtom = -1;
@@ -291,9 +287,9 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				: new ExtendedDepictor(mMol, mDrawingObjectList);
 
 			mDepictor.setForegroundColor(foreground, background);
-			mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) ? null
-					: LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(background, 0.85f)
-															: ColorHelper.darker(background, 0.85f));
+			mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) ? 0
+					: LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(background.getRGB(), 0.85f)
+															: ColorHelper.darker(background.getRGB(), 0.85f));
 			mDepictor.setDisplayMode(mDisplayMode
 				| AbstractDepictor.cDModeHiliteAllQueryFeatures
 				| ((mCurrentTool == JDrawToolbar.cToolMapper) ?
@@ -311,14 +307,14 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 					cleanupCoordinates(context, ((Graphics2D) g));
 					break;
 				case UPDATE_CHECK_COORDS:
-					DepictorTransformation t1 = mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, theSize.width, theSize.height), 0);
+					DepictorTransformation t1 = mDepictor.updateCoords(context, new GenericRectangle(0, 0, theSize.width, theSize.height), 0);
 					if (t1 != null && (mMode & MODE_MULTIPLE_FRAGMENTS) != 0) {
 						// in fragment mode depictor transforms mFragment[] rather than mMol
 						t1.applyTo(mMol);
 					}
 					break;
 				case UPDATE_CHECK_VIEW:
-					DepictorTransformation t2 = mDepictor.validateView(context, new Rectangle2D.Double(0, 0, theSize.width, theSize.height), 0);
+					DepictorTransformation t2 = mDepictor.validateView(context, new GenericRectangle(0, 0, theSize.width, theSize.height), 0);
 					isScaledView = (t2 != null && !t2.isVoidTransformation());
 					break;
 			}
@@ -533,7 +529,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		((Graphics2D) g).setStroke(oldStroke);
 	}
 
-	public void addDrawAreaListener(DrawAreaListener l)
+	public void addDrawAreaListener(GenericEventListener<EditorEvent> l)
 	{
 		mListeners.add(l);
 	}
@@ -814,7 +810,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			if (mol != null && mol.getAllAtoms() != 0) {
 				if (mol.getAllBonds() != 0)
 					new Depictor2D(mol).updateCoords((Graphics2D)getGraphics(),
-									new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()),
+									new GenericRectangle(0, 0, this.getWidth(), this.getHeight()),
 									AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
 
 				storeState();
@@ -1448,13 +1444,13 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				}
 				JMenu colorMenu = new JMenu("Set Atom Color");
 				addColorToMenu(colorMenu, Color.BLACK, Molecule.cAtomColorNone, atomColor == Molecule.cAtomColorNone);
-				addColorToMenu(colorMenu, AbstractDepictor.COLOR_BLUE, Molecule.cAtomColorBlue, atomColor == Molecule.cAtomColorBlue);
-				addColorToMenu(colorMenu, AbstractDepictor.COLOR_DARK_RED, Molecule.cAtomColorDarkRed, atomColor == Molecule.cAtomColorDarkRed);
-				addColorToMenu(colorMenu, AbstractDepictor.COLOR_RED, Molecule.cAtomColorRed, atomColor == Molecule.cAtomColorRed);
-				addColorToMenu(colorMenu, AbstractDepictor.COLOR_DARK_GREEN, Molecule.cAtomColorDarkGreen, atomColor == Molecule.cAtomColorDarkGreen);
-				addColorToMenu(colorMenu, AbstractDepictor.COLOR_GREEN, Molecule.cAtomColorGreen, atomColor == Molecule.cAtomColorGreen);
-				addColorToMenu(colorMenu, AbstractDepictor.COLOR_MAGENTA, Molecule.cAtomColorMagenta, atomColor == Molecule.cAtomColorMagenta);
-				addColorToMenu(colorMenu, AbstractDepictor.COLOR_ORANGE, Molecule.cAtomColorOrange, atomColor == Molecule.cAtomColorOrange);
+				addColorToMenu(colorMenu, new Color(AbstractDepictor.COLOR_BLUE), Molecule.cAtomColorBlue, atomColor == Molecule.cAtomColorBlue);
+				addColorToMenu(colorMenu, new Color(AbstractDepictor.COLOR_DARK_RED), Molecule.cAtomColorDarkRed, atomColor == Molecule.cAtomColorDarkRed);
+				addColorToMenu(colorMenu, new Color(AbstractDepictor.COLOR_RED), Molecule.cAtomColorRed, atomColor == Molecule.cAtomColorRed);
+				addColorToMenu(colorMenu, new Color(AbstractDepictor.COLOR_DARK_GREEN), Molecule.cAtomColorDarkGreen, atomColor == Molecule.cAtomColorDarkGreen);
+				addColorToMenu(colorMenu, new Color(AbstractDepictor.COLOR_GREEN), Molecule.cAtomColorGreen, atomColor == Molecule.cAtomColorGreen);
+				addColorToMenu(colorMenu, new Color(AbstractDepictor.COLOR_MAGENTA), Molecule.cAtomColorMagenta, atomColor == Molecule.cAtomColorMagenta);
+				addColorToMenu(colorMenu, new Color(AbstractDepictor.COLOR_ORANGE), Molecule.cAtomColorOrange, atomColor == Molecule.cAtomColorOrange);
 				popup.add(colorMenu);
 			}
 
@@ -2099,7 +2095,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 					}
 				}
 				if (selectionChanged) {
-					fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_SELECTION_CHANGED, true));
+					fireEvent(new EditorEvent(this, EditorEvent.WHAT_SELECTION_CHANGED, true));
 				}
 				repaint();
 				break;
@@ -2679,11 +2675,11 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 
 			mCurrentHiliteAtom = theAtom;
 			mAtomKeyStrokeBuffer.setLength(0);
-			fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_HILITE_ATOM_CHANGED, true));
+			fireEvent(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));
 		}
 		if (mCurrentHiliteBond != theBond) {
 			mCurrentHiliteBond = theBond;
-			fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_HILITE_BOND_CHANGED, true));
+			fireEvent(new EditorEvent(this, EditorEvent.WHAT_HILITE_BOND_CHANGED, true));
 		}
 		mCurrentHiliteObject = hiliteObject;
 
@@ -2927,7 +2923,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 
 		if (mDrawingObjectList != null) {
 			for (int i = mDrawingObjectList.size() - 1; i >= 0; i--) {
-				AbstractDrawingObject object = (AbstractDrawingObject) mDrawingObjectList.get(i);
+				AbstractDrawingObject object = mDrawingObjectList.get(i);
 				if (object.isSelected() && !(object instanceof ReactionArrow)) {
 					mDrawingObjectList.add(object.clone());
 				}
@@ -2937,13 +2933,13 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 
 	private void fireMoleculeChanged()
 	{
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, true));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, true));
 	}
 
-	private void fireEvent(DrawAreaEvent e)
+	private void fireEvent(EditorEvent e)
 	{
-		for (DrawAreaListener l : mListeners) {
-			l.contentChanged(e);
+		for (GenericEventListener<EditorEvent> l : mListeners) {
+			l.eventHappened(e);
 		}
 	}
 
@@ -2962,7 +2958,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 	 */
 	public void moleculeChanged(boolean userChange)
 	{
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, userChange));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, userChange));
 		update(UPDATE_SCALE_COORDS);
 	}
 
@@ -3002,7 +2998,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			}
 		}
 
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, false));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 
 		mMode = MODE_MULTIPLE_FRAGMENTS;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
@@ -3059,7 +3055,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			}
 		}
 
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, false));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 
 		mMode = MODE_MULTIPLE_FRAGMENTS | MODE_REACTION;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
@@ -3104,7 +3100,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			}
 		}
 
-		fireEvent(new DrawAreaEvent(this, DrawAreaEvent.TYPE_MOLECULE_CHANGED, false));
+		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 
 		mMode = MODE_MULTIPLE_FRAGMENTS | MODE_MARKUSH_STRUCTURE;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
@@ -3244,7 +3240,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				mMol.removeAtomMarkers();
 		}
 
-		mDepictor.updateCoords(context, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
+		mDepictor.updateCoords(context, new GenericRectangle(0, 0, getWidth(), getHeight()), maxUpdateMode());
 	}
 
 	private void cleanupMultiFragmentCoordinates(Graphics2D g, boolean selectedOnly)
@@ -3258,7 +3254,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			}
 		}
 
-		Rectangle2D.Double[] boundingRect = new Rectangle2D.Double[mFragment.length];
+		GenericRectangle[] boundingRect = new GenericRectangle[mFragment.length];
 //		float fragmentWidth = 0.0f;
 		for (int fragment = 0; fragment < mFragment.length; fragment++) {
 			if (mUpdateMode == UPDATE_INVENT_COORDS) {
@@ -3299,7 +3295,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			rawX += spacing + boundingRect[fragment].width;
 		}
 
-		mDepictor.updateCoords(new SwingDrawContext(g), new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
+		mDepictor.updateCoords(new SwingDrawContext(g), new GenericRectangle(0, 0, getWidth(), getHeight()), maxUpdateMode());
 
 		int[] fragmentAtom = new int[mFragment.length];
 		for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {

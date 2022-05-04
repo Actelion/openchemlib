@@ -2,7 +2,7 @@ package com.actelion.research.gui.generic;
 
 import info.clearthought.layout.TableLayout;
 
-public interface GenericDialog extends GenericComponent {
+public interface GenericDialog {
 	int PREFERRED = (int)TableLayout.PREFERRED;
 	int FILL = (int)TableLayout.FILL;
 
@@ -13,7 +13,8 @@ public interface GenericDialog extends GenericComponent {
 	GenericComboBox createComboBox();
 	GenericLabel createLabel(String text);
 	GenericTextField createTextField(int width, int height);
-	void showDialog();
+	void setEventConsumer(GenericEventListener<GenericActionEvent> consumer);
+	void showDialog();  // must wait until OK or Cancel is pressed
 	void disposeDialog();
 	void showMessage(String message);
 }

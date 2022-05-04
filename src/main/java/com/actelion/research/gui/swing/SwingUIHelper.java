@@ -2,11 +2,7 @@ package com.actelion.research.gui.swing;
 
 import com.actelion.research.chem.io.CompoundFileHelper;
 import com.actelion.research.gui.FileHelper;
-import com.actelion.research.gui.editor.DialogEventConsumer;
-import com.actelion.research.gui.editor.SwingEditorArea;
-import com.actelion.research.gui.generic.GenericDialog;
-import com.actelion.research.gui.generic.GenericDialogHelper;
-import com.actelion.research.gui.generic.GenericPopupMenu;
+import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.hidpi.ScaledEditorKit;
 import com.actelion.research.util.CursorHelper;
@@ -16,12 +12,12 @@ import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.io.File;
 
-public class SwingDialogHelper implements GenericDialogHelper {
-	private SwingEditorArea mDrawArea;
+public class SwingUIHelper implements GenericUIHelper {
+	private JComponent mParentComponent;
 	private JDialog mHelpDialog;
 
-	public SwingDialogHelper(SwingEditorArea drawArea) {
-		mDrawArea = drawArea;
+	public SwingUIHelper(JComponent parent) {
+		mParentComponent = parent;
 		}
 
 	@Override
@@ -30,8 +26,8 @@ public class SwingDialogHelper implements GenericDialogHelper {
 		}
 
 	@Override
-	public GenericDialog createDialog(String title, DialogEventConsumer consumer) {
-		Component c = mDrawArea;
+	public GenericDialog createDialog(String title, GenericEventListener<GenericActionEvent> consumer) {
+		Component c = mParentComponent;
 		while (!(c instanceof Frame || c instanceof Dialog))
 			c = c.getParent();
 
@@ -41,31 +37,41 @@ public class SwingDialogHelper implements GenericDialogHelper {
 		}
 
 	@Override
-	public GenericPopupMenu createPopupMenu(DialogEventConsumer consumer) {
-		return new SwingPopupMenu(mDrawArea, consumer);
+	public GenericPopupMenu createPopupMenu(GenericEventListener<GenericActionEvent> consumer) {
+		return new SwingPopupMenu(mParentComponent, consumer);
+		}
+
+	@Override
+	public GenericImage createImage(String name) {
+		return new SwingImage(name);
+		}
+
+	@Override
+	public GenericImage createImage(int width, int height) {
+		return new SwingImage(width, height);
 		}
 
 	@Override
 	public void grabFocus() {
-		mDrawArea.requestFocus();
+		mParentComponent.requestFocus();
 	}
 
 	@Override
 	public void setCursor(int cursor) {
-		mDrawArea.setCursor(CursorHelper.getCursor(cursor));
+		mParentComponent.setCursor(CursorHelper.getCursor(cursor));
 	}
 
 	@Override
 	public File openChemistryFile(boolean isReaction) {
 		return isReaction ?
-				FileHelper.getFile(mDrawArea, "Please select a reaction file",
+				FileHelper.getFile(mParentComponent, "Please select a reaction file",
 						FileHelper.cFileTypeRXN | CompoundFileHelper.cFileTypeRD)
-				: FileHelper.getFile(mDrawArea, "Please select a molecule file",
+				: FileHelper.getFile(mParentComponent, "Please select a molecule file",
 				FileHelper.cFileTypeMOL | CompoundFileHelper.cFileTypeMOL2);
 		}
 
 	@Override
-	public void showHelpDialog(String url) {
+	public void showHelpDialog(String url, String title) {
 		if (mHelpDialog == null || !mHelpDialog.isVisible()) {
 			JEditorPane helpPane = new JEditorPane();
 			helpPane.setEditorKit(HiDPIHelper.getUIScaleFactor() == 1f ? new HTMLEditorKit() : new ScaledEditorKit());
@@ -79,9 +85,9 @@ public class SwingDialogHelper implements GenericDialogHelper {
 
 			Component c = getParent();
 			if (c instanceof Frame)
-				mHelpDialog = new JDialog((Frame)c, "Idorsia Structure Editor Help", false);
+				mHelpDialog = new JDialog((Frame)c, title, false);
 			else
-				mHelpDialog = new JDialog((Dialog)c, "Idorsia Structure Editor Help", false);
+				mHelpDialog = new JDialog((Dialog)c, title, false);
 
 			mHelpDialog.setSize(HiDPIHelper.scale(520), HiDPIHelper.scale(440));
 			mHelpDialog.getContentPane().add(new JScrollPane(helpPane,
@@ -100,7 +106,7 @@ public class SwingDialogHelper implements GenericDialogHelper {
 		}
 
 	private Component getParent() {
-		Component parent = mDrawArea;
+		Component parent = mParentComponent;
 		while (!(parent instanceof Frame || parent instanceof Dialog) && parent.getParent() != null)
 			parent = parent.getParent();
 		return parent;

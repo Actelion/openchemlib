@@ -37,14 +37,24 @@ package com.actelion.research.chem.prediction;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
-
+/*
+Description: Every non-hydrogen atom is associated with an atom type from a list of about 63 distinct atom types.
+20 of these atoms types are considered contributing to non-polar surface and the rest contributes to the molecule's
+polar surface area. An atom type looks like '[CH2](-*)-*', which is a carbon atom connected to 2 hydrogen atoms
+and to two other atoms of any kind. Atom types are not only associated with polar or non-polar surfaces,
+they also have a numerical value describing the extent of which they are contributing to that kind of surface.
+For instance any atom belonging to the CH2-atom type above adds 13.76 square Angstrom to the non-polar surface of a molecule.
+After determining all atom's types, their contributions to the polar and the non-polar surface of the molecule
+are added up. Then the relative polar surface area is calculated as the total of the polar surface devided by
+the sum of polar and non-polar surface.
+ */
 public class TotalSurfaceAreaPredictor extends PolarSurfaceAreaPredictor {
 	public static final float cPSAUnknown = -1.0f;
 
 	public static final String[] cNonPolarAtomTypeName = {
 		"[B](-*)(-*)-*",
 		"[BH2]-*",
-		"[B-](-*)(-*)(-*)-*",	//x
+		"[B-](-*)(-*)(-*)-*",
 		"[C](-*)(-*)(-*)-*",
 		"[C](-*)(-*)=*",
 		"[C](=*)=*",

@@ -1,6 +1,6 @@
 package com.actelion.research.gui.swing;
 
-import com.actelion.research.gui.editor.DialogEvent;
+import com.actelion.research.gui.generic.GenericActionEvent;
 import com.actelion.research.gui.generic.GenericCheckBox;
 
 import javax.swing.*;
@@ -28,7 +28,6 @@ public class SwingCheckBox extends SwingComponent implements GenericCheckBox,Act
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (getEventConsumer() != null)
-			getEventConsumer().dialogEventHappened(new DialogEvent(this, DialogEvent.WHAT_STATE_TOGGLED, ((JCheckBox)e.getSource()).isSelected() ? 1 : 0));
+		fireEvent(new GenericActionEvent(this, GenericActionEvent.WHAT_STATE_TOGGLED, ((JCheckBox)e.getSource()).isSelected() ? 1 : 0));
 	}
 }

@@ -34,9 +34,9 @@
 package com.actelion.research.chem;
 
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.gui.generic.GenericRectangle;
 
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 
 
 public class ChemistryHelper
@@ -65,9 +65,9 @@ public class ChemistryHelper
             return REACTION_TYPE_NORMAL;
     }
 
-    public static Rectangle2D.Double getBoundingRect(Reaction r, boolean includearrows)
+    public static GenericRectangle getBoundingRect(Reaction r, boolean includearrows)
     {
-        Rectangle2D.Double res = null;
+        GenericRectangle res = null;
         if (r == null)
             return null;
         int nr = r.getReactants();
@@ -79,7 +79,7 @@ public class ChemistryHelper
         for (int i = 0; i < m; i++) {
             ExtendedMolecule mol = r.getMolecule(i);
             int nb = mol.getAllBonds();
-            Rectangle2D.Double d = getBoundingRect(mol);
+            GenericRectangle d = getBoundingRect(mol);
 //			System.out.println("getBoundingRect " + i + "=" + d);
             if (res == null) {
                 if (d != null && nb > 0) {
@@ -90,7 +90,7 @@ public class ChemistryHelper
                 }
             } else {
                 if (d != null && nb > 0) {
-                    res = (Rectangle2D.Double) res.createUnion(d);
+                    res = res.union(d);
                     width += d.getWidth();
                 } else {
 //					System.out.println("Empty bounding rect for molecule " + i);
@@ -99,17 +99,17 @@ public class ChemistryHelper
         }
         if (includearrows && nr == 0 && m > 0) {
             avgwidth = width / m;
-            res = new Rectangle2D.Double(res.getX() - avgwidth, res.getY(), res.getWidth() + avgwidth, res.getHeight());
+            res = new GenericRectangle(res.getX() - avgwidth, res.getY(), res.getWidth() + avgwidth, res.getHeight());
         } else if (includearrows && np == 0 && m > 0) {
             avgwidth = width / m;
-            res = new Rectangle2D.Double(res.getX(), res.getY(), res.getWidth() + avgwidth, res.getHeight());
+            res = new GenericRectangle(res.getX(), res.getY(), res.getWidth() + avgwidth, res.getHeight());
         }
 //		System.out.println("Reaction av bnd length: " + width + " getBoundingBox " + res);
 
         return res;
     }
 
-    public static Rectangle2D.Double getBoundingRect(ExtendedMolecule m)
+    public static GenericRectangle getBoundingRect(ExtendedMolecule m)
     {
         double xmax = Double.MIN_VALUE;
         double ymax = Double.MIN_VALUE;
@@ -130,7 +130,7 @@ public class ChemistryHelper
             ymin = Math.min(ymin, m.getAtomY(i));
         }
 
-        return (na > 0) ? new Rectangle2D.Double(xmin, ymin, Math.max(xmax - xmin, bl), Math.max(ymax - ymin, bl)) : null;
+        return (na > 0) ? new GenericRectangle(xmin, ymin, Math.max(xmax - xmin, bl), Math.max(ymax - ymin, bl)) : null;
     }
 
 
@@ -165,17 +165,17 @@ public class ChemistryHelper
         }
     }
 
-    public static Rectangle2D.Double getReactantsBoundingRect(Reaction r)
+    public static GenericRectangle getReactantsBoundingRect(Reaction r)
     {
         if (r == null)
             throw new NullPointerException("Cannot pass null reaction");
         int rn = r.getReactants();
-        Rectangle2D.Double rc = null;
+        GenericRectangle rc = null;
         for (int i = 0; i < rn; i++) {
-            Rectangle2D.Double rt = getBoundingRect(r.getReactant(i));
+            GenericRectangle rt = getBoundingRect(r.getReactant(i));
             if (rc != null && rt != null) {
-                Rectangle2D tmp = rc.createUnion(rt);
-                rc = new Rectangle2D.Double(tmp.getX(), tmp.getY(), tmp.getWidth(), tmp.getHeight());
+                GenericRectangle tmp = rc.union(rt);
+                rc = new GenericRectangle(tmp.getX(), tmp.getY(), tmp.getWidth(), tmp.getHeight());
             } else
                 rc = rt;
         }
@@ -183,42 +183,42 @@ public class ChemistryHelper
     }
 
 
-    public static Rectangle2D.Double getArrowBoundingRect(Reaction r)
+    public static GenericRectangle getArrowBoundingRect(Reaction r)
     {
-        Rectangle2D rr = getReactantsBoundingRect(r);
-        Rectangle2D rp = getProductsBoundingRect(r);
+        GenericRectangle rr = getReactantsBoundingRect(r);
+        GenericRectangle rp = getProductsBoundingRect(r);
         if (rr != null && rp != null) {
-            Rectangle2D union = rr.createUnion(rp);
+            GenericRectangle union = rr.union(rp);
             double y = union.getHeight() / 2 + union.getY();
-            double rx = rr.getMaxX();
-            double px = rp.getMinX();
-            return new Rectangle2D.Double(rx < px ? rx : px, y, Math.abs(px - rx), 0);
+            double rx = rr.x+rr.width;
+            double px = rp.x;
+            return new GenericRectangle(rx < px ? rx : px, y, Math.abs(px - rx), 0);
         } else if (rr != null) {
             double y = rr.getHeight() / 2 + rr.getY();
-            double rx = rr.getMaxX();
+            double rx = rr.x+rr.width;
             double width = rr.getWidth();
-            return new Rectangle2D.Double(rx, y, width, 0);
+            return new GenericRectangle(rx, y, width, 0);
 
         } else if (rp != null) {
             double y = rp.getHeight() / 2 + rp.getY();
             double width = 0;
-            double rx = rp.getMinX();
-            return new Rectangle2D.Double(rx, y, width, 0);
+            double rx = rp.x;
+            return new GenericRectangle(rx, y, width, 0);
         } else {
-            return new Rectangle2D.Double(0, 0, 0, 0);
+            return new GenericRectangle(0, 0, 0, 0);
         }
     }
 
-    public static Rectangle2D.Double getDiffRect(Rectangle2D rr, Rectangle2D rp)
+    public static GenericRectangle getDiffRect(GenericRectangle rr, GenericRectangle rp)
     {
         if (rr != null && rp != null) {
-            Rectangle2D union = rr.createUnion(rp);
-            double y = union.getMinY();
-            double rx = rr.getMaxX();
-            double px = rp.getMinX();
-            double ry = union.getMinY();
-            double py = union.getMaxY();
-            Rectangle2D.Double res = new Rectangle2D.Double(
+            GenericRectangle union = rr.union(rp);
+            double y = union.y;
+            double rx = rr.x+rr.width;
+            double px = rp.x;
+            double ry = union.y;
+            double py = union.y+union.height;
+            GenericRectangle res = new GenericRectangle(
                 rx < px ? rx : px,
                 ry < py ? ry : py,
                 Math.abs(px - rx),
@@ -232,23 +232,23 @@ public class ChemistryHelper
         }
     }
 
-    private static Rectangle2D.Double scaleTo(Rectangle2D.Double src, double width, double height)
+    private static GenericRectangle scaleTo(GenericRectangle src, double width, double height)
     {
         double x = (src.getWidth() - width) / 2 + src.getX();
         double y = (src.getHeight() - height) / 2 + src.getY();
-        return new Rectangle2D.Double(x, y, width, height);
+        return new GenericRectangle(x, y, width, height);
     }
 
-    public static Rectangle2D getProductsBoundingRect(Reaction r)
+    public static GenericRectangle getProductsBoundingRect(Reaction r)
     {
         if (r == null)
             throw new NullPointerException("Cannot pass null reaction");
         int rn = r.getProducts();
-        Rectangle2D rc = null;
+        GenericRectangle rc = null;
         for (int i = 0; i < rn; i++) {
-            Rectangle2D rt = getBoundingRect(r.getProduct(i));
+            GenericRectangle rt = getBoundingRect(r.getProduct(i));
             if (rc != null && rt != null)
-                rc = rc.createUnion(rt);
+                rc = rc.union(rt);
             else
                 rc = rt;
         }
@@ -284,7 +284,7 @@ public class ChemistryHelper
 /*
     public static void scaleInto(Reaction reaction, double x, double y, double w, double h)
     {
-        Rectangle2D bounds = getBoundingRect(reaction, false);
+        GenericRectangle bounds = getBoundingRect(reaction, false);
         if (bounds == null)
             return;
 
@@ -307,10 +307,10 @@ public class ChemistryHelper
 */
     public static void scaleIntoF(Reaction reaction, double x, double y, double width, double height, double arrowSize)
     {
-        Rectangle2D rr = getBoundingRect(reaction,true);
+        GenericRectangle rr = getBoundingRect(reaction,true);
         if (rr != null) {
-            double cx = -rr.getMinX();
-            double cy = -rr.getMinY();
+            double cx = -rr.x;
+            double cy = -rr.y;
             ChemistryHelper.transformReaction(reaction, cx, cy, 1);
             rr = ChemistryHelper.getBoundingRect(reaction, true);
 
@@ -343,7 +343,7 @@ public class ChemistryHelper
                 ExtendedMolecule m = reaction.getMolecule(i);
                 if (m.getAllAtoms() > 1)
                 {
-                    Rectangle2D.Double r = ChemistryHelper.getBoundingRect(m);
+                    GenericRectangle r = ChemistryHelper.getBoundingRect(m);
                     if (r != null) {
                         //                    System.out.printf("MoleculeID %s bounds: %s\n",System.identityHashCode(m),r);
                         sumHeight += r.getHeight();
@@ -373,23 +373,23 @@ public class ChemistryHelper
 //                scale /= 4;
             {
 
-                Rectangle2D rb = getBoundingRect(reactants);
+                GenericRectangle rb = getBoundingRect(reactants);
 //                System.out.printf("W/h before scaling prods %s\n",rb);
                 transformMolecules(reactants, 0, 0, scale);
                 rb = getBoundingRect(reactants);
-                double dx = x - rb.getMinX() + (w - rb.getWidth()) / 2;
-                double dy = y - rb.getMinY() + (h - rb.getHeight()) / 2;
+                double dx = x - rb.x + (w - rb.getWidth()) / 2;
+                double dy = y - rb.y + (h - rb.getHeight()) / 2;
 //                System.out.printf("W/h after scaling reactants %s,%s $s\n",dx,dy,rb);
                 transformMolecules(reactants, dx, dy, 1);
             }
 
             {
-                Rectangle2D pb = getBoundingRect(products);
+                GenericRectangle pb = getBoundingRect(products);
 //                System.out.printf("W/h before scaling prods %s\n",pb);
                 transformMolecules(products, 0, 0, scale);
                 pb = getBoundingRect(products);
-                double dx = x + w + arrowSize - pb.getMinX() + (w - pb.getWidth()) / 2;
-                double dy = y - pb.getMinY() + (h - pb.getHeight()) / 2;
+                double dx = x + w + arrowSize - pb.x + (w - pb.getWidth()) / 2;
+                double dy = y - pb.y + (h - pb.getHeight()) / 2;
 //                System.out.printf("W/h after scaling prods %s,%s %s\n",dx,dy,pb);
                 transformMolecules(products, dx, dy, 1);
             }
@@ -404,8 +404,8 @@ public class ChemistryHelper
             ExtendedMolecule[] reactants = getReactants(reaction);
             ExtendedMolecule[] products = getProducts(reaction);
 
-            Rectangle2D rb = getBoundingRect(reactants);
-            Rectangle2D pb = getBoundingRect(products);
+            GenericRectangle rb = getBoundingRect(reactants);
+            GenericRectangle pb = getBoundingRect(products);
 
             System.out.printf("Reactants bounds %s %s %s\n",width,rb.getWidth(),reactants.length);
             System.out.printf("Product bounds %s %s\n",height,pb.getHeight());
@@ -437,16 +437,16 @@ public class ChemistryHelper
 
                 transformMolecules(reactants, 0, 0, scale);
                 rb = getBoundingRect(reactants);
-                double dx = x - rb.getMinX() + (w - rb.getWidth()) / 2;
-                double dy = y - rb.getMinY() + (h - rb.getHeight()) / 2;
+                double dx = x - rb.x + (w - rb.getWidth()) / 2;
+                double dy = y - rb.y + (h - rb.getHeight()) / 2;
                 transformMolecules(reactants, dx, dy, 1);
             }
 
             {
                 transformMolecules(products, 0, 0, scale);
                 pb = getBoundingRect(products);
-                double dx = x + w + arrowSize - pb.getMinX() + (w - pb.getWidth()) / 2;
-                double dy = y - pb.getMinY() + (h - pb.getHeight()) / 2;
+                double dx = x + w + arrowSize - pb.x + (w - pb.getWidth()) / 2;
+                double dy = y - pb.y + (h - pb.getHeight()) / 2;
                 transformMolecules(products, dx, dy, 1);
             }
 
@@ -472,24 +472,24 @@ public class ChemistryHelper
         return ret;
     }
 
-    public static Rectangle2D getBoundingRect(ExtendedMolecule[] mols)
+    public static GenericRectangle getBoundingRect(ExtendedMolecule[] mols)
     {
         if (mols == null || mols.length == 0) {
-            return new Rectangle2D.Double(0,0,0,0);
+            return new GenericRectangle(0,0,0,0);
         }
 
-        Rectangle2D r = getBoundingRect(mols[0]);
+        GenericRectangle r = getBoundingRect(mols[0]);
         for (int i = 1; i < mols.length; i++) {
-            Rectangle2D t = getBoundingRect(mols[i]);
+            GenericRectangle t = getBoundingRect(mols[i]);
             if (t != null) {
                 if (r == null)
                     r = t;
                 else
-                    r = r.createUnion(getBoundingRect(mols[i]));
+                    r = r.union(getBoundingRect(mols[i]));
             }
         }
         if (r == null)
-            r = new Rectangle2D.Double(0,0,0,0);
+            r = new GenericRectangle(0,0,0,0);
         return r;
     }
 
@@ -506,13 +506,13 @@ public class ChemistryHelper
 
                 for (int fragment=0; fragment<len; fragment++) {
                     ExtendedMolecule m = rxn.getMolecule(fragment);
-                    java.awt.geom.Rectangle2D.Double rc = ChemistryHelper.getBoundingRect(m);
+                    GenericRectangle rc = ChemistryHelper.getBoundingRect(m);
                     if (rc != null) {
                         cx += rc.width;
                         cy += rc.height;
                     }
                 }
-                Rectangle2D rxnBounding = ChemistryHelper.getArrowBoundingRect(rxn);
+                GenericRectangle rxnBounding = ChemistryHelper.getArrowBoundingRect(rxn);
 
                 int plus = Math.max(0,len-2);
                 double plusWidth = size.width / (len + plus + 1) / 2;
@@ -530,7 +530,7 @@ public class ChemistryHelper
                     // make the same scale
                     ChemistryHelper.transformMolecule(m,0,0,scale);
 
-                    java.awt.geom.Rectangle2D.Double rectBefore = ChemistryHelper.getBoundingRect(m);
+                    GenericRectangle rectBefore = ChemistryHelper.getBoundingRect(m);
                     // calculate the offset
                     if (rectBefore != null && rb != null) {
                         double offsety = (rb.height - rectBefore.height) / 2;
@@ -538,7 +538,7 @@ public class ChemistryHelper
                         double moveY =  -rectBefore.y + offsety;
 
                         ChemistryHelper.transformMolecule(m,moveX,moveY,1);
-                        java.awt.geom.Rectangle2D.Double db = ChemistryHelper.getBoundingRect(m);
+                        GenericRectangle db = ChemistryHelper.getBoundingRect(m);
 
                         if (fragment == rxn.getReactants()-1) {
                             offsetx += (db.width + plusWidth * 2);

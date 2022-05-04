@@ -44,6 +44,7 @@ import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.dnd.ReactionDropAdapter;
 import com.actelion.research.gui.dnd.ReactionTransferable;
 import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
@@ -95,7 +96,7 @@ public class JChemistryView extends JComponent
 	private Dimension           mSize;
 	private int					mChemistryType,mUpdateMode,mDisplayMode,mDragType,mCopyOrDragActions,mPasteOrDropActions,mPasteAndDropOptions;
 	private boolean				mIsDragging,mAllowDropOrPasteWhenDisabled,mIsEditable,mShowBorder,mOpaqueBackground;
-	private Color				mFragmentNoColor;
+	private int 				mFragmentNoColor;
 	private MoleculeDropAdapter mMoleculeDropAdapter = null;
 	private ReactionDropAdapter mReactionDropAdapter = null;
 	private String              mWarningMessage;
@@ -224,11 +225,14 @@ public class JChemistryView extends JComponent
 			mIsEditable = b;
 		}
 
-	public void setFragmentNoColor(Color c) {
-	        // use setFragmentNoColor(null) if you don't want fragment numbers to be shown
-		mFragmentNoColor = c;
+	/**
+	 * Use setFragmentNoColor(0) if you don't want fragment numbers to be shown
+	 * @param argb
+	 */
+	public void setFragmentNoColor(int argb) {
+		mFragmentNoColor = argb;
 		if (mDepictor != null)
-			mDepictor.setFragmentNoColor(c);
+			mDepictor.setFragmentNoColor(argb);
 		}
 
 	public void setDisplayMode(int displayMode) {
@@ -257,11 +261,11 @@ public class JChemistryView extends JComponent
 		 || mSize.width != theSize.width
 		 || mSize.height != theSize.height
 		 || mUpdateMode == UPDATE_SCALE_COORDS) {
-			mDepictor.validateView(context, new Rectangle2D.Double(insets.left, insets.top, theSize.width, theSize.height),
+			mDepictor.validateView(context, new GenericRectangle(insets.left, insets.top, theSize.width, theSize.height),
 									AbstractDepictor.cModeInflateToMaxAVBL);
 			}
 		else if (mUpdateMode == UPDATE_CHECK_COORDS) {
-			mDepictor.validateView(context, new Rectangle2D.Double(insets.left, insets.top, theSize.width, theSize.height), 0);
+			mDepictor.validateView(context, new GenericRectangle(insets.left, insets.top, theSize.width, theSize.height), 0);
 			}
 
 		mSize = theSize;
@@ -282,7 +286,7 @@ public class JChemistryView extends JComponent
 		if (mShowBorder && mDragType != DRAG_TYPE_NONE) {
 			Color color = ColorHelper.perceivedBrightness(bg) < 0.5f ? ColorHelper.brighter(bg, 0.85f) : ColorHelper.darker(bg, 0.85f);
 			g.setColor(color);
-			Rectangle2D.Double rect = (mDragType == DRAG_TYPE_REACTION) ? getChemistryBounds() : getMoleculeBounds(mDragType);
+			GenericRectangle rect = (mDragType == DRAG_TYPE_REACTION) ? getChemistryBounds() : getMoleculeBounds(mDragType);
 			int arc = (int)Math.min(rect.height/4, Math.min(rect.width/4, HiDPIHelper.scale(10)));
 			g.fillRoundRect((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height, arc, arc);
 			if (mDragType == DRAG_TYPE_REACTION) {
@@ -320,23 +324,23 @@ public class JChemistryView extends JComponent
 	 * @param i
 	 * @return bounds or null, if i is out of range
 	 */
-	public Rectangle2D.Double getMoleculeBounds(int i) {
+	public GenericRectangle getMoleculeBounds(int i) {
 		return mDepictor == null || i >= mDepictor.getMoleculeCount() ?
 				null : mDepictor.getMoleculeDepictor(i).getBoundingRect();
 		}
 
-	public Rectangle2D.Double getChemistryBounds() {
+	public GenericRectangle getChemistryBounds() {
 		if (mDepictor == null || mDepictor.getMoleculeCount() == 0)
 			return null;
 
-		Rectangle2D.Double rect = null;
+		GenericRectangle rect = null;
 		for (int i=0; i<mDepictor.getMoleculeCount(); i++) {
-			Rectangle2D.Double mrect = mDepictor.getMoleculeDepictor(i).getBoundingRect();
+			GenericRectangle mrect = mDepictor.getMoleculeDepictor(i).getBoundingRect();
 			if (mrect != null) {
 				if (rect == null)
 					rect = mrect;
 				else
-					rect = (Rectangle2D.Double)rect.createUnion(mrect);
+					rect = rect.union(mrect);
 				}
 			}
 		return rect;
@@ -544,7 +548,7 @@ public class JChemistryView extends JComponent
 				CursorHelper.cPointerCursor : CursorHelper.cHandCursor));
 		}
 
-	private Rectangle shrink(Rectangle2D.Double rect) {
+	private Rectangle shrink(GenericRectangle rect) {
 		if (rect == null)
 			return null;
 

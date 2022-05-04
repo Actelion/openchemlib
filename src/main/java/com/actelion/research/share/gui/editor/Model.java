@@ -38,6 +38,7 @@ import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.Arrow;
 import com.actelion.research.share.gui.editor.chem.AbstractExtendedDepictor;
 import com.actelion.research.share.gui.editor.chem.IDrawingObject;
@@ -47,7 +48,6 @@ import com.actelion.research.share.gui.editor.listeners.IValidationListener;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -369,7 +369,7 @@ public abstract class Model
         for (int i = 0; i < rxn.getMolecules(); i++) {
             isFragment |= rxn.getMolecule(i).isFragment();
             StereoMolecule molecule = rxn.getMolecule(i);
-            Rectangle2D.Double boundingRect = ChemistryHelper.getBoundingRect(molecule);
+            GenericRectangle boundingRect = ChemistryHelper.getBoundingRect(molecule);
 //            if(i < mReactantCount) {
 //                arrowPos = new Point2D.Double(boundingRect.getX()+boundingRect.getWidth(),boundingRect.getY()+boundingRect.getHeight()/2);
 //            }
@@ -520,7 +520,7 @@ public abstract class Model
 //			mMol.setStereoBondsFromParity(); not needed anymore
         }
 
-        DepictorTransformation dt = depictor.simpleValidateView(new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()), AbstractDepictor.cModeInflateToMaxAVBL);
+        DepictorTransformation dt = depictor.simpleValidateView(new GenericRectangle(0, 0, this.getWidth(), this.getHeight()), AbstractDepictor.cModeInflateToMaxAVBL);
         if (dt != null)
             dt.applyTo(mMol);
 
@@ -628,7 +628,7 @@ public abstract class Model
             }
         }
 
-        Rectangle2D.Double[] boundingRect = new Rectangle2D.Double[mFragment.length];
+        GenericRectangle[] boundingRect = new GenericRectangle[mFragment.length];
         //		float fragmentWidth = 0.0f;
         for (int fragment = 0; fragment < mFragment.length; fragment++) {
             if (invent) {
@@ -671,7 +671,7 @@ public abstract class Model
             rawX += spacing + boundingRect[fragment].width;
         }
 
-        depictor.updateCoords(null, new Rectangle2D.Double(0, 0, getWidth(), getHeight()), maxUpdateMode());
+        depictor.updateCoords(null, new GenericRectangle(0, 0, getWidth(), getHeight()), maxUpdateMode());
 
         int[] fragmentAtom = new int[mFragment.length];
         for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
@@ -1011,7 +1011,7 @@ public abstract class Model
             if (scale != 1 && scale > 0) {
 //                System.out.printf("Scale %f\n",scale);
                 AbstractDepictor d = createDepictor(mMol);
-                DepictorTransformation dt = d.simpleValidateView(new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()),
+                DepictorTransformation dt = d.simpleValidateView(new GenericRectangle(0, 0, this.getWidth(), this.getHeight()),
                     AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
                 if (dt != null)
                     dt.applyTo(mMol);
@@ -1581,7 +1581,7 @@ public abstract class Model
     private void scaleIntoView(StereoMolecule mol, int avbl,double cx,double cy)
     {
         AbstractDepictor d = createDepictor(mol);
-        DepictorTransformation dt = d.simpleValidateView(new Rectangle2D.Double(0, 0, this.getWidth(), this.getHeight()), AbstractDepictor.cModeInflateToMaxAVBL + avbl);
+        DepictorTransformation dt = d.simpleValidateView(new GenericRectangle(0, 0, this.getWidth(), this.getHeight()), AbstractDepictor.cModeInflateToMaxAVBL + avbl);
 
         if (dt != null) {
             dt.move(cx,cy);

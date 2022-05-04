@@ -5,9 +5,10 @@ import com.actelion.research.chem.Depictor2D;
 import com.actelion.research.chem.ExtendedDepictor;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.generic.GenericDepictor;
 import com.actelion.research.gui.generic.GenericDrawContext;
-import com.actelion.research.gui.LookAndFeelHelper;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
@@ -15,7 +16,6 @@ import com.actelion.research.util.ColorHelper;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 
 public class ChemistryRenderPanel extends JPanel {
     static final long serialVersionUID = 0x20070312;
@@ -89,7 +89,7 @@ public class ChemistryRenderPanel extends JPanel {
                 	d.setOverruleColor(mOverruleForeground, getBackground());
                 int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
                 SwingDrawContext context = new SwingDrawContext((Graphics2D)g);
-                d.validateView(context, new Rectangle2D.Double(r.x, r.y, r.width, r.height), AbstractDepictor.cModeInflateToMaxAVBL | avbl);
+                d.validateView(context, new GenericRectangle(r.x, r.y, r.width, r.height), AbstractDepictor.cModeInflateToMaxAVBL | avbl);
                 d.paint(context);
                 }
             if (mChemistry instanceof Reaction) {
@@ -100,7 +100,7 @@ public class ChemistryRenderPanel extends JPanel {
                 	d.setOverruleColor(mOverruleForeground, getBackground());
                 int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
                 GenericDrawContext context = new SwingDrawContext((Graphics2D)g);
-                d.validateView(context, new Rectangle2D.Double(r.x, r.y, r.width, r.height), AbstractDepictor.cModeInflateToMaxAVBL | avbl);
+                d.validateView(context, new GenericRectangle(r.x, r.y, r.width, r.height), AbstractDepictor.cModeInflateToMaxAVBL | avbl);
                 d.paint(context);
                 }
             }

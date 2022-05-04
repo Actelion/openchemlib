@@ -35,9 +35,8 @@ package com.actelion.research.share.gui.editor.chem;
 
 
 import com.actelion.research.chem.DepictorTransformation;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
-
-import java.awt.geom.Rectangle2D;
 
 /**
  * Project:
@@ -47,9 +46,9 @@ import java.awt.geom.Rectangle2D;
  */
 public interface IDepictor<T>
 {
-    DepictorTransformation updateCoords(IDrawContext<T> g, Rectangle2D.Double aFloat, int cModeInflateToMaxAVBL);
+    DepictorTransformation updateCoords(IDrawContext<T> g, GenericRectangle aFloat, int cModeInflateToMaxAVBL);
 
-    DepictorTransformation simpleValidateView(Rectangle2D.Double viewRect, int mode);
+    DepictorTransformation simpleValidateView(GenericRectangle viewRect, int mode);
 
     void setDisplayMode(int displayMode);
 

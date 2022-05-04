@@ -51,17 +51,15 @@ public class Depictor extends AbstractDepictor<Graphics> {
 		super(mol);
 		}
 
-
 	public Depictor(StereoMolecule mol, int displayMode) {
 		super(mol, displayMode);
 		}
 
-	
 	public void setMaximumTextSize(int maxTextSize) {
 		mMaxTextSize = maxTextSize;
 		}
 
-
+	@Override
 	protected void init() {
 		super.init();
 		mFonts = new ArrayList<>();
@@ -70,12 +68,14 @@ public class Depictor extends AbstractDepictor<Graphics> {
 		}
 
 
+	@Override
 	protected void drawBlackLine(DepictorLine theLine) {
 		mContext.drawLine((int)Math.round(theLine.x1),(int)Math.round(theLine.y1),
 						  (int)Math.round(theLine.x2),(int)Math.round(theLine.y2));
 		}
 
 
+	@Override
     protected void drawDottedLine(DepictorLine theLine) {
         Stroke stroke = ((Graphics2D)mContext).getStroke();
         ((Graphics2D)mContext).setStroke(new BasicStroke(mLineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
@@ -85,12 +85,14 @@ public class Depictor extends AbstractDepictor<Graphics> {
         }
 
 
+	@Override
     public void drawString(String theString,double x, double y) {
 	    double strWidth = getStringWidth(theString);
 		mContext.drawString(theString,(int)Math.round(x-strWidth/2),(int)Math.round(y+1+mpTextSize/3));
 		}
 
 
+	@Override
 	protected void drawPolygon(GenericPolygon p) {
 		int[] px = new int[p.getSize()];
 		int[] py = new int[p.getSize()];
@@ -103,6 +105,7 @@ public class Depictor extends AbstractDepictor<Graphics> {
 		}
 
 
+	@Override
 	protected void fillCircle(double x, double y, double d) {
 	    mContext.fillOval((int)Math.round(x), (int)Math.round(y), (int)Math.round(d), (int)Math.round(d));
 		}
@@ -126,13 +129,13 @@ public class Depictor extends AbstractDepictor<Graphics> {
 		}	*/
 
 
+	@Override
 	protected double getStringWidth(String theString) {
 		return mContext.getFontMetrics().stringWidth(theString);
 		}
 
-
-	public void setTextSize(int theSize)
-    {
+	@Override
+	public void setTextSize(int theSize) {
         mpTextSize = Math.min(theSize, mMaxTextSize);
         if (mContext != null) {
             if (currentFont == null || currentFont.getSize() != mpTextSize) {
@@ -151,16 +154,17 @@ public class Depictor extends AbstractDepictor<Graphics> {
         }
     }
 
+	@Override
 	public int getTextSize() {
 	    return mpTextSize;
 	    }
 
-
+	@Override
 	protected double getLineWidth() {
 		return mLineWidth;
 		}
 
-
+	@Override
 	protected void setLineWidth(double lineWidth) {
 		if (lineWidth <= 1.5f)
 			lineWidth = 1.0f;
@@ -170,8 +174,8 @@ public class Depictor extends AbstractDepictor<Graphics> {
 			}
 		}
 
-
-	public void setColor(Color theColor) {
-	    mContext.setColor(theColor);
+	@Override
+	public void setRGB(int rgb) {
+	    mContext.setColor(new Color(rgb));
 		}
 	}

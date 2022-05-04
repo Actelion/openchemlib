@@ -38,13 +38,13 @@ import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.ExtendedDepictor;
 import com.actelion.research.chem.dnd.ChemistryFlavors;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.swing.SwingDrawContext;
 
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -188,7 +188,7 @@ public abstract class ReactionDragAdapter implements DragSourceListener /*,DragS
 					((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 					((Graphics2D)g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 					SwingDrawContext context = new SwingDrawContext((Graphics2D)g);
-					depict.validateView(context, new Rectangle2D.Double(0, 0, width, height), AbstractDepictor.cModeInflateToMaxAVBL);
+					depict.validateView(context, new GenericRectangle(0, 0, width, height), AbstractDepictor.cModeInflateToMaxAVBL);
 					depict.paint(context);
 					return img;
 				}

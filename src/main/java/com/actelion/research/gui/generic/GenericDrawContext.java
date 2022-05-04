@@ -1,14 +1,10 @@
 package com.actelion.research.gui.generic;
 
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
-
 public interface GenericDrawContext {
-	// for the time being we use the awt COlor object. For better compatibility with JS and Android, we might use ARGB int instead
 	float getLineWidth();
 	void setLineWidth(float lineWidth);
-	Color getColor();
-	void setColor(Color color);
+	int getRGB();
+	void setRGB(int rgb);
 	int getFontSize();
 	void setFont(int size, boolean isBold, boolean isItalic);
 	void drawLine(double x1, double y1, double x2, double y2);
@@ -21,7 +17,13 @@ public interface GenericDrawContext {
 	void fillPolygon(GenericPolygon p);
 	void drawString(double x, double y, String s);
 	void drawCenteredString(double x, double y, String s);
-	void drawImage(double x, double y, Image image);
-	void setClip(double x, double y, double w, double h);
-	Rectangle2D getBounds(String s);
+	void drawImage(GenericImage image, double x, double y);
+	void drawImage(GenericImage image, double sx, double sy, double dx, double dy, double w, double h);
+//	void setClip(double x, double y, double w, double h);
+	GenericRectangle getBounds(String s);
+	boolean isDarkBackground();
+	int getForegroundRGB();
+	int getBackgroundRGB();
+	int getSelectionBackgroundRGB();
+	GenericImage createARGBImage(int width, int height);
 }

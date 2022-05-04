@@ -5,7 +5,7 @@ import com.actelion.research.gui.clipboard.ClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.generic.GenericCanvas;
 import com.actelion.research.gui.generic.GenericDrawContext;
-import com.actelion.research.gui.swing.SwingDialogHelper;
+import com.actelion.research.gui.swing.SwingUIHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.gui.swing.SwingKeyHandler;
 import com.actelion.research.gui.swing.SwingMouseHandler;
@@ -25,16 +25,16 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 	public SwingEditorArea(StereoMolecule mol, int mode) {
 		setFocusable(true);
 
-		mDrawArea = new GenericDrawArea(mol, mode, new SwingDialogHelper(this), this);
+		mDrawArea = new GenericDrawArea(mol, mode, new SwingUIHelper(this), this);
 
 		initializeDragAndDrop(ALLOWED_DROP_ACTIONS);
 
-		SwingMouseHandler mouseHandler = new SwingMouseHandler();
+		SwingMouseHandler mouseHandler = new SwingMouseHandler(mDrawArea);
 		addMouseListener(mouseHandler);
 		addMouseMotionListener(mouseHandler);
 		mouseHandler.addListener(mDrawArea);
 
-		mKeyHandler = new SwingKeyHandler();
+		mKeyHandler = new SwingKeyHandler(mDrawArea);
 		addKeyListener(mKeyHandler);
 		mKeyHandler.addListener(mDrawArea);
 

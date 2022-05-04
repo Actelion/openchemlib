@@ -34,10 +34,9 @@
 package com.actelion.research.share.gui;
 
 import com.actelion.research.chem.DepictorTransformation;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.editor.chem.IDrawingObject;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
-
-import java.awt.geom.Rectangle2D;
 
 public class Arrow implements IDrawingObject
 {
@@ -61,13 +60,13 @@ public class Arrow implements IDrawingObject
       */
 
 
-    protected Rectangle2D rect = null;
+    protected GenericRectangle rect = null;
     private boolean selected = false;
 
     public Arrow(DrawConfig cfg, double x, double y, double w, double h)
     {
         gfxConfig = cfg;
-        rect = new Rectangle2D.Double(x, y, w, h);
+        rect = new GenericRectangle(x, y, w, h);
     }
 
 
@@ -84,30 +83,30 @@ public class Arrow implements IDrawingObject
 
     @Override
     public void move(float dx, float dy) {
-        rect.setRect(rect.getX()+dx,rect.getY()+dy,rect.getWidth(),rect.getHeight());
+        rect.set(rect.getX()+dx,rect.getY()+dy,rect.getWidth(),rect.getHeight());
     }
 
     @Override
-    public Rectangle2D getBoundingRect() {
+    public GenericRectangle getBoundingRect() {
         return rect;
     }
 
     @Override
     public void setRect(float x, float y, float w, float h) {
-        rect = new Rectangle2D.Double(x, y, w, h);
+        rect = new GenericRectangle(x, y, w, h);
     }
 
     @Override
     public void scale(float scaling) {
-        rect.setRect(rect.getX()*scaling,rect.getY()*scaling,rect.getWidth()*scaling,rect.getHeight()*scaling);
+        rect.set(rect.getX()*scaling,rect.getY()*scaling,rect.getWidth()*scaling,rect.getHeight()*scaling);
     }
 
     @Override
     public void draw(IDrawContext ctx,DepictorTransformation t)
     {
 
-        double dx =        t == null ? (rect.getMinX()) :   t.transformX((float)rect.getMinX()) ;
-        double dy =        t == null ? (rect.getMinY()) :   t.transformY((float)rect.getMinY()) ;
+        double dx =        t == null ? (rect.getX()) :   t.transformX((float)rect.getX()) ;
+        double dy =        t == null ? (rect.getY()) :   t.transformY((float)rect.getY()) ;
         double dwidth =    t == null ? rect.getWidth() :    t.transformX((float)rect.getWidth());
         double dheight =   t == null ? rect.getHeight() :   t.transformY((float)rect.getHeight()) ;
         double arrowEndX = dx + dwidth;

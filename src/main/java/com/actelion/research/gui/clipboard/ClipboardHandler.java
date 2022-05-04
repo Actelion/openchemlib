@@ -43,6 +43,7 @@ import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.gui.clipboard.external.ChemDrawCDX;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.dnd.ReactionTransferable;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.wmf.WMF;
 import com.actelion.research.gui.wmf.WMFGraphics2D;
 import com.actelion.research.util.Platform;
@@ -51,7 +52,6 @@ import com.actelion.research.util.Sketch;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -536,8 +536,8 @@ public class ClipboardHandler implements IClipboardHandler
 		WMF wmf = new WMF();
 		WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
 
-		Depictor d = new Depictor(m);
-		d.updateCoords(g, new Rectangle2D.Double(0, 0, w, h), AbstractDepictor.cModeInflateToMaxAVBL);
+		Depictor2D d = new Depictor2D(m);
+		d.updateCoords(g, new GenericRectangle(0, 0, w, h), AbstractDepictor.cModeInflateToMaxAVBL);
 		d.paint(g);
 
 		if (sketch != null) {

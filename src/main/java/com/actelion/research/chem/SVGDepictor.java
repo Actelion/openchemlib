@@ -34,9 +34,9 @@
 package com.actelion.research.chem;
 
 import com.actelion.research.gui.generic.GenericPolygon;
+import com.actelion.research.gui.generic.GenericRectangle;
 
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
@@ -206,9 +206,9 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    protected void setColor(Color theColor)
+    protected void setRGB(int rgb)
     {
-        currentColor = makeColor(theColor.getRed(), theColor.getGreen(), theColor.getBlue());
+        currentColor = makeColor((rgb & 0x00FF0000) >> 16, (rgb & 0x0000FF00) >> 8, rgb & 0x000000FF);
     }
 
     @Override
@@ -285,9 +285,8 @@ public class SVGDepictor extends AbstractDepictor
     }
 
     @Override
-    public DepictorTransformation simpleValidateView(Rectangle2D.Double viewRect, int mode)
+    public DepictorTransformation simpleValidateView(GenericRectangle viewRect, int mode)
     {
-
         width = (int) viewRect.getWidth();
         height = (int) viewRect.getHeight();
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);

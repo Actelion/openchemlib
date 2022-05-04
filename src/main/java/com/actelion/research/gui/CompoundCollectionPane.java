@@ -39,6 +39,7 @@ import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDragAdapter;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 import com.actelion.research.util.CursorHelper;
@@ -446,7 +447,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 
 						Depictor2D d = new Depictor2D(compound, mDisplayMode);
 						d.validateView((Graphics2D)g,
-									   new Rectangle2D.Double(bounds.x, bounds.y, bounds.width, bounds.height),
+									   new GenericRectangle(bounds.x, bounds.y, bounds.width, bounds.height),
 									   AbstractDepictor.cModeInflateToMaxAVBL);
 
 						d.setForegroundColor(foreground, background);

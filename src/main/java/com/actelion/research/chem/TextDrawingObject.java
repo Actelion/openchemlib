@@ -34,10 +34,10 @@
 package com.actelion.research.chem;
 
 import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericPoint;
+import com.actelion.research.gui.generic.GenericRectangle;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 public class TextDrawingObject extends AbstractDrawingObject {
@@ -51,10 +51,10 @@ public class TextDrawingObject extends AbstractDrawingObject {
 	private String	mText;
 	private int		mStyle;
 	private boolean	mHilite;
-	private Rectangle2D.Double mLastBounds;
+	private GenericRectangle mLastBounds;
 
 	public TextDrawingObject() {
-        this("",new Point2D.Double(),DEFAULT_SIZE, DEFAULT_STYLE);
+        this("",new GenericPoint(),DEFAULT_SIZE, DEFAULT_STYLE);
 		}
 
     public TextDrawingObject(String text, double x, double y)
@@ -64,7 +64,7 @@ public class TextDrawingObject extends AbstractDrawingObject {
     
     public TextDrawingObject(String text, double x, double y, double size, int style)
     {
-        this(text,new Point2D.Double(x,y),size,style);
+        this(text,new GenericPoint(x,y),size,style);
     }
     
 	public TextDrawingObject(String descriptorDetail) {
@@ -127,11 +127,11 @@ public class TextDrawingObject extends AbstractDrawingObject {
 
 
 
-    private TextDrawingObject(String text, Point2D.Double pt,  double size, int style) {
+    private TextDrawingObject(String text, GenericPoint pt, double size, int style) {
 		mText = text;
 		mSize = size;
 		mStyle = style;
-		mPoint = new Point2D.Double[1];
+		mPoint = new GenericPoint[1];
 		mPoint[0] = pt;        
     	}
 
@@ -187,7 +187,7 @@ public class TextDrawingObject extends AbstractDrawingObject {
 	public void draw(GenericDrawContext context, DepictorTransformation t) {
 		float size = (float)((t == null) ? mSize : t.getScaling()*mSize);
 		context.setFont(Math.round(size), (mStyle & 1) != 0, (mStyle & 2) != 0);
-		context.setColor(mIsSelected ? Color.red : Color.black);
+		context.setRGB(mIsSelected ? 0xFFFF0000 : context.isDarkBackground() ? 0xFFFFFFFF : 0xFF000000);
 
 		ArrayList<String> textList = getTextLineList();
 		mLastBounds = calculateBoundingRect(context, textList);
@@ -198,7 +198,7 @@ public class TextDrawingObject extends AbstractDrawingObject {
 			context.drawString(mLastBounds.x, mLastBounds.y+1+size*5/6+size*LINE_SPACING*i, textList.get(i));
 		}
 
-	private Rectangle2D.Double calculateBoundingRect(GenericDrawContext context, ArrayList<String> textList) {
+	private GenericRectangle calculateBoundingRect(GenericDrawContext context, ArrayList<String> textList) {
 		double maxWidth = 0;
 		for (String text:textList) {
 			if (text.length() != 0) {
@@ -208,11 +208,11 @@ public class TextDrawingObject extends AbstractDrawingObject {
 				}
 			}
 		double height = mSize * LINE_SPACING * (textList.size()-1) + mSize;
-		return new Rectangle2D.Double(mPoint[0].x, mPoint[0].y-mSize/2, maxWidth, height);
+		return new GenericRectangle(mPoint[0].x, mPoint[0].y-mSize/2, maxWidth, height);
 		}
 
 	@Override
-	public Rectangle2D.Double getBoundingRect(GenericDrawContext context) {
+	public GenericRectangle getBoundingRect(GenericDrawContext context) {
 		ArrayList<String> textList = getTextLineList();
 		return calculateBoundingRect(context, textList);
 		}
@@ -237,8 +237,8 @@ public class TextDrawingObject extends AbstractDrawingObject {
 
 	@Override
 	public void hilite(GenericDrawContext context) {
-		Rectangle2D.Double bounds = getBoundingRect(context);
-		context.setColor(SELECTION_COLOR);
+		GenericRectangle bounds = getBoundingRect(context);
+		context.setRGB(context.getSelectionBackgroundRGB());
 		context.fillRectangle(bounds.x, bounds.y, bounds.width, bounds.height);
 		}
 

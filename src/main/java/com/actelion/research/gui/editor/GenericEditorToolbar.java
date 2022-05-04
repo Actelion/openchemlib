@@ -33,19 +33,10 @@
 
 package com.actelion.research.gui.editor;
 
-import com.actelion.research.gui.generic.GenericCanvas;
-import com.actelion.research.gui.generic.GenericDrawContext;
-import com.actelion.research.gui.generic.GenericMouseEvent;
-import com.actelion.research.gui.generic.GenericMouseListener;
+import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.URL;
-
-public class GenericEditorToolbar implements GenericMouseListener {
+public class GenericEditorToolbar implements GenericEventListener<GenericMouseEvent> {
     protected static final int cButtonsPerColumn = 17;
 
 	protected static final int cButtonClear = 0;
@@ -83,9 +74,9 @@ public class GenericEditorToolbar implements GenericMouseListener {
 	protected static final int cToolAtomI = 32;
 	protected static final int cToolAtomOther = 33;
 
-    protected static final int cESRMenuBorder = 4;
-	protected static final int cESRMenuX = HiDPIHelper.scale(20);
-	protected static final int cESRMenuY = HiDPIHelper.scale(64);
+    protected static final int cESRMenuBorder = HiDPIHelper.scale(4);
+	protected static final int cESRMenuOffsetX = HiDPIHelper.scale(-5);
+	protected static final int cESRMenuOffsetY = HiDPIHelper.scale(-5);
 	protected static final float cButtonBorder = HiDPIHelper.getUIScaleFactor()*3f;
 	protected static final float cButtonSize = HiDPIHelper.getUIScaleFactor()*21f;
     protected static final int cToolESRAbs = 101;
@@ -94,7 +85,7 @@ public class GenericEditorToolbar implements GenericMouseListener {
 
 	private GenericCanvas mToolbarCanvas;
 	private GenericDrawArea mArea;
-	private Image		mImageUp,mImageDown,mESRImageUp,mESRImageDown;
+	private GenericImage mImageUp,mImageDown,mESRImageUp,mESRImageDown;
 	protected int		mWidth,mHeight,mCurrentTool,mPressedButton,mMode,mESRSelected,mESRHilited;
     protected boolean   mESRMenuVisible;
 
@@ -130,14 +121,14 @@ public class GenericEditorToolbar implements GenericMouseListener {
         }*/
 
 	private void init() {
-		mImageDown = createImage("drawButtonsDown.gif");
-		mImageUp = createImage("drawButtonsUp.gif");
+		mImageDown = mArea.getUIHelper().createImage("drawButtonsDown.gif");
+		mImageUp = mArea.getUIHelper().createImage("drawButtonsUp.gif");
 
-		mWidth = ((BufferedImage)mImageUp).getWidth();
-		mHeight = ((BufferedImage)mImageUp).getHeight();
+		mWidth = mImageUp.getWidth();
+		mHeight = mImageUp.getHeight();
 
-		mESRImageDown = createImage("ESRButtonsDown.gif");
-		mESRImageUp = createImage("ESRButtonsUp.gif");
+		mESRImageDown = mArea.getUIHelper().createImage("ESRButtonsDown.gif");
+		mESRImageUp = mArea.getUIHelper().createImage("ESRButtonsUp.gif");
 
 		scaleImages();
 
@@ -152,27 +143,14 @@ public class GenericEditorToolbar implements GenericMouseListener {
 		mWidth = HiDPIHelper.scale(mWidth);
 		mHeight = HiDPIHelper.scale(mHeight);
 
-		mImageDown = mImageDown.getScaledInstance(mWidth, mHeight, Image.SCALE_SMOOTH);
-		mImageUp = mImageUp.getScaledInstance(mWidth, mHeight, Image.SCALE_SMOOTH);
+		mImageDown.scale(mWidth, mHeight);
+		mImageUp.scale(mWidth, mHeight);
 
-		int width = HiDPIHelper.scale(((BufferedImage)mESRImageUp).getWidth());
-		int height = HiDPIHelper.scale(((BufferedImage)mESRImageUp).getHeight());
+		int width = HiDPIHelper.scale(mESRImageUp.getWidth());
+		int height = HiDPIHelper.scale(mESRImageUp.getHeight());
 
-		mESRImageDown = mESRImageDown.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-		mESRImageUp = mESRImageUp.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-		}
-
-	public BufferedImage createImage(String fileName) {
-		// Once double resolution is available use HiDPIHelper.createImage() !!!
-
-		URL url = GenericEditorToolbar.class.getResource("/images/" + fileName);
-		if (url == null)
-			throw new RuntimeException("Could not find: " + fileName);
-
-		try {
-			return ImageIO.read(url);
-			}
-		catch (IOException ioe) { return null; }
+		mESRImageDown.scale(width, height);
+		mESRImageUp.scale(width, height);
 		}
 
 	public void setCurrentTool(int tool) {
@@ -184,31 +162,31 @@ public class GenericEditorToolbar implements GenericMouseListener {
 		}
 
 	public void paintContent(GenericDrawContext context) {
-		context.drawImage(0,0, mImageUp);
+		context.drawImage(mImageUp, 0,0);
         drawPressedButton(context, mCurrentTool);
         if (mPressedButton != -1)
             drawPressedButton(context, mPressedButton);
 
         if (mESRSelected != 0) {
-            setButtonClip(context, cToolESR);
-            Point l = getButtonLocation(cToolESR);
-            Image esrButtons = (mCurrentTool == cToolESR) ? mESRImageDown : mESRImageUp;
-	        context.drawImage(l.x-cESRMenuBorder, l.y-cESRMenuBorder-cButtonSize*mESRSelected, esrButtons);
-	        context.setClip(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
+	        double[] l = getButtonLocation(cToolESR);
+            GenericImage esrButtons = (mCurrentTool == cToolESR) ? mESRImageDown : mESRImageUp;
+	        context.drawImage(esrButtons, cESRMenuBorder, cESRMenuBorder+mESRSelected*cButtonSize, l[0], l[1], cButtonSize, cButtonSize);
             }
 
-        if (mESRMenuVisible) {
-	        context.drawImage(cESRMenuX-cESRMenuBorder, cESRMenuY-cESRMenuBorder-cButtonSize*mESRSelected, mESRImageUp);
+		if (mESRMenuVisible) {
+	        double[] l = getButtonLocation(cToolESR);
+	        double esrMenuX = l[0]-cESRMenuBorder+cESRMenuOffsetX;
+	        double esrMenuY = l[1]-cESRMenuBorder+cESRMenuOffsetY-cButtonSize*mESRSelected;
+	        context.drawImage(mESRImageUp, esrMenuX, esrMenuY);
             if (mESRHilited != -1) {
-	            context.setClip(cESRMenuX, Math.round(cESRMenuY-cButtonSize*mESRSelected+cButtonSize*mESRHilited), Math.round(cButtonSize-1), Math.round(cButtonSize-1));
-	            context.drawImage(cESRMenuX-cESRMenuBorder, cESRMenuY-cESRMenuBorder-cButtonSize*mESRSelected, mESRImageDown);
-	            context.setClip(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
-               }
+	            context.drawImage(mESRImageDown, cESRMenuBorder, cESRMenuBorder+mESRHilited*cButtonSize,
+			            l[0]+cESRMenuOffsetX, l[1]+cESRMenuOffsetY+(mESRHilited-mESRSelected)*cButtonSize, cButtonSize, cButtonSize);
+                }
             }
         }
 
 	@Override
-	public void mouseActionHappened(GenericMouseEvent e) {
+	public void eventHappened(GenericMouseEvent e) {
 		if (e.getWhat() == GenericMouseEvent.MOUSE_PRESSED) {
 			int b = getButtonNo(e);
 			if (b == -1) return;
@@ -291,26 +269,25 @@ public class GenericEditorToolbar implements GenericMouseListener {
         int x = e.getX();
         int y = e.getY();
 		mESRHilited = -1;
-        if (x>=cESRMenuX && x<cESRMenuX+cButtonSize) {
-            int b = (int)((y-cESRMenuY+cButtonSize*mESRSelected) / cButtonSize);
+	    double[] l = getButtonLocation(cToolESR);
+	    l[0] += cESRMenuOffsetX;
+	    l[1] += cESRMenuOffsetX;
+	    if (x>l[0] && x<l[0]+cButtonSize) {
+            int b = (int)((y-l[1]+cButtonSize*mESRSelected) / cButtonSize);
             if (b >= 0 && b <= 2)
                 mESRHilited = b;
             }
         }
 
-    protected void setButtonClip(GenericDrawContext context, int button) {
-        Point l = getButtonLocation(button);
-	    context.setClip(l.x, l.y,Math.round(cButtonSize-1),Math.round(cButtonSize-1));
-        }
-
 	protected void drawPressedButton(GenericDrawContext context, int button) {
-        setButtonClip(context, button);
-		context.drawImage(0,0,mImageDown);
-		context.setClip(0,0,Integer.MAX_VALUE,Integer.MAX_VALUE);
+        double[] bl = getButtonLocation(button);
+		context.drawImage(mImageDown, bl[0], bl[1], bl[0], bl[1], cButtonSize, cButtonSize);
 		}
 
-    protected Point getButtonLocation(int button) {
-        return new Point(Math.round(cButtonSize * (button / cButtonsPerColumn) + cButtonBorder-2),
-						 Math.round(cButtonSize * (button % cButtonsPerColumn) + cButtonBorder-2));
-        }
+    private double[] getButtonLocation(int button) {
+	    double[] p = new double[2];
+		p[0] = cButtonSize * (button / cButtonsPerColumn) + cButtonBorder-2;
+		p[1] = cButtonSize * (button % cButtonsPerColumn) + cButtonBorder-2;
+        return p;
+		}
 	}

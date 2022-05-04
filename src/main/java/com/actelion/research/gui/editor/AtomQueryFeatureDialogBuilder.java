@@ -40,9 +40,7 @@ import com.actelion.research.gui.hidpi.HiDPIHelper;
 
 import java.util.Arrays;
 
-public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
-    static final long serialVersionUID = 0x20060720;
-
+public class AtomQueryFeatureDialogBuilder implements GenericEventListener<GenericActionEvent> {
 	private GenericDialog       mDialog;
 	private GenericLabel        mLabelAtomList;
 	private GenericTextField    mTFAtomList;
@@ -51,10 +49,21 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
 								mChoiceNeighbours,mChoiceHydrogen,mChoicePi,mChoiceReactionParityHint;
     private ExtendedMolecule	mMol;
 	private int					mAtom;
+	private boolean mOKSelected;
 
-	public AtomQueryFeatureDialogBuilder(GenericDialogHelper dialogHelper, ExtendedMolecule mol, int atom, boolean includeReactionHints) {
+	public AtomQueryFeatureDialogBuilder(GenericUIHelper dialogHelper, ExtendedMolecule mol, int atom, boolean includeReactionHints) {
 		mDialog = dialogHelper.createDialog(mol.isSelectedAtom(atom) ? "Atom Query Features (Multiple)" : "Atom Query Features", this);
 		build(mol, atom, includeReactionHints);
+		}
+
+	/**
+	 * @return true if OK was pressed and potential change was applied to molecule
+	 */
+	public boolean showDialog() {
+		mOKSelected = false;
+		mDialog.showDialog();
+
+		return mOKSelected;
 		}
 
 	private void build(ExtendedMolecule mol, int atom, boolean includeReactionHints) {
@@ -80,7 +89,7 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
         mDialog.setLayout(hLayout, vLayout);
 		
 		mCBAny = mDialog.createCheckBox("any atomic number");
-		mCBAny.setEventConsumer(this);
+		mCBAny.addEventConsumer(this);
 		mDialog.add(mCBAny, 1,1,3,1);
 
 		mLabelAtomList = mDialog.createLabel("excluded atoms:");
@@ -153,11 +162,11 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
 		mDialog.add(mChoicePi, 1,17,3,17);
 
 		mCBBlocked = mDialog.createCheckBox("prohibit further substitution");
-		mCBBlocked.setEventConsumer(this);
+		mCBBlocked.addEventConsumer(this);
 		mDialog.add(mCBBlocked, 1,19,3,19);
 
 		mCBSubstituted = mDialog.createCheckBox("require further substitution");
-		mCBSubstituted.setEventConsumer(this);
+		mCBSubstituted.addEventConsumer(this);
 		mDialog.add(mCBSubstituted, 1,21,3,21);
 
 		mCBMatchStereo = mDialog.createCheckBox("match stereo center");
@@ -178,17 +187,16 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
 
 		mMol.ensureHelperArrays(Molecule.cHelperCIP);
 		setInitialStates();
-
-		mDialog.showDialog();
 		}
 
 	@Override
-	public void dialogEventHappened(DialogEvent e) {
-		if (e.getWhat() == DialogEvent.WHAT_OK) {
+	public void eventHappened(GenericActionEvent e) {
+		if (e.getWhat() == GenericActionEvent.WHAT_OK) {
 			setQueryFeatures();
+			mOKSelected = true;
 			mDialog.disposeDialog();
 			}
-		else if (e.getWhat() == DialogEvent.WHAT_CANCEL) {
+		else if (e.getWhat() == GenericActionEvent.WHAT_CANCEL) {
 			mDialog.disposeDialog();
 			}
 		else if (e.getSource() == mCBAny) {
@@ -226,6 +234,8 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
 			mChoiceArom.setSelectedIndex(1);
 		else if (aromState == Molecule.cAtomQFNotAromatic)
 			mChoiceArom.setSelectedIndex(2);
+		else
+			mChoiceArom.setSelectedIndex(0);
 
 		int ringState = queryFeatures & Molecule.cAtomQFRingState;
 		switch (ringState) {
@@ -243,6 +253,9 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
 				break;
 			case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds:
 				mChoiceRingState.setSelectedIndex(5);
+				break;
+			default:
+				mChoiceRingState.setSelectedIndex(0);
 				break;
 			}
 
@@ -275,6 +288,9 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
         case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours:
             mChoiceNeighbours.setSelectedIndex(8);
             break;
+		default:
+			mChoiceNeighbours.setSelectedIndex(0);
+			break;
 		    }
 
 		int chargeFeatures = queryFeatures & Molecule.cAtomQFCharge;
@@ -287,6 +303,9 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
 			break;
 		case Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargeNeg:
 			mChoiceCharge.setSelectedIndex(3);
+			break;
+		default:
+			mChoiceCharge.setSelectedIndex(0);
 			break;
 			}
 
@@ -316,6 +335,9 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
             case Molecule.cAtomQFNot3Hydrogen:
                 mChoiceHydrogen.setSelectedIndex(8);
                 break;
+			default:
+				mChoiceHydrogen.setSelectedIndex(0);
+				break;
 			}
 
         int piFeatures = queryFeatures & Molecule.cAtomQFPiElectrons;
@@ -332,6 +354,9 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
             case Molecule.cAtomQFNot0PiElectrons:
                 mChoicePi.setSelectedIndex(4);
                 break;
+	        default:
+		        mChoicePi.setSelectedIndex(0);
+		        break;
             }
 
 		if ((queryFeatures & Molecule.cAtomQFNoMoreNeighbours) != 0)
@@ -357,6 +382,9 @@ public class AtomQueryFeatureDialogBuilder implements DialogEventConsumer {
 					break;
 				case Molecule.cAtomQFRxnParityRacemize:
 					mChoiceReactionParityHint.setSelectedIndex(3);
+					break;
+				default:
+					mChoiceReactionParityHint.setSelectedIndex(0);
 					break;
 				}
 			}

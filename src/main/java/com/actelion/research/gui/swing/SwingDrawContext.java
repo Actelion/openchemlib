@@ -1,8 +1,12 @@
 package com.actelion.research.gui.swing;
 
+import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericImage;
 import com.actelion.research.gui.generic.GenericPolygon;
+import com.actelion.research.gui.generic.GenericRectangle;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Ellipse2D;
@@ -126,12 +130,13 @@ public class SwingDrawContext implements GenericDrawContext {
 		}
 
 	@Override
-	public Color getColor() {
-		return mG.getColor();
+	public int getRGB() {
+		return mG.getColor().getRGB();
 		}
 
 	@Override
-	public void setColor(Color color) {
+	public void setRGB(int rgb) {
+		Color color = new Color(rgb);
 		mG.setColor(color);
 		mG.setPaint(color);
 		}
@@ -149,17 +154,53 @@ public class SwingDrawContext implements GenericDrawContext {
 		}
 
 	@Override
-	public Rectangle2D getBounds(String s) {
-		return mG.getFontMetrics().getStringBounds(s, mG);
+	public GenericRectangle getBounds(String s) {
+		Rectangle2D r = mG.getFontMetrics().getStringBounds(s, mG);
+		return new GenericRectangle(r.getX(), r.getY(), r.getWidth(), r.getHeight());
 		}
 
 	@Override
-	public void drawImage(double x, double y, Image image) {
-		mG.drawImage(image, Math.round((float)x), Math.round((float)y), null);
+	public void drawImage(GenericImage image, double x, double y) {
+		mG.drawImage((Image)image.get(), Math.round((float)x), Math.round((float)y), null);
 		}
 
 	@Override
-	public void setClip(double x, double y, double w, double h) {
-		mG.setClip(Math.round((float)x), Math.round((float)y), Math.round((float)w), Math.round((float)h));
+	public void drawImage(GenericImage image, double sx, double sy, double dx, double dy, double w, double h) {
+		mG.drawImage((Image)image.get(),
+				Math.round((float)dx), Math.round((float)dy), Math.round((float)(dx+w)), Math.round((float)(dy+h)),
+				Math.round((float)sx), Math.round((float)sy), Math.round((float)(sx+w)), Math.round((float)(sy+h)), null);
+		}
+
+//	@Override
+//	public void setClip(double x, double y, double w, double h) {
+//		mG.setClip(Math.round((float)x), Math.round((float)y), Math.round((float)w), Math.round((float)h));
+//		}
+
+	@Override
+	public boolean isDarkBackground() {
+		return LookAndFeelHelper.isDarkLookAndFeel();
+		}
+
+	@Override
+	public int getForegroundRGB() {
+		Color color = UIManager.getColor("TextArea.foreground");
+		return color == null ? 0 : color.getRGB();
+		}
+
+	@Override
+	public int getBackgroundRGB() {
+		Color color = UIManager.getColor("TextArea.background");
+		return color == null ? 0 : color.getRGB();
+		}
+
+	@Override
+	public int getSelectionBackgroundRGB() {
+		Color color = UIManager.getColor("TextArea.selectionBackground");
+		return color == null ? 0 : color.getRGB();
+		}
+
+	@Override
+	public GenericImage createARGBImage(int width, int height) {
+		return new SwingImage(width, height);
 		}
 	}

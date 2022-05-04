@@ -33,7 +33,8 @@
 
 package com.actelion.research.chem;
 
-import java.awt.geom.*;
+import com.actelion.research.gui.generic.GenericPoint;
+import com.actelion.research.gui.generic.GenericRectangle;
 
 public class DepictorTransformation {
     private double mOffsetX,mOffsetY,mScaling;
@@ -54,8 +55,8 @@ public class DepictorTransformation {
         mOffsetY = offsetY;
         }
 
-    public DepictorTransformation(Rectangle2D.Double bounds,
-                                  Rectangle2D.Double view,
+    public DepictorTransformation(GenericRectangle bounds,
+                                  GenericRectangle view,
                                   double averageBondLength,
                                   int mode) {
             // calculates transformation needed to transfer bounds into view considering mode.
@@ -159,12 +160,12 @@ public class DepictorTransformation {
         t.mOffsetY = t.mOffsetY * mScaling + mOffsetY;
         }
 
-    public void applyTo(Point2D.Double p) {
+    public void applyTo(GenericPoint p) {
         p.x = p.x * mScaling + mOffsetX;
         p.y = p.y * mScaling + mOffsetY;
         }
 
-    public void applyTo(Rectangle2D.Double r) {
+    public void applyTo(GenericRectangle r) {
         r.x = r.x * mScaling + mOffsetX;
         r.y = r.y * mScaling + mOffsetY;
         r.width *= mScaling;

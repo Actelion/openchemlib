@@ -43,12 +43,12 @@ import com.actelion.research.chem.mmp.MMPUniqueFragments.MMPUniqueFragment;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.gui.generic.GenericDrawContext;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.Base64;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -1830,8 +1830,7 @@ public class MMPReader {
 	 */
 	private static BufferedImage getImage(String value1, String value2, int width, int height) {
 		BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		Rectangle2D.Double viewRect = new Rectangle2D.Double();
-		viewRect.setRect(0.0f, 0.0f, (float) width, (float) height);
+		GenericRectangle viewRect = new GenericRectangle(0, 0, width, height);
 		ExtendedDepictor extendedDepictor;
 		StereoMolecule mol1 = new StereoMolecule();
 		IDCodeParser idCodeParser = new IDCodeParser();

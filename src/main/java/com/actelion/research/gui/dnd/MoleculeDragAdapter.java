@@ -37,12 +37,12 @@ import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.Depictor2D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.dnd.ChemistryFlavors;
+import com.actelion.research.gui.generic.GenericRectangle;
 
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -201,7 +201,7 @@ public abstract class MoleculeDragAdapter implements DragSourceListener//,DragSo
                     Graphics2D g = (Graphics2D)img.getGraphics();
                     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     		        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-                    depict.validateView(g, new Rectangle2D.Double(0, 0, width, height), AbstractDepictor.cModeInflateToMaxAVBL);
+                    depict.validateView(g, new GenericRectangle(0, 0, width, height), AbstractDepictor.cModeInflateToMaxAVBL);
                     depict.paint(g);
                     return img;
                 }

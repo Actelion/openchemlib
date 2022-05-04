@@ -35,25 +35,30 @@ package com.actelion.research.gui.editor;
 
 import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.Molecule;
-import com.actelion.research.gui.generic.GenericCheckBox;
-import com.actelion.research.gui.generic.GenericComboBox;
-import com.actelion.research.gui.generic.GenericDialog;
-import com.actelion.research.gui.generic.GenericDialogHelper;
+import com.actelion.research.gui.generic.*;
 
-public class BondQueryFeatureDialogBuilder implements DialogEventConsumer {
-    static final long serialVersionUID = 0x20070822;
-
+public class BondQueryFeatureDialogBuilder implements GenericEventListener<GenericActionEvent> {
 	private GenericDialog       mDialog;
     private ExtendedMolecule	mMol;
 	private int					mBond,mFirstSpanItem;
 	private GenericCheckBox     mCBSingle,mCBDouble,mCBTriple,mCBDelocalized,mCBMetalLigand,mCBIsBridge,mCBMatchStereo;
 	private GenericComboBox     mComboBoxRing,mComboBoxRingSize,mComboBoxMinAtoms,mComboBoxMaxAtoms;
+	private boolean             mOKSelected;
 
-	public BondQueryFeatureDialogBuilder(GenericDialogHelper dialogHelper, ExtendedMolecule mol, int bond) {
+	public BondQueryFeatureDialogBuilder(GenericUIHelper dialogHelper, ExtendedMolecule mol, int bond) {
 		mDialog = dialogHelper.createDialog((mol.isSelectedAtom(mol.getBondAtom(0, bond))
 				&& mol.isSelectedAtom(mol.getBondAtom(1, bond))) ?
 				"Bond Query Features (Multiple)" : "Bond Query Features", this);
 		build(mol, bond);
+		}
+
+	/**
+	 * @return true if OK was pressed and potential change was applied to molecule
+	 */
+	public boolean showDialog() {
+		mOKSelected = false;
+		mDialog.showDialog();
+		return mOKSelected;
 		}
 
 	private void build(ExtendedMolecule mol, int bond) {
@@ -88,7 +93,7 @@ public class BondQueryFeatureDialogBuilder implements DialogEventConsumer {
 		mComboBoxRing.addItem("is any ring bond");
 		mComboBoxRing.addItem("is non-aromatic ring bond");
 		mComboBoxRing.addItem("is aromatic bond");
-		mComboBoxRing.setEventConsumer(this);
+		mComboBoxRing.addEventConsumer(this);
 		mDialog.add(mComboBoxRing,1,7,3,7);
 
 		mComboBoxRingSize = mDialog.createComboBox();
@@ -102,11 +107,11 @@ public class BondQueryFeatureDialogBuilder implements DialogEventConsumer {
 
 		mCBMatchStereo = mDialog.createCheckBox("Match Stereo Configuration");
 		mCBMatchStereo.setSelected((mol.getBondQueryFeatures(bond) & Molecule.cBondQFMatchStereo) != 0);
-		mCBMatchStereo.setEventConsumer(this);
+		mCBMatchStereo.addEventConsumer(this);
 		mDialog.add(mCBMatchStereo, 1,11,3,11);
 
 		mCBIsBridge = mDialog.createCheckBox("Is atom bridge between");
-        mCBIsBridge.setEventConsumer(this);
+        mCBIsBridge.addEventConsumer(this);
 		mDialog.add(mCBIsBridge,1,13,3,13);
 
         mComboBoxMinAtoms = mDialog.createComboBox();
@@ -115,7 +120,7 @@ public class BondQueryFeatureDialogBuilder implements DialogEventConsumer {
             mComboBoxMinAtoms.addItem(""+i);
 		mDialog.add(mComboBoxMinAtoms,2,15);
 		mDialog.add(mDialog.createLabel(" and"),3,15);
-        mComboBoxMinAtoms.setEventConsumer(this);
+        mComboBoxMinAtoms.addEventConsumer(this);
 
         mComboBoxMaxAtoms = mDialog.createComboBox();
         populateComboBoxMaxAtoms(0);
@@ -124,17 +129,16 @@ public class BondQueryFeatureDialogBuilder implements DialogEventConsumer {
 
         mMol.ensureHelperArrays(Molecule.cHelperRings);
         setInitialStates();
-
-		mDialog.showDialog();
 		}
 
 	@Override
-	public void dialogEventHappened(DialogEvent e) {
-		if (e.getWhat() == DialogEvent.WHAT_CANCEL) {
+	public void eventHappened(GenericActionEvent e) {
+		if (e.getWhat() == GenericActionEvent.WHAT_CANCEL) {
 			mDialog.disposeDialog();
 			}
-		else if (e.getWhat() == DialogEvent.WHAT_OK) {
+		else if (e.getWhat() == GenericActionEvent.WHAT_OK) {
 			setQueryFeatures();
+			mOKSelected = true;
 			mDialog.disposeDialog();
 			}
         else if (e.getSource() == mCBIsBridge || e.getSource() == mComboBoxRing) {
@@ -188,7 +192,11 @@ public class BondQueryFeatureDialogBuilder implements DialogEventConsumer {
 				mComboBoxRing.setSelectedIndex(2);
 			else if (aromState == Molecule.cBondQFNotAromatic)
 				mComboBoxRing.setSelectedIndex(3);
+			else
+				mComboBoxRing.setSelectedIndex(0);
 			}
+		else
+			mComboBoxRing.setSelectedIndex(0);
 
 		int ringSize = (queryFeatures & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift;
 		mComboBoxRingSize.setSelectedIndex((ringSize == 0) ? 0 : ringSize-2);
@@ -201,7 +209,9 @@ public class BondQueryFeatureDialogBuilder implements DialogEventConsumer {
             populateComboBoxMaxAtoms(minAtoms);
             mComboBoxMaxAtoms.setSelectedIndex(atomSpan);
             }
-        
+        else
+	        mComboBoxMaxAtoms.setSelectedIndex(0);
+
         enableItems();
         }
 

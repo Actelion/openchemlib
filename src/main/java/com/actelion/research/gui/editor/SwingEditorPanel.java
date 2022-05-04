@@ -55,8 +55,6 @@ public class SwingEditorPanel extends JPanel {
 		mArea.getGenericDrawArea().setReaction(rxn);
 	}
 
-
-
 	private void initialize(StereoMolecule mol, int mode) {
 		setLayout(new BorderLayout());
 

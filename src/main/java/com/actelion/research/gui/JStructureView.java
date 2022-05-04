@@ -41,6 +41,7 @@ import com.actelion.research.gui.dnd.MoleculeDragAdapter;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.generic.GenericDepictor;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
@@ -278,7 +279,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
 
 		if (mShowBorder && !mDisableBorder) {
-			Rectangle2D.Double rect = mDepictor.getBoundingRect();
+			GenericRectangle rect = mDepictor.getBoundingRect();
 			if (rect != null) {
 				g.setColor(ColorHelper.perceivedBrightness(bg) < 0.5f ? ColorHelper.brighter(bg, 0.85f) : ColorHelper.darker(bg, 0.85f));
 				int arc = (int)Math.min(rect.height/4, Math.min(rect.width/4, HiDPIHelper.scale(10)));
@@ -301,7 +302,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
 			int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
 			SwingDrawContext context = new SwingDrawContext((Graphics2D)g);
-			mDepictor.validateView(context, new Rectangle2D.Double(insets.left, insets.top, theSize.width,theSize.height),
+			mDepictor.validateView(context, new GenericRectangle(insets.left, insets.top, theSize.width,theSize.height),
 								   AbstractDepictor.cModeInflateToMaxAVBL | mChiralTextPosition | avbl);
             mDepictor.paint(context);
 			}
@@ -436,7 +437,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		int y = e.getY();
 		boolean isInRect = false;
 		if (mDepictor != null && (mAllowedDragAction & DnDConstants.ACTION_COPY) != 0) {
-			Rectangle bounds = shrink(mDepictor.getBoundingRect());
+			GenericRectangle bounds = shrink(mDepictor.getBoundingRect());
 			if (bounds != null && bounds.contains(x, y))
 				isInRect = true;
 			}
@@ -445,11 +446,11 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		setCursor(CursorHelper.getCursor(isInRect ? CursorHelper.cHandCursor : CursorHelper.cPointerCursor));
 		}
 
-	private Rectangle shrink(Rectangle2D.Double rect) {
+	private GenericRectangle shrink(GenericRectangle rect) {
 		int margin = HiDPIHelper.scale(DRAG_MARGIN);
 		int marginX = Math.min(margin, (int)rect.width / 6);
 		int marginY = Math.min(margin, (int)rect.height / 6);
-		return new Rectangle((int)rect.x+marginX, (int)rect.y+marginY, (int)rect.width-2*marginX, (int)rect.height-2*marginY);
+		return new GenericRectangle((int)rect.x+marginX, (int)rect.y+marginY, (int)rect.width-2*marginX, (int)rect.height-2*marginY);
 	}
 
 	@Override public void mouseDragged(MouseEvent e) {}

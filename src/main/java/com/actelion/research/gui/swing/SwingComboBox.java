@@ -1,6 +1,6 @@
 package com.actelion.research.gui.swing;
 
-import com.actelion.research.gui.editor.DialogEvent;
+import com.actelion.research.gui.generic.GenericActionEvent;
 import com.actelion.research.gui.generic.GenericComboBox;
 
 import javax.swing.*;
@@ -18,8 +18,8 @@ public class SwingComboBox extends SwingComponent implements GenericComboBox,Ite
 
 	@Override
 	public void itemStateChanged(ItemEvent e) {
-		if (getEventConsumer() != null && e.getStateChange() == ItemEvent.SELECTED)
-			getEventConsumer().dialogEventHappened(new DialogEvent(this, DialogEvent.WHAT_ITEM_SELECTED, mComboBox.getSelectedIndex()));
+		if (e.getStateChange() == ItemEvent.SELECTED)
+			fireEvent(new GenericActionEvent(this, GenericActionEvent.WHAT_ITEM_SELECTED, mComboBox.getSelectedIndex()));
 	}
 
 	@Override
