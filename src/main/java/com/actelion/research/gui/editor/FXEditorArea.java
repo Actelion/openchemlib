@@ -3,15 +3,18 @@ package com.actelion.research.gui.editor;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.gui.clipboard.ClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
-import com.actelion.research.gui.fx.FXDialogHelper;
 import com.actelion.research.gui.fx.FXDrawContext;
 import com.actelion.research.gui.fx.FXKeyHandler;
 import com.actelion.research.gui.fx.FXMouseHandler;
+import com.actelion.research.gui.fx.FXUIHelper;
 import com.actelion.research.gui.generic.GenericCanvas;
 import com.actelion.research.gui.generic.GenericDrawContext;
 import com.actelion.research.gui.generic.GenericKeyEvent;
 import com.actelion.research.gui.generic.GenericMouseEvent;
+import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -23,34 +26,69 @@ public class FXEditorArea extends Canvas implements GenericCanvas {
 
 	private GenericDrawArea mDrawArea;
 	private FXKeyHandler mKeyHandler;
+	private volatile boolean mDrawPending;
 
 	public FXEditorArea(StereoMolecule mol, int mode) {
 //		setFocusable(true);
 
-		mDrawArea = new GenericDrawArea(mol, mode, new FXDialogHelper(this), this);
+		mDrawArea = new GenericDrawArea(mol, mode, new FXUIHelper(this), this);
+
+		widthProperty().addListener(evt -> repaint());
+		heightProperty().addListener(evt -> repaint());
 
 		initializeDragAndDrop(ALLOWED_DROP_ACTIONS);
 
-		FXMouseHandler mouseHandler = new FXMouseHandler();
+		FXMouseHandler mouseHandler = new FXMouseHandler(mDrawArea);
 		mouseHandler.addListener(mDrawArea);
 
 		setOnMousePressed(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_PRESSED) );
 		setOnMouseReleased(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_RELEASED) );
-//		setOnMouseReleased(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_CLICKED) ); not used
-		setOnMouseReleased(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_ENTERED) );
-//		setOnMouseReleased(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_EXITED) ); not used
-		setOnMouseReleased(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_MOVED) );
-		setOnMouseReleased(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_DRAGGED) );
+//		setOnMouseClicked(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_CLICKED) ); not used
+		setOnMouseEntered(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_ENTERED) );
+//		setOnMouseExited(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_EXITED) ); not used
+		setOnMouseMoved(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_MOVED) );
+		setOnMouseDragged(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_DRAGGED) );
 
-		mKeyHandler = new FXKeyHandler();
+		mKeyHandler = new FXKeyHandler(mDrawArea);
 		mKeyHandler.addListener(mDrawArea);
 
 		setOnKeyPressed(ke -> mKeyHandler.fireEvent(ke, GenericKeyEvent.KEY_PRESSED) );
 		setOnKeyReleased(ke -> mKeyHandler.fireEvent(ke, GenericKeyEvent.KEY_RELEASED) );
-		setOnKeyTyped(ke -> mKeyHandler.fireEvent(ke, GenericKeyEvent.KEY_TYPED) );
+//		setOnKeyTyped(ke -> mKeyHandler.fireEvent(ke, GenericKeyEvent.KEY_TYPED) );
 
 		getGenericDrawArea().setClipboardHandler(new ClipboardHandler());
 	}
+
+	private void draw() {
+		mDrawPending = false;
+
+		double width = getWidth();
+		double height = getHeight();
+
+		GraphicsContext gc = getGraphicsContext2D();
+		gc.clearRect(0, 0, width, height);
+
+		gc.setStroke(Color.RED);
+		gc.strokeLine(0, 0, width, height);
+		gc.strokeLine(0, height, width, 0);
+
+		mDrawArea.paintContent(new FXDrawContext(gc));
+		}
+
+	@Override
+	public boolean isResizable() {
+		return true;
+		}
+
+	@Override
+	public double prefWidth(double height) {
+		return getWidth();
+		}
+
+	@Override
+	public double prefHeight(double width) {
+		return getHeight();
+		}
 
 	public FXKeyHandler getKeyHandler() {
 		return mKeyHandler;
@@ -77,7 +115,12 @@ public class FXEditorArea extends Canvas implements GenericCanvas {
 	}
 
 	@Override
-	public void repaint() {}
+	public void repaint() {
+		if (!mDrawPending) {
+			mDrawPending = true;
+			Platform.runLater(() -> draw() );
+		}
+	}
 
 /*	@Override
 	public void paintComponent(Graphics g) {

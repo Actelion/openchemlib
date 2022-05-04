@@ -2,9 +2,9 @@ package com.actelion.research.gui.editor;
 
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.BorderPane;
 
-public class FXEditorPane extends Pane {
+public class FXEditorPane extends BorderPane {
 	private FXEditorToolbar mToolBar;
 	private FXEditorArea mArea;
 
@@ -54,7 +54,11 @@ public class FXEditorPane extends Pane {
 	private void initialize(StereoMolecule mol, int mode) {
 		mArea = new FXEditorArea(mol != null ? mol : new StereoMolecule(), mode);
 		mToolBar = new FXEditorToolbar(mArea, mode);
-		getChildren().addAll(mToolBar, mArea);
+		widthProperty().addListener((observable, oldValue, newValue) -> mArea.setWidth((double) newValue-mToolBar.getWidth()));
+		heightProperty().addListener((observable, oldValue, newValue) -> mArea.setHeight((double) newValue));
+
+		setLeft(mToolBar);
+		setCenter(mArea);
 	}
 
 	public GenericDrawArea getDrawArea() {
