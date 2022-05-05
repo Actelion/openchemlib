@@ -35,6 +35,7 @@ package com.actelion.research.share.gui.editor.geom;
 
 
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.DrawConfig;
 import com.actelion.research.share.gui.Polygon;
 import com.actelion.research.share.gui.editor.chem.IArrow;
@@ -42,8 +43,6 @@ import com.actelion.research.share.gui.editor.dialogs.IAtomPropertiesDialog;
 import com.actelion.research.share.gui.editor.dialogs.IAtomQueryFeaturesDialog;
 import com.actelion.research.share.gui.editor.dialogs.IBondQueryFeaturesDialog;
 import com.actelion.research.share.gui.editor.io.IKeyCode;
-
-import java.awt.geom.Rectangle2D;
 
 /**
  * Project:
@@ -65,11 +64,11 @@ public abstract class GeomFactory
     {
         return new Polygon();
     }
-    public abstract IArrow createArrow(Rectangle2D r);
+    public abstract IArrow createArrow(GenericRectangle r);
     public abstract IAtomQueryFeaturesDialog createAtomQueryFeatureDialog(StereoMolecule mol, int atom, boolean includeReactionHints);
     public abstract IBondQueryFeaturesDialog createBondFeaturesDialog(StereoMolecule mol, int bond);
     public abstract IAtomPropertiesDialog createAtomPropertiesDialog(StereoMolecule m, int atom);
-    public abstract Rectangle2D getBoundingRect(StereoMolecule m);
+    public abstract GenericRectangle getBoundingRect(StereoMolecule m);
     public abstract IKeyCode getDeleteKey();
     public abstract IKeyCode getEscapeKey();
     public abstract IKeyCode getBackSpaceKey();

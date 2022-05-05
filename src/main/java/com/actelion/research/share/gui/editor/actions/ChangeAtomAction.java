@@ -34,10 +34,9 @@
 package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
-
-import java.awt.geom.Point2D;
 
 /**
  * Project:
@@ -59,7 +58,7 @@ public class ChangeAtomAction extends AtomHighlightAction {
     public boolean onMouseUp(IMouseEvent evt) {
         model.pushUndo();
         int theAtom = model.getSelectedAtom();
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         StereoMolecule mol = model.getMolecule();
         if (theAtom != -1) {
             mol.setAtomicNo(theAtom, theAtomNo);
@@ -72,7 +71,7 @@ public class ChangeAtomAction extends AtomHighlightAction {
     }
 
     @Override
-    boolean trackHighLight(java.awt.geom.Point2D pt) {
+    boolean trackHighLight(GenericPoint pt) {
         int lastAtom = model.getSelectedAtom();
         boolean ok = super.trackHighLight(pt);
         int theAtom = model.getSelectedAtom();

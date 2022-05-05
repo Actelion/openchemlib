@@ -33,6 +33,8 @@
 
 package com.actelion.research.share.gui.editor.geom;
 
+import com.actelion.research.gui.generic.GenericPoint;
+
 /**
  * Project:
  * User: rufenec
@@ -41,14 +43,14 @@ package com.actelion.research.share.gui.editor.geom;
  */
 public interface IPolygon
 {
-    void add(java.awt.geom.Point2D pt);
+    void add(GenericPoint pt);
 
     int size();
 
-    java.awt.geom.Point2D get(int i);
+    GenericPoint get(int i);
 
 
-    void remove(java.awt.geom.Point2D origin);
+    void remove(GenericPoint origin);
 
     boolean contains(double atomX, double atomY);
 }

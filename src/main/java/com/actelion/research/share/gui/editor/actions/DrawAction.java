@@ -35,6 +35,7 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.share.gui.DrawConfig;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.geom.IColor;
@@ -42,8 +43,6 @@ import com.actelion.research.share.gui.editor.geom.ICursor;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
-
-import java.awt.geom.Point2D;
 
 /**
  * Basic class which handles all actions which interact with the drawing surface
@@ -115,7 +114,7 @@ public abstract class DrawAction implements Action
      * @param pt
      * @return atom no or -1 if no atom there
      */
-    int getAtomAt(java.awt.geom.Point2D pt)
+    int getAtomAt(GenericPoint pt)
     {
         StereoMolecule mol = model.getMoleculeAt(pt, false);
         return getAtomAt(mol, pt);
@@ -123,13 +122,13 @@ public abstract class DrawAction implements Action
 
 
 
-    int getBondAt(java.awt.geom.Point2D pt)
+    int getBondAt(GenericPoint pt)
     {
         StereoMolecule mol = model.getMoleculeAt(pt, true);
         return getBondAt(mol, pt);
     }
 
-    int getBondAt(StereoMolecule mol, java.awt.geom.Point2D pt)
+    int getBondAt(StereoMolecule mol, GenericPoint pt)
     {
         if (mol != null) {
             return mol.findBond((float) pt.getX(), (float) pt.getY());
@@ -139,10 +138,9 @@ public abstract class DrawAction implements Action
 
 
 
-    int getAtomAt(StereoMolecule mol, java.awt.geom.Point2D pt)
+    int getAtomAt(StereoMolecule mol, GenericPoint pt)
     {
         if (mol != null) {
-//            return findAtom(mol,(float) pt.getX(), (float) pt.getY());
             return mol.findAtom((float) pt.getX(), (float) pt.getY());
         }
         return -1;
@@ -193,7 +191,7 @@ public abstract class DrawAction implements Action
             radius = (int)HIGHLIGHT_ATOM_RADIUS;
 
         DrawConfig cfg = model.getGeomFactory().getDrawConfig();
-        java.awt.geom.Point2D highlightPoint = new Point2D.Double(mol.getAtomX(theAtom), mol.getAtomY(theAtom));
+        GenericPoint highlightPoint = new GenericPoint(mol.getAtomX(theAtom), mol.getAtomY(theAtom));
         ctx.save();
         ctx.setFill(cfg.getHighLightColor());
         ctx.fillElipse(
@@ -209,7 +207,7 @@ public abstract class DrawAction implements Action
 
         String s = model.getKeyStrokeBuffer().toString();
         int validity = model.getAtomKeyStrokeValidity(s);
-        java.awt.geom.Point2D highlightPoint = new Point2D.Double(mol.getAtomX(theAtom), mol.getAtomY(theAtom));
+        GenericPoint highlightPoint = new GenericPoint(mol.getAtomX(theAtom), mol.getAtomY(theAtom));
         DrawConfig cfg = model.getGeomFactory().getDrawConfig();
 
         ctx.save();
@@ -226,7 +224,7 @@ public abstract class DrawAction implements Action
         ctx.restore();
     }
 
-    protected java.awt.geom.Point2D suggestNewX2AndY2(int atom)
+    protected GenericPoint suggestNewX2AndY2(int atom)
     {
         StereoMolecule mol = model.getMolecule();// .getSelectedMolecule();
         mol.ensureHelperArrays(Molecule.cHelperNeighbours);
@@ -284,7 +282,7 @@ public abstract class DrawAction implements Action
             }
         }
         double avbl = mol.getAverageBondLength();
-        return new Point2D.Double(
+        return new GenericPoint(
                 mol.getAtomX(atom) + avbl * Math.sin(newAngle),
                 mol.getAtomY(atom) + avbl * Math.cos(newAngle)
         );

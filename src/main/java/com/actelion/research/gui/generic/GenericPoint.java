@@ -17,4 +17,10 @@ public class GenericPoint {
 	public double getY() {
 		return y;
 	}
+
+	public double distance(GenericPoint p) {
+		double dx = x - p.x;
+		double dy = y - p.y;
+		return Math.sqrt(dx*dx+dy*dy);
+	}
 }

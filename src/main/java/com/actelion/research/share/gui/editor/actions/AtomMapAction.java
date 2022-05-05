@@ -35,13 +35,12 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
-
-import java.awt.geom.Point2D;
 
 /**
  * Project:
@@ -52,8 +51,8 @@ import java.awt.geom.Point2D;
 public class AtomMapAction extends AtomHighlightAction
 {
 
-    private java.awt.geom.Point2D firstPoint = null;
-    private java.awt.geom.Point2D lastPoint = null;
+    private GenericPoint firstPoint = null;
+    private GenericPoint lastPoint = null;
     private int secondAtom = -1;
 
     public AtomMapAction(Model model)
@@ -79,7 +78,7 @@ public class AtomMapAction extends AtomHighlightAction
 //    @Override
 //    public boolean onMouseDown(ACTMouseEvent evt)
 //    {
-//        origin = new Point2D.Double(evt.getX(),evt.getY());
+//        origin = new GenericPoint(evt.getX(),evt.getY());
 //        return super.onMouseDown(evt);
 //    }
 
@@ -109,7 +108,7 @@ public class AtomMapAction extends AtomHighlightAction
         if (model.isReaction()) {
             StereoMolecule mol = model.getMolecule();
             if (!drag) {
-                java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+                GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
                 secondAtom = -1;
                 if(trackHighLight(pt)) {
                     int mCurrentHiliteAtom = model.getSelectedAtom();
@@ -130,8 +129,8 @@ public class AtomMapAction extends AtomHighlightAction
             } else {
                 int atom = model.getSelectedAtom();
                 if (mol != null && atom != -1) {
-                    java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
-                    firstPoint = new Point2D.Double(mol.getAtomX(atom), mol.getAtomY(atom));
+                    GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
+                    firstPoint = new GenericPoint(mol.getAtomX(atom), mol.getAtomY(atom));
                     lastPoint = pt;
                     return true;
                 }
@@ -141,7 +140,7 @@ public class AtomMapAction extends AtomHighlightAction
     }
 
     @Override
-    boolean trackHighLight(java.awt.geom.Point2D pt) {
+    boolean trackHighLight(GenericPoint pt) {
         int lastAtom = model.getSelectedAtom();
         boolean ok = super.trackHighLight(pt);
         int theAtom = model.getSelectedAtom();

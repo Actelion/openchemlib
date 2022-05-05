@@ -35,11 +35,10 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
-
-import java.awt.geom.Point2D;
 
 /**
  * Project:
@@ -82,7 +81,7 @@ public abstract class BondBaseAction extends BondHighlightAction
     {
 
         boolean ok = true;
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         model.pushUndo();
         int sourceAtom = getAtomAt(origin);
         int selectedAtom = model.getSelectedAtom();
@@ -92,7 +91,7 @@ public abstract class BondBaseAction extends BondHighlightAction
         if (!dragging) {
             if (mol != null && sourceAtom != -1) {
                 if (mol.getAllConnAtoms(sourceAtom) != Model.MAX_CONNATOMS) {
-                    java.awt.geom.Point2D targetPoint = suggestNewX2AndY2(sourceAtom);
+                    GenericPoint targetPoint = suggestNewX2AndY2(sourceAtom);
                     int stopAtom = mol.findAtom((float) targetPoint.getX(), (float) targetPoint.getY());
                     if (stopAtom != -1) {
                         int bondType = getBondType();
@@ -111,7 +110,7 @@ public abstract class BondBaseAction extends BondHighlightAction
                     onChangeBond(bond);
                 } else {
                     sourceAtom = mol.addAtom((float) pt.getX(), (float) pt.getY());
-                    java.awt.geom.Point2D targetPoint = suggestNewX2AndY2(sourceAtom);
+                    GenericPoint targetPoint = suggestNewX2AndY2(sourceAtom);
                     int targetAtom = mol.addAtom((float) targetPoint.getX(), (float) targetPoint.getY(), 0.0f);
                     onAddBond(sourceAtom, targetAtom);
                 }
@@ -119,7 +118,7 @@ public abstract class BondBaseAction extends BondHighlightAction
             } else  {
                 mol = model.getMolecule();
                 sourceAtom = mol.addAtom((float) evt.getX(), (float) evt.getY());
-                java.awt.geom.Point2D p = suggestNewX2AndY2(sourceAtom);
+                GenericPoint p = suggestNewX2AndY2(sourceAtom);
                 int t = mol.addAtom((float) p.getX() /*+ mol.getAverageBondLength()*/, (float) p.getY());
                 onAddBond(sourceAtom, t);
                 // This creates a new Fragment, so make sure scheme gets layouted (if in RXN mode)
@@ -134,7 +133,7 @@ public abstract class BondBaseAction extends BondHighlightAction
                     if (targetAtom == -1) {
                         double dx = origin.getX() - pt.getX();
                         double dy = origin.getY() - pt.getY();
-                        java.awt.geom.Point2D targetPoint = pt;
+                        GenericPoint targetPoint = pt;
                         if (dx * dx + dy * dy < Model.MIN_BOND_LENGTH_SQUARE) {
                             targetPoint = suggestNewX2AndY2(sourceAtom);
                         }
@@ -186,12 +185,12 @@ public abstract class BondBaseAction extends BondHighlightAction
 
     private void drawBondLine(IDrawContext ctx)
     {
-        java.awt.geom.Point2D point = origin;
+        GenericPoint point = origin;
         if (point != null && last != null) {
             int atom = getAtomAt(point);
             StereoMolecule mol = model.getMoleculeAt(point, true);
             if (mol != null && atom != -1) {
-                point = new Point2D.Double(mol.getAtomX(atom), mol.getAtomY(atom));
+                point = new GenericPoint(mol.getAtomX(atom), mol.getAtomY(atom));
             }
             ctx.save();
             ctx.drawLine(point.getX(), point.getY(), last.getX(), last.getY());

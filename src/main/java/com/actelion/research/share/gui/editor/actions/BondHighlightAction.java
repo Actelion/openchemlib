@@ -35,6 +35,7 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.share.gui.DialogResult;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.dialogs.IBondQueryFeaturesDialog;
@@ -42,8 +43,6 @@ import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
-
-import java.awt.geom.Point2D;
 
 
 /**
@@ -54,8 +53,8 @@ import java.awt.geom.Point2D;
  */
 public abstract class BondHighlightAction extends AtomHighlightAction
 {
-    java.awt.geom.Point2D origin = null;
-    java.awt.geom.Point2D last = null;
+    GenericPoint origin = null;
+    GenericPoint last = null;
     boolean dragging = false;
 
     public BondHighlightAction(Model model)
@@ -65,7 +64,7 @@ public abstract class BondHighlightAction extends AtomHighlightAction
 
 
     @Override
-    boolean trackHighLight(java.awt.geom.Point2D pt)
+    boolean trackHighLight(GenericPoint pt)
     {
         int lastAtom = model.getSelectedAtom();
         int lastBond = model.getSelectedBond();
@@ -97,7 +96,7 @@ public abstract class BondHighlightAction extends AtomHighlightAction
 
     public boolean onMouseDown(IMouseEvent evt)
     {
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         origin = pt;
         return false;
     }
@@ -106,7 +105,7 @@ public abstract class BondHighlightAction extends AtomHighlightAction
     public boolean onMouseMove(IMouseEvent evt, boolean drag)
     {
         dragging = drag;
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         if (!drag) {
             return trackHighLight(pt);
         } else {
@@ -114,7 +113,7 @@ public abstract class BondHighlightAction extends AtomHighlightAction
         }
     }
 
-    protected boolean onDrag(java.awt.geom.Point2D pt)
+    protected boolean onDrag(GenericPoint pt)
     {
         double dx = Math.abs(pt.getX() - origin.getX());
         double dy = Math.abs(pt.getY() - origin.getY());

@@ -33,23 +33,24 @@
 
 package com.actelion.research.share.gui;
 
+import com.actelion.research.gui.generic.GenericPoint;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.editor.geom.IPolygon;
 
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class Polygon implements IPolygon
 {
-    List<java.awt.geom.Point2D> list = new ArrayList<java.awt.geom.Point2D>();
+    List<GenericPoint> list = new ArrayList<>();
 
-    public void add(java.awt.geom.Point2D o)
+    public void add(GenericPoint o)
     {
         list.add(o);
     }
 
-    public void remove(java.awt.geom.Point2D o)
+    public void remove(GenericPoint o)
     {
         int idx = list.lastIndexOf(o);
         if (idx >= 0)
@@ -61,12 +62,12 @@ public class Polygon implements IPolygon
         return list.size();
     }
 
-    public java.awt.geom.Point2D get(int i)
+    public GenericPoint get(int i)
     {
         return list.get(i);
     }
 
-    Rectangle2D calculateBounds()
+    GenericRectangle calculateBounds()
     {
         double boundsMinX = Double.MAX_VALUE;
         double boundsMinY = Double.MIN_VALUE;
@@ -81,28 +82,28 @@ public class Polygon implements IPolygon
             boundsMinY = Math.min(boundsMinY, y);
             boundsMaxY = Math.max(boundsMaxY, y);
         }
-        Rectangle2D r = new Rectangle2D.Double(boundsMinX, boundsMinY,
+        GenericRectangle r = new GenericRectangle(boundsMinX, boundsMinY,
             boundsMaxX - boundsMinX,
             boundsMaxY - boundsMinY);
         return r;
     }
 
-    public Rectangle2D getBoundingBox()
+    public GenericRectangle getBoundingBox()
     {
         if (list.size() == 0) {
-            return new Rectangle2D.Double(0.0, 0.0, 0.0, 0.0);
+            return new GenericRectangle(0.0, 0.0, 0.0, 0.0);
         }
         return calculateBounds();
     }
 
-    public boolean contains(java.awt.geom.Point2D pt)
+    public boolean contains(GenericPoint pt)
     {
         return contains(pt.getX(), pt.getX());
     }
 
     public boolean contains(double x, double y)
     {
-        Rectangle2D r = getBoundingBox();
+        GenericRectangle r = getBoundingBox();
         boolean contains = r.contains(x, y);
         if (list.size() <= 2 || !contains) {
             return false;

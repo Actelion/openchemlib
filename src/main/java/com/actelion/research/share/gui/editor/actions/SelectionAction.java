@@ -35,6 +35,7 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.DialogResult;
 import com.actelion.research.share.gui.editor.Model;
@@ -48,7 +49,6 @@ import com.actelion.research.share.gui.editor.geom.IPolygon;
 import com.actelion.research.share.gui.editor.io.IKeyEvent;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
 
-import java.awt.geom.Point2D;
 import java.util.List;
 
 
@@ -92,7 +92,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
 
     @Override
     public boolean onMouseDown(IMouseEvent evt) {
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         StereoMolecule mol = model.getMoleculeAt(pt, true);
 
         polygon = factory.createPolygon();
@@ -103,7 +103,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         changed = false;
         model.pushUndo();
 
-        last = origin = new Point2D.Double(pt.getX(), pt.getY());
+        last = origin = new GenericPoint(pt.getX(), pt.getY());
         atom = getAtomAt(mol, origin);
         bond = getBondAt(mol, origin);
         if (atom != -1) {
@@ -142,7 +142,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     @Override
     public boolean onMouseMove(IMouseEvent evt, boolean drag) {
         boolean ok = false;
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         if (drag) {
 
             double dx = last.getX() - pt.getX();
@@ -182,7 +182,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     }
 
     @Override
-    boolean trackHighLight(java.awt.geom.Point2D pt) {
+    boolean trackHighLight(GenericPoint pt) {
         boolean selected = false;
         IDrawingObject lastSelected = model.getSelectedDrawingObject();
         java.util.List<IDrawingObject> drawables = model.getDrawingObjects();
@@ -205,7 +205,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     @Override
     public boolean onDoubleClick(IMouseEvent evt) {
 //        StereoMolecule mol = model.getSelectedMolecule();
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         StereoMolecule mol = model.getMoleculeAt(pt, true);
         if (mol != null) {
             int atom = mol.findAtom((float) pt.getX(), (float) pt.getY());
@@ -329,9 +329,9 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     }
 
     private void drawDashedRect(IDrawContext ctx) {
-        java.awt.geom.Rectangle2D rc = makeRect(origin, last);
+        GenericRectangle rc = makeRect(origin, last);
         if (rc.getWidth() > 5 && rc.getHeight() > 5) {
-            drawDashedRect(ctx, rc.getMinX(), rc.getMinY(), rc.getWidth(), rc.getHeight(), new int[]{
+            drawDashedRect(ctx, rc.getX(), rc.getY(), rc.getWidth(), rc.getHeight(), new int[]{
                     5,
                     2
             });
@@ -371,7 +371,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         return ok;
     }
 
-    private boolean selectItems(java.awt.geom.Point2D pt) {
+    private boolean selectItems(GenericPoint pt) {
         boolean ok = false;
         if (rectangular) {
             selectRectanglarRegion(null);
@@ -472,7 +472,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
 //        }
     }
 
-    private boolean selectPolygonRegion(StereoMolecule m, java.awt.geom.Point2D pt) {
+    private boolean selectPolygonRegion(StereoMolecule m, GenericPoint pt) {
         if (polygon.size() > 1 && Math.abs(pt.getX() - polygon.get(polygon.size() - 1).getX()) < 10
                 && Math.abs(pt.getY() - polygon.get(polygon.size() - 1).getY()) < 10) {
             return false;
@@ -512,7 +512,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
     }
 
     private void selectRectanglarRegion(StereoMolecule mol) {
-        java.awt.geom.Rectangle2D rc = makeRect(origin, last);
+        GenericRectangle rc = makeRect(origin, last);
         boolean selected = false;
         if (mol != null) {
             selectAtomsInRectangle(mol, rc);
@@ -520,8 +520,8 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         } else {
             StereoMolecule m = model.getMolecule();
             deselectAtoms(m);
-            java.awt.geom.Rectangle2D bounds = factory.getBoundingRect(m);
-            if (bounds != null && bounds.intersects(rc.getX(), rc.getY(), rc.getWidth(), rc.getHeight())) {
+            GenericRectangle bounds = factory.getBoundingRect(m);
+            if (bounds != null && bounds.intersects(rc)) {
                 selectRectanglarRegion(m);
                 //break;
             }
@@ -537,7 +537,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         }
     }
 
-    private void selectDrawingObjectsInRectangle(java.awt.geom.Rectangle2D rc) {
+    private void selectDrawingObjectsInRectangle(GenericRectangle rc) {
         for (IDrawingObject dw : model.getDrawingObjects()) {
             dw.setSelected(false);
             GenericRectangle r = dw.getBoundingRect();
@@ -546,7 +546,7 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         }
     }
 
-    private void selectAtomsInRectangle(StereoMolecule mol, java.awt.geom.Rectangle2D rc) {
+    private void selectAtomsInRectangle(StereoMolecule mol, GenericRectangle rc) {
         for (int i = 0; i < mol.getAllAtoms(); i++) {
             boolean isSelected = rc.contains(mol.getAtomX(i), mol.getAtomY(i));
             mol.setAtomSelection(i, isSelected);
@@ -582,12 +582,12 @@ public class SelectionAction extends BondHighlightAction//DrawAction
         }
     }
 
-    private java.awt.geom.Rectangle2D makeRect(java.awt.geom.Point2D origin, java.awt.geom.Point2D pt) {
+    private GenericRectangle makeRect(GenericPoint origin, GenericPoint pt) {
         double x = Math.min(origin.getX(), pt.getX());
         double y = Math.min(origin.getY(), pt.getY());
         double w = Math.abs(origin.getX() - pt.getX());
         double h = Math.abs(origin.getY() - pt.getY());
-        return new java.awt.geom.Rectangle2D.Double(x, y, w, h);
+        return new GenericRectangle(x, y, w, h);
     }
 
 

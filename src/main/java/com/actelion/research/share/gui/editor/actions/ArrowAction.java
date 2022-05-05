@@ -33,13 +33,13 @@
 
 package com.actelion.research.share.gui.editor.actions;
 
+import com.actelion.research.gui.generic.GenericPoint;
+import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.chem.IArrow;
 import com.actelion.research.share.gui.editor.geom.GeomFactory;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
-
-import java.awt.geom.Point2D;
 
 /**
  * Project:
@@ -49,7 +49,7 @@ import java.awt.geom.Point2D;
  */
 public class ArrowAction extends DrawAction
 {
-    java.awt.geom.Point2D origin,last;
+    GenericPoint origin,last;
     IArrow arrow = null;
 
     public ArrowAction(Model model)
@@ -60,7 +60,7 @@ public class ArrowAction extends DrawAction
     @Override
     public boolean onMouseDown(IMouseEvent ev)
     {
-        origin = new Point2D.Double(ev.getX(),ev.getY());
+        origin = new GenericPoint(ev.getX(),ev.getY());
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
@@ -78,16 +78,11 @@ public class ArrowAction extends DrawAction
     {
         if (drag) {
             GeomFactory factory = model.getGeomFactory();
-            last = new Point2D.Double(ev.getX(),ev.getY());
-            java.awt.geom.Rectangle2D r = new java.awt.geom.Rectangle2D.Double(
+            last = new GenericPoint(ev.getX(),ev.getY());
+            GenericRectangle r = new GenericRectangle(
                 (int) Math.min(last.getX(), origin.getX()),
                  (int) last.getY(),
                  (int) Math.abs(last.getX() - origin.getX()),0);
-//            IRectangle2D r = builder.createRectangle(
-//                (int) Math.min(last.getX(), origin.getX()),
-//                (int) last.getY(),
-//                (int) Math.abs(last.getX() - origin.getX()),
-//                2);
             arrow = factory.createArrow(r);
             return true;
         }

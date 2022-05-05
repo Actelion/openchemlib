@@ -35,10 +35,9 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
-
-import java.awt.geom.Point2D;
 
 /**
  * Project:
@@ -69,7 +68,7 @@ public class AddRingAction extends BondHighlightAction
     {
         model.pushUndo();
         StereoMolecule mol = model.getMolecule();
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         boolean ok = false;
         if (mol != null)
         {
@@ -97,7 +96,7 @@ public class AddRingAction extends BondHighlightAction
     }
 
     @Override
-    protected boolean onDrag(java.awt.geom.Point2D pt)
+    protected boolean onDrag(GenericPoint pt)
     {
         return true;
     }

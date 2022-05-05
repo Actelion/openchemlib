@@ -38,6 +38,7 @@ import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.Arrow;
 import com.actelion.research.share.gui.editor.chem.AbstractExtendedDepictor;
@@ -47,7 +48,6 @@ import com.actelion.research.share.gui.editor.listeners.IChangeListener;
 import com.actelion.research.share.gui.editor.listeners.IValidationListener;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -128,7 +128,7 @@ public abstract class Model
     private int mReactantCount;
     private int[] mFragmentNo;
     private boolean mAtomColorSupported;
-    private Point2D.Double arrowPos = new Point.Double(0,0);
+    private GenericPoint arrowPos = new GenericPoint(0,0);
 
     private List<IValidationListener> validationListeners = new ArrayList<IValidationListener>();
     private List<IChangeListener> changeListeners = new ArrayList<IChangeListener>();
@@ -160,7 +160,7 @@ public abstract class Model
 
         }
         if (isReactionMode()) {
-            arrowPos = new Point2D.Double(0,0);
+            arrowPos = new GenericPoint(0,0);
             Arrow arrow = new Arrow(factory.getDrawConfig(), 0, 0, 0, 0);
             mDrawingObjectList.add(arrow);
         }
@@ -203,7 +203,7 @@ public abstract class Model
         if (w > 0 && h > 0) {
             IDrawingObject arrow = getDrawingObjects().get(0);// new Arrow(mx , my, dx,20);
             arrow.setRect((float) (0.5f * w), (float) (0.5f * h), (float) (0.5f * .16 * w), 20);
-            arrowPos = new Point2D.Double((0.5f * w),  (0.5f * h));
+            arrowPos = new GenericPoint((0.5f * w),  (0.5f * h));
             mMode = MODE_MULTIPLE_FRAGMENTS;
             if (cleanAll)
                 cleanupCoordinates(true, true);
@@ -371,7 +371,7 @@ public abstract class Model
             StereoMolecule molecule = rxn.getMolecule(i);
             GenericRectangle boundingRect = ChemistryHelper.getBoundingRect(molecule);
 //            if(i < mReactantCount) {
-//                arrowPos = new Point2D.Double(boundingRect.getX()+boundingRect.getWidth(),boundingRect.getY()+boundingRect.getHeight()/2);
+//                arrowPos = new GenericPoint(boundingRect.getX()+boundingRect.getWidth(),boundingRect.getY()+boundingRect.getHeight()/2);
 //            }
             mFragment[i] = molecule;
             mMol.addMolecule(mFragment[i]);
@@ -890,7 +890,7 @@ public abstract class Model
         mMapper = mapper;
     }
 
-    public void mapReaction(int atom, Point2D left, Point2D right)
+    public void mapReaction(int atom, GenericPoint left, GenericPoint right)
     {
         StereoMolecule mol = getMolecule();// getSelectedMolecule();
         if (mol != null && left != null && right != null) {
@@ -1064,7 +1064,7 @@ public abstract class Model
     }
 
 
-    public StereoMolecule getMoleculeAt(java.awt.geom.Point2D pt, boolean includeBond)
+    public StereoMolecule getMoleculeAt(GenericPoint pt, boolean includeBond)
     {
         StereoMolecule mol = mMol;
         {
@@ -1073,7 +1073,7 @@ public abstract class Model
             }
 /*
             for (int atom = 0; atom < mol.getAllAtoms(); atom++) {
-                java.awt.geom.Point2D ap = new Point2D.Double(mol.getAtomX(atom), mol.getAtomY(atom));
+                GenericPoint ap = new GenericPoint(mol.getAtomX(atom), mol.getAtomY(atom));
                 if (Math.abs(ap.distance(pt)) < 5) {
 //                    System.out.println("getMoleculeAt Atom\n");
                     return mol;
@@ -1089,8 +1089,8 @@ public abstract class Model
                     double dist = line.ptSegDist(pt.getX(), pt.getY());
                     if (dist < 5) {
 /*
-                        if (Math.abs(new Point2D.Double(mol.getAtomX(source), mol.getAtomY(source)).distance(pt)) < 5 &&
-                                (Math.abs(new Point2D.Double(mol.getAtomX(target), mol.getAtomY(target)).distance(pt)) < 5)) {
+                        if (Math.abs(new GenericPoint(mol.getAtomX(source), mol.getAtomY(source)).distance(pt)) < 5 &&
+                                (Math.abs(new GenericPoint(mol.getAtomX(target), mol.getAtomY(target)).distance(pt)) < 5)) {
                             return mol;
                         }
 */
@@ -1123,10 +1123,10 @@ public abstract class Model
     }
 
 
-    private boolean isPointOnAtomOrBond(StereoMolecule mol, Point2D pt, boolean includeBond)
+    private boolean isPointOnAtomOrBond(StereoMolecule mol, GenericPoint pt, boolean includeBond)
     {
         for (int atom = 0; atom < mol.getAllAtoms(); atom++) {
-            Point2D ap = new Point2D.Double(mol.getAtomX(atom), mol.getAtomY(atom));
+            GenericPoint ap = new GenericPoint(mol.getAtomX(atom), mol.getAtomY(atom));
             if (Math.abs(ap.distance(pt)) < 5) {
                 return true;
             }
@@ -1142,8 +1142,8 @@ public abstract class Model
                 double dist = line.ptSegDist(pt.getX(), pt.getY());
                 if (dist < 5) {
 /*
-                    if (Math.abs(new Point2D.Double(mol.getAtomX(source), mol.getAtomY(source)).distance(pt)) < 5 &&
-                            (Math.abs(new Point2D.Double(mol.getAtomX(target), mol.getAtomY(target)).distance(pt)) < 5)) {
+                    if (Math.abs(new GenericPoint(mol.getAtomX(source), mol.getAtomY(source)).distance(pt)) < 5 &&
+                            (Math.abs(new GenericPoint(mol.getAtomX(target), mol.getAtomY(target)).distance(pt)) < 5)) {
                         return true;
                     }
 */
@@ -1154,7 +1154,7 @@ public abstract class Model
         return false;
     }
 
-    public StereoMolecule getFragmentAt(java.awt.geom.Point2D pt, boolean includeBond)
+    public StereoMolecule getFragmentAt(GenericPoint pt, boolean includeBond)
     {
         for (StereoMolecule mol : getFragments()) {
             if (isPointOnAtomOrBond(mol, pt, includeBond))
@@ -1293,7 +1293,7 @@ public abstract class Model
         return displayMode;
     }
 
-    java.awt.geom.Point2D calculateCenter(StereoMolecule r)
+    GenericPoint calculateCenter(StereoMolecule r)
     {
         float x = 0;
         float y = 0;
@@ -1302,7 +1302,7 @@ public abstract class Model
             x += r.getAtomX(atom);
             y += r.getAtomY(atom);
         }
-        return new Point2D.Double(x / atoms, y / atoms);
+        return new GenericPoint(x / atoms, y / atoms);
     }
 
 
@@ -1484,7 +1484,7 @@ public abstract class Model
         }
     }
 
-    private Point2D calculateCenterOfGravity()
+    private GenericPoint calculateCenterOfGravity()
     {
         int atoms = mMol.getAllAtoms();
         double sumx = 0;
@@ -1493,12 +1493,12 @@ public abstract class Model
             sumx += mMol.getAtomX(atom);
             sumy += mMol.getAtomY(atom);
         }
-        return atoms > 0 ? new Point2D.Double(sumx / atoms, sumy / atoms) : null;
+        return atoms > 0 ? new GenericPoint(sumx / atoms, sumy / atoms) : null;
     }
 
     public void flip(boolean horiz)
     {
-        Point2D pt = calculateCenterOfGravity();
+        GenericPoint pt = calculateCenterOfGravity();
         if (pt != null) {
             // center
             moveCoords((float) -pt.getX(), (float) -pt.getY());

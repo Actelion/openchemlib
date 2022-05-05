@@ -33,7 +33,9 @@
 
 package com.actelion.research.jfx.gui;
 
-import com.actelion.research.share.gui.editor.geom.*;
+import com.actelion.research.gui.generic.GenericPoint;
+import com.actelion.research.share.gui.editor.geom.IDrawContext;
+import com.actelion.research.share.gui.editor.geom.IPolygon;
 import javafx.geometry.Bounds;
 import javafx.geometry.VPos;
 import javafx.scene.canvas.GraphicsContext;
@@ -128,7 +130,7 @@ public class GraphicsContextImpl implements IDrawContext<GraphicsContext>
     public void drawPolygon(IPolygon polygon)
     {
         ctx.beginPath();
-        java.awt.geom.Point2D pt = polygon.get(0);
+        GenericPoint pt = polygon.get(0);
         ctx.moveTo(pt.getX(), pt.getY());
         for (int i = 1; i < polygon.size(); i++) {
             pt = polygon.get(i);

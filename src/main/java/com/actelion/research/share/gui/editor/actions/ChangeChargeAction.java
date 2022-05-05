@@ -34,6 +34,7 @@
 package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.share.gui.editor.Model;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
 
@@ -74,7 +75,7 @@ public class ChangeChargeAction extends AtomHighlightAction
     }
 
     @Override
-    boolean trackHighLight(java.awt.geom.Point2D pt) {
+    boolean trackHighLight(GenericPoint pt) {
         int lastAtom = model.getSelectedAtom();
         boolean ok = super.trackHighLight(pt);
         int theAtom = model.getSelectedAtom();

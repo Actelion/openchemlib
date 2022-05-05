@@ -35,13 +35,11 @@ package com.actelion.research.share.gui.editor.actions;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.share.gui.editor.Model;
-import com.actelion.research.share.gui.editor.geom.IColor;
 import com.actelion.research.share.gui.editor.geom.ICursor;
 import com.actelion.research.share.gui.editor.geom.IDrawContext;
 import com.actelion.research.share.gui.editor.io.IMouseEvent;
-
-import java.awt.geom.Point2D;
 
 /**
  * Project:
@@ -62,7 +60,7 @@ public class NewChainAction extends BondHighlightAction {
     }
 
     public boolean onMouseDown(IMouseEvent evt) {
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         StereoMolecule mol = model.getMolecule();
         boolean update = false;
         origin = pt;
@@ -73,7 +71,7 @@ public class NewChainAction extends BondHighlightAction {
                 if (mol.getAllConnAtoms(sourceAtom) == Model.MAX_CONNATOMS) {
                     return false;
                 }
-                origin = new Point2D.Double(mol.getAtomX(sourceAtom), mol.getAtomY(sourceAtom));
+                origin = new GenericPoint(mol.getAtomX(sourceAtom), mol.getAtomY(sourceAtom));
                 update = true;
                 numChainAtoms = 0;
                 mChainAtomX = null;
@@ -81,7 +79,7 @@ public class NewChainAction extends BondHighlightAction {
                 mChainAtom = null;
             }
         } else {
-            origin = new Point2D.Double(evt.getX(), evt.getY());
+            origin = new GenericPoint(evt.getX(), evt.getY());
             update = true;
             numChainAtoms = 0;
             mChainAtomX = null;
@@ -95,7 +93,7 @@ public class NewChainAction extends BondHighlightAction {
     public boolean onMouseUp(IMouseEvent evt) {
         boolean ok = false;
         model.pushUndo();
-        java.awt.geom.Point2D pt = new Point2D.Double(evt.getX(), evt.getY());
+        GenericPoint pt = new GenericPoint(evt.getX(), evt.getY());
         StereoMolecule mol = model.getMolecule();
         if (numChainAtoms == 0) {
             mol = model.getMoleculeAt(pt, false);
@@ -142,7 +140,7 @@ public class NewChainAction extends BondHighlightAction {
     }
 
     private void addSingleBondAtAtom(StereoMolecule mol, int atom) {
-        Point2D p = suggestNewX2AndY2(atom);
+        GenericPoint p = suggestNewX2AndY2(atom);
         int targetAtom = mol.findAtom((float) p.getX(), (float) p.getY());
         if (targetAtom != -1) {
             mol.addOrChangeBond(atom, targetAtom, mol.suggestBondType(atom, targetAtom));
@@ -155,7 +153,7 @@ public class NewChainAction extends BondHighlightAction {
 
 
     @Override
-    protected boolean onDrag(java.awt.geom.Point2D pt) {
+    protected boolean onDrag(GenericPoint pt) {
         StereoMolecule mol = model.getMolecule();
         boolean repaintNeeded = false;
         if (mol != null) {
@@ -250,13 +248,13 @@ public class NewChainAction extends BondHighlightAction {
                 super.paint(ctx);
             } else {
                 int theAtom = model.getSelectedAtom();
-                drawChain(ctx, theAtom != -1 ? new Point2D.Double(mol.getAtomX(theAtom), mol.getAtomY(theAtom)) : origin);
+                drawChain(ctx, theAtom != -1 ? new GenericPoint(mol.getAtomX(theAtom), mol.getAtomY(theAtom)) : origin);
             }
         }
         return false;
     }
 
-    private void drawChain(IDrawContext ctx, java.awt.geom.Point2D pt) {
+    private void drawChain(IDrawContext ctx, GenericPoint pt) {
         if (numChainAtoms > 0) {
             drawLine(ctx, pt.getX(), pt.getY(), mChainAtomX[0], mChainAtomY[0]);
         }
