@@ -1,6 +1,7 @@
 package com.actelion.research.gui.fx;
 
 import com.actelion.research.gui.generic.*;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.stage.Window;
@@ -50,6 +51,11 @@ public class FXUIHelper implements GenericUIHelper {
 	@Override
 	public GenericImage createImage(int width, int height) {
 		return new FXImage(width, height);
+	}
+
+	@Override
+	public void runLater(Runnable r) {
+		Platform.runLater(r);
 	}
 
 	@Override

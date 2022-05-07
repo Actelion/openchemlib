@@ -139,7 +139,7 @@ public class GenericDrawArea implements GenericEventListener {
 
 	private static IReactionMapper sMapper;
 	private int mMode, mChainAtoms, mCurrentTool, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical,
-			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest,
+			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled,
 			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
 	private double mX1, mY1, mX2, mY2, mWidth, mHeight;
@@ -524,13 +524,11 @@ public class GenericDrawArea implements GenericEventListener {
 				return;
 			case GenericEditorToolbar.cButtonCleanStructure:
 				storeState();
-				fireMoleculeChanged();
-				update(UPDATE_INVENT_COORDS);
+				updateAndFireEvent(UPDATE_INVENT_COORDS);
 				return;
 			case GenericEditorToolbar.cButtonUndo:
 				restoreState();
-				fireMoleculeChanged();
-				update(UPDATE_CHECK_VIEW);
+				updateAndFireEvent(UPDATE_CHECK_VIEW);
 				return;
 		}
 	}
@@ -544,10 +542,10 @@ public class GenericDrawArea implements GenericEventListener {
 		boolean isFragment = mMol.isFragment();
 		mMol.clear();
 		mMol.setFragment(isFragment);
-		if (mUndoMol.getAllAtoms() != 0) {
-			fireMoleculeChanged();
-		}
-		update(UPDATE_REDRAW);
+		if (mUndoMol.getAllAtoms() != 0)
+			updateAndFireEvent(UPDATE_REDRAW);
+		else
+			update(UPDATE_REDRAW);
 	}
 
 	public void toolChanged(int newTool) {
@@ -592,9 +590,7 @@ public class GenericDrawArea implements GenericEventListener {
 			openReaction();
 		} else if (command.equals(ITEM_ADD_AUTO_MAPPING)) {
 			autoMapReaction();
-			fireMoleculeChanged();
-			mUpdateMode = Math.max(mUpdateMode, UPDATE_REDRAW);
-			mCanvas.repaint();
+			updateAndFireEvent(Math.max(mUpdateMode, UPDATE_REDRAW));
 		} else if (command.equals(ITEM_REMOVE_MAPPING)) {
 			removeManualMapping();
 		} else if (command.equals(ITEM_FLIP_HORIZONTALLY)) {
@@ -640,9 +636,7 @@ public class GenericDrawArea implements GenericEventListener {
 
 		if (changed) {
 			autoMapReaction();
-			fireMoleculeChanged();
-			mUpdateMode = Math.max(mUpdateMode, UPDATE_REDRAW);
-			mCanvas.repaint();
+			updateAndFireEvent(Math.max(mUpdateMode, UPDATE_REDRAW));
 		}
 	}
 
@@ -820,8 +814,7 @@ public class GenericDrawArea implements GenericEventListener {
 			boolean isFragment = mMol.isFragment();
 			mol.copyMolecule(mMol);
 			mMol.setFragment(isFragment);
-			fireMoleculeChanged();
-			update(UPDATE_SCALE_COORDS);
+			updateAndFireEvent(UPDATE_SCALE_COORDS);
 		} else {
 			if (p != null)
 				mol.translateCoords(p.x - mCanvas.getCanvasWidth()/2, p.y - mCanvas.getCanvasHeight()/2);
@@ -830,8 +823,7 @@ public class GenericDrawArea implements GenericEventListener {
 			for (int atom = 0; atom<mMol.getAllAtoms(); atom++)
 				mMol.setAtomSelection(atom, atom>=originalAtoms);
 
-			fireMoleculeChanged();
-			update(UPDATE_CHECK_COORDS);
+			updateAndFireEvent(UPDATE_CHECK_COORDS);
 			}
 
 		return true;
@@ -1151,8 +1143,7 @@ public class GenericDrawArea implements GenericEventListener {
 
 			if (e.isCtrlDown() && e.getKey() == 'z') {
 				restoreState();
-				fireMoleculeChanged();
-				update(UPDATE_CHECK_VIEW);
+				updateAndFireEvent(UPDATE_CHECK_VIEW);
 			} else if (e.getKey() == GenericKeyEvent.KEY_DELETE) {
 				storeState();
 				if (mCurrentTool == GenericEditorToolbar.cToolMapper) {
@@ -1164,13 +1155,11 @@ public class GenericDrawArea implements GenericEventListener {
 						}
 					}
 					if (found) {
-						fireMoleculeChanged();
-						update(UPDATE_REDRAW);
+						updateAndFireEvent(UPDATE_REDRAW);
 					}
 				} else if (!deleteHilited()) {
 					if (mMol.deleteSelectedAtoms()) {
-						fireMoleculeChanged();
-						update(UPDATE_REDRAW);
+						updateAndFireEvent(UPDATE_REDRAW);
 					}
 				}
 			} else if (e.getKey() == GenericKeyEvent.KEY_HELP || (mCurrentHiliteAtom == -1 && e.getKey() == '?')) {
@@ -1181,20 +1170,14 @@ public class GenericDrawArea implements GenericEventListener {
 				if (ch == 'q' && mMol.isFragment()) {
 					showBondQFDialog(mCurrentHiliteBond);
 				} else if (ch == 'v') { // ChemDraw uses the same key
-					if (mMol.addRingToBond(mCurrentHiliteBond, 3, false)) {
-						fireMoleculeChanged();
-						update(UPDATE_CHECK_COORDS);
-					}
+					if (mMol.addRingToBond(mCurrentHiliteBond, 3, false))
+						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else if (ch>='4' && ch<='7') {
-					if (mMol.addRingToBond(mCurrentHiliteBond, ch - '0', false)) {
-						fireMoleculeChanged();
-						update(UPDATE_CHECK_COORDS);
-					}
+					if (mMol.addRingToBond(mCurrentHiliteBond, ch - '0', false))
+						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else if (ch == 'a' || ch == 'b') {    // ChemDraw uses 'a', we use 'b' since a long time
-					if (mMol.addRingToBond(mCurrentHiliteBond, 6, true)) {
-						fireMoleculeChanged();
-						update(UPDATE_CHECK_COORDS);
-					}
+					if (mMol.addRingToBond(mCurrentHiliteBond, 6, true))
+						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else {
 					boolean bondChanged =
 							(ch == '0') ? changeHighlightedBond(Molecule.cBondTypeMetalLigand)
@@ -1206,34 +1189,28 @@ public class GenericDrawArea implements GenericEventListener {
 									: (ch == 'c') ? changeHighlightedBond(Molecule.cBondTypeCross)
 									: (ch == 'm') ? changeHighlightedBond(Molecule.cBondTypeMetalLigand)
 									: false;
-					if (bondChanged) {
-						fireMoleculeChanged();
-						update(UPDATE_REDRAW);
-					}
+					if (bondChanged)
+						updateAndFireEvent(UPDATE_REDRAW);
 				}
 			} else if (mCurrentHiliteAtom != -1) {
 				int ch = e.getKey();
 				boolean isFirst = (mAtomKeyStrokeBuffer.length() == 0);
 				if (isFirst && (ch == '+' || ch == '-')) {
 					storeState();
-					if (mMol.changeAtomCharge(mCurrentHiliteAtom, ch == '+')) {
-						fireMoleculeChanged();
-						update(UPDATE_CHECK_COORDS);
-					}
+					if (mMol.changeAtomCharge(mCurrentHiliteAtom, ch == '+'))
+						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else if (isFirst && ch == '.') {
 					storeState();
 					int newRadical = (mMol.getAtomRadical(mCurrentHiliteAtom) == Molecule.cAtomRadicalStateD) ?
 							0 : Molecule.cAtomRadicalStateD;
 					mMol.setAtomRadical(mCurrentHiliteAtom, newRadical);
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else if (isFirst && ch == ':') {
 					storeState();
 					int newRadical = (mMol.getAtomRadical(mCurrentHiliteAtom) == Molecule.cAtomRadicalStateT) ? Molecule.cAtomRadicalStateS
 							: (mMol.getAtomRadical(mCurrentHiliteAtom) == Molecule.cAtomRadicalStateS) ? 0 : Molecule.cAtomRadicalStateT;
 					mMol.setAtomRadical(mCurrentHiliteAtom, newRadical);
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else if (isFirst && ch == 'l') {
 					mAtomKeyStrokeBuffer.append("Cl");
 					update(UPDATE_REDRAW);
@@ -1242,8 +1219,7 @@ public class GenericDrawArea implements GenericEventListener {
 				} else if (isFirst && ch == '?') {
 					storeState();
 					if (mMol.changeAtom(mCurrentHiliteAtom, 0, 0, -1, 0)) {
-						fireMoleculeChanged();
-						update(UPDATE_CHECK_COORDS);
+						updateAndFireEvent(UPDATE_CHECK_COORDS);
 					}
 				} else if (isFirst && ch>48 && ch<=57) {
 					if (mMol.getFreeValence(mCurrentHiliteAtom)>0) {
@@ -1262,8 +1238,7 @@ public class GenericDrawArea implements GenericEventListener {
 							atom1 = atom2 - hydrogenCount;    // new atom was added behind all hydrogens and travels now to the front
 							mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 						}
-						fireMoleculeChanged();
-						update(UPDATE_CHECK_COORDS);
+						updateAndFireEvent(UPDATE_CHECK_COORDS);
 					}
 				} else if (!isFirst && e.getKey() == GenericKeyEvent.KEY_ESCAPE) {
 					mAtomKeyStrokeBuffer.setLength(0);
@@ -1497,8 +1472,7 @@ public class GenericDrawArea implements GenericEventListener {
 					}
 				}
 
-				fireMoleculeChanged();
-				update(UPDATE_REDRAW);
+				updateAndFireEvent(UPDATE_REDRAW);
 			}
 		} else if (mCurrentTool == GenericEditorToolbar.cToolAtomOther) {
 			mUIHelper.showMessage("Please hold 'Ctrl' while pressing the left mouse button\nto open the atom property dialog.");
@@ -1510,10 +1484,8 @@ public class GenericDrawArea implements GenericEventListener {
 			storeState();
 			boolean showReactionHints = ((mMode & MODE_REACTION) != 0);
 			AtomQueryFeatureDialogBuilder builder = new AtomQueryFeatureDialogBuilder(mUIHelper, mMol, atom, showReactionHints);
-			if (builder.showDialog()) {
-				fireMoleculeChanged();
-				update(UPDATE_REDRAW);
-				}
+			if (builder.showDialog())
+				updateAndFireEvent(UPDATE_REDRAW);
 			}
 		}
 
@@ -1521,10 +1493,8 @@ public class GenericDrawArea implements GenericEventListener {
 		if (mAllowQueryFeatures) {
 			storeState();
 			BondQueryFeatureDialogBuilder builder = new BondQueryFeatureDialogBuilder(mUIHelper, mMol, bond);
-			if (builder.showDialog()) {
-				fireMoleculeChanged();
-				update(UPDATE_REDRAW);
-				}
+			if (builder.showDialog())
+				updateAndFireEvent(UPDATE_REDRAW);
 			}
 		}
 
@@ -1646,8 +1616,7 @@ public class GenericDrawArea implements GenericEventListener {
 				if (theAtom != -1) {
 					storeState();
 					mMol.setAtomConfigurationUnknown(theAtom, !mMol.isAtomConfigurationUnknown(theAtom));
-					fireMoleculeChanged();
-					update(UPDATE_REDRAW);
+					updateAndFireEvent(UPDATE_REDRAW);
 				}
 				break;
 			case GenericEditorToolbar.cToolESRAbs:
@@ -1659,8 +1628,7 @@ public class GenericDrawArea implements GenericEventListener {
 							Molecule.cESRTypeAbs :
 							(mCurrentTool == GenericEditorToolbar.cToolESRAnd) ?
 									Molecule.cESRTypeAnd : Molecule.cESRTypeOr);
-					fireMoleculeChanged();
-					update(UPDATE_REDRAW);
+					updateAndFireEvent(UPDATE_REDRAW);
 				}
 				break;
 			case GenericEditorToolbar.cToolStdBond:
@@ -1677,10 +1645,8 @@ public class GenericDrawArea implements GenericEventListener {
 						} else if (mCurrentTool == GenericEditorToolbar.cToolDownBond) {
 							bondType = Molecule.cBondTypeDown;
 						}
-						if (mMol.changeBond(bond, bondType)) {
-							fireMoleculeChanged();
-							update(UPDATE_REDRAW);
-						}
+						if (mMol.changeBond(bond, bondType))
+							updateAndFireEvent(UPDATE_REDRAW);
 						break;
 					}
 				} else {
@@ -1708,136 +1674,98 @@ public class GenericDrawArea implements GenericEventListener {
 				break;
 			case GenericEditorToolbar.cTool3Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 3, false)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addRing(mX1, mY1, 3, false))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cTool4Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 4, false)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addRing(mX1, mY1, 4, false))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cTool5Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 5, false)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addRing(mX1, mY1, 5, false))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cTool6Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 6, false)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addRing(mX1, mY1, 6, false))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cTool7Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 7, false)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addRing(mX1, mY1, 7, false))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAromRing:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 6, true)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addRing(mX1, mY1, 6, true))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolPosCharge:
 				storeState();
-				if (mMol.changeAtomCharge(mX1, mY1, true)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.changeAtomCharge(mX1, mY1, true))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolNegCharge:
 				storeState();
-				if (mMol.changeAtomCharge(mX1, mY1, false)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.changeAtomCharge(mX1, mY1, false))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomH:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 1, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 1, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomC:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 6, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 6, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomN:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 7, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 7, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomO:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 8, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 8, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomSi:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 14, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 14, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomP:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 15, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 15, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomS:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 16, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 16, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomF:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 9, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 9, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomCl:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 17, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 17, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomBr:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 35, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 35, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomI:
 				storeState();
-				if (mMol.addOrChangeAtom(mX1, mY1, 53, 0, -1, 0, null)) {
-					fireMoleculeChanged();
-					update(UPDATE_CHECK_COORDS);
-				}
+				if (mMol.addOrChangeAtom(mX1, mY1, 53, 0, -1, 0, null))
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAtomOther:
 				if (mOtherAtom == -1 || gme.isControlDown()) {
@@ -1851,16 +1779,13 @@ public class GenericDrawArea implements GenericEventListener {
 							mOtherValence = mMol.getAtomAbnormalValence(atom);
 							mOtherRadical = mMol.getAtomRadical(atom);
 							mOtherLabel = mMol.getAtomCustomLabel(atom);
-							fireMoleculeChanged();
-							update(UPDATE_REDRAW);
+							updateAndFireEvent(UPDATE_REDRAW);
 						}
 					}
 				} else {
 					storeState();
-					if (mMol.addOrChangeAtom(mX1, mY1, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical, mOtherLabel)) {
-						fireMoleculeChanged();
-						update(UPDATE_CHECK_COORDS);
-					}
+					if (mMol.addOrChangeAtom(mX1, mY1, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical, mOtherLabel))
+						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case GenericEditorToolbar.cToolMapper:
@@ -1921,8 +1846,7 @@ public class GenericDrawArea implements GenericEventListener {
 					mMol.addOrChangeBond(mAtom1, stopAtom, bondType);
 				}
 
-				fireMoleculeChanged();
-				update(UPDATE_CHECK_COORDS);
+				updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case cRequestNewChain:
 				storeState();
@@ -1952,13 +1876,13 @@ public class GenericDrawArea implements GenericEventListener {
 						}
 					}
 				}
-				fireMoleculeChanged();
-				update(UPDATE_CHECK_COORDS);
+				updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case cRequestMoveSingle:
 			case cRequestMoveSelected:
 			case cRequestZoomAndRotate:
-				fireMoleculeChanged();
+				updateAndFireEvent(UPDATE_CHECK_COORDS);
+				break;
 			case cRequestMoveObject:
 				update(UPDATE_CHECK_COORDS);
 				break;
@@ -1971,10 +1895,9 @@ public class GenericDrawArea implements GenericEventListener {
 						break;
 					}
 				}
-				if (selectionChanged) {
-					fireEvent(new EditorEvent(this, EditorEvent.WHAT_SELECTION_CHANGED, true));
-				}
 				mCanvas.repaint();
+				if (selectionChanged)
+					fireEventLater(new EditorEvent(this, EditorEvent.WHAT_SELECTION_CHANGED, true));
 				break;
 			case cRequestMapAtoms:
 				boolean mapNoChanged = false;
@@ -2028,10 +1951,8 @@ public class GenericDrawArea implements GenericEventListener {
 					autoMapReaction();
 				}
 
-				if (mapNoChanged) {
-					fireMoleculeChanged();
-					mUpdateMode = Math.max(mUpdateMode, UPDATE_REDRAW);
-				}
+				if (mapNoChanged)
+					updateAndFireEvent(Math.max(mUpdateMode, UPDATE_REDRAW));
 
 				mCanvas.repaint();
 				break;
@@ -2543,11 +2464,11 @@ public class GenericDrawArea implements GenericEventListener {
 
 			mCurrentHiliteAtom = theAtom;
 			mAtomKeyStrokeBuffer.setLength(0);
-			fireEvent(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));
+			fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));  //TODO
 		}
 		if (mCurrentHiliteBond != theBond) {
 			mCurrentHiliteBond = theBond;
-			fireEvent(new EditorEvent(this, EditorEvent.WHAT_HILITE_BOND_CHANGED, true));
+			fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_BOND_CHANGED, true));  //TODO
 		}
 		mCurrentHiliteObject = hiliteObject;
 
@@ -2586,8 +2507,7 @@ public class GenericDrawArea implements GenericEventListener {
 		if (atomicNo != 0) {
 			storeState();
 			if (mMol.changeAtom(mCurrentHiliteAtom, atomicNo, 0, -1, 0)) {
-				fireMoleculeChanged();
-				update(UPDATE_CHECK_COORDS);
+				updateAndFireEvent(UPDATE_CHECK_COORDS);
 				return;
 			}
 		}
@@ -2625,8 +2545,7 @@ public class GenericDrawArea implements GenericEventListener {
 			}
 			mMol.setStereoBondsFromParity();
 
-			fireMoleculeChanged();
-			update(UPDATE_CHECK_COORDS);
+			updateAndFireEvent(UPDATE_CHECK_COORDS);
 		}
 	}
 
@@ -2691,16 +2610,14 @@ public class GenericDrawArea implements GenericEventListener {
 		if (mCurrentHiliteAtom != -1) {
 			mMol.deleteAtom(mCurrentHiliteAtom);
 			mCurrentHiliteAtom = -1;
-			fireMoleculeChanged();
-			update(UPDATE_REDRAW);
+			updateAndFireEvent(UPDATE_REDRAW);
 			return true;
 		}
 
 		if (mCurrentHiliteBond != -1) {
 			mMol.deleteBondAndSurrounding(mCurrentHiliteBond);
 			mCurrentHiliteBond = -1;
-			fireMoleculeChanged();
-			update(UPDATE_REDRAW);
+			updateAndFireEvent(UPDATE_REDRAW);
 			return true;
 		}
 
@@ -2715,8 +2632,7 @@ public class GenericDrawArea implements GenericEventListener {
 
 	private boolean deleteAt ( double x, double y){
 		if (mMol.deleteAtomOrBond(x, y)) {
-			fireMoleculeChanged();
-			update(UPDATE_REDRAW);
+			updateAndFireEvent(UPDATE_REDRAW);
 			return true;
 		}
 		AbstractDrawingObject drawingObject = findDrawingObject(x, y, null, true);
@@ -2780,32 +2696,36 @@ public class GenericDrawArea implements GenericEventListener {
 		}
 	}
 
-	private void fireMoleculeChanged () {
-		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, true));
-	}
-
-	private void fireEvent(EditorEvent e) {
-		for (GenericEventListener<EditorEvent> l : mListeners) {
-			l.eventHappened(e);
+	private void fireEventLater(EditorEvent e) {
+		if ((e.getWhat() & ~mEventsScheduled) != 0) {
+			mUIHelper.runLater(() -> {
+				for (GenericEventListener<EditorEvent> l : mListeners)
+					l.eventHappened(e);
+				mEventsScheduled &= e.getWhat();
+			} );
+			mEventsScheduled |= e.getWhat();
 		}
 	}
 
 	/**
-	 * Use this to inform the GenericDrawArea after changing its molecule from outside.
+	 * Redraws the molecule(s) or the reaction after scaling coordinates.
+	 * Then analyses fragment membership and recreate individual molecules, reaction, or markush structure
+	 * Then, fires molecule change events with userChange=false, i.e. external change.
 	 */
 	public void moleculeChanged() {
-		moleculeChanged(false);
+		update(UPDATE_SCALE_COORDS);
+		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 	}
 
 	/**
-	 * Causes to redraw the molecule(s) or the reaction.
-	 * Causes a new analyses of fragment membership.
-	 * Fires molecule change events.
-	 * @param userChange is true if the change was done within the editor
+	 * Redraws the molecule(s) or the reaction after scaling coordinates.
+	 * Then analyses fragment membership and recreate individual molecules, reaction, or markush structure
+	 * Then, fires molecule change events with userChange=false, i.e. external change.
+	 * @param updateMode
 	 */
-	private void moleculeChanged(boolean userChange) {
-		update(UPDATE_SCALE_COORDS);
-		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, userChange));
+	private void updateAndFireEvent(int updateMode) {
+		update(updateMode);
+		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, true));
 	}
 
 	public StereoMolecule getMolecule ()
@@ -2819,14 +2739,14 @@ public class GenericDrawArea implements GenericEventListener {
 		}
 		mMol = theMolecule;
 		storeState();
-		moleculeChanged(false);
+		moleculeChanged();
 	}
 
 	public StereoMolecule[] getFragments () {
 		return mFragment;
 	}
 
-	public void setFragments (StereoMolecule[]fragment){
+	public void setFragments (StereoMolecule[]fragment) {
 		mMol.clear();
 		mFragment = fragment;
 		for (int i = 0; i<fragment.length; i++) {
@@ -2841,10 +2761,9 @@ public class GenericDrawArea implements GenericEventListener {
 			}
 		}
 
-		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
-
 		mMode = MODE_MULTIPLE_FRAGMENTS;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
+		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 	}
 
 	/**
@@ -2895,10 +2814,9 @@ public class GenericDrawArea implements GenericEventListener {
 			}
 		}
 
-		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
-
 		mMode = MODE_MULTIPLE_FRAGMENTS | MODE_REACTION;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
+		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 	}
 
 	public MarkushStructure getMarkushStructure () {
@@ -2938,10 +2856,9 @@ public class GenericDrawArea implements GenericEventListener {
 			}
 		}
 
-		fireEvent(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
-
 		mMode = MODE_MULTIPLE_FRAGMENTS | MODE_MARKUSH_STRUCTURE;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
+		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 	}
 
 	public int getDisplayMode () {
