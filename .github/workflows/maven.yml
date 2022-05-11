@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        # test against Java 8:
-        java: [ 8, 11 ]
+        # test against latest update of each major Java version:
+        java: [ 8, 11, 17 ]
     name: Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v3
