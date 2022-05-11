@@ -12,4 +12,5 @@ public interface GenericUIHelper {
 	GenericImage createImage(int width, int height);
 	void grabFocus();
 	void setCursor(int cursor);
+	void runLater(Runnable r);
 }

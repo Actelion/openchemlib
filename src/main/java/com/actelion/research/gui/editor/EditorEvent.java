@@ -40,8 +40,8 @@ public class EditorEvent extends GenericEvent {
 
     public static final int WHAT_MOLECULE_CHANGED = 1;
     public static final int WHAT_SELECTION_CHANGED = 2;
-    public static final int WHAT_HILITE_ATOM_CHANGED = 3;
-    public static final int WHAT_HILITE_BOND_CHANGED = 4;
+    public static final int WHAT_HILITE_ATOM_CHANGED = 4;
+    public static final int WHAT_HILITE_BOND_CHANGED = 8;
 
 	private boolean	mIsUserChange;
 

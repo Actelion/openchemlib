@@ -52,6 +52,11 @@ public class SwingUIHelper implements GenericUIHelper {
 		}
 
 	@Override
+	public void runLater(Runnable r) {
+		SwingUtilities.invokeLater(r);
+		}
+
+	@Override
 	public void grabFocus() {
 		mParentComponent.requestFocus();
 	}
