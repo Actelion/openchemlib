@@ -106,7 +106,7 @@ public class SwingEditorDialog extends JDialog implements ActionListener {
 	public SwingEditorDialog(Dialog owner, StereoMolecule[] mol, ModalityType modalityType) {
 		super(owner, DEFAULT_MOLECULE_TITLE, modalityType);
 		mMolecule = new StereoMolecule();
-		initialize(owner, GenericDrawArea.MODE_MULTIPLE_FRAGMENTS);
+		initialize(owner, GenericEditorArea.MODE_MULTIPLE_FRAGMENTS);
 		if (mol != null)
 			mArea.getGenericDrawArea().setFragments(mol);
 	}
@@ -121,7 +121,7 @@ public class SwingEditorDialog extends JDialog implements ActionListener {
 	public SwingEditorDialog(Dialog owner, Reaction rxn, ModalityType modalityType) {
 		super(owner, DEFAULT_REACTION_TITLE, modalityType);
 		mMolecule = new StereoMolecule();
-		initialize(owner, GenericDrawArea.MODE_REACTION);
+		initialize(owner, GenericEditorArea.MODE_REACTION);
 		if (rxn != null)
 			mArea.getGenericDrawArea().setReaction(rxn);
 	}
@@ -174,7 +174,7 @@ public class SwingEditorDialog extends JDialog implements ActionListener {
 	public SwingEditorDialog(Frame owner, StereoMolecule[] mol, ModalityType modalityType) {
 		super(owner, DEFAULT_MOLECULE_TITLE, modalityType);
 		mMolecule = new StereoMolecule();
-		initialize(owner, GenericDrawArea.MODE_MULTIPLE_FRAGMENTS);
+		initialize(owner, GenericEditorArea.MODE_MULTIPLE_FRAGMENTS);
 		if (mol != null)
 			mArea.getGenericDrawArea().setFragments(mol);
 	}
@@ -189,14 +189,14 @@ public class SwingEditorDialog extends JDialog implements ActionListener {
 	public SwingEditorDialog(Frame owner, Reaction rxn, ModalityType modalityType) {
 		super(owner, DEFAULT_REACTION_TITLE, modalityType);
 		mMolecule = new StereoMolecule();
-		initialize(owner, GenericDrawArea.MODE_REACTION);
+		initialize(owner, GenericEditorArea.MODE_REACTION);
 		if (rxn != null)
 			mArea.getGenericDrawArea().setReaction(rxn);
 	}
 
 	private void initialize(Component owner, int mode) {
 		mArea = new SwingEditorArea(mMolecule, mode);
-		mArea.setPreferredSize(new Dimension(HiDPIHelper.scale(mode == GenericDrawArea.MODE_REACTION ? 800 : 480), HiDPIHelper.scale(300)));
+		mArea.setPreferredSize(new Dimension(HiDPIHelper.scale(mode == GenericEditorArea.MODE_REACTION ? 800 : 480), HiDPIHelper.scale(300)));
 		getContentPane().add(mArea, BorderLayout.CENTER);
 
 		mToolBar = new SwingEditorToolbar(mArea, mode);
@@ -233,7 +233,7 @@ public class SwingEditorDialog extends JDialog implements ActionListener {
 		mListener.add(listener);
 	}
 
-	public GenericDrawArea getDrawArea() {
+	public GenericEditorArea getDrawArea() {
 		return mArea.getGenericDrawArea();
 	}
 

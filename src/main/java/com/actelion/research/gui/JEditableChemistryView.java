@@ -4,6 +4,7 @@ import com.actelion.research.chem.DrawingObjectList;
 import com.actelion.research.chem.ExtendedDepictor;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.gui.editor.SwingEditorDialog;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 
 import java.awt.*;
@@ -113,7 +114,7 @@ public class JEditableChemistryView extends JChemistryView {
 		}
 
 	private void editReaction() {
-		JDrawDialog dialog = createDrawDialog("Edit Reaction", new Reaction(mReaction));
+		SwingEditorDialog dialog = createDrawDialog("Edit Reaction", new Reaction(mReaction));
 		dialog.setVisible(true);
 		if (!dialog.isCancelled()) {
 			Reaction newRxn = dialog.getReactionAndDrawings();
@@ -135,7 +136,7 @@ public class JEditableChemistryView extends JChemistryView {
 		StereoMolecule[] mol = new StereoMolecule[mMolecules.length];
 		for (int i=0; i<mMolecules.length; i++)
 			mol[i] = new StereoMolecule(mMolecules[i]);
-		JDrawDialog dialog = createDrawDialog("Edit Molecules", mol);
+		SwingEditorDialog dialog = createDrawDialog("Edit Molecules", mol);
 		dialog.setVisible(true);
 		if (!dialog.isCancelled()) {
 			StereoMolecule[] newMols = dialog.getDrawArea().getFragments();
@@ -144,25 +145,33 @@ public class JEditableChemistryView extends JChemistryView {
 			}
 		}
 
-	protected JDrawDialog createDrawDialog(String title, Reaction reaction) {
+	protected SwingEditorDialog createDrawDialog(String title, Reaction reaction) {
 		Component c = this;
 		while (!(c instanceof Frame || c instanceof Dialog))
 			c = c.getParent();
 
-		if (c instanceof Frame)
-			return new JDrawDialog((Frame)c, reaction, "Edit Reaction", Dialog.ModalityType.DOCUMENT_MODAL);
-		else
-			return new JDrawDialog((Dialog)c, reaction, "Edit Reaction", Dialog.ModalityType.DOCUMENT_MODAL);
+		SwingEditorDialog d = (c instanceof Frame) ?
+			  new SwingEditorDialog((Frame)c, reaction, Dialog.ModalityType.DOCUMENT_MODAL)
+			: new SwingEditorDialog((Dialog)c, reaction, Dialog.ModalityType.DOCUMENT_MODAL);
+
+		if (title != null)
+			d.setTitle(title);
+
+		return d;
 		}
 
-	protected JDrawDialog createDrawDialog(String title, StereoMolecule[] mol) {
+	protected SwingEditorDialog createDrawDialog(String title, StereoMolecule[] mol) {
 		Component c = this;
 		while (!(c instanceof Frame || c instanceof Dialog))
 			c = c.getParent();
 
-		if (c instanceof Frame)
-			return new JDrawDialog((Frame)c, mol, "Edit Molecules", Dialog.ModalityType.DOCUMENT_MODAL);
-		else
-			return new JDrawDialog((Dialog)c, mol, "Edit Molecules", Dialog.ModalityType.DOCUMENT_MODAL);
+		SwingEditorDialog d = (c instanceof Frame) ?
+			  new SwingEditorDialog((Frame)c, mol, Dialog.ModalityType.DOCUMENT_MODAL)
+			: new SwingEditorDialog((Dialog)c, mol, Dialog.ModalityType.DOCUMENT_MODAL);
+
+		if (title != null)
+			d.setTitle(title);
+
+		return d;
 	}
 }

@@ -33,28 +33,49 @@
 
 package com.actelion.research.gui.editor;
 
-import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.gui.generic.*;
 
 import javax.swing.*;
 
-public class AtomLabelDialogBuilder implements GenericEventListener<GenericActionEvent> {
+public class CustomAtomDialogBuilder implements GenericEventListener<GenericActionEvent> {
     private static final String[] RADICAL_STATES = { "None", "One electron (duplet)", "Two electrons (triplet)", "Two electrons (singulet)" };
 
+	private GenericEditorArea mEditorArea;
 	private GenericDialog mDialog;
-    private ExtendedMolecule mMol;
-    private int mAtom;
+    private StereoMolecule mMol;
+    private int mAtom,mOldAtomicNo,mOldAtomMass,mOldAtomValence,mOldAtomRadical;
+    private String mOldCustomLabel;
     private GenericTextField mTextFieldLabel,mTextFieldMass,mTextFieldValence;
     private GenericComboBox mComboBoxRadical;
     private boolean mOKSelected;
 
-	public AtomLabelDialogBuilder(GenericUIHelper dialogHelper, StereoMolecule mol, int atom) {
+	public CustomAtomDialogBuilder(GenericUIHelper dialogHelper, GenericEditorArea editorArea,
+	                               int atomicNo, int mass, int valence, int radical, String label) {
 		mDialog = dialogHelper.createDialog("Atom Properties", this);
+		mEditorArea = editorArea;
+		mAtom = -1;
+		mOldAtomicNo = atomicNo;
+		mOldAtomMass = mass;
+		mOldAtomValence = valence;
+		mOldAtomRadical = radical;
+		mOldCustomLabel = label;
 		build();
+
+	}
+
+	public CustomAtomDialogBuilder(GenericUIHelper dialogHelper, GenericEditorArea editorArea, StereoMolecule mol, int atom) {
+		mDialog = dialogHelper.createDialog("Atom Properties", this);
+		mEditorArea = editorArea;
 		mMol = mol;
 		mAtom = atom;
+		mOldAtomicNo = mMol.getAtomicNo(atom);
+		mOldAtomMass = mMol.getAtomMass(atom);
+		mOldAtomValence = mMol.getAtomAbnormalValence(atom);
+		mOldAtomRadical = mMol.getAtomRadical(atom);
+		mOldCustomLabel = mMol.getAtomCustomLabel(atom);
+		build();
 		}
 
 	/**
@@ -92,7 +113,15 @@ public class AtomLabelDialogBuilder implements GenericEventListener<GenericActio
 		mDialog.add(mTextFieldValence, 3,9);
 		mDialog.add(mDialog.createLabel("(empty for default valence)"), 1,11,3,11);
 
-        if (mAtom != -1) {
+        if (mAtom == -1) {
+	        String label = Molecule.cAtomLabel[mOldAtomicNo];
+	        mTextFieldLabel.setText(mOldCustomLabel == null ? label : mOldCustomLabel+"@"+label);
+	        if (mOldAtomMass != 0)
+		        mTextFieldMass.setText(""+mOldAtomMass);
+	        if (mOldAtomValence != -1)
+		        mTextFieldValence.setText(""+mOldAtomValence);
+	        }
+        else {
         	String label = mMol.getAtomLabel(mAtom);
         	String customLabel = mMol.getAtomCustomLabel(mAtom);
             mTextFieldLabel.setText(customLabel == null ? label : customLabel+"@"+label);
@@ -105,15 +134,10 @@ public class AtomLabelDialogBuilder implements GenericEventListener<GenericActio
 		mComboBoxRadical = mDialog.createComboBox();
         for (String s:RADICAL_STATES)
 	        mComboBoxRadical.addItem(s);
-        if (mAtom != -1) {
-        	int state = mMol.getAtomRadical(mAtom);
-        	mComboBoxRadical.setSelectedIndex(state == Molecule.cAtomRadicalStateD ? 1 :
-        									  state == Molecule.cAtomRadicalStateT ? 2 :
-        									  state == Molecule.cAtomRadicalStateS ? 3 : 0);
-        	}
-        else {
-	        mComboBoxRadical.setSelectedIndex(0);
-	        }
+        int state = (mAtom == -1) ? mOldAtomRadical : mMol.getAtomRadical(mAtom);
+        mComboBoxRadical.setSelectedIndex(state == Molecule.cAtomRadicalStateD ? 1 :
+                                          state == Molecule.cAtomRadicalStateT ? 2 :
+                                          state == Molecule.cAtomRadicalStateS ? 3 : 0);
 		mDialog.add(mDialog.createLabel("Radical State:"), 1,13);
 		mDialog.add(mComboBoxRadical, 3,13);
 		}
@@ -121,18 +145,25 @@ public class AtomLabelDialogBuilder implements GenericEventListener<GenericActio
 	@Override
 	public void eventHappened(GenericActionEvent e) {
 		if (e.getSource() instanceof JTextField) {
-			processAtomLabel();
+			processAtomLabel(false);
 			}
 		else if (e.getWhat() == GenericActionEvent.WHAT_CANCEL) {
+			if (mAtom != -1) {
+				mMol.setAtomicNo(mAtom, mOldAtomicNo);
+				mMol.setAtomMass(mAtom, mOldAtomMass);
+				mMol.setAtomAbnormalValence(mAtom, mOldAtomValence);
+				mMol.setAtomRadical(mAtom, mOldAtomRadical);
+				mMol.setAtomCustomLabel(mAtom, mOldCustomLabel);
+				}
 			mDialog.disposeDialog();
 			}
 		else if (e.getWhat() == GenericActionEvent.WHAT_OK) {
-			processAtomLabel();
+			processAtomLabel(true);
 			mDialog.disposeDialog();
 			}
 		}
 
-	private void processAtomLabel() {
+	private void processAtomLabel(boolean updateDefault) {
 		String text = mTextFieldLabel.getText();
 		String customLabel = null;
 
@@ -182,9 +213,14 @@ public class AtomLabelDialogBuilder implements GenericEventListener<GenericActio
                 			  mComboBoxRadical.getSelectedIndex() == 2 ? Molecule.cAtomRadicalStateT :
                    			  mComboBoxRadical.getSelectedIndex() == 3 ? Molecule.cAtomRadicalStateS : 0;
 
-                mMol.changeAtom(mAtom, atomicNo, mass, valence, radical);
-                if (customLabel != null)
-                	mMol.setAtomCustomLabel(mAtom, customLabel);
+			    // set the current property set for the custom atom
+				if (updateDefault)
+				    mEditorArea.setCustomAtom(atomicNo, mass, valence, radical,customLabel);
+
+			    if (mAtom != -1) {
+				    mMol.changeAtom(mAtom, atomicNo, mass, valence, radical);
+				    mMol.setAtomCustomLabel(mAtom, customLabel);
+			        }
 
                 mOKSelected = true;
                 mDialog.disposeDialog();

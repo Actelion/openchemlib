@@ -9,11 +9,13 @@ import java.io.IOException;
 import java.net.URL;
 
 public class SwingImage implements GenericImage {
-	private Image mImage;
+	private BufferedImage mImage;
+
+	public SwingImage(BufferedImage image) {
+		mImage = image;
+		}
 
 	public SwingImage(String name) {
-		// Once double resolution is available use HiDPIHelper.createImage() !!!
-
 		URL url = SwingImage.class.getResource("/images/" + name);
 		if (url == null)
 			throw new RuntimeException("Could not find: " + name);
@@ -29,12 +31,17 @@ public class SwingImage implements GenericImage {
 		}
 
 	@Override
-	public void setRGB(int x, int y, int argb) {
-		((BufferedImage)mImage).setRGB(x, y, argb);
+	public int getRGB(int x, int y) {
+		return mImage.getRGB(x, y);
 		}
 
 	@Override
-	public Image get() {
+	public void setRGB(int x, int y, int argb) {
+		mImage.setRGB(x, y, argb);
+		}
+
+	@Override
+	public BufferedImage get() {
 		return mImage;
 		}
 
@@ -50,6 +57,10 @@ public class SwingImage implements GenericImage {
 
 	@Override
 	public void scale(int width, int height) {
-		mImage = mImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+		java.awt.Image scaledImage = mImage.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
+		mImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		Graphics g = mImage.createGraphics();
+		g.drawImage(scaledImage, 0, 0, null);
+		g.dispose();
 		}
 	}

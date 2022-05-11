@@ -7,14 +7,16 @@ import com.actelion.research.gui.fx.FXDrawContext;
 import com.actelion.research.gui.fx.FXKeyHandler;
 import com.actelion.research.gui.fx.FXMouseHandler;
 import com.actelion.research.gui.fx.FXUIHelper;
-import com.actelion.research.gui.generic.GenericCanvas;
-import com.actelion.research.gui.generic.GenericDrawContext;
-import com.actelion.research.gui.generic.GenericKeyEvent;
-import com.actelion.research.gui.generic.GenericMouseEvent;
+import com.actelion.research.gui.generic.*;
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -24,14 +26,14 @@ import java.awt.dnd.DnDConstants;
 public class FXEditorArea extends Canvas implements GenericCanvas {
 	private static final int ALLOWED_DROP_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 
-	private GenericDrawArea mDrawArea;
+	private GenericEditorArea mDrawArea;
 	private FXKeyHandler mKeyHandler;
 	private volatile boolean mDrawPending;
 
 	public FXEditorArea(StereoMolecule mol, int mode) {
 //		setFocusable(true);
 
-		mDrawArea = new GenericDrawArea(mol, mode, new FXUIHelper(this), this);
+		mDrawArea = new GenericEditorArea(mol, mode, new FXUIHelper(this), this);
 
 		widthProperty().addListener(evt -> repaint());
 		heightProperty().addListener(evt -> repaint());
@@ -94,7 +96,7 @@ public class FXEditorArea extends Canvas implements GenericCanvas {
 		return mKeyHandler;
 	}
 
-	public GenericDrawArea getGenericDrawArea() {
+	public GenericEditorArea getGenericDrawArea() {
 		return mDrawArea;
 	}
 
@@ -108,6 +110,26 @@ public class FXEditorArea extends Canvas implements GenericCanvas {
 		return getHeight();
 	}
 
+	@Override
+	public int getBackgroundRGB() {
+		Node parent = getParent();
+		while (parent != null && !(parent instanceof Pane))
+			parent = parent.getParent();
+		if (parent != null && parent instanceof Pane) {
+			Background bg = ((Pane)parent).getBackground();
+			if (bg != null) {
+				BackgroundFill bgf = bg.getFills().get(0);
+				if (bgf != null) {
+					Paint paint = bgf.getFill();
+					if (paint instanceof Color) {
+						Color c = (Color)paint;
+						return (Math.round(255f*(float)c.getRed()) << 16) + (Math.round(255f*(float)c.getGreen()) << 8) + Math.round(255f*(float)c.getBlue());
+					}
+				}
+			}
+		}
+		return 0x00E0E0E0;  // we just assume light gray
+	}
 
 	@Override
 	public GenericDrawContext getDrawContext() {
@@ -135,7 +157,7 @@ public class FXEditorArea extends Canvas implements GenericCanvas {
 		if (dropAction != DnDConstants.ACTION_NONE) {
 			MoleculeDropAdapter d = new MoleculeDropAdapter() {
 				public void onDropMolecule(StereoMolecule mol, Point p) {
-					mDrawArea.addPastedOrDropped(mol, p);
+					mDrawArea.addPastedOrDropped(mol, new GenericPoint(p.x, p.y));
 				}
 			};
 

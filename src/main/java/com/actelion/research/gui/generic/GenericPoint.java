@@ -23,4 +23,9 @@ public class GenericPoint {
 		double dy = y - p.y;
 		return Math.sqrt(dx*dx+dy*dy);
 	}
+
+	@Override
+	public String toString() {
+		return "x:"+x+" y:"+y;
+	}
 }

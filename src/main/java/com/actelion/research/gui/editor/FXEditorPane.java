@@ -37,7 +37,7 @@ public class FXEditorPane extends BorderPane {
 	 * @param mol
 	 */
 	public FXEditorPane(StereoMolecule[] mol) {
-		initialize(null, GenericDrawArea.MODE_MULTIPLE_FRAGMENTS);
+		initialize(null, GenericEditorArea.MODE_MULTIPLE_FRAGMENTS);
 		mArea.getGenericDrawArea().setFragments(mol);
 	}
 
@@ -47,7 +47,7 @@ public class FXEditorPane extends BorderPane {
 	 * @param rxn
 	 */
 	public FXEditorPane(Reaction rxn) {
-		initialize(null, GenericDrawArea.MODE_REACTION);
+		initialize(null, GenericEditorArea.MODE_REACTION);
 		mArea.getGenericDrawArea().setReaction(rxn);
 	}
 
@@ -61,7 +61,7 @@ public class FXEditorPane extends BorderPane {
 		setCenter(mArea);
 	}
 
-	public GenericDrawArea getDrawArea() {
+	public GenericEditorArea getDrawArea() {
 		return mArea.getGenericDrawArea();
 	}
 
