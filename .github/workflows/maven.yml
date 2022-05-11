@@ -1,0 +1,25 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        # test against latest update of each major Java version:
+        java: [ 11 ]
+    name: Java ${{ matrix.java }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: ${{ matrix.java }}
+          cache: 'maven'
+      - name: Build with Maven
+        run: mvn -B package
