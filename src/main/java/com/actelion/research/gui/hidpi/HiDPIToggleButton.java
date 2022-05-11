@@ -1,7 +1,5 @@
 package com.actelion.research.gui.hidpi;
 
-import com.actelion.research.gui.LookAndFeelHelper;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -41,10 +39,10 @@ public class HiDPIToggleButton extends JToggleButton {
 
 	private void updateIconSet() {
 		if (mImageName1 != null) {
-			setIcon(HiDPIHelper.createIcon(mImageName1, 0));
-			setSelectedIcon(HiDPIHelper.createIcon(mImageName2 != null ? mImageName2 : mImageName1, 0));
-			setDisabledIcon(HiDPIHelper.createDisabledIcon(mImageName1, 0));
-			setDisabledSelectedIcon(HiDPIHelper.createDisabledIcon(mImageName2 != null ? mImageName2 : mImageName1, 0));
+			setIcon(HiDPIIcon.createIcon(mImageName1, 0, false));
+			setSelectedIcon(HiDPIIcon.createIcon(mImageName2 != null ? mImageName2 : mImageName1, 0, false));
+			setDisabledIcon(HiDPIIcon.createIcon(mImageName1, 0, true));
+			setDisabledSelectedIcon(HiDPIIcon.createIcon(mImageName2 != null ? mImageName2 : mImageName1, 0, true));
 
 			Icon icon = getIcon();
 			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getRetinaScaleFactor()) + 2;

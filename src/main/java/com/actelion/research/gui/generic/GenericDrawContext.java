@@ -9,8 +9,8 @@ public interface GenericDrawContext {
 	void setFont(int size, boolean isBold, boolean isItalic);
 	void drawLine(double x1, double y1, double x2, double y2);
 	void drawDottedLine(double x1, double y1, double x2, double y2);
-	void drawRectangle(double x1, double y1, double x2, double y2);
-	void fillRectangle(double x1, double y1, double x2, double y2);
+	void drawRectangle(double x, double y, double w, double h);
+	void fillRectangle(double x, double y, double w, double h);
 	void drawCircle(double x, double y, double d);
 	void fillCircle(double x, double y, double d);
 	void drawPolygon(GenericPolygon p);

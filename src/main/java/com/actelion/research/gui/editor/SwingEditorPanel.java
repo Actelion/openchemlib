@@ -41,7 +41,7 @@ public class SwingEditorPanel extends JPanel {
 	 * @param mol
 	 */
 	public SwingEditorPanel(StereoMolecule[] mol) {
-		initialize(null, GenericDrawArea.MODE_MULTIPLE_FRAGMENTS);
+		initialize(null, GenericEditorArea.MODE_MULTIPLE_FRAGMENTS);
 		mArea.getGenericDrawArea().setFragments(mol);
 	}
 
@@ -51,7 +51,7 @@ public class SwingEditorPanel extends JPanel {
 	 * @param rxn
 	 */
 	public SwingEditorPanel(Reaction rxn) {
-		initialize(null, GenericDrawArea.MODE_REACTION);
+		initialize(null, GenericEditorArea.MODE_REACTION);
 		mArea.getGenericDrawArea().setReaction(rxn);
 	}
 
@@ -65,7 +65,7 @@ public class SwingEditorPanel extends JPanel {
 		add(mToolBar, BorderLayout.WEST);
 		}
 
-	public GenericDrawArea getDrawArea() {
+	public GenericEditorArea getDrawArea() {
 		return mArea.getGenericDrawArea();
 	}
 

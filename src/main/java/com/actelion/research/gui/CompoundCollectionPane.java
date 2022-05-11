@@ -39,6 +39,7 @@ import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDragAdapter;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
+import com.actelion.research.gui.editor.SwingEditorDialog;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
@@ -381,7 +382,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 			mol = mModel.getMolecule(mEditedIndex);
 			}
 		Component c = getParentFrame();
-		JDrawDialog theDialog = (c instanceof Frame) ? new JDrawDialog((Frame)c, mol) : new JDrawDialog((Dialog)c, mol);
+		SwingEditorDialog theDialog = (c instanceof Frame) ? new SwingEditorDialog((Frame)c, mol) : new SwingEditorDialog((Dialog)c, mol);
 		theDialog.addStructureListener(this);
 		theDialog.setVisible(true);
 		}

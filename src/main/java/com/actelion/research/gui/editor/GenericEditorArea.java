@@ -58,7 +58,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.TreeMap;
 
-public class GenericDrawArea implements GenericEventListener {
+public class GenericEditorArea implements GenericEventListener {
 	public static final int MODE_MULTIPLE_FRAGMENTS = 1;
 	public static final int MODE_MARKUSH_STRUCTURE = 2;
 	public static final int MODE_REACTION = 4;
@@ -138,7 +138,7 @@ public class GenericDrawArea implements GenericEventListener {
 	private static final int cRequestCopyObject = 11;
 
 	private static IReactionMapper sMapper;
-	private int mMode, mChainAtoms, mCurrentTool, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical,
+	private int mMode, mChainAtoms, mCurrentTool, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical,
 			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled,
 			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
@@ -146,7 +146,7 @@ public class GenericDrawArea implements GenericEventListener {
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
 	private boolean mAltIsDown, mShiftIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
-	private String mOtherLabel,mWarningMessage,mAtomKeyStrokeSuggestion;
+	private String mCustomAtomLabel,mWarningMessage,mAtomKeyStrokeSuggestion;
 	private String[] mAtomText;
 	private ExtendedDepictor mDepictor;
 	private StereoMolecule mMol;        // molecule being modified directly by the drawing editor
@@ -166,7 +166,7 @@ public class GenericDrawArea implements GenericEventListener {
 	 * @param mol  an empty or valid stereo molecule
 	 * @param mode 0 or a meaningful combination of the mode flags, e.g. MODE_REACTION | MODE_DRAWING_OBJECTS
 	 */
-	public GenericDrawArea(StereoMolecule mol, int mode, GenericUIHelper helper, GenericCanvas canvas) {
+	public GenericEditorArea(StereoMolecule mol, int mode, GenericUIHelper helper, GenericCanvas canvas) {
 		mMol = mol;
 		mMode = mode;
 		mUIHelper = helper;
@@ -179,11 +179,11 @@ public class GenericDrawArea implements GenericEventListener {
 		mCurrentHiliteBond = -1;
 		mCurrentHiliteObject = null;
 		mAtom1 = -1;
-		mOtherAtom = 6;
-		mOtherMass = 0;
-		mOtherValence = -1;
-		mOtherRadical = 0;
-		mOtherLabel = null;
+		mCustomAtomicNo = 6;
+		mCustomAtomMass = 0;
+		mCustomAtomValence = -1;
+		mCustomAtomRadical = 0;
+		mCustomAtomLabel = null;
 		mAllowQueryFeatures = true;
 		mPendingRequest = cRequestNone;
 		mCurrentCursor = CursorHelper.cPointerCursor;
@@ -550,7 +550,6 @@ public class GenericDrawArea implements GenericEventListener {
 
 	public void toolChanged(int newTool) {
 		if (mCurrentTool != newTool) {
-			setOtherAtom(-1, 0, -1, 0, null);
 			if (mCurrentTool == GenericEditorToolbar.cToolMapper
 					|| newTool == GenericEditorToolbar.cToolMapper) {
 				update(UPDATE_REDRAW);
@@ -560,12 +559,12 @@ public class GenericDrawArea implements GenericEventListener {
 		}
 	}
 
-	private void setOtherAtom(int atomicNo, int mass, int valence, int radical, String customLabel) {
-		mOtherAtom = atomicNo;
-		mOtherMass = mass;
-		mOtherValence = valence;
-		mOtherRadical = radical;
-		mOtherLabel = customLabel;
+	public void setCustomAtom(int atomicNo, int mass, int valence, int radical, String customLabel) {
+		mCustomAtomicNo = atomicNo;
+		mCustomAtomMass = mass;
+		mCustomAtomValence = valence;
+		mCustomAtomRadical = radical;
+		mCustomAtomLabel = customLabel;
 	}
 
 	@Override
@@ -796,7 +795,7 @@ public class GenericDrawArea implements GenericEventListener {
 		return false;
 		}
 
-	public boolean addPastedOrDropped(StereoMolecule mol, Point p) {
+	public boolean addPastedOrDropped(StereoMolecule mol, GenericPoint p) {
 		if (mol == null || mol.getAllAtoms() == 0)
 			return false;
 
@@ -1474,12 +1473,12 @@ public class GenericDrawArea implements GenericEventListener {
 
 				updateAndFireEvent(UPDATE_REDRAW);
 			}
-		} else if (mCurrentTool == GenericEditorToolbar.cToolAtomOther) {
-			mUIHelper.showMessage("Please hold 'Ctrl' while pressing the left mouse button\nto open the atom property dialog.");
+		} else if (mCurrentTool == GenericEditorToolbar.cToolCustomAtom) {
+			mUIHelper.showMessage("To change current custom atom properties hold 'Ctrl'\nwhile clicking an atom with the left mouse button.");
 		}
 	}
 
-	private void showAtomQFDialog ( int atom) {
+	private void showAtomQFDialog(int atom) {
 		if (mAllowQueryFeatures) {
 			storeState();
 			boolean showReactionHints = ((mMode & MODE_REACTION) != 0);
@@ -1489,7 +1488,7 @@ public class GenericDrawArea implements GenericEventListener {
 			}
 		}
 
-	private void showBondQFDialog ( int bond) {
+	private void showBondQFDialog(int bond) {
 		if (mAllowQueryFeatures) {
 			storeState();
 			BondQueryFeatureDialogBuilder builder = new BondQueryFeatureDialogBuilder(mUIHelper, mMol, bond);
@@ -1498,7 +1497,16 @@ public class GenericDrawArea implements GenericEventListener {
 			}
 		}
 
-	private void mousePressedButton1 (GenericMouseEvent gme) {
+	public void showCustomAtomDialog(int atom) {
+		storeState();
+		CustomAtomDialogBuilder builder = (atom == -1) ?
+				new CustomAtomDialogBuilder(mUIHelper, this, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical, mCustomAtomLabel)
+				: new CustomAtomDialogBuilder(mUIHelper, this, mMol, atom);
+		if (builder.showDialog() && atom != -1)
+			updateAndFireEvent(UPDATE_REDRAW);
+		}
+
+	private void mousePressedButton1(GenericMouseEvent gme) {
 		mX1 = gme.getX();
 		mY1 = gme.getY();
 
@@ -1767,24 +1775,15 @@ public class GenericDrawArea implements GenericEventListener {
 				if (mMol.addOrChangeAtom(mX1, mY1, 53, 0, -1, 0, null))
 					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
-			case GenericEditorToolbar.cToolAtomOther:
-				if (mOtherAtom == -1 || gme.isControlDown()) {
+			case GenericEditorToolbar.cToolCustomAtom:
+				if (gme.isControlDown()) {
 					int atom = mMol.findAtom(mX1, mY1);
 					if (atom != -1) {
-						storeState();
-						AtomLabelDialogBuilder builder = new AtomLabelDialogBuilder(mUIHelper, mMol, atom);
-						if (builder.showDialog()) {
-							mOtherAtom = mMol.getAtomicNo(atom);
-							mOtherMass = mMol.getAtomMass(atom);
-							mOtherValence = mMol.getAtomAbnormalValence(atom);
-							mOtherRadical = mMol.getAtomRadical(atom);
-							mOtherLabel = mMol.getAtomCustomLabel(atom);
-							updateAndFireEvent(UPDATE_REDRAW);
-						}
+						showCustomAtomDialog(atom);
 					}
 				} else {
 					storeState();
-					if (mMol.addOrChangeAtom(mX1, mY1, mOtherAtom, mOtherMass, mOtherValence, mOtherRadical, mOtherLabel))
+					if (mMol.addOrChangeAtom(mX1, mY1, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical, mCustomAtomLabel))
 						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				}
 				break;
@@ -2417,7 +2416,7 @@ public class GenericDrawArea implements GenericEventListener {
 				&& mCurrentTool != GenericEditorToolbar.cToolAtomCl
 				&& mCurrentTool != GenericEditorToolbar.cToolAtomBr
 				&& mCurrentTool != GenericEditorToolbar.cToolAtomI
-				&& mCurrentTool != GenericEditorToolbar.cToolAtomOther) {
+				&& mCurrentTool != GenericEditorToolbar.cToolCustomAtom) {
 			theBond = mMol.findBond(x, y);
 		}
 

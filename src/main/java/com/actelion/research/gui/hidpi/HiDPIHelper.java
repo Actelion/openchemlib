@@ -1,27 +1,18 @@
 package com.actelion.research.gui.hidpi;
 
 import com.actelion.research.gui.LookAndFeelHelper;
+import com.actelion.research.gui.generic.GenericImage;
 import com.actelion.research.util.ColorHelper;
 import com.actelion.research.util.Platform;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URL;
 
 public class HiDPIHelper {
-	private static final int THEME_COLOR1_BRIGHT_LAF = 0x00503CB4;	// main button color in supplied images
-	private static final int THEME_COLOR2_BRIGHT_LAF = 0x00000000;	// second button color in supplied images
-
-	private static final int THEME_COLOR1_DARK_LAF = 0x00B4A0FF;	// main button color in supplied images
-	private static final int THEME_COLOR2_DARK_LAF = 0x00E0E0E0;	// second button color in supplied images
-
-	private static final float ICON_SCALE_LIMIT_1 = 1.1f; // custom dpi scale factors smaller than this will be neglected
-	private static final float ICON_SCALE_LIMIT_2 = 1.9f; // custom dpi scale factors between ICON_SCALE_LIMIT_2 and ICON_SCALE_LIMIT_3
-	private static final float ICON_SCALE_LIMIT_3 = 2.1f; // use larger image, but won't be scaled
+	private static final int[] BRIGHT_TO_DARK_LAF = {   // supplied image always contains 1st color (bright L&F)
+			0x00503CB4, 0x00B4A0FF, 	// main color (bright and dark L&F)
+			0x00000000, 0x00E0E0E0 };	// second color (bright and dark L&F)
 
 	// This is an Apple only solution and needs to be adapted to support high-res displays of other vendors
 	private static float sRetinaFactor = -1f;
@@ -132,108 +123,23 @@ public class HiDPIHelper {
 		}
 
 	public static Color getThemeColor(int no) {
-		int c = (no == 0) ?
-				(LookAndFeelHelper.isDarkLookAndFeel() ? THEME_COLOR1_DARK_LAF : THEME_COLOR1_BRIGHT_LAF)
-			  : (LookAndFeelHelper.isDarkLookAndFeel() ? THEME_COLOR2_DARK_LAF : THEME_COLOR2_BRIGHT_LAF);
-		return new Color(c);
-		}
-
-	public static Icon createIcon(String fileName, int rotation) {
-		BufferedImage image = capCorners(rotate(createLaFCompatibleImage(fileName), rotation));
-		boolean isScaled = mustScale();
-		return new HiDPIIcon(isScaled ? scale(image) : image, isScaled);
-		}
-
-	public static Icon createDisabledIcon(String fileName, int rotation) {
-		BufferedImage image = capCorners(rotate(createDisabledImage(fileName), rotation));
-		boolean isScaled = mustScale();
-		return new HiDPIIcon(isScaled ? scale(image) : image, isScaled);
-		}
-
-	private static String getDoubleResolutionFileName(String fileName) {
-		int index = fileName.lastIndexOf('.');
-		return fileName.substring(0, index).concat("@2x").concat(fileName.substring(index));
-		}
-
-	private static BufferedImage rotate(BufferedImage image, int rotation) {
-		int size = image.getHeight();
-		int max = size-1;
-		if (rotation == 90) {
-			for (int x=0; x<size/2; x++) {
-				for (int y=0; y<size/2; y++) {
-					int argb = image.getRGB(x, y);
-					image.setRGB(x, y, image.getRGB(y, max-x));
-					image.setRGB(y, max-x, image.getRGB(max-x, max-y));
-					image.setRGB(max-x, max-y, image.getRGB(max-y, x));
-					image.setRGB(max-y, x, argb);
-					}
-				}
-			}
-		if (rotation == 180) {
-			for (int x=0; x<size/2; x++) {
-				for (int y=0; y<size; y++) {
-					int argb = image.getRGB(x, y);
-					image.setRGB(x, y, image.getRGB(max-x, max-y));
-					image.setRGB(max-x, max-y, argb);
-					}
-				}
-			}
-		if (rotation == 270) {
-			for (int x=0; x<size/2; x++) {
-				for (int y=0; y<size/2; y++) {
-					int argb = image.getRGB(x, y);
-					image.setRGB(x, y, image.getRGB(max-y, x));
-					image.setRGB(max-y, x, image.getRGB(max-x, max-y));
-					image.setRGB(max-x, max-y, image.getRGB(y, max-x));
-					image.setRGB(y, max-x, argb);
-					}
-				}
-			}
-		return image;
+		return new Color(BRIGHT_TO_DARK_LAF[2*no+(LookAndFeelHelper.isDarkLookAndFeel()?1:0)]);
 		}
 
 	/**
-	 * Creates an image from the fileName. On HiDPI devices this is a high
-	 * resolution image. If the current look&feel is dark, then colors are adapted
-	 * for optimal contrast.
-	 * @param fileName
+	 * If the current look&feel is dark, then colors are adapted for optimal contrast.
+	 * @param image
 	 * @return
 	 */
-	public static BufferedImage createImage(String fileName) {
-		if (useDoubleImage())
-			fileName = getDoubleResolutionFileName(fileName);
-
-		URL url = HiDPIIconButton.class.getResource("/images/" + fileName);
-		if (url == null)
-			throw new RuntimeException("Could not find: " + fileName);
-
-		try {
-			BufferedImage image = ImageIO.read(url);
-			return image;
-		}
-		catch (IOException ioe) { return null; }
+	public static void adaptForLookAndFeel(GenericImage image) {
+		if (LookAndFeelHelper.isDarkLookAndFeel())
+			useSpotColorsForDarkLookAndFeel(image);
 	}
 
-	/**
-	 * Creates an image from the fileName. On HiDPI devices this is a high
-	 * resolution image. If the current look&feel is dark, then colors are adapted
-	 * for optimal contrast.
-	 * @param fileName
-	 * @return
-	 */
-	public static BufferedImage createLaFCompatibleImage(String fileName) {
-		BufferedImage image = createImage(fileName);
-		if (image != null && LookAndFeelHelper.isDarkLookAndFeel())
-			brightenImage(image);
-		return image;
-	}
-
-	private static BufferedImage createDisabledImage(String fileName) {
-		BufferedImage image = createLaFCompatibleImage(fileName);
-
+	public static void disableImage(GenericImage image) {
 		Color gray = LookAndFeelHelper.isDarkLookAndFeel() ?
 				ColorHelper.brighter(UIManager.getColor("Panel.background"), 0.8f)
-			  : ColorHelper.darker(UIManager.getColor("Panel.background"), 0.8f);
+				: ColorHelper.darker(UIManager.getColor("Panel.background"), 0.8f);
 		int grayRGB = 0x00FFFFFF & gray.getRGB();
 
 		for (int x=0; x<image.getWidth(); x++) {
@@ -242,60 +148,20 @@ public class HiDPIHelper {
 				image.setRGB(x, y, (0xFF000000 & argb) + grayRGB);
 			}
 		}
-		return image;
 	}
 
-	private static boolean useDoubleImage() {
-		return getUIScaleFactor() * getRetinaScaleFactor() > ICON_SCALE_LIMIT_1;
-		}
-
-	private static boolean mustScale() {
-		return (getUIScaleFactor() * getRetinaScaleFactor() > ICON_SCALE_LIMIT_1
-			 && getUIScaleFactor() * getRetinaScaleFactor() < ICON_SCALE_LIMIT_2)
-			|| getUIScaleFactor() * getRetinaScaleFactor() < ICON_SCALE_LIMIT_3;
-		}
-
-	public static float getIconScaleFactor() {
-		if (!mustScale())
-			return 1f;
-
-		float scale = getUIScaleFactor() * getRetinaScaleFactor();
-		if (useDoubleImage())
-			scale *= 0.5f;
-
-		return scale;
-		}
-
-	public static Image scale(BufferedImage image) {
-		float scale = getIconScaleFactor();
-		return image.getScaledInstance(Math.round(scale * image.getWidth()),
-									   Math.round(scale * image.getHeight()), Image.SCALE_SMOOTH);
-		}
-
-	private static BufferedImage capCorners(BufferedImage image) {
-		image.setRGB(0, 0, 0x00000000);
-		image.setRGB(1, 0, 0x00000000);
-		image.setRGB(0, 1, 0x00000000);
-		image.setRGB(image.getWidth()-2, 0, 0x00000000);
-		image.setRGB(image.getWidth()-1, 0, 0x00000000);
-		image.setRGB(image.getWidth()-1, 1, 0x00000000);
-		image.setRGB(0, image.getHeight()-1, 0x00000000);
-		image.setRGB(1, image.getHeight()-1, 0x00000000);
-		image.setRGB(0, image.getHeight()-2, 0x00000000);
-		image.setRGB(image.getWidth()-2, image.getHeight()-1, 0x00000000);
-		image.setRGB(image.getWidth()-1, image.getHeight()-1, 0x00000000);
-		image.setRGB(image.getWidth()-1, image.getHeight()-2, 0x00000000);
-		return image;
-	}
-
-	private static void brightenImage(BufferedImage image) {
+	private static void useSpotColorsForDarkLookAndFeel(GenericImage image) {
 		for (int x=0; x<image.getWidth(); x++) {
 			for (int y=0; y<image.getHeight(); y++) {
 				int argb = image.getRGB(x, y);
 				int rgb = argb & 0x00FFFFFF;
-				int color = (rgb == THEME_COLOR1_BRIGHT_LAF) ? THEME_COLOR1_DARK_LAF
-						: (rgb == THEME_COLOR2_BRIGHT_LAF) ? THEME_COLOR2_DARK_LAF : rgb;
-				image.setRGB(x, y, (0xFF000000 & argb) + color);
+				for (int i=0; i<BRIGHT_TO_DARK_LAF.length; i+=2) {
+					if (rgb == BRIGHT_TO_DARK_LAF[i]) {
+						rgb = BRIGHT_TO_DARK_LAF[i + 1];
+						break;
+					}
+				}
+				image.setRGB(x, y, (0xFF000000 & argb) + rgb);
 			}
 		}
 	}

@@ -14,7 +14,7 @@ public class GenericRectangle implements GenericShape {
 
 	@Override
 	public boolean contains(double x, double y) {
-		return x>=x && x<=x+width && y>=y && y<=y+height;
+		return x>=this.x && x<=this.x+this.width && y>=this.y && y<=this.y+this.height;
 	}
 
 	public boolean contains(GenericRectangle r) {
@@ -65,5 +65,10 @@ public class GenericRectangle implements GenericShape {
 
 	public double getHeight() {
 		return height;
+	}
+
+	@Override
+	public String toString() {
+		return "x:"+x+" y:"+y+" w:"+width+" h:"+height;
 	}
 }

@@ -33,11 +33,15 @@
 
 package com.actelion.research.gui.editor;
 
+import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.util.ColorHelper;
 
 public class GenericEditorToolbar implements GenericEventListener<GenericMouseEvent> {
     protected static final int cButtonsPerColumn = 17;
+
+	protected static final int cImageOversize = 4;  // source image size in regard to target size with no UI-scaling
 
 	protected static final int cButtonClear = 0;
 	protected static final int cButtonCleanStructure = 1;
@@ -72,35 +76,30 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 	protected static final int cToolAtomS = 30;
 	protected static final int cToolAtomCl = 31;
 	protected static final int cToolAtomI = 32;
-	protected static final int cToolAtomOther = 33;
+	protected static final int cToolCustomAtom = 33;
 
-    protected static final int cESRMenuBorder = HiDPIHelper.scale(4);
-	protected static final int cESRMenuOffsetX = HiDPIHelper.scale(-5);
-	protected static final int cESRMenuOffsetY = HiDPIHelper.scale(-5);
-	protected static final float cButtonBorder = HiDPIHelper.getUIScaleFactor()*3f;
+	protected static final int cBorder = Math.round(HiDPIHelper.scale(2f));
 	protected static final float cButtonSize = HiDPIHelper.getUIScaleFactor()*21f;
     protected static final int cToolESRAbs = 101;
     protected static final int cToolESROr = 102;
     protected static final int cToolESRAnd  = 103;
 
 	private GenericCanvas mToolbarCanvas;
-	private GenericDrawArea mArea;
-	private GenericImage mImageUp,mImageDown,mESRImageUp,mESRImageDown;
-	protected int		mWidth,mHeight,mCurrentTool,mPressedButton,mMode,mESRSelected,mESRHilited;
-    protected boolean   mESRMenuVisible;
+	private GenericEditorArea mArea;
+	private GenericImage mImageNormal, mImageDisabled, mESRImageNormal;
+	protected int		mWidth,mHeight,mCurrentTool, mSelectedButton,mHighlightedButton,mMode,mESRSelected;
+	private boolean[] mIsDisabledButton;
 
-	public GenericEditorToolbar(GenericCanvas toolbarCanvas, GenericDrawArea theArea) {
-		mToolbarCanvas = toolbarCanvas;
-		mArea = theArea;
-		init();
+	public GenericEditorToolbar(GenericCanvas toolbarCanvas, GenericEditorArea theArea) {
+		this(toolbarCanvas, theArea, 0);
 		}
 
-	public GenericEditorToolbar(GenericCanvas toolbarCanvas, GenericDrawArea theArea, int mode) {
+	public GenericEditorToolbar(GenericCanvas toolbarCanvas, GenericEditorArea theArea, int mode) {
 		mToolbarCanvas = toolbarCanvas;
 		mArea = theArea;
 		mMode = mode;
-		if ((mMode & GenericDrawArea.MODE_REACTION) != 0)
-			mMode |= GenericDrawArea.MODE_MULTIPLE_FRAGMENTS;
+		if ((mMode & GenericEditorArea.MODE_REACTION) != 0)
+			mMode |= GenericEditorArea.MODE_MULTIPLE_FRAGMENTS;
 		init();
 		}
 
@@ -121,36 +120,39 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
         }*/
 
 	private void init() {
-		mImageDown = mArea.getUIHelper().createImage("drawButtonsDown.gif");
-		mImageUp = mArea.getUIHelper().createImage("drawButtonsUp.gif");
+		mImageNormal = mArea.getUIHelper().createImage("editorButtons.png");
+		if (LookAndFeelHelper.isDarkLookAndFeel())
+			HiDPIHelper.adaptForLookAndFeel(mImageNormal);
+		mImageDisabled = mArea.getUIHelper().createImage("editorButtons.png");
+		HiDPIHelper.disableImage(mImageDisabled);
 
-		mWidth = mImageUp.getWidth();
-		mHeight = mImageUp.getHeight();
+		mWidth =  2*cBorder + HiDPIHelper.scale(mImageNormal.getWidth() / cImageOversize);
+		mHeight = 2*cBorder + HiDPIHelper.scale(mImageNormal.getHeight() / cImageOversize);
 
-		mESRImageDown = mArea.getUIHelper().createImage("ESRButtonsDown.gif");
-		mESRImageUp = mArea.getUIHelper().createImage("ESRButtonsUp.gif");
+		mESRImageNormal = mArea.getUIHelper().createImage("esrButtons.png");
 
 		scaleImages();
 
 		mCurrentTool = cToolStdBond;
-		mPressedButton = -1;
-		}
+		mSelectedButton = -1;
+		mHighlightedButton = -1;
+
+		mIsDisabledButton = new boolean[2*cButtonsPerColumn];
+		if ((mMode & GenericEditorArea.MODE_REACTION) == 0)
+			mIsDisabledButton[cToolMapper] = true;
+		if ((mMode & GenericEditorArea.MODE_DRAWING_OBJECTS) == 0)
+			mIsDisabledButton[cToolText] = true;
+	}
 
 	private void scaleImages() {
-		if (cButtonSize == 21)	// no scaling
-			return;
+		int width = HiDPIHelper.scale(mImageNormal.getWidth() / cImageOversize);
+		int height = HiDPIHelper.scale(mImageNormal.getHeight() / cImageOversize);
+		mImageDisabled.scale(width, height);
+		mImageNormal.scale(width, height);
 
-		mWidth = HiDPIHelper.scale(mWidth);
-		mHeight = HiDPIHelper.scale(mHeight);
-
-		mImageDown.scale(mWidth, mHeight);
-		mImageUp.scale(mWidth, mHeight);
-
-		int width = HiDPIHelper.scale(mESRImageUp.getWidth());
-		int height = HiDPIHelper.scale(mESRImageUp.getHeight());
-
-		mESRImageDown.scale(width, height);
-		mESRImageUp.scale(width, height);
+		width = HiDPIHelper.scale(mESRImageNormal.getWidth() / cImageOversize);
+		height = HiDPIHelper.scale(mESRImageNormal.getHeight() / cImageOversize);
+		mESRImageNormal.scale(width, height);
 		}
 
 	public void setCurrentTool(int tool) {
@@ -162,73 +164,60 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 		}
 
 	public void paintContent(GenericDrawContext context) {
-		context.drawImage(mImageUp, 0,0);
-        drawPressedButton(context, mCurrentTool);
-        if (mPressedButton != -1)
-            drawPressedButton(context, mPressedButton);
+		int background = mToolbarCanvas.getBackgroundRGB();
+		boolean isDark = (ColorHelper.perceivedBrightness(background) < 0.5);
+		int highlightBackground = isDark ? ColorHelper.brighter(background, 0.6f) : ColorHelper.darker(background, 0.6f);
+		int selectedBackground = isDark ? ColorHelper.brighter(background, 0.8f) : ColorHelper.darker(background, 0.8f);
 
-        if (mESRSelected != 0) {
-	        double[] l = getButtonLocation(cToolESR);
-            GenericImage esrButtons = (mCurrentTool == cToolESR) ? mESRImageDown : mESRImageUp;
-	        context.drawImage(esrButtons, cESRMenuBorder, cESRMenuBorder+mESRSelected*cButtonSize, l[0], l[1], cButtonSize, cButtonSize);
-            }
+		context.drawImage(mImageNormal, cBorder,cBorder);
 
-		if (mESRMenuVisible) {
-	        double[] l = getButtonLocation(cToolESR);
-	        double esrMenuX = l[0]-cESRMenuBorder+cESRMenuOffsetX;
-	        double esrMenuY = l[1]-cESRMenuBorder+cESRMenuOffsetY-cButtonSize*mESRSelected;
-	        context.drawImage(mESRImageUp, esrMenuX, esrMenuY);
-            if (mESRHilited != -1) {
-	            context.drawImage(mESRImageDown, cESRMenuBorder, cESRMenuBorder+mESRHilited*cButtonSize,
-			            l[0]+cESRMenuOffsetX, l[1]+cESRMenuOffsetY+(mESRHilited-mESRSelected)*cButtonSize, cButtonSize, cButtonSize);
-                }
-            }
+		// draw the selected ESR button
+		double[] l = getButtonLocation(cToolESR);
+		context.drawImage(mESRImageNormal, 0, mESRSelected*cButtonSize, l[0], l[1], cButtonSize, cButtonSize);
+
+		// draw disabled buttons just over originals
+		for (int i=0; i<mIsDisabledButton.length; i++)
+			if (mIsDisabledButton[i])
+				drawButton(context, i, -1, true);
+
+        drawButton(context, mCurrentTool, selectedBackground, false);
+
+		if (mHighlightedButton != -1 && mHighlightedButton != mSelectedButton)
+			drawButton(context, mHighlightedButton, highlightBackground, false);
+
+        if (mSelectedButton != -1)
+	        drawButton(context, mSelectedButton, 0x006D5FB4, false);
         }
 
 	@Override
 	public void eventHappened(GenericMouseEvent e) {
 		if (e.getWhat() == GenericMouseEvent.MOUSE_PRESSED) {
 			int b = getButtonNo(e);
-			if (b == -1) return;
+			if (!isSelectableButton(b))
+				return;
 
-	        if (b == cToolESR) {
-	            mESRMenuVisible = true;
-	            validateESRHiliting(e);
-		        mToolbarCanvas.repaint();
-	            }
+	        if (b == cToolESR)
+		        mESRSelected = (++mESRSelected) % 3;
 
-	        mPressedButton = b;
+	        mSelectedButton = b;
 
-	        if (b != mCurrentTool)
-		        mToolbarCanvas.repaint();
+	        mToolbarCanvas.repaint();
 			}
 		else if (e.getWhat() == GenericMouseEvent.MOUSE_RELEASED) {
-	        int releasedButton = -1;
-	        if (mESRMenuVisible) {
-	            if (mESRHilited != -1) {
-	                mESRSelected = mESRHilited;
-	                releasedButton = cToolESR;
-	                }
-	            mESRMenuVisible = false;
-	            }
-
-	        if (mPressedButton == -1)
+	        if (mSelectedButton == -1)
 	            return;
 
-	            // if user didn't change esr menu than require that the button beneath
-	            // mouse pointer was the same when pressing and releasing the mouse
-	        if (releasedButton == -1)
-	            releasedButton = getButtonNo(e);
+            int releasedButton = getButtonNo(e);
 
-	        if (releasedButton != mPressedButton
-			 || (mPressedButton == cToolMapper && (mMode & GenericDrawArea.MODE_REACTION) == 0)
-			 || (mPressedButton == cToolText && (mMode & GenericDrawArea.MODE_DRAWING_OBJECTS) == 0)) {
-				mPressedButton = -1;
+	        if (releasedButton != mSelectedButton
+			 || (mSelectedButton == cToolMapper && (mMode & GenericEditorArea.MODE_REACTION) == 0)
+			 || (mSelectedButton == cToolText && (mMode & GenericEditorArea.MODE_DRAWING_OBJECTS) == 0)) {
+				mSelectedButton = -1;
 		        mToolbarCanvas.repaint();
 				return;
 				}
 
-	        mPressedButton = -1;
+	        mSelectedButton = -1;
 			if (releasedButton == cButtonClear
 			 || releasedButton == cButtonCleanStructure
 			 || releasedButton == cButtonUndo) {
@@ -240,54 +229,61 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 			mCurrentTool = releasedButton;
 			mToolbarCanvas.repaint();
 
-	        if (mCurrentTool == cToolESR)
-	            mArea.toolChanged((mESRSelected == 0) ? cToolESRAbs
-	                            : (mESRSelected == 1) ? cToolESROr : cToolESRAnd);
-	        else
-	            mArea.toolChanged(releasedButton);
+	        if (mCurrentTool == cToolESR) {
+		        mArea.toolChanged((mESRSelected == 0) ? cToolESRAbs
+						        : (mESRSelected == 1) ? cToolESROr : cToolESRAnd);
+	            }
+	        else if (mCurrentTool == cToolCustomAtom) {
+	        	mArea.showCustomAtomDialog(-1);
+		        mArea.toolChanged(releasedButton);
+	            }
+	        else {
+		        mArea.toolChanged(releasedButton);
+	            }
 			}
- 		else if (e.getWhat() == GenericMouseEvent.MOUSE_DRAGGED) {
-	        int oldESRHilited = mESRHilited;
-	        validateESRHiliting(e);
-	        if (oldESRHilited != mESRHilited)
-		        mToolbarCanvas.repaint();
-	       }
+		else if (e.getWhat() == GenericMouseEvent.MOUSE_MOVED
+			  || e.getWhat() == GenericMouseEvent.MOUSE_EXITED) {
+			int b = getButtonNo(e);
+			if (b == mSelectedButton)   // cannot highlight selected button
+				b = -1;
+			if (b != mHighlightedButton) {
+				mHighlightedButton = b;
+				mToolbarCanvas.repaint();
+				}
+			}
 		}
 
  	protected int getButtonNo(GenericMouseEvent e) {
-        int x = e.getX();
-        int y = e.getY();
-		if (x<0 || x>=2*cButtonSize+cButtonBorder || y<0 || y>cButtonsPerColumn*cButtonSize) return -1;
-		x -= cButtonBorder;
-		y -= cButtonBorder;
-		if ((x % cButtonSize) > cButtonSize-cButtonBorder) return -1;
-		if ((y % cButtonSize) > cButtonSize-cButtonBorder) return -1;
-		return cButtonsPerColumn * (int)(x/cButtonSize) + (int)(y/cButtonSize);
+        int x = e.getX() - cBorder;
+        int y = e.getY() - cBorder;
+		if (x<0 || x>=2*cButtonSize || y<0 || y>=cButtonsPerColumn*cButtonSize)
+			return -1;
+		int button = cButtonsPerColumn * (int)(x/cButtonSize) + (int)(y/cButtonSize);
+		return isSelectableButton(button) ? button : -1;
 		}
 
-    private void validateESRHiliting(GenericMouseEvent e) {
-        int x = e.getX();
-        int y = e.getY();
-		mESRHilited = -1;
-	    double[] l = getButtonLocation(cToolESR);
-	    l[0] += cESRMenuOffsetX;
-	    l[1] += cESRMenuOffsetX;
-	    if (x>l[0] && x<l[0]+cButtonSize) {
-            int b = (int)((y-l[1]+cButtonSize*mESRSelected) / cButtonSize);
-            if (b >= 0 && b <= 2)
-                mESRHilited = b;
-            }
-        }
+	private boolean isSelectableButton(int b) {
+		return b >= 0 && b < 2*cButtonsPerColumn && !mIsDisabledButton[b]
+				&& (b != mCurrentTool || b == cToolESR || b == cToolCustomAtom);
+		}
 
-	protected void drawPressedButton(GenericDrawContext context, int button) {
+	private void drawButton(GenericDrawContext context, int button, int background, boolean isDisabled) {
+		background |= 0x80000000;
         double[] bl = getButtonLocation(button);
-		context.drawImage(mImageDown, bl[0], bl[1], bl[0], bl[1], cButtonSize, cButtonSize);
+        if (background != -1) {
+	        context.setRGB(background);
+	        context.fillRectangle(bl[0], bl[1], cButtonSize, cButtonSize);
+            }
+        if (button == cToolESR)
+	        context.drawImage(mESRImageNormal, 0, mESRSelected*cButtonSize, bl[0], bl[1], cButtonSize, cButtonSize);
+        else
+			context.drawImage(isDisabled ? mImageDisabled : mImageNormal, bl[0] - cBorder, bl[1] - cBorder, bl[0], bl[1], cButtonSize, cButtonSize);
 		}
 
-    private double[] getButtonLocation(int button) {
+	private double[] getButtonLocation(int button) {
 	    double[] p = new double[2];
-		p[0] = cButtonSize * (button / cButtonsPerColumn) + cButtonBorder-2;
-		p[1] = cButtonSize * (button % cButtonsPerColumn) + cButtonBorder-2;
+		p[0] = cButtonSize * (button / cButtonsPerColumn) + cBorder;
+		p[1] = cButtonSize * (button % cButtonsPerColumn) + cBorder;
         return p;
 		}
 	}

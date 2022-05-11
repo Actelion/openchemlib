@@ -37,6 +37,11 @@ public class SwingEditorToolbar extends JPanel implements GenericCanvas {
 		}
 
 	@Override
+	public int getBackgroundRGB() {
+		return getBackground().getRGB();
+		}
+
+	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		mGenericToolbar.paintContent(new SwingDrawContext((Graphics2D)g));

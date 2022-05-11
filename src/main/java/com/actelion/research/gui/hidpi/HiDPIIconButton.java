@@ -101,7 +101,7 @@ public class HiDPIIconButton extends JButton {
 			for (int i=1; i<animationImageCount; i++) {
 				int index = mImageName.lastIndexOf('.');
 				String fileName = mImageName.substring(0, index)+"_"+i+mImageName.substring(index);
-				mAnimationIcon[i] = HiDPIHelper.createIcon(fileName, 0);
+				mAnimationIcon[i] = HiDPIIcon.createIcon(fileName, 0, false);
 				}
 			}
 
@@ -121,8 +121,8 @@ public class HiDPIIconButton extends JButton {
 
 	private void updateIconSet() {
 		if (mImageName != null) {
-			setIcon(HiDPIHelper.createIcon(mImageName, mRotation));
-			setDisabledIcon(HiDPIHelper.createDisabledIcon(mImageName, mRotation));
+			setIcon(HiDPIIcon.createIcon(mImageName, mRotation, false));
+			setDisabledIcon(HiDPIIcon.createIcon(mImageName, mRotation, true));
 
 			Icon icon = getIcon();
 			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getRetinaScaleFactor()) + 2;

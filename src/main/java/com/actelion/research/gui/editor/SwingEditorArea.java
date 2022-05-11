@@ -5,10 +5,11 @@ import com.actelion.research.gui.clipboard.ClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.generic.GenericCanvas;
 import com.actelion.research.gui.generic.GenericDrawContext;
-import com.actelion.research.gui.swing.SwingUIHelper;
+import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.gui.swing.SwingKeyHandler;
 import com.actelion.research.gui.swing.SwingMouseHandler;
+import com.actelion.research.gui.swing.SwingUIHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,13 +20,13 @@ import java.awt.dnd.DropTarget;
 public class SwingEditorArea extends JPanel implements GenericCanvas {
 	private static final int ALLOWED_DROP_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 
-	private GenericDrawArea mDrawArea;
+	private GenericEditorArea mDrawArea;
 	private SwingKeyHandler mKeyHandler;
 
 	public SwingEditorArea(StereoMolecule mol, int mode) {
 		setFocusable(true);
 
-		mDrawArea = new GenericDrawArea(mol, mode, new SwingUIHelper(this), this);
+		mDrawArea = new GenericEditorArea(mol, mode, new SwingUIHelper(this), this);
 
 		initializeDragAndDrop(ALLOWED_DROP_ACTIONS);
 
@@ -45,7 +46,7 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 		return mKeyHandler;
 		}
 
-	public GenericDrawArea getGenericDrawArea() {
+	public GenericEditorArea getGenericDrawArea() {
 		return mDrawArea;
 		}
 
@@ -65,6 +66,11 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 		}
 
 	@Override
+	public int getBackgroundRGB() {
+		return getBackground().getRGB();
+		}
+
+	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -77,7 +83,7 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 		if (dropAction != DnDConstants.ACTION_NONE) {
 			MoleculeDropAdapter d = new MoleculeDropAdapter() {
 				public void onDropMolecule(StereoMolecule mol, Point p) {
-					mDrawArea.addPastedOrDropped(mol, p);
+					mDrawArea.addPastedOrDropped(mol, new GenericPoint(p.x, p.y));
 				}
 			};
 

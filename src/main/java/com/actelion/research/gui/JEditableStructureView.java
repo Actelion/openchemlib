@@ -35,6 +35,7 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.editor.SwingEditorDialog;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 
 import java.awt.*;
@@ -91,7 +92,7 @@ public class JEditableStructureView extends JStructureView {
 
     public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2 && isEnabled() && isEditable()) {
-            JDrawDialog theDialog = createDrawDialog();
+            SwingEditorDialog theDialog = createDrawDialog();
             theDialog.getDrawArea().setAllowQueryFeatures(mAllowQueryFeatures);
             theDialog.getDrawArea().setDisplayMode(getDisplayMode());
             theDialog.addStructureListener(this);
@@ -99,11 +100,11 @@ public class JEditableStructureView extends JStructureView {
             }
         }
 
-    protected JDrawDialog createDrawDialog() {
+    protected SwingEditorDialog createDrawDialog() {
 		Component c = this;
 		while (!(c instanceof Frame || c instanceof Dialog))
 			c = c.getParent();
-		return (c instanceof Frame) ? new JDrawDialog((Frame) c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL) : new JDrawDialog((Dialog) c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL);
+		return (c instanceof Frame) ? new SwingEditorDialog((Frame) c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL) : new SwingEditorDialog((Dialog) c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL);
 		}
 
 	public void setAllowQueryFeatures(boolean allow) {
