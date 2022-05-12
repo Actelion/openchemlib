@@ -1249,7 +1249,7 @@ public class GenericEditorArea implements GenericEventListener {
 						|| (ch>=97 && ch<=122)
 						|| (ch>=48 && ch<=57)
 						|| (ch == '-')) {
-					mAtomKeyStrokeBuffer.append(ch);
+					mAtomKeyStrokeBuffer.append((char)ch);
 					update(UPDATE_REDRAW);
 				} else if (ch == '\n' || ch == '\r') {
 					expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
