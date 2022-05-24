@@ -553,7 +553,7 @@ public class Reactor {
 								product.setAtomRadical(newAtomNo[j], genericProduct.getAtomRadical(k));
 								if (mIsReactionCenter[genericProductNo][k]) {
 									int parity = mReactant[i].getAtomParity(j);
-									int productParityHint = genericProduct.getAtomQueryFeatures(k) & Molecule.cAtomQFRxnParityHint;
+									long productParityHint = genericProduct.getAtomQueryFeatures(k) & Molecule.cAtomQFRxnParityHint;
 									if (productParityHint == 0) {
 										product.setAtomParity(newAtomNo[j], Molecule.cAtomParityUnknown, false);
 										}

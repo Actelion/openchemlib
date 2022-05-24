@@ -273,7 +273,7 @@ public class TorsionDetail {
 	            		}
 	            	else if (mol.getAtomicNo(connAtom) == 6
 	            		  && !mol.isAromaticAtom(mCentralAtom[i])) {	// if not encoded on central atom
-	                    int feature = mol.isAromaticAtom(connAtom) ? Molecule.cAtomQFAromatic
+	                    long feature = mol.isAromaticAtom(connAtom) ? Molecule.cAtomQFAromatic
 	                                                           		: Molecule.cAtomQFNotAromatic;
 	                    mFragment.setAtomQueryFeature(mToFragmentAtom[connAtom], feature, true);
 	                    }
@@ -297,12 +297,12 @@ public class TorsionDetail {
 		            		hasZ = (mol.getZNeighbour(mCentralAtom[1-i], connBond) != -1);
 		            	if (hasZ) {
 		            		// there is no query feature 'has-Z-neighbor', thus use 'has3neighbors'
-		                    int feature = (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot3Neighbours);
+		                    long feature = (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot3Neighbours);
 		                    mFragment.setAtomQueryFeature(mToFragmentAtom[connAtom], feature, true);
 		            		}
 		            	else if (mol.isAromaticBond(connBond)) {
 		            		// we show that there is no ortho substituent with 'has2neighbors'
-		                    int feature = (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot2Neighbours);
+				            long feature = (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot2Neighbours);
 		                    mFragment.setAtomQueryFeature(mToFragmentAtom[connAtom], feature, true);
 		            		}
 		            	}
@@ -310,7 +310,7 @@ public class TorsionDetail {
 		            // account for gauche-pentane situations
 		            if (mol.getConnBondOrder(mCentralAtom[i], j) == 1) {
 		            	if (mol.getNonHydrogenNeighbourCount(connAtom) == 4) {
-		                    int feature = (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours);
+				            long feature = (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours);
 		                    mFragment.setAtomQueryFeature(mToFragmentAtom[connAtom], feature, true);
 			            	}
 		            	else if (mol.getAtomicNo(connAtom) == 6) {

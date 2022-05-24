@@ -53,6 +53,10 @@ public class DescriptorHandlerStandard2DFactory implements DescriptorConstants,D
 			return DescriptorHandlerLongFFP512.getDefaultInstance();
 		if (DESCRIPTOR_PFP512.shortName.equals(shortName))
 			return DescriptorHandlerLongPFP512.getDefaultInstance();
+//		if (DESCRIPTOR_SSSFP.shortName.equals(shortName))
+//			return DescriptorHandlerSSSPathFp.getDefaultInstance();
+//		if (DESCRIPTOR_ALLFRAG.shortName.equals(shortName))
+//			return DescriptorHandlerAllFragmentsFP.getDefaultInstance();
 		if (DESCRIPTOR_HashedCFp.shortName.equals(shortName))
 			return DescriptorHandlerLongCFP.getDefaultInstance();
 		if (DESCRIPTOR_SkeletonSpheres.shortName.equals(shortName))
@@ -73,6 +77,10 @@ public class DescriptorHandlerStandard2DFactory implements DescriptorConstants,D
 			return new DescriptorHandlerLongFFP512();
 		if (DESCRIPTOR_PFP512.shortName.equals(shortName))
 			return new DescriptorHandlerLongPFP512();
+//	    if (DESCRIPTOR_SSSFP.shortName.equals(shortName))
+//		    return new DescriptorHandlerSSSPathFp();
+//	    if (DESCRIPTOR_ALLFRAG.shortName.equals(shortName))
+//		    return new DescriptorHandlerAllFragmentsFP();
 		if (DESCRIPTOR_HashedCFp.shortName.equals(shortName))
 			return new DescriptorHandlerLongCFP();
 		if (DESCRIPTOR_SkeletonSpheres.shortName.equals(shortName))

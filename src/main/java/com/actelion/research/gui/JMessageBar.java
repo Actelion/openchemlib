@@ -34,6 +34,8 @@
 
 package com.actelion.research.gui;
 
+import com.actelion.research.gui.hidpi.HiDPIHelper;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -56,7 +58,7 @@ public class JMessageBar extends JPanel {
 		setLayout(new BorderLayout());
 
 		mLabel = new JLabel("", SwingConstants.CENTER);
-		mLabel.setFont(mLabel.getFont().deriveFont(Font.PLAIN,12));
+		mLabel.setFont(mLabel.getFont().deriveFont(Font.PLAIN, HiDPIHelper.scale(12)));
 		mLabel.setForeground(sTextColor);
 		mLabel.setBackground(sBackground);
 		mLabel.setOpaque(true);

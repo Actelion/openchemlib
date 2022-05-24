@@ -562,7 +562,7 @@ public class IsomericSmilesCreator {
 		if (charge == 0 && (mMode & MODE_CREATE_SMARTS) != 0) {
 			// Because SMARTS don't know a charge query feature, we set the atom charge in case of neg/pos charge required.
 			// There is no way to require an uncharged atom (Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos).
-			int chargeFeatures = mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFCharge;
+			long chargeFeatures = mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFCharge;
 			if (chargeFeatures == (Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargePos))
 				charge = -1;    // 'require negative charge' is translated into charge := -1
 			else if (chargeFeatures == (Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargeNeg))
@@ -645,31 +645,31 @@ public class IsomericSmilesCreator {
 	private String getAtomSMARTSFeatures(int atom, StringBuilder buffer) {
 		buffer.setLength(0);
 
-		int queryFeatures = mMol.getAtomQueryFeatures(atom);
+		long queryFeatures = mMol.getAtomQueryFeatures(atom);
 
 		// SMARTS don't distinguish between a charged atom and atom charge query features
-		int chargeFeatures = queryFeatures & Molecule.cAtomQFCharge;
+		int chargeFeatures = (int)((queryFeatures & Molecule.cAtomQFCharge) >> Molecule.cAtomQFChargeBits);
 		switch (chargeFeatures) {
-			case Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos:
+			case (int)((Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos) >> Molecule.cAtomQFChargeBits):
 				buffer.append("+0");   // 'require negative charge' is translated into charge := -1
 				break;
-			case Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargePos:
+			case (int)((Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargePos) >> Molecule.cAtomQFChargeBits):
 				if (mMol.getAtomCharge(atom) == 0)
 					buffer.append("-");   // 'require negative charge' is translated into charge := -1
 				break;
-			case Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargeNeg:
+			case (int)((Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargeNeg) >> Molecule.cAtomQFChargeBits):
 				if (mMol.getAtomCharge(atom) == 0)
 					buffer.append("+");   // 'require positive charge' is translated into charge := +1
 				break;
 			}
 
-		int aromState = queryFeatures & Molecule.cAtomQFAromState;
+		long aromState = queryFeatures & Molecule.cAtomQFAromState;
 		if (aromState == Molecule.cAtomQFAromatic)
 			buffer.append(";a");
 		else if (aromState == Molecule.cAtomQFNotAromatic)
 			buffer.append(";A");
 
-		int hydrogenQueryFeatures = queryFeatures & Molecule.cAtomQFHydrogen;
+		long hydrogenQueryFeatures = queryFeatures & Molecule.cAtomQFHydrogen;
 		if (hydrogenQueryFeatures != 0) {
 			if (hydrogenQueryFeatures == (Molecule.cAtomQFNot1Hydrogen | Molecule.cAtomQFNot2Hydrogen | Molecule.cAtomQFNot3Hydrogen))
 				buffer.append(";H0");
@@ -691,62 +691,62 @@ public class IsomericSmilesCreator {
 
 		// Atom membership of SSSR rings cannot be directly translated into number of ring bonds.
 		// We try to get close...
-		int ringState = queryFeatures & Molecule.cAtomQFRingState;
+		int ringState = (int)((queryFeatures & Molecule.cAtomQFRingState) >> Molecule.cAtomQFRingStateBits);
 		switch (ringState) {
-			case Molecule.cAtomQFNotChain:
+			case (int)(Molecule.cAtomQFNotChain >> Molecule.cAtomQFRingStateBits):
 				buffer.append(";!R0");
 				break;
-			case Molecule.cAtomQFNot2RingBonds:
+			case (int)(Molecule.cAtomQFNot2RingBonds >> Molecule.cAtomQFRingStateBits):
 				buffer.append(";!R1");
 				break;
-			case Molecule.cAtomQFNot3RingBonds:
+			case (int)(Molecule.cAtomQFNot3RingBonds >> Molecule.cAtomQFRingStateBits):
 				buffer.append(";!R2");
 				break;
-			case Molecule.cAtomQFNot4RingBonds:
+			case (int)(Molecule.cAtomQFNot4RingBonds >> Molecule.cAtomQFRingStateBits):
 				buffer.append(";!R3");
 				break;
-			case Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
+			case (int)((Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds) >> Molecule.cAtomQFRingStateBits):
 				buffer.append(";R0");
 				break;
-			case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
+			case (int)((Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds) >> Molecule.cAtomQFRingStateBits):
 				buffer.append(";R1");
 				break;
-			case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds:
+			case (int)((Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds) >> Molecule.cAtomQFRingStateBits):
 				buffer.append(";R2");
 				break;
-			case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds:
+			case (int)((Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds) >> Molecule.cAtomQFRingStateBits):
 				buffer.append(";R3");
 				break;
 		}
 
-		int ringSize = (queryFeatures & Molecule.cAtomQFRingSize) >> Molecule.cAtomQFRingSizeShift;
+		long ringSize = (queryFeatures & Molecule.cAtomQFSmallRingSize) >> Molecule.cAtomQFSmallRingSizeShift;
 		if (ringSize != 0)
 			buffer.append(";r"+ringSize);
 
-		int neighbourFeatures = queryFeatures & Molecule.cAtomQFNeighbours;
+		int neighbourFeatures = (int)((queryFeatures & Molecule.cAtomQFNeighbours) >> Molecule.cAtomQFNeighbourBits);
 		switch (neighbourFeatures) {
-			case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot1Neighbour:
+			case (int)((Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot1Neighbour) >> Molecule.cAtomQFNeighbourBits):
 				buffer.append(";D1");   // exactly 1
 				break;
-			case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot2Neighbours:
+			case (int)((Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot2Neighbours) >> Molecule.cAtomQFNeighbourBits):
 				buffer.append(";D2");   // exactly 2
 				break;
-			case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot3Neighbours:
+			case (int)((Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot3Neighbours) >> Molecule.cAtomQFNeighbourBits):
 				buffer.append(";D3");   // exactly 3
 				break;
-			case Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours:
+			case (int)((Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours) >> Molecule.cAtomQFNeighbourBits):
 				buffer.append(";!D3;!D4");   // less than 3
 				break;
-			case Molecule.cAtomQFNot4Neighbours:
+			case (int)(Molecule.cAtomQFNot4Neighbours >> Molecule.cAtomQFNeighbourBits):
 				buffer.append(";!D4");   // less than 4
 				break;
-			case Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour:
+			case (int)((Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour) >> Molecule.cAtomQFNeighbourBits):
 				buffer.append(";!D0;!D1");   // more than 1
 				break;
-			case Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot2Neighbours:
+			case (int)((Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot2Neighbours) >> Molecule.cAtomQFNeighbourBits):
 				buffer.append(";!D0;!D1;!D2");   // more than 2
 				break;
-			case Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours:
+			case (int)((Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours) >> Molecule.cAtomQFNeighbourBits):
 				buffer.append(";!D0;!D1;!D2;!D3");   // more than 3
 				break;
 		}

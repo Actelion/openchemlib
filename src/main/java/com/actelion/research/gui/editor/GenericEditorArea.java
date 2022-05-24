@@ -2696,13 +2696,14 @@ public class GenericEditorArea implements GenericEventListener {
 	}
 
 	private void fireEventLater(EditorEvent e) {
-		if ((e.getWhat() & ~mEventsScheduled) != 0) {
+		final int what = e.getWhat();
+		if ((what & mEventsScheduled) == 0) {
 			mUIHelper.runLater(() -> {
+				mEventsScheduled &= ~what;
 				for (GenericEventListener<EditorEvent> l : mListeners)
 					l.eventHappened(e);
-				mEventsScheduled &= e.getWhat();
 			} );
-			mEventsScheduled |= e.getWhat();
+			mEventsScheduled |= what;
 		}
 	}
 
@@ -2737,6 +2738,8 @@ public class GenericEditorArea implements GenericEventListener {
 			return;
 		}
 		mMol = theMolecule;
+		mMode = 0;
+		mDrawingObjectList = null;
 		storeState();
 		moleculeChanged();
 	}
@@ -2745,7 +2748,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return mFragment;
 	}
 
-	public void setFragments (StereoMolecule[]fragment) {
+	public void setFragments(StereoMolecule[]fragment) {
 		mMol.clear();
 		mFragment = fragment;
 		for (int i = 0; i<fragment.length; i++) {
@@ -2761,6 +2764,7 @@ public class GenericEditorArea implements GenericEventListener {
 		}
 
 		mMode = MODE_MULTIPLE_FRAGMENTS;
+		mDrawingObjectList = null;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);
 		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 	}
@@ -2812,6 +2816,8 @@ public class GenericEditorArea implements GenericEventListener {
 				mFragmentNo[atom++] = f;
 			}
 		}
+
+		mDrawingObjectList = new DrawingObjectList();
 
 		mMode = MODE_MULTIPLE_FRAGMENTS | MODE_REACTION;
 		update(UPDATE_SCALE_COORDS_USE_FRAGMENTS);

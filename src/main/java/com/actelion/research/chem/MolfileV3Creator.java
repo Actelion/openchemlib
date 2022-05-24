@@ -296,7 +296,7 @@ public class MolfileV3Creator
                 mMolfile.append(" VAL=" + ((valence == 0) ? "-1" : valence));
             	}
 
-            int hydrogenFlags = Molecule.cAtomQFHydrogen & mol.getAtomQueryFeatures(atom);
+	        long hydrogenFlags = Molecule.cAtomQFHydrogen & mol.getAtomQueryFeatures(atom);
             if (hydrogenFlags == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen)) {
                 mMolfile.append(" HCOUNT=2"); // at least 2 hydrogens
             	}
@@ -310,7 +310,7 @@ public class MolfileV3Creator
                 mMolfile.append(" HCOUNT=1"); // use at least 1 hydrogens as closest match for exactly one
             	}
 
-            int substitution = mol.getAtomQueryFeatures(atom) & (Molecule.cAtomQFMoreNeighbours | Molecule.cAtomQFNoMoreNeighbours);
+            long substitution = mol.getAtomQueryFeatures(atom) & (Molecule.cAtomQFMoreNeighbours | Molecule.cAtomQFNoMoreNeighbours);
             if (substitution != 0) {
                 if ((substitution & Molecule.cAtomQFMoreNeighbours) != 0) {
                     mMolfile.append(" SUBST=" + (mol.getAllConnAtoms(atom) + 1));
@@ -320,25 +320,18 @@ public class MolfileV3Creator
                 	}
             	}
 
-            int ringFeatures = mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFRingState;
+	        long ringFeatures = mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFRingState;
             if (ringFeatures != 0) {
-                switch(ringFeatures) {
-                    case Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
-                        mMolfile.append(" RBCNT=-1");
-                        break;
-                    case Molecule.cAtomQFNotChain:
-                        mMolfile.append(" RBCNT=2"); // any ring atom; there is no MDL equivalent
-                        break;
-                    case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
-                        mMolfile.append(" RBCNT=2");
-                        break;
-                    case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds:
-                        mMolfile.append(" RBCNT=3");
-                        break;
-                    case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds:
-                        mMolfile.append(" RBCNT=4");
-                        break;
-                	}
+                if (ringFeatures == (Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
+                    mMolfile.append(" RBCNT=-1");
+	            else if (ringFeatures == Molecule.cAtomQFNotChain)
+                    mMolfile.append(" RBCNT=2"); // any ring atom; there is no MDL equivalent
+                else if (ringFeatures == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
+                    mMolfile.append(" RBCNT=2");
+	            else if (ringFeatures == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds))
+                    mMolfile.append(" RBCNT=3");
+	            else if (ringFeatures == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds))
+                    mMolfile.append(" RBCNT=4");
             	}
 
             mMolfile.append(nl);

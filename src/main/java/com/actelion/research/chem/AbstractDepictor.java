@@ -34,6 +34,7 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.gui.editor.AtomQueryFeatureDialogBuilder;
 import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.gui.generic.GenericPolygon;
 import com.actelion.research.gui.generic.GenericRectangle;
@@ -1686,7 +1687,7 @@ public abstract class AbstractDepictor<T> {
 			propStr = append(propStr, mAtomText[atom]);
 
 		String isoStr = null;
-		int queryFeatures = mMol.getAtomQueryFeatures(atom);
+		long queryFeatures = mMol.getAtomQueryFeatures(atom);
 		if (queryFeatures != 0) {
 			if ((queryFeatures & Molecule.cAtomQFAromatic) != 0)
 				isoStr = append(isoStr, "a");
@@ -1695,7 +1696,7 @@ public abstract class AbstractDepictor<T> {
 			if ((queryFeatures & Molecule.cAtomQFMoreNeighbours) != 0)
 				isoStr = append(isoStr, "s");
             if ((queryFeatures & Molecule.cAtomQFHydrogen) != 0) {
-                int hydrogens = (queryFeatures & Molecule.cAtomQFHydrogen);
+                long hydrogens = (queryFeatures & Molecule.cAtomQFHydrogen);
     			if (hydrogens == Molecule.cAtomQFNot1Hydrogen+Molecule.cAtomQFNot2Hydrogen+Molecule.cAtomQFNot3Hydrogen)
     				isoStr = append(isoStr, "h0");
     			else if (hydrogens == Molecule.cAtomQFNot0Hydrogen+Molecule.cAtomQFNot2Hydrogen+Molecule.cAtomQFNot3Hydrogen)
@@ -1714,7 +1715,7 @@ public abstract class AbstractDepictor<T> {
                     isoStr = append(isoStr, "h<2");
                 }
             if ((queryFeatures & Molecule.cAtomQFCharge) != 0) {
-                int charge = (queryFeatures & Molecule.cAtomQFCharge);
+                long charge = (queryFeatures & Molecule.cAtomQFCharge);
     			if (charge == Molecule.cAtomQFNotChargePos+Molecule.cAtomQFNotChargeNeg)
     				isoStr = append(isoStr, "c0");
     			else if (charge == Molecule.cAtomQFNotCharge0+Molecule.cAtomQFNotChargeNeg)
@@ -1723,7 +1724,7 @@ public abstract class AbstractDepictor<T> {
     				isoStr = append(isoStr, "c-");
                 }
             if ((queryFeatures & Molecule.cAtomQFPiElectrons) != 0) {
-                int piElectrons = (queryFeatures & Molecule.cAtomQFPiElectrons);
+                long piElectrons = (queryFeatures & Molecule.cAtomQFPiElectrons);
                 if (piElectrons == Molecule.cAtomQFNot1PiElectron+Molecule.cAtomQFNot2PiElectrons)
                     isoStr = append(isoStr, "pi0");
                 else if (piElectrons == Molecule.cAtomQFNot0PiElectrons+Molecule.cAtomQFNot2PiElectrons)
@@ -1734,7 +1735,7 @@ public abstract class AbstractDepictor<T> {
                     isoStr = append(isoStr, "pi>0");
                 }
             if ((queryFeatures & Molecule.cAtomQFNeighbours) != 0) {
-                int neighbours = (queryFeatures & Molecule.cAtomQFNeighbours);
+                long neighbours = (queryFeatures & Molecule.cAtomQFNeighbours);
                 if (neighbours == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot1Neighbour))
                     isoStr = append(isoStr, "n1");
                 else if (neighbours == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot2Neighbours))
@@ -1753,7 +1754,7 @@ public abstract class AbstractDepictor<T> {
                     isoStr = append(isoStr, "n>3");
                 }
             if ((queryFeatures & Molecule.cAtomQFRingState) != 0) {
-                int ringBonds = (queryFeatures & Molecule.cAtomQFRingState);
+                long ringBonds = (queryFeatures & Molecule.cAtomQFRingState);
                 if (ringBonds == Molecule.cAtomQFNot2RingBonds+Molecule.cAtomQFNot3RingBonds+Molecule.cAtomQFNot4RingBonds)
                     isoStr = append(isoStr, "!r");
                 else if (ringBonds == Molecule.cAtomQFNotChain)
@@ -1765,9 +1766,12 @@ public abstract class AbstractDepictor<T> {
                 else if (ringBonds == Molecule.cAtomQFNotChain+Molecule.cAtomQFNot2RingBonds+Molecule.cAtomQFNot3RingBonds)
                     isoStr = append(isoStr, "rb4");
                 }
-            if ((queryFeatures & Molecule.cAtomQFRingSize) != 0) {
-                isoStr = append(isoStr, "r"+((queryFeatures & Molecule.cAtomQFRingSize)>>Molecule.cAtomQFRingSizeShift));
+            if ((queryFeatures & Molecule.cAtomQFSmallRingSize) != 0) {
+                isoStr = append(isoStr, "r"+((queryFeatures & Molecule.cAtomQFSmallRingSize)>>Molecule.cAtomQFSmallRingSizeShift));
                 }
+			if ((queryFeatures & Molecule.cAtomQFNewRingSize) != 0) {
+				isoStr = append(isoStr, createRingSizeText(queryFeatures));
+				}
             if ((queryFeatures & Molecule.cAtomQFFlatNitrogen) != 0) {
                 isoStr = append(isoStr, "f");
                 }
@@ -2131,6 +2135,31 @@ public abstract class AbstractDepictor<T> {
 
 		if (mCurrentColor == COLOR_EXCLUDE_GROUP_FG)
 			setColor_(COLOR_RESTORE_PREVIOUS);
+		}
+
+	private String createRingSizeText(long queryFeatures) {
+		queryFeatures &= Molecule.cAtomQFNewRingSize;
+		for (int i=0; i<AtomQueryFeatureDialogBuilder.RING_SIZE_VALUES.length; i++)
+			if (queryFeatures == AtomQueryFeatureDialogBuilder.RING_SIZE_VALUES[i])
+				return AtomQueryFeatureDialogBuilder.RING_SIZE_SHORT_TEXT[i];
+
+		StringBuilder customOption = new StringBuilder("R");
+		if ((queryFeatures & Molecule.cAtomQFRingSize0) != 0)
+			customOption.append("0");
+		if ((queryFeatures & Molecule.cAtomQFRingSize3) != 0)
+			customOption.append("3");
+		if ((queryFeatures & Molecule.cAtomQFRingSize4) != 0)
+			customOption.append("4");
+		if ((queryFeatures & Molecule.cAtomQFRingSize5) != 0)
+			customOption.append("5");
+		if ((queryFeatures & Molecule.cAtomQFRingSize6) != 0)
+			customOption.append("6");
+		if ((queryFeatures & Molecule.cAtomQFRingSize7) != 0)
+			customOption.append("7");
+		if ((queryFeatures & Molecule.cAtomQFRingSizeLarge) != 0)
+			customOption.append("8");
+
+		return customOption.toString();
 		}
 
 	private void mpSetNormalLabelSize() {

@@ -49,7 +49,7 @@ public class Molecule implements Serializable {
 	// be changed as well.
 	// In addition to the above requirement, the class name should not be obfuscated at all!
 
-	static final long serialVersionUID = 0x20100310;	// after splitting bond flags and query features
+	static final long serialVersionUID = 0x20220517;	// after extending atom query features from int to long
 
 	public static final int cMaxAtomicNo = 190;
 
@@ -81,9 +81,9 @@ public class Molecule implements Serializable {
 	public static final int cAtomColorDarkRed		= 0x0001C0;
 	private static final int cAtomFlagSelected 		= 0x000200;
 
-	protected static final int cAtomFlagsHelper		= 0x0003FC0F;
 	protected static final int cAtomFlagsHelper2	= 0x00007C08;
 	protected static final int cAtomFlagsHelper3	= 0x08038007;
+	protected static final int cAtomFlagsHelper		= cAtomFlagsHelper2 | cAtomFlagsHelper3;
 
 	protected static final int cAtomFlagsRingBonds	= 0x000C00;
 	protected static final int cAtomFlags2RingBonds = 0x000400;
@@ -123,7 +123,7 @@ public class Molecule implements Serializable {
 	protected static final int cAtomFlagsValence	= 0xF0000000;
 	private static final int cAtomFlagsValenceShift = 28;
 
-	public static final int cAtomQFNoOfBits			= 30;
+	public static final int cAtomQFNoOfBits			= 39;
 	public static final int cAtomQFAromStateBits	= 2;
 	public static final int cAtomQFAromStateShift	= 1;
 	public static final int cAtomQFRingStateBits	= 4;
@@ -134,52 +134,62 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFPiElectronShift	= 14;
 	public static final int cAtomQFNeighbourBits	= 5;
 	public static final int cAtomQFNeighbourShift	= 17;
-	public static final int cAtomQFRingSizeBits		= 3;
-	public static final int cAtomQFRingSizeShift	= 22;
+	public static final int cAtomQFSmallRingSizeBits = 3;
+	public static final int cAtomQFSmallRingSizeShift = 22;
 	public static final int cAtomQFChargeBits		= 3;
 	public static final int cAtomQFChargeShift		= 25;
 	public static final int cAtomQFRxnParityBits	= 2;
 	public static final int cAtomQFRxnParityShift	= 30;
-	public static final int cAtomQFSimpleFeatures	= 0x0E3FC7FE;
-	public static final int cAtomQFNarrowing		= 0x0E3FC7FE;
-	public static final int cAtomQFAny				= 0x00000001;
-	public static final int cAtomQFAromState		= 0x00000006;
-	public static final int cAtomQFAromatic			= 0x00000002;
-	public static final int cAtomQFNotAromatic		= 0x00000004;
-	public static final int cAtomQFRingState		= 0x00000078;
-	public static final int cAtomQFNotChain			= 0x00000008;
-	public static final int cAtomQFNot2RingBonds	= 0x00000010;
-	public static final int cAtomQFNot3RingBonds	= 0x00000020;
-	public static final int cAtomQFNot4RingBonds	= 0x00000040;
-	public static final int cAtomQFHydrogen			= 0x00000780;
-	public static final int cAtomQFNot0Hydrogen		= 0x00000080;
-	public static final int cAtomQFNot1Hydrogen		= 0x00000100;
-	public static final int cAtomQFNot2Hydrogen		= 0x00000200;
-	public static final int cAtomQFNot3Hydrogen		= 0x00000400;
-	public static final int cAtomQFNoMoreNeighbours	= 0x00000800;
-	public static final int cAtomQFMoreNeighbours	= 0x00001000;
-	public static final int cAtomQFMatchStereo		= 0x00002000;
-	public static final int cAtomQFPiElectrons		= 0x0001C000;
-	public static final int cAtomQFNot0PiElectrons  = 0x00004000;
-	public static final int cAtomQFNot1PiElectron   = 0x00008000;
-	public static final int cAtomQFNot2PiElectrons  = 0x00010000;
-	public static final int cAtomQFNeighbours		= 0x003E0000;  // these QF refer to non-H neighbours
-	public static final int cAtomQFNot0Neighbours   = 0x00020000;
-	public static final int cAtomQFNot1Neighbour	= 0x00040000;
-	public static final int cAtomQFNot2Neighbours   = 0x00080000;
-	public static final int cAtomQFNot3Neighbours   = 0x00100000;
-	public static final int cAtomQFNot4Neighbours   = 0x00200000;  // this is not 4 or more neighbours
-	public static final int cAtomQFRingSize			= 0x01C00000;
-	public static final int cAtomQFCharge			= 0x0E000000;
-	public static final int cAtomQFNotChargeNeg		= 0x02000000;
-	public static final int cAtomQFNotCharge0		= 0x04000000;
-	public static final int cAtomQFNotChargePos		= 0x08000000;
-	public static final int cAtomQFFlatNitrogen		= 0x10000000;  // currently only used in TorsionDetail
-	public static final int cAtomQFExcludeGroup		= 0x20000000;  // these atoms must not exist in SS-matches
-	public static final int cAtomQFRxnParityHint    = 0xC0000000;  // Retain,invert,racemise configuration in reaction
-	public static final int cAtomQFRxnParityRetain  = 0x40000000;  // Retain,invert,racemise configuration in reaction
-	public static final int cAtomQFRxnParityInvert  = 0x80000000;  // Retain,invert,racemise configuration in reaction
-	public static final int cAtomQFRxnParityRacemize= 0xC0000000;  // Retain,invert,racemise configuration in reaction
+	public static final int cAtomQFNewRingSizeBits	= 7;
+	public static final int cAtomQFNewRingSizeShift = 32;
+	public static final long cAtomQFSimpleFeatures	= 0x000000000E3FC7FEL;
+	public static final long cAtomQFNarrowing		= 0x000000000E3FC7FEL;
+	public static final long cAtomQFAny				= 0x00000001;
+	public static final long cAtomQFAromState		= 0x00000006;
+	public static final long cAtomQFAromatic		= 0x00000002;
+	public static final long cAtomQFNotAromatic		= 0x00000004;
+	public static final long cAtomQFRingState		= 0x00000078;
+	public static final long cAtomQFNotChain		= 0x00000008;
+	public static final long cAtomQFNot2RingBonds	= 0x00000010;
+	public static final long cAtomQFNot3RingBonds	= 0x00000020;
+	public static final long cAtomQFNot4RingBonds	= 0x00000040;
+	public static final long cAtomQFHydrogen		= 0x00000780;
+	public static final long cAtomQFNot0Hydrogen	= 0x00000080;
+	public static final long cAtomQFNot1Hydrogen	= 0x00000100;
+	public static final long cAtomQFNot2Hydrogen	= 0x00000200;
+	public static final long cAtomQFNot3Hydrogen	= 0x00000400;
+	public static final long cAtomQFNoMoreNeighbours= 0x00000800;
+	public static final long cAtomQFMoreNeighbours	= 0x00001000;
+	public static final long cAtomQFMatchStereo		= 0x00002000;
+	public static final long cAtomQFPiElectrons		= 0x0001C000;
+	public static final long cAtomQFNot0PiElectrons = 0x00004000;
+	public static final long cAtomQFNot1PiElectron  = 0x00008000;
+	public static final long cAtomQFNot2PiElectrons = 0x00010000;
+	public static final long cAtomQFNeighbours		= 0x003E0000;  // these QF refer to non-H neighbours
+	public static final long cAtomQFNot0Neighbours  = 0x00020000;
+	public static final long cAtomQFNot1Neighbour	= 0x00040000;
+	public static final long cAtomQFNot2Neighbours  = 0x00080000;
+	public static final long cAtomQFNot3Neighbours  = 0x00100000;
+	public static final long cAtomQFNot4Neighbours  = 0x00200000;  // this is not 4 or more neighbours
+	public static final long cAtomQFSmallRingSize = 0x01C00000;  // legacy: used to just define one ring size
+	public static final long cAtomQFCharge			= 0x0E000000;
+	public static final long cAtomQFNotChargeNeg	= 0x02000000;
+	public static final long cAtomQFNotCharge0		= 0x04000000;
+	public static final long cAtomQFNotChargePos	= 0x08000000;
+	public static final long cAtomQFFlatNitrogen	= 0x10000000;  // currently only used in TorsionDetail
+	public static final long cAtomQFExcludeGroup	= 0x20000000;  // these atoms must not exist in SS-matches
+	public static final long cAtomQFRxnParityHint   = 0xC0000000;  // Retain,invert,racemise configuration in reaction
+	public static final long cAtomQFRxnParityRetain = 0x40000000;  // Retain,invert,racemise configuration in reaction
+	public static final long cAtomQFRxnParityInvert = 0x80000000;  // Retain,invert,racemise configuration in reaction
+	public static final long cAtomQFRxnParityRacemize= 0xC0000000;  // Retain,invert,racemise configuration in reaction
+	public static final long cAtomQFNewRingSize     = 0x0000007F00000000L;
+	public static final long cAtomQFRingSize0       = 0x0000000100000000L;
+	public static final long cAtomQFRingSize3       = 0x0000000200000000L;
+	public static final long cAtomQFRingSize4       = 0x0000000400000000L;
+	public static final long cAtomQFRingSize5       = 0x0000000800000000L;
+	public static final long cAtomQFRingSize6       = 0x0000001000000000L;
+	public static final long cAtomQFRingSize7       = 0x0000002000000000L;
+	public static final long cAtomQFRingSizeLarge   = 0x0000004000000000L;
 
 	public static final int cBondTypeSingle			= 0x00000001;
 	public static final int cBondTypeDouble			= 0x00000002;
@@ -427,7 +437,7 @@ public class Molecule implements Serializable {
 	transient protected int[] mAtomMapNo;
 	transient protected int[] mAtomMass;
 	transient protected int[] mAtomFlags;
-	transient protected int[] mAtomQueryFeatures;
+	transient protected long[] mAtomQueryFeatures;
 	transient protected int[][] mBondAtom;
 	transient protected int[] mBondType;
 	transient protected int[] mBondFlags;
@@ -522,7 +532,7 @@ public class Molecule implements Serializable {
 			mCoordinates[i] = new Coordinates();
 		mAtomMass = new int[mMaxAtoms];
 		mAtomFlags = new int[mMaxAtoms];
-		mAtomQueryFeatures = new int[mMaxAtoms];
+		mAtomQueryFeatures = new long[mMaxAtoms];
 		mAtomList = null;
 		mAtomCustomLabel = null;
 		mBondAtom = new int[2][mMaxBonds];
@@ -1384,9 +1394,9 @@ public class Molecule implements Serializable {
 		tempInt = mAtomFlags[atom1];
 		mAtomFlags[atom1] = mAtomFlags[atom2];
 		mAtomFlags[atom2] = tempInt;
-		tempInt = mAtomQueryFeatures[atom1];
+		long tempLong = mAtomQueryFeatures[atom1];
 		mAtomQueryFeatures[atom1] = mAtomQueryFeatures[atom2];
-		mAtomQueryFeatures[atom2] = tempInt;
+		mAtomQueryFeatures[atom2] = tempLong;
 		tempInt = mAtomMapNo[atom1];
 		mAtomMapNo[atom1] = mAtomMapNo[atom2];
 		mAtomMapNo[atom2] = tempInt;
@@ -2057,7 +2067,7 @@ public class Molecule implements Serializable {
 	 * @param atom
 	 * @return
 	 */
-	public int getAtomQueryFeatures(int atom) {
+	public long getAtomQueryFeatures(int atom) {
 		return mAtomQueryFeatures[atom];
 		}
 
@@ -2473,6 +2483,11 @@ public class Molecule implements Serializable {
 		System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
 		return copy;
     }
+	private static long[] copyOf(long[] original, int newLength) {
+		long[] copy = new long[newLength];
+		System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
+		return copy;
+	}
 	private static int[][] copyOf(int[][] original, int newLength) {
 		int[][] copy = new int[newLength][];
 		for (int i=0; i<original.length; i++) {
@@ -3038,7 +3053,7 @@ public class Molecule implements Serializable {
 	 * @param feature one of cAtomQF...
 	 * @param value if true, the feature is set, otherwise it is removed
 	 */
-	public void setAtomQueryFeature(int atom, int feature, boolean value) {
+	public void setAtomQueryFeature(int atom, long feature, boolean value) {
 		if (value)
 			mAtomQueryFeatures[atom] |= feature;
 		else
@@ -4046,7 +4061,7 @@ public class Molecule implements Serializable {
 			stream.writeInt(mAtomCharge[atom]);
 			stream.writeInt(mAtomMass[atom]);
 			stream.writeInt(mAtomFlags[atom] & ~cAtomFlagsHelper);
-			stream.writeInt(mAtomQueryFeatures[atom]);
+			stream.writeLong(mAtomQueryFeatures[atom]);
 			stream.writeDouble(mCoordinates[atom].x);	// for compatibility with earlier double based coords
 			stream.writeDouble(mCoordinates[atom].y);
 			stream.writeDouble(mCoordinates[atom].z);

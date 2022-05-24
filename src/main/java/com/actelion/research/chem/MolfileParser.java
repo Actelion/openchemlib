@@ -177,6 +177,7 @@ public class MolfileParser
 				int atomicNo = Molecule.getAtomicNoFromLabel(label);
 				mMol.setAtomicNo(atom,atomicNo);
 				if(label.equals("A")){
+					mMol.setAtomicNo(atom, 6);
 					mMol.setAtomQueryFeature(atom,Molecule.cAtomQFAny,true);
 				}
 

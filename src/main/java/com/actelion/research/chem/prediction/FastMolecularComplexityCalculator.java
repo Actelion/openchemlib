@@ -37,6 +37,7 @@ package com.actelion.research.chem.prediction;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.util.SortedList;
 
 import java.util.TreeSet;
 
@@ -45,13 +46,14 @@ import java.util.TreeSet;
  * package. It determines the number of distinct fragments within the given molecule up to a bod count of 7.
  */
 public class FastMolecularComplexityCalculator {
+	protected static final int MAX_BOND_COUNT = 7;
+
 	/**
 	 * Ambiguous bonds are normalized.
 	 * @param mol
 	 * @return
 	 */
 	public static float assessComplexity(StereoMolecule mol) {
-		final int MAX_BOND_COUNT = 7;
 		int bondCount = Math.min(mol.getBonds()/2, MAX_BOND_COUNT);
 
 		if (bondCount < 2)
@@ -73,6 +75,8 @@ public class FastMolecularComplexityCalculator {
 				}
 			}
 		}
+
+		SortedList<BondSet> bondSets = new SortedList<>();
 
 		boolean[] bondIsMember = new boolean[mol.getBonds()];
 		int maxLevel = bondCount - 2;
@@ -98,8 +102,13 @@ public class FastMolecularComplexityCalculator {
 				if (levelBondFound) {
 					bondIsMember[levelBond[level]] = true;
 					if (level == maxLevel) {
-						mol.copyMoleculeByBonds(fragment, bondIsMember, true, atomMap);
-						fragmentSet.add(new Canonizer(fragment).getIDCode());
+						BondSet bondSet = new BondSet(bondIsMember, mol.getBonds());
+						if (bondSets.addIfNew(bondSet)) {
+							mol.copyMoleculeByBonds(fragment, bondIsMember, true, atomMap);
+							String idcode = new Canonizer(fragment).getIDCode();
+if (!fragmentSet.contains(idcode)) System.out.println(idcode+"\tComplexity");
+							fragmentSet.add(idcode);
+						}
 						bondIsMember[levelBond[level]] = false;
 					}
 					else {
@@ -113,8 +122,40 @@ public class FastMolecularComplexityCalculator {
 					bondIsMember[levelBond[level]] = false;
 				}
 			}
+			bondIsMember[rootBond] = false;
 		}
 
+//System.out.println("cbits:"+fragmentSet.size()+" idcode:"+new Canonizer(mol).getIDCode());
 		return (float)Math.log(fragmentSet.size()) / bondCount;
+	}
+}
+
+class BondSet implements Comparable<BondSet> {
+	private int[] sortedBonds;
+
+	public BondSet(boolean[] bondMask, int bondCount) {
+		sortedBonds = new int[FastMolecularComplexityCalculator.MAX_BOND_COUNT+1];
+		int count = 0;
+		for (int bond=0; bond<bondCount; bond++) {
+			if (count == sortedBonds.length)
+				System.out.println("!!!");
+			if (bondMask[bond])
+				sortedBonds[count++] = bond;
 		}
 	}
+
+	public boolean equals(BondSet bs) {
+		for (int i=0; i<sortedBonds.length; i++)
+			if (bs.sortedBonds[i] != sortedBonds[i])
+				return false;
+		return true;
+		}
+
+	@Override
+	public int compareTo(BondSet bs) {
+		for (int i=0; i<sortedBonds.length; i++)
+			if (bs.sortedBonds[i] != sortedBonds[i])
+				return bs.sortedBonds[i] < sortedBonds[i] ? -1 : 1;
+		return 0;
+	}
+}

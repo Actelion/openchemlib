@@ -199,7 +199,7 @@ public class MolfileCreator {
 
             mBuilder.append(" 0  0  0");	// massDif, charge, parity
 
-            int hydrogenFlags = Molecule.cAtomQFHydrogen & mol.getAtomQueryFeatures(atom);
+            long hydrogenFlags = Molecule.cAtomQFHydrogen & mol.getAtomQueryFeatures(atom);
             if (hydrogenFlags == 0)
                 mBuilder.append("  0");
             else if (hydrogenFlags == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen))
@@ -377,7 +377,7 @@ public class MolfileCreator {
             if (no != 0) {
                 int count = 0;
                 for (int atom=0; atom<mol.getAllAtoms(); atom++) {
-                    int ringFeatures = mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFRingState;
+                    long ringFeatures = mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFRingState;
                     if (ringFeatures != 0) {
                         if (count == 0) {
                             mBuilder.append("M  RBC");
@@ -385,23 +385,16 @@ public class MolfileCreator {
                             }
                         mBuilder.append(" ");
                         appendThreeDigitInt(atom + 1);
-                        switch (ringFeatures) {
-                            case Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
+                        if (ringFeatures == (Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
                                 mBuilder.append("  -1");
-                                break;
-                            case Molecule.cAtomQFNotChain:
+                        else if (ringFeatures == Molecule.cAtomQFNotChain)
                                 mBuilder.append("   1");	// any ring atom; there is no MDL equivalent
-                                break;
-                            case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds:
+                        else if (ringFeatures == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
                                 mBuilder.append("   2");
-                                break;
-                            case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds:
+                        else if (ringFeatures == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds))
                                 mBuilder.append("   3");
-                                break;
-                            case Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds:
+                        else if (ringFeatures == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds))
                                 mBuilder.append("   4");
-                                break;
-                            }
                         no--;
                         if (++count == 8 || no == 0) {
                             count = 0;
@@ -447,7 +440,7 @@ public class MolfileCreator {
             if (no != 0) {
                 int count = 0;
                 for (int atom=0; atom<mol.getAllAtoms(); atom++) {
-                    int substitution = mol.getAtomQueryFeatures(atom) & (Molecule.cAtomQFMoreNeighbours | Molecule.cAtomQFNoMoreNeighbours);
+                    long substitution = mol.getAtomQueryFeatures(atom) & (Molecule.cAtomQFMoreNeighbours | Molecule.cAtomQFNoMoreNeighbours);
                     if (substitution != 0) {
                         if (count == 0) {
                             mBuilder.append("M  SUB");

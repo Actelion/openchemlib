@@ -87,8 +87,7 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 	private GenericCanvas mToolbarCanvas;
 	private GenericEditorArea mArea;
 	private GenericImage mImageNormal, mImageDisabled, mESRImageNormal;
-	protected int		mWidth,mHeight,mCurrentTool, mSelectedButton,mHighlightedButton,mMode,mESRSelected;
-	private boolean[] mIsDisabledButton;
+	protected int mWidth,mHeight,mCurrentTool, mSelectedButton,mHighlightedButton,mESRSelected;
 
 	public GenericEditorToolbar(GenericCanvas toolbarCanvas, GenericEditorArea theArea) {
 		this(toolbarCanvas, theArea, 0);
@@ -97,10 +96,7 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 	public GenericEditorToolbar(GenericCanvas toolbarCanvas, GenericEditorArea theArea, int mode) {
 		mToolbarCanvas = toolbarCanvas;
 		mArea = theArea;
-		mMode = mode;
-		if ((mMode & GenericEditorArea.MODE_REACTION) != 0)
-			mMode |= GenericEditorArea.MODE_MULTIPLE_FRAGMENTS;
-		init();
+		init(mode);
 		}
 
 	public int getWidth() {
@@ -119,7 +115,7 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
             mMode &= ~GenericDrawArea.MODE_REACTION;
         }*/
 
-	private void init() {
+	private void init(int mode) {
 		mImageNormal = mArea.getUIHelper().createImage("editorButtons.png");
 		if (LookAndFeelHelper.isDarkLookAndFeel())
 			HiDPIHelper.adaptForLookAndFeel(mImageNormal);
@@ -136,12 +132,6 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 		mCurrentTool = cToolStdBond;
 		mSelectedButton = -1;
 		mHighlightedButton = -1;
-
-		mIsDisabledButton = new boolean[2*cButtonsPerColumn];
-		if ((mMode & GenericEditorArea.MODE_REACTION) == 0)
-			mIsDisabledButton[cToolMapper] = true;
-		if ((mMode & GenericEditorArea.MODE_DRAWING_OBJECTS) == 0)
-			mIsDisabledButton[cToolText] = true;
 	}
 
 	private void scaleImages() {
@@ -176,9 +166,10 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 		context.drawImage(mESRImageNormal, 0, mESRSelected*cButtonSize, l[0], l[1], cButtonSize, cButtonSize);
 
 		// draw disabled buttons just over originals
-		for (int i=0; i<mIsDisabledButton.length; i++)
-			if (mIsDisabledButton[i])
-				drawButton(context, i, -1, true);
+		if ((mArea.getMode() & GenericEditorArea.MODE_REACTION) == 0)
+			drawButton(context, cToolMapper, -1, true);
+		if ((mArea.getMode() & GenericEditorArea.MODE_DRAWING_OBJECTS) == 0)
+			drawButton(context, cToolText, -1, true);
 
         drawButton(context, mCurrentTool, selectedBackground, false);
 
@@ -210,8 +201,8 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
             int releasedButton = getButtonNo(e);
 
 	        if (releasedButton != mSelectedButton
-			 || (mSelectedButton == cToolMapper && (mMode & GenericEditorArea.MODE_REACTION) == 0)
-			 || (mSelectedButton == cToolText && (mMode & GenericEditorArea.MODE_DRAWING_OBJECTS) == 0)) {
+			 || (mSelectedButton == cToolMapper && (mArea.getMode() & GenericEditorArea.MODE_REACTION) == 0)
+			 || (mSelectedButton == cToolText && (mArea.getMode() & GenericEditorArea.MODE_DRAWING_OBJECTS) == 0)) {
 				mSelectedButton = -1;
 		        mToolbarCanvas.repaint();
 				return;
@@ -221,7 +212,6 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 			if (releasedButton == cButtonClear
 			 || releasedButton == cButtonCleanStructure
 			 || releasedButton == cButtonUndo) {
-	//		 || (releasedButton == cButtonChiral && (mMode & JDrawArea.MODE_MULTIPLE_FRAGMENTS) == 0)) {
 				mToolbarCanvas.repaint();
 				mArea.buttonPressed(releasedButton);
 				return;
@@ -263,8 +253,10 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 		}
 
 	private boolean isSelectableButton(int b) {
-		return b >= 0 && b < 2*cButtonsPerColumn && !mIsDisabledButton[b]
-				&& (b != mCurrentTool || b == cToolESR || b == cToolCustomAtom);
+		return b >= 0 && b < 2*cButtonsPerColumn
+			&& (b != mCurrentTool || b == cToolESR || b == cToolCustomAtom)
+			&& (b != cToolMapper || (mArea.getMode() & GenericEditorArea.MODE_REACTION) != 0)
+			&& (b != cToolText || (mArea.getMode() & GenericEditorArea.MODE_DRAWING_OBJECTS) != 0);
 		}
 
 	private void drawButton(GenericDrawContext context, int button, int background, boolean isDisabled) {

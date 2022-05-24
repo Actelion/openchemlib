@@ -266,6 +266,7 @@ public class SmilesParser {
 		int bondType = Molecule.cBondTypeSingle;
 		int bondQueryFeatures = 0;
 		SortedList<Integer> atomList = new SortedList<>();
+		SmilesRange range = new SmilesRange(smiles);
 
 		while (smiles[position] <= 32)
 			position++;
@@ -431,42 +432,60 @@ public class SmilesParser {
 
 						if (smiles[position] == 'H') {
 							position++;
-							explicitHydrogens = 1;
-							if (Character.isDigit(smiles[position])) {
-								explicitHydrogens = smiles[position] - '0';
-								position++;
-								}
+							position += range.parse(smiles, position, 1, 1);
+							explicitHydrogens = range.min;
+							int flags = 0;
+							if (range.min <= 0 && range.max >= 0)
+								flags |= Molecule.cAtomQFNot0Hydrogen;
+							if (range.min <= 1 && range.max >= 1)
+								flags |= Molecule.cAtomQFNot1Hydrogen;
+							if (range.min <= 2 && range.max >= 2)
+								flags |= Molecule.cAtomQFNot2Hydrogen;
+							if (range.min <= 3 && range.max >= 3)
+								flags |= Molecule.cAtomQFNot3Hydrogen;
+
 							if (isNot) {
-								if (explicitHydrogens == 0)
-									atomQueryFeatures |= Molecule.cAtomQFNot0Hydrogen;
-								else if (explicitHydrogens == 1)
-									atomQueryFeatures |= Molecule.cAtomQFNot1Hydrogen;
-								else if (explicitHydrogens == 2)
-									atomQueryFeatures |= Molecule.cAtomQFNot2Hydrogen;
-								else if (explicitHydrogens == 3)
-									atomQueryFeatures |= Molecule.cAtomQFNot3Hydrogen;
+								atomQueryFeatures |= flags;
 								explicitHydrogens = HYDROGEN_ANY;
+								}
+							else {
+								if (range.isSingle()) {
+									explicitHydrogens = range.min;
+									}
+								else {
+									atomQueryFeatures |= (Molecule.cAtomQFHydrogen & ~flags);
+									explicitHydrogens = HYDROGEN_ANY;
+									}
 								}
 							continue;
 							}
 
 						if (smiles[position] == 'D') {   // non-H-neighbours
 							position++;
-							int neighbours = 1;
-							if (Character.isDigit(smiles[position])) {
-								neighbours = smiles[position] - '0';
-								position++;
-								}
-							int qf = (neighbours == 0) ? Molecule.cAtomQFNot0Neighbours
-								   : (neighbours == 1) ? Molecule.cAtomQFNot1Neighbour
-								   : (neighbours == 2) ? Molecule.cAtomQFNot2Neighbours
-								   : (neighbours == 3) ? Molecule.cAtomQFNot3Neighbours
-								   : (neighbours == 4) ? Molecule.cAtomQFNot4Neighbours : 0;
-							if (qf != 0) {
+							position += range.parse(smiles, position, 1, 1);
+							long flags = 0;
+							if (range.min <= 0 && range.max >= 0)
+								flags |= Molecule.cAtomQFNot0Neighbours;
+							if (range.min <= 1 && range.max >= 1)
+								flags |= Molecule.cAtomQFNot1Neighbour;
+							if (range.min <= 2 && range.max >= 2)
+								flags |= Molecule.cAtomQFNot2Neighbours;
+							if (range.min <= 3 && range.max >= 3)
+								flags |= Molecule.cAtomQFNot3Neighbours;
+							if (range.min <= 4 && range.max >= 4)
+								flags |= Molecule.cAtomQFNot4Neighbours;
+
+							if (flags != 0) {
 								if (!isNot)
-									qf = qf ^ Molecule.cAtomQFNeighbours;
-								atomQueryFeatures |= qf;
+									flags = flags ^ Molecule.cAtomQFNeighbours;
+								atomQueryFeatures |= flags;
 								}
+							continue;
+							}
+
+						if (smiles[position] == 'X') {   // non-H-neighbours
+							position++;
+							position += range.parse(smiles, position, 1, 1);
 							continue;
 							}
 
@@ -478,73 +497,62 @@ public class SmilesParser {
 
 						if (smiles[position] == 'R') {
 							position++;
-							if (!Character.isDigit(smiles[position])) {
-								if (isNot)
-									atomQueryFeatures |= Molecule.cBondQFRingState & ~Molecule.cAtomQFNotChain;
-								else
-									atomQueryFeatures |= Molecule.cAtomQFNotChain;
-								continue;
-								}
-							int ringCount = smiles[position] - '0';
-							position++;
-							if (isNot) {
-								if (ringCount == 0)
-									atomQueryFeatures |= Molecule.cAtomQFNotChain;
-								else if (ringCount == 1)
-									atomQueryFeatures |= Molecule.cAtomQFNot2RingBonds;
-								else if (ringCount == 2)
-									atomQueryFeatures |= Molecule.cAtomQFNot3RingBonds;
-								else if (ringCount == 3)
-									atomQueryFeatures |= Molecule.cAtomQFNot4RingBonds;
-								else
-									smartsWarning("!R"+ringCount);
-								}
-							else {
-								if (ringCount >= 3)
-									ringCount = 3;
-								if (ringCount == 0)
-									atomQueryFeatures |= Molecule.cAtomQFRingState & ~Molecule.cAtomQFNotChain;
-								else if (ringCount == 1)
-									atomQueryFeatures |= Molecule.cAtomQFRingState & ~Molecule.cAtomQFNot2RingBonds;
-								else if (ringCount == 2)
-									atomQueryFeatures |= Molecule.cAtomQFRingState & ~Molecule.cAtomQFNot3RingBonds;
-								else if (ringCount == 3)
-									atomQueryFeatures |= Molecule.cAtomQFRingState & ~Molecule.cAtomQFNot4RingBonds;
-								else
-									smartsWarning("R"+ringCount);
+							position += range.parse(smiles, position, 1, 3);
+							int flags = 0;
+							if (range.min <= 0 && range.max >= 0)
+								flags |= Molecule.cAtomQFNotChain;
+							if (range.min <= 1 && range.max >= 1)
+								flags |= Molecule.cAtomQFNot2RingBonds;
+							if (range.min <= 2 && range.max >= 2)
+								flags |= Molecule.cAtomQFNot3RingBonds;
+							if (range.min <= 3 && range.max >= 3)
+								flags |= Molecule.cAtomQFNot4RingBonds;
+							if (range.max > 3)
+								smartsWarning((isNot?"!R":"R")+range.max);
+
+							if (flags != 0) {
+								if (!isNot)
+									flags = flags ^ Molecule.cBondQFRingState;
+								atomQueryFeatures |= flags;
 								}
 							continue;
 							}
 
 						if (smiles[position] == 'r') {
 							position++;
-							if (!Character.isDigit(smiles[position])) {
+							position += range.parse(smiles, position, 1, 1);
+							if (range.isDefault) {
 								if (isNot)
 									atomQueryFeatures |= Molecule.cBondQFRingState & ~Molecule.cAtomQFNotChain;
 								else
 									atomQueryFeatures |= Molecule.cAtomQFNotChain;
 								continue;
 								}
-							int ringSize = smiles[position] - '0';
-							position++;
+
+							int ringSize = range.min;
+
+							if (range.isRange())
+								smartsWarning((isNot ? "!r" : "r") + range.toString());
+
 							if (!isNot && ringSize >= 3 && ringSize <= 7)
-								atomQueryFeatures |= (ringSize << Molecule.cAtomQFRingSizeShift);
-							else
+								atomQueryFeatures |= (ringSize << Molecule.cAtomQFSmallRingSizeShift);
+							else if (!range.isRange())
 								smartsWarning((isNot ? "!r" : "r") + ringSize);
 							continue;
 							}
 
 						if (smiles[position] == 'v') {
 							position++;
-							int valence = smiles[position] - '0';
-							position++;
-							if (Character.isDigit(smiles[position])) {
-								valence = 10 * valence + smiles[position] - '0';
-								position++;
-								}
+							position += range.parse(smiles, position, 1, 1);
+
+							int valence = range.min;
+
+							if (range.isRange())
+								smartsWarning((isNot ? "!v" : "v") + range.toString());
+
 							if (!isNot && valence <= 14)
 								abnormalValence = valence;
-							else
+							else if (!range.isRange())
 								smartsWarning((isNot ? "!v" : "v") + valence);
 							continue;
 							}
@@ -555,7 +563,7 @@ public class SmilesParser {
 							continue;
 							}
 
-						throw new Exception("SmilesParser: unexpected character inside brackets: '"+theChar+"'");
+						throw new Exception("SmilesParser: unexpected character inside brackets: '"+(char)smiles[position]+"'");
 						}
 					}
 				else if (theChar == '*') {
@@ -1796,3 +1804,62 @@ System.out.println("parity:"+parity);
 			}
 		}
 	}
+
+class SmilesRange {
+	private byte[] smi;
+	private int pos;
+	public int min,max;
+	public boolean isDefault;
+
+	public SmilesRange(byte[] smiles) {
+		smi = smiles;
+		}
+
+	public int parse(byte[] smiles, int position, int defaultMin, int defaultMax) {
+		isDefault = false;
+		pos = position;
+
+		if (Character.isDigit(smiles[position])) {
+			min = max = parseInt();
+			return pos - position;
+			}
+
+		if (smiles[position] == '{'
+			&& Character.isDigit(smiles[position+1])) {
+			pos++;
+			min = parseInt();
+			if (smiles[pos++] != '-')
+				return 0;   // unexpected
+			if (!Character.isDigit(smiles[pos]))
+				return 0;   // unexpected
+			max = parseInt();
+			if (smiles[pos++] != '}')
+				return 0;   // unexpected
+			return pos - position;
+			}
+
+		min = defaultMin;
+		max = defaultMax;
+		isDefault = true;
+		return 0;
+	}
+
+	public boolean isSingle() {
+		return max == min;
+	}
+
+	public boolean isRange() {
+		return max > min;
+	}
+
+	public String toString() {
+		return "{"+min+"-"+max+"}";
+	}
+
+	private int parseInt() {
+		int num = smi[pos++] - '0';
+		if (Character.isDigit(smi[pos]))
+			num = 10 * num + (smi[pos++] - '0');
+		return num;
+	}
+}

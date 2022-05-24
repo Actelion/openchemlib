@@ -1533,6 +1533,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * different, but energetically equivalent mesomeric structures. Bonds in aromatic 6-membered
 	 * rings typically are delocalized, while those in uncharged 5-membered aromatic rings are not.
 	 * Indole has 6 delocalized bonds.
+	 * Moreover, if the molecule is a fragment and if the bond query feature cBondQFDelocalized is
+	 * set (possibly as one of multiple allowed bond types), then this method also returns true.
 	 * @param bond
 	 * @return
 	 */
@@ -3545,7 +3547,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 						queryFeatureShift = freeValence + explicitHydrogens - queryFeatureHydrogens;
 
 					if (queryFeatureShift > 0) {
-						int queryFeatures = (queryFeatureHydrogens == 0) ?  // purge 'less than' options
+						long queryFeatures = (queryFeatureHydrogens == 0) ?  // purge 'less than' options
 								0 : (mAtomQueryFeatures[atom] & cAtomQFHydrogen) << queryFeatureShift;
 						queryFeatures |= (queryFeatureShift == 3 ? 7 : explicitHydrogens == 2 ? 3 : 1) << cAtomQFHydrogenShift;
 

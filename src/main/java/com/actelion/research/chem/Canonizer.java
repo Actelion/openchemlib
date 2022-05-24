@@ -112,6 +112,8 @@ public class Canonizer {
 	// ranking and graph generation. This is typically used for diagnostics.
 	public static final int ENCODE_ATOM_CUSTOM_LABELS_WITHOUT_RANKING = 1024;
 
+	public static final int NEGLECT_ANY_STEREO_INFORMATION = 2048;
+
 	protected static final int cIDCodeVersion2 = 8;
 		// productive version till May 2006 based on the molfile version 2
 
@@ -219,21 +221,25 @@ public class Canonizer {
 		mMol.ensureHelperArrays(Molecule.cHelperRings);
 		mAtomBits = getNeededBits(mMol.getAtoms());
 
-		canFindNitrogenQualifyingForParity();
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0)
+			canFindNitrogenQualifyingForParity();
 
 		mZCoordinatesAvailable = ((mode & COORDS_ARE_3D) != 0) || mMol.is3D();
 
-		mTHParity = new byte[mMol.getAtoms()];
-		mTHParityIsPseudo = new boolean[mMol.getAtoms()];
-		mTHParityRoundIsOdd = new boolean[mMol.getAtoms()];
-		mEZParity = new byte[mMol.getBonds()];
-		mEZParityRoundIsOdd = new boolean[mMol.getBonds()];
-		mEZParityIsPseudo = new boolean[mMol.getBonds()];
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
+			mTHParity = new byte[mMol.getAtoms()];
+			mTHParityIsPseudo = new boolean[mMol.getAtoms()];
+			mTHParityRoundIsOdd = new boolean[mMol.getAtoms()];
+			mEZParity = new byte[mMol.getBonds()];
+			mEZParityRoundIsOdd = new boolean[mMol.getBonds()];
+			mEZParityIsPseudo = new boolean[mMol.getBonds()];
+			}
 
 		mCIPParityNoDistinctionProblem = false;
 
 		canInitializeRanking();
-		canRankStereo();
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0)
+			canRankStereo();
 		canRankFinal();
 //		if (mCIPParityNoDistinctionProblem)
 //			System.out.println("No distinction applying CIP rules: "+getIDCode()+" "+getEncodedCoordinates());
@@ -571,29 +577,31 @@ System.out.println();
 
 
 	private void canRankFinal() {
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
 			// locate atom differences due to pro-chiral or pro-E/Z location and
 			// detect for every proTH- or proEZ-parity whether pro-atoms are
 			// in same fragment as the pro-chiral-center or double-bond, respectively
-		mProTHAtomsInSameFragment = new boolean[mMol.getAtoms()];
-		mProEZAtomsInSameFragment = new boolean[mMol.getBonds()];
+			mProTHAtomsInSameFragment = new boolean[mMol.getAtoms()];
+			mProEZAtomsInSameFragment = new boolean[mMol.getBonds()];
 
-		if ((mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
-			for (int atom=0; atom<mMol.getAtoms(); atom++) {
-				mCanBase[atom].init(atom);
-				mCanBase[atom].add(mAtomBits+12, mCanRank[atom] << 12);
+			if ((mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
+				for (int atom=0; atom<mMol.getAtoms(); atom++) {
+					mCanBase[atom].init(atom);
+					mCanBase[atom].add(mAtomBits+12, mCanRank[atom] << 12);
+					}
 				}
-			}
-		if (mNoOfRanks < mMol.getAtoms()) {
-			int proParities = 0;
-			for (int atom=0; atom<mMol.getAtoms(); atom++)
-				if (canCalcTHParity(atom, true))
-					proParities++;
-			for (int bond=0; bond<mMol.getBonds(); bond++)
-				if (canCalcEZParity(bond, true))
-					proParities++;
-			}
-		if ((mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
-			mNoOfRanks = canPerformRanking();
+			if (mNoOfRanks < mMol.getAtoms()) {
+				int proParities = 0;
+				for (int atom=0; atom<mMol.getAtoms(); atom++)
+					if (canCalcTHParity(atom, true))
+						proParities++;
+				for (int bond=0; bond<mMol.getBonds(); bond++)
+					if (canCalcEZParity(bond, true))
+						proParities++;
+				}
+			if ((mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
+				mNoOfRanks = canPerformRanking();
+				}
 			}
 
 			// Atoms, which still share an equal rank, can now be
@@ -639,17 +647,22 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				}
 
 			mNoOfRanks = canPerformRanking();
-			canNormalizeGroupParities();
-			if (mMesoHelper != null)
-				mMesoHelper.normalizeESRGroupSwappingAndRemoval(mCanRank);
+
+			if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
+				canNormalizeGroupParities();
+				if (mMesoHelper != null)
+					mMesoHelper.normalizeESRGroupSwappingAndRemoval(mCanRank);
+				}
 			}
 
 			// normalize those group's parities that could not be normalized before tie-breaking
-		canNormalizeGroupParities();
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
+			canNormalizeGroupParities();
 
 			// detect all not yet discovered pseudo-parities
-		canFindPseudoParities();
-		flagStereoProblems();
+			canFindPseudoParities();
+			flagStereoProblems();
+			}
 /*
 for (int atom=0; atom<mMol.getAtoms(); atom++)
 System.out.println("mTHParity["+atom+"] = "+mTHParity[atom]+" roundIsOdd = "+mTHParityRoundIsOdd+" pseudo = "+mTHParityIsPseudo[atom]);
@@ -2652,8 +2665,10 @@ System.out.println("noOfRanks:"+canRank);
 	public String getIDCode() {
 		if (mIDCode == null) {
 			generateGraph();
-			idGenerateConfigurations();
-			idNormalizeESRGroupNumbers();
+			if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
+				idGenerateConfigurations();
+				idNormalizeESRGroupNumbers();
+				}
 			idCodeCreate();
 			}
 
@@ -2843,61 +2858,71 @@ System.out.print("BondOrders:");
 //System.out.println();
 
 		int THCount = 0;
-		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			if (mTHConfiguration[mGraphAtom[atom]] != Molecule.cAtomParityNone
-			 && mTHConfiguration[mGraphAtom[atom]] != Molecule.cAtomParityUnknown)
-				THCount++;
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
+			for (int atom=0; atom<mMol.getAtoms(); atom++)
+				if (mTHConfiguration[mGraphAtom[atom]] != Molecule.cAtomParityNone
+				 && mTHConfiguration[mGraphAtom[atom]] != Molecule.cAtomParityUnknown)
+					THCount++;
+			}
 		encodeBits(THCount, nbits);
-		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			if (mTHConfiguration[mGraphAtom[atom]] != Molecule.cAtomParityNone
-			 && mTHConfiguration[mGraphAtom[atom]] != Molecule.cAtomParityUnknown) {
-				encodeBits(atom, nbits);
-				if (mTHESRType[mGraphAtom[atom]] == Molecule.cESRTypeAbs) {
-					encodeBits(mTHConfiguration[mGraphAtom[atom]], 3);
-					}
-				else {
-					int parity = (mTHConfiguration[mGraphAtom[atom]] == Molecule.cAtomParity1) ?
-							((mTHESRType[mGraphAtom[atom]] == Molecule.cESRTypeAnd) ?
-									cParity1And : cParity1Or)
-						  : ((mTHESRType[mGraphAtom[atom]] == Molecule.cESRTypeAnd) ?
-									cParity2And : cParity2Or);
-
-					encodeBits(parity, 3);
-					encodeBits(mTHESRGroup[mGraphAtom[atom]], 3);
-					}
-				}
-
-		int EZCount = 0;
-		for (int bond=0; bond<mMol.getBonds(); bond++)	// parity of all double bonds
-			if (mEZConfiguration[mGraphBond[bond]] != 0
-			 && mEZConfiguration[mGraphBond[bond]] != Molecule.cBondParityUnknown
-			 && (!mMol.isSmallRingBond(mGraphBond[bond]) || mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeSingle))
-				EZCount++;
-		encodeBits(EZCount, nbits);
-		for (int bond=0; bond<mMol.getBonds(); bond++)
-			if (mEZConfiguration[mGraphBond[bond]] != 0
-			 && mEZConfiguration[mGraphBond[bond]] != Molecule.cBondParityUnknown
-			 && (!mMol.isSmallRingBond(mGraphBond[bond]) || mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeSingle)) {
-				encodeBits(bond, nbits);
-				if (mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeSingle) {	// BINAP type of axial chirality
-					if (mEZESRType[mGraphBond[bond]] == Molecule.cESRTypeAbs) {
-						encodeBits(mEZConfiguration[mGraphBond[bond]], 3);
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+				if (mTHConfiguration[mGraphAtom[atom]] != Molecule.cAtomParityNone
+				 && mTHConfiguration[mGraphAtom[atom]] != Molecule.cAtomParityUnknown) {
+					encodeBits(atom, nbits);
+					if (mTHESRType[mGraphAtom[atom]] == Molecule.cESRTypeAbs) {
+						encodeBits(mTHConfiguration[mGraphAtom[atom]], 3);
 						}
 					else {
-						int parity = (mEZConfiguration[mGraphBond[bond]] == Molecule.cBondParityEor1) ?
-								((mEZESRType[mGraphBond[bond]] == Molecule.cESRTypeAnd) ?
+						int parity = (mTHConfiguration[mGraphAtom[atom]] == Molecule.cAtomParity1) ?
+								((mTHESRType[mGraphAtom[atom]] == Molecule.cESRTypeAnd) ?
 										cParity1And : cParity1Or)
-							  : ((mEZESRType[mGraphBond[bond]] == Molecule.cESRTypeAnd) ?
+							  : ((mTHESRType[mGraphAtom[atom]] == Molecule.cESRTypeAnd) ?
 										cParity2And : cParity2Or);
 
 						encodeBits(parity, 3);
-						encodeBits(mEZESRGroup[mGraphBond[bond]], 3);
+						encodeBits(mTHESRGroup[mGraphAtom[atom]], 3);
 						}
 					}
-				else {
-					encodeBits(mEZConfiguration[mGraphBond[bond]], 2);	// for compatibility reasons we use only two bits for double bonds
+				}
+			}
+
+		int EZCount = 0;
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
+			for (int bond=0; bond<mMol.getBonds(); bond++)	// parity of all double bonds
+				if (mEZConfiguration[mGraphBond[bond]] != 0
+				 && mEZConfiguration[mGraphBond[bond]] != Molecule.cBondParityUnknown
+				 && (!mMol.isSmallRingBond(mGraphBond[bond]) || mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeSingle))
+					EZCount++;
+			}
+		encodeBits(EZCount, nbits);
+		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
+			for (int bond=0; bond<mMol.getBonds(); bond++) {
+				if (mEZConfiguration[mGraphBond[bond]] != 0
+				 && mEZConfiguration[mGraphBond[bond]] != Molecule.cBondParityUnknown
+				 && (!mMol.isSmallRingBond(mGraphBond[bond]) || mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeSingle)) {
+					encodeBits(bond, nbits);
+					if (mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeSingle) {	// BINAP type of axial chirality
+						if (mEZESRType[mGraphBond[bond]] == Molecule.cESRTypeAbs) {
+							encodeBits(mEZConfiguration[mGraphBond[bond]], 3);
+							}
+						else {
+							int parity = (mEZConfiguration[mGraphBond[bond]] == Molecule.cBondParityEor1) ?
+									((mEZESRType[mGraphBond[bond]] == Molecule.cESRTypeAnd) ?
+											cParity1And : cParity1Or)
+								  : ((mEZESRType[mGraphBond[bond]] == Molecule.cESRTypeAnd) ?
+											cParity2And : cParity2Or);
+
+							encodeBits(parity, 3);
+							encodeBits(mEZESRGroup[mGraphBond[bond]], 3);
+							}
+						}
+					else {
+						encodeBits(mEZConfiguration[mGraphBond[bond]], 2);	// for compatibility reasons we use only two bits for double bonds
+						}
 					}
 				}
+			}
 /*
 THCount = 0;
 for (int atom=0; atom<mMol.getAtoms(); atom++)
@@ -3026,9 +3051,9 @@ System.out.println();
 								 Molecule.cAtomQFNeighbourShift);
 
 			isSecondFeatureBlock |= addAtomQueryFeatures(16, isSecondFeatureBlock, nbits,
-														 Molecule.cAtomQFRingSize,
-														 Molecule.cAtomQFRingSizeBits,
-														 Molecule.cAtomQFRingSizeShift);
+														 Molecule.cAtomQFSmallRingSize,
+														 Molecule.cAtomQFSmallRingSizeBits,
+														 Molecule.cAtomQFSmallRingSizeShift);
 			}
 
 		count = 0;
@@ -3162,8 +3187,10 @@ System.out.println();
 					encodeBits(bond, nbits);
 			}
 
-		if (mMol.isFragment())	// 29 = datatype 'reaction parity hint'
+		if (mMol.isFragment()) {    // 29 = datatype 'reaction parity hint'
 			isSecondFeatureBlock |= addAtomQueryFeatures(29, isSecondFeatureBlock, nbits, Molecule.cAtomQFRxnParityHint, Molecule.cAtomQFRxnParityBits, Molecule.cAtomQFRxnParityShift);
+			isSecondFeatureBlock |= addAtomQueryFeatures(30, isSecondFeatureBlock, nbits, Molecule.cAtomQFNewRingSize, Molecule.cAtomQFNewRingSizeBits, Molecule.cAtomQFNewRingSizeShift);
+			}
 
 		encodeBits(0, 1);
 		mIDCode = encodeBitsEnd();
@@ -3180,7 +3207,7 @@ System.out.println();
 
 
 	private boolean addAtomQueryFeatures(int codeNo, boolean isSecondFeatureBlock, int nbits,
-										 int qfMask, int qfBits, int qfShift) {
+										 long qfMask, int qfBits, int qfShift) {
 		int count = 0;
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
 			if ((mMol.getAtomQueryFeatures(mGraphAtom[atom]) & qfMask) != 0)
@@ -3198,7 +3225,7 @@ System.out.println();
 		encodeBits(codeNo, 4);	  //  datatype
 		encodeBits(count, nbits);
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			int feature = mMol.getAtomQueryFeatures(mGraphAtom[atom]) & qfMask;
+			long feature = mMol.getAtomQueryFeatures(mGraphAtom[atom]) & qfMask;
 			if (feature != 0) {
 				encodeBits(atom, nbits);
 				if (qfBits != 1)
@@ -3716,7 +3743,7 @@ System.out.println();
 		}
 
 
-	private void encodeBits(int data, int bits) {
+	private void encodeBits(long data, int bits) {
 //System.out.println(bits+" bits:"+data+"  mode="+mode);
 		while (bits != 0) {
 			if (mEncodingBitsAvail == 0) {

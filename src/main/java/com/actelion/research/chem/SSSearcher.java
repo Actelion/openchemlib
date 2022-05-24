@@ -85,8 +85,10 @@ public class SSSearcher {
 
 	private int[] mMoleculeAtomType;	// atom features required to match
 	private int[] mFragmentAtomType;
-	private int[] mMoleculeAtomFeatures;	// flags defining given/required atom features
-	private int[] mFragmentAtomFeatures;
+	private long[] mMoleculeAtomFeatures;	// flags defining given/required atom features
+	private long[] mFragmentAtomFeatures;
+	private long[] mMoleculeRingFeatures;	// flags defining given/required atom ring size features
+	private long[] mFragmentRingFeatures;
 	private int[] mMoleculeBondFeatures;	// flags defining given/required bond features
 	private int[] mFragmentBondFeatures;
 
@@ -693,8 +695,8 @@ System.out.println();
 		if (fragmentConnAtoms > moleculeConnAtoms)
 			return false;
 
-		int moleculeQF = mMolecule.getAtomQueryFeatures(moleculeAtom);
-		int fragmentQF = mFragment.getAtomQueryFeatures(fragmentAtom);
+		long moleculeQF = mMolecule.getAtomQueryFeatures(moleculeAtom);
+		long fragmentQF = mFragment.getAtomQueryFeatures(fragmentAtom);
 
 		int[] fragmentList = mFragment.getAtomList(fragmentAtom);
 		int[] moleculeList = mMolecule.getAtomList(moleculeAtom);
@@ -764,6 +766,25 @@ System.out.println();
 		if ((mMoleculeAtomFeatures[moleculeAtom] & ~mFragmentAtomFeatures[fragmentAtom]) != 0)
 			return false;
 
+		// all ring sizes found for fragment atom must all exist for molecule atom
+		if ((mFragmentRingFeatures[fragmentAtom] & ~mMoleculeRingFeatures[moleculeAtom]) != 0)
+			return false;
+
+		long fragmentRingQF = fragmentQF & Molecule.cAtomQFNewRingSize;
+		if (mMolecule.isFragment()) {
+			// For a fragment in fragment search, the query fragment must not be more restrictive than the target.
+			// Thus, if we have molecule ring features and no restriction on the query or more allowed features
+			// on the query then don't consider the atom a match.
+			long moleculeRingQF = fragmentQF & Molecule.cAtomQFNewRingSize;
+			if (moleculeRingQF != 0 && (fragmentRingQF == 0 || (fragmentRingQF & ~moleculeRingQF) != 0))
+				return false;
+			}
+		else {
+			// at least one of the ring sizes defined in ring query features must match one of the ring sizes found in molecule atom
+			if (fragmentRingQF != 0 && (fragmentRingQF & mMoleculeRingFeatures[moleculeAtom]) == 0)
+				return false;
+			}
+
 		if (mFragment.getAtomCharge(fragmentAtom) != 0
 		 && mFragment.getAtomCharge(fragmentAtom) != mMolecule.getAtomCharge(moleculeAtom))
 			return false;
@@ -773,24 +794,18 @@ System.out.println();
 		if (mFragment.getAtomRadical(fragmentAtom) != 0
 		 && mFragment.getAtomRadical(fragmentAtom) != mMolecule.getAtomRadical(moleculeAtom))
 			return false;
-		int ringSize = (mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFRingSize) >> Molecule.cAtomQFRingSizeShift;
-		if (ringSize != 0) {
-			if (mMolecule.isFragment()
-			 && ringSize == (mMolecule.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFRingSize) >> Molecule.cAtomQFRingSizeShift)
-				return true;
 
-			boolean found = false;
-			RingCollection ringSet = mMolecule.getRingSet();
-			for (int i=0; i<ringSet.getSize(); i++) {
-				if (ringSet.getRingSize(i) == ringSize) {
-					if (ringSet.isAtomMember(i, moleculeAtom)) {
-						found = true;
-						break;
-						}
-					}
+		int smallestRingSize = (int)((mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFSmallRingSize) >> Molecule.cAtomQFSmallRingSizeShift);
+		if (smallestRingSize != 0) {
+			if (!mMolecule.isFragment()) {
+				if (mMolecule.getAtomRingSize(moleculeAtom) != smallestRingSize)
+					return false;
 				}
-			if (!found)
-				return false;
+			else {
+				int targetRingSize = (int)((mMolecule.getAtomQueryFeatures(moleculeAtom) & Molecule.cAtomQFSmallRingSize) >> Molecule.cAtomQFSmallRingSizeShift);
+				if (smallestRingSize != targetRingSize)
+					return false;
+				}
 			}
 
 		return true;
@@ -1339,11 +1354,11 @@ System.out.println();
 		int nTotalMoleculeAtoms = mMolecule.getAtoms();
 
 		mMoleculeAtomType = new int[nTotalMoleculeAtoms];
-		mMoleculeAtomFeatures = new int[nTotalMoleculeAtoms];
+		mMoleculeAtomFeatures = new long[nTotalMoleculeAtoms];
 
 		for (int atom=0; atom<nTotalMoleculeAtoms; atom++) {
 			mMoleculeAtomFeatures[atom] = ((getAtomQueryDefaults(mMolecule, atom)
-					| mMolecule.getAtomQueryFeatures(atom))
+				| mMolecule.getAtomQueryFeatures(atom))
 					& Molecule.cAtomQFSimpleFeatures)
 					^ Molecule.cAtomQFNarrowing;
 
@@ -1354,6 +1369,31 @@ System.out.println();
 
 			if ((matchMode & cMatchAtomMass) != 0)
 				mMoleculeAtomType[atom] += mMolecule.getAtomMass(atom) << 16;
+			}
+
+		mMoleculeRingFeatures = new long[nTotalMoleculeAtoms];
+		RingCollection ringSet = mMolecule.getRingSet();
+		for (int i=0; i<ringSet.getSize(); i++) {
+			int ringSize = ringSet.getRingSize(i);
+			for (int atom:ringSet.getRingAtoms(i)) {
+				if (ringSize == 3)
+					mMoleculeRingFeatures[atom] |= Molecule.cAtomQFRingSize3;
+				else if (ringSize == 4)
+					mMoleculeRingFeatures[atom] |= Molecule.cAtomQFRingSize4;
+				else if (ringSize == 5)
+					mMoleculeRingFeatures[atom] |= Molecule.cAtomQFRingSize5;
+				else if (ringSize == 6)
+					mMoleculeRingFeatures[atom] |= Molecule.cAtomQFRingSize6;
+				else if (ringSize == 7)
+					mMoleculeRingFeatures[atom] |= Molecule.cAtomQFRingSize7;
+				}
+			}
+		for (int atom=0; atom<nTotalMoleculeAtoms; atom++) {
+			int ringSize = mMolecule.getAtomRingSize(atom);
+			if (ringSize == 0)
+				mMoleculeRingFeatures[atom] |= Molecule.cAtomQFRingSize0;
+			else if (ringSize > 7)
+				mMoleculeRingFeatures[atom] |= Molecule.cAtomQFRingSizeLarge;
 			}
 
 		int nTotalMoleculeBonds = mMolecule.getBonds();
@@ -1369,7 +1409,7 @@ System.out.println();
 			}
 
 	private void setupFragmentFeatures(int matchMode) {
-		int[] atomFeaturesWithoutExcludeAtoms = null;
+		long[] atomFeaturesWithoutExcludeAtoms = null;
 		int[] bondFeaturesWithoutExcludeAtoms = null;
 		int[] atomTypeWithoutExcludeAtoms = null;
 
@@ -1419,12 +1459,12 @@ System.out.println();
 	private void setupFragmentFeatures(StereoMolecule fragment, int matchMode) {
 		int nTotalFragmentAtoms = fragment.getAtoms();
 
-		mFragmentAtomFeatures = new int[fragment.getAtoms()];
+		mFragmentAtomFeatures = new long[fragment.getAtoms()];
 		mFragmentAtomType = new int[fragment.getAtoms()];
 
 		for (int atom=0; atom<nTotalFragmentAtoms; atom++) {
 			mFragmentAtomFeatures[atom] = ((getAtomQueryDefaults(fragment, atom)
-					| fragment.getAtomQueryFeatures(atom))
+				| mFragment.getAtomQueryFeatures(atom))
 					& Molecule.cAtomQFSimpleFeatures)
 					^ Molecule.cAtomQFNarrowing;
 			mFragmentAtomType[atom] = fragment.getAtomicNo(atom);
@@ -1435,6 +1475,27 @@ System.out.println();
 			if ((matchMode & cMatchAtomMass) != 0)
 				mFragmentAtomType[atom] += fragment.getAtomMass(atom) << 16;
 			}
+
+		mFragmentRingFeatures = new long[fragment.getAtoms()];
+		RingCollection ringSet = fragment.getRingSet();
+		for (int i=0; i<ringSet.getSize(); i++) {
+			int ringSize = ringSet.getRingSize(i);
+			for (int atom:ringSet.getRingAtoms(i)) {
+				if (ringSize == 3)
+					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize3;
+				else if (ringSize == 4)
+					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize4;
+				else if (ringSize == 5)
+					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize5;
+				else if (ringSize == 6)
+					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize6;
+				else if (ringSize == 7)
+					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize7;
+				}
+			}
+		for (int atom=0; atom<nTotalFragmentAtoms; atom++)
+			if (mMolecule.getAtomRingSize(atom) > 7)
+				mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSizeLarge;
 
 		int nTotalFragmentBonds = fragment.getBonds();
 
@@ -1465,8 +1526,8 @@ System.out.println();
 	 * @param atom the atom of which to generate feature flags
 	 * @return atom features independent of query features
 	 */
-	private int getAtomQueryDefaults(StereoMolecule mol, int atom) {
-		int queryDefaults = 0;
+	private long getAtomQueryDefaults(StereoMolecule mol, int atom) {
+		long queryDefaults = 0;
 
 		if (!mol.isFragment()) {
 			if (mol.isAromaticAtom(atom))

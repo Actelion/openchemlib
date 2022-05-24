@@ -176,6 +176,22 @@ public class SortedList<T extends Comparable<? super T>> {
 	    return index;
 		}
 
+	/**
+	 * Adds object to the list provided that it doesn't contain
+	 * an object being considered equal by compareTo().
+	 * @param object
+	 * @return whether the object was new and therefore added to the list
+	 */
+	public boolean addIfNew(T object) {
+		int index = getIndexOrInsertIndex(object);
+		if (index >= 0)
+			return false;
+
+		index = -(index+1);
+		mList.add(index, object);
+		return true;
+		}
+
 	public int size(){
 		return mList.size();
 		}

@@ -33,6 +33,7 @@
 
 package com.actelion.research.chem;
 
+@Deprecated // use Canonizer with mode NEGLECT_ANY_STEREO_INFORMATION instead
 public class SimpleCanonizer {
     private static final int cIDCodeVersion3 = 9;
     // productive version since May 2006 based on the molfile version 3
@@ -523,9 +524,9 @@ public class SimpleCanonizer {
                                  Molecule.cAtomQFNeighbourShift);
 
             isSecondFeatureBlock |= addAtomQueryFeatures(16, isSecondFeatureBlock, nbits,
-                                                         Molecule.cAtomQFRingSize,
-                                                         Molecule.cAtomQFRingSizeBits,
-                                                         Molecule.cAtomQFRingSizeShift);
+                                                         Molecule.cAtomQFSmallRingSize,
+                                                         Molecule.cAtomQFSmallRingSizeBits,
+                                                         Molecule.cAtomQFSmallRingSizeShift);
         	}
 
         count = 0;
@@ -629,7 +630,7 @@ public class SimpleCanonizer {
 
 
 	private boolean addAtomQueryFeatures(int codeNo, boolean isSecondFeatureBlock, int nbits,
-                                         int qfMask, int qfBits, int qfShift) {
+                                         long qfMask, int qfBits, int qfShift) {
         int count = 0;
         for (int atom=0; atom<mMol.getAtoms(); atom++)
             if ((mMol.getAtomQueryFeatures(mGraphAtom[atom]) & qfMask) != 0)
@@ -647,7 +648,7 @@ public class SimpleCanonizer {
         encodeBits(codeNo, 4);      //  datatype
         encodeBits(count, nbits);
         for (int atom=0; atom<mMol.getAtoms(); atom++) {
-        int feature = mMol.getAtomQueryFeatures(mGraphAtom[atom]) & qfMask;
+        long feature = mMol.getAtomQueryFeatures(mGraphAtom[atom]) & qfMask;
         if (feature != 0) {
             encodeBits(atom, nbits);
             if (qfBits != 1)
@@ -826,7 +827,7 @@ public class SimpleCanonizer {
         }
 
 
-    private void encodeBits(int data, int bits) {
+    private void encodeBits(long data, int bits) {
 //System.out.println(bits+" bits:"+data+"  mode="+mode);
         while (bits != 0) {
             if (mEncodingBitsAvail == 0) {
