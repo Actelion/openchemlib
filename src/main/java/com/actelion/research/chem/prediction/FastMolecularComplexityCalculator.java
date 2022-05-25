@@ -39,6 +39,7 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.SortedList;
 
+import javax.swing.*;
 import java.util.TreeSet;
 
 /**
@@ -47,6 +48,8 @@ import java.util.TreeSet;
  */
 public class FastMolecularComplexityCalculator {
 	protected static final int MAX_BOND_COUNT = 7;
+
+	public static boolean createIDCodes;
 
 	/**
 	 * Ambiguous bonds are normalized.
@@ -103,7 +106,7 @@ public class FastMolecularComplexityCalculator {
 					bondIsMember[levelBond[level]] = true;
 					if (level == maxLevel) {
 						BondSet bondSet = new BondSet(bondIsMember, mol.getBonds());
-						if (bondSets.addIfNew(bondSet)) {
+						if (bondSets.addIfNew(bondSet) && createIDCodes) {
 							mol.copyMoleculeByBonds(fragment, bondIsMember, true, atomMap);
 							String idcode = new Canonizer(fragment).getIDCode();
 if (!fragmentSet.contains(idcode)) System.out.println(idcode+"\tComplexity");
@@ -125,7 +128,11 @@ if (!fragmentSet.contains(idcode)) System.out.println(idcode+"\tComplexity");
 			bondIsMember[rootBond] = false;
 		}
 
-//System.out.println("cbits:"+fragmentSet.size()+" idcode:"+new Canonizer(mol).getIDCode());
+if (createIDCodes)
+	SwingUtilities.invokeLater(() -> System.out.println("Complex fragments:"+fragmentSet.size()));
+else
+	SwingUtilities.invokeLater(() -> System.out.println("Complex bondsets:"+bondSets.size()));
+
 		return (float)Math.log(fragmentSet.size()) / bondCount;
 	}
 }

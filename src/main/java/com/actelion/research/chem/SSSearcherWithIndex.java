@@ -34,6 +34,8 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.chem.descriptor.DescriptorHandlerAllFragmentsFP;
+
 import java.util.ArrayList;
 
 // TODO purge mMoleculeIndexInt,mFragmentIndexInt and related methods from this class. Long versions were introduced Aug 3, 2018
@@ -563,10 +565,18 @@ public class SSSearcherWithIndex {
 	private int[]				mMoleculeIndexInt,mFragmentIndexInt;
 	private long[]				mMoleculeIndexLong,mFragmentIndexLong;
 	private byte[]				mMoleculeIDCode,mFragmentIDCode;
+	private boolean             mUseAllFragmentIndex;
 
 	public static int getNoOfKeys() {
         return cKeyIDCode.length;
 	   	}
+
+	public SSSearcherWithIndex(boolean useAllFragmentIndex) {
+		mSSSearcher = new SSSearcher();
+		mUseAllFragmentIndex = useAllFragmentIndex;
+		init();
+		}
+
 
 	public SSSearcherWithIndex() {
 		mSSSearcher = new SSSearcher();
@@ -875,6 +885,7 @@ public class SSSearcherWithIndex {
 		}
 
 
+	@Deprecated // switch to long version; this version does not support the AllFragmentIndex
 	public int[] createIndex(StereoMolecule mol) {
 		if (mol == null)
 			return null;
@@ -896,7 +907,8 @@ public class SSSearcherWithIndex {
 		if (mol == null)
 			return null;
 
-//return new DescriptorHandlerAllFragmentsFP().createDescriptor(mol);
+		if (mUseAllFragmentIndex)
+			return new DescriptorHandlerAllFragmentsFP().createDescriptor(mol);
 
 		long[] index = new long[(cKeyIDCode.length+63)/64];
 		mol = removeExcludeGroups(mol);
