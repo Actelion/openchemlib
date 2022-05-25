@@ -67,6 +67,14 @@ public class GenericRectangle implements GenericShape {
 		return height;
 	}
 
+	public double getCenterX(GenericRectangle r) {
+		return r.getX() + r.getWidth() / 2.0;
+	}
+
+	public double getCenterY(GenericRectangle r) {
+		return r.getY() + r.getHeight() / 2.0;
+	}
+
 	@Override
 	public String toString() {
 		return "x:"+x+" y:"+y+" w:"+width+" h:"+height;
