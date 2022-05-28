@@ -33,11 +33,9 @@
 
 package com.actelion.research.chem.descriptor;
 
-import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SSSearcherWithIndex;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.util.BurtleHasher;
 import com.actelion.research.util.SortedList;
 
 public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLongFP<StereoMolecule> {
@@ -47,17 +45,17 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 
 	private static DescriptorHandlerAllFragmentsFP sDefaultInstance;
 
-	private static final int MAX_BOND_COUNT = 7;
-	private static final int HASH_BITS = 11;
-	private static final int HASH_INIT = 13;
+	private static final int MAX_BOND_COUNT = 6;
+	private static final int HASH_BITS = 10;
 	private static final int DESCRIPTOR_SIZE = (1 << HASH_BITS);
 	private static final int DESCRIPTOR_LEN = DESCRIPTOR_SIZE / Long.SIZE;
 
-	private StereoMolecule mMol,mFragment;
+	private StereoMolecule mMol;
 	private boolean[] mIsAtomMember,mIsBondMember;
-	private int[] mMemberBond,mMemberAtom,mAtomMap;
+	private int[] mMemberBond,mMemberAtom;
 	private long[] mDescriptor;
 	private SortedList<BondSet> mBondSets;
+	private SimpleFragmentGraph mFragmentGraph;
 
 	public static DescriptorHandlerAllFragmentsFP getDefaultInstance() {
 		synchronized(DescriptorHandlerAllFragmentsFP.class) {
@@ -135,12 +133,11 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 
 		mMol = preprocessStructure(mol);
 		mMol.ensureHelperArrays(Molecule.cHelperRings);
-		mFragment = new StereoMolecule(mMol.getAtoms(), mMol.getBonds());
+		mFragmentGraph = new SimpleFragmentGraph(MAX_BOND_COUNT);
 
 		mBondSets = new SortedList<>();
 		mIsAtomMember = new boolean[mMol.getAtoms()];
 		mIsBondMember = new boolean[mMol.getBonds()];
-		mAtomMap = new int[mMol.getAtoms()];
 		mDescriptor = new long[DESCRIPTOR_LEN];
 		mMemberAtom = new int[mMol.getAtoms()];
 		mMemberBond = new int[mMol.getBonds()];
@@ -166,7 +163,7 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (mMol.getConnAtoms(atom) == 0) {
 				int atomicNo = mMol.getAtomicNo(atom);
-				mDescriptor[atomicNo < 64 ? 0 : 1] |= (1 << (atomicNo % 64));
+				mDescriptor[atomicNo < 64 ? 0 : 1] |= (1L << (atomicNo % 64));
 			}
 		}
 
@@ -213,12 +210,8 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 	private void setHashBitIfNew(int bondCount) {
 		BondSet bondSet = new BondSet(mMemberBond, bondCount, mMol.getBonds());
 		if (mBondSets.addIfNew(bondSet)) {
-			mMol.copyMoleculeByBonds(mFragment, mIsBondMember, true, mAtomMap);
-			mFragment.setFragment(true);
-
-			String idcode = new Canonizer(mFragment, Canonizer.NEGLECT_ANY_STEREO_INFORMATION).getIDCode();
-			int hash = BurtleHasher.hashlittle(idcode, HASH_INIT);
-			hash = (hash & BurtleHasher.hashmask(HASH_BITS));
+			mFragmentGraph.set(mMol, mMemberBond, bondCount);
+			int hash = mFragmentGraph.createHashValue(HASH_BITS);
 
 			int high = DESCRIPTOR_LEN - hash / Long.SIZE - 1;
 			int low = hash % Long.SIZE;
