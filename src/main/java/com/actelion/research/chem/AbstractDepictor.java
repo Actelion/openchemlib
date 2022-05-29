@@ -2510,7 +2510,7 @@ public abstract class AbstractDepictor<T> {
 		}
 
 
-	public void setColor_(int theColor) {
+	private void setColor_(int theColor) {
 		if (mIsValidatingView)
 			return;
 
