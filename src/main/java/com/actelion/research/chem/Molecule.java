@@ -143,7 +143,7 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFNewRingSizeBits	= 7;
 	public static final int cAtomQFNewRingSizeShift = 32;
 	public static final long cAtomQFSimpleFeatures	= 0x000000000E3FC7FEL;
-	public static final long cAtomQFNarrowing		= 0x000000000E3FC7FEL;
+	public static final long cAtomQFNarrowing		= 0x0000007F0FFFFFFEL;
 	public static final long cAtomQFAny				= 0x00000001;
 	public static final long cAtomQFAromState		= 0x00000006;
 	public static final long cAtomQFAromatic		= 0x00000002;

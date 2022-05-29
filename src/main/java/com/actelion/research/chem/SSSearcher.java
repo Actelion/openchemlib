@@ -836,16 +836,20 @@ System.out.println();
 			   		continue;
 
 				// consider as match if asymetrical fragment atom matches on non-stereo-center
+				// ('none' in molecule may actually be an 'unknown', if the molecule was parsed from an idcode)
 				if (moleculeParity == Molecule.cAtomParityNone)
 			   		continue;
 
-				// unknown molecule centers need to match everything because
-				// parities from idcodes don't include them, i.e. depending
-				// on the source of the parities, unknown centers may look as
-				// no centers. Both must retrieve the same results.
+				// unknown fragment centers match everything
 				if (fragmentParity == Molecule.cAtomParityUnknown)
 			   		continue;
 
+				// Here the fragment center is either 1 or 2.
+				// Thus, unknown molecule centers are not considered a match.
+				// Consider: parities from idcodes don't include 'unknown', i.e. depending
+				// on the source of the parities, unknown centers may look as no stereo center.
+				// These fake no-stereo-center are not refused here and show up as hits
+				// if the molecule was directly read from an idcode.
 				if (moleculeParity == Molecule.cAtomParityUnknown)
 			   		return false;
 

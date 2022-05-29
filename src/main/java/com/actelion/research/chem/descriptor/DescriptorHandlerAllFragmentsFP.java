@@ -39,14 +39,14 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.SortedList;
 
 public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLongFP<StereoMolecule> {
-	private static final double CORRECTION_FACTOR = 0.6;
+	private static final double CORRECTION_FACTOR = 0.68;
 
 	public static boolean skipIDCodes;
 
 	private static DescriptorHandlerAllFragmentsFP sDefaultInstance;
 
 	private static final int MAX_BOND_COUNT = 6;
-	private static final int HASH_BITS = 10;
+	private static final int HASH_BITS = 11;
 	private static final int DESCRIPTOR_SIZE = (1 << HASH_BITS);
 	private static final int DESCRIPTOR_LEN = DESCRIPTOR_SIZE / Long.SIZE;
 
@@ -98,23 +98,6 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 				mol.copyMoleculeByAtoms(query, includeBond, true, null);
 				mol = query;
 			}
-			else {
-				mol = mol.getCompactCopy();
-			}
-
-			// Remove atom query features, we don't want them in the fragments, which are translated to hash bits
-			for (int atom = 0; atom<mol.getAtoms(); atom++)
-				mol.setAtomQueryFeature(atom, Molecule.cAtomQFNarrowing, false);
-			for (int bond = 0; bond<mol.getBonds(); bond++)
-				mol.setBondQueryFeature(bond, Molecule.cBondQFNarrowing, false);
-		}
-		else {
-			mol = mol.getCompactCopy();
-		}
-
-		for (int atom=0; atom<mol.getAllAtoms(); atom++) {
-			mol.setAtomCharge(atom, 0);
-			mol.setAtomRadical(atom, 0);
 		}
 
 		return mol;

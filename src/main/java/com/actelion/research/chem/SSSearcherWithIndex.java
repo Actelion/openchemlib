@@ -34,7 +34,7 @@
 
 package com.actelion.research.chem;
 
-import com.actelion.research.chem.descriptor.DescriptorHandlerAllFragmentsFP;
+import com.actelion.research.chem.descriptor.AbstractDescriptorHandlerLongFP;
 
 import java.util.ArrayList;
 
@@ -565,15 +565,15 @@ public class SSSearcherWithIndex {
 	private int[]				mMoleculeIndexInt,mFragmentIndexInt;
 	private long[]				mMoleculeIndexLong,mFragmentIndexLong;
 	private byte[]				mMoleculeIDCode,mFragmentIDCode;
-	private boolean             mUseAllFragmentIndex;
+	private AbstractDescriptorHandlerLongFP<StereoMolecule> mDescriptorHandler;
 
 	public static int getNoOfKeys() {
         return cKeyIDCode.length;
 	   	}
 
-	public SSSearcherWithIndex(boolean useAllFragmentIndex) {
+	public SSSearcherWithIndex(AbstractDescriptorHandlerLongFP<StereoMolecule> dh) {
 		mSSSearcher = new SSSearcher();
-		mUseAllFragmentIndex = useAllFragmentIndex;
+		mDescriptorHandler = dh;
 		init();
 		}
 
@@ -907,8 +907,8 @@ public class SSSearcherWithIndex {
 		if (mol == null)
 			return null;
 
-		if (mUseAllFragmentIndex)
-			return new DescriptorHandlerAllFragmentsFP().createDescriptor(mol);
+		if (mDescriptorHandler != null)
+			return mDescriptorHandler.createDescriptor(mol);
 
 		long[] index = new long[(cKeyIDCode.length+63)/64];
 		mol = removeExcludeGroups(mol);
