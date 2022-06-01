@@ -2486,10 +2486,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		int count = 0;
 		for (int i=0; i<mConnAtoms[atom]; i++) {
 			int connAtom = mConnAtom[atom][i];
-			if (connAtom != otherBondAtom && mConnAtoms[connAtom] > 2) {
+			if (connAtom != otherBondAtom && mConnAtoms[connAtom] > 2)
 				count++;
-				break;
-				}
 			}
 		return count;
 		}

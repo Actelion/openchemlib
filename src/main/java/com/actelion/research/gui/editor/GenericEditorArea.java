@@ -124,6 +124,8 @@ public class GenericEditorArea implements GenericEventListener {
 
 	private static final int DEFAULT_SELECTION_BACKGROUND = 0xFF80A4C0;
 
+	private static final int MEAN_BOND_LENGTH = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
+
 	private static final int cRequestNone = 0;
 	private static final int cRequestNewBond = 1;
 	private static final int cRequestNewChain = 2;
@@ -3013,13 +3015,13 @@ public class GenericEditorArea implements GenericEventListener {
 //			fragmentWidth += boundingRect[fragment].width;
 		}
 
-		double spacing = FRAGMENT_CLEANUP_DISTANCE * AbstractDepictor.cOptAvBondLen;
+		double spacing = FRAGMENT_CLEANUP_DISTANCE * MEAN_BOND_LENGTH;
 		double avbl = mMol.getAverageBondLength();
 		double arrowWidth = ((mMode & MODE_REACTION) == 0) ?
 				0f
 				: (mUpdateMode == UPDATE_SCALE_COORDS_USE_FRAGMENTS) ?
 				DEFAULT_ARROW_LENGTH * mCanvas.getCanvasWidth()
-				: ((ReactionArrow)mDrawingObjectList.get(0)).getLength() * AbstractDepictor.cOptAvBondLen / avbl;
+				: ((ReactionArrow)mDrawingObjectList.get(0)).getLength() * MEAN_BOND_LENGTH / avbl;
 
 		double rawX = 0.5 * spacing;
 		for (int fragment = 0; fragment<=mFragment.length; fragment++) {
@@ -3286,7 +3288,7 @@ public class GenericEditorArea implements GenericEventListener {
 		}*/
 
 	private int maxUpdateMode () {
-		return AbstractDepictor.cModeInflateToMaxAVBL + HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
+		return AbstractDepictor.cModeInflateToMaxAVBL + MEAN_BOND_LENGTH;
 	}
 
 	private Point2D calculateCenterOfGravity ( boolean selectedOnly){

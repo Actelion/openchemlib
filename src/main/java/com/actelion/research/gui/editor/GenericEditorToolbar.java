@@ -187,7 +187,7 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 			if (!isSelectableButton(b))
 				return;
 
-	        if (b == cToolESR)
+	        if (b == cToolESR && b == mCurrentTool)
 		        mESRSelected = (++mESRSelected) % 3;
 
 	        mSelectedButton = b;
