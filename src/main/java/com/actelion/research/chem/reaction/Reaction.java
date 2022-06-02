@@ -308,18 +308,91 @@ public class Reaction implements java.io.Serializable {
 		}
 
 	/**
-	 * Checks, whether all non-hydrogen atoms are mapped and whether every reactant atom has exactly one assigned product atom.
+	 * Checks, whether some(!) non-hydrogen and non-exclude-group atoms are mapped,
+	 * and whether every mapped reactant atom has exactly one assigned product atom.
+	 * @return
+	 */
+	public boolean isMapped() {
+		int maxMapNo = getHighestMapNo();
+		boolean[] isUsed = new boolean[maxMapNo+1];
+
+		int mapNoCount = 0;
+		for (StereoMolecule reactant:mReactant) {
+			for (int atom=0; atom<reactant.getAtoms(); atom++) {
+				int mapNo = reactant.getAtomMapNo(atom);
+				if (mapNo != 0) {
+					mapNoCount++;
+					if (reactant.isFragment() && (reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+						return false;
+
+					if (isUsed[mapNo])
+						return false;
+
+					isUsed[mapNo] = true;
+					}
+				}
+			}
+
+		if (mapNoCount == 0)
+			return false;
+
+		for (StereoMolecule product:mProduct) {
+			for (int atom=0; atom<product.getAtoms(); atom++) {
+				int mapNo = product.getAtomMapNo(atom);
+				if (mapNo != 0) {
+					mapNoCount--;
+					if (product.isFragment() && (product.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+						return false;
+
+					if (!isUsed[mapNo])
+						return false;
+
+					isUsed[mapNo] = false;
+					}
+				}
+			}
+
+		if (mapNoCount != 0)
+			return false;
+
+		return true;
+		}
+
+	/**
+	 * Checks, whether all non-hydrogen and non-exclude-group atoms are mapped,
+	 * whether every mapped reactant atom has exactly one assigned product atom,
+	 * and whether every exclude group atom is not mapped.
 	 * @return
 	 */
 	public boolean isPerfectlyMapped() {
 		int atoms = 0;
 		for (StereoMolecule reactant:mReactant) {
 			reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
-			atoms += reactant.getAtoms();
+			if (reactant.isFragment()) {
+				for (int atom = 0; atom<reactant.getAtoms(); atom++) {
+					if ((reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0)
+						atoms++;
+					else if (reactant.getAtomMapNo(atom) != 0)
+						return false;
+					}
+				}
+			else {
+				atoms += reactant.getAtoms();
+				}
 			}
 		for (StereoMolecule product:mProduct) {
 			product.ensureHelperArrays(Molecule.cHelperNeighbours);
-			atoms -= product.getAtoms();
+			if (product.isFragment()) {
+				for (int atom = 0; atom<product.getAtoms(); atom++) {
+					if ((product.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0)
+						atoms--;
+					else if (product.getAtomMapNo(atom) != 0)
+						return false;
+					}
+				}
+			else {
+				atoms -= product.getAtoms();
+				}
 			}
 		if (atoms != 0)
 			return false;	// reactant atom count is different from product atom count
@@ -330,20 +403,24 @@ public class Reaction implements java.io.Serializable {
 
 		for (StereoMolecule reactant:mReactant) {
 			for (int atom=0; atom<reactant.getAtoms(); atom++) {
-				int mapNo = reactant.getAtomMapNo(atom);
-				if (isUsed[mapNo])
-					return false;
-				isUsed[mapNo] = true;
+				if (!reactant.isFragment() || (reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0) {
+					int mapNo = reactant.getAtomMapNo(atom);
+					if (isUsed[mapNo])
+						return false;
+					isUsed[mapNo] = true;
+					}
 				}
 			}
 
 		for (StereoMolecule product:mProduct) {
 			product.ensureHelperArrays(Molecule.cHelperNeighbours);
 			for (int atom=0; atom<product.getAtoms(); atom++) {
-				int mapNo = product.getAtomMapNo(atom);
-				if (mapNo >= maxMapNo || !isUsed[mapNo])
-					return false;
-				isUsed[mapNo] = false;
+				if (!product.isFragment() || (product.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0) {
+					int mapNo = product.getAtomMapNo(atom);
+					if (mapNo >= maxMapNo || !isUsed[mapNo])
+						return false;
+					isUsed[mapNo] = false;
+					}
 				}
 			}
 
