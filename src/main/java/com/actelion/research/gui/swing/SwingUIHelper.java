@@ -5,7 +5,6 @@ import com.actelion.research.gui.FileHelper;
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.hidpi.ScaledEditorKit;
-import com.actelion.research.util.CursorHelper;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
@@ -63,7 +62,7 @@ public class SwingUIHelper implements GenericUIHelper {
 
 	@Override
 	public void setCursor(int cursor) {
-		mParentComponent.setCursor(CursorHelper.getCursor(cursor));
+		mParentComponent.setCursor(SwingCursorHelper.getCursor(cursor));
 	}
 
 	@Override

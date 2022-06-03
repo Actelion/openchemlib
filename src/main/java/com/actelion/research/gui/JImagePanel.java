@@ -35,7 +35,7 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.gui.clipboard.ImageClipboardHandler;
-import com.actelion.research.util.CursorHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,7 +88,7 @@ public class JImagePanel extends JPanel implements ActionListener,ImageObserver,
 		mUseThumbNail = useThumbNail;
 		mImageRect = new Rectangle();
 		resetZoomState();
-		mCurrentCursor = CursorHelper.cPointerCursor;
+		mCurrentCursor = SwingCursorHelper.cPointerCursor;
 		}
 
 	/**
@@ -562,18 +562,18 @@ public class JImagePanel extends JPanel implements ActionListener,ImageObserver,
 
 	private void updateCursor() {
 		if (mMouseIsInside) {
-			int cursor = CursorHelper.cPointerCursor;
+			int cursor = SwingCursorHelper.cPointerCursor;
 
 			if (mImageStatus == IMAGE_AVAILABLE) {
 				if (mAltIsDown)
-					cursor = CursorHelper.cSelectRectCursor;
+					cursor = SwingCursorHelper.cSelectRectCursor;
 				else
-					cursor = mMouseIsDown ? CursorHelper.cFistCursor : CursorHelper.cHandCursor;
+					cursor = mMouseIsDown ? SwingCursorHelper.cFistCursor : SwingCursorHelper.cHandCursor;
 				}
 
 			if (mCurrentCursor != cursor) {
 				mCurrentCursor = cursor;
-				setCursor(CursorHelper.getCursor(cursor));
+				setCursor(SwingCursorHelper.getCursor(cursor));
 				}
 			}
 		}

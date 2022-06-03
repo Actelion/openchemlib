@@ -51,7 +51,7 @@ import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.hidpi.ScaledEditorKit;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
-import com.actelion.research.util.CursorHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
@@ -194,7 +194,7 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		mOtherLabel = null;
 		mAllowQueryFeatures = true;
 		mPendingRequest = cRequestNone;
-		mCurrentCursor = CursorHelper.cPointerCursor;
+		mCurrentCursor = SwingCursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
 
 		if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE)) != 0) {
@@ -3473,45 +3473,45 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 		int cursor = -1;
 		switch (mCurrentTool) {
 			case JDrawToolbar.cToolZoom:
-				cursor = CursorHelper.cZoomCursor;
+				cursor = SwingCursorHelper.cZoomCursor;
 				break;
 			case JDrawToolbar.cToolLassoPointer:
 				if ((mCurrentHiliteAtom != -1 && mMol.isSelectedAtom(mCurrentHiliteAtom))
 					|| (mCurrentHiliteBond != -1 && mMol.isSelectedBond(mCurrentHiliteBond))) {
-					cursor = mMouseIsDown ? CursorHelper.cFistCursor
-						: mShiftIsDown ? CursorHelper.cHandPlusCursor
-						: CursorHelper.cHandCursor;
+					cursor = mMouseIsDown ? SwingCursorHelper.cFistCursor
+						: mShiftIsDown ? SwingCursorHelper.cHandPlusCursor
+						: SwingCursorHelper.cHandCursor;
 				} else if (mCurrentHiliteAtom != -1
 					|| mCurrentHiliteBond != -1) {
-					cursor = CursorHelper.cPointerCursor;
+					cursor = SwingCursorHelper.cPointerCursor;
 				} else if (mCurrentHiliteObject != null) {
-					cursor = mMouseIsDown ? CursorHelper.cFistCursor
+					cursor = mMouseIsDown ? SwingCursorHelper.cFistCursor
 						: (mShiftIsDown
 						&& !(mCurrentHiliteObject instanceof ReactionArrow)) ?
-						CursorHelper.cHandPlusCursor : CursorHelper.cHandCursor;
+						SwingCursorHelper.cHandPlusCursor : SwingCursorHelper.cHandCursor;
 				} else {
 					cursor = mShiftIsDown ?
-						(mAltIsDown ? CursorHelper.cSelectRectPlusCursor : CursorHelper.cLassoPlusCursor)
-						: (mAltIsDown ? CursorHelper.cSelectRectCursor : CursorHelper.cLassoCursor);
+						(mAltIsDown ? SwingCursorHelper.cSelectRectPlusCursor : SwingCursorHelper.cLassoPlusCursor)
+						: (mAltIsDown ? SwingCursorHelper.cSelectRectCursor : SwingCursorHelper.cLassoCursor);
 				}
 				break;
 			case JDrawToolbar.cToolDelete:
-				cursor = CursorHelper.cDeleteCursor;
+				cursor = SwingCursorHelper.cDeleteCursor;
 				break;
 			case JDrawToolbar.cToolChain:
-				cursor = CursorHelper.cChainCursor;
+				cursor = SwingCursorHelper.cChainCursor;
 				break;
 			case JDrawToolbar.cToolText:
-				cursor = CursorHelper.cTextCursor;
+				cursor = SwingCursorHelper.cTextCursor;
 				break;
 			default:
-				cursor = CursorHelper.cPointerCursor;
+				cursor = SwingCursorHelper.cPointerCursor;
 				break;
 		}
 
 		if (mCurrentCursor != cursor) {
 			mCurrentCursor = cursor;
-			setCursor(CursorHelper.getCursor(cursor));
+			setCursor(SwingCursorHelper.getCursor(cursor));
 		}
 	}
 

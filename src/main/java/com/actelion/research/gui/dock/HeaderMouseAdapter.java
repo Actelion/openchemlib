@@ -1,6 +1,6 @@
 package com.actelion.research.gui.dock;
 
-import com.actelion.research.util.CursorHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 
 import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
@@ -27,21 +27,21 @@ public class HeaderMouseAdapter extends MouseInputAdapter {
 
     @Override
     public void mouseEntered(MouseEvent e) {
-        mTitleLabel.setCursor(CursorHelper.getCursor(CursorHelper.cHandCursor));
+        mTitleLabel.setCursor(SwingCursorHelper.getCursor(SwingCursorHelper.cHandCursor));
         mIsMouseDown = false;
         }
 
     @Override
     public void mouseExited(MouseEvent e) {
         if (!mIsMouseDown)
-            mTitleLabel.setCursor(CursorHelper.getCursor(CursorHelper.cPointerCursor));
+            mTitleLabel.setCursor(SwingCursorHelper.getCursor(SwingCursorHelper.cPointerCursor));
         mIsMouseDown = false;
         }
 
     @Override
     public void mousePressed(MouseEvent e) {
         if (!handlePopupTrigger(e)) {
-            mTitleLabel.setCursor(CursorHelper.getCursor(e.getButton() == MouseEvent.BUTTON1 ? CursorHelper.cFistCursor : CursorHelper.cPointerCursor));
+            mTitleLabel.setCursor(SwingCursorHelper.getCursor(e.getButton() == MouseEvent.BUTTON1 ? SwingCursorHelper.cFistCursor : SwingCursorHelper.cPointerCursor));
             mIsMouseDown = true;
             mDockable.getDockingPanel().selectDockable(mDockable);
             }
@@ -50,13 +50,13 @@ public class HeaderMouseAdapter extends MouseInputAdapter {
     @Override
     public void mouseReleased(MouseEvent e) {
         handlePopupTrigger(e);
-        mTitleLabel.setCursor(CursorHelper.getCursor(CursorHelper.cHandCursor));
+        mTitleLabel.setCursor(SwingCursorHelper.getCursor(SwingCursorHelper.cHandCursor));
         mIsMouseDown = false;
         }
 
     private boolean handlePopupTrigger(MouseEvent e) {
         if (mPopupProvider != null && e.isPopupTrigger()) {
-            mTitleLabel.setCursor(CursorHelper.getCursor(CursorHelper.cPointerCursor));
+            mTitleLabel.setCursor(SwingCursorHelper.getCursor(SwingCursorHelper.cPointerCursor));
             JPopupMenu popup = mPopupProvider.createPopupMenu(mTitleLabel.getText(), mDockable.isMaximized());
             popup.show(mTitleLabel, e.getX(), e.getY());
             return true;

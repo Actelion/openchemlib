@@ -3,7 +3,7 @@ package com.actelion.research.gui.dock;
 import com.actelion.research.gui.HeaderPaintHelper;
 import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.hidpi.HiDPIIconButton;
-import com.actelion.research.util.CursorHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 import info.clearthought.layout.TableLayout;
 
 import javax.swing.*;
@@ -45,7 +45,7 @@ public class DockableHeader extends JPanel {
 
 		DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(mTitleLabel, ALLOWED_DRAG_ACTIONS, e -> {
 			if (!mDockable.isMaximized() && mDockable.getDockingPanel().getDockableCount() >= 2)
-				e.startDrag(CursorHelper.getCursor(CursorHelper.cFistCursor), new TransferableDockable(mDockable));
+				e.startDrag(SwingCursorHelper.getCursor(SwingCursorHelper.cFistCursor), new TransferableDockable(mDockable));
 			} );
 		}
 

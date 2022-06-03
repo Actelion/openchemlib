@@ -45,7 +45,7 @@ import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
-import com.actelion.research.util.CursorHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -443,7 +443,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			}
 
 		updateBorder(isInRect);
-		setCursor(CursorHelper.getCursor(isInRect ? CursorHelper.cHandCursor : CursorHelper.cPointerCursor));
+		setCursor(SwingCursorHelper.getCursor(isInRect ? SwingCursorHelper.cHandCursor : SwingCursorHelper.cPointerCursor));
 		}
 
 	private GenericRectangle shrink(GenericRectangle rect) {

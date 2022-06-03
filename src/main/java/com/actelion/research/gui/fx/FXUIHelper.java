@@ -2,6 +2,7 @@ package com.actelion.research.gui.fx;
 
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -47,7 +48,7 @@ public class FXUIHelper implements GenericUIHelper {
 
 	@Override
 	public void setCursor(int cursor) {
-//		mDrawArea.setCursor(CursorHelper.getCursor(cursor));
+		mParentNode.setCursor(FXCursorHelper.getCursor(cursor));
 	}
 
 	@Override

@@ -43,7 +43,7 @@ import com.actelion.research.gui.editor.SwingEditorDialog;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
-import com.actelion.research.util.CursorHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -558,7 +558,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 			int index = getMoleculeIndex(e.getX(), e.getY());
 			if (mHighlightedIndex != index) {
 				mHighlightedIndex = index;
-				setCursor(CursorHelper.getCursor(index == -1 ? CursorHelper.cPointerCursor : CursorHelper.cHandCursor));
+				setCursor(SwingCursorHelper.getCursor(index == -1 ? SwingCursorHelper.cPointerCursor : SwingCursorHelper.cHandCursor));
 				repaint();
 				}
 			}
@@ -684,7 +684,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 				public Transferable getTransferable(Point p) {
 					if (mHighlightedIndex == -1)
 						return null;
-					setCursor(CursorHelper.getCursor(CursorHelper.cFistCursor));
+					setCursor(SwingCursorHelper.getCursor(SwingCursorHelper.cFistCursor));
 					mDragIndex = mHighlightedIndex;
 					return new MoleculeTransferable(mModel.getMolecule(mHighlightedIndex));
 					}

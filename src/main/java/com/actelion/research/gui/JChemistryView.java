@@ -48,7 +48,7 @@ import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
-import com.actelion.research.util.CursorHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -429,8 +429,8 @@ public class JChemistryView extends JComponent
 	public void mousePressed(MouseEvent e) {
 		handlePopupTrigger(e);
 
-		setCursor(CursorHelper.getCursor((mDragType == DRAG_TYPE_NONE) ?
-				CursorHelper.cPointerCursor : CursorHelper.cFistCursor));
+		setCursor(SwingCursorHelper.getCursor((mDragType == DRAG_TYPE_NONE) ?
+				SwingCursorHelper.cPointerCursor : SwingCursorHelper.cFistCursor));
 		}
 
 	@Override
@@ -540,8 +540,8 @@ public class JChemistryView extends JComponent
 			}
 
 		updateBorder(dragType != DRAG_TYPE_NONE);
-		setCursor(CursorHelper.getCursor((mDragType == DRAG_TYPE_NONE) ?
-				CursorHelper.cPointerCursor : CursorHelper.cHandCursor));
+		setCursor(SwingCursorHelper.getCursor((mDragType == DRAG_TYPE_NONE) ?
+				SwingCursorHelper.cPointerCursor : SwingCursorHelper.cHandCursor));
 		}
 
 	private Rectangle shrink(GenericRectangle rect) {
@@ -723,7 +723,7 @@ public class JChemistryView extends JComponent
 					getReactionTransferable() : getMoleculeTransferable();
 			if (transferable != null) {
 				try {
-					e.startDrag(CursorHelper.getCursor(CursorHelper.cFistCursor), transferable, this);
+					e.startDrag(SwingCursorHelper.getCursor(SwingCursorHelper.cFistCursor), transferable, this);
 					mIsDragging = true;
 //					e.startDrag(DragSource.DefaultCopyNoDrop, transferable, this);
 					}
