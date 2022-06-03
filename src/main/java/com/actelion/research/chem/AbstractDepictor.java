@@ -38,6 +38,7 @@ import com.actelion.research.gui.editor.AtomQueryFeatureDialogBuilder;
 import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.gui.generic.GenericPolygon;
 import com.actelion.research.gui.generic.GenericRectangle;
+import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 
 import java.awt.*;
@@ -110,7 +111,7 @@ public abstract class AbstractDepictor<T> {
 	public static final int COLOR_DARK_GREEN = 0xFF008000;
 	public static final int COLOR_DARK_RED = 0xFFA00000;
 
-	public static final int cOptAvBondLen = 24;
+	public static final int cOptAvBondLen = HiDPIHelper.scale(24);
 	public static final int cColorGray = 1;	// avoid the Molecule.cAtomFlagsColor range
 
 	protected static final int cModeMaxBondLength			= 0x0FFFF;
