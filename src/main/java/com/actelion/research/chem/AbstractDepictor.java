@@ -38,7 +38,6 @@ import com.actelion.research.gui.editor.AtomQueryFeatureDialogBuilder;
 import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.gui.generic.GenericPolygon;
 import com.actelion.research.gui.generic.GenericRectangle;
-import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 
 import java.awt.*;
@@ -111,7 +110,7 @@ public abstract class AbstractDepictor<T> {
 	public static final int COLOR_DARK_GREEN = 0xFF008000;
 	public static final int COLOR_DARK_RED = 0xFFA00000;
 
-	public static final int cOptAvBondLen = HiDPIHelper.scale(24);
+	public static final int cOptAvBondLen = (int)Molecule.cDefaultAVBL;
 	public static final int cColorGray = 1;	// avoid the Molecule.cAtomFlagsColor range
 
 	protected static final int cModeMaxBondLength			= 0x0FFFF;
@@ -298,13 +297,14 @@ public abstract class AbstractDepictor<T> {
 
 
 	/**
-	 * Returns full transformation that moves/scales original molecule into viewRect.
-	 * This method considers atom labels when generating the bounding box. This includes
+	 * Scales and translates the depictor's molecule's coordinates such that the molecule
+	 * fits into the supplied rectangle.
+	 * This method considers atom labels when generating the bounding box, which includes
 	 * atom labels of drawn implicit hydrogen atoms.
 	 * @param context
 	 * @param viewRect
 	 * @param mode is typically (cModeInflateToMaxAVBL | maximum_desired_bond_length)
-	 * @return
+	 * @return transformation that moved/scaled the original molecule into viewRect
 	 */
 	public DepictorTransformation updateCoords(T context, GenericRectangle viewRect, int mode) {
 		validateView(context, viewRect, mode);
@@ -321,12 +321,13 @@ public abstract class AbstractDepictor<T> {
 
 
 	/**
-	 * Returns full transformation that moves/scales original molecule into viewRect.
+	 * Scales and translates the depictor's molecule's coordinates such that the molecule
+	 * fits into the supplied rectangle.
 	 * This simple method creates a transformation that places all atom coordinates in
-	 * the viewRect.
+	 * the viewRect but does not know about nor considers atom labels.
 	 * @param viewRect
 	 * @param mode
-	 * @return
+	 * @return transformation that moved/scaled the original molecule into viewRect
 	 */
 	public DepictorTransformation simpleUpdateCoords(GenericRectangle viewRect, int mode) {
 		simpleValidateView(viewRect, mode);
@@ -349,7 +350,8 @@ public abstract class AbstractDepictor<T> {
 
 	/**
 	 * A depictor maintains a DepictorTransformation object, which defines translation and scaling
-	 * of molecule coordinates into the viewRect. This method updates the depictor's transformation
+	 * needed to project all of the molecule's coordinates into the viewRect.
+	 * This method updates the depictor's transformation
 	 * such that the molecule is centered in viewRect and reduced in size if it doesn't fit.
 	 * If mode contains cModeInflateToMaxAVBL, then it is scaled to reach the desired mean bond length,
 	 * or to fill viewRect, whatever is reached first.

@@ -1185,17 +1185,17 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			if (ch == 'q' && mMol.isFragment()) {
 				showBondQFDialog(mCurrentHiliteBond);
 			} else if (ch == 'v') { // ChemDraw uses the same key
-				if (mMol.addRingToBond(mCurrentHiliteBond, 3, false)) {
+				if (mMol.addRingToBond(mCurrentHiliteBond, 3, false, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 			} else if (ch >= '4' && ch <= '7') {
-				if (mMol.addRingToBond(mCurrentHiliteBond, ch - '0', false)) {
+				if (mMol.addRingToBond(mCurrentHiliteBond, ch - '0', false, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 			} else if (ch == 'a' || ch == 'b') {    // ChemDraw uses 'a', we use 'b' since a long time
-				if (mMol.addRingToBond(mCurrentHiliteBond, 6, true)) {
+				if (mMol.addRingToBond(mCurrentHiliteBond, 6, true, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
@@ -1827,42 +1827,42 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 				break;
 			case JDrawToolbar.cTool3Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 3, false)) {
+				if (mMol.addRing(mX1, mY1, 3, false, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cTool4Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 4, false)) {
+				if (mMol.addRing(mX1, mY1, 4, false, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cTool5Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 5, false)) {
+				if (mMol.addRing(mX1, mY1, 5, false, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cTool6Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 6, false)) {
+				if (mMol.addRing(mX1, mY1, 6, false, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cTool7Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 7, false)) {
+				if (mMol.addRing(mX1, mY1, 7, false, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}
 				break;
 			case JDrawToolbar.cToolAromRing:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 6, true)) {
+				if (mMol.addRing(mX1, mY1, 6, true, Molecule.getDefaultAverageBondLength())) {
 					fireMoleculeChanged();
 					update(UPDATE_CHECK_COORDS);
 				}

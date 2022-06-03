@@ -183,10 +183,10 @@ public abstract class BondHighlightAction extends AtomHighlightAction
                     case '5':
                     case '6':
                     case '7':
-                        return mol.addRingToBond(theBond, c - '0', false);
+                        return mol.addRingToBond(theBond, c - '0', false, Molecule.getDefaultAverageBondLength());
 
                     case 'b':
-                        return mol.addRingToBond(theBond, 6, true);
+                        return mol.addRingToBond(theBond, 6, true, Molecule.getDefaultAverageBondLength());
 
                     case '1':
                         return mol.changeBond(theBond, Molecule.cBondTypeSingle);

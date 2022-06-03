@@ -124,8 +124,6 @@ public class GenericEditorArea implements GenericEventListener {
 
 	private static final int DEFAULT_SELECTION_BACKGROUND = 0xFF80A4C0;
 
-	private static final int MEAN_BOND_LENGTH = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
-
 	private static final int cRequestNone = 0;
 	private static final int cRequestNewBond = 1;
 	private static final int cRequestNewChain = 2;
@@ -142,9 +140,9 @@ public class GenericEditorArea implements GenericEventListener {
 	private static IReactionMapper sMapper;
 	private int mMode, mChainAtoms, mCurrentTool, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical,
 			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled,
-			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2;
+			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2, mMaxAVBL;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
-	private double mX1, mY1, mX2, mY2, mWidth, mHeight;
+	private double mX1, mY1, mX2, mY2, mWidth, mHeight, mUIScaling;
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
 	private boolean mAltIsDown, mShiftIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
@@ -190,6 +188,9 @@ public class GenericEditorArea implements GenericEventListener {
 		mPendingRequest = cRequestNone;
 		mCurrentCursor = SwingCursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
+
+		mUIScaling = HiDPIHelper.getUIScaleFactor();
+		mMaxAVBL = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
 
 		if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE)) != 0) {
 			mMode |= (MODE_MULTIPLE_FRAGMENTS);
@@ -436,6 +437,10 @@ public class GenericEditorArea implements GenericEventListener {
 			context.drawCenteredString(mWidth / 2, context.getFontSize(), mWarningMessage);
 			context.setRGB(saveRGB);
 		}
+	}
+
+	private double getScaledAVBL() {
+		return mMol.getAverageBondLength(Molecule.cDefaultAVBL * mUIScaling);
 	}
 
 	public static int lassoColor(GenericDrawContext context) {
@@ -804,7 +809,7 @@ public class GenericEditorArea implements GenericEventListener {
 		if (mol.getAllBonds() != 0)
 			new GenericDepictor(mol).updateCoords(mCanvas.getDrawContext(),
 					new GenericRectangle(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()),
-					AbstractDepictor.cModeInflateToMaxAVBL + (int)mMol.getAverageBondLength());
+					AbstractDepictor.cModeInflateToMaxAVBL + (int)getScaledAVBL());
 
 		storeState();
 
@@ -944,7 +949,7 @@ public class GenericEditorArea implements GenericEventListener {
 						lastX = 0;
 						lastY = 0;
 					}
-					double avbl = mMol.getAverageBondLength();
+					double avbl = getScaledAVBL();
 					double s0 = (int)avbl;
 					double s1 = (int)(0.866 * avbl);
 					double s2 = (int)(0.5 * avbl);
@@ -1171,13 +1176,13 @@ public class GenericEditorArea implements GenericEventListener {
 				if (ch == 'q' && mMol.isFragment()) {
 					showBondQFDialog(mCurrentHiliteBond);
 				} else if (ch == 'v') { // ChemDraw uses the same key
-					if (mMol.addRingToBond(mCurrentHiliteBond, 3, false))
+					if (mMol.addRingToBond(mCurrentHiliteBond, 3, false, getScaledAVBL()))
 						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else if (ch>='4' && ch<='7') {
-					if (mMol.addRingToBond(mCurrentHiliteBond, ch - '0', false))
+					if (mMol.addRingToBond(mCurrentHiliteBond, ch - '0', false, getScaledAVBL()))
 						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else if (ch == 'a' || ch == 'b') {    // ChemDraw uses 'a', we use 'b' since a long time
-					if (mMol.addRingToBond(mCurrentHiliteBond, 6, true))
+					if (mMol.addRingToBond(mCurrentHiliteBond, 6, true, getScaledAVBL()))
 						updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else {
 					boolean bondChanged =
@@ -1684,32 +1689,32 @@ public class GenericEditorArea implements GenericEventListener {
 				break;
 			case GenericEditorToolbar.cTool3Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 3, false))
+				if (mMol.addRing(mX1, mY1, 3, false, getScaledAVBL()))
 					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cTool4Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 4, false))
+				if (mMol.addRing(mX1, mY1, 4, false, getScaledAVBL()))
 					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cTool5Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 5, false))
+				if (mMol.addRing(mX1, mY1, 5, false, getScaledAVBL()))
 					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cTool6Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 6, false))
+				if (mMol.addRing(mX1, mY1, 6, false, getScaledAVBL()))
 					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cTool7Ring:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 7, false))
+				if (mMol.addRing(mX1, mY1, 7, false, getScaledAVBL()))
 					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolAromRing:
 				storeState();
-				if (mMol.addRing(mX1, mY1, 6, true))
+				if (mMol.addRing(mX1, mY1, 6, true, getScaledAVBL()))
 					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				break;
 			case GenericEditorToolbar.cToolPosCharge:
@@ -2337,7 +2342,7 @@ public class GenericEditorArea implements GenericEventListener {
 				newAngle = (angle[largestNo] + angle[largestNo + 1]) / 2;
 			}
 		}
-		double avbl = mMol.getAverageBondLength();
+		double avbl = getScaledAVBL();
 		mX2 = ((atom == -1) ? mX1 : mMol.getAtomX(atom)) + avbl * (float)Math.sin(newAngle);
 		mY2 = ((atom == -1) ? mY1 : mMol.getAtomY(atom)) + avbl * (float)Math.cos(newAngle);
 	}
@@ -2525,7 +2530,7 @@ public class GenericEditorArea implements GenericEventListener {
 			// while retaining coordinates of the fragment.
 			StereoMolecule fragment = new StereoMolecule();
 			fragment.addFragment(mMol, mCurrentHiliteAtom, null);
-			double sourceAVBL = fragment.getAverageBondLength();
+			double sourceAVBL = fragment.getAverageBondLength(mUIScaling * Molecule.cDefaultAVBL);
 			int firstAtomInFragment = fragment.getAllAtoms();
 			for (int atom = 0; atom<fragment.getAllAtoms(); atom++)
 				fragment.setAtomMarker(atom, true);
@@ -2989,7 +2994,8 @@ public class GenericEditorArea implements GenericEventListener {
 				mMol.removeAtomMarkers();
 		}
 
-		mDepictor.updateCoords(context, new GenericRectangle(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()), maxUpdateMode());
+		mDepictor.updateCoords(context, new GenericRectangle(0, 0, mCanvas.getCanvasWidth(),
+				mCanvas.getCanvasHeight()), AbstractDepictor.cModeInflateToMaxAVBL | mMaxAVBL);
 	}
 
 	private void cleanupMultiFragmentCoordinates(GenericDrawContext context, boolean selectedOnly){
@@ -3010,18 +3016,18 @@ public class GenericEditorArea implements GenericEventListener {
 				mFragment[fragment].setStereoBondsFromParity();
 			}
 			GenericDepictor d = new GenericDepictor(mFragment[fragment]);
-			d.updateCoords(context, null, AbstractDepictor.cModeInflateToMaxAVBL);
+			d.updateCoords(context, null, AbstractDepictor.cModeInflateToMaxAVBL | mMaxAVBL);
 			boundingRect[fragment] = d.getBoundingRect();
 //			fragmentWidth += boundingRect[fragment].width;
 		}
 
-		double spacing = FRAGMENT_CLEANUP_DISTANCE * MEAN_BOND_LENGTH;
-		double avbl = mMol.getAverageBondLength();
+		double spacing = FRAGMENT_CLEANUP_DISTANCE * mMaxAVBL;
+		double avbl = getScaledAVBL();
 		double arrowWidth = ((mMode & MODE_REACTION) == 0) ?
 				0f
 				: (mUpdateMode == UPDATE_SCALE_COORDS_USE_FRAGMENTS) ?
 				DEFAULT_ARROW_LENGTH * mCanvas.getCanvasWidth()
-				: ((ReactionArrow)mDrawingObjectList.get(0)).getLength() * MEAN_BOND_LENGTH / avbl;
+				: ((ReactionArrow)mDrawingObjectList.get(0)).getLength() * mMaxAVBL / avbl;
 
 		double rawX = 0.5 * spacing;
 		for (int fragment = 0; fragment<=mFragment.length; fragment++) {
@@ -3043,7 +3049,8 @@ public class GenericEditorArea implements GenericEventListener {
 			rawX += spacing + boundingRect[fragment].width;
 		}
 
-		mDepictor.updateCoords(context, new GenericRectangle(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()), maxUpdateMode());
+		mDepictor.updateCoords(context, new GenericRectangle(0, 0, mCanvas.getCanvasWidth(),
+				mCanvas.getCanvasHeight()), AbstractDepictor.cModeInflateToMaxAVBL | mMaxAVBL);
 
 		int[] fragmentAtom = new int[mFragment.length];
 		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
@@ -3080,7 +3087,7 @@ public class GenericEditorArea implements GenericEventListener {
 			mergeFragments[i] = new boolean[i];
 		}
 
-		double avbl = mMol.getAverageBondLength();
+		double avbl = getScaledAVBL();
 		for (int atom1 = 1; atom1<mMol.getAllAtoms(); atom1++) {
 			for (int atom2 = 0; atom2<atom1; atom2++) {
 				double dx = mMol.getAtomX(atom2) - mMol.getAtomX(atom1);
@@ -3286,10 +3293,6 @@ public class GenericEditorArea implements GenericEventListener {
 			System.out.println("Error reading data: "+e);
 			}
 		}*/
-
-	private int maxUpdateMode () {
-		return AbstractDepictor.cModeInflateToMaxAVBL + MEAN_BOND_LENGTH;
-	}
 
 	private Point2D calculateCenterOfGravity ( boolean selectedOnly){
 		int atoms = 0;

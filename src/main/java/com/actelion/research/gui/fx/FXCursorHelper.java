@@ -20,7 +20,16 @@ public class FXCursorHelper extends GenericCursorHelper {
 
 	public static Cursor createCursor(int cursor) {
 		if (cursor<IMAGE_DATA_16.length) {
-			Dimension2D size = ImageCursor.getBestSize(16, 16);
+			Dimension2D size = ImageCursor.getBestSize(32, 32);
+			if (size.getWidth() == 32 && size.getHeight() == 32 && IMAGE_NAME_32[cursor] != null) {
+				return new ImageCursor(new FXImage("cursor/" + IMAGE_NAME_32[cursor]).get());
+			}
+			else if (size.getWidth() == 24 && size.getHeight() == 24 && IMAGE_NAME_32[cursor] != null) {
+				FXImage image = new FXImage("cursor/" + IMAGE_NAME_32[cursor]);
+				image.scale(24, 24);
+				return new ImageCursor(image.get());
+			}
+
 			if (size.getWidth() == 0 || size.getHeight() < 16)
 				return Cursor.DEFAULT;
 

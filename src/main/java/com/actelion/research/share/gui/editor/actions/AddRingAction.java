@@ -75,19 +75,19 @@ public class AddRingAction extends BondHighlightAction
             int atom = getAtomAt(mol,pt);
             int bond = getBondAt(mol,pt);
             if (atom != -1) {
-                ok = mol.addRing((float) pt.getX(), (float) pt.getY(), ringSize, aromatic);
+                ok = mol.addRing((float) pt.getX(), (float) pt.getY(), ringSize, aromatic, Molecule.getDefaultAverageBondLength());
                 model.setSelectedBond(-1);
             } else if (bond != -1) {
-                ok = mol.addRing((float) pt.getX(), (float) pt.getY(), ringSize, aromatic);
+                ok = mol.addRing((float) pt.getX(), (float) pt.getY(), ringSize, aromatic, Molecule.getDefaultAverageBondLength());
                 model.setSelectedAtom(-1);
             } else {
-                ok = mol.addRing((float) pt.getX(), (float) pt.getY(), ringSize, aromatic);
+                ok = mol.addRing((float) pt.getX(), (float) pt.getY(), ringSize, aromatic, Molecule.getDefaultAverageBondLength());
                 if (model.isReaction())
                     model.needsLayout(true);
             }
         } else {
             mol = new StereoMolecule();
-            ok= mol.addRing((float) pt.getX(), (float) pt.getY(), ringSize, aromatic);
+            ok= mol.addRing((float) pt.getX(), (float) pt.getY(), ringSize, aromatic, Molecule.getDefaultAverageBondLength());
             model.setValue(mol, true);
         }
         if (ok)

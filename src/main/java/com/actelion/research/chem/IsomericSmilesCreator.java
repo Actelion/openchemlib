@@ -691,65 +691,85 @@ public class IsomericSmilesCreator {
 
 		// Atom membership of SSSR rings cannot be directly translated into number of ring bonds.
 		// We try to get close...
-		int ringState = (int)((queryFeatures & Molecule.cAtomQFRingState) >> Molecule.cAtomQFRingStateBits);
-		switch (ringState) {
-			case (int)(Molecule.cAtomQFNotChain >> Molecule.cAtomQFRingStateBits):
-				buffer.append(";!R0");
-				break;
-			case (int)(Molecule.cAtomQFNot2RingBonds >> Molecule.cAtomQFRingStateBits):
-				buffer.append(";!R1");
-				break;
-			case (int)(Molecule.cAtomQFNot3RingBonds >> Molecule.cAtomQFRingStateBits):
-				buffer.append(";!R2");
-				break;
-			case (int)(Molecule.cAtomQFNot4RingBonds >> Molecule.cAtomQFRingStateBits):
-				buffer.append(";!R3");
-				break;
-			case (int)((Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds) >> Molecule.cAtomQFRingStateBits):
-				buffer.append(";R0");
-				break;
-			case (int)((Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds) >> Molecule.cAtomQFRingStateBits):
-				buffer.append(";R1");
-				break;
-			case (int)((Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds) >> Molecule.cAtomQFRingStateBits):
-				buffer.append(";R2");
-				break;
-			case (int)((Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds) >> Molecule.cAtomQFRingStateBits):
-				buffer.append(";R3");
-				break;
+		long ringState = queryFeatures & Molecule.cAtomQFRingState;
+		if (ringState == Molecule.cAtomQFNotChain)
+			buffer.append(";!R0");
+		else if (ringState == Molecule.cAtomQFNot2RingBonds)
+			buffer.append(";!R1");
+		else if (ringState == Molecule.cAtomQFNot3RingBonds)
+			buffer.append(";!R2");
+		else if (ringState == Molecule.cAtomQFNot4RingBonds)
+			buffer.append(";!R3");
+		else if (ringState == (Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
+			buffer.append(";R0");
+		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
+			buffer.append(";R1");
+		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds))
+			buffer.append(";R2");
+		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds))
+			buffer.append(";R3");
+
+		long ringSize = queryFeatures & Molecule.cAtomQFNewRingSize;
+		if (ringSize == Molecule.cAtomQFRingSize0)
+			buffer.append(";!r" + ringSize);
+		else if (ringSize == (Molecule.cAtomQFNewRingSize & ~Molecule.cAtomQFRingSize0))
+			buffer.append(";r" + ringSize);
+		else if (ringSize != 0) {
+			if ((ringSize & Molecule.cAtomQFRingSizeLarge) != 0) {  // negative logic
+				if ((ringSize & Molecule.cAtomQFRingSize0) == 0)
+					buffer.append(";!r0" + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize3) == 0)
+					buffer.append(";!r3" + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize4) == 0)
+					buffer.append(";!r4" + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize5) == 0)
+					buffer.append(";!r5" + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize6) == 0)
+					buffer.append(";!r6" + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize7) == 0)
+					buffer.append(";!r7" + ringSize);
+			}
+			else {
+				buffer.append(";");
+				if ((ringSize & Molecule.cAtomQFRingSize0) != 0)
+					buffer.append("r0," + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize3) != 0)
+					buffer.append("r3," + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize4) != 0)
+					buffer.append("r4," + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize5) != 0)
+					buffer.append("r5," + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize6) != 0)
+					buffer.append("r6," + ringSize);
+				if ((ringSize & Molecule.cAtomQFRingSize7) != 0)
+					buffer.append("r7," + ringSize);
+				buffer.setLength(buffer.length()-1);
+			}
 		}
 
-		long ringSize = (queryFeatures & Molecule.cAtomQFSmallRingSize) >> Molecule.cAtomQFSmallRingSizeShift;
-		if (ringSize != 0)
-			buffer.append(";r"+ringSize);
-
-		int neighbourFeatures = (int)((queryFeatures & Molecule.cAtomQFNeighbours) >> Molecule.cAtomQFNeighbourBits);
-		switch (neighbourFeatures) {
-			case (int)((Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot1Neighbour) >> Molecule.cAtomQFNeighbourBits):
-				buffer.append(";D1");   // exactly 1
-				break;
-			case (int)((Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot2Neighbours) >> Molecule.cAtomQFNeighbourBits):
-				buffer.append(";D2");   // exactly 2
-				break;
-			case (int)((Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot3Neighbours) >> Molecule.cAtomQFNeighbourBits):
-				buffer.append(";D3");   // exactly 3
-				break;
-			case (int)((Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours) >> Molecule.cAtomQFNeighbourBits):
-				buffer.append(";!D3;!D4");   // less than 3
-				break;
-			case (int)(Molecule.cAtomQFNot4Neighbours >> Molecule.cAtomQFNeighbourBits):
-				buffer.append(";!D4");   // less than 4
-				break;
-			case (int)((Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour) >> Molecule.cAtomQFNeighbourBits):
-				buffer.append(";!D0;!D1");   // more than 1
-				break;
-			case (int)((Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot2Neighbours) >> Molecule.cAtomQFNeighbourBits):
-				buffer.append(";!D0;!D1;!D2");   // more than 2
-				break;
-			case (int)((Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours) >> Molecule.cAtomQFNeighbourBits):
-				buffer.append(";!D0;!D1;!D2;!D3");   // more than 3
-				break;
+		if (ringSize == 0) {
+			ringSize = (queryFeatures & Molecule.cAtomQFSmallRingSize) >> Molecule.cAtomQFSmallRingSizeShift;
+			if (ringSize != 0)
+				buffer.append(";r" + ringSize);
 		}
+
+		long neighbourFeatures = queryFeatures & Molecule.cAtomQFNeighbours;
+		if (neighbourFeatures == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot1Neighbour))
+			buffer.append(";D1");   // exactly 1
+		if (neighbourFeatures == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot2Neighbours))
+			buffer.append(";D2");   // exactly 2
+		if (neighbourFeatures == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot3Neighbours))
+			buffer.append(";D3");   // exactly 3
+		if (neighbourFeatures == (Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours))
+			buffer.append(";!D3;!D4");   // less than 3
+		if (neighbourFeatures == Molecule.cAtomQFNot4Neighbours)
+			buffer.append(";!D4");   // less than 4
+		if (neighbourFeatures == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour))
+			buffer.append(";!D0;!D1");   // more than 1
+		if (neighbourFeatures == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot2Neighbours))
+			buffer.append(";!D0;!D1;!D2");   // more than 2
+		if (neighbourFeatures == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours))
+			buffer.append(";!D0;!D1;!D2;!D3");   // more than 3
 
 		if ((queryFeatures & Molecule.cAtomQFNoMoreNeighbours) != 0)
 			buffer.append(";D"+mMol.getConnAtoms(atom));   // Convert into exact explicit neighbour count 'D'

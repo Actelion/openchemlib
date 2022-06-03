@@ -311,7 +311,7 @@ public class Molecule implements Serializable {
 	public static final int cChiralityEpimers		 	= 0x060000;
 	public static final int cChiralityDiastereomers		= 0x070000; // this has added the number of diastereomers
 
-	private static final double cDefaultAVBL = 24.0;
+	public static final double cDefaultAVBL = 24.0;
 	private static double sDefaultAVBL = cDefaultAVBL;
 
 	public static final int cMoleculeColorDefault = 0;
@@ -735,7 +735,7 @@ public class Molecule implements Serializable {
 	 * @param aromatic
 	 * @return
 	 */
-	public boolean addRing(double x, double y, int ringSize, boolean aromatic) {
+	public boolean addRing(double x, double y, int ringSize, boolean aromatic, double bondLength) {
 		while(mAllAtoms + ringSize > mMaxAtoms)
 			setMaxAtoms(mMaxAtoms*2);
 		while(mAllBonds + ringSize > mMaxBonds)
@@ -743,16 +743,16 @@ public class Molecule implements Serializable {
 
 		int atom = findAtom(x,y);
 		if (atom != -1)
-			return addRingToAtom(atom, ringSize, aromatic);
+			return addRingToAtom(atom, ringSize, aromatic, bondLength);
 
 		int bond = findBond(x,y);
 		if (bond != -1)
-			return addRingToBond(bond, ringSize, aromatic);
+			return addRingToBond(bond, ringSize, aromatic, bondLength);
 
 		// new ring in empty space
 		atom = addAtom(x,y);
 		double cornerAngle = Math.PI * (ringSize-2)/ringSize;
-		polygon(atom, ringSize, atom,aromatic, 0, Math.PI - cornerAngle);
+		polygon(atom, ringSize, atom,aromatic, 0, Math.PI - cornerAngle, bondLength);
 		mValidHelperArrays = cHelperNone;
 		return true;
 		}
@@ -765,7 +765,7 @@ public class Molecule implements Serializable {
 	 * @param aromatic
 	 * @return
 	 */
-	public boolean addRingToAtom(int atom, int ringSize, boolean aromatic) {
+	public boolean addRingToAtom(int atom, int ringSize, boolean aromatic, double bondLength) {
 		if ((aromatic && getOccupiedValence(atom) > 1)
 		 || (!aromatic && getOccupiedValence(atom) > 2))
 			return false;
@@ -793,7 +793,7 @@ public class Molecule implements Serializable {
 				: (angle[0] + angle[1])/2 + Math.PI;
 
 		double cornerAngle = (Math.PI * (ringSize-2))/ringSize;
-		polygon(atom, ringSize, atom, aromatic, newAngle-cornerAngle/2, Math.PI - cornerAngle);
+		polygon(atom, ringSize, atom, aromatic, newAngle-cornerAngle/2, Math.PI - cornerAngle, bondLength);
 		mValidHelperArrays = cHelperNone;
 //				checkAtomParity(atom);
 		return true;
@@ -807,7 +807,7 @@ public class Molecule implements Serializable {
 	 * @param aromatic
 	 * @return
 	 */
-	public boolean addRingToBond(int bond, int ringSize, boolean aromatic) {
+	public boolean addRingToBond(int bond, int ringSize, boolean aromatic, double bondLength) {
 		int[] bondAtom = new int[2];
 		double[] bondAngle = new double[2];
 
@@ -858,7 +858,7 @@ public class Molecule implements Serializable {
 		double cornerAngle = (Math.PI * (ringSize-2))/ringSize;
 		polygon(bondAtom[atomNo], ringSize-1,
 				bondAtom[1-atomNo], aromatic,
-				bondAngle[(side > 0) ? 0 : 1] + Math.PI - cornerAngle, Math.PI - cornerAngle);
+				bondAngle[(side > 0) ? 0 : 1] + Math.PI - cornerAngle, Math.PI - cornerAngle, bondLength);
 
 		mValidHelperArrays = cHelperNone;
 //		checkAtomParity(bondAtom[0]);
@@ -2153,11 +2153,22 @@ public class Molecule implements Serializable {
 	/**
 	 * Calculates and returns the mean bond length. If the molecule has
 	 * no bonds, then the smallest distance between unconnected atoms is
-	 * returned. If is has less than 2 atoms, cDefaultAverageBondLength is returned.
+	 * returned. If it has less than 2 atoms, cDefaultAverageBondLength is returned.
 	 * @return
 	 */
 	public double getAverageBondLength() {
 		return getAverageBondLength(mAllAtoms, mAllBonds, sDefaultAVBL);
+		}
+
+
+	/**
+	 * Calculates and returns the mean bond length. If the molecule has
+	 * no bonds, then the smallest distance between unconnected atoms is
+	 * returned. If it has less than 2 atoms, the given defaultBondLength is returned.
+	 * @return
+	 */
+	public double getAverageBondLength(double defaultBondLength) {
+		return getAverageBondLength(mAllAtoms, mAllBonds, defaultBondLength);
 		}
 
 
@@ -3979,15 +3990,12 @@ public class Molecule implements Serializable {
 		}
 
 
-	private void polygon(int atom, int bonds, int endAtm, boolean aromatic, double actlAngle, double angleChange) {
+	private void polygon(int atom, int bonds, int endAtm, boolean aromatic, double actlAngle, double angleChange, double bondLength) {
 		boolean dblBnd;
 		int actlAtm,remoteAtm,bnd;
-		double bondLength,xdiff,ydiff,newx,newy;
+		double xdiff,ydiff,newx,newy;
 
-		if (atom == endAtm) {
-			bondLength = getAverageBondLength();
-			}
-		else {
+		if (atom != endAtm) {
 			xdiff = mCoordinates[atom].x - mCoordinates[endAtm].x;
 			ydiff = mCoordinates[atom].y - mCoordinates[endAtm].y;
 			bondLength = Math.sqrt(xdiff * xdiff + ydiff * ydiff);
