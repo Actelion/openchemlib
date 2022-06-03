@@ -831,27 +831,32 @@ System.out.println();
 				int fragmentParity = mFragment.getAtomParity(fragmentAtom);
 				int moleculeParity = mMolecule.getAtomParity(moleculeAtom);
 
-					// always consider as match if fragment atom is no stereo center
+				// always consider as match if fragment atom is no stereo center
 				if (fragmentParity == Molecule.cAtomParityNone)
-			   		continue;
-
-				// consider as match if asymetrical fragment atom matches on non-stereo-center
-				// ('none' in molecule may actually be an 'unknown', if the molecule was parsed from an idcode)
-				if (moleculeParity == Molecule.cAtomParityNone)
 			   		continue;
 
 				// unknown fragment centers match everything
 				if (fragmentParity == Molecule.cAtomParityUnknown)
 			   		continue;
 
-				// Here the fragment center is either 1 or 2.
-				// Thus, unknown molecule centers are not considered a match.
-				// Consider: parities from idcodes don't include 'unknown', i.e. depending
-				// on the source of the parities, unknown centers may look as no stereo center.
-				// These fake no-stereo-center are not refused here and show up as hits
-				// if the molecule was directly read from an idcode.
-				if (moleculeParity == Molecule.cAtomParityUnknown)
+				// Here the fragment center is clearly specified as either 1 or 2.
+				// Thus, unknown molecule centers should not be considered a match.
+				// A molecule may not have a stereo center here for symmetry reasons,
+				// but match 100% anyway. In this case we interpret: the user wants a
+				// stereo center. Therefore, we don't consider no stereo centers a match.
+				// Into the bargain: parities within idcodes don't include 'unknown',
+				// because the information is implicit: if a stereo center within an idcode
+				// has no 1 or 2 parity, then it is automatically treated to be unknown.
+				// If idcodes are parsed with given or created coordinates, then implicit
+				// unknowns are converted to explicit ones. However, if idcodes are intentionally
+				// parsed without giving coordinates, then an unknown stereo center looks
+				// like a no-stereo-center, because parities were taken from the idcode and
+				// never calculated by ensureHelperArrays().
+				if (moleculeParity == Molecule.cAtomParityNone
+				 || moleculeParity == Molecule.cAtomParityUnknown)
 			   		return false;
+
+				// From here both, fragment and molecule, have a defined parity: 1 or 2.
 
 				if (mFragment.getAtomESRType(fragmentAtom) == Molecule.cESRTypeAnd) {
 					esrGroupAtomCount++;

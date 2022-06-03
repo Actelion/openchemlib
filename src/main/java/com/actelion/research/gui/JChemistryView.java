@@ -95,7 +95,7 @@ public class JChemistryView extends JComponent
 	private ArrayList<StructureListener> mListener;
 	private Dimension           mSize;
 	private int					mChemistryType,mUpdateMode,mDisplayMode,mDragType,mCopyOrDragActions,mPasteOrDropActions,mPasteAndDropOptions;
-	private boolean				mIsDragging,mAllowDropOrPasteWhenDisabled,mIsEditable,mShowBorder,mOpaqueBackground;
+	private boolean				mIsDragging,mAllowDropOrPasteWhenDisabled,mIsEditable,mShowBorder;
 	private int 				mFragmentNoColor;
 	private MoleculeDropAdapter mMoleculeDropAdapter = null;
 	private ReactionDropAdapter mReactionDropAdapter = null;
@@ -179,10 +179,6 @@ public class JChemistryView extends JComponent
 		mUpdateMode = UPDATE_SCALE_COORDS;
 		mDragType = DRAG_TYPE_NONE;
 		repaint();
-		}
-
-	public void setOpaqueBackground(boolean b) {
-		mOpaqueBackground = b;
 		}
 
 	/**

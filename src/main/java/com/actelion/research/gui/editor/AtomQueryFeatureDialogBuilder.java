@@ -223,9 +223,10 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
         mChoiceNeighbours.addItem("exactly 3");
         mChoiceNeighbours.addItem("less than 3");
         mChoiceNeighbours.addItem("less than 4");
-        mChoiceNeighbours.addItem("more than 1");
-        mChoiceNeighbours.addItem("more than 2");
-        mChoiceNeighbours.addItem("more than 3");
+		mChoiceNeighbours.addItem("at least 1");
+        mChoiceNeighbours.addItem("at least 2");
+        mChoiceNeighbours.addItem("at least 3");
+        mChoiceNeighbours.addItem("at least 4");
 		mDialog.add(mDialog.createLabel("Non-H neighbours:"), 1,15);
 		mDialog.add(mChoiceNeighbours, 3,15);
 
@@ -387,12 +388,14 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             mChoiceNeighbours.setSelectedIndex(4);
         else if (neighbourFeatures == Molecule.cAtomQFNot4Neighbours)
             mChoiceNeighbours.setSelectedIndex(5);
+		else if (neighbourFeatures == Molecule.cAtomQFNot0Neighbours)
+			mChoiceNeighbours.setSelectedIndex(6);
         else if (neighbourFeatures == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour))
-            mChoiceNeighbours.setSelectedIndex(6);
-		else if (neighbourFeatures == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot2Neighbours))
             mChoiceNeighbours.setSelectedIndex(7);
-        else if (neighbourFeatures == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours))
+		else if (neighbourFeatures == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot2Neighbours))
             mChoiceNeighbours.setSelectedIndex(8);
+        else if (neighbourFeatures == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours))
+            mChoiceNeighbours.setSelectedIndex(9);
 		else
 			mChoiceNeighbours.setSelectedIndex(0);
 
@@ -580,19 +583,23 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             else if (mMol.getConnAtoms(atom) < 3)
                 queryFeatures |= Molecule.cAtomQFNot4Neighbours;
             break;
-        case 6: // more than 1 non-H neighbour
+        case 6: // more than 0 non-H neighbour
+	        if (mMol.getConnAtoms(atom) == 0)
+		        queryFeatures |= Molecule.cAtomQFMoreNeighbours;
+	        break;
+        case 7: // more than 1 non-H neighbour
             if (mMol.getConnAtoms(atom) == 1)
                 queryFeatures |= Molecule.cAtomQFMoreNeighbours;
             else if (mMol.getConnAtoms(atom) < 1)
                 queryFeatures |= (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour);
             break;
-        case 7: // more than 2 non-H neighbours
+        case 8: // more than 2 non-H neighbours
             if (mMol.getConnAtoms(atom) == 2)
                 queryFeatures |= Molecule.cAtomQFMoreNeighbours;
             else if (mMol.getConnAtoms(atom) < 2)
                 queryFeatures |= (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot2Neighbours);
             break;
-        case 8: // more than 3 non-H neighbours
+        case 9: // more than 3 non-H neighbours
             if (mMol.getConnAtoms(atom) == 3)
                 queryFeatures |= Molecule.cAtomQFMoreNeighbours;
             else if (mMol.getConnAtoms(atom) < 3)

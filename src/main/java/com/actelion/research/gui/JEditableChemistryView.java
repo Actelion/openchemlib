@@ -25,10 +25,12 @@ public class JEditableChemistryView extends JChemistryView {
 		super(chemistryType);
 		if (chemistryType == ExtendedDepictor.TYPE_REACTION) {
 			mReaction = new Reaction();
+			super.setContent(mReaction);
 			}
 		else {
 			mMolecules = new StereoMolecule[1];
 			mMolecules[0] = new StereoMolecule();
+			super.setContent(mMolecules);
 			}
 		setEditable(true);
 		}

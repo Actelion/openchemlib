@@ -321,6 +321,7 @@ public abstract class CompoundFileHelper {
 			filter.addDescription("DataWarrior macro files");
 			}
 		if ((filetypes & cFileTypeTextTabDelimited) != 0) {
+			filter.addExtension("tsv");
 			filter.addExtension("txt");
 			filter.addDescription("TAB delimited text files");
 			}
@@ -470,7 +471,7 @@ public abstract class CompoundFileHelper {
             return cFileTypeSOM;
         if (extension.equals(".dwam"))
             return cFileTypeDataWarriorMacro;
-        if (extension.equals(".txt"))
+        if (extension.equals(".txt") || extension.equals(".tsv"))
             return cFileTypeTextTabDelimited;
         if (extension.equals(".csv"))
             return cFileTypeTextCommaSeparated;

@@ -1,15 +1,22 @@
 package com.actelion.research.gui.fx;
 
 import com.actelion.research.gui.generic.*;
+import com.actelion.research.gui.hidpi.HiDPIHelper;
 import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.web.WebView;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 
 public class FXUIHelper implements GenericUIHelper {
 	private Node mParentNode;
+	private Stage mHelpDialog;
 
 	public FXUIHelper(Node parent) {
 		mParentNode = parent;
@@ -70,6 +77,17 @@ public class FXUIHelper implements GenericUIHelper {
 
 	@Override
 	public void showHelpDialog(String url, String title) {
+		if (mHelpDialog == null) {
+			mHelpDialog = new Stage();
+			WebView view = new WebView();
+			view.setZoom(HiDPIHelper.getUIScaleFactor());
+			view.getEngine().load(createURL(url).toExternalForm());
+			Scene scene = new Scene(view, HiDPIHelper.scale(640), HiDPIHelper.scale(480));
+			mHelpDialog.setScene(scene);
+			mHelpDialog.show();
+		}
+
+
 /*		if (mHelpDialog == null || !mHelpDialog.isVisible()) {
 			JEditorPane helpPane = new JEditorPane();
 			helpPane.setEditorKit(HiDPIHelper.getUIScaleFactor() == 1f ? new HTMLEditorKit() : new ScaledEditorKit());
@@ -101,5 +119,24 @@ public class FXUIHelper implements GenericUIHelper {
 					c.getX() - 8 - mHelpDialog.getWidth() : c.getX() + 8 + c.getWidth();
 			mHelpDialog.setLocation(x, c.getY());
 		}*/
+	}
+
+	public static URL createURL(String urlText) {
+		String ref = null;
+		int index = urlText.indexOf('#');
+		if (index != -1) {
+			ref = urlText.substring(index);
+			urlText = urlText.substring(0, index);
+		}
+		URL theURL = FXUIHelper.class.getResource(urlText);
+		if (ref != null) {
+			try {
+				theURL = new URL(theURL, ref);
+			}
+			catch (IOException e) {
+				return null;
+			}
+		}
+		return theURL;
 	}
 }
