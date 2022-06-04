@@ -93,6 +93,7 @@ public interface CompoundTableConstants {
     int cDataTypeInteger = 2;
     int cDataTypeDate = 3;
     int cDataTypeString = 4;
+    String cForceCategoriesCode = "_categories";
     String[] cDataTypeCode = {"auto", "num", "int", "date", "text"};
     String[] cDataTypeText = {"Automatic", "Floating Point", "Integer", "Date", "Text"};
 
