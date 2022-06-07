@@ -205,9 +205,10 @@ public class JChemistryView extends JComponent
 			if (mReactionDropAdapter != null)
 				mReactionDropAdapter.setActive(enable);
 			if (enable)
-				mDepictor.setOverruleColor(null, null);
+				mDepictor.setOverruleColor(0, 0);
 			else
-				mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, getBackground()), getBackground());
+				mDepictor.setOverruleColor(0xFF000000 | ColorHelper.getContrastColor(0xFF808080,
+						getBackground().getRGB()), 0xFF000000 | getBackground().getRGB());
 			repaint();
 			}
 		}

@@ -52,25 +52,30 @@ public class SwingCursorHelper extends GenericCursorHelper {
 		}
 
 	public static Cursor createCursor(int cursor) {
-		if (cursor<IMAGE_DATA_16.length) {
-			Toolkit tk = Toolkit.getDefaultToolkit();
-			Dimension size = tk.getBestCursorSize(16, 16);
-			if (size != null && size.width>15 && size.height>15) {
-				SwingImage image = new SwingImage(size.width, size.height);
-				build16x16CursorImage(image, cursor);
-				return tk.createCustomCursor(image.get(), new Point(HOTSPOT_16[2*cursor], HOTSPOT_16[2*cursor+1]), "");
-				}
+		Toolkit tk = Toolkit.getDefaultToolkit();
+		Dimension size = tk.getBestCursorSize(32, 32);
+
+		if (size.width == 32 && size.height == 32 && IMAGE_NAME_32[cursor] != null) {
+			return tk.createCustomCursor(new SwingImage("cursor/" + IMAGE_NAME_32[cursor]).get(), new Point(HOTSPOT_32[2*cursor], HOTSPOT_32[2*cursor+1]), "");
 			}
-		else {
-			switch (cursor) {
-			case cPointerCursor:
-				return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
-			case cTextCursor:
-				return Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
-			case cPointedHandCursor:
-				return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-				}
+		if (size.width >= 24 && size.height >= 24 && IMAGE_NAME_32[cursor] != null) {
+			SwingImage image = new SwingImage("cursor/" + IMAGE_NAME_32[cursor]);
+			image.scale(24, 24);
+			return tk.createCustomCursor(image.get(), new Point(HOTSPOT_32[2*cursor]*3/4, HOTSPOT_32[2*cursor+1]*3/4), "");
 			}
-		return null;
+		if (size.width>15 && size.height>15 && cursor<IMAGE_DATA_16.length) {
+			SwingImage image = new SwingImage(size.width, size.height);
+			build16x16CursorImage(image, cursor);
+			return tk.createCustomCursor(image.get(), new Point(HOTSPOT_16[2*cursor], HOTSPOT_16[2*cursor+1]), "");
+			}
+
+		if (cursor == cPointerCursor)
+			return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+		if (cursor == cTextCursor)
+			return Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
+		if (cursor == cPointedHandCursor)
+			return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+
+		return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
 		}
 	} 

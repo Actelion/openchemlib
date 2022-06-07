@@ -21,7 +21,7 @@ public class ChemistryRenderPanel extends JPanel {
     static final long serialVersionUID = 0x20070312;
 
     private Object  mChemistry;
-    private Color mOverruleForeground;
+    private int mOverruleForegroundARGB;
     private boolean mAlternateBackground;
 
     public void setChemistry(Object chemistry) {
@@ -52,9 +52,14 @@ public class ChemistryRenderPanel extends JPanel {
             setBorder(new EmptyBorder(1, 1, 1, 1));
         }
 
+    @Deprecated
     public void setOverruleForeground(Color fg) {
-		mOverruleForeground = fg;
+        mOverruleForegroundARGB = fg.getRGB();
     	}
+
+    public void setOverruleForeground(int argb) {
+        mOverruleForegroundARGB = argb;
+    }
 
     public void setAlternateBackground(boolean b) {
         mAlternateBackground = b;
@@ -85,8 +90,8 @@ public class ChemistryRenderPanel extends JPanel {
             if (mChemistry instanceof StereoMolecule) {
                 GenericDepictor d = new GenericDepictor((StereoMolecule)mChemistry, Depictor2D.cDModeSuppressChiralText);
                 d.setForegroundColor(getForeground(), getBackground());
-                if (mOverruleForeground != null)
-                	d.setOverruleColor(mOverruleForeground, getBackground());
+                if (mOverruleForegroundARGB != 0)
+                	d.setOverruleColor(mOverruleForegroundARGB, getBackground().getRGB());
                 int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
                 SwingDrawContext context = new SwingDrawContext((Graphics2D)g);
                 d.validateView(context, new GenericRectangle(r.x, r.y, r.width, r.height), AbstractDepictor.cModeInflateToMaxAVBL | avbl);
@@ -96,8 +101,8 @@ public class ChemistryRenderPanel extends JPanel {
             	Reaction rxn = (Reaction)mChemistry;
                 ExtendedDepictor d = new ExtendedDepictor(rxn, rxn.getDrawingObjects(), rxn.isReactionLayoutRequired());
                 d.setForegroundColor(getForeground(), getBackground());
-                if (mOverruleForeground != null)
-                	d.setOverruleColor(mOverruleForeground, getBackground());
+                if (mOverruleForegroundARGB != 0)
+                	d.setOverruleColor(mOverruleForegroundARGB, getBackground().getRGB());
                 int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
                 GenericDrawContext context = new SwingDrawContext((Graphics2D)g);
                 d.validateView(context, new GenericRectangle(r.x, r.y, r.width, r.height), AbstractDepictor.cModeInflateToMaxAVBL | avbl);

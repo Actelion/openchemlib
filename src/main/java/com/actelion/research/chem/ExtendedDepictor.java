@@ -183,17 +183,29 @@ public class ExtendedDepictor {
 				d.setForegroundColor(foreground, background);
         }
 
-	public void setOverruleColor(Color foreGround, Color background) {
+	@Deprecated
+	// Use rgb version of this method instead
+	public void setOverruleColor(Color foreground, Color background) {
 		if (mDepictor != null)
 			for (GenericDepictor d:mDepictor)
-				d.setOverruleColor(foreGround, background);
+				d.setOverruleColor(foreground, background);
 
 		if (mCatalystDepictor != null)
 			for (GenericDepictor d:mCatalystDepictor)
-				d.setOverruleColor(foreGround, background);
+				d.setOverruleColor(foreground, background);
 		}
 
-    public void paint(GenericDrawContext context) {
+	public void setOverruleColor(int foreground, int background) {
+		if (mDepictor != null)
+			for (GenericDepictor d:mDepictor)
+				d.setOverruleColor(foreground, background);
+
+		if (mCatalystDepictor != null)
+			for (GenericDepictor d:mCatalystDepictor)
+				d.setOverruleColor(foreground, background);
+	}
+
+	public void paint(GenericDrawContext context) {
         int saveRGB = context.getRGB();
         int fontSize = context.getFontSize();
         try {
@@ -224,7 +236,7 @@ public class ExtendedDepictor {
                     cog.y = (int)mDepictor[i].getTransformation().transformY(cog.y);
 
 
-                    String str = (mChemistryType == TYPE_MOLECULES) ? "F"+(i+1)
+                    String str = (mChemistryType == TYPE_MOLECULES) ? ""+(i+1)
                                : (mChemistryType == TYPE_MARKUSH) ? ((i < mMarkushCoreCount) ? ""+(char)('A'+i) : "R"+(i+1-mMarkushCoreCount))
                                : (mChemistryType == TYPE_REACTION) ? ((i < mReactantCount) ? ""+(char)('A'+i) : "P"+(i+1-mReactantCount)) : "?"+(i+1);
                     context.drawCenteredString(cog.x, cog.y, str);
@@ -244,9 +256,9 @@ public class ExtendedDepictor {
 
     public void paintStructures(GenericDrawContext context) {
         if (mDepictor != null) {
-            for (int i=0; i<mDepictor.length; i++) {
-                mDepictor[i].setDisplayMode(mDisplayMode);
-                mDepictor[i].paint(context);
+            for (GenericDepictor d:mDepictor) {
+                d.setDisplayMode(mDisplayMode);
+                d.paint(context);
 /*
 Rectangle2D.Float r = mDepictor[i].getBoundingRect();
 if (r != null) {
@@ -256,9 +268,9 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);
                 }
             }
 		if (mCatalystDepictor != null) {
-			for (int i=0; i<mCatalystDepictor.length; i++) {
-//				mCatalystDepictor[i].setDisplayMode(mDisplayMode);
-				mCatalystDepictor[i].paint(context);
+			for (GenericDepictor d:mCatalystDepictor) {
+//				d.setDisplayMode(mDisplayMode);
+				d.paint(context);
 /*
 Rectangle2D.Float r = mCatalystDepictor[i].getBoundingRect();
 if (r != null) {
@@ -291,20 +303,20 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             }
         else {
             if (mMolecule != null)
-                for (int i=0; i<mMolecule.length; i++)
-                    mTransformation.applyTo(mMolecule[i]);
+                for (StereoMolecule mol:mMolecule)
+                    mTransformation.applyTo(mol);
 
             if (mDrawingObjectList != null)
-                for (int i=0; i<mDrawingObjectList.size(); i++)
-                    mTransformation.applyTo(mDrawingObjectList.get(i));
+                for (AbstractDrawingObject o:mDrawingObjectList)
+                    mTransformation.applyTo(o);
 
             if (mDepictor != null)
-                for (int i=0; i<mDepictor.length; i++)
-                    mDepictor[i].getTransformation().clear();
+                for (GenericDepictor d:mDepictor)
+                    d.getTransformation().clear();
 
 			if (mCatalystDepictor != null)
-				for (int i=0; i<mCatalystDepictor.length; i++)
-					mCatalystDepictor[i].getTransformation().clear();
+				for (GenericDepictor d:mCatalystDepictor)
+					d.getTransformation().clear();
 
 			DepictorTransformation t = mTransformation;
             mTransformation = new DepictorTransformation();
@@ -319,25 +331,22 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
 
         GenericRectangle boundingRect = null;
         if (mDepictor != null) {
-            for (int i=0; i<mDepictor.length; i++) {
-                mDepictor[i].validateView(context, null, 0);
-                boundingRect = (boundingRect == null) ? mDepictor[i].getBoundingRect()
-                            : boundingRect.union(mDepictor[i].getBoundingRect());
+            for (GenericDepictor d:mDepictor) {
+                d.validateView(context, null, 0);
+                boundingRect = (boundingRect == null) ? d.getBoundingRect() : boundingRect.union(d.getBoundingRect());
                 }
             }
 		if (mCatalystDepictor != null) {
-			for (int i=0; i<mCatalystDepictor.length; i++) {
-				mCatalystDepictor[i].validateView(context, null, 0);
-				boundingRect = (boundingRect == null) ? mCatalystDepictor[i].getBoundingRect()
-						: boundingRect.union(mCatalystDepictor[i].getBoundingRect());
+			for (GenericDepictor d:mCatalystDepictor) {
+				d.validateView(context, null, 0);
+				boundingRect = (boundingRect == null) ? d.getBoundingRect() : boundingRect.union(d.getBoundingRect());
 				}
 			}
         if (mDrawingObjectList != null) {
-            for (int i=0; i<mDrawingObjectList.size(); i++) {
-	            GenericRectangle objectBounds = mDrawingObjectList.get(i).getBoundingRect(context);
+            for (AbstractDrawingObject o:mDrawingObjectList) {
+	            GenericRectangle objectBounds = o.getBoundingRect(context);
                 mTransformation.applyTo(objectBounds);
-                boundingRect = (boundingRect == null) ? objectBounds
-                        : boundingRect.union(objectBounds);
+                boundingRect = (boundingRect == null) ? objectBounds : boundingRect.union(objectBounds);
                 }
             }
 
@@ -352,12 +361,12 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
             t.applyTo(mTransformation);
 
             if (mDepictor != null)
-                for (int i=0; i<mDepictor.length; i++)
-                    mDepictor[i].applyTransformation(t);
+                for (GenericDepictor d:mDepictor)
+                    d.applyTransformation(t);
 
 			if (mCatalystDepictor != null)
-				for (int i=0; i<mCatalystDepictor.length; i++)
-					mCatalystDepictor[i].applyTransformation(t);
+				for (GenericDepictor d:mCatalystDepictor)
+					d.applyTransformation(t);
 
 			return t;
             }

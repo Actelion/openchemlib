@@ -65,9 +65,24 @@ public abstract class GenericCursorHelper {
 			0, 0,
 			8, 8,
 			0, 0 };
+	public static final int[] HOTSPOT_32 = {
+			4, 20,
+			10, 29,
+			18, 18,
+			18, 18,
+			18, 18,
+			16, 30,
+			16, 30,
+			4, 5,
+			4, 5,
+			16, 16,
+			16, 16,
+			0, 0,
+			0, 0,
+			12, 2 };
 
 	public static final String[] IMAGE_NAME_32 = {
-			null, null, "hand.png", null, "fist.png", null, null, null, null, null, null, null, null, "pointingHand.png" };
+			"chain.png", "delete.png", "hand.png", "handPlus.png", "fist.png", "lasso.png", "lassoPlus.png", "rect.png", "rectPlus.png", "zoom.png", "invisible.png", null, null, "pointingHand.png" };
 
 	public static void build16x16CursorImage(GenericImage image, int cursor) {
 		if (IMAGE_DATA_16[cursor] != null) {
