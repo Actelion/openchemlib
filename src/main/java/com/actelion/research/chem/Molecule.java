@@ -4118,7 +4118,7 @@ public class Molecule implements Serializable {
 			mAtomCharge[atom] = stream.readInt();
 			mAtomMass[atom] = stream.readInt();
 			mAtomFlags[atom] = stream.readInt();
-			mAtomQueryFeatures[atom] = stream.readInt();
+			mAtomQueryFeatures[atom] = stream.readLong();
 			mCoordinates[atom].set(stream.readDouble(), stream.readDouble(), stream.readDouble());
 			mAtomMapNo[atom] = stream.readInt();
 
