@@ -396,7 +396,7 @@ public class ReactionSearch {
 												mDataSource.getCoordinates(row),
 												mDataSource.getMapping(row), false, true));
 										mProductSearcher.setMolecule(product, productFFP);
-										int inProductCount = mProductSearcher.findFragmentInMoleculeWithoutIndex(SSSearcher.cCountModeOverlapping);
+										int inProductCount = mProductSearcher.findFragmentInMoleculeWithoutIndex(SSSearcher.cCountModeSeparated);
 										if (inProductCount != 0) {
 											long[] reactantFFP = mDataSource.getReactantDescriptor(row);
 											mReactantSearcher.setFragment(mQueryRetron[i], mQueryRetronDescriptor[i]);
@@ -408,7 +408,7 @@ public class ReactionSearch {
 														mDataSource.getCoordinates(row),
 														mDataSource.getMapping(row), true, false));
 												mReactantSearcher.setMolecule(reactant, reactantFFP);
-												inReactantCount = mReactantSearcher.findFragmentInMoleculeWithoutIndex(SSSearcher.cCountModeOverlapping);
+												inReactantCount = mReactantSearcher.findFragmentInMoleculeWithoutIndex(SSSearcher.cCountModeSeparated);
 												if (inReactantCount != 0 && mDataSource.getMapping(row) != null) {
 													inProductCount -= countEquivalentMatches(product, mProductSearcher.getMatchList());
 													if (inProductCount <= inReactantCount)

@@ -95,7 +95,7 @@ public class ChemistryCellRenderer implements ListCellRenderer,TableCellRenderer
         mRenderPanel.setAlternateBackground(mAlternateBackground && (row & 1) == 1);
         mRenderPanel.setSelected(isSelected);
         mRenderPanel.setFocus(hasFocus);
-       	mRenderPanel.setOverruleForeground(mIsEnabled ? null : Color.GRAY);
+       	mRenderPanel.setOverruleForeground(mIsEnabled ? 0 : Color.GRAY.getRGB());
         return mRenderPanel;
         }
 	}

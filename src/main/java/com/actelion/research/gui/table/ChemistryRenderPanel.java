@@ -54,7 +54,7 @@ public class ChemistryRenderPanel extends JPanel {
 
     @Deprecated
     public void setOverruleForeground(Color fg) {
-        mOverruleForegroundARGB = fg.getRGB();
+        mOverruleForegroundARGB = fg == null ? 0 : fg.getRGB();
     	}
 
     public void setOverruleForeground(int argb) {
