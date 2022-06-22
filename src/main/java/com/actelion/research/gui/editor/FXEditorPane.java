@@ -3,6 +3,7 @@ package com.actelion.research.gui.editor;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 
 public class FXEditorPane extends BorderPane {
 	private FXEditorToolbar mToolBar;
@@ -56,9 +57,8 @@ public class FXEditorPane extends BorderPane {
 		mToolBar = new FXEditorToolbar(mArea, mode);
 		widthProperty().addListener((observable, oldValue, newValue) -> mArea.setWidth((double) newValue-mToolBar.getWidth()));
 		heightProperty().addListener((observable, oldValue, newValue) -> mArea.setHeight((double) newValue));
-
 		setLeft(mToolBar);
-		setCenter(mArea);
+		setCenter(new Pane(mArea));
 	}
 
 	public GenericEditorArea getDrawArea() {
