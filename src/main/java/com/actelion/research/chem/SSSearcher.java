@@ -54,7 +54,7 @@ public class SSSearcher {
 	index creation). Example: key C=C-N-C=C, query pyrol, molecule indole, key would match
 	pyrol but not indol!!!
   - match modes used for the actual atom by atom check must be more or equally restrictive
-	than the match mode used for index creation. Otherwise index keys may filter out
+	than the match mode used for index creation. Otherwise, index keys may filter out
 	molecules which would be considered a match with the less strict matching conditions
 	of the atom by atom check.
 */
@@ -1503,7 +1503,7 @@ System.out.println();
 				}
 			}
 		for (int atom=0; atom<nTotalFragmentAtoms; atom++)
-			if (mMolecule.getAtomRingSize(atom) > 7)
+			if (fragment.getAtomRingSize(atom) > 7)
 				mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSizeLarge;
 
 		int nTotalFragmentBonds = fragment.getBonds();
@@ -1605,6 +1605,25 @@ System.out.println();
 				break;
 				}
 
+			int eNegNeighbours = mol.getAtomZValue(atom);
+			switch (eNegNeighbours) {
+				case 0:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot0);
+					break;
+				case 1:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot1);
+					break;
+				case 2:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2);
+					break;
+				case 3:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFNot3ENegNeighbours);
+					break;
+				default:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
+					break;
+				}
+
 			int piElectrons = mol.getAtomPi(atom);
 			switch (piElectrons) {
 			case 0:
@@ -1659,6 +1678,24 @@ System.out.println();
 			default:
 				queryDefaults |= (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours);
 				break;
+				}
+
+			int zValue = mol.getAtomZValue(atom);
+			switch (zValue) {
+				case 0:
+					break;
+				case 1:
+					queryDefaults |= (Molecule.cAtomQFZValueNot0);
+					break;
+				case 2:
+					queryDefaults |= (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1);
+					break;
+				case 3:
+					queryDefaults |= (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1 | Molecule.cAtomQFZValueNot2);
+					break;
+				default:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
+					break;
 				}
 			}
 

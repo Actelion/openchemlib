@@ -1756,6 +1756,31 @@ public abstract class AbstractDepictor<T> {
                 else if (neighbours == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours))
                     isoStr = append(isoStr, "n>3");
                 }
+			if ((queryFeatures & Molecule.cAtomQFZValue) != 0) {
+				long eNegNeighbours = (queryFeatures & Molecule.cAtomQFZValue);
+				if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot0))
+					isoStr = append(isoStr, "e0");
+				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot1))
+					isoStr = append(isoStr, "e1");
+				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2))
+					isoStr = append(isoStr, "e2");
+				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFNot3ENegNeighbours))
+					isoStr = append(isoStr, "e3");
+				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4))
+					isoStr = append(isoStr, "e<2");
+				else if (eNegNeighbours == (Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4))
+					isoStr = append(isoStr, "e<3");
+				else if (eNegNeighbours == Molecule.cAtomQFZValueNot4)
+					isoStr = append(isoStr, "e<4");
+				else if (eNegNeighbours == Molecule.cAtomQFZValueNot0)
+					isoStr = append(isoStr, "e>0");
+				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1))
+					isoStr = append(isoStr, "e>1");
+				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1 | Molecule.cAtomQFZValueNot2))
+					isoStr = append(isoStr, "e>2");
+				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4))
+					isoStr = append(isoStr, "e>3");
+				}
             if ((queryFeatures & Molecule.cAtomQFRingState) != 0) {
                 long ringBonds = (queryFeatures & Molecule.cAtomQFRingState);
                 if (ringBonds == Molecule.cAtomQFNot2RingBonds+Molecule.cAtomQFNot3RingBonds+Molecule.cAtomQFNot4RingBonds)

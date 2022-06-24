@@ -135,6 +135,11 @@ public class FXDrawContext implements GenericDrawContext {
 		mG.drawImage((Image)image.get(), sx, sy, w, h, dx, dy, w, h);
 	}
 
+	@Override
+	public void drawImage(GenericImage image, double sx, double sy, double sw, double sh, double dx, double dy, double dw, double dh) {
+		mG.drawImage((Image)image.get(), sx, sy, sw, sh, dx, dy, dw, dh);
+	}
+
 //	@Override
 //	public void setClip(double x, double y, double w, double h) {
 //		mParentRegion.setClip(new Rectangle(x, y, w, h));

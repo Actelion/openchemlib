@@ -89,7 +89,7 @@ public class ChemistryRenderPanel extends JPanel {
         if (mChemistry != null && r.width > 0 && r.height > 0) {
             if (mChemistry instanceof StereoMolecule) {
                 GenericDepictor d = new GenericDepictor((StereoMolecule)mChemistry, Depictor2D.cDModeSuppressChiralText);
-                d.setForegroundColor(getForeground(), getBackground());
+                d.setForegroundColor(getForeground().getRGB(), getBackground().getRGB());
                 if (mOverruleForegroundARGB != 0)
                 	d.setOverruleColor(mOverruleForegroundARGB, getBackground().getRGB());
                 int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
@@ -100,7 +100,7 @@ public class ChemistryRenderPanel extends JPanel {
             if (mChemistry instanceof Reaction) {
             	Reaction rxn = (Reaction)mChemistry;
                 ExtendedDepictor d = new ExtendedDepictor(rxn, rxn.getDrawingObjects(), rxn.isReactionLayoutRequired());
-                d.setForegroundColor(getForeground(), getBackground());
+                d.setForegroundColor(getForeground().getRGB(), getBackground().getRGB());
                 if (mOverruleForegroundARGB != 0)
                 	d.setOverruleColor(mOverruleForegroundARGB, getBackground().getRGB());
                 int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);

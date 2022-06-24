@@ -311,14 +311,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	/**
 	 * @param atom
 	 * @return Hendrickson Z-value, which is the sum of all bond orders to any attached hetero atoms
-	 *
+	 */
 	public int getAtomZValue(int atom) {
 		int z = 0;
 		for (int i=0; i<mConnAtoms[atom]; i++)
 			if (isElectronegative(mConnAtom[atom][i]))
 				z += mConnBondOrder[atom][i];
 		return z;
-		}*/
+		}
 
 	
 	/**

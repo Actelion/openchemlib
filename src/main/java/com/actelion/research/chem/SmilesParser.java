@@ -52,6 +52,7 @@ public class SmilesParser {
 
 	public static final int MODE_SKIP_COORDINATE_TEMPLATES = 4;
 	public static final int MODE_MAKE_HYDROGEN_EXPLICIT = 8;
+	public static final int MODE_NO_CACTUS_SYNTAX = 16;  // if not set, then some CACTVS SMARTS extensions will be recognized and translated as close as possible
 
 	private static final int INITIAL_CONNECTIONS = 16;
 	private static final int MAX_CONNECTIONS = 100; // largest allowed one in SMILES is 99
@@ -68,7 +69,7 @@ public class SmilesParser {
 	private boolean[] mIsAromaticBond;
 	private int mAromaticAtoms,mAromaticBonds,mSmartsMode,mCoordinateMode;
 	private long mRandomSeed;
-	private boolean mCreateSmartsWarnings, mMakeHydrogenExplicit;
+	private boolean mCreateSmartsWarnings,mMakeHydrogenExplicit,mAllowCactvs;
 	private StringBuilder mSmartsWarningBuffer;
 
 	/**
@@ -93,6 +94,7 @@ public class SmilesParser {
 	 */
 	public SmilesParser(int mode, boolean createSmartsWarnings) {
 		mSmartsMode = mode & SMARTS_MODE_MASK;
+		mAllowCactvs = (mode & MODE_NO_CACTUS_SYNTAX) == 0;
 		mCreateSmartsWarnings = createSmartsWarnings;
 		mMakeHydrogenExplicit = ((mode & MODE_MAKE_HYDROGEN_EXPLICIT) != 0);
 		mCoordinateMode = CoordinateInventor.MODE_DEFAULT;
@@ -274,6 +276,7 @@ public class SmilesParser {
 		while (position < endIndex) {
 			char theChar = (char)smiles[position++];
 
+			// if there is an atom symbol,
 			if (Character.isLetter(theChar)
 			 || theChar == '*'
 			 || theChar == '?'
@@ -288,12 +291,7 @@ public class SmilesParser {
 				boolean isClockwise = false;
 				int atomQueryFeatures = 0;      // translated from obvious SMARTS features
 				if (squareBracketOpen) {
-					if (theChar == 'R' && Character.isDigit(smiles[position])) {
-						int noOfDigits = Character.isDigit(smiles[position+1]) ? 2 : 1;
-						atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position-1, 1+noOfDigits));
-						position += noOfDigits;
-						}
-					else if (theChar == '*') {
+					if (theChar == '*') {
 						atomicNo = 6;
 						atomQueryFeatures |= Molecule.cAtomQFAny;
 						}
@@ -319,47 +317,64 @@ public class SmilesParser {
 							position++;
 							}
 
-						int labelLength = Character.isLowerCase(smiles[position]) ? 2 : 1;
-						atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position-1, labelLength));
-						position += labelLength-1;
-						explicitHydrogens = HYDROGEN_IMPLICIT_ZERO;
+						// Handle this before checking for atom symbols. R<n> (ring count) takes precendence to R1 - R16 (substituent pseudo label)
+						if (smiles[position-1] == 'R' && allowSmarts && (Character.isDigit(smiles[position]) || (mAllowCactvs && smiles[position] == '{'))) {
+							atomicNo = 6;
+							atomQueryFeatures |= Molecule.cAtomQFAny;
+							position--;
+							if (isNot)
+								position--;
+							}
+						else {
+							int labelLength = Character.isLowerCase(smiles[position]) ? 2 : 1;
+							atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position-1, labelLength));
+							if (atomicNo == -1) {
+								atomicNo = 6;
+								atomQueryFeatures |= Molecule.cAtomQFAny;
+								position--;
+								}
+							else {
+								position += labelLength - 1;
+								explicitHydrogens = HYDROGEN_IMPLICIT_ZERO;
 
-						// If we have a comma after the first atom label, then we need to parse a list.
-						// In this case we also have to set aromaticity query features from upper and lower case symbols.
-						if (allowSmarts && (smiles[position] == ',' || isNot)) {
-							atomList.removeAll();
-							boolean upperCaseFound = false;
-							boolean lowerCaseFound = false;
-							int start = position - labelLength;
-							for (int p=start; p<smiles.length; p++) {
-								if (!Character.isLetter(smiles[p])) {
-									int no = Molecule.getAtomicNoFromLabel(new String(smiles, start, p - start));
-									if (no != 0) {
-										atomList.add(no);
-										if (Character.isUpperCase(smiles[start]))
-											upperCaseFound = true;
-										else
-											lowerCaseFound = true;
+								// If we have a comma after the first atom label, then we need to parse a list.
+								// In this case we also have to set aromaticity query features from upper and lower case symbols.
+								if (allowSmarts && (smiles[position] == ',' || isNot)) {
+									atomList.removeAll();
+									boolean upperCaseFound = false;
+									boolean lowerCaseFound = false;
+									int start = position - labelLength;
+									for (int p=start; p<smiles.length; p++) {
+										if (!Character.isLetter(smiles[p])) {
+											int no = Molecule.getAtomicNoFromLabel(new String(smiles, start, p - start));
+											if (no != 0) {
+												atomList.add(no);
+												if (Character.isUpperCase(smiles[start]))
+													upperCaseFound = true;
+												else
+													lowerCaseFound = true;
+												}
+											start = p+1;
+											if (smiles[p] != ',')
+												break;
+											if (smiles[p+1] == '!') {
+												if (!isNot)
+													throw new Exception("SmilesParser: inconsistent '!' in atom list.");
+												p++;
+												start++;
+												}
+											}
 										}
-									start = p+1;
-									if (smiles[p] != ',')
-										break;
-									if (smiles[p+1] == '!') {
-										if (!isNot)
-											throw new Exception("SmilesParser: inconsistent '!' in atom list.");
-										p++;
-										start++;
+									if (atomList.size() > 1) {
+										if (!upperCaseFound)
+											atomQueryFeatures |= Molecule.cAtomQFAromatic;
+										else if (!lowerCaseFound)
+											atomQueryFeatures |= Molecule.cAtomQFNotAromatic;
 										}
+
+									position = start-1;
 									}
 								}
-							if (atomList.size() > 1) {
-								if (!upperCaseFound)
-									atomQueryFeatures |= Molecule.cAtomQFAromatic;
-								else if (!lowerCaseFound)
-									atomQueryFeatures |= Molecule.cAtomQFNotAromatic;
-								}
-
-							position = start-1;
 							}
 						}
 
@@ -483,9 +498,51 @@ public class SmilesParser {
 							continue;
 							}
 
-						if (smiles[position] == 'X') {   // non-H-neighbours
+						if (smiles[position] == 'z' && mAllowCactvs) {   // electro-negative neighbour count (CACTVS extension)
+							position++;
+							position += range.parse(smiles, position, 1, 4);
+							long flags = 0;
+							if (range.min <= 0 && range.max >= 0)
+								flags |= Molecule.cAtomQFZValueNot0;
+							if (range.min <= 1 && range.max >= 1)
+								flags |= Molecule.cAtomQFZValueNot1;
+							if (range.min <= 2 && range.max >= 2)
+								flags |= Molecule.cAtomQFZValueNot2;
+							if (range.min <= 3 && range.max >= 3)
+								flags |= Molecule.cAtomQFNot3ENegNeighbours;
+							if (range.min <= 4 && range.max >= 4)
+								flags |= Molecule.cAtomQFZValueNot4;
+
+							if (flags != 0) {
+								if (!isNot)
+									flags = flags ^ Molecule.cAtomQFZValue;
+								atomQueryFeatures |= flags;
+								}
+							continue;
+							}
+
+						if (smiles[position] == 'X') {   // neighbour count including implicit hydrogens
 							position++;
 							position += range.parse(smiles, position, 1, 1);
+							byte[] valences = Molecule.cAtomValence[atomicNo];
+							if (valences == null)
+								continue;
+
+							int valence = valences[0];
+							long flags = 0;
+							// we convert into pi-electron count using standard valence
+							if (valence-range.min <= 0 && valence-range.max >= 0)
+								flags |= Molecule.cAtomQFNot0PiElectrons;
+							if (valence-range.min <= 1 && valence-range.max >= 1)
+								flags |= Molecule.cAtomQFNot1PiElectron;
+							if (valence-range.min <= 2 && valence-range.max >= 2)
+								flags |= Molecule.cAtomQFNot2PiElectrons;
+
+							if (flags != 0) {
+								if (!isNot)
+									flags = flags ^ Molecule.cAtomQFPiElectrons;
+								atomQueryFeatures |= flags;
+								}
 							continue;
 							}
 
@@ -498,7 +555,7 @@ public class SmilesParser {
 						if (smiles[position] == 'R') {
 							position++;
 							position += range.parse(smiles, position, 1, 3);
-							int flags = 0;
+							long flags = 0;
 							if (range.min <= 0 && range.max >= 0)
 								flags |= Molecule.cAtomQFNotChain;
 							if (range.min <= 1 && range.max >= 1)
@@ -512,7 +569,7 @@ public class SmilesParser {
 
 							if (flags != 0) {
 								if (!isNot)
-									flags = flags ^ Molecule.cBondQFRingState;
+									flags = flags ^ Molecule.cAtomQFRingState;
 								atomQueryFeatures |= flags;
 								}
 							continue;
@@ -725,6 +782,8 @@ public class SmilesParser {
 							excludedBonds |= Molecule.cBondQFTriple;
 						else if (theChar == ':')
 							excludedBonds |= Molecule.cBondQFDelocalized;
+						else
+							throw new Exception("SmilesParser: bond symbol '"+theChar+"' not allowed after '!'.");
 						}
 					else {
 						if (theChar == '@')
@@ -735,6 +794,8 @@ public class SmilesParser {
 							bondType = Molecule.cBondTypeTriple;
 						else if (theChar == ':')
 							bondType = Molecule.cBondTypeDelocalized;
+						else if (theChar == '~')
+							bondQueryFeatures |= Molecule.cBondQFBondTypes;
 						else if (theChar == '/') {
 							if (readStereoFeatures)
 								bondType = Molecule.cBondTypeUp;    // encode slash temporarily in bondType
@@ -804,7 +865,8 @@ public class SmilesParser {
 										|| smiles[position-2] == '='
 										|| smiles[position-2] == '#'
 										|| smiles[position-2] == ':'
-										|| smiles[position-2] == '>');
+										|| smiles[position-2] == '>'
+										|| smiles[position-2] == '~');
 					if (isDoubleDigit
 					 && position < endIndex
 					 && Character.isDigit(smiles[position])) {
@@ -1061,6 +1123,7 @@ public class SmilesParser {
 			|| theChar == '/'
 			|| theChar == '\\'
 			|| theChar == '<'
+			|| theChar == '~'
 			|| theChar == '!'
 			|| theChar == '@';
 		}
@@ -1069,7 +1132,8 @@ public class SmilesParser {
 		return symbol == '=' ? Molecule.cBondQFDouble
 			 : symbol == '#' ? Molecule.cBondQFTriple
 			 : symbol == ':' ? Molecule.cBondQFDelocalized
-			 : symbol == '>' ? Molecule.cBondQFMetalLigand : Molecule.cBondQFSingle;
+			 : symbol == '>' ? Molecule.cBondQFMetalLigand
+			 : symbol == '~' ? Molecule.cBondQFBondTypes : Molecule.cBondQFSingle;
 		}
 
 	private void smartsWarning(String feature) {
