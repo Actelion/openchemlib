@@ -1,5 +1,7 @@
 package com.actelion.research.gui.editor;
 
+import com.actelion.research.chem.IDCodeParser;
+import com.actelion.research.chem.MolfileParser;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.gui.generic.GenericPoint;
@@ -66,10 +68,9 @@ public class FXEditorPane extends BorderPane {
 		widthProperty().addListener((observable, oldValue, newValue) -> mArea.setWidth((double) newValue-mToolBar.getWidth()));
 		heightProperty().addListener((observable, oldValue, newValue) -> mArea.setHeight((double) newValue));
 		setLeft(mToolBar);
-		setCenter(mArea);
+		setCenter(new Pane(mArea));
 
 		initializeDragAndDrop();
-		setCenter(new Pane(mArea));
 	}
 
 	public GenericEditorArea getDrawArea() {
