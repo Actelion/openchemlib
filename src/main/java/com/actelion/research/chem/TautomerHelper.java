@@ -234,10 +234,10 @@ public class TautomerHelper {
 			return mOriginalMol;
 
 		StereoMolecule mol = mOriginalMol.getCompactCopy();
+		mol.setFragment(true);
+
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 
-		mol.setFragment(true);
-		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		for (int bond=0; bond<mol.getBonds(); bond++) {
 			if (mIsTautomerBond[bond]) {
 				mol.setBondType(bond, Molecule.cBondTypeSingle);

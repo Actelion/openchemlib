@@ -41,7 +41,10 @@ import com.actelion.research.util.ColorHelper;
 public class GenericEditorToolbar implements GenericEventListener<GenericMouseEvent> {
     protected static final int cButtonsPerColumn = 17;
 
-	protected static final int cImageOversize = 4;  // source image size in regard to target size with no UI-scaling
+	private static final int cImageOversize = 4;  // source image size in regard to target size with no UI-scaling
+	private static final int cImageDownsizing = 2;  // source image downsizing before drawing on canvas
+	private static final int cImageDrawScaling = 2;  // scaling of downsized image when drawing; Surplus of resolution for automatic FX-UI-scaling
+	// Note: cImageDownsizing * cImageDrawScaling = cImageOversize (!!!); we might skip the downsizing entirely
 
 	protected static final int cButtonClear = 0;
 	protected static final int cButtonCleanStructure = 1;
@@ -135,13 +138,13 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 	}
 
 	private void scaleImages() {
-		int width = HiDPIHelper.scale(mImageNormal.getWidth() / cImageOversize);
-		int height = HiDPIHelper.scale(mImageNormal.getHeight() / cImageOversize);
+		int width = HiDPIHelper.scale(mImageNormal.getWidth() / cImageDownsizing);
+		int height = HiDPIHelper.scale(mImageNormal.getHeight() / cImageDownsizing);
 		mImageDisabled.scale(width, height);
 		mImageNormal.scale(width, height);
 
-		width = HiDPIHelper.scale(mESRImageNormal.getWidth() / cImageOversize);
-		height = HiDPIHelper.scale(mESRImageNormal.getHeight() / cImageOversize);
+		width = HiDPIHelper.scale(mESRImageNormal.getWidth() / cImageDownsizing);
+		height = HiDPIHelper.scale(mESRImageNormal.getHeight() / cImageDownsizing);
 		mESRImageNormal.scale(width, height);
 		}
 
@@ -159,11 +162,14 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 		int highlightBackground = isDark ? ColorHelper.brighter(background, 0.6f) : ColorHelper.darker(background, 0.6f);
 		int selectedBackground = isDark ? ColorHelper.brighter(background, 0.8f) : ColorHelper.darker(background, 0.8f);
 
-		context.drawImage(mImageNormal, cBorder,cBorder);
+		int sw = mImageNormal.getWidth();
+		int sh = mImageNormal.getHeight();
+		context.drawImage(mImageNormal, 0, 0, sw, sh, cBorder, cBorder, sw/cImageDrawScaling, sh/cImageDrawScaling);
 
 		// draw the selected ESR button
 		double[] l = getButtonLocation(cToolESR);
-		context.drawImage(mESRImageNormal, 0, mESRSelected*cButtonSize, l[0], l[1], cButtonSize, cButtonSize);
+		context.drawImage(mESRImageNormal, 0, mESRSelected*cButtonSize*cImageDrawScaling,
+				cButtonSize*cImageDrawScaling, cButtonSize*cImageDrawScaling, l[0], l[1], cButtonSize, cButtonSize);
 
 		// draw disabled buttons just over originals
 		if ((mArea.getMode() & GenericEditorArea.MODE_REACTION) == 0)
@@ -266,10 +272,13 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 	        context.setRGB(background);
 	        context.fillRectangle(bl[0], bl[1], cButtonSize, cButtonSize);
             }
+        float sourceSize = cButtonSize*cImageDrawScaling;
         if (button == cToolESR)
-	        context.drawImage(mESRImageNormal, 0, mESRSelected*cButtonSize, bl[0], bl[1], cButtonSize, cButtonSize);
+	        context.drawImage(mESRImageNormal, 0, mESRSelected*cButtonSize*cImageDownsizing, sourceSize, sourceSize,
+			        bl[0], bl[1], cButtonSize, cButtonSize);
         else
-			context.drawImage(isDisabled ? mImageDisabled : mImageNormal, bl[0] - cBorder, bl[1] - cBorder, bl[0], bl[1], cButtonSize, cButtonSize);
+			context.drawImage(isDisabled ? mImageDisabled : mImageNormal, (bl[0] - cBorder)*cImageDrawScaling, (bl[1] - cBorder)*cImageDrawScaling,
+					sourceSize, sourceSize, bl[0], bl[1], cButtonSize, cButtonSize);
 		}
 
 	private double[] getButtonLocation(int button) {
