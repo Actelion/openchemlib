@@ -33,6 +33,8 @@
 package com.actelion.research.calc.histogram;
 
 import com.actelion.research.calc.Matrix;
+import com.actelion.research.util.StringFunctions;
+import com.sun.deploy.util.StringUtils;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -311,7 +313,18 @@ public class Histogram {
     	return sb.toString();
     }
 
-	public double getBinWidth() {
+	/**
+	 * Replaces the spaces with tab. So, the output can be used in Excel by copy/paste.
+	 * @return
+	 */
+	public String toStringWithTabs() {
+		String s = toString();
+		String sTab = s.replaceAll("[ ]{1,}", "\t");
+		return sTab;
+	}
+
+
+		public double getBinWidth() {
 		return binwidth;
 	}
 
@@ -321,14 +334,14 @@ public class Histogram {
 		double min=0;
 		double max=0.1;
 		double minBin=0;
-		double maxBin=0.1;
+		double maxBin=1;
 		int bins=20;
 
 		double [] arr = new double [n];
 		Random rnd = new Random();
 		for (int i = 0; i < n; i++) {
 			// arr[i]= min + rnd.nextInt((int)(max-min));
-			arr[i]= min + rnd.nextDouble()*0.1;
+			arr[i]= min + rnd.nextDouble();
 		}
 
 
