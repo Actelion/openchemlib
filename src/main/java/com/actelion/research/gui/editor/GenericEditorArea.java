@@ -757,7 +757,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	private boolean copyMolecule(boolean selectionOnly) {
 		if (mMol.getAllAtoms() != 0 && mClipboardHandler != null) {
-			return mClipboardHandler.copyMolecule(selectionOnly ? getSelectedCopy(mMol) : mMol);
+			return mClipboardHandler.copyMolecule(selectionOnly ? getSelectedCopy(mMol) : mMol.getCompactCopy());
 		}
 
 		return false;
@@ -1264,14 +1264,11 @@ public class GenericEditorArea implements GenericEventListener {
 			} else if (mCurrentHiliteAtom == -1 && mCurrentHiliteBond == -1) {
 				if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE | MODE_MULTIPLE_FRAGMENTS)) == 0) {
 					int ch = e.getKey();
-					if (ch == 'h') {
+					if (ch == 'h')
 						flip(true);
-					}
-					if (ch == 'v') {
+					if (ch == 'v')
 						flip(false);
-					}
 				}
-
 			}
 		}
 		if (e.getWhat() == GenericKeyEvent.KEY_RELEASED) {
@@ -1287,11 +1284,10 @@ public class GenericEditorArea implements GenericEventListener {
 				updateCursor();
 			}
 			if (e.isMenuShortcut()) {
-				if (e.getKey() == 'c') {
+				if (e.getKey() == 'c')
 					copy();
-				} else if (e.getKey() == 'v') {
+				else if (e.getKey() == 'v')
 					paste();
-				}
 			}
 		}
 	}
