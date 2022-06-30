@@ -33,8 +33,6 @@
 package com.actelion.research.calc.histogram;
 
 import com.actelion.research.calc.Matrix;
-import com.actelion.research.util.StringFunctions;
-import com.sun.deploy.util.StringUtils;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
