@@ -33,15 +33,24 @@
 
 package com.actelion.research.gui.swing;
 
+import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.generic.GenericCursorHelper;
+import com.actelion.research.util.Platform;
 
 import java.awt.*;
 
 public class SwingCursorHelper extends GenericCursorHelper {
 
 	private static Cursor[]	sCursor;
+	private static boolean sIsDarkLaF;
 
 	public static Cursor getCursor(int cursor) {
+		boolean isDarkLaF = LookAndFeelHelper.isDarkLookAndFeel();
+		if (sIsDarkLaF != isDarkLaF) {
+			sIsDarkLaF = isDarkLaF;
+			sCursor = null;
+			}
+
 		if (sCursor == null)
 			sCursor = new Cursor[cCursorCount];
 
@@ -55,17 +64,23 @@ public class SwingCursorHelper extends GenericCursorHelper {
 		Toolkit tk = Toolkit.getDefaultToolkit();
 		Dimension size = tk.getBestCursorSize(32, 32);
 
-		if (size.width == 32 && size.height == 32 && IMAGE_NAME_32[cursor] != null) {
-			return tk.createCustomCursor(new SwingImage("cursor/" + IMAGE_NAME_32[cursor]).get(), new Point(HOTSPOT_32[2*cursor], HOTSPOT_32[2*cursor+1]), "");
-			}
-		if (size.width >= 24 && size.height >= 24 && IMAGE_NAME_32[cursor] != null) {
-			SwingImage image = new SwingImage("cursor/" + IMAGE_NAME_32[cursor]);
-			image.scale(24, 24);
-			return tk.createCustomCursor(image.get(), new Point(HOTSPOT_32[2*cursor]*3/4, HOTSPOT_32[2*cursor+1]*3/4), "");
+		if (!Platform.isWindows()) {
+			/* if (size.width == 32 && size.height == 32 && IMAGE_NAME_32[cursor] != null) {
+				SwingImage image = new SwingImage("cursor/" + IMAGE_NAME_32[cursor]);
+				adaptForLaF(image);
+				return tk.createCustomCursor(image.get(), new Point(HOTSPOT_32[2*cursor], HOTSPOT_32[2*cursor+1]), "");
+				} Swing seems to use a very small color palette. It accepts 32x32 cursors, but they seem a little large */
+			if (size.width >= 24 && size.height >= 24 && IMAGE_NAME_32[cursor] != null) {
+				SwingImage image = new SwingImage("cursor/" + IMAGE_NAME_32[cursor]);
+				adaptForLaF(image);
+				image.scale(24, 24);
+				return tk.createCustomCursor(image.get(), new Point(HOTSPOT_32[2*cursor]*3/4, HOTSPOT_32[2*cursor+1]*3/4), "");
+				}
 			}
 		if (size.width>15 && size.height>15 && cursor<IMAGE_DATA_16.length) {
 			SwingImage image = new SwingImage(size.width, size.height);
 			build16x16CursorImage(image, cursor);
+			adaptForLaF(image);
 			return tk.createCustomCursor(image.get(), new Point(HOTSPOT_16[2*cursor], HOTSPOT_16[2*cursor+1]), "");
 			}
 

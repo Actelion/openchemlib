@@ -1,5 +1,7 @@
 package com.actelion.research.gui.generic;
 
+import com.actelion.research.gui.LookAndFeelHelper;
+
 public abstract class GenericCursorHelper {
 	public static final int cCursorCount = 14;
 
@@ -71,8 +73,8 @@ public abstract class GenericCursorHelper {
 			18, 18,
 			18, 18,
 			18, 18,
-			16, 30,
-			16, 30,
+			16, 11,
+			16, 11,
 			4, 5,
 			4, 5,
 			16, 16,
@@ -82,7 +84,14 @@ public abstract class GenericCursorHelper {
 			12, 2 };
 
 	public static final String[] IMAGE_NAME_32 = {
-			"chain.png", "delete.png", "hand.png", "handPlus.png", "fist.png", "lasso.png", "lassoPlus.png", "rect.png", "rectPlus.png", "zoom.png", "invisible.png", null, null, "pointingHand.png" };
+			"chain.png", "eraser.png", "hand.png", "handPlus.png", "fist.png", "lasso.png", "lassoPlus.png", "rect.png", "rectPlus.png", "zoom.png", "invisible.png", null, null, "pointingHand.png" };
+
+	public static void adaptForLaF(GenericImage image) {
+		if (LookAndFeelHelper.isDarkLookAndFeel())
+			for (int x=0; x<image.getWidth(); x++)
+				for (int y=0; y<image.getHeight(); y++)
+					image.setRGB(x, y, image.getRGB(x, y) ^ 0x00FFFFFF);
+		}
 
 	public static void build16x16CursorImage(GenericImage image, int cursor) {
 		if (IMAGE_DATA_16[cursor] != null) {

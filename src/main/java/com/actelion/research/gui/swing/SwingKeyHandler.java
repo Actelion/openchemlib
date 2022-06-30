@@ -37,6 +37,8 @@ public class SwingKeyHandler extends GenericEventHandler<GenericKeyEvent> implem
 				: e.getKeyCode() == KeyEvent.VK_HELP ? GenericKeyEvent.KEY_HELP
 				: e.getKeyCode() == KeyEvent.VK_ESCAPE ? GenericKeyEvent.KEY_ESCAPE
 				: e.getKeyChar();
+		if (key >= 1 && key <= 26)  // strangely, if Ctrl is pressed, letters are encoded from 1-26
+			key = 'a' + key - 1;
 		boolean isAltDown = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
 		boolean isCtrlDown = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
 		boolean isShiftDown = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
