@@ -806,10 +806,15 @@ public class GenericEditorArea implements GenericEventListener {
 		if (mol == null || mol.getAllAtoms() == 0)
 			return false;
 
-		if (mol.getAllBonds() != 0)
+		if (mol.getAllBonds() != 0) {
+			double avbl = getScaledAVBL();
 			new GenericDepictor(mol).updateCoords(mCanvas.getDrawContext(),
 					new GenericRectangle(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()),
-					AbstractDepictor.cModeInflateToMaxAVBL + (int)getScaledAVBL());
+					AbstractDepictor.cModeInflateToMaxAVBL + (int)avbl);
+
+			while (atomCoordinatesCollide(mol, 0.2*avbl))
+				mol.translateCoords(0.5*avbl, 0.5*avbl);
+			}
 
 		storeState();
 
@@ -833,6 +838,30 @@ public class GenericEditorArea implements GenericEventListener {
 			}
 
 		return true;
+		}
+
+	private boolean atomCoordinatesCollide(StereoMolecule mol, double tolerance) {
+		int count = 0;
+		tolerance *= tolerance;
+		for (int i=0; i<mol.getAllAtoms(); i++) {
+			double x1 = mol.getAtomX(i);
+			double y1 = mol.getAtomY(i);
+			boolean found = false;
+			for (int j=0; j<mMol.getAllAtoms(); j++) {
+				double x2 = mMol.getAtomX(j);
+				double y2 = mMol.getAtomY(j);
+				double dx = x2 - x1;
+				double dy = y2 - y1;
+				if (dx * dx + dy * dy < tolerance) {
+					found = true;
+					break;
+					}
+				}
+			if (found)
+				count++;
+			}
+System.out.println("collides:"+(count == mol.getAllAtoms()));
+		return count == mol.getAllAtoms();
 		}
 
 	private void openReaction() {
@@ -1147,9 +1176,17 @@ public class GenericEditorArea implements GenericEventListener {
 				updateCursor();
 			}
 
-			if (e.isCtrlDown() && e.getKey() == 'z') {
-				restoreState();
-				updateAndFireEvent(UPDATE_CHECK_VIEW);
+			if (e.isMenuShortcut()) {
+				if (e.getKey() == 'z') {
+					restoreState();
+					updateAndFireEvent(UPDATE_CHECK_VIEW);
+				}
+				else if (e.getKey() == 'c') {
+					copy();
+				}
+				else if (e.getKey() == 'v') {
+					paste();
+				}
 			} else if (e.getKey() == GenericKeyEvent.KEY_DELETE) {
 				storeState();
 				if (mCurrentTool == GenericEditorToolbar.cToolMapper) {
@@ -1282,12 +1319,6 @@ public class GenericEditorArea implements GenericEventListener {
 			}
 			if (e.getKey() == GenericKeyEvent.KEY_CTRL) {
 				updateCursor();
-			}
-			if (e.isMenuShortcut()) {
-				if (e.getKey() == 'c')
-					copy();
-				else if (e.getKey() == 'v')
-					paste();
 			}
 		}
 	}
