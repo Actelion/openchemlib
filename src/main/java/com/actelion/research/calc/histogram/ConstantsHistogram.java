@@ -8,5 +8,5 @@ package com.actelion.research.calc.histogram;
  */
 public class ConstantsHistogram {
 
-    public static final double TINY_FACTOR = 0.01;
+    public static final double TINY_FACTOR = 0.000001;
 }
