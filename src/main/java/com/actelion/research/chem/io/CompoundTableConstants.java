@@ -173,6 +173,7 @@ public interface CompoundTableConstants {
     String cColumnPropertyReferenceTypeRedundant = "redundant";	// a connection is always referenced on both records
     String cColumnPropertyReferenceTypeTopDown = "topdown";	// a connection is only referenced from top record
     String cColumnPropertyFormula = "formula";
+    String cColumnPropertyCompoundProperty = "compoundProperty";
     String cColumnPropertySuperposeMolecule = "superposeMol";	// idcode+coords to be displayed in every cell
     String cColumnPropertyProteinCavity = "proteinCavity";	// idcode+coords of protein cavity to be displayed in every cell
     String cColumnPropertyNaturalLigand = "naturalLigand";	// idcode+coords of natural ligand, if proteinCavity is given (not shown, used for surface creation)

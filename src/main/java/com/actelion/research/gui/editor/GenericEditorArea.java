@@ -860,7 +860,6 @@ public class GenericEditorArea implements GenericEventListener {
 			if (found)
 				count++;
 			}
-System.out.println("collides:"+(count == mol.getAllAtoms()));
 		return count == mol.getAllAtoms();
 		}
 

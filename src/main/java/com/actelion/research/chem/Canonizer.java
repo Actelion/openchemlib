@@ -307,6 +307,10 @@ public class Canonizer {
 						smallRingNo++;
 						}
 
+					if (smallRingNo >= RingCollection.MAX_SMALL_RING_COUNT
+					 && smallRingNo == ringSet.getSize())
+						continue;   // very rare case, but found with wrongly highly bridged CSD entry JORFAZ
+
 					int firstBridgeAtom = -1;
 					int firstBridgeBond = -1;
 					for (int i=0; i<3; i++) {
