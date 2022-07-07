@@ -1093,8 +1093,6 @@ public class SubGraphExtractor {
 
         int sizeRing2Check = arrIndexRingAtomsRing2Check.length;
 
-        LinkedList<LinkedList> liliIndexRing = new LinkedList<>();
-
         /**
          * Detect all rings that have the same indices as the potentially enclosing ring.
          */
@@ -1104,108 +1102,23 @@ public class SubGraphExtractor {
                 continue;
             }
 
-            int [] arrIndexRingAtoms = ringCollection.getRingAtoms(ringNo2Check);
+            int [] arrIndexRingAtoms = ringCollection.getRingAtoms(ringNo);
 
             if(arrIndexRingAtoms.length >= sizeRing2Check) {
                 continue;
             }
 
             boolean allIndicesMatch = true;
-
             for (int indexRingAtom : arrIndexRingAtoms) {
-
                 if(!arrRingAtom[indexRingAtom]){
                     allIndicesMatch = false;
                     break;
                 }
             }
 
-            if(allIndicesMatch) {
-
-                LinkedList<Integer> li = new LinkedList<>();
-
-                li.add(ringNo);
-
-                liliIndexRing.add(li);
-
-            }
-        }
-
-        while (!liliIndexRing.isEmpty()){
-
-            LinkedList<Integer> liIndexRingParent = liliIndexRing.poll();
-
-            HashSetInt hsIndexAtom = new HashSetInt();
-
-            for (int ringNo : liIndexRingParent) {
-
-                int [] arrIndexRingAtoms = ringCollection.getRingAtoms(ringNo);
-
-                hsIndexAtom.add(arrIndexRingAtoms);
-
-            }
-
-            if(hsIndexAtom.size() == sizeRing2Check) {
-
-                int [] arrIndexRingAtoms = hsIndexAtom.getValues();
-
-                Arrays.sort(arrIndexRingAtoms);
-
-                boolean match = true;
-
-                for (int i = 0; i < arrIndexRingAtoms.length; i++) {
-
-                    if(arrIndexRingAtomsRing2Check[i] != arrIndexRingAtoms[i]){
-
-                        match = false;
-
-                        break;
-
-                    }
-
-                }
-
-                if(match) {
-
-                    enclosingRing = true;
-
-                    break;
-
-                }
-
-            } else if(hsIndexAtom.size() < sizeRing2Check) {
-
-                for (int ringNo = 0; ringNo < rings; ringNo++) {
-
-                    if(ringNo == ringNo2Check) {
-
-                        continue;
-
-                    }
-
-                    if(!liIndexRingParent.contains(ringNo)){
-
-                        int [] arrIndexRingAtoms = ringCollection.getRingAtoms(ringNo);
-
-                        boolean allIndicesMatch = true;
-
-                        for (int indexRingAtom : arrIndexRingAtoms) {
-                            if(!arrRingAtom[indexRingAtom]){
-                                allIndicesMatch = false;
-                                break;
-                            }
-                        }
-
-                        if(allIndicesMatch) {
-
-                            LinkedList<Integer> liIndexRingChild = new LinkedList<>(liIndexRingParent);
-
-                            liIndexRingChild.add(ringNo);
-
-                            liliIndexRing.add(liIndexRingChild);
-                        }
-                    }
-                }
+            if(allIndicesMatch){
+                enclosingRing = true;
+                break;
             }
         }
 
