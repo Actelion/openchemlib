@@ -1532,7 +1532,9 @@ public class Molecule implements Serializable {
 
 	/**
 	 * High level function for constructing a molecule.
-	 * After the deletion the original order of atom and bond indexes is retained.
+	 * After the deletion the original order of atom and bond indexes is retained. Hence, the number of bond indexes
+	 * is reduced by one. Successively removing bonds needs to start with the highest bond index first,
+	 * e.g. the bonds 5, 6, and 11 must be deleted in the order 11, 6, and 5.
 	 * @param bond
 	 */
 	public void deleteBond(int bond) {
