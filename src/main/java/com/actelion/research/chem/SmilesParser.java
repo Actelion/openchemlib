@@ -1009,10 +1009,10 @@ public class SmilesParser {
 					}
 				else {
 					if (!mMol.isMarkedAtom(atom)
-					 || mMol.getAtomicNo(atom) == 6) {
+					 || (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == 0)) {
 						// We don't correct aromatic non-carbon atoms, because for these the number of
 						// explicit hydrogens encodes whether a pi-bond needs to be placed at the atom
-						// when resolving aromaticity.
+						// when resolving aromaticity. Same applies for charged carbon.
 						byte[] valences = Molecule.getAllowedValences(mMol.getAtomicNo(atom));
 						boolean compatibleValenceFound = false;
 						int usedValence = mMol.getOccupiedValence(atom);
@@ -1465,9 +1465,13 @@ public class SmilesParser {
 		if (!RingCollection.qualifiesAsAromatic(mMol.getAtomicNo(atom)))
 			return false;
 
-		if ((mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) != 0)
-		 || !mMol.isMarkedAtom(atom))	// already marked as hetero-atom of another ring
-			return false;
+		if (mMol.getAtomicNo(atom) == 6) {
+			if (!mMol.isMarkedAtom(atom))	// already member of another aromatic ring
+				return false;
+
+			if (mMol.getAtomCharge(atom) > 0)
+				return false;
+			}
 
 		int explicitHydrogens = (mMol.getAtomCustomLabel(atom) == null) ?
 								0 : mMol.getAtomCustomLabelBytes(atom)[0];
