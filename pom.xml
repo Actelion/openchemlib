@@ -90,15 +90,25 @@
             </build>
         </profile>
         <profile>
-            <id>include-jfx11</id>
+            <id>include-jfx</id>
             <activation>
-                <jdk>11</jdk>
+                <jdk>[11,)</jdk>
             </activation>
             <dependencies>
                 <dependency>
                     <groupId>org.openjfx</groupId>
                     <artifactId>javafx-controls</artifactId>
-                    <version>11-ea+19</version>
+                    <version>11.0.2</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-swing</artifactId>
+                    <version>11.0.2</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-web</artifactId>
+                    <version>11.0.2</version>
                 </dependency>
             </dependencies>            
         </profile>
