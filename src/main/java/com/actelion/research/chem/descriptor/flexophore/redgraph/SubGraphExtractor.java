@@ -325,7 +325,6 @@ public class SubGraphExtractor {
 
 
                     SubGraphIndices sgiSub = new SubGraphIndices();
-
                     sgiSub.addIndex(arrAtmSubPath);
 
                     addConnAtoms(mol, sgiSub, sgi, hsIndAtmSubPath);
