@@ -42,7 +42,7 @@ import java.util.ArrayList;
 
 public class InventorDefaultTemplateList extends ArrayList<InventorTemplate> {
 	// Simple annelated rings, bi- or tri-cyclo compounds are typically generated reasonably well
-	// by the CoordinateInventor without using templates. More complex highly bridged polycylcic
+	// by the CoordinateInventor without using templates. More complex highly bridged polycyclic
 	// compounds gain from provided templates, which usually are optimized 2D-projections from the
 	// 3-dimensional molecule.
 	private static final String[] DEFAULT_TEMPLATE = {
