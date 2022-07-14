@@ -291,11 +291,10 @@ public class Molecule implements Serializable {
 	public static final int cHelperBitCIP			= 0x0010;
 
 	public static final int cHelperBitSymmetrySimple			= 0x0020;
-	public static final int cHelperBitSymmetryDiastereotopic	= 0x0040;
-	public static final int cHelperBitSymmetryEnantiotopic		= 0x0080;
-	public static final int cHelperBitIncludeNitrogenParities	= 0x0100;
+	public static final int cHelperBitSymmetryStereoHeterotopic	= 0x0040;
+	public static final int cHelperBitIncludeNitrogenParities	= 0x0080;
 
-	public static final int cHelperBitsStereo = 0x01F8;
+	public static final int cHelperBitsStereo = 0x00F8;
 
 	public static final int cHelperNeighbours = cHelperBitNeighbours;
 	public static final int cHelperRingsSimple = cHelperNeighbours | cHelperBitRingsSimple;
@@ -304,8 +303,7 @@ public class Molecule implements Serializable {
 	public static final int cHelperCIP = cHelperParities | cHelperBitCIP;
 
 	public static final int cHelperSymmetrySimple = cHelperCIP | cHelperBitSymmetrySimple;
-	public static final int cHelperSymmetryDiastereotopic = cHelperCIP | cHelperBitSymmetryDiastereotopic;
-	public static final int cHelperSymmetryEnantiotopic = cHelperCIP | cHelperBitSymmetryEnantiotopic;
+	public static final int cHelperSymmetryStereoHeterotopic = cHelperCIP | cHelperBitSymmetryStereoHeterotopic;
 
 	public static final int cChiralityIsomerCountMask   = 0x00FFFF;
 	public static final int cChiralityUnknown		  	= 0x000000;

@@ -58,12 +58,8 @@ public class Canonizer {
 	// of the pro-chiral center is a stereo bond, which, of course,
 	// will be recognized as an over-specified stereo feature.
 
-	// Consider diastereotopic/enantiotopic atoms uniquely for atom ranking
-	public static final int CONSIDER_DIASTEREOTOPICITY = 2;
-	public static final int CONSIDER_ENANTIOTOPICITY = 4;
-
-	// Consider both diastereotopic and enantiotopic atoms uniquely for atom ranking
-	public static final int CONSIDER_STEREOHETEROTOPICITY = CONSIDER_DIASTEREOTOPICITY | CONSIDER_ENANTIOTOPICITY;
+	// Consider both diastereotopic and enantiotopic atoms as being different when creating the symmetry rank
+	public static final int CONSIDER_STEREOHETEROTOPICITY = 2;
 
 	// Consider custom atom labels for atom ranking and encode them into idcodes
 	public static final int ENCODE_ATOM_CUSTOM_LABELS = 8;
@@ -581,6 +577,11 @@ System.out.println();
 
 
 	private void canRankFinal() {
+		if ((mMode & CREATE_SYMMETRY_RANK) != 0
+		 && (mMode & CONSIDER_STEREOHETEROTOPICITY) == 0) {
+			mCanRankBeforeTieBreaking = Arrays.copyOf(mCanRank, mMol.getAtoms());
+			}
+
 		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
 			// locate atom differences due to pro-chiral or pro-E/Z location and
 			// detect for every proTH- or proEZ-parity whether pro-atoms are
@@ -588,11 +589,9 @@ System.out.println();
 			mProTHAtomsInSameFragment = new boolean[mMol.getAtoms()];
 			mProEZAtomsInSameFragment = new boolean[mMol.getBonds()];
 
-			if ((mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
-				for (int atom=0; atom<mMol.getAtoms(); atom++) {
-					mCanBase[atom].init(atom);
-					mCanBase[atom].add(mAtomBits+12, mCanRank[atom] << 12);
-					}
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+				mCanBase[atom].init(atom);
+				mCanBase[atom].add(mAtomBits+12, mCanRank[atom] << 12);
 				}
 			if (mNoOfRanks < mMol.getAtoms()) {
 				int proParities = 0;
@@ -602,25 +601,25 @@ System.out.println();
 				for (int bond=0; bond<mMol.getBonds(); bond++)
 					if (canCalcEZParity(bond, true))
 						proParities++;
-				}
-			if ((mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
-				mNoOfRanks = canPerformRanking();
+				if (proParities != 0)
+					mNoOfRanks = canPerformRanking();
 				}
 			}
 
-			// Atoms, which still share an equal rank, can now be
-			// considered symmetrical considering their connectivity
-			// and stereo features.
-		if ((mMode & CREATE_SYMMETRY_RANK) != 0) {
+		// Atoms, which still share an equal rank, can now be
+		// considered symmetrical considering their connectivity
+		// and stereo features.
+		if ((mMode & CREATE_SYMMETRY_RANK) != 0
+		 && (mMode & CONSIDER_STEREOHETEROTOPICITY) != 0) {
 			mCanRankBeforeTieBreaking = Arrays.copyOf(mCanRank, mMol.getAtoms());
 			}
 
-			// ############### begin tie breaking ##############
-			// i.e. if not all atoms have a different rank yet, then
-			// select randomly one atom of those atoms that share the
-			// lowest rank and consider it higher ranked. Propagate the
-			// new ranking assymetry through the molecule (performFullRanking()).
-			// Repeat these steps until all atoms have a different rank.
+		// ############### begin tie breaking ##############
+		// i.e. if not all atoms have a different rank yet, then
+		// select randomly one atom of those atoms that share the
+		// lowest rank and consider it higher ranked. Propagate the
+		// new ranking assymetry through the molecule (performFullRanking()).
+		// Repeat these steps until all atoms have a different rank.
 
 //System.out.println("start of tie breaking");
 /*
@@ -1760,9 +1759,7 @@ System.out.println("noOfRanks:"+canRank);
 		if (!calcProParity) {
 			mTHParity[atom] = atomTHParity;
 			}
-		else if ((mStereoCentersFound && (mMode & CONSIDER_DIASTEREOTOPICITY) != 0)
-			  || (!mStereoCentersFound && (mMode & CONSIDER_ENANTIOTOPICITY) != 0)) {
-			// increment mCanBase[] for atoms that are Pro-Parity1
+		else {
 			if (atomTHParity == Molecule.cAtomParity1) {
 				mCanBase[proTHAtom1].add(0x0400);
 				mCanBase[proTHAtom2].add(0x0100);
@@ -1929,8 +1926,7 @@ System.out.println("noOfRanks:"+canRank);
 		if (!calcProParity) {	// increment mProParity[] for atoms that are Pro-Parity1
 			mTHParity[atom] = alleneParity;
 			}
-		else if ((mStereoCentersFound && (mMode & CONSIDER_DIASTEREOTOPICITY) != 0)
-			  || (!mStereoCentersFound && (mMode & CONSIDER_ENANTIOTOPICITY) != 0)) {
+		else {
 			if (halfParity1.mRanksEqual) {
 				if (alleneParity == Molecule.cAtomParity1) {
 					mCanBase[halfParity1.mHighConn].add(0x0040);
@@ -2024,8 +2020,7 @@ System.out.println("noOfRanks:"+canRank);
 		if (!calcProParity) {	// increment mProParity[] for atoms that are Pro-E
 			mEZParity[bond] = axialParity;
 			}
-		else if ((mStereoCentersFound && (mMode & CONSIDER_DIASTEREOTOPICITY) != 0)
-			  || (!mStereoCentersFound && (mMode & CONSIDER_ENANTIOTOPICITY) != 0)) {
+		else {
 			if (halfParity1.mRanksEqual) {
 				if (axialParity == Molecule.cBondParityZor2) {
 					mCanBase[halfParity1.mHighConn].add(0x0004);
@@ -2169,8 +2164,7 @@ System.out.println("noOfRanks:"+canRank);
 		if (!calcProParity) {
 			mEZParity[bond] = bondDBParity;
 			}
-		else if ((mMode & CONSIDER_DIASTEREOTOPICITY) != 0) {
-			// increment mProParity[] for atoms that are Pro-E
+		else {
 			if (halfParity1.mRanksEqual) {
 				if (bondDBParity == Molecule.cBondParityEor1) {
 					mCanBase[halfParity1.mHighConn].add(0x0004);

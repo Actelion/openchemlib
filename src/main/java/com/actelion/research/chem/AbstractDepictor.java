@@ -136,12 +136,11 @@ public abstract class AbstractDepictor<T> {
 
 	private static final int cDModeShowSymmetryAny = 0x0700;
 	public static final int cDModeShowSymmetrySimple = 0x0100;
-    public static final int cDModeShowSymmetryDiastereotopic = 0x0200;
-    public static final int cDModeShowSymmetryEnantiotopic = 0x0400;
-	public static final int	cDModeNoImplicitAtomLabelColors = 0x0800;
-	public static final int	cDModeNoStereoProblem = 0x1000;
-	public static final int	cDModeNoColorOnESRAndCIP = 0x2000;
-	public static final int cDModeNoImplicitHydrogen = 0x4000;
+    public static final int cDModeShowSymmetryStereoHeterotopic = 0x0200;
+	public static final int	cDModeNoImplicitAtomLabelColors = 0x0400;
+	public static final int	cDModeNoStereoProblem = 0x0800;
+	public static final int	cDModeNoColorOnESRAndCIP = 0x1000;
+	public static final int cDModeNoImplicitHydrogen = 0x2000;
 
 	private static final double cFactorTextSize = 0.6;
 	private static final double cFactorChiralTextSize = 0.5;
@@ -694,8 +693,7 @@ public abstract class AbstractDepictor<T> {
 
 	private int requiredHelperArrays() {
 	    return ((mDisplayMode & cDModeShowSymmetrySimple) != 0) ? Molecule.cHelperSymmetrySimple
-	         : ((mDisplayMode & cDModeShowSymmetryDiastereotopic) != 0) ? Molecule.cHelperSymmetryDiastereotopic
-             : ((mDisplayMode & cDModeShowSymmetryEnantiotopic) != 0) ? Molecule.cHelperSymmetryEnantiotopic
+	         : ((mDisplayMode & cDModeShowSymmetryStereoHeterotopic) != 0) ? Molecule.cHelperSymmetryStereoHeterotopic
              : Molecule.cHelperCIP;
 	    }
 
