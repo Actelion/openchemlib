@@ -180,6 +180,10 @@ public class PPNodeViz extends PPNode implements Serializable {
 		return ArrayUtils.toIntArray(hsIndexOriginalAtoms);
 	}
 
+	public HashSet<Integer> getIndexOriginalAtoms() {
+		return hsIndexOriginalAtoms;
+	}
+
 	public int getMappingIndex() {
 		return mappingIndex;
 	}

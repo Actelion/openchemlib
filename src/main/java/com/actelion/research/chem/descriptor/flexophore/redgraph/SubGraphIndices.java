@@ -56,9 +56,6 @@ public class SubGraphIndices {
 
 
 
-    public int getNumIndices() {
-        return hsIndexAtom.size();
-    }
 
     public SubGraphIndices() {
         hsIndexAtom = new HashSetInt();
@@ -68,10 +65,13 @@ public class SubGraphIndices {
         hsIndexAtom = new HashSetInt(arrIndexAtom);
     }
 
+    public int getNumIndices() {
+        return hsIndexAtom.size();
+    }
+
     public void clear() {
         hsIndexAtom.clear();
     }
-
 
     public void addIndex(int indexAtom) {
         hsIndexAtom.add(indexAtom);
