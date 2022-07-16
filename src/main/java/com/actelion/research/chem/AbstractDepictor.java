@@ -136,7 +136,7 @@ public abstract class AbstractDepictor<T> {
 
 	private static final int cDModeShowSymmetryAny = 0x0700;
 	public static final int cDModeShowSymmetrySimple = 0x0100;
-    public static final int cDModeShowSymmetryStereoHeterotopic = 0x0200;
+    public static final int cDModeShowSymmetryStereoHeterotopicity = 0x0200;
 	public static final int	cDModeNoImplicitAtomLabelColors = 0x0400;
 	public static final int	cDModeNoStereoProblem = 0x0800;
 	public static final int	cDModeNoColorOnESRAndCIP = 0x1000;
@@ -693,7 +693,7 @@ public abstract class AbstractDepictor<T> {
 
 	private int requiredHelperArrays() {
 	    return ((mDisplayMode & cDModeShowSymmetrySimple) != 0) ? Molecule.cHelperSymmetrySimple
-	         : ((mDisplayMode & cDModeShowSymmetryStereoHeterotopic) != 0) ? Molecule.cHelperSymmetryStereoHeterotopic
+	         : ((mDisplayMode & cDModeShowSymmetryStereoHeterotopicity) != 0) ? Molecule.cHelperSymmetryStereoHeterotopicity
              : Molecule.cHelperCIP;
 	    }
 

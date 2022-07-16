@@ -205,9 +205,9 @@ public class StereoMolecule extends ExtendedMolecule {
 			rankBits = cHelperBitSymmetrySimple;
 		    rankMode = Canonizer.CREATE_SYMMETRY_RANK;
 		    }
-		else if ((required & cHelperBitSymmetryStereoHeterotopic) != 0) {
-			rankBits = cHelperBitSymmetryStereoHeterotopic;
-            rankMode = Canonizer.CREATE_SYMMETRY_RANK;
+		else if ((required & cHelperBitSymmetryStereoHeterotopicity) != 0) {
+			rankBits = cHelperBitSymmetryStereoHeterotopicity;
+            rankMode = Canonizer.CREATE_SYMMETRY_RANK| Canonizer.CONSIDER_STEREOHETEROTOPICITY;
 		    }
 
 		if ((required & cHelperBitIncludeNitrogenParities) != 0) {
