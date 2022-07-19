@@ -2343,8 +2343,7 @@ System.out.println("noOfRanks:"+canRank);
 			// if no parity found, but atom was assigned to AND or OR group
 			if ((mMol.getAtomESRType(atom) == Molecule.cESRTypeAnd
 			  || mMol.getAtomESRType(atom) == Molecule.cESRTypeOr)
-			 && (!mIsStereoCenter[atom]
-			  || mTHParity[atom] == Molecule.cAtomParityUnknown))
+			 && (mTHParity[atom] == Molecule.cAtomParityUnknown))
 				mMol.setStereoProblem(atom);
 
 			if (mMol.isAtomConfigurationUnknown(atom)
@@ -4351,8 +4350,8 @@ System.out.println();
 			// Locate parent atoms with equal ranks that may be distinguished
 			// by attachments on current level. Adjust parent ranks accordingly
 			// and propagate rank distinctions upwards the hierarchy.
-			cipUpdateParentRanking(graphIsPseudo, graphRank, graphParent,
-								   graphAtom, levelStart, currentLevel);
+			cipUpdateParentRanking(graphIsPseudo, graphRank, graphParent, graphAtom, levelStart, currentLevel);
+
 /*
 System.out.println("Ranking atomic numbers on currentLevel:"+currentLevel+" levelStart:"+levelStart[currentLevel]+" nextLevelStart:"+levelStart[currentLevel+1]);
 System.out.print(" graphAtoms:");
