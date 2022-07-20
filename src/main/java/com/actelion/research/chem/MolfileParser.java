@@ -94,7 +94,7 @@ public class MolfileParser
 			mHydrogenMap = null;
 
 			if(mMol != null){
-				mMol.deleteMolecule();
+				mMol.clear();
 				mMol.setFragment(false);
 			}
 

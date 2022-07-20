@@ -233,7 +233,6 @@ public interface DescriptorConstants {
     DescriptorInfo[] DESCRIPTOR_LIST = {
                                                 DESCRIPTOR_FFP512,
                                                 DESCRIPTOR_PFP512,
-											    DESCRIPTOR_SSSFP,
 											    DESCRIPTOR_ALLFRAG,
                                                 DESCRIPTOR_HashedCFp,
                                                 DESCRIPTOR_SkeletonSpheres,
