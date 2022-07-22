@@ -452,7 +452,11 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 		while(!nodesProcessed){
 			
 			int end = StringFunctions.nextClosing(strMolDistHist, start, '(', ')');
-			
+
+			if(end==-1){
+				throw new RuntimeException("Error for MolDistHist " + strMolDistHist);
+			}
+
 			String strNode = strMolDistHist.substring(start+1, end);
 
 			PPNode n = PPNode.read(strNode);
@@ -472,33 +476,27 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	public static MolDistHist read(String strMolDistHist){
 
 		String pattern = "[0-9]+";
-
 		List<PPNode> liPPNode = readNodes( strMolDistHist);
-
 		int size = liPPNode.size();
-
 		MolDistHist mdh = new MolDistHist(size);
-
 		for (PPNode ppNode : liPPNode) {
 			mdh.addNode(ppNode);
 		}
 
 		boolean histsProcessed = false;
-
 		List<byte []> liHist = new ArrayList<byte []>();
-
 		int startHist = strMolDistHist.indexOf("][");
-
 		int nHistograms = ((size*size)-size)/2;
+
+		if(nHistograms==0){
+			histsProcessed=true;
+		}
 
 		while(!histsProcessed){
 
 			int endHist = StringFunctions.nextClosing(strMolDistHist, startHist, '[', ']');
-
 			String sub = strMolDistHist.substring(startHist, endHist);
-
 			List<Point> li = StringFunctions.match(sub, pattern);
-
 			if(li.size() != ConstantsFlexophoreGenerator.BINS_HISTOGRAM){
 				throw new RuntimeException("Error in histogram.");
 			}
@@ -507,17 +505,12 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 
 			int cc=0;
 			for (Point p : li) {
-
 				String strCount = sub.substring(p.x, p.y);
-
 				arr[cc++] = (byte)(Integer.parseInt(strCount) & 0xFF);
-
 			}
 
 			liHist.add(arr);
-
 			startHist = strMolDistHist.indexOf('[', endHist);
-
 			if(liHist.size()==nHistograms){
 				histsProcessed=true;
 			}
@@ -529,7 +522,6 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 				mdh.setDistHist(i,j, liHist.get(cc++));
 			}
 		}
-
 
 		return mdh;
 	}

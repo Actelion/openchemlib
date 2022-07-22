@@ -205,6 +205,15 @@ public class CreatorMolDistHistViz {
     }
 
 
+    /**
+     * This method must be called before:
+     *  conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
+     * @param molInPlace
+     * @param liMultCoordFragIndex
+     * @param nConformations
+     * @param conformerGenerator
+     * @return
+     */
     public static Molecule3D createConformations(Molecule3D molInPlace, List<MultCoordFragIndex> liMultCoordFragIndex, int nConformations, ConformerGenerator conformerGenerator){
 
         int nAtoms = molInPlace.getAtoms();
@@ -235,7 +244,7 @@ public class CreatorMolDistHistViz {
      * @param liSubGraphIndices
      * @param molInPlace
      */
-    public  List<SubGraphIndices> handleCarbonConnected2Hetero(List<SubGraphIndices> liSubGraphIndices, StereoMolecule molInPlace){
+    public  static List<SubGraphIndices> handleCarbonConnected2Hetero(List<SubGraphIndices> liSubGraphIndices, StereoMolecule molInPlace){
         List<SubGraphIndices> liSubGraphIndicesProcessed = new ArrayList<>();
         for (SubGraphIndices sgi : liSubGraphIndices) {
             int [] arrIndexAtomFragment = sgi.getAtomIndices();
