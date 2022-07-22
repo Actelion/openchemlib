@@ -88,6 +88,21 @@ public class SubGraphIndices {
     public boolean contains(int indexAtom) {
         return hsIndexAtom.contains(indexAtom);
     }
+    public boolean equalIndices(int [] arrIndexAtom) {
+        if(hsIndexAtom.size()!=arrIndexAtom.length)
+            return false;
+
+        boolean eq=true;
+
+        for (int index : arrIndexAtom) {
+            if(!hsIndexAtom.contains(index)){
+                eq=false;
+                break;
+            }
+        }
+
+        return eq;
+    }
 
     @Override
     public boolean equals(Object obj) {

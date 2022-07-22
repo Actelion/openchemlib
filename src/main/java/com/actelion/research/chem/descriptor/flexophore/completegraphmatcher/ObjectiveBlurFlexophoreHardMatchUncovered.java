@@ -606,8 +606,6 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 		slidingWindowDistHist.apply(mdhvBaseBlurredHist);
 
-		System.out.println(MolDistHistHelper.toStringDistHist(mdhvBaseBlurredHist.getMolDistHist()));
-
 		nodesBase = iMolDistHistBase.getNumPPNodes();
 		
 		validHelpersBase = false;
@@ -634,8 +632,6 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		}
 
 		slidingWindowDistHist.apply(mdhvQueryBlurredHist);
-
-		System.out.println(MolDistHistHelper.toStringDistHist(mdhvQueryBlurredHist.getMolDistHist()));
 
 		nodesQuery = iMolDistHistQuery.getNumPPNodes();
 		
