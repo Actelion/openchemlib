@@ -1690,6 +1690,10 @@ public abstract class AbstractDepictor<T> {
 		String isoStr = null;
 		long queryFeatures = mMol.getAtomQueryFeatures(atom);
 		if (queryFeatures != 0) {
+			if ((queryFeatures & Molecule.cAtomQFIsStereo) != 0)
+				isoStr = append(isoStr, "*");
+			if ((queryFeatures & Molecule.cAtomQFIsNotStereo) != 0)
+				isoStr = append(isoStr, "!*");
 			if ((queryFeatures & Molecule.cAtomQFAromatic) != 0)
 				isoStr = append(isoStr, "a");
 			if ((queryFeatures & Molecule.cAtomQFNotAromatic) != 0)
@@ -1785,6 +1789,8 @@ public abstract class AbstractDepictor<T> {
                     isoStr = append(isoStr, "!r");
                 else if (ringBonds == Molecule.cAtomQFNotChain)
                     isoStr = append(isoStr, "r");
+                else if (ringBonds == Molecule.cAtomQFNot3RingBonds+Molecule.cAtomQFNot4RingBonds)
+	                isoStr = append(isoStr, "rb<3");
                 else if (ringBonds == Molecule.cAtomQFNotChain+Molecule.cAtomQFNot3RingBonds+Molecule.cAtomQFNot4RingBonds)
                     isoStr = append(isoStr, "rb2");
                 else if (ringBonds == Molecule.cAtomQFNotChain+Molecule.cAtomQFNot2RingBonds+Molecule.cAtomQFNot4RingBonds)

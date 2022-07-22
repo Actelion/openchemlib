@@ -553,8 +553,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 					mMol.setAtomQueryFeature(atom, neighbours, true);
 					}
 				break;
-			case 15: //  datatype 'start second feature set'
-				offset = 16;
+			case 15: //  datatype 'start next feature set'
+			case 31:
+				offset += 16;
 				break;
 			case 16: //  datatype 'AtomQFSmallRingSize'
 				no = decodeBits(abits);
@@ -665,6 +666,14 @@ public class IDCodeParserWithoutCoordinateInvention {
 					int atom = decodeBits(abits);
 					long ringSize = (long)decodeBits(Molecule.cAtomQFNewRingSizeBits) << Molecule.cAtomQFNewRingSizeShift;
 					mMol.setAtomQueryFeature(atom, ringSize, true);
+					}
+				break;
+			case 32: //  datatype 'AtomQFNewRingSize'
+				no = decodeBits(abits);
+				for (int i=0; i<no; i++) {
+					int atom = decodeBits(abits);
+					long stereoState = (long)decodeBits(Molecule.cAtomQFStereoStateBits) << Molecule.cAtomQFStereoStateShift;
+					mMol.setAtomQueryFeature(atom, stereoState, true);
 					}
 				break;
 				}
@@ -1425,8 +1434,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 						System.out.println();
 						break;
 					case 15: //  datatype 'start second feature set'
-						offset = 16;
-						System.out.println("<start second feature set>");
+					case 31:
+						offset += 16;
+						System.out.println("<start next feature set>");
 						break;
 					case 16: //  datatype 'AtomQFSmallRingSize'
 						no = decodeBits(abits);
@@ -1537,6 +1547,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 						System.out.print("AtomQFNewRingSize:");
 						for (int i = 0; i < no; i++)
 							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFNewRingSizeBits));
+						System.out.println();
+						break;
+					case 32: //  datatype 'AtomQFStereoStateBits'
+						no = decodeBits(abits);
+						System.out.print("AtomQFStereoState:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFStereoStateBits));
 						System.out.println();
 						break;
 				}

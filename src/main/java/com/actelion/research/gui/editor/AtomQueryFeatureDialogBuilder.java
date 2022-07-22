@@ -122,7 +122,8 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 	private GenericTextField    mTFAtomList;
 	private GenericCheckBox     mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo,mCBExcludeGroup;
 	private GenericComboBox     mChoiceArom,mChoiceRingState,mChoiceSmallRingSize,mChoiceRingSize,mChoiceCharge,
-								mChoiceNeighbours,mChoiceHydrogen,mChoicePi, mChoiceZValue,mChoiceReactionParityHint;
+								mChoiceNeighbours,mChoiceHydrogen,mChoicePi, mChoiceZValue,mChoiceReactionParityHint,
+								mChoiceStereoCenter;
     private ExtendedMolecule	mMol;
 	private int					mAtom;
 	private long                mRingSizeCustomValue;
@@ -148,7 +149,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mAtom = atom;
 
 		int gap = HiDPIHelper.scale(8);
-		int[] gap1 = { gap, gap/2, gap*3/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap*3/2, gap/4, gap/4, gap/4 };
+		int[] gap1 = { gap, gap/2, gap*3/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap*3/2, gap/4, gap/2, gap/2, gap/4 };
 		int[] gap2 = { gap*3/2, gap/2 };
 		int[] hLayout = {gap, GenericDialog.PREFERRED, gap, GenericDialog.PREFERRED, gap};
 		int[] vLayout = new int[1 + 2*gap1.length + (includeReactionHints ? 2*gap2.length : 0)];
@@ -184,11 +185,12 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 
 		mChoiceRingState = mDialog.createComboBox();
 		mChoiceRingState.addItem("any");
-		mChoiceRingState.addItem("none (not in a ring)");
-		mChoiceRingState.addItem("at least 2");
-		mChoiceRingState.addItem("exactly 2");
-		mChoiceRingState.addItem("exactly 3");
-		mChoiceRingState.addItem("more than 3");
+		mChoiceRingState.addItem("0 (not in a ring)");
+		mChoiceRingState.addItem("0 or 2 (0 or 1 ring)");
+		mChoiceRingState.addItem(">=2 (any ring count)");
+		mChoiceRingState.addItem("2 (in 1 ring)");
+		mChoiceRingState.addItem("3 (bridge head; 2 rings)");
+		mChoiceRingState.addItem(">3 (in more than 2 rings)");
 		mDialog.add(mDialog.createLabel("Ring bonds:"), 1,7);
 		mDialog.add(mChoiceRingState, 3,7);
 
@@ -276,20 +278,27 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mCBSubstituted.addEventConsumer(this);
 		mDialog.add(mCBSubstituted, 1,25,3,25);
 
+		mChoiceStereoCenter = mDialog.createComboBox();
+		mChoiceStereoCenter.addItem("any");
+		mChoiceStereoCenter.addItem("is a stereo center");
+		mChoiceStereoCenter.addItem("is not a stereo center");
+		mDialog.add(mDialog.createLabel("Stereo center:"), 1,27);
+		mDialog.add(mChoiceStereoCenter,3,27);
+
 		mCBMatchStereo = mDialog.createCheckBox("match stereo center");
-		mDialog.add(mCBMatchStereo, 1,27,3,27);
+		mDialog.add(mCBMatchStereo, 1,29,3,29);
 
 		mCBExcludeGroup = mDialog.createCheckBox("is part of exclude group");
-		mDialog.add(mCBExcludeGroup, 1,29,3,29);
+		mDialog.add(mCBExcludeGroup, 1,31,3,31);
 
 		if (includeReactionHints) {
-			mDialog.add(mDialog.createLabel("Stereo center hint for product:"), 1,31,3,31);
+			mDialog.add(mDialog.createLabel("Stereo center hint for product:"), 1,33,3,33);
 			mChoiceReactionParityHint = mDialog.createComboBox();
 			mChoiceReactionParityHint.addItem("Copy from generic product");
 			mChoiceReactionParityHint.addItem("Keep reactant configuration");
 			mChoiceReactionParityHint.addItem("Invert reactant configuration");
 			mChoiceReactionParityHint.addItem("Racemise configuration");
-			mDialog.add(mChoiceReactionParityHint, 1,33,3,33);
+			mDialog.add(mChoiceReactionParityHint, 1,35,3,35);
 			}
 
 		mMol.ensureHelperArrays(Molecule.cHelperCIP);
@@ -348,14 +357,16 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		long ringState = queryFeatures & Molecule.cAtomQFRingState;
 		if (ringState == (Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
 			mChoiceRingState.setSelectedIndex(1);
-		else if (ringState == Molecule.cAtomQFNotChain)
+		else if (ringState == (Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
 			mChoiceRingState.setSelectedIndex(2);
-		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
+		else if (ringState == Molecule.cAtomQFNotChain)
 			mChoiceRingState.setSelectedIndex(3);
-		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds))
+		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds))
 			mChoiceRingState.setSelectedIndex(4);
-		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds))
+		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot4RingBonds))
 			mChoiceRingState.setSelectedIndex(5);
+		else if (ringState == (Molecule.cAtomQFNotChain | Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds))
+			mChoiceRingState.setSelectedIndex(6);
 		else
 			mChoiceRingState.setSelectedIndex(0);
 
@@ -490,6 +501,14 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		if ((queryFeatures & Molecule.cAtomQFMoreNeighbours) != 0)
 			mCBSubstituted.setSelected(true);
 
+		long stereoFeatures = queryFeatures & Molecule.cAtomQFStereoState;
+		if (stereoFeatures == Molecule.cAtomQFIsStereo)
+			mChoiceStereoCenter.setSelectedIndex(1);
+		else if (stereoFeatures == Molecule.cAtomQFIsNotStereo)
+			mChoiceStereoCenter.setSelectedIndex(2);
+		else
+			mChoiceStereoCenter.setSelectedIndex(0);
+
 		if ((queryFeatures & Molecule.cAtomQFMatchStereo) != 0)
 			mCBMatchStereo.setSelected(true);
 
@@ -553,21 +572,26 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 								| Molecule.cAtomQFNot4RingBonds);
 			break;
 		case 2:
-			queryFeatures |= Molecule.cAtomQFNotChain;
+			if (ringBonds <= 2)
+				queryFeatures |= (Molecule.cAtomQFNot3RingBonds
+								| Molecule.cAtomQFNot4RingBonds);
 			break;
 		case 3:
+			queryFeatures |= Molecule.cAtomQFNotChain;
+			break;
+		case 4:
 			if (ringBonds < 3)
 				queryFeatures |= (Molecule.cAtomQFNotChain
 								| Molecule.cAtomQFNot3RingBonds
 								| Molecule.cAtomQFNot4RingBonds);
 			break;
-		case 4:
+		case 5:
 			if (ringBonds < 4)
 				queryFeatures |= (Molecule.cAtomQFNotChain
 								| Molecule.cAtomQFNot2RingBonds
 								| Molecule.cAtomQFNot4RingBonds);
 			break;
-		case 5:
+		case 6:
 			queryFeatures |= (Molecule.cAtomQFNotChain
 							| Molecule.cAtomQFNot2RingBonds
 							| Molecule.cAtomQFNot3RingBonds);
@@ -763,7 +787,16 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		  || (mMol.getAtomCharge(atom)==0 && (mMol.getAtomicNo(atom)==5 || mMol.isNitrogenFamily(atom) || mMol.isChalcogene(atom)))))
 			queryFeatures |= Molecule.cAtomQFMoreNeighbours;
 
-		if (mCBMatchStereo.isSelected())
+	    switch (mChoiceStereoCenter.getSelectedIndex()) {
+	    case 1: // is stereo center
+		    queryFeatures |= Molecule.cAtomQFIsStereo;
+		    break;
+	    case 2: // is no stereo center
+		    queryFeatures |= Molecule.cAtomQFIsNotStereo;
+		    break;
+	        }
+
+	    if (mCBMatchStereo.isSelected())
 			queryFeatures |= Molecule.cAtomQFMatchStereo;
 
 		if (mCBExcludeGroup.isSelected())

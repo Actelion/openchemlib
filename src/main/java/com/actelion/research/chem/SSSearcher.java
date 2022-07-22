@@ -202,7 +202,7 @@ public class SSSearcher {
 
 		mRequiredHelperLevel = Molecule.cHelperRings;
 		for (int atom=0; atom<mFragment.getAtoms(); atom++)
-			if ((mFragment.getAtomQueryFeatures(atom) & Molecule.cAtomQFMatchStereo) != 0)
+			if ((mFragment.getAtomQueryFeatures(atom) & (Molecule.cAtomQFStereoState | Molecule.cAtomQFMatchStereo)) != 0)
 				mRequiredHelperLevel = Molecule.cHelperParities;
 		for (int bond=0; bond<mFragment.getBonds(); bond++)
 			if ((mFragment.getBondQueryFeatures(bond) & Molecule.cBondQFMatchStereo) != 0)
@@ -1543,6 +1543,11 @@ System.out.println();
 				queryDefaults |= Molecule.cAtomQFAromatic;
 			else
 				queryDefaults |= Molecule.cAtomQFNotAromatic;
+
+			if (mol.isAtomStereoCenter(atom))
+				queryDefaults |= Molecule.cAtomQFIsStereo;
+			else
+				queryDefaults |= Molecule.cAtomQFIsNotStereo;
 
 			int ringBonds = mol.getAtomRingBondCount(atom);
 			if (ringBonds == 0)

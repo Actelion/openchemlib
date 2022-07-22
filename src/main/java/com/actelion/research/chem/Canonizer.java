@@ -177,7 +177,7 @@ public class Canonizer {
 	private boolean mEncodeAvoid127;
 
 	private boolean mGraphGenerated;
-	private int mGraphRings;
+	private int mGraphRings,mFeatureBlock;
 	private int[] mGraphAtom;
 	private int[] mGraphIndex;
 	private int[] mGraphBond;
@@ -3054,8 +3054,7 @@ System.out.println();
 			if (mMol.getAtomMass(mGraphAtom[atom]) != 0)
 				count++;
 		if (count != 0) {
-			encodeBits(1, 1);	//	more data to come
-			encodeBits(1, 4);	//	1 = datatype 'isotope'
+			encodeFeatureNo(1);	//	1 = datatype 'isotope'
 			encodeBits(count, nbits);
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				if (mMol.getAtomMass(mGraphAtom[atom]) != 0) {
@@ -3065,26 +3064,26 @@ System.out.println();
 				}
 			}
 
-		boolean isSecondFeatureBlock = false;
+		mFeatureBlock = 0;
 
 		if (mMol.isFragment()) {	// QueryFeatures and fragment specific properties
-			addAtomQueryFeatures(0, false, nbits, Molecule.cAtomQFNoMoreNeighbours, 1, -1);
+			addAtomQueryFeatures(0, nbits, Molecule.cAtomQFNoMoreNeighbours, 1, -1);
 
-			addAtomQueryFeatures(3, false, nbits, Molecule.cAtomQFMoreNeighbours, 1, -1);
+			addAtomQueryFeatures(3, nbits, Molecule.cAtomQFMoreNeighbours, 1, -1);
 
-			addAtomQueryFeatures(4, false, nbits,
+			addAtomQueryFeatures(4, nbits,
 								 Molecule.cAtomQFRingState,
 								 Molecule.cAtomQFRingStateBits,
 								 Molecule.cAtomQFRingStateShift);
 
-			addAtomQueryFeatures(5, false, nbits,
+			addAtomQueryFeatures(5, nbits,
 								 Molecule.cAtomQFAromState,
 								 Molecule.cAtomQFAromStateBits,
 								 Molecule.cAtomQFAromStateShift);
 
-			addAtomQueryFeatures(6, false, nbits, Molecule.cAtomQFAny, 1, -1);
+			addAtomQueryFeatures(6, nbits, Molecule.cAtomQFAny, 1, -1);
 
-			addAtomQueryFeatures(7, false, nbits,
+			addAtomQueryFeatures(7, nbits,
 								 Molecule.cAtomQFHydrogen,
 								 Molecule.cAtomQFHydrogenBits,
 								 Molecule.cAtomQFHydrogenShift);
@@ -3094,8 +3093,7 @@ System.out.println();
 				if (mMol.getAtomList(mGraphAtom[atom]) != null)
 					count++;
 			if (count > 0) {
-				encodeBits(1, 1);	//	more data to come
-				encodeBits(8, 4);	//	8 = datatype 'AtomList'
+				encodeFeatureNo(8);	//	8 = datatype 'AtomList'
 				encodeBits(count, nbits);
 				for (int atom=0; atom<mMol.getAtoms(); atom++) {
 					int[] atomList = mMol.getAtomList(mGraphAtom[atom]);
@@ -3108,37 +3106,37 @@ System.out.println();
 					}
 				}
 
-			addBondQueryFeatures(9, false, nbits,
+			addBondQueryFeatures(9, nbits,
 								 Molecule.cBondQFRingState,
 								 Molecule.cBondQFRingStateBits,
 								 Molecule.cBondQFRingStateShift);
 
-			addBondQueryFeatures(10, false, nbits,
+			addBondQueryFeatures(10, nbits,
 								 Molecule.cBondQFBondTypes,
 								 Molecule.cBondQFBondTypesBits,
 								 Molecule.cBondQFBondTypesShift);
 
-			addAtomQueryFeatures(11, false, nbits, Molecule.cAtomQFMatchStereo, 1, -1);
+			addAtomQueryFeatures(11, nbits, Molecule.cAtomQFMatchStereo, 1, -1);
 
-			addBondQueryFeatures(12, false, nbits,
+			addBondQueryFeatures(12, nbits,
 								 Molecule.cBondQFBridge,
 								 Molecule.cBondQFBridgeBits,
 								 Molecule.cBondQFBridgeShift);
 
-			addAtomQueryFeatures(13, false, nbits,
+			addAtomQueryFeatures(13, nbits,
 								 Molecule.cAtomQFPiElectrons,
 								 Molecule.cAtomQFPiElectronBits,
 								 Molecule.cAtomQFPiElectronShift);
 
-			addAtomQueryFeatures(14, false, nbits,
+			addAtomQueryFeatures(14, nbits,
 								 Molecule.cAtomQFNeighbours,
 								 Molecule.cAtomQFNeighbourBits,
 								 Molecule.cAtomQFNeighbourShift);
 
-			isSecondFeatureBlock |= addAtomQueryFeatures(16, isSecondFeatureBlock, nbits,
-														 Molecule.cAtomQFSmallRingSize,
-														 Molecule.cAtomQFSmallRingSizeBits,
-														 Molecule.cAtomQFSmallRingSizeShift);
+			addAtomQueryFeatures(16, nbits,
+								 Molecule.cAtomQFSmallRingSize,
+								 Molecule.cAtomQFSmallRingSizeBits,
+								 Molecule.cAtomQFSmallRingSizeShift);
 			}
 
 		count = 0;
@@ -3146,9 +3144,7 @@ System.out.println();
 			if (mAbnormalValence != null && mAbnormalValence[mGraphAtom[atom]] != -1)
 				count++;
 		if (count != 0) {
-			isSecondFeatureBlock = ensureSecondFeatureBlock(isSecondFeatureBlock);
-			encodeBits(1, 1);   //  more data to come
-			encodeBits(1, 4);   //  (17-offset) 17 = datatype 'AtomAbnormalValence'
+			encodeFeatureNo(17);   //  17 = datatype 'AtomAbnormalValence'
 			encodeBits(count, nbits);
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				if (mAbnormalValence != null && mAbnormalValence[mGraphAtom[atom]] != -1) {
@@ -3170,10 +3166,8 @@ System.out.println();
 					}
 				}
 			if (count != 0) {
-				isSecondFeatureBlock = ensureSecondFeatureBlock(isSecondFeatureBlock);
 				int lbits = getNeededBits(maxLength);
-				encodeBits(1, 1);   //  more data to come
-				encodeBits(2, 4);   //  (18-offset) 18 = datatype 'AtomCustomLabel'
+				encodeFeatureNo(18);   //  18 = datatype 'AtomCustomLabel'
 				encodeBits(count, nbits);
 				encodeBits(lbits, 4);
 				for (int atom=0; atom<mMol.getAtoms(); atom++) {
@@ -3189,15 +3183,15 @@ System.out.println();
 			}
 
 		if (mMol.isFragment()) {	// more QueryFeatures and fragment specific properties
-			isSecondFeatureBlock |= addAtomQueryFeatures(19, isSecondFeatureBlock, nbits,
-					 									 Molecule.cAtomQFCharge,
-					 									 Molecule.cAtomQFChargeBits,
-					 									 Molecule.cAtomQFChargeShift);
+			addAtomQueryFeatures(19, nbits,
+					 			 Molecule.cAtomQFCharge,
+					 			 Molecule.cAtomQFChargeBits,
+					 			 Molecule.cAtomQFChargeShift);
 
-			isSecondFeatureBlock |= addBondQueryFeatures(20, isSecondFeatureBlock, nbits,
-														 Molecule.cBondQFRingSize,
-														 Molecule.cBondQFRingSizeBits,
-														 Molecule.cBondQFRingSizeShift);
+			addBondQueryFeatures(20, nbits,
+								 Molecule.cBondQFRingSize,
+								 Molecule.cBondQFRingSizeBits,
+								 Molecule.cBondQFRingSizeShift);
 			}
 
 		count = 0;
@@ -3205,9 +3199,7 @@ System.out.println();
 			if (mMol.getAtomRadical(mGraphAtom[atom]) != 0)
 				count++;
 		if (count != 0) {
-			isSecondFeatureBlock = ensureSecondFeatureBlock(isSecondFeatureBlock);
-			encodeBits(1, 1);   //  more data to come
-			encodeBits(5, 4);   //  (21-offset) 21 = datatype 'AtomRadicalState'
+			encodeFeatureNo(21);   //  21 = datatype 'AtomRadicalState'
 			encodeBits(count, nbits);
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				if (mMol.getAtomRadical(mGraphAtom[atom]) != 0) {
@@ -3218,20 +3210,18 @@ System.out.println();
 			}
 
 		if (mMol.isFragment()) {	// more QueryFeatures and fragment specific properties
-			isSecondFeatureBlock |= addAtomQueryFeatures(22, isSecondFeatureBlock, nbits, Molecule.cAtomQFFlatNitrogen, 1, -1);
-			isSecondFeatureBlock |= addBondQueryFeatures(23, isSecondFeatureBlock, nbits, Molecule.cBondQFMatchStereo, 1, -1);
-			isSecondFeatureBlock |= addBondQueryFeatures(24, isSecondFeatureBlock, nbits,
-					 									 Molecule.cBondQFAromState,
-					 									 Molecule.cBondQFAromStateBits,
-					 									 Molecule.cBondQFAromStateShift);
+			addAtomQueryFeatures(22, nbits, Molecule.cAtomQFFlatNitrogen, 1, -1);
+			addBondQueryFeatures(23, nbits, Molecule.cBondQFMatchStereo, 1, -1);
+			addBondQueryFeatures(24, nbits,
+					 							Molecule.cBondQFAromState,
+					 							Molecule.cBondQFAromStateBits,
+					 							Molecule.cBondQFAromStateShift);
 			}
 
 		if ((mMode & ENCODE_ATOM_SELECTION) != 0) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				if (mMol.isSelectedAtom(mGraphAtom[atom])) {
-					isSecondFeatureBlock = ensureSecondFeatureBlock(isSecondFeatureBlock);
-					encodeBits(1, 1);   //  more data to come
-					encodeBits(9, 4);   //  (25-offset) 25 = datatype 'AtomSelection'
+					encodeFeatureNo(25);   //  25 = datatype 'AtomSelection'
 					for (int a=0; a<mMol.getAtoms(); a++)
 						encodeBits(mMol.isSelectedAtom(mGraphAtom[a]) ? 1:0, 1);
 					break;
@@ -3246,9 +3236,7 @@ System.out.println();
 				if (isAromaticSPBond[mGraphBond[bond]])
 					count++;
 
-			isSecondFeatureBlock = ensureSecondFeatureBlock(isSecondFeatureBlock);
-			encodeBits(1, 1);   //  more data to come
-			encodeBits(10, 4);   //  (26-offset) 26 = datatype 'delocalized high order bond'
+			encodeFeatureNo(26);   //  26 = datatype 'delocalized high order bond'
 			encodeBits(count, nbits);
 			for (int bond=0; bond<mMol.getBonds(); bond++)
 				if (isAromaticSPBond[mGraphBond[bond]])
@@ -3256,16 +3244,14 @@ System.out.println();
 			}
 
 		if (mMol.isFragment())	// 27 = datatype 'part of an exclude-group'
-			isSecondFeatureBlock |= addAtomQueryFeatures(27, isSecondFeatureBlock, nbits, Molecule.cAtomQFExcludeGroup, 1, -1);
+			addAtomQueryFeatures(27, nbits, Molecule.cAtomQFExcludeGroup, 1, -1);
 
 		count = 0;
 		for (int bond=0; bond<mMol.getBonds(); bond++)
 			if (mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeMetalLigand)
 				count++;
 		if (count != 0) {
-			isSecondFeatureBlock = ensureSecondFeatureBlock(isSecondFeatureBlock);
-			encodeBits(1, 1);   //  more data to come
-			encodeBits(12, 4);   //  (28-offset) 28 = datatype 'coordinate bond'
+			encodeFeatureNo(28);    // 28 = datatype 'dative (0-order) bond'
 			encodeBits(count, nbits);
 			for (int bond=0; bond<mMol.getBonds(); bond++)
 				if (mMol.getBondType(mGraphBond[bond]) == Molecule.cBondTypeMetalLigand)
@@ -3273,8 +3259,9 @@ System.out.println();
 			}
 
 		if (mMol.isFragment()) {    // 29 = datatype 'reaction parity hint'
-			isSecondFeatureBlock |= addAtomQueryFeatures(29, isSecondFeatureBlock, nbits, Molecule.cAtomQFRxnParityHint, Molecule.cAtomQFRxnParityBits, Molecule.cAtomQFRxnParityShift);
-			isSecondFeatureBlock |= addAtomQueryFeatures(30, isSecondFeatureBlock, nbits, Molecule.cAtomQFNewRingSize, Molecule.cAtomQFNewRingSizeBits, Molecule.cAtomQFNewRingSizeShift);
+			addAtomQueryFeatures(29, nbits, Molecule.cAtomQFRxnParityHint, Molecule.cAtomQFRxnParityBits, Molecule.cAtomQFRxnParityShift);
+			addAtomQueryFeatures(30, nbits, Molecule.cAtomQFNewRingSize, Molecule.cAtomQFNewRingSizeBits, Molecule.cAtomQFNewRingSizeShift);
+			addAtomQueryFeatures(32, nbits, Molecule.cAtomQFStereoState, Molecule.cAtomQFStereoStateBits, Molecule.cAtomQFStereoStateShift);
 			}
 
 		encodeBits(0, 1);
@@ -3282,32 +3269,16 @@ System.out.println();
 		}
 
 
-	private boolean ensureSecondFeatureBlock(boolean isSecondFeatureBlock) {
-		if (!isSecondFeatureBlock) {
-			encodeBits(1, 1);   //  more data to come
-			encodeBits(15, 4);   //  15 = datatype 'start second query feature set'
-			}
-		return true;
-		}
-
-
-	private boolean addAtomQueryFeatures(int codeNo, boolean isSecondFeatureBlock, int nbits,
-										 long qfMask, int qfBits, int qfShift) {
+	private void addAtomQueryFeatures(int codeNo, int nbits, long qfMask, int qfBits, int qfShift) {
 		int count = 0;
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
 			if ((mMol.getAtomQueryFeatures(mGraphAtom[atom]) & qfMask) != 0)
 				count++;
 
 		if (count == 0)
-			return false;
+			return;
 
-		if (codeNo > 15) {
-			ensureSecondFeatureBlock(isSecondFeatureBlock);
-			codeNo -= 16;
-			}
-
-		encodeBits(1, 1);		   //  more data to come
-		encodeBits(codeNo, 4);	  //  datatype
+		encodeFeatureNo(codeNo);
 		encodeBits(count, nbits);
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			long feature = mMol.getAtomQueryFeatures(mGraphAtom[atom]) & qfMask;
@@ -3317,27 +3288,19 @@ System.out.println();
 					encodeBits(feature >> qfShift, qfBits);
 				}
 			}
-
-		return true;
 		}
 
 
-	private boolean addBondQueryFeatures(int codeNo, boolean isSecondFeatureBlock, int nbits, int qfMask, int qfBits, int qfShift) {
+	private void addBondQueryFeatures(int codeNo, int nbits, int qfMask, int qfBits, int qfShift) {
 		int count = 0;
 		for (int bond=0; bond<mMol.getBonds(); bond++)
 			if ((mMol.getBondQueryFeatures(mGraphBond[bond]) & qfMask) != 0)
 				count++;
 
 		if (count == 0)
-			return false;
+			return;
 
-		if (codeNo > 15) {
-			ensureSecondFeatureBlock(isSecondFeatureBlock);
-			codeNo -= 16;
-			}
-
-		encodeBits(1, 1);		   //  more data to come
-		encodeBits(codeNo, 4);	  //  datatype
+		encodeFeatureNo(codeNo);
 		encodeBits(count, nbits);
 		for (int bond=0; bond<mMol.getBonds(); bond++) {
 			int feature = mMol.getBondQueryFeatures(mGraphBond[bond]) & qfMask;
@@ -3347,8 +3310,6 @@ System.out.println();
 					encodeBits(feature >> qfShift, qfBits);
 				}
 			}
-
-		return true;
 		}
 
 
@@ -3827,6 +3788,24 @@ System.out.println();
 		mEncodeAvoid127 = avoid127;
 		}
 
+
+	private void encodeFeatureNo(int codeNo) {
+		for (int i=0; i<mFeatureBlock; i++)
+			codeNo -= 16;
+
+		if (codeNo < 0)
+			System.out.println("ERROR in Canonizer: Code unexpectedly low.");
+
+		while (codeNo > 15) {
+			encodeBits(1, 1);   //  more data to come
+			encodeBits(15, 4);  //  15 = datatype 'start next feature set'
+			codeNo -= 16;
+			mFeatureBlock++;
+			}
+
+		encodeBits(1, 1);   // more features to come
+		encodeBits(codeNo, 4);
+		}
 
 	private void encodeBits(long data, int bits) {
 //System.out.println(bits+" bits:"+data+"  mode="+mode);

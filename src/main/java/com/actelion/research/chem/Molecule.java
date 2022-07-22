@@ -142,8 +142,10 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFRxnParityShift	= 30;
 	public static final int cAtomQFNewRingSizeBits	= 7;
 	public static final int cAtomQFNewRingSizeShift = 32;
-	public static final long cAtomQFSimpleFeatures	= 0x00000F800E3FC7FEL;
-	public static final long cAtomQFNarrowing		= 0x00000FFF0FFFFFFEL;
+	public static final int cAtomQFStereoStateBits	= 2;
+	public static final int cAtomQFStereoStateShift = 44;
+	public static final long cAtomQFSimpleFeatures	= 0x00003F800E3FC7FEL;
+	public static final long cAtomQFNarrowing		= 0x00003FFF0FFFFFFEL;
 	public static final long cAtomQFAny				= 0x00000001;
 	public static final long cAtomQFAromState		= 0x00000006;
 	public static final long cAtomQFAromatic		= 0x00000002;
@@ -176,12 +178,12 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFNotChargeNeg	= 0x02000000;
 	public static final long cAtomQFNotCharge0		= 0x04000000;
 	public static final long cAtomQFNotChargePos	= 0x08000000;
-	public static final long cAtomQFFlatNitrogen	= 0x10000000;  // Currently, only used in TorsionDetail
-	public static final long cAtomQFExcludeGroup	= 0x20000000;  // These atoms must not exist in SS-matches
-	public static final long cAtomQFRxnParityHint   = 0xC0000000;  // Retain,invert,racemise configuration in reaction
-	public static final long cAtomQFRxnParityRetain = 0x40000000;
-	public static final long cAtomQFRxnParityInvert = 0x80000000;
-	public static final long cAtomQFRxnParityRacemize= 0xC0000000;
+	public static final long cAtomQFFlatNitrogen	= 0x0000000010000000L;  // Currently, only used in TorsionDetail
+	public static final long cAtomQFExcludeGroup	= 0x0000000020000000L;  // These atoms must not exist in SS-matches
+	public static final long cAtomQFRxnParityHint   = 0x00000000C0000000L;  // Retain,invert,racemise configuration in reaction
+	public static final long cAtomQFRxnParityRetain = 0x0000000040000000L;
+	public static final long cAtomQFRxnParityInvert = 0x0000000080000000L;
+	public static final long cAtomQFRxnParityRacemize=0x00000000C0000000L;
 	public static final long cAtomQFNewRingSize     = 0x0000007F00000000L;
 	public static final long cAtomQFRingSize0       = 0x0000000100000000L;
 	public static final long cAtomQFRingSize3       = 0x0000000200000000L;
@@ -196,6 +198,9 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFZValueNot2 = 0x0000020000000000L;
 	public static final long cAtomQFNot3ENegNeighbours = 0x0000040000000000L;
 	public static final long cAtomQFZValueNot4 = 0x0000080000000000L;
+	public static final long cAtomQFStereoState = 0x0000300000000000L;
+	public static final long cAtomQFIsStereo = 0x0000100000000000L;
+	public static final long cAtomQFIsNotStereo = 0x0000200000000000L;
 
 	public static final int cBondTypeSingle			= 0x00000001;
 	public static final int cBondTypeDouble			= 0x00000002;
