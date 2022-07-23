@@ -18,6 +18,7 @@ import java.util.List;
  * ObjectiveBlurFlexophoreHardMatchUncovered
  * The weighting of the coverage is hard. Which means that uncovered nodes 
  * strongly change the final similarity score.
+ * The distance histograms are heavily blurred. This increases the probability of matching.
  * look in <code>getScoreUncoveredNearestNodesBase(SolutionCompleteGraph solution)</code> 
  * and <code>getScoreUncoveredNearestNodesQuery(SolutionCompleteGraph solution)</code>.
  * Use is subject to license terms.</p>
@@ -119,23 +120,15 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			double threshHistogramSimilarity) {
 		
 		arrTmpHist =  new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
-
 		nodeSimilarity = new PPNodeSimilarity(versionInteractionTable, modePPNodeSimilarity);
-
 		nodeSimilarity.setThreshSimilarityHardMatch(threshSimilarityNodeHardMatch);
-
 		this.threshHistogramSimilarity = threshHistogramSimilarity;
-
 		threshNodeMinSimilarityStart = THRESH_NODE_SIMILARITY_START;
-
 		slidingWindowDistHist = new SlidingWindowDistHist(ConstantsFlexophoreGenerator.FILTER);
-
 		modeQuery = false;
-
 		deltaNanoQueryBlur=0;
 		deltaNanoBaseBlur=0;
 		deltaNanoSimilarity=0;
-
 		initSimilarityMatrices();
 	}
 	
@@ -145,7 +138,6 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		for (int i = 0; i < ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE; i++) {
 			arrSimilarityNodes[i] = new float [ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE];
 			Arrays.fill(arrSimilarityNodes[i], INIT_VAL);
-			
 		}
 
 		int maxNumHistograms = ((ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE* ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE)- ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE)/2;
@@ -157,6 +149,11 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		}
 	}
 
+	/**
+	 *
+	 * @param modeQuery if set true the query must hit with all pharmacophore nodes. No penalty terms apply for not
+	 * matched base nodes.
+	 */
 	public void setModeQuery(boolean modeQuery) {
 		this.modeQuery = modeQuery;
 	}
@@ -213,15 +210,12 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	public boolean isValidSolution(SolutionCompleteGraph solution) {
 		
 		boolean mapping = true;
-
 		if(!validHelpersQuery){
 			calculateHelpersQuery();
 		}
-		
 		if(!validHelpersBase){
 			calculateHelpersBase();
 		}
-		
 		if(resetSimilarityArrays){
 			resetSimilarityMatrices();
 		}
@@ -235,61 +229,45 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		// Check for inevitable pharmacophore points.
 		//
 		if(numInevitablePPPoints > 0) {
-
 			int ccInevitablePPPointsInSolution = 0;
-
 			for (int i = 0; i < heap; i++) {
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
-
 				if(mdhvQueryBlurredHist.isInevitablePharmacophorePoint(indexNodeQuery)){
 					ccInevitablePPPointsInSolution++;
 				}
 			}
-
 			int neededMinInevitablePPPoints = Math.min(heap, numInevitablePPPoints);
-
 			if(ccInevitablePPPointsInSolution < neededMinInevitablePPPoints){
 				mapping = false;
 			}
-
 		}
 
 		//
 		// Check for one hetero atom in solution
 		//
 		if(mapping){
-
 			boolean heteroNodeQuery = false;
-
 			boolean heteroNodeBase = false;
-
 			for (int i = 0; i < heap; i++) {
-
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
 				PPNode nodeQuery = mdhvQueryBlurredHist.getNode(indexNodeQuery);
 				if(nodeQuery.hasHeteroAtom()){
 					heteroNodeQuery = true;
 				}
-
 				int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
-
 				PPNode nodeBase = mdhvBaseBlurredHist.getNode(indexNodeBase);
 				if(nodeBase.hasHeteroAtom()){
 					heteroNodeBase = true;
 				}
-
 				if(heteroNodeQuery && heteroNodeBase){
 					break;
 				}
-
 			}
-
 			if(!heteroNodeQuery || !heteroNodeBase) {
 				mapping = false;
 			}
 		}
-		
-		
+
 		//
 		// Check for matching nodes.
 		//

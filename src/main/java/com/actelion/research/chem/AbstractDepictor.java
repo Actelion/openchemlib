@@ -136,12 +136,11 @@ public abstract class AbstractDepictor<T> {
 
 	private static final int cDModeShowSymmetryAny = 0x0700;
 	public static final int cDModeShowSymmetrySimple = 0x0100;
-    public static final int cDModeShowSymmetryDiastereotopic = 0x0200;
-    public static final int cDModeShowSymmetryEnantiotopic = 0x0400;
-	public static final int	cDModeNoImplicitAtomLabelColors = 0x0800;
-	public static final int	cDModeNoStereoProblem = 0x1000;
-	public static final int	cDModeNoColorOnESRAndCIP = 0x2000;
-	public static final int cDModeNoImplicitHydrogen = 0x4000;
+    public static final int cDModeShowSymmetryStereoHeterotopicity = 0x0200;
+	public static final int	cDModeNoImplicitAtomLabelColors = 0x0400;
+	public static final int	cDModeNoStereoProblem = 0x0800;
+	public static final int	cDModeNoColorOnESRAndCIP = 0x1000;
+	public static final int cDModeNoImplicitHydrogen = 0x2000;
 
 	private static final double cFactorTextSize = 0.6;
 	private static final double cFactorChiralTextSize = 0.5;
@@ -694,8 +693,7 @@ public abstract class AbstractDepictor<T> {
 
 	private int requiredHelperArrays() {
 	    return ((mDisplayMode & cDModeShowSymmetrySimple) != 0) ? Molecule.cHelperSymmetrySimple
-	         : ((mDisplayMode & cDModeShowSymmetryDiastereotopic) != 0) ? Molecule.cHelperSymmetryDiastereotopic
-             : ((mDisplayMode & cDModeShowSymmetryEnantiotopic) != 0) ? Molecule.cHelperSymmetryEnantiotopic
+	         : ((mDisplayMode & cDModeShowSymmetryStereoHeterotopicity) != 0) ? Molecule.cHelperSymmetryStereoHeterotopicity
              : Molecule.cHelperCIP;
 	    }
 
@@ -1692,6 +1690,10 @@ public abstract class AbstractDepictor<T> {
 		String isoStr = null;
 		long queryFeatures = mMol.getAtomQueryFeatures(atom);
 		if (queryFeatures != 0) {
+			if ((queryFeatures & Molecule.cAtomQFIsStereo) != 0)
+				isoStr = append(isoStr, "*");
+			if ((queryFeatures & Molecule.cAtomQFIsNotStereo) != 0)
+				isoStr = append(isoStr, "!*");
 			if ((queryFeatures & Molecule.cAtomQFAromatic) != 0)
 				isoStr = append(isoStr, "a");
 			if ((queryFeatures & Molecule.cAtomQFNotAromatic) != 0)
@@ -1787,6 +1789,8 @@ public abstract class AbstractDepictor<T> {
                     isoStr = append(isoStr, "!r");
                 else if (ringBonds == Molecule.cAtomQFNotChain)
                     isoStr = append(isoStr, "r");
+                else if (ringBonds == Molecule.cAtomQFNot3RingBonds+Molecule.cAtomQFNot4RingBonds)
+	                isoStr = append(isoStr, "rb<3");
                 else if (ringBonds == Molecule.cAtomQFNotChain+Molecule.cAtomQFNot3RingBonds+Molecule.cAtomQFNot4RingBonds)
                     isoStr = append(isoStr, "rb2");
                 else if (ringBonds == Molecule.cAtomQFNotChain+Molecule.cAtomQFNot2RingBonds+Molecule.cAtomQFNot4RingBonds)

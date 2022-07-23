@@ -83,37 +83,25 @@ public class HashSetInt {
 	}
 	
 	public HashSetInt(int capacity) {
-		
 		double log2 = Math.log10(capacity)/Math.log10(2);
-
 		int capPowOf2 = (int)(Math.pow(2, (int)(log2+1)));
-		
 		data =  new int [capPowOf2][];
- 		
 		loadFactor = DEFAULT_LOAD_FACTOR;
-		
 		threshold = (int)(capPowOf2 * loadFactor);
-		
 	}
 	
 	public HashSetInt(List<Integer> li) {
-		
 		this(li.size());
-		
 		for (Integer v : li) {
 			add(v);
 		}
-		
 	}
 	
 	public HashSetInt(int [] a) {
-		
 		this(a.length);
-		
 		for (int v : a) {
 			add(v);
 		}
-		
 	}
 	
     /**

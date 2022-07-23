@@ -60,6 +60,10 @@ public class DistHist implements Serializable {
 		identifier=-1;
 	}
 
+	/**
+	 * Initializes the distance histograms. Filled with 0.
+	 * @param nPPNodes
+	 */
 	public DistHist(int nPPNodes) {
 		initHistogramArray(nPPNodes);
 	}
@@ -219,6 +223,12 @@ public class DistHist implements Serializable {
 		return liClusterNodeMinRMSD;
 	}
 
+	/**
+	 * The distnce histograms are stored in a single array.
+	 * @param indexAt1
+	 * @param indexAt2
+	 * @param arrHist
+	 */
 	public void setDistHist(int indexAt1, int indexAt2, byte [] arrHist) {
 		
 		if(indexAt1 >= numPPNodes) {

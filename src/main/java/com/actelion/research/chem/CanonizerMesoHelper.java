@@ -458,13 +458,30 @@ System.out.println();
 	 * @return
 	 */
 	private int findMirrorAtom(int atom, int parentOfMirrorAtom, boolean[] isFragmentMember) {
+		int[] candidate = new int[mMol.getConnAtoms(parentOfMirrorAtom)];
+		int index = 0;
 		for (int i=0; i<mMol.getConnAtoms(parentOfMirrorAtom); i++) {
-			int candidate = mMol.getConnAtom(parentOfMirrorAtom, i);
-			if (!isFragmentMember[candidate]
-			 && mayBeMirrorAtoms(atom, candidate))
-				return candidate;
+			candidate[index] = mMol.getConnAtom(parentOfMirrorAtom, i);
+			if (!isFragmentMember[candidate[index]]
+			 && mayBeMirrorAtoms(atom, candidate[index]))
+				index++;
 			}
-		return -1;
+		if (index == 0)
+			return -1;
+		if (index == 1)
+			return candidate[0];
+
+		// if we have multiple candidates, then take that one that is topologically closer to atom
+		int lowCandidate = -1;
+		int lowPathLength = Integer.MAX_VALUE;
+		for (int i=0; i<index; i++) {
+			int pathLength = mMol.getPathLength(atom, candidate[i], Integer.MAX_VALUE, isFragmentMember);
+			if (pathLength < lowPathLength) {
+				lowPathLength = pathLength;
+				lowCandidate = candidate[i];
+				}
+			}
+		return lowCandidate;
 		}
 
 
@@ -489,7 +506,7 @@ System.out.println();
 //System.out.println("normalizeESRGroups() mMesoFragmentCount:"+mMesoFragmentAtom.length);
 		if (mMesoFragmentAtom != null) {
 			ESRGroupFragmentMatrix matrix = new ESRGroupFragmentMatrix();
-			mESRGroupNormalizationInfoList = new ArrayList<ESRGroupNormalizationInfo>();
+			mESRGroupNormalizationInfoList = new ArrayList<>();
 
 			for (int fragment=0; fragment<mMesoFragmentAtom.length; fragment++) {
 				int dependentGroupCount = matrix.getDependentGroupCount(fragment);
