@@ -1375,6 +1375,10 @@ public class StringFunctions {
 		return false;
 	}
 
+
+	public static boolean isAlphaNumeric(char char1) {
+		return (char1 >= 'a' && char1 <= 'z') || (char1 >= 'A' && char1 <= 'Z') || (char1 >= '0' && char1 <= '9');
+	}
 	/**
 	 * 
 	 * @param s
