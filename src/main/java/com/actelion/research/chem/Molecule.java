@@ -192,15 +192,15 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFRingSize6       = 0x0000001000000000L;
 	public static final long cAtomQFRingSize7       = 0x0000002000000000L;
 	public static final long cAtomQFRingSizeLarge   = 0x0000004000000000L;
-	public static final long cAtomQFZValue = 0x00000F8000000000L;
-	public static final long cAtomQFZValueNot0 = 0x0000008000000000L;
-	public static final long cAtomQFZValueNot1 = 0x0000010000000000L;
-	public static final long cAtomQFZValueNot2 = 0x0000020000000000L;
-	public static final long cAtomQFNot3ENegNeighbours = 0x0000040000000000L;
-	public static final long cAtomQFZValueNot4 = 0x0000080000000000L;
-	public static final long cAtomQFStereoState = 0x0000300000000000L;
-	public static final long cAtomQFIsStereo = 0x0000100000000000L;
-	public static final long cAtomQFIsNotStereo = 0x0000200000000000L;
+	public static final long cAtomQFZValue          = 0x00000F8000000000L;
+	public static final long cAtomQFZValueNot0      = 0x0000008000000000L;
+	public static final long cAtomQFZValueNot1      = 0x0000010000000000L;
+	public static final long cAtomQFZValueNot2      = 0x0000020000000000L;
+	public static final long cAtomQFZValueNot3      = 0x0000040000000000L;
+	public static final long cAtomQFZValueNot4      = 0x0000080000000000L;
+	public static final long cAtomQFStereoState     = 0x0000300000000000L;
+	public static final long cAtomQFIsStereo        = 0x0000100000000000L;
+	public static final long cAtomQFIsNotStereo     = 0x0000200000000000L;
 
 	public static final int cBondTypeSingle			= 0x00000001;
 	public static final int cBondTypeDouble			= 0x00000002;

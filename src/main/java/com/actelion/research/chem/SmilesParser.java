@@ -509,7 +509,7 @@ public class SmilesParser {
 							if (range.min <= 2 && range.max >= 2)
 								flags |= Molecule.cAtomQFZValueNot2;
 							if (range.min <= 3 && range.max >= 3)
-								flags |= Molecule.cAtomQFNot3ENegNeighbours;
+								flags |= Molecule.cAtomQFZValueNot3;
 							if (range.min <= 4 && range.max >= 4)
 								flags |= Molecule.cAtomQFZValueNot4;
 

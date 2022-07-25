@@ -1766,11 +1766,11 @@ public abstract class AbstractDepictor<T> {
 					isoStr = append(isoStr, "e1");
 				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2))
 					isoStr = append(isoStr, "e2");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFNot3ENegNeighbours))
+				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3))
 					isoStr = append(isoStr, "e3");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4))
+				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4))
 					isoStr = append(isoStr, "e<2");
-				else if (eNegNeighbours == (Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4))
+				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4))
 					isoStr = append(isoStr, "e<3");
 				else if (eNegNeighbours == Molecule.cAtomQFZValueNot4)
 					isoStr = append(isoStr, "e<4");

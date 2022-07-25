@@ -1610,8 +1610,8 @@ System.out.println();
 				break;
 				}
 
-			int eNegNeighbours = mol.getAtomZValue(atom);
-			switch (eNegNeighbours) {
+			int zValue = mol.getAtomZValue(atom);
+			switch (zValue) {
 				case 0:
 					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot0);
 					break;
@@ -1622,7 +1622,7 @@ System.out.println();
 					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2);
 					break;
 				case 3:
-					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFNot3ENegNeighbours);
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3);
 					break;
 				default:
 					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
@@ -1702,13 +1702,13 @@ System.out.println();
 					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
 					break;
 				}
-			}
 
-		int piElectrons = mol.getAtomPi(atom);
-		if (piElectrons > 0)
-			queryDefaults |= Molecule.cAtomQFNot0PiElectrons;
-		if (piElectrons > 1)
-			queryDefaults |= Molecule.cAtomQFNot1PiElectron;
+			int piElectrons = mol.getAtomPi(atom);
+			if (piElectrons > 0)
+				queryDefaults |= Molecule.cAtomQFNot0PiElectrons;
+			if (piElectrons > 1)
+				queryDefaults |= Molecule.cAtomQFNot1PiElectron;
+			}
 
 		return queryDefaults;
 		}

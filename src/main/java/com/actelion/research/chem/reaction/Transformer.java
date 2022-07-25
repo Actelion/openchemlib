@@ -75,15 +75,16 @@ public class Transformer {
 	 * to determine all possible matches and, thus, the number of possible transformations that
 	 * can be applied on the molecule without causing a valence problem.
 	 * @param molecule
+	 * @param countMode one of SSSearch.cCountMode...
 	 * @return number of valid transformation to be applied to this molecule
 	 */
-	public int setMolecule(StereoMolecule molecule) {
+	public int setMolecule(StereoMolecule molecule, int countMode) {
 		mTargetMolecule = molecule;
 		StereoMolecule reactant = mReaction.getReactant(0);
 
 		mSSSearcher.setMol(reactant, mTargetMolecule);
 		int matchMode = SSSearcher.cDefaultMatchMode;
-		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, matchMode) == 0) {
+		if (mSSSearcher.findFragmentInMolecule(countMode, matchMode) == 0) {
 			mMatchList = null;
 			return 0;
 			}

@@ -84,7 +84,7 @@ public class DescriptorHandlerLongCFP extends AbstractDescriptorHandlerLongFP<St
         mol.ensureHelperArrays(Molecule.cHelperRings);
         StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
 
-        // byte[] descriptor = new byte[DESCRIPTOR_SIZE];
+//System.out.println("atom\tsphere\tbit\tidcode");
         final int len = DESCRIPTOR_SIZE / Long.SIZE;
         long[] data = new long[len];
 
@@ -130,7 +130,7 @@ public class DescriptorHandlerLongCFP extends AbstractDescriptorHandlerLongFP<St
 	            if (h % 64 >= 32)
 	            	bitNo += 32;
 	            data[index] |= (1L << bitNo);
-//System.out.println("atom:"+rootAtom+"\tsphere:"+sphere+"\thash:"+h+"\t"+idcode);
+//System.out.println(rootAtom+"\t"+sphere+"\t"+h+"\t"+idcode);
                 }
             }
 

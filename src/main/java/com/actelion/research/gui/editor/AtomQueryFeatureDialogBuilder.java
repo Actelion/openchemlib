@@ -434,11 +434,11 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			mChoiceZValue.setSelectedIndex(2);
 		else if (zValueFeatures == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2))
 			mChoiceZValue.setSelectedIndex(3);
-		else if (zValueFeatures == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFNot3ENegNeighbours))
+		else if (zValueFeatures == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3))
 			mChoiceZValue.setSelectedIndex(4);
-		else if (zValueFeatures == (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4))
+		else if (zValueFeatures == (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4))
 			mChoiceZValue.setSelectedIndex(5);
-		else if (zValueFeatures == (Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4))
+		else if (zValueFeatures == (Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4))
 			mChoiceZValue.setSelectedIndex(6);
 		else if (zValueFeatures == Molecule.cAtomQFZValueNot4)
 			mChoiceZValue.setSelectedIndex(7);
@@ -690,19 +690,19 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			    break;
 		    case 4: // z = 3
 			    if (zValue <= 3)
-				    queryFeatures |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFNot3ENegNeighbours);
+				    queryFeatures |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3);
 			    break;
 		    case 5: // z < 2
 			    if (zValue < 2)
-				    queryFeatures |= (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4);
+				    queryFeatures |= (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4);
 			    break;
 		    case 6: // z < 3
 			    if (zValue < 3)
-				    queryFeatures |= (Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4);
+				    queryFeatures |= (Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4);
 			    break;
 		    case 7: // z < 4
 			    if (zValue < 4)
-				    queryFeatures |= (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFNot3ENegNeighbours | Molecule.cAtomQFZValueNot4);
+				    queryFeatures |= Molecule.cAtomQFZValueNot4;
 			    break;
 		    case 8: // z at least 1
 			    if (zValue == 0)

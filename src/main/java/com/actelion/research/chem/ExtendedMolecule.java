@@ -231,7 +231,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The neighbours (connected atoms) of any atom are sorted by their relevance:<br>
-	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non natural abundance isotops, custom labelled hydrogen, etc.)<br>
+	 * 1. non-hydrogen atoms (bond order 1 and above) and unusual hydrogen atoms (non-natural abundance isotopes, custom labelled hydrogen, etc.)<br>
 	 * 2. plain-hydrogen atoms (natural abundance, bond order 1)<br>
 	 * 3. loosely connected atoms (bond order 0, i.e. metal ligand bond)<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
@@ -263,13 +263,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * A validated molecule (after helper array creation) contains a sorted list of all atoms
-	 * with the plain (neglegible) hydrogen atoms at the end of the list. Neglegible hydrogen atoms
+	 * with the plain (negligible) hydrogen atoms at the end of the list. negligible hydrogen atoms
 	 * a those that can be considered implicit, because they have no attached relevant information.
-	 * Hydrogen atoms that cannot be neglected are special isotops (mass != 0), if they carry a
+	 * Hydrogen atoms that cannot be neglected are special isotopes (mass != 0), if they carry a
 	 * custom label, if they are connected to another atom with bond order different from 1, or
-	 * if they are connected to another neglegible hydrogen.<br>
+	 * if they are connected to another negligible hydrogen.<br>
 	 * Only valid after calling ensureHelperArrays(cHelperNeighbours or higher);
-	 * @return the number of relevant atoms not including neglegible hydrogen atoms
+	 * @return the number of relevant atoms not including negligible hydrogen atoms
 	 */
 	public int getAtoms() {
 		return mAtoms;
@@ -309,15 +309,28 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * Hendrickson Z-value, which is the sum of all bond orders to any attached hetero atoms.
+	 * Delocalized bonds orders are considered 1.5. Since the z-value is an integer,
+	 * one delocalized hetero atom results in z=1, two delocalized hetero atoms give z=3.
+	 * Requires helper arrays state cHelperRings.
 	 * @param atom
-	 * @return Hendrickson Z-value, which is the sum of all bond orders to any attached hetero atoms
+	 * @return Hendrickson Z-value
 	 */
 	public int getAtomZValue(int atom) {
 		int z = 0;
-		for (int i=0; i<mConnAtoms[atom]; i++)
-			if (isElectronegative(mConnAtom[atom][i]))
-				z += mConnBondOrder[atom][i];
-		return z;
+		int arom = 0;
+		for (int i=0; i<mConnAtoms[atom]; i++) {
+			if (isElectronegative(mConnAtom[atom][i])) {
+				if (isDelocalizedBond(mConnBond[atom][i])) {
+					z++;
+					arom++;
+					}
+				else {
+					z += mConnBondOrder[atom][i];
+					}
+				}
+			}
+		return z + arom/2;
 		}
 
 	
