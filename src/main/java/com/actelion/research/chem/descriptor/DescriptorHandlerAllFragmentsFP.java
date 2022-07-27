@@ -114,6 +114,8 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 		if (mol ==null)
 			return null;
 
+//System.out.println("bit\tbonds\tidcode");
+
 		mMol = preprocessStructure(mol);
 		mMol.ensureHelperArrays(Molecule.cHelperRings);
 		mFragmentGraph = new SimpleFragmentGraph(MAX_BOND_COUNT);
@@ -195,7 +197,14 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 		if (mBondSets.addIfNew(bondSet)) {
 			mFragmentGraph.set(mMol, mMemberBond, bondCount);
 			int hash = mFragmentGraph.createHashValue(HASH_BITS);
-
+/*
+StereoMolecule frag = new StereoMolecule();
+boolean[] isBondMember = new boolean[mMol.getBonds()];
+for (int i=0; i<bondCount; i++)
+ isBondMember[mMemberBond[i]] = true;
+mMol.copyMoleculeByBonds(frag, isBondMember, true, null);
+System.out.println(hash+"\t"+bondCount+"\t"+new Canonizer(frag).getIDCode());
+*/
 			int high = DESCRIPTOR_LEN - hash / Long.SIZE - 1;
 			int low = hash % Long.SIZE;
 			mDescriptor[high] |= (1L << low);
