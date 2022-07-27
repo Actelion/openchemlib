@@ -1,0 +1,10 @@
+# Builds OpenChemLib.jar from a shell
+# OpenChemLib does not require any dependency
+#
+rm -rf ./build/*
+cp -r ./src/main/resources/* ./build/
+find -name "*.java" > sources.txt
+javac -d ./build @sources.txt
+rm sources.txt
+jar -cf build/OpenChemLib.jar -C ./build .
+
