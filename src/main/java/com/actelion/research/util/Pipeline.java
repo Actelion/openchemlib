@@ -150,35 +150,42 @@ public class Pipeline<T> implements IPipeline<T> {
 	 * @return all data
 	 */
 	public List<T> pollAllWithWait(){
-
 		List<T> li = new ArrayList<>();
-
 		while(!wereAllDataFetched()){
-
 			T row = pollData();
-
 			if(row==null){
 				try {Thread.sleep(10);} catch (InterruptedException e) {e.printStackTrace();}
 				continue;
 			}
-
 			li.add(row);
 		}
-
 		return li;
 	}
-	public List<T> pollAll(){
 
+	public List<T> pollBatchWithWait(int sizeBatch){
+		List<T> li = new ArrayList<>();
+		while(!wereAllDataFetched()){
+			T row = pollData();
+			if(row==null){
+				try {Thread.sleep(10);} catch (InterruptedException e) {e.printStackTrace();}
+				continue;
+			}
+			li.add(row);
+			if(li.size()==sizeBatch){
+				break;
+			}
+		}
+		return li;
+	}
+
+	public List<T> pollAll(){
 		if(!isAllDataIn()){
 			throw new RuntimeException("all_data_in flag not set.");
 		}
-		
 		List<T> li = new ArrayList<T>();
-		
 		while(!isEmpty()){
 			li.add(pollData());
 		}
-		
 		return li;
 	}
 	
