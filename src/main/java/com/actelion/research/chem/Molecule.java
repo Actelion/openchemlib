@@ -3856,6 +3856,16 @@ public class Molecule implements Serializable {
 	 * @return whether atom is an electronegative one
 	 */
 	public boolean isElectronegative(int atom) {
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return false;
+
+			if (mAtomList != null && mAtomList[atom] != null)
+				for (int atomicNo:mAtomList[atom])
+					if (!isAtomicNoElectronegative(atomicNo))
+						return false;
+			}
+
 		return isAtomicNoElectronegative(mAtomicNo[atom]);
 		}
 
@@ -3887,6 +3897,16 @@ public class Molecule implements Serializable {
 	 * @return whether atom is an electropositive one
 	 */
 	public boolean isElectropositive(int atom) {
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return false;
+
+			if (mAtomList != null && mAtomList[atom] != null)
+				for (int atomicNo:mAtomList[atom])
+					if (!isAtomicNoElectropositive(atomicNo))
+						return false;
+			}
+
 		return isAtomicNoElectropositive(mAtomicNo[atom]);
 		}
 
@@ -3896,7 +3916,21 @@ public class Molecule implements Serializable {
 	 * @return whether atom is any metal atom
 	 */
 	public boolean isMetalAtom(int atom) {
-		int atomicNo = mAtomicNo[atom];
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return false;
+
+			if (mAtomList != null && mAtomList[atom] != null)
+				for (int atomicNo:mAtomList[atom])
+					if (!isAtomicNoMetal(atomicNo))
+						return false;
+			}
+
+		return isAtomicNoMetal(mAtomicNo[atom]);
+		}
+
+
+	public static boolean isAtomicNoMetal(int atomicNo) {
 		return (atomicNo >=  3 && atomicNo <=  4)
 			|| (atomicNo >= 11 && atomicNo <= 13)
 			|| (atomicNo >= 19 && atomicNo <= 31)
@@ -3911,7 +3945,21 @@ public class Molecule implements Serializable {
 	 * @return true if this atom is not a metal and not a nobel gas
 	 */
 	public boolean isOrganicAtom(int atom) {
-		int atomicNo = mAtomicNo[atom];
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return false;
+
+			if (mAtomList != null && mAtomList[atom] != null)
+				for (int atomicNo:mAtomList[atom])
+					if (!isAtomicNoOrganic(atomicNo))
+						return false;
+			}
+
+		return isAtomicNoOrganic(mAtomicNo[atom]);
+		}
+
+
+	public static boolean isAtomicNoOrganic(int atomicNo) {
 		return atomicNo == 1
 			|| (atomicNo >=  5 && atomicNo <=  9)	// B,C,N,O,F
 			|| (atomicNo >= 14 && atomicNo <= 17)	// Si,P,S,Cl

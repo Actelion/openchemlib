@@ -1502,9 +1502,11 @@ System.out.println();
 					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize7;
 				}
 			}
-		for (int atom=0; atom<nTotalFragmentAtoms; atom++)
-			if (fragment.getAtomRingSize(atom) > 7)
-				mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSizeLarge;
+// Cannot require that, because if a molecule atom is also part of a small ring,
+// then the large ring membership is not known anymore
+//		for (int atom=0; atom<nTotalFragmentAtoms; atom++)
+//			if (fragment.getAtomRingSize(atom) > 7)
+//				mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSizeLarge;
 
 		int nTotalFragmentBonds = fragment.getBonds();
 
