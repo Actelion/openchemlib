@@ -59,15 +59,10 @@ public class Pipeline<T> implements IPipeline<T> {
 	private AtomicLong polled;
 	
 	public Pipeline() {
-		
 		allDataIn = new AtomicBoolean(false);
-		
 		queue = new ConcurrentLinkedQueue<T>();
-		
 		added = new AtomicLong();
-		
 		polled = new AtomicLong();
-		
 	}
 	
 	/**
@@ -120,12 +115,9 @@ public class Pipeline<T> implements IPipeline<T> {
 	 * @return null if nothing is in the queue.
 	 */
 	public T pollData() {
-		
 		T t = queue.poll();
-		
 		if(t!=null)
 			polled.incrementAndGet();
-		
 		return t;
 	}
 	
@@ -193,11 +185,9 @@ public class Pipeline<T> implements IPipeline<T> {
 	 * Returns true if all data in was set and the queue is empty.
 	 */
 	public boolean wereAllDataFetched() {
-		
 		if(!isAllDataIn()){
 			return false;
 		}
-		
 		return queue.isEmpty();
 	}
 
