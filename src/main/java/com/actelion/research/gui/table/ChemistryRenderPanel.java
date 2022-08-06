@@ -21,8 +21,15 @@ public class ChemistryRenderPanel extends JPanel {
     static final long serialVersionUID = 0x20070312;
 
     private Object  mChemistry;
-    private int mOverruleForegroundARGB;
+    private int mDisplayMode,mOverruleForegroundARGB;
+    private double mTextSizeFactor;
     private boolean mAlternateBackground;
+
+    public ChemistryRenderPanel() {
+        mOverruleForegroundARGB = 0;
+        mDisplayMode = 0;
+        mTextSizeFactor = 1.0;
+        }
 
     public void setChemistry(Object chemistry) {
         mChemistry = chemistry;
@@ -65,6 +72,14 @@ public class ChemistryRenderPanel extends JPanel {
         mAlternateBackground = b;
         }
 
+    public void setDisplayMode(int mode) {
+        mDisplayMode = mode;
+        }
+
+    public void setTextSizeFactor(double factor) {
+        mTextSizeFactor = factor;
+        }
+
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -88,7 +103,8 @@ public class ChemistryRenderPanel extends JPanel {
 
         if (mChemistry != null && r.width > 0 && r.height > 0) {
             if (mChemistry instanceof StereoMolecule) {
-                GenericDepictor d = new GenericDepictor((StereoMolecule)mChemistry, Depictor2D.cDModeSuppressChiralText);
+                GenericDepictor d = new GenericDepictor((StereoMolecule)mChemistry, mDisplayMode | Depictor2D.cDModeSuppressChiralText);
+                d.setFactorTextSize(mTextSizeFactor);
                 d.setForegroundColor(getForeground().getRGB(), getBackground().getRGB());
                 if (mOverruleForegroundARGB != 0)
                 	d.setOverruleColor(mOverruleForegroundARGB, getBackground().getRGB());
@@ -100,6 +116,8 @@ public class ChemistryRenderPanel extends JPanel {
             if (mChemistry instanceof Reaction) {
             	Reaction rxn = (Reaction)mChemistry;
                 ExtendedDepictor d = new ExtendedDepictor(rxn, rxn.getDrawingObjects(), rxn.isReactionLayoutRequired());
+                d.setFactorTextSize(mTextSizeFactor);
+                d.setDisplayMode(mDisplayMode | Depictor2D.cDModeSuppressChiralText);
                 d.setForegroundColor(getForeground().getRGB(), getBackground().getRGB());
                 if (mOverruleForegroundARGB != 0)
                 	d.setOverruleColor(mOverruleForegroundARGB, getBackground().getRGB());

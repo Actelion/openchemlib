@@ -142,7 +142,7 @@ public class GenericEditorArea implements GenericEventListener {
 			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled,
 			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2, mMaxAVBL;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
-	private double mX1, mY1, mX2, mY2, mWidth, mHeight, mUIScaling;
+	private double mX1, mY1, mX2, mY2, mWidth, mHeight, mUIScaling, mTextSizeFactor;
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
 	private boolean mAltIsDown, mShiftIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
@@ -188,6 +188,8 @@ public class GenericEditorArea implements GenericEventListener {
 		mPendingRequest = cRequestNone;
 		mCurrentCursor = SwingCursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
+
+		mTextSizeFactor = 1.0;
 
 		mUIScaling = HiDPIHelper.getUIScaleFactor();
 		mMaxAVBL = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
@@ -279,6 +281,8 @@ public class GenericEditorArea implements GenericEventListener {
 			mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) ? 0
 					: LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(background, 0.85f)
 					: ColorHelper.darker(background, 0.85f));
+
+			mDepictor.setFactorTextSize(mTextSizeFactor);
 
 			mDepictor.setDisplayMode(mDisplayMode
 					| AbstractDepictor.cDModeHiliteAllQueryFeatures
@@ -2905,6 +2909,11 @@ public class GenericEditorArea implements GenericEventListener {
 
 	public void setDisplayMode ( int dMode){
 		mDisplayMode = dMode;
+		update(UPDATE_REDRAW);
+	}
+
+	public void setTextSizeFactor(double factor) {
+		mTextSizeFactor = factor;
 		update(UPDATE_REDRAW);
 	}
 

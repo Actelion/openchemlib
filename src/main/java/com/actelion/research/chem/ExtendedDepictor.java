@@ -145,6 +145,12 @@ public class ExtendedDepictor {
         mDisplayMode = displayMode;
         }
 
+    public void setFactorTextSize(double factor) {
+    	if (mDepictor != null)
+	    	for (GenericDepictor d:mDepictor)
+	    		d.setFactorTextSize(factor);
+        }
+
     public void setFragmentNoColor(int argb) {
         // use setFragmentNoColor(null) if you don't want fragment numbers to be shown
         mFragmentNoColor = argb;
@@ -270,6 +276,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);
 		if (mCatalystDepictor != null) {
 			for (GenericDepictor d:mCatalystDepictor) {
 //				d.setDisplayMode(mDisplayMode);
+//				d.setFactorTextSize(mFactorTextSize);
 				d.paint(context);
 /*
 Rectangle2D.Float r = mCatalystDepictor[i].getBoundingRect();

@@ -184,6 +184,8 @@ public interface CompoundTableConstants {
     String cColumnPropertyCommentUploadStatus = "commentUploadStatus";
     String cColumnPropertyCommentDepartment = "commentDepartment";
     String cColumnPropertyCalculated = "calculated"; //for columns that can be calculated by a task
+    String cColumnPropertyChemistryDisplayMode = "chemistryDisplayMode"; // display mode for molecules, e.g. to better recognize query features
+    String cColumnPropertyChemistryTextSize = "chemistryTextSize"; // display text size for molecule atom labels; default is 1.0
 
     String cSuperposeValueReferenceRow = "refRow";  // "reference" or null
     String cSuperposeAlignValueShape = "shape";  // "reference" or null
