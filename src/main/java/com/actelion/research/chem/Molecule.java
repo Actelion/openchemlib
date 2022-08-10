@@ -518,6 +518,22 @@ public class Molecule implements Serializable {
 		}
 
 
+	public static int bondTypeToOrder(int bondType) {
+		int simpleType = bondType & cBondTypeMaskSimple;
+		return (simpleType == cBondTypeSingle
+			 || simpleType == cBondTypeDelocalized) ? 1
+			  : simpleType == cBondTypeDouble ? 2
+			  : simpleType == cBondTypeTriple ? 3 : 0; // dative bonds
+		}
+
+
+	public static int bondOrderToType(int bondOrder) {
+		return bondOrder == 0 ? Molecule.cBondTypeMetalLigand
+			 : bondOrder == 1 ? Molecule.cBondTypeSingle
+			 : bondOrder == 2 ? Molecule.cBondTypeDouble : Molecule.cBondTypeTriple;
+		}
+
+
 	public Molecule() {
 		mMaxAtoms = mMaxBonds = 256;
 		init();
