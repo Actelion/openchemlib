@@ -340,7 +340,6 @@ public class SmilesParser {
 								// If we have a comma after the first atom label, then we need to parse a list.
 								// In this case we also have to set aromaticity query features from upper and lower case symbols.
 								if (allowSmarts && (smiles[position] == ',' || isNot)) {
-									atomList.removeAll();
 									boolean upperCaseFound = false;
 									boolean lowerCaseFound = false;
 									int start = position - labelLength;
@@ -366,6 +365,7 @@ public class SmilesParser {
 											}
 										}
 									if (atomList.size() > 1) {
+										explicitHydrogens = HYDROGEN_ANY;   // don't use implicit zero with atom lists
 										if (!upperCaseFound)
 											atomQueryFeatures |= Molecule.cAtomQFAromatic;
 										else if (!lowerCaseFound)
@@ -687,6 +687,14 @@ public class SmilesParser {
 				mMol.setAtomAbnormalValence(atom, abnormalValence);
 				if (atomQueryFeatures != 0) {
 					smartsFeatureFound = true;
+					if ((atomQueryFeatures & Molecule.cAtomQFAromatic) != 0) {
+						atomQueryFeatures &= ~Molecule.cAtomQFAromatic;
+						mMol.setAtomMarker(atom, true);
+						mAromaticAtoms++;
+						}
+					else {
+						mMol.setAtomMarker(atom, false);
+						}
 					mMol.setAtomQueryFeature(atom, atomQueryFeatures, true);
 					}
 				if (atomList.size() != 0) {
@@ -695,18 +703,19 @@ public class SmilesParser {
 					for (int i=0; i<atomList.size(); i++)
 						list[i] = atomList.get(i);
 					mMol.setAtomList(atom, list);
+					atomList.removeAll();
 					}
+				else {  // mark aromatic atoms
+					if (Character.isLowerCase(theChar)) {
+						if (atomicNo != 5 && atomicNo != 6 && atomicNo != 7 && atomicNo != 8 && atomicNo != 15 && atomicNo != 16 && atomicNo != 33 && atomicNo != 34)
+							throw new Exception("SmilesParser: atomicNo " + atomicNo + " must not be aromatic");
 
-				// mark aromatic atoms
-				if (Character.isLowerCase(theChar)) {
-					if (atomicNo != 5 && atomicNo != 6 && atomicNo != 7 && atomicNo != 8 && atomicNo != 15 &&atomicNo != 16 && atomicNo != 33  && atomicNo != 34)
-						throw new Exception("SmilesParser: atomicNo "+atomicNo+" must not be aromatic");
-
-					mMol.setAtomMarker(atom, true);
-					mAromaticAtoms++;
-					}
-				else {
-					mMol.setAtomMarker(atom, false);
+						mMol.setAtomMarker(atom, true);
+						mAromaticAtoms++;
+						}
+					else {
+						mMol.setAtomMarker(atom, false);
+						}
 					}
 
 				// put explicitHydrogen into atomCustomLabel to keep atom-relation when hydrogens move to end of atom list in handleHydrogen()
