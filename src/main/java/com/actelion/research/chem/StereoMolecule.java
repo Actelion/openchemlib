@@ -205,13 +205,9 @@ public class StereoMolecule extends ExtendedMolecule {
 			rankBits = cHelperBitSymmetrySimple;
 		    rankMode = Canonizer.CREATE_SYMMETRY_RANK;
 		    }
-		else if ((required & cHelperBitSymmetryDiastereotopic) != 0) {
-			rankBits = cHelperBitSymmetryDiastereotopic;
-            rankMode = Canonizer.CREATE_SYMMETRY_RANK | Canonizer.CONSIDER_DIASTEREOTOPICITY;
-		    }
-		else if ((required & cHelperBitSymmetryEnantiotopic) != 0) {
-			rankBits = cHelperBitSymmetryEnantiotopic;
-            rankMode = Canonizer.CREATE_SYMMETRY_RANK | Canonizer.CONSIDER_ENANTIOTOPICITY;
+		else if ((required & cHelperBitSymmetryStereoHeterotopicity) != 0) {
+			rankBits = cHelperBitSymmetryStereoHeterotopicity;
+            rankMode = Canonizer.CREATE_SYMMETRY_RANK| Canonizer.CONSIDER_STEREOHETEROTOPICITY;
 		    }
 
 		if ((required & cHelperBitIncludeNitrogenParities) != 0) {
@@ -533,10 +529,10 @@ public class StereoMolecule extends ExtendedMolecule {
               || getAtomESRType(atom) == cESRTypeOr)
              && (!isAtomStereoCenter(atom)
               || getAtomParity(atom) == cAtomParityUnknown))
-                throw new Exception("Members of ESR groups must only be stereo centers with known configuration.");
+                throw new Exception(VALIDATION_ERROR_ESR_CENTER_UNKNOWN);
 
             if ((mAtomFlags[atom] & cAtomFlagStereoProblem) != 0)
-				throw new Exception("Over- or under-specified stereofeature or more than one racemic type bond");
+				throw new Exception(VALIDATION_ERROR_OVER_UNDER_SPECIFIED);
 
 			if ((getAtomParity(atom) == Molecule.cAtomParity1
 			  || getAtomParity(atom) == Molecule.cAtomParity2)
@@ -549,7 +545,7 @@ public class StereoMolecule extends ExtendedMolecule {
 						for (int j=0; j<i; j++)
 							if (!isStereoBond(getConnBond(atom, j), atom))
 								if (bondsAreParallel(angle[i], angle[j]))
-									throw new Exception("Ambiguous configuration at stereo center because of 2 parallel bonds");
+									throw new Exception(VALIDATION_ERROR_AMBIGUOUS_CONFIGURATION);
 				}
 			}
 		}

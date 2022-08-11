@@ -19,6 +19,7 @@ public interface GenericDrawContext {
 	void drawCenteredString(double x, double y, String s);
 	void drawImage(GenericImage image, double x, double y);
 	void drawImage(GenericImage image, double sx, double sy, double dx, double dy, double w, double h);
+	void drawImage(GenericImage image, double sx, double sy, double sw, double sh, double dx, double dy, double dw, double dh);
 //	void setClip(double x, double y, double w, double h);
 	GenericRectangle getBounds(String s);
 	boolean isDarkBackground();

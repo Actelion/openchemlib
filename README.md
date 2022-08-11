@@ -11,9 +11,13 @@ git clone https://github.com/Actelion/openchemlib.git
 ```
 
 ### Build the project
-To build the project run the following from within the project directory.
+To build the project with maven run the following from within the project directory:
 ```bash
 ./mvnw package
+```
+To build the project using the JDK only (Mac, Linux) run this from within the project directory:
+```
+./buildOpenChemLib
 ```
 
 ### Folder 'examples'

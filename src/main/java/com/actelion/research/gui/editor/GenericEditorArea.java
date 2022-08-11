@@ -142,7 +142,7 @@ public class GenericEditorArea implements GenericEventListener {
 			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled,
 			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2, mMaxAVBL;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
-	private double mX1, mY1, mX2, mY2, mWidth, mHeight, mUIScaling;
+	private double mX1, mY1, mX2, mY2, mWidth, mHeight, mUIScaling, mTextSizeFactor;
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
 	private boolean mAltIsDown, mShiftIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
@@ -188,6 +188,8 @@ public class GenericEditorArea implements GenericEventListener {
 		mPendingRequest = cRequestNone;
 		mCurrentCursor = SwingCursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
+
+		mTextSizeFactor = 1.0;
 
 		mUIScaling = HiDPIHelper.getUIScaleFactor();
 		mMaxAVBL = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
@@ -279,6 +281,8 @@ public class GenericEditorArea implements GenericEventListener {
 			mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) ? 0
 					: LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(background, 0.85f)
 					: ColorHelper.darker(background, 0.85f));
+
+			mDepictor.setFactorTextSize(mTextSizeFactor);
 
 			mDepictor.setDisplayMode(mDisplayMode
 					| AbstractDepictor.cDModeHiliteAllQueryFeatures
@@ -757,7 +761,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	private boolean copyMolecule(boolean selectionOnly) {
 		if (mMol.getAllAtoms() != 0 && mClipboardHandler != null) {
-			return mClipboardHandler.copyMolecule(selectionOnly ? getSelectedCopy(mMol) : mMol);
+			return mClipboardHandler.copyMolecule(selectionOnly ? getSelectedCopy(mMol) : mMol.getCompactCopy());
 		}
 
 		return false;
@@ -806,10 +810,15 @@ public class GenericEditorArea implements GenericEventListener {
 		if (mol == null || mol.getAllAtoms() == 0)
 			return false;
 
-		if (mol.getAllBonds() != 0)
+		if (mol.getAllBonds() != 0) {
+			double avbl = getScaledAVBL();
 			new GenericDepictor(mol).updateCoords(mCanvas.getDrawContext(),
 					new GenericRectangle(0, 0, mCanvas.getCanvasWidth(), mCanvas.getCanvasHeight()),
-					AbstractDepictor.cModeInflateToMaxAVBL + (int)getScaledAVBL());
+					AbstractDepictor.cModeInflateToMaxAVBL + (int)avbl);
+
+			while (atomCoordinatesCollide(mol, 0.2*avbl))
+				mol.translateCoords(0.5*avbl, 0.5*avbl);
+			}
 
 		storeState();
 
@@ -833,6 +842,29 @@ public class GenericEditorArea implements GenericEventListener {
 			}
 
 		return true;
+		}
+
+	private boolean atomCoordinatesCollide(StereoMolecule mol, double tolerance) {
+		int count = 0;
+		tolerance *= tolerance;
+		for (int i=0; i<mol.getAllAtoms(); i++) {
+			double x1 = mol.getAtomX(i);
+			double y1 = mol.getAtomY(i);
+			boolean found = false;
+			for (int j=0; j<mMol.getAllAtoms(); j++) {
+				double x2 = mMol.getAtomX(j);
+				double y2 = mMol.getAtomY(j);
+				double dx = x2 - x1;
+				double dy = y2 - y1;
+				if (dx * dx + dy * dy < tolerance) {
+					found = true;
+					break;
+					}
+				}
+			if (found)
+				count++;
+			}
+		return count == mol.getAllAtoms();
 		}
 
 	private void openReaction() {
@@ -1147,9 +1179,17 @@ public class GenericEditorArea implements GenericEventListener {
 				updateCursor();
 			}
 
-			if (e.isCtrlDown() && e.getKey() == 'z') {
-				restoreState();
-				updateAndFireEvent(UPDATE_CHECK_VIEW);
+			if (e.isMenuShortcut()) {
+				if (e.getKey() == 'z') {
+					restoreState();
+					updateAndFireEvent(UPDATE_CHECK_VIEW);
+				}
+				else if (e.getKey() == 'c') {
+					copy();
+				}
+				else if (e.getKey() == 'v') {
+					paste();
+				}
 			} else if (e.getKey() == GenericKeyEvent.KEY_DELETE) {
 				storeState();
 				if (mCurrentTool == GenericEditorToolbar.cToolMapper) {
@@ -1264,14 +1304,11 @@ public class GenericEditorArea implements GenericEventListener {
 			} else if (mCurrentHiliteAtom == -1 && mCurrentHiliteBond == -1) {
 				if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE | MODE_MULTIPLE_FRAGMENTS)) == 0) {
 					int ch = e.getKey();
-					if (ch == 'h') {
+					if (ch == 'h')
 						flip(true);
-					}
-					if (ch == 'v') {
+					if (ch == 'v')
 						flip(false);
-					}
 				}
-
 			}
 		}
 		if (e.getWhat() == GenericKeyEvent.KEY_RELEASED) {
@@ -1285,13 +1322,6 @@ public class GenericEditorArea implements GenericEventListener {
 			}
 			if (e.getKey() == GenericKeyEvent.KEY_CTRL) {
 				updateCursor();
-			}
-			if (e.isMenuShortcut()) {
-				if (e.getKey() == 'c') {
-					copy();
-				} else if (e.getKey() == 'v') {
-					paste();
-				}
 			}
 		}
 	}
@@ -2879,6 +2909,11 @@ public class GenericEditorArea implements GenericEventListener {
 
 	public void setDisplayMode ( int dMode){
 		mDisplayMode = dMode;
+		update(UPDATE_REDRAW);
+	}
+
+	public void setTextSizeFactor(double factor) {
+		mTextSizeFactor = factor;
 		update(UPDATE_REDRAW);
 	}
 

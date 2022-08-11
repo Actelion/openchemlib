@@ -3,6 +3,7 @@ package com.actelion.research.chem.descriptor.flexophore.generator;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.histogram.MatrixBasedHistogram;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.util.Formatter;
 import com.actelion.research.util.datamodel.DoubleArray;
 
@@ -18,6 +19,21 @@ public class MultCoordFragIndex {
     public MultCoordFragIndex(int[] arrIndexFrag) {
         this.arrIndexFrag = arrIndexFrag;
         liCoord = new ArrayList<>();
+    }
+
+
+    public MultCoordFragIndex getDeepClone(){
+        int [] a = new int[arrIndexFrag.length];
+        System.arraycopy(arrIndexFrag, 0, a, 0, a.length);
+        MultCoordFragIndex m = new MultCoordFragIndex(a);
+        for (Coordinates coordinates : liCoord) {
+            m.liCoord.add(new Coordinates(coordinates));
+        }
+        return m;
+    }
+
+    public boolean isEqualIndices(SubGraphIndices sgi){
+        return sgi.equalIndices(arrIndexFrag);
     }
 
     public void addCoord(Coordinates coordinates){

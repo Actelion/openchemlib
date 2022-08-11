@@ -454,20 +454,13 @@ public class IntArray implements Serializable {
     }
     
     public static IntArray read(String l){
-    	
     	IntArray ia = new IntArray();
-    	
     	StringTokenizer st = new StringTokenizer(l, ", ;");
-    	
     	while(st.hasMoreTokens()){
-    		String t = st.nextToken();
-    		
+    		String t = st.nextToken().trim();
     		int i = Integer.parseInt(t);
-    		
     		ia.add(i);
-    		
     	}
-    	
     	return ia;
     }
 

@@ -142,8 +142,10 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFRxnParityShift	= 30;
 	public static final int cAtomQFNewRingSizeBits	= 7;
 	public static final int cAtomQFNewRingSizeShift = 32;
-	public static final long cAtomQFSimpleFeatures	= 0x000000000E3FC7FEL;
-	public static final long cAtomQFNarrowing		= 0x0000007F0FFFFFFEL;
+	public static final int cAtomQFStereoStateBits	= 2;
+	public static final int cAtomQFStereoStateShift = 44;
+	public static final long cAtomQFSimpleFeatures	= 0x00003F800E3FC7FEL;
+	public static final long cAtomQFNarrowing		= 0x00003FFF0FFFFFFEL;
 	public static final long cAtomQFAny				= 0x00000001;
 	public static final long cAtomQFAromState		= 0x00000006;
 	public static final long cAtomQFAromatic		= 0x00000002;
@@ -170,18 +172,18 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFNot1Neighbour	= 0x00040000;
 	public static final long cAtomQFNot2Neighbours  = 0x00080000;
 	public static final long cAtomQFNot3Neighbours  = 0x00100000;
-	public static final long cAtomQFNot4Neighbours  = 0x00200000;  // this is not 4 or more neighbours
-	public static final long cAtomQFSmallRingSize = 0x01C00000;  // legacy: used to just define one ring size
+	public static final long cAtomQFNot4Neighbours  = 0x00200000;  // this is not 4-or-more neighbours
+	public static final long cAtomQFSmallRingSize   = 0x01C00000;  // legacy: used to just define the smallest ring an atom is member of
 	public static final long cAtomQFCharge			= 0x0E000000;
 	public static final long cAtomQFNotChargeNeg	= 0x02000000;
 	public static final long cAtomQFNotCharge0		= 0x04000000;
 	public static final long cAtomQFNotChargePos	= 0x08000000;
-	public static final long cAtomQFFlatNitrogen	= 0x10000000;  // currently only used in TorsionDetail
-	public static final long cAtomQFExcludeGroup	= 0x20000000;  // these atoms must not exist in SS-matches
-	public static final long cAtomQFRxnParityHint   = 0xC0000000;  // Retain,invert,racemise configuration in reaction
-	public static final long cAtomQFRxnParityRetain = 0x40000000;  // Retain,invert,racemise configuration in reaction
-	public static final long cAtomQFRxnParityInvert = 0x80000000;  // Retain,invert,racemise configuration in reaction
-	public static final long cAtomQFRxnParityRacemize= 0xC0000000;  // Retain,invert,racemise configuration in reaction
+	public static final long cAtomQFFlatNitrogen	= 0x0000000010000000L;  // Currently, only used in TorsionDetail
+	public static final long cAtomQFExcludeGroup	= 0x0000000020000000L;  // These atoms must not exist in SS-matches
+	public static final long cAtomQFRxnParityHint   = 0x00000000C0000000L;  // Retain,invert,racemise configuration in reaction
+	public static final long cAtomQFRxnParityRetain = 0x0000000040000000L;
+	public static final long cAtomQFRxnParityInvert = 0x0000000080000000L;
+	public static final long cAtomQFRxnParityRacemize=0x00000000C0000000L;
 	public static final long cAtomQFNewRingSize     = 0x0000007F00000000L;
 	public static final long cAtomQFRingSize0       = 0x0000000100000000L;
 	public static final long cAtomQFRingSize3       = 0x0000000200000000L;
@@ -190,6 +192,15 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFRingSize6       = 0x0000001000000000L;
 	public static final long cAtomQFRingSize7       = 0x0000002000000000L;
 	public static final long cAtomQFRingSizeLarge   = 0x0000004000000000L;
+	public static final long cAtomQFZValue          = 0x00000F8000000000L;
+	public static final long cAtomQFZValueNot0      = 0x0000008000000000L;
+	public static final long cAtomQFZValueNot1      = 0x0000010000000000L;
+	public static final long cAtomQFZValueNot2      = 0x0000020000000000L;
+	public static final long cAtomQFZValueNot3      = 0x0000040000000000L;
+	public static final long cAtomQFZValueNot4      = 0x0000080000000000L;
+	public static final long cAtomQFStereoState     = 0x0000300000000000L;
+	public static final long cAtomQFIsStereo        = 0x0000100000000000L;
+	public static final long cAtomQFIsNotStereo     = 0x0000200000000000L;
 
 	public static final int cBondTypeSingle			= 0x00000001;
 	public static final int cBondTypeDouble			= 0x00000002;
@@ -285,11 +296,10 @@ public class Molecule implements Serializable {
 	public static final int cHelperBitCIP			= 0x0010;
 
 	public static final int cHelperBitSymmetrySimple			= 0x0020;
-	public static final int cHelperBitSymmetryDiastereotopic	= 0x0040;
-	public static final int cHelperBitSymmetryEnantiotopic		= 0x0080;
-	public static final int cHelperBitIncludeNitrogenParities	= 0x0100;
+	public static final int cHelperBitSymmetryStereoHeterotopicity = 0x0040;
+	public static final int cHelperBitIncludeNitrogenParities	= 0x0080;
 
-	public static final int cHelperBitsStereo = 0x01F8;
+	public static final int cHelperBitsStereo = 0x00F8;
 
 	public static final int cHelperNeighbours = cHelperBitNeighbours;
 	public static final int cHelperRingsSimple = cHelperNeighbours | cHelperBitRingsSimple;
@@ -298,8 +308,7 @@ public class Molecule implements Serializable {
 	public static final int cHelperCIP = cHelperParities | cHelperBitCIP;
 
 	public static final int cHelperSymmetrySimple = cHelperCIP | cHelperBitSymmetrySimple;
-	public static final int cHelperSymmetryDiastereotopic = cHelperCIP | cHelperBitSymmetryDiastereotopic;
-	public static final int cHelperSymmetryEnantiotopic = cHelperCIP | cHelperBitSymmetryEnantiotopic;
+	public static final int cHelperSymmetryStereoHeterotopicity = cHelperCIP | cHelperBitSymmetryStereoHeterotopicity;
 
 	public static final int cChiralityIsomerCountMask   = 0x00FFFF;
 	public static final int cChiralityUnknown		  	= 0x000000;
@@ -506,6 +515,22 @@ public class Molecule implements Serializable {
 		while (angleDif > Math.PI)
 			angleDif -= 2 * Math.PI;
 		return angleDif;
+		}
+
+
+	public static int bondTypeToOrder(int bondType) {
+		int simpleType = bondType & cBondTypeMaskSimple;
+		return (simpleType == cBondTypeSingle
+			 || simpleType == cBondTypeDelocalized) ? 1
+			  : simpleType == cBondTypeDouble ? 2
+			  : simpleType == cBondTypeTriple ? 3 : 0; // dative bonds
+		}
+
+
+	public static int bondOrderToType(int bondOrder) {
+		return bondOrder == 0 ? Molecule.cBondTypeMetalLigand
+			 : bondOrder == 1 ? Molecule.cBondTypeSingle
+			 : bondOrder == 2 ? Molecule.cBondTypeDouble : Molecule.cBondTypeTriple;
 		}
 
 
@@ -1526,7 +1551,9 @@ public class Molecule implements Serializable {
 
 	/**
 	 * High level function for constructing a molecule.
-	 * After the deletion the original order of atom and bond indexes is retained.
+	 * After the deletion the original order of atom and bond indexes is retained. Hence, the number of bond indexes
+	 * is reduced by one. Successively removing bonds needs to start with the highest bond index first,
+	 * e.g. the bonds 5, 6, and 11 must be deleted in the order 11, 6, and 5.
 	 * @param bond
 	 */
 	public void deleteBond(int bond) {
@@ -3845,6 +3872,16 @@ public class Molecule implements Serializable {
 	 * @return whether atom is an electronegative one
 	 */
 	public boolean isElectronegative(int atom) {
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return false;
+
+			if (mAtomList != null && mAtomList[atom] != null)
+				for (int atomicNo:mAtomList[atom])
+					if (!isAtomicNoElectronegative(atomicNo))
+						return false;
+			}
+
 		return isAtomicNoElectronegative(mAtomicNo[atom]);
 		}
 
@@ -3876,6 +3913,16 @@ public class Molecule implements Serializable {
 	 * @return whether atom is an electropositive one
 	 */
 	public boolean isElectropositive(int atom) {
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return false;
+
+			if (mAtomList != null && mAtomList[atom] != null)
+				for (int atomicNo:mAtomList[atom])
+					if (!isAtomicNoElectropositive(atomicNo))
+						return false;
+			}
+
 		return isAtomicNoElectropositive(mAtomicNo[atom]);
 		}
 
@@ -3885,7 +3932,21 @@ public class Molecule implements Serializable {
 	 * @return whether atom is any metal atom
 	 */
 	public boolean isMetalAtom(int atom) {
-		int atomicNo = mAtomicNo[atom];
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return false;
+
+			if (mAtomList != null && mAtomList[atom] != null)
+				for (int atomicNo:mAtomList[atom])
+					if (!isAtomicNoMetal(atomicNo))
+						return false;
+			}
+
+		return isAtomicNoMetal(mAtomicNo[atom]);
+		}
+
+
+	public static boolean isAtomicNoMetal(int atomicNo) {
 		return (atomicNo >=  3 && atomicNo <=  4)
 			|| (atomicNo >= 11 && atomicNo <= 13)
 			|| (atomicNo >= 19 && atomicNo <= 31)
@@ -3900,7 +3961,21 @@ public class Molecule implements Serializable {
 	 * @return true if this atom is not a metal and not a nobel gas
 	 */
 	public boolean isOrganicAtom(int atom) {
-		int atomicNo = mAtomicNo[atom];
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return false;
+
+			if (mAtomList != null && mAtomList[atom] != null)
+				for (int atomicNo:mAtomList[atom])
+					if (!isAtomicNoOrganic(atomicNo))
+						return false;
+			}
+
+		return isAtomicNoOrganic(mAtomicNo[atom]);
+		}
+
+
+	public static boolean isAtomicNoOrganic(int atomicNo) {
 		return atomicNo == 1
 			|| (atomicNo >=  5 && atomicNo <=  9)	// B,C,N,O,F
 			|| (atomicNo >= 14 && atomicNo <= 17)	// Si,P,S,Cl

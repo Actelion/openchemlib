@@ -28,6 +28,14 @@ public class ChemistryCellRenderer implements ListCellRenderer,TableCellRenderer
 		mAlternateBackground = b;
 		}
 
+	public void setDisplayMode(int mode) {
+		mRenderPanel.setDisplayMode(mode);
+		}
+
+	public void setTextSizeFactor(double factor) {
+		mRenderPanel.setTextSizeFactor(factor);
+		}
+
 	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
     	mIsEnabled = list.isEnabled();
     	return getCellRendererComponent(value, isSelected, hasFocus, index);

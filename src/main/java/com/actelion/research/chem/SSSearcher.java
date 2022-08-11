@@ -54,7 +54,7 @@ public class SSSearcher {
 	index creation). Example: key C=C-N-C=C, query pyrol, molecule indole, key would match
 	pyrol but not indol!!!
   - match modes used for the actual atom by atom check must be more or equally restrictive
-	than the match mode used for index creation. Otherwise index keys may filter out
+	than the match mode used for index creation. Otherwise, index keys may filter out
 	molecules which would be considered a match with the less strict matching conditions
 	of the atom by atom check.
 */
@@ -202,7 +202,7 @@ public class SSSearcher {
 
 		mRequiredHelperLevel = Molecule.cHelperRings;
 		for (int atom=0; atom<mFragment.getAtoms(); atom++)
-			if ((mFragment.getAtomQueryFeatures(atom) & Molecule.cAtomQFMatchStereo) != 0)
+			if ((mFragment.getAtomQueryFeatures(atom) & (Molecule.cAtomQFStereoState | Molecule.cAtomQFMatchStereo)) != 0)
 				mRequiredHelperLevel = Molecule.cHelperParities;
 		for (int bond=0; bond<mFragment.getBonds(); bond++)
 			if ((mFragment.getBondQueryFeatures(bond) & Molecule.cBondQFMatchStereo) != 0)
@@ -1502,9 +1502,11 @@ System.out.println();
 					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize7;
 				}
 			}
-		for (int atom=0; atom<nTotalFragmentAtoms; atom++)
-			if (mMolecule.getAtomRingSize(atom) > 7)
-				mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSizeLarge;
+// Cannot require that, because if a molecule atom is also part of a small ring,
+// then the large ring membership is not known anymore
+//		for (int atom=0; atom<nTotalFragmentAtoms; atom++)
+//			if (fragment.getAtomRingSize(atom) > 7)
+//				mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSizeLarge;
 
 		int nTotalFragmentBonds = fragment.getBonds();
 
@@ -1543,6 +1545,11 @@ System.out.println();
 				queryDefaults |= Molecule.cAtomQFAromatic;
 			else
 				queryDefaults |= Molecule.cAtomQFNotAromatic;
+
+			if (mol.isAtomStereoCenter(atom))
+				queryDefaults |= Molecule.cAtomQFIsStereo;
+			else
+				queryDefaults |= Molecule.cAtomQFIsNotStereo;
 
 			int ringBonds = mol.getAtomRingBondCount(atom);
 			if (ringBonds == 0)
@@ -1605,6 +1612,25 @@ System.out.println();
 				break;
 				}
 
+			int zValue = mol.getAtomZValue(atom);
+			switch (zValue) {
+				case 0:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot0);
+					break;
+				case 1:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot1);
+					break;
+				case 2:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2);
+					break;
+				case 3:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3);
+					break;
+				default:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
+					break;
+				}
+
 			int piElectrons = mol.getAtomPi(atom);
 			switch (piElectrons) {
 			case 0:
@@ -1660,13 +1686,31 @@ System.out.println();
 				queryDefaults |= (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours);
 				break;
 				}
-			}
 
-		int piElectrons = mol.getAtomPi(atom);
-		if (piElectrons > 0)
-			queryDefaults |= Molecule.cAtomQFNot0PiElectrons;
-		if (piElectrons > 1)
-			queryDefaults |= Molecule.cAtomQFNot1PiElectron;
+			int zValue = mol.getAtomZValue(atom);
+			switch (zValue) {
+				case 0:
+					break;
+				case 1:
+					queryDefaults |= (Molecule.cAtomQFZValueNot0);
+					break;
+				case 2:
+					queryDefaults |= (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1);
+					break;
+				case 3:
+					queryDefaults |= (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1 | Molecule.cAtomQFZValueNot2);
+					break;
+				default:
+					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
+					break;
+				}
+
+			int piElectrons = mol.getAtomPi(atom);
+			if (piElectrons > 0)
+				queryDefaults |= Molecule.cAtomQFNot0PiElectrons;
+			if (piElectrons > 1)
+				queryDefaults |= Molecule.cAtomQFNot1PiElectron;
+			}
 
 		return queryDefaults;
 		}

@@ -59,15 +59,10 @@ public class Pipeline<T> implements IPipeline<T> {
 	private AtomicLong polled;
 	
 	public Pipeline() {
-		
 		allDataIn = new AtomicBoolean(false);
-		
 		queue = new ConcurrentLinkedQueue<T>();
-		
 		added = new AtomicLong();
-		
 		polled = new AtomicLong();
-		
 	}
 	
 	/**
@@ -120,12 +115,9 @@ public class Pipeline<T> implements IPipeline<T> {
 	 * @return null if nothing is in the queue.
 	 */
 	public T pollData() {
-		
 		T t = queue.poll();
-		
 		if(t!=null)
 			polled.incrementAndGet();
-		
 		return t;
 	}
 	
@@ -150,35 +142,42 @@ public class Pipeline<T> implements IPipeline<T> {
 	 * @return all data
 	 */
 	public List<T> pollAllWithWait(){
-
 		List<T> li = new ArrayList<>();
-
 		while(!wereAllDataFetched()){
-
 			T row = pollData();
-
 			if(row==null){
 				try {Thread.sleep(10);} catch (InterruptedException e) {e.printStackTrace();}
 				continue;
 			}
-
 			li.add(row);
 		}
-
 		return li;
 	}
-	public List<T> pollAll(){
 
+	public List<T> pollBatchWithWait(int sizeBatch){
+		List<T> li = new ArrayList<>();
+		while(!wereAllDataFetched()){
+			T row = pollData();
+			if(row==null){
+				try {Thread.sleep(10);} catch (InterruptedException e) {e.printStackTrace();}
+				continue;
+			}
+			li.add(row);
+			if(li.size()==sizeBatch){
+				break;
+			}
+		}
+		return li;
+	}
+
+	public List<T> pollAll(){
 		if(!isAllDataIn()){
 			throw new RuntimeException("all_data_in flag not set.");
 		}
-		
 		List<T> li = new ArrayList<T>();
-		
 		while(!isEmpty()){
 			li.add(pollData());
 		}
-		
 		return li;
 	}
 	
@@ -186,11 +185,9 @@ public class Pipeline<T> implements IPipeline<T> {
 	 * Returns true if all data in was set and the queue is empty.
 	 */
 	public boolean wereAllDataFetched() {
-		
 		if(!isAllDataIn()){
 			return false;
 		}
-		
 		return queue.isEmpty();
 	}
 

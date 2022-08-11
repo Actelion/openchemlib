@@ -1140,13 +1140,18 @@ public class CoordinateInventor {
 				}
 			}
 
-		// if the bond is also a member of a small ring and if more than this one bond are shared
-		// then the first and the last shared bond are E and the ones between Z.
+		// If the bond is also a member of a small ring
 		if (mMol.isSmallRingBond(ringBond[index])) {
 			int sharedRing1 = mMol.getRingSet().getSharedRing(ringBond[lowerIndex], ringBond[index]);
 			int sharedRing2 = mMol.getRingSet().getSharedRing(ringBond[higherIndex], ringBond[index]);
+
+			// If more than one bond is shared by the large and the small ring,
+			// then the first and the last shared bond are E and the ones between Z.
 			if (sharedRing1 != -1 || sharedRing2 != -1)
 				return sharedRing1 == sharedRing2 ? Molecule.cBondParityZor2 : Molecule.cBondParityEor1;
+
+			// If only this one bond is shared, then we have a Z-configuration
+			return Molecule.cBondParityZor2;
 			}
 
 		return Molecule.cBondParityNone;

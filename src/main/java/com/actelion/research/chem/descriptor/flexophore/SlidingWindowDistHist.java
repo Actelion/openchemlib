@@ -15,60 +15,33 @@ public class SlidingWindowDistHist {
     private int lenFilHalf;
 
     public SlidingWindowDistHist(double[] arrFilter) {
-
         this.arrFilter = arrFilter;
-
         if(arrFilter.length % 2 == 0){
             throw new RuntimeException("Odd number of filter values needed!");
         }
-
         lenFilHalf = arrFilter.length / 2;
-
         int n = ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE;
-
         int maxNumDistHist = ((n*n)-n)/2;
-
         arrTmp = new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM * maxNumDistHist];
     }
 
     public void apply(DistHist distHist){
-
         int nNodes = distHist.getNumPPNodes();
-
         int n = ConstantsFlexophoreGenerator.BINS_HISTOGRAM;
-
         int end = n - lenFilHalf;
-
         for (int i = 0; i < nNodes; i++) {
-
             for (int j = i+1; j < nNodes; j++) {
-
                 int indexStart = distHist.getIndexPosStartForDistHist(i,j);
-
                 for (int k = lenFilHalf; k < end; k++) {
-
                     double v = 0;
-
                     for (int l = 0; l < arrFilter.length; l++) {
-
                         int ind = k - lenFilHalf + l + indexStart;
-
                         v +=  distHist.getValueAtAbsolutePosition(ind) * arrFilter[l];
-
                     }
-
                     arrTmp[indexStart+k] = (byte)(v+0.5);
                 }
             }
         }
-
         System.arraycopy(arrTmp, 0, distHist.arrDistHists, 0, distHist.arrDistHists.length);
     }
-
-
-
-
-
-
-
 }

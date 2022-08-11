@@ -263,9 +263,10 @@ public class Reactor {
 	 * Matches are removed, if free valences are not compatible with the formation of new bonds.
 	 * @param no
 	 * @param reactant with correctly set parity flags
+	 * @return whether the generic reactant was found in this real world reactant
 	 */
 	@SuppressWarnings("unchecked")
-	public void setReactant(int no, StereoMolecule reactant) {
+	public boolean setReactant(int no, StereoMolecule reactant) {
 		mReactant[no] = reactant;
 		mProduct = null;
 		StereoMolecule genericReactant = mGenericReaction.getReactant(no);
@@ -275,7 +276,7 @@ public class Reactor {
 		if (mSSSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, matchMode) == 0) {
 			mMatchList[no] = new ArrayList<>();
 			mReactantMatchCombinationCount = 0;
-			return;
+			return false;
 			}
 
 		// eliminate matches where reaction would exceed an atom valence
@@ -307,6 +308,8 @@ public class Reactor {
 		mReactantMatchCombinationCount = 1;
 		for (int i=0; i<mReactant.length; i++)
 			mReactantMatchCombinationCount *= (mMatchList[i] == null) ? 0 : mMatchList[i].size();
+
+		return true;
 		}
 
 

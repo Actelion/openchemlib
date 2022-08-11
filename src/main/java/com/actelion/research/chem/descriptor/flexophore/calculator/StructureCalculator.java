@@ -35,6 +35,8 @@
 package com.actelion.research.chem.descriptor.flexophore.calculator;
 
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.conf.VDWRadii;
+import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
 import com.actelion.research.util.ArrayUtils;
 
 import java.util.*;
@@ -2128,7 +2130,67 @@ public class StructureCalculator {
 //		}
 //		return cluster;
 //	}
-	
+
+	/**
+	 * Return a List of int[] representing all the atom-atom pairs having
+	 * an intermolecular interactions (distance close to sum of VDW)
+	 *
+	 * @param m
+	 * @return
+	 */
+	public static List<int[]> getHBonds(Molecule3D m) {
+		int[] donor = new int[m.getAllAtoms()];
+		int[] acceptor = new int[m.getAllAtoms()];
+		for (int i = 0; i < m.getAllAtoms(); i++) {
+			if(m.getAtomicNo(i)!=8 && m.getAtomicNo(i)!=7 && m.getAtomicNo(i)!=16) continue;
+			donor[i] = StructureCalculator.getImplicitHydrogens(m, i)+StructureCalculator.getExplicitHydrogens(m, i);
+			acceptor[i] = m.getAtomicNo(i)==8?2:m.getAtomicNo(i)==7?1:0; //Approximative
+		}
+
+
+		List<int[]> res = new ArrayList<int[]>();
+		MoleculeGrid grid = new MoleculeGrid(m);
+		for (int i = 0; i < m.getNMovables(); i++) {
+			if(!m.isAtomFlag(i, Molecule3D.LIGAND)) continue;
+			if(donor[i]==0 && acceptor[i]==0) continue;
+
+			Set<Integer> neighbours = grid.getNeighbours(m.getCoordinates(i), 5);
+			for (Iterator<Integer> iter = neighbours.iterator(); iter.hasNext();) {
+				int a =  ((Integer)iter.next()).intValue();
+				if(m.isAtomFlag(a, Molecule3D.LIGAND)) continue;
+				if(!((donor[i]>0 && acceptor[a]>0) || (donor[a]>0 && acceptor[i]>0))) continue;
+
+				double d = Math.sqrt(m.getCoordinates(a).distSquareTo(m.getCoordinates(i)));
+				double vdw = VDWRadii.VDW_RADIUS[m.getAtomicNo(a)]+VDWRadii.VDW_RADIUS[m.getAtomicNo(i)];
+
+				if(d>vdw-.5 && d<vdw+.5) { //H-Bonds
+					boolean hbond = false;
+					for (int j = 0; j < m.getAllConnAtoms(i); j++) {
+						if(m.getAtomicNo(m.getConnAtom(i, j))<=1) continue;
+						for (int k = 0; k < m.getAllConnAtoms(a); k++) {
+							if(m.getAtomicNo(m.getConnAtom(a, k))<=1) continue;
+
+							Coordinates c1 = m.getCoordinates(i).subC(m.getCoordinates(m.getConnAtom(i, j)));
+							Coordinates c2 = m.getCoordinates(a).subC(m.getCoordinates(m.getConnAtom(a, k)));
+							double angle = c1.getAngle(c2);
+							if(Math.abs(2*Math.PI/3-angle)<Math.PI/10) hbond = true;
+							if(Math.abs(Math.PI/3-angle)<Math.PI/10) hbond = true;
+						}
+					}
+					if(hbond) {
+						res.add(new int[]{i, a});
+						/*if(donor[i]>0 && acceptor[a]>0) {
+							donor[i]--; acceptor[a]--;
+						} else {
+							donor[a]--; acceptor[i]--;
+						}*/
+					}
+				}
+			}
+
+		}
+		return res;
+	}
 
 
 }

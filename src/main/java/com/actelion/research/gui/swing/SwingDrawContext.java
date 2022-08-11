@@ -171,6 +171,13 @@ public class SwingDrawContext implements GenericDrawContext {
 				Math.round((float)sx), Math.round((float)sy), Math.round((float)(sx+w)), Math.round((float)(sy+h)), null);
 		}
 
+	@Override
+	public void drawImage(GenericImage image, double sx, double sy, double sw, double sh, double dx, double dy, double dw, double dh) {
+		mG.drawImage((Image)image.get(),
+				Math.round((float)dx), Math.round((float)dy), Math.round((float)(dx+dw)), Math.round((float)(dy+dh)),
+				Math.round((float)sx), Math.round((float)sy), Math.round((float)(sx+sw)), Math.round((float)(sy+sh)), null);
+		}
+
 //	@Override
 //	public void setClip(double x, double y, double w, double h) {
 //		mG.setClip(Math.round((float)x), Math.round((float)y), Math.round((float)w), Math.round((float)h));

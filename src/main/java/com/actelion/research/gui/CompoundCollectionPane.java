@@ -91,12 +91,13 @@ public class CompoundCollectionPane<T> extends JScrollPane
 	private CompoundCollectionModel<T> mModel;
 	private IClipboardHandler   mClipboardHandler;
 	private MoleculeFilter		mCompoundFilter;
-	private int					mDragActions,mDisplayMode,mSelectedIndex,mHighlightedIndex,
+	private int					mDisplayMode,mSelectedIndex,mHighlightedIndex,
 								mEditedIndex,mFileSupport,mStructureSize,mDragIndex,mDropIndex;
 	private Dimension		    mContentSize,mCellSize;
 	private JPanel			    mContentPanel;
 	private boolean			    mIsVertical,mIsEditable,mIsSelectable,mCreateFragments,
 								mIsEnabled,mShowValidationError,mInternalDragAndDropIsMove;
+	private ArrayList<JMenuItem> mCustomPopupItemList;
 	private ScrollPaneAutoScrollerWhenDragging mScroller;
 
 
@@ -228,6 +229,14 @@ public class CompoundCollectionPane<T> extends JScrollPane
 		return mClipboardHandler;
 		}
 
+	public void addCustomPopupItem(JMenuItem customItem) {
+		if (mCustomPopupItemList == null)
+			mCustomPopupItemList = new ArrayList<>();
+
+		mCustomPopupItemList.add(customItem);
+		}
+
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().equals(COPY) && mHighlightedIndex != -1) {
 			mClipboardHandler.copyMolecule(mModel.getMolecule(mHighlightedIndex));
@@ -617,6 +626,12 @@ public class CompoundCollectionPane<T> extends JScrollPane
 				}
 			}
 
+		if (mCustomPopupItemList != null) {
+			popup.addSeparator();
+			for (JMenuItem customItem:mCustomPopupItemList)
+				popup.add(customItem);
+			}
+
 		popup.show(this, e.getX(), e.getY());
 		}
 
@@ -678,7 +693,6 @@ public class CompoundCollectionPane<T> extends JScrollPane
 		}
 
 	private void initializeDragAndDrop(int dragAction, int dropAction) {
-		mDragActions = dragAction;
 		if (dragAction != DnDConstants.ACTION_NONE) {
 			new MoleculeDragAdapter(this) {
 				public Transferable getTransferable(Point p) {

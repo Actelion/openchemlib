@@ -41,6 +41,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
+
 public class MoleculeDropAdapter implements DropTargetListener
 {
     public static final boolean debug = false;

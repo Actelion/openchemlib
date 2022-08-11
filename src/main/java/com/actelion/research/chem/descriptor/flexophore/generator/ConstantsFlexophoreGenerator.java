@@ -6,7 +6,7 @@ public class ConstantsFlexophoreGenerator {
 
 
     /**
-     * Defines the resolution for the range.
+     * Defines the resolution for the range. This is also the length for the DistHist vector.
      */
     public static final int BINS_HISTOGRAM = 80;
 
