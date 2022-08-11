@@ -132,6 +132,7 @@ public class CreatorMolDistHistViz {
 
     /**
      * Conformation generator of Thomas Sander
+     * The molecule is standardized first.
      * @param molOrig
      * @return
      * @throws Exception
@@ -153,10 +154,6 @@ public class CreatorMolDistHistViz {
         conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
         
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
-
-//        for (int i = 0; i < molInPlace.getAtoms(); i++) {
-//            System.out.println(molInPlace.getInteractionAtomType(i));
-//        }
 
         //
         // Handle carbon atoms connected to hetero atoms

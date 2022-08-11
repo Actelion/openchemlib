@@ -1057,6 +1057,29 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 
 		return b.toString();
 	}
+	public String toStringPPNodesElusive(){
+
+		if(!finalized)
+			realize();
+
+		StringBuffer b = new StringBuffer();
+
+		b.append("[");
+		for (int i = 0; i < getNumPPNodes(); i++) {
+
+			PPNodeViz ppNodeViz = getNode(i);
+
+			b.append(ppNodeViz.toStringElusive());
+
+			if(i<getNumPPNodes()-1){
+				b.append(" ");
+			} else {
+				b.append("]");
+			}
+		}
+
+		return b.toString();
+	}
 
 	public String toStringShort(){
 		
