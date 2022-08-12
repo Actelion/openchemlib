@@ -1,14 +1,12 @@
 package com.actelion.research.chem;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class Molecule3DFunctions {
 
-    public static final Molecule3D removeAllAtomsWithoutNeighbours(Molecule3D ffMol) {
-        Molecule3D molecule3D = new Molecule3D(ffMol);
+    public static final Molecule3D removeAllAtomsWithoutNeighbours(Molecule3D mol) {
+        Molecule3D molecule3D = new Molecule3D(mol);
         molecule3D.ensureHelperArrays(Molecule.cHelperRings);
 
         HashSet<Integer> hsAt2Del = new HashSet<Integer>();
@@ -30,5 +28,21 @@ public class Molecule3DFunctions {
         return molecule3D;
     }
 
+    public static final String toStringSerialized(Molecule3D mol) throws IOException {
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(byteArrayOutputStream);
+        oos.writeObject(mol);
+        oos.close();
+
+        return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray());
+    }
+    public static final Molecule3D readSerialized(String serMol) throws IOException, ClassNotFoundException {
+        byte [] arrByte = Base64.getDecoder().decode(serMol);
+        ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(arrByte));
+        Molecule3D molecule3D  = (Molecule3D)is.readObject();
+        is.close();
+        return molecule3D;
+    }
 
 }

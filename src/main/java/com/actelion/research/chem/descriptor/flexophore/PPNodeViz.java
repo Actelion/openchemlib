@@ -289,8 +289,8 @@ public class PPNodeViz extends PPNode implements Serializable {
 	 *
 	 * @return
 	 */
-	public String toStringLongPPNode(){
-		return super.toStringLong();
+	public String toStringPPNodeText(){
+		return super.toStringText();
 	}
 
 	public String toString(){
@@ -298,7 +298,7 @@ public class PPNodeViz extends PPNode implements Serializable {
 		sb.append("(");
 
 		if(modeFlexophore==ConstantsFlexophore.MODE_SOFT_PPPOINTS) {
-			sb.append(super.toStringLong());
+			sb.append(super.toStringText());
 		} else if(modeFlexophore==ConstantsFlexophore.MODE_HARD_PPPOINTS) {
 			sb.append(super.toStringLongHardPPPoint());
 		} else {

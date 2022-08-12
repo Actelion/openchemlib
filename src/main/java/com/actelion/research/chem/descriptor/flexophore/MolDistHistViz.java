@@ -1034,7 +1034,7 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 	 * Only nodes without coordinates
 	 * @return
 	 */
-	public String toStringPPNodes(){
+	public String toStringNodesText(){
 
 		if(!finalized)
 			realize();
@@ -1046,7 +1046,53 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 
 			PPNodeViz ppNodeViz = getNode(i);
 
-			b.append(ppNodeViz.toStringLongPPNode());
+			b.append(ppNodeViz.toString());
+
+			if(i<getNumPPNodes()-1){
+				b.append(" ");
+			} else {
+				b.append("]");
+			}
+		}
+
+		return b.toString();
+	}
+	public String toStringPPNodesText(){
+
+		if(!finalized)
+			realize();
+
+		StringBuffer b = new StringBuffer();
+
+		b.append("[");
+		for (int i = 0; i < getNumPPNodes(); i++) {
+
+			PPNodeViz ppNodeViz = getNode(i);
+
+			b.append(ppNodeViz.toStringPPNodeText());
+
+			if(i<getNumPPNodes()-1){
+				b.append(" ");
+			} else {
+				b.append("]");
+			}
+		}
+
+		return b.toString();
+	}
+	public String toStringPPNodesElusive(){
+
+		if(!finalized)
+			realize();
+
+		StringBuffer b = new StringBuffer();
+
+		b.append("[");
+		for (int i = 0; i < getNumPPNodes(); i++) {
+
+			PPNodeViz ppNodeViz = getNode(i);
+
+			b.append(ppNodeViz.toStringElusive());
 
 			if(i<getNumPPNodes()-1){
 				b.append(" ");

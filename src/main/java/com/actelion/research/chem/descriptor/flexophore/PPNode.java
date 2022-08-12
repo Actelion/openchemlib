@@ -528,24 +528,49 @@ public class PPNode implements Comparable<PPNode>, IPPNode {
 		return nodeHetero;
 	}
 
-	public String toStringLong(){
+	/**
+	 * Prints the atom symbols for the types
+	 * @return
+	 */
+	public String toStringText(){
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		for (int i = 0; i < size; i++) {
+			if(i>0){
+				sb.append(SEPARATOR_ATOMS);
+			}
+			InterActionTypeFreq iaf = getInteraction(i);
+			String s = InteractionAtomTypeCalculator.getString(iaf.interactionType);
+			sb.append(s);
+			if(iaf.frequency>1){
+				sb.append(MULT_FREQ);
+				sb.append( iaf.frequency);
+			}
+		}
+		sb.append(")");
+		return sb.toString();
+	}
+
+	/**
+	 * Prints the identifier and the atom symbols for the types. Separated by ':'.
+	 * @return
+	 */
+	public String toStringElusive(){
 
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("(");
 
 		for (int i = 0; i < size; i++) {
-
 			if(i>0){
 				sb.append(SEPARATOR_ATOMS);
 			}
-
 			InterActionTypeFreq iaf = getInteraction(i);
-
 			String s = InteractionAtomTypeCalculator.getString(iaf.interactionType);
-
+			sb.append(iaf.interactionType);
+			sb.append(":");
 			sb.append(s);
-
 			if(iaf.frequency>1){
 				sb.append(MULT_FREQ);
 				sb.append( iaf.frequency);

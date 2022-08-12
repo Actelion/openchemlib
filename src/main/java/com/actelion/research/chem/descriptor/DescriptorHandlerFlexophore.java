@@ -505,7 +505,12 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 		return recentException;
 	}
 
-
+	/**
+	 * In query mode, all pharmacophore points in the query must be found in base.
+	 * @param query
+	 * @param base
+	 * @return
+	 */
 	public float getSimilarity(Object query, Object base) {
 
 		float sc=0;

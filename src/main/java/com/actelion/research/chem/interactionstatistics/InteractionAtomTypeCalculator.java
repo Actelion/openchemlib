@@ -200,11 +200,12 @@ public class InteractionAtomTypeCalculator {
 				guanidine:for(int i=0; i<complex.getAllConnAtoms(atom); i++) {
 					int aa = complex.getConnAtom(atom, i);
 					if(complex.getAtomicNo(aa)==6 && complex.getConnAtoms(aa)==3 && getNeighbours(complex, aa, 7, 2)>0) {
+						isAmidine = true;
 						for(int j=0; j<complex.getAllConnAtoms(aa); j++) {
 							int aaa = complex.getConnAtom(aa, j);
 							if(atom==aaa)continue;
 							if(complex.getAtomicNo(aaa)!=7 || complex.isAromaticAtom(aaa)) continue guanidine;
-							else isAmidine = true;
+							//else isAmidine = true;
 						}
 						return FunctionalGroup.GUANIDINE.id;
 
