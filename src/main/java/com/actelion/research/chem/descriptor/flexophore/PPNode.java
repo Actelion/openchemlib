@@ -532,7 +532,7 @@ public class PPNode implements Comparable<PPNode>, IPPNode {
 	 * Prints the atom symbols for the types
 	 * @return
 	 */
-	public String toStringLong(){
+	public String toStringText(){
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("(");
