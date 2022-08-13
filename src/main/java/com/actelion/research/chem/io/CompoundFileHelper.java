@@ -45,33 +45,35 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public abstract class CompoundFileHelper {
-	public static final int cFileTypeMask = 0x0003FFFF;
+	public static final int cFileTypeMask = 0x007FFFFF;
 	public static final int cFileTypeDataWarrior = 0x00000001;
 	public static final int cFileTypeDataWarriorTemplate = 0x00000002;
 	public static final int cFileTypeDataWarriorQuery = 0x00000004;
 	public static final int cFileTypeDataWarriorMacro = 0x00000008;
 	public static final int cFileTypeTextTabDelimited = 0x00000010;
     public static final int cFileTypeTextCommaSeparated = 0x00000020;
-    public static final int cFileTypeText = cFileTypeTextTabDelimited | cFileTypeTextCommaSeparated;
-	public static final int cFileTypeSDV3 = 0x00000040;
-    public static final int cFileTypeSDV2 = 0x00000080;
+	public static final int cFileTypeTextSemicolonSeparated = 0x00000040;
+	public static final int cFileTypeTextVLineSeparated = 0x00000080;
+    public static final int cFileTypeText = cFileTypeTextTabDelimited | cFileTypeTextCommaSeparated | cFileTypeTextSemicolonSeparated | cFileTypeTextVLineSeparated;
+	public static final int cFileTypeSDV3 = 0x00000100;
+    public static final int cFileTypeSDV2 = 0x00000200;
     public static final int cFileTypeSD = cFileTypeSDV3 | cFileTypeSDV2;
-	public static final int cFileTypeRXN = 0x00000100;
-	public static final int cFileTypeSOM = 0x00000200;
-	public static final int cFileTypeJPG = 0x00000400;
-	public static final int cFileTypeGIF = 0x00000800;
-	public static final int cFileTypePNG = 0x00001000;
-	public static final int cFileTypeSVG = 0x00002000;
+	public static final int cFileTypeRXN = 0x00000400;
+	public static final int cFileTypeSOM = 0x00000800;
+	public static final int cFileTypeJPG = 0x00001000;
+	public static final int cFileTypeGIF = 0x00002000;
+	public static final int cFileTypePNG = 0x00004000;
+	public static final int cFileTypeSVG = 0x00008000;
 	public static final int cFileTypePictureFile = cFileTypeJPG | cFileTypeGIF | cFileTypePNG | cFileTypeSVG;
-    public static final int cFileTypeRDV3 = 0x00004000;
-    public static final int cFileTypeRDV2 = 0x00008000;
+    public static final int cFileTypeRDV3 = 0x00010000;
+    public static final int cFileTypeRDV2 = 0x00020000;
     public static final int cFileTypeRD = cFileTypeRDV3 | cFileTypeRDV2;
-	public static final int cFileTypeMOL = 0x00010000;
-	public static final int cFileTypeMOL2 = 0x00020000;
-	public static final int cFileTypePDB = 0x00040000;
-	public static final int cFileTypeMMTF = 0x00080000;
-	public static final int cFileTypeProtein = 0x000C0000;
-	public static final int cFileTypeSDGZ = 0x00100000;
+	public static final int cFileTypeMOL = 0x00040000;
+	public static final int cFileTypeMOL2 = 0x00080000;
+	public static final int cFileTypePDB = 0x00100000;
+	public static final int cFileTypeMMTF = 0x00200000;
+	public static final int cFileTypeProtein = cFileTypePDB | cFileTypeMMTF;
+	public static final int cFileTypeSDGZ = 0x00400000;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
 
@@ -325,9 +327,9 @@ public abstract class CompoundFileHelper {
 			filter.addExtension("txt");
 			filter.addDescription("TAB delimited text files");
 			}
-        if ((filetypes & cFileTypeTextCommaSeparated) != 0) {
+        if ((filetypes & (cFileTypeTextCommaSeparated | cFileTypeTextSemicolonSeparated | cFileTypeTextVLineSeparated)) != 0) {
             filter.addExtension("csv");
-            filter.addDescription("Comma separated text files");
+            filter.addDescription("Comma [,;|] separated text files");
             }
 		if ((filetypes & cFileTypeRXN) != 0) {
 			filter.addExtension("rxn");
@@ -474,7 +476,7 @@ public abstract class CompoundFileHelper {
         if (extension.equals(".txt") || extension.equals(".tsv"))
             return cFileTypeTextTabDelimited;
         if (extension.equals(".csv"))
-            return cFileTypeTextCommaSeparated;
+            return cFileTypeTextCommaSeparated | cFileTypeTextSemicolonSeparated | cFileTypeTextVLineSeparated;
         if (extension.equals(".sdf"))
             return cFileTypeSD;
 		if (extension.equals(".sdf.gz"))
@@ -544,6 +546,8 @@ public abstract class CompoundFileHelper {
 			extension = ".txt";
 			break;
         case cFileTypeTextCommaSeparated:
+		case cFileTypeTextSemicolonSeparated:
+		case cFileTypeTextVLineSeparated:
             extension = ".csv";
             break;
 		case cFileTypeSD:
