@@ -630,13 +630,14 @@ public class SmilesParser {
 				else if (theChar == '?') {
 					atomicNo = 0;
 					}
+				else if ((theChar == 'A' || theChar == 'a') && allowSmarts) {
+					atomicNo = 6;
+					atomQueryFeatures |= Molecule.cAtomQFAny;
+					atomQueryFeatures |= theChar == 'A' ? Molecule.cAtomQFNotAromatic : Molecule.cAtomQFAromatic;
+					smartsFeatureFound = true;
+					}
 				else {
 					switch (Character.toUpperCase(theChar)) {
-					case 'A':
-						atomicNo = 6;
-						atomQueryFeatures |= Molecule.cAtomQFAny;
-						atomQueryFeatures |= theChar == 'A' ? Molecule.cAtomQFNotAromatic : Molecule.cAtomQFAromatic;
-						break;
 					case 'B':
 						if (position < endIndex && smiles[position] == 'r') {
 							atomicNo = 35;
