@@ -54,7 +54,8 @@ public abstract class CompoundFileHelper {
     public static final int cFileTypeTextCommaSeparated = 0x00000020;
 	public static final int cFileTypeTextSemicolonSeparated = 0x00000040;
 	public static final int cFileTypeTextVLineSeparated = 0x00000080;
-    public static final int cFileTypeText = cFileTypeTextTabDelimited | cFileTypeTextCommaSeparated | cFileTypeTextSemicolonSeparated | cFileTypeTextVLineSeparated;
+	public static final int cFileTypeTextAnyCSV = cFileTypeTextCommaSeparated | cFileTypeTextSemicolonSeparated | cFileTypeTextVLineSeparated;
+    public static final int cFileTypeTextAny = cFileTypeTextTabDelimited | cFileTypeTextAnyCSV;
 	public static final int cFileTypeSDV3 = 0x00000100;
     public static final int cFileTypeSDV2 = 0x00000200;
     public static final int cFileTypeSD = cFileTypeSDV3 | cFileTypeSDV2;
@@ -80,7 +81,7 @@ public abstract class CompoundFileHelper {
 	// explicitly supported compression format (SD-files only)
 	public static final String cGZipExtention = ".gz";
 
-	public static final int cFileTypeDataWarriorCompatibleData = cFileTypeDataWarrior | cFileTypeText | cFileTypeRD | cFileTypeSD | cFileTypeSDGZ;
+	public static final int cFileTypeDataWarriorCompatibleData = cFileTypeDataWarrior | cFileTypeTextAny | cFileTypeRD | cFileTypeSD | cFileTypeSDGZ;
 	public static final int cFileTypeDataWarriorTemplateContaining = cFileTypeDataWarrior | cFileTypeDataWarriorQuery | cFileTypeDataWarriorTemplate;
 
 	private static File sCurrentDirectory;
@@ -327,7 +328,7 @@ public abstract class CompoundFileHelper {
 			filter.addExtension("txt");
 			filter.addDescription("TAB delimited text files");
 			}
-        if ((filetypes & (cFileTypeTextCommaSeparated | cFileTypeTextSemicolonSeparated | cFileTypeTextVLineSeparated)) != 0) {
+        if ((filetypes & cFileTypeTextAnyCSV) != 0) {
             filter.addExtension("csv");
             filter.addDescription("Comma [,;|] separated text files");
             }
@@ -456,6 +457,11 @@ public abstract class CompoundFileHelper {
 		return (i == -1) ? filePath : filePath.substring(0, i);
 		}
 
+	/**
+	 * Note: If
+	 * @param filename
+	 * @return one or multiple filtetypes that matching the extension of the given filename
+	 */
 	public static int getFileType(String filename) {
         int index = getExtensionIndex(filename);
 
@@ -476,7 +482,7 @@ public abstract class CompoundFileHelper {
         if (extension.equals(".txt") || extension.equals(".tsv"))
             return cFileTypeTextTabDelimited;
         if (extension.equals(".csv"))
-            return cFileTypeTextCommaSeparated | cFileTypeTextSemicolonSeparated | cFileTypeTextVLineSeparated;
+            return cFileTypeTextAnyCSV;
         if (extension.equals(".sdf"))
             return cFileTypeSD;
 		if (extension.equals(".sdf.gz"))
@@ -545,6 +551,7 @@ public abstract class CompoundFileHelper {
 		case cFileTypeTextTabDelimited:
 			extension = ".txt";
 			break;
+		case cFileTypeTextAnyCSV:
         case cFileTypeTextCommaSeparated:
 		case cFileTypeTextSemicolonSeparated:
 		case cFileTypeTextVLineSeparated:
