@@ -3262,6 +3262,7 @@ System.out.println();
 			addAtomQueryFeatures(29, nbits, Molecule.cAtomQFRxnParityHint, Molecule.cAtomQFRxnParityBits, Molecule.cAtomQFRxnParityShift);
 			addAtomQueryFeatures(30, nbits, Molecule.cAtomQFNewRingSize, Molecule.cAtomQFNewRingSizeBits, Molecule.cAtomQFNewRingSizeShift);
 			addAtomQueryFeatures(32, nbits, Molecule.cAtomQFStereoState, Molecule.cAtomQFStereoStateBits, Molecule.cAtomQFStereoStateShift);
+			addAtomQueryFeatures(33, nbits, Molecule.cAtomQFENeighbours, Molecule.cAtomQFENeighbourBits, Molecule.cAtomQFENeighbourShift);
 			}
 
 		encodeBits(0, 1);

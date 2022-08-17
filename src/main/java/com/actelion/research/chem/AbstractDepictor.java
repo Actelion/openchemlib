@@ -1782,30 +1782,36 @@ public abstract class AbstractDepictor<T> {
                 else if (neighbours == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours))
                     isoStr = append(isoStr, "n>3");
                 }
-			if ((queryFeatures & Molecule.cAtomQFZValue) != 0) {
-				long eNegNeighbours = (queryFeatures & Molecule.cAtomQFZValue);
-				if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot0))
+			if ((queryFeatures & Molecule.cAtomQFENeighbours) != 0) {
+				long eNegNeighbours = (queryFeatures & Molecule.cAtomQFENeighbours);
+				if (eNegNeighbours == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot0ENeighbours))
 					isoStr = append(isoStr, "e0");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot1))
+				else if (eNegNeighbours == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot1ENeighbour))
 					isoStr = append(isoStr, "e1");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2))
+				else if (eNegNeighbours == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot2ENeighbours))
 					isoStr = append(isoStr, "e2");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3))
+				else if (eNegNeighbours == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot3ENeighbours))
 					isoStr = append(isoStr, "e3");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4))
+				else if (eNegNeighbours == (Molecule.cAtomQFNot2ENeighbours | Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours))
 					isoStr = append(isoStr, "e<2");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4))
+				else if (eNegNeighbours == (Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours))
 					isoStr = append(isoStr, "e<3");
-				else if (eNegNeighbours == Molecule.cAtomQFZValueNot4)
+				else if (eNegNeighbours == Molecule.cAtomQFNot4ENeighbours)
 					isoStr = append(isoStr, "e<4");
-				else if (eNegNeighbours == Molecule.cAtomQFZValueNot0)
+				else if (eNegNeighbours == Molecule.cAtomQFNot0ENeighbours)
 					isoStr = append(isoStr, "e>0");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1))
+				else if (eNegNeighbours == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour))
 					isoStr = append(isoStr, "e>1");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1 | Molecule.cAtomQFZValueNot2))
+				else if (eNegNeighbours == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot2ENeighbours))
 					isoStr = append(isoStr, "e>2");
-				else if (eNegNeighbours == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4))
+				else if (eNegNeighbours == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot4ENeighbours))
 					isoStr = append(isoStr, "e>3");
+				else if (eNegNeighbours == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot3ENeighbours))
+					isoStr = append(isoStr, "e1-2");
+				else if (eNegNeighbours == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot4ENeighbours))
+					isoStr = append(isoStr, "e1-3");
+				else if (eNegNeighbours == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot4ENeighbours))
+					isoStr = append(isoStr, "e2-3");
 				}
             if ((queryFeatures & Molecule.cAtomQFRingState) != 0) {
                 long ringBonds = (queryFeatures & Molecule.cAtomQFRingState);

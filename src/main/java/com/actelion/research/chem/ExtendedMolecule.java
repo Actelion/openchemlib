@@ -296,6 +296,21 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * Requires helper arrays state cHelperNeighbours.
+	 * @param atom
+	 * @return number of electronegative neighbour atoms
+	 */
+	public int getAtomElectronegativeNeighbours(int atom) {
+		int e = 0;
+		for (int i=0; i<mConnAtoms[atom]; i++)
+			if (isElectronegative(mConnAtom[atom][i]))
+				e++;
+
+		return e;
+		}
+
+
+	/**
 	 * @param atom
 	 * @return Hendrickson sigma-value, which is the number attached carbon atoms
 	 *

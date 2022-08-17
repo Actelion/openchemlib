@@ -503,19 +503,19 @@ public class SmilesParser {
 							position += range.parse(smiles, position, 1, 4);
 							long flags = 0;
 							if (range.min <= 0 && range.max >= 0)
-								flags |= Molecule.cAtomQFZValueNot0;
+								flags |= Molecule.cAtomQFNot0ENeighbours;
 							if (range.min <= 1 && range.max >= 1)
-								flags |= Molecule.cAtomQFZValueNot1;
+								flags |= Molecule.cAtomQFNot1ENeighbour;
 							if (range.min <= 2 && range.max >= 2)
-								flags |= Molecule.cAtomQFZValueNot2;
+								flags |= Molecule.cAtomQFNot2ENeighbours;
 							if (range.min <= 3 && range.max >= 3)
-								flags |= Molecule.cAtomQFZValueNot3;
+								flags |= Molecule.cAtomQFNot3ENeighbours;
 							if (range.min <= 4 && range.max >= 4)
-								flags |= Molecule.cAtomQFZValueNot4;
+								flags |= Molecule.cAtomQFNot4ENeighbours;
 
 							if (flags != 0) {
 								if (!isNot)
-									flags = flags ^ Molecule.cAtomQFZValue;
+									flags = flags ^ Molecule.cAtomQFENeighbours;
 								atomQueryFeatures |= flags;
 								}
 							continue;

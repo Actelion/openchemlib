@@ -119,6 +119,7 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 
 	private StereoMolecule mReactant,mProduct;
 	private float mScore;
+	private int mMaxRuleTries;
 	private ChemicalRule mAppliedRule;
 	private StringBuilder mHistory;
 
@@ -131,6 +132,7 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 					sInitialized = true;
 				}
 			}
+		mMaxRuleTries = Integer.MAX_VALUE;
 		}
 
 	@Override
@@ -159,6 +161,7 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 		int[] bestProductMapNo = null;
 		int bestGraphMapNoCount = 0;
 		mAppliedRule = null;
+		int ruleApplicationCount = 0;
 		mHistory = new StringBuilder();
 
 if (SimilarityGraphBasedReactionMapper.DEBUG)
@@ -167,6 +170,9 @@ if (SimilarityGraphBasedReactionMapper.DEBUG)
 		StereoMolecule reactant = new StereoMolecule(); // reusable container
 
 		for (ChemicalRule rule:CHEMICAL_RULE) {
+			if (ruleApplicationCount++ == mMaxRuleTries)
+				break;
+
 			reactantSearcher.setFragment(rule.getReactant());
 			reactantSearcher.setFragmentSymmetryConstraints(rule.getReactantAtomSymmetryConstraints());
 			if (0 != reactantSearcher.findFragmentInMolecule(SSSearcher.cCountModeUnique, SSSearcher.cDefaultMatchMode)) {
@@ -175,6 +181,9 @@ if (SimilarityGraphBasedReactionMapper.DEBUG)
 				 && reactantSearcher.getMatchList().size() <= MAX_MATCH_COUNT) {
 float historyScore = -10000;
 					for (int[] reactantMatch:reactantSearcher.getMatchList()) {
+						if (ruleApplicationCount++ >= mMaxRuleTries)
+							break;
+
 						mReactant.copyMolecule(reactant);
 						rule.apply(reactant, reactantMatch);
 						int[] reactantMapNo = new int[mReactant.getAtoms()];
@@ -216,6 +225,17 @@ mHistory.append("no rule:"+score+pairSequences+"\n");
 
 		if (mScore != Integer.MIN_VALUE)
 			mapper.copyMapNosToReaction(rxn, bestReactantMapNo, bestProductMapNo, bestGraphMapNoCount);
+
+if (SimilarityGraphBasedReactionMapper.DEBUG)
+ System.out.println("Done; used "+ruleApplicationCount+" of "+mMaxRuleTries+" allowed rule application tries.");
+		}
+
+	/**
+	 * This limits the maximum number of times a chemical rule is applied to improve the mapping.
+	 * @param max
+	 */
+	public void setMaximumRuleTries(int max) {
+		mMaxRuleTries = max;
 		}
 
 	public String getHistory() {
