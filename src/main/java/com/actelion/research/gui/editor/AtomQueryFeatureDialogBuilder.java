@@ -549,6 +549,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             setQueryFeatures(mAtom, atomList);
             }
 
+        mMol.validateAtomQueryFeatures();
         }
 
 

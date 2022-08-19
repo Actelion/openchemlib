@@ -1568,7 +1568,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 */
 	public boolean isDelocalizedBond(int bond) {
 		return (mBondFlags[bond] & cBondFlagDelocalized) != 0
-			 || (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) == cBondQFDelocalized);
+			 || mBondType[bond] == cBondTypeDelocalized;
+//			 || (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) == cBondQFDelocalized);
 		}
 
 
@@ -3032,7 +3033,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 			mValidHelperArrays |= cHelperBitNeighbours;
 
-			if (validateQueryFeatures()) {
+			if (convertHydrogenToQueryFeatures()) {
 				handleHydrogens();
 				calculateNeighbours();
 				}
@@ -3531,8 +3532,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
-	private boolean validateQueryFeatures() {
-			// returns true if hydrogens were deleted and, thus, mConnAtoms are invalid
+	/**
+	 * @return true if hydrogens were deleted and, thus, mConnAtoms are invalid
+	 */
+	private boolean convertHydrogenToQueryFeatures() {
 		if (!mIsFragment)
 			return false;
 
@@ -3591,12 +3594,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 						}
 					}
 				}
-
-			if ((mAtomQueryFeatures[atom] & cAtomQFAromatic) != 0)
-				mAtomQueryFeatures[atom] &= ~cAtomQFNotChain;
-
-			if (mAtomCharge[atom] != 0)	// explicit charge superceeds query features
-				mAtomFlags[atom] &= ~cAtomQFCharge;
 			}
 		if (deleteHydrogens)
 			compressMolTable();
@@ -3605,9 +3602,66 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
+	/**
+	 * Normalizes atom query features by removing redundant ones that are implicitly defined
+	 * by the structure itself and those that are contradictory.
+	 * This method may be used before creating a canonical representation of a substructure.
+	 */
+	public void validateAtomQueryFeatures() {
+		if (!mIsFragment)
+			return;
+
+		ensureHelperArrays(cHelperRings);
+
+		for (int atom=0; atom<mAtoms; atom++) {
+			if (isRingAtom(atom))
+				mAtomQueryFeatures[atom] &= ~(cAtomQFRingSize0 | cAtomQFNotChain);  // forbidden
+
+			if (isAromaticAtom(atom))
+				mAtomQueryFeatures[atom] &= ~cAtomQFAromState;   // redundant or impossible
+			else if ((mAtomQueryFeatures[atom] & cAtomQFAromatic) != 0)
+				mAtomQueryFeatures[atom] &= ~cAtomQFNotAromatic;
+
+			if ((mAtomQueryFeatures[atom] & cAtomQFSmallRingSize) != 0)
+				mAtomQueryFeatures[atom] &= ~cAtomQFNotChain;   // redundant
+
+			if (mAtomCharge[atom] != 0)	// explicit charge supersedes query features
+				mAtomFlags[atom] &= ~cAtomQFCharge;
+			}
+		}
+
+	/**
+	 * Normalizes bond query features by removing redundant ones that are implicitly defined
+	 * by the structure itself and those that are contradictory.
+	 * This method may be used before creating a canonical representation of a substructure.
+	 */
+	public void validateBondQueryFeatures() {
+		if (!mIsFragment)
+			return;
+
+		ensureHelperArrays(cHelperRings);
+
+		for (int bond=0; bond<mBonds; bond++) {
+			if (isDelocalizedBond(bond))
+				mBondQueryFeatures[bond] &= ~cBondQFDelocalized;
+
+			int bondType = mBondType[bond] & cBondTypeMaskSimple;
+			if (bondType == cBondTypeSingle)
+				mBondQueryFeatures[bond] &= ~cBondQFSingle;
+			else if (bondType == cBondTypeDouble)
+				mBondQueryFeatures[bond] &= ~cBondQFDouble;
+			else if (bondType == cBondTypeTriple)
+				mBondQueryFeatures[bond] &= ~cBondQFTriple;
+			else if (bondType == cBondTypeMetalLigand)
+				mBondQueryFeatures[bond] &= ~cBondQFMetalLigand;
+			else if (bondType == cBondTypeDelocalized)
+				mBondQueryFeatures[bond] &= ~cBondQFDelocalized;
+			}
+		}
+
+
 	private void writeObject(ObjectOutputStream stream) throws IOException {}
 	private void readObject(ObjectInputStream stream) throws IOException {}
-
 
 
 	public final static Coordinates getCenterGravity(ExtendedMolecule mol) {

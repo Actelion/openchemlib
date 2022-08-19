@@ -251,6 +251,8 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
         else {
             setQueryFeatures(mBond);
             }
+
+	    mMol.validateBondQueryFeatures();
         }
 
 
@@ -294,7 +296,7 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
     			queryFeatures |= Molecule.cBondQFDouble;
     		if (mCBTriple.isSelected() && bondOrder != 3)
     			queryFeatures |= Molecule.cBondQFTriple;
-    		if (mCBDelocalized.isSelected() && bondOrder != 4)
+    		if (mCBDelocalized.isSelected() && !mMol.isDelocalizedBond(bond) && bondOrder != 4)
     			queryFeatures |= Molecule.cBondQFDelocalized;
 			if (mCBMetalLigand.isSelected() && bondOrder != 0)
 				queryFeatures |= Molecule.cBondQFMetalLigand;

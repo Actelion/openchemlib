@@ -123,7 +123,7 @@ public class Molecule implements Serializable {
 	protected static final int cAtomFlagsValence	= 0xF0000000;
 	private static final int cAtomFlagsValenceShift = 28;
 
-	public static final int cAtomQFNoOfBits			= 39;
+	public static final int cAtomQFNoOfBits			= 46;
 	public static final int cAtomQFAromStateBits	= 2;
 	public static final int cAtomQFAromStateShift	= 1;
 	public static final int cAtomQFRingStateBits	= 4;
