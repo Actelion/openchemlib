@@ -78,6 +78,12 @@ public abstract class CompoundFileHelper {
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
 
+	public static final int cFileTypeCompoundFiles =
+			  CompoundFileHelper.cFileTypeMOL
+			| CompoundFileHelper.cFileTypeMOL2
+			| CompoundFileHelper.cFileTypeSD
+			| CompoundFileHelper.cFileTypeDataWarrior;
+
 	// explicitly supported compression format (SD-files only)
 	public static final String cGZipExtention = ".gz";
 
@@ -101,22 +107,12 @@ public abstract class CompoundFileHelper {
 		}
 
 	public ArrayList<StereoMolecule> readStructuresFromFile(boolean readIdentifier) {
-        File file = selectFileToOpen("Please select substance file",
-					           CompoundFileHelper.cFileTypeMOL
-					         | CompoundFileHelper.cFileTypeMOL2
-                             | CompoundFileHelper.cFileTypeSD
-                             | CompoundFileHelper.cFileTypeDataWarrior);
-
+        File file = selectFileToOpen("Please select a compound file", cFileTypeCompoundFiles);
         return readStructuresFromFile(file, readIdentifier);
 	    }
 
 	public ArrayList<String> readIDCodesFromFile() {
-        File file = selectFileToOpen("Please select substance file",
-		                CompoundFileHelper.cFileTypeMOL
-				             | CompoundFileHelper.cFileTypeMOL2
-					         | CompoundFileHelper.cFileTypeSD
-                             | CompoundFileHelper.cFileTypeDataWarrior);
-
+        File file = selectFileToOpen("Please select a compound file", cFileTypeCompoundFiles);
         return readIDCodesFromFile(file);
 	    }
 
@@ -132,7 +128,7 @@ public abstract class CompoundFileHelper {
 
 	/**
 	 * Reads all compounds as idcode list from the given file.
-	 * @param file SD- or DataWarrior file
+	 * @param file MOL-, mol2-, SD- or DataWarrior file
 	 * @return
 	 */
 	public ArrayList<String> readIDCodesFromFile(File file) {

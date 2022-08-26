@@ -52,8 +52,11 @@ public class FileHelper extends CompoundFileHelper {
 		}
 
 	public String selectOption(String message, String title, String[] option) {
-        return (String)JOptionPane.showInputDialog(mParent, message, title,
-        										   JOptionPane.QUESTION_MESSAGE, null, option, option[0]);
+		if (SwingUtilities.isEventDispatchThread())
+	        return (String)JOptionPane.showInputDialog(mParent, message, title,
+            										   JOptionPane.QUESTION_MESSAGE, null, option, option[0]);
+		else
+			return null;
 		}
 
 	public void showMessage(String message) {

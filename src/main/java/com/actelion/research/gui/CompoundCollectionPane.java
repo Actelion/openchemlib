@@ -65,7 +65,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 			implements ActionListener,CompoundCollectionListener,MouseListener,MouseMotionListener,StructureListener {
 	private static final long serialVersionUID = 0x20060904;
 
-	private static final String[] MESSAGE = { "<to add compounds use popup menu,", "drag&drop, or paste structure or name(s)>" };
+	private static final String[] MESSAGE = { "<to add compounds use popup menu,", "drag&drop, or paste structure(s) or name(s)>" };
 
 	private static final String ADD = "Add...";
 	private static final String EDIT = "Edit...";
@@ -97,6 +97,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 	private JPanel			    mContentPanel;
 	private boolean			    mIsVertical,mIsEditable,mIsSelectable,mCreateFragments,
 								mIsEnabled,mShowValidationError,mInternalDragAndDropIsMove;
+	private String[]            mMessage;
 	private ArrayList<JMenuItem> mCustomPopupItemList;
 	private ScrollPaneAutoScrollerWhenDragging mScroller;
 
@@ -234,6 +235,21 @@ public class CompoundCollectionPane<T> extends JScrollPane
 			mCustomPopupItemList = new ArrayList<>();
 
 		mCustomPopupItemList.add(customItem);
+		}
+
+	/**
+	 * @param msg null for default message or custom message to show if this pane is empty
+	 */
+	public void setMessage(String msg) {
+		if (msg == null) {
+			mMessage = null;
+			}
+		else {
+			mMessage = new String[1];
+			mMessage[0] = msg;
+			}
+		if (mModel.getSize() == 0)
+			repaint();
 		}
 
 	@Override
@@ -477,10 +493,11 @@ public class CompoundCollectionPane<T> extends JScrollPane
 					g.setColor(foreground);
 					g.setFont(g.getFont().deriveFont(Font.PLAIN, HiDPIHelper.scale(12)));
 					FontMetrics m = g.getFontMetrics();
-					for (int i=0; i<MESSAGE.length; i++) {
-						Rectangle2D b = m.getStringBounds(MESSAGE[i], g);
-						g.drawString(MESSAGE[i], bounds.x + (bounds.width - (int)b.getWidth()) / 2,
-								bounds.y + i*m.getHeight() + (bounds.height - MESSAGE.length * m.getHeight()) / 2 + m.getAscent());
+					String[] message = (mMessage == null) ? MESSAGE : mMessage;
+					for (int i=0; i<message.length; i++) {
+						Rectangle2D b = m.getStringBounds(message[i], g);
+						g.drawString(message[i], bounds.x + (bounds.width - (int)b.getWidth()) / 2,
+								bounds.y + i*m.getHeight() + (bounds.height - message.length * m.getHeight()) / 2 + m.getAscent());
 						}
 					}
 
