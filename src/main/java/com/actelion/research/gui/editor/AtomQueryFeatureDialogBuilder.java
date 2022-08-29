@@ -844,23 +844,27 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 
 
 	private int[] createAtomList() {
-		String listString = mTFAtomList.getText();
-		if (listString.length() == 0)
-			return null;
+		int[] list = null;
 
-        int[] list = null;
-		int delimiterIndex;
-		do {
+		String listString = mTFAtomList.getText().trim();
+		while (listString.length() != 0) {
 			String label;
-			delimiterIndex = listString.indexOf(',');
-			if (delimiterIndex == -1)
-				label = listString;
+			int delimiterIndex = listString.indexOf(',');
+			if (delimiterIndex == -1) {
+				label = listString.trim();
+				listString = "";
+				}
 			else {
-				label = listString.substring(0, delimiterIndex);
-				if (delimiterIndex == listString.length() - 1)
-					listString = "";
-				else
-					listString = listString.substring(delimiterIndex+1);
+				label = listString.substring(0, delimiterIndex).trim();
+				listString = listString.substring(delimiterIndex+1).trim();
+				}
+
+			// support and expand MDL halogen shortcut
+			if (label.equals("X")) {
+				if (listString.length() != 0)
+					listString = ",";
+				listString = listString.concat("F,Cl,Br,I");
+				continue;
 				}
 
 			int atomicNo = Molecule.getAtomicNoFromLabel(label);
@@ -889,7 +893,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
                         }
                     }
 				}
-			} while (delimiterIndex != -1);
+			}
 
 		if (list != null)
 		    Arrays.sort(list);
