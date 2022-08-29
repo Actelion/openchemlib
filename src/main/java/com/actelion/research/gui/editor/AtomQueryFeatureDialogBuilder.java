@@ -179,6 +179,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mChoiceArom = mDialog.createComboBox();
 		mChoiceArom.addItem("any");
 		mChoiceArom.addItem("is aromatic");
+		mChoiceArom.addItem("is hetero-aromatic");
 		mChoiceArom.addItem("is not aromatic");
 		mDialog.add(mDialog.createLabel("Aromaticity:"), 1,5);
 		mDialog.add(mChoiceArom, 3,5);
@@ -350,10 +351,12 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mTFAtomList.setText(mMol.getAtomList(mAtom) == null ? "" : mMol.getAtomListString(mAtom));
 
 		long aromState = queryFeatures & Molecule.cAtomQFAromState;
-		if (aromState == Molecule.cAtomQFAromatic)
+		if (aromState == Molecule.cAtomQFHeteroAromatic)
+			mChoiceArom.setSelectedIndex(2);
+		else if (aromState == Molecule.cAtomQFAromatic)
 			mChoiceArom.setSelectedIndex(1);
 		else if (aromState == Molecule.cAtomQFNotAromatic)
-			mChoiceArom.setSelectedIndex(2);
+			mChoiceArom.setSelectedIndex(3);
 		else
 			mChoiceArom.setSelectedIndex(0);
 
@@ -563,10 +566,15 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		else
 			mMol.setAtomList(atom, atomList, false);
 
-		if (!mMol.isAromaticAtom(atom)) {
+		if (mChoiceArom.getSelectedIndex() == 2) {
+			if (!mMol.isHeteroAromaticAtom(atom))
+				queryFeatures |= (Molecule.cAtomQFAromatic
+							    | Molecule.cAtomQFHeteroAromatic);
+		    }
+		else if (!mMol.isAromaticAtom(atom)) {
 			if (mChoiceArom.getSelectedIndex() == 1)
 				queryFeatures |= Molecule.cAtomQFAromatic;
-			else if (mChoiceArom.getSelectedIndex() == 2)
+			else if (mChoiceArom.getSelectedIndex() == 3)
 				queryFeatures |= Molecule.cAtomQFNotAromatic;
 			}
 

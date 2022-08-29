@@ -1547,13 +1547,32 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	public boolean isAromaticAtom(int atom) {
-		return (mAtomFlags[atom] & cAtomFlagAromatic) != 0;
+		return mRingSet.isAromaticAtom(atom);
 		}
 
 
-	public boolean isAromaticBond(int bnd) {
-		return (mBondFlags[bnd] & cBondFlagAromatic) != 0;
-		}
+	public boolean isHeteroAromaticAtom(int atom) {
+		return mRingSet.isHeteroAromaticAtom(atom);
+	}
+
+
+	/**
+	 * @param atom
+	 * @return whether the atom is a member of a delocalized ring (subset of aromatic rings)
+	 */
+	public boolean isDelocalizedAtom(int atom) {
+		return mRingSet.isDelocalizedAtom(atom);
+	}
+
+
+	public boolean isAromaticBond(int bond) {
+		return mRingSet.isAromaticBond(bond);
+	}
+
+
+	public boolean isHeteroAromaticBond(int bond) {
+		return mRingSet.isHeteroAromaticBond(bond);
+	}
 
 
 	/**
@@ -1561,15 +1580,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * different, but energetically equivalent mesomeric structures. Bonds in aromatic 6-membered
 	 * rings typically are delocalized, while those in uncharged 5-membered aromatic rings are not.
 	 * Indole has 6 delocalized bonds.
-	 * Moreover, if the molecule is a fragment and if the bond query feature cBondQFDelocalized is
-	 * set (possibly as one of multiple allowed bond types), then this method also returns true.
+	 * This method also returns true, if the molecule is a fragment and if the bond is explicitly
+	 * defined to be delocalized.
 	 * @param bond
 	 * @return
 	 */
+	@Override
 	public boolean isDelocalizedBond(int bond) {
-		return (mBondFlags[bond] & cBondFlagDelocalized) != 0
-			 || mBondType[bond] == cBondTypeDelocalized;
-//			 || (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) == cBondQFDelocalized);
+		return mRingSet.isDelocalizedBond(bond) || mBondType[bond] == cBondTypeDelocalized;
 		}
 
 
@@ -3057,16 +3075,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 			findRings(RingCollection.MODE_SMALL_AND_LARGE_RINGS_AND_AROMATICITY);
 
-				// set aromaticity flags of explicitly defined delocalized bonds
-			for(int bond=0; bond<mBonds; bond++) {
-				if (mBondType[bond] == cBondTypeDelocalized) {
-					mAtomFlags[mBondAtom[0][bond]] |= cAtomFlagAromatic;
-					mAtomFlags[mBondAtom[1][bond]] |= cAtomFlagAromatic;
-					mBondFlags[bond] |= cBondFlagAromatic;
-					mBondFlags[bond] |= cBondFlagDelocalized;
-					}
-				}
-
 			for (int atom=0; atom<mAtoms; atom++) {	// allylic & stabilized flags
 				for (int i = 0; i< mConnAtoms[atom]; i++) {
 					int connBond = mConnBond[atom][i];
@@ -3097,8 +3105,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				for (int atom=0; atom<mAtoms; atom++) {
 						 // for non-aromatic stabilized atoms with pi-electrons
 					if (mPi[atom] > 0
-					 && ((cAtomFlagStabilized | cAtomFlagAromatic)
-							& mAtomFlags[atom]) == cAtomFlagStabilized) {
+					 && (mAtomFlags[atom] & cAtomFlagStabilized) != 0
+					 && !mRingSet.isAromaticAtom(atom)) {
 						for (int i = 0; i< mConnAtoms[atom]; i++) {
 							if (mConnBondOrder[atom][i] > 1) {
 								int connAtom = mConnAtom[atom][i];
@@ -3504,9 +3512,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomFlags[atom] |= cAtomFlags4RingBonds;
 			}
 
-		// the aromaticity flag is not public. Thus, generate it:
-		boolean includeAromaticity = (((mode & RingCollection.MODE_SMALL_RINGS_AND_AROMATICITY) & ~RingCollection.MODE_SMALL_RINGS_ONLY) != 0);
-
 		for (int ringNo=0; ringNo<mRingSet.getSize(); ringNo++) {
 			int ringAtom[] = mRingSet.getRingAtoms(ringNo);
 			int ringBond[] = mRingSet.getRingBonds(ringNo);
@@ -3514,16 +3519,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			for (int i=0; i<ringAtoms; i++) {
 				mAtomFlags[ringAtom[i]] |= cAtomFlagSmallRing;
 				mBondFlags[ringBond[i]] |= cBondFlagSmallRing;
-
-				if (includeAromaticity) {
-					if (mRingSet.isAromatic(ringNo)) {
-						mAtomFlags[ringAtom[i]] |= cAtomFlagAromatic;
-						mBondFlags[ringBond[i]] |= cBondFlagAromatic;
-						}
-
-					if (mRingSet.isDelocalized(ringNo))
-						mBondFlags[ringBond[i]] |= cBondFlagDelocalized;
-					}
 
 				if (mBondType[ringBond[i]] == cBondTypeCross)
 					mBondType[ringBond[i]] = cBondTypeDouble;

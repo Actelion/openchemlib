@@ -1541,7 +1541,10 @@ System.out.println();
 		long queryDefaults = 0;
 
 		if (!mol.isFragment()) {
-			if (mol.isAromaticAtom(atom))
+			if (mol.isHeteroAromaticAtom(atom))
+				queryDefaults |= (Molecule.cAtomQFAromatic
+								| Molecule.cAtomQFHeteroAromatic);
+			else if (mol.isAromaticAtom(atom))
 				queryDefaults |= Molecule.cAtomQFAromatic;
 			else
 				queryDefaults |= Molecule.cAtomQFNotAromatic;
@@ -1649,7 +1652,10 @@ System.out.println();
 			}
 		else {	// The fragments implicit features are not really necessary,
 				  // but may speed up the graph matching.
-			if (mol.isAromaticAtom(atom))
+			if (mol.isHeteroAromaticAtom(atom))
+				queryDefaults |= (Molecule.cAtomQFAromatic
+							  | Molecule.cAtomQFHeteroAromatic);
+			else if (mol.isAromaticAtom(atom))
 				queryDefaults |= Molecule.cAtomQFAromatic;
 
 			int ringBonds = mol.getAtomRingBondCount(atom);
