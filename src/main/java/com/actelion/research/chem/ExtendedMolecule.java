@@ -1547,12 +1547,12 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	public boolean isAromaticAtom(int atom) {
-		return mRingSet.isAromaticAtom(atom);
+		return (atom < mAtoms) ? mRingSet.isAromaticAtom(atom) : false;
 		}
 
 
 	public boolean isHeteroAromaticAtom(int atom) {
-		return mRingSet.isHeteroAromaticAtom(atom);
+		return (atom < mAtoms) ? mRingSet.isHeteroAromaticAtom(atom) : false;
 	}
 
 
@@ -1561,17 +1561,17 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return whether the atom is a member of a delocalized ring (subset of aromatic rings)
 	 */
 	public boolean isDelocalizedAtom(int atom) {
-		return mRingSet.isDelocalizedAtom(atom);
+		return (atom < mAtoms) ? mRingSet.isDelocalizedAtom(atom) : false;
 	}
 
 
 	public boolean isAromaticBond(int bond) {
-		return mRingSet.isAromaticBond(bond);
+		return (bond < mBonds) ? mRingSet.isAromaticBond(bond) : false;
 	}
 
 
 	public boolean isHeteroAromaticBond(int bond) {
-		return mRingSet.isHeteroAromaticBond(bond);
+		return (bond < mBonds) ? mRingSet.isHeteroAromaticBond(bond) : false;
 	}
 
 
@@ -1587,7 +1587,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 */
 	@Override
 	public boolean isDelocalizedBond(int bond) {
-		return mRingSet.isDelocalizedBond(bond) || mBondType[bond] == cBondTypeDelocalized;
+		return (bond < mBonds) ? mRingSet.isDelocalizedBond(bond) || mBondType[bond] == cBondTypeDelocalized : false;
 		}
 
 
