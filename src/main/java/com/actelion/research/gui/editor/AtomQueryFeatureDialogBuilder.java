@@ -351,7 +351,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mTFAtomList.setText(mMol.getAtomList(mAtom) == null ? "" : mMol.getAtomListString(mAtom));
 
 		long aromState = queryFeatures & Molecule.cAtomQFAromState;
-		if (aromState == Molecule.cAtomQFHeteroAromatic)
+		if ((aromState & Molecule.cAtomQFHeteroAromatic) != 0)
 			mChoiceArom.setSelectedIndex(2);
 		else if (aromState == Molecule.cAtomQFAromatic)
 			mChoiceArom.setSelectedIndex(1);
