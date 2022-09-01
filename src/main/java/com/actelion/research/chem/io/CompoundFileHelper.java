@@ -515,11 +515,11 @@ public abstract class CompoundFileHelper {
     	ArrayList<String> list = new ArrayList<String>();
     	int type = 0x00000001;
     	while ((type & cFileTypeMask) != 0) {
-    		if ((type & fileTypes) != 0) {
-    			String extension = getExtension(type);
-    			if (extension.length() != 0 && !list.contains(extension))
-    				list.add(extension);
-    			}
+    		if ((type & fileTypes) != 0)
+    			for (String extension:getExtensions(type))
+    			    if (!list.contains(extension))
+    				    list.add(extension);
+
     		type <<= 1;
     		}
     	return list;
@@ -527,77 +527,88 @@ public abstract class CompoundFileHelper {
 
 	/**
 	 * @param filetype
-	 * @return file extension including the dot
+	 * @return preferred file extension including the dot
 	 */
-    public static String getExtension(int filetype) {
-		String extension = "";
+	public static String getExtension(int filetype) {
+    	String[] extensions = getExtensions(filetype);
+    	return extensions.length == 0 ? "" : extensions[0];
+		}
+
+	/**
+	 * @param filetype
+	 * @return file extensions including the dot
+	 */
+    public static String[] getExtensions(int filetype) {
+		ArrayList<String> extensions = new ArrayList<>();
 		switch (filetype) {
 		case cFileTypeDataWarrior:
-			extension = ".dwar";
+			extensions.add(".dwar");
 			break;
 		case cFileTypeDataWarriorQuery:
-			extension = ".dwaq";
+			extensions.add(".dwaq");
 			break;
 		case cFileTypeDataWarriorTemplate:
-			extension = ".dwat";
+			extensions.add(".dwat");
 			break;
 		case cFileTypeDataWarriorMacro:
-			extension = ".dwam";
+			extensions.add(".dwam");
 			break;
 		case cFileTypeTextTabDelimited:
-			extension = ".txt";
+			extensions.add(".txt");
+			extensions.add(".tsv");
 			break;
 		case cFileTypeTextAnyCSV:
         case cFileTypeTextCommaSeparated:
 		case cFileTypeTextSemicolonSeparated:
 		case cFileTypeTextVLineSeparated:
-            extension = ".csv";
+            extensions.add(".csv");
             break;
 		case cFileTypeSD:
         case cFileTypeSDV2:
         case cFileTypeSDV3:
-			extension = ".sdf";
+			extensions.add(".sdf");
 			break;
 		case cFileTypeRD:
         case cFileTypeRDV2:
         case cFileTypeRDV3:
-			extension = ".rdf";
+			extensions.add(".rdf");
 			break;
 		case cFileTypeRXN:
-			extension = ".rxn";
+			extensions.add(".rxn");
 			break;
 		case cFileTypeSOM:
-			extension = ".dwas";
+			extensions.add(".dwas");
 			break;
 		case cFileTypeJPG:
-			extension = ".jpeg";
+			extensions.add(".jpeg");
+			extensions.add(".jpg");
 			break;
 		case cFileTypeGIF:
-			extension = ".gif";
+			extensions.add(".gif");
 			break;
 		case cFileTypePNG:
-			extension = ".png";
+			extensions.add(".png");
 			break;
 		case cFileTypeSVG:
-			extension = ".svg";
+			extensions.add(".svg");
 			break;
 		case cFileTypeMOL:
-			extension = ".mol";
+			extensions.add(".mol");
 			break;
 		case cFileTypeMOL2:
-			extension = ".mol2";
+			extensions.add(".mol2");
 			break;
 		case cFileTypePDB:
-			extension = ".pdb";
+			extensions.add(".pdb");
 			break;
 		case cFileTypeMMTF:
-			extension = ".mmtf";
+			extensions.add(".mmtf");
 			break;
 		case cFileTypeSDGZ:
-			extension = ".sdf.gz";
+			extensions.add(".sdf.gz");
 			break;
 			}
-		return extension;
+		return extensions.toArray(new String[0]);
 		}
 
 	public void saveRXNFile(Reaction rxn) {

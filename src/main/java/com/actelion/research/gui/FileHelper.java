@@ -159,7 +159,7 @@ public class FileHelper extends CompoundFileHelper {
 		fileChooser.setCurrentDirectory(getCurrentDirectory());
 		fileChooser.setDialogTitle(title);
 		fileChooser.setFileFilter(createFileFilter(filetype, true));
-		fileChooser.setExtension(FileHelper.getExtension(filetype));
+		fileChooser.setExtensions(FileHelper.getExtensions(filetype));
 		if (newFileName == null) {
 			fileChooser.setSelectedFile(new File(FileHelper.getCurrentDirectory(), "Untitled"));
 			}

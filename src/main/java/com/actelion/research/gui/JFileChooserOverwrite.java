@@ -40,14 +40,14 @@ public class JFileChooserOverwrite extends JFileChooser {
 	private static final long serialVersionUID = 20150101L;
 
 	private File	mFile;
-	private String	mExtension = null;
+	private String[] mExtensions = null;
 
 	public JFileChooserOverwrite() {
 //		super(System.getProperty("user.dir"));
 		}
 
-	public void setExtension(String extension) {
-		mExtension = extension;
+	public void setExtensions(String[] extensions) {
+		mExtensions = extensions;
 		}
 
 	public File getFile() {
@@ -57,15 +57,23 @@ public class JFileChooserOverwrite extends JFileChooser {
 	public void approveSelection() {
 		if (getSelectedFile() != null) {
 			String filename = getSelectedFile().getPath();
-			if (mExtension != null) {
+			if (mExtensions != null) {
 				int dotIndex = filename.lastIndexOf('.');
 				int slashIndex = filename.lastIndexOf(File.separator);
 				if (dotIndex == -1
-				 || dotIndex < slashIndex)
-					filename = filename.concat(mExtension);
-		    	else if (!filename.substring(dotIndex).equalsIgnoreCase(mExtension)) {
-					JOptionPane.showMessageDialog(this, "uncompatible file name extension.");
-				    return;
+				 || dotIndex < slashIndex) {
+					filename = filename.concat(mExtensions[0]);
+					}
+				else {
+					boolean found = false;
+					for (String extension:mExtensions)
+				        if (filename.substring(dotIndex).equalsIgnoreCase(extension))
+				        	found = true;
+
+				    if (!found) {
+						JOptionPane.showMessageDialog(this, "uncompatible file name extension.");
+					    return;
+						}
 					}
 				}
 
