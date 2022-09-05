@@ -95,7 +95,7 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 
 			if (hasBlockedBond) {
 				StereoMolecule query = new StereoMolecule(mol.getAllBonds(), mol.getAllBonds());
-				mol.copyMoleculeByAtoms(query, includeBond, true, null);
+				mol.copyMoleculeByBonds(query, includeBond, true, null);
 				mol = query;
 			}
 		}
