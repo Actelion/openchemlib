@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveCompleteGraph<IMolDistHist>{
 
-	public static final String VERSION = "02.04.2020 08:00";
+	public static final String VERSION = "07.09.2022";
 	public static final String INFO = "";
 
 	// 0.15 best thresh tested on 31.03.2016
@@ -71,6 +71,8 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 	private PPNodeSimilarity nodeSimilarity;
 
+	private boolean optimisticHistogramSimilarity;
+
 	boolean verbose;
 
 
@@ -104,12 +106,14 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	private long deltaNanoBaseBlur;
 	private long deltaNanoSimilarity;
 
+
 	private SlidingWindowDistHist slidingWindowDistHist;
 
 	public ObjectiveBlurFlexophoreHardMatchUncovered(){
 		this(DescriptorHandlerFlexophore.VERSION_INTERACTION_TABLES,
 				DescriptorHandlerFlexophore.MODE_PPNODE_SIMILARITY_COMPARISON,
-				DescriptorHandlerFlexophore.THRESH_SIMILARITY_COMPARISON_NODE, THRESH_HISTOGRAM_SIMILARITY);
+				DescriptorHandlerFlexophore.THRESH_SIMILARITY_COMPARISON_NODE,
+				THRESH_HISTOGRAM_SIMILARITY);
 
 	}
 
@@ -129,9 +133,14 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		deltaNanoQueryBlur=0;
 		deltaNanoBaseBlur=0;
 		deltaNanoSimilarity=0;
+		optimisticHistogramSimilarity = false;
 		initSimilarityMatrices();
 	}
-	
+
+	public void setOptimisticHistogramSimilarity(boolean optimisticHistogramSimilarity) {
+		this.optimisticHistogramSimilarity = optimisticHistogramSimilarity;
+	}
+
 	private void initSimilarityMatrices(){
 		
 		arrSimilarityNodes = new float [ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE][];
@@ -872,11 +881,12 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		double simNodePair2 = getSimilarityNodes(indexNode2Query, indexNode2Base);
 		
 		double simHists = getSimilarityHistogram(indexNode1Query, indexNode2Query, indexNode1Base, indexNode2Base);
-		
-//		if(simHists==0){
-//			System.out.println("ObjectiveFlexophoreHardMatchUncovered getScorePairwiseMapping(int indexNode1Query, int indexNode2Query, int indexNode1Base, int indexNode2Base)");
-//			System.out.println("Sim hists = 0");
-//		}
+
+		if(optimisticHistogramSimilarity) {
+			if (simHists > 0) {
+				simHists = 1.0;
+			}
+		}
 
 		if(verbose){
 			System.out.println("simHists " + Formatter.format2(simHists));
