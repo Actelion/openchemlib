@@ -41,7 +41,7 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 	private GenericDialog       mDialog;
     private ExtendedMolecule	mMol;
 	private int					mBond,mFirstSpanItem;
-	private GenericCheckBox     mCBSingle,mCBDouble,mCBTriple,mCBDelocalized,mCBMetalLigand,mCBIsBridge,mCBMatchStereo;
+	private GenericCheckBox     mCBSingle,mCBDouble,mCBTriple,mCBDelocalized,mCBMetalLigand,mCBIsBridge,mCBMatchFormalOrder,mCBMatchStereo;
 	private GenericComboBox     mComboBoxRing,mComboBoxRingSize,mComboBoxMinAtoms,mComboBoxMaxAtoms;
 	private boolean             mOKSelected;
 
@@ -66,26 +66,29 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mBond = bond;
 
         int[] hLayout = {8, GenericDialog.FILL, GenericDialog.PREFERRED, GenericDialog.PREFERRED, 8};
-        int[] vLayout = {8, GenericDialog.PREFERRED, GenericDialog.PREFERRED, GenericDialog.PREFERRED,
-					        GenericDialog.PREFERRED, GenericDialog.PREFERRED, 8,
-					        GenericDialog.PREFERRED, 8, GenericDialog.PREFERRED, 8, GenericDialog.PREFERRED, 16,
+        int[] vLayout = {8, GenericDialog.PREFERRED, 8, GenericDialog.PREFERRED, GenericDialog.PREFERRED,
+		                    GenericDialog.PREFERRED, GenericDialog.PREFERRED, GenericDialog.PREFERRED, 8,
+					        GenericDialog.PREFERRED, 8, GenericDialog.PREFERRED, 8, GenericDialog.PREFERRED, 8,
+		                    GenericDialog.PREFERRED, 16,
 					        GenericDialog.PREFERRED, 4, GenericDialog.PREFERRED, 4, GenericDialog.PREFERRED, 16};
         mDialog.setLayout(hLayout, vLayout);
 
+		mDialog.add(mDialog.createLabel("Desired Bond type(s):"), 1, 1, 3, 1);
+
 		mCBSingle = mDialog.createCheckBox("Single");
-		mDialog.add(mCBSingle,1,1,3,1);
+		mDialog.add(mCBSingle,1,3,3,3);
 
 		mCBDouble = mDialog.createCheckBox("Double");
-		mDialog.add(mCBDouble,1,2,3,2);
+		mDialog.add(mCBDouble,1,4,3,4);
 
 		mCBTriple = mDialog.createCheckBox("Triple");
-		mDialog.add(mCBTriple,1,3,3,3);
+		mDialog.add(mCBTriple,1,5,3,5);
 
 		mCBDelocalized = mDialog.createCheckBox("Delocalized");
-		mDialog.add(mCBDelocalized,1,4,3,4);
+		mDialog.add(mCBDelocalized,1,6,3,6);
 
 		mCBMetalLigand = mDialog.createCheckBox("Coordinate (0-order)");
-		mDialog.add(mCBMetalLigand,1,5,3,5);
+		mDialog.add(mCBMetalLigand,1,7,3,7);
 
 		mComboBoxRing = mDialog.createComboBox();
 		mComboBoxRing.addItem("any ring state");
@@ -94,7 +97,7 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mComboBoxRing.addItem("is non-aromatic ring bond");
 		mComboBoxRing.addItem("is aromatic bond");
 		mComboBoxRing.addEventConsumer(this);
-		mDialog.add(mComboBoxRing,1,7,3,7);
+		mDialog.add(mComboBoxRing,1,9,3,9);
 
 		mComboBoxRingSize = mDialog.createComboBox();
 		mComboBoxRingSize.addItem("any ring size");
@@ -103,29 +106,34 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mComboBoxRingSize.addItem("is in 5-membered ring");
 		mComboBoxRingSize.addItem("is in 6-membered ring");
 		mComboBoxRingSize.addItem("is in 7-membered ring");
-		mDialog.add(mComboBoxRingSize, 1,9,3,9);
+		mDialog.add(mComboBoxRingSize, 1,11,3,11);
+
+		mCBMatchFormalOrder = mDialog.createCheckBox("Match formal bond order");
+		mCBMatchFormalOrder.setSelected((mol.getBondQueryFeatures(bond) & Molecule.cBondQFMatchFormalOrder) != 0);
+		mCBMatchFormalOrder.addEventConsumer(this);
+		mDialog.add(mCBMatchFormalOrder, 1,13,3,13);
 
 		mCBMatchStereo = mDialog.createCheckBox("Match Stereo Configuration");
 		mCBMatchStereo.setSelected((mol.getBondQueryFeatures(bond) & Molecule.cBondQFMatchStereo) != 0);
 		mCBMatchStereo.addEventConsumer(this);
-		mDialog.add(mCBMatchStereo, 1,11,3,11);
+		mDialog.add(mCBMatchStereo, 1,15,3,15);
 
 		mCBIsBridge = mDialog.createCheckBox("Is atom bridge between");
         mCBIsBridge.addEventConsumer(this);
-		mDialog.add(mCBIsBridge,1,13,3,13);
+		mDialog.add(mCBIsBridge,1,17,3,17);
 
         mComboBoxMinAtoms = mDialog.createComboBox();
         int itemCount = (1 << Molecule.cBondQFBridgeMinBits);
         for (int i=0; i<itemCount; i++)
             mComboBoxMinAtoms.addItem(""+i);
-		mDialog.add(mComboBoxMinAtoms,2,15);
-		mDialog.add(mDialog.createLabel(" and"),3,15);
+		mDialog.add(mComboBoxMinAtoms,2,19);
+		mDialog.add(mDialog.createLabel(" and"),3,19);
         mComboBoxMinAtoms.addEventConsumer(this);
 
         mComboBoxMaxAtoms = mDialog.createComboBox();
         populateComboBoxMaxAtoms(0);
-		mDialog.add(mComboBoxMaxAtoms,2,17);
-		mDialog.add(mDialog.createLabel(" atoms"),3,17);
+		mDialog.add(mComboBoxMaxAtoms,2,21);
+		mDialog.add(mDialog.createLabel(" atoms"),3,21);
 
         mMol.ensureHelperArrays(Molecule.cHelperRings);
         setInitialStates();
@@ -178,6 +186,8 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			mCBDelocalized.setSelected(true);
 		if ((queryFeatures & Molecule.cBondQFMetalLigand) != 0 || bondOrder == 0)
 			mCBMetalLigand.setSelected(true);
+		if ((queryFeatures & Molecule.cBondQFMatchFormalOrder) != 0)
+			mCBMatchFormalOrder.setSelected(true);
 		if ((queryFeatures & Molecule.cBondQFMatchStereo) != 0)
 			mCBMatchStereo.setSelected(true);
 
@@ -300,8 +310,10 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
     			queryFeatures |= Molecule.cBondQFDelocalized;
 			if (mCBMetalLigand.isSelected() && bondOrder != 0)
 				queryFeatures |= Molecule.cBondQFMetalLigand;
-    		if (mCBMatchStereo.isSelected())
-    			queryFeatures |= Molecule.cBondQFMatchStereo;
+    		if (mCBMatchFormalOrder.isSelected())
+    			queryFeatures |= Molecule.cBondQFMatchFormalOrder;
+	        if (mCBMatchStereo.isSelected())
+		        queryFeatures |= Molecule.cBondQFMatchStereo;
 
 			if (mComboBoxRing.getSelectedIndex() != 0) {
 				if (mComboBoxRing.getSelectedIndex() == 1) {

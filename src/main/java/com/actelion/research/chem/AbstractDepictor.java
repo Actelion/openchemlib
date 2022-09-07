@@ -134,7 +134,7 @@ public abstract class AbstractDepictor<T> {
 	public static final int	cDModeSuppressCIPParity = 0x0040;
 	public static final int	cDModeSuppressESR = 0x0080;
 
-	private static final int cDModeShowSymmetryAny = 0x0700;
+	private static final int cDModeShowSymmetryAny = 0x0300;
 	public static final int cDModeShowSymmetrySimple = 0x0100;
     public static final int cDModeShowSymmetryStereoHeterotopicity = 0x0200;
 	public static final int	cDModeNoImplicitAtomLabelColors = 0x0400;
