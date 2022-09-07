@@ -81,27 +81,26 @@ public class Molecule implements Serializable {
 	public static final int cAtomColorDarkRed		= 0x0001C0;
 	private static final int cAtomFlagSelected 		= 0x000200;
 
-	protected static final int cAtomFlagsHelper2	= 0x00007C08;
-	protected static final int cAtomFlagsHelper3	= 0x08038007;
+	protected static final int cAtomFlagsHelper2	= 0x00003C08;
+	protected static final int cAtomFlagsHelper3	= 0x0401C007;
 	protected static final int cAtomFlagsHelper		= cAtomFlagsHelper2 | cAtomFlagsHelper3;
 
 	protected static final int cAtomFlagsRingBonds	= 0x000C00;
 	protected static final int cAtomFlags2RingBonds = 0x000400;
 	protected static final int cAtomFlags3RingBonds = 0x000800;
 	protected static final int cAtomFlags4RingBonds = 0x000C00;
-	protected static final int cAtomFlagAromatic	= 0x001000;
-	protected static final int cAtomFlagAllylic		= 0x002000;
-	protected static final int cAtomFlagStabilized	= 0x004000;
+	protected static final int cAtomFlagAllylic		= 0x001000;
+	protected static final int cAtomFlagStabilized	= 0x002000;
 
-	private static final int cAtomFlagsCIPParity	= 0x018000;
-	private static final int cAtomFlagsCIPParityShift = 15;
+	private static final int cAtomFlagsCIPParity	= 0x00C000;
+	private static final int cAtomFlagsCIPParityShift = 14;
 	public static final int cAtomCIPParityNone		= 0x000000;
 	public static final int cAtomCIPParityRorM		= 0x000001;
 	public static final int cAtomCIPParitySorP		= 0x000002;
 	public static final int cAtomCIPParityProblem	= 0x000003;
 
-	protected static final int cAtomFlagStereoProblem = 0x020000;
-	protected static final int cAtomFlagMarked		= 0x040000;
+	protected static final int cAtomFlagStereoProblem = 0x010000;
+	protected static final int cAtomFlagMarked		= 0x020000;
 
 		// MDL's enhanced stereochemical representation (ESR group and type may be assigned
 		// to TH and allene stereo centers as well as to BINAP kind of stereo bonds)
@@ -111,19 +110,19 @@ public class Molecule implements Serializable {
 	public static final int cESRMaxGroups			= 32;
 	public static final int cESRGroupBits			= 5;
 
-	protected static final int cAtomFlagsESR		= 0x03F80000;
-	private static final int cAtomFlagsESRType		= 0x00180000;
-	private static final int cAtomFlagsESRTypeShift = 19;
-	private static final int cAtomFlagsESRGroup		= 0x03E00000;
-	private static final int cAtomFlagsESRGroupShift = 21;
+	protected static final int cAtomFlagsESR		= 0x01FC0000;
+	private static final int cAtomFlagsESRType		= 0x000C0000;
+	private static final int cAtomFlagsESRTypeShift = 18;
+	private static final int cAtomFlagsESRGroup		= 0x01F00000;
+	private static final int cAtomFlagsESRGroupShift = 20;
 
-	protected static final int cAtomFlagConfigurationUnknown = 0x04000000;
-	private static final int cAtomFlagIsStereoCenter = 0x08000000;
+	protected static final int cAtomFlagConfigurationUnknown = 0x02000000;
+	private static final int cAtomFlagIsStereoCenter = 0x04000000;
 
-	protected static final int cAtomFlagsValence	= 0xF0000000;
-	private static final int cAtomFlagsValenceShift = 28;
+	protected static final int cAtomFlagsValence	= 0x78000000;
+	private static final int cAtomFlagsValenceShift = 27;
 
-	public static final int cAtomQFNoOfBits			= 39;
+	public static final int cAtomQFNoOfBits			= 46;
 	public static final int cAtomQFAromStateBits	= 2;
 	public static final int cAtomQFAromStateShift	= 1;
 	public static final int cAtomQFRingStateBits	= 4;
@@ -142,10 +141,12 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFRxnParityShift	= 30;
 	public static final int cAtomQFNewRingSizeBits	= 7;
 	public static final int cAtomQFNewRingSizeShift = 32;
+	public static final int cAtomQFENeighbourBits	= 5;
+	public static final int cAtomQFENeighbourShift	= 39;
 	public static final int cAtomQFStereoStateBits	= 2;
 	public static final int cAtomQFStereoStateShift = 44;
-	public static final long cAtomQFSimpleFeatures	= 0x00003F800E3FC7FEL;
-	public static final long cAtomQFNarrowing		= 0x00003FFF0FFFFFFEL;
+	public static final long cAtomQFSimpleFeatures	= 0x00007F800E3FC7FEL;
+	public static final long cAtomQFNarrowing		= 0x00007FFF0FFFFFFEL;
 	public static final long cAtomQFAny				= 0x00000001;
 	public static final long cAtomQFAromState		= 0x00000006;
 	public static final long cAtomQFAromatic		= 0x00000002;
@@ -192,15 +193,16 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFRingSize6       = 0x0000001000000000L;
 	public static final long cAtomQFRingSize7       = 0x0000002000000000L;
 	public static final long cAtomQFRingSizeLarge   = 0x0000004000000000L;
-	public static final long cAtomQFZValue          = 0x00000F8000000000L;
-	public static final long cAtomQFZValueNot0      = 0x0000008000000000L;
-	public static final long cAtomQFZValueNot1      = 0x0000010000000000L;
-	public static final long cAtomQFZValueNot2      = 0x0000020000000000L;
-	public static final long cAtomQFZValueNot3      = 0x0000040000000000L;
-	public static final long cAtomQFZValueNot4      = 0x0000080000000000L;
+	public static final long cAtomQFENeighbours     = 0x00000F8000000000L;
+	public static final long cAtomQFNot0ENeighbours = 0x0000008000000000L;
+	public static final long cAtomQFNot1ENeighbour  = 0x0000010000000000L;
+	public static final long cAtomQFNot2ENeighbours = 0x0000020000000000L;
+	public static final long cAtomQFNot3ENeighbours = 0x0000040000000000L;
+	public static final long cAtomQFNot4ENeighbours = 0x0000080000000000L;
 	public static final long cAtomQFStereoState     = 0x0000300000000000L;
 	public static final long cAtomQFIsStereo        = 0x0000100000000000L;
 	public static final long cAtomQFIsNotStereo     = 0x0000200000000000L;
+	public static final long cAtomQFHeteroAromatic  = 0x0000400000000000L;
 
 	public static final int cBondTypeSingle			= 0x00000001;
 	public static final int cBondTypeDouble			= 0x00000002;
@@ -216,7 +218,7 @@ public class Molecule implements Serializable {
 	protected static final int cBondTypeMaskSimple	= 0x00000067;	// masks
 	protected static final int cBondTypeMaskStereo	= 0x00000018;
 
-	protected static final int cBondFlagsHelper2	= 0x000003C0;
+	protected static final int cBondFlagsHelper2	= 0x000002C0;
 	protected static final int cBondFlagsHelper3	= 0x0000003F;
 
 		// double bond E/Z parities based on atom positions in atom table
@@ -236,17 +238,15 @@ public class Molecule implements Serializable {
 
 	protected static final int cBondFlagRing		= 0x00000040;
 	protected static final int cBondFlagSmallRing	= 0x00000080;
-	protected static final int cBondFlagAromatic	= 0x00000100;
-	protected static final int cBondFlagDelocalized	= 0x00000200;
-	protected static final int cBondFlagsESR		= 0x0001FC00;
-	private static final int cBondFlagsESRType		= 0x00000C00;
-	private static final int cBondFlagsESRTypeShift = 10;
-	private static final int cBondFlagsESRGroup		= 0x0001F000;
-	private static final int cBondFlagsESRGroupShift = 12;
-	private static final int cBondFlagBGHilited		= 0x00020000;
-	private static final int cBondFlagFGHilited		= 0x00040000;
+	protected static final int cBondFlagsESR		= 0x00007F00;
+	private static final int cBondFlagsESRType		= 0x00000300;
+	private static final int cBondFlagsESRTypeShift = 8;
+	private static final int cBondFlagsESRGroup		= 0x00007C00;
+	private static final int cBondFlagsESRGroupShift = 10;
+	private static final int cBondFlagBGHilited		= 0x00008000;
+	private static final int cBondFlagFGHilited		= 0x00010000;
 
-	private static final int cBondParityUnknownOrNone = 0x1000000;
+	private static final int cBondParityUnknownOrNone = 0x0020000;
 	// This hint/flag is set by CoordinateInventor for double bonds without
 	// given EZ-parity because coordinates may imply a not intended EZ-parity.
 	// The setBondParity() method clears this flag. The Canonizer considers
@@ -1302,8 +1302,7 @@ public class Molecule implements Serializable {
 		destMol.mBondAtom[0][destBond] = destAtom1;
 		destMol.mBondAtom[1][destBond] = destAtom2;
 
-		int bondType = (useBondTypeDelocalized
-					 && (mBondFlags[sourceBond] & cBondFlagDelocalized) != 0) ?
+		int bondType = (useBondTypeDelocalized && isDelocalizedBond(sourceBond)) ?
 									cBondTypeDelocalized : mBondType[sourceBond];
 		destMol.mBondType[destBond] = bondType;
 		destMol.mBondFlags[destBond] = mBondFlags[sourceBond];
@@ -2722,6 +2721,10 @@ public class Molecule implements Serializable {
 		}
 
 
+	public boolean isDelocalizedBond(int bond) {
+		return mBondType[bond] == cBondTypeDelocalized;
+		}
+
 	/**
 	 * @return true if at least one z-coordinate is different from 0.0
 	 */
@@ -3048,7 +3051,7 @@ public class Molecule implements Serializable {
 	 * @param isPseudo true if the configuration is only meaningful relative to another one
 	 */
 	public void setAtomParity(int atom, int parity, boolean isPseudo) {
-		mAtomFlags[atom] &= ~(cAtomFlagsParity | cAtomParityIsPseudo);
+		mAtomFlags[atom] &= ~(cAtomFlagsParity | cAtomParityIsPseudo | cAtomFlagConfigurationUnknown);
 		mAtomFlags[atom] |= parity;
 		if (isPseudo)
 			mAtomFlags[atom] |= cAtomParityIsPseudo;

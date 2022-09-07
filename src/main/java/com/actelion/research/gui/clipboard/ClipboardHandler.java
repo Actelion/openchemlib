@@ -142,13 +142,33 @@ public class ClipboardHandler implements IClipboardHandler
 				ArrayList<String> unresolvedNameList = null;
 
 				if (molList.size() == 0) {
+					boolean isFirstLine = true;
+					int column = -1;    // in case we have a TAB-delimited table with '[idcode]' tags, use first tagged column
 					BufferedReader reader = new BufferedReader(new StringReader(text));
 					try {
 						String line = reader.readLine();
 						while (line != null) {
 							line = line.trim();
+							if (isFirstLine) {
+								String[] header = line.split("\\t");
+								for (int i=0; i<header.length; i++) {
+									if (header[i].endsWith("[idcode]")) {
+										column = i;
+										break;
+									}
+								}
+								isFirstLine = false;
+								if (column != -1)
+									continue;
+							}
 							try {
-								mol = new IDCodeParser(prefer2D).getCompactMolecule(line);
+								String idcode = line;
+								if (column != -1) {
+									String[] entry = line.split("\\t");
+									if (column < entry.length)
+										idcode = entry[column];
+								}
+								mol = new IDCodeParser(prefer2D).getCompactMolecule(idcode);
 							} catch (Exception e) {
 								mol = null;
 							}
@@ -284,9 +304,7 @@ public class ClipboardHandler implements IClipboardHandler
 		try {
 			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 			return (StereoMolecule)t.getTransferData(ChemistryFlavors.DF_SERIALIZED_MOLECULE);
-		} catch (Exception e) {
-			System.err.println("error getting clipboard data "+ e);
-		}
+		} catch (Exception e) {}
 	return null;
 	}
 
@@ -378,9 +396,7 @@ public class ClipboardHandler implements IClipboardHandler
 		try {
 			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 			return (Reaction)t.getTransferData(ChemistryFlavors.DF_SERIALIZED_REACTION);
-		} catch (Exception e) {
-			System.err.println("error getting clipboard data "+ e);
-		}
+		} catch (Exception e) {}
 		return null;
 	}
 

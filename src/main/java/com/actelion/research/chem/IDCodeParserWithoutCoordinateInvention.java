@@ -676,6 +676,21 @@ public class IDCodeParserWithoutCoordinateInvention {
 					mMol.setAtomQueryFeature(atom, stereoState, true);
 					}
 				break;
+			case 33: //  datatype 'AtomQFENeighbours'
+				no = decodeBits(abits);
+				for (int i=0; i<no; i++) {
+					int atom = decodeBits(abits);
+					long eNeighbours = (long)decodeBits(Molecule.cAtomQFENeighbourBits) << Molecule.cAtomQFENeighbourShift;
+					mMol.setAtomQueryFeature(atom, eNeighbours, true);
+					}
+				break;
+			case 34:	//	datatype 'AtomQFHetereoAromatic'
+				no = decodeBits(abits);
+				for (int i=0; i<no; i++) {
+					int atom = decodeBits(abits);
+					mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHeteroAromatic, true);
+				}
+				break;
 				}
 			}
 
@@ -1491,14 +1506,14 @@ public class IDCodeParserWithoutCoordinateInvention {
 						no = decodeBits(abits);
 						System.out.print("AtomQFFlatNitrogen:");
 						for (int i = 0; i < no; i++)
-							System.out.print(" " + decodeBits(abits) + ":true");
+							System.out.print(" " + decodeBits(abits));
 						System.out.println();
 						break;
 					case 23:    //	datatype 'cBondQFMatchStereo'
 						no = decodeBits(bbits);
 						System.out.print("cBondQFMatchStereo:");
 						for (int i = 0; i < no; i++)
-							System.out.print(" " + decodeBits(abits) + ":true");
+							System.out.print(" " + decodeBits(abits));
 						System.out.println();
 						break;
 					case 24:    //	datatype 'cBondQFAromatic'
@@ -1525,7 +1540,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 						no = decodeBits(abits);
 						System.out.print("AtomQFExcludeGroup:");
 						for (int i = 0; i < no; i++)
-							System.out.print(" " + decodeBits(abits) + ":true");
+							System.out.print(" " + decodeBits(abits));
 						System.out.println();
 						break;
 					case 28:    //	datatype 'coordinate bond'
@@ -1554,6 +1569,20 @@ public class IDCodeParserWithoutCoordinateInvention {
 						System.out.print("AtomQFStereoState:");
 						for (int i = 0; i < no; i++)
 							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFStereoStateBits));
+						System.out.println();
+						break;
+					case 33: //  datatype 'AtomQFENeighbours'
+						no = decodeBits(abits);
+						System.out.print("AtomQFENeighbours:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFENeighbourBits));
+						System.out.println();
+						break;
+					case 34:    //	datatype 'in hetero aromatic ring'
+						no = decodeBits(abits);
+						System.out.print("AtomQFHeteroAromatic:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits));
 						System.out.println();
 						break;
 				}

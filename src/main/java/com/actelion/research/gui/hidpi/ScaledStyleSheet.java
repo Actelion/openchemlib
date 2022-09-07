@@ -32,10 +32,10 @@ package com.actelion.research.gui.hidpi;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-		import java.awt.Font;
 		import javax.swing.text.AttributeSet;
-		import javax.swing.text.html.CSS;
-		import javax.swing.text.html.StyleSheet;
+import javax.swing.text.html.CSS;
+import javax.swing.text.html.StyleSheet;
+import java.awt.*;
 
 
 public class ScaledStyleSheet extends StyleSheet{
@@ -62,9 +62,9 @@ public class ScaledStyleSheet extends StyleSheet{
 			return ScaledEditorKit.getFontScaleFactor();
 		if(fontSize.endsWith("px"))
 			return 1/1.3f;
-		if(fontSize.endsWith("%") || fontSize.endsWith("em") || fontSize.endsWith("ex")
-				|| fontSize.endsWith("er"))
-			return getFontScaleFactor(a);
+//		if(fontSize.endsWith("%") || fontSize.endsWith("em") || fontSize.endsWith("ex")
+//				|| fontSize.endsWith("er"))
+//			return getFontScaleFactor(a);   outcommented, because of stack overflow; TLS 2022Aug12
 		return ScaledEditorKit.getFontScaleFactor();
 	}
 }

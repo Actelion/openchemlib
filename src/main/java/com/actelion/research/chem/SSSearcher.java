@@ -1541,7 +1541,10 @@ System.out.println();
 		long queryDefaults = 0;
 
 		if (!mol.isFragment()) {
-			if (mol.isAromaticAtom(atom))
+			if (mol.isHeteroAromaticAtom(atom))
+				queryDefaults |= (Molecule.cAtomQFAromatic
+								| Molecule.cAtomQFHeteroAromatic);
+			else if (mol.isAromaticAtom(atom))
 				queryDefaults |= Molecule.cAtomQFAromatic;
 			else
 				queryDefaults |= Molecule.cAtomQFNotAromatic;
@@ -1612,22 +1615,22 @@ System.out.println();
 				break;
 				}
 
-			int zValue = mol.getAtomZValue(atom);
-			switch (zValue) {
+			int eValue = mol.getAtomElectronegativeNeighbours(atom);
+			switch (eValue) {
 				case 0:
-					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot0);
+					queryDefaults |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot0ENeighbours);
 					break;
 				case 1:
-					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot1);
+					queryDefaults |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot1ENeighbour);
 					break;
 				case 2:
-					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2);
+					queryDefaults |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot2ENeighbours);
 					break;
 				case 3:
-					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3);
+					queryDefaults |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot3ENeighbours);
 					break;
 				default:
-					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
+					queryDefaults |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot4ENeighbours);
 					break;
 				}
 
@@ -1649,7 +1652,10 @@ System.out.println();
 			}
 		else {	// The fragments implicit features are not really necessary,
 				  // but may speed up the graph matching.
-			if (mol.isAromaticAtom(atom))
+			if (mol.isHeteroAromaticAtom(atom))
+				queryDefaults |= (Molecule.cAtomQFAromatic
+							  | Molecule.cAtomQFHeteroAromatic);
+			else if (mol.isAromaticAtom(atom))
 				queryDefaults |= Molecule.cAtomQFAromatic;
 
 			int ringBonds = mol.getAtomRingBondCount(atom);
@@ -1687,21 +1693,21 @@ System.out.println();
 				break;
 				}
 
-			int zValue = mol.getAtomZValue(atom);
-			switch (zValue) {
+			int eValue = mol.getAtomElectronegativeNeighbours(atom);
+			switch (eValue) {
 				case 0:
 					break;
 				case 1:
-					queryDefaults |= (Molecule.cAtomQFZValueNot0);
+					queryDefaults |= (Molecule.cAtomQFNot0ENeighbours);
 					break;
 				case 2:
-					queryDefaults |= (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1);
+					queryDefaults |= (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour);
 					break;
 				case 3:
-					queryDefaults |= (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1 | Molecule.cAtomQFZValueNot2);
+					queryDefaults |= (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot2ENeighbours);
 					break;
 				default:
-					queryDefaults |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
+					queryDefaults |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot4ENeighbours);
 					break;
 				}
 

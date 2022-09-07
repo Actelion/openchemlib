@@ -83,6 +83,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	private String mWarningMessage;
 	private int[] mAtomHiliteColor;
 	private float[] mAtomHiliteRadius;
+	private double mTextSizeFactor;
 
 	public JStructureView() {
         this(null);
@@ -152,6 +153,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		mMol = (mol == null) ? new StereoMolecule() : new StereoMolecule(mol);
 		mDisplayMol = (displayMol == null) ? mMol : displayMol;
 		mDisplayMode = AbstractDepictor.cDModeHiliteAllQueryFeatures;
+		mTextSizeFactor = 1.0;
 		mIsEditable = false;
 		updateBackground();
 		addMouseListener(this);
@@ -192,6 +194,14 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		    repaint();
 			}
 	    }
+
+	/**
+	 * Sets a multiplication factor to the text size of all labels. The default is 1.0.
+	 * @param factor text size factor
+	 */
+	public void setFactorTextSize(double factor) {
+		mTextSizeFactor = factor;
+		}
 
 	public void setDisableBorder(boolean b) {
 		mDisableBorder = b;
@@ -292,6 +302,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		if (mDisplayMol != null && mDisplayMol.getAllAtoms() != 0) {
 			mDepictor = new GenericDepictor(mDisplayMol);
             mDepictor.setDisplayMode(mDisplayMode);
+            mDepictor.setFactorTextSize(mTextSizeFactor);
             mDepictor.setAtomText(mAtomText);
             mDepictor.setAtomHighlightColors(mAtomHiliteColor, mAtomHiliteRadius);
 

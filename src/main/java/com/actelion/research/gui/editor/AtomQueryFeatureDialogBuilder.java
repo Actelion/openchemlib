@@ -122,7 +122,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 	private GenericTextField    mTFAtomList;
 	private GenericCheckBox     mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo,mCBExcludeGroup;
 	private GenericComboBox     mChoiceArom,mChoiceRingState,mChoiceSmallRingSize,mChoiceRingSize,mChoiceCharge,
-								mChoiceNeighbours,mChoiceHydrogen,mChoicePi, mChoiceZValue,mChoiceReactionParityHint,
+								mChoiceNeighbours,mChoiceHydrogen,mChoicePi, mChoiceENeighbours,mChoiceReactionParityHint,
 								mChoiceStereoCenter;
     private ExtendedMolecule	mMol;
 	private int					mAtom;
@@ -179,6 +179,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mChoiceArom = mDialog.createComboBox();
 		mChoiceArom.addItem("any");
 		mChoiceArom.addItem("is aromatic");
+		mChoiceArom.addItem("is hetero-aromatic");
 		mChoiceArom.addItem("is not aromatic");
 		mDialog.add(mDialog.createLabel("Aromaticity:"), 1,5);
 		mDialog.add(mChoiceArom, 3,5);
@@ -232,21 +233,24 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mDialog.add(mDialog.createLabel("Non-H neighbours:"), 1,15);
 		mDialog.add(mChoiceNeighbours, 3,15);
 
-		mChoiceZValue = mDialog.createComboBox();
-		mChoiceZValue.addItem("any");
-		mChoiceZValue.addItem("exactly 0");
-		mChoiceZValue.addItem("exactly 1");
-		mChoiceZValue.addItem("exactly 2");
-		mChoiceZValue.addItem("exactly 3");
-		mChoiceZValue.addItem("less than 2");
-		mChoiceZValue.addItem("less than 3");
-		mChoiceZValue.addItem("less than 4");
-		mChoiceZValue.addItem("at least 1");
-		mChoiceZValue.addItem("at least 2");
-		mChoiceZValue.addItem("at least 3");
-		mChoiceZValue.addItem("at least 4");
-		mDialog.add(mDialog.createLabel("Electronegative valence:"), 1,17);
-		mDialog.add(mChoiceZValue, 3,17);
+		mChoiceENeighbours = mDialog.createComboBox();
+		mChoiceENeighbours.addItem("any");
+		mChoiceENeighbours.addItem("exactly 0");
+		mChoiceENeighbours.addItem("exactly 1");
+		mChoiceENeighbours.addItem("exactly 2");
+		mChoiceENeighbours.addItem("exactly 3");
+		mChoiceENeighbours.addItem("less than 2");
+		mChoiceENeighbours.addItem("less than 3");
+		mChoiceENeighbours.addItem("less than 4");
+		mChoiceENeighbours.addItem("at least 1");
+		mChoiceENeighbours.addItem("at least 2");
+		mChoiceENeighbours.addItem("at least 3");
+		mChoiceENeighbours.addItem("at least 4");
+		mChoiceENeighbours.addItem("from 1 to 2");
+		mChoiceENeighbours.addItem("from 1 to 3");
+		mChoiceENeighbours.addItem("from 2 to 3");
+		mDialog.add(mDialog.createLabel("Electroneg. neighbours:"), 1,17);
+		mDialog.add(mChoiceENeighbours, 3,17);
 
 		mChoiceHydrogen = mDialog.createComboBox();
 		mChoiceHydrogen.addItem("any");
@@ -328,7 +332,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		else if (e.getSource() == mCBBlocked) {
 			mCBSubstituted.setSelected(false);
 			mChoiceNeighbours.setSelectedIndex(0);
-			mChoiceZValue.setSelectedIndex(0);
+			mChoiceENeighbours.setSelectedIndex(0);
 		    }
 		else if (e.getSource() == mCBSubstituted)
 			mCBBlocked.setSelected(false);
@@ -347,10 +351,12 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mTFAtomList.setText(mMol.getAtomList(mAtom) == null ? "" : mMol.getAtomListString(mAtom));
 
 		long aromState = queryFeatures & Molecule.cAtomQFAromState;
-		if (aromState == Molecule.cAtomQFAromatic)
+		if ((aromState & Molecule.cAtomQFHeteroAromatic) != 0)
+			mChoiceArom.setSelectedIndex(2);
+		else if (aromState == Molecule.cAtomQFAromatic)
 			mChoiceArom.setSelectedIndex(1);
 		else if (aromState == Molecule.cAtomQFNotAromatic)
-			mChoiceArom.setSelectedIndex(2);
+			mChoiceArom.setSelectedIndex(3);
 		else
 			mChoiceArom.setSelectedIndex(0);
 
@@ -427,31 +433,37 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		else
 			mChoiceNeighbours.setSelectedIndex(0);
 
-		long zValueFeatures = queryFeatures & Molecule.cAtomQFZValue;
-		if (zValueFeatures == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot0))
-			mChoiceZValue.setSelectedIndex(1);
-		else if (zValueFeatures == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot1))
-			mChoiceZValue.setSelectedIndex(2);
-		else if (zValueFeatures == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2))
-			mChoiceZValue.setSelectedIndex(3);
-		else if (zValueFeatures == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3))
-			mChoiceZValue.setSelectedIndex(4);
-		else if (zValueFeatures == (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4))
-			mChoiceZValue.setSelectedIndex(5);
-		else if (zValueFeatures == (Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4))
-			mChoiceZValue.setSelectedIndex(6);
-		else if (zValueFeatures == Molecule.cAtomQFZValueNot4)
-			mChoiceZValue.setSelectedIndex(7);
-		else if (zValueFeatures == Molecule.cAtomQFZValueNot0)
-			mChoiceZValue.setSelectedIndex(8);
-		else if (zValueFeatures == (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1))
-			mChoiceZValue.setSelectedIndex(9);
-		else if (zValueFeatures == (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1 | Molecule.cAtomQFZValueNot2))
-			mChoiceZValue.setSelectedIndex(10);
-		else if (zValueFeatures == (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4))
-			mChoiceZValue.setSelectedIndex(11);
+		long eNeighbourFeatures = queryFeatures & Molecule.cAtomQFENeighbours;
+		if (eNeighbourFeatures == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot0ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(1);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot1ENeighbour))
+			mChoiceENeighbours.setSelectedIndex(2);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot2ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(3);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot3ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(4);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFNot2ENeighbours | Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(5);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(6);
+		else if (eNeighbourFeatures == Molecule.cAtomQFNot4ENeighbours)
+			mChoiceENeighbours.setSelectedIndex(7);
+		else if (eNeighbourFeatures == Molecule.cAtomQFNot0ENeighbours)
+			mChoiceENeighbours.setSelectedIndex(8);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour))
+			mChoiceENeighbours.setSelectedIndex(9);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot2ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(10);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot4ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(11);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(12);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot4ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(13);
+		else if (eNeighbourFeatures == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot4ENeighbours))
+			mChoiceENeighbours.setSelectedIndex(14);
 		else
-			mChoiceZValue.setSelectedIndex(0);
+			mChoiceENeighbours.setSelectedIndex(0);
 
 		long chargeFeatures = queryFeatures & Molecule.cAtomQFCharge;
 		if (chargeFeatures == (Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos))
@@ -540,6 +552,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             setQueryFeatures(mAtom, atomList);
             }
 
+        mMol.validateAtomQueryFeatures();
         }
 
 
@@ -553,10 +566,15 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		else
 			mMol.setAtomList(atom, atomList, false);
 
-		if (!mMol.isAromaticAtom(atom)) {
+		if (mChoiceArom.getSelectedIndex() == 2) {
+			if (!mMol.isHeteroAromaticAtom(atom))
+				queryFeatures |= (Molecule.cAtomQFAromatic
+							    | Molecule.cAtomQFHeteroAromatic);
+		    }
+		else if (!mMol.isAromaticAtom(atom)) {
 			if (mChoiceArom.getSelectedIndex() == 1)
 				queryFeatures |= Molecule.cAtomQFAromatic;
-			else if (mChoiceArom.getSelectedIndex() == 2)
+			else if (mChoiceArom.getSelectedIndex() == 3)
 				queryFeatures |= Molecule.cAtomQFNotAromatic;
 			}
 
@@ -674,51 +692,63 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             break;
             }
 
-	    int zValue = mMol.getAtomZValue(atom);
-	    switch (mChoiceZValue.getSelectedIndex()) {
-		    case 1: // z = 0
-			    if (zValue == 0)
-				    queryFeatures |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot0);
+	    int eNeighbours = mMol.getAtomElectronegativeNeighbours(atom);
+	    switch (mChoiceENeighbours.getSelectedIndex()) {
+		    case 1: // e = 0
+			    if (eNeighbours == 0)
+				    queryFeatures |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot0ENeighbours);
 			    break;
-		    case 2: // z = 1
-			    if (zValue <= 1)
-				    queryFeatures |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot1);
+		    case 2: // e = 1
+			    if (eNeighbours <= 1)
+				    queryFeatures |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot1ENeighbour);
 			    break;
-		    case 3: // z = 2
-			    if (zValue <= 2)
-				    queryFeatures |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot2);
+		    case 3: // e = 2
+			    if (eNeighbours <= 2)
+				    queryFeatures |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot2ENeighbours);
 			    break;
-		    case 4: // z = 3
-			    if (zValue <= 3)
-				    queryFeatures |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot3);
+		    case 4: // e = 3
+			    if (eNeighbours <= 3)
+				    queryFeatures |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot3ENeighbours);
 			    break;
-		    case 5: // z < 2
-			    if (zValue < 2)
-				    queryFeatures |= (Molecule.cAtomQFZValueNot2 | Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4);
+		    case 5: // e < 2
+			    if (eNeighbours < 2)
+				    queryFeatures |= (Molecule.cAtomQFNot2ENeighbours | Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours);
 			    break;
-		    case 6: // z < 3
-			    if (zValue < 3)
-				    queryFeatures |= (Molecule.cAtomQFZValueNot3 | Molecule.cAtomQFZValueNot4);
+		    case 6: // e < 3
+			    if (eNeighbours < 3)
+				    queryFeatures |= (Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours);
 			    break;
-		    case 7: // z < 4
-			    if (zValue < 4)
-				    queryFeatures |= Molecule.cAtomQFZValueNot4;
+		    case 7: // e < 4
+			    if (eNeighbours < 4)
+				    queryFeatures |= Molecule.cAtomQFNot4ENeighbours;
 			    break;
-		    case 8: // z at least 1
-			    if (zValue == 0)
-				    queryFeatures |= Molecule.cAtomQFZValueNot0;
+		    case 8: // e at least 1
+			    if (eNeighbours == 0)
+				    queryFeatures |= Molecule.cAtomQFNot0ENeighbours;
 			    break;
-		    case 9: // z at least 2
-			    if (zValue < 2)
-				    queryFeatures |= (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1);
+		    case 9: // e at least 2
+			    if (eNeighbours < 2)
+				    queryFeatures |= (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour);
 			    break;
-		    case 10: // z at least 3
-			    if (zValue < 3)
-				    queryFeatures |= (Molecule.cAtomQFZValueNot0 | Molecule.cAtomQFZValueNot1 | Molecule.cAtomQFZValueNot2);
+		    case 10: // e at least 3
+			    if (eNeighbours < 3)
+				    queryFeatures |= (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot2ENeighbours);
 			    break;
-		    case 11: // z at least 4
-			    if (zValue < 4)
-				    queryFeatures |= (Molecule.cAtomQFZValue & ~Molecule.cAtomQFZValueNot4);
+		    case 11: // e at least 4
+			    if (eNeighbours < 4)
+				    queryFeatures |= (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot4ENeighbours);
+			    break;
+		    case 12: // e from 1 to 2
+			    if (eNeighbours < 2)
+				    queryFeatures |= (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours);
+			    break;
+		    case 13: // e from 1 to 3
+			    if (eNeighbours < 3)
+				    queryFeatures |= (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot4ENeighbours);
+			    break;
+		    case 14: // e from 2 to 3
+			    if (eNeighbours < 3)
+				    queryFeatures |= (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot4ENeighbours);
 			    break;
 		    }
 
@@ -822,23 +852,27 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 
 
 	private int[] createAtomList() {
-		String listString = mTFAtomList.getText();
-		if (listString.length() == 0)
-			return null;
+		int[] list = null;
 
-        int[] list = null;
-		int delimiterIndex;
-		do {
+		String listString = mTFAtomList.getText().trim();
+		while (listString.length() != 0) {
 			String label;
-			delimiterIndex = listString.indexOf(',');
-			if (delimiterIndex == -1)
-				label = listString;
+			int delimiterIndex = listString.indexOf(',');
+			if (delimiterIndex == -1) {
+				label = listString.trim();
+				listString = "";
+				}
 			else {
-				label = listString.substring(0, delimiterIndex);
-				if (delimiterIndex == listString.length() - 1)
-					listString = "";
-				else
-					listString = listString.substring(delimiterIndex+1);
+				label = listString.substring(0, delimiterIndex).trim();
+				listString = listString.substring(delimiterIndex+1).trim();
+				}
+
+			// support and expand MDL halogen shortcut
+			if (label.equals("X")) {
+				if (listString.length() != 0)
+					listString = ",";
+				listString = listString.concat("F,Cl,Br,I");
+				continue;
 				}
 
 			int atomicNo = Molecule.getAtomicNoFromLabel(label);
@@ -867,7 +901,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
                         }
                     }
 				}
-			} while (delimiterIndex != -1);
+			}
 
 		if (list != null)
 		    Arrays.sort(list);

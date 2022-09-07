@@ -67,6 +67,9 @@ public class MoleculeStandardizer {
 
 		if (remainingCharge != 0)
 			neutralizeCharges(mol, mode, remainingCharge);
+
+		mol.validateAtomQueryFeatures();
+		mol.validateBondQueryFeatures();
 	}
 
 	/**

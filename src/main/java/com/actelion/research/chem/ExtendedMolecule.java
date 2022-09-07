@@ -296,6 +296,21 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * Requires helper arrays state cHelperNeighbours.
+	 * @param atom
+	 * @return number of electronegative neighbour atoms
+	 */
+	public int getAtomElectronegativeNeighbours(int atom) {
+		int e = 0;
+		for (int i=0; i<mConnAtoms[atom]; i++)
+			if (isElectronegative(mConnAtom[atom][i]))
+				e++;
+
+		return e;
+		}
+
+
+	/**
 	 * @param atom
 	 * @return Hendrickson sigma-value, which is the number attached carbon atoms
 	 *
@@ -1532,13 +1547,32 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	public boolean isAromaticAtom(int atom) {
-		return (mAtomFlags[atom] & cAtomFlagAromatic) != 0;
+		return (atom < mAtoms) ? mRingSet.isAromaticAtom(atom) : false;
 		}
 
 
-	public boolean isAromaticBond(int bnd) {
-		return (mBondFlags[bnd] & cBondFlagAromatic) != 0;
-		}
+	public boolean isHeteroAromaticAtom(int atom) {
+		return (atom < mAtoms) ? mRingSet.isHeteroAromaticAtom(atom) : false;
+	}
+
+
+	/**
+	 * @param atom
+	 * @return whether the atom is a member of a delocalized ring (subset of aromatic rings)
+	 */
+	public boolean isDelocalizedAtom(int atom) {
+		return (atom < mAtoms) ? mRingSet.isDelocalizedAtom(atom) : false;
+	}
+
+
+	public boolean isAromaticBond(int bond) {
+		return (bond < mBonds) ? mRingSet.isAromaticBond(bond) : false;
+	}
+
+
+	public boolean isHeteroAromaticBond(int bond) {
+		return (bond < mBonds) ? mRingSet.isHeteroAromaticBond(bond) : false;
+	}
 
 
 	/**
@@ -1546,14 +1580,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * different, but energetically equivalent mesomeric structures. Bonds in aromatic 6-membered
 	 * rings typically are delocalized, while those in uncharged 5-membered aromatic rings are not.
 	 * Indole has 6 delocalized bonds.
-	 * Moreover, if the molecule is a fragment and if the bond query feature cBondQFDelocalized is
-	 * set (possibly as one of multiple allowed bond types), then this method also returns true.
+	 * This method also returns true, if the molecule is a fragment and if the bond is explicitly
+	 * defined to be delocalized.
 	 * @param bond
 	 * @return
 	 */
+	@Override
 	public boolean isDelocalizedBond(int bond) {
-		return (mBondFlags[bond] & cBondFlagDelocalized) != 0
-			 || (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) == cBondQFDelocalized);
+		return (bond < mBonds) ? mRingSet.isDelocalizedBond(bond) || mBondType[bond] == cBondTypeDelocalized : false;
 		}
 
 
@@ -3017,7 +3051,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 			mValidHelperArrays |= cHelperBitNeighbours;
 
-			if (validateQueryFeatures()) {
+			if (convertHydrogenToQueryFeatures()) {
 				handleHydrogens();
 				calculateNeighbours();
 				}
@@ -3040,16 +3074,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				}
 
 			findRings(RingCollection.MODE_SMALL_AND_LARGE_RINGS_AND_AROMATICITY);
-
-				// set aromaticity flags of explicitly defined delocalized bonds
-			for(int bond=0; bond<mBonds; bond++) {
-				if (mBondType[bond] == cBondTypeDelocalized) {
-					mAtomFlags[mBondAtom[0][bond]] |= cAtomFlagAromatic;
-					mAtomFlags[mBondAtom[1][bond]] |= cAtomFlagAromatic;
-					mBondFlags[bond] |= cBondFlagAromatic;
-					mBondFlags[bond] |= cBondFlagDelocalized;
-					}
-				}
 
 			for (int atom=0; atom<mAtoms; atom++) {	// allylic & stabilized flags
 				for (int i = 0; i< mConnAtoms[atom]; i++) {
@@ -3081,8 +3105,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				for (int atom=0; atom<mAtoms; atom++) {
 						 // for non-aromatic stabilized atoms with pi-electrons
 					if (mPi[atom] > 0
-					 && ((cAtomFlagStabilized | cAtomFlagAromatic)
-							& mAtomFlags[atom]) == cAtomFlagStabilized) {
+					 && (mAtomFlags[atom] & cAtomFlagStabilized) != 0
+					 && !mRingSet.isAromaticAtom(atom)) {
 						for (int i = 0; i< mConnAtoms[atom]; i++) {
 							if (mConnBondOrder[atom][i] > 1) {
 								int connAtom = mConnAtom[atom][i];
@@ -3488,9 +3512,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomFlags[atom] |= cAtomFlags4RingBonds;
 			}
 
-		// the aromaticity flag is not public. Thus, generate it:
-		boolean includeAromaticity = (((mode & RingCollection.MODE_SMALL_RINGS_AND_AROMATICITY) & ~RingCollection.MODE_SMALL_RINGS_ONLY) != 0);
-
 		for (int ringNo=0; ringNo<mRingSet.getSize(); ringNo++) {
 			int ringAtom[] = mRingSet.getRingAtoms(ringNo);
 			int ringBond[] = mRingSet.getRingBonds(ringNo);
@@ -3499,16 +3520,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomFlags[ringAtom[i]] |= cAtomFlagSmallRing;
 				mBondFlags[ringBond[i]] |= cBondFlagSmallRing;
 
-				if (includeAromaticity) {
-					if (mRingSet.isAromatic(ringNo)) {
-						mAtomFlags[ringAtom[i]] |= cAtomFlagAromatic;
-						mBondFlags[ringBond[i]] |= cBondFlagAromatic;
-						}
-
-					if (mRingSet.isDelocalized(ringNo))
-						mBondFlags[ringBond[i]] |= cBondFlagDelocalized;
-					}
-
 				if (mBondType[ringBond[i]] == cBondTypeCross)
 					mBondType[ringBond[i]] = cBondTypeDouble;
 				}
@@ -3516,8 +3527,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
-	private boolean validateQueryFeatures() {
-			// returns true if hydrogens were deleted and, thus, mConnAtoms are invalid
+	/**
+	 * @return true if hydrogens were deleted and, thus, mConnAtoms are invalid
+	 */
+	private boolean convertHydrogenToQueryFeatures() {
 		if (!mIsFragment)
 			return false;
 
@@ -3576,12 +3589,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 						}
 					}
 				}
-
-			if ((mAtomQueryFeatures[atom] & cAtomQFAromatic) != 0)
-				mAtomQueryFeatures[atom] &= ~cAtomQFNotChain;
-
-			if (mAtomCharge[atom] != 0)	// explicit charge superceeds query features
-				mAtomFlags[atom] &= ~cAtomQFCharge;
 			}
 		if (deleteHydrogens)
 			compressMolTable();
@@ -3590,9 +3597,66 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
+	/**
+	 * Normalizes atom query features by removing redundant ones that are implicitly defined
+	 * by the structure itself and those that are contradictory.
+	 * This method may be used before creating a canonical representation of a substructure.
+	 */
+	public void validateAtomQueryFeatures() {
+		if (!mIsFragment)
+			return;
+
+		ensureHelperArrays(cHelperRings);
+
+		for (int atom=0; atom<mAtoms; atom++) {
+			if (isRingAtom(atom))
+				mAtomQueryFeatures[atom] &= ~(cAtomQFRingSize0 | cAtomQFNotChain);  // forbidden
+
+			if (isAromaticAtom(atom))
+				mAtomQueryFeatures[atom] &= ~cAtomQFAromState;   // redundant or impossible
+			else if ((mAtomQueryFeatures[atom] & cAtomQFAromatic) != 0)
+				mAtomQueryFeatures[atom] &= ~cAtomQFNotAromatic;
+
+			if ((mAtomQueryFeatures[atom] & cAtomQFSmallRingSize) != 0)
+				mAtomQueryFeatures[atom] &= ~cAtomQFNotChain;   // redundant
+
+			if (mAtomCharge[atom] != 0)	// explicit charge supersedes query features
+				mAtomFlags[atom] &= ~cAtomQFCharge;
+			}
+		}
+
+	/**
+	 * Normalizes bond query features by removing redundant ones that are implicitly defined
+	 * by the structure itself and those that are contradictory.
+	 * This method may be used before creating a canonical representation of a substructure.
+	 */
+	public void validateBondQueryFeatures() {
+		if (!mIsFragment)
+			return;
+
+		ensureHelperArrays(cHelperRings);
+
+		for (int bond=0; bond<mBonds; bond++) {
+			if (isDelocalizedBond(bond))
+				mBondQueryFeatures[bond] &= ~cBondQFDelocalized;
+
+			int bondType = mBondType[bond] & cBondTypeMaskSimple;
+			if (bondType == cBondTypeSingle)
+				mBondQueryFeatures[bond] &= ~cBondQFSingle;
+			else if (bondType == cBondTypeDouble)
+				mBondQueryFeatures[bond] &= ~cBondQFDouble;
+			else if (bondType == cBondTypeTriple)
+				mBondQueryFeatures[bond] &= ~cBondQFTriple;
+			else if (bondType == cBondTypeMetalLigand)
+				mBondQueryFeatures[bond] &= ~cBondQFMetalLigand;
+			else if (bondType == cBondTypeDelocalized)
+				mBondQueryFeatures[bond] &= ~cBondQFDelocalized;
+			}
+		}
+
+
 	private void writeObject(ObjectOutputStream stream) throws IOException {}
 	private void readObject(ObjectInputStream stream) throws IOException {}
-
 
 
 	public final static Coordinates getCenterGravity(ExtendedMolecule mol) {
