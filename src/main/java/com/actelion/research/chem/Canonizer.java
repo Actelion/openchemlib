@@ -3264,6 +3264,7 @@ System.out.println();
 			addAtomQueryFeatures(32, nbits, Molecule.cAtomQFStereoState, Molecule.cAtomQFStereoStateBits, Molecule.cAtomQFStereoStateShift);
 			addAtomQueryFeatures(33, nbits, Molecule.cAtomQFENeighbours, Molecule.cAtomQFENeighbourBits, Molecule.cAtomQFENeighbourShift);
 			addAtomQueryFeatures(34, nbits, Molecule.cAtomQFHeteroAromatic, 1, -1);
+			addBondQueryFeatures(35, nbits, Molecule.cBondQFMatchFormalOrder, 1, -1);
 			}
 
 		encodeBits(0, 1);

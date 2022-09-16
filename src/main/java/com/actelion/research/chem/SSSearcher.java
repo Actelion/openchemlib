@@ -1266,7 +1266,26 @@ System.out.println();
 	 * @return true if all molecule bond features are present in fragment bond
 	 */
 	public boolean areBondsSimilar(int moleculeBond, int fragmentBond) {
-		if ((mMoleculeBondFeatures[moleculeBond] & ~mFragmentBondFeatures[fragmentBond]) != 0)
+		int molDefaults = mMoleculeBondFeatures[moleculeBond];
+		int frgDefaults = mFragmentBondFeatures[fragmentBond];
+
+		if ((mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFMatchFormalOrder) != 0) {
+			int molBondType = mMolecule.getBondTypeSimple(moleculeBond);
+			int frgBondType = mFragment.getBondTypeSimple(fragmentBond);
+			int frgBondTypes = mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFBondTypes;
+			if (molBondType != frgBondType
+			 && !(molBondType == Molecule.cBondTypeSingle && (frgBondTypes & Molecule.cBondQFSingle) != 0)
+			 && !(molBondType == Molecule.cBondTypeDouble && (frgBondTypes & Molecule.cBondQFDouble) != 0)
+			 && !(molBondType == Molecule.cBondTypeTriple && (frgBondTypes & Molecule.cBondQFTriple) != 0)
+			 && !(molBondType == Molecule.cBondTypeMetalLigand && (frgBondTypes & Molecule.cBondQFMetalLigand) != 0)
+			 && !(molBondType == Molecule.cBondTypeDelocalized && (frgBondTypes & Molecule.cBondQFDelocalized) != 0))
+				return false;
+
+			molDefaults &= ~Molecule.cBondQFBondTypes;
+			frgDefaults &= ~Molecule.cBondQFBondTypes;
+			}
+
+		if ((molDefaults & ~frgDefaults) != 0)
 			return false;
 
 		int ringSize = (mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift;

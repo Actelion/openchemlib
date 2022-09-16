@@ -689,7 +689,14 @@ public class IDCodeParserWithoutCoordinateInvention {
 				for (int i=0; i<no; i++) {
 					int atom = decodeBits(abits);
 					mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHeteroAromatic, true);
-				}
+					}
+				break;
+			case 35:	//	datatype 'BondQFMatchFormalOrder'
+				no = decodeBits(bbits);
+				for (int i=0; i<no; i++) {
+					int bond = decodeBits(bbits);
+					mMol.setBondQueryFeature(bond, Molecule.cBondQFMatchFormalOrder, true);
+					}
 				break;
 				}
 			}
@@ -1581,6 +1588,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 					case 34:    //	datatype 'in hetero aromatic ring'
 						no = decodeBits(abits);
 						System.out.print("AtomQFHeteroAromatic:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(abits));
+						System.out.println();
+						break;
+					case 35:    //	datatype 'cBondQFMatchFormalOrder'
+						no = decodeBits(bbits);
+						System.out.print("BondQFMatchFormalOrder:");
 						for (int i = 0; i < no; i++)
 							System.out.print(" " + decodeBits(abits));
 						System.out.println();
