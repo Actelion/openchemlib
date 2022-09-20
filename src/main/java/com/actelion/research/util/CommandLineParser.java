@@ -104,16 +104,12 @@ public class CommandLineParser {
     }
 
     public List<String> getAsList(String command) {
-
         String s = hmCommandValue.get(command);
-
         String [] a = s.split(SEP_TAG);
-
         List<String> l = new ArrayList<>();
         for (String tok : a) {
-            l.add(tok);
+            l.add(tok.trim());
         }
-
         return l;
     }
 
