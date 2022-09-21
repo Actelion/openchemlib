@@ -66,7 +66,9 @@
 package com.actelion.research.chem;
 
 import com.actelion.research.calc.ArrayUtilsCalc;
+import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
+import com.actelion.research.util.BurtleHasher;
 
 import java.util.*;
 
@@ -1667,6 +1669,56 @@ public class ExtendedMoleculeFunctions {
 
 		return dh.getSimilarity(d1, d2);
 	}
+
+	/**
+	 * Taken from Thomas Sander SkeletonSpheres descriptor
+	 * @param mol
+	 * @param rootAtom atom index to start
+	 * @param depth so many spheres are taken
+	 * @return Fragment containing the spheres started at rootAtom
+	 */
+	public static StereoMolecule getSphere(StereoMolecule mol, int rootAtom, int depth){
+
+		mol.ensureHelperArrays(Molecule.cHelperRings);
+		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
+
+		int[] atomList = new int[mol.getAtoms()];
+		boolean[] atomMask = new boolean[mol.getAtoms()];
+		if (rootAtom != 0)
+			Arrays.fill(atomMask, false);
+
+		int min = 0;
+		int max = 0;
+
+		for (int sphere=0; sphere<depth && max<mol.getAtoms(); sphere++) {
+			if (max == 0) {
+				atomList[0] = rootAtom;
+				atomMask[rootAtom] = true;
+				max = 1;
+			}
+			else {
+				int newMax = max;
+				for (int i=min; i<max; i++) {
+					int atom = atomList[i];
+					for (int j=0; j<mol.getConnAtoms(atom); j++) {
+						int connAtom = mol.getConnAtom(atom, j);
+						if (!atomMask[connAtom]) {
+							atomMask[connAtom] = true;
+							atomList[newMax++] = connAtom;
+						}
+					}
+				}
+				min = max;
+				max = newMax;
+			}
+
+			mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
+		}
+
+		return fragment;
+
+	}
+
 
 	/**
 	 * Starts with 1 and goes until 16

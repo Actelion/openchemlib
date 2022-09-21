@@ -95,17 +95,21 @@ public class CommandLineParser {
         return hmCommandValue.get(command);
     }
 
+    public int getOrDefault(String command, int defaultVal){
+        int v=defaultVal;
+        if(contains(command)){
+            v=getAsInt(command);
+        }
+        return v;
+    }
+
     public List<String> getAsList(String command) {
-
         String s = hmCommandValue.get(command);
-
         String [] a = s.split(SEP_TAG);
-
         List<String> l = new ArrayList<>();
         for (String tok : a) {
-            l.add(tok);
+            l.add(tok.trim());
         }
-
         return l;
     }
 
