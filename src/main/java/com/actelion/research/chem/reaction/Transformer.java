@@ -25,8 +25,10 @@ public class Transformer {
 	private StereoMolecule mReactant,mTargetMolecule;
 	private SSSearcher mSSSearcher;
 	private ArrayList<int[]> mMatchList;
+	private String mName;
 
-	public Transformer(StereoMolecule reactant, StereoMolecule product) {
+	public Transformer(StereoMolecule reactant, StereoMolecule product, String name) {
+		mName = name;
 		reactant.ensureHelperArrays(Molecule.cHelperRings);
 		product.ensureHelperArrays(Molecule.cHelperRings);
 		mBondGain = product.getBonds() - reactant.getBonds();
@@ -106,9 +108,10 @@ public class Transformer {
 		}
 
 	/**
-	 * Creates a canonical representation of the bond state after the transformation.
-	 * This can be used to keep a history of created bonds states of a molecule and, thus, to avoid
-	 * transformations that lead to redundant products.
+	 * Creates a canonical representation of the bond state after the transformation
+	 * without actually touching the molecule itself.
+	 * Together with a history of created bonds states, this can be used to avoid
+	 * transformations that lead to products that have been seen before.
 	 * @return
 	 */
 	public int[] getTransformedBondList(StereoMolecule mol, int matchNo) {
@@ -147,5 +150,9 @@ public class Transformer {
 			rule.adaptBondOrder(mol, matchAtom);
 			}
 		mol.deleteMarkedAtomsAndBonds();
+		}
+
+	public String getName() {
+		return mName;
 		}
 	}

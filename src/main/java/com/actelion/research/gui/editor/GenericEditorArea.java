@@ -47,8 +47,8 @@ import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
-import com.actelion.research.util.ColorHelper;
 import com.actelion.research.gui.swing.SwingCursorHelper;
+import com.actelion.research.util.ColorHelper;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -139,7 +139,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	private static IReactionMapper sMapper;
 	private int mMode, mChainAtoms, mCurrentTool, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical,
-			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled,
+			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled, mFirstAtomKey,
 			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2, mMaxAVBL;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
 	private double mX1, mY1, mX2, mY2, mWidth, mHeight, mUIScaling, mTextSizeFactor;
@@ -1241,6 +1241,16 @@ public class GenericEditorArea implements GenericEventListener {
 			} else if (mCurrentHiliteAtom != -1) {
 				int ch = e.getKey();
 				boolean isFirst = (mAtomKeyStrokeBuffer.length() == 0);
+				if (isFirst)
+					mFirstAtomKey = ch;
+				else {
+					if (mFirstAtomKey == 'l') {
+						mAtomKeyStrokeBuffer.setLength(0);
+						mAtomKeyStrokeBuffer.append('L');
+						}
+					mFirstAtomKey = -1;
+					}
+
 				if (isFirst && (ch == '+' || ch == '-')) {
 					storeState();
 					if (mMol.changeAtomCharge(mCurrentHiliteAtom, ch == '+'))

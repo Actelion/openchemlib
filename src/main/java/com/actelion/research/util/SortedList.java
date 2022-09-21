@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 
-public class SortedList<T extends Comparable<? super T>> {
+public class SortedList<T> {
     static final long serialVersionUID = 0x20160626;
 
     private ArrayList<T> mList = new ArrayList<T>();
@@ -135,7 +135,7 @@ public class SortedList<T extends Comparable<? super T>> {
 		}
 
 	private int compare(T o1, T o2) {
-		return (mComparator != null) ? mComparator.compare(o1, o2) : o1.compareTo(o2);
+		return (mComparator != null) ? mComparator.compare(o1, o2) : ((Comparable<? super T>)o1).compareTo((T)o2);
 		}
 
 	/**

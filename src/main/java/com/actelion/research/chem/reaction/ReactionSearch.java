@@ -410,9 +410,9 @@ public class ReactionSearch {
 												mReactantSearcher.setMolecule(reactant, reactantFFP);
 												inReactantCount = mReactantSearcher.findFragmentInMoleculeWithoutIndex(SSSearcher.cCountModeSeparated);
 												if (inReactantCount != 0 && mDataSource.getMapping(row) != null) {
-													inProductCount -= countEquivalentMatches(product, mProductSearcher.getMatchList());
+													inProductCount -= countEquivalentMatches(product, mProductSearcher.getGraphMatcher().getMatchList());
 													if (inProductCount <= inReactantCount)
-														inReactantCount -= countEquivalentMatches(reactant, mReactantSearcher.getMatchList());
+														inReactantCount -= countEquivalentMatches(reactant, mReactantSearcher.getGraphMatcher().getMatchList());
 													}
 												}
 											// TODO check, whether we also have to take into account in catalyst occurences

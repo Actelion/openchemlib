@@ -36,7 +36,9 @@ package com.actelion.research.chem;
 
 import com.actelion.research.util.IntArrayComparator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.TreeSet;
 
 public class SSSearcher {
 	// CONSTANTS TO DEFINE KIND OF SIMILARITY BETWEEN ATOMS AND BONDS
@@ -100,6 +102,7 @@ public class SSSearcher {
 	private int[] mFragmentGraphParentBond;
 	private boolean[] mFragmentGraphIsRingClosure;
 	private boolean[] mIsExcludeAtom;
+	private boolean[] mIsBridgeBondAtom;
 	private int[] mFragmentConnAtoms;	// in case of exclude atoms, these are not part of this
 	private int[] mMatchTable;
 	private int[] mExcludeGroupNo;
@@ -111,6 +114,7 @@ public class SSSearcher {
 	private TreeSet<int[]> mSortedMatchSet;
 	private ArrayList<int[]> mMatchList;
 	private ArrayList<BridgeBond> mBridgeBondList;
+	private ArrayList<boolean[]> mBridgeBondAtomList;
 
 	private boolean mMoleculeFeaturesValid;
 	private boolean mFragmentFeaturesValid;
@@ -129,8 +133,9 @@ public class SSSearcher {
 	 */
 	public SSSearcher() {
 		mDefaultMatchMode = cDefaultMatchMode;
-		mMatchList = new ArrayList<int[]>();
-		mSortedMatchSet = new TreeSet<int[]>(new IntArrayComparator());
+		mMatchList = new ArrayList<>();
+		mBridgeBondAtomList = new ArrayList<>();
+		mSortedMatchSet = new TreeSet<>(new IntArrayComparator());
 		}
 
 
@@ -145,8 +150,9 @@ public class SSSearcher {
 	 */
 	public SSSearcher(int matchMode) {
 		mDefaultMatchMode = matchMode;
-		mMatchList = new ArrayList<int[]>();
-		mSortedMatchSet = new TreeSet<int[]>(new IntArrayComparator());
+		mMatchList = new ArrayList<>();
+		mBridgeBondAtomList = new ArrayList<>();
+		mSortedMatchSet = new TreeSet<>(new IntArrayComparator());
 		}
 
 
@@ -381,7 +387,8 @@ System.out.println();
 	 * If the match count mode is one of cCountModeFirstMatch, cCountModeOverlapping,
 	 * cCountModeRigorous then this method returns an arraylist of all counted matches,
 	 * i.e. int arrays mapping fragment atoms to molecule atoms. Atoms being part of a
-	 * matched bridge bond are naturally not covered by the mapping.<br>
+	 * matched bridge bond are naturally not covered by the mapping. Atoms being part of a
+	 * matching bridge bond are available with getBridgeBondAtomList().<br>
 	 * Note: If some query fragment atoms are marked as exclude group, then the respective
 	 * matchlist values are -1.
 	 * @return list of distinct counted matches.
@@ -390,6 +397,16 @@ System.out.println();
 		return mMatchList;
 		}
 
+	/**
+	 * getMatchList() doesn't include information about atoms, which are part of a matching bridge bond.
+	 * This method returns an atom mask for a given matchNo, where all atoms are flagged that are part of a
+	 * matching bridge bond within that match.
+	 * @param matchNo index of corresponding match from getMatchList()
+	 * @return null or atom mask in target atom space
+	 */
+	public boolean[] getMatchingBridgeBondAtoms(int matchNo) {
+		return mBridgeBondAtomList.size() <= matchNo ? mBridgeBondAtomList.get(matchNo) : null;
+		}
 
 	/**
 	 * Fastest check, whether the molecule contains the fragment.
@@ -455,7 +472,8 @@ System.out.println();
 	 */
 	public int findFragmentInMolecule(int countMode, int matchMode, final boolean[] atomExcluded) {
 		mStop = false;
-		mMatchList = new ArrayList<int[]>();
+		mMatchList.clear();
+		mBridgeBondAtomList.clear();
 		mSortedMatchSet.clear();
 
 		if (mMolecule == null
@@ -598,13 +616,13 @@ System.out.println();
 		if (countMode == cCountModeFirstMatch
 		 || countMode == cCountModeRigorous) {
 			// count every match (even permutations of same atoms)
-			mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+			addMatchAtoms();
 			}
 		else if (countMode == cCountModeOverlapping) {
 			int[] sortedMatch = getSortedMatch(copyOf(mMatchTable, mMatchTable.length));
 			if (!mSortedMatchSet.contains(sortedMatch)) {
 				mSortedMatchSet.add(sortedMatch);
-				mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+				addMatchAtoms();
 				}
 			}
 		else if (countMode == cCountModeSeparated) {
@@ -628,7 +646,7 @@ System.out.println();
 					}
 				if (!found) {
 					mSortedMatchSet.add(sortedMatch);
-					mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+					addMatchAtoms();
 					}
 				}
 			}
@@ -636,11 +654,16 @@ System.out.println();
 			int[] sortedMatch = getSortedSymmetryMatch(copyOf(mMatchTable, mMatchTable.length));
 			if (!mSortedMatchSet.contains(sortedMatch)) {
 				mSortedMatchSet.add(sortedMatch);
-				mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+				addMatchAtoms();
 				}
 			}
 		}
 
+	private void addMatchAtoms() {
+		mMatchList.add(copyOf(mMatchTable, mMatchTable.length));
+		if (mBridgeBondList != null)
+			mBridgeBondAtomList.add(copyOf(mIsBridgeBondAtom, mIsBridgeBondAtom.length));
+		}
 
 	/**
 	 * @return sorted match atoms without excluded atoms
@@ -1243,15 +1266,20 @@ System.out.println();
 	 */
 	private boolean doBridgeBondsMatch(boolean[] moleculeAtomUsed, int excludeGroupNo) {
 		if (mBridgeBondList != null) {
+			mIsBridgeBondAtom = new boolean[moleculeAtomUsed.length];
 			for (BridgeBond bb:mBridgeBondList) {
 				if (mExcludeGroupNo == null
 				 ||	(excludeGroupNo == -1 && mExcludeGroupNo[bb.atom1] == -1 && mExcludeGroupNo[bb.atom2] == -1)
 				 || (excludeGroupNo != -1 && (mExcludeGroupNo[bb.atom1] == excludeGroupNo || mExcludeGroupNo[bb.atom2] == excludeGroupNo))) {
 //				if ((mIsExcludeAtom[bb.atom1] || mIsExcludeAtom[bb.atom2]) == isExcludeFragment) {
-					int bridgeSize = mMolecule.getPathLength(mMatchTable[bb.atom1], mMatchTable[bb.atom2], bb.maxBridgeSize+1, moleculeAtomUsed) - 1;
+					int[] pathAtom = new int[bb.maxBridgeSize+2];
+					int bridgeSize = mMolecule.getPath(pathAtom, mMatchTable[bb.atom1], mMatchTable[bb.atom2], bb.maxBridgeSize+1, moleculeAtomUsed, null) - 1;
 					if (bridgeSize < bb.minBridgeSize
 					 || bridgeSize > bb.maxBridgeSize)
 						return false;
+
+					for (int i=1; i<bridgeSize; i++)
+						mIsBridgeBondAtom[pathAtom[i]] = true;
 					}
 				}
 			}
@@ -1787,7 +1815,7 @@ System.out.println();
 		for (int bond=0; bond<mFragment.getBonds(); bond++) {
 			if (mFragment.isBondBridge(bond)) {
 				if (mBridgeBondList == null)
-					mBridgeBondList = new ArrayList<BridgeBond>();
+					mBridgeBondList = new ArrayList<>();
 				BridgeBond bridgeBond = new BridgeBond();
 				bridgeBond.atom1 = mFragment.getBondAtom(0, bond);
 				bridgeBond.atom2 = mFragment.getBondAtom(1, bond);
@@ -1804,6 +1832,12 @@ System.out.println();
 
 	private static int[] copyOf(int[] original, int newLength) {
 		int[] copy = new int[newLength];
+		System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
+		return copy;
+		}
+
+	private static boolean[] copyOf(boolean[] original, int newLength) {
+		boolean[] copy = new boolean[newLength];
 		System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
 		return copy;
 		}

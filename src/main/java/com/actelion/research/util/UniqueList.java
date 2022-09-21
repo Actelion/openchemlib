@@ -37,7 +37,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class UniqueList<T extends Comparable<? super T>> extends SortedList<T> implements Serializable {
+public class UniqueList<T> extends SortedList<T> implements Serializable {
     static final long serialVersionUID = 0x20121016;
 
     private ArrayList<T> mOriginalOrder = new ArrayList<T>();

@@ -36,8 +36,6 @@ package com.actelion.research.chem;
 
 import com.actelion.research.chem.descriptor.AbstractDescriptorHandlerLongFP;
 
-import java.util.ArrayList;
-
 // TODO purge mMoleculeIndexInt,mFragmentIndexInt and related methods from this class. Long versions were introduced Aug 3, 2018
 
 public class SSSearcherWithIndex {
@@ -872,18 +870,11 @@ public class SSSearcherWithIndex {
 
 
 	/**
-	 * If the match count mode is one of cCountModeFirstMatch, cCountModeOverlapping,
-	 * cCountModeRigorous then this method returns an arraylist of all counted matches,
-	 * i.e. int arrays mapping fragment atoms to molecule atoms. Atoms being part of a
-	 * matched bridge bond are naturally not covered by the mapping.<br>
-	 * Note: If some query fragment atoms are marked as exclude group, then the respective
-	 * matchlist values are -1.
-	 * @return list of distinct counted matches.
+	 * @return the SSSearcher employed for the graph matching by this index accelerated SS-searcher
 	 */
-	public ArrayList<int[]> getMatchList() {
-		return mSSSearcher.getMatchList();
+	public SSSearcher getGraphMatcher() {
+		return mSSSearcher;
 		}
-
 
 	@Deprecated // switch to long version; this version does not support the AllFragmentIndex
 	public int[] createIndex(StereoMolecule mol) {

@@ -262,7 +262,7 @@ public class CoordinateInventor {
 			if (useFFP) {
 				searcherWithIndex.setFragment(templateMol, template.getFFP());
 				if (searcherWithIndex.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cDefaultMatchMode) != 0)
-					matchList = searcherWithIndex.getMatchList();
+					matchList = searcherWithIndex.getGraphMatcher().getMatchList();
 				}
 			else {
 				searcher.setFragment(templateMol);
