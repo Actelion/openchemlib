@@ -89,6 +89,7 @@ public class GenericEditorArea implements GenericEventListener {
 	private static final String ITEM_FLIP_HORIZONTALLY = "Flip Horizontally";
 	private static final String ITEM_FLIP_VERTICALLY = "Flip Vertically";
 	private static final String ITEM_FLIP_ROTATE180 = "Rotate 180°";
+	private static final String ITEM_SHOW_HELP = "Help Me";
 
 	// development items
 	private static final String ITEM_SHOW_ATOM_BOND_NUMBERS = "Show Atom & Bond Numbers";
@@ -609,6 +610,8 @@ public class GenericEditorArea implements GenericEventListener {
 			flip(false);
 		} else if (command.equals(ITEM_FLIP_ROTATE180)) {
 			rotate180();
+		} else if (command.equals(ITEM_SHOW_HELP)) {
+			showHelpDialog();
 		} else if (command.startsWith("atomColor")) {
 			int index = command.indexOf(':');
 			int atom = Integer.parseInt(command.substring(9, index));
@@ -1244,14 +1247,17 @@ public class GenericEditorArea implements GenericEventListener {
 				if (isFirst)
 					mFirstAtomKey = ch;
 				else {
-					if (mFirstAtomKey == 'l') {
+					if (mFirstAtomKey == 'l') { // if we don't want first 'l' to be a chlorine
 						mAtomKeyStrokeBuffer.setLength(0);
 						mAtomKeyStrokeBuffer.append('L');
 						}
 					mFirstAtomKey = -1;
 					}
 
-				if (isFirst && (ch == '+' || ch == '-')) {
+				if (isFirst && ch == 'l') { // if no chars are following, we interpret 'l' as chlorine analog to ChemDraw
+					mAtomKeyStrokeBuffer.append("Cl");
+					update(UPDATE_REDRAW);
+				} else if (isFirst && (ch == '+' || ch == '-')) {
 					storeState();
 					if (mMol.changeAtomCharge(mCurrentHiliteAtom, ch == '+'))
 						updateAndFireEvent(UPDATE_CHECK_COORDS);
@@ -1267,11 +1273,13 @@ public class GenericEditorArea implements GenericEventListener {
 							: (mMol.getAtomRadical(mCurrentHiliteAtom) == Molecule.cAtomRadicalStateS) ? 0 : Molecule.cAtomRadicalStateT;
 					mMol.setAtomRadical(mCurrentHiliteAtom, newRadical);
 					updateAndFireEvent(UPDATE_CHECK_COORDS);
-				} else if (isFirst && ch == 'l') {
-					mAtomKeyStrokeBuffer.append("Cl");
-					update(UPDATE_REDRAW);
 				} else if (isFirst && ch == 'q' && mMol.isFragment()) {
 					showAtomQFDialog(mCurrentHiliteAtom);
+
+				} else if (isFirst && mMol.isFragment() && (ch == 'x' || ch == 'X')) {
+					int[] list = { 9, 17, 35, 53 };
+					mMol.setAtomList(mCurrentHiliteAtom, list);
+					updateAndFireEvent(UPDATE_CHECK_COORDS);
 				} else if (isFirst && ch == '?') {
 					storeState();
 					if (mMol.changeAtom(mCurrentHiliteAtom, 0, 0, -1, 0)) {
@@ -1399,6 +1407,12 @@ public class GenericEditorArea implements GenericEventListener {
 			popup.addRadioButtonItem("	  ", "atomColor" + mCurrentHiliteAtom + ":" + Molecule.cAtomColorOrange, AbstractDepictor.COLOR_ORANGE, atomColor == Molecule.cAtomColorOrange);
 			popup.endSubMenu();
 			}
+
+		if (popup == null)
+			popup = mUIHelper.createPopupMenu(this);
+		else
+			popup.addSeparator();
+		popup.addItem(ITEM_SHOW_HELP, null, true);
 
 		if (System.getProperty("development") != null) {
 			if (popup == null)
@@ -2537,7 +2551,7 @@ public class GenericEditorArea implements GenericEventListener {
 	 * @param s
 	 * @return true if adding one or more chars may still create a valid key stroke sequence
 	 */
-	private boolean isValidAtomKeyStrokeStart (String s){
+	private boolean isValidAtomKeyStrokeStart(String s){
 		if (s.length()<3)
 			for (int i=1; i<Molecule.cAtomLabel.length; i++)
 				if (Molecule.cAtomLabel[i].startsWith(s))
@@ -2546,7 +2560,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return false;
 	}
 
-	private void expandAtomKeyStrokes (String keyStrokes){
+	private void expandAtomKeyStrokes(String keyStrokes){
 		mAtomKeyStrokeBuffer.setLength(0);
 
 		int atomicNo = Molecule.getAtomicNoFromLabel(keyStrokes);

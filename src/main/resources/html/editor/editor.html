@@ -15,9 +15,9 @@ depending on the kind of object(s) being edited. Thus, the atom mapping tool is 
 when a reaction is edited. Query feature dialogs only open, when a substructure is edited, etc.</p>
 <br>
 <H3>Atom and Bond Hot-Keys</H3>
-<p>Hot-keys allow to quickly change atom and bond types or to attach common groups to an atom.
-When the mouse is moved over an atom or bond then the atom or bond is automatically highlighted,
-indicating that mouse clicks or pressing a hot-key affect the highlighted object.</p>
+<p>Hot-keys allow to quickly change atoms and bonds or to attach common groups to an atom.
+When the mouse pointer is moving near to an atom or bond then the atom or bond is automatically highlighted,
+indicating that a mouse click or typing hot-keys will affect the highlighted atom or bond.</p>
 <p><table BORDER=1 CELLSPACING=0 CELLPADDING=4 CLASS=body width="100%">
  <tr align="Left">
   <th>Hot-Key</th>
@@ -44,6 +44,18 @@ the mapping tool is selected, then pressing the 'Delete' key removes all atom ma
   <td>Atom</td>
   <td>Charge Modifiers</td>
   <td>Increases or decreases the charge of the highlighted atom.</td>
+ </tr>
+ <tr>
+  <td><b>'.'</b></td>
+  <td>Atom</td>
+  <td>Radical State Modifier</td>
+  <td>Adds or removes a single electron to change the atom's radical state.</td>
+ </tr>
+ <tr>
+  <td><b>':'</b></td>
+  <td>Atom</td>
+  <td>Radical State Modifier</td>
+  <td>Add or removes two electrons and toggles between singlet and triplet states.</td>
  </tr>
  <tr>
   <td><b>'?'</b></td>
@@ -100,14 +112,17 @@ atoms is a relative or absolute stereo center.</td>
 
 <br>
 <H3>Atom labels & Substituents & Protecting Groups</H3>
-<p>If an atom is highlighted one may type multiple keys to define an atom label or common
-group name. The key sequence is shown in the editor and in black, if it is a valid atom label.
-It is shown in blue, if it is a recognized substituent or protecting group name. It is shown in
-gray, if it can be completed to a known group name and it is shown in red, if no valid completion
-is possible. After typing a valid atom symbol or group name and moving the mouse away or typing
-<i>Enter</i> the atom is converted according to the atom label or a substituent is attached accoringly.
-For the sake of convenience atom labels or group names can be typed in as lower case letters and dashes
-in group names may be omitted. E.g. typing 'n' followed by 'a' converts the atom to a sodium atom
+<p>While the mouse pointer is near an atom such that the atom is highlighted, you may type one or
+multiple keys to change the atom label or to attach common substituent.
+The sequence of typed keys is shown in the editor. If it is recognized to represent a valid atom label,
+then the key string is shown in black. If it is recognized as a known substituent or protecting group name,
+then it is shown in blue. The key string is shown in gray, if it can be extended by adding more keys to
+a known group name. Finally, it is shown in red, if no valid completion to a known name is possible.
+Once a black or blue color indicates that your key string is recognized, you may move the mouse away or type
+<i>Enter</i> to actually convert the atom into the new type or to automatically attach the recognized
+substituent.</p>
+<p>For the sake of convenience atom labels or group names can be typed using lower case letters only.
+Dashes in group names may also be omitted. E.g. typing 'n' followed by 'a' converts the atom to a sodium atom
 and typing 'otolyl' attaches an ortho-Tolyl group.</p>
 <p>Known group names are: Ac, Alloc, Allyl, Am, Benzoyl, Benzyl, Boc, BOM, Bn, Bs, Bt, Btm, Bu, Bz,
 Bzh, Bzl, BzOM, Cbz, Cy, cyclobutyl, cycloheptyl, cyclooctyl, cyclopentyl, cyclopropyl, Dan, DEAE, DEIPS,
@@ -115,6 +130,8 @@ DMIPS, DMPM, DMPS, DMTr, DNP, DNS, DPIPS, DPTBS, DTBMS, Et, Fmoc, i-Am, i-Bu, i-
 MDPS, MEM, MMTr, MOM, MPM, MTM, Me, Mes, Ms, N3, n-Am, n-Bu, n-Pr, neo-Am, nitro, NO2, Np, o-Tolyl, p-Tolyl,
 PMB, PMBM, PNB, PPi, Ph, Phenyl, Pht, Piv, Poc, Pr, Pv, s-Am, s-Bu, s-Butyl, SEM, SES, t-Am, t-Bu, t-Butyl,
 TBDMS, TBDPS, TBMPS, TBS, TDS, TFA, THF, THP, TIPS, TMS, Tf, Thexyl, Tos, Troc, Trt, Ts, Xyl.</p>
+<p>To be compatible with ChemDraw, 'l' is recognized as chlorine atom. If you are editing a sub-structure,
+you may use 'x' to convert an atom into an atom list containing all halogene atoms.</p>
 
 <br>
 <H3>Buttons and Tools</H3>

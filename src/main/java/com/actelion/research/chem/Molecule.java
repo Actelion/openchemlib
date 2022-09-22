@@ -327,6 +327,15 @@ public class Molecule implements Serializable {
 	public static final int cMoleculeColorDefault = 0;
 	public static final int cMoleculeColorNeutral = 1;
 
+	public static final int cPseudoAtomsHydrogenIsotops = 1;
+	public static final int cPseudoAtomsRGroups = 2;
+	public static final int cPseudoAtomsAminoAcids = 4;
+	public static final int cPseudoAtomAttachmentPoint = 8;
+
+	public static final int cDefaultAllowedPseudoAtoms = cPseudoAtomsHydrogenIsotops
+													   | cPseudoAtomsAminoAcids
+													   | cPseudoAtomAttachmentPoint;
+
 	public static final String[] cAtomLabel = { "?",
 		"H"  ,"He" ,"Li" ,"Be" ,"B"  ,"C"  ,"N"  ,"O"  ,
 		"F"  ,"Ne" ,"Na" ,"Mg" ,"Al" ,"Si" ,"P"  ,"S"  ,
@@ -468,9 +477,32 @@ public class Molecule implements Serializable {
 	transient private Object mUserData;
 
     public static int getAtomicNoFromLabel(String atomLabel) {
-		for (int i=1; i<cAtomLabel.length; i++)
-			if (atomLabel.equalsIgnoreCase(cAtomLabel[i]))
+	    return getAtomicNoFromLabel(atomLabel, cDefaultAllowedPseudoAtoms);
+		}
+
+	public static int getAtomicNoFromLabel(String atomLabel, int allowedPseudoAtomGroups) {
+    	if (((allowedPseudoAtomGroups & cPseudoAtomAttachmentPoint) != 0) && atomLabel.equals("?"))
+			return 0;
+
+		for (int i=1; i<=128; i++)
+			if (!atomLabel.equals("??") && atomLabel.equalsIgnoreCase(cAtomLabel[i]))
 				return i;
+
+		if ((allowedPseudoAtomGroups & cPseudoAtomsRGroups) != 0)
+			for (int i=129; i<=144; i++)
+				if (atomLabel.equalsIgnoreCase(cAtomLabel[i]))
+					return i;
+
+		if ((allowedPseudoAtomGroups & cPseudoAtomsHydrogenIsotops) != 0)
+			for (int i=151; i<=152; i++)
+				if (atomLabel.equalsIgnoreCase(cAtomLabel[i]))
+					return i;
+
+		if ((allowedPseudoAtomGroups & cPseudoAtomsAminoAcids) != 0)
+			for (int i=171; i<=190; i++)
+				if (atomLabel.equalsIgnoreCase(cAtomLabel[i]))
+					return i;
+
 		return 0;
 		}
 
