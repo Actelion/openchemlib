@@ -42,6 +42,7 @@ import java.io.IOException;
 
 public class BondLengthSet {
 	private static final String cBondDataFile = "bondLengthData.txt";
+	private static String cCustomBondDataFile = null;
 
 	private static boolean isInitialized = false;
 	private static int[] BOND_ID,BOND_COUNT;
@@ -79,11 +80,19 @@ public class BondLengthSet {
 			}
 		}
 
+	/**
+	 * @param filePathAndName null (for default) or valid path & name to a custom bond length data file
+	 */
+	public void setCustomDataFile(String filePathAndName) {
+		cCustomBondDataFile = filePathAndName;
+		isInitialized = false;
+		}
+
 	private static void initialize() {
 		if (!isInitialized) {
 			synchronized (BondLengthSet.class) {
 				try {
-					BufferedReader bdr = TorsionDB.openReader(cBondDataFile);
+					BufferedReader bdr = TorsionDB.openReader(cCustomBondDataFile != null ? cCustomBondDataFile : cBondDataFile);
 
 					String countString = bdr.readLine();
 					int count = (countString == null) ? 0 : Integer.parseInt(countString);
