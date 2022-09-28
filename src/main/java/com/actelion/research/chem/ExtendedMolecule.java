@@ -3213,7 +3213,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		for (int bond=0; bond<lastNonHBond; bond++) {
 			if (isHydrogenBond[bond]) {
-				int tempInt = mBondAtom[0][bond];
+				swapBonds(bond, lastNonHBond);
+/*				int tempInt = mBondAtom[0][bond];
 				mBondAtom[0][bond] = mBondAtom[0][lastNonHBond];
 				mBondAtom[0][lastNonHBond] = tempInt;
 				tempInt = mBondAtom[1][bond];
@@ -3221,7 +3222,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mBondAtom[1][lastNonHBond] = tempInt;
 				tempInt = mBondType[bond];
 				mBondType[bond] = mBondType[lastNonHBond];
-				mBondType[lastNonHBond] = tempInt;
+				mBondType[lastNonHBond] = tempInt;  */
 				isHydrogenBond[bond] = false;
 				do lastNonHBond--;
 					while (isHydrogenBond[lastNonHBond]);

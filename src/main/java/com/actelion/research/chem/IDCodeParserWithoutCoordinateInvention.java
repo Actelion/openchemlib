@@ -656,7 +656,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 				no = decodeBits(abits);
 				for (int i=0; i<no; i++) {
 					int atom = decodeBits(abits);
-					long hint = decodeBits(Molecule.cAtomQFRxnParityBits) << Molecule.cAtomQFRxnParityShift;
+					long hint = (long)decodeBits(Molecule.cAtomQFRxnParityBits) << Molecule.cAtomQFRxnParityShift;
 					mMol.setAtomQueryFeature(atom, hint, true);
 					}
 				break;

@@ -144,6 +144,7 @@ public class Transformer {
 	 * @param matchNo must be smaller than the number of valid matches returned by setMolecule()
 	 */
 	public void applyTransformation(StereoMolecule mol, int matchNo) {
+		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		int[] matchAtom = mMatchList.get(matchNo);
 		for (int i=0; i<mRuleList.size(); i++) {
 			TransformerRule rule = mRuleList.get(i);

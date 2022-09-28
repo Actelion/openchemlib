@@ -93,7 +93,7 @@ public class TransformerRule extends Object implements Comparable<TransformerRul
 		}
 		else if (Integer.bitCount(productRule.mBondQFTypes) == 1) {
 			mTargetBondType = productRule.mBondQFTypes == Molecule.cBondQFSingle ? Molecule.cBondTypeSingle
-					: productRule.mBondQFTypes == Molecule.cBondQFDouble ? Molecule.cBondTypeDouble
+					: productRule.mBondQFTypes == Molecule.cBondQFDouble ? Molecule.cBondTypeCross
 					: productRule.mBondQFTypes == Molecule.cBondQFTriple ? Molecule.cBondTypeTriple
 					: productRule.mBondQFTypes == Molecule.cBondQFMetalLigand ? Molecule.cBondTypeMetalLigand
 					: Molecule.cBondTypeDelocalized;
@@ -123,6 +123,12 @@ public class TransformerRule extends Object implements Comparable<TransformerRul
 		mType = TYPE.REMOVE;
 	}
 
+	/**
+	 * Make sure that the molecule's helper status is at least cHelperNeighbours
+	 * @param mol
+	 * @param matchAtom
+	 * @return
+	 */
 	public boolean adaptBondOrder(StereoMolecule mol, int[] matchAtom) {
 		int atom1 = matchAtom[mAtom1];
 		int atom2 = matchAtom[mAtom2];
@@ -161,7 +167,7 @@ public class TransformerRule extends Object implements Comparable<TransformerRul
 
 				int targetBondOrder = mol.getBondOrder(bond) + mTargetBondDif;
 				if (targetBondOrder >= 0 && targetBondOrder <= 3) {
-					mol.setBondType(bond, Molecule.bondOrderToType(targetBondOrder));
+					mol.setBondType(bond, Molecule.bondOrderToType(targetBondOrder, true));
 					return true;
 				}
 			}

@@ -2798,10 +2798,10 @@ public class GenericEditorArea implements GenericEventListener {
 		if (mMol == theMolecule) {
 			return;
 		}
+		storeState();
 		mMol = theMolecule;
 		mMode = 0;
 		mDrawingObjectList = null;
-		storeState();
 		moleculeChanged();
 	}
 

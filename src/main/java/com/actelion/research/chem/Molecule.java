@@ -215,8 +215,8 @@ public class Molecule implements Serializable {
 	public static final int cBondTypeDeleted		= 0x00000080;
 	public static final int cBondTypeIncreaseOrder  = 0x0000007F;
 
-	protected static final int cBondTypeMaskSimple	= 0x00000067;	// masks
-	protected static final int cBondTypeMaskStereo	= 0x00000018;
+	public static final int cBondTypeMaskSimple	= 0x00000067;	// masks
+	public static final int cBondTypeMaskStereo	= 0x00000018;
 
 	protected static final int cBondFlagsHelper2	= 0x000002C0;
 	protected static final int cBondFlagsHelper3	= 0x0000003F;
@@ -560,10 +560,11 @@ public class Molecule implements Serializable {
 		}
 
 
-	public static int bondOrderToType(int bondOrder) {
+	public static int bondOrderToType(int bondOrder, boolean useCrossBond) {
 		return bondOrder == 0 ? Molecule.cBondTypeMetalLigand
 			 : bondOrder == 1 ? Molecule.cBondTypeSingle
-			 : bondOrder == 2 ? Molecule.cBondTypeDouble : Molecule.cBondTypeTriple;
+			 : bondOrder == 2 ? (useCrossBond ? Molecule.cBondTypeCross : Molecule.cBondTypeDouble)
+							  : Molecule.cBondTypeTriple;
 		}
 
 
