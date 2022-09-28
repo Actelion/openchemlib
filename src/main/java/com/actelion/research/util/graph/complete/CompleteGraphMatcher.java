@@ -149,25 +149,21 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		hsSolution.clear();
 		
 		int nodesInSolution = 1;
-		
+
+
+		// Creates indices for all one node mappings from base and query.
+		// This is the start of the mapping process for the complete graph of the Flexophore.
+		// It is tested if the nodes are similar for the given threshold.
+
 		List<SolutionCompleteGraph> liSolution = liliSolution.get(nodesInSolution);
-		
 		for (byte indexNodeQuery = 0; indexNodeQuery < nodesQuery; indexNodeQuery++) {
-			
 			for (byte indexNodeBase = 0; indexNodeBase < nodesBase; indexNodeBase++) {
-			
 				if(objectiveCompleteGraph.areNodesMapping(indexNodeQuery, indexNodeBase)){
-
 					// System.out.println(indexNodeQuery + "\t" + indexNodeBase);
-
 					SolutionCompleteGraph solution = cm.get();
-					
 					solution.setNodesQuery(nodesQuery);
-					
 					solution.add(indexNodeQuery, indexNodeBase);
-					
 					liSolution.add(solution);
-					
 				}
 			}
 		}

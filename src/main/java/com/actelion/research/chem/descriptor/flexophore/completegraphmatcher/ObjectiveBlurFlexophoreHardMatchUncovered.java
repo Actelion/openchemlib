@@ -35,6 +35,8 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	// 0.15 best thresh tested on 31.03.2016
 	public final static double THRESH_HISTOGRAM_SIMILARITY	= 0.15;
 
+	public final static double THRESH_HISTOGRAM_SIMILARITY_OPTIMISTIC	= 0.0000001;
+
 
 	// The thresh for the node similarity depends on the number of interaction types in the node.
 	// 03.03.2016 Top result so far for 0.9
@@ -72,6 +74,9 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	private PPNodeSimilarity nodeSimilarity;
 
 	private boolean optimisticHistogramSimilarity;
+
+	// For small Flexophore descriptor comparison.
+	private boolean fragmentNodesMapping;
 
 	boolean verbose;
 
@@ -133,12 +138,25 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		deltaNanoQueryBlur=0;
 		deltaNanoBaseBlur=0;
 		deltaNanoSimilarity=0;
-		optimisticHistogramSimilarity = false;
+		setFragmentNodesMapping(false);
+		setOptimisticHistogramSimilarity(false);
 		initSimilarityMatrices();
+
 	}
 
+	public void setFragmentNodesMapping(boolean fragmentNodesMapping) {
+		this.fragmentNodesMapping = fragmentNodesMapping;
+	}
+
+	/**
+	 * An overlap of two compared histograms is scored as a full match.
+	 * @param optimisticHistogramSimilarity
+	 */
 	public void setOptimisticHistogramSimilarity(boolean optimisticHistogramSimilarity) {
 		this.optimisticHistogramSimilarity = optimisticHistogramSimilarity;
+		if(optimisticHistogramSimilarity){
+			threshHistogramSimilarity = THRESH_HISTOGRAM_SIMILARITY_OPTIMISTIC;
+		}
 	}
 
 	private void initSimilarityMatrices(){
@@ -252,9 +270,9 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		}
 
 		//
-		// Check for one hetero atom in solution
-		//
-		if(mapping){
+		// Check for one hetero atom in solution.
+		// Not checked for fragment mapping!
+		if(!fragmentNodesMapping && mapping){
 			boolean heteroNodeQuery = false;
 			boolean heteroNodeBase = false;
 			for (int i = 0; i < heap; i++) {
@@ -380,7 +398,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		boolean match = true;
 
 		double simHistograms = getSimilarityHistogram(indexNode1Query, indexNode2Query, indexNode1Base, indexNode2Base);
-		
+
 		if(simHistograms < threshHistogramSimilarity){
 			match=false;
 		}
