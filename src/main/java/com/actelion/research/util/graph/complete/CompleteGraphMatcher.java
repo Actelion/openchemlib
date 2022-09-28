@@ -180,6 +180,30 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 			return sim;
 		}
 
+		if(objectiveCompleteGraph.isModeFragment() && nodesQuery==1) {
+
+//			double simMax=0;
+//			for (byte indexNodeBase = 0; indexNodeBase < nodesBase; indexNodeBase++) {
+//				double sim = objectiveCompleteGraph.getSimilarityNodes(0,indexNodeBase);
+//				if(sim>simMax){
+//					simMax=sim;
+//				}
+//			}
+//
+
+			List<SolutionCompleteGraph> liSolution = liliSolution.get(1);
+			double simMax=0;
+			for (SolutionCompleteGraph solutionCompleteGraph : liSolution) {
+				double sim = objectiveCompleteGraph.getSimilarity(solutionCompleteGraph);
+				if(sim>simMax){
+					simMax=sim;
+					solutionBest=solutionCompleteGraph;
+				}
+			}
+			return simMax;
+		}
+
+
 		int maxNumNodesWithSolution = 0;
 		for (int nodesInSolution = 1; nodesInSolution < nodesBase+1; nodesInSolution++) {
 			

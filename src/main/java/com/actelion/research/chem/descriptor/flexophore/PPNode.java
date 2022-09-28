@@ -346,21 +346,20 @@ public class PPNode implements Comparable<PPNode>, IPPNode {
 	}
 
 	public boolean isCarbonExclusiveNode(){
-		
-		boolean bY = true;
-		
+		boolean carbon = true;
 		int size = getInteractionTypeCount();
-		
 		for (int i = 0; i < size; i++) {
 			if(getAtomicNo(i) !=6) {
-				bY=false;
+				carbon=false;
 				break;
 			}
 		}
-		
-		return bY;
+		return carbon;
 	}
-	
+	public boolean containsHetero(){
+		return heteroAtom;
+	}
+
 	
 	private void init(){
 		arrInteractionType = new byte [BUFFER_SIZE];

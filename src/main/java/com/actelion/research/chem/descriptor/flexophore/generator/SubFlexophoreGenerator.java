@@ -302,27 +302,27 @@ public class SubFlexophoreGenerator {
 
 	/**
 	 * @param mdh
-	 * @param arrIndices the original index is set in the index field of the new SubFragment.
+	 * @param arrIndexNodes the original index is set in the index field of the new SubFragment.
 	 * @return
 	 */
-	public static MolDistHistVizFrag getSubFragment(MolDistHistViz mdh, int [] arrIndices){
+	public static MolDistHistVizFrag getSubFragment(MolDistHistViz mdh, int [] arrIndexNodes){
 		
 		
-		MolDistHistVizFrag frag = new MolDistHistVizFrag(arrIndices.length, mdh.getMolecule());
+		MolDistHistVizFrag frag = new MolDistHistVizFrag(arrIndexNodes.length, mdh.getMolecule());
 		
-		for (int i = 0; i < arrIndices.length; i++) {
-			PPNodeViz node = new PPNodeViz(mdh.getNode(arrIndices[i]));
+		for (int i = 0; i < arrIndexNodes.length; i++) {
+			PPNodeViz node = new PPNodeViz(mdh.getNode(arrIndexNodes[i]));
 			frag.addNode(node);
 		}
 		
-		for (int i = 0; i < arrIndices.length; i++) {
-			for (int j = i+1; j < arrIndices.length; j++) {
-				byte [] arrHist = mdh.getDistHist(arrIndices[i],arrIndices[j]);
+		for (int i = 0; i < arrIndexNodes.length; i++) {
+			for (int j = i+1; j < arrIndexNodes.length; j++) {
+				byte [] arrHist = mdh.getDistHist(arrIndexNodes[i],arrIndexNodes[j]);
 				frag.setDistHist(i,j,arrHist);
 			}
 		}
 		
-		frag.setArrIndexParentNodes(arrIndices);
+		frag.setArrIndexParentNodes(arrIndexNodes);
 		
 		frag.realize();
 			
@@ -346,18 +346,18 @@ public class SubFlexophoreGenerator {
 	}
 
 
-	public static MolDistHist getSubFragment(MolDistHist mdh, int [] arrIndices){
+	public static MolDistHist getSubFragment(MolDistHist mdh, int [] arrIndexNodes){
 
-		MolDistHist frag = new MolDistHist(arrIndices.length);
+		MolDistHist frag = new MolDistHist(arrIndexNodes.length);
 
-		for (int i = 0; i < arrIndices.length; i++) {
-			PPNode node = new PPNode(mdh.getNode(arrIndices[i]));
+		for (int i = 0; i < arrIndexNodes.length; i++) {
+			PPNode node = new PPNode(mdh.getNode(arrIndexNodes[i]));
 			frag.addNode(node);
 		}
 
-		for (int i = 0; i < arrIndices.length; i++) {
-			for (int j = i+1; j < arrIndices.length; j++) {
-				byte [] arrHist = mdh.getDistHist(arrIndices[i],arrIndices[j]);
+		for (int i = 0; i < arrIndexNodes.length; i++) {
+			for (int j = i+1; j < arrIndexNodes.length; j++) {
+				byte [] arrHist = mdh.getDistHist(arrIndexNodes[i],arrIndexNodes[j]);
 				frag.setDistHist(i,j,arrHist);
 			}
 		}
