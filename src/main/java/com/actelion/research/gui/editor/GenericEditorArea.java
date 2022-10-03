@@ -145,7 +145,8 @@ public class GenericEditorArea implements GenericEventListener {
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
 	private double mX1, mY1, mX2, mY2, mWidth, mHeight, mUIScaling, mTextSizeFactor;
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
-	private boolean mAltIsDown, mShiftIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures;
+	private boolean mAltIsDown, mShiftIsDown, mMouseIsDown, mIsAddingToSelection, mAtomColorSupported, mAllowQueryFeatures,
+			mAllowFragmentChangeOnPasteOrDrop;
 	private boolean[] mIsSelectedAtom, mIsSelectedObject;
 	private String mCustomAtomLabel,mWarningMessage,mAtomKeyStrokeSuggestion;
 	private String[] mAtomText;
@@ -186,6 +187,7 @@ public class GenericEditorArea implements GenericEventListener {
 		mCustomAtomRadical = 0;
 		mCustomAtomLabel = null;
 		mAllowQueryFeatures = true;
+		mAllowFragmentChangeOnPasteOrDrop = false;
 		mPendingRequest = cRequestNone;
 		mCurrentCursor = SwingCursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
@@ -785,9 +787,10 @@ public class GenericEditorArea implements GenericEventListener {
 		if (mClipboardHandler != null) {
 			Reaction rxn = mClipboardHandler.pasteReaction();
 			if (rxn != null) {
-				for (int i = 0; i<rxn.getMolecules(); i++) {
-					rxn.getMolecule(i).setFragment(mMol.isFragment());
-				}
+				if (!mAllowFragmentChangeOnPasteOrDrop)
+					for (int i = 0; i<rxn.getMolecules(); i++)
+						rxn.getMolecule(i).setFragment(mMol.isFragment());
+
 				storeState();
 				setReaction(rxn);
 				ret = true;
@@ -828,16 +831,19 @@ public class GenericEditorArea implements GenericEventListener {
 		mol.removeAtomColors();
 		mol.removeBondHiliting();
 
+		boolean editorIsFragment = mMol.isFragment();
 		if (mMol.getAllAtoms() == 0) {
-			boolean isFragment = mMol.isFragment();
 			mol.copyMolecule(mMol);
-			mMol.setFragment(isFragment);
+			if (!mAllowFragmentChangeOnPasteOrDrop)
+				mMol.setFragment(editorIsFragment);
 			updateAndFireEvent(UPDATE_SCALE_COORDS);
 		} else {
 			if (p != null)
 				mol.translateCoords(p.x - mCanvas.getCanvasWidth()/2, p.y - mCanvas.getCanvasHeight()/2);
 			int originalAtoms = mMol.getAllAtoms();
 			mMol.addMolecule(mol);
+			if (!mAllowFragmentChangeOnPasteOrDrop)
+				mMol.setFragment(editorIsFragment);
 			for (int atom = 0; atom<mMol.getAllAtoms(); atom++)
 				mMol.setAtomSelection(atom, atom>=originalAtoms);
 
@@ -2953,6 +2959,20 @@ public class GenericEditorArea implements GenericEventListener {
 			if (!allow)
 				mMol.removeQueryFeatures();
 		}
+	}
+
+	/**
+	 * In case a molecule/reaction is pasted into or dropped onto the editor area,
+	 * then the fragment state of the editor area stays unchanged even if it is empty.
+	 * If this method has been called with parameter 'true' then the behaviour changes as follows:
+	 * If a query molecule/reaction (fragment==true) is pasted/dropped, then the editor's
+	 * fragment state is set to true. If a non-fragment molecule/reaction is pasted/dropped
+	 * then the editor's fragment state stays unchanged unless the editor area is empty,
+	 * in which case the fragment state of the dropped object will be retained.
+	 * @param b
+	 */
+	public void setAllowFragmentChangeOnPasteOrDrop(boolean b) {
+		mAllowFragmentChangeOnPasteOrDrop = b;
 	}
 
 	/**
