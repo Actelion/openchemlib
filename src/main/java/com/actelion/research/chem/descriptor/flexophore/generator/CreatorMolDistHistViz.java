@@ -68,6 +68,7 @@ public class CreatorMolDistHistViz {
     private static final int CONF_GEN_TS = 0;
 
     public static final int CONF_GIVEN_SINGLE_CONFORMATION = 1;
+    public static final int SINGLE_CONFORMATION = 2;
 
     private static CreatorMolDistHistViz INSTANCE;
 
@@ -116,10 +117,13 @@ public class CreatorMolDistHistViz {
 
         switch (conformationMode) {
             case CONF_GEN_TS:
-                mdhv = createMultipleConformations(molOrig);
+                mdhv = createMultipleConformations(molOrig, DescriptorHandlerFlexophore.NUM_CONFORMATIONS);
                 break;
             case CONF_GIVEN_SINGLE_CONFORMATION:
                 mdhv = createFromGivenConformation(molOrig);
+                break;
+            case SINGLE_CONFORMATION:
+                mdhv = createMultipleConformations(molOrig, 1);
                 break;
             default:
                 throw new RuntimeException("Invalid conformation mode");
@@ -137,9 +141,9 @@ public class CreatorMolDistHistViz {
      * @return
      * @throws Exception
      */
-    public MolDistHistViz createMultipleConformations(StereoMolecule molOrig) throws Exception {
+    public MolDistHistViz createMultipleConformations(StereoMolecule molOrig, int nConformations) throws Exception {
 
-        int nConformations = DescriptorHandlerFlexophore.NUM_CONFORMATIONS;
+        // int nConformations = DescriptorHandlerFlexophore.NUM_CONFORMATIONS;
 
         StereoMolecule molStand = molOrig.getCompactCopy();
 
@@ -205,6 +209,13 @@ public class CreatorMolDistHistViz {
     /**
      * This method must be called before:
      *  conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
+     *
+     * Time in nanoseconds for a small molecule with idcode fegPb@JByH@QdbbbarTTbb^bRIRNQsjVZjjjh@J@@@
+     * 75491600 first conformation
+     * 16700 sec conformation
+     * 37200 ...
+     * 40100 ...
+     *
      * @param molInPlace
      * @param liMultCoordFragIndex
      * @param nConformations
@@ -212,9 +223,7 @@ public class CreatorMolDistHistViz {
      * @return
      */
     public static Molecule3D createConformations(Molecule3D molInPlace, List<MultCoordFragIndex> liMultCoordFragIndex, int nConformations, ConformerGenerator conformerGenerator){
-
         int nAtoms = molInPlace.getAtoms();
-
         int ccConformationsGenerated = 0;
         Molecule3D molViz = null;
         for (int i = 0; i < nConformations; i++) {
@@ -228,11 +237,9 @@ public class CreatorMolDistHistViz {
                 molViz = createPharmacophorePoints(molInPlace, liMultCoordFragIndex);
             }
         }
-
         if(ccConformationsGenerated==0){
             throw new ExceptionConformationGenerationFailed("Impossible to generate one conformer!");
         }
-
         return molViz;
     }
 

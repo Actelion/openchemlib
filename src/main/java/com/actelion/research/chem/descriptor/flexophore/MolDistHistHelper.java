@@ -1,6 +1,8 @@
 package com.actelion.research.chem.descriptor.flexophore;
 
+import com.actelion.research.chem.descriptor.flexophore.generator.SubFlexophoreGenerator;
 import com.actelion.research.util.ArrayUtils;
+import com.actelion.research.util.ByteArray;
 
 import java.util.Arrays;
 
@@ -97,6 +99,71 @@ public class MolDistHistHelper {
             }
         }
     }
+
+    public static MolDistHist getMostDistantPairOfNodes (MolDistHist mdh){
+
+        int n = mdh.getNumPPNodes();
+
+        int maxMedBinIndex = 0;
+        int indexNode1=-1;
+        int indexNode2=-1;
+
+        for (int i = 0; i < n; i++) {
+            for (int j = i+1; j < n; j++) {
+                byte [] arr = mdh.getDistHist(i, j);
+                int medBinInd = DistHistHelper.getMedianBin(arr);
+                if(medBinInd>maxMedBinIndex){
+                    maxMedBinIndex=medBinInd;
+                    indexNode1 = i;
+                    indexNode2 = j;
+                }
+            }
+        }
+        int [] arrIndexNodes = new int[2];
+        arrIndexNodes[0]=indexNode1;
+        arrIndexNodes[1]=indexNode2;
+
+        MolDistHist mdhSub = SubFlexophoreGenerator.getSubFragment(mdh, arrIndexNodes);
+
+        return mdhSub;
+    }
+    public static MolDistHist getMostDistantPairOfNodesOneHeteroAtom (MolDistHist mdh){
+
+        int n = mdh.getNumPPNodes();
+
+        int maxMedBinIndex = 0;
+        int indexNode1=-1;
+        int indexNode2=-1;
+
+        boolean [] arrHetero = new boolean[n];
+
+        for (int i = 0; i < n; i++) {
+            arrHetero[i]=mdh.getNode(i).containsHetero();
+        }
+
+        for (int i = 0; i < n; i++) {
+            for (int j = i+1; j < n; j++) {
+                if (arrHetero[i] || arrHetero[j]) {
+                    byte[] arr = mdh.getDistHist(i, j);
+                    int medBinInd = DistHistHelper.getMedianBin(arr);
+                    if (medBinInd > maxMedBinIndex) {
+                        maxMedBinIndex = medBinInd;
+                        indexNode1 = i;
+                        indexNode2 = j;
+                    }
+                }
+            }
+        }
+        int [] arrIndexNodes = new int[2];
+        arrIndexNodes[0]=indexNode1;
+        arrIndexNodes[1]=indexNode2;
+
+        MolDistHist mdhSub = SubFlexophoreGenerator.getSubFragment(mdh, arrIndexNodes);
+
+        return mdhSub;
+    }
+
+
 
 
 }

@@ -429,9 +429,22 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		//
 		if(modeQuery) {
 			if (nodesQuery != heap) {
-				return 0;
+				similarity=0;
+				return (float)similarity;
 			}
 		}
+
+		if(fragmentNodesMapping && heap==1){
+
+			int indexNodeQuery = solution.getIndexQueryFromHeap(0);
+
+			int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
+
+			similarity = getSimilarityNodes(indexNodeQuery, indexNodeBase);
+
+			return (float)similarity;
+		}
+
 
 		double sumPairwiseMapping = 0;
 
@@ -609,8 +622,13 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		}
 
 	}
-	
-	
+
+	@Override
+	public boolean isModeFragment() {
+		return fragmentNodesMapping;
+	}
+
+
 	public IMolDistHist getBase() {
 		return mdhvBase;
 	}

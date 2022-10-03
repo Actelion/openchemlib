@@ -66,4 +66,6 @@ public interface IObjectiveCompleteGraph<T extends ICompleteGraph> {
 
 	void setMatchingInfoInQueryAndBase(SolutionCompleteGraph solution);
 
+	boolean isModeFragment();
+
 }

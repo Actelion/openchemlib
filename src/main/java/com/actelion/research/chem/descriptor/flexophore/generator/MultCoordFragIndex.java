@@ -12,8 +12,11 @@ import java.util.List;
 
 public class MultCoordFragIndex {
 
+    // Indices of the atoms in the molecule.
     private int [] arrIndexFrag;
 
+    // List with center of gravity for multiple conformations.
+    // One conformation describes one center of gravity for the fragments indicated by the index array.
     private List<Coordinates> liCoord;
 
     public MultCoordFragIndex(int[] arrIndexFrag) {
