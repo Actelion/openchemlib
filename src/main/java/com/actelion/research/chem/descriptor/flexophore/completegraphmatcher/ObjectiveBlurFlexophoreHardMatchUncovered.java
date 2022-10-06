@@ -406,6 +406,11 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		return match;
 	}
 
+	/**
+	 * Calculates the similarity for the pharmacophore nodes and the distance histograms.
+	 * @param solution
+	 * @return
+	 */
 	public float getSimilarity(SolutionCompleteGraph solution) {
 
 		long t0 = System.nanoTime();
@@ -435,13 +440,9 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		}
 
 		if(fragmentNodesMapping && heap==1){
-
 			int indexNodeQuery = solution.getIndexQueryFromHeap(0);
-
 			int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
-
 			similarity = getSimilarityNodes(indexNodeQuery, indexNodeBase);
-
 			return (float)similarity;
 		}
 
@@ -492,8 +493,6 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			similarity = avrPairwiseMappingScaled * coverage * ratioNodesMatchQuery * ratioNodesMatchBase;
 		}
 
-
-
 		if(verbose) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("ObjectiveFlexophoreHardMatchUncovered");
@@ -508,6 +507,84 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			sb.append("coverage");
 			sb.append("\t");
 			sb.append(Formatter.format2(coverage));
+			sb.append("\t");
+			sb.append("ratioNodesMatchQuery");
+			sb.append("\t");
+			sb.append(Formatter.format2(ratioNodesMatchQuery));
+			sb.append("\t");
+			sb.append("ratioNodesMatchBase");
+			sb.append("\t");
+			sb.append(Formatter.format2(ratioNodesMatchBase));
+
+			System.out.println(sb.toString());
+		}
+
+		deltaNanoSimilarity += System.nanoTime()-t0;
+
+		return (float)similarity;
+
+		// For testing
+		// return (float)1.0;
+
+	}
+	public float getSimilarityNodes(SolutionCompleteGraph solution) {
+
+		long t0 = System.nanoTime();
+
+		if(resetSimilarityArrays){
+			resetSimilarityMatrices();
+		}
+
+		int heap = solution.getSizeHeap();
+
+		//
+		// the query must hit with all pharmacophore nodes
+		//
+		if(modeQuery) {
+			if (nodesQuery != heap) {
+				similarity=0;
+				return (float)similarity;
+			}
+		}
+
+		if(fragmentNodesMapping && heap==1){
+			int indexNodeQuery = solution.getIndexQueryFromHeap(0);
+			int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
+			similarity = getSimilarityNodes(indexNodeQuery, indexNodeBase);
+			return (float)similarity;
+		}
+
+		double sumSimilarityNodes = 0;
+		for (int i = 0; i < heap; i++) {
+			int indexNodeQuery = solution.getIndexQueryFromHeap(i);
+			int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
+			double similarityNodePair = getSimilarityNodes(indexNodeQuery, indexNodeBase);
+			sumSimilarityNodes += similarityNodePair;
+		}
+
+		double mappings = heap;
+		avrPairwiseMappingScaled = sumSimilarityNodes/mappings;
+		coverageQuery = 0;
+		coverageBase = 0;
+		double ratioNodesMatchQuery = Math.min(nodesQuery, heap) / (double)Math.max(nodesQuery, heap);
+		double ratioNodesMatchBase = Math.min(heap, nodesBase) / (double)Math.max(heap, nodesBase);
+
+		if(modeQuery) {
+			similarity = avrPairwiseMappingScaled * ratioNodesMatchQuery * ratioNodesMatchQuery;
+		} else {
+			similarity = avrPairwiseMappingScaled * ratioNodesMatchQuery * ratioNodesMatchBase;
+		}
+
+		if(verbose) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("ObjectiveFlexophoreHardMatchUncovered");
+			sb.append(" similarity nodes");
+			sb.append("\t");
+			sb.append(Formatter.format2(similarity));
+			sb.append("\t");
+			sb.append("avrPairwiseMappingScaled");
+			sb.append("\t");
+			sb.append(Formatter.format2(avrPairwiseMappingScaled));
 			sb.append("\t");
 			sb.append("ratioNodesMatchQuery");
 			sb.append("\t");

@@ -278,7 +278,101 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		
 		return similarity;
 	}
-	
+	public double calculateNodeSimilarity () {
+
+		initSearch();
+
+		if(nodesBase==1 && nodesQuery==1) {
+			double sim = objectiveCompleteGraph.getSimilarityNodes(0,0);
+			return sim;
+		}
+
+		if(objectiveCompleteGraph.isModeFragment() && nodesQuery==1) {
+			List<SolutionCompleteGraph> liSolution = liliSolution.get(1);
+			double simMax=0;
+			for (SolutionCompleteGraph solutionCompleteGraph : liSolution) {
+				double sim = objectiveCompleteGraph.getSimilarityNodes(solutionCompleteGraph);
+				if(sim>simMax){
+					simMax=sim;
+					solutionBest=solutionCompleteGraph;
+				}
+			}
+			return simMax;
+		}
+
+
+		int maxNumNodesWithSolution = 0;
+		for (int nodesInSolution = 1; nodesInSolution < nodesBase+1; nodesInSolution++) {
+
+			List<SolutionCompleteGraph> liSolution = liliSolution.get(nodesInSolution);
+
+			boolean validSolutionFound = false;
+
+			hsSolution.clear();
+
+			for (SolutionCompleteGraph solution : liSolution) {
+
+				if(getNeighbourSolutions(solution)){
+					validSolutionFound = true;
+				}
+
+				if(hsSolution.size()> maxNumSolutions){
+					break;
+				}
+			}
+
+			if(validSolutionFound){
+				maxNumNodesWithSolution = nodesInSolution+1;
+
+				liliSolution.get(maxNumNodesWithSolution).addAll(hsSolution);
+
+				// System.out.println("Found " + hsSolution.size() + " valid solutions for " + maxNumNodesWithSolution + " nodes.");
+
+				//
+				// Remove all smaller solutions
+				//
+				List<SolutionCompleteGraph> li = liliSolution.get(nodesInSolution);
+				for (SolutionCompleteGraph solutionCompleteGraph : li) {
+					cm.back(solutionCompleteGraph);
+				}
+				li.clear();
+			} else {
+				break;
+			}
+
+		}
+
+		if(maxNumNodesWithSolution < MIN_NUM_NODES_SIM){
+			return 0;
+		}
+
+		List<SolutionCompleteGraph> hsSolution = liliSolution.get(maxNumNodesWithSolution);
+
+		List<SolutionCompleteGraph> li = new ArrayList<>();
+
+
+		for (SolutionCompleteGraph solution : hsSolution) {
+			float similarity = objectiveCompleteGraph.getSimilarityNodes(solution);
+			solution.setSimilarity(similarity);
+			li.add(solution);
+		}
+
+		Collections.sort(li);
+
+		solutionBest.copyIntoThis(li.get(li.size()-1));
+
+
+		if(DEBUG) {
+			objectiveCompleteGraph.setVerbose(true);
+			objectiveCompleteGraph.getSimilarity(solutionBest);
+			objectiveCompleteGraph.setVerbose(false);
+		}
+
+		double similarity = solutionBest.getSimilarity();
+
+		return similarity;
+	}
+
 	public SolutionCompleteGraph getBestMatchingSolution(){
 		SolutionCompleteGraph solution = new SolutionCompleteGraph();
 		

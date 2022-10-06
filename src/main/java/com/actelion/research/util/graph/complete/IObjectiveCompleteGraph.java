@@ -55,6 +55,7 @@ public interface IObjectiveCompleteGraph<T extends ICompleteGraph> {
 	boolean isValidSolution(SolutionCompleteGraph solution);
 	
 	float getSimilarity(SolutionCompleteGraph solution);
+	float getSimilarityNodes(SolutionCompleteGraph solution);
 
 	float getSimilarityHistogram(int indexNode1Query, int indexNode2Query, int indexNode1Base, int indexNode2Base);
 
