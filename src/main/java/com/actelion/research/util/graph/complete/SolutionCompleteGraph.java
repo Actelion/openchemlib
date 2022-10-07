@@ -50,7 +50,10 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 
 	// Contains the node index in MolDistHist for base
 	private byte [] heapIndexBase;
-	
+
+	/**
+	 * number of the matching nodes
+	 */
 	private int sizeHeap;
 
 	// Contains the node index in MolDistHist for query

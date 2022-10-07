@@ -1015,6 +1015,23 @@ public class ExtendedMoleculeFunctions {
 		return ring;
 	}
 
+	public static boolean containsFiveBindingCarbon(StereoMolecule mol) {
+
+		boolean five=false;
+		for (int i = 0; i < mol.getAtoms(); i++) {
+			if(mol.getAtomicNo(i)==6){
+				int sumBO=0;
+				for (int j = 0; j < mol.getConnAtoms(i); j++) {
+					int bo = mol.getConnBondOrder(i,j);
+					sumBO+=bo;
+				}
+				five=(sumBO>4)?true:false;
+			}
+		}
+
+		return five;
+	}
+
 	/**
 	 *
 	 * @param mol
