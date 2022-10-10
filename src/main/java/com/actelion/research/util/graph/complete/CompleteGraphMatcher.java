@@ -84,6 +84,8 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	private long validSolutions;
 	
 	private long createdSolutions;
+
+	private boolean nodeSimilarityWithoutSizeDifference;
 	
 	public CompleteGraphMatcher(IObjectiveCompleteGraph<T> objectiveCompleteGraph) {
 		this.objectiveCompleteGraph = objectiveCompleteGraph;
@@ -125,9 +127,15 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		arrIndexQueryTmp = new byte [MAX_NUM_NODES];
 		
 		solutionBest = new SolutionCompleteGraph();
+
+		nodeSimilarityWithoutSizeDifference = false;
 	}
-	
-	
+
+
+	public void setNodeSimilarityWithoutSizeDifference(boolean nodeSimilarityWithoutSizeDifference) {
+		this.nodeSimilarityWithoutSizeDifference = nodeSimilarityWithoutSizeDifference;
+	}
+
 	public void set(T cgBase, T cgQuery){
 		objectiveCompleteGraph.setBase(cgBase);
 		objectiveCompleteGraph.setQuery(cgQuery);
@@ -214,11 +222,9 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 			hsSolution.clear();
 			
 			for (SolutionCompleteGraph solution : liSolution) {
-				
 				if(getNeighbourSolutions(solution)){
 					validSolutionFound = true;
 				}
-				
 				if(hsSolution.size()> maxNumSolutions){
 					break;
 				}
@@ -242,31 +248,28 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 			} else {
 				break;
 			}
-			
 		}
 		
-		if(maxNumNodesWithSolution < MIN_NUM_NODES_SIM){
+		if(maxNumNodesWithSolution == 0){
 			return 0;
 		}
-		
+
+		if(!objectiveCompleteGraph.isModeFragment()) {
+			if (maxNumNodesWithSolution < MIN_NUM_NODES_SIM) {
+				return 0;
+			}
+		}
+
 		List<SolutionCompleteGraph> hsSolution = liliSolution.get(maxNumNodesWithSolution);
-				
 		List<SolutionCompleteGraph> li = new ArrayList<SolutionCompleteGraph>();
-
-
 		for (SolutionCompleteGraph solution : hsSolution) {
-			
 			float similarity = objectiveCompleteGraph.getSimilarity(solution);
-			
 			solution.setSimilarity(similarity);
-			
 			li.add(solution);
 		}
 		
 		Collections.sort(li);
-		
 		solutionBest.copyIntoThis(li.get(li.size()-1));
-
 
 		if(DEBUG) {
 			objectiveCompleteGraph.setVerbose(true);
@@ -291,31 +294,25 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 			List<SolutionCompleteGraph> liSolution = liliSolution.get(1);
 			double simMax=0;
 			for (SolutionCompleteGraph solutionCompleteGraph : liSolution) {
-				double sim = objectiveCompleteGraph.getSimilarityNodes(solutionCompleteGraph);
-				if(sim>simMax){
-					simMax=sim;
+				double similarity = objectiveCompleteGraph.getSimilarityNodes(solutionCompleteGraph);
+				if(similarity>simMax){
+					simMax=similarity;
 					solutionBest=solutionCompleteGraph;
 				}
 			}
 			return simMax;
 		}
 
-
 		int maxNumNodesWithSolution = 0;
 		for (int nodesInSolution = 1; nodesInSolution < nodesBase+1; nodesInSolution++) {
 
 			List<SolutionCompleteGraph> liSolution = liliSolution.get(nodesInSolution);
-
 			boolean validSolutionFound = false;
-
 			hsSolution.clear();
-
 			for (SolutionCompleteGraph solution : liSolution) {
-
 				if(getNeighbourSolutions(solution)){
 					validSolutionFound = true;
 				}
-
 				if(hsSolution.size()> maxNumSolutions){
 					break;
 				}
@@ -323,9 +320,7 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 
 			if(validSolutionFound){
 				maxNumNodesWithSolution = nodesInSolution+1;
-
 				liliSolution.get(maxNumNodesWithSolution).addAll(hsSolution);
-
 				// System.out.println("Found " + hsSolution.size() + " valid solutions for " + maxNumNodesWithSolution + " nodes.");
 
 				//
@@ -342,17 +337,22 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 
 		}
 
-		if(maxNumNodesWithSolution < MIN_NUM_NODES_SIM){
+		if(maxNumNodesWithSolution==0){
 			return 0;
+		}
+
+		if(!objectiveCompleteGraph.isModeFragment()) {
+			if (maxNumNodesWithSolution < MIN_NUM_NODES_SIM) {
+				return 0;
+			}
 		}
 
 		List<SolutionCompleteGraph> hsSolution = liliSolution.get(maxNumNodesWithSolution);
 
 		List<SolutionCompleteGraph> li = new ArrayList<>();
 
-
 		for (SolutionCompleteGraph solution : hsSolution) {
-			float similarity = objectiveCompleteGraph.getSimilarityNodes(solution);
+			double similarity = objectiveCompleteGraph.getSimilarityNodes(solution);
 			solution.setSimilarity(similarity);
 			li.add(solution);
 		}
@@ -360,7 +360,6 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		Collections.sort(li);
 
 		solutionBest.copyIntoThis(li.get(li.size()-1));
-
 
 		if(DEBUG) {
 			objectiveCompleteGraph.setVerbose(true);
