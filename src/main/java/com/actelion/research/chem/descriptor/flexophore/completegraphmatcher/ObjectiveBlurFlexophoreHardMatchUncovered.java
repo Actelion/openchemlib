@@ -742,7 +742,8 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			mdhvBaseBlurredHist = new MolDistHistViz((MolDistHist) iMolDistHistBase);
 		}
 
-		slidingWindowDistHist.apply(mdhvBaseBlurredHist);
+		if(!fragmentNodesMapping)
+			slidingWindowDistHist.apply(mdhvBaseBlurredHist);
 
 		nodesBase = iMolDistHistBase.getNumPPNodes();
 		
@@ -769,7 +770,8 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			mdhvQueryBlurredHist = new MolDistHistViz((MolDistHist) iMolDistHistQuery);
 		}
 
-		slidingWindowDistHist.apply(mdhvQueryBlurredHist);
+		if(!fragmentNodesMapping)
+			slidingWindowDistHist.apply(mdhvQueryBlurredHist);
 
 		nodesQuery = iMolDistHistQuery.getNumPPNodes();
 		
