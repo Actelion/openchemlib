@@ -732,6 +732,10 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 	public void setBase(IMolDistHist iMolDistHistBase) {
 
+		if(iMolDistHistBase.getNumPPNodes()>=ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE){
+			throw new RuntimeException("Number of base pharmacophore nodes (" +iMolDistHistBase.getNumPPNodes() + ") exceeds limit of " + ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE + ".");
+		}
+
 		long t0 = System.nanoTime();
 
 		if(iMolDistHistBase instanceof MolDistHistViz) {
@@ -741,6 +745,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			mdhvBase = new MolDistHistViz((MolDistHist) iMolDistHistBase);
 			mdhvBaseBlurredHist = new MolDistHistViz((MolDistHist) iMolDistHistBase);
 		}
+
 
 		if(!fragmentNodesMapping)
 			slidingWindowDistHist.apply(mdhvBaseBlurredHist);
@@ -759,6 +764,10 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	}
 	
 	public void setQuery(IMolDistHist iMolDistHistQuery) {
+
+		if(iMolDistHistQuery.getNumPPNodes()>=ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE){
+			throw new RuntimeException("Number of query pharmacophore nodes (" +iMolDistHistQuery.getNumPPNodes() + ") exceeds limit of " + ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE + ".");
+		}
 
 		long t0 = System.nanoTime();
 
