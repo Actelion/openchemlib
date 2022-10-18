@@ -199,7 +199,7 @@ public class SwingEditorDialog extends JDialog implements ActionListener {
 		mArea.setPreferredSize(new Dimension(HiDPIHelper.scale(mode == GenericEditorArea.MODE_REACTION ? 800 : 480), HiDPIHelper.scale(300)));
 		getContentPane().add(mArea, BorderLayout.CENTER);
 
-		mToolBar = new SwingEditorToolbar(mArea, mode);
+		mToolBar = new SwingEditorToolbar(mArea);
 		getContentPane().add(mToolBar, BorderLayout.WEST);
 
 		mButtonPanel = new JPanel();

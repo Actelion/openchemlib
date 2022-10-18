@@ -61,12 +61,16 @@ public class SwingEditorPanel extends JPanel {
 		mArea = new SwingEditorArea(mol != null ? mol : new StereoMolecule(), mode);
 		add(mArea, BorderLayout.CENTER);
 
-		mToolBar = new SwingEditorToolbar(mArea, mode);
+		mToolBar = new SwingEditorToolbar(mArea);
 		add(mToolBar, BorderLayout.WEST);
 		}
 
 	public GenericEditorArea getDrawArea() {
 		return mArea.getGenericDrawArea();
+	}
+
+	public SwingEditorToolbar getSwingDrawToolbar() {
+		return mToolBar;
 	}
 
 	public SwingEditorArea getSwingDrawArea() {

@@ -64,7 +64,7 @@ public class FXEditorPane extends BorderPane {
 
 	private void initialize(StereoMolecule mol, int mode) {
 		mArea = new FXEditorArea(mol != null ? mol : new StereoMolecule(), mode);
-		mToolBar = new FXEditorToolbar(mArea, mode);
+		mToolBar = new FXEditorToolbar(mArea);
 		widthProperty().addListener((observable, oldValue, newValue) -> mArea.setWidth((double) newValue-mToolBar.getWidth()));
 		heightProperty().addListener((observable, oldValue, newValue) -> mArea.setHeight((double) newValue));
 		setLeft(mToolBar);

@@ -11,8 +11,8 @@ import java.awt.*;
 public class SwingEditorToolbar extends JPanel implements GenericCanvas {
 	private GenericEditorToolbar mGenericToolbar;
 
-	public SwingEditorToolbar(SwingEditorArea swingEditorArea, int mode) {
-		mGenericToolbar = new GenericEditorToolbar(this, swingEditorArea.getGenericDrawArea(), mode);
+	public SwingEditorToolbar(SwingEditorArea swingEditorArea) {
+		mGenericToolbar = new GenericEditorToolbar(this, swingEditorArea.getGenericDrawArea());
 
 		SwingMouseHandler mouseHandler = new SwingMouseHandler(mGenericToolbar);
 		addMouseListener(mouseHandler);

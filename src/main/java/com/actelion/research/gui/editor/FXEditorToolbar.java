@@ -20,8 +20,8 @@ public class FXEditorToolbar extends Canvas implements GenericCanvas {
 	private GenericEditorToolbar mGenericToolbar;
 	private volatile boolean mDrawPending;
 
-	public FXEditorToolbar(FXEditorArea fxEditorArea, int mode) {
-		mGenericToolbar = new GenericEditorToolbar(this, fxEditorArea.getGenericDrawArea(), mode);
+	public FXEditorToolbar(FXEditorArea fxEditorArea) {
+		mGenericToolbar = new GenericEditorToolbar(this, fxEditorArea.getGenericDrawArea());
 
 		FXMouseHandler mouseHandler = new FXMouseHandler(mGenericToolbar);
 		mouseHandler.addListener(mGenericToolbar);
