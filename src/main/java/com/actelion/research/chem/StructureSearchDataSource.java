@@ -56,6 +56,15 @@ public interface StructureSearchDataSource {
 	public int getRowCount();
 
 	/**
+	 * This is the number of individual structures within that row that a query will be checked against.
+	 * Typically, this will be one. However, if a database contains empty structures, mixtures,
+	 * or reactants/products of a reaction, then the row may contain multiple structures to be searched.
+	 * @param row
+	 * @return typically 1, but may be 0...n
+	 */
+	public int getStructureCount(int row);
+
+	/**
 	 * Returns a number to be used in getDescriptor() to address the
 	 * the descriptor with the given short name.
 	 * If a descriptor of the desired kind is not available, then return -1
@@ -68,30 +77,33 @@ public interface StructureSearchDataSource {
 	/**
 	 * @param column
 	 * @param row
+	 * @param i structure index for that particular row
 	 * @param largestFragmentOnly
 	 * @return null if this row has no descriptor
 	 */
-	public Object getDescriptor(int column, int row, boolean largestFragmentOnly);
+	public Object getDescriptor(int column, int row, int i, boolean largestFragmentOnly);
 
 	/**
 	 * Returns the idcode of the structure or largest fragment.
 	 * If the code is not available, null is returned.
 	 * This method is not supposed to calculate idcodes on-the-fly.
 	 * @param row
+	 * @param i structure index for that particular row
 	 * @param largestFragmentOnly
 	 * @return idcode of this row or null, if no structure is associated to this row
 	 */
-	public byte[] getIDCode(int row, boolean largestFragmentOnly);
+	public byte[] getIDCode(int row, int i, boolean largestFragmentOnly);
 
 	/**
 	 * Returns a hash code representing the structure or its largest fragment
 	 * without any stereo information. If this code is not available, SEARCH_TYPE_NOT_SUPPORTED
 	 * is returned. This method is not supposed to calculate the code on-the-fly.
 	 * @param row
+	 * @param i structure index for that particular row
 	 * @param largestFragmentOnly
 	 * @return
 	 */
-	public long getNoStereoCode(int row, boolean largestFragmentOnly);
+	public long getNoStereoCode(int row, int i, boolean largestFragmentOnly);
 
 	/**
 	 * Returns a hash code representing the generic tautomer of the structure or its
@@ -99,10 +111,11 @@ public interface StructureSearchDataSource {
 	 * If this code is not available, SEARCH_TYPE_NOT_SUPPORTED is returned.
 	 * This method is not supposed to calculate the code on-the-fly.
 	 * @param row
+	 * @param i structure index for that particular row
 	 * @param largestFragmentOnly
 	 * @return
 	 */
-	public long getTautomerCode(int row, boolean largestFragmentOnly);
+	public long getTautomerCode(int row, int i, boolean largestFragmentOnly);
 
 	/**
 	 * Returns a hash code representing the generic tautomer of the structure or its
@@ -110,10 +123,11 @@ public interface StructureSearchDataSource {
 	 * If this code is not available, SEARCH_TYPE_NOT_SUPPORTED is returned.
 	 * This method is not supposed to calculate the code on-the-fly.
 	 * @param row
+	 * @param i structure index for that particular row
 	 * @param largestFragmentOnly
 	 * @return
 	 */
-	public long getNoStereoTautomerCode(int row, boolean largestFragmentOnly);
+	public long getNoStereoTautomerCode(int row, int i, boolean largestFragmentOnly);
 
 	/**
 	 * Returns a hash code representing the structure or its largest fragment
@@ -121,8 +135,9 @@ public interface StructureSearchDataSource {
 	 * SEARCH_TYPE_NOT_SUPPORTED is returned.
 	 * This method is not supposed to calculate the code on-the-fly.
 	 * @param row
+	 * @param i structure index for that particular row
 	 * @param largestFragmentOnly
 	 * @return
 	 */
-	public long getBackboneCode(int row, boolean largestFragmentOnly);
+	public long getBackboneCode(int row, int i, boolean largestFragmentOnly);
 	}
