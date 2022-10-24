@@ -184,12 +184,14 @@ public class TableModelString {
 		}
 
 		for (int i = 0; i < liColName.size(); i++) {
-
 			arrLengthMax[i]=Math.max(arrLengthMax[i],liColName.get(i).length());
-
 			for (int j = 0; j < liRowName.size(); j++) {
 				String s = get(j,i);
-				arrLengthMax[i]=Math.max(arrLengthMax[i],s.length());
+				if(s!=null){
+					arrLengthMax[i]=Math.max(arrLengthMax[i],s.length());
+				} else {
+					System.out.println("TableModelString toString() no value for field: row ["+j+"] " + liRowName.get(j) + ", and col ["+i+"] " + liColName.get(i) + ".");
+				}
 			}
 		}
 
