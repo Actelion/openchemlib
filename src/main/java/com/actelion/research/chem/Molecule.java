@@ -327,10 +327,15 @@ public class Molecule implements Serializable {
 	public static final int cMoleculeColorDefault = 0;
 	public static final int cMoleculeColorNeutral = 1;
 
-	public static final int cPseudoAtomsHydrogenIsotops = 1;
-	public static final int cPseudoAtomsRGroups = 2;
-	public static final int cPseudoAtomsAminoAcids = 4;
-	public static final int cPseudoAtomAttachmentPoint = 8;
+	public static final int cPseudoAtomsHydrogenIsotops = 1;    // D and T
+	public static final int cPseudoAtomsRGroups = 2;            // R1 to R16
+	public static final int cPseudoAtomsAGroups = 4;            // A,A1,A2,A3
+	public static final int cPseudoAtomR = 8;                   // R
+	public static final int cPseudoAtomX = 16;                  // X
+	public static final int cPseudoAtomsAminoAcids = 32;        // all 20 amino acid 3-letter codes
+	public static final int cPseudoAtomPolymer = 64;            // Pol
+	public static final int cPseudoAtomAttachmentPoint = 128;   // ?
+	public static final int cPseudoAtomsAll = 255;              // all of above
 
 	public static final int cDefaultAllowedPseudoAtoms = cPseudoAtomsHydrogenIsotops
 													   | cPseudoAtomsAminoAcids
@@ -493,10 +498,27 @@ public class Molecule implements Serializable {
 				if (atomLabel.equalsIgnoreCase(cAtomLabel[i]))
 					return i;
 
+		if ((allowedPseudoAtomGroups & cPseudoAtomsAGroups) != 0)
+			for (int i=145; i<=148; i++)
+				if (atomLabel.equalsIgnoreCase(cAtomLabel[i]))
+					return i;
+
 		if ((allowedPseudoAtomGroups & cPseudoAtomsHydrogenIsotops) != 0)
 			for (int i=151; i<=152; i++)
 				if (atomLabel.equalsIgnoreCase(cAtomLabel[i]))
 					return i;
+
+		if ((allowedPseudoAtomGroups & cPseudoAtomX) != 0)
+			if (atomLabel.equalsIgnoreCase(cAtomLabel[153]))
+				return 153;
+
+		if ((allowedPseudoAtomGroups & cPseudoAtomR) != 0)
+			if (atomLabel.equalsIgnoreCase(cAtomLabel[154]))
+				return 154;
+
+		if ((allowedPseudoAtomGroups & cPseudoAtomPolymer) != 0)
+			if (atomLabel.equalsIgnoreCase(cAtomLabel[159]))
+				return 159;
 
 		if ((allowedPseudoAtomGroups & cPseudoAtomsAminoAcids) != 0)
 			for (int i=171; i<=190; i++)

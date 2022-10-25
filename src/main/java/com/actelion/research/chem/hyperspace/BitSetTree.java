@@ -453,7 +453,7 @@ public class BitSetTree implements Serializable {
         int dcol = ssds.getDescriptorColumn(descriptorShortName);
         List<BitSetWithRow> rows = new ArrayList<>();
         for(int zi=0;zi<ssds.getRowCount();zi++) {
-            rows.add(new BitSetWithRow( BitSet.valueOf( (long[]) ssds.getDescriptor(dcol,zi,false) ) ,zi));
+            rows.add(new BitSetWithRow( BitSet.valueOf( (long[]) ssds.getDescriptor(dcol,zi,0, false) ) ,zi));
         }
         BitSetTree bst = BitSetTree.createTree(rows,descriptorBits,treeBinSize,maxTries);
         return bst;

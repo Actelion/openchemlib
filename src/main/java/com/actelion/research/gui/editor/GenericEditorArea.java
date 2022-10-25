@@ -268,7 +268,7 @@ public class GenericEditorArea implements GenericEventListener {
 		boolean isScaledView = false;
 		if (mUpdateMode != UPDATE_NONE) {
 			if ((mMode & MODE_MULTIPLE_FRAGMENTS) != 0
-					&& mUpdateMode != UPDATE_SCALE_COORDS_USE_FRAGMENTS)
+			 && mUpdateMode != UPDATE_SCALE_COORDS_USE_FRAGMENTS)
 				analyzeFragmentMembership();
 
 			mDepictor = ((mMode & MODE_REACTION) != 0) ?
@@ -280,6 +280,7 @@ public class GenericEditorArea implements GenericEventListener {
 					: new ExtendedDepictor(mMol, mDrawingObjectList);
 
 			mDepictor.setForegroundColor(foreground, background);
+			mDepictor.setDefaultAVBL(mMaxAVBL);
 
 			mDepictor.setFragmentNoColor(((mMode & MODE_MULTIPLE_FRAGMENTS) == 0) ? 0
 					: LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(background, 0.85f)
@@ -2866,7 +2867,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return rxn;
 	}
 
-	public void setReaction (Reaction rxn){
+	public void setReaction (Reaction rxn) {
 		mMol.clear();
 		mFragment = new StereoMolecule[rxn.getMolecules()];
 		mReactantCount = rxn.getReactants();
@@ -3077,7 +3078,7 @@ public class GenericEditorArea implements GenericEventListener {
 				mCanvas.getCanvasHeight()), AbstractDepictor.cModeInflateToMaxAVBL | mMaxAVBL);
 	}
 
-	private void cleanupMultiFragmentCoordinates(GenericDrawContext context, boolean selectedOnly){
+	private void cleanupMultiFragmentCoordinates(GenericDrawContext context, boolean selectedOnly) {
 		if (selectedOnly && mUpdateMode == UPDATE_INVENT_COORDS) {
 			int[] fragmentAtom = new int[mFragment.length];
 			for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
@@ -3102,8 +3103,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 		double spacing = FRAGMENT_CLEANUP_DISTANCE * mMaxAVBL;
 		double avbl = getScaledAVBL();
-		double arrowWidth = ((mMode & MODE_REACTION) == 0) ?
-				0f
+		double arrowWidth = ((mMode & MODE_REACTION) == 0) ? 0f
 				: (mUpdateMode == UPDATE_SCALE_COORDS_USE_FRAGMENTS) ?
 				DEFAULT_ARROW_LENGTH * mCanvas.getCanvasWidth()
 				: ((ReactionArrow)mDrawingObjectList.get(0)).getLength() * mMaxAVBL / avbl;
@@ -3143,7 +3143,7 @@ public class GenericEditorArea implements GenericEventListener {
 		mMol.setStereoBondsFromParity();
 	}
 
-	private void analyzeFragmentMembership () {
+	private void analyzeFragmentMembership() {
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
 
 		int[] fragmentNo = new int[mMol.getAllAtoms()];

@@ -64,16 +64,18 @@ public interface ReactionSearchDataSource {
 	public long[] getReactionDescriptor(int row);
 
 	/**
+	 * FFP of all reactants merged into one molecule
 	 * @param row
 	 * @return null if this row has no reactant descriptor
 	 */
-	public long[] getReactantDescriptor(int row);
+	public long[] getMergedReactantDescriptor(int row);
 
 	/**
+	 * FFP of all products merged into one molecule
 	 * @param row
 	 * @return null if this row has no product descriptor
 	 */
-	public long[] getProductDescriptor(int row);
+	public long[] getMergedProductDescriptor(int row);
 
 	/**
 	 * Returns the reaction idcode.

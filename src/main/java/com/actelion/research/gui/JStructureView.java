@@ -306,10 +306,11 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
             mDepictor.setAtomText(mAtomText);
             mDepictor.setAtomHighlightColors(mAtomHiliteColor, mAtomHiliteRadius);
 
+            int bgRGB = bg.getRGB();
 			if (!isEnabled())
-                mDepictor.setOverruleColor(ColorHelper.getContrastColor(Color.GRAY, bg), bg);
+                mDepictor.setOverruleColor(ColorHelper.getContrastColor(0x808080, bgRGB), bgRGB);
 			else
-				mDepictor.setForegroundColor(getForeground(), bg);
+				mDepictor.setForegroundColor(getForeground().getRGB(), bgRGB);
 
 			int avbl = HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen);
 			SwingDrawContext context = new SwingDrawContext((Graphics2D)g);

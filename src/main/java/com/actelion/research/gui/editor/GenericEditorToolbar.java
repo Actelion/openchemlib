@@ -92,10 +92,6 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 	private float mImageScaling;
 
 	public GenericEditorToolbar(GenericCanvas toolbarCanvas, GenericEditorArea theArea) {
-		this(toolbarCanvas, theArea, 0);
-		}
-
-	public GenericEditorToolbar(GenericCanvas toolbarCanvas, GenericEditorArea theArea, int mode) {
 		mToolbarCanvas = toolbarCanvas;
 		mArea = theArea;
 		init();
@@ -108,14 +104,6 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 	public int getHeight() {
 		return mHeight;
 		}
-
-	/* CXR added this 09/05/2011
-    public void setReactionMode(boolean rxn) {
-        if (rxn)  {
-            mMode = GenericDrawArea.MODE_MULTIPLE_FRAGMENTS | GenericDrawArea.MODE_REACTION;
-        } else
-            mMode &= ~GenericDrawArea.MODE_REACTION;
-        }*/
 
 	private void init() {
 		mImageNormal = mArea.getUIHelper().createImage("editorButtons.png");

@@ -255,12 +255,14 @@ public class StructureSearch {
 						if (mMaxSSSMatches != 0 && mMatchCount.get() > mMaxSSSMatches)
 							break;
 
-						mSSSearcher.setMolecule(mDataSource.getIDCode(row, false), (long[])mDataSource.getDescriptor(mDescriptorColumn, row, false));
-						for (int i=0; i<mQueryFragment.length; i++) {
-							mSSSearcher.setFragment(mQueryFragment[i], (long[])mQueryDescriptor[i]);
-							if (mSSSearcher.isFragmentInMolecule()) {
-								isMatch = true;
-								break;
+						for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
+							mSSSearcher.setMolecule(mDataSource.getIDCode(row, s, false), (long[])mDataSource.getDescriptor(mDescriptorColumn, row, s, false));
+							for (int i=0; i<mQueryFragment.length; i++) {
+								mSSSearcher.setFragment(mQueryFragment[i], (long[])mQueryDescriptor[i]);
+								if (mSSSearcher.isFragmentInMolecule()) {
+									isMatch = true;
+									break;
+									}
 								}
 							}
 						}
@@ -272,51 +274,63 @@ public class StructureSearch {
 							isMatch = true;
 							}
 						else if (mSpecification.isSimilaritySearch()) {
-							for (int i=0; i<mQueryDescriptor.length; i++) {
-								if (mDescriptorHandler.getSimilarity(mQueryDescriptor[i], mDataSource.getDescriptor(mDescriptorColumn, row, mSpecification.isLargestFragmentOnly()))
-									 >= mSpecification.getSimilarityThreshold()) {
-									isMatch = true;
-									break;
+							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
+								for (int i=0; i<mQueryDescriptor.length; i++) {
+									if (mDescriptorHandler.getSimilarity(mQueryDescriptor[i], mDataSource.getDescriptor(mDescriptorColumn, row, s, mSpecification.isLargestFragmentOnly()))
+										 >= mSpecification.getSimilarityThreshold()) {
+										isMatch = true;
+										break;
+										}
 									}
 								}
 							}
 						else if (mSpecification.isExactSearch()) {
-							for (int i=0; i<mQueryIDCode.length; i++) {
-								if (mIDCodeComparator.compare(mQueryIDCode[i], mDataSource.getIDCode(row, mSpecification.isLargestFragmentOnly())) == 0) {
-									isMatch = true;
-									break;
+							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
+								for (int i=0; i<mQueryIDCode.length; i++) {
+									if (mIDCodeComparator.compare(mQueryIDCode[i], mDataSource.getIDCode(row, s, mSpecification.isLargestFragmentOnly())) == 0) {
+										isMatch = true;
+										break;
+										}
 									}
 								}
 							}
 						else if (mSpecification.isNoStereoSearch()) {
-							for (int i=0; i<mQueryHashCode.length; i++) {
-								if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getNoStereoCode(row, mSpecification.isLargestFragmentOnly())) {
-									isMatch = true;
-									break;
+							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
+								for (int i=0; i<mQueryHashCode.length; i++) {
+									if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getNoStereoCode(row, s, mSpecification.isLargestFragmentOnly())) {
+										isMatch = true;
+										break;
+										}
 									}
 								}
 							}
 						else if (mSpecification.isTautomerSearch()) {
-							for (int i=0; i<mQueryHashCode.length; i++) {
-								if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getTautomerCode(row, mSpecification.isLargestFragmentOnly())) {
-									isMatch = true;
-									break;
+							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
+								for (int i=0; i<mQueryHashCode.length; i++) {
+									if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getTautomerCode(row, s, mSpecification.isLargestFragmentOnly())) {
+										isMatch = true;
+										break;
+										}
 									}
 								}
 							}
 						else if (mSpecification.isNoStereoTautomerSearch()) {
-							for (int i=0; i<mQueryHashCode.length; i++) {
-								if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getNoStereoTautomerCode(row, mSpecification.isLargestFragmentOnly())) {
-									isMatch = true;
-									break;
+							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
+								for (int i=0; i<mQueryHashCode.length; i++) {
+									if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getNoStereoTautomerCode(row, s, mSpecification.isLargestFragmentOnly())) {
+										isMatch = true;
+										break;
+										}
 									}
 								}
 							}
 						else if (mSpecification.isBackboneSearch()) {
-							for (int i=0; i<mQueryHashCode.length; i++) {
-								if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getBackboneCode(row, mSpecification.isLargestFragmentOnly())) {
-									isMatch = true;
-									break;
+							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
+								for (int i=0; i<mQueryHashCode.length; i++) {
+									if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getBackboneCode(row, s, mSpecification.isLargestFragmentOnly())) {
+										isMatch = true;
+										break;
+										}
 									}
 								}
 							}

@@ -258,7 +258,7 @@ public abstract class AbstractDepictor<T> {
 		}
 
 	/**
-	 * If you want this tructure view to also draw an atom background with specific colors for every atom,
+	 * If you want the Depictor to draw an atom background with specific colors for every atom,
 	 * then you need to call this method before calling paint().
 	 * @param argb values with a==0 are not considered
 	 * @param radius <= 1.0; if null, then a default of 0.5 of the average bond length is used

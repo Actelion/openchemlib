@@ -11,7 +11,7 @@ import com.actelion.research.chem.coords.CoordinateInventor;
  * Bento, A. P., Hersey, A., Félix, E., Landrum, G., Gaulton, A., Atkinson, F., ... & Leach, A. R. (2020).
  * An open source chemical structure curation pipeline using RDKit. Journal of Cheminformatics, 12(1), 1-16.<br>
  * Exceptions: - S=O is not transformed into S(+)-O(-)<br>
- *             - If charges (e.g. quarternary nitrogen) cannot be balanced, then Na(+) or Cl(-) are added to neutralize as last resort<br>
+ *             - If charges (e.g. quaternary nitrogen) cannot be balanced, then Na(+) or Cl(-) are added to neutralize as last resort<br>
  */
 public class MoleculeStandardizer {
 	public static final int MODE_GET_PARENT = 1;

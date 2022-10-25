@@ -38,6 +38,7 @@ import com.actelion.research.chem.*;
 import com.actelion.research.util.ArrayUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ReactionEncoder
 {
@@ -696,7 +697,7 @@ public class ReactionEncoder
 			}
 		}
 
-		ArrayList<StereoMolecule> moleculeList = new ArrayList<StereoMolecule>();
+		ArrayList<StereoMolecule> moleculeList = new ArrayList<>();
 		if (includeReactants) {
 			int reactantIndex = 0;
 			do {
@@ -771,5 +772,52 @@ public class ReactionEncoder
 		}
 
 		return catalystList.size() == 0 ? null : catalystList.toArray(new StereoMolecule[0]);
+	}
+
+	/**
+	 * Generates an array of all reactants and/or products of the encoded reaction string as bytes.
+	 * If the string includes atom coordinates or if they are explicitly, these are used.
+	 * At least one of includeReactants and includeProducts must be true.
+	 * @param rxnBytes may contain atom coordinates
+	 * @return null (if reactants or products are missing) or StereoMolecule array with at least one molecule
+	 */
+	public static byte[][] getMoleculeIDCodes(byte[] rxnBytes, boolean includeReactants, boolean includeProducts) {
+		if (rxnBytes == null || rxnBytes.length == 0)
+			return null;
+
+		int reactantEnd = ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.PRODUCT_IDENTIFIER);
+		if (reactantEnd <= 0)
+			return null;
+
+		int productIndex = reactantEnd + 1;
+		int productEnd = ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.OBJECT_DELIMITER, productIndex);
+		if (productEnd == -1)
+			productEnd = rxnBytes.length;
+
+		if (productIndex == productEnd)
+			return null;
+
+		ArrayList<byte[]> moleculeList = new ArrayList<>();
+		if (includeReactants) {
+			int reactantIndex = 0;
+			while (reactantIndex < reactantEnd) {
+				int index2 = ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, reactantIndex);
+				if (index2 == -1)
+					index2 = reactantEnd;
+				moleculeList.add(Arrays.copyOfRange(rxnBytes, reactantIndex, index2));
+				reactantIndex = 1 + index2;
+			}
+		}
+		if (includeProducts) {
+			while (productIndex < productEnd) {
+				int index2 = ArrayUtils.indexOf(rxnBytes, (byte)ReactionEncoder.MOLECULE_DELIMITER, productIndex);
+				if (index2 == -1)
+					index2 = productEnd;
+				moleculeList.add(Arrays.copyOfRange(rxnBytes, productIndex, index2));
+				productIndex = 1 + index2;
+			}
+		}
+
+		return moleculeList.size() == 0 ? null : moleculeList.toArray(new byte[0][]);
 	}
 }

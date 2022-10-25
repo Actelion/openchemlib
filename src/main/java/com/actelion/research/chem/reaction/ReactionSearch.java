@@ -372,8 +372,8 @@ public class ReactionSearch {
 							break;
 
 						if (mSpecification.isSubreactionSearch()) {
-							long[] reactantFFP = (long[])mDataSource.getReactantDescriptor(row);
-							long[] productFFP = (long[])mDataSource.getProductDescriptor(row);
+							long[] reactantFFP = mDataSource.getMergedReactantDescriptor(row);
+							long[] productFFP = mDataSource.getMergedProductDescriptor(row);
 							mSRSearcher.setReaction(mDataSource.getReactionCode(row), mDataSource.getMapping(row), mDataSource.getCoordinates(row), reactantFFP, productFFP);
 
 							for (int i = 0; i<mQueryReaction.length; i++) {
@@ -387,7 +387,7 @@ public class ReactionSearch {
 						else {  // retron search
 							for (int i = 0; i<mQueryRetron.length; i++) {
 								if (!mDescriptorHandlerFFP512.calculationFailed(mQueryRetronDescriptor[i])) {
-									long[] productFFP = mDataSource.getProductDescriptor(row);
+									long[] productFFP = mDataSource.getMergedProductDescriptor(row);
 									mProductSearcher.setFragment(mQueryRetron[i], mQueryRetronDescriptor[i]);
 									mProductSearcher.setMolecule((StereoMolecule)null, productFFP);
 									if (mProductSearcher.isFragmentIndexInMoleculeIndex()) {
@@ -398,7 +398,7 @@ public class ReactionSearch {
 										mProductSearcher.setMolecule(product, productFFP);
 										int inProductCount = mProductSearcher.findFragmentInMoleculeWithoutIndex(SSSearcher.cCountModeSeparated);
 										if (inProductCount != 0) {
-											long[] reactantFFP = mDataSource.getReactantDescriptor(row);
+											long[] reactantFFP = mDataSource.getMergedReactantDescriptor(row);
 											mReactantSearcher.setFragment(mQueryRetron[i], mQueryRetronDescriptor[i]);
 											mReactantSearcher.setMolecule((StereoMolecule)null, reactantFFP);
 											int inReactantCount = 0;

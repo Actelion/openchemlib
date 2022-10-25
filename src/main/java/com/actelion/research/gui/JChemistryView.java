@@ -273,12 +273,18 @@ public class JChemistryView extends JComponent
 		g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
 		Color fg = g2.getColor();
-		Color bg = UIManager.getColor(isEditable() && isEnabled() ? "TextField.background" : "TextField.inactiveBackground");
+		Color bg = null;
+		if (!isEditable() || !isEnabled())
+			bg = UIManager.getColor("TextField.inactiveBackground");
+		if (bg == null)
+			bg = UIManager.getColor("TextField.background");
+		if (bg == null)
+			bg = Color.WHITE;
 		g2.setColor(bg);
 		g2.fill(new Rectangle(insets.left, insets.top, theSize.width, theSize.height));
 		g2.setColor(fg);
 
-		mDepictor.setForegroundColor(getForeground(), getBackground());
+		mDepictor.setForegroundColor(getForeground().getRGB(), getBackground().getRGB());
 
 		if (mShowBorder && mDragType != DRAG_TYPE_NONE) {
 			Color color = ColorHelper.perceivedBrightness(bg) < 0.5f ? ColorHelper.brighter(bg, 0.85f) : ColorHelper.darker(bg, 0.85f);
