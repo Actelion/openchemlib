@@ -178,11 +178,13 @@ public class MolfileParser
 				int atom = mMol.addAtom(x, -y, -z);
 
 				String label = line.substring(31,34).trim();
-				if(label.equals("A") || label.equals("Q") || label.equals("*")){    // 'Q' is unspecified; different meaning than in V3000
-					mMol.setAtomicNo(atom, 6);
+				if(label.equals("A") || label.equals("*")){
 					mMol.setAtomQueryFeature(atom,Molecule.cAtomQFAny,true);
-				}
-				else {
+				} else if(label.equals("Q")) {    // 'Q' is defined as 'unspecified' for V2000; we use V3000 behaviour (any but not C,H)
+					int[] list = new int[1];
+					list[0] = 6;
+					mMol.setAtomList(atom, list, true);
+				} else {
 					int atomicNo = Molecule.getAtomicNoFromLabel(label, ALLOWED_ATOM_LABELS);
 					mMol.setAtomicNo(atom,atomicNo);
 				}
