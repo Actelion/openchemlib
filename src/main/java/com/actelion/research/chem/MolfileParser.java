@@ -432,6 +432,22 @@ public class MolfileParser
 					}
 				}
 
+				if(line.startsWith("M  RGP")){
+					int aaa,vvv;
+					int j = Integer.parseInt(line.substring(6,9).trim());
+					if(j > 0){
+						aaa = 10;
+						vvv = 14;
+						for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
+							int atom = Integer.parseInt(line.substring(aaa,aaa + 3).trim()) - 1;
+							int rno = Integer.parseInt(line.substring(vvv,vvv + 3).trim());
+							if(rno >= 1 && rno <= 20){
+								mMol.setAtomicNo(atom, Molecule.getAtomicNoFromLabel("R"+rno, Molecule.cPseudoAtomsRGroups));
+							}
+						}
+					}
+				}
+
 				line = reader.readLine();
 			}
 		} catch(Exception e){
