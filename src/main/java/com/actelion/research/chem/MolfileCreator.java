@@ -188,6 +188,8 @@ public class MolfileCreator {
                 mBuilder.append(" L  ");
             else if ((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0)
                 mBuilder.append(" A  ");
+            else if ((mol.getAtomicNo(atom) >= 129 && mol.getAtomicNo(atom) <= 144) || mol.getAtomicNo(atom) == 154)
+                mBuilder.append(" R# ");
             else {
                 String atomLabel = mol.getAtomLabel(atom);
                 mBuilder.append(" "+atomLabel);
@@ -359,6 +361,33 @@ public class MolfileCreator {
                         mBuilder.append("   3");
                         break;
                         }
+                    no--;
+                    if (++count == 8 || no == 0) {
+                        count = 0;
+                        mBuilder.append(nl);
+                        }
+                    }
+                }
+            }
+
+        no = 0;
+        for (int atom=0; atom<mol.getAllAtoms(); atom++)
+            if ((mol.getAtomicNo(atom) >= 129 && mol.getAtomicNo(atom) <= 144) || mol.getAtomicNo(atom) == 154)
+                no++;
+
+        if (no != 0) {
+            int count = 0;
+            for (int atom=0; atom<mol.getAllAtoms(); atom++) {
+                int atomicNo = mol.getAtomicNo(atom);
+                if ((atomicNo >= 129 && atomicNo <= 144) || atomicNo == 154) {
+                    if (count == 0) {
+                        mBuilder.append("M  RGP");
+                        appendThreeDigitInt(Math.min(8, no));
+                        }
+                    mBuilder.append(" ");
+                    appendThreeDigitInt(atom + 1);
+                    mBuilder.append(" ");
+                    appendThreeDigitInt(atomicNo == 154 ? 0 : atomicNo >= 142 ? atomicNo - 141 : atomicNo - 125);
                     no--;
                     if (++count == 8 || no == 0) {
                         count = 0;

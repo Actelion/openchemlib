@@ -141,7 +141,7 @@ public class GenericEditorArea implements GenericEventListener {
 	private static IReactionMapper sMapper;
 	private int mMode, mChainAtoms, mCurrentTool, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical,
 			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled, mFirstAtomKey,
-			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2, mMaxAVBL;
+			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2, mMaxAVBL, mAllowedPseudoAtoms;
 	private int[] mChainAtom, mFragmentNo, mHiliteBondSet;
 	private double mX1, mY1, mX2, mY2, mWidth, mHeight, mUIScaling, mTextSizeFactor;
 	private double[] mX, mY, mChainAtomX, mChainAtomY;
@@ -191,6 +191,12 @@ public class GenericEditorArea implements GenericEventListener {
 		mPendingRequest = cRequestNone;
 		mCurrentCursor = SwingCursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
+
+		mAllowedPseudoAtoms = Molecule.cPseudoAtomsHydrogenIsotops
+							| Molecule.cPseudoAtomsAminoAcids
+							| Molecule.cPseudoAtomR
+							| Molecule.cPseudoAtomsRGroups
+							| Molecule.cPseudoAtomAttachmentPoint;
 
 		mTextSizeFactor = 1.0;
 
@@ -341,7 +347,7 @@ public class GenericEditorArea implements GenericEventListener {
 			context.setRGB((validity == KEY_IS_ATOM_LABEL) ? foreground
 						   : (validity == KEY_IS_SUBSTITUENT) ? RGB_BLUE : RGB_GRAY);
 			if (validity == KEY_IS_ATOM_LABEL)
-				s = Molecule.cAtomLabel[Molecule.getAtomicNoFromLabel(s)];
+				s = Molecule.cAtomLabel[Molecule.getAtomicNoFromLabel(s, mAllowedPseudoAtoms)];
 			else if (validity == KEY_IS_SUBSTITUENT)
 				s = mAtomKeyStrokeSuggestion.substring(0, s.length());
 			int fontSize = 3*context.getFontSize()/2;
@@ -2543,7 +2549,7 @@ public class GenericEditorArea implements GenericEventListener {
 	}
 
 	private int getAtomKeyStrokeValidity(String s){
-		if (Molecule.getAtomicNoFromLabel(s) != 0)
+		if (Molecule.getAtomicNoFromLabel(s, mAllowedPseudoAtoms) != 0)
 			return KEY_IS_ATOM_LABEL;
 		mAtomKeyStrokeSuggestion = NamedSubstituents.identify(s);
 		if (mAtomKeyStrokeSuggestion == null)
@@ -2570,7 +2576,7 @@ public class GenericEditorArea implements GenericEventListener {
 	private void expandAtomKeyStrokes(String keyStrokes){
 		mAtomKeyStrokeBuffer.setLength(0);
 
-		int atomicNo = Molecule.getAtomicNoFromLabel(keyStrokes);
+		int atomicNo = Molecule.getAtomicNoFromLabel(keyStrokes, mAllowedPseudoAtoms);
 		if (atomicNo != 0) {
 			storeState();
 			if (mMol.changeAtom(mCurrentHiliteAtom, atomicNo, 0, -1, 0)) {
@@ -2614,6 +2620,10 @@ public class GenericEditorArea implements GenericEventListener {
 
 			updateAndFireEvent(UPDATE_CHECK_COORDS);
 		}
+	}
+
+	private void setAllowPseudoAtoms(int apa) {
+		mAllowedPseudoAtoms = apa;
 	}
 
 	private AbstractDrawingObject findDrawingObject ( double x, double y, String type,boolean forDeletion){
@@ -2910,6 +2920,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	public void setMarkushStructure (MarkushStructure markush){
 		mMol.clear();
+		mDrawingObjectList = null;
 		mFragment = new StereoMolecule[markush.getCoreCount() + markush.getRGroupCount()];
 		mReactantCount = markush.getCoreCount();
 		boolean isFragment = false;

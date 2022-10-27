@@ -52,6 +52,10 @@ import java.util.TreeMap;
 public class MolfileParser
 {
 	public static final int MODE_KEEP_HYDROGEN_MAP = 1;
+	public static final int ALLOWED_ATOM_LABELS = Molecule.cPseudoAtomsHydrogenIsotops
+												| Molecule.cPseudoAtomsRGroups
+												| Molecule.cPseudoAtomsAminoAcids;
+	public static final int ALLOWED_ATOM_LABELS_IN_LIST = Molecule.cPseudoAtomsHydrogenIsotops;
 
 	public static boolean debug = false;
 	private StereoMolecule mMol;
@@ -174,16 +178,20 @@ public class MolfileParser
 				int atom = mMol.addAtom(x, -y, -z);
 
 				String label = line.substring(31,34).trim();
-				int atomicNo = Molecule.getAtomicNoFromLabel(label);
-				mMol.setAtomicNo(atom,atomicNo);
-				if(label.equals("A")){
-					mMol.setAtomicNo(atom, 6);
+				if(label.equals("A") || label.equals("*")){
 					mMol.setAtomQueryFeature(atom,Molecule.cAtomQFAny,true);
+				} else if(label.equals("Q")) {    // 'Q' is defined as 'unspecified' for V2000; we use V3000 behaviour (any but not C,H)
+					int[] list = new int[1];
+					list[0] = 6;
+					mMol.setAtomList(atom, list, true);
+				} else {
+					int atomicNo = Molecule.getAtomicNoFromLabel(label, ALLOWED_ATOM_LABELS);
+					mMol.setAtomicNo(atom,atomicNo);
 				}
 
 				int massDif = parseIntOrSpaces(line.substring(34,36).trim());
 				if(massDif != 0){
-					mMol.setAtomMass(atom,Molecule.cRoundedMass[atomicNo] + massDif);
+					mMol.setAtomMass(atom,Molecule.cRoundedMass[mMol.getAtomicNo(atom)] + massDif);
 				}
 
 				int chargeDif = parseIntOrSpaces(line.substring(36,39).trim());
@@ -391,7 +399,7 @@ public class MolfileParser
 						int aaa = 16;
 						for(int k = 0;k < no;k++,aaa += 4){
 							String sym = line.substring(aaa,aaa + 4).trim();
-							v[k] = Molecule.getAtomicNoFromLabel(sym);
+							v[k] = Molecule.getAtomicNoFromLabel(sym, ALLOWED_ATOM_LABELS_IN_LIST);
 						}
 						mMol.setAtomList(atom,v,bNotList);
 					}
@@ -419,6 +427,22 @@ public class MolfileParser
 								if(substitution > substitutionCount){
 									mMol.setAtomQueryFeature(atom,Molecule.cAtomQFMoreNeighbours,true);
 								}
+							}
+						}
+					}
+				}
+
+				if(line.startsWith("M  RGP")){
+					int aaa,vvv;
+					int j = Integer.parseInt(line.substring(6,9).trim());
+					if(j > 0){
+						aaa = 10;
+						vvv = 14;
+						for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
+							int atom = Integer.parseInt(line.substring(aaa,aaa + 3).trim()) - 1;
+							int rno = Integer.parseInt(line.substring(vvv,vvv + 3).trim());
+							if(rno >= 1 && rno <= 20){
+								mMol.setAtomicNo(atom, Molecule.getAtomicNoFromLabel("R"+rno, Molecule.cPseudoAtomsRGroups));
 							}
 						}
 					}
@@ -614,14 +638,14 @@ public class MolfileParser
 			mMol.setAtomMapNo(atom,mapNo,false);
 		}
 
-		if(label.equals("A")){
+		if(label.equals("A") || label.equals("*")){
 			mMol.setAtomQueryFeature(atom,Molecule.cAtomQFAny,true);
 		} else if(label.equals("Q")){
 			int[] list = new int[1];
 			list[0] = 6;
 			mMol.setAtomList(atom,list,true);
 		} else{
-			mMol.setAtomicNo(atom,Molecule.getAtomicNoFromLabel(label));
+			mMol.setAtomicNo(atom,Molecule.getAtomicNoFromLabel(label, ALLOWED_ATOM_LABELS));
 		}
 
 		while((index1 = indexOfNextItem(line,index2)) != -1){
@@ -842,7 +866,7 @@ public class MolfileParser
 	/**
 	 * Interprets the atom description line and returns the atom list for this atom
 	 * @param line String Atom description line
-	 * @return int[] Array containg the atomic numbers for the list or null if no atom list could be interpreted
+	 * @return int[] Array contaning the atomic numbers for the list or null if no atom list could be interpreted
 	 */
 	private int[] interpretV3AtomList(String line)
 	{
@@ -868,7 +892,7 @@ public class MolfileParser
 					l = s.substring(0,i1);
 					s = s.substring(i1+1);
 				}
-				atoms[index++] = Molecule.getAtomicNoFromLabel(l);
+				atoms[index++] = Molecule.getAtomicNoFromLabel(l, ALLOWED_ATOM_LABELS_IN_LIST);
 			}
 			res = new int[index];
 			System.arraycopy(atoms,0,res,0,index);

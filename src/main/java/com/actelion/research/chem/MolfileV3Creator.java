@@ -242,6 +242,9 @@ public class MolfileV3Creator
             else if((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0) {
                 mMolfile.append(" A");
             	}
+            else if((mol.getAtomicNo(atom) >= 129 && mol.getAtomicNo(atom) <= 144) || mol.getAtomicNo(atom) == 154) {
+	            mMolfile.append(" R#");
+	            }
             else {
                 mMolfile.append(" " + mol.getAtomLabel(atom));
             	}
@@ -295,6 +298,11 @@ public class MolfileV3Creator
             if (valence != -1) {
                 mMolfile.append(" VAL=" + ((valence == 0) ? "-1" : valence));
             	}
+
+	        int atomicNo = mol.getAtomicNo(atom);
+	        if ((atomicNo >= 129 && atomicNo <= 144) || atomicNo == 154) {
+		        mMolfile.append(" RGROUPS=(1 " + (atomicNo == 154 ? 0 : atomicNo >= 142 ? atomicNo - 141 : atomicNo - 125) +")");
+	            }
 
 	        long hydrogenFlags = Molecule.cAtomQFHydrogen & mol.getAtomQueryFeatures(atom);
             if (hydrogenFlags == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot1Hydrogen)) {
