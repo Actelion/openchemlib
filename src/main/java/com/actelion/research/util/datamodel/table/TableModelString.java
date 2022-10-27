@@ -237,6 +237,10 @@ public class TableModelString {
 			for (int j = 0; j < liColName.size(); j++) {
 
 				String sData = get(i,j);
+
+				if(sData==null)
+					sData="";
+
 				n = arrLengthMax[j]-sData.length();
 
 				for (int k = 0; k < n; k++) {
