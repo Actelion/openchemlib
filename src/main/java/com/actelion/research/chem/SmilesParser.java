@@ -1472,7 +1472,7 @@ public class SmilesParser {
 
 
 	private boolean qualifiesForPi(int atom) {
-		if (!RingCollection.qualifiesAsAromatic(mMol.getAtomicNo(atom)))
+		if (!RingCollection.qualifiesAsAromaticAtomicNo(mMol.getAtomicNo(atom)))
 			return false;
 
 		if (mMol.getAtomicNo(atom) == 6) {

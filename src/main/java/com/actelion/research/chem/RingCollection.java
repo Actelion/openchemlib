@@ -679,7 +679,7 @@ public class RingCollection {
 			// returns true if it can successfully determine and set the ring's aromaticity
 		int ringAtom[] = mRingAtomSet.get(ringNo);
 		for (int atom:ringAtom)
-			if (!qualifiesAsAromatic(mMol.getAtomicNo(atom)))
+			if (!qualifiesAsAromaticAtom(atom))
 				return true;
 
 		int ringBond[] = mRingBondSet.get(ringNo);
@@ -862,8 +862,31 @@ public class RingCollection {
 		return false;
 		}
 
+	private boolean qualifiesAsAromaticAtom(int atom) {
+		// If we have a list or wildcard atom, then the atomicNo is meaningless...
+		if (mMol.isFragment()) {
+			// We consider wildcard atoms as being compatible with aromaticity
+			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0) {
+				// in theory, we must return false, if all atomicNos, which qualify for aromaticity,
+				// are part of the exclude list. In reality that is rather unlikely...
+				return true;
+				}
+			else {
+				int[] list = mMol.getAtomList(atom);
+				if (list != null) {
+					for (int atomicNo:list)
+						if (qualifiesAsAromaticAtomicNo(atomicNo))
+							return true;
 
-	public static boolean qualifiesAsAromatic(int atomicNo) {
+					return false;
+					}
+				}
+			}
+
+		return qualifiesAsAromaticAtomicNo(mMol.getAtomicNo(atom));
+		}
+
+	public static boolean qualifiesAsAromaticAtomicNo(int atomicNo) {
 		return atomicNo == 5
 			|| atomicNo == 6
 			|| atomicNo == 7
