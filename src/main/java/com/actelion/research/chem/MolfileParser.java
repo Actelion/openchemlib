@@ -401,6 +401,7 @@ public class MolfileParser
 							String sym = line.substring(aaa,aaa + 4).trim();
 							v[k] = Molecule.getAtomicNoFromLabel(sym, ALLOWED_ATOM_LABELS_IN_LIST);
 						}
+						mMol.setAtomicNo(atom, 6);
 						mMol.setAtomList(atom,v,bNotList);
 					}
 				}
@@ -631,8 +632,10 @@ public class MolfileParser
 		if(atom + 1 != atomIndex)
 			mapAtomIndex(atomIndex, atom);
 
-		if (v != null)
-			mMol.setAtomList(atom,v,bNotList);
+		if (v != null) {
+			mMol.setAtomicNo(atom, 6);
+			mMol.setAtomList(atom, v, bNotList);
+		}
 
 		if(mapNo != 0){
 			mMol.setAtomMapNo(atom,mapNo,false);

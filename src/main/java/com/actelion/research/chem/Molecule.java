@@ -33,7 +33,8 @@
 
 package com.actelion.research.chem;
 
-import java.awt.geom.Rectangle2D;
+import com.actelion.research.gui.generic.GenericRectangle;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -2188,7 +2189,24 @@ public class Molecule implements Serializable {
 		return mCoordinates[atom].z;
 		}
 
-	public Rectangle2D.Double getBounds(Rectangle2D.Double r) {
+//	@Deprecated
+//	public Rectangle2D.Double getBounds(Rectangle2D.Double r) {
+//		if (mAllAtoms == 0)
+//			return null;
+//
+//		GenericRectangle b = getBounds((GenericRectangle)null);
+//		if (r != null) {
+//			r.x = b.x;
+//			r.y = b.y;
+//			r.width = b.width;
+//			r.height = b.height;
+//			return r;
+//			}
+//
+//		return new Rectangle2D.Double(b.x, b.y, b.width, b.height):
+//		}
+
+	public GenericRectangle getBounds(GenericRectangle r) {
 		if (mAllAtoms == 0)
 			return null;
 
@@ -2209,7 +2227,7 @@ public class Molecule implements Serializable {
 			}
 
 		if (r == null) {
-			r = new Rectangle2D.Double(x1, y1, x2 - x1, y2 - y1);
+			r = new GenericRectangle(x1, y1, x2 - x1, y2 - y1);
 			}
 		else {
 			r.x = x1;

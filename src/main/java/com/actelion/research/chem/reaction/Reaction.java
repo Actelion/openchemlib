@@ -37,8 +37,8 @@ package com.actelion.research.chem.reaction;
 import com.actelion.research.chem.DrawingObjectList;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.generic.GenericRectangle;
 
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -279,10 +279,10 @@ public class Reaction implements java.io.Serializable {
 
 		double avbl = getAverageBondLength();
 
-		Rectangle2D.Double[] r = new Rectangle2D.Double[getMolecules()];
+		GenericRectangle[] r = new GenericRectangle[getMolecules()];
 
 		for (int i=0; i<getMolecules(); i++) {
-			r[i] = getMolecule(i).getBounds(null);
+			r[i] = getMolecule(i).getBounds((GenericRectangle)null);
 			if (r[i] != null) {
 				for (int j=0; j<i; j++) {
 					if (r[j] != null) {
