@@ -133,8 +133,6 @@ public class SSSearcher {
 	 */
 	public SSSearcher() {
 		mDefaultMatchMode = cDefaultMatchMode;
-		mMatchList = new ArrayList<>();
-		mBridgeBondAtomList = new ArrayList<>();
 		mSortedMatchSet = new TreeSet<>(new IntArrayComparator());
 		}
 
@@ -150,8 +148,6 @@ public class SSSearcher {
 	 */
 	public SSSearcher(int matchMode) {
 		mDefaultMatchMode = matchMode;
-		mMatchList = new ArrayList<>();
-		mBridgeBondAtomList = new ArrayList<>();
 		mSortedMatchSet = new TreeSet<>(new IntArrayComparator());
 		}
 
@@ -472,8 +468,8 @@ System.out.println();
 	 */
 	public int findFragmentInMolecule(int countMode, int matchMode, final boolean[] atomExcluded) {
 		mStop = false;
-		mMatchList.clear();
-		mBridgeBondAtomList.clear();
+		mMatchList = new ArrayList<>();
+		mBridgeBondAtomList = new ArrayList<>();
 		mSortedMatchSet.clear();
 
 		if (mMolecule == null
