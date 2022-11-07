@@ -401,7 +401,7 @@ System.out.println();
 	 * @return null or atom mask in target atom space
 	 */
 	public boolean[] getMatchingBridgeBondAtoms(int matchNo) {
-		return mBridgeBondAtomList.size() <= matchNo ? mBridgeBondAtomList.get(matchNo) : null;
+		return mBridgeBondAtomList.size() <= matchNo ? null : mBridgeBondAtomList.get(matchNo);
 		}
 
 	/**
