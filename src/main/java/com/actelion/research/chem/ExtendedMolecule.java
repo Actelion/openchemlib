@@ -3698,6 +3698,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mBondQueryFeatures[bond] &= ~cBondQFDouble;
 			else if (bondType == cBondTypeTriple)
 				mBondQueryFeatures[bond] &= ~cBondQFTriple;
+			else if (bondType == cBondTypeQuadruple)
+				mBondQueryFeatures[bond] &= ~cBondQFQuadruple;
+			else if (bondType == cBondTypeQuintuple)
+				mBondQueryFeatures[bond] &= ~cBondQFQuintuple;
 			else if (bondType == cBondTypeMetalLigand)
 				mBondQueryFeatures[bond] &= ~cBondQFMetalLigand;
 			else if (bondType == cBondTypeDelocalized)

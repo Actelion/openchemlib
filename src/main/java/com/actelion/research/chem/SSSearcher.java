@@ -1301,6 +1301,8 @@ System.out.println();
 			 && !(molBondType == Molecule.cBondTypeSingle && (frgBondTypes & Molecule.cBondQFSingle) != 0)
 			 && !(molBondType == Molecule.cBondTypeDouble && (frgBondTypes & Molecule.cBondQFDouble) != 0)
 			 && !(molBondType == Molecule.cBondTypeTriple && (frgBondTypes & Molecule.cBondQFTriple) != 0)
+			 && !(molBondType == Molecule.cBondTypeQuadruple && (frgBondTypes & Molecule.cBondQFQuadruple) != 0)
+			 && !(molBondType == Molecule.cBondTypeQuintuple && (frgBondTypes & Molecule.cBondQFQuintuple) != 0)
 			 && !(molBondType == Molecule.cBondTypeMetalLigand && (frgBondTypes & Molecule.cBondQFMetalLigand) != 0)
 			 && !(molBondType == Molecule.cBondTypeDelocalized && (frgBondTypes & Molecule.cBondQFDelocalized) != 0))
 				return false;
@@ -1789,6 +1791,12 @@ System.out.println();
 				break;
 			case 3:
 				queryDefaults |= Molecule.cBondQFTriple;
+				break;
+			case 4:
+				queryDefaults |= Molecule.cBondQFQuadruple;
+				break;
+			case 5:
+				queryDefaults |= Molecule.cBondQFQuintuple;
 				break;
 			}
 

@@ -204,7 +204,7 @@ public class FingerPrintGenerator
                     newPath.append("-");
                 } else if (mol.getBondOrder(bond) == 2) {
                     newPath.append("=");
-                } else if (mol.getBondOrder(bond) == 3) {
+                } else if (mol.getBondOrder(bond) >= 3) {
                     newPath.append("#");
                 } else if (mol.getBondOrder(bond) == 0) {
                     newPath.append(".");

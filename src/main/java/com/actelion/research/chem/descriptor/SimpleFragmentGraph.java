@@ -210,7 +210,7 @@ public class SimpleFragmentGraph {
 		// to stay in 2 bits we pool dative with triple bonds
 		if (mol.isDelocalizedBond(bond))
 			return 0;
-		int order = mol.getBondOrder(bond);
+		int order = Math.min(3, mol.getBondOrder(bond));
 		return (byte)(order == 0 ? 3 : order);
 	}
 }
