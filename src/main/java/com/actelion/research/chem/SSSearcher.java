@@ -133,8 +133,6 @@ public class SSSearcher {
 	 */
 	public SSSearcher() {
 		mDefaultMatchMode = cDefaultMatchMode;
-		mMatchList = new ArrayList<>();
-		mBridgeBondAtomList = new ArrayList<>();
 		mSortedMatchSet = new TreeSet<>(new IntArrayComparator());
 		}
 
@@ -150,8 +148,6 @@ public class SSSearcher {
 	 */
 	public SSSearcher(int matchMode) {
 		mDefaultMatchMode = matchMode;
-		mMatchList = new ArrayList<>();
-		mBridgeBondAtomList = new ArrayList<>();
 		mSortedMatchSet = new TreeSet<>(new IntArrayComparator());
 		}
 
@@ -405,7 +401,7 @@ System.out.println();
 	 * @return null or atom mask in target atom space
 	 */
 	public boolean[] getMatchingBridgeBondAtoms(int matchNo) {
-		return mBridgeBondAtomList.size() <= matchNo ? mBridgeBondAtomList.get(matchNo) : null;
+		return mBridgeBondAtomList.size() <= matchNo ? null : mBridgeBondAtomList.get(matchNo);
 		}
 
 	/**
@@ -472,8 +468,8 @@ System.out.println();
 	 */
 	public int findFragmentInMolecule(int countMode, int matchMode, final boolean[] atomExcluded) {
 		mStop = false;
-		mMatchList.clear();
-		mBridgeBondAtomList.clear();
+		mMatchList = new ArrayList<>();
+		mBridgeBondAtomList = new ArrayList<>();
 		mSortedMatchSet.clear();
 
 		if (mMolecule == null
@@ -1305,6 +1301,8 @@ System.out.println();
 			 && !(molBondType == Molecule.cBondTypeSingle && (frgBondTypes & Molecule.cBondQFSingle) != 0)
 			 && !(molBondType == Molecule.cBondTypeDouble && (frgBondTypes & Molecule.cBondQFDouble) != 0)
 			 && !(molBondType == Molecule.cBondTypeTriple && (frgBondTypes & Molecule.cBondQFTriple) != 0)
+			 && !(molBondType == Molecule.cBondTypeQuadruple && (frgBondTypes & Molecule.cBondQFQuadruple) != 0)
+			 && !(molBondType == Molecule.cBondTypeQuintuple && (frgBondTypes & Molecule.cBondQFQuintuple) != 0)
 			 && !(molBondType == Molecule.cBondTypeMetalLigand && (frgBondTypes & Molecule.cBondQFMetalLigand) != 0)
 			 && !(molBondType == Molecule.cBondTypeDelocalized && (frgBondTypes & Molecule.cBondQFDelocalized) != 0))
 				return false;
@@ -1793,6 +1791,12 @@ System.out.println();
 				break;
 			case 3:
 				queryDefaults |= Molecule.cBondQFTriple;
+				break;
+			case 4:
+				queryDefaults |= Molecule.cBondQFQuadruple;
+				break;
+			case 5:
+				queryDefaults |= Molecule.cBondQFQuintuple;
 				break;
 			}
 

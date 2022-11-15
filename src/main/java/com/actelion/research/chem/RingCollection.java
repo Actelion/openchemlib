@@ -580,7 +580,7 @@ public class RingCollection {
 				boolean isHeteroAromatic = false;
 				for (int atom:mRingAtomSet.get(ring)) {
 					mAtomRingFeatures[atom] |= FEATURES_AROMATIC;
-					if (Molecule.isAtomicNoElectronegative(mMol.getAtomicNo(atom)))
+					if (qualifiesAsHeteroAtom(atom))
 						isHeteroAromatic = true;
 					}
 				for (int bond:mRingBondSet.get(ring))
@@ -601,6 +601,21 @@ public class RingCollection {
 					}
 				}
 			}
+		}
+
+	private boolean qualifiesAsHeteroAtom(int atom) {
+		if (mMol.isFragment()) {
+			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0)
+				return false;
+			int[] atomList = mMol.getAtomList(atom);
+			if (atomList != null) {
+				for (int atomicNo : atomList)
+					if (!Molecule.isAtomicNoElectronegative(atomicNo))
+						return false;
+				return true;
+				}
+			}
+		return Molecule.isAtomicNoElectronegative(mMol.getAtomicNo(atom));
 		}
 
 	private int[] getRingBonds(int[] ringAtom) {

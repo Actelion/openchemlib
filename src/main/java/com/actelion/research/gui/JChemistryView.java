@@ -38,17 +38,19 @@ import com.actelion.research.chem.io.CompoundFileHelper;
 import com.actelion.research.chem.io.RDFileParser;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.gui.clipboard.ClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.dnd.ReactionDropAdapter;
 import com.actelion.research.gui.dnd.ReactionTransferable;
+import com.actelion.research.gui.editor.GenericEditorArea;
 import com.actelion.research.gui.generic.GenericDrawContext;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
-import com.actelion.research.gui.swing.SwingCursorHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,6 +72,7 @@ public class JChemistryView extends JComponent
 
 	private static final String ITEM_COPY_RXN = "Copy Reaction";
 	private static final String ITEM_PASTE_RXN = "Paste Reaction";
+	private static final String ITEM_USE_TEMPLATE = "Use Template";
 	private static final String ITEM_OPEN_RXN = "Open Reaction File...";
 	private static final String ITEM_SAVE_RXN = "Save Reaction File...";
 	private static final String ITEM_COPY_MOLS = "Copy Molecules";
@@ -403,6 +406,14 @@ public class JChemistryView extends JComponent
 				showWarningMessage("No reaction on clipboard!");
 			}
 
+		if (e.getActionCommand().startsWith(ITEM_USE_TEMPLATE) && mIsEditable) {
+			Reaction rxn = ReactionEncoder.decode(e.getActionCommand().substring(ITEM_USE_TEMPLATE.length()), true);
+			if (rxn != null)
+				pasteOrDropReaction(rxn);
+			else
+				showWarningMessage("Could not decode template!");
+			}
+
 		if (e.getActionCommand().equals(ITEM_OPEN_RXN) && mIsEditable) {
 			File rxnFile = FileHelper.getFile(this, "Please select a reaction file",
 					FileHelper.cFileTypeRXN | CompoundFileHelper.cFileTypeRD);
@@ -474,6 +485,28 @@ public class JChemistryView extends JComponent
 						JMenuItem item = new JMenuItem(ITEM_PASTE_RXN);
 						item.addActionListener(this);
 						popup.add(item);
+						}
+					if (GenericEditorArea.getReactionQueryTemplates() != null && mDepictor.getReaction() != null && mDepictor.getReaction().isFragment()) {
+						popup.addSeparator();
+						JMenu templateMenu = null;
+						for (String[] template:GenericEditorArea.getReactionQueryTemplates()) {
+							if (GenericEditorArea.TEMPLATE_SECTION_KEY.equals(template[0])) {
+								if (templateMenu != null)
+									popup.add(templateMenu);
+
+								templateMenu = new JMenu("Use "+template[1]+" Template");
+								continue;
+								}
+
+							if (templateMenu == null)
+								templateMenu = new JMenu("Use Template");
+
+							JMenuItem item = new JMenuItem(template[0]);
+							item.setActionCommand(ITEM_USE_TEMPLATE + template[1]);
+							item.addActionListener(this);
+							templateMenu.add(item);
+							}
+						popup.add(templateMenu);
 						}
 
 					if (popup.getComponentCount() != 0)

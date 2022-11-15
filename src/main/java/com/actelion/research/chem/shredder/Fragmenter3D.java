@@ -43,7 +43,7 @@ public class Fragmenter3D {
 		mFragmentList.clear();
 
 		mol.stripSmallFragments();
-		mol.removeExplicitHydrogens(true);
+		mol.removeExplicitHydrogens(false, true);
 
 		boolean[] isRotatableBond = new boolean[mol.getAllBonds()];
 		int count = TorsionDB.findRotatableBonds(mol, true, isRotatableBond);

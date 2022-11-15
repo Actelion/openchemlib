@@ -820,7 +820,7 @@ public class IsomericSmilesCreator {
 		if (mEZHalfParity[bond] != 0)
 			builder.append(mEZHalfParity[bond] == 1 ? '/' : '\\');
 		if (mMode == MODE_CREATE_SMARTS) {
-			int bondTypes = mMol.getBondQueryFeatures(Molecule.cBondQFBondTypes);
+			int bondTypes = mMol.getBondQueryFeatures(Molecule.cBondQFBondTypes | Molecule.cBondQFRareBondTypes);
 			if (bondTypes != 0) {
 				if ((bondTypes & Molecule.cBondTypeSingle) != 0 && mEZHalfParity[bond] == 0) {
 					builder.append('-');
@@ -834,6 +834,16 @@ public class IsomericSmilesCreator {
 					if (builder.length() != startLength)
 						builder.append(',');
 					builder.append('#');
+					}
+				if ((bondTypes & Molecule.cBondTypeQuadruple) != 0) {
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append('$');
+					}
+				if ((bondTypes & Molecule.cBondTypeQuintuple) != 0) {   // SMILES doesn't support quintuple bonds, thus we use quadruple
+					if (builder.length() != startLength)
+						builder.append(',');
+					builder.append('$');
 					}
 				if ((bondTypes & Molecule.cBondTypeDelocalized) != 0) {
 					if (builder.length() != startLength)
@@ -859,8 +869,10 @@ public class IsomericSmilesCreator {
 				builder.append('=');
 			else if (bondType == Molecule.cBondTypeTriple)
 				builder.append('#');
-//				else if (order == Molecule.cBondTypeQuadruple)	// not supported by Molecule
-//					builder.append('$');
+			else if (bondType == Molecule.cBondTypeQuadruple)
+				builder.append('$');
+			else if (bondType == Molecule.cBondTypeQuintuple)	// not supported by SMILES, we use quadruple instead
+				builder.append('$');
 			else if (bondType == Molecule.cBondTypeDelocalized)
 				builder.append(':');
 			else if (bondType == Molecule.cBondTypeMetalLigand)

@@ -1132,23 +1132,45 @@ public abstract class AbstractDepictor<T> {
 			if (mpProperLine(theLine)) {
 				drawLine(theLine, atom1, atom2);
 				mpCalcPiBondOffset(theLine.x2 - theLine.x1,
-								   theLine.y2 - theLine.y1,piBondOffset);
-				aLine.x1 = theLine.x1 + piBondOffset.x;
-				aLine.y1 = theLine.y1 + piBondOffset.y;
-				aLine.x2 = theLine.x2 + piBondOffset.x;
-				aLine.y2 = theLine.y2 + piBondOffset.y;
-				drawLine(aLine, atom1, atom2);
-				aLine.x1 = theLine.x1 - piBondOffset.x;
-				aLine.y1 = theLine.y1 - piBondOffset.y;
-				aLine.x2 = theLine.x2 - piBondOffset.x;
-				aLine.y2 = theLine.y2 - piBondOffset.y;
-				drawLine(aLine, atom1, atom2);
+								   theLine.y2 - theLine.y1, piBondOffset);
+				drawOffsetLine(theLine, atom1, atom2, piBondOffset.x, piBondOffset.y, aLine);
+				drawOffsetLine(theLine, atom1, atom2, -piBondOffset.x, -piBondOffset.y, aLine);
+				}
+			break;
+		case 4:
+			if (mpProperLine(theLine)) {
+				mpCalcPiBondOffset(theLine.x2 - theLine.x1,
+						theLine.y2 - theLine.y1, piBondOffset);
+				drawOffsetLine(theLine, atom1, atom2, 1.5*piBondOffset.x, 1.5*piBondOffset.y, aLine);
+				drawOffsetLine(theLine, atom1, atom2, 0.5*piBondOffset.x, 0.5*piBondOffset.y, aLine);
+				drawOffsetLine(theLine, atom1, atom2, -0.5*piBondOffset.x, -0.5*piBondOffset.y, aLine);
+				drawOffsetLine(theLine, atom1, atom2, -1.5*piBondOffset.x, -1.5*piBondOffset.y, aLine);
+				}
+			break;
+		case 5:
+			if (mpProperLine(theLine)) {
+				drawLine(theLine, atom1, atom2);
+				mpCalcPiBondOffset(theLine.x2 - theLine.x1,
+						theLine.y2 - theLine.y1, piBondOffset);
+				drawOffsetLine(theLine, atom1, atom2, 2*piBondOffset.x, 2*piBondOffset.y, aLine);
+				drawOffsetLine(theLine, atom1, atom2, piBondOffset.x, piBondOffset.y, aLine);
+				drawOffsetLine(theLine, atom1, atom2, -piBondOffset.x, -piBondOffset.y, aLine);
+				drawOffsetLine(theLine, atom1, atom2, -2*piBondOffset.x, -2*piBondOffset.y, aLine);
 				}
 			break;
             }
 
 		if (mCurrentColor == COLOR_EXCLUDE_GROUP_FG)
 			setColor_(COLOR_RESTORE_PREVIOUS);
+		}
+
+
+	private void drawOffsetLine(DepictorLine theLine, int atom1, int atom2, double dx, double dy, DepictorLine aLine) {
+		aLine.x1 = theLine.x1 + dx;
+		aLine.y1 = theLine.y1 + dy;
+		aLine.x2 = theLine.x2 + dx;
+		aLine.y2 = theLine.y2 + dy;
+		drawLine(aLine, atom1, atom2);
 		}
 
 

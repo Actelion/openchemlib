@@ -1494,6 +1494,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return count;
 		}
 
+
 	/**
 	 * @return a RingCollection object, which contains a total set of small rings
 	 */
@@ -1501,6 +1502,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperRings);
 		return mRingSet;
 		}
+
+
 	/**
 	 * 
 	 * @return a RingCollection object without aromaticity information
@@ -1511,27 +1514,27 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return mRingSet;
 		}
 
-	
-	
-	
+
 	/**
 	 * Locates that single bond which is the preferred one to be converted into up/down bond
-	 * in order to define the atom chirality.
+	 * in order to define the atom chirality. This method does not consider, whether any
+	 * bond is a stereo bond already.
 	 * @param atom parity carrying atom, i.e. a tetrahedral stereocenter or central allene atom
 	 * @return preferred bond or -1, if no single bond existing
 	 */
 	public int getAtomPreferredStereoBond(int atom) {
 		ensureHelperArrays(cHelperRings);
 		if (mPi[atom] == 2 && mConnAtoms[atom] == 2)
-			return preferredAlleneStereoBond(atom);
+			return preferredAlleneStereoBond(atom, false);
 		else
-			return preferredTHStereoBond(atom);
+			return preferredTHStereoBond(atom, false);
 		}
 
 
 	/**
 	 * Locates that single bond which is the preferred one to be converted into up/down bond
-	 * in order to define the bond chirality.
+	 * in order to define the bond chirality. This method does not consider, whether any
+	 * bond is a stereo bond already.
 	 * @param bond BINAP type of chirality bond
 	 * @return preferred bond or -1, if no single bond existing
 	 */
@@ -1546,8 +1549,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			return 0;
 
 		return 16 - mAllConnAtoms[atom]
+				  + (((mBondType[bond] & cBondTypeMaskStereo) == 0 || mBondAtom[0][bond] != atom) ? 32768 : 0)
 				  + ((mAtomicNo[atom] == 1) ? 4096 : 0)
-				  + (((mBondType[bond] & cBondTypeMaskStereo) == 0 || mBondAtom[0][bond] != atom) ? 2048 : 0)
+				  + ((mAllConnAtoms[atom] == 1) ? 2048 : 0)
 				  + ((getAtomParity(atom) == 0) ? 1024 : 0)
 				  + ((!isRingBond(bond)) ? 512 : 0)
 				  + ((mAtomicNo[atom] != 6) ? 256 : 0);
@@ -1715,8 +1719,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * e.g. after idcode parsing with coordinates or after coordinate generation.
 	 */
 	public void setStereoBondsFromParity() {
+		assert((mValidHelperArrays & cHelperBitParities) != 0);
 		ensureHelperArrays(cHelperRings); // in case we miss ring and neighbour information
-	
+
+		// Convert all stereo bonds into single bonds
+		for (int bond=0; bond<mBonds; bond++)
+			if (isStereoBond(bond))
+				mBondType[bond] = cBondTypeSingle;
+
 		for (int atom=0; atom<mAtoms; atom++)
 			setStereoBondFromAtomParity(atom);
 
@@ -1740,10 +1750,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if (mPi[atom] == 2 && mConnAtoms[atom] == 2 && mConnBondOrder[atom][0] == 2) {
 			for (int i=0; i<2; i++) {
 				int alleneEnd = findAlleneEndAtom(atom, mConnAtom[atom][i]);
-				if (alleneEnd != -1)
-					for (int j=0; j<mConnAtoms[alleneEnd];j++)
-						if (isStereoBond(mConnBond[alleneEnd][j]))
+				if (alleneEnd != -1) {
+					for (int j=0; j<mConnAtoms[alleneEnd];j++) {
+						int connBond = mConnBond[alleneEnd][j];
+						if (isStereoBond(connBond) && mBondAtom[0][connBond] == alleneEnd)
 							mBondType[mConnBond[alleneEnd][j]] = cBondTypeSingle;
+						}
+					}
 				}
 			return;
 			}
@@ -1751,7 +1764,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if (mPi[atom] == 0 || mAtomicNo[atom] >= 15) {
 			for (int i=0; i<mAllConnAtoms[atom]; i++) {
 				int connBond = mConnBond[atom][i];
-				if (isStereoBond(connBond, atom))
+				if (isStereoBond(connBond, atom) && mBondAtom[0][connBond] == atom)
 					mBondType[connBond] = cBondTypeSingle;
 				}
 			}
@@ -1805,21 +1818,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		 && setFisherProjectionStereoBondsFromParity(atom, sortedConnMap, angle))
 			return;
 
-		// If there is exactly one stereo bond at the atom then take this
-		// as the new stereo bond. Otherwise find a preferred stereo bond.
-		int preferredBond = -1;
-		for (int i=0; i<allConnAtoms; i++) {
-			int connBond = mConnBond[atom][i];
-			if (isStereoBond(connBond, atom)) {
-				mBondType[mConnBond[atom][i]] = cBondTypeSingle;
-				if (preferredBond == -1)
-					preferredBond = connBond;
-				else
-					preferredBond = -2;
-				}
-			}
-		if (preferredBond < 0)
-			preferredBond = preferredTHStereoBond(atom);
+		int preferredBond = preferredTHStereoBond(atom, true);
 
 		if (mBondAtom[0][preferredBond] != atom) {
 			mBondAtom[1][preferredBond] = mBondAtom[0][preferredBond];
@@ -1979,7 +1978,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	/**
 	 * Checks whether we have two vertical non-stereo single bonds and
 	 * two horizontal stereo single bonds. If these conditions
-	 * are met, then an int array is returned defining the directions of all
+	 * are met, then an int array is filled defining the directions of all
 	 * connected bonds (0:south; 1:west; 2:north; 3:east).
 	 * @param atom
 	 * @param sortedConnMap map of neighbours sorted by atom index
@@ -2120,6 +2119,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * In case bond is a BINAP kind of chiral bond with defined parity,
 	 * then the preferred neighbour single bond is converted into a
 	 * stereo bond to correctly reflect its defined parity.
+	 * This method assumes that none of the potential stereo bonds to indicate
+	 * the axial configuration is a stereo bond already.
 	 * @param bond
 	 */
 	public void setStereoBondFromBondParity(int bond) {
@@ -2214,8 +2215,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
-	private int preferredTHStereoBond(int atom) {
-		// If we have two (anti-)parallel bonds, the we need to select
+	private int preferredTHStereoBond(int atom, boolean excludeStereoBonds) {
+		// If we have two (anti-)parallel bonds, then we need to select
 		// that one of those that is closest to the other bonds.
 		int allConnAtoms = mAllConnAtoms[atom];
 		double[] angle = new double[allConnAtoms];
@@ -2233,19 +2234,47 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 							}
 						}
 					int bond = (angleDistanceSum1 < angleDistanceSum2) ? mConnBond[atom][i] : mConnBond[atom][j];
-					if (getBondOrder(bond) == 1)
-						return bond;
+					if (getBondOrder(bond) == 1
+					 && (!excludeStereoBonds || !isStereoBond(bond)))
+ 						return bond;
 					}
 				}
 			}
 
+		// For every neighbour determine the closest left and the closest right neighbour.
+		// If the angle between those two is smaller than 180 degrees, then give a strong preference
+		// to the one in the middle to be used as stereo bond.
+		boolean[] isPreferred = new boolean[allConnAtoms];
+		for (int i=0; i<allConnAtoms; i++) {
+			double closestLeftDif = -10.0;
+			double closestRightDif = 10.0;
+			for (int j=0; j<allConnAtoms; j++) {
+				if (j != i) {
+					double dif =Angle.difference(angle[i], angle[j]);
+					if (dif < 0) {
+						if (closestLeftDif < dif)
+							closestLeftDif = dif;
+						}
+					else {
+						if (closestRightDif > dif)
+							closestRightDif = dif;
+						}
+					}
+				isPreferred[i] = (closestRightDif - closestLeftDif < Math.PI);
+				}
+			}
+
 		int preferredBond = -1;
+
 		int bestScore = 0;
 		for (int i=0; i<allConnAtoms; i++) {
 			int connAtom = mConnAtom[atom][i];
 			int connBond = mConnBond[atom][i];
 			int score = getStereoBondScore(connBond, connAtom);
-			if (bestScore < score) {
+			if (isPreferred[i])
+				score += 16384; // first priority
+			if (bestScore < score
+			 && (!excludeStereoBonds || !isStereoBond(connBond))) {
 				bestScore = score;
 				preferredBond = connBond;
 				}
@@ -2254,7 +2283,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
-	private int preferredAlleneStereoBond(int atom) {
+	private int preferredAlleneStereoBond(int atom, boolean excludeStereoBonds) {
 		int preferredBond = -1;
 		int bestScore = 0;
 		for (int i=0; i<2; i++) {
@@ -2264,7 +2293,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				if (connAtom != atom) {
 					int connBond = mConnBond[alleneAtom][j];
 					int score = getStereoBondScore(connBond, connAtom);
-					if (bestScore < score) {
+					if (bestScore < score
+					 && (!excludeStereoBonds || !isStereoBond(connBond))) {
 						bestScore = score;
 						preferredBond = connBond;
 						}
@@ -2861,7 +2891,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 					if (oldBondType == cBondTypeDown
 					 || oldBondType == cBondTypeUp) {   // retain stereo information
 						int stereoCenter = mBondAtom[0][bond];
-						int newStereoBond = preferredTHStereoBond(stereoCenter);
+						int newStereoBond = preferredTHStereoBond(stereoCenter, false);
 						if (mBondAtom[0][newStereoBond] != stereoCenter) {
 							mBondAtom[1][newStereoBond] = mBondAtom[0][newStereoBond];
 							mBondAtom[1][newStereoBond] = stereoCenter;
@@ -3380,23 +3410,26 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * Removes all plain explicit hydrogens atoms from the molecule, converting them effectively to implicit ones.
-	 * Assuming that this molecule has 2D-coordinates, then this method perceives stereo configurations from up/down-bonds
+	 * Assuming that this molecule has 2D-coordinates, this method perceives stereo configurations from up/down-bonds
 	 * to explicit hydrogens before deleting them and turns another bond into a stereo bond to indicate the proper configuration.
 	 * If the removal of a hydrogen atom would change an atom's implicit valence, the atom's abnormal valence is set accordingly.
 	 */
 	public void removeExplicitHydrogens() {
-		removeExplicitHydrogens(false);
+		removeExplicitHydrogens(true, false);
 		}
 
 	/**
 	 * Removes all plain explicit hydrogens atoms from the molecule, converting them effectively to implicit ones.
-	 * If the molecules has 2D-coordinates (is3D==false), then this method perceives stereo configurations from up/down-bonds
-	 * to explicit hydrogens before deleting them and turns another bond into a stereo bond to indicate the proper configuration.
+	 * If the molecules has 2D-coordinates (hasValid2DCoords==true), then this method initially perceives stereo
+	 * configurations E/Z/R/S from coordinates and up/down-bonds to explicit hydrogens before deleting them
+	 * and turns another bond into a stereo bond to indicate the proper configuration.
 	 * If the removal of a hydrogen atom would change an atom's implicit valence, the atom's abnormal valence is set accordingly.
-	 * @param is3D pass true, if atom coordinates are three dimensional
+	 * @param hasValid2DCoords pass true, if molecule has 2D-atom-coordinates
+	 * @param hasValid3DCoords pass true, if molecule has 3D-atom-coordinates
 	 */
-	public void removeExplicitHydrogens(boolean is3D) {
-		ensureHelperArrays(is3D ? cHelperNeighbours : cHelperParities);	// to calculate stereo center parities
+	public void removeExplicitHydrogens(boolean hasValid2DCoords, boolean hasValid3DCoords) {
+		// calculate EZ and TH stereo parities if 2D-atom coordinates are available
+		ensureHelperArrays(hasValid2DCoords ? cHelperParities : cHelperNeighbours);
 		mAllAtoms = mAtoms;
 		mAllBonds = mBonds;
 		for (int atom=0; atom<mAtoms; atom++) {
@@ -3418,7 +3451,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				}
 			}
 
-		if (!is3D)
+		if (hasValid2DCoords)
 			setStereoBondsFromParity();
 
 		mValidHelperArrays = cHelperNone;
@@ -3665,6 +3698,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mBondQueryFeatures[bond] &= ~cBondQFDouble;
 			else if (bondType == cBondTypeTriple)
 				mBondQueryFeatures[bond] &= ~cBondQFTriple;
+			else if (bondType == cBondTypeQuadruple)
+				mBondQueryFeatures[bond] &= ~cBondQFQuadruple;
+			else if (bondType == cBondTypeQuintuple)
+				mBondQueryFeatures[bond] &= ~cBondQFQuintuple;
 			else if (bondType == cBondTypeMetalLigand)
 				mBondQueryFeatures[bond] &= ~cBondQFMetalLigand;
 			else if (bondType == cBondTypeDelocalized)

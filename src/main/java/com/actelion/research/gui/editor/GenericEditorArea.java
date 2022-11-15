@@ -38,10 +38,7 @@ import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.io.RDFileParser;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
-import com.actelion.research.chem.reaction.IReactionMapper;
-import com.actelion.research.chem.reaction.MCSReactionMapper;
-import com.actelion.research.chem.reaction.Reaction;
-import com.actelion.research.chem.reaction.ReactionArrow;
+import com.actelion.research.chem.reaction.*;
 import com.actelion.research.gui.FileHelper;
 import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
@@ -64,6 +61,10 @@ public class GenericEditorArea implements GenericEventListener {
 	public static final int MODE_REACTION = 4;
 	public static final int MODE_DRAWING_OBJECTS = 8;
 
+	public static final String TEMPLATE_TYPE_KEY = "TEMPLATE";
+	public static final String TEMPLATE_TYPE_REACTION_QUERIES = "REACTION_QUERIES";
+	public static final String TEMPLATE_SECTION_KEY = "SECTION";
+
 	private static final int MAX_CONNATOMS = 8;
 	private static final int MIN_BOND_LENGTH_SQUARE = 100;
 
@@ -82,6 +83,7 @@ public class GenericEditorArea implements GenericEventListener {
 	private static final String ITEM_COPY_REACTION = "Copy Reaction";
 	private static final String ITEM_PASTE_STRUCTURE = "Paste Structure";
 	private static final String ITEM_PASTE_REACTION = "Paste Reaction";
+	private static final String ITEM_USE_TEMPLATE = "Use Reaction Template...";
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE_STRUCTURE + " or Name";
 	private static final String ITEM_LOAD_REACTION = "Open Reaction File...";
 	private static final String ITEM_ADD_AUTO_MAPPING = "Auto-Map Reaction";
@@ -139,6 +141,7 @@ public class GenericEditorArea implements GenericEventListener {
 	private static final int cRequestCopyObject = 11;
 
 	private static IReactionMapper sMapper;
+	private static String[][] sReactionQueryTemplates;
 	private int mMode, mChainAtoms, mCurrentTool, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical,
 			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled, mFirstAtomKey,
 			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2, mMaxAVBL, mAllowedPseudoAtoms;
@@ -222,6 +225,20 @@ public class GenericEditorArea implements GenericEventListener {
 		dumpBytesOfGif("/lassoPlusCursor.gif");
 		dumpBytesOfGif("/rectCursor.gif");
 		dumpBytesOfGif("/rectPlusCursor.gif");	*/
+	}
+
+	/**
+	 * @return null or String[n][2] with pairs of reaction name and rxn-idcode
+	 */
+	public static String[][] getReactionQueryTemplates() {
+		return sReactionQueryTemplates;
+	}
+
+	/**
+	 * @param templates null or String[n][2] with pairs of reaction name and rxn-idcode
+	 */
+	public static void setReactionQueryTemplates(String[][] templates) {
+		sReactionQueryTemplates = templates;
 	}
 
 	public GenericUIHelper getUIHelper() {
@@ -604,6 +621,8 @@ public class GenericEditorArea implements GenericEventListener {
 			copy();
 		} else if (command.equals(ITEM_PASTE_REACTION)) {
 			pasteReaction();
+		} else if (command.startsWith(ITEM_USE_TEMPLATE)) {
+			useTemplate(command.substring(ITEM_USE_TEMPLATE.length()));
 		} else if (command.startsWith(ITEM_PASTE_STRUCTURE)) {
 			pasteMolecule();
 		} else if (command.equals(ITEM_LOAD_REACTION)) {
@@ -858,6 +877,11 @@ public class GenericEditorArea implements GenericEventListener {
 			}
 
 		return true;
+		}
+
+	private void useTemplate(String rxncode) {
+		storeState();
+		setReaction(ReactionEncoder.decode(rxncode, true));
 		}
 
 	private boolean atomCoordinatesCollide(StereoMolecule mol, double tolerance) {
@@ -1371,11 +1395,34 @@ public class GenericEditorArea implements GenericEventListener {
 			String item1 = analyseCopy(false) ? ITEM_COPY_REACTION : ITEM_COPY_STRUCTURE;
 			popup.addItem(item1, null, mMol.getAllAtoms() != 0);
 
-			if ((mMode & MODE_REACTION) != 0)
-				popup.addItem(ITEM_PASTE_REACTION, null, true);
-
 			String item3 = (StructureNameResolver.getInstance() == null) ? ITEM_PASTE_STRUCTURE : ITEM_PASTE_WITH_NAME;
 			popup.addItem(item3, null, true);
+
+			if ((mMode & MODE_REACTION) != 0) {
+				popup.addItem(ITEM_PASTE_REACTION, null, true);
+				popup.addSeparator();
+				if (sReactionQueryTemplates != null && mMol.isFragment()) {
+					boolean isSubMenu = false;
+					for (String[] template: sReactionQueryTemplates) {
+						if (TEMPLATE_SECTION_KEY.equals(template[0])) {
+							if (isSubMenu)
+								popup.endSubMenu();
+
+							popup.startSubMenu("Use " + template[1] + " Template");
+							isSubMenu = true;
+							continue;
+							}
+
+						if (!isSubMenu) {
+							popup.startSubMenu("Use Template");
+							isSubMenu = true;
+							}
+
+						popup.addItem(template[0], ITEM_USE_TEMPLATE + template[1], true);
+						}
+					popup.endSubMenu();
+					}
+				}
 
 			if ((mMode & MODE_REACTION) != 0)
 				popup.addItem(ITEM_LOAD_REACTION, null, true);

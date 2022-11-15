@@ -790,6 +790,8 @@ public class SmilesParser {
 							excludedBonds |= Molecule.cBondQFDouble;
 						else if (theChar == '#')
 							excludedBonds |= Molecule.cBondQFTriple;
+						else if (theChar == '$')
+							excludedBonds |= Molecule.cBondQFQuadruple;
 						else if (theChar == ':')
 							excludedBonds |= Molecule.cBondQFDelocalized;
 						else
@@ -802,6 +804,8 @@ public class SmilesParser {
 							bondType = Molecule.cBondTypeDouble;
 						else if (theChar == '#')
 							bondType = Molecule.cBondTypeTriple;
+						else if (theChar == '$')
+							bondType = Molecule.cBondTypeQuadruple;
 						else if (theChar == ':')
 							bondType = Molecule.cBondTypeDelocalized;
 						else if (theChar == '~')
@@ -874,6 +878,7 @@ public class SmilesParser {
 										|| smiles[position-2] == '\\'
 										|| smiles[position-2] == '='
 										|| smiles[position-2] == '#'
+										|| smiles[position-2] == '$'
 										|| smiles[position-2] == ':'
 										|| smiles[position-2] == '>'
 										|| smiles[position-2] == '~');
@@ -1018,8 +1023,9 @@ public class SmilesParser {
 						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot3Hydrogen, true);
 					}
 				else {
-					if (!mMol.isMarkedAtom(atom)
-					 || (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == 0)) {
+					if (!mMol.isMetalAtom(atom)
+					 && (!mMol.isMarkedAtom(atom)
+					  || (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == 0))) {
 						// We don't correct aromatic non-carbon atoms, because for these the number of
 						// explicit hydrogens encodes whether a pi-bond needs to be placed at the atom
 						// when resolving aromaticity. Same applies for charged carbon.
@@ -1129,6 +1135,7 @@ public class SmilesParser {
 		return theChar == '-'
 			|| theChar == '='
 			|| theChar == '#'
+			|| theChar == '$'
 			|| theChar == ':'
 			|| theChar == '/'
 			|| theChar == '\\'
@@ -1141,6 +1148,7 @@ public class SmilesParser {
 	private int bondSymbolToQueryFeature(char symbol) {
 		return symbol == '=' ? Molecule.cBondQFDouble
 			 : symbol == '#' ? Molecule.cBondQFTriple
+			 : symbol == '$' ? Molecule.cBondQFQuadruple
 			 : symbol == ':' ? Molecule.cBondQFDelocalized
 			 : symbol == '>' ? Molecule.cBondQFMetalLigand
 			 : symbol == '~' ? Molecule.cBondQFBondTypes : Molecule.cBondQFSingle;

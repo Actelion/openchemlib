@@ -608,7 +608,7 @@ public class TautomerHelper {
 		public BondOrders(StereoMolecule mol) {
 			encoding = new int[(mOriginalMol.getBonds()+15) / 16];
 			for (int i=0; i<mOriginalMol.getBonds(); i++)
-				encoding[i >> 4] |= (mol.getBondOrder(i) << (2*(i & 15)));
+				encoding[i >> 4] |= (Math.min(3, mol.getBondOrder(i)) << (2*(i & 15)));
 			}
 
 		@Override

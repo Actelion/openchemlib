@@ -698,6 +698,22 @@ public class IDCodeParserWithoutCoordinateInvention {
 					mMol.setBondQueryFeature(bond, Molecule.cBondQFMatchFormalOrder, true);
 					}
 				break;
+			case 36:	//	datatype 'cBondQFRareBondType'
+				no = decodeBits(bbits);
+				for (int i=0; i<no; i++) {
+					int bond = decodeBits(bbits);
+					int bondType = decodeBits(Molecule.cBondQFRareBondTypesBits) << Molecule.cBondQFRareBondTypesShift;
+					mMol.setBondQueryFeature(bond, bondType, true);
+					}
+				break;
+			case 37:	//	datatype 'rare order bond'
+				no = decodeBits(bbits);
+				for (int i=0; i<no; i++) {
+					int bond = decodeBits(bbits);
+					int bondType = decodeBits(1) == 0 ? Molecule.cBondTypeQuadruple : Molecule.cBondTypeQuintuple;
+					mMol.setBondType(bond, bondType);
+					}
+				break;
 				}
 			}
 
@@ -1599,8 +1615,21 @@ public class IDCodeParserWithoutCoordinateInvention {
 							System.out.print(" " + decodeBits(abits));
 						System.out.println();
 						break;
+					case 36:    //	datatype 'cBondQFRareBondType'
+						no = decodeBits(bbits);
+						System.out.print("BondQFRareBondType:");
+						for (int i = 0; i < no; i++)
+							System.out.print(" " + decodeBits(bbits) + ":" + decodeBits(Molecule.cBondQFRareBondTypesBits));
+						System.out.println();
+						break;
+					case 37:    // datatype 'rare bond type'
+						no = decodeBits(bbits);
+						System.out.print("Rare Bond Type:");
+						for (int i=0; i<no; i++)
+							System.out.print(" " + decodeBits(bbits) + ":" + (decodeBits(1) == 0 ? "quadruple" : "quintuple"));
+						break;
+					}
 				}
-			}
 
 			if (coordinates != null) {
 				if (coordinates[0] == '!' || coordinates[0] == '#') {    // new coordinate format
