@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 /**
  * 
@@ -48,7 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Mar 27, 2012 MvK: Start implementation
  * Oct 9 2012 MvK: bug fix, added reset()
  */
-public class Pipeline<T> implements IPipeline<T> {
+public class Pipeline<T> implements IPipeline<T>, Supplier<T> {
 
 	private AtomicBoolean allDataIn;
 	
@@ -120,7 +121,26 @@ public class Pipeline<T> implements IPipeline<T> {
 			polled.incrementAndGet();
 		return t;
 	}
-	
+
+	@Override
+	public T get() {
+
+		if(wereAllDataFetched())
+			return null;
+
+		T row = null;
+
+		while(row == null){
+			row = pollData();
+			if(row==null){
+				try {Thread.sleep(10);} catch (InterruptedException e) {e.printStackTrace();}
+				continue;
+			}
+		}
+
+		return row;
+	}
+
 	public int sizePipe(){
 		return queue.size();
 	}
