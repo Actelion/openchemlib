@@ -32,7 +32,7 @@ package com.actelion.research.chem;
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-import com.actelion.research.chem.Molecule;
+
 public abstract class AtomComparator implements java.util.Comparator
 {
 	protected Molecule mol_;

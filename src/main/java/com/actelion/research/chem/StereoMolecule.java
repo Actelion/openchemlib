@@ -563,7 +563,7 @@ public class StereoMolecule extends ExtendedMolecule {
         case cChiralityUnknown:
 			return "unknown chirality";
         case cChiralityRacemic:
-            return "racemate";
+            return "both enantiomers";
         case cChiralityKnownEnantiomer:
             return "this enantiomer";
         case cChiralityUnknownEnantiomer:
