@@ -84,6 +84,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @return
 	 */
 	public StereoMolecule getCompactMolecule(byte[] idcode) {
+		if (idcode == null || idcode.length == 0)
+			return null;
+
+		for (int i=2; i<idcode.length-2; i++)
+			if (idcode[i] == ' ')
+				return getCompactMolecule(idcode, idcode, 0, i+1);
+
 		return getCompactMolecule(idcode, null);
 		}
 

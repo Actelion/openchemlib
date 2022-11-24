@@ -555,6 +555,14 @@ public class Molecule implements Serializable {
 			: (atomicNo >= 171 && atomicNo <= 190) ? cAminoAcidValences : cDefaultAtomValences;
 		}
 
+	/**
+	 * Calculates the angle of the line leading from (x1,y1) to (x2,y2).
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @return -Pi to Pi
+	 */
 	public static double getAngle(double x1, double y1, double x2, double y2) {
 		double angle;
 		double xdiff = x2 - x1;
@@ -576,6 +584,12 @@ public class Molecule implements Serializable {
 		}
 
 
+	/**
+	 * Calculates the difference of two angles as angle1-angle2
+	 * @param angle1
+	 * @param angle2
+	 * @return -Pi to Pi
+	 */
 	public static double getAngleDif(double angle1, double angle2) {
 		double angleDif = angle1 - angle2;
 		while (angleDif < -Math.PI)
