@@ -65,7 +65,7 @@ public class SSSearcher {
 	public static final int cIndexMatchMode = cMatchDBondToDelocalized;
 	public static final int cDefaultMatchMode = cMatchAromDBondToDelocalized;
 
-	public final static int cCountModeExistance		= 1;    // check only, don't create matchList
+	public final static int cCountModeExistence     = 1;    // check only, don't create matchList
 	public final static int cCountModeFirstMatch	= 2;    // create matchList with just one match
 	public final static int cCountModeSeparated		= 3;    // create list of all non-overlapping matches / not optimized for maximum match count
 	public final static int cCountModeOverlapping	= 4;    // create list not containing multiple matches sharing exactly the same atoms
@@ -413,7 +413,7 @@ System.out.println();
 	 * @return whether fragment was found as sub-structure in molecule
 	 */
 	public boolean isFragmentInMolecule() {
-		return (findFragmentInMolecule(cCountModeExistance, mDefaultMatchMode) > 0);
+		return (findFragmentInMolecule(cCountModeExistence, mDefaultMatchMode) > 0);
 		}
 
 
@@ -425,7 +425,7 @@ System.out.println();
 	 * @return whether fragment was found as sub-structure in molecule
 	 */
 	public boolean isFragmentInMolecule(int matchMode) {
-		return (findFragmentInMolecule(cCountModeExistance, matchMode) > 0);
+		return (findFragmentInMolecule(cCountModeExistence, matchMode) > 0);
 		}
 
 	/**
@@ -584,7 +584,7 @@ System.out.println();
 							}
 						}
 
-					if (countMode == cCountModeExistance && !isExcludedMatch)
+					if (countMode == cCountModeExistence && !isExcludedMatch)
 						return 1;
 
 					if (!isExcludedMatch) {
@@ -782,6 +782,7 @@ System.out.println();
 				}
 			}
 
+		// molecule features must be a subset of the fragment features
 		if ((mMoleculeAtomFeatures[moleculeAtom] & ~mFragmentAtomFeatures[fragmentAtom]) != 0)
 			return false;
 
@@ -1201,7 +1202,7 @@ System.out.println();
 				if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor
 					if (!atomUsed[candidate]) {
 						if (areAtomsSimilar(candidate, mFragmentGraphAtom[current])
-								&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
+						 && areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
 							atomUsed[candidate] = true;
 							mMatchTable[mFragmentGraphAtom[current]] = candidate;
 							current++;
@@ -1210,7 +1211,7 @@ System.out.println();
 					}
 				else {	// current graph position is ringClosure
 					if (candidate == mMatchTable[mFragmentGraphAtom[current]]
-							&& areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
+					 && areBondsSimilar(mMolecule.getConnBond(mMatchTable[mFragmentGraphParentAtom[current]], index[current]), mFragmentGraphParentBond[current])) {
 						current++;
 						}
 					}
@@ -1267,14 +1268,13 @@ System.out.println();
 				if (mExcludeGroupNo == null
 				 ||	(excludeGroupNo == -1 && mExcludeGroupNo[bb.atom1] == -1 && mExcludeGroupNo[bb.atom2] == -1)
 				 || (excludeGroupNo != -1 && (mExcludeGroupNo[bb.atom1] == excludeGroupNo || mExcludeGroupNo[bb.atom2] == excludeGroupNo))) {
-//				if ((mIsExcludeAtom[bb.atom1] || mIsExcludeAtom[bb.atom2]) == isExcludeFragment) {
 					int[] pathAtom = new int[bb.maxBridgeSize+2];
 					int bridgeSize = mMolecule.getPath(pathAtom, mMatchTable[bb.atom1], mMatchTable[bb.atom2], bb.maxBridgeSize+1, moleculeAtomUsed, null) - 1;
 					if (bridgeSize < bb.minBridgeSize
 					 || bridgeSize > bb.maxBridgeSize)
 						return false;
 
-					for (int i=1; i<bridgeSize; i++)
+					for (int i=1; i<=bridgeSize; i++)
 						mIsBridgeBondAtom[pathAtom[i]] = true;
 					}
 				}
@@ -1533,18 +1533,27 @@ System.out.println();
 		mFragmentRingFeatures = new long[fragment.getAtoms()];
 		RingCollection ringSet = fragment.getRingSet();
 		for (int i=0; i<ringSet.getSize(); i++) {
-			int ringSize = ringSet.getRingSize(i);
-			for (int atom:ringSet.getRingAtoms(i)) {
-				if (ringSize == 3)
-					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize3;
-				else if (ringSize == 4)
-					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize4;
-				else if (ringSize == 5)
-					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize5;
-				else if (ringSize == 6)
-					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize6;
-				else if (ringSize == 7)
-					mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize7;
+			boolean containsBridgeBond = false;
+			for (int bond:ringSet.getRingBonds(i)) {
+				if (mFragment.isBondBridge(bond)) {
+					containsBridgeBond = true;
+					break;
+					}
+				}
+			if (!containsBridgeBond) {
+				int ringSize = ringSet.getRingSize(i);
+				for (int atom:ringSet.getRingAtoms(i)) {
+					if (ringSize == 3)
+						mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize3;
+					else if (ringSize == 4)
+						mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize4;
+					else if (ringSize == 5)
+						mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize5;
+					else if (ringSize == 6)
+						mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize6;
+					else if (ringSize == 7)
+						mFragmentRingFeatures[atom] |= Molecule.cAtomQFRingSize7;
+					}
 				}
 			}
 // Cannot require that, because if a molecule atom is also part of a small ring,

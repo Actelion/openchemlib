@@ -2584,11 +2584,11 @@ public class GenericEditorArea implements GenericEventListener {
 
 			mCurrentHiliteAtom = theAtom;
 			mAtomKeyStrokeBuffer.setLength(0);
-			fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));  //TODO
+			fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));
 		}
 		if (mCurrentHiliteBond != theBond) {
 			mCurrentHiliteBond = theBond;
-			fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_BOND_CHANGED, true));  //TODO
+			fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_BOND_CHANGED, true));
 		}
 		mCurrentHiliteObject = hiliteObject;
 

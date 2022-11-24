@@ -303,7 +303,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	public int getAtomElectronegativeNeighbours(int atom) {
 		int e = 0;
 		for (int i=0; i<mConnAtoms[atom]; i++)
-			if (isElectronegative(mConnAtom[atom][i]))
+			if (isElectronegative(mConnAtom[atom][i]) && !isBondBridge(mConnBond[atom][i]))
 				e++;
 
 		return e;
