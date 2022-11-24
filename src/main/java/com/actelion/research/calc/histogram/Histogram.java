@@ -43,7 +43,6 @@ import java.util.Random;
  * 
  * Histogram
  * @author Modest von Korff
- * @version 1.0
  * 29 Feb 2008 MvK: Start implementation
  * 06 Jun 2016 MvK: added cumulative histogram to output.
  * 03.12.2018 improvements toString()
@@ -68,6 +67,15 @@ public class Histogram {
 
 	private double [] arrRaw;
 
+	private int digits;
+
+	/**
+	 *
+	 * @param arrRaw data
+	 * @param min minimum value considered in the histogram
+	 * @param max maximum value considered in the histogram
+	 * @param bins
+	 */
 	public Histogram(double [] arrRaw, double min, double max, int bins) {
 		initialize(arrRaw,min,max,bins);
 	}
@@ -105,6 +113,8 @@ public class Histogram {
 		arrFrequencies = new int [bins];
 
 		arrBins = new float [bins];
+
+		digits = -1;
 
 		calcBins();
 
@@ -207,6 +217,10 @@ public class Histogram {
 		return maximumX;
 	}
 
+	public void setDigits(int digits) {
+		this.digits = digits;
+	}
+
 	/**
      * First row: bins, upper border.
      * Sec row: frequencies
@@ -218,8 +232,9 @@ public class Histogram {
     	int logRange = (int)Math.log10(range);
     	int bins = arrFrequencies.length;
     	int logBins = (int)Math.log10(bins);
-    	
-    	int digits = logBins-logRange+1;
+
+		if(digits<0)
+    		digits = logBins-logRange+1;
     	
     	String sFormatDigits="";
     	for (int i = 0; i < digits; i++) {
@@ -243,29 +258,19 @@ public class Histogram {
 		int sumFreq = 0;
 
     	for (int i = 0; i < arrStrY.length; i++) {
-    		
     		String sX = nfX.format(arrBins[i]);
-
     		String sY = nfY.format(arrFrequencies[i]);
-
 			sumFreq += arrFrequencies[i];
-
 			double fractionCumulative = (double)sumFreq / arrRaw.length;
-
     		String sFractionCumulative = nfFractionCumulative.format(fractionCumulative);
-
 			int maxLen = sX.length();
-
 			if(sY.length() > maxLen) {
-
 				maxLen = sY.length();
 			}
 
 			if(sFractionCumulative.length() > maxLen) {
-
 				maxLen = sFractionCumulative.length();
 			}
-
 
     		while(sX.length() < maxLen){
     			sX = " " + sX ;
