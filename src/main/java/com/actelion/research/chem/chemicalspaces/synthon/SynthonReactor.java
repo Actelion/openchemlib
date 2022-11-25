@@ -137,7 +137,7 @@ public class SynthonReactor {
 	 * @param a1
 	 * @param a2
 	 */
-	private static void alignSynthons(StereoMolecule s1, StereoMolecule s2,int u1, int u2, int a1, int a2) {
+	public static void alignSynthons(StereoMolecule s1, StereoMolecule s2,int u1, int u2, int a1, int a2) {
 		Coordinates v1 = s1.getCoordinates(u1).subC(s1.getCoordinates(a1));
 		Coordinates v2 = s2.getCoordinates(a2).subC(s2.getCoordinates(u2));
 		v1.unit();
