@@ -50,7 +50,8 @@ public class Molecule implements Serializable {
 	// be changed as well.
 	// In addition to the above requirement, the class name should not be obfuscated at all!
 
-	static final long serialVersionUID = 0x20220517;	// after extending atom query features from int to long
+//	static final long serialVersionUID = 0x20220517;	// after extending atom query features from int to long
+	static final long serialVersionUID = 0x20221130;	// after introducing quadruple and quintuple bonds
 
 	public static final int cMaxAtomicNo = 190;
 
