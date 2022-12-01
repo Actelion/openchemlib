@@ -218,13 +218,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 	public void parse(StereoMolecule mol, byte[] idcode, byte[] coordinates, int idcodeStart, int coordsStart) {
 		mol.clear();
 
-		if (idcode==null || idcodeStart >= idcode.length)
+		if (idcode==null || idcodeStart < 0 || idcodeStart >= idcode.length)
 			return;
 
 		mMol = mol;
 		int version = Canonizer.cIDCodeVersion2;
 
-		if (coordinates != null && coordsStart >= coordinates.length)
+		if (coordinates != null && (coordsStart < 0 || coordsStart >= coordinates.length))
 			coordinates = null;
 
 		decodeBitsStart(idcode, idcodeStart);
@@ -268,7 +268,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		mMol.setAtomY(0, 0.0);
 		mMol.setAtomZ(0, 0.0);
 
-		boolean decodeOldCoordinates = (coordinates != null && coordinates[0] >= '\'');
+		boolean decodeOldCoordinates = (coordinates != null && coordinates[coordsStart] >= '\'');
 		double targetAVBL = 0.0;
 		double xOffset = 0.0;
 		double yOffset = 0.0;
