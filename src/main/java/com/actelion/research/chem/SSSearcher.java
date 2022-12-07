@@ -1472,6 +1472,8 @@ System.out.println();
 		for (int atom=0; atom<mFragment.getAtoms(); atom++)
 			mFragmentConnAtoms[atom] = mFragment.getConnAtoms(atom);
 
+		// If we have exclude groups, we need to determine atom and bond features without the exclude atoms and
+		// map them to the original fragment atom and bond indexes.
 		if (mFragmentExcludeAtoms != 0) {
 			StereoMolecule fragmentWithoutExcludeGroups = new StereoMolecule(mFragment.getAllAtoms(), mFragment.getAllBonds());
 			boolean[] isNonExcludeAtom = new boolean[mFragment.getAllAtoms()];
@@ -1491,6 +1493,8 @@ System.out.println();
 					mFragmentConnAtoms[atom] = fragmentWithoutExcludeGroups.getConnAtoms(index++);
 			}
 
+		// We cannot skip this if we have exclude groups:
+		// We need to determine exclude groups atom & bond features for the exclude group matching phase.
 		setupFragmentFeatures(mFragment, matchMode);
 
 		if (mFragmentExcludeAtoms != 0) {
@@ -1518,7 +1522,7 @@ System.out.println();
 
 		for (int atom=0; atom<nTotalFragmentAtoms; atom++) {
 			mFragmentAtomFeatures[atom] = ((getAtomQueryDefaults(fragment, atom)
-				| mFragment.getAtomQueryFeatures(atom))
+				| fragment.getAtomQueryFeatures(atom))
 					& Molecule.cAtomQFSimpleFeatures)
 					^ Molecule.cAtomQFNarrowing;
 			mFragmentAtomType[atom] = fragment.getAtomicNo(atom);
@@ -1535,7 +1539,7 @@ System.out.println();
 		for (int i=0; i<ringSet.getSize(); i++) {
 			boolean containsBridgeBond = false;
 			for (int bond:ringSet.getRingBonds(i)) {
-				if (mFragment.isBondBridge(bond)) {
+				if (fragment.isBondBridge(bond)) {
 					containsBridgeBond = true;
 					break;
 					}
