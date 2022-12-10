@@ -179,6 +179,7 @@ class MySplitPane extends JSplitPane {
 
 	public MySplitPane(int newOrientation, Component newLeftComponent, Component newRightComponent, double proportionalLocation) {
 		super(newOrientation, true, newLeftComponent, newRightComponent);
+		proportionalLocation = Math.min(1, Math.max(0, proportionalLocation));
 		setDividerLocation(proportionalLocation);
 		setResizeWeight(proportionalLocation);
 		setBorder(null);
