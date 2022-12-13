@@ -176,7 +176,7 @@ public class CustomAtomDialogBuilder implements GenericEventListener<GenericActi
 			}
 
 		if (text.length() != 0) {
-			int atomicNo = Molecule.getAtomicNoFromLabel(text);
+			int atomicNo = Molecule.getAtomicNoFromLabel(text, mEditorArea.getAllowedPseudoAtoms());
 			if (atomicNo != 0 || text.equals("?")) {
 			    int mass = 0;
 			    if (mTextFieldMass.getText().length() != 0) {

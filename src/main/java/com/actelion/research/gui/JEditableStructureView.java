@@ -35,6 +35,7 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.editor.GenericEditorArea;
 import com.actelion.research.gui.editor.SwingEditorDialog;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 
@@ -47,28 +48,27 @@ public class JEditableStructureView extends JStructureView {
 
     private static final String EDIT_MESSAGE = "<double click or drag & drop>";
     private boolean mAllowQueryFeatures;
+    private int mAllowedPseudoAtoms;
 
     public JEditableStructureView() {
-        super(null);
-	    setEditable(true);
-		mAllowQueryFeatures = true;
+        this(null);
 		}
 
 	public JEditableStructureView(StereoMolecule mol) {
         super(mol);
 		setEditable(true);
+		mAllowedPseudoAtoms = GenericEditorArea.DEFAULT_ALLOWED_PSEUDO_ATOMS;
 		mAllowQueryFeatures = true;
 	    }
 
 	public JEditableStructureView(int dragAction, int dropAction) {
-        super(null, dragAction, dropAction);
-		setEditable(true);
-		mAllowQueryFeatures = true;
+        this(null, dragAction, dropAction);
 	    }
 
 	public JEditableStructureView(StereoMolecule mol, int dragAction, int dropAction) {
         super(mol, dragAction, dropAction);
 		setEditable(true);
+		mAllowedPseudoAtoms = GenericEditorArea.DEFAULT_ALLOWED_PSEUDO_ATOMS;
 		mAllowQueryFeatures = true;
 	    }
 
@@ -93,7 +93,8 @@ public class JEditableStructureView extends JStructureView {
     public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2 && isEnabled() && isEditable()) {
             SwingEditorDialog theDialog = createDrawDialog();
-            theDialog.getDrawArea().setAllowQueryFeatures(mAllowQueryFeatures);
+            theDialog.getDrawArea().setAllowedPseudoAtoms(mAllowedPseudoAtoms);
+	        theDialog.getDrawArea().setAllowQueryFeatures(mAllowQueryFeatures);
             theDialog.getDrawArea().setDisplayMode(getDisplayMode());
             theDialog.addStructureListener(this);
             theDialog.setVisible(true);
@@ -105,6 +106,10 @@ public class JEditableStructureView extends JStructureView {
 		while (!(c instanceof Frame || c instanceof Dialog))
 			c = c.getParent();
 		return (c instanceof Frame) ? new SwingEditorDialog((Frame) c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL) : new SwingEditorDialog((Dialog) c, getMolecule(), Dialog.ModalityType.DOCUMENT_MODAL);
+		}
+
+	public void setAllowedPseudoAtoms(int apa) {
+		mAllowedPseudoAtoms = apa;
 		}
 
 	public void setAllowQueryFeatures(boolean allow) {

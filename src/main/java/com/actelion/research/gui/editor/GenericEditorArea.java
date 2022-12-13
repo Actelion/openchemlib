@@ -65,6 +65,13 @@ public class GenericEditorArea implements GenericEventListener {
 	public static final String TEMPLATE_TYPE_REACTION_QUERIES = "REACTION_QUERIES";
 	public static final String TEMPLATE_SECTION_KEY = "SECTION";
 
+	public static final int DEFAULT_ALLOWED_PSEUDO_ATOMS
+			= Molecule.cPseudoAtomsHydrogenIsotops
+			| Molecule.cPseudoAtomsAminoAcids
+			| Molecule.cPseudoAtomR
+			| Molecule.cPseudoAtomsRGroups
+			| Molecule.cPseudoAtomAttachmentPoint;
+
 	private static final int MAX_CONNATOMS = 8;
 	private static final int MIN_BOND_LENGTH_SQUARE = 100;
 
@@ -195,11 +202,7 @@ public class GenericEditorArea implements GenericEventListener {
 		mCurrentCursor = SwingCursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
 
-		mAllowedPseudoAtoms = Molecule.cPseudoAtomsHydrogenIsotops
-							| Molecule.cPseudoAtomsAminoAcids
-							| Molecule.cPseudoAtomR
-							| Molecule.cPseudoAtomsRGroups
-							| Molecule.cPseudoAtomAttachmentPoint;
+		mAllowedPseudoAtoms = DEFAULT_ALLOWED_PSEUDO_ATOMS;
 
 		mTextSizeFactor = 1.0;
 
@@ -2669,7 +2672,11 @@ public class GenericEditorArea implements GenericEventListener {
 		}
 	}
 
-	private void setAllowPseudoAtoms(int apa) {
+	public int getAllowedPseudoAtoms() {
+		return mAllowedPseudoAtoms;
+	}
+
+	public void setAllowedPseudoAtoms(int apa) {
 		mAllowedPseudoAtoms = apa;
 	}
 
