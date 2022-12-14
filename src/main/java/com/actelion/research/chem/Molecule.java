@@ -150,7 +150,7 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFSimpleFeatures	= 0x00007F800E3FC7FEL;
 	public static final long cAtomQFNarrowing		= 0x00007FFF0FFFFFFEL;
 	public static final long cAtomQFAny				= 0x00000001;
-	public static final long cAtomQFAromState		= 0x00000006;
+	public static final long cAtomQFAromState		= 0x0000400000000006L;
 	public static final long cAtomQFAromatic		= 0x00000002;
 	public static final long cAtomQFNotAromatic		= 0x00000004;
 	public static final long cAtomQFRingState		= 0x00000078;

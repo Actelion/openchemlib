@@ -1740,9 +1740,11 @@ public abstract class AbstractDepictor<T> {
 				isoStr = append(isoStr, "*");
 			if ((queryFeatures & Molecule.cAtomQFIsNotStereo) != 0)
 				isoStr = append(isoStr, "!*");
-			if ((queryFeatures & Molecule.cAtomQFAromatic) != 0)
+			if ((queryFeatures & Molecule.cAtomQFHeteroAromatic) != 0)
+				isoStr = append(isoStr, "ha");
+			else if ((queryFeatures & Molecule.cAtomQFAromatic) != 0)
 				isoStr = append(isoStr, "a");
-			if ((queryFeatures & Molecule.cAtomQFNotAromatic) != 0)
+			else if ((queryFeatures & Molecule.cAtomQFNotAromatic) != 0)
 				isoStr = append(isoStr, "!a");
 			if ((queryFeatures & Molecule.cAtomQFMoreNeighbours) != 0)
 				isoStr = append(isoStr, "s");
