@@ -76,7 +76,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	private static final int cBorder = 2;
 
 	private float	mLowValue,mMinValue,mHighValue,mMaxValue,mSegmentSize;
-	private boolean	mIsHorizontal,mUpdateNeeded,mUseRedColor,mAllowDoubleClickChange;
+	private boolean	mIsHorizontal,mUpdateNeeded,mUseRedColor,mAllowDoubleClickChange,mWasDragged;
 	private int		mID,mMousePosition,mClickedArea,mPosition1,mPosition2;
 	private ArrayList<PruningBarListener> mListener;
 
@@ -207,10 +207,14 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	 * @param silent if true, PruningBarEvents are suppressed
 	 */
 	public void setLowAndHigh(float low, float high, boolean silent) {
-		boolean lowChanged = setLow(low);
-		boolean highChanged = setHigh(high);
-
-		if (highChanged || lowChanged) {
+		if (low < mMinValue)
+			low = mMinValue;
+		if (high > mMaxValue)
+			high = mMaxValue;
+		if ((low != mLowValue || high != mHighValue)
+		 && low <= high) {
+			mLowValue = low;
+			mHighValue = high;
 			if (!silent)
 				informListeners(false);
 			mUpdateNeeded = true;
@@ -344,6 +348,8 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		else
 			mMousePosition = e.getY();
 
+		mWasDragged = false;
+
 		mClickedArea = 0;
 		if (mMousePosition < mPosition1)
 			mClickedArea = 0;
@@ -362,7 +368,8 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		}
 
 	public void mouseReleased(MouseEvent e) {
-		informListeners(false);
+		if (mWasDragged)
+			informListeners(false);
 		}
 
 	public void mouseEntered(MouseEvent e) {}
@@ -412,6 +419,8 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 
 		if (position == mMousePosition)
 			return;
+
+		mWasDragged = true;
 
 		float change = mSegmentSize * (float)(position - mMousePosition);
 		if (!mIsHorizontal) // tribute to inverted Y-scale in java
