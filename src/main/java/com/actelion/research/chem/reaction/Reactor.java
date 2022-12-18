@@ -193,17 +193,25 @@ public class Reactor {
 		}
 
 	private int[] getSortedConnectedAtomicNos(StereoMolecule mol, int atom) {
-		int[] atomicNo = new int[mol.getConnAtoms(atom)];
-		for (int i=0; i<mol.getConnAtoms(atom); i++)
-			atomicNo[i] = mol.getAtomicNo(mol.getConnAtom(atom, i));
+		int[] atomicNo = new int[mol.getConnAtoms(atom) - mol.getExcludedNeighbourCount(atom)];
+		int index = 0;
+		for (int i=0; i<mol.getConnAtoms(atom); i++) {
+			int connAtom = mol.getConnAtom(atom, i);
+			if ((mol.getAtomQueryFeatures(connAtom) & Molecule.cAtomQFExcludeGroup) == 0)
+				atomicNo[index++] = mol.getAtomicNo(connAtom);
+			}
 		Arrays.sort(atomicNo);
 		return atomicNo;
 		}
 
 	private int[] getSortedConnectedMapNos(StereoMolecule mol, int atom) {
-		int[] mapNo = new int[mol.getConnAtoms(atom)];
-		for (int i=0; i<mol.getConnAtoms(atom); i++)
-			mapNo[i] = mol.getAtomMapNo(mol.getConnAtom(atom, i));
+		int[] mapNo = new int[mol.getConnAtoms(atom) - mol.getExcludedNeighbourCount(atom)];
+		int index = 0;
+		for (int i=0; i<mol.getConnAtoms(atom); i++) {
+			int connAtom = mol.getConnAtom(atom, i);
+			if ((mol.getAtomQueryFeatures(connAtom) & Molecule.cAtomQFExcludeGroup) == 0)
+				mapNo[index++] = mol.getAtomMapNo(connAtom);
+			}
 		Arrays.sort(mapNo);
 		return mapNo;
 		}
