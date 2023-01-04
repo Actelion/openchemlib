@@ -41,6 +41,7 @@ import com.actelion.research.util.datamodel.ScorePoint;
 import java.awt.*;
 import java.io.*;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
@@ -3912,7 +3913,7 @@ public class Matrix {
 	            iCounter++;
 	        }
         }
-        return  new DecimalFormat(sFormat);
+        return new DecimalFormat(sFormat, new DecimalFormatSymbols(Locale.US));
     }
 
     public void write(String sFile, boolean bApppend, int digits, int totalWidth) {
