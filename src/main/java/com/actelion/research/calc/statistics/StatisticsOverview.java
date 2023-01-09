@@ -247,11 +247,8 @@ public class StatisticsOverview {
     }
 
     public double getQuartile(double q) {
-    	
     	double [] arr = data.get();
-    	
     	Arrays.sort(arr);
-     	
     	return getQuartile(arr, q);
     }
 
@@ -305,10 +302,8 @@ public class StatisticsOverview {
 			sb.append("\t");
 			sb.append(Matrix.format(histTrans.get(i,2), dfBins, WIDTH));
 			sb.append("\n");
-			
 		}
-		
-		
+
 		return sb.toString();
 	}
 
@@ -346,11 +341,8 @@ public class StatisticsOverview {
 	}
 
 	public static ModelStatisticsOverviewMedian getMedianOverview(DoubleArray da){
-
 		StatisticsOverview statisticsOverview = new StatisticsOverview(da);
-
 		statisticsOverview.evaluate();
-
 		ModelStatisticsOverviewMedian model =
 				new ModelStatisticsOverviewMedian(
 						statisticsOverview.percentile05,
@@ -448,6 +440,4 @@ public class StatisticsOverview {
 
 		return sb.toString();
 	}
-
-
 }
