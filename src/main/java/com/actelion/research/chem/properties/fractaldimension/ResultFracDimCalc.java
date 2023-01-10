@@ -33,6 +33,7 @@
 
 package com.actelion.research.chem.properties.fractaldimension;
 
+import com.actelion.research.chem.ExtendedMoleculeFunctions;
 import com.actelion.research.util.Formatter;
 
 import java.util.ArrayList;
@@ -52,6 +53,8 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
 
     public static final String TAG_SUM_UNIQUE_FRAGMENTS_CALC = "SumUniqueFragmentsCalculated";
 
+    public static final String TAG_ATOM_COUNT = "AtomCountNonH";
+    public static final String TAG_BOND_COUNT = "BondCountNonH";
     public static final String TAG_BONDS_AT_MAX_FRAGS_CALC = "BondNumberAtMaxNumFragCalculated";
 
     public static final String TAG_MAX_NUM_UNIQUE_FRAGMENTS_CALC = "MaxNumUniqueFragmentsCalculated";
@@ -64,6 +67,8 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
             TAG_ID,
             TAG_SUM_UNIQUE_FRAGMENTS_CALC,
             TAG_BONDS_AT_MAX_FRAGS_CALC,
+            TAG_ATOM_COUNT,
+            TAG_BOND_COUNT,
             TAG_MAX_NUM_UNIQUE_FRAGMENTS_CALC,
             TAG_FRACTAL_DIM,
             TAG_MESSAGE};
@@ -75,6 +80,8 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
 
     double fractalDimension;
 
+    int atomCount;
+    int bondCount;
     int bondsAtMaxFrag;
 
     int maxNumUniqueFrags;
@@ -89,6 +96,9 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
         idMolecule = -1;
 
         fractalDimension = Double.NaN;
+
+        atomCount = ExtendedMoleculeFunctions.getNumNonHydrogenAtoms(inputObjectFracDimCalc.getData());
+        bondCount = ExtendedMoleculeFunctions.getNumBondsNoHydrogen(inputObjectFracDimCalc.getData());
 
         bondsAtMaxFrag = -1;
 
@@ -105,6 +115,14 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
 
     public int getBondsAtMaxFrag() {
         return bondsAtMaxFrag;
+    }
+
+    public int getBondCount() {
+        return bondCount;
+    }
+
+    public int getAtomCount() {
+        return atomCount;
     }
 
     public int getMaxNumUniqueFrags() {
@@ -128,6 +146,10 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
         sb.append(SEP);
         sb.append(getSumUniqueFrags());
         sb.append(SEP);
+        sb.append(getAtomCount());
+        sb.append(SEP);
+        sb.append(getBondCount());
+        sb.append(SEP);
         sb.append(getBondsAtMaxFrag());
         sb.append(SEP);
         sb.append(getMaxNumUniqueFrags());
@@ -148,6 +170,10 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
         sb.append(SEP);
         sb.append(TAG_SUM_UNIQUE_FRAGMENTS_CALC);
         sb.append(SEP);
+        sb.append(TAG_ATOM_COUNT);
+        sb.append(SEP);
+        sb.append(TAG_BOND_COUNT);
+        sb.append(SEP);
         sb.append(TAG_BONDS_AT_MAX_FRAGS_CALC);
         sb.append(SEP);
         sb.append(TAG_MAX_NUM_UNIQUE_FRAGMENTS_CALC);
@@ -166,6 +192,8 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
         li.add(TAG_SMILES);
         li.add(TAG_ID);
         li.add(TAG_SUM_UNIQUE_FRAGMENTS_CALC);
+        li.add(TAG_ATOM_COUNT);
+        li.add(TAG_BOND_COUNT);
         li.add(TAG_BONDS_AT_MAX_FRAGS_CALC);
         li.add(TAG_MAX_NUM_UNIQUE_FRAGMENTS_CALC);
         li.add(TAG_FRACTAL_DIM);
@@ -173,6 +201,4 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
 
         return li;
     }
-
-
 }

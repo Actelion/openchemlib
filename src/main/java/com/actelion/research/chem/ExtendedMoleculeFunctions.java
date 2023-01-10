@@ -235,6 +235,31 @@ public class ExtendedMoleculeFunctions {
 		return hetero;
 	}
 
+	public static int getNumBondsNoHydrogen(ExtendedMolecule mol) {
+		int bnds = 0;
+		for (int i = 0; i < mol.getBonds(); i++) {
+			int at1 = mol.getBondAtom(0,i);
+			int atNo1 = mol.getAtomicNo(at1);
+			int at2 = mol.getBondAtom(1,i);
+			int atNo2 = mol.getAtomicNo(at2);
+			if(atNo1!=1 && atNo2!=1) {
+				bnds++;
+			}
+		}
+		return bnds;
+	}
+	public static int getNumNonHydrogenAtoms(ExtendedMolecule mol) {
+		int non = 0;
+
+		for (int i = 0; i < mol.getAtoms(); i++) {
+			int atomicNo = mol.getAtomicNo(i);
+			if(atomicNo!=1) {
+				non++;
+			}
+		}
+
+		return non;
+	}
 	public static int getNumCarbonAtoms(ExtendedMolecule mol) {
 		int carbon = 0;
 

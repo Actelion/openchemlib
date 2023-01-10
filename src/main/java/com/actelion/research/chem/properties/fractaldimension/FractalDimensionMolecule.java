@@ -56,6 +56,8 @@ import java.util.List;
  */
 public class FractalDimensionMolecule {
 
+    public static final String MSG_ZERO = "Zero by definition. Max bond count at one bond.";
+
     private static final int MAX_THREADS_BOND_VECTOR_TO_IDCODE = 3;
 
     private ExhaustiveFragmentsStatistics exhaustiveFragmentsStatistics;
@@ -111,14 +113,15 @@ public class FractalDimensionMolecule {
         int nBondsAtMaxNumFrags = pBnds_MaxNumUniqueFrags.x;
         int nMaxFrags = pBnds_MaxNumUniqueFrags.y;
 
-        resultFracDimCalc.fractalDimension = Math.log10(nMaxFrags) / Math.log10(nBondsAtMaxNumFrags+1);
-
-        resultFracDimCalc.bondsAtMaxFrag = nBondsAtMaxNumFrags;
-
-        resultFracDimCalc.maxNumUniqueFrags = nMaxFrags;
-
-        resultFracDimCalc.sumUniqueFrags = getSumUniqueFrags(liFragBnds_NumUniqueFrags);
-
+        if(nBondsAtMaxNumFrags==1){
+            resultFracDimCalc.fractalDimension = 0;
+            resultFracDimCalc.message = MSG_ZERO;
+        } else {
+            resultFracDimCalc.fractalDimension = Math.log10(nMaxFrags) / Math.log10(nBondsAtMaxNumFrags);
+            resultFracDimCalc.bondsAtMaxFrag = nBondsAtMaxNumFrags;
+            resultFracDimCalc.maxNumUniqueFrags = nMaxFrags;
+            resultFracDimCalc.sumUniqueFrags = getSumUniqueFrags(liFragBnds_NumUniqueFrags);
+        }
         return resultFracDimCalc;
     }
 

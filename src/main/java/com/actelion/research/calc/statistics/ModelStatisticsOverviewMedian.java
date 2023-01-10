@@ -46,11 +46,11 @@ public class ModelStatisticsOverviewMedian {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("ModelStatisticsOverviewMedian{");
-        sb.append("percentile05=").append(Formatter.format4(percentile05));
-        sb.append(", percentile25=").append(Formatter.format4(percentile25));
-        sb.append(", median=").append(Formatter.format4(median));
-        sb.append(", percentile75=").append(Formatter.format4(percentile75));
-        sb.append(", percentile95=").append(Formatter.format4(percentile95));
+        sb.append("percentile05=").append(StatisticsOverview.DF4.format(percentile05));
+        sb.append(", percentile25=").append(StatisticsOverview.DF4.format(percentile25));
+        sb.append(", median=").append(StatisticsOverview.DF4.format(median));
+        sb.append(", percentile75=").append(StatisticsOverview.DF4.format(percentile75));
+        sb.append(", percentile95=").append(StatisticsOverview.DF4.format(percentile95));
         sb.append('}');
         return sb.toString();
     }

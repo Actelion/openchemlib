@@ -1,8 +1,10 @@
 package com.actelion.research.calc.statistics;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.Locale;
 
 import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.calc.Matrix;
@@ -27,8 +29,11 @@ public class StatisticsOverview {
 	public static final String TAG_PERCENTILE05 = "Percentile.05";
 	public static final String TAG_PERCENTILE95 = "Percentile.95";
 
-	private static final NumberFormat NF = new DecimalFormat("0.000##");
-	
+	public static final NumberFormat DF1 = new DecimalFormat("0.0", new DecimalFormatSymbols(Locale.US));
+	public static final NumberFormat DF3 = new DecimalFormat("0.000", new DecimalFormatSymbols(Locale.US));
+	public static final NumberFormat DF4 = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.US));
+	private static final NumberFormat DF3Plus = new DecimalFormat("0.000##", new DecimalFormatSymbols(Locale.US));
+
 	private static final int BINS = 20;
 	
 	private static final int WIDTH = 8;
@@ -242,11 +247,8 @@ public class StatisticsOverview {
     }
 
     public double getQuartile(double q) {
-    	
     	double [] arr = data.get();
-    	
     	Arrays.sort(arr);
-     	
     	return getQuartile(arr, q);
     }
 
@@ -272,17 +274,17 @@ public class StatisticsOverview {
 		sb.append("\n");
 		sb.append("min\t" + min);
 		sb.append("\n");
-		sb.append("Mean\t" + NF.format(mean));
+		sb.append("Mean\t" + DF3Plus.format(mean));
 		sb.append("\n");
 		sb.append("max\t" + max);
 		sb.append("\n");
-		sb.append("SDV\t" + NF.format(sdv));
+		sb.append("SDV\t" + DF3Plus.format(sdv));
 		sb.append("\n");
-		sb.append("Quartile 0.25\t" + NF.format(leftQuartile));
+		sb.append("Quartile 0.25\t" + DF3Plus.format(leftQuartile));
 		sb.append("\n");
-		sb.append("Median\t" + NF.format(median));
+		sb.append("Median\t" + DF3Plus.format(median));
 		sb.append("\n");
-		sb.append("Quartile 0.75\t" + NF.format(rightQuartile));
+		sb.append("Quartile 0.75\t" + DF3Plus.format(rightQuartile));
 		sb.append("\n");
 		sb.append("Histogram values below hist min " + valsBelowHistMin + ", values above hist max " + valsAboveHistMax);
 		sb.append("\n");
@@ -300,10 +302,8 @@ public class StatisticsOverview {
 			sb.append("\t");
 			sb.append(Matrix.format(histTrans.get(i,2), dfBins, WIDTH));
 			sb.append("\n");
-			
 		}
-		
-		
+
 		return sb.toString();
 	}
 
@@ -341,11 +341,8 @@ public class StatisticsOverview {
 	}
 
 	public static ModelStatisticsOverviewMedian getMedianOverview(DoubleArray da){
-
 		StatisticsOverview statisticsOverview = new StatisticsOverview(da);
-
 		statisticsOverview.evaluate();
-
 		ModelStatisticsOverviewMedian model =
 				new ModelStatisticsOverviewMedian(
 						statisticsOverview.percentile05,
@@ -366,15 +363,15 @@ public class StatisticsOverview {
 		so.evaluate();
 		sb.append(text1);
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getMean()));
+		sb.append(DF3.format(so.getMean()));
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getSdv()));
+		sb.append(DF3.format(so.getSdv()));
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getMedian()));
+		sb.append(DF3.format(so.getMedian()));
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getPercentile05()));
+		sb.append(DF3.format(so.getPercentile05()));
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getPercentile95()));
+		sb.append(DF3.format(so.getPercentile95()));
 
 		return sb.toString();
 	}
@@ -389,15 +386,15 @@ public class StatisticsOverview {
 		so.evaluate();
 		sb.append(text);
 		sb.append("\t");
-		sb.append(Formatter.format1(so.getMean()));
+		sb.append(DF1.format(so.getMean()));
 		sb.append("\t");
-		sb.append(Formatter.format1(so.getSdv()));
+		sb.append(DF1.format(so.getSdv()));
 		sb.append("\t");
-		sb.append(Formatter.format1(so.getMedian()));
+		sb.append(DF1.format(so.getMedian()));
 		sb.append("\t");
-		sb.append(Formatter.format1(so.getPercentile05()));
+		sb.append(DF1.format(so.getPercentile05()));
 		sb.append("\t");
-		sb.append(Formatter.format1(so.getPercentile95()));
+		sb.append(DF1.format(so.getPercentile95()));
 
 		return sb.toString();
 	}
@@ -431,18 +428,16 @@ public class StatisticsOverview {
 		sb.append("\t");
 		sb.append(text2);
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getMean()));
+		sb.append(DF3.format(so.getMean()));
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getSdv()));
+		sb.append(DF3.format(so.getSdv()));
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getMedian()));
+		sb.append(DF3.format(so.getMedian()));
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getPercentile05()));
+		sb.append(DF3.format(so.getPercentile05()));
 		sb.append("\t");
-		sb.append(Formatter.format3(so.getPercentile95()));
+		sb.append(DF3.format(so.getPercentile95()));
 
 		return sb.toString();
 	}
-
-
 }

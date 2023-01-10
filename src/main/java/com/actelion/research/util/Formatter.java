@@ -7,9 +7,11 @@ package com.actelion.research.util;
 import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
 /**
@@ -45,18 +47,18 @@ public class Formatter {
 	private static DateFormat[] dateTimeParsers;
 	private static DateFormat[] dateTimeFormatters;
 
-	private static final DecimalFormat df0 = new DecimalFormat("0");
-	private static final DecimalFormat df1 = new DecimalFormat("0.0");
-	private static final DecimalFormat df2 = new DecimalFormat("0.00");
-	private static final DecimalFormat dfmax2 = new DecimalFormat("0.##");
-	private static final DecimalFormat df3 = new DecimalFormat("0.000");
-	private static final DecimalFormat dfmax3 = new DecimalFormat("0.###");
-	private static final DecimalFormat df4 = new DecimalFormat("0.0000");
-	private static final DecimalFormat df8 = new DecimalFormat("0.00000000");
-	private static final DecimalFormat dfE = new DecimalFormat("0.00E0");
+	private static final DecimalFormat df0 = new DecimalFormat("0", new DecimalFormatSymbols(Locale.US));
+	private static final DecimalFormat df1 = new DecimalFormat("0.0", new DecimalFormatSymbols(Locale.US));
+	private static final DecimalFormat df2 = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
+	private static final DecimalFormat dfmax2 = new DecimalFormat("0.##", new DecimalFormatSymbols(Locale.US));
+	private static final DecimalFormat df3 = new DecimalFormat("0.000", new DecimalFormatSymbols(Locale.US));
+	private static final DecimalFormat dfmax3 = new DecimalFormat("0.###", new DecimalFormatSymbols(Locale.US));
+	private static final DecimalFormat df4 = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.US));
+	private static final DecimalFormat df8 = new DecimalFormat("0.00000000", new DecimalFormatSymbols(Locale.US));
+	private static final DecimalFormat dfE = new DecimalFormat("0.00E0", new DecimalFormatSymbols(Locale.US));
 	
-	public static final DecimalFormat dfI2 = new DecimalFormat("00");
-	public static final DecimalFormat dfI3 = new DecimalFormat("000");
+	public static final DecimalFormat dfI2 = new DecimalFormat("00", new DecimalFormatSymbols(Locale.US));
+	public static final DecimalFormat dfI3 = new DecimalFormat("000", new DecimalFormatSymbols(Locale.US));
 
 	static {
 		//Set default format
