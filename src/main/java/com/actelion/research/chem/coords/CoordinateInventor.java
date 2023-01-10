@@ -159,7 +159,8 @@ public class CoordinateInventor {
 	 * @parem ffp null or fragment fingerprint of the molecule, which is used (if available) for faster template location
 	 */
 	public void invent(StereoMolecule mol, long[] ffp) {
-		boolean paritiesPresent = ((mol.getHelperArrayStatus() & Molecule.cHelperParities) != 0);
+		boolean paritiesPresent = (mol.getHelperArrayStatus() & Molecule.cHelperParities) != 0;
+		int parityState = mol.getHelperArrayStatus() & Molecule.cHelperBitsStereo;
 
 		if (mRandom == null)
 			mRandom = new Random();
@@ -227,8 +228,10 @@ public class CoordinateInventor {
 				}
 			}
 
-		if (paritiesPresent)
+		if (paritiesPresent) {
+			mMol.setParitiesValid(parityState);
 			mMol.setStereoBondsFromParity();
+			}
 
 		if (mAbsoluteOrientationTemplateFound)
 			mMol.removeAtomMarkers();

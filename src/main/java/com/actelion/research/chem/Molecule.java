@@ -3195,7 +3195,7 @@ public class Molecule implements Serializable {
 	 * <p>An inverse logic needs to be applied to translate a user request to the bits needed. For example,
 	 * to only accept atoms that have 1 or 2 hydrogen neighbors, we need to filter out all others. Thus, we
 	 * would call<br>setAtomQueryFeature(atom, cAtomQFNot0Hydrogen | cAtomQFNot3Hydrogen, true);</p>
-	 * <p>To match only atoms without hydrogen neighbors, call<br>setAtomQueryFeature(atom, cAtomQFHydrogen & ~cAtomQFNot3Hydrogen, true);<br>
+	 * <p>To match only atoms without hydrogen neighbors, call<br>setAtomQueryFeature(atom, cAtomQFHydrogen & ~cAtomQFNot0Hydrogen, true);<br>
 	 * This mechanism allows a very efficient atom matching and therefore very fast sub-structure search.</p>
 	 * @param atom
 	 * @param feature one of cAtomQF...

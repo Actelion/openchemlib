@@ -52,9 +52,19 @@ public class JLoginDialog extends JDialog implements WindowListener {
 	private JTextField		mTextFieldUserID;
 	private JPasswordField	mTextFieldPassword;
 
+	public JLoginDialog(Dialog owner, ActionListener listener) {
+		super(owner, "Database Login", true);
+		initialize(listener);
+		setLocationRelativeTo(owner);
+		}
+
 	public JLoginDialog(Frame owner, ActionListener listener) {
 		super(owner, "Database Login", true);
+		initialize(listener);
+		setLocationRelativeTo(owner);
+		}
 
+	private void initialize(ActionListener listener) {
 		JPanel p1 = new JPanel();
 		p1.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 		p1.setLayout(new GridLayout(2, 2, 4, 4));
@@ -92,7 +102,6 @@ public class JLoginDialog extends JDialog implements WindowListener {
 			}
 
 		pack();
-		setLocationRelativeTo(owner);
 		}
 
 	public String getUserID() {

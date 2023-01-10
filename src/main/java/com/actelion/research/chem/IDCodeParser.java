@@ -4,6 +4,7 @@ import com.actelion.research.chem.coords.CoordinateInventor;
 
 public class IDCodeParser extends IDCodeParserWithoutCoordinateInvention {
 	private boolean mEnsure2DCoordinates;
+	private int mCoordinateMode = CoordinateInventor.MODE_DEFAULT;
 
 	/**
 	 * This default constructor creates molecules guaranteed to have 2D-atom-coordinates.
@@ -15,10 +16,20 @@ public class IDCodeParser extends IDCodeParserWithoutCoordinateInvention {
 	}
 
 	/**
-	 *
+	 * This default constructor creates molecules guaranteed to have 2D-atom-coordinates.
+	 * If 2D-coordinates are not supplied with the idcode, or if supplied coordinates are 3D,
+	 * then new 2D-coordinates are created on the fly.
+	 * @param coordinateMode mode used for CoordinateInventor
+	 */
+	public IDCodeParser(int coordinateMode){
+		this(true);
+		mCoordinateMode = coordinateMode;
+	}
+
+	/**
 	 * @param ensure2DCoordinates If TRUE and no coordinates are passed with the idcode, then
 	 * the parser generates atom coordinates of any molecule and assigns up/down bonds reflecting
-	 * given atom parities. Generating coordinates is potentially error prone, such that providing
+	 * given atom parities. Generating coordinates is potentially error-prone, such that providing
 	 * original coordinates, where available, should be the preferred option.
 	 * <br><b>WARNING:</b> If FALSE: In this case stereo parities are taken directly from the idcode,
 	 * missing explicitly 'unknown' parities, because they are not part of the idcode.
@@ -33,6 +44,8 @@ public class IDCodeParser extends IDCodeParserWithoutCoordinateInvention {
 		mEnsure2DCoordinates = ensure2DCoordinates;
 		}
 
+
+
 	@Override
 	protected boolean ensure2DCoordinates() {
 		return mEnsure2DCoordinates;
@@ -40,7 +53,7 @@ public class IDCodeParser extends IDCodeParserWithoutCoordinateInvention {
 
 	@Override
 	protected void inventCoordinates(StereoMolecule mol) {
-		CoordinateInventor inventor = new CoordinateInventor();
+		CoordinateInventor inventor = new CoordinateInventor(mCoordinateMode);
 		inventor.setRandomSeed(0x1234567890L);  // create reproducible coordinates
 		inventor.invent(mol);
 		}

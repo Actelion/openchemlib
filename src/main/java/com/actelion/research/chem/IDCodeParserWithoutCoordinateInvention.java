@@ -856,7 +856,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		// - have distinguishable substituents on both ends, i.e. is a stereo double bond
 		// - are not in a small ring
 		// Here we don't know, whether a double bond without E/Z parity is a stereo bond with unknown
-		// configuration or not a stereo bond. Therefore we need to set a flag, that causes the Canonizer
+		// configuration or not a stereo bond. Therefore, we need to set a flag, that causes the Canonizer
 		// during the next stereo recognition with atom coordinates to assign an unknown configuration rather
 		// than E or Z based on created or given coordinates.
 		// In a next step these double bonds are converted into cross bonds by
@@ -869,8 +869,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 					mMol.setBondParityUnknownOrNone(bond);
 			}
 
+		mMol.setParitiesValid(0);
+
 		if (!coords2DAvailable && ensure2DCoordinates()) {
-			mMol.setParitiesValid(0);
 			try {
 				inventCoordinates(mMol);
 				coords2DAvailable = true;

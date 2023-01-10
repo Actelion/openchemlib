@@ -1737,6 +1737,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			if (mBondType[bond] == cBondTypeDouble
 			 && getBondParity(bond) == Molecule.cBondParityUnknown)
 				mBondType[bond] = cBondTypeCross;
+
+		assert((mValidHelperArrays & cHelperBitParities) != 0);
 		}
 
 

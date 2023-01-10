@@ -196,7 +196,10 @@ public class MolfileParser
 
 				int chargeDif = parseIntOrSpaces(line.substring(36,39).trim());
 				if(chargeDif != 0){
-					mMol.setAtomCharge(atom,4 - chargeDif);
+					if (chargeDif == 4)
+						mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+					else
+						mMol.setAtomCharge(atom,4 - chargeDif);
 				}
 
 				int mapNo = (line.length() < 63) ? 0 : parseIntOrSpaces(line.substring(60,63).trim());
