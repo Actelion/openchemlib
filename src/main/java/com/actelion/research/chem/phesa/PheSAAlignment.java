@@ -1,6 +1,7 @@
 package com.actelion.research.chem.phesa;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.IDCodeParser;
 import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
@@ -410,17 +411,25 @@ public class PheSAAlignment {
 	public static class PheSAResult implements Comparable <PheSAResult>{
 		private StereoMolecule refMol;
 		private StereoMolecule fitMol;
+		private StereoMolecule fitInput;
+		
 		private double sim;
 		private double[] contributions;
 		private static final String DELIMITER = ";";
 		
-		public PheSAResult(StereoMolecule refMol, StereoMolecule fitMol, double sim) {
+		public PheSAResult(StereoMolecule refMol, StereoMolecule fitInput, StereoMolecule fitMol, double sim) {
 			this.refMol = refMol;
 			this.fitMol = fitMol;
 			this.sim = sim;
 			this.contributions = new double[4];
+			this.fitInput = fitInput;
 		}
 		
+		public void setFitInput(StereoMolecule fitInput) {
+			this.fitInput = fitInput;
+		}
+
+
 		public StereoMolecule getRefMol() {
 			return refMol;
 		}
@@ -461,6 +470,9 @@ public class PheSAAlignment {
 			sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(sim)));
 			sb.append(DELIMITER);
 			sb.append(encoder.encodeToString(EncodeFunctions.doubleArrayToByteArray(contributions)));
+			sb.append(DELIMITER);
+			sb.append(fitInput.getIDCode());
+			
 			return sb.toString();
 		}
 		
@@ -481,7 +493,9 @@ public class PheSAAlignment {
 			fitMol.ensureHelperArrays(Molecule.cHelperCIP);
 			double sim = EncodeFunctions.byteArrayToDouble(decoder.decode(s[4].getBytes()));
 			double[] contributions = EncodeFunctions.byteArrayToDoubleArray(decoder.decode(s[5].getBytes()));
-			PheSAResult pheSAResult = new PheSAResult(refMol,fitMol,sim);
+			StereoMolecule fitInput = new StereoMolecule();
+			new IDCodeParser().parse(fitInput,s[6]);
+			PheSAResult pheSAResult = new PheSAResult(refMol,fitInput,fitMol,sim);
 			pheSAResult.setContributions(contributions);
 			return pheSAResult;
 		}
