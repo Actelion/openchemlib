@@ -364,7 +364,7 @@ public class DockingEngine {
 			Translation translate = new Translation(new double[] {origCOM.x, origCOM.y, origCOM.z});
 			rot.apply(best);
 			translate.apply(best);
-			return new DockingResult(best,bestEnergy,contributions);
+			return new DockingResult(mol, best,bestEnergy,contributions);
 		}
 		else {
 			throw new DockingFailedException("docking failed");
@@ -570,6 +570,7 @@ public class DockingEngine {
 	
 	public static class DockingResult implements Comparable<DockingResult>  {
 		private double score;
+		private StereoMolecule input; //might be a different enantiomer/protomer than the pose
 		private StereoMolecule pose;
 		private Map<String,Double> contributions;
 		private static final String DELIMITER = ";";
@@ -577,12 +578,22 @@ public class DockingEngine {
 		private static final String DELIMITER3 = "%";
 		private static final String NULL_CONTRIBUTION = "#";
 		
-		public DockingResult(StereoMolecule pose, double score, Map<String,Double> contributions) {
+		public DockingResult(StereoMolecule input,
+				StereoMolecule pose, double score, Map<String,Double> contributions) {
 			this.score = score;
 			this.pose = pose;
 			this.contributions = contributions;
+			this.input = input;
 		}
 		
+		
+		
+		public void setInput(StereoMolecule input) {
+			this.input = input;
+		}
+
+
+
 		public double getScore() {
 			return score;
 		}
@@ -605,6 +616,8 @@ public class DockingEngine {
 			sb.append(idcode);
 			sb.append(DELIMITER);
 			sb.append(idcoords);
+			sb.append(DELIMITER);
+			sb.append(input.getIDCode());
 			sb.append(DELIMITER);
 			sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(score)));
 			sb.append(DELIMITER);
@@ -632,11 +645,14 @@ public class DockingEngine {
 			IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
 			parser.parse(pose, idcode, idcoords);
 			pose.ensureHelperArrays(Molecule.cHelperCIP);
-			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[2].getBytes()));
+			String idcodeInput = s[2];
+			StereoMolecule input = new StereoMolecule();
+			new IDCodeParser().parse(input, idcodeInput);
+			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[3].getBytes()));
 			Map<String,Double> contributions = null;
-			if(!s[3].equals(NULL_CONTRIBUTION)) {
+			if(!s[4].equals(NULL_CONTRIBUTION)) {
 				contributions = new HashMap<String,Double>();
-				String[] splitted = s[3].split(DELIMITER2);
+				String[] splitted = s[4].split(DELIMITER2);
 				for(String contr : splitted) {
 					String[] splitted2 = contr.split(DELIMITER3);
 					String name = splitted2[0];
@@ -645,7 +661,7 @@ public class DockingEngine {
 				}
 			}
 				
-			DockingResult dockingResult = new DockingResult(pose,score,contributions);
+			DockingResult dockingResult = new DockingResult(input,pose,score,contributions);
 			return dockingResult;
 		}
 
