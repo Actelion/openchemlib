@@ -1008,19 +1008,21 @@ public class SmilesParser {
 			if (mMol.getAtomCustomLabel(atom) != null) {	// if we have the exact number of hydrogens
 				int explicitHydrogen = mMol.getAtomCustomLabelBytes(atom)[0];
 
-				if (mMakeHydrogenExplicit) {
-					for (int i=0; i<explicitHydrogen; i++)
-						mMol.addBond(atom, mMol.addAtom(1), 1);
-					}
-				else if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS) {
-					if (explicitHydrogen == 0)
-						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot0Hydrogen, true);
-					if (explicitHydrogen == 1)
-						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot1Hydrogen, true);
-					if (explicitHydrogen == 2)
-						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot2Hydrogen, true);
-					if (explicitHydrogen == 3)
-						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot3Hydrogen, true);
+				if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS) {
+					if (mMakeHydrogenExplicit) {
+						for (int i=0; i<explicitHydrogen; i++)
+							mMol.addBond(atom, mMol.addAtom(1), 1);
+						}
+					else {
+						if (explicitHydrogen == 0)
+							mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot0Hydrogen, true);
+						if (explicitHydrogen == 1)
+							mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot1Hydrogen, true);
+						if (explicitHydrogen == 2)
+							mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot2Hydrogen, true);
+						if (explicitHydrogen == 3)
+							mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot3Hydrogen, true);
+						}
 					}
 				else {
 					if (!mMol.isMetalAtom(atom)
@@ -1052,11 +1054,9 @@ public class SmilesParser {
 							mMol.setAtomAbnormalValence(atom, usedValence);
 						}
 
-					if (!mMol.supportsImplicitHydrogen(atom)) {
-						// If implicit hydrogens are not supported, then add explicit ones.
+					if (mMakeHydrogenExplicit || !mMol.supportsImplicitHydrogen(atom))
 						for (int i=0; i<explicitHydrogen; i++)
 							mMol.addBond(atom, mMol.addAtom(1), 1);
-						}
 					}
 				}
 			else if (!mMakeHydrogenExplicit && (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS)) {
