@@ -592,6 +592,9 @@ public class DockingEngine {
 			this.input = input;
 		}
 
+		public StereoMolecule getInput() {
+			return input;
+		}
 
 
 		public double getScore() {
