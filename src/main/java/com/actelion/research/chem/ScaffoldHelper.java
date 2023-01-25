@@ -78,7 +78,7 @@ public class ScaffoldHelper {
 		return scaffold;
 		}
 
-	private static void makeSkeleton(StereoMolecule mol) {
+	public static void makeSkeleton(StereoMolecule mol) {
 		for (int bond=0; bond<mol.getAllBonds(); bond++)
 			mol.setBondType(bond, Molecule.cBondTypeSingle);
 		for (int atom=0; atom<mol.getAllAtoms(); atom++)
