@@ -55,13 +55,150 @@ import com.actelion.research.util.datamodel.PointDouble;
 
 public class ArrayUtilsCalc {
 
+	public final static int [] cat(int [] a, int [] b) {
+		int [] c = new int [a.length + b.length];
+
+		for (int i = 0; i < a.length; i++) {
+			c[i]=a[i];
+		}
+
+		for (int i = 0; i < b.length; i++) {
+			c[a.length+i]=b[i];
+		}
+
+		return c;
+	}
+
+
+	public final static boolean contains(int [] a, int b) {
+		boolean bFound = false;
+		for (int i = 0; i < a.length; i++) {
+			if(a[i]==b){
+				bFound=true;
+				break;
+			}
+		}
+		return bFound;
+	}
+
+	public final static int [] copy(int [] a) {
+		int [] b = new int [a.length];
+		for (int i = 0; i < b.length; i++) {
+			b[i]=a[i];
+
+		}
+		return b;
+	}
+
+	public final static byte [] copy(byte [] a) {
+		byte [] b = new byte [a.length];
+		for (int i = 0; i < b.length; i++) {
+			b[i]=a[i];
+
+		}
+		return b;
+	}
+
+	/**
+	 *
+	 * @param li
+	 * @return deep copy.
+	 */
+	public final static List<int[]> copyIntArray(List<int[]> li) {
+
+		List<int[]> liC = new ArrayList<int[]>(li.size());
+
+		for (int[] a : li) {
+			int [] c = new int [a.length];
+			System.arraycopy(a, 0, c, 0, a.length);
+			liC.add(c);
+		}
+
+		return liC;
+	}
+
+	public final static Object [] copy(Object [] a) {
+		Object b [] = new Object [a.length];
+		for (int ii = 0; ii < a.length; ii++) {
+			b[ii] = a[ii];
+		}
+		return b;
+	}
+
+	public static boolean equals(int [] a, int [] b){
+		if(a.length!=b.length){
+			return false;
+		}
+		for (int i = 0; i < b.length; i++) {
+			if(a[i]!=b[i]){
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public final static double [] extractCol(double [][] a, int col) {
+		double b [] = new double [a.length];
+		for (int ii = 0; ii < a.length; ii++) {
+			b[ii] = a[ii][col];
+		}
+		return b;
+	}
+
+	public final static double [] filter(int [] arrData, double [] arrFilter){
+		double [] arr = new double [arrData.length];
+
+		for (int i = 0; i < arr.length; i++) {
+
+			double val = 0;
+			for (int j = 0; j < arrFilter.length; j++) {
+				int indexFilter = (-arrFilter.length / 2) + j;
+				int indexData = indexFilter + i;
+				if(indexData >= 0 && indexData < arr.length){
+					val += arrData[indexData] * arrFilter[j];
+				}
+			}
+			arr[i]=val;
+		}
+		return arr;
+	}
+
+	public final static double [] filter(byte [] arrData, double [] arrFilter){
+		double [] arr = new double [arrData.length];
+
+		for (int i = 0; i < arr.length; i++) {
+
+			double val = 0;
+			for (int j = 0; j < arrFilter.length; j++) {
+				int indexFilter = (-arrFilter.length / 2) + j;
+				int indexData = indexFilter + i;
+				if(indexData >= 0 && indexData < arr.length){
+					val += arrData[indexData] * arrFilter[j];
+				}
+			}
+			arr[i]=val;
+		}
+		return arr;
+	}
+
+	public final static boolean findIdentical(int [] a, int [] b) {
+		boolean bFound = false;
+
+		for (int i = 0; i < a.length; i++) {
+			for (int j = 0; j < b.length; j++) {
+				if(a[i]==b[j]){
+					bFound=true;
+					break;
+				}
+			}
+		}
+
+		return bFound;
+	}
     public static final double getCorrPearson(List<PointDouble> li) {
-        
-    	
+
     	final double [] a = new double [li.size()];
-    	
     	final double [] b = new double [li.size()];
-    	
     	for (int i = 0; i < li.size(); i++) {
 			a[i]=li.get(i).x;
 			b[i]=li.get(i).y;
@@ -108,23 +245,15 @@ public class ArrayUtilsCalc {
         
         return val;
 	}
-	
-	public static boolean equals(int [] a, int [] b){
-		
-		if(a.length!=b.length){
-			return false;
+	public static double [] getCentered(double [] arr) {
+		double [] arrCent = new double [arr.length];
+		final double mean = getMean(arr);
+		for (int i = 0; i < arr.length; i++) {
+			arrCent[i] = arr[i]-mean;
 		}
-		
-		for (int i = 0; i < b.length; i++) {
-			if(a[i]!=b[i]){
-				return false;
-			}
-		}
-		
-		
-		return true;
+		return arrCent;
 	}
-	
+
 	public static double getCovarianceCentered(double [] a, double [] b) {
 		
 		double sum = 0;
@@ -137,17 +266,16 @@ public class ArrayUtilsCalc {
 		return covXY;
 	}
 
-	public static double [] getCentered(double [] arr) {
-		
-		double [] arrCent = new double [arr.length];
-		
-		final double mean = getMean(arr);
-		
-		for (int i = 0; i < arr.length; i++) {
-			arrCent[i] = arr[i]-mean;
+	public static double getGiniCoefficient(double [] a){
+		double sum=0, sumDiff=0;
+		for (int i = 0; i < a.length; i++) {
+			sum += a[i];
+			for (int j = 0; j < a.length; j++) {
+				sumDiff = Math.abs(a[i]-a[j]);
+			}
 		}
-		
-		return arrCent;
+		double gini = sumDiff/(2* a.length * sum);
+		return gini;
 	}
 
 	public static final double [] getNormalized(double [] arr) {
@@ -163,40 +291,7 @@ public class ArrayUtilsCalc {
 		return arrNorm;
 
 	}
-	
-	public static final double getVariance(double [] arr) {
-		
-		double sum=0;
-		
-		final double mean = getMean(arr);
-		
-    	for (int i = 0; i < arr.length; i++) {
-    		sum += (arr[i]-mean)*(arr[i]-mean);
-		}
-    	
-    	final double var = sum / (arr.length - 1);
-    	
-    	return var;
-	}
-	public static final double getVariance(int [] arr) {
-		double sum=0;
-		final double mean = getMean(arr);
-    	for (int i = 0; i < arr.length; i++) {
-    		sum += (arr[i]-mean)*(arr[i]-mean);
-		}
-    	final double var = sum / (arr.length - 1);
-    	return var;
-	}
 
-	public static final double getStandardDeviation(double [] arr) {
-		double sum=0;
-		double mean = getMean(arr);
-    	for (int i = 0; i < arr.length; i++) {
-    		sum += (arr[i]-mean)*(arr[i]-mean);
-		}
-    	double sdv = Math.sqrt(sum / (arr.length - 1));
-    	return sdv;
-	}
 	
 	public static final double getMean(double [] arr) {
 		double sum = 0;
@@ -316,135 +411,41 @@ public class ArrayUtilsCalc {
 		return percentile;
 	}
 
-	
-	
-	public final static boolean findIdentical(int [] a, int [] b) {
-		boolean bFound = false;
-		
-		for (int i = 0; i < a.length; i++) {
-			for (int j = 0; j < b.length; j++) {
-				if(a[i]==b[j]){
-					bFound=true;
-					break;
-				}
-			}
-		}
-		
-		return bFound;
-	}
-	
-	public final static double [] filter(int [] arrData, double [] arrFilter){
-		double [] arr = new double [arrData.length];
-		
+	public static final double getStandardDeviation(double [] arr) {
+		double sum=0;
+		double mean = getMean(arr);
 		for (int i = 0; i < arr.length; i++) {
-			
-			double val = 0;
-			for (int j = 0; j < arrFilter.length; j++) {
-				int indexFilter = (-arrFilter.length / 2) + j;
-				int indexData = indexFilter + i;
-				if(indexData >= 0 && indexData < arr.length){
-					val += arrData[indexData] * arrFilter[j];
-				}
-			}
-			arr[i]=val;
+			sum += (arr[i]-mean)*(arr[i]-mean);
 		}
-		return arr;
+		double sdv = Math.sqrt(sum / (arr.length - 1));
+		return sdv;
 	}
 
-	public final static double [] filter(byte [] arrData, double [] arrFilter){
-		double [] arr = new double [arrData.length];
-		
+
+	public static final double getVariance(double [] arr) {
+
+		double sum=0;
+
+		final double mean = getMean(arr);
+
 		for (int i = 0; i < arr.length; i++) {
-			
-			double val = 0;
-			for (int j = 0; j < arrFilter.length; j++) {
-				int indexFilter = (-arrFilter.length / 2) + j;
-				int indexData = indexFilter + i;
-				if(indexData >= 0 && indexData < arr.length){
-					val += arrData[indexData] * arrFilter[j];
-				}
-			}
-			arr[i]=val;
-		}
-		return arr;
-	}
-
-	public final static boolean contains(int [] a, int b) {
-		boolean bFound = false;
-		for (int i = 0; i < a.length; i++) {
-			if(a[i]==b){
-				bFound=true;
-				break;
-			}
-		}
-		return bFound;
-	}
-
-	public final static int [] cat(int [] a, int [] b) {
-		int [] c = new int [a.length + b.length];
-		
-		for (int i = 0; i < a.length; i++) {
-			c[i]=a[i];
-		}
-		
-		for (int i = 0; i < b.length; i++) {
-			c[a.length+i]=b[i];
+			sum += (arr[i]-mean)*(arr[i]-mean);
 		}
 
-		return c;
+		final double var = sum / (arr.length - 1);
+
+		return var;
+	}
+	public static final double getVariance(int [] arr) {
+		double sum=0;
+		final double mean = getMean(arr);
+		for (int i = 0; i < arr.length; i++) {
+			sum += (arr[i]-mean)*(arr[i]-mean);
+		}
+		final double var = sum / (arr.length - 1);
+		return var;
 	}
 
-	public final static int [] copy(int [] a) {
-		int [] b = new int [a.length];
-		for (int i = 0; i < b.length; i++) {
-			b[i]=a[i];
-			
-		}
-		return b;
-	}
-	
-	public final static byte [] copy(byte [] a) {
-		byte [] b = new byte [a.length];
-		for (int i = 0; i < b.length; i++) {
-			b[i]=a[i];
-			
-		}
-		return b;
-	}
-
-	/**
-	 * 
-	 * @param li
-	 * @return deep copy.
-	 */
-	public final static List<int[]> copyIntArray(List<int[]> li) {
-		
-		List<int[]> liC = new ArrayList<int[]>(li.size());
-		
-		for (int[] a : li) {
-			int [] c = new int [a.length];
-			System.arraycopy(a, 0, c, 0, a.length);
-			liC.add(c);
-		}
-		
-		return liC;
-	}
-	
-	public final static Object [] copy(Object [] a) {
-        Object b [] = new Object [a.length];
-        for (int ii = 0; ii < a.length; ii++) {
-          b[ii] = a[ii];
-        }
-        return b;
-    }
-
-	public final static double [] extractCol(double [][] a, int col) {
-        double b [] = new double [a.length];
-        for (int ii = 0; ii < a.length; ii++) {
-          b[ii] = a[ii][col];
-        }
-        return b;
-    }
 
 	public final static int sum(int [] a) {
         int b = 0;
