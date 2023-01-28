@@ -120,8 +120,12 @@ public class TotalSurfaceAreaPredictor extends PolarSurfaceAreaPredictor {
 	 * as solvent accessible surface using Van der Waals radii and a probe of 1.4 angstrom
 	 * radius. Surface contribution values were for 43 polar and 20 non polar atom types were
 	 * calculated as a multi-linear regression with a PLS approach.
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
 	 * @param mol
-	 * @return
+	 * @return topological total surface area estimated from atom type specific increments
 	 */
 	public float assessTotalSurfaceArea(StereoMolecule mol) {
 		return assessNonPolarSurfaceArea(mol) + assessPolarSurfaceArea(mol);
@@ -137,8 +141,12 @@ public class TotalSurfaceAreaPredictor extends PolarSurfaceAreaPredictor {
 	 * as solvent accessible surface using Van der Waals radii and a probe of 1.4 angstrom
 	 * radius. Surface contribution values were for 43 polar and 20 non polar atom types were
 	 * calculated as a multi-linear regression with a PLS approach.
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
 	 * @param mol
-	 * @return
+	 * @return topological polar surface area estimated from atom type specific increments
 	 */
 	public float assessPolarSurfaceArea(StereoMolecule mol) {
 		int[] count = getPolarAtomTypeCounts(mol);
@@ -160,8 +168,12 @@ public class TotalSurfaceAreaPredictor extends PolarSurfaceAreaPredictor {
 	 * as solvent accessible surface using Van der Waals radii and a probe of 1.4 angstrom
 	 * radius. Surface contribution values were for 43 polar and 20 non polar atom types were
 	 * calculated as a multi-linear regression with a PLS approach.
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
 	 * @param mol
-	 * @return
+	 * @return topological non-polar surface area estimated from atom type specific increments
 	 */
 	public float assessNonPolarSurfaceArea(StereoMolecule mol) {
 		int[] count = getNonPolarAtomTypeCounts(mol);
@@ -176,8 +188,12 @@ public class TotalSurfaceAreaPredictor extends PolarSurfaceAreaPredictor {
 	/**
 	 * Calculates the relative (fractional) polar surface area from polar and non-polar atom
 	 * contributions. This method does not use the Peter Ertl increments.
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
 	 * @param mol
-	 * @return
+	 * @return topological relative surface area estimated from atom type specific increments
 	 */
 	public float assessRelativePolarSurfaceArea(StereoMolecule mol) {
 		float psa = assessPolarSurfaceArea(mol);

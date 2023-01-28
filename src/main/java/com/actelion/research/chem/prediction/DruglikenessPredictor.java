@@ -61,7 +61,15 @@ public class DruglikenessPredictor {
 		}
 
 
-	public double assessDruglikeness(StereoMolecule testMolecule, ThreadMaster threadMaster) {
+	/**
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
+	 * @param mol
+	 * @return druglikeness value estimated from atom type specific increments
+	 */
+	public double assessDruglikeness(StereoMolecule mol, ThreadMaster threadMaster) {
 		ParameterizedStringList detail = new ParameterizedStringList();
 
 		if (!sInitialized) {
@@ -86,7 +94,7 @@ public class DruglikenessPredictor {
 			Thread.yield();
 
 			new IDCodeParser(false).parse(fragment, sIncrementTable.getFragment(i));
-			sss.setMol(fragment, testMolecule);
+			sss.setMol(fragment, mol);
 			if (sss.isFragmentInMolecule()) {
 				double increment = sIncrementTable.getIncrement(i);
 				if (increment < -1)

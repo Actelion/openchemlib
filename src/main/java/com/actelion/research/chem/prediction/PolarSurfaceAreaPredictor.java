@@ -111,8 +111,12 @@ public class PolarSurfaceAreaPredictor {
 	 * Calculates the topological polar surface area (TPSA) of a molecule as a sum of
 	 * contributions of its polar atom-types. This method uses the polar atom contributions
 	 * originally published by Peter Ertl et al. in J. Med. Chem. 2000, 43, 3714-3717.
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
 	 * @param mol
-	 * @return
+	 * @return topological polar surface area estimated from atom type specific increments
 	 */
 	public float assessPSA(StereoMolecule mol) {
 		int[] count = getPolarAtomTypeCounts(mol);
