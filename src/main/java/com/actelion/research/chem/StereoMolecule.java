@@ -367,6 +367,8 @@ public class StereoMolecule extends ExtendedMolecule {
      */
     public String getIDCode() {
         ensureHelperArrays(cHelperParities);
+        if (mCanonizer == null && (getAtoms() < 2 || !mCoordinates[0].equals(mCoordinates[1])))
+        	mCanonizer = new Canonizer(this);
         return mCanonizer == null ? null : mCanonizer.getIDCode();
         }
 
@@ -380,6 +382,8 @@ public class StereoMolecule extends ExtendedMolecule {
      */
     public String getIDCoordinates() {
         ensureHelperArrays(cHelperParities);
+	    if (mCanonizer == null && (getAtoms() < 2 || !mCoordinates[0].equals(mCoordinates[1])))
+		    mCanonizer = new Canonizer(this);
         return mCanonizer == null ? null : mCanonizer.getEncodedCoordinates();
         }
 
