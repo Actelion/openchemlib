@@ -115,6 +115,14 @@ public class CommandLineParser {
         return s;
     }
 
+    public File getFileOrDefault(String command, File defaultVal){
+        File f=defaultVal;
+        if(contains(command)){
+            f=getAsFile(command);
+        }
+        return f;
+    }
+
     public List<String> getAsList(String command) {
         String s = hmCommandValue.get(command);
         String [] a = s.split(SEP_TAG);
