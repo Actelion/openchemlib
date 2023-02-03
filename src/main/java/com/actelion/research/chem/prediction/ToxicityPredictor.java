@@ -102,11 +102,21 @@ public class ToxicityPredictor {
 		}
 
 
-	public int assessRisk(StereoMolecule testMolecule, int riskType, ThreadMaster threadMaster) {
+	/**
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
+	 * @param mol
+	 * @param riskType one of the four risk types cRiskType...
+	 * @param threadMaster may be null
+	 * @return toxicity risk class estimated from atom type specific increments
+	 */
+	public int assessRisk(StereoMolecule mol, int riskType, ThreadMaster threadMaster) {
 		if (!sInitialized)
 			return cUnknownRisk;
 
-		if (sRiskMolecules[riskType].contains(new Canonizer(testMolecule).getIDCode()))
+		if (sRiskMolecules[riskType].contains(new Canonizer(mol).getIDCode()))
 			return cHighRisk;
 
 		SSSearcher sss = new SSSearcher(SSSearcher.cMatchAtomCharge);
@@ -118,7 +128,7 @@ public class ToxicityPredictor {
 			Thread.yield();
 
 			new IDCodeParser(false).parse(fragment, sHighRiskFragments[riskType].get(i));
-			sss.setMol(fragment, testMolecule);
+			sss.setMol(fragment, mol);
 			if (sss.isFragmentInMolecule())
 				return cHighRisk;
 			}
@@ -130,7 +140,7 @@ public class ToxicityPredictor {
 			Thread.yield();
 
 			new IDCodeParser(false).parse(fragment, sLowRiskFragments[riskType].get(i));
-			sss.setMol(fragment, testMolecule);
+			sss.setMol(fragment, mol);
 			if (sss.isFragmentInMolecule())
 				return cLowRisk;
 			}

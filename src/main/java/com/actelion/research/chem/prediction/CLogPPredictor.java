@@ -233,9 +233,13 @@ public class CLogPPredictor {
 		}
 
 	/**
-	 * Ambiguous bonds are normalized. 
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
+	 * This method may normalize ambiguous bonds of the molecule.
 	 * @param mol
-	 * @return
+	 * @return logP value estimated from atom type specific increments
 	 */
 	public float assessCLogP(StereoMolecule mol) {
 		float cLogP = 0.0f;

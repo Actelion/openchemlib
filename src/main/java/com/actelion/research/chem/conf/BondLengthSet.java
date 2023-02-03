@@ -125,7 +125,9 @@ public class BondLengthSet {
 					bdr.close();
 					isInitialized = true;
 					}
-				catch (IOException e) {}
+				catch (IOException e) {
+					e.printStackTrace();
+					}
 				}
 			}
 		}

@@ -48,9 +48,12 @@ public class FastMolecularComplexityCalculator {
 	protected static final int MAX_BOND_COUNT = 7;
 
 	/**
-	 * Ambiguous bonds are normalized.
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
 	 * @param mol
-	 * @return
+	 * @return complexity value estimated from the number of distinct small fragments
 	 */
 	public static float assessComplexity(StereoMolecule mol) {
 		int bondCount = Math.min(mol.getBonds()/2, MAX_BOND_COUNT);

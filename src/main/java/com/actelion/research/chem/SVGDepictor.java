@@ -40,7 +40,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-public class SVGDepictor extends AbstractDepictor {
+public class SVGDepictor extends AbstractDepictor<Void> {
     public static final int DEFAULT_ELEM_WIDTH = 8;
 
     private static final String FONTNAME = "Helvetica";

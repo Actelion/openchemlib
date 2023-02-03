@@ -155,6 +155,15 @@ public class SolubilityPredictor {
 		}
 
 
+	/**
+	 * Before calculating any kind of property, make sure that the molecule's structure is standardized.
+	 * Typically, molecules created by an IDCodeParser are standardized. Molecules generated from a
+	 * SmilesParser or MolfileParser, or just drawn within an editor, should be standardized using the
+	 * MoleculeStandardizer.
+	 * This method may normalize ambiguous bonds of the molecule.
+	 * @param mol
+	 * @return aquous solubility value estimated from atom type specific increments
+	 */
 	public float assessSolubility(StereoMolecule mol) {
 		float logS = -0.530f;
 

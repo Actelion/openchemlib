@@ -285,7 +285,9 @@ public class TorsionDB {
 			if (br != null)
 				br.close();
 			}
-		catch (IOException e) {}
+		catch (IOException e) {
+			e.printStackTrace();
+			}
 		}
 
 	protected static BufferedReader openReader(String resourceName) throws IOException {
