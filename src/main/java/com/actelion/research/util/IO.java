@@ -506,17 +506,12 @@ public class IO {
 
 	public static String read(InputStream is) throws IOException {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-		
 		String line=null;
-		
 		StringBuilder sb = new StringBuilder();
-		
 		while ((line = reader.readLine())!=null) {
 			sb.append(line + "\n");
 		}
-		
 		reader.close();
-
 		return sb.toString();
 	}
 	
