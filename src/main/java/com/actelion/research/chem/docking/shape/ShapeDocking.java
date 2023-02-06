@@ -1,9 +1,5 @@
 package com.actelion.research.chem.docking.shape;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer;
@@ -11,10 +7,11 @@ import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.AlignmentR
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.PheSASetting;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.phesa.DescriptorHandlerShape;
-import com.actelion.research.chem.phesa.DescriptorHandlerShapeOneConf;
-import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.PheSAMolecule;
 import com.actelion.research.chem.phesa.ShapeVolume;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShapeDocking {
 	private static final double DEFAULT_PP_WEIGHT = 0.5;
@@ -46,6 +43,7 @@ public class ShapeDocking {
 	}
 
 	public void setThreadMaster(ThreadMaster tm) {
+		// TODO use the ThreadMaster!!!
 		this.threadMaster = tm;
 	}
 	

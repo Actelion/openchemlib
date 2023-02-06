@@ -34,7 +34,11 @@
 
 package com.actelion.research.chem;
 
-import java.io.*;
+import com.actelion.research.chem.coords.CoordinateInventor;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 public class StereoMolecule extends ExtendedMolecule {
     static final long serialVersionUID = 0x2006CAFE;
@@ -190,6 +194,13 @@ public class StereoMolecule extends ExtendedMolecule {
 
         if ((required & ~mValidHelperArrays) == 0)
 			return;
+
+        // If we have valid parities, but no atom coordinates, and if we need to run the Canonizer
+		// for extended stereo features, then we need to create 2D-coordinates first to not loose
+		// the given parities, because the Canonizer recalculates parities from coords and up/down bonds.
+		if ((mValidHelperArrays & cHelperParities) != 0
+		 && (mAllAtoms > 1) && mCoordinates[0].equals(mCoordinates[1]))
+			new CoordinateInventor(0).invent(this);
 
         if (mAssignParitiesToNitrogen)
         	required |= cHelperBitIncludeNitrogenParities;

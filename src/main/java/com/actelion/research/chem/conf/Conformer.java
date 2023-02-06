@@ -184,7 +184,7 @@ public class Conformer implements Comparable<Conformer> {
 	/**
 	 * Removes atoms Coordinates objects from those atoms that are marked in the given array.
 	 * Make sure to also remove those atoms from the underlying Molecule.
-	 *
+	 * When this method is used, bond torsion angles are lost.
 	 * @param isToBeDeleted
 	 * @return
 	 */
@@ -196,18 +196,13 @@ public class Conformer implements Comparable<Conformer> {
 
 		if (count != 0) {
 			Coordinates[] newCoords = new Coordinates[mCoordinates.length - count];
-			short[] newBondTorsion = (mBondTorsion == null) ? null : new short[mCoordinates.length - count];
 			int newIndex = 0;
-			for (int i = 0; i < mCoordinates.length; i++) {
-				if (!isToBeDeleted[i]) {
-					newCoords[newIndex] = mCoordinates[i];
-					if (newBondTorsion != null)
-						newBondTorsion[newIndex] = mBondTorsion[i];
-					newIndex++;
-				}
-			}
+			for (int i = 0; i < mCoordinates.length; i++)
+				if (!isToBeDeleted[i])
+					newCoords[newIndex++] = mCoordinates[i];
+
 			mCoordinates = newCoords;
-			mBondTorsion = newBondTorsion;
+			mBondTorsion = null;
 		}
 
 		return count;
@@ -242,8 +237,7 @@ public class Conformer implements Comparable<Conformer> {
 	}
 
 	/**
-	 * Returns the current bond torsion angle in degrees, it is was set before.
-	 *
+	 * Returns the current bond torsion angle in degrees, as it was set before.
 	 * @param bond
 	 * @return -1 or previously set torsion angle in the range 0 ... 359
 	 */
@@ -258,8 +252,10 @@ public class Conformer implements Comparable<Conformer> {
 	 * @param torsion in degrees
 	 */
 	public void setBondTorsion(int bond, short torsion) {
-		if (mBondTorsion == null)
+		if (mBondTorsion == null) {
 			mBondTorsion = new short[mMol.getAllBonds()];
+			Arrays.fill(mBondTorsion, (short)-1);
+			}
 		mBondTorsion[bond] = torsion;
 	}
 

@@ -63,6 +63,7 @@ public class RotatableBond {
 	private static final short[][] SIXTY_DEGREE_RANGE = { {-20,20},{40,80},{100,140},{160,200},{220,260},{280,320}};
 
 	private RigidFragment mFragment1,mFragment2;
+	private String mTorsionID;
 	private Random mRandom;
 	private int mRotationCenter,mBond,mFragmentNo1,mFragmentNo2;
 	private boolean mBondAtomsInFragmentOrder;
@@ -106,6 +107,7 @@ public class RotatableBond {
 			mTorsionRange = SIXTY_DEGREE_RANGE;
 			}
 		else {
+			mTorsionID = detail.getID();
 			mTorsion = TorsionDB.getTorsions(detail.getID());
 			if (mTorsion == null) {
 				TorsionPrediction prediction = new TorsionPrediction(mol, mTorsionAtom);
@@ -258,6 +260,10 @@ public class RotatableBond {
 				return t;
 			}
 		return mTorsion.length-1;  // should never reach this
+		}
+
+	public String getTorsionID() {
+		return mTorsionID;
 		}
 
 	/**
@@ -683,7 +689,7 @@ public class RotatableBond {
 		}
 
 	/**
-	 * If we have a BINAP stereo contraint, we have to remove colliding torsions
+	 * If we have a BINAP stereo constraint, we have to remove colliding torsions
 	 * @param mol
 	 */
 	private void removeIllegalTorsions(StereoMolecule mol) {

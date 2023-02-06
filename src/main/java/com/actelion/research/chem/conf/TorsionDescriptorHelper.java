@@ -96,7 +96,7 @@ public class TorsionDescriptorHelper {
 
 	/**
 	 * Creates a TorsionDescriptor from the coordinates of the passed conformer assuming that its
-	 * underlying molecule is the same that waas passed to this TorsionDescriptorHelper's constructor.
+	 * underlying molecule is the same that was passed to this TorsionDescriptorHelper's constructor.
 	 * This TorsionDescriptorHelper uses the default method to detect rotatable bonds.
 	 * The torsion descriptor is not canonical, unless the passed molecule is canonical.
 	 * Rotatable bonds need to carry at least one external non-hydrogen neighbor on each side.

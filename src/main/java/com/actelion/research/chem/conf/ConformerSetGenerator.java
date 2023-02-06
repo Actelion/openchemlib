@@ -2,7 +2,6 @@ package com.actelion.research.chem.conf;
 
 import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
@@ -45,17 +44,14 @@ public class ConformerSetGenerator {
 	
 	public ConformerSetGenerator() {
 		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,DEFAULT_SEED);
-		
 	}
 	
 	public ConformerSetGenerator(boolean useFF) {
 		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,DEFAULT_SEED);
-		
 	}
 	
 	public ConformerSetGenerator(boolean useFF, long seed) {
 		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,seed);
-		
 	}
 	
 	public void setThreadMaster(ThreadMaster tm) {
@@ -69,12 +65,19 @@ public class ConformerSetGenerator {
 	 */
 	public ConformerSet generateConformerSet(StereoMolecule mol) {   
 		ConformerSet confSet = new ConformerSet();
+
+/* Simplified; TLS 31Jan2023
 		StereoMolecule canMol = new StereoMolecule(mol);
 		canMol.stripSmallFragments();
-		ConformerGenerator.addHydrogenAtoms(canMol);
+		ConformerGenerator.addHydrogenAtoms(canMol);        not necessary, because the ConformerGenerator does that anyway
 		Canonizer can = new Canonizer(canMol);
 		canMol = can.getCanMolecule(true);
-		canMol.ensureHelperArrays(Molecule.cHelperCIP);
+		canMol.ensureHelperArrays(Molecule.cHelperCIP);     not allowed, because the molecule may not have coordinates!
+*/
+		StereoMolecule largestFragment = mol.getCompactCopy();
+		largestFragment.stripSmallFragments();
+		StereoMolecule canonicalFragment = new Canonizer(largestFragment).getCanMolecule();
+
 		int maxTorsionSets = (int) Math.max(2 * mMaxNrConfs, (1000 * Math.sqrt(mMaxNrConfs)));
 		ConformerGenerator cg = new ConformerGenerator(mSeed,false);
 		cg.setThreadMaster(this.threadMaster);
@@ -85,11 +88,11 @@ public class ConformerSetGenerator {
 			ffOptions.put("dielectric constant", 4.0);
 		}
 
-		if (cg.initializeConformers(canMol, mStrategy, maxTorsionSets, false)) {
+		if (cg.initializeConformers(canonicalFragment, mStrategy, maxTorsionSets, false)) {
 			for (int i = 0; i < mMaxNrConfs; i++) {
 				Conformer conformer = cg.getNextConformer();
 				if (conformer == null && i==0) {
-					ConformationSelfOrganizer sampler = new ConformationSelfOrganizer(canMol, true);
+					ConformationSelfOrganizer sampler = new ConformationSelfOrganizer(canonicalFragment, true);
 					conformer = sampler.generateOneConformer(mSeed);
 				}
 
@@ -97,10 +100,10 @@ public class ConformerSetGenerator {
 					break;
 
 				if(mUseFF) {
-					conformer.copyTo(canMol);
-					ForceFieldMMFF94 mmff = new ForceFieldMMFF94(canMol, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+					conformer.copyTo(canonicalFragment);
+					ForceFieldMMFF94 mmff = new ForceFieldMMFF94(canonicalFragment, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 					mmff.minimise();
-					conformer.copyFrom(canMol);
+					conformer.copyFrom(canonicalFragment);
 				}
 				confSet.add(conformer);
 				if(threadMaster!=null && threadMaster.threadMustDie())

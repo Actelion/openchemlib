@@ -153,7 +153,7 @@ public class RigidFragmentProvider {
 		StereoMolecule fragment = new StereoMolecule(atomCount, bondCount);
 		mol.copyMoleculeByAtoms(fragment, includeAtom, false, null);
 
-		fragment.setFragment(true); // if can encode as fragment, because H-atoms are converted deuterium
+		fragment.setFragment(true); // Can encode as fragment, because H-atoms are converted to deuterium
 
 		int[] coreToFragmentAtom = new int[coreAtomCount];
 		int[] fragmentToOriginalAtom = new int[atomCount];

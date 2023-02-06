@@ -69,6 +69,10 @@ public class RigidFragment {
 		return mConformerList.length;
 	}
 
+	public Conformer getConformer(int i) {
+		return mConformerList[i];
+	}
+
 	public double getConformerLikelihood(int i) {
 		return mConformerLikelihood[i];
 	}

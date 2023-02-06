@@ -1,36 +1,10 @@
 package com.actelion.research.chem.docking;
 
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.Base64.Decoder;
-import java.util.Base64.Encoder;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
-import org.openmolecules.chem.conf.gen.ConformerGenerator;
-
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.ThreadMaster;
-import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.IDCodeParser;
-import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.Molecule3D;
-import com.actelion.research.chem.SSSearcher;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.alignment3d.KabschAlignment;
-import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
-import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.alignment3d.transformation.Rotation;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
 import com.actelion.research.chem.alignment3d.transformation.Translation;
@@ -42,7 +16,6 @@ import com.actelion.research.chem.docking.scoring.AbstractScoringEngine;
 import com.actelion.research.chem.docking.scoring.ChemPLP;
 import com.actelion.research.chem.docking.scoring.IdoScore;
 import com.actelion.research.chem.docking.shape.ShapeDocking;
-import com.actelion.research.chem.forcefield.mmff.MMFFExternalPositionConstraint;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.forcefield.mmff.MMFFPositionConstraint;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
@@ -54,7 +27,13 @@ import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
 import com.actelion.research.chem.phesa.ShapeVolume;
 import com.actelion.research.chem.potentialenergy.PositionConstraint;
-import com.actelion.research.chem.phesa.PheSAAlignment.PheSAResult;
+import org.openmolecules.chem.conf.gen.ConformerGenerator;
+
+import java.util.*;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class DockingEngine {
 /**
@@ -137,6 +116,7 @@ public class DockingEngine {
 	
 	public void setThreadMaster(ThreadMaster tm) {
 		threadMaster = tm;
+		shapeDocking.setThreadMaster(tm);
 	}
 	
 	

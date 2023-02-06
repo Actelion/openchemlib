@@ -275,7 +275,7 @@ public abstract class TorsionSetStrategy {
 	 * @param previousTorsionSet delivered by this method (or null if it is the first call)
 	 * @return torsion index set that adheres to already known collision rules
 	 */
-	public final TorsionSet getNextTorsionSet(TorsionSet previousTorsionSet) {
+	public final TorsionSet getNextTorsionSet(TorsionSet previousTorsionSet, ConformerSetDiagnostics diagnostics) {
 		// Some molecules have unavoidable internal strains,
 		// which we try to determine until we start returning second choices.
 		if (previousTorsionSet != null
@@ -286,8 +286,8 @@ public abstract class TorsionSetStrategy {
 			return getRandomSecondChoice();
 
 		if (mTotalCount == mMaxTotalCount) {
-			if (ConformerGenerator.PRINT_EXIT_REASON)
-				System.out.println("maxTotal("+mMaxTotalCount+") reached (1); collisions:"+mCollisionCount+" eliminationRules:"+mEliminationRuleList.size());
+			if (diagnostics != null)
+				diagnostics.setExitReason("maxTotal("+mMaxTotalCount+") reached (1); collisions:"+mCollisionCount+" eliminationRules:"+mEliminationRuleList.size());
 			return null;
 			}
 
@@ -316,8 +316,8 @@ public abstract class TorsionSetStrategy {
 			mTorsionSetList.add(ts);
 
 			if (mTotalCount == mMaxTotalCount) {
-				if (ConformerGenerator.PRINT_EXIT_REASON)
-					System.out.println("maxTotal(\"+mMaxTotalCount+\") reached (2); collisions:"+mCollisionCount+" eliminationRules:"+mEliminationRuleList.size());
+				if (diagnostics != null)
+					diagnostics.setExitReason("maxTotal(\"+mMaxTotalCount+\") reached (2); collisions:"+mCollisionCount+" eliminationRules:"+mEliminationRuleList.size());
 				return null;
 				}
 
@@ -341,17 +341,14 @@ public abstract class TorsionSetStrategy {
 				ts = getRandomSecondChoice();
 				}
 
-			if (ts == null && ConformerGenerator.PRINT_EXIT_REASON)
-				System.out.println("Inner strategy stop criterion hit");
+			if (ts == null && diagnostics != null)
+				diagnostics.setExitReason("Inner strategy stop criterion hit");
 
 			return ts;
 			}
 
 		mTotalCount++;
 		mTorsionSetList.add(ts);
-
-		if (ConformerGenerator.PRINT_DEBUG_INDEXES)
-			System.out.print("total:"+mTotalCount+" ");
 
 		return ts;
 		}
@@ -558,8 +555,8 @@ public abstract class TorsionSetStrategy {
 		return null;
 		}
 
-	// TODO remove this
-	public String eliminationRuleString(TorsionSetEliminationRule rule)  {
+	public String getEliminationRuleString(int ruleNo)  {
+		TorsionSetEliminationRule rule = mEliminationRuleList.get(ruleNo);
 		StringBuilder sb = new StringBuilder();
  		int index = 0;
 		for (int i=0; i<mRotatableBond.length; i++) {
@@ -585,6 +582,5 @@ public abstract class TorsionSetStrategy {
 		return sb.toString();
 		}
 
-	// TODO remove this
 	public ArrayList<TorsionSetEliminationRule> getEliminationRuleList() { return mEliminationRuleList; }
 }

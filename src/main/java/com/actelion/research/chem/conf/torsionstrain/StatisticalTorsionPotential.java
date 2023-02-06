@@ -1,25 +1,19 @@
 package com.actelion.research.chem.conf.torsionstrain;
 
+import com.actelion.research.chem.conf.TorsionDB;
+import com.actelion.research.chem.interactionstatistics.SplineFunction;
+import com.actelion.research.util.FastSpline;
+import com.actelion.research.util.SmoothingSplineInterpolator;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import com.actelion.research.chem.conf.TorsionDB;
-import com.actelion.research.chem.interactionstatistics.SplineFunction;
-import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
-import com.actelion.research.util.FastSpline;
-import com.actelion.research.util.SmoothingSplineInterpolator;
 
 public class StatisticalTorsionPotential {
 	
@@ -182,6 +176,7 @@ public class StatisticalTorsionPotential {
 				Y[i] = ff.value(X[i]);
 				}
 				catch(Exception e) {
+					e.printStackTrace();
 					Y[i] = 0;
 				}
 			}

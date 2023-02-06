@@ -1,28 +1,12 @@
 package com.actelion.research.chem.alignment3d;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Random;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.transformation.Rotation;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
 import com.actelion.research.chem.conf.Conformer;
-
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
-import com.actelion.research.chem.phesa.PheSAAlignment.PheSAResult;
 import com.actelion.research.chem.phesa.PheSAMolecule;
 import com.actelion.research.chem.phesa.ShapeVolume;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangle;
@@ -30,7 +14,9 @@ import com.actelion.research.chem.phesa.pharmacophore.PPTriangleCreator;
 import com.actelion.research.chem.phesa.pharmacophore.PPTriangleMatcher;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
-import com.actelion.research.util.EncoderFloatingPointNumbers;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PheSAAlignmentOptimizer {
 	
@@ -196,6 +182,7 @@ public class PheSAAlignmentOptimizer {
 				triangleResults.addAll(PPTriangleMatcher.getMatchingTransforms(refTriangles, fitTriangles,i,j,setting.useDirectionality));
 			}
 		}
+
 		List<AlignmentResult> sortedTriangleResults = triangleResults.stream()
 				.sorted(Comparator.reverseOrder())
 				.collect(Collectors.toList());
@@ -223,6 +210,7 @@ public class PheSAAlignmentOptimizer {
 		List<AlignmentResult> sortedSolutions = optimizedResults.stream()
 				.sorted(Comparator.reverseOrder())
 				.collect(Collectors.toList());
+
 		return sortedSolutions;
 	}
 	
@@ -388,8 +376,4 @@ public class PheSAAlignmentOptimizer {
 			return setting;
 		}
 	}
-	
-
-	
-
 }
