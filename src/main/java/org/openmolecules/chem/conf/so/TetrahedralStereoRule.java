@@ -38,6 +38,15 @@ import java.util.ArrayList;
 public class TetrahedralStereoRule extends ConformationRule {
 	private int[] mRotatableAtom,mStaticNeighbour,mRotatableNeighbour;
 
+	/**
+	 * Expects neighbourAtom[5] as list of 3 or 4 neighbour atoms of the stereo center.
+	 * The list must be sorted by atom index. In case of 3 neighbours neighbourAtom[3] is -1.
+	 * neighbourAtom[4] contains the stereo center. If desired parity==cAtomParity1, then
+	 * neighbourAtom[0] && neighbourAtom[1] have swapped positions.
+	 * @param mol
+	 * @param neighbourAtom
+	 * @param neighbourBond
+	 */
 	public TetrahedralStereoRule(StereoMolecule mol, int[] neighbourAtom, int[] neighbourBond) {
 		super(neighbourAtom);
 		calculateRotatableAtoms(mol, neighbourAtom, neighbourBond);
@@ -73,12 +82,12 @@ public class TetrahedralStereoRule extends ConformationRule {
 					atomList[4] = atom;
 
 					if (parity == Molecule.cAtomParity1) {
-						int temp = atomList[2];
-						atomList[2] = atomList[1];
-						atomList[1] = temp;
-						temp = bondList[2];
-						bondList[2] = bondList[1];
-						bondList[1] = temp;
+						int temp = atomList[1];
+						atomList[1] = atomList[0];
+						atomList[0] = temp;
+						temp = bondList[1];
+						bondList[1] = bondList[0];
+						bondList[0] = temp;
 						}
 
 					ruleList.add(new TetrahedralStereoRule(mol, atomList, bondList));
@@ -176,48 +185,117 @@ public class TetrahedralStereoRule extends ConformationRule {
 	private void calculateRotatableAtoms(StereoMolecule mol, int[] neighbourAtom, int[] neighbourBond) {
 		int stereoCenter = neighbourAtom[4];
 		int neighbours = (neighbourAtom[3] == -1) ? 3 : 4;
-		boolean[][] isMemberAtom = new boolean[neighbours][mol.getAllAtoms()];
-		int[] substituentSize = new int[neighbours];
 
-		// find sizes of the 3 or 4 substituents (if not in a ring)
+
+		int[] fragmentNo = new int[mol.getAllAtoms()];
+		boolean[] neglectBond = new boolean[mol.getAllBonds()];
 		for (int i=0; i<neighbours; i++)
-			if (!mol.isRingBond(neighbourBond[i]))
-				substituentSize[i] = mol.getSubstituent(stereoCenter, neighbourAtom[i], isMemberAtom[i], null, null);
+			neglectBond[neighbourBond[i]] = true;
+		int fragmentCount = mol.getFragmentNumbers(fragmentNo, neglectBond, false);
 
-		int rotatableAtomCount = 0;
-		boolean[] isRotatableAtom = null;
-		for (int s=2; s<neighbours; s++) {
-			int smallestIndex = -1;
-			int smallestSize = Integer.MAX_VALUE;
-			for (int i=0; i<neighbours; i++) {
-				if (smallestSize > substituentSize[i] && substituentSize[i] != 0) {
-					smallestSize = substituentSize[i];
-					smallestIndex = i;
-					}
-				}
-			if (smallestIndex != -1) {
-				rotatableAtomCount += substituentSize[smallestIndex];
-				substituentSize[smallestIndex] = 0; // mark to not find it again
-				if (isRotatableAtom == null)
-					isRotatableAtom = isMemberAtom[smallestIndex];
-				else
-					for (int a=0; a<mol.getAllAtoms(); a++)
-						isRotatableAtom[a] |= isMemberAtom[smallestIndex][a];
-				}
-			else {
-				if (isRotatableAtom == null)
-					isRotatableAtom = new boolean[mol.getAllAtoms()];
-				for (int i=neighbours-1; i>=0; i--) {
-					if (!isRotatableAtom[neighbourAtom[i]]) {
-						isRotatableAtom[neighbourAtom[i]] = true;
-						rotatableAtomCount++;
-						break;
-						}
-					}
+		int[] fragmentSize = new int[fragmentCount];
+		for (int f:fragmentNo)
+			fragmentSize[f]++;
+
+		int neighbourFragmentCount = 0;
+		boolean[] isNeighbourFragment = new boolean[fragmentCount];
+		for (int i=0; i<neighbours; i++) {
+			int f = fragmentNo[neighbourAtom[i]];
+			if (!isNeighbourFragment[f]) {
+				isNeighbourFragment[f] = true;
+				neighbourFragmentCount++;
 				}
 			}
 
+		int[] neighbourFragmentNo = new int[neighbourFragmentCount];
+		int[] neighbourFragmentSize = new int[neighbourFragmentCount];
+		int[] neighbourFragmentBondCount = new int[neighbourFragmentCount];
 		int index = 0;
+		for (int f=0; f<fragmentCount; f++) {
+			if (isNeighbourFragment[f]) {
+				neighbourFragmentNo[index] = f;
+				neighbourFragmentSize[index] = fragmentSize[f];
+				for (int i=0; i<neighbours; i++)
+					if (f == fragmentNo[neighbourAtom[i]])
+						neighbourFragmentBondCount[index]++;
+				index++;
+			}
+		}
+
+		boolean[] isRotatableAtom = new boolean[mol.getAllAtoms()];
+		int rotatableAtomCount = 0;
+
+		// Now we know about every fragment that touches the stereo center:
+		// - number of bonds connecting to stereo center
+		// - number of fragment atoms
+		// - the fragment number
+		if (neighbourFragmentCount == neighbours) { // no rings: we need to rotate neighbours-2 substituents (== fragments)
+			int lastSmallestFragmentIndex = -1;
+			for (int i=0; i<neighbours-2; i++) {
+				int smallestFragmentIndex = -1;
+				int smallestFragmentSize = Integer.MAX_VALUE;
+				for (int j=0; j<neighbourFragmentNo.length; j++) {
+					if (j != lastSmallestFragmentIndex && neighbourFragmentSize[j] < smallestFragmentSize) {
+						smallestFragmentIndex = j;
+						smallestFragmentSize = neighbourFragmentSize[j];
+					}
+				}
+				for (int a=0; a<mol.getAllAtoms(); a++) {
+					if (fragmentNo[a] == neighbourFragmentNo[smallestFragmentIndex]) {
+						isRotatableAtom[a] = true;
+						rotatableAtomCount++;
+						}
+					}
+				lastSmallestFragmentIndex = smallestFragmentIndex;
+			}
+		}
+		else {  // If we have one ring (two bonds share the same fragment), we can rotate the ring (if four neighbours) or the rest
+			for (int i=0; i<neighbourFragmentNo.length; i++) {
+				if (neighbourFragmentBondCount[i] == 1 && neighbours == 3) {
+					for (int a=0; a<mol.getAllAtoms(); a++) {
+						if (fragmentNo[a] == neighbourFragmentNo[i]) {
+							isRotatableAtom[a] = true;
+							rotatableAtomCount++;
+						}
+					}
+					break;
+				}
+				if (neighbourFragmentBondCount[i] == 2 && neighbours == 4) {
+					boolean isSmallerFragment = 2*neighbourFragmentSize[i] < mol.getAllAtoms();
+					for (int a=0; a<mol.getAllAtoms(); a++) {
+						if (a != neighbourAtom[4]) {
+							if ((fragmentNo[a] == neighbourFragmentNo[i]) == isSmallerFragment) {
+								isRotatableAtom[a] = true;
+								rotatableAtomCount++;
+							}
+						}
+					}
+					break;
+				}
+			}
+		}
+
+		if (rotatableAtomCount == 0) {
+			for (int i=0; i<neighbourFragmentNo.length; i++) {
+				if (neighbourFragmentBondCount[i] == 1) {
+					for (int a=0; a<mol.getAllAtoms(); a++) {
+						if (fragmentNo[a] == neighbourFragmentNo[i]) {
+							isRotatableAtom[a] = true;
+							rotatableAtomCount++;
+						}
+					}
+					break;
+				}
+			}
+			// TODO we have a 3+ neighbour bond fragment and to proportionally rotate the closer part of it and not just one atom
+			int remainingNeighboursToRotate = neighbours - 2 - (rotatableAtomCount == 0 ? 0 : 1);
+			for (int i=0; i<remainingNeighboursToRotate; i++) {
+				isRotatableAtom[neighbourAtom[i]] = true;
+				rotatableAtomCount++;
+			}
+		}
+
+		index = 0;
 		mRotatableAtom = new int[rotatableAtomCount];
 		for (int i=0; i<isRotatableAtom.length; i++)
 			if (isRotatableAtom[i])
