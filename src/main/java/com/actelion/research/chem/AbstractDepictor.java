@@ -1662,32 +1662,45 @@ public abstract class AbstractDepictor<T> {
 		}
 
 
-	private int mpPreferredSide(int bnd) {
-		boolean[] isAromatic = new boolean[ExtendedMolecule.cMaxConnAtoms];
-		boolean[] isInRing = new boolean[ExtendedMolecule.cMaxConnAtoms];
+	private int mpPreferredSide(int bond) {
+		int[] value = new int[ExtendedMolecule.cMaxConnAtoms];
 		double[] angle = new double[ExtendedMolecule.cMaxConnAtoms];
 		double[] bondAngle = new double[2];
 
 		int angles = 0;
 		for (int i=0; i<2; i++) {
-			int atm = mMol.getBondAtom(i,bnd);
+			int atm = mMol.getBondAtom(i,bond);
 
 			for (int j=0; j<mMol.getConnAtoms(atm); j++) {
 				int connBond = mMol.getConnBond(atm,j);
-				if (connBond == bnd)
+				if (connBond == bond)
 					continue;
 
 				if (angles == 4)
 					return 0;
 
-				isAromatic[angles] = mMol.isAromaticBond(connBond);
-				isInRing[angles] = mMol.isRingBond(connBond);
-				angle[angles++] = mMol.getBondAngle(atm, mMol.getConnAtom(atm,j));
+				int connAtom = mMol.getConnAtom(atm,j);
+
+				value[angles] = 16;
+
+				// Prefer bond on side with conjugated pi systems
+				if (mMol.getAtomPi(connAtom) != 0)
+					value[angles] += mMol.isRingAtom(connAtom) ? 1 : 4;
+
+				// Prefer bond inside of ring. Even more, if it is aromatic.
+				if (mMol.isRingBond(bond)
+				 && mMol.isRingBond(connBond)) {
+					int sharedRing = mMol.getRingSet().getSharedRing(bond, connBond);
+					if (sharedRing != -1)
+						value[angles] += mMol.getRingSet().isAromatic(sharedRing) ? 64 : 6;
+					}
+
+				angle[angles++] = mMol.getBondAngle(atm, connAtom);
 				}
 			}
 
 		boolean changed;
-		bondAngle[0] = mMol.getBondAngle(mMol.getBondAtom(0,bnd),mMol.getBondAtom(1,bnd));
+		bondAngle[0] = mMol.getBondAngle(mMol.getBondAtom(0,bond),mMol.getBondAtom(1,bond));
 		if (bondAngle[0] < 0) {
 			bondAngle[1] = bondAngle[0] + Math.PI;
 			changed = false;
@@ -1700,18 +1713,10 @@ public abstract class AbstractDepictor<T> {
 
 		int side = 0;
 		for (int i=0; i<angles; i++) {
-			int value;
-			if (isAromatic[i])
-				value = 20;
-			else if (isInRing[i])
-				value = 17;
-			else
-				value = 16;
-
 			if ((angle[i] > bondAngle[0]) && (angle[i] < bondAngle[1]))
-				side -= value;
+				side -= value[i];
 			else
-				side += value;
+				side += value[i];
 			}
 
 		return (changed) ? -side : side;
