@@ -40,14 +40,14 @@ public class TorsionSetStrategyAdaptiveRandom extends TorsionSetStrategyRandom {
 	 * that connect colliding fragments.
 	 * Torsion indices are picked either by pure random or with a twisted likelyhood
 	 * towards towards those angles, that show higher frequencies in the CSD.
-	 * @param rotatableBond
+	 * @param conformerGenerator
 	 * @param preferLikelyTorsions if set then more frequent torsions are picked with higher probability
 	 * @param startWithMostProbable if true then the first torsion set returned contains for every bond the most frequent torsion
 	 * @param seed
 	 * @return
 	 */
-	public TorsionSetStrategyAdaptiveRandom(RotatableBond[] rotatableBond, RigidFragment[] fragment, boolean preferLikelyTorsions, boolean startWithMostProbable, long seed) {
-		super(rotatableBond, fragment, preferLikelyTorsions, seed);
+	public TorsionSetStrategyAdaptiveRandom(ConformerGenerator conformerGenerator, boolean preferLikelyTorsions, boolean startWithMostProbable, long seed) {
+		super(conformerGenerator, preferLikelyTorsions, seed);
 		mStartWithMostProbable = startWithMostProbable;
 		}
 

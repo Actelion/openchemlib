@@ -51,7 +51,6 @@ import java.util.Comparator;
  * whether and how serious atom collisions occurred.
  */
 public abstract class TorsionSetStrategy {
-	private static final long[] BITS = { 0x00L, 0x01L, 0x03L, 0x07L, 0x0fL, 0x1fL, 0x3fL, 0x7fL };
 	private static final int MAX_TOTAL_COUNT = 10000;   // maximum of distinct torsion sets to be checked
 
 	// Slightly colliding torsion sets, which are initially not considered acceptable, are collected in a cache.
@@ -74,16 +73,15 @@ public abstract class TorsionSetStrategy {
 
 	public static final double MAX_ALLOWED_COLLISION_INTENSITY = MAX_COLLISION_INTENSITY_BASE + SECOND_CHOICE_MAX_TOLERANCE;
 
+	protected ConformerGenerator mConformerGenerator;
 	protected RotatableBond[] mRotatableBond;
 	protected RigidFragment[] mRigidFragment;
-	private int mFragmentCount,mEncodingLongCount,mCollisionCount,mTotalCount,mMaxTotalCount,mPermutationCount;
+	private TorsionSetEncoder mTorsionSetEncoder;
+	private int mFragmentCount,mCollisionCount,mTotalCount,mMaxTotalCount,mPermutationCount;
 	private boolean mUsingSecondChoices;
 	private int[][][] mBondsBetweenFragments;
 	private int[][] mConnFragmentNo;
 	private int[][] mConnRotatableBondNo;
-	private int[] mEncodingBitCount;
-	private int[] mEncodingBitShift;
-	private int[] mEncodingLongIndex;
 	private int[] mGraphFragment;
 	private int[] mGraphBond;
 	private int[] mGraphParent;
@@ -91,11 +89,12 @@ public abstract class TorsionSetStrategy {
 	private double mLowestCollisionStrain;
 	private UniqueList<TorsionSet> mTorsionSetList;
 	private SortedList<TorsionSet> mSecondChoiceList;
-	private ArrayList<TorsionSetEliminationRule> mEliminationRuleList;
 
-	public TorsionSetStrategy(RotatableBond[] rotatableBond, RigidFragment[] fragment) {
-		mRotatableBond = rotatableBond;
-		mRigidFragment = fragment;
+	public TorsionSetStrategy(ConformerGenerator conformerGenerator) {
+		mConformerGenerator = conformerGenerator;
+		mRotatableBond = conformerGenerator.getRotatableBonds();
+		mRigidFragment = conformerGenerator.getRigidFragments();
+		mTorsionSetEncoder = new TorsionSetEncoder(mRigidFragment, mRotatableBond);
 
 		// create arrays of neighbor fragment no's
 		mFragmentCount = 0;
@@ -138,49 +137,13 @@ public abstract class TorsionSetStrategy {
 			}
 
 		mPermutationCount = 1;
-		mEncodingBitCount = new int[mRotatableBond.length+mRigidFragment.length];
-		mEncodingBitShift = new int[mRotatableBond.length+mRigidFragment.length];
-		mEncodingLongIndex = new int[mRotatableBond.length+mRigidFragment.length];
-		int bitCount = 0;
-		int longIndex = 0;
-		int index = 0;
-		for (RotatableBond rb:mRotatableBond) {
+
+		for (RotatableBond rb:mRotatableBond)
 			mPermutationCount *= rb.getTorsionCount();
-			int bits = neededBits(rb.getTorsionCount());
-			if (bitCount + bits <= 64) {
-				mEncodingBitShift[index] = bitCount;
-				bitCount += bits;
-				}
-			else {
-				longIndex++;
-				mEncodingBitShift[index] = 0;
-				bitCount = 0;
-				}
-			mEncodingBitCount[index] = bits;
-			mEncodingLongIndex[index] = longIndex;
-			index++;
-			}
-		for (RigidFragment rf:mRigidFragment) {
+		for (RigidFragment rf:mRigidFragment)
 			mPermutationCount *= rf.getConformerCount();
-			int bits = neededBits(rf.getConformerCount());
-			if (bitCount + bits <= 64) {
-				mEncodingBitShift[index] = bitCount;
-				bitCount += bits;
-				}
-			else {
-				longIndex++;
-				mEncodingBitShift[index] = 0;
-				bitCount = 0;
-				}
-			mEncodingBitCount[index] = bits;
-			mEncodingLongIndex[index] = longIndex;
-			index++;
-			}
-		mEncodingLongCount = longIndex+1;
 		if (mPermutationCount <= 0)
 			mPermutationCount = Integer.MAX_VALUE;
-
-		mEliminationRuleList = new ArrayList<>();
 
 		mTorsionSetList = new UniqueList<>();
 		mSecondChoiceList = new SortedList<>(Comparator.comparingDouble(ts -> ((TorsionSet)ts).getCollisionIntensitySum()));
@@ -197,16 +160,6 @@ public abstract class TorsionSetStrategy {
 
 	public void setMaxTotalCount(int maxTotalCount) {
 		mMaxTotalCount = Math.min(maxTotalCount, mPermutationCount);
-		}
-
-	private int neededBits(int count) {
-		int bits = 0;
-		int maxIndex = count-1;
-		while (maxIndex > 0) {
-			maxIndex >>= 1;
-			bits++;
-			}
-		return bits;
 		}
 
 	/*	public UniqueList<TorsionSet> getTorsionSetList() {
@@ -235,6 +188,10 @@ public abstract class TorsionSetStrategy {
 		return mTotalCount;
 		}
 
+	public TorsionSetEncoder getTorsionSetEncoder() {
+		return mTorsionSetEncoder;
+	}
+
 	/**
 	 * Creates a new TorsionSet object from a torsion index array.
 	 * An overall likelihood of the new torsion set is calculated
@@ -246,17 +203,15 @@ public abstract class TorsionSetStrategy {
 	 */
 	protected TorsionSet createTorsionSet(int[] torsionIndex, int[] conformerIndex) {
 		double likelihood = 1.0;
-		for (int j=0; j<mRotatableBond.length; j++)
-			likelihood *= mRotatableBond[j].getTorsionLikelyhood(torsionIndex[j]);
 		if (conformerIndex != null)
-			for (int j=0; j<mRigidFragment.length; j++)
-				likelihood *= mRigidFragment[j].getConformerLikelihood(conformerIndex[j]);
-		return new TorsionSet(torsionIndex, conformerIndex, mEncodingBitShift, mEncodingLongIndex, likelihood);
+			for (int rf=0; rf<mRigidFragment.length; rf++)
+				likelihood *= mRigidFragment[rf].getConformerLikelihood(conformerIndex[rf]);
+		BaseConformer baseConformer = mConformerGenerator.getBaseConformer(conformerIndex == null ?
+				new int[mRigidFragment.length] : conformerIndex);
+		for (int rb=0; rb<mRotatableBond.length; rb++)
+			likelihood *= baseConformer.getTorsionLikelyhood(rb, torsionIndex[rb]);
+		return new TorsionSet(torsionIndex, conformerIndex, mTorsionSetEncoder, likelihood);
 		}
-
-/*	protected TorsionSet createTorsionSet(int[] torsionIndex, double likelihood) {
-		return new TorsionSet(torsionIndex, mEncodingBitShift, mEncodingLongIndex, likelihood);
-		}	*/
 
 	protected boolean isNewTorsionSet(TorsionSet ts) {
 		return !mTorsionSetList.contains(ts);
@@ -283,11 +238,12 @@ public abstract class TorsionSetStrategy {
 			mLowestCollisionStrain = previousTorsionSet.getCollisionIntensitySum();
 
 		if (mUsingSecondChoices)
-			return getRandomSecondChoice();
+			return getBestSecondChoice();
 
 		if (mTotalCount == mMaxTotalCount) {
 			if (diagnostics != null)
-				diagnostics.setExitReason("maxTotal("+mMaxTotalCount+") reached (1); collisions:"+mCollisionCount+" eliminationRules:"+mEliminationRuleList.size());
+				diagnostics.setExitReason("maxTotal(" + mMaxTotalCount + ") reached A; collisions:" + mCollisionCount);
+
 			return null;
 			}
 
@@ -310,14 +266,16 @@ public abstract class TorsionSetStrategy {
 
 		ts = createTorsionSet(previousTorsionSet);
 
-		while (ts != null && matchesEliminationRule(ts, tolerance)) {
+		while (ts != null
+				&& matchesEliminationRule(ts, tolerance, mConformerGenerator.getBaseConformer(
+						ts.getConformerIndexes()).getEliminationRules())) {
 			mCollisionCount++;
 			mTotalCount++;
 			mTorsionSetList.add(ts);
 
 			if (mTotalCount == mMaxTotalCount) {
 				if (diagnostics != null)
-					diagnostics.setExitReason("maxTotal(\"+mMaxTotalCount+\") reached (2); collisions:"+mCollisionCount+" eliminationRules:"+mEliminationRuleList.size());
+					diagnostics.setExitReason("maxTotal(\"+mMaxTotalCount+\") reached B; collisions:"+mCollisionCount);
 				return null;
 				}
 
@@ -338,7 +296,7 @@ public abstract class TorsionSetStrategy {
 					&& mSecondChoiceList.get(mSecondChoiceList.size()-1).getCollisionIntensitySum() > mLowestCollisionStrain + SECOND_CHOICE_MAX_TOLERANCE)
 					mSecondChoiceList.remove(mSecondChoiceList.size()-1);
 
-				ts = getRandomSecondChoice();
+				ts = getBestSecondChoice();
 				}
 
 			if (ts == null && diagnostics != null)
@@ -366,12 +324,26 @@ public abstract class TorsionSetStrategy {
 		return ts;
 		}
 
-	private TorsionSet getRandomSecondChoice() {
+	private TorsionSet getBestSecondChoice() {
 		if (mSecondChoiceList.size() == 0)
 			return null;
 
-		int index = (this instanceof TorsionSetStrategyRandom) ?
-				((TorsionSetStrategyRandom)this).getRandom().nextInt(mSecondChoiceList.size()) : 0;
+		int index = -1;
+
+		if (this instanceof TorsionSetStrategyRandom) {
+			index = ((TorsionSetStrategyRandom)this).getRandom().nextInt(mSecondChoiceList.size());
+			}
+		else {
+			double minCollisionIntensitySum = Double.MAX_VALUE;
+			for (int i=0; i<mSecondChoiceList.size(); i++) {
+				TorsionSet ts = mSecondChoiceList.get(i);
+				if (minCollisionIntensitySum > ts.getCollisionIntensitySum()) {
+					minCollisionIntensitySum = ts.getCollisionIntensitySum();
+					index = i;
+					}
+				}
+			}
+
 		TorsionSet ts = mSecondChoiceList.get(index);
 		mSecondChoiceList.remove(index);
 		return ts;
@@ -409,7 +381,7 @@ public abstract class TorsionSetStrategy {
 	/**
 	 * Must be called if the torsion indexes delivered with getNextTorsionIndexes()
 	 * caused an atom collision.
-	 * Completes a dictionary of bond sequences with specific torsions that cause
+	 * Completes a dictionary of bond sequences with specific torsions that causes
 	 * atom collisions. Depending on the strategy implementation, this disctionary
 	 * is taken into account, when creating new torsion sets.
 	 */
@@ -421,20 +393,18 @@ public abstract class TorsionSetStrategy {
 				for (int f2=0; f2<f1; f2++) {
 					if (collisionIntensityMatrix[f1][f2] != 0f) {
 						int[] rotatableBondIndex = mBondsBetweenFragments[f1][f2];
-						long[] mask = new long[mEncodingLongCount];
-						long[] data = new long[mEncodingLongCount];
-						for (int rb:rotatableBondIndex) {
-							data[mEncodingLongIndex[rb]] += (torsionIndex[rb] << mEncodingBitShift[rb]);
-							mask[mEncodingLongIndex[rb]] += (BITS[mEncodingBitCount[rb]] << mEncodingBitShift[rb]);
-							}
+						TorsionSetEliminationRule rule = new TorsionSetEliminationRule(torsionIndex,
+								rotatableBondIndex, collisionIntensityMatrix[f1][f2], mTorsionSetEncoder);
 						boolean isCovered = false;
 						ArrayList<TorsionSetEliminationRule> obsoleteList = null;
-						for (TorsionSetEliminationRule er:mEliminationRuleList) {
-							if (er.isCovered(mask, data)) {
+						ArrayList<TorsionSetEliminationRule> currentList = mConformerGenerator.getBaseConformer(
+								torsionSet.getConformerIndexes()).getEliminationRules();
+						for (TorsionSetEliminationRule er:currentList) {
+							if (er.isCovered(rule)) {
 								isCovered = true;
 								break;
 								}
-							if (er.isMoreGeneral(mask, data)) {
+							if (er.isMoreGeneral(rule)) {
 								if (obsoleteList == null)
 									obsoleteList = new ArrayList<>();
 								obsoleteList.add(er);
@@ -442,8 +412,8 @@ public abstract class TorsionSetStrategy {
 							}
 						if (!isCovered) {
 							if (obsoleteList != null)
-								mEliminationRuleList.removeAll(obsoleteList);
-							mEliminationRuleList.add(new TorsionSetEliminationRule(mask, data, collisionIntensityMatrix[f1][f2]));
+								currentList.removeAll(obsoleteList);
+							currentList.add(rule);
 //							eliminateTorsionSets(mask, data);
 // currently validity checking is done in getNextTorsionIndexes() against the list of elimination rules
 							}
@@ -465,14 +435,15 @@ public abstract class TorsionSetStrategy {
 	 */
 	protected double[] getBondAndFragmentCollisionIntensities(TorsionSet collidingTorsionSet) {
 		double[] collisionIntensity = new double[mRotatableBond.length+mRigidFragment.length];
-		for (TorsionSetEliminationRule er:mEliminationRuleList) {
-			if (collidingTorsionSet.matches(er, 0.0)) {
-				long[] mask = er.getMask();
+		ArrayList<TorsionSetEliminationRule> elimRules = mConformerGenerator.getBaseConformer(
+				collidingTorsionSet.getConformerIndexes()).getEliminationRules();
+
+		for (TorsionSetEliminationRule er:elimRules)
+			if (collidingTorsionSet.matches(er, 0.0))
 				for (int i=0; i<collisionIntensity.length; i++)
-					if ((mask[mEncodingLongIndex[i]] & (1L << mEncodingBitShift[i])) != 0L)
+					if (mTorsionSetEncoder.isMaskSet(er, i))
 						collisionIntensity[i] += er.getCollisionIntensity();
-				}
-			}
+
 		return collisionIntensity;
 		}
 
@@ -495,15 +466,16 @@ public abstract class TorsionSetStrategy {
 	 */
 	public double getContribution(TorsionSet torsionSet) {
 		double likelyhood = 1.0;
-		for (int i=0; i<mRotatableBond.length; i++)
-			likelyhood *= mRotatableBond[i].getTorsionLikelyhood(torsionSet.getTorsionIndexes()[i]);
-		for (int i=0; i<mRigidFragment.length; i++)
-			likelyhood *= mRigidFragment[i].getConformerLikelihood(torsionSet.getConformerIndexes()[i]);
+		for (int rf=0; rf<mRigidFragment.length; rf++)
+			likelyhood *= mRigidFragment[rf].getConformerLikelihood(torsionSet.getConformerIndexes()[rf]);
+		BaseConformer baseConformer = mConformerGenerator.getBaseConformer(torsionSet.getConformerIndexes());
+		for (int rb=0; rb<mRotatableBond.length; rb++)
+			likelyhood *= baseConformer.getTorsionLikelyhood(rb, torsionSet.getTorsionIndexes()[rb]);
 		return likelyhood;
 		}
 
-	private boolean matchesEliminationRule(TorsionSet ts, double tolerance) {
-		for (TorsionSetEliminationRule er:mEliminationRuleList)
+	private boolean matchesEliminationRule(TorsionSet ts, double tolerance, ArrayList<TorsionSetEliminationRule> elimRules) {
+		for (TorsionSetEliminationRule er:elimRules)
 			if (ts.matches(er, tolerance))
 				return true;
 		return false;
@@ -554,33 +526,4 @@ public abstract class TorsionSetStrategy {
 			}
 		return null;
 		}
-
-	public String getEliminationRuleString(int ruleNo)  {
-		TorsionSetEliminationRule rule = mEliminationRuleList.get(ruleNo);
-		StringBuilder sb = new StringBuilder();
- 		int index = 0;
-		for (int i=0; i<mRotatableBond.length; i++) {
-			if (mRotatableBond[i].getTorsionCount() > 1) {
-				long mask = BITS[neededBits(mRotatableBond[i].getTorsionCount())] << mEncodingBitShift[index];
-				if ((rule.getMask()[mEncodingLongIndex[index]] & mask) != 0) {
-					int t = (int)((rule.getData()[mEncodingLongIndex[index]] & mask) >> mEncodingBitShift[index]);
-					sb.append("rb[" + i + "]=" + mRotatableBond[i].getTorsion(t) + "(" + (int)(100 * mRotatableBond[i].getTorsionLikelyhood(t)) + "%) ");
-					}
-				}
-			index++;
-			}
-		for (int i=0; i<mRigidFragment.length; i++) {
-			if (mRigidFragment[i].getConformerCount() > 1) {
-				long mask = BITS[neededBits(mRigidFragment[i].getConformerCount())] << mEncodingBitShift[index];
-				if ((rule.getMask()[mEncodingLongIndex[index]] & mask) != 0) {
-					int t = (int)((rule.getData()[mEncodingLongIndex[index]] & mask) >> mEncodingBitShift[index]);
-					sb.append("f[" + i + "]:(" + (int)(100 * mRigidFragment[i].getConformerLikelihood(t)) + "%) ");
-					}
-				}
-			index++;
-			}
-		return sb.toString();
-		}
-
-	public ArrayList<TorsionSetEliminationRule> getEliminationRuleList() { return mEliminationRuleList; }
-}
+	}

@@ -28,6 +28,7 @@
 
 package org.openmolecules.chem.conf.so;
 
+import com.actelion.research.calc.SingularValueDecomposition;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
@@ -173,18 +174,92 @@ System.out.println();
 	    	}
 	    }
 
-	protected void rotateAtom(Conformer conformer, int atom, int refAtom, Coordinates unit, double theta) {
+	/**
+	 * Rotate one atom and all connected atoms except those in the notList and beyond.
+	 * @param conformer
+	 * @param atom
+	 * @param notList atom list that are not moved
+	 * @param p center of rotation
+	 * @param n normal vector
+	 * @param theta angle
+	 */
+	protected static void rotateGroup(Conformer conformer, int atom, int[] notList, Coordinates p, Coordinates n, double theta) {
+		StereoMolecule mol = conformer.getMolecule();
+
+		boolean[] avoidAtom = new boolean[mol.getAllAtoms()];
+		int[] graphAtom = new int[mol.getAllAtoms()];
+
+		graphAtom[0] = atom;
+		avoidAtom[atom] = true;
+		for (int notAtom:notList)
+			avoidAtom[notAtom] = true;
+
+		rotateAtom(conformer, atom, p, n, theta);
+
+		int current = 0;
+		int highest = 0;
+		while (current <= highest) {
+			for (int i=0; i<mol.getAllConnAtoms(graphAtom[current]); i++) {
+				int candidate = mol.getConnAtom(graphAtom[current], i);
+				if (!avoidAtom[candidate]) {
+					avoidAtom[candidate] = true;
+					graphAtom[++highest] = candidate;
+					rotateAtom(conformer, candidate, p, n, theta);
+					}
+				}
+			current++;
+			}
+		}
+
+	protected static void rotateAtom(Conformer conformer, int atom, Coordinates p, Coordinates unit, double theta) {
 		double x = unit.x;
 		double y = unit.y;
 		double z = unit.z;
 		double c = Math.cos(theta);
 		double s = Math.sin(theta);
 		double t = 1-c;
-		double mx = conformer.getX(atom) - conformer.getX(refAtom);
-		double my = conformer.getY(atom) - conformer.getY(refAtom);
-		double mz = conformer.getZ(atom) - conformer.getZ(refAtom);
-		conformer.setX(atom, conformer.getX(refAtom) + (t*x*x+c)*mx + (t*x*y+s*z)*my + (t*x*z-s*y)*mz);
-		conformer.setY(atom, conformer.getY(refAtom) + (t*x*y-s*z)*mx + (t*y*y+c)*my + (t*y*z+s*x)*mz);
-		conformer.setZ(atom, conformer.getZ(refAtom) + (t*x*z+s*y)*mx + (t*z*y-s*x)*my + (t*z*z+c)*mz);
+		double mx = conformer.getX(atom) - p.x;
+		double my = conformer.getY(atom) - p.y;
+		double mz = conformer.getZ(atom) - p.z;
+		conformer.setX(atom, p.x + (t*x*x+c)*mx + (t*x*y+s*z)*my + (t*x*z-s*y)*mz);
+		conformer.setY(atom, p.y + (t*x*y-s*z)*mx + (t*y*y+c)*my + (t*y*z+s*x)*mz);
+		conformer.setZ(atom, p.z + (t*x*z+s*y)*mx + (t*z*y-s*x)*my + (t*z*z+c)*mz);
+		}
+
+	/**
+	 * @param conformer
+	 * @param atom
+	 * @param cog receives the center of gravity
+	 * @param n receives normal vector of plane nearest to all atoms
+	 * @param coords receives original atom coordinates translated towards center of gravity [atom count][3]
+	 */
+	public static void calculateNearestPlane(Conformer conformer, int[] atom, Coordinates cog, Coordinates n, double[][] coords) {
+		for (int i=0; i<atom.length; i++)
+			cog.add(conformer.getCoordinates(atom[i]));
+		cog.scale(1.0 / atom.length);
+
+		for (int i=0; i<atom.length; i++) {
+			coords[i][0] = conformer.getX(atom[i]) - cog.x;
+			coords[i][1] = conformer.getY(atom[i]) - cog.y;
+			coords[i][2] = conformer.getZ(atom[i]) - cog.z;
+		}
+
+		double[][] squareMatrix = new double[3][3];
+		for (int i=0; i<atom.length; i++)
+			for (int j=0; j<3; j++)
+				for (int k=0; k<3; k++)
+					squareMatrix[j][k] += coords[i][j] * coords[i][k];
+
+		SingularValueDecomposition svd = new SingularValueDecomposition(squareMatrix, null, null);
+		double[] S = svd.getSingularValues();
+		int minIndex = 0;
+		for (int i=1; i<3; i++)
+			if (S[i] < S[minIndex])
+				minIndex = i;
+
+		double[][] U = svd.getU();
+		n.x = U[0][minIndex];
+		n.y = U[1][minIndex];
+		n.z = U[2][minIndex];
 		}
 	}

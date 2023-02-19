@@ -1,11 +1,7 @@
 package com.actelion.research.chem.phesa;
 
 import com.actelion.research.calc.ThreadMaster;
-import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.PheSASetting;
 import com.actelion.research.chem.alignment3d.transformation.Rotation;
@@ -21,7 +17,6 @@ import com.actelion.research.chem.descriptor.DescriptorInfo;
 import com.actelion.research.chem.phesaflex.FlexibleShapeAlignment;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 

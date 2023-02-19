@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Handles attropisomery as well as chiral allenes
+ * Handles atropisomers as well as chiral allenes
  */
 public class AxialStereoRule extends ConformationRule {
 	private int[] mRotatableAtom;
@@ -188,14 +188,18 @@ if (atomList[0] == Integer.MAX_VALUE || atomList[3] == Integer.MAX_VALUE) { // T
 			rotation = -rotation;
 
 		for (int atom:mRotatableAtom)
-			rotateAtom(conformer, atom, mAtom[1], unit, rotation);
+			rotateAtom(conformer, atom, conformer.getCoordinates(mAtom[1]), unit, rotation);
 
 		return true;
 		}
 
 	@Override
 	public double addStrain(Conformer conformer, double[] atomStrain) {
-		return conformer.calculateTorsion(mAtom) < 0 ? 1.0 : 0.0;
+		double strain = conformer.calculateTorsion(mAtom) < 0 ? 1.0 : 0.0;
+		if (atomStrain != null)
+			for (int atom:mAtom)
+				atomStrain[atom] += strain / 4;
+		return strain;
 		}
 
 	@Override

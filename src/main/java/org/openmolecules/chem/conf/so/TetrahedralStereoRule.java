@@ -109,7 +109,7 @@ public class TetrahedralStereoRule extends ConformationRule {
 
 		Coordinates rotationAxis = calculateRotationAxis(conformer);
 		for (int atom:mRotatableAtom)
-			rotateAtom(conformer, atom, mAtom[4], rotationAxis, Math.PI);
+			rotateAtom(conformer, atom, conformer.getCoordinates(mAtom[4]), rotationAxis, Math.PI);
 
 		return true;
 		}
@@ -133,8 +133,9 @@ public class TetrahedralStereoRule extends ConformationRule {
 		if (wrongCount != 0) {
 			for (int i=0; i<mAtom.length; i++) {
 				if (mAtom[i] != -1) {
-					double panalty = 0.25 * wrongCount; // arbitrary value 0.5 * 0.5;
-					atomStrain[mAtom[i]] += panalty;
+					double panalty = 0.68 * wrongCount; // arbitrary value: likelyhood factor 10 per two atoms;
+					if (atomStrain != null)
+						atomStrain[mAtom[i]] += panalty;
 					totalStrain += panalty;
 					}
 				}

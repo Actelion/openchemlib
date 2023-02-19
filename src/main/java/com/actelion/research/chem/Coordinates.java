@@ -77,28 +77,28 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return dist();
 	}
 
-	public final double dist() {
+	public double dist() {
 		return Math.sqrt(distSq());
 	}
-	public final double distSq() {
+	public double distSq() {
 		return  x*x + y*y + z*z;
 	}
 
-	public final double distanceSquared(Coordinates c) {
+	public double distanceSquared(Coordinates c) {
 		return (c.x-x)*(c.x-x) + (c.y-y)*(c.y-y) + (c.z-z)*(c.z-z);
 	}
-	public final double distSquareTo(Coordinates c) {
+	public double distSquareTo(Coordinates c) {
 		return distanceSquared(c);
 	}
-	public final double distance(Coordinates c) {
+	public double distance(Coordinates c) {
 		return Math.sqrt(distanceSquared(c));
 	}
 
-	public final double dot(Coordinates c) {
+	public double dot(Coordinates c) {
 		return x*c.x + y*c.y + z*c.z;
 	}
 
-	public final Coordinates cross(Coordinates c) {
+	public Coordinates cross(Coordinates c) {
 		return new Coordinates(y*c.z-z*c.y, -(x*c.z-z*c.x), x*c.y-y*c.x);
 	}
 
@@ -107,7 +107,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	 * @param c
 	 * @return angle in radian
 	 */
-	public final double getAngle(Coordinates c) {
+	public double getAngle(Coordinates c) {
 		double d1 = distSq();
 		double d2 = c.distSq();
 		if(d1==0 || d2==0) return 0;
@@ -139,19 +139,19 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return angle;
 	}
 
-	public final double getDihedral(Coordinates c2, Coordinates c3, Coordinates c4) {
+	public double getDihedral(Coordinates c2, Coordinates c3, Coordinates c4) {
 		return getDihedral(this, c2, c3, c4);
 	}
 
-	public final Coordinates subC(Coordinates c) {
+	public Coordinates subC(Coordinates c) {
 		return new Coordinates(x-c.x, y-c.y, z-c.z);
 	}
 
-	public final Coordinates addC(Coordinates c) {
+	public Coordinates addC(Coordinates c) {
 		return new Coordinates(x+c.x, y+c.y, z+c.z);
 	}
 
-	public final Coordinates scaleC(double scale) {
+	public Coordinates scaleC(double scale) {
 		return new Coordinates(x*scale, y*scale, z*scale);
 	}
 
@@ -170,7 +170,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	 * @param c
 	 * @return this after subtracting c
 	 */
-	public final Coordinates add(Coordinates c) {
+	public Coordinates add(Coordinates c) {
 		x+=c.x;
 		y+=c.y;
 		z+=c.z;
@@ -187,7 +187,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	 * @param scale
 	 * @return this after scaling this
 	 */
-	public final Coordinates scale(double scale) {
+	public Coordinates scale(double scale) {
 		x*=scale;
 		y*=scale;
 		z*=scale;
@@ -223,7 +223,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 							   x*m[0][2]+y*m[1][2]+z*m[2][2]);
 	}
 
-	public final Coordinates rotate(Coordinates normal, double theta) {
+	public Coordinates rotate(Coordinates normal, double theta) {
 		if(Math.abs(normal.x*normal.x+normal.y*normal.y+normal.z*normal.z-1)>1E-6) throw new IllegalArgumentException("normal needs to a unit vector: "+normal);
 		double x = normal.x;
 		double y = normal.y;
@@ -243,7 +243,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	/**
 	 * @return new Coordinates with a copy of this scaled to length=1.0
 	 */
-	public final Coordinates unitC() {
+	public Coordinates unitC() {
 		double d = dist();
 		if(d==0) {
 			System.err.println("Cannot call unitC() on a null vector");
@@ -257,7 +257,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	/**
 	 * @return this after scaling it to length=1.0
 	 */
-	public final Coordinates unit() {
+	public Coordinates unit() {
 		double d = dist();
 		if(d==0) {
 			System.err.println("Cannot call unit() on a null vector. Returned (1,0,0)");
@@ -311,22 +311,22 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return this;
 	}
 
-	public final boolean insideBounds(Coordinates[] bounds) {
+	public boolean insideBounds(Coordinates[] bounds) {
 		return bounds!=null && bounds[0].x<=x && x<=bounds[1].x && bounds[0].y<=y && y<=bounds[1].y && bounds[0].z<=z && z<=bounds[1].z;
 	}
 
 	@Override
-	public final String toString() {
+	public String toString() {
 		DecimalFormat df = new DecimalFormat("0.00");
 		return "[" + df.format(x) + ", " + df.format(y) + ", " + df.format(z) + "]";
 	}
 
-	public final String toStringSpaceDelimited() {
+	public String toStringSpaceDelimited() {
 		DecimalFormat df = new DecimalFormat("0.00");
 		return df.format(x) + " " + df.format(y) + " " + df.format(z);
 	}
 
-	public final String toStringSpaceDelimited(Locale locale) {
+	public String toStringSpaceDelimited(Locale locale) {
 		NumberFormat nf = NumberFormat.getNumberInstance(locale);
 		DecimalFormat df = (DecimalFormat)nf;
 		df.applyPattern("0.00");
@@ -334,20 +334,20 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	}
 
 	@Override
-	public final boolean equals(Object o) {
+	public boolean equals(Object o) {
 		if(o==null || !(o instanceof Coordinates)) return false;
 		Coordinates c = (Coordinates) o;
 		return Math.abs(c.x-x) + Math.abs(c.y-y) + Math.abs(c.z-z) < 1E-6;
 	}
 
-	public final boolean isNaN() {
+	public boolean isNaN() {
 		return Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z);
 	}
 
-	public final Coordinates min(Coordinates c) {
+	public Coordinates min(Coordinates c) {
 		return new Coordinates(Math.min(x, c.x), Math.min(y, c.y), Math.min(z, c.z));
 	}
-	public final Coordinates max(Coordinates c) {
+	public Coordinates max(Coordinates c) {
 		return new Coordinates(Math.max(x, c.x), Math.max(y, c.y), Math.max(z, c.z));
 	}
 
@@ -358,7 +358,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	}
 
 	/////////////////// UTILITITIES ///////////////////////////////////////
-	public static final Coordinates min(Coordinates[] c) {
+	public static Coordinates min(Coordinates[] c) {
 		Coordinates min = new Coordinates(c[0]);
 		for (int i = 1; i < c.length; i++) {
 			min.x = Math.min(c[i].x, min.x);
@@ -368,7 +368,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return min;
 	}
 
-	public static final Coordinates max(Coordinates[] c) {
+	public static Coordinates max(Coordinates[] c) {
 		Coordinates max = new Coordinates(c[0]);
 		for (int i = 1; i < c.length; i++) {
 			max.x = Math.max(c[i].x, max.x);
@@ -378,7 +378,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return max;
 	}
 
-	public static final Coordinates createBarycenter(Coordinates... coords) {
+	public static Coordinates createBarycenter(Coordinates... coords) {
 		if(coords==null) throw new IllegalArgumentException("The coordinates are null");
 		Coordinates res = new Coordinates();
 		for(int i=0; i<coords.length; i++) {
@@ -400,7 +400,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	 * @param c3
 	 * @return
 	 */
-	public static final Coordinates getMirror(Coordinates p, Coordinates c1, Coordinates c2, Coordinates c3) {
+	public static Coordinates getMirror(Coordinates p, Coordinates c1, Coordinates c2, Coordinates c3) {
 		//define a unit normal vector to the plane
 		Coordinates r31 = new Coordinates(c3);
 		r31.sub(c1);
@@ -419,7 +419,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return pp;
 	}
 
-/*	public static final double getDihedral(Coordinates c1, Coordinates c2, Coordinates c3, Coordinates c4) {
+/*	public static double getDihedral(Coordinates c1, Coordinates c2, Coordinates c3, Coordinates c4) {
 		//Coordinates c1 = this;
 		// Calculate the vectors between atoms
 		Coordinates r12 = new Coordinates(c1);
@@ -463,7 +463,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	 * @param c4
 	 * @return torsion in the range: -pi <= torsion <= pi
 	 */
-	public static final double getDihedral(Coordinates c1, Coordinates c2, Coordinates c3, Coordinates c4) {
+	public static double getDihedral(Coordinates c1, Coordinates c2, Coordinates c3, Coordinates c4) {
 		// changed from above, because it seems a little more efficient; TLS 2-Nov-2016
 		Coordinates v1 = c2.subC(c1);
 		Coordinates v2 = c3.subC(c2);
@@ -483,7 +483,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return 0;
 	}
 
-	public static final Coordinates random() {
+	public static Coordinates random() {
 		Random random = new Random();
 		return new Coordinates(random.nextDouble()*2-1, random.nextDouble()*2-1, random.nextDouble()*2-1);
 	}

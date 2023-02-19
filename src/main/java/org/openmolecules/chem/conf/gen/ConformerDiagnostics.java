@@ -7,8 +7,9 @@ import java.util.ArrayList;
 
 public class ConformerDiagnostics {
 	private String mIDCode,mCoords;
+	private BaseConformer mBaseConformer;
 	private double mCollisionIntensity;
-	private int[] mTorsion,mTorsionIndex,mConformerIndex,mCollisionAtoms;
+	private int[] mTorsionIndex,mConformerIndex,mCollisionAtoms,mFixedTorsion;
 	private ArrayList<String> mEliminationRules;
 	private StringBuilder mCollisionLog;
 	private boolean mSuccess;
@@ -20,10 +21,18 @@ public class ConformerDiagnostics {
 		mEliminationRules = new ArrayList<>();
 	}
 
-	protected void setConformer(Conformer c) {
+	protected void setConformer(BaseConformer bc, Conformer c) {
 		Canonizer can = new Canonizer(c.toMolecule(null));
 		mIDCode = can.getIDCode();
 		mCoords = can.getEncodedCoordinates();
+		mBaseConformer = bc;
+		mFixedTorsion = new int[bc.getRotatableBonds().length];
+		for (int i=0; i<mFixedTorsion.length; i++)
+			mFixedTorsion[i] = c.getBondTorsion(bc.getRotatableBonds()[i].getBond());
+	}
+
+	protected BaseConformer getBaseConformer() {
+		return mBaseConformer;
 	}
 
 	protected void setCollisionIntensity(double v) {
@@ -74,6 +83,10 @@ public class ConformerDiagnostics {
 
 	public int[] getTorsionIndexes() {
 		return mTorsionIndex;
+	}
+
+	public int[] getFixedTorsions() {
+		return mFixedTorsion;
 	}
 
 	public String getCollisionLog() {

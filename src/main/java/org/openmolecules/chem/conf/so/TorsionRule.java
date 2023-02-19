@@ -64,7 +64,7 @@ public class TorsionRule extends ConformationRule {
 		TorsionDB.initialize(TorsionDB.MODE_ANGLES);
 
 		boolean[] isRotatableBond = new boolean[mol.getAllBonds()];
-		TorsionDB.findRotatableBonds(mol, false, isRotatableBond);
+		TorsionDB.findRotatableBonds(mol, true, isRotatableBond);
 		for (int bond=0; bond<mol.getBonds(); bond++) {
 			if (isRotatableBond[bond]) {
 				int[] torsionAtom = new int[4];
@@ -288,7 +288,7 @@ System.out.println();
 	    if (mAtomToRotate != null) {	// rotate smaller side of the molecule
     	    double rotation = (mSmallerSubstituentIndex == 0) ? -angleCorrection : angleCorrection;
             for (int a:mAtomToRotate)
-            	rotateAtom(conformer, a, mAtom[1], unit, rotation);
+            	rotateAtom(conformer, a, conformer.getCoordinates(mAtom[1]), unit, rotation);
 	        }
 	    else {	// rotate first and second atom shell from bond atoms; reduce angle for second shell atoms and if one side is more rigid
 	    	int bond = mol.getBond(mAtom[1], mAtom[2]);
@@ -377,12 +377,12 @@ System.out.println((mAtomToRotate==null?"ring":"!ring")+" before:"+currentTorsio
 	 * @param theta
 	 */
 	private void rotateGroup(Conformer conformer, int atom, int refAtom, Coordinates unit, double theta) {
-		rotateAtom(conformer, atom, refAtom, unit, theta);
+		rotateAtom(conformer, atom, conformer.getCoordinates(refAtom), unit, theta);
 	    StereoMolecule mol = conformer.getMolecule();
         for (int i=0; i<mol.getAllConnAtoms(atom); i++) {
         	int connAtom = mol.getConnAtom(atom, i);
         	if (mol.getAllConnAtoms(connAtom) == 1)
-        		rotateAtom(conformer, connAtom, refAtom, unit, theta);
+        		rotateAtom(conformer, connAtom, conformer.getCoordinates(refAtom), unit, theta);
         	}
 		}
 
@@ -398,6 +398,12 @@ System.out.println((mAtomToRotate==null?"ring":"!ring")+" before:"+currentTorsio
 		double torsion = 180 * angle / Math.PI;
 
 		int index = findApplicableTorsionIndex(angle);
+if(index == -1) {
+System.out.print("TorsionRule angle: "+angle+" torsions:");
+for (int t:mTorsion)
+ System.out.print(" "+t);
+System.out.println();
+}
 
 		double severity = getSeverity(angle, index);
 		if (severity == 0.0)
@@ -411,19 +417,23 @@ System.out.println((mAtomToRotate==null?"ring":"!ring")+" before:"+currentTorsio
 
 	    StereoMolecule mol = conformer.getMolecule();
 
-	    double penalty = severity*dif*dif/14400;	// make a 60 degree dif penalty the same as 0.5 Angstrom distance penalty
+		// Use 50% the rotation barrier of butane (6 kcal/mol), if 60 degrees off.
+		// The major strain contribution should come from atom repulsion strains if a torsion is not optimal.
+	    double strain = 3.0 * severity * dif*dif/3600;
 
 		double totalStrain = 0;
 	    for (int i=0; i<mol.getAllConnAtoms(mAtom[1]); i++) {
 	        if (mol.getConnAtom(mAtom[1], i) != mAtom[2]) {
-	        	atomStrain[mol.getConnAtom(mAtom[1], i)] += penalty;
-				totalStrain += penalty;
+	        	if (atomStrain != null)
+		        	atomStrain[mol.getConnAtom(mAtom[1], i)] += strain;
+				totalStrain += strain;
 	        	}
 	    	}
         for (int i=0; i<mol.getAllConnAtoms(mAtom[2]); i++) {
             if (mol.getConnAtom(mAtom[2], i) != mAtom[1]) {
-            	atomStrain[mol.getConnAtom(mAtom[2], i)] += penalty;
-				totalStrain += penalty;
+	            if (atomStrain != null)
+	            	atomStrain[mol.getConnAtom(mAtom[2], i)] += strain;
+				totalStrain += strain;
 		    	}
 			}
 		return totalStrain;

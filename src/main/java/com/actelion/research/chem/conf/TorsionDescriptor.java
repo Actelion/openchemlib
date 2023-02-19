@@ -47,7 +47,7 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 	/**
 	 *
 	 * @param torsion torsion angles of rotatable bonds from 0 to maxTorsion
-	 * @param maxTorsion maxcimum torsions of rotatable bonds defining individual symmetry dependent range
+	 * @param maxTorsion maximum torsions of rotatable bonds defining individual symmetry dependent range
 	 */
 	public TorsionDescriptor(float[] torsion, float[] maxTorsion) {
 		mTorsion = torsion;

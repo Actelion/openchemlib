@@ -40,12 +40,12 @@ public class TorsionSetStrategyLikelySystematic extends TorsionSetStrategy {
 	private TorsionSet[]	mAvailableTorsionSet;
 	private int				mAvailableTorsionSetIndex;
 
-	public TorsionSetStrategyLikelySystematic(RotatableBond[] rotatableBond, RigidFragment[] fragment) {
-		super(rotatableBond, fragment);
-		mCurrentMaxTorsionIndex = new int[rotatableBond.length];
-		mCurrentMaxConformerIndex = new int[fragment.length];
+	public TorsionSetStrategyLikelySystematic(ConformerGenerator conformerGenerator) {
+		super(conformerGenerator);
+		mCurrentMaxTorsionIndex = new int[mRotatableBond.length];
+		mCurrentMaxConformerIndex = new int[mRigidFragment.length];
 		mAvailableTorsionSet = new TorsionSet[1];
-		mAvailableTorsionSet[0] = createTorsionSet(new int[rotatableBond.length], new int[fragment.length]);
+		mAvailableTorsionSet[0] = createTorsionSet(new int[mRotatableBond.length], new int[mRigidFragment.length]);
 		mAvailableTorsionSetIndex = -1;
 		}
 
@@ -75,23 +75,24 @@ public class TorsionSetStrategyLikelySystematic extends TorsionSetStrategy {
 		int bestIndex = -1;
 		boolean isConformerIndex = false;
 		double minLoss = Double.MAX_VALUE;
-		for (int i=0; i<mCurrentMaxTorsionIndex.length; i++) {
-			if (mCurrentMaxTorsionIndex[i] < mRotatableBond[i].getTorsionCount()-1) {
-				double loss = mRotatableBond[i].getTorsionLikelyhood(mCurrentMaxTorsionIndex[i])
-							/ mRotatableBond[i].getTorsionLikelyhood(mCurrentMaxTorsionIndex[i]+1);
+		BaseConformer baseConformer = mConformerGenerator.getBaseConformer(mCurrentMaxConformerIndex);
+		for (int rb=0; rb<mCurrentMaxTorsionIndex.length; rb++) {
+			if (mCurrentMaxTorsionIndex[rb] < mRotatableBond[rb].getTorsionCount()-1) {
+				double loss = baseConformer.getTorsionLikelyhood(rb, mCurrentMaxTorsionIndex[rb])
+							/ baseConformer.getTorsionLikelyhood(rb, mCurrentMaxTorsionIndex[rb]+1);
 				if (minLoss > loss) {
 					minLoss = loss;
-					bestIndex = i;
+					bestIndex = rb;
 					}
 				}
 			}
-		for (int i=0; i<mCurrentMaxConformerIndex.length; i++) {
-			if (mCurrentMaxConformerIndex[i] < mRigidFragment[i].getConformerCount()-1) {
-				double loss = mRigidFragment[i].getConformerLikelihood(mCurrentMaxConformerIndex[i])
-						    / mRigidFragment[i].getConformerLikelihood(mCurrentMaxConformerIndex[i]+1);
+		for (int rf=0; rf<mCurrentMaxConformerIndex.length; rf++) {
+			if (mCurrentMaxConformerIndex[rf] < mRigidFragment[rf].getConformerCount()-1) {
+				double loss = mRigidFragment[rf].getConformerLikelihood(mCurrentMaxConformerIndex[rf])
+						    / mRigidFragment[rf].getConformerLikelihood(mCurrentMaxConformerIndex[rf]+1);
 				if (minLoss > loss) {
 					minLoss = loss;
-					bestIndex = i;
+					bestIndex = rf;
 					isConformerIndex = true;
 					}
 				}

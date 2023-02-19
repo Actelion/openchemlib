@@ -40,11 +40,13 @@ import com.actelion.research.util.DoubleFormat;
 import java.util.ArrayList;
 
 public class DistanceRule extends ConformationRule {
-	private static final double VDW_TOLERANCE = 0.85;
+	private static final double VDW_RADIUS_CORRECTION = 1.02;   // We increase reported VDW radii to increase Lennard-Jones energies
 
-	private static final int PRIORITY_ONE_BOND = 10;
+	private static final int PRIORITY_ONE_BOND = 10;    // We also use priorities to distinguish cases
 	private static final int PRIORITY_TWO_BONDS = 5;
 	private static final int PRIORITY_THREE_BONDS = 3;
+	private static final int PRIORITY_FOUR_AND_MORE_BONDS = 1;
+	private static final int PRIORITY_DISCONNECTED = 0;
 
 	private double[] mDistance;
 	private int[] mNotList;
@@ -79,7 +81,7 @@ public class DistanceRule extends ConformationRule {
 		mPriority = priority;
 		}
 
-   public DistanceRule(int[] atom, int[] notList, double minDistance, double maxDistance, int priority) {
+	public DistanceRule(int[] atom, int[] notList, double minDistance, double maxDistance, int priority) {
 		super(atom);
 		mDistance = new double[2];
 		mDistance[0] = minDistance;
@@ -134,7 +136,7 @@ public class DistanceRule extends ConformationRule {
 				}
 			}
 
-					// distances with 3 bonds between both atoms (special cases only)
+		// distances with 3 bonds between both atoms (special cases only)
 //		int[] bondRingSize = calculateBondRingSizes(mol);
 		for (int bond=0; bond<mol.getAllBonds(); bond++) {
 			if (mol.isAromaticBond(bond)
@@ -332,8 +334,6 @@ public class DistanceRule extends ConformationRule {
 								notList[1] = parent;
 								rule[rootAtom][candidate] = new DistanceRule(combineAtoms(rootAtom, candidate), notList,
 										getVDWRadius(rootAtom, mol) + getVDWRadius(candidate, mol), distanceToRoot[candidate], 0);
-
-								rule[rootAtom][candidate].mDistance[0] *= VDW_TOLERANCE; // in reality non binding atoms sometimes come closer...
 								}
 							}
 						}
@@ -566,9 +566,6 @@ public class DistanceRule extends ConformationRule {
 
 	@Override
 	public boolean apply(Conformer conformer, double cycleFactor) {
-/*
-double strainBefore = addStrain(conformer, new double[conformer.getMolecule().getAllAtoms()]);
-*/
 		double dx = conformer.getX(mAtom[1]) - conformer.getX(mAtom[0]);
 		double dy = conformer.getY(mAtom[1]) - conformer.getY(mAtom[0]);
 		double dz = conformer.getZ(mAtom[1]) - conformer.getZ(mAtom[0]);
@@ -597,23 +594,17 @@ double strainBefore = addStrain(conformer, new double[conformer.getMolecule().ge
 
 		double factor = cycleFactor * distanceFactor;
 
-// for exclusively moving each of both involved atoms atom 50%
-//moveAtom(conformer, mAtom[0], dx*factor/2f, dy*factor/2f, dz*factor/2f);
-//moveAtom(conformer, mAtom[1], -dx*factor/2f, -dy*factor/2f, -dz*factor/2f);
-
 		StereoMolecule mol = conformer.getMolecule();
 
 		if (mPriority == PRIORITY_ONE_BOND) {
 			if (mol.getAllConnAtoms(mAtom[0]) == 1
 			 && mol.getAllConnAtoms(mAtom[1]) != 1) {
 				conformer.getCoordinates(mAtom[0]).add(dx*factor, dy*factor, dz*factor);
-//printStuff(conformer, distance);
 				return true;
 				}
 			if (mol.getAllConnAtoms(mAtom[0]) != 1
 			 && mol.getAllConnAtoms(mAtom[1]) == 1) {
 				conformer.getCoordinates(mAtom[1]).add(-dx*factor, -dy*factor, -dz*factor);
-//printStuff(conformer, distance);
 				return true;
 				}
 			}
@@ -621,55 +612,94 @@ double strainBefore = addStrain(conformer, new double[conformer.getMolecule().ge
 		factor /= 2f;
 		moveGroup(conformer, mAtom[0], mNotList, dx*factor, dy*factor, dz*factor);
 		moveGroup(conformer, mAtom[1], mNotList, -dx*factor, -dy*factor, -dz*factor);
-/*
-double strainAfter = addStrain(conformer, new double[conformer.getMolecule().getAllAtoms()]);
-if (strainAfter > 0.0001) System.out.println("Strain before:"+strainBefore+" after:"+strainAfter+" distanceBefore:"+distance+" "+toString());
-*/
-//printStuff(conformer, distance);
+
 		return true;
 		}
-/*
-private void printStuff(Conformer conformer, double distanceBefore) {
- double dx = conformer.x[mAtom[1]] - conformer.x[mAtom[0]];
- double dy = conformer.y[mAtom[1]] - conformer.y[mAtom[0]];
- double dz = conformer.z[mAtom[1]] - conformer.z[mAtom[0]];
- double distanceAfter = Math.sqrt(dx*dx+dy*dy+dz*dz);
- System.out.println("Distance before:"+distanceBefore+" distanceAfter:"+distanceAfter+((mDistance.length==1 && Math.abs(distanceAfter-mDistance[0])>Math.abs(distanceBefore-mDistance[0]))?"!!!!!!!!!!!!!":""));	
-}*/
 
 	@Override
 	public double addStrain(Conformer conformer, double[] atomStrain) {
+		double strain = getStrain(conformer);
+		if (atomStrain != null && strain > 0.0) {
+			atomStrain[mAtom[0]] += strain / 2;
+			atomStrain[mAtom[1]] += strain / 2;
+			}
+		return strain;
+		}
+
+	private double getStrain(Conformer conformer) {
 		double distance = conformer.getCoordinates(mAtom[1]).distance(conformer.getCoordinates(mAtom[0]));
-		double totalStrain = 0;
 		if (mDistance.length == 2) {
-			if (distance < mDistance[0]) {	// van der waals radii
-				double strain = (mDistance[0] - distance) / 2.0f;
-				double panalty = strain*strain;
-				atomStrain[mAtom[0]] += panalty;
-				atomStrain[mAtom[1]] += panalty;
-				totalStrain += 2*panalty;
-/*TLSSystem.out.println(toString()+" distance:"+distance+" strain:"+strain+" panalty:"+panalty);*/
+			if (distance < VDW_RADIUS_CORRECTION * mDistance[0]) {
+				return calculateVDWStrain(conformer.getMolecule(), distance);
 				}
 			else if (distance > mDistance[1]) {
-				double strain = (distance - mDistance[1]) / 2.0f;
-				double panalty = strain*strain;
-				atomStrain[mAtom[0]] += panalty;
-				atomStrain[mAtom[1]] += panalty;
-				totalStrain += 2*panalty;
-/*TLSSystem.out.println(toString()+" distance:"+distance+" strain:"+strain+" panalty:"+panalty);*/
+				return calculateRelaxedStrain((distance - mDistance[1]) / distance);
 				}
 			}
 		else {
-			double strain = (distance - mDistance[0]) / 2.0f;
-			if (Math.abs(strain) > 0.005f) {
-				double panalty = strain*strain;
-    			atomStrain[mAtom[0]] += panalty;
-    			atomStrain[mAtom[1]] += panalty;
-    			totalStrain += 2*panalty;
-/*TLSSystem.out.println(toString()+" distance:"+distance+" strain:"+strain+" panalty:"+panalty);*/
-			    }
+			double strain = (mPriority == PRIORITY_ONE_BOND) ?
+					calculateDirectConnectionStrain(Math.abs(mDistance[0] - distance) / Math.max(mDistance[0], distance))
+						  : (mPriority == PRIORITY_TWO_BONDS) ?
+					calculateTwoBondStrain(Math.abs(mDistance[0] - distance) / Math.max(mDistance[0], distance))
+					: calculateRelaxedStrain(Math.abs(mDistance[0] - distance) / Math.max(mDistance[0], distance));
+			if (Math.abs(strain) > 0.01f)
+				return strain;
 			}
-		return totalStrain;
+		return 0.0;
+		}
+
+	public void printStrain(Conformer conformer) {
+		double distance = conformer.getCoordinates(mAtom[1]).distance(conformer.getCoordinates(mAtom[0]));
+		double strain = 0.0;
+		double must = 0.0;
+		if (mDistance.length == 2) {
+			if (distance < VDW_RADIUS_CORRECTION * mDistance[0]) {
+				must = mDistance[0];
+				strain = calculateVDWStrain(conformer.getMolecule(), distance);
+				}
+			else if (distance > mDistance[1]) {
+				must = mDistance[1];
+				strain = calculateRelaxedStrain((distance - mDistance[1]) / distance);
+				}
+			}
+		else {
+			must = mDistance[0];
+			strain = (mPriority == PRIORITY_ONE_BOND) ?
+					calculateDirectConnectionStrain(Math.abs(mDistance[0] - distance) / Math.max(mDistance[0], distance))
+					: (mPriority == PRIORITY_TWO_BONDS) ?
+					calculateTwoBondStrain(Math.abs(mDistance[0] - distance) / Math.max(mDistance[0], distance))
+					: calculateRelaxedStrain(Math.abs(mDistance[0] - distance) / Math.max(mDistance[0], distance));
+			}
+		if (strain > 0.001) {
+			System.out.print("Atoms("+Molecule.cAtomLabel[conformer.getMolecule().getAtomicNo(mAtom[0])]+mAtom[0]
+					+(mPriority == PRIORITY_ONE_BOND? "-" : mPriority == PRIORITY_TWO_BONDS? "-?-" : mPriority == PRIORITY_THREE_BONDS? "-?-?-" : "-...-")
+					+Molecule.cAtomLabel[conformer.getMolecule().getAtomicNo(mAtom[1])]+mAtom[1]+") distance:"+DoubleFormat.toString(distance, 4));
+			System.out.println(" must:"+DoubleFormat.toString(must,4)+" strain:"+DoubleFormat.toString(strain, 4));
+			}
+		}
+
+	private double calculateDirectConnectionStrain(double deltaDistance) {
+		// We use a quadratic potential with an energy penalty of 100.0 kcal/mol when 10% off
+		return 10000.0 * deltaDistance * deltaDistance;
+		}
+
+	private double calculateTwoBondStrain(double deltaDistance) {
+		// We use a quadratic potential with an energy penalty of 50 kcal/mol when 10% off
+		return 8000.0 * deltaDistance * deltaDistance;
+		}
+
+	private double calculateRelaxedStrain(double deltaDistance) {
+		// We use a quadratic potential with an energy penalty of 50 kcal/mol when 10% off
+		return 4000.0 * deltaDistance * deltaDistance;
+		}
+
+	private double calculateVDWStrain(StereoMolecule mol, double distance) {
+		// We use the repulsion part of the Lennard-Jones potential
+		double vdwradii = VDW_RADIUS_CORRECTION * getVDWRadius(mAtom[1], mol) + getVDWRadius(mAtom[0], mol);
+		double reldist = distance / vdwradii;
+		double reldist6 = Math.pow(reldist, -6);
+		double constant = 2.0f; // constant=1.0 causes a return value of 1.66 kcal/mol with reldist=0.9
+		return (reldist >= 1.0) ? 0.0 : constant * (reldist6 * reldist6 - reldist6);
 		}
 
 	@Override

@@ -28,6 +28,8 @@
 
 package org.openmolecules.chem.conf.gen;
 
+import com.actelion.research.chem.conf.Conformer;
+
 import java.util.Arrays;
 
 public class TorsionSet implements Comparable<TorsionSet> {
@@ -37,37 +39,21 @@ public class TorsionSet implements Comparable<TorsionSet> {
 	private double mCollisionIntensitySum;
 	private double[][] mCollisionIntensityMatrix;
 	private boolean mIsUsed;
-
-//	private int[] bitshift;
-//	private int[] longIndex;
+	private Conformer mConformer;
 
 	/**
 	 * Creates a new conformer description from torsion and conformer indexes.
 	 *
 	 * @param torsionIndex   torsion angle index for all rotatable bonds
 	 * @param conformerIndex conformer index for every rigid fragment
-	 * @param bitShift       bit position of torsion and conformer indexes
-	 * @param longIndex      index on long array for shifted torsion and conformer indexes
+	 * @param encoder
 	 * @param likelihood     all individual index likelyhoods multiplied
 	 */
-	public TorsionSet(int[] torsionIndex, int[] conformerIndex, int[] bitShift, int[] longIndex, double likelihood) {
+	public TorsionSet(int[] torsionIndex, int[] conformerIndex, TorsionSetEncoder encoder, double likelihood) {
 		mTorsionIndex = torsionIndex;
 		mConformerIndex = conformerIndex;
 		mLikelihood = likelihood;
-		mEncodedBits = new long[1 + longIndex[longIndex.length - 1]];
-
-//		this.bitshift = bitShift;
-//		this.longIndex = longIndex;
-
-		int i = 0;
-		for (int index : torsionIndex) {
-			mEncodedBits[longIndex[i]] += (index << bitShift[i]);
-			i++;
-		}
-		for (int index : conformerIndex) {
-			mEncodedBits[longIndex[i]] += (index << bitShift[i]);
-			i++;
-		}
+		mEncodedBits = encoder.encode(torsionIndex, conformerIndex);
 	}
 
 	/**
@@ -120,6 +106,14 @@ public class TorsionSet implements Comparable<TorsionSet> {
 
 	public void setUsed() {
 		mIsUsed = true;
+	}
+
+	public Conformer getConformer() {
+		return mConformer;
+	}
+
+	public void setConformer(Conformer c) {
+		mConformer = c;
 	}
 
 	/**

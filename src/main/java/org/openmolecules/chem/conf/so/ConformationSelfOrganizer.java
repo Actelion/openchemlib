@@ -29,11 +29,9 @@
 package org.openmolecules.chem.conf.so;
 
 import com.actelion.research.calc.ThreadMaster;
-import com.actelion.research.chem.Canonizer;
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.*;
+import com.actelion.research.chem.*;
+import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.conf.TorsionDescriptorHelper;
 import com.actelion.research.util.DoubleFormat;
 
 import java.io.BufferedWriter;
@@ -43,29 +41,38 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class ConformationSelfOrganizer {
-	private static final int    INITIAL_POOL_SIZE = 4;
-	private static final int    MAX_CONFORMER_TRIES = 6;
+	private static final int PHASE_PREPARATION = 0;         // without ambiguous rules (i.e. torsion)
+	private static final int PHASE_PRE_OPTIMIZATION = 1;    // with ambiguous rules before breakout
+	private static final int PHASE_BREAKOUT = 2;
+	private static final int PHASE_OPTIMIZATION = 3;
+	private static final int PHASE_MINIMIZATION = 4;
+	private static final int[] PHASE_CYCLES = { 40, 20, 20, 100, 20 };
+	private static final double[] PHASE_FACTOR = { 40, 20, 20, 100, 40 };
+	private static final String[] PHASE_NAME = { "preparation", "pre-optimization", "breakout", "optimization", "minimization" };
+
+	private static final int    INITIAL_POOL_SIZE = 8;
+	private static final int    MAX_CONFORMER_TRIES = 12;
 	private static final int    MAX_BREAKOUT_ROUNDS = 3;
-	private static final int    PREPARATION_CYCLES = 40;		// without ambiguous rules (i.e. torsion)
-	private static final int    PRE_OPTIMIZATION_CYCLES = 20;	// with ambiguous rules before breakout
-	private static final int    BREAKOUT_CYCLES = 20;
-	private static final int    OPTIMIZATION_CYCLES = 100;
-	private static final int    MINIMIZATION_CYCLES = 20;
+	private static final boolean PREFER_HIGH_STRAIN_RULES = false;
+	private static final boolean INITIALLY_SKIP_TORSION_RULES = false;
+	private static final int    CONSIDERED_PREVIOUS_CYCLE_COUNT = 10;    // must be much smaller than all the ...CYCLES above
 	private static final double	STANDARD_CYCLE_FACTOR = 1.0;
-	private static final double	MINIMIZATION_REDUCTION = 20.0;
-	private static final double ATOM_FLAT_RING_BREAKOUT_STRAIN = 0.25;
-	private static final double ATOM_CAGE_BREAKOUT_STRAIN = 2.0;
+	private static final double	MINIMIZATION_END_FACTOR = 0.01;
+	private static final double	ATOM_ACCEPTABLE_STRAIN = 2.72; // A conformer is considered acceptable if all atom strains are below this value
+	private static final double ATOM_FLAT_RING_BREAKOUT_STRAIN = 1000;    // TODO check
+	private static final double ATOM_CAGE_BREAKOUT_STRAIN = 2000;          // TODO check
+	private static final double TWIST_BOAT_ESCAPE_ANGLE = 0.6;  // angle to rotate ring member out of plane (from mid point between ring center and atom), after rotating it into the plane from the other side
+	private static final int    TWIST_BOAT_ESCAPE_FREQUENCY = 10;   // in every tenth cycle we try escaping trapped twist boats
 	private static final double	BREAKOUT_DISTANCE = 8.0;
-	private static final double MAX_AVERAGE_ATOM_STRAIN = 0.025;
-	private static final double MAX_HIGHEST_ATOM_STRAIN = 0.05;
-	private static final double MAX_STRAIN_TOLERANCE = 1.5;
+	private static final double	MAX_POOL_STRAIN_DIF = 2.72;     // 2 * 1.36 kcal/mol, which is factor 100
 
 public static boolean KEEP_INITIAL_COORDINATES = false;
 public static boolean WRITE_DW_FILE = false;
 private static final String DATAWARRIOR_DEBUG_FILE = "/home/thomas/data/debug/conformationSampler.dwar";
-private BufferedWriter mDWWriter;
-private Conformer mLastDWConformer;
-private int mDWCycle;
+private static BufferedWriter mDWWriter;
+private static Conformer mLastDWConformer;
+private static int mDWCycle;
+private String mDWMode;
 private double[] mDWStrain; 	// TODO get rid of this
 
 	private StereoMolecule		mMol;
@@ -74,7 +81,7 @@ private double[] mDWStrain; 	// TODO get rid of this
     private boolean				mPoolIsClosed;
 	private ArrayList<ConformationRule> mRuleList;
 	private ArrayList<SelfOrganizedConformer> mConformerList;
-	private double              mMinAverageAtomStrainInPool,mMinHighestAtomStrainInPool;
+	private double              mMinStrainInPool;
 	private int[]				mRuleCount;
 	private boolean[]			mSkipRule;
 	private int[]				mRotatableBondForDescriptor;
@@ -109,7 +116,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		    mMol.removeExplicitHydrogens();
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
 
-		mRuleList = new ArrayList<ConformationRule>();
+		mRuleList = new ArrayList<>();
 		mSkipRule = new boolean[ConformationRule.RULE_NAME.length];
 		mRuleCount = new int[ConformationRule.RULE_NAME.length];
 
@@ -225,23 +232,6 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
         mRandom = (randomSeed == 0) ? new Random() : new Random(randomSeed);
 
         SelfOrganizedConformer conformer = new SelfOrganizedConformer(mMol);
-
-		if (WRITE_DW_FILE) {
-			try {
-				writeDWFileStart();
-				mDWCycle = 0;
-				mLastDWConformer = null;
-				tryGenerateConformer(conformer);
-				writeDWFileEnd();
-				mDWWriter.close();
-				return conformer;
-				}
-			catch (IOException e) {
-				e.printStackTrace();
-				return null;
-				}
-			}
-
 		SelfOrganizedConformer bestConformer = null;
 		for (int i=0; i<MAX_CONFORMER_TRIES; i++) {
 			if (mThreadMaster != null && mThreadMaster.threadMustDie())
@@ -276,9 +266,8 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 	public void initializeConformers(long randomSeed, int maxConformers) {
         mRandom = (randomSeed == 0) ? new Random() : new Random(randomSeed);
 
-        mConformerList = new ArrayList<SelfOrganizedConformer>();
-		mMinHighestAtomStrainInPool = MAX_STRAIN_TOLERANCE * MAX_HIGHEST_ATOM_STRAIN;
-		mMinAverageAtomStrainInPool = MAX_STRAIN_TOLERANCE * MAX_AVERAGE_ATOM_STRAIN;
+        mConformerList = new ArrayList<>();
+		mMinStrainInPool = Double.MAX_VALUE;
         mPoolIsClosed = false;
 
 		int freeBondCount = 0;
@@ -311,26 +300,22 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 			if (conformer == null)
 				conformer = new SelfOrganizedConformer(mMol);
 			if (tryGenerateConformer(conformer)) {
-				if (addConformerIfNew(conformer))
-					conformer = null;
-				}
-			else if (conformer.getTotalStrain() / conformer.getSize() < MAX_STRAIN_TOLERANCE * mMinAverageAtomStrainInPool
-				  && conformer.getHighestAtomStrain() < MAX_STRAIN_TOLERANCE * mMinHighestAtomStrainInPool) {
-				if (addConformerIfNew(conformer))
+				// if optimization is successful, we have a good conformer
+				if (addIfNewOrReplaceIfBetter(conformer))
 					conformer = null;
 				}
 			else {
 				if (bestRefusedConformer == null) {
 					bestRefusedConformer = conformer;
 					conformer = null;
-					}
+				}
 				else if (bestRefusedConformer.isWorseThan(conformer)) {
 					SelfOrganizedConformer tempConformer = bestRefusedConformer;
 					bestRefusedConformer = conformer;
 					conformer = tempConformer;
-					}
 				}
 			}
+		}
 		if (mConformerList.isEmpty() && bestRefusedConformer != null)
 			mConformerList.add(bestRefusedConformer);
 		if (mConformerList.size() < finalPoolSize
@@ -338,37 +323,42 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 			mPoolIsClosed = true;
 		}
 
-	private boolean addConformerIfNew(SelfOrganizedConformer conformer) {
+	/**
+	 * @param conformer
+	 * @return true if the conformer was added or replaced another one
+	 */
+	private boolean addIfNewOrReplaceIfBetter(SelfOrganizedConformer conformer) {
 		if (mRotatableBondForDescriptor == null)
 			mRotatableBondForDescriptor = TorsionDescriptorHelper.findRotatableBonds(getMolecule());
 
-		conformer.calculateDescriptor(mRotatableBondForDescriptor);
-		boolean isNew = true;
-		for (SelfOrganizedConformer c:mConformerList) {
-			if (conformer.equals(c)) {
-				isNew = false;
-				break;
-			}
-		}
-		if (!isNew)
+		if (conformer.getTotalStrain() > mMinStrainInPool + MAX_POOL_STRAIN_DIF)
 			return false;
 
-		mConformerList.add(conformer);
+		conformer.calculateDescriptor(mRotatableBondForDescriptor);
 
-		double averageStrain = conformer.getTotalStrain() / conformer.getSize();
-		double highestStrain = conformer.getHighestAtomStrain();
-		if ((mMinAverageAtomStrainInPool > averageStrain)
-		 || (mMinHighestAtomStrainInPool > highestStrain)) {
-			if (mMinAverageAtomStrainInPool > averageStrain)
-				mMinAverageAtomStrainInPool = averageStrain;
-			if (mMinHighestAtomStrainInPool > highestStrain)
-				mMinHighestAtomStrainInPool = highestStrain;
-			for (int j=mConformerList.size()-1; j>=0; j--) {
-				SelfOrganizedConformer soc = mConformerList.get(j);
-				if (!soc.isAcceptable(mRuleList)
-						&& (soc.getTotalStrain() / soc.getSize() > MAX_STRAIN_TOLERANCE * mMinAverageAtomStrainInPool
-						|| soc.getHighestAtomStrain() > MAX_STRAIN_TOLERANCE * mMinHighestAtomStrainInPool))
-					mConformerList.remove(j);
+		for (int i=mConformerList.size()-1; i>=0; i--) {
+			SelfOrganizedConformer soc = mConformerList.get(i);
+			if (conformer.equals(soc)) {
+				if (soc.isWorseThan(conformer)) {
+					mConformerList.remove(i);
+					mConformerList.add(conformer);
+					if (mMinStrainInPool > conformer.getTotalStrain())
+						mMinStrainInPool = conformer.getTotalStrain();
+					return true;
+					}
+
+				return false;
+				}
+			}
+
+		mConformerList.add(conformer);
+		if (mMinStrainInPool > conformer.getTotalStrain()) {
+			mMinStrainInPool = conformer.getTotalStrain();
+
+			for (int i=mConformerList.size()-1; i>=0; i--) {
+				SelfOrganizedConformer soc = mConformerList.get(i);
+				if (soc.getTotalStrain() > mMinStrainInPool + MAX_POOL_STRAIN_DIF)
+					mConformerList.remove(i);
 				}
 			}
 
@@ -382,6 +372,10 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 	 * created as long as molecule flexibility allows. If a representative set of low strain
 	 * molecules have been picked, this method returns null, provided that at least one conformer
 	 * was returned.
+	 * Internally, TorsionDescriptors are compared to decide whether a conformer is new.
+	 * These TorsionDescriptors are created on the fly using the default method to determine all
+	 * considered rotatable bonds. Bonds that contain marked atoms are excluded from being considered
+	 * rotatable.
 	 * @return
 	 */
 	public SelfOrganizedConformer getNextConformer() {
@@ -407,95 +401,162 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		return bestConformer;
 		}
 
-	private void writeDWFileStart() throws IOException {
-        mDWWriter = new BufferedWriter(new FileWriter(DATAWARRIOR_DEBUG_FILE));
-        mDWWriter.write("<column properties>");
-        mDWWriter.newLine();
-        mDWWriter.write("<columnName=\"Structure\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<columnProperty=\"specialType\tidcode\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<columnName=\"before\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<columnProperty=\"specialType\tidcoordinates3D\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<columnProperty=\"parent\tStructure\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<columnName=\"after\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<columnProperty=\"specialType\tidcoordinates3D\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<columnProperty=\"parent\tStructure\">");
-        mDWWriter.newLine();
-        mDWWriter.write("</column properties>");
-        mDWWriter.newLine();
-        mDWWriter.write("Structure\tbefore\tafter\tcycle\truleName\truleAtoms\truleDetail");
-        for (int i=0; i<ConformationRule.RULE_NAME.length; i++)
-            mDWWriter.write("\t"+ConformationRule.RULE_NAME[i]);
-        mDWWriter.write("\ttotalStrain\tstrainGain\truleStrainBefore\truleStrainAfter\truleStrainGain");
-        mDWWriter.newLine();
+	public void printStrainDetails(SelfOrganizedConformer conformer) {
+		System.out.println("############ new conformer ###############");
+		for (ConformationRule rule:mRuleList)
+			if (rule instanceof DistanceRule)
+				((DistanceRule)rule).printStrain(conformer);
+		}
+
+	public static void writeDWFileStart() {
+		mDWCycle = 0;
+		mLastDWConformer = null;
+
+		try {
+			mDWWriter = new BufferedWriter(new FileWriter(DATAWARRIOR_DEBUG_FILE));
+			mDWWriter.write("<column properties>");
+			mDWWriter.newLine();
+			mDWWriter.write("<columnName=\"Structure\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<columnProperty=\"specialType\tidcode\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<columnName=\"before\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<columnProperty=\"specialType\tidcoordinates3D\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<columnProperty=\"parent\tStructure\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<columnName=\"after\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<columnProperty=\"specialType\tidcoordinates3D\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<columnProperty=\"parent\tStructure\">");
+			mDWWriter.newLine();
+			mDWWriter.write("</column properties>");
+			mDWWriter.newLine();
+			mDWWriter.write("Structure\tbefore\tafter\tcycle\tmode\truleName\truleAtoms\truleDetail");
+			for (int i = 0; i<ConformationRule.RULE_NAME.length; i++)
+				mDWWriter.write("\t" + ConformationRule.RULE_NAME[i]);
+			mDWWriter.write("\ttotalStrain\tstrainGain\truleStrainBefore\truleStrainAfter\truleStrainGain\tatomStrain");
+			mDWWriter.newLine();
+			}
+		catch (IOException ioe) {}
         }
 
-
-	private void writeDWFileEnd() throws IOException {
-		mDWWriter.write("<datawarrior properties>");
-        mDWWriter.newLine();
-		mDWWriter.write("<axisColumn_2D View_0=\"cycle\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<axisColumn_2D View_1=\"totalStrain\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<chartType_2D View=\"scatter\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<colorColumn_2D View=\"ruleName\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<colorCount_2D View=\"3\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<colorListMode_2D View=\"Categories\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<color_2D View_0=\"-11992833\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<color_2D View_1=\"-65494\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<color_2D View_2=\"-16732826\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<detailView=\"height[Data]=0.4;height[before]=0.3;height[after]=0.3\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainSplitting=\"0.71712\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainView=\"2D View\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainViewCount=\"2\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainViewDockInfo0=\"root\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainViewDockInfo1=\"Table	center\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainViewName0=\"Table\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainViewName1=\"2D View\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainViewType0=\"tableView\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<mainViewType1=\"2Dview\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<rightSplitting=\"0\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<rowHeight_Table=\"80\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<filter0=\"#category#\truleName\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<connectionColumn_2D View=\"<connectAll>\">");
-        mDWWriter.newLine();
-        mDWWriter.write("<connectionLineWidth_2D View=\"0.17640000581741333\">");
-        mDWWriter.newLine();
-   		mDWWriter.write("<logarithmicView=\"totalStrain\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<markersize_2D View=\"0.1936\">");
-        mDWWriter.newLine();
-		mDWWriter.write("<sizeAdaption_2D View=\"false\">");
-        mDWWriter.newLine();
-		mDWWriter.write("</datawarrior properties>");
-        mDWWriter.newLine();
+	public static void writeDWFileEnd() {
+		try {
+			mDWWriter.write("<datawarrior properties>");
+	        mDWWriter.newLine();
+			mDWWriter.write("<axisColumn_2D View_0=\"cycle\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<axisColumn_2D View_1=\"totalStrain\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<chartType_2D View=\"scatter\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<colorColumn_2D View=\"ruleName\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<colorCount_2D View=\"3\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<colorListMode_2D View=\"Categories\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<color_2D View_0=\"-11992833\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<color_2D View_1=\"-65494\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<color_2D View_2=\"-16732826\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<detailView=\"height[Data]=0.4;height[before]=0.3;height[after]=0.3\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainSplitting=\"0.71712\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainView=\"2D View\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainViewCount=\"3\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainViewDockInfo0=\"root\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainViewDockInfo1=\"Table	center\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<mainViewDockInfo2=\"2D View\tbottom\t0.501\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainViewName0=\"Table\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainViewName1=\"2D View\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainViewName2=\"Form View\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<mainViewType0=\"tableView\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainViewType1=\"2Dview\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<mainViewType2=\"formView\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<rightSplitting=\"0\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<rowHeight_Table=\"80\">");
+	        mDWWriter.newLine();
+	        mDWWriter.write("<filter0=\"#category#\truleName\">");
+	        mDWWriter.newLine();
+	        mDWWriter.write("<connectionColumn_2D View=\"<connectAll>\">");
+	        mDWWriter.newLine();
+	        mDWWriter.write("<connectionLineWidth_2D View=\"0.17640000581741333\">");
+	        mDWWriter.newLine();
+	        mDWWriter.write("<logarithmicView=\"totalStrain\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<markersize_2D View=\"0.1936\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<shapeColumn_2D View=\"mode\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<sizeAdaption_2D View=\"false\">");
+	        mDWWriter.newLine();
+			mDWWriter.write("<formLayout_Form View=\"TableLayout,7,11.0,-1.0,11.0,-1.0,11.0,-1.0,11.0,27,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectCount_Form View=\"19\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_0=\"before\tstructure3D\t1, 5, 1, 21, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_1=\"after\tstructure3D\t3, 5, 3, 21, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_10=\"torsion\ttextLine\t5, 21, 5, 21, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_11=\"stereo\ttextLine\t5, 23, 5, 23, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_12=\"binap\ttextLine\t5, 25, 5, 25, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_13=\"totalStrain\ttextLine\t5, 13, 5, 13, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_14=\"strainGain\ttextLine\t5, 1, 5, 1, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_15=\"ruleStrainBefore\ttextLine\t5, 3, 5, 3, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_16=\"ruleStrainAfter\ttextLine\t5, 5, 5, 5, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_17=\"ruleStrainGain\ttextLine\t5, 7, 5, 7, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_18=\"atomStrain\ttextLine\t1, 23, 3, 25, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_2=\"cycle\ttextLine\t1, 1, 1, 1, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_3=\"mode\ttextLine\t3, 1, 3, 1, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_4=\"ruleName\ttextLine\t1, 3, 1, 3, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_5=\"ruleAtoms\ttextLine\t3, 3, 3, 3, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_6=\"ruleDetail\ttextLine\t5, 9, 5, 11, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_7=\"distance\ttextLine\t5, 15, 5, 15, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_8=\"plane\ttextLine\t5, 17, 5, 17, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("<formObjectInfo_Form View_9=\"line\ttextLine\t5, 19, 5, 19, full, full\">");
+			mDWWriter.newLine();
+			mDWWriter.write("</datawarrior properties>");
+	        mDWWriter.newLine();
+			mDWWriter.close();
+			mDWWriter = null;
+			}
+		catch (IOException ioe) {}
 		}
 
 	/**
@@ -512,98 +573,161 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		if (mMol.getAllAtoms() < 2)
 			return true;
 
+		// Make sure no rule were disabled in previous run.
+		for (ConformationRule rule:mRuleList)
+			rule.setEnabled(true);
+		for (int i=0; i<mSkipRule.length; i++)
+			mSkipRule[i] = false;
+
 		if (!KEEP_INITIAL_COORDINATES)
 			jumbleAtoms(conformer);
 
-		mSkipRule[ConformationRule.RULE_TYPE_TORSION] = true;
+		if (INITIALLY_SKIP_TORSION_RULES)
+			mSkipRule[ConformationRule.RULE_TYPE_TORSION] = true;
 
-		optimize(conformer, PREPARATION_CYCLES, STANDARD_CYCLE_FACTOR, 1.0);
+		SelfOrganizedConformer bestConformer = new SelfOrganizedConformer(conformer);
 
-		boolean done = false;
+		optimize(conformer, bestConformer, PHASE_PREPARATION);
 
-		if (mRuleCount[ConformationRule.RULE_TYPE_TORSION] != 0) {
+		if (INITIALLY_SKIP_TORSION_RULES
+		 && mRuleCount[ConformationRule.RULE_TYPE_TORSION] != 0) {
 			mSkipRule[ConformationRule.RULE_TYPE_TORSION] = false;
-			done = optimize(conformer, PRE_OPTIMIZATION_CYCLES, STANDARD_CYCLE_FACTOR, 1.0);
+
+			optimize(conformer, bestConformer, PHASE_PRE_OPTIMIZATION);
 			}
 
-		for (int i=0; !done && i<MAX_BREAKOUT_ROUNDS; i++) {
+		for (int i=0; containsTrappedAtom(conformer) && i<MAX_BREAKOUT_ROUNDS; i++) {
 			if (mThreadMaster != null && mThreadMaster.threadMustDie())
 				break;
-
-			if (jumbleStrainedAtoms(conformer) == 0)
+			if (escapeFromTrappedStates(conformer) == 0)
 				break;
-
-			done = optimize(conformer, BREAKOUT_CYCLES, STANDARD_CYCLE_FACTOR, 1.0);
+			optimize(conformer, bestConformer, PHASE_BREAKOUT);
 			}
 
-//		if (!done && disableCollidingTorsionRules(conformer))
-//			done = optimize(conformer, OPTIMIZATION_CYCLES, STANDARD_CYCLE_FACTOR, 1.0);
+		optimize(conformer, bestConformer, PHASE_OPTIMIZATION);
+		optimize(conformer, bestConformer, PHASE_MINIMIZATION);
 
-		if (!done)
-			done = optimize(conformer, OPTIMIZATION_CYCLES, STANDARD_CYCLE_FACTOR, 1.0);
-
-		if (!done)
-			done = optimize(conformer, MINIMIZATION_CYCLES, STANDARD_CYCLE_FACTOR, MINIMIZATION_REDUCTION);
-
-		return done;
+		return isAcceptable(conformer);
 		}
 
-	public boolean optimize(SelfOrganizedConformer conformer, int cycles, double startFactor, double factorReduction) {
+	private void optimize(SelfOrganizedConformer conformer, SelfOrganizedConformer bestConformer, int phase) {
+		int cycles = PHASE_CYCLES[phase];
+		double cycleFactor = STANDARD_CYCLE_FACTOR;
+		double reductionFactor = (phase == PHASE_MINIMIZATION) ? Math.exp(Math.log(MINIMIZATION_END_FACTOR)/cycles) : 1.0;
+mDWMode = PHASE_NAME[phase];
+
 		int atomsSquare = mMol.getAllAtoms() * mMol.getAllAtoms();
 
-		double k = Math.log(factorReduction)/cycles;
-//double[] dummy_ = new double[mMol.getAllAtoms()];
+		double[] previousTotalStrains = new double[CONSIDERED_PREVIOUS_CYCLE_COUNT];
+		int previousTotalStrainIndex = 0;
 
 		for (int outerCycle=0; outerCycle<cycles; outerCycle++) {
 			if (mThreadMaster != null && mThreadMaster.threadMustDie())
 				break;
 
-			double cycleFactor = startFactor * Math.exp(-k*outerCycle);
+			if (phase != PHASE_PREPARATION && (outerCycle % TWIST_BOAT_ESCAPE_FREQUENCY) == 0)
+				tryEscapeTwistBoats(conformer);
 
 			for (int innerCycle=0; innerCycle<atomsSquare; innerCycle++) {
 				if (mThreadMaster != null && mThreadMaster.threadMustDie())
 					break;
 
-				ConformationRule rule = mRuleList.get((int)(mRandom.nextDouble() * mRuleList.size()));
-
-/*				// Always use maximum strain constraint.
 				ConformationRule rule = null;
+				if (PREFER_HIGH_STRAIN_RULES) {
+					// Select the rule based on a weighted random algorithm preferring rules with larger strain
+					double[] ruleStrain = new double[1+mRuleList.size()];
+					int index = 0;
+					for (ConformationRule r:mRuleList) {
+						if (r.isEnabled() && !mSkipRule[r.getRuleType()]) {
+							index++;
+							ruleStrain[index] = ruleStrain[index - 1] + r.addStrain(conformer, null);
+							}
+						}
+					double random = ruleStrain[index] * mRandom.nextDouble();
+					index = 0;
+					for (ConformationRule r:mRuleList) {
+						if (r.isEnabled() && !mSkipRule[r.getRuleType()]) {
+							index++;
+							if (random < ruleStrain[index]) {
+								rule = r;
+								break;
+								}
+							}
+						}
+					}
+				else {
+					// Purely random rule selection.
+					rule = mRuleList.get((int)(mRandom.nextDouble() * mRuleList.size()));
+					}
+
+				// Always use maximum strain constraint.
+/*				ConformationRule rule = null;
 				double maxStrain = -1;
 				for (ConformationRule r:mRuleList) {
 					if (r.isEnabled() && !mSkipRule[r.getRuleType()]) {
-						double strain = r.addStrain(conformer, dummy_) / r.getAtomList().length;
+						double strain = r.addStrain(conformer, null);
 						if (maxStrain < strain) {
 							maxStrain = strain;
 							rule = r;
 							}
 						}
-					}
-*/
-				if (rule.isEnabled() && !mSkipRule[rule.getRuleType()]) {
+					}*/
 
-//System.out.println("#1 rule:"+rule.toString());
+				if (rule.isEnabled() && !mSkipRule[rule.getRuleType()]) {
 					boolean conformerChanged = rule.apply(conformer, cycleFactor);
-//System.out.println("atom 2  x:"+conformer.x[2]+" y:"+conformer.y[2]+" z:"+conformer.z[2]);
-//System.out.println("atom 5  x:"+conformer.x[5]+" y:"+conformer.y[5]+" z:"+conformer.z[5]);
-//System.out.println("atom 10 x:"+conformer.x[10]+" y:"+conformer.y[10]+" z:"+conformer.z[10]);
-//System.out.println("#2");
 
 					if (conformerChanged)
 						conformer.invalidateStrain();
 
 if (mDWWriter != null && conformerChanged) {
  try {
-  double[] dummy = new double[mMol.getAllAtoms()];
-  double s1 = (mLastDWConformer == null) ? 0 : rule.addStrain(mLastDWConformer, dummy);
-  double s2 = rule.addStrain(conformer, dummy);
+  double s1 = (mLastDWConformer == null) ? 0 : rule.addStrain(mLastDWConformer, null);
+  double s2 = rule.addStrain(conformer, null);
   writeStrains(conformer, rule, null, s1, s2);
  } catch (Exception e) { e.printStackTrace(); } }
 					}
 				}
 
-			if (conformer.isAcceptable(mRuleList))
-				return true;
+			// we break if the current total strain is not lower than the average from the previous X cycles.
+			conformer.calculateStrain(mRuleList);
+
+			previousTotalStrains[previousTotalStrainIndex++] = conformer.getTotalStrain();
+			if (previousTotalStrainIndex == CONSIDERED_PREVIOUS_CYCLE_COUNT)
+				previousTotalStrainIndex = 0;
+
+			if (outerCycle > CONSIDERED_PREVIOUS_CYCLE_COUNT) {
+				double averagePreviousStrain = 0.0;
+				for (double strain:previousTotalStrains)
+					averagePreviousStrain += strain;
+				averagePreviousStrain /= CONSIDERED_PREVIOUS_CYCLE_COUNT;
+
+				if (conformer.getTotalStrain() > averagePreviousStrain)
+					break;
+				}
+
+			if (bestConformer.getTotalStrain() > conformer.getTotalStrain())
+				bestConformer.copyFrom(conformer);
+
+			cycleFactor *= reductionFactor;
 			}
+
+		if (conformer.isWorseThan(bestConformer))
+			conformer.copyFrom(bestConformer);
+		}
+
+	private boolean isAcceptable(SelfOrganizedConformer conformer) {
+		for (int atom=0; atom<conformer.getMolecule().getAllAtoms(); atom++)
+			if (conformer.getAtomStrain(atom) > ATOM_ACCEPTABLE_STRAIN)
+				return false;
+
+		return true;
+		}
+
+	private boolean containsTrappedAtom(SelfOrganizedConformer conformer) {
+		for (int atom=0; atom<conformer.getMolecule().getAllAtoms(); atom++)
+			if (conformer.getAtomStrain(atom) > ATOM_FLAT_RING_BREAKOUT_STRAIN
+			 || conformer.getAtomStrain(atom) > ATOM_CAGE_BREAKOUT_STRAIN)
+				return true;
 
 		return false;
 		}
@@ -651,10 +775,14 @@ if (mDWWriter != null && conformerChanged) {
 			String idcode = oldCanonizer.getIDCode();
 			String oldCoords = oldCanonizer.getEncodedCoordinates();
 
-			mDWWriter.write(idcode + "\t" + oldCoords + "\t" + newCoords + "\t" + mDWCycle + "\t" + ruleName + "\t" + atoms + "\t" + (rule != null ? rule.toString() : stepName));
+			mDWWriter.write(idcode + "\t" + oldCoords + "\t" + newCoords + "\t" + mDWCycle + "\t" + mDWMode + "\t" + ruleName + "\t" + atoms + "\t" + (rule != null ? rule.toString() : stepName));
 			for (double s : strain)
-				mDWWriter.write("\t" + s);
-			mDWWriter.write("\t" + strainSum + "\t" + (oldStrainSum - strainSum) + "\t" + DoubleFormat.toString(strain1) + "\t" + DoubleFormat.toString(strain2) + "\t" + DoubleFormat.toString(strain1 - strain2));
+				mDWWriter.write("\t" + DoubleFormat.toString(s));
+			mDWWriter.write("\t" + DoubleFormat.toString(strainSum) + "\t" + DoubleFormat.toString(oldStrainSum - strainSum) + "\t" + DoubleFormat.toString(strain1) + "\t" + DoubleFormat.toString(strain2) + "\t" + DoubleFormat.toString(strain1 - strain2));
+			for (int atom=0; atom<mol.getAllAtoms(); atom++) {
+				mDWWriter.write(atom == 0 ? "\t" : " ");
+				mDWWriter.write(atom+":"+DoubleFormat.toString(newConformer.getAtomStrain(atom), 2));
+				}
 			mDWWriter.newLine();
 			mDWStrain = strain;
 			mDWCycle++;
@@ -666,15 +794,25 @@ if (mDWWriter != null && conformerChanged) {
 	private void jumbleAtoms(SelfOrganizedConformer conformer) {
 		double boxSize = 1.0 + 3.0 * Math.sqrt(mMol.getAllAtoms());
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
-			conformer.setX(atom, boxSize * mRandom.nextDouble() - boxSize / 2);
-			conformer.setY(atom, boxSize * mRandom.nextDouble() - boxSize / 2);
-			conformer.setZ(atom, boxSize * mRandom.nextDouble() - boxSize / 2);
+			if (mMol.getAllConnAtoms(atom) != 1) {
+				conformer.setX(atom, boxSize * mRandom.nextDouble() - boxSize / 2);
+				conformer.setY(atom, boxSize * mRandom.nextDouble() - boxSize / 2);
+				conformer.setZ(atom, boxSize * mRandom.nextDouble() - boxSize / 2);
+				}
+			}
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
+			if (mMol.getAllConnAtoms(atom) == 1) {
+				int connAtom = mMol.getConnAtom(atom, 0);
+				conformer.setX(atom, conformer.getX(connAtom) + 2 * mRandom.nextDouble() - 1);
+				conformer.setY(atom, conformer.getY(connAtom) + 2 * mRandom.nextDouble() - 1);
+				conformer.setZ(atom, conformer.getZ(connAtom) + 2 * mRandom.nextDouble() - 1);
+				}
 			}
 
 		conformer.invalidateStrain();
 		}
 
-	private int jumbleStrainedAtoms(SelfOrganizedConformer conformer) {
+	private int escapeFromTrappedStates(SelfOrganizedConformer conformer) {
 		conformer.calculateStrain(mRuleList);
 
 		int atomCount = 0;
@@ -748,6 +886,77 @@ if (mDWWriter != null && conformerChanged) {
 				}
 			}
 		return false;
+		}
+
+	private boolean tryEscapeTwistBoats(SelfOrganizedConformer conformer) {
+		boolean changeDone = false;
+		RingCollection ringSet = mMol.getRingSet();
+		for (int r=0; r<ringSet.getSize(); r++) {
+			int[] ringAtom = ringSet.getRingAtoms(r);
+			if (ringAtom.length == 6 && !ringSet.isDelocalized(r)) {
+				boolean isCandidate = true;
+				for (int rb:ringSet.getRingBonds(r)) {
+					if (mMol.getBondOrder(rb) != 1 || mMol.isDelocalizedBond(rb)) {
+						isCandidate = false;
+						break;
+						}
+					}
+				if (isCandidate) {
+					Coordinates cog = new Coordinates();
+					Coordinates n = new Coordinates();
+					double[][] coords = new double[6][3];
+					ConformationRule.calculateNearestPlane(conformer, ringAtom, cog, n, coords);
+
+					double[] distance = new double[ringAtom.length];
+					int sideMatchCount = 0;
+//					int pattern = 0;
+					for (int i=0; i<ringAtom.length; i++) {
+						distance[i] = -(n.x * coords[i][0] + n.y * coords[i][1] + n.z * coords[i][2]);
+//						pattern += (distance[i] < 0) ? 1 << i : 0;
+						if ((distance[i] < 0) ^ ((i & 1) == 1))
+							sideMatchCount++;
+						}
+
+					// We don't want to escape from boat conformations!
+//					if (pattern == 9 || pattern == 18 || pattern == 36
+//					 || pattern == 54 || pattern == 45 || pattern == 27)
+//						continue;
+
+					if (sideMatchCount != 0 && sideMatchCount != 6) {
+						for (int i=0; i<ringAtom.length; i++) {
+							if ((distance[i] < 0) ^ ((i & 1) == 1) ^ (sideMatchCount >= 3)) {
+								int[] notAtom = new int[2];
+								notAtom[0] = ringAtom[i == 0 ? 5 : i-1];
+								notAtom[1] = ringAtom[i == 5 ? 0 : i+1];
+								Coordinates pAtom = conformer.getCoordinates(ringAtom[i]);
+								Coordinates axis = conformer.getCoordinates(ringAtom[i]).subC(cog).cross(n).unit();
+								double angle = TWIST_BOAT_ESCAPE_ANGLE + Math.asin(Math.abs(distance[i])/pAtom.distance(cog));
+								double theta = (distance[i] < 0) ? angle : -angle;
+								Coordinates center = new Coordinates(pAtom).center(cog);
+								ConformationRule.rotateGroup(conformer, ringAtom[i], notAtom, center, axis, theta);
+								}
+							}
+						changeDone = true;
+						}
+					}
+				}
+			}
+
+		if (changeDone) {
+			double strain1 = conformer.getTotalStrain();
+
+			conformer.invalidateStrain();
+			conformer.calculateStrain(mRuleList);
+
+			if (mDWWriter != null) {
+				try {
+					writeStrains(conformer, null, "escapeTwistBoat", strain1, conformer.getTotalStrain());
+				}
+				catch (Exception e) { e.printStackTrace(); }
+			}
+		}
+
+			return changeDone;
 		}
 
 	public boolean disableCollidingTorsionRules(SelfOrganizedConformer conformer) {

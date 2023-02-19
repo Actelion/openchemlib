@@ -286,14 +286,15 @@ public class StraightLineRule extends ConformationRule {
 
 		double totalStrain = 0;
 		for (int i=0; i<mAtom.length; i++) {
-				// calculate lamda that gives the closest point to current atom location
-			double lamda = n[0]*A[i][0]+n[1]*A[i][1]+n[2]*A[i][2];
-			double dx = lamda*n[0]-A[i][0];
-			double dy = lamda*n[1]-A[i][1];
-			double dz = lamda*n[2]-A[i][2];
-			double panalty = dx*dx+dy*dy+dz*dz;
-			atomStrain[mAtom[i]] += panalty;
-			totalStrain += panalty;
+				// calculate lambda that gives the closest point to current atom location
+			double lambda = n[0]*A[i][0]+n[1]*A[i][1]+n[2]*A[i][2];
+			double dx = lambda*n[0]-A[i][0];
+			double dy = lambda*n[1]-A[i][1];
+			double dz = lambda*n[2]-A[i][2];
+			double strain = 10.0 * dx*dx+dy*dy+dz*dz;
+			if (atomStrain != null)
+				atomStrain[mAtom[i]] += strain;
+			totalStrain += strain;
 			}
 
 		return totalStrain;
