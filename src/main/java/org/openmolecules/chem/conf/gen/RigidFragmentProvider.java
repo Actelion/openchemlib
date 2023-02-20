@@ -197,7 +197,7 @@ public class RigidFragmentProvider {
 			}
 		}
 
-		ArrayList<Conformer> conformerList = null;
+		ArrayList<SelfOrganizedConformer> conformerList = null;
 		double[] likelihood = null;
 		Canonizer canonizer = null;
 		String key = null;
@@ -257,7 +257,7 @@ public class RigidFragmentProvider {
 						fragment.setAtomY(j, c.y);
 						fragment.setAtomZ(j, invertedEnantiomer ? -c.z : c.z);
 						}
-					conformerList.add(new Conformer(fragment));
+					conformerList.add(new SelfOrganizedConformer(fragment));
 					}
 
 				likelihood = cacheEntry.likelihood;
@@ -290,23 +290,22 @@ public class RigidFragmentProvider {
 			for(Conformer conf:conformerList)
 				minStrain = Math.min(minStrain, ((SelfOrganizedConformer)conf).getTotalStrain());
 
-			// Strain values resemble enegies in kcal/mol, but not as reliable. Therefore we are less strict and allow factor 1000
+			// Strain values resemble energies in kcal/mol, but not as reliable. Therefore we are less strict and allow factor 1000
 			double strainLimit = minStrain + 3.0 * ENERGY_FOR_FACTOR_10;
 			for (int i=conformerList.size()-1; i>=0; i--)
-				if (((SelfOrganizedConformer)conformerList.get(i)).getTotalStrain()>strainLimit)
+				if (conformerList.get(i).getTotalStrain()>strainLimit)
 					conformerList.remove(i);
 
-			double[] population = new double[conformerList.size()];
-			double populationSum = 0;
-			int index = 0;
-			for(int i=conformerList.size()-1; i>=0; i--) {
-				Conformer conf = conformerList.get(i);
-				populationSum += (population[index++] = Math.pow(10, (minStrain - conf.getEnergy()) / ENERGY_FOR_FACTOR_10));
-				}
-
 			likelihood = new double[conformerList.size()];
+			double likelihoodSum = 0;
+			int index = 0;
+			for(int i=0; i<conformerList.size(); i++) {
+				SelfOrganizedConformer conf = conformerList.get(i);
+				likelihood[i] = Math.pow(10, (minStrain - conf.getTotalStrain()) / ENERGY_FOR_FACTOR_10);
+				likelihoodSum += likelihood[i];
+				}
 			for (int i=0; i<conformerList.size(); i++)
-				likelihood[i] = population[i] / populationSum;
+				likelihood[i] /= likelihoodSum;
 
 			if(mOptimizeFragments) {
 				int validEnergyCount = 0;
@@ -329,17 +328,20 @@ public class RigidFragmentProvider {
 						}
 					}
 
-				// If we have no valid MMFF energy values, we keep the likelihoods from the self organizer
+				// If we have no valid MMFF energy values, we keep the likelihoods from the self organizer, otherwise...
 				if (validEnergyCount != 0) {
-					population = new double[validEnergyCount];
-					populationSum = 0;
+					double[] population = new double[validEnergyCount];
+					double populationSum = 0;
 					index = 0;
 					for(int i=conformerList.size()-1; i>=0; i--) {
 						Conformer conf = conformerList.get(i);
 						if (Double.isNaN(conf.getEnergy()))
 							conformerList.remove(i);
-						else
-							populationSum += (population[index++] = Math.pow(10, (minEnergy - conf.getEnergy()) / ENERGY_FOR_FACTOR_10));
+						else {
+							population[index] = Math.pow(10, (minEnergy - conf.getEnergy()) / ENERGY_FOR_FACTOR_10);
+							populationSum += population[index];
+							index++;
+							}
 						}
 
 					likelihood = new double[validEnergyCount];
@@ -363,7 +365,7 @@ public class RigidFragmentProvider {
 			}
 
 		return new RigidFragment(coreAtomCount, coreToFragmentAtom, fragmentToOriginalAtom,
-				extendedToFragmentAtom, originalToExtendedAtom, conformerList.toArray(new Conformer[0]), likelihood);
+				extendedToFragmentAtom, originalToExtendedAtom, conformerList.toArray(new SelfOrganizedConformer[0]), likelihood);
 	}
 
 	/**

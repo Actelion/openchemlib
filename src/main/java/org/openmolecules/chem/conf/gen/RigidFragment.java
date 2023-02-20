@@ -29,7 +29,7 @@
 package org.openmolecules.chem.conf.gen;
 
 import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.conf.Conformer;
+import org.openmolecules.chem.conf.so.SelfOrganizedConformer;
 
 public class RigidFragment {
 	int   mCoreAtomCount;
@@ -38,7 +38,7 @@ public class RigidFragment {
 	int[] mExtendedToFragmentAtom;
 	int[] mOriginalToExtendedAtom;
 
-	Conformer[] mConformerList;
+	SelfOrganizedConformer[] mConformerList;
 	double[] mConformerLikelihood;
 
 	public RigidFragment(int coreAtomCount,
@@ -46,7 +46,7 @@ public class RigidFragment {
 	                     int[] fragmentToOriginalAtom,
 	                     int[] extendedToFragmentAtom,
 	                     int[] originalToExtendedAtom,
-	                     Conformer[] conformerList,
+	                     SelfOrganizedConformer[] conformerList,
 	                     double[] conformerLikelyhood) {
 		this.mCoreAtomCount = coreAtomCount;
 		this.mCoreToFragmentAtom = coreToFragmentAtom;
@@ -69,7 +69,7 @@ public class RigidFragment {
 		return mConformerList.length;
 	}
 
-	public Conformer getConformer(int i) {
+	public SelfOrganizedConformer getConformer(int i) {
 		return mConformerList[i];
 	}
 

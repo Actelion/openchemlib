@@ -43,7 +43,7 @@ public class SelfOrganizedConformer extends Conformer {
 
 	public SelfOrganizedConformer(StereoMolecule mol) {
 		super(mol);
-		mTotalStrain = Double.MAX_VALUE;
+		mTotalStrain = Double.NaN;
 		}
 
 	public SelfOrganizedConformer(SelfOrganizedConformer conformer) {
@@ -97,7 +97,7 @@ public class SelfOrganizedConformer extends Conformer {
 		}
 
 	public double getAtomStrain(int atom) {
-		return mAtomStrain[atom];
+		return mAtomStrain == null ? Double.NaN : mAtomStrain[atom];
 		}
 
 	public double getTotalStrain() {
@@ -105,7 +105,7 @@ public class SelfOrganizedConformer extends Conformer {
 		}
 
 	public double getRuleStrain(int rule) {
-		return mRuleStrain[rule];
+		return mRuleStrain == null ? Double.NaN : mRuleStrain[rule];
 		}
 
 	/**

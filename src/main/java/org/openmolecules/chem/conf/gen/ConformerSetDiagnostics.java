@@ -160,7 +160,7 @@ public class ConformerSetDiagnostics extends ArrayList<ConformerDiagnostics> {
 					Canonizer canonizer = new Canonizer(f.getConformer(j).toMolecule());
 					String idcode = canonizer.getIDCode();
 					String coords = canonizer.getEncodedCoordinates();
-					SelfOrganizedConformer soc = (SelfOrganizedConformer)f.getConformer(j);
+					SelfOrganizedConformer soc = f.getConformer(j);
 					writer.write(idcode + "\t" + coords + "\t" + i + "\t" + j + "\t"
 							+ DoubleFormat.toString(f.getConformerLikelihood(j)) + "\t");
 					for (int r=0; r<ConformationRule.RULE_NAME.length; r++) {

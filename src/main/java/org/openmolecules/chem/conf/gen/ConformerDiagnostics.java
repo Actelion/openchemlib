@@ -53,7 +53,7 @@ public class ConformerDiagnostics {
 
 	protected void writeCollisionLog(String log) {
 		if (mCollisionLog.length() != 0)
-			mCollisionLog.append("\n");
+			mCollisionLog.append("<NL>");
 		mCollisionLog.append(log);
 	}
 
