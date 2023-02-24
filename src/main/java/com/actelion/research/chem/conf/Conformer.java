@@ -45,6 +45,7 @@ public class Conformer implements Comparable<Conformer> {
 	private String mName;
 	private short[] mBondTorsion;
 	private double mEnergy;
+	private double mLikelihood;
 	private TorsionDescriptor mTorsionDescriptor;
 
 	/**
@@ -89,6 +90,8 @@ public class Conformer implements Comparable<Conformer> {
 
 		if (c.mBondTorsion != null)
 			mBondTorsion = Arrays.copyOf(c.mBondTorsion, c.mBondTorsion.length);
+
+		mName = (c.mName == null || c.mName.endsWith(" (copy)")) ? c.mName : c.mName.concat(" (copy)");
 
 		mEnergy = Double.NaN;
 	}
@@ -299,28 +302,11 @@ public class Conformer implements Comparable<Conformer> {
 	public void copyFrom(Conformer conformer) {
 		for (int atom = 0; atom < conformer.getSize(); atom++)
 			mCoordinates[atom].set(conformer.mCoordinates[atom]);
-		if (conformer.mName != null)
-			mName = createNameCopy(conformer.mName);
 
 		if (conformer.mBondTorsion == null)
 			mBondTorsion = null;
 		else
 			mBondTorsion = Arrays.copyOf(conformer.mBondTorsion, conformer.mBondTorsion.length);
-	}
-
-	private String createNameCopy(String originalName) {
-		int index = originalName.lastIndexOf(' ');
-		if (index != -1) {
-			if (originalName.substring(index + 1).equals("copy"))
-				return originalName.concat(" 2");
-
-			try {
-				int no = Integer.parseInt(originalName.substring(index + 1));
-				return originalName.substring(0, index + 1).concat(Integer.toString(no + 1));
-			} catch (NumberFormatException nfe) {
-			}
-		}
-		return originalName.concat(" copy");
 	}
 
 	/**
@@ -357,6 +343,15 @@ public class Conformer implements Comparable<Conformer> {
 	public void setEnergy(double energy) {
 		mEnergy = energy;
 	}
+
+	public double getLikelihood() {
+		return mLikelihood;
+	}
+
+	public void setLikelihood(double likelihood) {
+		mLikelihood = likelihood;
+	}
+
 
 	public String getName() {
 		return mName == null ? mMol.getName() : mName;

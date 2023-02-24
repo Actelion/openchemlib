@@ -34,10 +34,9 @@ import com.actelion.research.chem.conf.Conformer;
 import java.util.ArrayList;
 
 public class SelfOrganizedConformer extends Conformer {
-	// Define such that a molecule frequency is reduced by factor 100, if one atom has MAX_ATOM_STRAIN rather than 0.0
-	private static final double	ATOM_STRAIN_FOR_LIKELYHOOD = 2.8;   // we try to match kcal/mol with strain
+	private static final double	STRAIN_FOR_LIKELIHOOD_FACTOR_10 = 1.36;   // we try to match kcal/mol with strain
 
-	private double	    mTotalStrain,mLikelyhood;
+	private double	    mTotalStrain,mLikelihood;
 	private double[]	mAtomStrain,mRuleStrain;
 	private boolean 	mIsUsed;
 
@@ -62,7 +61,7 @@ public class SelfOrganizedConformer extends Conformer {
 
 	private void copyStrainFrom(SelfOrganizedConformer conformer) {
 		mTotalStrain = conformer.mTotalStrain;
-		mLikelyhood = conformer.mLikelyhood;
+		mLikelihood = conformer.mLikelihood;
 		mIsUsed = conformer.mIsUsed;
 		mAtomStrain = conformer.mAtomStrain == null ? null : conformer.mAtomStrain.clone();
 		mRuleStrain = conformer.mRuleStrain == null ? null : conformer.mRuleStrain.clone();
@@ -93,7 +92,7 @@ public class SelfOrganizedConformer extends Conformer {
 		for (int atom=0; atom<getMolecule().getAllAtoms(); atom++)
 			mTotalStrain += mAtomStrain[atom];
 
-		mLikelyhood = -1.0;
+		mLikelihood = -1.0;
 		}
 
 	public double getAtomStrain(int atom) {
@@ -112,16 +111,13 @@ public class SelfOrganizedConformer extends Conformer {
 	 * Tries to estimate the relative likelihood of this conformer from atom strains
 	 * considering an unstrained conformer to have a likelihood of 1.0.
 	 * @return conformer likelihood
-	 *
-	public double getLikelyhood() {
-		if (mLikelyhood == -1) {
-			mLikelyhood = 100.0;
-			for (double atomStrain:mAtomStrain)
-				mLikelyhood *= Math.pow(100, -atomStrain / ATOM_STRAIN_FOR_LIKELYHOOD);
-			}
+	 */
+	public double getLikelihood() {
+		if (mLikelihood == -1)
+			mLikelihood = Math.pow(10, -mTotalStrain / STRAIN_FOR_LIKELIHOOD_FACTOR_10);
 
-		return mLikelyhood;
-		}*/
+		return mLikelihood;
+		}
 
 	public void invalidateStrain() {
 		mTotalStrain = Double.MAX_VALUE;

@@ -40,7 +40,6 @@ import com.actelion.research.util.IntArrayComparator;
 import org.openmolecules.chem.conf.so.ConformationSelfOrganizer;
 import org.openmolecules.chem.conf.so.SelfOrganizedConformer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.TreeMap;
@@ -66,12 +65,15 @@ public class ConformerGenerator {
 	public static final int STRATEGY_LIKELY_RANDOM = 3;
 	public static final int STRATEGY_ADAPTIVE_RANDOM = 4;
 
-	protected static final double VDW_TOLERANCE_HYDROGEN = 0.80;  // factor on VDW radii for minimum tolerated non bound atom distances
-	protected static final double VDW_TOLERANCE_OTHER = 0.80;     // factor on VDW radii for minimum tolerated non bound atom distances
+	protected static final double VDW_TOLERANCE_HYDROGEN = 0.90;  // factor on VDW radii for minimum tolerated non bound atom distances
+	protected static final double VDW_TOLERANCE_OTHER = 0.90;     // factor on VDW radii for minimum tolerated non bound atom distances
 
 	private static final int ESCAPE_ANGLE = 8;  // degrees to rotate two adjacent rotatable bonds to escape collisions
 	private static final int ESCAPE_STEPS = 3;	// how often we apply this rotation trying to solve the collision
-	private static final double MIN_ESCAPE_GAIN_PER_STEP = 0.05;
+	private static final double MIN_ESCAPE_GAIN_PER_STEP = 1.0;
+
+	// We try to translate arbitrary collision values into a kcal/mol energy scale
+	public static final double COLLISION_STRAIN_TO_ENERGY_FACTOR = 20;
 
 	private StereoMolecule		mMolecule;
 	private TreeMap<int[],BaseConformer> mBaseConformerMap;
@@ -82,9 +84,8 @@ public class ConformerGenerator {
 	private TorsionSetStrategy	mTorsionSetStrategy;
 	private TorsionSet			mTorsionSet;
 	private long				mRandomSeed;
-	private int					mDisconnectedFragmentCount,mConformerCount;
+	private int					mDisconnectedFragmentCount,mAllConformerCount,mReturnedConformerCount;
 	private boolean				mUseSelfOrganizerIfAllFails,mIsDiagnosticsMode,mIsFinished;
-	private double				mContribution;
 	private int[]				mFragmentNo,mDisconnectedFragmentNo,mDisconnectedFragmentSize;
 	private boolean[][]			mSkipCollisionCheck;
 	private Random				mRandom;
@@ -397,7 +398,8 @@ public class ConformerGenerator {
 		}
 
 		mMolecule = mol;
-		mConformerCount = 0;
+		mAllConformerCount = 0;
+		mReturnedConformerCount = 0;
 		mTorsionSet = null;
 		mRotatableBond = null;
 
@@ -495,10 +497,10 @@ public class ConformerGenerator {
 	 * created by this function since the last call of initializeConformers().
 	 * Every call of this method creates a new collision-free conformer until the employed torsion set
 	 * strategy decides that it cannot generate any more suitable torsion sets.
-	 * @param torsion_set_out : will contain the TorsionSet that gave rise to the conformer.
+	 * @param torsionSetHolder : will contain the TorsionSet that gave rise to the conformer.
 	 * @return conformer or null, if all/maximum torsion permutations have been tried
 	 */
-	public Conformer getNextConformer(TorsionSet[] torsion_set_out) {
+	public Conformer getNextConformer(TorsionSet[] torsionSetHolder) {
 		if (mRotatableBond == null && mSelfOrganizer == null)
 			return null;
 
@@ -506,7 +508,9 @@ public class ConformerGenerator {
 			SelfOrganizedConformer conformer = mSelfOrganizer.getNextConformer();
 			if (conformer != null) {
 				separateDisconnectedFragments(conformer);
-				mConformerCount++;
+				mAllConformerCount++;
+				mReturnedConformerCount++;
+				conformer.setName("SO#"+(++mAllConformerCount));
 				return conformer;
 				}
 
@@ -523,38 +527,29 @@ public class ConformerGenerator {
 		mTorsionSet = mTorsionSetStrategy.getNextTorsionSet(mTorsionSet, mDiagnostics);
 		while (mTorsionSet != null && (mThreadMaster == null || !mThreadMaster.threadMustDie())) {
 			BaseConformer baseConformer = getBaseConformer(mTorsionSet.getConformerIndexes());
-			if (mTorsionSet.getConformer() == null)
-				mTorsionSet.setConformer(baseConformer.deriveConformer(mTorsionSet.getTorsionIndexes()));
+			if (mTorsionSet.getConformer() == null) {
+				mTorsionSet.setConformer(baseConformer.deriveConformer(mTorsionSet.getTorsionIndexes(), "#" + (++mAllConformerCount)));
+				if (mIsDiagnosticsMode)
+					mDiagnostics.addNew(mTorsionSet);
+				}
 
 			// If the torsionSet has already a collision value, then it is a second choice torsion set
 			// with a collision value below the tolerance. No need to check or fix again.
-			if (mTorsionSet.getCollisionIntensitySum() == 0.0) {
-				if (mIsDiagnosticsMode)
-					mDiagnostics.addNew(mTorsionSet);
+			if (mTorsionSet.getCollisionStrainSum() == 0.0) {
+				calculateCollision(mTorsionSet, mTorsionSet.getConformer());
 
-				checkCollision(mTorsionSet.getConformer(), mTorsionSet);
-
-				if (mTorsionSet.getCollisionIntensitySum() != 0.0)
-					tryFixCollisions(baseConformer, mTorsionSet.getConformer(), mTorsionSet);
+				if (mTorsionSet.getCollisionStrainSum() != 0.0)
+					tryFixCollisions(baseConformer, mTorsionSet);
 
 				if (mIsDiagnosticsMode) {
-					mDiagnostics.getCurrent().setConformer(baseConformer, mTorsionSet.getConformer());
-					mDiagnostics.getCurrent().setCollisionIntensity(mTorsionSet.getCollisionIntensitySum());
+					mDiagnostics.get(mTorsionSet).setConformer(baseConformer, mTorsionSet.getConformer());
+					mDiagnostics.get(mTorsionSet).setCollisionStrain(mTorsionSet.getCollisionStrainSum());
 					}
 				}
 
-			if (mTorsionSet.getCollisionIntensitySum() > mTorsionSetStrategy.calculateCollisionTolerance()) {
-				// Save count of elimination rules for diagnostics
-				ArrayList<TorsionSetEliminationRule> elimRules = baseConformer.getEliminationRules();
-				int elimRuleCount = elimRules.size();
-
+			if (mTorsionSet.getCollisionStrainSum() > mTorsionSetStrategy.calculateCollisionTolerance()) {
 				mTorsionSet = mTorsionSetStrategy.getNextTorsionSet(mTorsionSet, mDiagnostics);
-
-				if (mIsDiagnosticsMode)
-					for (int i=elimRuleCount; i<elimRules.size(); i++)
-						mDiagnostics.getCurrent().addEliminationRule(mTorsionSetStrategy.getTorsionSetEncoder().createRuleString(elimRules.get(i), baseConformer));
-
-				if (mTorsionSet != null || mConformerCount != 0)
+				if (mTorsionSet != null || mReturnedConformerCount != 0)
 					continue;
 
 				if (mUseSelfOrganizerIfAllFails) {
@@ -564,7 +559,8 @@ public class ConformerGenerator {
 					SelfOrganizedConformer conformer = mSelfOrganizer.getNextConformer();
 					if (conformer != null) {
 						separateDisconnectedFragments(conformer);
-						mConformerCount++;
+						mReturnedConformerCount++;
+						conformer.setName("SO#"+(++mAllConformerCount));
 						return conformer;
 						}
 					}
@@ -575,17 +571,15 @@ public class ConformerGenerator {
 				mIsFinished = true;	// we are finished with conformers
 				}
 
-			if (mIsDiagnosticsMode)
-				mDiagnostics.getCurrent().setSuccess(true);
-
 			separateDisconnectedFragments(mTorsionSet.getConformer());
-			mContribution = mTorsionSetStrategy.getContribution(mTorsionSet);
 			mTorsionSet.setUsed();
-			mConformerCount++;
+			mReturnedConformerCount++;
 
-			if(torsion_set_out != null) {
-				torsion_set_out[0] = new TorsionSet(mTorsionSet);
-			}
+			if(torsionSetHolder != null)
+				torsionSetHolder[0] = new TorsionSet(mTorsionSet);
+
+			if (mIsDiagnosticsMode)
+				mDiagnostics.get(mTorsionSet).setSuccess(true);
 
 			return mTorsionSet.getConformer();
 			}
@@ -616,7 +610,7 @@ public class ConformerGenerator {
 	 * @return count of valid delivered conformers
 	 */
 	public int getConformerCount() {
-		return mConformerCount;
+		return mReturnedConformerCount;
 		}
 
 	/**
@@ -627,17 +621,6 @@ public class ConformerGenerator {
 	 */
 	public int getPotentialConformerCount() {
 		return (mTorsionSetStrategy == null) ? 1 : mTorsionSetStrategy.getPermutationCount();
-		}
-
-	/**
-	 * With best current knowledge about colliding torsion combinations
-	 * and based on the individual frequencies of currently active torsions
-	 * this method returns the conformers's overall contribution to the
-	 * total set of non colliding conformers.
-	 * @return this conformer's contribution to all conformers
-	 */
-	public double getPreviousConformerContribution() {
-		return mRotatableBond == null ? 1f : mContribution;
 		}
 
 	/**
@@ -829,12 +812,12 @@ public class ConformerGenerator {
 			mSkipCollisionCheck[atom1][atom2] = true;
 		}
 
-	private boolean checkCollision(Conformer conformer, TorsionSet torsionSet) {
+	private boolean calculateCollision(TorsionSet torsionSet, Conformer conformer) {
 		if (mIsDiagnosticsMode)
-			mDiagnostics.getCurrent().setCollisionAtoms(null);
+			mDiagnostics.get(torsionSet).setCollisionAtoms(null);
 
-		double collisionIntensitySum = 0;
-		double[][] collisionIntensityMatrix = null;
+		double collisionStrainSum = 0;
+		double[][] collisionStrainMatrix = null;
 		StereoMolecule mol = conformer.getMolecule();
 		for (int atom1=1; atom1<mol.getAllAtoms(); atom1++) {
 			double vdwr1 = getToleratedVDWRadius(mol.getAtomicNo(atom1));
@@ -850,32 +833,32 @@ public class ConformerGenerator {
 								double distance = Math.sqrt(dx*dx+dy*dy+dz*dz);
 								if (distance < minDistance) {
 									double relativeCollision = (minDistance - distance) / minDistance;
-									double collisionIntensity = relativeCollision * relativeCollision;
-									collisionIntensitySum += collisionIntensity;
+									double collisionStrain = COLLISION_STRAIN_TO_ENERGY_FACTOR * relativeCollision * relativeCollision;
+									collisionStrainSum += collisionStrain;
 
 									if (mIsDiagnosticsMode) {
-										mDiagnostics.getCurrent().writeCollisionLog("a1:" + atom1 + " f1:" + mFragmentNo[atom1] + " a2:" + atom2 + " f2:" + mFragmentNo[atom2] + " distance:" + DoubleFormat.toString(distance) + " min:" + DoubleFormat.toString(minDistance));
-										if (mDiagnostics.getCurrent().getCollisionAtoms() == null) {
+										mDiagnostics.get(torsionSet).writeCollisionLog("a1:" + atom1 + " f1:" + mFragmentNo[atom1] + " a2:" + atom2 + " f2:" + mFragmentNo[atom2] + " distance:" + DoubleFormat.toString(distance) + " min:" + DoubleFormat.toString(minDistance));
+										if (mDiagnostics.get(torsionSet).getCollisionAtoms() == null) {
 											int[] atoms = new int[2];
 											atoms[0] = atom1;
 											atoms[1] = atom2;
-											mDiagnostics.getCurrent().setCollisionAtoms(atoms);
+											mDiagnostics.get(torsionSet).setCollisionAtoms(atoms);
 											}
 										}
 
-									if (collisionIntensityMatrix == null)
-										collisionIntensityMatrix = new double[mRigidFragment.length][];
+									if (collisionStrainMatrix == null)
+										collisionStrainMatrix = new double[mRigidFragment.length][];
 									int f1 = mFragmentNo[atom1];
 									int f2 = mFragmentNo[atom2];
 									if (f1 < f2) {
-										if (collisionIntensityMatrix[f2] == null)
-											collisionIntensityMatrix[f2] = new double[f2];
-										collisionIntensityMatrix[f2][f1] += collisionIntensity;
+										if (collisionStrainMatrix[f2] == null)
+											collisionStrainMatrix[f2] = new double[f2];
+										collisionStrainMatrix[f2][f1] += collisionStrain;
 										}
 									else {
-										if (collisionIntensityMatrix[f1] == null)
-											collisionIntensityMatrix[f1] = new double[f1];
-										collisionIntensityMatrix[f1][f2] += collisionIntensity;
+										if (collisionStrainMatrix[f1] == null)
+											collisionStrainMatrix[f1] = new double[f1];
+										collisionStrainMatrix[f1][f2] += collisionStrain;
 										}
 									}
 								}
@@ -884,51 +867,50 @@ public class ConformerGenerator {
 					}
 				}
 			}
-		torsionSet.setCollisionIntensity(collisionIntensitySum, collisionIntensityMatrix);
-		return (collisionIntensitySum != 0);
+		torsionSet.setCollisionStrain(collisionStrainSum, collisionStrainMatrix);
+		return (collisionStrainSum != 0);
 		}
 
 	/**
 	 * If we have collisions between two fragments that have two rotatable bonds in between,
 	 * then we try to rotate both rotatable bonds in any of these situations stepwise
-	 * by a small angle to reduce the collision intensity sum. If we achieve a sufficient
+	 * by a small angle to reduce the collision strain sum. If we achieve a sufficient
 	 * improvement without hampering the rest of the molecule, the passed conformer is modified.
-	 * @param origConformer
 	 * @param torsionSet
-	 * @return true if successful; false if no fix possible that reduces total collision intensity below tolerance
+	 * @return true if successful; false if no fix possible that reduces total collision strain below tolerance
 	 */
-	private boolean tryFixCollisions(BaseConformer baseConformer, Conformer origConformer, TorsionSet torsionSet) {
+	private boolean tryFixCollisions(BaseConformer baseConformer, TorsionSet torsionSet) {
 		if (mThreadMaster != null && mThreadMaster.threadMustDie())
 			return false;
 
-		double[][] origCollisionIntensityMatrix = torsionSet.getCollisionIntensityMatrix();
-		double remainingCollisionIntensity = 0;
-		for (int f1=1; f1<origCollisionIntensityMatrix.length; f1++)
-			if (origCollisionIntensityMatrix[f1] != null)
+		double[][] origCollisionStrainMatrix = torsionSet.getCollisionStrainMatrix();
+		double remainingCollisionStrain = 0;
+		for (int f1=1; f1<origCollisionStrainMatrix.length; f1++)
+			if (origCollisionStrainMatrix[f1] != null)
 				for (int f2=0; f2<f1; f2++)
-					if (origCollisionIntensityMatrix[f1][f2] != 0f
+					if (origCollisionStrainMatrix[f1][f2] != 0f
 					 && mTorsionSetStrategy.getBondsBetweenFragments(f1, f2).length != 2)
-						remainingCollisionIntensity += origCollisionIntensityMatrix[f1][f2];
+						remainingCollisionStrain += origCollisionStrainMatrix[f1][f2];
 
-		// if other collision strength is already inacceptable
-		if (remainingCollisionIntensity > TorsionSetStrategy.MAX_ALLOWED_COLLISION_INTENSITY)
+		// if other collision strength is already unacceptable
+		if (remainingCollisionStrain > TorsionSetStrategy.MAX_COLLISION_STRAIN)
 			return false;
 
 		Conformer conformer = null;
 		Conformer localBest = null;
 		Conformer globalBest = null;
-		double bestCollisionIntensity = Double.MAX_VALUE;
-		double origCollisionIntensitySum = torsionSet.getCollisionIntensitySum();
-		for (int f1=1; f1<origCollisionIntensityMatrix.length; f1++) {
-			if (origCollisionIntensityMatrix[f1] != null) {
+		double bestCollisionStrain = Double.MAX_VALUE;
+		double origCollisionStrainSum = torsionSet.getCollisionStrainSum();
+		for (int f1=1; f1<origCollisionStrainMatrix.length; f1++) {
+			if (origCollisionStrainMatrix[f1] != null) {
 				for (int f2=0; f2<f1; f2++) {
-					if (origCollisionIntensityMatrix[f1][f2] > MIN_ESCAPE_GAIN_PER_STEP
+					if (origCollisionStrainMatrix[f1][f2] > MIN_ESCAPE_GAIN_PER_STEP
 					 && mTorsionSetStrategy.getBondsBetweenFragments(f1, f2).length == 2) {
 						int[] rbIndex = mTorsionSetStrategy.getBondsBetweenFragments(f1, f2);
 						int[] startTorsion = new int[2];
 						for (int i=0; i<2; i++) {
 							RotatableBond rotatableBond = mRotatableBond[rbIndex[i]];
-							startTorsion[i] = origConformer.getBondTorsion(rotatableBond.getBond());
+							startTorsion[i] = torsionSet.getConformer().getBondTorsion(rotatableBond.getBond());
 //							short[] torsionRange = rotatableBond.getDefaultTorsionRanges()[torsionSet.getTorsionIndexes()[rbIndex[i]]];
 							}
 
@@ -938,35 +920,35 @@ public class ConformerGenerator {
 							for (int r2=-1; r2<=1; r2+=2) {
 								torsionDif[1] = r2 * ESCAPE_ANGLE;
 
-								double collisionIntensity = origCollisionIntensityMatrix[f1][f2];
+								double collisionStrain = origCollisionStrainMatrix[f1][f2];
 								for (int step=1; step<=ESCAPE_STEPS; step++) {
 									if (conformer == null)
-										conformer = new Conformer(origConformer);
+										conformer = new Conformer(torsionSet.getConformer());
 									else
-										conformer.copyFrom(origConformer);
+										conformer.copyFrom(torsionSet.getConformer());
 
 									for (int i=0; i<2; i++)
 										baseConformer.rotateTo(conformer, mRotatableBond[rbIndex[i]], (short)(startTorsion[i] + step * torsionDif[i]));
 
-									double intensity = calculateCollisionIntensity(conformer, mRigidFragment[f1], mRigidFragment[f2]);
-									if (intensity < collisionIntensity - MIN_ESCAPE_GAIN_PER_STEP) {
-										collisionIntensity = intensity;
+									double strain = calculateCollisionStrain(conformer, mRigidFragment[f1], mRigidFragment[f2]);
+									if (strain < collisionStrain - MIN_ESCAPE_GAIN_PER_STEP) {
+										collisionStrain = strain;
 										if (localBest == null)
 											localBest = new Conformer(conformer);
 										else
 											localBest.copyFrom(conformer);
 
-										// not enough collision intensity left for correction
-										if (collisionIntensity < MIN_ESCAPE_GAIN_PER_STEP)
+										// not enough collision strain left for correction
+										if (collisionStrain < MIN_ESCAPE_GAIN_PER_STEP)
 											break;
 										}
 									else {
 										break;
 										}
 									}
-								if (collisionIntensity < origCollisionIntensityMatrix[f1][f2]
-								 && collisionIntensity < bestCollisionIntensity) {
-									bestCollisionIntensity = collisionIntensity;
+								if (collisionStrain < origCollisionStrainMatrix[f1][f2]
+								 && collisionStrain < bestCollisionStrain) {
+									bestCollisionStrain = collisionStrain;
 									if (globalBest == null)
 										globalBest = new Conformer(localBest);
 									else
@@ -982,20 +964,20 @@ public class ConformerGenerator {
 		if (globalBest == null)
 			return false;
 
-		checkCollision(globalBest, torsionSet);
-		if (torsionSet.getCollisionIntensitySum() >= origCollisionIntensitySum) {
+		calculateCollision(torsionSet, globalBest);
+		if (torsionSet.getCollisionStrainSum() >= origCollisionStrainSum) {
 			// local improvement causes worsening somewhere else
-			torsionSet.setCollisionIntensity(origCollisionIntensitySum, origCollisionIntensityMatrix);
+			torsionSet.setCollisionStrain(origCollisionStrainSum, origCollisionStrainMatrix);
 			return false;
 			}
 
-		origConformer.copyFrom(globalBest);
+		torsionSet.getConformer().copyFrom(globalBest);
 
 		return true;
 		}
 
-	private double calculateCollisionIntensity(Conformer conformer, RigidFragment f1, RigidFragment f2) {
-		double collisionIntensitySum = 0;
+	private double calculateCollisionStrain(Conformer conformer, RigidFragment f1, RigidFragment f2) {
+		double collisionStrainSum = 0;
 		for (int i=0; i<f1.getCoreSize(); i++) {
 			int atom1 = f1.coreToOriginalAtom(i);
 			double vdwr1 = getToleratedVDWRadius(mMolecule.getAtomicNo(atom1));
@@ -1011,15 +993,15 @@ public class ConformerGenerator {
 							double distance = Math.sqrt(dx*dx+dy*dy+dz*dz);
 							if (distance < minDistance) {
 								double relativeCollision = (minDistance - distance) / minDistance;
-								double collisionIntensity = relativeCollision * relativeCollision;
-								collisionIntensitySum += collisionIntensity;
+								double collisionStrain = relativeCollision * relativeCollision;
+								collisionStrainSum += collisionStrain;
 								}
 							}
 						}
 					}
 				}
 			}
-		return collisionIntensitySum;
+		return COLLISION_STRAIN_TO_ENERGY_FACTOR * collisionStrainSum;
 		}
 
 
@@ -1027,14 +1009,14 @@ public class ConformerGenerator {
 	 * Computes a conformer from a TorsionSet object.
  	 * @param torsionset
 	 * @return the generated conformer.
-	 */
+	 *
 	public Conformer generateConformerFromTorsionSet(TorsionSet torsionset) {
 		return generateConformerFromTorsionSet(torsionset.getConformerIndexes(), torsionset.getTorsionIndexes());
 	}
 
 	private Conformer generateConformerFromTorsionSet(int[] conformerIndexes, int[] torsionIndexes) {
-		Conformer conformer = getBaseConformer(conformerIndexes).deriveConformer(torsionIndexes);
+		Conformer conformer = getBaseConformer(conformerIndexes).deriveConformer(torsionIndexes, "#"+(++mAllConformerCount));
 		separateDisconnectedFragments(conformer);
 		return conformer;
-	}
+	}*/
 }

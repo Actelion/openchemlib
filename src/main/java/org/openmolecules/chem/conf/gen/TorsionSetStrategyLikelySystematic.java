@@ -150,7 +150,7 @@ public class TorsionSetStrategyLikelySystematic extends TorsionSetStrategy {
 			}
 
 		Arrays.sort(mAvailableTorsionSet, (ts1, ts2) -> {
-			return Double.compare(ts2.getLikelihood(), ts1.getLikelihood());    // we want the highest likelyhood first
+			return Double.compare(ts2.getContribution(), ts1.getContribution());    // we want the highest likelyhood first
 			} );
 		mAvailableTorsionSetIndex = -1;
 		}

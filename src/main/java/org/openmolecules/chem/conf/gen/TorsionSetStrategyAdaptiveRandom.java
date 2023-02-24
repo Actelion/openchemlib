@@ -60,7 +60,7 @@ public class TorsionSetStrategyAdaptiveRandom extends TorsionSetStrategyRandom {
 				return super.createTorsionSet(null);
 			}
 
-		if (previousTorsionSet.getCollisionIntensitySum() == 0.0)
+		if (previousTorsionSet.getCollisionStrainSum() == 0.0)
 			return super.createTorsionSet(previousTorsionSet);
 
 		double[] collisionIntensitySum = getBondAndFragmentCollisionIntensities(previousTorsionSet);

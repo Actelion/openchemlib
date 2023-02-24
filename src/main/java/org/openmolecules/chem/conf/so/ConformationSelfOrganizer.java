@@ -509,6 +509,8 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 			mDWWriter.newLine();
 			mDWWriter.write("<sizeAdaption_2D View=\"false\">");
 	        mDWWriter.newLine();
+			mDWWriter.write("<autoZoomFactor_2D View=\""+mDWCycle/120+".0;0.0\">");
+			mDWWriter.newLine();
 			mDWWriter.write("<formLayout_Form View=\"TableLayout,7,11.0,-1.0,11.0,-1.0,11.0,-1.0,11.0,27,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0,-1.0,7.0\">");
 			mDWWriter.newLine();
 			mDWWriter.write("<formObjectCount_Form View=\"19\">");

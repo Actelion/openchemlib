@@ -95,10 +95,11 @@ public class BaseConformer extends Conformer {
 		return mBestTorsionIndex;
 	}
 
-	public Conformer deriveConformer(int[] torsionIndex) {
+	public Conformer deriveConformer(int[] torsionIndex, String name) {
 		mConformerCount++;
 
 		Conformer conformer = new Conformer(this);
+		conformer.setName(name);
 		for (int rb=mRotatableBond.length-1; rb>=0; rb--)
 			rotateToIndex(conformer, mRotatableBond[rb], rb, torsionIndex[rb]);
 		return conformer;

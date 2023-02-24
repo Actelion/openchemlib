@@ -6,9 +6,9 @@ import com.actelion.research.chem.conf.Conformer;
 import java.util.ArrayList;
 
 public class ConformerDiagnostics {
-	private String mIDCode,mCoords;
+	private String mIDCode,mCoords,mName;
 	private BaseConformer mBaseConformer;
-	private double mCollisionIntensity;
+	private double mCollisionIntensity,mLikelihood;
 	private int[] mTorsionIndex,mConformerIndex,mCollisionAtoms,mFixedTorsion;
 	private ArrayList<String> mEliminationRules;
 	private StringBuilder mCollisionLog;
@@ -26,7 +26,9 @@ public class ConformerDiagnostics {
 		mIDCode = can.getIDCode();
 		mCoords = can.getEncodedCoordinates();
 		mBaseConformer = bc;
+		mName = c.getName();
 		mFixedTorsion = new int[bc.getRotatableBonds().length];
+		mLikelihood = c.getLikelihood();
 		for (int i=0; i<mFixedTorsion.length; i++)
 			mFixedTorsion[i] = c.getBondTorsion(bc.getRotatableBonds()[i].getBond());
 	}
@@ -35,7 +37,7 @@ public class ConformerDiagnostics {
 		return mBaseConformer;
 	}
 
-	protected void setCollisionIntensity(double v) {
+	protected void setCollisionStrain(double v) {
 		mCollisionIntensity = v;
 	}
 
@@ -65,12 +67,20 @@ public class ConformerDiagnostics {
 		return mCoords;
 	}
 
+	public String getName() {
+		return mName;
+	}
+
 	public boolean isSuccess() {
 		return mSuccess;
 	}
 
 	public double getCollisionIntensity() {
 		return mCollisionIntensity;
+	}
+
+	public double getLikelihood() {
+		return mLikelihood;
 	}
 
 	public int[] getCollisionAtoms() {
