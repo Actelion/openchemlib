@@ -38,6 +38,9 @@ import java.io.InputStream;
 
 public class BitArray128 extends IndexHash implements IBitArray {
 
+	public static final int HASH_NOT_SET=-1;
+	public static final int HASH_SIDE_STEP =-2;
+
 	// Two long
 	public static final int MAX_NUM_BITS = 128;
 	
@@ -149,12 +152,11 @@ public class BitArray128 extends IndexHash implements IBitArray {
     		l2 = l2 | mask;
     	}
     	
-    	setHash(-1);
+    	setHash(BitArray128.HASH_NOT_SET);
     	
     	if(i >= sizeAfterLastBitSet){
     		sizeAfterLastBitSet = (char)(i + 1);
     	}
-    	
     }
     
     public void unsetBit(int i) {
@@ -171,7 +173,7 @@ public class BitArray128 extends IndexHash implements IBitArray {
     		l2 = l2 & ~mask;
     	}
     	
-    	setHash(-1);
+    	setHash(BitArray128.HASH_NOT_SET);
     	
     	if((i+1) == sizeAfterLastBitSet){
     		sizeAfterLastBitSet = 0;
@@ -222,7 +224,7 @@ public class BitArray128 extends IndexHash implements IBitArray {
 
 	public void reset() {
     	
-		setHash(-1);
+		setHash(BitArray128.HASH_NOT_SET);
 
     	l1 = 0;
     	l2 = 0;
@@ -300,9 +302,9 @@ public class BitArray128 extends IndexHash implements IBitArray {
     	
     	f.setHash((int)parseLong(s));
     	
-    	f.l1 =  (long)parseLong(s);
+    	f.l1 =  parseLong(s);
     	
-    	f.l2 =  (long)parseLong(s);
+    	f.l2 =  parseLong(s);
     	
     	f.sizeAfterLastBitSet =  (char)parseLong(s);
     	

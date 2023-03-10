@@ -149,32 +149,23 @@ public class ContainerFragBondsSolutions {
 	 * reached.
 	 */
 	public ContainerFragBondsSolutions(int bits, int totalCapacity) {
-		
 		this.bits = bits;
-
 		int [] arrHashMapCapacity = getHashMapCapacity(totalCapacity);
-
 		init(arrHashMapCapacity, totalCapacity);
 	}
 	
 	private int [] getHashMapCapacity(int totalMaximumCapacity) {
 
         int totalCapacity = 0;
-
 		int [] arrCapacity = new int [MAX_NUM_BONDS+1];
-
         for (int i = 0; i < arrCapacity.length; i++) {
             arrCapacity[i]=1;
         }
 
         for (int i = 0; i < ARR_CAPACITY.length; i++) {
-
             arrCapacity[i]= ARR_CAPACITY[i];
-
             totalCapacity += arrCapacity[i];
-
 			maximumNumberBondsInFragment = i;
-
             if(totalCapacity>=totalMaximumCapacity) {
                 break;
             }
@@ -278,19 +269,13 @@ public class ContainerFragBondsSolutions {
 	}
 	
 	public IBitArray getWithCopy(IBitArray orign){
-		
 		IBitArray f = containerListFragmentDefinedByBonds.get();
-		
 		f.copyIntoThis(orign);
-		
 		return f;
 	}
 	
 	public List<IBitArray> getList(int bonds){
-		
 		HashMap<IBitArray, IBitArray> hm = liHMFragmentDefinedByBonds.get(bonds);
-
-		
 		return new ArrayList<IBitArray>(hm.values());
 	}
 	
