@@ -64,8 +64,15 @@ public class BitArray128Factory implements IBitArrayFactory<BitArray128> {
 		burtleHasherABC.c = 0;
 		
 		BurtleHasher.mix64(burtleHasherABC);
-		
-		f.setHash((int)burtleHasherABC.c);
+
+		int h = (int)burtleHasherABC.c;
+
+		if(BitArray128.HASH_NOT_SET == h){
+			h = BitArray128.HASH_SIDE_STEP;
+			System.out.println("BitArray128Factory calculateHash(...) hash calculated from long-->int with " + BitArray128.HASH_NOT_SET + ", set to " + BitArray128.HASH_SIDE_STEP+ ".");
+		}
+
+		f.setHash(h);
 		
 	}
 
