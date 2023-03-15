@@ -221,9 +221,7 @@ public class ContainerFragBondsSolutions {
 		liHMFragmentDefinedByBonds.add(new HashMap<IBitArray, IBitArray>());
 
 		for (int i = 0; i < arrCapacity.length; i++) {
-			
 			liHMFragmentDefinedByBonds.add(new HashMap<IBitArray, IBitArray>(arrCapacity[i]));
-			
 		}
 		
 		containerListFragmentDefinedByBonds = new ContainerBitArray(bits, totalCapacity);

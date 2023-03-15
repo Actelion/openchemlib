@@ -125,16 +125,14 @@ public class ExhaustiveFragmentsStatistics {
 		
 		pipeInputFragIndexListsFromEFG = new Pipeline<IBitArray>();
 
-		pipeOutputFragmentDefinedByBondsIdCode = new Pipeline<FragmentDefinedByBondsIdCode>();
+		pipeOutputFragmentDefinedByBondsIdCode = new Pipeline<>();
 
-		liRunBondVector2IdCode = new ArrayList<RunBondVector2IdCode>();
+		liRunBondVector2IdCode = new ArrayList<>();
 		
 		for (int i = 0; i < threads; i++) {
-			RunBondVector2IdCode runExhaustiveFragStats = new RunBondVector2IdCode(i, pipeInputFragIndexListsFromEFG, pipeOutputFragmentDefinedByBondsIdCode);
-        	
-			liRunBondVector2IdCode.add(runExhaustiveFragStats);
-        	
-        	new Thread(runExhaustiveFragStats).start();
+			RunBondVector2IdCode runBondVector2IdCode = new RunBondVector2IdCode(i, pipeInputFragIndexListsFromEFG, pipeOutputFragmentDefinedByBondsIdCode);
+			liRunBondVector2IdCode.add(runBondVector2IdCode);
+        	new Thread(runBondVector2IdCode).start();
 		}
 
 		
@@ -154,7 +152,7 @@ public class ExhaustiveFragmentsStatistics {
 		
 		int maxNumBondsFragment = Math.min(efg.getMaximumCapacityBondsInFragment(), maxNumBondsFragmentDesired);
 
-		List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = new ArrayList<ModelExhaustiveStatistics>();
+		List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = new ArrayList<>();
 		
 		if(collectFragmentIdCodes) {
 			for (int i = 0; i < maxNumBondsFragment+1; i++) {
@@ -197,19 +195,22 @@ public class ExhaustiveFragmentsStatistics {
 				@Override
 				public void run() {
 
-				while(!pipeOutputFragmentDefinedByBondsIdCode.wereAllDataFetched()) {
-
-					FragmentDefinedByBondsIdCode fragmentIndexIdCode = pipeOutputFragmentDefinedByBondsIdCode.pollData();
-
-					if(fragmentIndexIdCode == null){
-
-						try {Thread.sleep(SLEEP);} catch (InterruptedException e) {e.printStackTrace();}
-
-						continue;
+					try {
+						while (!pipeOutputFragmentDefinedByBondsIdCode.wereAllDataFetched()) {
+							FragmentDefinedByBondsIdCode fragmentIndexIdCode = pipeOutputFragmentDefinedByBondsIdCode.pollData();
+							if (fragmentIndexIdCode == null) {
+								try {
+									Thread.sleep(SLEEP);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+								continue;
+							}
+							hsIdCode.add(new ByteVec(fragmentIndexIdCode.getIdCode()));
+						}
+					} catch (Exception e){
+						e.printStackTrace();
 					}
-
-					hsIdCode.add(new ByteVec(fragmentIndexIdCode.getIdCode()));
-				}
 				}
 			};
 
@@ -281,17 +282,15 @@ public class ExhaustiveFragmentsStatistics {
 		return endOfRunReached;
 	}
 	
-	public void finalize() throws Throwable {
+	public void roundUp() throws Throwable {
 		
 		pipeInputFragIndexListsFromEFG.setAllDataIn(true);
 		
 		while(!areAllReachedEndOfRun()){
 			try {Thread.sleep(SLEEP);} catch (InterruptedException e) {e.printStackTrace();}
-			System.out.println("ExhaustiveFragmentsStatistics finalize() waiting for end of run.");
+			System.out.println("ExhaustiveFragmentsStatistics roundUp() waiting for end of run.");
 		}
-		
-		super.finalize();
-		
+
 	}
 
 	public int getMaximumNumberBondsInMolecule(){

@@ -100,7 +100,7 @@ public class FractalDimensionMolecule {
         List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = resultFragmentsStatistic.getExhaustiveStatistics();
 
 
-        List<Point> liFragBnds_NumUniqueFrags = new ArrayList<Point>();
+        List<Point> liFragBnds_NumUniqueFrags = new ArrayList<>();
 
         for (ModelExhaustiveStatistics modelExhaustiveStatistic : liModelExhaustiveStatistics) {
             liFragBnds_NumUniqueFrags.add(new Point(modelExhaustiveStatistic.getNumBondsInFragment(), modelExhaustiveStatistic.getUnique()));
@@ -128,7 +128,7 @@ public class FractalDimensionMolecule {
 
     public void finalizeThreads() throws Throwable {
         if(exhaustiveFragmentsStatistics!=null) {
-            exhaustiveFragmentsStatistics.finalize();
+            exhaustiveFragmentsStatistics.roundUp();
         }
     }
 

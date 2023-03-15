@@ -69,9 +69,8 @@ public class MolecularComplexityCalculator {
 
 	}
 	
-	public void finalize() throws Throwable{
-		exhaustiveFragmentsStatistics.finalize();
-		super.finalize();
+	public void roundUp() throws Throwable{
+		exhaustiveFragmentsStatistics.roundUp();
 	}
 
 
