@@ -873,15 +873,16 @@ public class SmilesParser {
 					atomMass = number;
 					}
 				else {
-					boolean hasBondType = (smiles[position-2] == '-'
-										|| smiles[position-2] == '/'
-										|| smiles[position-2] == '\\'
-										|| smiles[position-2] == '='
-										|| smiles[position-2] == '#'
-										|| smiles[position-2] == '$'
-										|| smiles[position-2] == ':'
-										|| smiles[position-2] == '>'
-										|| smiles[position-2] == '~');
+					int bondTypePosition = isDoubleDigit ? position - 3 : position - 2;
+					boolean hasBondType = (smiles[bondTypePosition] == '-'
+										|| smiles[bondTypePosition] == '/'
+										|| smiles[bondTypePosition] == '\\'
+										|| smiles[bondTypePosition] == '='
+										|| smiles[bondTypePosition] == '#'
+										|| smiles[bondTypePosition] == '$'
+										|| smiles[bondTypePosition] == ':'
+										|| smiles[bondTypePosition] == '>'
+										|| smiles[bondTypePosition] == '~');
 					if (isDoubleDigit
 					 && position < endIndex
 					 && Character.isDigit(smiles[position])) {

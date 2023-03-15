@@ -819,7 +819,8 @@ public class RingCollection {
 			for (int carbeniumPosition=0; carbeniumPosition<7; carbeniumPosition++) {
 				if ((bondSequence & cSequence7Ring[carbeniumPosition]) == cSequence7Ring[carbeniumPosition]) {
 					if ((mMol.getAtomicNo(ringAtom[carbeniumPosition]) == 6
-					  && mMol.getAtomCharge(ringAtom[carbeniumPosition]) == 1)
+					  && (mMol.getAtomCharge(ringAtom[carbeniumPosition]) == 1
+					|| (includeTautomericBonds && hasOxo(ringAtom[carbeniumPosition]))))
 					 || (mMol.getAtomicNo(ringAtom[carbeniumPosition]) == 5
 					  && mMol.getAtomCharge(ringAtom[carbeniumPosition]) == 0)) {
 						isAromatic[ringNo] = true;
@@ -839,6 +840,14 @@ public class RingCollection {
 			return true;
 
 		return !unhandledAnnelatedRingFound;
+		}
+
+	private boolean hasOxo(int carbonAtom) {
+		for (int i=0; i<mMol.getConnAtoms(carbonAtom); i++)
+			if (mMol.getConnBondOrder(carbonAtom, i) == 2
+			 && mMol.getAtomicNo(mMol.getConnAtom(carbonAtom, i)) == 8)
+				return true;
+		return false;
 		}
 
 	private boolean qualifiesAsPiBond(int bond) {

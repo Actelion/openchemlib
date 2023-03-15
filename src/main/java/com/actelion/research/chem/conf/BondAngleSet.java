@@ -73,12 +73,31 @@ public class BondAngleSet {
 		mTinyRingSizeSum = new int[mMol.getBonds()];
 	
 			// define all angles between bonds of flat rings (aromatic or ringsize<=4)
-		calculateBondAnglesOfFlatRings();
-	
+		RingCollection ringSet = mMol.getRingSet();
+		boolean[] isAromaticRing = new boolean[ringSet.getSize()];
+		ringSet.determineAromaticity(isAromaticRing, new boolean[ringSet.getSize()], new int[ringSet.getSize()], true);
+		for (int consideredRingSize=3; consideredRingSize<=7; consideredRingSize++) {
+			for (int ring=0; ring<ringSet.getSize(); ring++) {
+				int ringSize = ringSet.getRingSize(ring);
+				if (ringSize == consideredRingSize) {
+					if (isAromaticRing[ring])
+						calculateBondAnglesOfAromaticRing(ring);
+					else if (ringSize <= 4)
+						calculateBondAnglesOfSmallRing(ring);
+					}
+				}
+			}
+		// We include tautomeric bond states to detect aromaticity leading to flatness of rings.
+		// When later checking atoms for being aromatic, we need to apply the same concept.
+		boolean[] isAromaticAtom = new boolean[mMol.getAtoms()];
+		for (int ring=0; ring<ringSet.getSize(); ring++)
+			if (isAromaticRing[ring])
+				for (int ringAtom:ringSet.getRingAtoms(ring))
+					isAromaticAtom[ringAtom] = true;
+
 			// define remaining angles between yet undefined angles between vicinal bonds
 		final int[] cTotalAngleCount = { 0, 0, 1, 3, 6, 10, 15, 21 };
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			int[] connAtom = new int[mMol.getAllConnAtoms(atom)];
 			int connAtoms = mMol.getAllConnAtoms(atom);
 			if (connAtoms > 4) {
 				for (int i=1; i<connAtoms; i++)
@@ -94,7 +113,7 @@ public class BondAngleSet {
 	
 				// exocyclic bonds of flat ring atoms (aromatic or sp2 in ringsize<=4)
 			if (mMol.isSmallRingAtom(atom)
-			 && (mMol.isAromaticAtom(atom)
+			 && (isAromaticAtom[atom]
 			  || (mMol.getAtomRingSize(atom) <= 4
 			   && mMol.getAtomPi(atom) > 0))) {
 				if (connAtoms > 2) {
@@ -274,23 +293,6 @@ public class BondAngleSet {
 		return (i1 < i2) ? mBondAngle[atom][i2][i1] : mBondAngle[atom][i1][i2];
 		}
 
-	private void calculateBondAnglesOfFlatRings() {
-		RingCollection ringSet = mMol.getRingSet();
-		boolean[] isAromaticRing = new boolean[ringSet.getSize()];
-		ringSet.determineAromaticity(isAromaticRing, new boolean[ringSet.getSize()], new int[ringSet.getSize()], true);
-		for (int consideredRingSize=3; consideredRingSize<=7; consideredRingSize++) {
-			for (int ring=0; ring<ringSet.getSize(); ring++) {
-			    int ringSize = ringSet.getRingSize(ring);
-				if (ringSize == consideredRingSize) {
-				    if (isAromaticRing[ring])
-				        calculateBondAnglesOfAromaticRing(ring);
-				    else if (ringSize <= 4)
-				        calculateBondAnglesOfSmallRing(ring);
-					}
-				}
-			}
-		}
-
 	private void calculateBondAnglesOfSmallRing(int ring) {
 		RingCollection ringSet = mMol.getRingSet();
 	    int ringSize = ringSet.getRingSize(ring);
@@ -335,8 +337,6 @@ public class BondAngleSet {
 			    setBondAngle(ringAtom[i], ringBond[i], ringBond[(i==0)?ringSize-1:i-1], bondAngle);
 		    return;
 			}
-
-
 	    
 	    float[] optAngle = new float[ringSize];
 	    float angleSum = 0.0f;
@@ -405,13 +405,12 @@ public class BondAngleSet {
 	            angle -= 2*Math.PI;
 
 	        System.out.println("optAngle:"+optAngle[i]+"; angle("+i+"):"+com.actelion.research.util.DoubleFormat.toString(angle));
-		    sx += mBondLength[ringBond[i]] * Math.sin(direction[i]);
-		    sy += mBondLength[ringBond[i]] * Math.cos(direction[i]);
+		    sx += mBondLengthSet.getLength(ringBond[i]) * Math.sin(direction[i]);
+		    sy += mBondLengthSet.getLength(ringBond[i]) * Math.cos(direction[i]);
 			}
 		System.out.println("dsx:"+com.actelion.research.util.DoubleFormat.toString(sx));
 		System.out.println("dsy:"+com.actelion.research.util.DoubleFormat.toString(sy));
-*/
-		}
+*/		}
 
 	private int getRingStrainClass(int atom) {
 		// the ring strain class of an atom is the sorted list
