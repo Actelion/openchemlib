@@ -173,6 +173,10 @@ public class ExhaustiveFragmentsStatistics {
 				
 		for (int nBondsFrag = minNumBondsFragment; nBondsFrag < maxNumBondsFragment+1; nBondsFrag++) {
 
+			if(isELUSIVE()){
+				System.out.println("ExhaustiveFragmentsStatistics create(...) process for bond count " + nBondsFrag + ".");
+			}
+
 			hsIdCode.clear();
 
 			pipeInputFragIndexListsFromEFG.reset();
@@ -182,12 +186,17 @@ public class ExhaustiveFragmentsStatistics {
 
 			List<IBitArray> liIntegerListResultsEFG = efg.getFragments(nBondsFrag);
 
+			if(isELUSIVE()){
+				System.out.println("ExhaustiveFragmentsStatistics create(...) processing for bond count " + nBondsFrag + ". Retrieved list with fragments " +  Formatter.group(liIntegerListResultsEFG.size()) + ".");
+			}
+
 			processedFragments.set(0);
 
 			if(!pipeInputFragIndexListsFromEFG.isEmpty()){
 				throw new RuntimeException("Error in algorithm!");
 			}
 
+			// Feeds bond vector to idcode
 			pipeInputFragIndexListsFromEFG.addData(liIntegerListResultsEFG);
 
 			// Do not set all data in for pipeInputFragIndexListsFromEFG here. This is set in finalize().
@@ -209,8 +218,12 @@ public class ExhaustiveFragmentsStatistics {
 							}
 							hsIdCode.add(new ByteVec(fragmentIndexIdCode.getIdCode()));
 						}
-					} catch (Exception e){
+					} catch (Throwable e){
 						e.printStackTrace();
+					} finally {
+						if(isELUSIVE()){
+							System.out.println("ExhaustiveFragmentsStatistics Runnable runAdd2HashSe finally reached.");
+						}
 					}
 				}
 			};
@@ -228,6 +241,9 @@ public class ExhaustiveFragmentsStatistics {
 				}
 			}
 
+			if(isELUSIVE()){
+				System.out.println("ExhaustiveFragmentsStatistics create(...) add idcode to HashSet finished for bond count " + nBondsFrag + ".");
+			}
 			
 			double ratioCoveredBonds =  (double)nBondsFrag / bondsMol;
 						
@@ -245,7 +261,11 @@ public class ExhaustiveFragmentsStatistics {
 			if(collectFragmentIdCodes) {
 				liliIdCode.get(nBondsFrag).addAll(hsIdCode);
 			}
-			
+
+			if(isELUSIVE()){
+				System.out.println("ExhaustiveFragmentsStatistics create(...) finished for bond count " + nBondsFrag + ".");
+			}
+
 		}
 		
 		ResultFragmentsStatistic fragmentsStatistic = new ResultFragmentsStatistic(mol, liModelExhaustiveStatistics);
@@ -353,7 +373,7 @@ public class ExhaustiveFragmentsStatistics {
 	}
 
 	/**
-	 * @param elusive the eLUSIVE to set
+	 * @param elusive the ELUSIVE to set
 	 */
 	public static void setELUSIVE(boolean elusive) {
 		ELUSIVE = elusive;

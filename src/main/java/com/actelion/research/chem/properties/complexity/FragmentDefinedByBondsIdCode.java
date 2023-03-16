@@ -36,7 +36,7 @@ package com.actelion.research.chem.properties.complexity;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class FragmentDefinedByBondsIdCode {
+public class FragmentDefinedByBondsIdCode implements Comparable<FragmentDefinedByBondsIdCode> {
 
 	
 	String idcode;
@@ -154,4 +154,16 @@ public class FragmentDefinedByBondsIdCode {
     }
 
 
+	@Override
+	public int compareTo(FragmentDefinedByBondsIdCode o) {
+
+		if(idcode==null && o.idcode==null)
+			return 0;
+		else if(o.idcode==null)
+			return 1;
+		else if(idcode==null)
+			return -1;
+
+		return idcode.compareTo(o.idcode);
+	}
 }
