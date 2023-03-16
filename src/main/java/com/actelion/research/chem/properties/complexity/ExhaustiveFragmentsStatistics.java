@@ -36,6 +36,7 @@ package com.actelion.research.chem.properties.complexity;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.mcs.ExhaustiveFragmentGeneratorBonds;
 import com.actelion.research.chem.mcs.RunBondVector2IdCode;
+import com.actelion.research.util.Formatter;
 import com.actelion.research.util.Pipeline;
 import com.actelion.research.util.datamodel.ByteVec;
 
@@ -115,7 +116,9 @@ public class ExhaustiveFragmentsStatistics {
 
 		efg  = new ExhaustiveFragmentGeneratorBonds(bits, totalCapacity);
 
-		System.out.println("ExhaustiveFragmentsStatistics init(...) totalCapacity " + totalCapacity);
+		// Formatter
+
+		System.out.println("ExhaustiveFragmentsStatistics init(...) totalCapacity " + Formatter.group(totalCapacity));
 
 		minNumBondsFragment = MINLEN_FRAG;
 				
@@ -134,8 +137,6 @@ public class ExhaustiveFragmentsStatistics {
 			liRunBondVector2IdCode.add(runBondVector2IdCode);
         	new Thread(runBondVector2IdCode).start();
 		}
-
-		
 	}
 	
 	/**
@@ -314,8 +315,7 @@ public class ExhaustiveFragmentsStatistics {
 				int capacity = (int)(arrCapacity[i-1] * ContainerFragBondsSolutions.FACTOR_CAPACITY);
 				arrCapacity[i] = capacity;
 			}
-			
-			
+
 			for (int i = 0; i < MINLEN_FRAG; i++) {
 				liliIdCode.add(new ArrayList<ByteVec>());
 			}
@@ -323,10 +323,8 @@ public class ExhaustiveFragmentsStatistics {
 			for (int i = 0; i < arrCapacity.length; i++) {
 				liliIdCode.add(new ArrayList<ByteVec>(arrCapacity[i]));
 			}
-
 		}
 
-		
 	}
 
 	

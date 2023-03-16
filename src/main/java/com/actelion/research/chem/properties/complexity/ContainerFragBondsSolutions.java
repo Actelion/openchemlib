@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.properties.complexity;
 
+import com.actelion.research.util.Formatter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -123,7 +125,7 @@ public class ContainerFragBondsSolutions {
 
 	protected static int START_CAPACITY = 100;
 
-	protected static int DEFAULT_CAPACITY = 2 * 1000 * 1000;
+	protected static int DEFAULT_CAPACITY = 4 * 1000 * 1000;
 
 	protected static int MAX_NUM_BONDS = 100;
 
@@ -214,7 +216,7 @@ public class ContainerFragBondsSolutions {
 		}
 		
 		if(ELUSIVE)
-			System.out.println("ContainerFragBondsSolutions initialized cumulated hash map capacity " + cumulatedInitHashMapCapacity + ".");
+			System.out.println("ContainerFragBondsSolutions initialized cumulated hash map capacity " + Formatter.group(cumulatedInitHashMapCapacity) + ".");
 		
 		liHMFragmentDefinedByBonds = new ArrayList<HashMap<IBitArray,IBitArray>>();
 		
@@ -274,7 +276,7 @@ public class ContainerFragBondsSolutions {
 	
 	public List<IBitArray> getList(int bonds){
 		HashMap<IBitArray, IBitArray> hm = liHMFragmentDefinedByBonds.get(bonds);
-		return new ArrayList<IBitArray>(hm.values());
+		return new ArrayList<>(hm.values());
 	}
 	
 
@@ -330,7 +332,7 @@ public class ContainerFragBondsSolutions {
 
 		HashMap<IBitArray, IBitArray> hm = liHMFragmentDefinedByBonds.get(bits);
 
-		List<IBitArray> li = new ArrayList<IBitArray>(hm.keySet());
+		List<IBitArray> li = new ArrayList<>(hm.keySet());
 
 		for (IBitArray bitArray : li) {
 			containerListFragmentDefinedByBonds.receycle(bitArray);

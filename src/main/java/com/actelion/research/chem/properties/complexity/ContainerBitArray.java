@@ -36,30 +36,31 @@ package com.actelion.research.chem.properties.complexity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.actelion.research.util.Formatter;
 import com.actelion.research.util.datamodel.IntArray;
 
+/**
+ * Contains a list of reusable bit arrays.
+ */
 public class ContainerBitArray {
 	
 	private static boolean ELUSIVE = false;
 
-	private static final int CAPACITY_ADD = 1 << 10;
-	
-	private static final int MAX_CAPACITY_ADD = 1 << 28;
-	
-	private static final int LIMIT2FULL = 1500000000;
-	
-	private static final int CAPACITY_FULL = Integer.MAX_VALUE;
+	private static final int LIMIT2FULL = 1500 * 1000 * 1000;
+
+	/**
+	 * If we reach Integer.MAX_VALUE an error will be thrown.
+	 */
+	private static final int CAPACITY_FULL = Integer.MAX_VALUE-1;
 	
 	
 	private List<IBitArray> li;
 			
 	private IntArray arrAvailable;
-	
-	private int capacityAdd;
 
 	private int bits;
 	
-	IBitArrayFactory<? extends IBitArray> bitArrayCreator;
+	private IBitArrayFactory<? extends IBitArray> bitArrayCreator;
 	
 	/**
 	 * 
@@ -79,21 +80,20 @@ public class ContainerBitArray {
 		if(capacity > LIMIT2FULL) {
 			capacity = CAPACITY_FULL;
 		}
-		
-		capacityAdd = CAPACITY_ADD;
-	
+
+		if(isELUSIVE()){
+			System.out.println("ContainerBitArray(...) capacity " + Formatter.group(capacity) + ".");
+		}
+
 		arrAvailable = new IntArray(capacity);
 		
-		li = new ArrayList<IBitArray>(capacity);
-		
+		li = new ArrayList<>(capacity);
 
-		
 		addResources(capacity);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public void calculateHash(IBitArray f){
-		
 		((IBitArrayFactory<IBitArray>)bitArrayCreator).calculateHash(f);
 	}
 
@@ -113,7 +113,7 @@ public class ContainerBitArray {
 	private void addResources(int capacity) {
 		
 		if(li.size() == Integer.MAX_VALUE){
-			new RuntimeException("Maximum capacity reached").toString();
+			new RuntimeException("Maximum capacity reached").printStackTrace();
 			return;
 		}
 		
@@ -128,31 +128,19 @@ public class ContainerBitArray {
 			arrAvailable.add(index);
 			
 			if(li.size() == Integer.MAX_VALUE){
-				new RuntimeException("Maximum capacity reached").toString();
+				new RuntimeException("Maximum capacity reached").printStackTrace();
 				break;
 			}
 		}
 	}
 	/**
 	 * 
-	 * @return a fresh (reseted) instance.
+	 * @return a fresh (reset) instance.
 	 */
 	public IBitArray get(){
 		
 		if(arrAvailable.length()==0){
-
-			throw new CapacityReachedError("Maximum capacity " + arrAvailable.getCapacity() + " reached!");
-
-//			addResources(capacityAdd);
-//
-//			if(ELUSIVE){
-//				System.out.println("ContainerBitArray capacity increased by " + capacityAdd + " objects.");
-//			}
-//
-//			if(capacityAdd<MAX_CAPACITY_ADD) {
-//				capacityAdd <<= 1;
-//			}
-			
+			throw new CapacityReachedError("Maximum capacity " + Formatter.group(arrAvailable.getCapacity()) + " reached!");
 		}
 		
 		int index = arrAvailable.removeLast();
@@ -163,7 +151,11 @@ public class ContainerBitArray {
 		
 		return bitArray;
 	}
-	
+
+	/**
+	 * The garbage collector. Put BitArray here if not used anymore.
+	 * @param liv
+	 */
 	public void receycle(IBitArray liv){
 		arrAvailable.add(liv.getIndex());
 	}

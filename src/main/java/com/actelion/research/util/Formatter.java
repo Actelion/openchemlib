@@ -60,6 +60,8 @@ public class Formatter {
 	public static final DecimalFormat dfI2 = new DecimalFormat("00", new DecimalFormatSymbols(Locale.US));
 	public static final DecimalFormat dfI3 = new DecimalFormat("000", new DecimalFormatSymbols(Locale.US));
 
+	public static final DecimalFormat dfGroup = new DecimalFormat("#,###", new DecimalFormatSymbols(Locale.US));
+
 	static {
 		//Set default format
 		setLocaleFormat(LocaleFormat.SWISS);
@@ -143,6 +145,17 @@ public class Formatter {
 		return dfE.format(d);
 	}
 
+	public static final String group(Integer d) {
+		if(d==null) return "";
+		return dfGroup.format(d);
+	}
+	public static final String group(Long d) {
+		if(d==null) return "";
+		return dfGroup.format(d);
+	}
+
+
+
 	public static final String format(Object value) {
 		if(value==null) {
 			return "";
@@ -154,6 +167,7 @@ public class Formatter {
 			return "" + value;
 		}
 	}
+
 
 
 	
