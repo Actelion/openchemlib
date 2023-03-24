@@ -6,6 +6,7 @@ import java.util.List;
 import com.actelion.research.chem.ExtendedMolecule;
 import com.actelion.research.chem.properties.complexity.ContainerFragBondsSolutions;
 import com.actelion.research.chem.properties.complexity.IBitArray;
+import com.actelion.research.util.Formatter;
 import com.actelion.research.util.SizeOf;
 import com.actelion.research.util.datamodel.IntArray;
 
@@ -50,7 +51,7 @@ public class ExhaustiveFragmentGeneratorBonds {
 	public static final long LIMIT_NEIGHBOURS_SINCE_LAST_ADDED = 100 * 1000 * 1000;
 		
 	// This list contains the solutions. Each row in the list contains the solutions for the corresponding number of atom types.
-	// Consequently the first two rows are empty.
+	// Consequently, the first two rows are empty.
 	private ContainerFragBondsSolutions containerDataFragDefByBonds;
 	
 	private ExtendedMolecule mol;
@@ -160,7 +161,7 @@ public class ExhaustiveFragmentGeneratorBonds {
 		long neighboursTotal = 0;
 		long addedTotal = 0;
 		if(ELUSIVE) {
-			System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() start record capacity " + containerDataFragDefByBonds.getAvailable() + ".");
+			System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() start record capacity " + Formatter.group(containerDataFragDefByBonds.getAvailable()) + ".");
 		}
 		maximumCapacityBreak:
 		for (int i = 1; i < maxNumBondsFrag; i++) {
@@ -168,7 +169,7 @@ public class ExhaustiveFragmentGeneratorBonds {
 			List<IBitArray> liParent = containerDataFragDefByBonds.getList(i);
 
 			if(ELUSIVE) {
-				System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() bonds  " + i + ". Parents " + liParent.size() + ".");
+				System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() bonds  " + i + ". Parents " + Formatter.group(liParent.size()) + ".");
 
 			}
 
@@ -237,20 +238,20 @@ public class ExhaustiveFragmentGeneratorBonds {
 		fragmentsGenerated = true;
 		
 		if(ELUSIVE) {
-			System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() getTotalSizeResultList() " + containerDataFragDefByBonds.getTotalSizeResults() + ".");
-			System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() solutionAdded " + solutionAdded + ".");
+			System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() getTotalSizeResultList() " + Formatter.group(containerDataFragDefByBonds.getTotalSizeResults()) + ".");
+			System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() solutionAdded " + Formatter.group(solutionAdded) + ".");
 		}
 	}
 
 	private void log(long neighbours, long neighboursTotal, long added, long addedTotal, long neighboursSinceLastAdded){
 		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() " + new Date().toString() + ".");
-		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() neighbours generated " + neighbours + ".");
-		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() neighbours generated total " + neighboursTotal + ".");
-		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() solutions added " + added + ".");
-		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() solutions added total " + addedTotal + ".");
-		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() available  " + containerDataFragDefByBonds.getAvailable() + ".");
-		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() capacity  " + containerDataFragDefByBonds.getCapacity() + ".");
-		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() neighboursSinceLastAdded  " + neighboursSinceLastAdded + ".");
+		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() neighbours generated " + Formatter.group(neighbours) + ".");
+		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() neighbours generated total " + Formatter.group(neighboursTotal) + ".");
+		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() solutions added " + Formatter.group(added) + ".");
+		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() solutions added total " + Formatter.group(addedTotal) + ".");
+		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() available  " + Formatter.group(containerDataFragDefByBonds.getAvailable()) + ".");
+		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() capacity  " + Formatter.group(containerDataFragDefByBonds.getCapacity()) + ".");
+		System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() neighboursSinceLastAdded  " + Formatter.group(neighboursSinceLastAdded) + ".");
 	}
 
 

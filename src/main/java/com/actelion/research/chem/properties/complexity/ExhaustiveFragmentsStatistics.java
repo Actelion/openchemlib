@@ -36,6 +36,7 @@ package com.actelion.research.chem.properties.complexity;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.mcs.ExhaustiveFragmentGeneratorBonds;
 import com.actelion.research.chem.mcs.RunBondVector2IdCode;
+import com.actelion.research.util.Formatter;
 import com.actelion.research.util.Pipeline;
 import com.actelion.research.util.datamodel.ByteVec;
 
@@ -115,7 +116,9 @@ public class ExhaustiveFragmentsStatistics {
 
 		efg  = new ExhaustiveFragmentGeneratorBonds(bits, totalCapacity);
 
-		System.out.println("ExhaustiveFragmentsStatistics init(...) totalCapacity " + totalCapacity);
+		// Formatter
+
+		System.out.println("ExhaustiveFragmentsStatistics init(...) totalCapacity " + Formatter.group(totalCapacity));
 
 		minNumBondsFragment = MINLEN_FRAG;
 				
@@ -125,19 +128,15 @@ public class ExhaustiveFragmentsStatistics {
 		
 		pipeInputFragIndexListsFromEFG = new Pipeline<IBitArray>();
 
-		pipeOutputFragmentDefinedByBondsIdCode = new Pipeline<FragmentDefinedByBondsIdCode>();
+		pipeOutputFragmentDefinedByBondsIdCode = new Pipeline<>();
 
-		liRunBondVector2IdCode = new ArrayList<RunBondVector2IdCode>();
+		liRunBondVector2IdCode = new ArrayList<>();
 		
 		for (int i = 0; i < threads; i++) {
-			RunBondVector2IdCode runExhaustiveFragStats = new RunBondVector2IdCode(i, pipeInputFragIndexListsFromEFG, pipeOutputFragmentDefinedByBondsIdCode);
-        	
-			liRunBondVector2IdCode.add(runExhaustiveFragStats);
-        	
-        	new Thread(runExhaustiveFragStats).start();
+			RunBondVector2IdCode runBondVector2IdCode = new RunBondVector2IdCode(i, pipeInputFragIndexListsFromEFG, pipeOutputFragmentDefinedByBondsIdCode);
+			liRunBondVector2IdCode.add(runBondVector2IdCode);
+        	new Thread(runBondVector2IdCode).start();
 		}
-
-		
 	}
 	
 	/**
@@ -154,7 +153,7 @@ public class ExhaustiveFragmentsStatistics {
 		
 		int maxNumBondsFragment = Math.min(efg.getMaximumCapacityBondsInFragment(), maxNumBondsFragmentDesired);
 
-		List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = new ArrayList<ModelExhaustiveStatistics>();
+		List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = new ArrayList<>();
 		
 		if(collectFragmentIdCodes) {
 			for (int i = 0; i < maxNumBondsFragment+1; i++) {
@@ -174,6 +173,10 @@ public class ExhaustiveFragmentsStatistics {
 				
 		for (int nBondsFrag = minNumBondsFragment; nBondsFrag < maxNumBondsFragment+1; nBondsFrag++) {
 
+			if(isELUSIVE()){
+				System.out.println("ExhaustiveFragmentsStatistics create(...) process for bond count " + nBondsFrag + ".");
+			}
+
 			hsIdCode.clear();
 
 			pipeInputFragIndexListsFromEFG.reset();
@@ -183,12 +186,17 @@ public class ExhaustiveFragmentsStatistics {
 
 			List<IBitArray> liIntegerListResultsEFG = efg.getFragments(nBondsFrag);
 
+			if(isELUSIVE()){
+				System.out.println("ExhaustiveFragmentsStatistics create(...) processing for bond count " + nBondsFrag + ". Retrieved list with fragments " +  Formatter.group(liIntegerListResultsEFG.size()) + ".");
+			}
+
 			processedFragments.set(0);
 
 			if(!pipeInputFragIndexListsFromEFG.isEmpty()){
 				throw new RuntimeException("Error in algorithm!");
 			}
 
+			// Feeds bond vector to idcode
 			pipeInputFragIndexListsFromEFG.addData(liIntegerListResultsEFG);
 
 			// Do not set all data in for pipeInputFragIndexListsFromEFG here. This is set in finalize().
@@ -197,19 +205,26 @@ public class ExhaustiveFragmentsStatistics {
 				@Override
 				public void run() {
 
-				while(!pipeOutputFragmentDefinedByBondsIdCode.wereAllDataFetched()) {
-
-					FragmentDefinedByBondsIdCode fragmentIndexIdCode = pipeOutputFragmentDefinedByBondsIdCode.pollData();
-
-					if(fragmentIndexIdCode == null){
-
-						try {Thread.sleep(SLEEP);} catch (InterruptedException e) {e.printStackTrace();}
-
-						continue;
+					try {
+						while (!pipeOutputFragmentDefinedByBondsIdCode.wereAllDataFetched()) {
+							FragmentDefinedByBondsIdCode fragmentIndexIdCode = pipeOutputFragmentDefinedByBondsIdCode.pollData();
+							if (fragmentIndexIdCode == null) {
+								try {
+									Thread.sleep(SLEEP);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+								continue;
+							}
+							hsIdCode.add(new ByteVec(fragmentIndexIdCode.getIdCode()));
+						}
+					} catch (Throwable e){
+						e.printStackTrace();
+					} finally {
+						if(isELUSIVE()){
+							System.out.println("ExhaustiveFragmentsStatistics Runnable runAdd2HashSe finally reached.");
+						}
 					}
-
-					hsIdCode.add(new ByteVec(fragmentIndexIdCode.getIdCode()));
-				}
 				}
 			};
 
@@ -226,6 +241,9 @@ public class ExhaustiveFragmentsStatistics {
 				}
 			}
 
+			if(isELUSIVE()){
+				System.out.println("ExhaustiveFragmentsStatistics create(...) add idcode to HashSet finished for bond count " + nBondsFrag + ".");
+			}
 			
 			double ratioCoveredBonds =  (double)nBondsFrag / bondsMol;
 						
@@ -243,7 +261,11 @@ public class ExhaustiveFragmentsStatistics {
 			if(collectFragmentIdCodes) {
 				liliIdCode.get(nBondsFrag).addAll(hsIdCode);
 			}
-			
+
+			if(isELUSIVE()){
+				System.out.println("ExhaustiveFragmentsStatistics create(...) finished for bond count " + nBondsFrag + ".");
+			}
+
 		}
 		
 		ResultFragmentsStatistic fragmentsStatistic = new ResultFragmentsStatistic(mol, liModelExhaustiveStatistics);
@@ -281,17 +303,15 @@ public class ExhaustiveFragmentsStatistics {
 		return endOfRunReached;
 	}
 	
-	public void finalize() throws Throwable {
+	public void roundUp() throws Throwable {
 		
 		pipeInputFragIndexListsFromEFG.setAllDataIn(true);
 		
 		while(!areAllReachedEndOfRun()){
 			try {Thread.sleep(SLEEP);} catch (InterruptedException e) {e.printStackTrace();}
-			System.out.println("ExhaustiveFragmentsStatistics finalize() waiting for end of run.");
+			System.out.println("ExhaustiveFragmentsStatistics roundUp() waiting for end of run.");
 		}
-		
-		super.finalize();
-		
+
 	}
 
 	public int getMaximumNumberBondsInMolecule(){
@@ -315,8 +335,7 @@ public class ExhaustiveFragmentsStatistics {
 				int capacity = (int)(arrCapacity[i-1] * ContainerFragBondsSolutions.FACTOR_CAPACITY);
 				arrCapacity[i] = capacity;
 			}
-			
-			
+
 			for (int i = 0; i < MINLEN_FRAG; i++) {
 				liliIdCode.add(new ArrayList<ByteVec>());
 			}
@@ -324,10 +343,8 @@ public class ExhaustiveFragmentsStatistics {
 			for (int i = 0; i < arrCapacity.length; i++) {
 				liliIdCode.add(new ArrayList<ByteVec>(arrCapacity[i]));
 			}
-
 		}
 
-		
 	}
 
 	
@@ -356,7 +373,7 @@ public class ExhaustiveFragmentsStatistics {
 	}
 
 	/**
-	 * @param elusive the eLUSIVE to set
+	 * @param elusive the ELUSIVE to set
 	 */
 	public static void setELUSIVE(boolean elusive) {
 		ELUSIVE = elusive;

@@ -60,11 +60,17 @@ public class FractalDimensionMolecule {
 
     private static final int MAX_THREADS_BOND_VECTOR_TO_IDCODE = 3;
 
+    private static final int BONDS_LIMIT_STATS = 18;
+
     private ExhaustiveFragmentsStatistics exhaustiveFragmentsStatistics;
+
+    boolean elusive;
 
     public FractalDimensionMolecule(int totalCapacity, boolean elusive) {
 
         ExhaustiveFragmentsStatistics.setELUSIVE(elusive);
+
+        this.elusive = elusive;
 
         int threadsBondVector2IdCode = Runtime.getRuntime().availableProcessors()-1;
 
@@ -93,14 +99,20 @@ public class FractalDimensionMolecule {
             return resultFracDimCalc;
         }
 
-        System.out.println("Process molecule " + inputObjectFracDimCalc.getId() + " with " + bonds + " bonds." );
 
-        ResultFragmentsStatistic resultFragmentsStatistic = exhaustiveFragmentsStatistics.create(mol, bonds-1);
+
+        int maxNumBondsStats = bonds -1;
+        if(bonds>BONDS_LIMIT_STATS)
+            maxNumBondsStats = bonds - 2;
+
+        System.out.println("Process molecule " + inputObjectFracDimCalc.getId() + " with " + bonds + " bonds. maxNumBondsStats " + maxNumBondsStats + ".");
+
+        ResultFragmentsStatistic resultFragmentsStatistic = exhaustiveFragmentsStatistics.create(mol, maxNumBondsStats);
 
         List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = resultFragmentsStatistic.getExhaustiveStatistics();
 
 
-        List<Point> liFragBnds_NumUniqueFrags = new ArrayList<Point>();
+        List<Point> liFragBnds_NumUniqueFrags = new ArrayList<>();
 
         for (ModelExhaustiveStatistics modelExhaustiveStatistic : liModelExhaustiveStatistics) {
             liFragBnds_NumUniqueFrags.add(new Point(modelExhaustiveStatistic.getNumBondsInFragment(), modelExhaustiveStatistic.getUnique()));
@@ -128,7 +140,7 @@ public class FractalDimensionMolecule {
 
     public void finalizeThreads() throws Throwable {
         if(exhaustiveFragmentsStatistics!=null) {
-            exhaustiveFragmentsStatistics.finalize();
+            exhaustiveFragmentsStatistics.roundUp();
         }
     }
 

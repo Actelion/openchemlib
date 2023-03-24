@@ -69,13 +69,9 @@ public class RunBondVector2IdCode implements Runnable {
     }
 
     public void init(StereoMolecule mol){
-
         StereoMolecule molCopy = new StereoMolecule(mol);
-
         molCopy.ensureHelperArrays(Molecule.cHelperCIP);
-
         bondVector2IdCode = new BondVector2IdCode(molCopy);
-
         processedFragments = new AtomicInteger();
     }
 
@@ -85,26 +81,19 @@ public class RunBondVector2IdCode implements Runnable {
         try {
 
             while(!pipeInputFragIndexListsFromEFG.wereAllDataFetched()){
-
                 IBitArray livIndexBond = pipeInputFragIndexListsFromEFG.pollData();
-
                 if(livIndexBond == null){
                     try {Thread.sleep(SLEEP);} catch (InterruptedException e) {e.printStackTrace();}
-
                     continue;
                 }
 
                 try {
-
                     FragmentDefinedByBondsIdCode livIdCode = new FragmentDefinedByBondsIdCode(livIndexBond);
-
                     String idcodeFrag = bondVector2IdCode.getFragmentIdCode(livIndexBond);
-
                     livIdCode.setIdCode(idcodeFrag);
-
                     pipeOutputFragmentDefinedByBondsIdCode.addData(livIdCode);
 
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     e.printStackTrace();
                 } finally {
                     processedFragments.incrementAndGet();
@@ -112,8 +101,10 @@ public class RunBondVector2IdCode implements Runnable {
 
             } // End while
 
-
+        } catch (Exception e){
+          e.printStackTrace();
         } finally {
+            System.out.println("RunBondVector2IdCode finally reached.");
             endOfRunReached.set(true);
         }
 
