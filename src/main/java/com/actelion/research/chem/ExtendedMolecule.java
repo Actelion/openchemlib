@@ -2217,6 +2217,72 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
+	/**
+	 *
+	 * @param bond
+	 * @return
+	 */
+	public int getPreferredDoubleBondSide(int bond) {
+		int[] value = new int[cMaxConnAtoms];
+		double[] angle = new double[cMaxConnAtoms];
+		double[] bondAngle = new double[2];
+
+		int angles = 0;
+		for (int i=0; i<2; i++) {
+			int atom = mBondAtom[i][bond];
+
+			for (int j=0; j<mConnAtoms[atom]; j++) {
+				int connBond = mConnBond[atom][j];
+				if (connBond == bond)
+					continue;
+
+				if (angles == 4)
+					return 0;
+
+				int connAtom = mConnAtom[atom][j];
+
+				value[angles] = 16;
+
+				// Prefer bond on side with conjugated pi systems
+				if (mPi[connAtom] != 0)
+					value[angles] += isRingAtom(connAtom) ? 1 : 4;
+
+				// Prefer bond inside of ring. Even more, if it is aromatic.
+				if (isRingBond(bond)
+						&& isRingBond(connBond)) {
+					int sharedRing = mRingSet.getSharedRing(bond, connBond);
+					if (sharedRing != -1)
+						value[angles] += mRingSet.isAromatic(sharedRing) ? 64 : 6;
+				}
+
+				angle[angles++] = getBondAngle(atom, connAtom);
+			}
+		}
+
+		boolean changed;
+		bondAngle[0] = getBondAngle(mBondAtom[0][bond], mBondAtom[1][bond]);
+		if (bondAngle[0] < 0) {
+			bondAngle[1] = bondAngle[0] + Math.PI;
+			changed = false;
+			}
+		else {
+			bondAngle[1] = bondAngle[0];
+			bondAngle[0] = bondAngle[1] - Math.PI;
+			changed = true;
+			}
+
+		int side = 0;
+		for (int i=0; i<angles; i++) {
+			if ((angle[i] > bondAngle[0]) && (angle[i] < bondAngle[1]))
+				side -= value[i];
+			else
+				side += value[i];
+			}
+
+		return (changed) ? -side : side;
+		}
+
+
 	private int preferredTHStereoBond(int atom, boolean excludeStereoBonds) {
 		// If we have two (anti-)parallel bonds, then we need to select
 		// that one of those that is closest to the other bonds.

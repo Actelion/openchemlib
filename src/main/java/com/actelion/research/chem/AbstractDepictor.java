@@ -1071,7 +1071,7 @@ public abstract class AbstractDepictor<T> {
 			else {
 								// standard carbon-carbon double bond. Thus,one bond
 								// connects the atom centers and the other lies aside.
-				int side = mpPreferredSide(bnd);
+				int side = mMol.getPreferredDoubleBondSide(bnd);
 				if (side == 0) side = 1;
 				aLine.x1 = theLine.x1;
 				aLine.y1 = theLine.y1;
@@ -1205,7 +1205,7 @@ public abstract class AbstractDepictor<T> {
 			aLine.x2 = theLine.x2;
 			aLine.y2 = theLine.y2;
 
-			int side = (inverted) ? -mpPreferredSide(bnd) : mpPreferredSide(bnd);
+			int side = (inverted) ? -mMol.getPreferredDoubleBondSide(bnd) : mMol.getPreferredDoubleBondSide(bnd);
 			if (side == 0) side = 1;
 
 			mpCalcPiBondOffset(theLine.x2 - theLine.x1,
@@ -1659,67 +1659,6 @@ public abstract class AbstractDepictor<T> {
 			theLine.x2  = sx;
 			theLine.y2 = sy;
 			}
-		}
-
-
-	private int mpPreferredSide(int bond) {
-		int[] value = new int[ExtendedMolecule.cMaxConnAtoms];
-		double[] angle = new double[ExtendedMolecule.cMaxConnAtoms];
-		double[] bondAngle = new double[2];
-
-		int angles = 0;
-		for (int i=0; i<2; i++) {
-			int atm = mMol.getBondAtom(i,bond);
-
-			for (int j=0; j<mMol.getConnAtoms(atm); j++) {
-				int connBond = mMol.getConnBond(atm,j);
-				if (connBond == bond)
-					continue;
-
-				if (angles == 4)
-					return 0;
-
-				int connAtom = mMol.getConnAtom(atm,j);
-
-				value[angles] = 16;
-
-				// Prefer bond on side with conjugated pi systems
-				if (mMol.getAtomPi(connAtom) != 0)
-					value[angles] += mMol.isRingAtom(connAtom) ? 1 : 4;
-
-				// Prefer bond inside of ring. Even more, if it is aromatic.
-				if (mMol.isRingBond(bond)
-				 && mMol.isRingBond(connBond)) {
-					int sharedRing = mMol.getRingSet().getSharedRing(bond, connBond);
-					if (sharedRing != -1)
-						value[angles] += mMol.getRingSet().isAromatic(sharedRing) ? 64 : 6;
-					}
-
-				angle[angles++] = mMol.getBondAngle(atm, connAtom);
-				}
-			}
-
-		boolean changed;
-		bondAngle[0] = mMol.getBondAngle(mMol.getBondAtom(0,bond),mMol.getBondAtom(1,bond));
-		if (bondAngle[0] < 0) {
-			bondAngle[1] = bondAngle[0] + Math.PI;
-			changed = false;
-			}
-		else {
-			bondAngle[1] = bondAngle[0];
-			bondAngle[0] = bondAngle[1] - Math.PI;
-			changed = true;
-			}
-
-		int side = 0;
-		for (int i=0; i<angles; i++) {
-			if ((angle[i] > bondAngle[0]) && (angle[i] < bondAngle[1]))
-				side -= value[i];
-			else
-				side += value[i];
-			}
-
-		return (changed) ? -side : side;
 		}
 
 
