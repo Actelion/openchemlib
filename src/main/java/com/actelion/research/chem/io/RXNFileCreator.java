@@ -33,12 +33,13 @@
 
 package com.actelion.research.chem.io;
 
-import java.io.*;
-
-import com.actelion.research.chem.ChemistryHelper;
 import com.actelion.research.chem.MolfileCreator;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 
 public class RXNFileCreator {
 	public static final String RXN_CODE_TAG = "OCL_RXN_V1.0:";
@@ -59,7 +60,10 @@ public class RXNFileCreator {
             theWriter.write(programName != null ? programName : "");
 			theWriter.write(NL+NL);
 			theWriter.write(RXN_CODE_TAG+ ReactionEncoder.encode(r, true,
-                    ReactionEncoder.INCLUDE_MAPPING | ReactionEncoder.INCLUDE_COORDS | ReactionEncoder.INCLUDE_CATALYSTS));
+                    ReactionEncoder.INCLUDE_MAPPING
+                        | ReactionEncoder.INCLUDE_COORDS
+                        | ReactionEncoder.INCLUDE_CATALYSTS
+                        | ReactionEncoder.RETAIN_REACTANT_AND_PRODUCT_ORDER));
 			theWriter.write(NL);
             theWriter.write("  "+rxn.getReactants()+"  "+rxn.getProducts() + NL);
 
