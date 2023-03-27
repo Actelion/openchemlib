@@ -58,7 +58,7 @@ public class FractalDimensionMolecule {
 
     public static final String MSG_ZERO = "Zero by definition. Max bond count at one bond.";
 
-    private static final int MAX_THREADS_BOND_VECTOR_TO_IDCODE = 3;
+    private static final int MAX_THREADS_BOND_VECTOR_TO_IDCODE = 12;
 
     private static final int BONDS_LIMIT_STATS = 18;
 
@@ -72,9 +72,9 @@ public class FractalDimensionMolecule {
 
         this.elusive = elusive;
 
-        int threadsBondVector2IdCode = Runtime.getRuntime().availableProcessors()-1;
+        // int threadsBondVector2IdCode = Runtime.getRuntime().availableProcessors()-1;
 
-        threadsBondVector2IdCode = Math.min(MAX_THREADS_BOND_VECTOR_TO_IDCODE, threadsBondVector2IdCode);
+        int threadsBondVector2IdCode = Math.min(MAX_THREADS_BOND_VECTOR_TO_IDCODE, Runtime.getRuntime().availableProcessors()-1);
 
         if(threadsBondVector2IdCode==0){
             threadsBondVector2IdCode=1;

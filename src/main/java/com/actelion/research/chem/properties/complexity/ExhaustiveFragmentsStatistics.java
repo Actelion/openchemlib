@@ -58,7 +58,7 @@ public class ExhaustiveFragmentsStatistics {
 		
 	private static final long SLEEP = 10;
 	
-	private static final int CAPACITY = 200000;
+	private static final int CAPACITY = 200 * 1000 * 1000;
 
 	private static final int LIMIT_BONDS_WHERE_IDCODE_IS_STORED = 20;
 
@@ -112,7 +112,7 @@ public class ExhaustiveFragmentsStatistics {
 		init(bits, threads, TOTAL_CAPACITY);
 	}
 	
-	private void init(int bits, int threads, int totalCapacity){
+	private void init(int bits, int threadsBondVector2IdCode, int totalCapacity){
 
 		efg  = new ExhaustiveFragmentGeneratorBonds(bits, totalCapacity);
 
@@ -132,7 +132,7 @@ public class ExhaustiveFragmentsStatistics {
 
 		liRunBondVector2IdCode = new ArrayList<>();
 		
-		for (int i = 0; i < threads; i++) {
+		for (int i = 0; i < threadsBondVector2IdCode; i++) {
 			RunBondVector2IdCode runBondVector2IdCode = new RunBondVector2IdCode(i, pipeInputFragIndexListsFromEFG, pipeOutputFragmentDefinedByBondsIdCode);
 			liRunBondVector2IdCode.add(runBondVector2IdCode);
         	new Thread(runBondVector2IdCode).start();
@@ -222,7 +222,7 @@ public class ExhaustiveFragmentsStatistics {
 						e.printStackTrace();
 					} finally {
 						if(isELUSIVE()){
-							System.out.println("ExhaustiveFragmentsStatistics Runnable runAdd2HashSe finally reached.");
+							System.out.println("ExhaustiveFragmentsStatistics Runnable runAdd2HashSet finally reached. hsIdCode " + hsIdCode.size());
 						}
 					}
 				}
