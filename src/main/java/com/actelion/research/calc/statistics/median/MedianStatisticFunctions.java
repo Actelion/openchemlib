@@ -235,11 +235,13 @@ public class MedianStatisticFunctions {
 
 		ModelMedianLong modelMedian = new ModelMedianLong();
 
-		modelMedian.lowerQuartile = (long)(MedianStatisticFunctions.getPercentileFromSortedLong(liScore, 0.25) + 0.5);
+		double quarter = 0.25, half = 0.5, three_quarter = 0.75;
 
-		modelMedian.median = (long)(MedianStatisticFunctions.getPercentileFromSortedLong(liScore, 0.5) + 0.5);
+		modelMedian.lowerQuartile = (long)(MedianStatisticFunctions.getPercentileFromSortedLong(liScore, quarter) + half);
 
-		modelMedian.upperQuartile = (long)(MedianStatisticFunctions.getPercentileFromSortedLong(liScore, 0.75) + 0.5);
+		modelMedian.median = (long)(MedianStatisticFunctions.getPercentileFromSortedLong(liScore, half) + half);
+
+		modelMedian.upperQuartile = (long)(MedianStatisticFunctions.getPercentileFromSortedLong(liScore, three_quarter) + half);
 
 		modelMedian.size = liScore.size();
 

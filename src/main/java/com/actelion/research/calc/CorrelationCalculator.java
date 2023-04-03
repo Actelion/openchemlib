@@ -66,7 +66,7 @@ public class CorrelationCalculator {
         if (valueCount != column2.getValueCount())
             return Double.NaN;
 
-        double r = Double.NaN;
+        double correlation = Double.NaN;
 
         if (correlationType == TYPE_BRAVAIS_PEARSON) {
             // http://de.wikibooks.org/wiki/Mathematik:_Statistik:_Korrelationsanalyse
@@ -103,7 +103,7 @@ public class CorrelationCalculator {
                     sumdydy += dy*dy;
                     }
                 }
-            r = sumdxdy / Math.sqrt(sumdxdx * sumdydy);
+            correlation = sumdxdy / Math.sqrt(sumdxdx * sumdydy);
             }
         else if (correlationType == TYPE_SPEARMAN) {
             if (valueCount < 2)
@@ -140,10 +140,10 @@ public class CorrelationCalculator {
 	                sumdydy += dy*dy;
             		}
                 }
-            r = sumdxdy / Math.sqrt(sumdxdx * sumdydy);
+            correlation = sumdxdy / Math.sqrt(sumdxdx * sumdydy);
             }
 
-        return r;
+        return correlation;
         }
 
     /**
