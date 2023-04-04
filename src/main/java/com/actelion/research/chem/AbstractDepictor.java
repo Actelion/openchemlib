@@ -843,7 +843,7 @@ public abstract class AbstractDepictor<T> {
 
     		// add all double bonds first because they may set alternative coords for single bonds
 		for (int i=0; i<mMol.getAllBonds(); i++)
-			if (isBondTypeDoubleOrCrossOrDelocalized())
+			if (isBondTypeDoubleOrCrossOrDelocalized(i))
 				mpDrawBond(i);
 
 		for (int i=0; i<mMol.getAllBonds(); i++)
@@ -914,7 +914,7 @@ public abstract class AbstractDepictor<T> {
 			}
 		}
 
-	private Boolean isBondTypeDoubleOrCrossOrDelocalized() {
+	private Boolean isBondTypeDoubleOrCrossOrDelocalized(int i) {
 		return mMol.getBondType(i) == Molecule.cBondTypeDouble
 				|| mMol.getBondType(i) == Molecule.cBondTypeCross
 				|| mMol.getBondType(i) == Molecule.cBondTypeDelocalized;
