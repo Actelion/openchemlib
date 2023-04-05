@@ -290,7 +290,7 @@ public class ConformerGenerator {
 
 	/**
 	 * If the conformer generation must be stopped from outside, for instance because of user
-	 * intervention or because of a defined timeout, the provide a ThreadMaster with this method.
+	 * intervention or because of a defined timeout, then provide a ThreadMaster with this method.
 	 * @param tm
 	 */
 	public void setThreadMaster(ThreadMaster tm) {
