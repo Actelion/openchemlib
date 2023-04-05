@@ -295,6 +295,7 @@ public class ConformerGenerator {
 	 */
 	public void setThreadMaster(ThreadMaster tm) {
 		mThreadMaster = tm;
+		mRigidFragmentProvider.setThreadMaster(tm);
 	}
 
 	/**
