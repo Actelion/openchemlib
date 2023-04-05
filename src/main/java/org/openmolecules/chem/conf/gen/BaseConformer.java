@@ -59,7 +59,6 @@ public class BaseConformer extends Conformer {
 		for (int bondIndex=0; bondIndex<rotatableBond.length; bondIndex++) {
 			mTorsion[bondIndex] = rotatableBond[bondIndex].getDefaultTorsions().clone();
 			mFrequency[bondIndex] = rotatableBond[bondIndex].getDefaultFrequencies().clone();
-			mTorsion[bondIndex] = rotatableBond[bondIndex].getDefaultTorsions().clone();
 			mLikelyhood[bondIndex] = new double[mTorsion[bondIndex].length];
 			defaultTorsionRange[bondIndex] = rotatableBond[bondIndex].getDefaultTorsionRanges();
 		}
