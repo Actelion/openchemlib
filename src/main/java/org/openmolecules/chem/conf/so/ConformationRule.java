@@ -231,7 +231,7 @@ System.out.println();
 	 * @param atom
 	 * @param cog receives the center of gravity
 	 * @param n receives normal vector of plane nearest to all atoms
-	 * @param coords receives original atom coordinates translated towards center of gravity [atom count][3]
+	 * @param coords receives original atom coordinates minus the center of gravity [atom count][3]
 	 */
 	public static void calculateNearestPlane(Conformer conformer, int[] atom, Coordinates cog, Coordinates n, double[][] coords) {
 		for (int i=0; i<atom.length; i++)
