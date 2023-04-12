@@ -28,6 +28,7 @@
 
 package org.openmolecules.chem.conf.gen;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
@@ -88,6 +89,7 @@ public class RigidFragmentProvider {
 	private long mRandomSeed;
 	private boolean mOptimizeFragments;
 	private RigidFragmentCache mCache;
+	private ThreadMaster mThreadMaster;
 
 	public RigidFragmentProvider(long randomSeed, RigidFragmentCache cache, boolean optimizeRigidFragments) {
 		mRandomSeed = randomSeed;
@@ -95,6 +97,15 @@ public class RigidFragmentProvider {
 		mOptimizeFragments = optimizeRigidFragments;
 		if (optimizeRigidFragments)
 			forceFieldInitialize();
+		}
+
+	/**
+	 * If the conformer generation must be stopped from outside, for instance because of user
+	 * intervention or because of a defined timeout, then provide a ThreadMaster with this method.
+	 * @param tm
+	 */
+	public void setThreadMaster(ThreadMaster tm) {
+		mThreadMaster = tm;
 		}
 
 	public void setCache(RigidFragmentCache cache) {
@@ -271,6 +282,7 @@ public class RigidFragmentProvider {
 			}
 
 			ConformationSelfOrganizer selfOrganizer = new ConformationSelfOrganizer(fragment, true);
+			selfOrganizer.setThreadMaster(mThreadMaster);
 			selfOrganizer.initializeConformers(mRandomSeed, MAX_CONFORMERS);
 
 			// Generate multiple low constraint conformers
