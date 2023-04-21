@@ -2525,6 +2525,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean isFlatNitrogen(int atom) {
+		return isFlatNitrogen(atom, true);
+		}
+
+	private boolean isFlatNitrogen(int atom, boolean checkForPyramidalBridgeHead) {
 		if (mAtomicNo[atom] != 7 || mConnAtoms[atom] == 4)
 			return false;
 		if (isAromaticAtom(atom) || mPi[atom] != 0 || (mAtomQueryFeatures[atom] & cAtomQFFlatNitrogen) != 0)
@@ -2562,13 +2566,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 							 || (orthoSubstituentCount == 1 && nitrogenNeighbourCount == 3))
 								continue;  // the nitrogen is rotated out of PI-plane
 							}
-						return !isPyramidalBridgeHead(atom);
+						return !checkForPyramidalBridgeHead || !isPyramidalBridgeHead(atom);
 						}
 
 					// vinyloge amides, etc.
 					for (int j = 0; j< mConnAtoms[connAtom]; j++) {
 						if ((mConnBondOrder[connAtom][j] == 2 || isAromaticBond(mConnBond[connAtom][j])))
-							return !isPyramidalBridgeHead(atom);
+							return !checkForPyramidalBridgeHead || !isPyramidalBridgeHead(atom);
 						}
 					}
 				}
@@ -2592,7 +2596,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 						}
 					}
 				if (isStabilized && (!hasCompetitor || heteroCount == 0))
-					return !isPyramidalBridgeHead(atom);
+					return !checkForPyramidalBridgeHead || !isPyramidalBridgeHead(atom);
 				}
 			}
 		return false;
@@ -2683,7 +2687,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		boolean bridgeHeadIsFlat = (getAtomPi(bridgeHead) == 1
 				|| isAromaticAtom(bridgeHead)
-				|| isFlatNitrogen(bridgeHead));
+				|| isFlatNitrogen(bridgeHead, false));
 		boolean bridgeHeadMayInvert = !bridgeHeadIsFlat
 				&& getAtomicNo(bridgeHead) == 7
 				&& getAtomCharge(bridgeHead) != 1;
