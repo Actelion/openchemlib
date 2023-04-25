@@ -161,6 +161,8 @@ public class ClipboardHandler implements IClipboardHandler
 								if (column != -1)
 									continue;
 							}
+							if (line.length() == 0)
+								continue;
 							try {
 								String idcode = line;
 								if (column != -1) {
