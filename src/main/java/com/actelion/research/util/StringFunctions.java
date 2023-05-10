@@ -1089,16 +1089,14 @@ public class StringFunctions {
 	}
 
 	public static String toString(Collection<String> li, String sep) {
-
 		StringBuilder sb = new StringBuilder();
-
+		boolean started=false;
 		for (String s : li) {
-
-			if(sb.length() > 0){
+			if(started){
 				sb.append(sep);
 			}
-
 			sb.append(s);
+			started=true;
 		}
 
 		return sb.toString();
