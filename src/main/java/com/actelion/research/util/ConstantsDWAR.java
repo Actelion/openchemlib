@@ -110,7 +110,10 @@ public class ConstantsDWAR {
 	 */
 	@Deprecated
 	public static final String TAG_IDCODE = "idcode";
-	
+
+	// From SAR analysis
+	public static final String TAG_IDCODE_SCAFFOLD = "Scaffold";
+
 	public static final String TAG_IDCODE2 = "Structure";
 
 	public static final String TAG_COOR2 = "idcoordinates2D";
@@ -183,7 +186,9 @@ public class ConstantsDWAR {
 	public static final String TAG_REACTION_MAPPING = "ReactionMapping";
 	public static final String TAG_REACTION_DRAW_OBJ = "ReactionDrawingObjects";
 	
-	public static final String CHARSET_ENCODING = "UTF8";
+	public static final String CHARSET_ENCODING = "UTF8"
+			;
+	public static final int MOLECULE_START_R_GROUPS = 129;
 
 
 	
