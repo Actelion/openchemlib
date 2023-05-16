@@ -2525,14 +2525,23 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean isFlatNitrogen(int atom) {
-		if (mAtomicNo[atom] != 7)
+		return isFlatNitrogen(atom, true);
+		}
+
+	private boolean isFlatNitrogen(int atom, boolean checkForPyramidalBridgeHead) {
+		if (mAtomicNo[atom] != 7 || mConnAtoms[atom] == 4)
 			return false;
 		if (isAromaticAtom(atom) || mPi[atom] != 0 || (mAtomQueryFeatures[atom] & cAtomQFFlatNitrogen) != 0)
 			return true;
 		if (mAtomCharge[atom] == 1)
 			return false;
+
+		for (int i=0; i<mConnAtoms[atom]; i++)
+			if (getBondRingSize(mConnBond[atom][i]) == 3)
+				return false;
+
 		int heteroCount = 0;
-		for (int i = 0; i< mConnAtoms[atom]; i++) {
+		for (int i=0; i<mConnAtoms[atom]; i++) {
 			if (mConnBondOrder[atom][i] == 1) {
 				int atomicNo = mAtomicNo[mConnAtom[atom][i]];
 				if (atomicNo == 8 || atomicNo == 9 || atomicNo == 17)
@@ -2540,7 +2549,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				}
 			}
 		if (heteroCount == 0) {
-			for (int i = 0; i< mConnAtoms[atom]; i++) {
+			for (int i=0; i<mConnAtoms[atom]; i++) {
 				int connAtom = mConnAtom[atom][i];
 				if (mPi[connAtom] != 0) {
 					if (isAromaticAtom(connAtom)) {
@@ -2557,13 +2566,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 							 || (orthoSubstituentCount == 1 && nitrogenNeighbourCount == 3))
 								continue;  // the nitrogen is rotated out of PI-plane
 							}
-						return true;
+						return !checkForPyramidalBridgeHead || !isPyramidalBridgeHead(atom);
 						}
 
 					// vinyloge amides, etc.
 					for (int j = 0; j< mConnAtoms[connAtom]; j++) {
 						if ((mConnBondOrder[connAtom][j] == 2 || isAromaticBond(mConnBond[connAtom][j])))
-							return true;
+							return !checkForPyramidalBridgeHead || !isPyramidalBridgeHead(atom);
 						}
 					}
 				}
@@ -2587,13 +2596,159 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 						}
 					}
 				if (isStabilized && (!hasCompetitor || heteroCount == 0))
-					return true;
+					return !checkForPyramidalBridgeHead || !isPyramidalBridgeHead(atom);
 				}
 			}
 		return false;
 		}
 
-	
+
+	/**
+	 * Use heuristics to determine whether atom has at least three rings bonds and whether that ring system
+	 * forces the atom into a pyramidal geometry due to the length of ring bridges.<br>
+	 * For this, after checking for at least 3 ring bonds, we find the smallest ring that atom is member of.
+	 * If this ring is not larger than 7 members, then we check for all neighbours (1 or 2)
+	 * that do not belong to the smallest ring:<br>
+	 * - We find the bridge size (atom count) to where it touches the smallest ring.<br>
+	 * - We also find the path length from the touch point on the smallest ring back to atom.<br>
+	 * - Using heuristics we decide with this information, whether the ring system prevents a flat geometry of atom.
+	 * @param atom
+	 * @return true, if the attached ring system prevents a flat geometry of atom
+	 */
+	public boolean isPyramidalBridgeHead(int atom) {
+		if (isAromaticAtom(atom)
+		 || mPi[atom] != 0
+		 || (mAtomQueryFeatures[atom] & cAtomQFFlatNitrogen) != 0
+		 || getAtomRingBondCount(atom) < 3)
+			return false;
+
+		int smallRingSize = getAtomRingSize(atom);
+		if (smallRingSize > 7)
+			return false;
+
+		int smallRingNo = 0;
+		while (smallRingNo<mRingSet.getSize()) {
+			if (mRingSet.getRingSize(smallRingNo) == smallRingSize
+			 && mRingSet.isAtomMember(smallRingNo, atom))
+				break;
+
+			smallRingNo++;
+			}
+
+		if (smallRingNo >= RingCollection.MAX_SMALL_RING_COUNT
+		 && smallRingNo == mRingSet.getSize())
+			return false;   // very rare case, but found with wrongly highly bridged CSD entry JORFAZ
+
+		for (int i=0; i<mConnAtoms[atom]; i++) {
+			int connBond = mConnBond[atom][i];
+			if (!mRingSet.isBondMember(smallRingNo, connBond)
+			 && isPyramidEnforcingBridge(atom, smallRingNo, mConnAtom[atom][i], connBond))
+				return true;
+			}
+
+		return false;
+		}
+
+
+	private boolean isPyramidEnforcingBridge(int atom, int ringNo, int firstBridgeAtom, int firstBridgeBond) {
+		boolean[] neglectBond = new boolean[mBonds];
+		neglectBond[firstBridgeBond] = true;
+		int[] pathAtom = new int[11];
+		int pathLength = getPath(pathAtom, firstBridgeAtom, atom, 10, neglectBond);
+		if (pathLength == -1)
+			return false;
+
+		int bridgeAtomCount = 1;
+		while (!mRingSet.isAtomMember(ringNo, pathAtom[bridgeAtomCount]))
+			bridgeAtomCount++;
+
+		int bondCountToBridgeHead = pathLength - bridgeAtomCount;
+
+		int bridgeHead = pathAtom[bridgeAtomCount];
+
+		int smallestRingSize = mRingSet.getRingSize(ringNo);
+
+		if (smallestRingSize == 6 && bondCountToBridgeHead == 2 && bridgeAtomCount == 3) {
+			if (getAtomRingBondCount(pathAtom[1]) >= 3) {
+				int[] ringAtom = mRingSet.getRingAtoms(ringNo);
+				for (int i=0; i<6; i++) {
+					if (atom == ringAtom[i]) {
+						int potentialOtherBridgeHeadIndex = mRingSet.validateMemberIndex(ringNo,
+								(bridgeHead == ringAtom[mRingSet.validateMemberIndex(ringNo, i+2)]) ? i-2 : i+2);
+						int potentialOtherBridgeHead = ringAtom[potentialOtherBridgeHeadIndex];
+						if (getAtomRingBondCount(potentialOtherBridgeHead) >= 3
+						 && getPathLength(pathAtom[1], potentialOtherBridgeHead, 2, null) == 2)
+							return true;    // adamantane like
+						break;
+						}
+					}
+				}
+			}
+
+		boolean bridgeHeadIsFlat = (getAtomPi(bridgeHead) == 1
+				|| isAromaticAtom(bridgeHead)
+				|| isFlatNitrogen(bridgeHead, false));
+		boolean bridgeHeadMayInvert = !bridgeHeadIsFlat
+				&& getAtomicNo(bridgeHead) == 7
+				&& getAtomCharge(bridgeHead) != 1;
+
+		if (bondCountToBridgeHead == 1
+		 && !bridgeHeadIsFlat
+		 && !bridgeHeadMayInvert
+		 && smallestRingSize <= 4
+		 && bridgeAtomCount <= 3)
+			return true;
+
+		switch (smallestRingSize) {
+			// case 3 is fully handled
+			case 4:	// must be bondCountToBridgeHead == 2
+				if (!bridgeHeadIsFlat
+				 && !bridgeHeadMayInvert
+				 && bridgeAtomCount <= 4)
+					return true;
+				break;
+			case 5:	// must be bondCountToBridgeHead == 2
+				if (bridgeHeadMayInvert) {
+					if (bridgeAtomCount <= 3)
+						return true;
+					}
+				else if (!bridgeHeadIsFlat) {
+					if (bridgeAtomCount <= 4)
+						return true;
+					}
+				break;
+			case 6:
+				if (bondCountToBridgeHead == 2) {
+					if (bridgeHeadIsFlat) {
+						if (bridgeAtomCount <= 4)
+							return true;
+						}
+					else if (!bridgeHeadMayInvert) {
+						if (bridgeAtomCount <= 3)
+							return true;
+						}
+					}
+				else if (bondCountToBridgeHead == 3) {
+					if (bridgeHeadIsFlat) {
+						if (bridgeAtomCount <= 6)
+							return true;
+						}
+					else {
+						if (bridgeAtomCount <= 4)
+							return true;
+						}
+					}
+				break;
+			case 7:
+				if (bondCountToBridgeHead == 3) {
+					if (bridgeAtomCount <= 3)
+						return true;
+					}
+				break;
+			}
+		return false;
+		}
+
 	/**
 	 * Checks whether bond is an axial chirality bond of the BINAP type.
 	 * Condition: non-aromatic, non-small-ring (<= 7 members) single bond

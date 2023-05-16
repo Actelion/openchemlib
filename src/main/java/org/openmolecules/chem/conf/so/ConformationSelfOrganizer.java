@@ -935,7 +935,20 @@ if (mDWWriter != null && conformerChanged) {
 								double angle = TWIST_BOAT_ESCAPE_ANGLE + Math.asin(Math.abs(distance[i])/pAtom.distance(cog));
 								double theta = (distance[i] < 0) ? angle : -angle;
 								Coordinates center = new Coordinates(pAtom).center(cog);
-								ConformationRule.rotateGroup(conformer, ringAtom[i], notAtom, center, axis, theta);
+								boolean isBridgedRingAtom = false;
+								if (mMol.getConnAtoms(ringAtom[i]) > 2) {
+									for (int j=0; j<mMol.getConnAtoms(ringAtom[i]); j++) {
+										int connAtom = mMol.getConnAtom(ringAtom[i], j);
+										if (connAtom != notAtom[0]
+										 && connAtom != notAtom[1]
+										 && mMol.isRingBond(mMol.getConnBond(ringAtom[i], j))) {
+											isBridgedRingAtom = true;
+											break;
+										}
+									}
+								}
+								if (!isBridgedRingAtom)
+									ConformationRule.rotateGroup(conformer, ringAtom[i], notAtom, center, axis, theta);
 								}
 							}
 						changeDone = true;
