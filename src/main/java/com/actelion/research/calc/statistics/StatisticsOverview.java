@@ -237,11 +237,15 @@ public class StatisticsOverview {
 
 	private static double getQuartile(double [] arr, double q) {
     	double v = 0;
-    	
-    	int p1 = (int)((q * arr.length) - 1);
-    	int p2 = (int)(q * arr.length);
-    	
-    	v = (arr[p1] + arr[p2]) / 2.0;
+
+		if(arr.length % 2==0) {
+			int p1 = (int) ((q * arr.length) - 1);
+			int p2 = (int) (q * arr.length);
+			v = (arr[p1] + arr[p2]) / 2.0;
+		} else {
+			int p = (int)(arr.length * q);
+			v = arr[p];
+		}
     	
     	return v;
     }

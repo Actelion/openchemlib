@@ -84,6 +84,11 @@ public class PLSRegressionModelCalculator extends ARegressionMethod<ParameterPLS
 		getParameter().setFactors(factors);
 	}
 
+	/**
+	 *
+	 * @param dataXYTrain
+	 * @return Yhat from the train data
+	 */
 	public Matrix createModel(ModelXYIndex dataXYTrain){
 
 		X = dataXYTrain.X;
