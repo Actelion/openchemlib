@@ -896,10 +896,22 @@ public class StringFunctions {
 
 	
 	public static String toString(double [] arr, NumberFormat nf){
+		return toString(arr, nf, 0);
+	}
+
+	public static String toString(double [] arr, NumberFormat nf, int width){
 
 		StringBuilder sb = new  StringBuilder();
 		for (int i = 0; i < arr.length; i++) {
-			sb.append(nf.format(arr[i]));
+
+
+			String str = nf.format(arr[i]);
+
+			while (str.length()<width){
+				str = " " + str;
+			}
+
+			sb.append(str);
 			if(i < arr.length-1){
 				sb.append(ConstantsDWAR.SEP_VALUE);
 			}
