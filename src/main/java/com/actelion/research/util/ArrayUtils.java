@@ -152,6 +152,16 @@ public class ArrayUtils {
 		return res;
 	}
 
+	public final static byte [] toByteArray(List<Byte> li) {
+		byte[] res = new byte[li.size()];
+		int index = 0;
+		Iterator<Byte> iter = li.iterator();
+		while(iter.hasNext()) {
+			res[index++] = iter.next();
+		}
+		return res;
+	}
+
 	public final static int indexOf(Object[] array, Object obj) {
 		for (int i = 0; i < array.length; i++) {
 			if(array[i].equals(obj)) return i;
