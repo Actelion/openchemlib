@@ -33,9 +33,12 @@
 package com.actelion.research.calc.histogram;
 
 import com.actelion.research.calc.Matrix;
+import com.actelion.research.util.Formatter;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.Random;
 
 
@@ -245,11 +248,10 @@ public class Histogram {
     	
     	if(sFormatDigits.length()>0)
     		sFormat += "." + sFormatDigits;
-    	
-    	
-    	NumberFormat nfX = new DecimalFormat(sFormat);
-    	NumberFormat nfY = new DecimalFormat("0");
-    	NumberFormat nfFractionCumulative = new DecimalFormat("0.00");
+
+    	NumberFormat nfX = new DecimalFormat(sFormat, new DecimalFormatSymbols(Locale.US));
+    	NumberFormat nfY = new DecimalFormat("0", new DecimalFormatSymbols(Locale.US));
+    	NumberFormat nfFractionCumulative = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
 
     	String [] arrStrX = new String [bins];
     	String [] arrStrY = new String [bins];

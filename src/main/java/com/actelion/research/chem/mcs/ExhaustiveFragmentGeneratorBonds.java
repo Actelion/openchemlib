@@ -198,7 +198,7 @@ public class ExhaustiveFragmentGeneratorBonds {
 
 						if(addedTotal>totalMaximumCapacity) {
 							if(ELUSIVE) {
-								System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() maximum capacity break.");
+								System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments() maximum capacity (" + totalMaximumCapacity + ") break.");
 								log(neighbours, neighboursTotal, added, addedTotal, neighboursSinceLastAdded);
 							}
 							// Clear all records for this number of bonds.
@@ -218,8 +218,9 @@ public class ExhaustiveFragmentGeneratorBonds {
 					}
 				}
 				
-				if(neighboursSinceLastAdded > LIMIT_NEIGHBOURS_SINCE_LAST_ADDED) {
-					System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments(). Break for fragments with " + i + " bonds. Generated  " + neighboursSinceLastAdded + " neighbours since last add to hash map.");
+				// if(neighboursSinceLastAdded > LIMIT_NEIGHBOURS_SINCE_LAST_ADDED) {
+				if(neighboursSinceLastAdded > totalMaximumCapacity) {
+					System.out.println("ExhaustiveFragmentGeneratorBonds generateFragments(). Break for fragments with " + i + " bonds. Generated  " + totalMaximumCapacity + " neighbours since last add to hash map.");
 					break;
 				}
 			}
