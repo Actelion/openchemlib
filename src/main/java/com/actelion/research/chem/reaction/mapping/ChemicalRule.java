@@ -177,7 +177,7 @@ public class ChemicalRule {
 		reactant.deleteMarkedAtomsAndBonds();
 
 		if (mInvertedTHParity.length != 0) {
-			reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
+			reactant.ensureHelperArrays(Molecule.cHelperRings);
 			for (int atom:mInvertedTHParity) {
 				int reactantAtom = match[atom];
 				int reactantParity = reactant.getAtomParity(reactantAtom);

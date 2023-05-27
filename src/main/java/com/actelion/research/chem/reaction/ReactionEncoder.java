@@ -70,7 +70,7 @@ public class ReactionEncoder
 	 * creating idcodes of every reactant and product and
 	 * concatenating them in lexical order.
 	 * If mapping information is available this will be encoded
-	 * in a 2nd string. Otherwise this will be null.
+	 * in a 2nd string. Otherwise this will be an empty string.
 	 * Coordinates, if available, will be encoded in a 3rd string.
 	 * If there are drawing objects assigned to this reaction
 	 * then these are encoded in a 4th string.

@@ -1773,6 +1773,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
+	/**
+	 * Requires helper arrays level cHelperRings!
+	 * @param atom
+	 */
 	public void setStereoBondFromAtomParity(int atom) {
 		convertStereoBondsToSingleBonds(atom);
 

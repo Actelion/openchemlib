@@ -31,24 +31,24 @@
 *
 */
 
-package com.actelion.research.chem;
+package com.actelion.research.share.gui;
 
+import com.actelion.research.chem.AbstractDepictor;
+import com.actelion.research.chem.ExtendedMolecule;
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.gui.generic.GenericRectangle;
 
 import java.awt.*;
 
 
-public class ChemistryHelper
+public class ChemistryGeometryHelper
 {
     public static final int REACTION_TYPE_NOMOLS = 0;
     public static final int REACTION_TYPE_NOPRODUCTS = 1;
     public static final int REACTION_TYPE_REACTANTS = 2;
     public static final int REACTION_TYPE_NORMAL = 3;
-
-    private ChemistryHelper()
-    {
-    }
 
     public static int getReactionType(Reaction r)
     {
@@ -160,7 +160,7 @@ public class ChemistryHelper
             ExtendedMolecule m = rxn.getMolecule(fragment);
             dx = m.getAverageBondLength();
             double scale = bndlen / dx;
-            ChemistryHelper.transformMolecule(m,0,0,scale);
+            ChemistryGeometryHelper.transformMolecule(m,0,0,scale);
 
         }
     }
@@ -311,8 +311,8 @@ public class ChemistryHelper
         if (rr != null) {
             double cx = -rr.x;
             double cy = -rr.y;
-            ChemistryHelper.transformReaction(reaction, cx, cy, 1);
-            rr = ChemistryHelper.getBoundingRect(reaction, true);
+            ChemistryGeometryHelper.transformReaction(reaction, cx, cy, 1);
+            rr = ChemistryGeometryHelper.getBoundingRect(reaction, true);
 
             double sumWidth = rr.getWidth(), sumHeight = rr.getHeight();
 
@@ -324,7 +324,7 @@ public class ChemistryHelper
                 scale = scV;
 
 //            System.out.printf("Scaleinto scale %s\n",scale);
-            ChemistryHelper.transformReaction(reaction, 0, 0, scH);
+            ChemistryGeometryHelper.transformReaction(reaction, 0, 0, scH);
         }
     }
 
@@ -343,7 +343,7 @@ public class ChemistryHelper
                 ExtendedMolecule m = reaction.getMolecule(i);
                 if (m.getAllAtoms() > 1)
                 {
-                    GenericRectangle r = ChemistryHelper.getBoundingRect(m);
+                    GenericRectangle r = ChemistryGeometryHelper.getBoundingRect(m);
                     if (r != null) {
                         //                    System.out.printf("MoleculeID %s bounds: %s\n",System.identityHashCode(m),r);
                         sumHeight += r.getHeight();
@@ -506,13 +506,13 @@ public class ChemistryHelper
 
                 for (int fragment=0; fragment<len; fragment++) {
                     ExtendedMolecule m = rxn.getMolecule(fragment);
-                    GenericRectangle rc = ChemistryHelper.getBoundingRect(m);
+                    GenericRectangle rc = ChemistryGeometryHelper.getBoundingRect(m);
                     if (rc != null) {
                         cx += rc.width;
                         cy += rc.height;
                     }
                 }
-                GenericRectangle rxnBounding = ChemistryHelper.getArrowBoundingRect(rxn);
+                GenericRectangle rxnBounding = ChemistryGeometryHelper.getArrowBoundingRect(rxn);
 
                 int plus = Math.max(0,len-2);
                 double plusWidth = size.width / (len + plus + 1) / 2;
@@ -528,17 +528,17 @@ public class ChemistryHelper
                 for (int fragment=0; fragment<len; fragment++) {
                     ExtendedMolecule m = rxn.getMolecule(fragment);
                     // make the same scale
-                    ChemistryHelper.transformMolecule(m,0,0,scale);
+                    ChemistryGeometryHelper.transformMolecule(m,0,0,scale);
 
-                    GenericRectangle rectBefore = ChemistryHelper.getBoundingRect(m);
+                    GenericRectangle rectBefore = ChemistryGeometryHelper.getBoundingRect(m);
                     // calculate the offset
                     if (rectBefore != null && rb != null) {
                         double offsety = (rb.height - rectBefore.height) / 2;
                         double moveX =  -rectBefore.x + offsetx;
                         double moveY =  -rectBefore.y + offsety;
 
-                        ChemistryHelper.transformMolecule(m,moveX,moveY,1);
-                        GenericRectangle db = ChemistryHelper.getBoundingRect(m);
+                        ChemistryGeometryHelper.transformMolecule(m,moveX,moveY,1);
+                        GenericRectangle db = ChemistryGeometryHelper.getBoundingRect(m);
 
                         if (fragment == rxn.getReactants()-1) {
                             offsetx += (db.width + plusWidth * 2);

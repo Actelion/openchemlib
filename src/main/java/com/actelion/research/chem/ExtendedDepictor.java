@@ -267,8 +267,10 @@ public class ExtendedDepictor {
 
     public void paintStructures(GenericDrawContext context) {
         if (mDepictor != null) {
+	        double averageBondLength = calculateAverageBondLength();
             for (GenericDepictor d:mDepictor) {
                 d.setDisplayMode(mDisplayMode);
+				d.setAtomLabelAVBL(averageBondLength);
                 d.paint(context);
 /*
 Rectangle2D.Float r = mDepictor[i].getBoundingRect();
@@ -310,7 +312,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
     // returns full transformation that moves/scales original molecules/objects into viewRect
         validateView(context, viewRect, mode);
 
-        if (mTransformation.isVoidTransformation()) {
+		if (mTransformation.isVoidTransformation()) {
             return null;
             }
         else {
@@ -374,7 +376,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
 
             if (mDepictor != null)
                 for (GenericDepictor d:mDepictor)
-                    d.applyTransformation(t);
+	                d.applyTransformation(t);
 
 			if (mCatalystDepictor != null)
 				for (GenericDepictor d:mCatalystDepictor)

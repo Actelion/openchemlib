@@ -1,10 +1,6 @@
 package com.actelion.research.gui;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.LayoutManager;
+import java.awt.*;
 
 /**
  *  A vertical flow layout is similar to a flow layuot but it layouts the
@@ -239,7 +235,7 @@ public class VerticalFlowLayout implements LayoutManager, java.io.Serializable {
 			for (int ii = 0; ii < nmembers; ii++) {
 				Component m = target.getComponent(ii);
 				if (m.isVisible()) {
-					Dimension d = m.getPreferredSize();
+					Dimension d = m.getMinimumSize();
 					dim.width = Math.max(dim.width, d.width);
 					if (firstVisibleComponent) {
 						firstVisibleComponent = false;
