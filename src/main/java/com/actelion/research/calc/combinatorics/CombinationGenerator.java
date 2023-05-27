@@ -127,15 +127,19 @@ public class CombinationGenerator {
 	 */
 	public static List<List<Integer>> getCombinations(int [] arrSizeClass) {
 
-		int capacity = 1;
+		long capacity = 1;
 
 		for (int sizeClass : arrSizeClass) {
 			capacity *= sizeClass;
 		}
 
-		List<List<Integer>> li = new ArrayList<>(capacity);
+		if(capacity>Integer.MAX_VALUE){
+			throw new RuntimeException("Number of combinations " + capacity + " above Integer.MAX_VALUE!");
+		}
 
-		List<List<Integer>> liTmp = new ArrayList<>(capacity);
+		List<List<Integer>> li = new ArrayList<>((int)capacity);
+
+		List<List<Integer>> liTmp = new ArrayList<>((int)capacity);
 
 		int index=0;
 

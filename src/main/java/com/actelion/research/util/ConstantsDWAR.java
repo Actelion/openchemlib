@@ -114,6 +114,8 @@ public class ConstantsDWAR {
 	// From SAR analysis
 	public static final String TAG_IDCODE_SCAFFOLD = "Scaffold";
 
+	public static final String TAG_COORDINATES_SCAFFOLD = "scaffoldAtomCoords";
+
 	public static final String TAG_IDCODE2 = "Structure";
 
 	public static final String TAG_COOR2 = "idcoordinates2D";

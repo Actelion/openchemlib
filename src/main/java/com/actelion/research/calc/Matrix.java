@@ -43,9 +43,8 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.*;
 
 public class Matrix {
 
@@ -3445,7 +3444,10 @@ public class Matrix {
         return sb.toString();
     }
     public String toString(int digits) {
-        return toString(rows(), cols(), digits);
+        return toString(rows(), cols(), digits, 0);
+    }
+    public String toString(int digits, int width) {
+        return toString(rows(), cols(), digits, width);
     }
 
     /**
@@ -3455,7 +3457,7 @@ public class Matrix {
      * @param digits
      * @return
      */
-    public String toString(int rowEnd, int colEnd, int digits) {
+    public String toString(int rowEnd, int colEnd, int digits, int width) {
 
         int iRequireDigits = 20;
 
@@ -3471,7 +3473,7 @@ public class Matrix {
           iCounter++;
         }
 
-        DecimalFormat nf = new DecimalFormat(sFormat);
+        DecimalFormat nf = new DecimalFormat(sFormat, new DecimalFormatSymbols(Locale.US));
 
         int len = getRowDim() * getColDim() * iRequireDigits;
         StringBuilder sb = new StringBuilder(len);
@@ -3483,8 +3485,12 @@ public class Matrix {
             	String sVal = nf.format(data[i][j]);
             	if(data[i][j]==Double.MAX_VALUE)
             		sVal = "Max";
-            	
-                sb.append(sVal);
+
+                StringBuilder sbVal = new StringBuilder(sVal);
+                while (sbVal.length()<width){
+                    sbVal.insert(0, " ");
+                }
+                sb.append(sbVal.toString());
                 
                 if(j<data[0].length-1)
                 	sb.append(OUT_SEPARATOR_COL);

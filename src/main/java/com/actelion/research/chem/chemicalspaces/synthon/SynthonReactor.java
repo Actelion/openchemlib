@@ -4,125 +4,147 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.MoleculeStandardizer;
 import com.actelion.research.chem.SmilesCreator;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.coords.CoordinateInventor;
 
 public class SynthonReactor {
 	
 	public static final int CONNECTOR_OFFSET = 92;
 	
-	public static StereoMolecule react(List<StereoMolecule> synthons) {
-		int[] bonds = new int[10];
-		List<int[]> deletionMap = new ArrayList<int[]>();
-		List<int[]> atomMap = new ArrayList<int[]>();
-		
+	public static StereoMolecule react(List<StereoMolecule> synthons) {		
 		List<StereoMolecule> buildingBlocks = new ArrayList<StereoMolecule>();
 		synthons.stream().forEach(e -> buildingBlocks.add(new StereoMolecule(e)));
 		buildingBlocks.forEach(e -> e.ensureHelperArrays(Molecule.cHelperCIP));
-		Map<Integer,List<int[]>> rgrps = new HashMap<Integer,List<int[]>>();
-		
+		Set<Integer> rgrps = new HashSet<Integer>();
 		for(int m=0;m<buildingBlocks.size();m++) {
 			StereoMolecule bb = buildingBlocks.get(m);
+			new CoordinateInventor().invent(bb);
 			for(int a=0;a<bb.getAtoms();a++) {
 				int atomNo = bb.getAtomicNo(a);
 				if(atomNo>=CONNECTOR_OFFSET) {
-					rgrps.putIfAbsent(atomNo-CONNECTOR_OFFSET+1, new ArrayList<int[]>());
-					int connAtom = bb.getConnAtom(a, 0);
-					int b = bb.getBond(a, connAtom);
-					int upDownIdentifier = bb.getBondAtom(0, b) == a ? -1 : 1; // if up/down if bond is defined from the connected atom, assign 1, otherwise -1
-					int bondType = bb.getBondType(b);
-					rgrps.get(atomNo-CONNECTOR_OFFSET+1).add(new int[]{m,connAtom,a,upDownIdentifier,bondType});
-					int bondOrder = bb.getConnBondOrder(a, 0);
-					bonds[0] = bondOrder;
-					//bb.markAtomForDeletion(a);
-	
-					
+					rgrps.add(atomNo-CONNECTOR_OFFSET+1);
+
 				}
 
 				
 			}
 		}
-		List<Integer> keysToDelete = new ArrayList<>();
-		rgrps.forEach((k,v) -> {
-			if(v.size()<2)
-				keysToDelete.add(k);
-		});
-		rgrps.keySet().removeAll(keysToDelete);
-		rgrps.forEach((k,v) -> {
-			buildingBlocks.get(v.get(0)[0]).markAtomForDeletion(v.get(0)[2]);
-			buildingBlocks.get(v.get(1)[0]).markAtomForDeletion(v.get(1)[2]);
-			int bb1 = v.get(0)[0];
-			int bb2 = v.get(1)[0];
-			int u1 = v.get(0)[2];
-			int u2 = v.get(1)[2];
-			int a1 = v.get(0)[1];
-			int a2 = v.get(1)[1];
-			alignSynthons(buildingBlocks.get(bb1), buildingBlocks.get(bb2), u1, u2, a1, a2);
-		});
-		
-		// remove R groups
-		for(int m=0;m<buildingBlocks.size();m++) {
-			StereoMolecule bb = buildingBlocks.get(m);
-			int[] map = bb.deleteMarkedAtomsAndBonds();
-			deletionMap.add(map);
-			final int m_ = m;
-			rgrps.forEach((k,v) -> {
-				v.stream().forEach(e -> {
-					if(e[0]==m_)
-						e[1] = map[e[1]];
-				});
-				
-			});
-
-			
-		}
-		StereoMolecule product = new StereoMolecule();
-		atomMap.add(product.addMolecule(buildingBlocks.get(0)));
-		for(int m=1;m<buildingBlocks.size();m++) {
-			int[] map = product.addMolecule(buildingBlocks.get(m));
-			atomMap.add(map);
-			final int m_ = m;
-			rgrps.forEach((k,v) -> {
-				v.stream().forEach(e -> {
-					if(e[0]==m_) {
-						e[1] = map[e[1]];
-						
+		StereoMolecule prod = null;
+		for(int i : rgrps) {
+			for(int j=0;j<buildingBlocks.size();j++) {
+				StereoMolecule bb1 = buildingBlocks.get(j);
+				if(bb1.getAllAtoms()==0)
+					continue;
+				int connAtom1 = findConnectorAtom(i,bb1);
+				if(connAtom1>-1) {
+					SynthonConnector sc1 = new SynthonConnector();
+					sc1.connAtom = connAtom1;
+					sc1.bb = bb1;
+					sc1.neighbourAtom = bb1.getConnAtom(connAtom1, 0);
+					int b1 = bb1.getBond(connAtom1, sc1.neighbourAtom);
+					sc1.bondType = bb1.getBondType(b1);
+					sc1.bond = b1;
+					sc1.bondOrder = bb1.getBondOrder(b1);
+					for(int k=0;k<buildingBlocks.size();k++) {
+						if(k==j)
+							continue;
+						StereoMolecule bb2 = buildingBlocks.get(k);
+						if(bb2.getAllAtoms()==0)
+							continue;
+						int connAtom2 = findConnectorAtom(i,bb2);
+						if(connAtom2>-1) {
+							SynthonConnector sc2 = new SynthonConnector();
+							sc2.connAtom = connAtom2;
+							sc2.bb = bb2;
+							sc2.neighbourAtom = bb2.getConnAtom(connAtom2, 0);
+							int b2 = bb2.getBond(connAtom2, sc2.neighbourAtom );
+							sc2.bondType = bb2.getBondType(b2);
+							sc2.bond = b2;
+							sc2.bondOrder = bb2.getBondOrder(b2);
+							prod = combineSynthons(sc1,sc2);
+						}
 					}
-				});
-				
-			});
-		
+				}
+			}
 		}
-		rgrps.forEach((k,v) -> {
-			int atom1 = v.get(0)[1];
-			int atom2 = v.get(1)[1];
-			int bondType = v.get(0)[4];
-			int upDownIdentifier = v.get(0)[3];
-			int bond=-1;
-			if(upDownIdentifier==1)
-				bond = product.addBond(atom1, atom2);
-			else 
-				bond = product.addBond(atom2, atom1);
-				
-			product.setBondOrder(bond, bonds[k-1]);
-			product.setBondType(bond, bondType);
-		});
-		product.ensureHelperArrays(Molecule.cHelperCIP);
+		return prod;
+		
+	}
+		
+	private static StereoMolecule combineSynthons(SynthonConnector sc1, SynthonConnector sc2) {
+		StereoMolecule mol = null;
+		SynthonConnector referenceConnector = null;
+		SynthonConnector connector = null;
+		if(sc2.bondType==Molecule.cBondTypeUp || sc2.bondType==Molecule.cBondTypeDown ) {
+			referenceConnector = sc2;
+			connector = sc1;
+		}
+		else {
+			referenceConnector = sc1;
+			connector = sc2;
+		}
+
+		int upDownIdentifier = referenceConnector.bb.getBondAtom(0, referenceConnector.bond) == referenceConnector.connAtom ? -1 : 1; // if up/down if bond is defined from the connected atom, assign 1, otherwise -1
+		int u1 = referenceConnector.connAtom;
+		int u2 = connector.connAtom;
+		int a1 = referenceConnector.neighbourAtom;
+		int a2 = connector.neighbourAtom;
+		referenceConnector.bb.markAtomForDeletion(u1);
+		connector.bb.markAtomForDeletion(u2);
+		alignSynthons(referenceConnector.bb, connector.bb,u1,u2, a1, a2);
+
+		int[] map = referenceConnector.bb.deleteMarkedAtomsAndBonds();	
+		referenceConnector.neighbourAtom = map[referenceConnector.neighbourAtom];
+		map = connector.bb.deleteMarkedAtomsAndBonds();	
+		connector.neighbourAtom = map[connector.neighbourAtom];
+		map = referenceConnector.bb.addMolecule(connector.bb);
+		int newConnectorAtom = map[connector.neighbourAtom];
+		int bond = -1;
+		if(upDownIdentifier==-1) {
+			bond = referenceConnector.bb.addBond(newConnectorAtom, referenceConnector.neighbourAtom);
+		}
+		else {
+			bond = referenceConnector.bb.addBond(referenceConnector.neighbourAtom,newConnectorAtom);
+		}
+		referenceConnector.bb.setBondOrder(bond, referenceConnector.bondOrder);
+		referenceConnector.bb.setBondType(bond, referenceConnector.bondType);
+
+		referenceConnector.bb.ensureHelperArrays(Molecule.cHelperCIP);
+
+		new CoordinateInventor().invent(referenceConnector.bb);
+
 		try {
-			MoleculeStandardizer.standardize(product, 0);
-			product.ensureHelperArrays(Molecule.cHelperCIP);
+			MoleculeStandardizer.standardize(referenceConnector.bb, 0);
+			referenceConnector.bb.ensureHelperArrays(Molecule.cHelperCIP);
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		return product;
-		
+		connector.bb.clear();
+		mol = referenceConnector.bb;
+		return mol;
+	}
+	
+	private static int findConnectorAtom(int rGrp, StereoMolecule bb) {
+		int index = -1;
+		for(int a=0;a<bb.getAtoms();a++) {
+			int atomNo = bb.getAtomicNo(a);
+			if(atomNo>=CONNECTOR_OFFSET) {
+				if(atomNo-CONNECTOR_OFFSET+1==rGrp) {
+					return index = a;
+				}
+			}
+		}
+		return index;
 	}
 	
 	/**
@@ -166,12 +188,14 @@ public class SynthonReactor {
 		for(int a=0;a<s2.getAtoms();a++) {
 			s2.getCoordinates(a).add(t);
 		}
+
 		for(int a=0;a<s2.getAtoms();a++) {
 			Coordinates newCoords = eulerRodrigues(s2.getCoordinates(a),n,-alpha);
 			s2.setAtomX(a,newCoords.x);
 			s2.setAtomY(a,newCoords.y);
 			s2.setAtomZ(a,newCoords.z);
 		}
+
 
 	}
 	
@@ -182,6 +206,18 @@ public class SynthonReactor {
 		Coordinates vNew = c1.addC(c2);
 		vNew.add(c3);
 		return vNew;
+	}
+	
+	private static class SynthonConnector {
+		StereoMolecule bb;
+		int bond;
+		int bondOrder;
+		int connAtom;
+		int neighbourAtom;
+		int bondType;
+		
+
+
 	}
 	
 
