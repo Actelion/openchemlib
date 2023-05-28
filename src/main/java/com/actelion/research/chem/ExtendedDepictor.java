@@ -267,10 +267,10 @@ public class ExtendedDepictor {
 
     public void paintStructures(GenericDrawContext context) {
         if (mDepictor != null) {
-	        double averageBondLength = calculateAverageBondLength();
+	        double avbl = calculateAverageBondLength() / mTransformation.getScaling();  // this still contains individual depictor scaling
             for (GenericDepictor d:mDepictor) {
                 d.setDisplayMode(mDisplayMode);
-				d.setAtomLabelAVBL(averageBondLength);
+				d.setAtomLabelAVBL(avbl);
                 d.paint(context);
 /*
 Rectangle2D.Float r = mDepictor[i].getBoundingRect();

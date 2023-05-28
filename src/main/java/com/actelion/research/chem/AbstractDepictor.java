@@ -283,7 +283,7 @@ public abstract class AbstractDepictor<T> {
 	 * @param avbl
 	 */
 	public void setAtomLabelAVBL(double avbl) {
-		mAtomLabelAVBL = avbl;
+		mAtomLabelAVBL = avbl / mTransformation.getScaling();
 		}
 
 
