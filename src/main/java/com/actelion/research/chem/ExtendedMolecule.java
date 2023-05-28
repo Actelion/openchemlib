@@ -107,8 +107,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @param atomMap null or int[] not smaller than includeAtom.length; receives atom indices of dest molecule or -1 if not copied
 	 */
 	public void copyMoleculeByAtoms(ExtendedMolecule destMol, boolean[] includeAtom, boolean recognizeDelocalizedBonds, int[] atomMap) {
-		if (recognizeDelocalizedBonds)
-			ensureHelperArrays(cHelperRings);
+		ensureHelperArrays(recognizeDelocalizedBonds ? cHelperRings : cHelperNeighbours);
 
 		destMol.mAtomList = null;
 		if (mIsFragment)
@@ -120,8 +119,30 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			atomMap = new int[atomCount];
 
 		destMol.mAllAtoms = 0;
-		for (int atom=0; atom<atomCount;atom++)
-			atomMap[atom] = includeAtom[atom] ? copyAtom(destMol, atom, 0, 0) : -1;
+		for (int atom=0; atom<atomCount;atom++) {
+			if (includeAtom[atom]) {
+				atomMap[atom] = copyAtom(destMol, atom, 0, 0);
+
+				// For the rare but existing case where hydrogen has more than one neighbour (e.g. diborane)
+				// of which at least one is not copied, we need to define an abnormal valence for this hydrogen.
+				// Otherwise, this hydrogen might turn into a simple hydrogen and removed, i.e. converted into an
+				// implicit one, which would render atomMap references invalid.
+				if (mAtomicNo[atom] == 1) {
+					int valence = getOccupiedValence(atom);
+					if (valence > 1) {
+						for (int i=0; i<mAllConnAtoms[atom]; i++) {
+							if (!includeAtom[mConnAtom[atom][i]]) {
+								destMol.setAtomAbnormalValence(atomMap[atom], valence);
+								break;
+								}
+							}
+						}
+					}
+				}
+			else {
+				atomMap[atom] = -1;
+				}
+			}
 
 		destMol.mAllBonds = 0;
 		for (int bnd=0; bnd<mAllBonds;bnd++) {
@@ -151,6 +172,24 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		if (destMol.mAllAtoms != atomCount)
 			destMol.setFragment(true);
+
+		// convert implicit abnormal valences into explicit ones, if necessary
+		destMol.ensureHelperArrays(Molecule.cHelperNeighbours);
+		for (int atom=0; atom<atomCount;atom++) {
+			if (atomMap[atom] != -1
+			 && mAtomicNo[atom] != 1    // hydrogen is already handled
+			 && mAllConnAtoms[atom] != destMol.getAllConnAtoms(atomMap[atom])) {
+				int abnormalValence = getImplicitHigherValence(atom, false);
+				if (abnormalValence != -1) {
+					int newAbnormalValence = destMol.getImplicitHigherValence(atomMap[atom], false);
+					if (abnormalValence != newAbnormalValence) {
+						int explicitAbnormalValence = destMol.getAtomAbnormalValence(atomMap[atom]);
+						if (explicitAbnormalValence == -1 || explicitAbnormalValence < abnormalValence)
+							destMol.setAtomAbnormalValence(atomMap[atom], abnormalValence);
+						}
+					}
+				}
+			}
 
 		if (recognizeDelocalizedBonds)
 			new AromaticityResolver(destMol).locateDelocalizedDoubleBonds(null);
@@ -3630,9 +3669,12 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return
 	 */
 	public boolean isSimpleHydrogen(int atom) {
-		return mAtomicNo[atom] == 1 && mAtomMass[atom] == 0 && mAtomCharge[atom] == 0 // && mAtomMapNo[atom] == 0
+		return mAtomicNo[atom] == 1
+			&& mAtomMass[atom] == 0
+			&& mAtomCharge[atom] == 0
+		 // && mAtomMapNo[atom] == 0 Since a mapNo is not part of an idcode, a mapped but otherwise simple H must be considered simple; TLS 29Aug2020
+			&& (mAtomFlags[atom] & cAtomFlagsValence) == 0
 			&& (mAtomCustomLabel == null || mAtomCustomLabel[atom] == null);
-		// Since a mapNo is not part of an idcode, a mapped but otherwise simple H must be considered simple; TLS 29Aug2020
 		}
 
 	/**
