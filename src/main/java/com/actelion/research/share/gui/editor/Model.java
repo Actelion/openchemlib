@@ -41,6 +41,7 @@ import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.gui.generic.GenericPoint;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.share.gui.Arrow;
+import com.actelion.research.share.gui.ChemistryGeometryHelper;
 import com.actelion.research.share.gui.editor.chem.AbstractExtendedDepictor;
 import com.actelion.research.share.gui.editor.chem.IDrawingObject;
 import com.actelion.research.share.gui.editor.geom.GeomFactory;
@@ -207,7 +208,7 @@ public abstract class Model
             mMode = MODE_MULTIPLE_FRAGMENTS;
             if (cleanAll)
                 cleanupCoordinates(true, true);
-            ChemistryHelper.scaleInto(reaction, 0, 0, dim.getWidth(), dim.getHeight(), width);
+            ChemistryGeometryHelper.scaleInto(reaction, 0, 0, dim.getWidth(), dim.getHeight(), width);
             setValue(reaction);
         }
     }
@@ -369,7 +370,7 @@ public abstract class Model
         for (int i = 0; i < rxn.getMolecules(); i++) {
             isFragment |= rxn.getMolecule(i).isFragment();
             StereoMolecule molecule = rxn.getMolecule(i);
-            GenericRectangle boundingRect = ChemistryHelper.getBoundingRect(molecule);
+            GenericRectangle boundingRect = ChemistryGeometryHelper.getBoundingRect(molecule);
 //            if(i < mReactantCount) {
 //                arrowPos = new GenericPoint(boundingRect.getX()+boundingRect.getWidth(),boundingRect.getY()+boundingRect.getHeight()/2);
 //            }

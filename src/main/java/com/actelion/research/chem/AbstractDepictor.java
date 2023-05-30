@@ -155,7 +155,7 @@ public abstract class AbstractDepictor<T> {
 	private boolean[]				mAtomIsConnected;
 	private boolean[]				mAtomLabelDisplayed;
 	private double					mpBondSpacing,mpDotDiameter,mpLineWidth,mpQFDiameter,mpBondHiliteRadius,
-									mFactorTextSize,mpExcludeGroupRadius,mChiralTextSize;
+									mFactorTextSize,mpExcludeGroupRadius,mChiralTextSize,mAtomLabelAVBL;
 	private int						mpLabelSize,mStandardForegroundColor,mDisplayMode,mCurrentColor,mPreviousColor;
 	private boolean                 mIsValidatingView;
 	private ArrayList<GenericRectangle> mpTabuZone;
@@ -271,6 +271,19 @@ public abstract class AbstractDepictor<T> {
 
 	public void setTransformation(DepictorTransformation t) {
 		mTransformation = t;
+		}
+
+
+	/**
+	 * Per default the size of the atom label font depends on the average bond length,
+	 * which usually is determined before a molecule is drawn.
+	 * This method allows to override the mechanism and to define an artificial
+	 * "average bond length" that is used instead if the real one to serve as basis
+	 * for the scale of atom labels, double bond distance, chiral text, etc...
+	 * @param avbl
+	 */
+	public void setAtomLabelAVBL(double avbl) {
+		mAtomLabelAVBL = avbl / mTransformation.getScaling();
 		}
 
 
@@ -403,8 +416,12 @@ public abstract class AbstractDepictor<T> {
 		}
 
 
+	/**
+	 * @param viewRect
+	 * @param mode
+	 * @return incremental transformation that moves/scales already transformed molecule into viewRect
+	 */
 	public DepictorTransformation simpleValidateView(GenericRectangle viewRect, int mode) {
-	// returns incremental transformation that moves/scales already transformed molecule into viewRect
 		if (mMol.getAllAtoms() == 0)
 			return null;
 
@@ -576,12 +593,12 @@ public abstract class AbstractDepictor<T> {
 
 
     private void calculateParameters() {
-	    double averageBondLength = mTransformation.getScaling() * mMol.getAverageBondLength();
+	    double averageBondLength = mTransformation.getScaling() * (mAtomLabelAVBL != 0 ? mAtomLabelAVBL : mMol.getAverageBondLength());
 		mpLineWidth = averageBondLength * cFactorLineWidth;
 		mpBondSpacing = averageBondLength * cFactorBondSpacing;
 		mpBondHiliteRadius = averageBondLength * cFactorBondHiliteRadius;
 		mpExcludeGroupRadius = averageBondLength * cFactorExcludeGroupRadius;
-		mpLabelSize    = (int)(averageBondLength * mFactorTextSize * cFactorTextSize + 0.5);
+		mpLabelSize = (int)(averageBondLength * mFactorTextSize * cFactorTextSize + 0.5);
 		mpDotDiameter = averageBondLength * cFactorDotDiameter;
 		mpQFDiameter = averageBondLength * cFactorQFDiameter;
 		mChiralTextSize = averageBondLength * cFactorChiralTextSize + 0.5f;

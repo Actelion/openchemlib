@@ -2338,7 +2338,7 @@ public class Molecule implements Serializable {
 	 * @param atoms atom indexes >= this are not considered
 	 * @param bonds bond indexes >= this are not considered
 	 * @param defaultBondLength
-	 * @param coords may be a second set of the molecule's coordinates, e.g. from a Conformer
+	 * @param coords to be used, either the molecule's coordinates, or an alternative, e.g. from a Conformer
 	 * @return
 	 */
 	public double getAverageBondLength(int atoms, int bonds, double defaultBondLength, Coordinates[] coords) {
@@ -2384,6 +2384,7 @@ public class Molecule implements Serializable {
 			 && (mBondQueryFeatures[bond] & cBondQFBridge) == 0)
 				avblSum += coords[mBondAtom[1][bond]].distance(coords[mBondAtom[0][bond]]);
 			}
+
 		return avblSum / consideredBonds;
 		}
 

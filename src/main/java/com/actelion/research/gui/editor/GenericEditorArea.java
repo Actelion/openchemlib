@@ -1492,7 +1492,7 @@ public class GenericEditorArea implements GenericEventListener {
 			popup.show(x, y);
 		}
 
-	private void handleDoubleClick (int x, int y) {
+	private void handleDoubleClick(int x, int y) {
 		int atom = mMol.findAtom(x, y);
 		int bond = mMol.findBond(x, y);
 
@@ -2088,7 +2088,7 @@ public class GenericEditorArea implements GenericEventListener {
 	 * uses the MCS-mapper to map the reaction and returns the rxn's mapping
 	 * into the display molecule.
 	 */
-	private void autoMapReaction () {
+	private void autoMapReaction() {
 		if (sMapper == null)
 			sMapper = new MCSReactionMapper();
 
@@ -2240,7 +2240,7 @@ public class GenericEditorArea implements GenericEventListener {
 	 * @param stereoBond the up/down stereo bond
 	 * @return
 	 */
-	private boolean qualifiesForESR ( int stereoBond){
+	private boolean qualifiesForESR(int stereoBond){
 		return mMol.isStereoBond(stereoBond) && (getESRAtom(stereoBond) != -1 || getESRBond(stereoBond) != -1);
 	}
 
@@ -2250,7 +2250,7 @@ public class GenericEditorArea implements GenericEventListener {
 	 * @param stereoBond
 	 * @return stereo center atom or -1 if no stereo center found
 	 */
-	private int getESRAtom ( int stereoBond){
+	private int getESRAtom(int stereoBond){
 		int atom = mMol.getBondAtom(0, stereoBond);
 		if (mMol.getAtomParity(atom) != Molecule.cAtomParityNone) {
 			return (mMol.isAtomParityPseudo(atom)
@@ -2272,7 +2272,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return -1;
 	}
 
-	private int getESRBond ( int stereoBond)
+	private int getESRBond(int stereoBond)
 	{
 		int bond = mMol.findBINAPChiralityBond(mMol.getBondAtom(0, stereoBond));
 		if (bond != -1
@@ -2288,7 +2288,7 @@ public class GenericEditorArea implements GenericEventListener {
 	 * Sets the ESR information of an atom or bond.
 	 *
 	 */
-	private void setESRInfo ( int stereoBond, int type)
+	private void setESRInfo(int stereoBond, int type)
 	{
 		int group = -1;
 
@@ -2385,7 +2385,7 @@ public class GenericEditorArea implements GenericEventListener {
 		}
 	}
 
-	private int findFragment ( double x, double y)
+	private int findFragment(double x, double y)
 	{
 		int fragment = -1;
 		double minDistance = Double.MAX_VALUE;
@@ -2408,7 +2408,7 @@ public class GenericEditorArea implements GenericEventListener {
 	 *
 	 * @param atom
 	 */
-	private void suggestNewX2AndY2 ( int atom)
+	private void suggestNewX2AndY2(int atom)
 	{
 		double newAngle = Math.PI * 2 / 3;
 		if (atom != -1) {
@@ -2464,7 +2464,7 @@ public class GenericEditorArea implements GenericEventListener {
 		mY2 = ((atom == -1) ? mY1 : mMol.getAtomY(atom)) + avbl * (float)Math.cos(newAngle);
 	}
 
-	private boolean areAtomsMappingCompatible ( int atom1, int atom2){
+	private boolean areAtomsMappingCompatible(int atom1, int atom2){
 		if (mMol.isFragment()) {
 			if ((mMol.getAtomQueryFeatures(atom1) & Molecule.cAtomQFExcludeGroup) != 0
 					|| (mMol.getAtomQueryFeatures(atom1) & Molecule.cAtomQFExcludeGroup) != 0)
@@ -2497,7 +2497,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return mMol.getAtomicNo(atom1) == mMol.getAtomicNo(atom2);
 	}
 
-	private boolean trackHiliting ( double x, double y, boolean isDragging){
+	private boolean trackHiliting(double x, double y, boolean isDragging){
 		int theAtom = mMol.findAtom(x, y);
 		int theBond = -1;
 
@@ -2694,7 +2694,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return null;
 	}
 
-	private void editTextObject (TextDrawingObject object){
+	private void editTextObject(TextDrawingObject object){
 		new TextDrawingObjectDialogBuilder(mUIHelper, object);
 
 		boolean nonWhiteSpaceFound = false;
@@ -2711,13 +2711,13 @@ public class GenericEditorArea implements GenericEventListener {
 		mCanvas.repaint();
 	}
 
-	private boolean shareSameReactionSide ( int atom1, int atom2){
+	private boolean shareSameReactionSide(int atom1, int atom2){
 		ReactionArrow arrow = (ReactionArrow)mDrawingObjectList.get(0);
 		return !(arrow.isOnProductSide(mMol.getAtomX(atom1), mMol.getAtomY(atom1))
 				^ arrow.isOnProductSide(mMol.getAtomX(atom2), mMol.getAtomY(atom2)));
 	}
 
-	protected void restoreState () {
+	protected void restoreState() {
 		if (mUndoMol == null) {
 			return;
 		}
@@ -2726,7 +2726,7 @@ public class GenericEditorArea implements GenericEventListener {
 				null : new DrawingObjectList(mUndoDrawingObjectList);
 	}
 
-	public void storeState ()
+	public void storeState()
 	{
 		if (mUndoMol == null) {
 			mUndoMol = new Molecule();
@@ -2737,7 +2737,7 @@ public class GenericEditorArea implements GenericEventListener {
 				null : new DrawingObjectList(mDrawingObjectList);
 	}
 
-	private boolean deleteHilited () {
+	private boolean deleteHilited() {
 		if (mCurrentHiliteAtom != -1) {
 			mMol.deleteAtom(mCurrentHiliteAtom);
 			mCurrentHiliteAtom = -1;
@@ -2761,7 +2761,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return false;
 	}
 
-	private boolean deleteAt ( double x, double y){
+	private boolean deleteAt(double x, double y){
 		if (mMol.deleteAtomOrBond(x, y)) {
 			updateAndFireEvent(UPDATE_REDRAW);
 			return true;
@@ -2776,7 +2776,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return false;
 	}
 
-	private void duplicateSelected () {
+	private void duplicateSelected() {
 		int atomCount = 0;
 		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
 			if (mMol.isSelectedAtom(atom)) {
@@ -2860,7 +2860,7 @@ public class GenericEditorArea implements GenericEventListener {
 		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, true));
 	}
 
-	public StereoMolecule getMolecule ()
+	public StereoMolecule getMolecule()
 	{
 		return mMol;
 	}
@@ -2876,7 +2876,7 @@ public class GenericEditorArea implements GenericEventListener {
 		moleculeChanged();
 	}
 
-	public StereoMolecule[] getFragments () {
+	public StereoMolecule[] getFragments() {
 		return mFragment;
 	}
 
@@ -2904,7 +2904,7 @@ public class GenericEditorArea implements GenericEventListener {
 	/**
 	 * @return mapped reaction with absolute coordinates, but without drawing objects
 	 */
-	public Reaction getReaction () {
+	public Reaction getReaction() {
 		if ((mMode & MODE_REACTION) == 0 || mFragment == null) {
 			return null;
 		}
@@ -2923,7 +2923,7 @@ public class GenericEditorArea implements GenericEventListener {
 	/**
 	 * @return mapped reaction with absolute coordinates and drawing objects
 	 */
-	public Reaction getReactionAndDrawings () {
+	public Reaction getReactionAndDrawings() {
 		Reaction rxn = getReaction();
 		if (rxn != null) {
 			rxn.setDrawingObjects(getDrawingObjects());
@@ -2931,7 +2931,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return rxn;
 	}
 
-	public void setReaction (Reaction rxn) {
+	public void setReaction(Reaction rxn) {
 		mMol.clear();
 		mFragment = new StereoMolecule[rxn.getMolecules()];
 		mReactantCount = rxn.getReactants();
@@ -2956,7 +2956,7 @@ public class GenericEditorArea implements GenericEventListener {
 		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 	}
 
-	public MarkushStructure getMarkushStructure () {
+	public MarkushStructure getMarkushStructure() {
 		if ((mMode & MODE_MARKUSH_STRUCTURE) == 0) {
 			return null;
 		}
@@ -2972,7 +2972,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return markush;
 	}
 
-	public void setMarkushStructure (MarkushStructure markush){
+	public void setMarkushStructure(MarkushStructure markush){
 		mMol.clear();
 		mDrawingObjectList = null;
 		mFragment = new StereoMolecule[markush.getCoreCount() + markush.getRGroupCount()];
@@ -2999,7 +2999,7 @@ public class GenericEditorArea implements GenericEventListener {
 		fireEventLater(new EditorEvent(this, EditorEvent.WHAT_MOLECULE_CHANGED, false));
 	}
 
-	public int getDisplayMode () {
+	public int getDisplayMode() {
 		return mDisplayMode;
 	}
 
@@ -3019,7 +3019,7 @@ public class GenericEditorArea implements GenericEventListener {
 	 * won't be available. This feature is only relevant if the molecule is a fragment.
 	 * @param allow if false, then query feature editing is not allowed, even for molecules being a fragment
 	 */
-	public void setAllowQueryFeatures (boolean allow){
+	public void setAllowQueryFeatures(boolean allow){
 		if (mAllowQueryFeatures != allow) {
 			mAllowQueryFeatures = allow;
 			if (!allow)
@@ -3051,11 +3051,11 @@ public class GenericEditorArea implements GenericEventListener {
 	 *
 	 * @param atomText String[] matching atom indexes (may contain null entries)
 	 */
-	public void setAtomText (String[]atomText){
+	public void setAtomText(String[]atomText){
 		mAtomText = atomText;
 	}
 
-	public DrawingObjectList getDrawingObjects () {
+	public DrawingObjectList getDrawingObjects() {
 		return mDrawingObjectList;
 	}
 
@@ -3065,25 +3065,25 @@ public class GenericEditorArea implements GenericEventListener {
 		update(UPDATE_SCALE_COORDS);
 	}
 
-	public int getMode () {
+	public int getMode() {
 		return mMode;
 	}
 
-	public int getHiliteAtom () {
+	public int getHiliteAtom() {
 		return mCurrentHiliteAtom;
 	}
 
-	public int getHiliteBond () {
+	public int getHiliteBond() {
 		return mCurrentHiliteBond;
 	}
 
-	public void setHiliteBondSet ( int[] bondSet)
+	public void setHiliteBondSet(int[] bondSet)
 	{
 		mHiliteBondSet = bondSet;
 		update(UPDATE_REDRAW);
 	}
 
-	public void setReactionMode ( boolean rxn)
+	public void setReactionMode(boolean rxn)
 	{
 		if (rxn) {
 			Molecule m[] = this.getFragments();
@@ -3127,7 +3127,7 @@ public class GenericEditorArea implements GenericEventListener {
 			cleanupMoleculeCoordinates(context, selectedOnly);
 	}
 
-	private void cleanupMoleculeCoordinates (GenericDrawContext context,boolean selectedOnly){
+	private void cleanupMoleculeCoordinates(GenericDrawContext context,boolean selectedOnly){
 		if (mUpdateMode == UPDATE_INVENT_COORDS) {
 			if (selectedOnly)
 				for (int atom = 0; atom<mMol.getAllAtoms(); atom++)
@@ -3221,7 +3221,7 @@ public class GenericEditorArea implements GenericEventListener {
 		mFragment = mMol.getFragments(fragmentNo, fragments);
 	}
 
-	private int joinCloseFragments ( int[] fragmentNo, int fragments){
+	private int joinCloseFragments(int[] fragmentNo, int fragments){
 		if (fragments<2) {
 			return fragments;
 		}
@@ -3285,7 +3285,7 @@ public class GenericEditorArea implements GenericEventListener {
 		return fragments - mergeCount;
 	}
 
-	private void sortFragmentsByPosition ( int[] fragmentNo, int fragments){
+	private void sortFragmentsByPosition(int[] fragmentNo, int fragments){
 		int[][] fragmentDescriptor = new int[fragments][((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE)) != 0) ? 2 : 1];
 		for (int fragment = 0; fragment<fragments; fragment++) {
 			fragmentDescriptor[fragment][0] = fragment;
@@ -3343,7 +3343,7 @@ public class GenericEditorArea implements GenericEventListener {
 		}
 	}
 
-	private Point[] calculateFragmentCenterOfGravity ( int[] fragmentNo, int fragments){
+	private Point[] calculateFragmentCenterOfGravity(int[] fragmentNo, int fragments){
 		Point[] fragmentCOG = new Point[fragments];
 		int[] fragmentAtoms = new int[fragments];
 		for (int fragment = 0; fragment<fragments; fragment++) {
@@ -3438,7 +3438,7 @@ public class GenericEditorArea implements GenericEventListener {
 			}
 		}*/
 
-	private Point2D calculateCenterOfGravity ( boolean selectedOnly){
+	private Point2D calculateCenterOfGravity(boolean selectedOnly){
 		int atoms = 0;
 		double sumx = 0;
 		double sumy = 0;

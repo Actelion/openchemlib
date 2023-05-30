@@ -31,12 +31,9 @@
 *
 */
 
-package com.actelion.research.chem;
+package com.actelion.research.chem.prediction;
 
-import com.actelion.research.chem.prediction.CLogPPredictor;
-import com.actelion.research.chem.prediction.ParameterizedStringList;
-import com.actelion.research.chem.prediction.PolarSurfaceAreaPredictor;
-import com.actelion.research.chem.prediction.SolubilityPredictor;
+import com.actelion.research.chem.StereoMolecule;
 
 
 public class PropertyCalculator {
