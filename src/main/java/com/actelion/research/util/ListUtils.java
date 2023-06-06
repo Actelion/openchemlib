@@ -52,6 +52,19 @@ public class ListUtils {
         return sb.toString();
     }
 
+    public static String toStringInteger(List<Integer> li){
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < li.size(); i++) {
+            sb.append(li.get(i));
+            if(i<li.size()-1){
+                sb.append(ConstantsDWAR.SEP_VALUE);
+            }
+        }
+
+        return sb.toString();
+    }
+
 
     public static  List<Integer> createIndexList(int n){
         List<Integer> liIndex = new ArrayList<>(n);

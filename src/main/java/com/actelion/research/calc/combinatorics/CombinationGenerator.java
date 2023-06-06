@@ -31,6 +31,8 @@
  */
 package com.actelion.research.calc.combinatorics;
 
+import com.actelion.research.util.ListUtils;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -310,31 +312,17 @@ public class CombinationGenerator {
 
 	public static void main(String[] args) {
 
-		int l = 3;
+		int [] a = {3,4};
 
-		int [] r = new int[l];
-		for (int i = 0; i < l; i++) {
-			r[i]=i+1;
-		}
-		List<int[]> permutations = getPermutations(r,r.length);
-
-
-
-
-		for(int[] per : permutations) {
+		List<List<Integer>> liComb = getCombinations(a);
+		for(List li : liComb) {
 			//System.out.println(Arrays.toString(per));
-			System.out.println(Arrays.toString(per));
+			System.out.println(ListUtils.toStringInteger(li));
 		}
 
-		System.out.println(permutations.size());
 
 
-//		int n = 12;
-//		int k= 3;
-//
-//		BigInteger bc = getBinomialCoefficient(n,k);
-//
-//		System.out.println(bc.toString());
+
 	}
 
 
