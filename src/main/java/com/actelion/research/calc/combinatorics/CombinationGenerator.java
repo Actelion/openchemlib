@@ -31,9 +31,12 @@
  */
 package com.actelion.research.calc.combinatorics;
 
+import com.actelion.research.util.ListUtils;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -309,109 +312,54 @@ public class CombinationGenerator {
 	}
 
 	public static void main(String[] args) {
+		examplePermutations();
 
-		int l = 3;
+	}
+	public static void examplePermutations() {
+		int [] a = {4,7,9};
 
-		int [] r = new int[l];
-		for (int i = 0; i < l; i++) {
-			r[i]=i+1;
+		List<int []> liComb = getPermutations(a, 3);
+		for(int [] p : liComb) {
+			System.out.println(Arrays.toString(p));
 		}
-		List<int[]> permutations = getPermutations(r,r.length);
+	}
+	public static void exampleCartesianProduct() {
 
+		List<List<Integer>> lists = new ArrayList<>();
 
+		List<Integer> l0 = new ArrayList<>();
 
+		l0.add(1);
+		l0.add(2);
+		l0.add(3);
 
-		for(int[] per : permutations) {
-			//System.out.println(Arrays.toString(per));
-			System.out.println(Arrays.toString(per));
+		List<Integer> l1 = new ArrayList<>(l0);
+		List<Integer> l2 = new ArrayList<>(l0);
+
+		lists.add(l0);
+		lists.add(l1);
+		lists.add(l2);
+
+		List<List<Integer>> liComb = cartesianProduct(lists);
+		for(List li : liComb) {
+			System.out.println(ListUtils.toStringInteger(li));
 		}
+	}
+	public static void exampleCombinations() {
 
-		System.out.println(permutations.size());
+		int [] a = {1,2,3};
 
-
-//		int n = 12;
-//		int k= 3;
-//
-//		BigInteger bc = getBinomialCoefficient(n,k);
-//
-//		System.out.println(bc.toString());
+		List<List<Integer>> liComb = getCombinations(a);
+		for(List li : liComb) {
+			System.out.println(ListUtils.toStringInteger(li));
+		}
 	}
 
 
-//	public static void main(String[] args) {
-//		List<int[]> li = new ArrayList<>();
-//
-////		int [] a1 = {0,1};
-////		int [] a2 = {0};
-////		int [] a3 = {1,2};
-//		int [] a1 = {1,2,3,4,5,6,7,8};
-//		int [] a2 = {1,2,3};
-//		//int [] a3 = {5,6,7};
-//		//int [] a4 = {8};
-//
-//		//li.add(a1);
-//		//li.add(a2);
-//
-//
-//		//li.add(a3);
-//		//li.add(a4);
-//
-//		//List<int[]> liComb = getCombinations(li);
-//		/*
-//		List<int[]> liComb = getAllOutOf(9,3);
-//
-//
-//		li = new ArrayList<>();
-//		for(int[] l : liComb)
-//			//getPermutations(l,l.length);
-//			System.out.println(Arrays.toString(l));
-//		*/
-//		int n = 3;
-//		int[] elements = IntStream.range(1,n).toArray();
-//		List<int[]> liComb = getAllOutOf(7,n-1);
-//
-//		for(int[] r : liComb) {
-//			List<int[]> permutations = getPermutations(r,r.length);
-//			System.out.println("#####");
-//			//System.out.println(Arrays.toString(r));
-//			for(int[] per : permutations) {
-//				//System.out.println(Arrays.toString(per));
-//				int[] arr = new int[per.length+1];
-//				arr[0] = 0;
-//				IntStream.range(0, per.length).forEach(e -> {
-//				arr[e+1] = per[e]+1;});
-//				System.out.println(Arrays.toString(arr));
-//			}
-//		}
-//
-//	}
 
 
 
 		
-	
 
-//	public static void main(String[] args) {
-//
-//		int sizeList = 9;
-//
-//		int sumCombinations=0;
-//		for (int i = 4; i < sizeList+1; i++) {
-//
-//			List<int[]> li = CombinationGenerator.getAllOutOf(sizeList, i);
-//
-//			sumCombinations += li.size();
-//			for (int j = 0; j < li.size(); j++) {
-//				int [] a = li.get(j);
-//				System.out.println(ArrayUtils.toString(a));
-//
-//			}
-//		}
-//
-//		System.out.println("sum combinations " + sumCombinations);
-//
-//
-//
-//	}
 
 }
