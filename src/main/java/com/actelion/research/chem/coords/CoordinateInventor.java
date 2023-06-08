@@ -126,7 +126,10 @@ public class CoordinateInventor {
 
 	/**
 	 * Creates new atom 2D-coordinates for a molecule or a part of a molecule.
-	 * Coordinates will correctly reflect E/Z double bond parities, unless the double bond is in a small ring.
+	 * Typically, the molecule has defined TH- and EZ-parities (even if unknown or none), which were not
+	 * calculated, but taken from a SMILES or from an IDCode. In these cases setParitiesValid() should have
+	 * been called to indicate that a parity calculation is not needed and even would destroy given parities.
+	 * New coordinates will correctly reflect E/Z double bond parities, unless the double bond is in a small ring.
 	 * If atom parities are available, this call is typically followed by calling mol.setStereoBondsFromParity();
 	 * Unneeded explicit hydrogens are removed, if mode includes MODE_REMOVE_HYDROGEN.
 	 * The relative orientation of all marked atoms is retained, if mode includes MODE_KEEP_MARKED_ATOM_COORDS.

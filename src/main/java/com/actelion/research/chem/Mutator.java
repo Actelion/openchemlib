@@ -1256,10 +1256,13 @@ public class Mutator {
 
 		repairCharges(mol);
 
+		// Most of the parity flags are still valid; the CoordinateInventor creates up/down bonds from them
+		mol.setParitiesValid(0);
 		new CoordinateInventor().invent(mol);
-		mol.setStereoBondsFromParity();	// rescue old parity information, where it is still correct
 
-		mol.ensureHelperArrays(Molecule.cHelperParities);	// detect over/under-specified stereo information
+		// we need to invalidate to detect all parities correctly now
+		mol.invalidateHelperArrays(Molecule.cHelperParities | Molecule.cHelperCIP);
+
 		repairStereoChemistry(mol);	// assign random parities to new stereo centers, and change up/down accordingly
 	    }
 
@@ -1537,6 +1540,7 @@ public class Mutator {
 		}
 
 	private void repairStereoChemistry(StereoMolecule mol) {
+		mol.ensureHelperArrays(Molecule.cHelperParities);	// detect over/under-specified stereo information
 		for (int bond=0; bond<mol.getAllBonds(); bond++)
 			if (mol.isStereoBond(bond))
 				mol.setBondType(bond, Molecule.cBondTypeSingle);
@@ -1550,7 +1554,7 @@ public class Mutator {
 		        mol.setAtomESR(atom, Molecule.cESRTypeAbs, 0);
 	            }
         	if (parity != Molecule.cAtomParityNone)
-                mol.setStereoBondFromAtomParity(atom);
+				mol.setStereoBondFromAtomParity(atom);
             }
         for (int bond=0; bond<mol.getBonds(); bond++) {
         	if (mol.isBINAPChiralityBond(bond)) {
