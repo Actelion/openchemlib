@@ -4085,7 +4085,7 @@ public class Molecule implements Serializable {
 
 			if (mAtomList != null && mAtomList[atom] != null)
 				for (int atomicNo:mAtomList[atom])
-					if (!isAtomicNoMetal(atomicNo))
+					if (!isAtomicNoTransitionMetal(atomicNo))
 						return false;
 			}
 
