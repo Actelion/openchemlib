@@ -4099,7 +4099,7 @@ public class Molecule implements Serializable {
 			|| (atomicNo >= 19 && atomicNo <= 31)
 			|| (atomicNo >= 37 && atomicNo <= 51)
 			|| (atomicNo >= 55 && atomicNo <= 84)
-			|| (atomicNo >= 87 && atomicNo <= 103);
+			|| (atomicNo >= 87 && atomicNo <= 112);
 		}
 
 
