@@ -397,6 +397,8 @@ System.out.println();
 	 * getMatchList() doesn't include information about atoms, which are part of a matching bridge bond.
 	 * This method returns an atom mask for a given matchNo, where all atoms are flagged that are part of a
 	 * matching bridge bond within that match.
+	 * If multiple bridges bond matches are possible, for every bridge bond only the shortest bridge is considered.
+	 * Multiple bridge matches don't contribute to the multiplicity of match lists, nor are they considered else where.
 	 * @param matchNo index of corresponding match from getMatchList()
 	 * @return null or atom mask in target atom space
 	 */

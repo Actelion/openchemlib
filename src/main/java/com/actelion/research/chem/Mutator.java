@@ -1261,7 +1261,7 @@ public class Mutator {
 		new CoordinateInventor().invent(mol);
 
 		// we need to invalidate to detect all parities correctly now
-		mol.invalidateHelperArrays(Molecule.cHelperParities | Molecule.cHelperCIP);
+		mol.invalidateHelperArrays(Molecule.cHelperAll);
 
 		repairStereoChemistry(mol);	// assign random parities to new stereo centers, and change up/down accordingly
 	    }

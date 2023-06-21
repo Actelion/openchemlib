@@ -118,7 +118,10 @@ public class SimilarityGraphBasedReactionMapper {
 
 			RootAtomPair pair = rootAtomPairSource.nextPair();
 			while (pair != null) {
+System.out.println(); System.out.println("@ SMapper.map() pair: "+pair.reactantAtom+","+pair.productAtom+" mMapNo:"+mMapNo+" sequence:"+mAtomPairSequenceCount);
 				mapFromRootAtoms(pair);
+System.out.print("@ rMapNo:"); for (int mapNo:mReactantMapNo) System.out.print(" "+mapNo); System.out.println();
+System.out.print("@ pMapNo:"); for (int mapNo:mProductMapNo) System.out.print(" "+mapNo); System.out.println();
 				pair = rootAtomPairSource.nextPair();
 				}
 
@@ -134,6 +137,7 @@ public class SimilarityGraphBasedReactionMapper {
 				MappingScorer scorer = new MappingScorer(mReactant, mProduct);
 				score = scorer.scoreMapping(scorer.createReactantToProductAtomMap(mReactantMapNo, mProductMapNo));
 				}
+System.out.println("@ score:"+score);
 
 if (DEBUG) {
 	Reaction rxn = new Reaction();

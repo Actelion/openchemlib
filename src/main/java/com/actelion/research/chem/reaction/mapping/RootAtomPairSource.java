@@ -397,7 +397,7 @@ public class RootAtomPairSource {
 					if (pair != null)
 						return pair;
 					}
-				mCurrentEnvIndex0++;    // go to next environment key once all potential pairs with current envoronment are depleted
+				mCurrentEnvIndex0++;    // go to next environment key once all potential pairs with current environment are depleted
 				}
 
 			while (mCurrentRadius >= MIN_ENVIRONMENT_RADIUS
@@ -410,10 +410,10 @@ public class RootAtomPairSource {
 					if (pair != null)
 						return pair;
 					}
-				mCurrentEnvIndex1++;    // go to next environment key once all potential pairs with current envoronment are depleted
+				mCurrentEnvIndex1++;    // go to next environment key once all potential pairs with current environment are depleted
 				}
 
-			// We create a low priority starting pairs if we just have one atom of a kind
+			// We create a low priority starting pair if we just have one atom of a kind
 			while (mIsStoichiometric && mCurrentRadius == 0
 			 && mCurrentEnvIndex2 < mEnvKey[0].length) {
 				byte[] envKey = mEnvKey[0][mCurrentEnvIndex2++];
@@ -465,7 +465,7 @@ public class RootAtomPairSource {
 	 * may be subgroups with equal similarity ranks. All matching rank permutations are built,
 	 * and one of them is chosen considering the history of choices.
 	 * If an unsymmetrical matching was chosen, then ranks are consolidated such that formerly
-	 * equal ranking atoms are split where atoms if these got matched to differently ranking atoms.
+	 * equal ranking atoms are split where atoms of these got matched to differently ranking atoms.
 	 * @param reactantAtoms
 	 * @param productAtoms
 	 * @return
@@ -552,13 +552,13 @@ public class RootAtomPairSource {
 		}
 
 	/**
-	 * Increases the symmetry rank of the specified atom in regard to ther atoms with
-	 * the same rank in order to reflect the asymmetry introduced by matching this atom
-	 * to another atom on the other side of the reaction.
+	 * Increases the symmetry rank of the specified atom in regard to all other atoms with
+	 * the same rank. This split of formerly equal ranks accounts for the asymmetry introduced
+	 * by matching this atom to another atom on the other side of the reaction.
 	 * The updated rank is then propagated recursively through all neighbours.
 	 * This, of course, happens only, if the atom's initial rank is shared by at least another atom.
 	 * @param mol
-	 * @param atomRank
+	 * @param atomRank reactant's or product's atom ranks to be modified in place
 	 * @param atom
 	 * @return
 	 */
