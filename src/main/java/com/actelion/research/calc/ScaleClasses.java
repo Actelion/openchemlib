@@ -2,9 +2,7 @@ package com.actelion.research.calc;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Modest v. Korff
@@ -13,20 +11,36 @@ import java.util.Random;
  **/
 public class ScaleClasses {
 
+	public static final double TINY = 0.0000001;
+
 	private List<Limit> liLimit;
+
+	private boolean validated;
 
 	public ScaleClasses(){
 		liLimit = new ArrayList<Limit>();
+		validated=false;
 	}
 
 
 	public void add(double inLow, double inHigh, double scLow, double scHigh){
 		Limit lim = new Limit(inLow, inHigh, scLow, scHigh);
+		add(lim);
+
+	}
+	public void add(Limit lim){
 		liLimit.add(lim);
+		validated=false;
 	}
 
 	public double scale(double v){
-		double sc = 0;
+		double sc = Double.NaN;
+
+		if(!validated){
+			if(!validate()){
+				throw new RuntimeException("Validation failed! Discontinuous limits definition!");
+			}
+		}
 
 		for (Limit limit : liLimit) {
 			if(limit.isInRange(v)){
@@ -49,6 +63,36 @@ public class ScaleClasses {
 		}
 
 		return sc;
+	}
+
+	public boolean validate(){
+
+		Collections.sort(liLimit, new Comparator<Limit>() {
+			@Override
+			public int compare(Limit o1, Limit o2) {
+				int c=0;
+
+				if(o1.mInLow>o2.mInLow){
+					c=1;
+				} else if(o1.mInLow<o2.mInLow){
+					c=-1;
+				}
+
+				return c;
+			}
+		});
+
+		boolean valid=true;
+
+		for (int i = 1; i < liLimit.size(); i++) {
+			double h0 = liLimit.get(i-1).mInHigh;
+			double l1 = liLimit.get(i).mInLow;
+			if(Math.abs(h0-l1)>TINY){
+				valid=false;
+				break;
+			}
+		}
+		return valid;
 	}
 
 	public static void main(String [] args){
@@ -96,7 +140,7 @@ public class ScaleClasses {
 
 	}
 
-	private static class Limit {
+	public static class Limit {
 
 		private double mInHigh;
 		private double mInLow;
