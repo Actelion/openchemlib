@@ -298,6 +298,7 @@ public class Molecule implements Serializable {
 	public static final int cBondQFNotAromatic		= 0x00400000;
 	public static final int cBondQFMatchFormalOrder = 0x00800000; // matches the formal bond order considering also cBondQFBondTypes in query
 
+	public static final int cHelperAll				= 0x00FF;
 	public static final int cHelperNone				= 0x0000;
 	public static final int cHelperBitNeighbours	= 0x0001;
 	public static final int cHelperBitRingsSimple	= 0x0002;	// small rings only, no aromaticity, no allylic nor stabilized flags
@@ -1218,7 +1219,7 @@ public class Molecule implements Serializable {
 	 * High level function for constructing a molecule.
 	 * @param substituent
 	 * @param connectionAtom
-	 * @param encodeRingClosuresInMapNo for ring closures set atomicNo to 0 and atomMapNo to thsi Molecule's atom index+1
+	 * @param encodeRingClosuresInMapNo for ring closures set atomicNo to 0 and atomMapNo to this Molecule's atom index+1
 	 * @return atom mapping from substituent to this molecule after addition of substituent
 	 */
 	public int[] addSubstituent(Molecule substituent, int connectionAtom, boolean encodeRingClosuresInMapNo) {
@@ -3920,7 +3921,11 @@ public class Molecule implements Serializable {
 	 * @return
 	 */
 	public int getElectronValenceCorrection(int atom, int occupiedValence) {
-		if (mAtomicNo[atom] >= 171 && mAtomicNo[atom] <= 190)
+		return getElectronValenceCorrection(atom, occupiedValence, mAtomicNo[atom]);
+		}
+
+	protected int getElectronValenceCorrection(int atom, int occupiedValence, int atomicNo) {
+		if (atomicNo >= 171 && atomicNo <= 190)
 			return 0;
 
 		int correction = 0;
@@ -3938,32 +3943,32 @@ public class Molecule implements Serializable {
 			if ((mAtomQueryFeatures[atom] & cAtomQFCharge) == cAtomQFNotCharge0+cAtomQFNotChargeNeg)
 				charge = 1;
 			}
-		if (mAtomicNo[atom] == 7		// N
-		 || mAtomicNo[atom] == 8		// O
-		 || mAtomicNo[atom] == 9)		// F
+		if (atomicNo == 7		// N
+		 || atomicNo == 8		// O
+		 || atomicNo == 9)		// F
 			correction += charge;
-		else if (mAtomicNo[atom] == 6	// C
-			  || mAtomicNo[atom] == 14	// Si
-			  || mAtomicNo[atom] == 32)	// Ge
+		else if (atomicNo == 6	// C
+			  || atomicNo == 14	// Si
+			  || atomicNo == 32)	// Ge
 			correction -= Math.abs(charge);
-		else if (mAtomicNo[atom] == 15		// P
-			  || mAtomicNo[atom] == 33) {	// As
+		else if (atomicNo == 15		// P
+			  || atomicNo == 33) {	// As
 			if (occupiedValence - correction - charge <= 3)
 				correction += charge;
 			else
 				correction -= charge;
 			}
-		else if (mAtomicNo[atom] == 16		// S
-			  || mAtomicNo[atom] == 34		// Se
-			  || mAtomicNo[atom] == 52) {	// Te
+		else if (atomicNo == 16		// S
+			  || atomicNo == 34		// Se
+			  || atomicNo == 52) {	// Te
 			if (occupiedValence - correction - charge <= 4)
 				correction += charge;
 			else
 				correction -= Math.abs(charge);
 			}
-		else if (mAtomicNo[atom] == 17		// Cl
-			  || mAtomicNo[atom] == 35		// Br
-			  || mAtomicNo[atom] == 53) {   // I
+		else if (atomicNo == 17		// Cl
+			  || atomicNo == 35		// Br
+			  || atomicNo == 53) {   // I
 			if (occupiedValence - correction - charge <= 5)
 				correction += charge;
 			else
@@ -4085,7 +4090,7 @@ public class Molecule implements Serializable {
 
 			if (mAtomList != null && mAtomList[atom] != null)
 				for (int atomicNo:mAtomList[atom])
-					if (!isAtomicNoMetal(atomicNo))
+					if (!isAtomicNoTransitionMetal(atomicNo))
 						return false;
 			}
 
@@ -4099,7 +4104,7 @@ public class Molecule implements Serializable {
 			|| (atomicNo >= 19 && atomicNo <= 31)
 			|| (atomicNo >= 37 && atomicNo <= 51)
 			|| (atomicNo >= 55 && atomicNo <= 84)
-			|| (atomicNo >= 87 && atomicNo <= 103);
+			|| (atomicNo >= 87 && atomicNo <= 112);
 		}
 
 
