@@ -2001,7 +2001,7 @@ public class FunctionalGroupClassifier {
 		}
 
 	private int classN(int atm) {
-		int[] conn = new int[3];
+		int[] conn = new int[ExtendedMolecule.cMaxConnAtoms];
 		int[] hetAtm = new int[ExtendedMolecule.cMaxConnAtoms];
 		
 		mMol.setAtomMarker(atm, false);

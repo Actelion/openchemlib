@@ -48,8 +48,11 @@ public class ScaffoldGroup extends ArrayList<ScaffoldData> {
 			if (mExitVector[i].getQueryAtom() == queryAtom
 			 && ((topicity == -1 && mExitVector[i].getIndex() == connIndex)
 			  || (topicity != -1 && mExitVector[i].getTopicity() == topicity)))
+//{ System.out.println("getExitVectorIndex(queryAtom:"+queryAtom+", connIndex:"+connIndex+", topicity:"+topicity+") ev.index:"+mExitVector[i].getIndex()+" ev.topicity:"+mExitVector[i].getTopicity()+" evi:"+i);
 				return i;
+//}
 
+System.out.println("getExitVectorIndex(queryAtom:"+queryAtom+", connIndex:"+connIndex+", topicity:"+topicity+") evi:"+-1);
 		return -1;
 	}
 
@@ -64,9 +67,17 @@ public class ScaffoldGroup extends ArrayList<ScaffoldData> {
 	protected int assignRGroups(int firstRGroup) {
 		if (mRGroupCount == -1) {
 			mRGroupCount = 0;
-			for (ExitVector exitVector:mExitVector)
-				if (exitVector.substituentVaries())
+			for (int i=0; i<mExitVector.length; i++) {
+				ExitVector exitVector = mExitVector[i];
+				if (exitVector.substituentVaries()) {
 					exitVector.setRGroupNo(++mRGroupCount + firstRGroup - 1);
+//					if (!exitVector.hasSeenBondOrder(1)) {
+//						i++;
+//						if (!exitVector.hasSeenBondOrder(2))
+//							i++;
+//					}
+				}
+			}
 		}
 		return mRGroupCount;
 	}

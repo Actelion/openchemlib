@@ -44,7 +44,7 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	private static final int MAX_MATCH_COUNT = 512;  // Protection for combinatorial explosion, e.g. for metathesis or DielsAlder in fullerene
 
 	// Chemical rule reactions must neither be stoichiometrically complete, nor must they be completely mapped!!!
-	// If rules contains exclude atoms, these must not be mapped.
+	// If rules contain exclude atoms, these must not be mapped.
 	// Of course, when a rule is applied, then only the mapped region of the rule is used as a template to
 	// change bonding of the reaction the rule is applied to. Nevertheless, the rule's entire reactant is used
 	// for the substructure search that identifies applicability.

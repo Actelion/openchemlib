@@ -7,13 +7,14 @@ import com.actelion.research.chem.StereoMolecule;
 
 import java.util.ArrayList;
 
-public class MoleculeData {
+public class SARMoleculeData {
 	private StereoMolecule mMol,mBuffer;
 	private ScaffoldData mScaffoldData;
 	private String[] mSubstituent;
+	private int[] mSubstituentBondOrder;
 	private boolean[] mSubstituentConnectsBack;
 
-	protected MoleculeData(StereoMolecule mol, ScaffoldData scaffoldData, int[] molToCoreAtom, StereoMolecule buffer) {
+	protected SARMoleculeData(StereoMolecule mol, ScaffoldData scaffoldData, int[] molToCoreAtom, StereoMolecule buffer) {
 		mMol = mol;
 		mScaffoldData = scaffoldData;
 		mBuffer = buffer;
@@ -35,15 +36,14 @@ public class MoleculeData {
 
 	protected void checkSubstituents() {
 		for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++)
-			mScaffoldData.checkSubstituent(mSubstituent == null ? null : mSubstituent[exitVectorIndex], exitVectorIndex);
+			mScaffoldData.checkSubstituent(mSubstituent[exitVectorIndex], exitVectorIndex, mSubstituentBondOrder[exitVectorIndex]);
 	}
 
 	protected void removeUnchangingSubstituents() {
-		if (mSubstituent != null)
-			for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++)
-				if (mSubstituent[exitVectorIndex] != null
-				 && !mScaffoldData.getExitVector(exitVectorIndex).substituentVaries())
-					mSubstituent[exitVectorIndex] = null;
+		for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++)
+			if (mSubstituent[exitVectorIndex] != null
+			 && !mScaffoldData.getExitVector(exitVectorIndex).substituentVaries())
+				mSubstituent[exitVectorIndex] = null;
 	}
 
 	protected void buildSubstituents(int[] molToCoreAtom) {
@@ -59,36 +59,32 @@ public class MoleculeData {
 		for (int i=0; i<core.getAtoms(); i++)
 			mMol.setAtomicNo(coreToMolAtom[i], 0);
 
+		mSubstituentBondOrder = new int[mScaffoldData.getExitVectorCount()];
+		mSubstituentConnectsBack = new boolean[mScaffoldData.getExitVectorCount()];
+		mSubstituent = new String[mScaffoldData.getExitVectorCount()];
+
 		// For all exit vectors that carry substituents in the molecule,
 		// create substituent idcodes and assign them to the respective exit vectors.
-		mSubstituentConnectsBack = new boolean[mScaffoldData.getExitVectorCount()];
-		for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++) {
-			String substituent = encodeSubstituent(exitVectorIndex, coreToMolAtom, molToCoreAtom);
-			if (substituent != null) {
-				if (mSubstituent == null)
-					mSubstituent = new String[mScaffoldData.getExitVectorCount()];
-
-				mSubstituent[exitVectorIndex] = substituent;
-			}
-		}
+		for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++)
+			encodeSubstituent(exitVectorIndex, coreToMolAtom, molToCoreAtom);
 	}
 
-	private String encodeSubstituent(int exitVectorIndex, int[] coreToMolAtom, int[] molToCoreAtom) {
+	private void encodeSubstituent(int exitVectorIndex, int[] coreToMolAtom, int[] molToCoreAtom) {
 		int exitVectorAtom = mScaffoldData.getExitVectorAtom(mMol, coreToMolAtom, molToCoreAtom, exitVectorIndex);
 		if (exitVectorAtom == -1)
-			return null;
+			return;
 
-		int coreAtom = mScaffoldData.getCoreAtom(exitVectorIndex);
-		int rootAtom = coreToMolAtom[coreAtom];
+		int rootAtom = coreToMolAtom[mScaffoldData.getCoreAtom(exitVectorIndex)];
+		int rootBond = mMol.getBond(rootAtom, exitVectorAtom);
 
-		int[] workAtom = new int[mMol.getAllAtoms()];
+		int[] workAtom = new int[mMol.getAtoms()];
 		boolean[] isSubstituentAtom = new boolean[mMol.getAtoms()];
 		boolean[] isSubstituentBond = new boolean[mMol.getBonds()];
 		ArrayList<BackConnection> backConnectionList = new ArrayList<>();
 
 		isSubstituentAtom[rootAtom] = true;
 		isSubstituentAtom[exitVectorAtom] = true;
-		isSubstituentBond[mMol.getBond(coreToMolAtom[coreAtom], exitVectorAtom)] = true;
+		isSubstituentBond[rootBond] = true;
 		workAtom[0] = rootAtom;
 		workAtom[1] = exitVectorAtom;
 		int current = 1;
@@ -116,12 +112,12 @@ public class MoleculeData {
 
 		mBuffer.clear();
 
+		int[] homotopicConnIndex = new int[mMol.getAtoms()];
 		int[] molToSubstituentAtom = mMol.copyMoleculeByBonds(mBuffer, isSubstituentBond, false, null);
 		for (BackConnection backConnection:backConnectionList) {
 			int atom = mBuffer.addAtom(0);
 			mBuffer.addBond(molToSubstituentAtom[backConnection.substituentAtom], atom, backConnection.bondType);
-			// TODO assign connIndexes to the different backConnection.substituentAtom for equal backConnection.backEndAtom in case we have multiple backconnections
-			int connIndex = 0;
+			int connIndex = homotopicConnIndex[backConnection.backEndAtom]++;
 			int topicity = mScaffoldData.calculateTopicity(mMol, backConnection.backEndAtom, backConnection.substituentAtom, molToCoreAtom);
 			mBuffer.setAtomCustomLabel(atom, Integer.toString(mScaffoldData.getExitVectorIndex(molToCoreAtom[backConnection.backEndAtom], connIndex, topicity)));
 		}
@@ -137,14 +133,15 @@ public class MoleculeData {
 			 && mBuffer.getAtomicNo(mBuffer.getBondAtom(1, bond)) == 0)
 				mBuffer.deleteBond(bond);
 
-		return new Canonizer(mBuffer, Canonizer.ENCODE_ATOM_CUSTOM_LABELS).getIDCode();
+		mSubstituent[exitVectorIndex] = new Canonizer(mBuffer, Canonizer.ENCODE_ATOM_CUSTOM_LABELS).getIDCode();
+		mSubstituentBondOrder[exitVectorIndex] = mMol.getBondOrder(rootBond);
 	}
 
 	/**
 	 * In case of substituent atom connecting back to the core structure, the exit vector index is encoded as label
 	 * in the substituent idcode.
 	 * This is needed within the check for varying substituents, because of the label chains with inverted direction
-	 * are recognized as different substituents. Also otherwise equal chains that connect back to different exit
+	 * are recognized as different substituents. Also, otherwise equal chains that connect back to different exit
 	 * vectors are also recognized as being different.
 	 * After the check for varying substituents and once we have a mapping from exit vector index to R-group index,
 	 * we need to exchange the label by a new one with the R-Group index, which should be finally displayed to the user.

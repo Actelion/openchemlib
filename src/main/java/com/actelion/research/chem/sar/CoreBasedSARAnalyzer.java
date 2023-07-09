@@ -14,43 +14,59 @@ public class CoreBasedSARAnalyzer {
 	private StereoMolecule mQuery,mFragment;
 	private SSSearcher mSearcher;
 	private SSSearcherWithIndex mSearcherWithIndex;
-	private ArrayList<MoleculeData> mMoleculeDataList;  // contains info of analyzed molecules, e.g. substituents and corresponding ScaffoldData
+	private ArrayList<SARMoleculeData> mMoleculeDataList;  // contains info of analyzed molecules, e.g. substituents and corresponding ScaffoldData
 	private TreeMap<String,ScaffoldData> mScaffoldMap;  // map of idccodes of core structures to corresponding ScaffoldData
 	private ScaffoldGroup mScaffoldGroup;
 
 	/**
 	 * This class runs a complete structure-activity-relationship (SAR) analysis from molecules that share
-	 * a common similar scaffold. For one given query substructure this class analyses many molecules, whether
-	 * the query substructure is found and which substituents are connected at which positions.
-	 * Then, R-group numbers are assigned to those query structure positions, which carry varying substituents
-	 * throughout matches of different molecule. Every molecule is broken down into a scaffold structure with
-	 * R-group pseudo atoms (R1, R2, ...) and the substituent structures, which are present in the particular
-	 * molecule.<br>
-	 * For a given molecule a scaffold structure is constructed the following way:<br>
+	 * one or multiple common similar scaffold(s). For one given query substructure this class analyses many
+	 * molecules, whether the query substructure is found and which substituents are connected at which positions.
+	 * If the query structure matches on a substructure of multiple molecules, then these molecule substructures
+	 * may be the same in all cases, or it may differ between some molecules. This happens, for instance,
+	 * if the <i>query</i> contains wildcard atoms that match to multiple atom types, or if a bridge bond
+	 * matches to atom chains of different lengths.<br>
+	 * The matching substructure of a molecule is called <i>core structure</i>. All molecules that share the same
+	 * <i>core structure</i> are analyzed regarding which core structure atom carries which substituents within
+	 * these molecules. If the substitution is varying within these molecules for a core structrure atom, then
+	 * an R-group is assigned to that position. An atom may get multiple R-groups if attachment positions are
+	 * diastereotop or if it sees multiple substituents in some of its molecules. The core structure with numbered
+	 * attached R-groups at all exit vectors with changing substitution is called a <i>scaffold</i>.
+	 * Thus, a specific <i>core structure</i> always gives rise to a specific <i>scaffold</i> structure.
+	 * Thus, all N <i>scaffolds</i> derived from all N <i>core structures</i> caused by one <i>query structure</i>
+	 * form a <i>scaffold group</i>. R-group numbering between all <i>scaffolds</i> within the same <i>scaffold group</i>
+	 * is compatible. This means that R-groups at equivalent exit vectors of two different scaffolds within
+	 * the same group have the same number. Two exit vectors are considered equivalent, if they are connected
+	 * to atom, which matching the same query structure atom, and if they are diastereotop, e.g. both connected
+	 * with an up-stereo bond when super-positioning their atom coordinates.<br>
+	 * For any given molecule a scaffold structure is constructed the following way:<br>
 	 * - A substructure search locates all matches of the query structure and selects a preferred match based
-	 *   on the substitution pattern. If no match is found than this molecule is skipped from the analysis<br>
+	 *   on the substitution pattern. If no match is found, then this molecule is skipped from the analysis.<br>
 	 * - All matching atoms and bonds are taken as a 'core' structure. If the query contains bridge bonds, then
 	 *   those molecule atoms that match on the bridge bonds also belong to the core structure.<br>
-	 * - When the core structure is determined for a molecule, then all remaining atoms belong to substituents.
-	 *   For every exit vector of the core structure, i.e. a bond that connects to a substituent atom, the
-	 *   substituent is determined. A substituent atom may connect back to another exit vector of the core
-	 *   structure, causing a ring closure.<br>
-	 * - To all exit vectors that have at least two different substituents (e.g. -H and -Me) an R-group is
-	 *   attached to the core structure. If all molecules have the same substituent at one position, then that
-	 *   substituent is attached to the core structure. R-groups are numbered accordingly.<br>
+	 * - When the core structure is determined for a molecule, then all remaining atoms of the molecule that
+	 *   don't belong to the core structure, are part of substituents.<br>
+	 * - For every exit vector of the core structure, i.e. a bond that connects to a substituent atom, the
+	 *   substituent structure is determined. A substituent atom may connect back to another exit vector of
+	 *   the core structure, causing a ring closure.<br>
+	 * - After the analysis of all molecules that share the same <i>core structure</i>, a copy of the
+	 *   <i>core structure</i> is created. Then all exit vectors that have at least two different substituents
+	 *   throughout all molecules (e.g. -H and -Me) an R-group is attached to the <i>core structure</i>.
+	 *   If all molecules have the same substituent at one core structure position, then no R-group is attached.
+	 *   Instead, that substituent itself is attached to the core structure.<br>
 	 * - The core structure with attached R-groups and attached constant substituents constitutes the scaffold
 	 *   structure for a particular molecule.<br>
 	 * - All molecules that match to the same query structure don't necessarily share the same scaffold structure,
 	 *   e.g. if a query bridge bond matches on a different chain length or if a wildcard atom matches on a
-	 *   different atom type, then the constructed scaffold structure differs in these aspects. Also the
+	 *   different atom type, then the constructed scaffold structure differs in these aspects. Also, the
 	 *   number of attached R-groups may be different for different scaffolds, if all molecules belonging
 	 *   to one scaffold have no substituent at a position that is substituted on a related scaffold's molecules.
-	 *   However, it is assured, that R-group numbering is always the same among a scaffold group.<br>
+	 *   However, it is assured, that R-group numbering is always the same among the entire scaffold group.<br>
 	 *   <b>Summary:</b> If molecules match to the same query structure, they belong to the same scaffold group,
 	 *   but nonetheless, their assigned scaffold structures may differ concerning atom types, ring sizes, and
 	 *   count of attached R-groups. The R-group numbering (R1, R2, ...), however, is compatible, i.e. R-groups
 	 *   at equivalent positions have the same number.<br>
-	 * @param query
+	 * @param query substructure with valid atom coordinates that defines one or multiple scaffolds (e.g. via atom lists or bond bridges)
 	 */
 	public CoreBasedSARAnalyzer(StereoMolecule query) {
 		mQuery = query;
@@ -63,6 +79,16 @@ public class CoreBasedSARAnalyzer {
 		mFragment = new StereoMolecule();   // used as molecule buffer
 	}
 
+	/**
+	 * Adds a molecule to the SAR-analyzer:<br>
+	 * - determines core structure from the preferred query match<br>
+	 * - if this core structure was not seen yet, creates a new scaffold object for this core structure<br>
+	 * - creates new SAR-molecule data object with scaffold and substituent information<br>
+	 * Use this version of addMolecule() if you don't have pre-calculated fragment fingerprints
+	 * for your molecules available.
+	 * @param mol
+	 * @return
+	 */
 	public int addMolecule(StereoMolecule mol) {
 		if (mSearcher == null) {
 			mSearcher = new SSSearcher();
@@ -81,6 +107,16 @@ public class CoreBasedSARAnalyzer {
 		return matchCount;
 	}
 
+	/**
+	 * Adds a molecule to the SAR-analyzer:<br>
+	 * - determines core structure from the preferred query match<br>
+	 * - if this core structure was not seen yet, creates a new scaffold object for this core structure<br>
+	 * - creates new SAR-molecule data object with scaffold and substituent information<br>
+	 * Use this version of addMolecule() if you have in memory molecules and pre-calculated fragment fingerprints.
+	 * @param mol
+	 * @param ffp
+	 * @return
+	 */
 	public int addMolecule(StereoMolecule mol, long[] ffp) {
 		if (mSearcherWithIndex == null) {
 			mSearcherWithIndex = new SSSearcherWithIndex();
@@ -99,6 +135,18 @@ public class CoreBasedSARAnalyzer {
 		return matchCount;
 	}
 
+	/**
+	 * Adds a molecule to the SAR-analyzer:<br>
+	 * - determines core structure from the preferred query match<br>
+	 * - if this core structure was not seen yet, creates a new scaffold object for this core structure<br>
+	 * - creates new SAR-molecule data object with scaffold and substituent information<br>
+	 * Use this version of addMolecule() if you have idcodes, coords, and pre-calculated fragment fingerprints
+	 * of your molecules.
+	 * @param idcode
+	 * @param coords
+	 * @param ffp
+	 * @return
+	 */
 	public int addMolecule(byte[] idcode, byte[] coords, long[] ffp) {
 		if (mSearcherWithIndex == null) {
 			mSearcherWithIndex = new SSSearcherWithIndex();
@@ -140,15 +188,38 @@ public class CoreBasedSARAnalyzer {
 		StereoMolecule core = new StereoMolecule();
 		int[] molToCoreAtom = new int[isCoreAtom.length];
 		mol.copyMoleculeByAtoms(core, isCoreAtom, true, molToCoreAtom);
+
+		core.setFragment(false);
+
+		// In order to build always the same scaffold molecule from a core structure, we need a canonical core as basis!
 		Canonizer coreCanonizer = new Canonizer(core);
 		int[] coreGraphIndex = coreCanonizer.getGraphIndexes();
 		for (int i=0; i<molToCoreAtom.length; i++)
 			if (molToCoreAtom[i] != -1)
 				molToCoreAtom[i] = coreGraphIndex[molToCoreAtom[i]];
-		core = coreCanonizer.getCanMolecule(false);
+		StereoMolecule canonicalCore = coreCanonizer.getCanMolecule(false);
 
-/*  TODO copy ESR features to scaffold stereo centers with Rn-groups
+		// As key for equal core structures resulting in equal scaffolds, we use the idcode of the core structure.
+		// However, we want to have different scaffolds, if substituents are connected with different bond orders.
+		// Therefore, we use radical info to mark connection atoms with substituents connected by double/triple bonds.
+		for (int atom=0; atom<molToCoreAtom.length; atom++) {
+			if (molToCoreAtom[atom] != -1) {
+				int exoPiCount = 0;
+				for (int i=0; i<mol.getConnAtoms(atom); i++) {
+					int connAtom = mol.getConnAtom(atom, i);
+					if (molToCoreAtom[connAtom] == -1)
+						exoPiCount += mol.getConnBondOrder(atom, i) - 1;
+				}
 
+				// encode exo-core bonds with pi-electrons as radicals
+				if (exoPiCount != 0)
+					core.setAtomRadical(molToCoreAtom[atom], exoPiCount == 1 ?
+							Molecule.cAtomRadicalStateD : Molecule.cAtomRadicalStateT);
+			}
+		}
+
+
+/* TODO copy ESR features to scaffold stereo centers with Rn-groups???
 		core.ensureHelperArrays(Molecule.cHelperNeighbours);
 		String extendedCoreIDCode = null;
 		int[] coreAtomParity = null;
@@ -210,23 +281,29 @@ public class CoreBasedSARAnalyzer {
 				extendedCoreIDCode = new Canonizer(extendedCore).getIDCode();
 			}*/
 
-		core.setFragment(false);
-
 		// Get existing or create new ScaffoldData object for this particular core structure.
-		ScaffoldData scaffoldData = getScaffoldData(core, queryToMolAtom, molToCoreAtom, isBridgeAtom != null);
+		String key = new Canonizer(core).getIDCode();
+		ScaffoldData scaffoldData = getScaffoldData(key, canonicalCore, queryToMolAtom, molToCoreAtom, isBridgeAtom != null);
 
-		mMoleculeDataList.add(new MoleculeData(mol, scaffoldData, molToCoreAtom, mFragment));
+		mMoleculeDataList.add(new SARMoleculeData(mol, scaffoldData, molToCoreAtom, mFragment));
 		}
 
-	private ScaffoldData getScaffoldData(StereoMolecule core, int[] queryToMolAtom, int[] molToCoreAtom, boolean hasBridgeAtoms) {
-		// Create one CoreInfo for every distinct core structure and assign all rows
-		// having the same core structure to the respective CoreInfo.
-		String coreIDCode = new Canonizer(core).getIDCode();
-		ScaffoldData scaffoldData = mScaffoldMap.get(coreIDCode);
+	/**
+	 * Create one ScaffoldData for every distinct core structure and assign all rows
+	 * having the same core structure to the respective ScaffoldData.
+	 * @param canonicalCore
+	 * @param queryToMolAtom
+	 * @param molToCoreAtom
+	 * @param hasBridgeAtoms
+	 * @return
+	 */
+	private ScaffoldData getScaffoldData(String key, StereoMolecule canonicalCore, int[] queryToMolAtom, int[] molToCoreAtom, boolean hasBridgeAtoms) {
+		ScaffoldData scaffoldData = mScaffoldMap.get(key);
 
 		if (scaffoldData == null) {
+			canonicalCore.ensureHelperArrays(Molecule.cHelperNeighbours);
 			int[] queryToCoreAtom = new int[mQuery.getAtoms()];
-			int[] coreToQueryAtom = new int[core.getAtoms()];
+			int[] coreToQueryAtom = new int[canonicalCore.getAtoms()];
 			Arrays.fill(queryToCoreAtom, -1);	// account for exclude atoms
 			Arrays.fill(coreToQueryAtom, -1);	// account for bridge atoms
 			for (int queryAtom=0; queryAtom<mQuery.getAtoms(); queryAtom++) {
@@ -238,12 +315,11 @@ public class CoreBasedSARAnalyzer {
 					}
 				}
 
-// TODO make sure, we don't destroy stereo centers when changin coordinates
-			adaptCoreAtomCoordsFromQuery(mQuery, core, queryToCoreAtom, hasBridgeAtoms);
+			adaptCoreAtomCoordsFromQuery(mQuery, canonicalCore, queryToCoreAtom, hasBridgeAtoms);
 
-			System.out.println(coreIDCode);
-			scaffoldData = new ScaffoldData(core, coreToQueryAtom, queryToCoreAtom, mScaffoldGroup);
-			mScaffoldMap.put(coreIDCode, scaffoldData);
+System.out.println(key);
+			scaffoldData = new ScaffoldData(mQuery, canonicalCore, coreToQueryAtom, queryToCoreAtom, mScaffoldGroup);
+			mScaffoldMap.put(key, scaffoldData);
 			mScaffoldGroup.add(scaffoldData);
 			}
 
@@ -251,29 +327,35 @@ public class CoreBasedSARAnalyzer {
 		}
 
 	/**
-	 * @param firstRGroup
-	 * @return true if the maximum R-group count was exceeded in some cases
+	 * Call this after all molecules have been added to the CoreBasedSARAnalyzer.
+	 * This method determines the real scaffold structure(s) and those exit vectors
+	 * that carry varying substituents in the molecule set. Then R-group numbers
+	 * are assigned to those exit vectors, which carry varying substituents.
+	 * If the highest assigned R-group number exceeds the maximum (16) for one or
+	 * more scaffolds, then molecules belonging to those scaffolds are not processed.
+	 * @param firstRGroupNumber 1 or a higher number, e.g. if the molecules contain R-groups themselves
+	 * @return true if all molecules could be processed, i.e. R-group numbers didn't exceed the maximum
 	 */
-	public boolean analyze(int firstRGroup) {
+	public boolean analyze(int firstRGroupNumber) {
 		boolean rGroupCountExceeded = false;
 
 		// check for varying substituents to require a new column
-		for (MoleculeData moleculeData:mMoleculeDataList)
+		for (SARMoleculeData moleculeData:mMoleculeDataList)
 			if (moleculeData != null)
 				moleculeData.checkSubstituents();
 
 		// Remove substituents from atoms, which didn't see a varying substitution
-		for (MoleculeData moleculeData:mMoleculeDataList)
+		for (SARMoleculeData moleculeData:mMoleculeDataList)
 			if (moleculeData != null)
 				moleculeData.removeUnchangingSubstituents();
 
-		int scaffoldRGroupCount = mScaffoldGroup.assignRGroups(firstRGroup);
+		int scaffoldRGroupCount = mScaffoldGroup.assignRGroups(firstRGroupNumber);
 
 		for (ScaffoldData scaffoldData:mScaffoldGroup) {
-			int rGroupsOnBridges = scaffoldData.assignRGroupsToBridgeAtoms(firstRGroup + scaffoldRGroupCount);
+			int rGroupsOnBridges = scaffoldData.assignRGroupsToBridgeAtoms(firstRGroupNumber + scaffoldRGroupCount);
 
 			if (scaffoldRGroupCount + rGroupsOnBridges > MAX_R_GROUPS) {
-				for (MoleculeData moleculeData:mMoleculeDataList)
+				for (SARMoleculeData moleculeData:mMoleculeDataList)
 					if (moleculeData != null
 					 && moleculeData.getScaffoldData().getRGroupCount() > MAX_R_GROUPS)
 						moleculeData.clear();
@@ -284,11 +366,11 @@ public class CoreBasedSARAnalyzer {
 			scaffoldData.addRGroupsToCoreStructure();
 			}
 
-		for (MoleculeData moleculeData:mMoleculeDataList)
+		for (SARMoleculeData moleculeData:mMoleculeDataList)
 			if (moleculeData != null)
 				moleculeData.correctSubstituentRingClosureLabels();
 
-		return rGroupCountExceeded;
+		return !rGroupCountExceeded;
 		}
 
 	/**
@@ -431,7 +513,7 @@ public class CoreBasedSARAnalyzer {
 		return mScaffoldGroup;
 	}
 
-	public ArrayList<MoleculeData> getMoleculeData() {
+	public ArrayList<SARMoleculeData> getMoleculeData() {
 		return mMoleculeDataList;
 	}
 }

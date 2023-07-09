@@ -1,7 +1,7 @@
 package com.actelion.research.chem.sar;
 
 public class ExitVector {
-	private int mAtom,mIndex,mBondOrder,mTopicity;
+	private int mAtom,mIndex,mSeenBondOrders,mTopicity;
 	private boolean mAtomIsQueryAtom,mEmptySubstituentSeen,mSubstituentVaries;
 	private String mConstantSubstituent;
 	private int mRGroupNo;
@@ -23,6 +23,10 @@ public class ExitVector {
 		return mAtomIsQueryAtom ? mAtom : -1;
 	}
 
+	/**
+	 * @param queryToCoreAtom
+	 * @return the root atom index for the core structure
+	 */
 	public int getCoreAtom(int[] queryToCoreAtom) {
 		return mAtomIsQueryAtom ? queryToCoreAtom[mAtom] : mAtom;
 	}
@@ -51,6 +55,10 @@ public class ExitVector {
 		return mConstantSubstituent;
 	}
 
+	public boolean hasSeenBondOrder(int bondOrder) {
+		return (mSeenBondOrders & (1 << bondOrder)) != 0;
+	}
+
 	/**
 	 * This method is called with all substituents at this exit vector position.
 	 * After being called with all substituents from all molecules within the same scaffold
@@ -59,7 +67,8 @@ public class ExitVector {
 	 * substituents.
 	 * @param substituent
 	 */
-	protected void checkSubstituent(String substituent) {
+	protected void checkSubstituent(String substituent, int bondOrder) {
+		mSeenBondOrders |= (1 << bondOrder);
 		if (!mSubstituentVaries) {
 			if (substituent == null) {
 				mEmptySubstituentSeen = true;

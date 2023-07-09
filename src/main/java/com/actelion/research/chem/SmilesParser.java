@@ -138,13 +138,37 @@ public class SmilesParser {
 		return mol;
 		}
 
+	public static boolean isReactionSmiles(byte[] smiles) {
+		int count = 0;
+		int index = -1;
+
+		while (count < 3) {
+			index = ArrayUtils.indexOf(smiles, (byte)'>', index + 1);
+			while (index>0 && smiles[index - 1] == (byte)'-')
+				index = ArrayUtils.indexOf(smiles, (byte)'>', index + 1);
+
+			if (index == -1)
+				break;
+
+			count++;
+			}
+
+		return count == 2;
+		}
+
 	public Reaction parseReaction(String smiles) throws Exception {
 		return smiles == null ? null : parseReaction(smiles.getBytes());
-	}
+		}
 
 	public Reaction parseReaction(byte[] smiles) throws Exception {
 		int index1 = ArrayUtils.indexOf(smiles, (byte)'>');
+		while (index1 > 0 && smiles[index1-1] == (byte)'-')
+			index1 = ArrayUtils.indexOf(smiles, (byte)'>', index1+1);
+
 		int index2 = (index1 == -1) ? -1 : ArrayUtils.indexOf(smiles, (byte)'>', index1+1);
+		while (index2 > 0 && smiles[index2-1] == (byte)'-')
+			index2 = ArrayUtils.indexOf(smiles, (byte)'>', index2+1);
+
 		if (index2 == -1)
 			throw new Exception("Missing one or both separators ('>').");
 		if (ArrayUtils.indexOf(smiles, (byte)'>', index2+1) != -1)
@@ -1115,22 +1139,6 @@ public class SmilesParser {
 			mMol.setFragment(true);
 		}
 
-
-	private int parseAtomList(byte[] smiles, int start, SortedList<Integer> atomList) {
-		atomList.removeAll();
-		for (int p=start; p<smiles.length; p++) {
-			if (!Character.isLetter(smiles[p])) {
-				int atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, start, p - start));
-				if (atomicNo != 0)
-					atomList.add(atomicNo);
-				start = p+1;
-				if (smiles[p] != ',')
-					break;
-				}
-			}
-
-		return start-1;
-		}
 
 	private boolean isBondSymbol(char theChar) {
 		return theChar == '-'

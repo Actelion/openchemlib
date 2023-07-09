@@ -2029,9 +2029,18 @@ public class Molecule implements Serializable {
 	/**
 	 * @return the entire atom coordinate array
 	 */
+	public Coordinates getAtomCoordinates(int atom) {
+		return mCoordinates[atom];
+		}
+
+
+	/**
+	 * @return the entire atom coordinate array
+	 */
 	public Coordinates[] getAtomCoordinates() {
 		return mCoordinates;
-		}
+	}
+
 
 	/**
 	 * This is MDL's enhanced stereo representation (ESR).

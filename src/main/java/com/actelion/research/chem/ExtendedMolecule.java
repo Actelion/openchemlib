@@ -1692,9 +1692,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		return 16 - mAllConnAtoms[atom]
 				  + (((mBondType[bond] & cBondTypeMaskStereo) == 0 || mBondAtom[0][bond] != atom) ? 32768 : 0)
-				  + ((mAtomicNo[atom] == 1) ? 4096 : 0)
-				  + ((mAllConnAtoms[atom] == 1) ? 2048 : 0)
-				  + ((getAtomParity(atom) == 0) ? 1024 : 0)
+				  + ((getAtomParity(atom) == 0) ? 4096 : 0)
+				  + ((mAtomicNo[atom] == 1) ? 2048 : 0)
+				  + ((mAllConnAtoms[atom] == 1) ? 1024 : 0)
 				  + ((!isRingBond(bond)) ? 512 : 0)
 				  + ((mAtomicNo[atom] != 6) ? 256 : 0);
 		}
@@ -1967,6 +1967,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			return;
 
 		int preferredBond = preferredTHStereoBond(atom, true);
+		if (preferredBond == -1)
+			return; // very rare, but existing case
 
 		if (mBondAtom[0][preferredBond] != atom) {
 			mBondAtom[1][preferredBond] = mBondAtom[0][preferredBond];

@@ -2424,6 +2424,10 @@ System.out.println("noOfRanks:"+canRank);
 		}
 
 
+	/**
+	 * @param includeExplicitHydrogen
+	 * @return canonical copy of this molecule
+	 */
 	public StereoMolecule getCanMolecule(boolean includeExplicitHydrogen) {
 		generateGraph();
 
