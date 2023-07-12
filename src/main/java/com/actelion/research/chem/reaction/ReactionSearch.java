@@ -59,7 +59,8 @@ public class ReactionSearch {
 	private volatile DescriptorHandlerLongFFP512 mDescriptorHandlerFFP512;
 	private volatile DescriptorHandlerReactionFP mDescriptorHandlerRxnFP;
 	private volatile long[][] mQueryReactionDescriptor,mQueryReactantDescriptor,mQueryProductDescriptor,mQueryRetronDescriptor;
-	private volatile int mMaxSSSMatches,mMaxNonSSSMatches;
+	private volatile int mMaxSSSMatches,mMaxNonSSSMatches,mStatus;
+	private volatile long mStopTime,mMaxMillis;
 	private ConcurrentLinkedQueue<Integer> mResultQueue;
 	private AtomicInteger mSMPIndex,mMatchCount;
 
@@ -81,6 +82,7 @@ public class ReactionSearch {
 		mDataSource = dataSource;
 		mSearchController = searchController;
 		mProgressController = progressController;
+		mStatus = StructureSearch.SEARCH_PENDING;
 
 		if (mSpecification != null) {
 			// define needed descriptor handlers
@@ -95,9 +97,10 @@ public class ReactionSearch {
 		}
 
 	/**
-	 * If the search shall be aborted once it exceed a given number of matches,
+	 * If the search shall be aborted once it exceeds a given number of matches,
 	 * then define the maximum number of matches with this method before starting the search.
-	 * Calling start with then return the first maximum count valid matches.
+	 * In case a search would return more than the defined maximum of allowed matches,
+	 * then the search would stop at the allowed maximum and return those matches.
 	 * @param maxSSSMatches maximum number of allowed sub-reaction/retron search matches (0: no limit)
 	 * @param maxNonSSSMatches maximum number of allowed matches for other search types (0: no limit)
 	 */
@@ -106,16 +109,34 @@ public class ReactionSearch {
 		mMaxNonSSSMatches = maxNonSSSMatches;
 		}
 
+	/**
+	 * If the search shall be aborted once it exceeds a given elapsed time limit,
+	 * then define the maximum allowed search time in milliseconds.
+	 * If a search time limit is reached, then the search would return all matches found.
+	 * @param maxMillis maximum allowed elapsed search milliseconds (0: no limit)
+	 */
+	public void setTimeLimit(long maxMillis) {
+		mMaxMillis = maxMillis;
+		}
+
+	public String getCompletionStatus() {
+		return StructureSearch.COMPLETION_TEXT[mStatus];
+		}
+
 	public int[] start() {
-		if (!mDataSource.isSupportedSearchType(mSpecification))
+		if (!mDataSource.isSupportedSearchType(mSpecification)) {
+			mStatus = StructureSearch.SEARCH_TYPE_NOT_SUPPORTED;
 			return null;
+			}
 
 		mMatchCount = new AtomicInteger(0);
 
 		if (!mSpecification.isNoReactionSearch()) {
 			final int queryReactionCount = mSpecification.getReactionCount();
-			if (queryReactionCount == 0)
+			if (queryReactionCount == 0) {
+				mStatus = StructureSearch.QUERY_MISSING;
 				return null;
+				}
 
 			if (mSpecification.isSubreactionSearch()
 			 || mSpecification.isSimilaritySearch()) {
@@ -174,13 +195,16 @@ public class ReactionSearch {
     	mResultQueue = new ConcurrentLinkedQueue<>();
 
 		if (mProgressController != null && mSpecification.getReactionCount() > 1023)
-			mProgressController.startProgress("Searching structures", 0, mSpecification.getReactionCount());
+			mProgressController.startProgress("Searching reactions", 0, mSpecification.getReactionCount());
+
+		mStopTime = (mMaxMillis == 0) ? Long.MAX_VALUE : System.currentTimeMillis() + mMaxMillis;
+		mStatus = StructureSearch.SEARCH_RUNNING;
 
 		if (MULTITHREADED_SEARCH) {
 			int threadCount = Runtime.getRuntime().availableProcessors();
 			SearchThread[] t = new SearchThread[threadCount];
 			for (int i = 0; i<threadCount; i++) {
-				t[i] = new SearchThread("Structure Search " + (i + 1));
+				t[i] = new SearchThread("Reaction Search " + (i + 1));
 				t[i].setPriority(Thread.MIN_PRIORITY);
 				t[i].start();
 				}
@@ -194,17 +218,19 @@ public class ReactionSearch {
 				catch (InterruptedException e) {}
 			}
 		else {
-			new SearchThread("Structure Search").run();
+			new SearchThread("Reaction Search").run();
 			}
 
-    	int[] result = new int[mResultQueue.size()];
+		if (mStatus == StructureSearch.SEARCH_RUNNING)
+			mStatus = StructureSearch.SUCCESSFUL_COMPLETION;
+
+		int[] result = new int[mResultQueue.size()];
     	int i=0;
     	for (Integer integer:mResultQueue)
     		result[i++] = integer.intValue();
 
     	return result;
 		}
-
 
 	private void ensureMoleculeDescriptors() {
 		final int queryReactionCount = mSpecification.getReactionCount();
@@ -359,7 +385,17 @@ public class ReactionSearch {
 
 		public void run() {
 			int row = mSMPIndex.decrementAndGet();
-			while (row >= 0 && (mProgressController == null || !mProgressController.threadMustDie())) {
+			while (row >= 0) {
+				if ((mProgressController != null && mProgressController.threadMustDie())) {
+					mStatus = StructureSearch.SEARCH_STOPPED;
+					break;
+					}
+
+				if (System.currentTimeMillis() > mStopTime) {
+					mStatus = StructureSearch.TIME_LIMIT_EXCEEDED;
+					break;
+					}
+
 				if (mProgressController != null && row%1024==1023)
 					mProgressController.updateProgress(mSpecification.getReactionCount()-row);
 
@@ -368,8 +404,10 @@ public class ReactionSearch {
 
 					if (mSpecification.isSubreactionSearch()
 					 || mSpecification.isRetronSearch()) {
-						if (mMaxSSSMatches != 0 && mMatchCount.get() > mMaxSSSMatches)
+						if (mMaxSSSMatches != 0 && mMatchCount.get() > mMaxSSSMatches) {
+							mStatus = StructureSearch.COUNT_LIMIT_EXCEEDED;
 							break;
+							}
 
 						if (mSpecification.isSubreactionSearch()) {
 							long[] reactantFFP = mDataSource.getMergedReactantDescriptor(row);
@@ -415,7 +453,7 @@ public class ReactionSearch {
 														inReactantCount -= countEquivalentMatches(reactant, mReactantSearcher.getGraphMatcher().getMatchList());
 													}
 												}
-											// TODO check, whether we also have to take into account in catalyst occurences
+											// TODO check, whether we also have to take into account in catalyst occurrences
 											if (inProductCount > inReactantCount) {
 												isMatch = true;
 												break;
@@ -427,8 +465,10 @@ public class ReactionSearch {
 							}
 						}
 					else {
-						if (mMaxNonSSSMatches != 0 && mMatchCount.get() > mMaxNonSSSMatches)
+						if (mMaxNonSSSMatches != 0 && mMatchCount.get() > mMaxNonSSSMatches) {
+							mStatus = StructureSearch.COUNT_LIMIT_EXCEEDED;
 							break;
+							}
 
 						if (mSpecification.isNoReactionSearch()) {
 							isMatch = true;

@@ -200,7 +200,7 @@ public class RigidFragmentProvider {
 
 				fragmentToOriginalAtom[fragmentAtom] = atom;
 
-				// convert all plain hydrogen to deuterium that we don't loose them in the idcode
+				// convert all plain hydrogen to deuterium that we don't lose them in the idcode
 				if (fragment.getAtomicNo(fragmentAtom) == 1)
 					fragment.setAtomMass(fragmentAtom, 2);
 

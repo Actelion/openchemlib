@@ -2471,7 +2471,7 @@ System.out.println("noOfRanks:"+canRank);
 			}
 
 		mMol.copyMoleculeProperties(mol);
-		mMol.invalidateHelperArrays(Molecule.cHelperAll);
+		mol.invalidateHelperArrays(Molecule.cHelperBitParities);
 
 		return mol;
 		}

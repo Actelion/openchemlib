@@ -3147,7 +3147,7 @@ public class Molecule implements Serializable {
 	 */
 	public void setAtomMass(int atom, int mass) {
 		mAtomMass[atom] = mass;
-		mValidHelperArrays &= cHelperRings;
+		mValidHelperArrays &= (mAtomicNo[atom] == 1) ? cHelperNone : cHelperRings;
 		}
 
 
