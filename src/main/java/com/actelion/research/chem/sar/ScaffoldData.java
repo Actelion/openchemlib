@@ -2,7 +2,6 @@ package com.actelion.research.chem.sar;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.coords.CoordinateInventor;
-import com.actelion.research.util.DoubleFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -309,63 +308,119 @@ public class ScaffoldData {
 	 * @param rootAtom
 	 * @param exitAtom
 	 * @param molToCoreAtom
-	 * @return
+	 * @return 0 or 1 (-1 if topicity cannot be determined)
 	 */
 	protected int calculateTopicity(StereoMolecule mol, int rootAtom, int exitAtom, int[] molToCoreAtom) {
 		if (!mol.isAtomStereoCenter(rootAtom))
 			return mol.getAtomPi(rootAtom) == 0 ? -1 : calculateEZTopicity(mol, rootAtom, exitAtom, molToCoreAtom);
 
+		int[] neighbour = new int[4];
+		double[] angle = new double[4];
+		int otherExitBond = -1;
+		int stereoBondIndex = -1;
+
 		int stereoBond = mol.getStereoBond(rootAtom);
-if (stereoBond == -1) System.out.println("ERROR: No stereobond found"); // TODO remove
+		if (stereoBond == -1) System.out.println("ERROR: No stereobond found"); // TODO remove
 
-		int[] neighbour = new int[3];
-		double[] angle = new double[3];
-
+		// Create array of rootAtom neighbour bond angles sorted by the relevant neighbour atom indexes.
+		// Included neighbours are all neighbours that are part of the core structure plus the defined exit atom.
+		// A potential second exit atom is not considered here.
 		int count = 0;
 		for (int i=0; i<mol.getConnAtoms(rootAtom); i++) {
-			int coreConnAtom = molToCoreAtom[mol.getConnAtom(rootAtom, i)];
-			if (coreConnAtom != -1) {
-				neighbour[count] = getTopicityRelevantAtomIndex(molToCoreAtom[rootAtom], coreConnAtom);
-				angle[count] = mol.getBondAngle(rootAtom, mol.getConnAtom(rootAtom, i));
+			int connAtom = mol.getConnAtom(rootAtom, i);
+			int connBond = mol.getConnBond(rootAtom, i);
+			if (molToCoreAtom[connAtom] == -1 && connAtom != exitAtom) {
+				otherExitBond = connBond;
+			}
+			else {
+				int neighbourAtom = (connAtom == exitAtom) ? Integer.MAX_VALUE
+						  : getTopicityRelevantAtomIndex(molToCoreAtom[rootAtom], molToCoreAtom[connAtom]);
+				int index = count;
+				while (index > 0 && neighbour[index-1] > neighbourAtom) {
+					neighbour[index] = neighbour[index-1];
+
+					index--;
+				}
+
+				if (stereoBondIndex >= index)
+					stereoBondIndex++;
+
+				neighbour[index] = neighbourAtom;
+				angle[index] = mol.getBondAngle(rootAtom, connAtom);
+
+				if (connBond == stereoBond)
+					stereoBondIndex = index;
+
 				count++;
 			}
 		}
 
-		int bondType = mol.getBondType(stereoBond);
+		if (count < 3 || count > 4)
+			return -1;
 
-		if (mol.getConnAtoms(rootAtom) == 4) {
-			for (int i=0; i<mol.getConnAtoms(rootAtom); i++) {
-				int connAtom = mol.getConnAtom(rootAtom, i);
-				int connBond = mol.getConnBond(rootAtom, i);
+		int stereoType = (mol.getBondType(stereoBond) == Molecule.cBondTypeUp) ? 2 : 1;
 
-				if (molToCoreAtom[connAtom] == -1
-				 && connAtom != exitAtom
-				 && stereoBond == connBond) {   // stereoBond is other exit atom
-					bondType = bondType == Molecule.cBondTypeDown ? Molecule.cBondTypeUp
-							 : bondType == Molecule.cBondTypeUp ? Molecule.cBondTypeDown : bondType;
+		if (stereoBond == otherExitBond) {
+			stereoBondIndex = count-1;   // exit vector bond
+			stereoType = 3 - stereoType;
+		}
+
+		return calculateTHTopicity(angle, stereoBondIndex, stereoType);
+	}
+
+	/**
+	 * Use Canonizer's logic to calculate parities of 2D stereo center.
+	 * The difference is that we assign the highest atom index to the exit atom,
+	 * and neglect an optional second exit vector. If a second exit vector exists and
+	 * if that is connected with a stereo bond, then we adapt accordingly.
+	 * @param angle
+	 * @return
+	 */
+	private int calculateTHTopicity(double[] angle, int stereoBondIndex, int stereoType) {
+		final int[][] up_down = { { 1,0,1,0 },	// direction of stereobond
+				{ 0,1,1,0 },	// for topicity = 1
+				{ 0,0,1,1 },	// first dimension: order of
+				{ 1,0,0,1 },	// angles to connected atoms
+				{ 1,1,0,0 },	// second dimension: number of
+				{ 0,1,0,1 } };  // mMol.getConnAtom that has stereobond
+
+// No support for Fisher projections here!
+//		byte parity = (byte)mMol.getFisherProjectionParity(atom, remappedConn, angle, null);
+//		if (parity != Molecule.cAtomParityUnknown)
+//			return parity;
+
+		for (int i=1; i<angle.length; i++)
+			if (angle[i] < angle[0])
+				angle[i] += Math.PI*2;
+
+		if (angle.length == 3) {
+			switch (stereoBondIndex) {
+				case 0:
+					if (((angle[1] < angle[2]) && (angle[2] - angle[1] < Math.PI))
+					 || ((angle[1] > angle[2]) && (angle[1] - angle[2] > Math.PI)))
+						stereoType = 3 - stereoType;
 					break;
-					}
-
-				// If we have 2 neighbours in the core and two exit bonds, we assume that both exit bonds roughly point
-				// into the same direction and no correction is needed!?
-
-				// TODO if we have 3 neighbours in the core and if stereoBond is not the exit bond, then we also need to correct
-				}
+				case 1:
+					if (angle[2] - angle[0] > Math.PI)
+						stereoType = 3 - stereoType;
+					break;
+				case 2:
+					if (angle[1] - angle[0] < Math.PI)
+						stereoType = 3 - stereoType;
+					break;
 			}
 
-		boolean isClockWise = getAngleParity(angle, count) == getOrderParity(neighbour, count);
+			return (stereoType == 1) ? 1 : 0;
+		}
 
-System.out.print("calcTopicity() coreAtom:"+molToCoreAtom[rootAtom]+" neighbours:");
-for (int i=0; i<count; i++) System.out.print(neighbour[i]+" ");
-System.out.print(" angles:");
-for (int i=0; i<count; i++) System.out.print(DoubleFormat.toString(angle[i],3) +" ");
-System.out.print(" bondType:"+bondType);
-System.out.print(" ap:"+getAngleParity(angle, count));
-System.out.print(" op:"+getOrderParity(neighbour, count));
-System.out.print(" isClockWise:"+isClockWise);
-System.out.println(" topicity:"+(isClockWise ^ bondType == Molecule.cBondTypeDown ? 0 : 1));
-
-		return isClockWise ^ bondType == Molecule.cBondTypeDown ? 0 : 1;
+		int order = 0;
+		if		(angle[1] <= angle[2] && angle[2] <= angle[3]) order = 0;
+		else if (angle[1] <= angle[3] && angle[3] <= angle[2]) order = 1;
+		else if (angle[2] <= angle[1] && angle[1] <= angle[3]) order = 2;
+		else if (angle[2] <= angle[3] && angle[3] <= angle[1]) order = 3;
+		else if (angle[3] <= angle[1] && angle[1] <= angle[2]) order = 4;
+		else if (angle[3] <= angle[2] && angle[2] <= angle[1]) order = 5;
+		return (up_down[order][stereoBondIndex] == stereoType) ? 1 : 0;
 	}
 
 	private int calculateEZTopicity(StereoMolecule mol, int rootAtom, int exitAtom, int[] molToCoreAtom) {
@@ -507,8 +562,16 @@ System.out.println(" topicity:"+(isClockWise ^ bondType == Molecule.cBondTypeDow
 		for (int i=0; i<mScaffold.getConnAtoms(rootAtom); i++) {
 			int connAtom = mScaffold.getConnAtom(rootAtom, i);
 			if (connAtom < mCoreToQueryAtom.length) {
-				neighbour[count] = getTopicityRelevantAtomIndex(rootAtom, connAtom);
-				angle[count] = mScaffold.getBondAngle(rootAtom, neighbour[count]);
+				int neighbourAtom = getTopicityRelevantAtomIndex(rootAtom, connAtom);
+
+				int index = count;
+				while (index > 0 && neighbour[index-1] > neighbourAtom) {
+					neighbour[index] = neighbour[index-1];
+					index--;
+				}
+
+				neighbour[index] = neighbourAtom;
+				angle[index] = mScaffold.getBondAngle(rootAtom, connAtom);
 				piBondSum += mScaffold.getConnBondOrder(rootAtom, i) - 1;
 				count++;
 			}
@@ -529,8 +592,9 @@ System.out.println(" topicity:"+(isClockWise ^ bondType == Molecule.cBondTypeDow
 		if (exitVector.getTopicity() == -1)
 			return Molecule.cBondTypeSingle;
 
-		boolean isClockWise = getAngleParity(angle, count) == getOrderParity(neighbour, count);
-		return isClockWise ^ exitVector.getTopicity() == 1 ? Molecule.cBondTypeUp : Molecule.cBondTypeDown;
+		angle[count] = Molecule.getAngle(mScaffold.getAtomX(rootAtom), mScaffold.getAtomY(rootAtom), coords.x, coords.y);
+		int topicity = calculateTHTopicity(angle, count, 1);
+		return (topicity == -1) ? Molecule.cBondTypeSingle : (topicity == 0) ? Molecule.cBondTypeUp : Molecule.cBondTypeDown;
 	}
 
 	/**
@@ -599,33 +663,5 @@ System.out.println(" topicity:"+(isClockWise ^ bondType == Molecule.cBondTypeDow
 		double avbl = mScaffold.getAverageBondLength();
 		coords.x = mScaffold.getAtomX(atom) + avbl * Math.sin(exitAngle);
 		coords.y = mScaffold.getAtomY(atom) + avbl * Math.cos(exitAngle);
-	}
-
-	/**
-	 * @param angle
-	 * @param count 2 or 3
-	 * @return false if angles are in increasing order
-	 */
-	private boolean getAngleParity(double[] angle, int count) {
-		if (count == 2)
-			return Molecule.getAngleDif(angle[0], angle[1]) > 0;
-
-		return (Molecule.getAngleDif(angle[0], angle[1]) > 0 && Molecule.getAngleDif(angle[2], angle[0]) > 0)
-			|| (Molecule.getAngleDif(angle[2], angle[0]) > 0 && Molecule.getAngleDif(angle[1], angle[2]) > 0)
-			|| (Molecule.getAngleDif(angle[1], angle[2]) > 0 && Molecule.getAngleDif(angle[0], angle[1]) > 0);
-	}
-
-	/**
-	 * @param atomIndex
-	 * @param count 2 or 3
-	 * @return false if atom indexes are in natural order or if we have an even number of exchanges to get to natural order
-	 */
-	private boolean getOrderParity(int[] atomIndex, int count) {
-		if (count == 2)
-			return atomIndex[0] > atomIndex[1];
-
-		return (atomIndex[0] > atomIndex[1] && atomIndex[2] > atomIndex[0])
-			|| (atomIndex[2] > atomIndex[0] && atomIndex[1] > atomIndex[2])
-			|| (atomIndex[1] > atomIndex[2] && atomIndex[0] > atomIndex[1]);
 	}
 }

@@ -14,7 +14,7 @@ public class CoreBasedSARAnalyzer {
 	private StereoMolecule mQuery,mFragment;
 	private SSSearcher mSearcher;
 	private SSSearcherWithIndex mSearcherWithIndex;
-	private ArrayList<SARMoleculeData> mMoleculeDataList;  // contains info of analyzed molecules, e.g. substituents and corresponding ScaffoldData
+	private SARMoleculeData[] mMoleculeData;  // contains info of analyzed molecules, e.g. substituents and corresponding ScaffoldData
 	private TreeMap<String,ScaffoldData> mScaffoldMap;  // map of idccodes of core structures to corresponding ScaffoldData
 	private ScaffoldGroup mScaffoldGroup;
 
@@ -68,11 +68,11 @@ public class CoreBasedSARAnalyzer {
 	 *   at equivalent positions have the same number.<br>
 	 * @param query substructure with valid atom coordinates that defines one or multiple scaffolds (e.g. via atom lists or bond bridges)
 	 */
-	public CoreBasedSARAnalyzer(StereoMolecule query) {
+	public CoreBasedSARAnalyzer(StereoMolecule query, int moleculeCount) {
 		mQuery = query;
 		mQuery.ensureHelperArrays(Molecule.cHelperNeighbours);
 
-		mMoleculeDataList = new ArrayList<>();
+		mMoleculeData = new SARMoleculeData[moleculeCount];
 		mScaffoldMap = new TreeMap<>();
 		mScaffoldGroup = new ScaffoldGroup(query);
 
@@ -87,9 +87,10 @@ public class CoreBasedSARAnalyzer {
 	 * Use this version of addMolecule() if you don't have pre-calculated fragment fingerprints
 	 * for your molecules available.
 	 * @param mol
+	 * @param index
 	 * @return
 	 */
-	public int addMolecule(StereoMolecule mol) {
+	public int setMolecule(StereoMolecule mol, int index) {
 		if (mSearcher == null) {
 			mSearcher = new SSSearcher();
 			mSearcher.setFragment(mQuery);
@@ -97,12 +98,10 @@ public class CoreBasedSARAnalyzer {
 
 		mSearcher.setMolecule(mol);
 		int matchCount = mSearcher.findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cDefaultMatchMode);
-		if (matchCount == 0) {
-			mMoleculeDataList.add(null);
+		if (matchCount == 0)
 			return 0;
-			}
 
-		addMolecule(mol, mSearcher);
+		setMolecule(mol, mSearcher, index);
 
 		return matchCount;
 	}
@@ -115,9 +114,10 @@ public class CoreBasedSARAnalyzer {
 	 * Use this version of addMolecule() if you have in memory molecules and pre-calculated fragment fingerprints.
 	 * @param mol
 	 * @param ffp
+	 * @param index
 	 * @return
 	 */
-	public int addMolecule(StereoMolecule mol, long[] ffp) {
+	public int setMolecule(StereoMolecule mol, long[] ffp, int index) {
 		if (mSearcherWithIndex == null) {
 			mSearcherWithIndex = new SSSearcherWithIndex();
 			mSearcherWithIndex.setFragment(mQuery, (long[])null);
@@ -125,12 +125,10 @@ public class CoreBasedSARAnalyzer {
 
 		mSearcherWithIndex.setMolecule(mol, ffp);
 		int matchCount = mSearcherWithIndex.findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cDefaultMatchMode);
-		if (matchCount == 0) {
-			mMoleculeDataList.add(null);
+		if (matchCount == 0)
 			return 0;
-			}
 
-		addMolecule(mol, mSearcherWithIndex.getGraphMatcher());
+		setMolecule(mol, mSearcherWithIndex.getGraphMatcher(), index);
 
 		return matchCount;
 	}
@@ -145,9 +143,10 @@ public class CoreBasedSARAnalyzer {
 	 * @param idcode
 	 * @param coords
 	 * @param ffp
+	 * @param index
 	 * @return
 	 */
-	public int addMolecule(byte[] idcode, byte[] coords, long[] ffp) {
+	public int setMolecule(byte[] idcode, byte[] coords, long[] ffp, int index) {
 		if (mSearcherWithIndex == null) {
 			mSearcherWithIndex = new SSSearcherWithIndex();
 			mSearcherWithIndex.setFragment(mQuery, (long[])null);
@@ -155,17 +154,15 @@ public class CoreBasedSARAnalyzer {
 
 		mSearcherWithIndex.setMolecule(idcode, ffp);
 		int matchCount = mSearcherWithIndex.findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cDefaultMatchMode);
-		if (matchCount == 0) {
-			mMoleculeDataList.add(null);
+		if (matchCount == 0)
 			return 0;
-			}
 
-		addMolecule(new IDCodeParser(true).getCompactMolecule(idcode, coords), mSearcherWithIndex.getGraphMatcher());
+		setMolecule(new IDCodeParser(true).getCompactMolecule(idcode, coords), mSearcherWithIndex.getGraphMatcher(), index);
 
 		return matchCount;
 	}
 
-	private void addMolecule(StereoMolecule mol, SSSearcher searcher) {
+	private void setMolecule(StereoMolecule mol, SSSearcher searcher, int index) {
 		int match = findPreferredMatch(mol, searcher.getMatchList());
 
 		int[] queryToMolAtom = searcher.getMatchList().get(match);
@@ -285,7 +282,7 @@ public class CoreBasedSARAnalyzer {
 		String key = new Canonizer(core).getIDCode();
 		ScaffoldData scaffoldData = getScaffoldData(key, canonicalCore, queryToMolAtom, molToCoreAtom, isBridgeAtom != null);
 
-		mMoleculeDataList.add(new SARMoleculeData(mol, scaffoldData, molToCoreAtom, mFragment));
+		mMoleculeData[index] = new SARMoleculeData(mol, scaffoldData, molToCoreAtom, mFragment);
 		}
 
 	/**
@@ -340,12 +337,12 @@ System.out.println(key);
 		boolean rGroupCountExceeded = false;
 
 		// check for varying substituents to require a new column
-		for (SARMoleculeData moleculeData:mMoleculeDataList)
+		for (SARMoleculeData moleculeData:mMoleculeData)
 			if (moleculeData != null)
 				moleculeData.checkSubstituents();
 
 		// Remove substituents from atoms, which didn't see a varying substitution
-		for (SARMoleculeData moleculeData:mMoleculeDataList)
+		for (SARMoleculeData moleculeData:mMoleculeData)
 			if (moleculeData != null)
 				moleculeData.removeUnchangingSubstituents();
 
@@ -355,7 +352,7 @@ System.out.println(key);
 			int rGroupsOnBridges = scaffoldData.assignRGroupsToBridgeAtoms(firstRGroupNumber + scaffoldRGroupCount);
 
 			if (scaffoldRGroupCount + rGroupsOnBridges > MAX_R_GROUPS) {
-				for (SARMoleculeData moleculeData:mMoleculeDataList)
+				for (SARMoleculeData moleculeData:mMoleculeData)
 					if (moleculeData != null
 					 && moleculeData.getScaffoldData().getRGroupCount() > MAX_R_GROUPS)
 						moleculeData.clear();
@@ -366,7 +363,7 @@ System.out.println(key);
 			scaffoldData.addRGroupsToCoreStructure();
 			}
 
-		for (SARMoleculeData moleculeData:mMoleculeDataList)
+		for (SARMoleculeData moleculeData:mMoleculeData)
 			if (moleculeData != null)
 				moleculeData.correctSubstituentRingClosureLabels();
 
@@ -513,7 +510,7 @@ System.out.println(key);
 		return mScaffoldGroup;
 	}
 
-	public ArrayList<SARMoleculeData> getMoleculeData() {
-		return mMoleculeDataList;
+	public SARMoleculeData getMoleculeData(int index) {
+		return mMoleculeData[index];
 	}
 }
