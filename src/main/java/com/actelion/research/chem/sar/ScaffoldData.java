@@ -86,9 +86,9 @@ public class ScaffoldData {
 		ExitVector exitVector = getExitVector(exitVectorIndex);
 		int rootAtom = coreToMolAtom[exitVector.getCoreAtom(mQueryToCoreAtom)];
 
-		// If we don't have a stereo center at rootAtom and if one if the exiting bonds is a double or triple bond,
-		// then we associate the first exit vector at rootAtom with the double/triple bond and a potentially
-		// second (single bonded) exit vector with the second one.
+		// If we don't have a stereo center at rootAtom and if one of the exiting bonds is a double or triple bond,
+		// then we associate the first exit vector at rootAtom with the double/triple bond and a second
+		// (single bonded) exit vector with the remaining bond if one exists.
 		boolean hasExitPiBond = false;
 		for (int i=0; i<mol.getConnAtoms(rootAtom); i++) {
 			if (molToCoreAtom[mol.getConnAtom(rootAtom, i)] == -1
@@ -115,9 +115,7 @@ public class ScaffoldData {
 				int topicity = (exitVector.getTopicity() == -1) ? -1 : calculateTopicity(mol, rootAtom, connAtom, molToCoreAtom);
 				if (topicity != -1) {
 					if (topicity == exitVector.getTopicity())
-{ System.out.println("getExitVectorAtom() rootAtom:"+rootAtom+", coreAtom:"+exitVector.getCoreAtom(mQueryToCoreAtom)+", topicity:"+topicity+" ev.index:"+exitVector.getIndex()+" ev.topicity:"+exitVector.getTopicity()+" evAtom:"+connAtom);
 						return connAtom;
-}
 				}
 				else if (count == exitVector.getIndex())
 					return connAtom;
@@ -201,6 +199,8 @@ public class ScaffoldData {
 		mScaffold = new StereoMolecule(mCore);
 		mScaffold.ensureHelperArrays(Molecule.cHelperNeighbours);
 
+		double coreAVBL = mScaffold.getAverageBondLength();
+
 		int exitVectorCount = getExitVectorCount();
 		boolean[] closureCovered = new boolean[exitVectorCount];
 		for (int exitVectorIndex=0; exitVectorIndex<exitVectorCount; exitVectorIndex++) {
@@ -224,11 +224,24 @@ public class ScaffoldData {
 					Coordinates coords = new Coordinates();
 					int bondType = calculateExitVectorCoordsAndBondType(exitVectorIndex, coords);
 
+					int rootAtom = exitVector.getCoreAtom(mQueryToCoreAtom);
+					double wantedAngle = Molecule.getAngle(mScaffold.getAtomX(rootAtom), mScaffold.getAtomY(rootAtom), coords.x, coords.y);
+
 					// Translate substituent to correct attachment position
-					for (int atom=0; atom<substituent.getAllAtoms(); atom++) {
-						if (substituent.getAtomicNo(atom) == 0 && substituent.getAtomCustomLabel(atom) == null)
-							substituent.translateCoords(coords.x - substituent.getAtomX(atom), coords.y - substituent.getAtomY(atom));
-						break;
+					for (int bond=0; bond<substituent.getAllBonds(); bond++) {
+						for (int i=0; i<2; i++) {
+							int atom = substituent.getBondAtom(i, bond);
+							if (substituent.getAtomicNo(atom) == 0 && substituent.getAtomCustomLabel(atom) == null) {
+								int conn = substituent.getBondAtom(1-i, bond);
+								double currentAngle = substituent.getBondAngle(atom, conn);
+								double rotation = Molecule.getAngleDif(currentAngle, wantedAngle);
+								substituent.scaleCoords(coreAVBL / substituent.getAverageBondLength());
+								substituent.rotateCoords(substituent.getAtomX(conn), substituent.getAtomY(conn), rotation);
+								substituent.translateCoords(coords.x - substituent.getAtomX(conn), coords.y - substituent.getAtomY(conn));
+								bond = substituent.getAllBonds();
+								break;
+							}
+						}
 					}
 
 					// Substitutions, which connect back to the core fragment are decorated with atomicNo=0 atoms that
@@ -320,7 +333,6 @@ public class ScaffoldData {
 		int stereoBondIndex = -1;
 
 		int stereoBond = mol.getStereoBond(rootAtom);
-		if (stereoBond == -1) System.out.println("ERROR: No stereobond found"); // TODO remove
 
 		// Create array of rootAtom neighbour bond angles sorted by the relevant neighbour atom indexes.
 		// Included neighbours are all neighbours that are part of the core structure plus the defined exit atom.
@@ -338,7 +350,7 @@ public class ScaffoldData {
 				int index = count;
 				while (index > 0 && neighbour[index-1] > neighbourAtom) {
 					neighbour[index] = neighbour[index-1];
-
+					angle[index] = angle[index-1];
 					index--;
 				}
 
@@ -365,7 +377,7 @@ public class ScaffoldData {
 			stereoType = 3 - stereoType;
 		}
 
-		return calculateTHTopicity(angle, stereoBondIndex, stereoType);
+		return calculateTHTopicity(angle, count, stereoBondIndex, stereoType);
 	}
 
 	/**
@@ -376,24 +388,24 @@ public class ScaffoldData {
 	 * @param angle
 	 * @return
 	 */
-	private int calculateTHTopicity(double[] angle, int stereoBondIndex, int stereoType) {
-		final int[][] up_down = { { 1,0,1,0 },	// direction of stereobond
-				{ 0,1,1,0 },	// for topicity = 1
-				{ 0,0,1,1 },	// first dimension: order of
-				{ 1,0,0,1 },	// angles to connected atoms
-				{ 1,1,0,0 },	// second dimension: number of
-				{ 0,1,0,1 } };  // mMol.getConnAtom that has stereobond
+	private int calculateTHTopicity(double[] angle, int count, int stereoBondIndex, int stereoType) {
+		final int[][] up_down = { { 2,1,2,1 },	// direction of stereobond
+				{ 1,2,2,1 },	// for topicity = 1
+				{ 1,1,2,2 },	// first dimension: order of
+				{ 2,1,1,2 },	// angles to connected atoms
+				{ 2,2,1,1 },	// second dimension: number of
+				{ 1,2,1,2 } };  // mMol.getConnAtom that has stereobond
 
 // No support for Fisher projections here!
 //		byte parity = (byte)mMol.getFisherProjectionParity(atom, remappedConn, angle, null);
 //		if (parity != Molecule.cAtomParityUnknown)
 //			return parity;
 
-		for (int i=1; i<angle.length; i++)
+		for (int i=1; i<count; i++)
 			if (angle[i] < angle[0])
 				angle[i] += Math.PI*2;
 
-		if (angle.length == 3) {
+		if (count == 3) {
 			switch (stereoBondIndex) {
 				case 0:
 					if (((angle[1] < angle[2]) && (angle[2] - angle[1] < Math.PI))
@@ -410,7 +422,7 @@ public class ScaffoldData {
 					break;
 			}
 
-			return (stereoType == 1) ? 1 : 0;
+			return (stereoType == 1) ? 0 : 1;
 		}
 
 		int order = 0;
@@ -567,6 +579,7 @@ public class ScaffoldData {
 				int index = count;
 				while (index > 0 && neighbour[index-1] > neighbourAtom) {
 					neighbour[index] = neighbour[index-1];
+					angle[index] = angle[index-1];
 					index--;
 				}
 
@@ -593,8 +606,9 @@ public class ScaffoldData {
 			return Molecule.cBondTypeSingle;
 
 		angle[count] = Molecule.getAngle(mScaffold.getAtomX(rootAtom), mScaffold.getAtomY(rootAtom), coords.x, coords.y);
-		int topicity = calculateTHTopicity(angle, count, 1);
-		return (topicity == -1) ? Molecule.cBondTypeSingle : (topicity == 0) ? Molecule.cBondTypeUp : Molecule.cBondTypeDown;
+
+		int topicity = calculateTHTopicity(angle, count+1, count, 1);
+		return (topicity == -1) ? Molecule.cBondTypeSingle : (topicity == exitVector.getTopicity()) ? Molecule.cBondTypeDown : Molecule.cBondTypeUp;
 	}
 
 	/**

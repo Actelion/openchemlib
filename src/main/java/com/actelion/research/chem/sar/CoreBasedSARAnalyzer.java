@@ -314,7 +314,6 @@ public class CoreBasedSARAnalyzer {
 
 			adaptCoreAtomCoordsFromQuery(mQuery, canonicalCore, queryToCoreAtom, hasBridgeAtoms);
 
-System.out.println(key);
 			scaffoldData = new ScaffoldData(mQuery, canonicalCore, coreToQueryAtom, queryToCoreAtom, mScaffoldGroup);
 			mScaffoldMap.put(key, scaffoldData);
 			mScaffoldGroup.add(scaffoldData);

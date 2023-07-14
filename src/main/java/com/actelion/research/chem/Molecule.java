@@ -3719,6 +3719,18 @@ public class Molecule implements Serializable {
 		}
 
 
+	public void rotateCoords(double x, double y, double angle) {
+		double sin = Math.sin(angle);
+		double cos = Math.cos(angle);
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			double ax = mCoordinates[atom].x - x;
+			double ay = mCoordinates[atom].y - y;
+			mCoordinates[atom].x = x + ax * cos - ay * sin;
+			mCoordinates[atom].y = y + ay * cos + ax * sin;
+		}
+	}
+
+
 	public void zoomAndRotateInit(double x, double y) {
 		mZoomRotationX = x;
 		mZoomRotationY = y;
