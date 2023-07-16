@@ -1156,7 +1156,7 @@ public class Molecule implements Serializable {
 	 * Copies all atoms and bonds of mol to the end of this Molecule's atom and bond
 	 * tables. If mol is a fragment then this Molecule's fragment flag is set to true
 	 * and all query features of mol are also copied.
-	 * High level function for constructing a molecule.
+	 * High level function for constructing a molecule. Does not require any helper arrays.
 	 * @param mol
 	 * @return atom mapping from original mol to this molecule after incorporation of mol
 	 */
@@ -1171,7 +1171,7 @@ public class Molecule implements Serializable {
 	 * and all query features of mol are also copied. Typically, this is used to add a
 	 * molecule without explicit hydrogen atoms. If parities of copied molecules are valid,
 	 * then you may call setParitiesValid() on this molecule after adding molecules.
-	 * High level function for constructing a molecule.
+	 * High level function for constructing a molecule. Does not require any helper arrays.
 	 * @param mol
 	 * @param atoms count of atoms to be copied
 	 * @param bonds count of bonds to be copied
@@ -1196,43 +1196,57 @@ public class Molecule implements Serializable {
 		return atomMap;
 		}
 
-
 	/**
-	 * Adds and connects the substituent molecule to the connectionAtom of this molecule.
-	 * Substituent atoms with atomicNo=0 are not copied and considered to represent the connectionAtom.
-	 * Bonds leading to them, however, are copied and connected to the connectionAtom.
-	 * High level function for constructing a molecule.
+	 * Adds and connects the substituent molecule to the rootAtom of this molecule.
+	 * Substituent atom(s) with atomicNo=0 and not carrying an atom label are not copied
+	 * because these are considered to represent the rootAtom.
+	 * Bonds leading to them, however, are copied and connected to the rootAtom.
+	 * If substituent atom parities are valid, then these are corrected for stereo centers
+	 * adjacent to attachment point, if their neighbor order changes due to the new bond to the rootAtom.
+	 * High level function for constructing a molecule. Does not require any helper arrays.
 	 * @param substituent
-	 * @param connectionAtom
+	 * @param rootAtom
 	 * @return atom mapping from substituent to this molecule after addition of substituent
 	 */
-	public int[] addSubstituent(Molecule substituent, int connectionAtom) {
-		return addSubstituent(substituent, connectionAtom, false);
-		}
-
-	/**
-	 * Adds and connects the substituent molecule to the connectionAtom of this molecule.
-	 * Substituent atoms with atomicNo=0 are not copied and considered to represent the connectionAtom.
-	 * Bonds leading to them, however, are copied and connected to the connectionAtom.
-	 * If encodeRingClosuresInMapNo==true, then connections (ring closures) to atoms other than connectionAtom
-	 * are allowed and encoded in the substituents atomMapNo as closureAtomIndex = atomicNo-1.
-	 * High level function for constructing a molecule.
-	 * @param substituent
-	 * @param connectionAtom
-	 * @param encodeRingClosuresInMapNo for ring closures set atomicNo to 0 and atomMapNo to this Molecule's atom index+1
-	 * @return atom mapping from substituent to this molecule after addition of substituent
-	 */
-	public int[] addSubstituent(Molecule substituent, int connectionAtom, boolean encodeRingClosuresInMapNo) {
+	public int[] addSubstituent(Molecule substituent, int rootAtom) {
 		int[] atomMap = new int[substituent.mAllAtoms];
 		int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
 		int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
 		for (int atom=0; atom<substituent.mAllAtoms; atom++) {
-			if (substituent.getAtomicNo(atom) != 0)
+			if (substituent.getAtomicNo(atom) != 0 || substituent.getAtomCustomLabel(atom) != null) {
 				atomMap[atom] = substituent.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
-			else if (encodeRingClosuresInMapNo && substituent.getAtomMapNo(atom) != 0)
-				atomMap[atom] = substituent.getAtomMapNo(atom) - 1;
-			else
-				atomMap[atom] = connectionAtom;
+				}
+			else {
+				atomMap[atom] = rootAtom;
+
+				// adapt parities for stereo centers adjacent to attachment point if order of neighbours changes
+				if ((substituent.mValidHelperArrays & cHelperBitParities) != 0) {
+					for (int bond=0; bond<substituent.mAllBonds; bond++) {
+						for (int i=0; i<2; i++) {
+							if (substituent.getBondAtom(i, bond) == atom) {
+								int neighbor = substituent.getBondAtom(1-i, bond);
+								int parity = substituent.getAtomParity(neighbor);
+								boolean invert = false;
+								if (parity == cAtomParity1 || parity == cAtomParity2) {
+									for (int b=0; b<substituent.mAllBonds; b++) {
+										if (b != bond) {
+											for (int j=0; j<2; j++) {
+												if (substituent.getBondAtom(j, b) == neighbor
+												 && substituent.getBondAtom(1-j, b) < atom) {
+													invert = !invert;
+													}
+												}
+											}
+										}
+									}
+								if (invert)
+									substituent.setAtomParity(neighbor, parity == cAtomParity1 ?
+											cAtomParity2 : cAtomParity1, substituent.isAtomParityPseudo(neighbor));
+								}
+							}
+						}
+					}
+				}
 			}
 		for (int bond=0; bond<substituent.mAllBonds; bond++) {
 			substituent.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
@@ -1244,6 +1258,69 @@ public class Molecule implements Serializable {
 		return atomMap;
 		}
 
+	/**
+	 * Scales the given substituent to match this molecule's average bond length.
+	 * Then, rotates the substituent such that the angle of the bond from the attachment point
+	 * to the first real atom matches the given angle. If angle is NaN, then no rotation is done.
+	 * Then, translates the substituent such that the attachment point overlaps with rootAtom.
+	 * Finally, copies the substituent without the attachment point into this molecule and
+	 * adds a new bond from rootAtom to the first substituent atom using the given bond type.
+	 * If bondType is -1, then all bond(s) connecting the attachment point with other substituent
+	 * atoms are copied to attach rootAtom with substituent atom(s). Otherwise, rootAtom
+	 * will be connected to the substituent's first atom using the specified bond tyoe and making
+	 * sure that the pointed tip of the stereo bond is at the rootAtom. Here it is assumed
+	 * that the attachmentPoint atom connects to exactly one other substituent atom.
+	 * If substituent atom parities are valid, then these are corrected for stereo centers
+	 * adjacent to attachment point, if their neighbor order changes due to the new bond to the rootAtom.
+	 * High level function for constructing a molecule. Does not require any helper arrays.
+	 * @param substituent
+	 * @param rootAtom in this Molecule
+	 * @param angle NaN or desired exit vector angle from rootAtom to first substituent atom
+	 * @param bondType -1 or up/down bond type to connect substituent with pointed tip at rootAtom
+	 */
+	public void addSubstituent(StereoMolecule substituent, int rootAtom, double angle, int bondType) {
+		double avbl = getAverageBondLength();
+		double substituentAVBL = substituent.getAverageBondLength(avbl);
+		if (substituentAVBL != avbl)
+			substituent.scaleCoords(avbl / substituentAVBL);
+
+		int attachmentPoint = -1;
+		int firstAtom = -1;
+		for (int bond=0; bond<substituent.getAllBonds() && attachmentPoint==-1; bond++) {
+			for (int i=0; i<2; i++) {
+				int atom = substituent.getBondAtom(i, bond);
+				if (substituent.getAtomicNo(atom) == 0 && substituent.getAtomCustomLabel(atom) == null) {
+					attachmentPoint = atom;
+					firstAtom = substituent.getBondAtom(1 - i, bond);
+					break;
+					}
+				}
+			}
+
+		if (!Double.isNaN(angle)) {
+			double rotation = Molecule.getAngleDif(substituent.getBondAngle(attachmentPoint, firstAtom), angle);
+			substituent.rotateCoords(substituent.getAtomX(firstAtom), substituent.getAtomY(firstAtom), rotation);
+			}
+
+		substituent.translateCoords(getAtomX(rootAtom) - substituent.getAtomX(attachmentPoint),
+									getAtomY(rootAtom) - substituent.getAtomY(attachmentPoint));
+
+		addSubstituent(substituent, rootAtom);
+
+		if (bondType != -1 && (bondType & Molecule.cBondTypeMaskStereo) != 0) {
+			for (int bond=mAllBonds-substituent.getAllBonds(); bond<mAllBonds; bond++) {
+				if (mBondAtom[0][bond] == rootAtom
+				 || mBondAtom[1][bond] == rootAtom) {
+					mBondType[bond] = bondType;
+					if (mBondAtom[1][bond] == rootAtom) {
+						mBondAtom[1][bond] = mBondAtom[0][bond];
+						mBondAtom[0][bond] = rootAtom;
+						break;
+						}
+					}
+				}
+			}
+		}
 
 	/**
 	 * Copies this molecule including parity settings, if valid.

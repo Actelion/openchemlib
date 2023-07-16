@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeMap;
 
-import static com.actelion.research.chem.coords.CoordinateInventor.MODE_PREFER_MARKED_ATOM_COORDS;
-
 public class ScaffoldData {
 	private StereoMolecule mQuery,mCore,mScaffold;
 	private int[] mCoreToQueryAtom,mQueryToCoreAtom;
@@ -220,30 +218,6 @@ public class ScaffoldData {
 				if (!closureCovered[exitVectorIndex] && exitVector.getConstantSubstituent() != null) {
 					StereoMolecule substituent = new IDCodeParser(true).getCompactMolecule(exitVector.getConstantSubstituent());
 
-					// If we have a stereo bond to connect the substituent
-					Coordinates coords = new Coordinates();
-					int bondType = calculateExitVectorCoordsAndBondType(exitVectorIndex, coords);
-
-					int rootAtom = exitVector.getCoreAtom(mQueryToCoreAtom);
-					double wantedAngle = Molecule.getAngle(mScaffold.getAtomX(rootAtom), mScaffold.getAtomY(rootAtom), coords.x, coords.y);
-
-					// Translate substituent to correct attachment position
-					for (int bond=0; bond<substituent.getAllBonds(); bond++) {
-						for (int i=0; i<2; i++) {
-							int atom = substituent.getBondAtom(i, bond);
-							if (substituent.getAtomicNo(atom) == 0 && substituent.getAtomCustomLabel(atom) == null) {
-								int conn = substituent.getBondAtom(1-i, bond);
-								double currentAngle = substituent.getBondAngle(atom, conn);
-								double rotation = Molecule.getAngleDif(currentAngle, wantedAngle);
-								substituent.scaleCoords(coreAVBL / substituent.getAverageBondLength());
-								substituent.rotateCoords(substituent.getAtomX(conn), substituent.getAtomY(conn), rotation);
-								substituent.translateCoords(coords.x - substituent.getAtomX(conn), coords.y - substituent.getAtomY(conn));
-								bond = substituent.getAllBonds();
-								break;
-							}
-						}
-					}
-
 					// Substitutions, which connect back to the core fragment are decorated with atomicNo=0 atoms that
 					// carry a label with the respective exit vector index. Here we just copy those connection atoms,
 					// but mark the exit vector indexes as already attached (closureCovered) to avoid processing from the
@@ -255,22 +229,14 @@ public class ScaffoldData {
 							closureCovered[Integer.parseInt(label)] = true;
 					}
 
-					int coreAtom = exitVector.getCoreAtom(mQueryToCoreAtom);
-					mScaffold.addSubstituent(substituent, coreAtom, false);
+					// If we have a stereo bond to connect the substituent
+					Coordinates coords = new Coordinates();
+					int bondType = calculateExitVectorCoordsAndBondType(exitVectorIndex, coords);
 
-					if ((bondType & Molecule.cBondTypeMaskStereo) != 0) {
-						for (int bond=mScaffold.getAllBonds()-substituent.getAllBonds(); bond<mScaffold.getAllBonds(); bond++) {
-							if (mScaffold.getBondAtom(0, bond) == coreAtom
-							 || mScaffold.getBondAtom(1, bond) == coreAtom) {
-								mScaffold.setBondType(bond, bondType);
-								if (mScaffold.getBondAtom(1, bond) == coreAtom) {
-									mScaffold.setBondAtom(1, bond, mScaffold.getBondAtom(0, bond));
-									mScaffold.setBondAtom(0, bond, coreAtom);
-									break;
-								}
-							}
-						}
-					}
+					int rootAtom = exitVector.getCoreAtom(mQueryToCoreAtom);
+					double wantedAngle = Molecule.getAngle(mScaffold.getAtomX(rootAtom), mScaffold.getAtomY(rootAtom), coords.x, coords.y);
+
+					mScaffold.addSubstituent(substituent, rootAtom, wantedAngle, bondType);
 				}
 			}
 		}
@@ -283,17 +249,44 @@ public class ScaffoldData {
 			if (label != null) {
 				labelsFound = true;
 				int exitVectorIndex = Integer.parseInt(label);
-				int bondType = calculateExitVectorCoordsAndBondType(exitVectorIndex, mScaffold.getAtomCoordinates(mScaffold.getConnAtom(atom, 0)));
-				mScaffold.addBond(getExitVector(exitVectorIndex).getCoreAtom(mQueryToCoreAtom), mScaffold.getConnAtom(atom, 0), bondType);
+				int firstAtom = mScaffold.getConnAtom(atom, 0);
+				int bondType = calculateExitVectorCoordsAndBondType(exitVectorIndex, mScaffold.getAtomCoordinates(firstAtom));
+
+				// Correct parity of first substituent atom at ring closure if we have an odd number of neighbours
+				// with an atom index between old and new attachment index.
+				int parity = mScaffold.getAtomParity(firstAtom);
+				if (parity == Molecule.cAtomParity1 || parity == Molecule.cAtomParity2) {
+					boolean invert = false;
+					for (int i=0; i<mScaffold.getConnAtoms(firstAtom); i++) {
+						int connAtom = mScaffold.getConnAtom(firstAtom, i);
+						if (connAtom != atom && connAtom<atom)
+							invert = !invert;
+					}
+					if (invert)
+						mScaffold.setAtomParity(firstAtom, parity == Molecule.cAtomParity1 ?
+										Molecule.cAtomParity2 : Molecule.cAtomParity1, mScaffold.isAtomParityPseudo(firstAtom));
+				}
+				mScaffold.addBond(getExitVector(exitVectorIndex).getCoreAtom(mQueryToCoreAtom), firstAtom, bondType);
 				mScaffold.markAtomForDeletion(atom);
 			}
 		}
 		if (labelsFound)
 			mScaffold.deleteMarkedAtomsAndBonds();
 
+		// To close the ring and to ensure the stereo center correctness at core atom of the closure bond
+		// we have relocated the substituent atom of the closure bond potentially inverting the stereo configuration
+		// if that atom is a stereo center. We rebuild up/down bonds to reflect new atom coordinates.
+		mScaffold.ensureHelperArrays(Molecule.cHelperRings);
+		for (int atom=mCore.getAllAtoms(); atom<mScaffold.getAllAtoms(); atom++)
+			mScaffold.setStereoBondFromAtomParity(atom);
+
 		mScaffold.ensureHelperArrays(Molecule.cHelperParities);
 
-		// TODO we may need to remove overspecifying up/down bonds
+		for (int atom=0; atom<mCore.getAllAtoms(); atom++)
+			mScaffold.setAtomMarker(atom, true);
+		new CoordinateInventor(CoordinateInventor.MODE_KEEP_MARKED_ATOM_COORDS).invent(mScaffold);
+		for (int atom=0; atom<mCore.getAllAtoms(); atom++)
+			mScaffold.setAtomMarker(atom, false);
 	}
 
 	public int getRGroupCount() {
@@ -301,9 +294,6 @@ public class ScaffoldData {
 	}
 
 	private void buildIDCodeAndCoords() {
-		mScaffold.ensureHelperArrays(Molecule.cHelperParities); // provide parities for CoordinateInventor
-		new CoordinateInventor(MODE_PREFER_MARKED_ATOM_COORDS).invent(mScaffold);
-
 		Canonizer canonizer = new Canonizer(mScaffold);
 		mIDCodeWithRGroups = canonizer.getIDCode();
 		mIDCoordsWithRGroups = canonizer.getEncodedCoordinates();

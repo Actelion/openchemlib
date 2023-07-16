@@ -201,7 +201,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * Parses the idcode and populates the given molecule to represent the passed idcode.
 	 * @param mol molecule object to be filled with the idcode content
 	 * @param idcode may be null
-	 * @param idcodeStart first byte index of idcode
+	 * @param idcodeStart offset in idcode array to first idcode byte
 	 */
 	public void parse(StereoMolecule mol, byte[] idcode, int idcodeStart) {
 		parse(mol, idcode, null, idcodeStart, -1);
@@ -212,8 +212,8 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @param mol molecule object to be filled with the idcode content
 	 * @param idcode may be null
 	 * @param coordinates may be null
-	 * @param idcodeStart first byte index of idcode
-	 * @param coordsStart first byte indexif coordinates
+	 * @param idcodeStart offset in idcode array to first idcode byte
+	 * @param coordsStart offset in coordinates array to first coords byte
 	 */
 	public void parse(StereoMolecule mol, byte[] idcode, byte[] coordinates, int idcodeStart, int coordsStart) {
 		mol.clear();
