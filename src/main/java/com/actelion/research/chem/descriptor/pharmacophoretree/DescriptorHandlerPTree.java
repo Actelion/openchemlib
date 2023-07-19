@@ -95,9 +95,9 @@ public class DescriptorHandlerPTree implements DescriptorHandler<PharmacophoreTr
 	}
 
 	@Override
-	public PharmacophoreTree createDescriptor(StereoMolecule mol) {
+	public PharmacophoreTree createDescriptor(StereoMolecule m) {
+		StereoMolecule mol = new StereoMolecule(m);
 		mol.stripSmallFragments();
-		
 		PharmacophoreTree pharmTree =  PharmacophoreTreeGenerator.generate(mol);
 		if(pharmTree.getNodes().size()>MAX_NODE_SIZE)
 			pharmTree = FAILED_OBJECT;
