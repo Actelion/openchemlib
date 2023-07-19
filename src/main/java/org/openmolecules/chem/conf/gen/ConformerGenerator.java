@@ -57,7 +57,15 @@ import java.util.TreeMap;
  * <li>A dedicated (systematic, biased or random) torsion set strategy delivers collision-free torsion sets, i.e. conformers.
  * <br><br>
  * For generating conformers in multiple threads, every thread needs its own ConformerGenerator instance.
- * If they use a RigidFragmentCache, then the cache is shared among all ConformerGenerators.
+ * If they use a RigidFragmentCache, then the cache is shared among all ConformerGenerators.<br>
+ * Important: Input molecules should contain absolute stereo centers. If they contain undefined or ESR type '&' or 'or'
+ * stereo centers, then a ConformerGenerator randomly takes one of the possible stereo isomers and generates conformers
+ * for that. If you want conformers for all possible stereo isomers of a molecules with non-absolute stereo centers,
+ * you should use a StereoIsomerEnumerator to produce all possible stereo isomers and then produce conformers for every
+ * one of them. If half of a set of stereo isomers consists of the enantiomers of the other half, then it is advisable
+ * to generate conformes for one half only and to generate the second half by just mirroring the first halfs coordinates.
+ * To do that use option skipEnantiomers==true create a mirrored set of conformers, if isSkippingEnantiomers() of the
+ * StereoIsomerEnumerator returns true.
  */
 public class ConformerGenerator {
 	public static final int STRATEGY_LIKELY_SYSTEMATIC = 1;
