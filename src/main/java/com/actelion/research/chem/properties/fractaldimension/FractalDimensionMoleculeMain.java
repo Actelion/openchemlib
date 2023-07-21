@@ -173,7 +173,9 @@ public class FractalDimensionMoleculeMain {
 
         BufferedWriter bw = new BufferedWriter(new FileWriter(fiOutTbl));
 
-        bw.write(ResultFracDimCalc.toStringHeader());
+        ResultFracDimCalcHeaderTags resultFracDimCalcHeaderTags = new ResultFracDimCalcHeaderTags();
+
+        bw.write(resultFracDimCalcHeaderTags.toStringHeader());
 
         for (InputObjectFracDimCalc inputObjectFracDimCalc : liMolecule) {
 

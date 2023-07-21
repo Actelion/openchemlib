@@ -104,7 +104,7 @@ public class RunBondVector2IdCode implements Runnable {
         } catch (Exception e){
           e.printStackTrace();
         } finally {
-            System.out.println("RunBondVector2IdCode finally reached.");
+            // System.out.println("RunBondVector2IdCode finally reached.");
             endOfRunReached.set(true);
         }
 
