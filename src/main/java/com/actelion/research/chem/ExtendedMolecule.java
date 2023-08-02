@@ -1072,29 +1072,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return atoms being in the same fragment as rootAtom
 	 */
 	public int[] getFragmentAtoms(int rootAtom, boolean considerMetalBonds) {
-		ensureHelperArrays(cHelperNeighbours);
-
-		boolean[] isFragmentMember = new boolean[mAllAtoms];
-		int graphAtom[] = new int[mAllAtoms];
-
-		graphAtom[0] = rootAtom;
-		isFragmentMember[rootAtom] = true;
-		int current = 0;
-		int highest = 0;
-		int fragmentMembers = 1;
-	 	while (current <= highest) {
-			int connAtoms = considerMetalBonds ? getAllConnAtomsPlusMetalBonds(graphAtom[current])
-											   : mAllConnAtoms[graphAtom[current]];
-			for (int i=0; i<connAtoms; i++) {
-				int candidate = mConnAtom[graphAtom[current]][i];
-				if (!isFragmentMember[candidate]) {
-					graphAtom[++highest] = candidate;
-					isFragmentMember[candidate] = true;
-					fragmentMembers++;
-					}
-				}
-			current++;
-			}
+		boolean[] isFragmentMember = isFragmentMember = new boolean[mAllAtoms];
+		int fragmentMembers = getFragmentAtoms(rootAtom, considerMetalBonds, isFragmentMember);
 
 		int[] fragmentMember = new int[fragmentMembers];
 		fragmentMembers = 0;
@@ -1103,6 +1082,47 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				fragmentMember[fragmentMembers++] = atom;
 
 		return fragmentMember;
+		}
+
+
+	/**
+	 * Determines all atoms for which a path of bonds exists to rootAtom.
+	 * Metal ligand bonds may or may not be considered a connection.
+	 * If isFragmentMember is not null, then it receives the fragment membership flags.
+	 * @param rootAtom
+	 * @param considerMetalBonds
+	 * @param isFragmentMember null or array with size of at least all non-H atoms
+	 * @return number of atoms of fragment that rootAtom belongs to
+	 */
+	public int getFragmentAtoms(int rootAtom, boolean considerMetalBonds, boolean[] isFragmentMember) {
+		ensureHelperArrays(cHelperNeighbours);
+
+		if (isFragmentMember == null)
+			isFragmentMember = new boolean[mAllAtoms];
+
+		int graphAtom[] = new int[mAllAtoms];
+
+		graphAtom[0] = rootAtom;
+		isFragmentMember[rootAtom] = true;
+		int current = 0;
+		int highest = 0;
+		int fragmentMembers = 1;
+		while (current <= highest) {
+			int connAtoms = considerMetalBonds ? getAllConnAtomsPlusMetalBonds(graphAtom[current])
+					: mAllConnAtoms[graphAtom[current]];
+			for (int i=0; i<connAtoms; i++) {
+				int candidate = mConnAtom[graphAtom[current]][i];
+				if (candidate < isFragmentMember.length
+				 && !isFragmentMember[candidate]) {
+					graphAtom[++highest] = candidate;
+					isFragmentMember[candidate] = true;
+					fragmentMembers++;
+					}
+				}
+			current++;
+			}
+
+		return fragmentMembers;
 		}
 
 
