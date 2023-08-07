@@ -88,8 +88,7 @@ public class TotalSurfaceAreaPredictor extends PolarSurfaceAreaPredictor {
 		 7.85f, 20.62f,  0.04f, -3.09f,  4.71f, 12.52f, 14.90f,  5.75f, 13.25f, 15.66f,
 		13.76f, 18.04f, 19.01f,  5.09f,  5.46f, 12.21f, 13.10f, 22.17f, 25.38f, 33.03f };
 
-	/* These are the increments approximating the Schroedinger method (VdW radii, 1.4A probe),
-	 * which creates somewhat smaller values than the Schroedinger method.
+	/* These are the increments approximating the Schroedinger method (VdW radii, 1.4A probe).
 	 * The average error of the PLS prediction (ChEMBL training set) was about 10 square angstrom.
 	private static final float[] cPolarIncrement = {
 		 3.96f, 12.12f,  7.11f,  3.65f, 18.40f, -0.46f, 12.34f, 18.64f, 13.41f, 13.51f,
