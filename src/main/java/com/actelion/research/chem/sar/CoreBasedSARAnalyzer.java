@@ -17,6 +17,7 @@ public class CoreBasedSARAnalyzer {
 	private SARMoleculeData[] mMoleculeData;  // contains info of analyzed molecules, e.g. substituents and corresponding ScaffoldData
 	private TreeMap<String,ScaffoldData> mScaffoldMap;  // map of idccodes of core structures to corresponding ScaffoldData
 	private ScaffoldGroup mScaffoldGroup;
+	private int[] mPreferredQueryAtomRGroupMatch;
 
 	/**
 	 * This class runs a complete structure-activity-relationship (SAR) analysis from molecules that share
@@ -77,6 +78,9 @@ public class CoreBasedSARAnalyzer {
 		mScaffoldGroup = new ScaffoldGroup(query);
 
 		mFragment = new StereoMolecule();   // used as molecule buffer
+
+		mPreferredQueryAtomRGroupMatch = new int[MAX_R_GROUPS];
+		Arrays.fill(mPreferredQueryAtomRGroupMatch, -1);
 	}
 
 	/**
@@ -172,6 +176,20 @@ public class CoreBasedSARAnalyzer {
 		for (int i=0; i<queryToMolAtom.length; i++)
 			if (queryToMolAtom[i] != -1)
 				isCoreAtom[queryToMolAtom[i]] = true;
+
+		// Add all R-group atom directly attached to core (in case of successive SAR steps)
+		for (int atom=0; atom<mol.getAtoms(); atom++) {
+			if (isCoreAtom[atom]) {
+				for (int i=0; i<mol.getConnAtoms(atom); i++) {
+					int connAtom = mol.getConnAtom(atom, i);
+					if (!isCoreAtom[connAtom]) {
+						int atomicNo = mol.getAtomicNo(connAtom);
+						if (atomicNo >= 129 && atomicNo <= 144)
+							isCoreAtom[connAtom] = true;
+					}
+				}
+			}
+		}
 
 		boolean[] isBridgeAtom = searcher.getMatchingBridgeBondAtoms(match);
 		if (isBridgeAtom != null)
@@ -371,7 +389,7 @@ public class CoreBasedSARAnalyzer {
 
 	/**
 	 * Uses a simple strategy to determine the preferred match:
-	 * It preferrers matches that bears substituent at low atom indexes.
+	 * It preferrers matches that carry substituents at low atom indexes.
 	 * @param mol
 	 * @param matchList
 	 * @return
@@ -381,23 +399,96 @@ public class CoreBasedSARAnalyzer {
 			return 0;
 
 		int bestMatch = -1;
-		int bestScore = Integer.MAX_VALUE;
+		int bestScore = Integer.MIN_VALUE;
+		int[] bestQueryAtomRGroupMatch = null;
 
 		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
 
 		for (int i=0; i<matchList.size(); i++) {
 			int[] match = matchList.get(i);
-			int score = 0;
+
+			// flag used atoms
+			boolean[] isUsedAtom = new boolean[mol.getAtoms()];
 			for (int atom:match)
 				if (atom != -1)
-					score += atom * mol.getConnAtoms(atom);
-			if (bestScore > score) {
+					isUsedAtom[atom] = true;
+
+			int rGroupMatchScore = mol.getAtoms() * match.length;   // larger than all potential differences from substitution penalties
+
+			int score = 0;
+			for (int m=0; m<match.length; m++) {
+				int atom = match[m];
+				if (atom != -1) {
+					// Add penalty for external neighbours that increases with core atom index
+					// This prefers atoms with low atom indexes to carry neighbours.
+					// We could do better by also looking at substituent sizes, or even optimize
+					// substituent structure - atom index combination counts.
+					int addedValence = mol.getConnAtoms(atom) - mQuery.getConnAtoms(m);
+					if (addedValence>0)
+						score -= atom * addedValence;
+				}
+			}
+
+			// In case of 2-step SAR deconvolutions, where we may have R-groups as substituents,
+			// we try to choose those matches, which have the same R-groups at
+			// the same positions.
+			int[] queryAtomRGroupMatch = getExistingQueryAtomRGroupMatch(match, isUsedAtom, mol);
+			if (queryAtomRGroupMatch != null) {
+				int matchingRGroupCount = 0;
+				for (int k=0; k<MAX_R_GROUPS; k++) {
+					if (mPreferredQueryAtomRGroupMatch[k] != -1 && queryAtomRGroupMatch[k] != -1) {
+						if (mPreferredQueryAtomRGroupMatch[k] != queryAtomRGroupMatch[k]) {
+							matchingRGroupCount = -1;
+							break;
+						}
+						else {
+							matchingRGroupCount++;
+						}
+					}
+				}
+
+				score += matchingRGroupCount * rGroupMatchScore;
+			}
+
+			if (bestScore < score) {
 				bestScore = score;
 				bestMatch = i;
+				bestQueryAtomRGroupMatch = queryAtomRGroupMatch;
 			}
 		}
 
+		if (bestQueryAtomRGroupMatch != null)
+			for (int i=0; i<MAX_R_GROUPS; i++)
+				if (bestQueryAtomRGroupMatch[i] != -1)
+					mPreferredQueryAtomRGroupMatch[i] = bestQueryAtomRGroupMatch[i];
+
 		return bestMatch;
+	}
+
+	private int[] getExistingQueryAtomRGroupMatch(int[] match, boolean[] isUsedAtom, StereoMolecule mol) {
+		int[] rGroupToQueryAtom = null;
+		for (int i=0; i<match.length; i++) {
+			if (match[i] != -1) {
+				for (int j=0; j<mol.getConnAtoms(match[i]); j++) {
+					int connAtom = mol.getConnAtom(match[i], j);
+					if (!isUsedAtom[connAtom]) {
+						// In case of 2-step SAR deconvolutions, where we may have R-groups as substituents,
+						// we try to choose those matches, which have the same R-groups at
+						// the same positions:
+						int atomicNo = mol.getAtomicNo(connAtom);
+						if (atomicNo >= 129 && atomicNo <= 144) {
+							if (rGroupToQueryAtom == null) {
+								rGroupToQueryAtom = new int[MAX_R_GROUPS];
+								Arrays.fill(rGroupToQueryAtom, -1);
+							}
+							int rGroupNo = (atomicNo >= 142) ? atomicNo - 142 : atomicNo - 126; // 0-based
+							rGroupToQueryAtom[rGroupNo] = i;
+						}
+					}
+				}
+			}
+		}
+		return rGroupToQueryAtom;
 	}
 
 	private void adaptCoreAtomCoordsFromQuery(StereoMolecule query, StereoMolecule core, int[] queryToCoreAtom, boolean hasBridgeAtoms) {

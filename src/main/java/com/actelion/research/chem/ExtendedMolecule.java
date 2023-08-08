@@ -200,8 +200,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return atom map from this to destMol with not copied atom's index being -1
 	 */
 	public int[] copyMoleculeByBonds(ExtendedMolecule destMol, boolean[] includeBond, boolean recognizeDelocalizedBonds, int[] atomMap) {
-		if (recognizeDelocalizedBonds)
-			ensureHelperArrays(cHelperRings);
+		ensureHelperArrays(recognizeDelocalizedBonds ? cHelperRings : cHelperNeighbours);
 
 		destMol.mAtomList = null;
 		if (mIsFragment)
