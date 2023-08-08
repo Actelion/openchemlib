@@ -1833,7 +1833,7 @@ f.mAtomY[i] = mMol.getAtomY(f.mAtom[i]) / avbl;
 		int current = 0;
 		int highest = 0;
 		while (current <= highest) {
-			for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(graphAtom[current]); i++) {
+			for (int i=0; i<mMol.getAllConnAtoms(graphAtom[current]); i++) {
 				int candidate = mMol.getConnAtom(graphAtom[current], i);
 				int theBond = mMol.getConnBond(graphAtom[current], i);
 

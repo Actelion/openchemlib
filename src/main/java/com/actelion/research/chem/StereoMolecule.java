@@ -105,9 +105,9 @@ public class StereoMolecule extends ExtendedMolecule {
 	 * If fragment separation is only needed, if there are multiple fragments, it may be more
 	 * efficient to run this functionality in two steps, e.g.:<br>
 	 * int[] fragmentNo = new int[mol.getAllAtoms()];<br>
-	 * int fragmentCount = getFragmentNumbers(fragmentNo, boolean, boolean);<br>
+	 * int fragmentCount = mol.getFragmentNumbers(fragmentNo, false, false);<br>
 	 * if (fragmentCount > 1) {<br>
-	 *     StereoMolecule[] fragment = getUniqueFragmentsEstimated(int[] fragmentNo, fragmentCount);<br>
+	 *     StereoMolecule[] fragment = mol.getFragments(fragmentNo, fragmentCount);<br>
 	 *     ...<br>
 	 *     }<br>
 	 * @return
