@@ -159,8 +159,6 @@ public class ResultFracDimCalcHeaderTags {
 
         List<String> li = new ArrayList<>();
 
-        li.add(getTagSmiles());
-        li.add(getTagId());
         li.add(getTagSumUniqueFragmentsCalc());
         li.add(getTagAtomCount());
         li.add(getTagBondCount());
@@ -169,6 +167,15 @@ public class ResultFracDimCalcHeaderTags {
         li.add(getTagFractalDimension());
         li.add(getTagMessage());
         li.add(getTagOutcome());
+
+        return li;
+    }
+    public List<String> getHeaderTags4SMILES() {
+
+        List<String> li = new ArrayList<>(getHeaderTags());
+
+        li.add(getTagSmiles());
+        li.add(getTagId());
 
         return li;
     }
