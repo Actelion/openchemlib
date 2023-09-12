@@ -47,7 +47,7 @@ public class DescriptorEncoder {
     private static final byte[] sCode = "0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".getBytes();
     private static final byte[] sCodeMultipleMin = "!#$%&()*+,-./".getBytes();
     private static final byte[] sCodeMultipleMax = ":;<=>?[]^{|}~".getBytes();
-    private static int[]  sDecode,sDecodeMultiple;
+    private static volatile int[] sDecode,sDecodeMultiple;
 
     private byte[]  mBytes;
     private int     mByteIndex,mAvailableBits,mTempData,mByteMask;
@@ -55,7 +55,7 @@ public class DescriptorEncoder {
 
     public DescriptorEncoder() {
     	if (sDecode == null) {
-    		synchronized(this) {
+    		synchronized(this.getClass()) {
 				if (sDecode == null) {
 			        int len = 1 << BITS;
 			        assert len <= sCode.length : "Error in encoding, not enough characters.";
