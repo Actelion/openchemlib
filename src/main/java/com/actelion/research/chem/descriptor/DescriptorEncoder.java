@@ -56,18 +56,20 @@ public class DescriptorEncoder {
     public DescriptorEncoder() {
     	if (sDecode == null) {
     		synchronized(this) {
-		        int len = 1 << BITS;
-		        assert len <= sCode.length : "Error in encoding, not enough characters.";
-		
-		        sDecode = new int[sCode[sCode.length-1]+1];
-		        for (int i=0; i<sCode.length; i++)
-		            sDecode[sCode[i]] = i;
-		        sDecodeMultiple = new int[Math.max(sCodeMultipleMin[sCodeMultipleMin.length-1],
-		                                           sCodeMultipleMax[sCodeMultipleMax.length-1])+1];
-		        for (int i=0; i<sCodeMultipleMin.length; i++)
-		            sDecodeMultiple[sCodeMultipleMin[i]] = -i-2;
-		        for (int i=0; i<sCodeMultipleMax.length; i++)
-		            sDecodeMultiple[sCodeMultipleMax[i]] = i+2;
+				if (sDecode == null) {
+			        int len = 1 << BITS;
+			        assert len <= sCode.length : "Error in encoding, not enough characters.";
+
+			        sDecode = new int[sCode[sCode.length-1]+1];
+			        for (int i=0; i<sCode.length; i++)
+			            sDecode[sCode[i]] = i;
+			        sDecodeMultiple = new int[Math.max(sCodeMultipleMin[sCodeMultipleMin.length-1],
+			                                           sCodeMultipleMax[sCodeMultipleMax.length-1])+1];
+			        for (int i=0; i<sCodeMultipleMin.length; i++)
+			            sDecodeMultiple[sCodeMultipleMin[i]] = -i-2;
+			        for (int i=0; i<sCodeMultipleMax.length; i++)
+			            sDecodeMultiple[sCodeMultipleMax[i]] = i+2;
+					}
     			}
     		}
         }
