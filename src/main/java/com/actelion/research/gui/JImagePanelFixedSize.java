@@ -34,13 +34,16 @@
 
 package com.actelion.research.gui;
 
+import com.actelion.research.gui.hidpi.HiDPIHelper;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedInputStream;
 
 public class JImagePanelFixedSize extends JPanel {
-	private Image		mImage;
+	private Image	mImage;
+	private int     mWidth,mHeight;
 
     public JImagePanelFixedSize() {
 		super();
@@ -50,7 +53,9 @@ public class JImagePanelFixedSize extends JPanel {
 		super();
 
 		readImage(fileName);
-		Dimension size = new Dimension(mImage.getWidth(this), mImage.getHeight(this));
+	    mWidth = HiDPIHelper.scale(mImage.getWidth(this));
+	    mHeight = HiDPIHelper.scale(mImage.getHeight(this));
+		Dimension size = new Dimension(mWidth, mHeight);
 		setMinimumSize(size);
 		setMaximumSize(size);
 		setPreferredSize(size);
@@ -62,7 +67,7 @@ public class JImagePanelFixedSize extends JPanel {
 		}
 
 	@Override public void paintComponent(Graphics g) {
-		g.drawImage(mImage,0,0,this);
+		g.drawImage(mImage,0,0, mWidth, mHeight, this);
 		}
 
 	private void readImage(String fileName) {
