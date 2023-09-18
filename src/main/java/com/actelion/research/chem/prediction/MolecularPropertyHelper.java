@@ -57,7 +57,9 @@ public class MolecularPropertyHelper {
 	public static final int MOLECULAR_PROPERTY_ACIDIC_OXYGENS = 14;
 	public static final int MOLECULAR_PROPERTY_TOXICITY_RISK = 15;
 
-	public static final PropertySpecification[] SPEC = {
+	// Fitness between min and max is 1.0. Fitness at min-halfWidth or max+halfWidth is 1.0/e
+	// rangeMin and rangeMax are used as limits for the graph depicting the fuzzy score
+	private static final PropertySpecification[] SPEC = {
 			new PropertySpecification("molweight", "Molecular weight", "", "400", 50f, 0f, 800f),
 			new PropertySpecification("cLogP", "cLogP", "", "4", 0.5f, 0f, 8f),
 			new PropertySpecification("cLogS", "cLogS", "-4", "", 0.5f, -8f, 2f),

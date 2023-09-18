@@ -1710,6 +1710,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			return 0;
 
 		return 16 - mAllConnAtoms[atom]
+				  + 16 * Math.max(0, (Math.min(9, getBondRingSize(bond)) - 2))
 				  + (((mBondType[bond] & cBondTypeMaskStereo) == 0 || mBondAtom[0][bond] != atom) ? 32768 : 0)
 				  + ((getAtomParity(atom) == 0) ? 4096 : 0)
 				  + ((mAtomicNo[atom] == 1) ? 2048 : 0)
@@ -2476,6 +2477,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				}
 			}
 
+		/* Disabled for now, because no obvious reason and counter example: gGx@@eJxfuURtJ@ !Bsttq@HlDgrZ}b@ ;TLS 2-Sep-2023
 		// For every neighbour determine the closest left and the closest right neighbour.
 		// If the angle between those two is smaller than 180 degrees, then give a strong preference
 		// to the one in the middle to be used as stereo bond.
@@ -2497,7 +2499,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 					}
 				isPreferred[i] = (closestRightDif - closestLeftDif < Math.PI);
 				}
-			}
+			}*/
 
 		int preferredBond = -1;
 
@@ -2506,8 +2508,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			int connAtom = mConnAtom[atom][i];
 			int connBond = mConnBond[atom][i];
 			int score = getStereoBondScore(connBond, connAtom);
-			if (isPreferred[i])
-				score += 16384; // first priority
+//			if (isPreferred[i])
+//				score += 16384; // first priority
 			if (bestScore < score
 			 && (!excludeStereoBonds || !isStereoBond(connBond))) {
 				bestScore = score;
