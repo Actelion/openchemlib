@@ -323,6 +323,8 @@ public class ScaffoldData {
 		int stereoBondIndex = -1;
 
 		int stereoBond = mol.getStereoBond(rootAtom);
+		if (stereoBond == -1)
+			return -1;
 
 		// Create array of rootAtom neighbour bond angles sorted by the relevant neighbour atom indexes.
 		// Included neighbours are all neighbours that are part of the core structure plus the defined exit atom.
