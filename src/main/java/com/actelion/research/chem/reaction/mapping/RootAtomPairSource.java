@@ -41,6 +41,7 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.ByteArrayComparator;
 import com.actelion.research.util.IntArrayComparator;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeMap;
@@ -237,7 +238,7 @@ public class RootAtomPairSource {
 						fragment.setAtomCharge(atom, 0);
 						fragment.setAtomRadical(atom, 0);
 						}
-					environment[rootAtom][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes();
+					environment[rootAtom][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes(StandardCharsets.UTF_8);
 					}
 				}
 

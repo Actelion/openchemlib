@@ -29,6 +29,7 @@ import com.actelion.research.chem.phesa.ShapeVolume;
 import com.actelion.research.chem.potentialenergy.PositionConstraint;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -631,7 +632,7 @@ public class DockingEngine {
 			String idcodeInput = s[2];
 			StereoMolecule input = new StereoMolecule();
 			new IDCodeParser().parse(input, idcodeInput);
-			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[3].getBytes()));
+			double score = EncodeFunctions.byteArrayToDouble(decoder.decode(s[3].getBytes(StandardCharsets.UTF_8)));
 			Map<String,Double> contributions = null;
 			if(!s[4].equals(NULL_CONTRIBUTION)) {
 				contributions = new HashMap<String,Double>();
@@ -639,7 +640,7 @@ public class DockingEngine {
 				for(String contr : splitted) {
 					String[] splitted2 = contr.split(DELIMITER3);
 					String name = splitted2[0];
-					double value = EncodeFunctions.byteArrayToDouble(decoder.decode(splitted2[1].getBytes()));
+					double value = EncodeFunctions.byteArrayToDouble(decoder.decode(splitted2[1].getBytes(StandardCharsets.UTF_8)));
 					contributions.put(name, value);
 				}
 			}

@@ -1,16 +1,13 @@
 package com.actelion.research.chem.descriptor.pharmacophoretree;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.descriptor.DescriptorConstants;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
 import com.actelion.research.chem.descriptor.DescriptorInfo;
-import com.actelion.research.chem.descriptor.pharmacophoretree.PharmacophoreNode;
-import com.actelion.research.chem.descriptor.pharmacophoretree.PharmacophoreTree;
-import com.actelion.research.chem.descriptor.pharmacophoretree.PharmacophoreTreeGenerator;
-import com.actelion.research.chem.descriptor.pharmacophoretree.TreeMatcher;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DescriptorHandlerPTree implements DescriptorHandler<PharmacophoreTree,StereoMolecule> {
 	
@@ -79,7 +76,7 @@ public class DescriptorHandlerPTree implements DescriptorHandler<PharmacophoreTr
 	
 	public PharmacophoreTree decode(byte[] arr) {
 
-		return decode(new String(arr));
+		return decode(new String(arr, StandardCharsets.UTF_8));
 		
 	}
 	

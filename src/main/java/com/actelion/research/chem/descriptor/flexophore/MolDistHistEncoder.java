@@ -38,6 +38,8 @@ import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.util.datamodel.IntVec;
 
+import java.nio.charset.StandardCharsets;
+
 public class MolDistHistEncoder {
 	
 	private static MolDistHistEncoder INSTANCE;
@@ -59,13 +61,13 @@ public class MolDistHistEncoder {
 				
 		String strDistHist = " " + distHistEncoder.encodeHistograms(mdh);
 
-		String atoms = mdh.getNodeAtoms() == null ? "" : " " + new String(new DescriptorEncoder().encodeIntArray2D(mdh.getNodeAtoms()));
+		String atoms = mdh.getNodeAtoms() == null ? "" : " " + new String(new DescriptorEncoder().encodeIntArray2D(mdh.getNodeAtoms()), StandardCharsets.UTF_8);
 		
 		return strNodes + strDistHist + atoms;
 	}
 	
 	public MolDistHist decode(byte [] arr){
-		return decode(new String(arr));
+		return decode(new String(arr, StandardCharsets.UTF_8));
 	}
 	
 	public MolDistHist decode(String s){
@@ -102,7 +104,7 @@ public class MolDistHistEncoder {
 			distHistEncoder.decodeHistograms(st[1], mdh);
 
 		if (st.length >= 3)
-			mdh.setNodeAtoms(new DescriptorEncoder().decodeIntArray2D(st[2].getBytes()));
+			mdh.setNodeAtoms(new DescriptorEncoder().decodeIntArray2D(st[2].getBytes(StandardCharsets.UTF_8)));
 
 		return mdh;
 

@@ -38,6 +38,7 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.BurtleHasher;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class DescriptorHandlerSkeletonSpheres implements DescriptorHandler<byte[], StereoMolecule> {
@@ -156,7 +157,7 @@ public class DescriptorHandlerSkeletonSpheres implements DescriptorHandler<byte[
 
     public String encode(byte[] o) {
         return calculationFailed(o) ? FAILED_STRING
-             : new String(new DescriptorEncoder().encodeCounts(o));
+             : new String(new DescriptorEncoder().encodeCounts(o), StandardCharsets.UTF_8);
         }
 
     public DescriptorInfo getInfo() {

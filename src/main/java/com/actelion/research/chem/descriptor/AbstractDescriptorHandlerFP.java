@@ -33,16 +33,17 @@
 
 package com.actelion.research.chem.descriptor;
 
-import java.util.Arrays;
+import com.actelion.research.chem.SSSearcherWithIndex;
 
-import com.actelion.research.chem.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 abstract public class AbstractDescriptorHandlerFP<U> implements DescriptorHandler<int[], U> {
     protected static final int[] FAILED_OBJECT = new int[0];
 
     public String encode(int[] o) {
         return calculationFailed(o) ? FAILED_STRING
-                                    : new String(new DescriptorEncoder().encode(o));
+                                    : new String(new DescriptorEncoder().encode(o), StandardCharsets.UTF_8);
     	}
 
     public int[] decode(String s) {

@@ -36,6 +36,7 @@ package com.actelion.research.chem.descriptor;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.FunctionalGroupClassifier;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.TreeSet;
 
@@ -87,7 +88,7 @@ public class DescriptorHandlerFunctionalGroups implements DescriptorHandler<int[
 
     public String encode(int[][] d) {
         return calculationFailed(d) ? FAILED_STRING
-             : new String(new DescriptorEncoder().encodePairs(d));
+             : new String(new DescriptorEncoder().encodePairs(d), StandardCharsets.UTF_8);
         }
 
     public DescriptorInfo getInfo() {

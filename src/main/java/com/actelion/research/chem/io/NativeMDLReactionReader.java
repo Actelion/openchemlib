@@ -42,6 +42,7 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.util.DoubleFormat;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class NativeMDLReactionReader {
@@ -196,7 +197,7 @@ public class NativeMDLReactionReader {
 			dtp.unk6 = readInt(dis);
 			dtp.unk7 = readInt(dis);
 			dis.read(buf, 0, 20);
-			dtp.dtpnam = new String(buf).trim();
+			dtp.dtpnam = new String(buf, StandardCharsets.UTF_8).trim();
 			dtp.access1 = dis.readByte();
 			dtp.access2 = dis.readByte();
 			dis.read(dtp.empty = new byte[2], 0, 2);
@@ -244,13 +245,13 @@ public class NativeMDLReactionReader {
 		for (int i=0; i<size;i++) {
 			SBF sbf = mSBFDir[i] = new SBF();
 			dis.read(buf, 0, 20);
-			sbf.shortnam = new String(buf).trim();
+			sbf.shortnam = new String(buf, StandardCharsets.UTF_8).trim();
 			dis.read(buf, 0, 20);
-			sbf.format1 = new String(buf).trim();
+			sbf.format1 = new String(buf, StandardCharsets.UTF_8).trim();
 			dis.read(buf, 0, 20);
-			sbf.format2 = new String(buf).trim();
+			sbf.format2 = new String(buf, StandardCharsets.UTF_8).trim();
 			dis.read(buf, 0, 20);
-			sbf.name = new String(buf).trim();
+			sbf.name = new String(buf, StandardCharsets.UTF_8).trim();
 			sbf.lnum = readInt(dis);
 			sbf.type = readInt(dis);
 			sbf.a2 = readInt(dis);

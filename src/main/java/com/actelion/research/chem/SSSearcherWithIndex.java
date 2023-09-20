@@ -36,6 +36,8 @@ package com.actelion.research.chem;
 
 import com.actelion.research.chem.descriptor.AbstractDescriptorHandlerLongFP;
 
+import java.nio.charset.StandardCharsets;
+
 // TODO purge mMoleculeIndexInt,mFragmentIndexInt and related methods from this class. Long versions were introduced Aug 3, 2018
 
 public class SSSearcherWithIndex {
@@ -607,7 +609,7 @@ public class SSSearcherWithIndex {
 
 	@Deprecated // Use long version of this method
 	public void setFragment(String idcode, int[] index) {
-	    setFragment(idcode.getBytes(), index);
+	    setFragment(idcode.getBytes(StandardCharsets.UTF_8), index);
 		}
 
 
@@ -640,7 +642,7 @@ public class SSSearcherWithIndex {
 
 	@Deprecated // Use long version of this method
 	public void setMolecule(String idcode, int[] index) {
-	    setMolecule(idcode.getBytes(), index);
+	    setMolecule(idcode.getBytes(StandardCharsets.UTF_8), index);
 		}
 
 
@@ -671,7 +673,7 @@ public class SSSearcherWithIndex {
 
 
 	public void setFragment(String idcode, long[] index) {
-		setFragment(idcode.getBytes(), index);
+		setFragment(idcode.getBytes(StandardCharsets.UTF_8), index);
 	}
 
 
@@ -701,7 +703,7 @@ public class SSSearcherWithIndex {
 
 
 	public void setMolecule(String idcode, long[] index) {
-		setMolecule(idcode.getBytes(), index);
+		setMolecule(idcode.getBytes(StandardCharsets.UTF_8), index);
 	}
 
 
@@ -1053,7 +1055,7 @@ public class SSSearcherWithIndex {
 				}
 			}
 
-		return new String(bytes);
+		return new String(bytes, StandardCharsets.UTF_8);
 		}
 
 	

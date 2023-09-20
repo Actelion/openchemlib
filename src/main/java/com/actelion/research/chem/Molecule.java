@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 
@@ -2168,7 +2169,7 @@ public class Molecule implements Serializable {
 	public String getAtomCustomLabel(int atom) {
 		return (mAtomCustomLabel == null) ? null
 			 : (mAtomCustomLabel[atom] == null) ? null
-			 : new String(mAtomCustomLabel[atom]);
+			 : new String(mAtomCustomLabel[atom], StandardCharsets.UTF_8);
 		}
 
 
@@ -3573,7 +3574,7 @@ public class Molecule implements Serializable {
 		else {
 			if (mAtomCustomLabel == null)
 				mAtomCustomLabel = new byte[mMaxAtoms][];
-			mAtomCustomLabel[atom] = label.getBytes();
+			mAtomCustomLabel[atom] = label.getBytes(StandardCharsets.UTF_8);
 			}
 		}
 

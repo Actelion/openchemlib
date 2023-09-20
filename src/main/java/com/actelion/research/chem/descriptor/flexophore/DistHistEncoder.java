@@ -39,6 +39,7 @@ import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.util.datamodel.IntVec;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -228,7 +229,7 @@ public class DistHistEncoder {
 				
 		IntVec iv = new IntVec(arrTruncated);
 		
-		String s = new String(new DescriptorEncoder().encode(iv.get()));
+		String s = new String(new DescriptorEncoder().encode(iv.get()), StandardCharsets.UTF_8);
 				
 		return s;
 	}

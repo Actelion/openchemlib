@@ -39,6 +39,7 @@ import com.actelion.research.chem.IDCodeParserWithoutCoordinateInvention;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.ArrayUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.TreeSet;
 
@@ -62,7 +63,7 @@ public class ConformerSet extends TreeSet<Conformer> {
 				for(int i=2; i<confString.length;i++) {
 					Conformer conf = new Conformer(firstConformer);
 					try {
-						parser.parseCoordinates(confString[i].getBytes(), 0, mol, conf.getCoordinates());
+						parser.parseCoordinates(confString[i].getBytes(StandardCharsets.UTF_8), 0, mol, conf.getCoordinates());
 						add(conf);
 					} catch (Exception e) {}
 				}

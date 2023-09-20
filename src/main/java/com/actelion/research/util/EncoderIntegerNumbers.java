@@ -2,9 +2,9 @@ package com.actelion.research.util;
 
 import com.actelion.research.calc.Logarithm;
 import com.actelion.research.chem.descriptor.DescriptorEncoder;
-import com.actelion.research.util.datamodel.DoubleArray;
 import com.actelion.research.util.datamodel.IntArray;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 /**
@@ -170,7 +170,7 @@ public class EncoderIntegerNumbers {
 
         int [] data = finalizeAndGet();
 
-        String strData = new String(new DescriptorEncoder().encode(data));
+        String strData = new String(new DescriptorEncoder().encode(data), StandardCharsets.UTF_8);
 
         return strData;
     }

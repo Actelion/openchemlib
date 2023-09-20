@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.descriptor;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * DescriptorHandler is the base Interface for any molecular descriptor
  * handling StereoMolecules or Reactions
@@ -40,7 +42,7 @@ package com.actelion.research.chem.descriptor;
 
 public interface DescriptorHandler<T, U> extends ISimilarityCalculator<T> {
     static final String FAILED_STRING = "Calculation Failed";
-    static final byte[] FAILED_BYTES = FAILED_STRING.getBytes();
+    static final byte[] FAILED_BYTES = FAILED_STRING.getBytes(StandardCharsets.UTF_8);
     public abstract DescriptorInfo getInfo();
     public abstract String getVersion();
 	public abstract String encode(T o);

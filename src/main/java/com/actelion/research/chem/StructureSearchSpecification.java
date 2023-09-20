@@ -37,6 +37,7 @@ package com.actelion.research.chem;
 import com.actelion.research.chem.descriptor.DescriptorHelper;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 
 public class StructureSearchSpecification implements Serializable {
     static final long serialVersionUID = 0x20120402;
@@ -233,7 +234,7 @@ public class StructureSearchSpecification implements Serializable {
 						  + (((mSearchType & MODE_LARGEST_FRAGMENT_ONLY) != 0) ? "/largestFragmentOnly":"");
 
 		return "type:"+typeString
-			 + (mIDCode==null?" idcodes:null":mIDCode.length==1?" idcode:"+(mIDCode[0]==null?"null":new String(mIDCode[0])):" idcodeCount:"+mIDCode.length)
+			 + (mIDCode==null?" idcodes:null":mIDCode.length==1?" idcode:"+(mIDCode[0]==null?"null":new String(mIDCode[0], StandardCharsets.UTF_8)):" idcodeCount:"+mIDCode.length)
 			 + (mDescriptor==null?" descriptors:null":" descriptorCount:"+mDescriptor.length);
 		}
 	}

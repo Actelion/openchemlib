@@ -141,7 +141,7 @@ public class ReactionDropAdapter implements DropTargetListener
 		if (chosen.equals(ChemistryFlavors.DF_SERIALIZED_REACTION) && o instanceof Reaction) {
 			rxn = new Reaction((Reaction)o);
 		} else if (chosen.equals(ChemistryFlavors.DF_REACTION_SMILES) && o instanceof String) {
-			rxn = new SmilesParser().parseReaction(((String)o).getBytes());
+			rxn = new SmilesParser().parseReaction((String)o);
 		} else if (chosen.equals(DataFlavor.stringFlavor) && o instanceof String) {
 			try {
 				rxn = ReactionEncoder.decode((String)o, true);

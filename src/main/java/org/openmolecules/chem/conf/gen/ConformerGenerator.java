@@ -29,9 +29,7 @@
 package org.openmolecules.chem.conf.gen;
 
 import com.actelion.research.calc.ThreadMaster;
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.conf.TorsionDB;
 import com.actelion.research.chem.conf.VDWRadii;
@@ -101,7 +99,8 @@ public class ConformerGenerator {
 	private ConformerSetDiagnostics mDiagnostics;
 
 	/**
-	 * Adds explicit hydrogen atoms where they are implicit by filling valences
+	 * Assuming that the given molecule has 2D-coordinates, this method
+	 * converts all implicit hydrogen atoms into explicit ones by filling valences
 	 * and adapting for atom charges. New hydrogen atoms receive new 2D-coordinates
 	 * by equally locating them between those two neighbors with the widest angle between
 	 * their bonds. Any stereo configurations deducible from 2D-coordinates are retained.

@@ -39,6 +39,7 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.SortedList;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeMap;
@@ -117,7 +118,7 @@ public class SmilesParser {
 		}
 
 	public StereoMolecule parseMolecule(String smiles) {
-		return smiles == null ? null : parseMolecule(smiles.getBytes());
+		return smiles == null ? null : parseMolecule(smiles.getBytes(StandardCharsets.UTF_8));
 		}
 
 	/**
@@ -157,7 +158,7 @@ public class SmilesParser {
 		}
 
 	public Reaction parseReaction(String smiles) throws Exception {
-		return smiles == null ? null : parseReaction(smiles.getBytes());
+		return smiles == null ? null : parseReaction(smiles.getBytes(StandardCharsets.UTF_8));
 		}
 
 	public Reaction parseReaction(byte[] smiles) throws Exception {
@@ -246,7 +247,7 @@ public class SmilesParser {
 	 * @throws Exception
 	 */
 	public void parse(StereoMolecule mol, String smiles) throws Exception {
-		parse(mol, smiles.getBytes(), true, true);
+		parse(mol, smiles.getBytes(StandardCharsets.UTF_8), true, true);
 		}
 
 	public void parse(StereoMolecule mol, byte[] smiles) throws Exception {
@@ -1150,12 +1151,12 @@ public class SmilesParser {
 			}
 		else if (smiles[position] >= 'A' && smiles[position] <= 'Z') {
 			info.labelLength = (smiles[position+1] >= 'a' && smiles[position+1] <= 'z') ? 2 : 1;
-			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength));
+			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
 			info.mayBeAromatic = false;
 			}
 		else if (smiles[position] >= 'a' && smiles[position] <= 'z') {
 			info.labelLength = (smiles[position+1] >= 'a' && smiles[position+1] <= 'z') ? 2 : 1;
-			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength));
+			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
 			info.mayBeAliphatic = false;
 			}
 		else

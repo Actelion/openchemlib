@@ -38,6 +38,7 @@ import com.actelion.research.chem.*;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.util.ByteArrayComparator;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class SimilarityGraphBasedReactionMapper {
@@ -440,7 +441,7 @@ if (DEBUG) {
 						if (skeletonOnly || isWithoutPi)
 							for (int bond=0; bond<fragment.getBonds(); bond++)
 								fragment.setBondType(bond, Molecule.cBondTypeSingle);
-						environment[rootAtom][connIndex][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes();
+						environment[rootAtom][connIndex][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes(StandardCharsets.UTF_8);
 						}
 					}
 

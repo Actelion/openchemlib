@@ -4,6 +4,8 @@ import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.util.datamodel.DoubleArray;
 import com.actelion.research.util.datamodel.IntArray;
 
+import java.nio.charset.StandardCharsets;
+
 /*
 * Copyright (c) 1997 - 2016
 * Actelion Pharmaceuticals Ltd.
@@ -285,7 +287,7 @@ public class EncoderFloatingPointNumbers {
 
         int [] data = finalizeAndGet();
 
-        String strData = new String(new DescriptorEncoder().encode(data));
+        String strData = new String(new DescriptorEncoder().encode(data), StandardCharsets.UTF_8);
 
         return strData;
     }

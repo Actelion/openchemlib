@@ -16,6 +16,7 @@ import com.actelion.research.chem.descriptor.DescriptorHandler;
 import com.actelion.research.chem.descriptor.DescriptorInfo;
 import com.actelion.research.chem.phesaflex.FlexibleShapeAlignment;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -352,7 +353,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	public PheSAMolecule decode(byte[] arr) {
 
-		return decode(new String(arr));
+		return decode(new String(arr, StandardCharsets.UTF_8));
 		
 	}
 	

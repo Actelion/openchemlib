@@ -35,6 +35,8 @@ package com.actelion.research.chem;
 
 import com.actelion.research.util.DoubleFormat;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Typically you should use IDCodeParser instead of this class. You may instantiate this class
  * if you need to avoid a dependency to the CoordinateInventor and if you pass encoded coordinates
@@ -73,7 +75,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @return
 	 */
 	public StereoMolecule getCompactMolecule(String idcode) {
-		return (idcode == null || idcode.length() == 0) ? null : getCompactMolecule(idcode.getBytes(), null);
+		return (idcode == null || idcode.length() == 0) ? null : getCompactMolecule(idcode.getBytes(StandardCharsets.UTF_8), null);
 		}
 
 	/**
@@ -103,8 +105,8 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @return
 	 */
 	public StereoMolecule getCompactMolecule(String idcode, String coordinates) {
-		return (idcode == null) ? null : getCompactMolecule(idcode.getBytes(),
-							(coordinates == null) ? null : coordinates.getBytes());
+		return (idcode == null) ? null : getCompactMolecule(idcode.getBytes(StandardCharsets.UTF_8),
+							(coordinates == null) ? null : coordinates.getBytes(StandardCharsets.UTF_8));
 		}
 
 	/**
@@ -156,9 +158,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 
 		int index = idcode.indexOf(' ');
 		if (index > 0 && index < idcode.length()-1)
-			parse(mol, idcode.substring(0, index).getBytes(), idcode.substring(index+1).getBytes());
+			parse(mol, idcode.substring(0, index).getBytes(StandardCharsets.UTF_8), idcode.substring(index+1).getBytes(StandardCharsets.UTF_8));
 		else
-			parse(mol, idcode.getBytes(), null);
+			parse(mol, idcode.getBytes(StandardCharsets.UTF_8), null);
 		}
 
 	/**
@@ -177,8 +179,8 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @param coordinates may be null
 	 */
 	public void parse(StereoMolecule mol, String idcode, String coordinates) {
-		byte[] idcodeBytes = (idcode == null) ? null : idcode.getBytes();
-		byte[] coordinateBytes = (coordinates == null) ? null : coordinates.getBytes();
+		byte[] idcodeBytes = (idcode == null) ? null : idcode.getBytes(StandardCharsets.UTF_8);
+		byte[] coordinateBytes = (coordinates == null) ? null : coordinates.getBytes(StandardCharsets.UTF_8);
 		parse(mol, idcodeBytes, coordinateBytes);
 		}
 
@@ -588,7 +590,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 					byte[] label = new byte[count];
 					for (int j=0; j<count; j++)
 						label[j] = (byte)decodeBits(7);
-					mMol.setAtomCustomLabel(atom, new String(label));
+					mMol.setAtomCustomLabel(atom, new String(label, StandardCharsets.UTF_8));
 					}
 				break;
 			case 19: //  datatype 'AtomQFCharge'
@@ -844,7 +846,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 				}
 			catch (Exception e) {
 				e.printStackTrace();
-				System.err.println("Faulty id-coordinates:"+e.toString()+" "+new String(idcode)+" "+new String(coordinates));
+				System.err.println("Faulty id-coordinates:"+e+" "+new String(idcode, StandardCharsets.UTF_8)+" "+new String(coordinates, StandardCharsets.UTF_8));
 				coordinates = null;
 				coordsAre3D = false;
 				}
@@ -878,7 +880,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 				}
 			catch (Exception e) {
 				e.printStackTrace();
-				System.err.println("2D-coordinate creation failed:"+e.toString()+" "+new String(idcode));
+				System.err.println("2D-coordinate creation failed:"+e+" "+new String(idcode, StandardCharsets.UTF_8));
 				}
 			}
 
@@ -1016,7 +1018,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		}
 
 	public boolean coordinatesAre3D(String idcode, String coordinates) {
-		return coordinates != null && coordinatesAre3D(idcode.getBytes(), coordinates.getBytes());
+		return coordinates != null && coordinatesAre3D(idcode.getBytes(StandardCharsets.UTF_8), coordinates.getBytes(StandardCharsets.UTF_8));
 		}
 
 	public boolean coordinatesAre3D(byte[] idcode, byte[] coordinates) {
@@ -1042,7 +1044,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		}
 
 	public boolean coordinatesAreAbsolute(String coordinates) {
-		return coordinates != null && coordinatesAreAbsolute(coordinates.getBytes());
+		return coordinates != null && coordinatesAreAbsolute(coordinates.getBytes(StandardCharsets.UTF_8));
 		}
 
 	public boolean coordinatesAreAbsolute(byte[] coordinates) {
@@ -1073,7 +1075,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		if (idcode == null || idcode.length() == 0)
 			return -1;
 
-		return getIDCodeVersion(idcode.getBytes());
+		return getIDCodeVersion(idcode.getBytes(StandardCharsets.UTF_8));
 		}
 
 	public int getIDCodeVersion(byte[] idcode) {
@@ -1091,7 +1093,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		if (idcode == null || idcode.length() == 0)
 			return 0;
 
-		return getAtomCount(idcode.getBytes(), 0);
+		return getAtomCount(idcode.getBytes(StandardCharsets.UTF_8), 0);
 		}
 
 	public int getAtomCount(byte[] idcode, int offset) {
@@ -1121,7 +1123,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		if (idcode == null || idcode.length() == 0)
 			return null;
 
-		return getAtomAndBondCounts(idcode.getBytes(), 0, count);
+		return getAtomAndBondCounts(idcode.getBytes(StandardCharsets.UTF_8), 0, count);
 		}
 
 	/**
@@ -1205,9 +1207,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 			if (coordinates != null && coordinates.length == 0)
 				coordinates = null;
 
-			System.out.println("idcode: " + new String(idcode));
+			System.out.println("idcode: " + new String(idcode, StandardCharsets.UTF_8));
 			if (coordinates != null)
-				System.out.println("coords: " + new String(coordinates));
+				System.out.println("coords: " + new String(coordinates, StandardCharsets.UTF_8));
 
 			decodeBitsStart(idcode, 0);
 			int abits = decodeBits(4);
@@ -1508,7 +1510,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 							byte[] label = new byte[count];
 							for (int j = 0; j < count; j++)
 								label[j] = (byte) decodeBits(7);
-							System.out.print(" " + atom + ":" + new String(label));
+							System.out.print(" " + atom + ":" + new String(label, StandardCharsets.UTF_8));
 						}
 						System.out.println();
 						break;

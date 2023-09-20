@@ -34,6 +34,8 @@
 
 package com.actelion.research.chem.descriptor;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * This is a descriptor handler, where the input object is an integer array
  * that typically represents counts of some sort. This class may be used
@@ -89,7 +91,7 @@ public class DescriptorHandlerIntVector<U extends Object> implements DescriptorH
 
 	@Override
 	public String encode(int[] d) {
-        return calculationFailed(d) ? FAILED_STRING : new String(new DescriptorEncoder().encodeIntArray(d));
+        return calculationFailed(d) ? FAILED_STRING : new String(new DescriptorEncoder().encodeIntArray(d), StandardCharsets.UTF_8);
 		}
 
 	@Override

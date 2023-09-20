@@ -146,14 +146,14 @@ public class MoleculeDropAdapter implements DropTargetListener
             new MolfileParser().parse(mol, (String)o);
         } else if (chosen.equals(ChemistryFlavors.DF_SMILES) && o instanceof String) {
             mol = new StereoMolecule();
-            new SmilesParser().parse(mol, ((String)o).getBytes());
+            new SmilesParser().parse(mol, (String)o);
         } else if (chosen.equals(ChemistryFlavors.DF_IDCODE) && o instanceof String) {
             mol = new StereoMolecule();
-            new IDCodeParser(true).parse(mol, ((String) o).getBytes());
+            new IDCodeParser(true).parse(mol, (String)o);
         } else if (chosen.equals(DataFlavor.stringFlavor) && o instanceof String) {
             try {
                 mol = new StereoMolecule();
-               new IDCodeParser(true).parse(mol, ((String) o).getBytes());
+               new IDCodeParser(true).parse(mol, (String)o);
             } catch(Throwable t) {
                 mol = StructureNameResolver.resolve((String) o);
             }

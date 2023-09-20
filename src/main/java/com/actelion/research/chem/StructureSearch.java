@@ -38,6 +38,7 @@ import com.actelion.research.calc.ProgressController;
 import com.actelion.research.chem.descriptor.*;
 import com.actelion.research.util.ByteArrayComparator;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -178,7 +179,7 @@ public class StructureSearch {
 				for (int i=0; i<queryStructureCount; i++) {
 					if (largestFragmentOnly) {
 						StereoMolecule query = new IDCodeParser(true).getCompactMolecule(mSpecification.getIDCode(i));
-						mQueryIDCode[i] = CanonizerUtil.getIDCode(query, CanonizerUtil.IDCODE_TYPE.NORMAL, largestFragmentOnly).getBytes();
+						mQueryIDCode[i] = CanonizerUtil.getIDCode(query, CanonizerUtil.IDCODE_TYPE.NORMAL, largestFragmentOnly).getBytes(StandardCharsets.UTF_8);
 						}
 					else {
 						mQueryIDCode[i] = mSpecification.getIDCode(i);

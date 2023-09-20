@@ -37,6 +37,7 @@ package com.actelion.research.chem.reaction;
 import com.actelion.research.chem.*;
 import com.actelion.research.util.ArrayUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -352,7 +353,7 @@ public class ReactionEncoder
 			StereoMolecule mol = parser.getCompactMolecule(idcode, coords);
 
 			if (mapping != null) {
-				parser.parseMapping(mapping.getBytes());
+				parser.parseMapping(mapping.getBytes(StandardCharsets.UTF_8));
 			}
 
 			if (isProduct) {
@@ -607,23 +608,23 @@ public class ReactionEncoder
 		byte[] rxnCoords = null;
 		int index1 = s.indexOf(OBJECT_DELIMITER);
 		if (index1 == -1) {
-			rxnCode = s.getBytes();
+			rxnCode = s.getBytes(StandardCharsets.UTF_8);
 		} else {
-			rxnCode = s.substring(0, index1).getBytes();
+			rxnCode = s.substring(0, index1).getBytes(StandardCharsets.UTF_8);
 			if (includeMapping || includeCoords) {
 				int index2 = s.indexOf(OBJECT_DELIMITER, index1 + 1);
 				if (index2 == -1) {
 					if (includeMapping)
-						rxnMapping = s.substring(index1 + 1).getBytes();
+						rxnMapping = s.substring(index1 + 1).getBytes(StandardCharsets.UTF_8);
 				} else {
 					if (includeMapping)
-						rxnMapping = s.substring(index1 + 1, index2).getBytes();
+						rxnMapping = s.substring(index1 + 1, index2).getBytes(StandardCharsets.UTF_8);
 					if (includeCoords) {
 						int index3 = s.indexOf(OBJECT_DELIMITER, index2 + 1);
 						if (index3 == -1) {
-							rxnCoords = s.substring(index2 + 1).getBytes();
+							rxnCoords = s.substring(index2 + 1).getBytes(StandardCharsets.UTF_8);
 						} else {
-							rxnCoords = s.substring(index2 + 1, index3).getBytes();
+							rxnCoords = s.substring(index2 + 1, index3).getBytes(StandardCharsets.UTF_8);
 							}
 						}
 					}
