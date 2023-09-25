@@ -398,21 +398,19 @@ public class TableModelString {
 
 			List<String> liData = liliData.get(i);
 
-			for (int j = 0; j < liData.size(); j++) {
-				bw.write(liData.get(j));
-				if(i<liData.size()-1){
-					bw.write(SEP_FIELD);
+			if(liData!=null) {
+				for (int j = 0; j < liData.size(); j++) {
+					bw.write(liData.get(j));
+					if (i < liData.size() - 1) {
+						bw.write(SEP_FIELD);
+					}
 				}
 			}
 
-			if(i<liRowName.size()-1){
+			if (i < liRowName.size() - 1) {
 				bw.write(SEP_LINE);
 			}
-
 		}
-
-
-
 
 		bw.close();
 
