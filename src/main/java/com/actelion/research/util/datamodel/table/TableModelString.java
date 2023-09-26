@@ -400,7 +400,10 @@ public class TableModelString {
 
 			if(liData!=null) {
 				for (int j = 0; j < liData.size(); j++) {
-					bw.write(liData.get(j));
+
+					String str = liData.get(j);
+					if(str!=null)
+						bw.write(str);
 					if (i < liData.size() - 1) {
 						bw.write(SEP_FIELD);
 					}
