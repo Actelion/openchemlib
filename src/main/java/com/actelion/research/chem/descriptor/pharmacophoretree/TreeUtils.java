@@ -16,23 +16,26 @@ public class TreeUtils {
 	private static void binaryInsert(double[] arr, int[][] indexPairs, double val, int[] indexPair) {
 		int n = arr.length;
 		int index = Arrays.binarySearch(arr, val);
-		if(index<0) {
+		if(index<0) 
 			index=-index-1;		
-			if(index<n) {
-				double currentVal = arr[index];
-				int[] currentIndexPair = indexPairs[index];
-				arr[index] = val;
-				indexPairs[index] = indexPair;
-				for(int i=index+1;i<n;i++) {
-					double previousVal = arr[i];
-					int[] previousIndexPair = indexPairs[i];
-					arr[i] = currentVal;
-					indexPairs[i] = currentIndexPair;
-					currentVal = previousVal;
-					currentIndexPair = previousIndexPair;
-				}
-			}		
-		}
+		else 
+			index = index +1;
+		if(index<n) {
+			double currentVal = arr[index];
+			int[] currentIndexPair = indexPairs[index];
+			arr[index] = val;
+			indexPairs[index] = indexPair;
+			for(int i=index+1;i<n;i++) {
+				double previousVal = arr[i];
+				int[] previousIndexPair = indexPairs[i];
+				arr[i] = currentVal;
+				indexPairs[i] = currentIndexPair;
+				currentVal = previousVal;
+				currentIndexPair = previousIndexPair;
+			}
+			
+	}
+
 		
 	}
 	
@@ -41,7 +44,7 @@ public class TreeUtils {
 		for(int[] indecesRow:indeces)
 			Arrays.fill(indecesRow, -1);
 		for(int i=0;i<arr.length;i++) {
-			for(int j=i;j<arr[0].length;j++) {
+			for(int j=0;j<arr[0].length;j++) {
 				binaryInsert(val,indeces,-arr[i][j],new int[] {i,j});
 			}
 		}

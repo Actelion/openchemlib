@@ -21,9 +21,15 @@ public class DescriptorHandlerPTree implements DescriptorHandler<PharmacophoreTr
 	
 	@Override
 	public float getSimilarity(PharmacophoreTree pt1, PharmacophoreTree pt2) {
-		TreeMatcher matcher = new TreeMatcher(pt1,pt2);
-		TreeMatcher.TreeMatching matching = matcher.matchSearch();
-		return (float)matching.getSim();
+		float sim = 0.0f;
+		if(pt1.getNodes().size()==1 || pt2.getNodes().size()==1)
+			sim = (float)pt1.getDirectSim(pt2);
+		else {
+			TreeMatcher matcher = new TreeMatcher(pt1,pt2);
+			TreeMatcher.TreeMatching matching = matcher.matchSearch();	
+			sim = (float)matching.getSim();
+		}
+		return sim;
 	}
 	
 	@Override
