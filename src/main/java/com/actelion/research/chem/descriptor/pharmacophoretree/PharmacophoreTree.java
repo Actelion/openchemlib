@@ -31,6 +31,8 @@ public class PharmacophoreTree {
 	public static final int CUT_NONE = 0;
 	public static final int CUT_RIGHT = 1;
 	public static final int CUT_LEFT = -1;
+	
+	public static final int MAX_EXTENSION_CUTS = 500;
 
 	private List<int[]> edges;
 	private List<PharmacophoreNode> nodes;
@@ -264,6 +266,8 @@ public class PharmacophoreTree {
 		Arrays.fill(previousCut, -1);
 		previousCut[0] = 1;
 		while(lowerBound>=0) {
+			if(cuts.size()>MAX_EXTENSION_CUTS) // prevent combinatorial explosion
+				return cuts;
 			int[] nextCut = previousCut.clone();
 			lowerBound = getNextCut(previousCut,nextCut,subtreeEdgeIndeces,subtreeEdgeParentIndeces);
 			previousCut = nextCut;
@@ -274,6 +278,8 @@ public class PharmacophoreTree {
 			}
 			if(!alreadyPresent)
 				cuts.add(previousCut);
+			
+			
 		}
 
 		return cuts;
