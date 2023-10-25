@@ -10,13 +10,13 @@ public class ExitVector {
 	 * @param atom index of canonical core structure (if is bond bridge atom) or of original query structure
 	 * @param atomIsQueryAtom
 	 * @param index number to distinguish multiple exit vectors at same core atom (0-based)
-	 * @param parity -1 (no parity) or 0 or 1
+	 * @param topicity -1 (no topicity) or 0 or 1
 	 */
-	public ExitVector(int atom, boolean atomIsQueryAtom, int index, int parity) {
+	public ExitVector(int atom, boolean atomIsQueryAtom, int index, int topicity) {
 		mAtom = atom;
 		mAtomIsQueryAtom = atomIsQueryAtom;
 		mIndex = index;
-		mTopicity = parity;
+		mTopicity = topicity;
 	}
 
 	public int getQueryAtom() {

@@ -60,7 +60,7 @@ public class ConformationSelfOrganizer {
 	private static final double	MINIMIZATION_END_FACTOR = 0.01;
 	private static final double	ATOM_ACCEPTABLE_STRAIN = 2.72; // A conformer is considered acceptable if all atom strains are below this value
 	private static final double ATOM_FLAT_RING_BREAKOUT_STRAIN = 1000;    // TODO check
-	private static final double ATOM_CAGE_BREAKOUT_STRAIN = 2000;          // TODO check
+	private static final double ATOM_CAGE_BREAKOUT_STRAIN = 2000;  // TODO check Max allowed strain for 4-neighbour atoms
 	private static final double TWIST_BOAT_ESCAPE_ANGLE = 0.6;  // angle to rotate ring member out of plane (from mid point between ring center and atom), after rotating it into the plane from the other side
 	private static final int    TWIST_BOAT_ESCAPE_FREQUENCY = 10;   // in every tenth cycle we try escaping trapped twist boats
 	private static final double	BREAKOUT_DISTANCE = 8.0;
@@ -73,7 +73,7 @@ private static BufferedWriter mDWWriter;
 private static Conformer mLastDWConformer;
 private static int mDWCycle;
 private String mDWMode;
-private double[] mDWStrain; 	// TODO get rid of this
+private double[] mDWStrain; 	// TODO get rid of this section
 
 	private StereoMolecule		mMol;
     private Random				mRandom;
@@ -794,7 +794,7 @@ if (mDWWriter != null && conformerChanged) {
 	    }
 
 	private void jumbleAtoms(SelfOrganizedConformer conformer) {
-		double boxSize = 1.0 + 3.0 * Math.sqrt(mMol.getAllAtoms());
+		double boxSize = 2.0 + 2.0 * Math.sqrt(mMol.getAllAtoms());
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 			if (mMol.getAllConnAtoms(atom) != 1) {
 				conformer.setX(atom, boxSize * mRandom.nextDouble() - boxSize / 2);
@@ -805,9 +805,9 @@ if (mDWWriter != null && conformerChanged) {
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 			if (mMol.getAllConnAtoms(atom) == 1) {
 				int connAtom = mMol.getConnAtom(atom, 0);
-				conformer.setX(atom, conformer.getX(connAtom) + 2 * mRandom.nextDouble() - 1);
-				conformer.setY(atom, conformer.getY(connAtom) + 2 * mRandom.nextDouble() - 1);
-				conformer.setZ(atom, conformer.getZ(connAtom) + 2 * mRandom.nextDouble() - 1);
+				conformer.setX(atom, conformer.getX(connAtom) + 4 * mRandom.nextDouble() - 2);
+				conformer.setY(atom, conformer.getY(connAtom) + 4 * mRandom.nextDouble() - 2);
+				conformer.setZ(atom, conformer.getZ(connAtom) + 4 * mRandom.nextDouble() - 2);
 				}
 			}
 
@@ -820,25 +820,45 @@ if (mDWWriter != null && conformerChanged) {
 		int atomCount = 0;
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 			double atomStrain = conformer.getAtomStrain(atom);
-			if (atomStrain > ATOM_FLAT_RING_BREAKOUT_STRAIN) {
-				if (tryEscapeFromFlatRingTrap(conformer, atom)) {
+			if (atomStrain > ATOM_FLAT_RING_BREAKOUT_STRAIN
+			 && tryEscapeFromFlatRingTrap(conformer, atom))
 					atomCount++;
-					continue;
-					}
-				}
-			if (atomStrain > ATOM_CAGE_BREAKOUT_STRAIN) {
-				if (mDWWriter != null) {
-					try {
-						writeStrains(conformer, null, "escapeCage", atomStrain, Double.NaN);
-						}
-					catch (Exception e) { e.printStackTrace(); }
-					}
+			}
 
-				Coordinates c = conformer.getCoordinates(atom);
-				c.add(BREAKOUT_DISTANCE * mRandom.nextDouble() - BREAKOUT_DISTANCE / 2,
-					  BREAKOUT_DISTANCE * mRandom.nextDouble() - BREAKOUT_DISTANCE / 2,
-					  BREAKOUT_DISTANCE * mRandom.nextDouble() - BREAKOUT_DISTANCE / 2);
-				atomCount++;
+		if (atomCount == 0) {
+			int neighbourCount = 16;
+			for (int atom=0; atom<mMol.getAllAtoms(); atom++)
+				if (neighbourCount > mMol.getAllConnAtoms(atom)
+				 && conformer.getAtomStrain(atom) > maxCageBreakoutStrain(atom))
+					neighbourCount = mMol.getAllConnAtoms(atom);
+
+			if (neighbourCount != 16) {
+				for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
+					if (neighbourCount == mMol.getAllConnAtoms(atom)
+					 && conformer.getAtomStrain(atom) > maxCageBreakoutStrain(atom)) {
+System.out.println("escape "+neighbourCount+" neighbours");
+System.out.print("strains: "); for (int i=0; i<mMol.getAllAtoms(); i++) System.out.print(" "+i+":"+conformer.getAtomStrain(i)); System.out.println();
+						if (mDWWriter != null) {
+							try {
+								writeStrains(conformer, null, "escapeCage", conformer.getAtomStrain(atom), Double.NaN);
+								}
+							catch (Exception e) { e.printStackTrace(); }
+							}
+
+						Coordinates c = conformer.getCoordinates(atom);
+						if (mMol.getAllConnAtoms(atom) == 1) {
+							Coordinates cn = conformer.getCoordinates(mMol.getConnAtom(atom, 0));
+							c.add(2.0 * (cn.x - c.x), 2.0 * (cn.y - c.y), 2.0 * (cn.z - c.z));
+							}
+						else {
+							double distance = (mMol.getAllConnAtoms(atom) == 0) ? 2.0 * BREAKOUT_DISTANCE : BREAKOUT_DISTANCE;
+							c.add(distance * mRandom.nextDouble() - distance / 2,
+								  distance * mRandom.nextDouble() - distance / 2,
+								  distance * mRandom.nextDouble() - distance / 2);
+							}
+						atomCount++;
+						}
+					}
 				}
 			}
 
@@ -848,8 +868,13 @@ if (mDWWriter != null && conformerChanged) {
 		return atomCount;
 		}
 
+	private double maxCageBreakoutStrain(int atom) {
+		int connAtoms = Math.min(4, mMol.getAllConnAtoms(atom));
+		return ATOM_CAGE_BREAKOUT_STRAIN / 5 + connAtoms * ATOM_CAGE_BREAKOUT_STRAIN / 5;
+		}
+
 	/**
-	 * Sometimes individual exocyclic atoms end up trapped inside a flat ring,
+	 * Sometimes individual exo-cyclic atoms end up trapped inside a flat ring,
 	 * because a plane rule combined with a distance rule stabilize the situation.
 	 * This method checks, whether atom<br>
 	 *     - has only one neighbour<br>

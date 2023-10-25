@@ -7,23 +7,23 @@ import com.actelion.research.chem.StereoMolecule;
 
 import java.util.ArrayList;
 
-public class SARMoleculeData {
+public class SARMolecule {
 	private StereoMolecule mMol,mBuffer;
-	private ScaffoldData mScaffoldData;
+	private SARScaffold mScaffold;
 	private String[] mSubstituent;
 	private int[] mSubstituentBondOrder;
 	private boolean[] mSubstituentConnectsBack;
 
-	protected SARMoleculeData(StereoMolecule mol, ScaffoldData scaffoldData, int[] molToCoreAtom, StereoMolecule buffer) {
+	protected SARMolecule(StereoMolecule mol, SARScaffold scaffold, int[] molToCoreAtom, StereoMolecule buffer) {
 		mMol = mol;
-		mScaffoldData = scaffoldData;
+		mScaffold = scaffold;
 		mBuffer = buffer;
 
 		buildSubstituents(molToCoreAtom);
 	}
 
-	public ScaffoldData getScaffoldData() {
-		return mScaffoldData;
+	public SARScaffold getScaffold() {
+		return mScaffold;
 	}
 
 	public String[] getSubstituents() {
@@ -31,23 +31,23 @@ public class SARMoleculeData {
 	}
 
 	protected void clear() {
-		mScaffoldData = null;
+		mScaffold = null;
 	}
 
 	protected void checkSubstituents() {
-		for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++)
-			mScaffoldData.checkSubstituent(mSubstituent[exitVectorIndex], exitVectorIndex, mSubstituentBondOrder[exitVectorIndex]);
+		for (int exitVectorIndex = 0; exitVectorIndex<mScaffold.getExitVectorCount(); exitVectorIndex++)
+			mScaffold.checkSubstituent(mSubstituent[exitVectorIndex], exitVectorIndex, mSubstituentBondOrder[exitVectorIndex]);
 	}
 
 	protected void removeUnchangingSubstituents() {
-		for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++)
+		for (int exitVectorIndex = 0; exitVectorIndex<mScaffold.getExitVectorCount(); exitVectorIndex++)
 			if (mSubstituent[exitVectorIndex] != null
-			 && !mScaffoldData.getExitVector(exitVectorIndex).substituentVaries())
+			 && !mScaffold.getExitVector(exitVectorIndex).substituentVaries())
 				mSubstituent[exitVectorIndex] = null;
 	}
 
 	protected void buildSubstituents(int[] molToCoreAtom) {
-		StereoMolecule core = mScaffoldData.getCoreStructure();
+		StereoMolecule core = mScaffold.getCoreStructure();
 
 		int[] coreToMolAtom = new int[core.getAtoms()];
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
@@ -59,23 +59,28 @@ public class SARMoleculeData {
 		for (int i=0; i<core.getAtoms(); i++)
 			mMol.setAtomicNo(coreToMolAtom[i], 0);
 
-		mSubstituentBondOrder = new int[mScaffoldData.getExitVectorCount()];
-		mSubstituentConnectsBack = new boolean[mScaffoldData.getExitVectorCount()];
-		mSubstituent = new String[mScaffoldData.getExitVectorCount()];
+		mSubstituentBondOrder = new int[mScaffold.getExitVectorCount()];
+		mSubstituentConnectsBack = new boolean[mScaffold.getExitVectorCount()];
+		mSubstituent = new String[mScaffold.getExitVectorCount()];
+
+		int[] rootAtom = new int[mScaffold.getExitVectorCount()];
+		int[] exitAtom = new int[mScaffold.getExitVectorCount()];
+		for (int evi=0; evi<mScaffold.getExitVectorCount(); evi++) {
+			rootAtom[evi] = coreToMolAtom[mScaffold.getCoreAtom(evi)];
+			exitAtom[evi] = mScaffold.getExitVectorAtom(mMol, coreToMolAtom, molToCoreAtom, evi);
+		}
 
 		// For all exit vectors that carry substituents in the molecule,
 		// create substituent idcodes and assign them to the respective exit vectors.
-		for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++)
-			encodeSubstituent(exitVectorIndex, coreToMolAtom, molToCoreAtom);
+		for (int evi=0; evi<mScaffold.getExitVectorCount(); evi++)
+			if (exitAtom[evi] != -1)
+				encodeSubstituent(evi, rootAtom, exitAtom, molToCoreAtom);
 	}
 
-	private void encodeSubstituent(int exitVectorIndex, int[] coreToMolAtom, int[] molToCoreAtom) {
-		int exitVectorAtom = mScaffoldData.getExitVectorAtom(mMol, coreToMolAtom, molToCoreAtom, exitVectorIndex);
-		if (exitVectorAtom == -1)
-			return;
-
-		int rootAtom = coreToMolAtom[mScaffoldData.getCoreAtom(exitVectorIndex)];
-		int rootBond = mMol.getBond(rootAtom, exitVectorAtom);
+	private void encodeSubstituent(int exitVectorIndex, int[] rootAtoms, int[] exitAtoms, int[] molToCoreAtom) {
+		int exitAtom = exitAtoms[exitVectorIndex];
+		int rootAtom = rootAtoms[exitVectorIndex];
+		int rootBond = mMol.getBond(rootAtom, exitAtom);
 
 		int[] workAtom = new int[mMol.getAtoms()];
 		boolean[] isSubstituentAtom = new boolean[mMol.getAtoms()];
@@ -83,10 +88,10 @@ public class SARMoleculeData {
 		ArrayList<BackConnection> backConnectionList = new ArrayList<>();
 
 		isSubstituentAtom[rootAtom] = true;
-		isSubstituentAtom[exitVectorAtom] = true;
+		isSubstituentAtom[exitAtom] = true;
 		isSubstituentBond[rootBond] = true;
 		workAtom[0] = rootAtom;
-		workAtom[1] = exitVectorAtom;
+		workAtom[1] = exitAtom;
 		int current = 1;
 		int highest = 1;
 		while (current <= highest) {
@@ -112,14 +117,17 @@ public class SARMoleculeData {
 
 		mBuffer.clear();
 
-		int[] homotopicConnIndex = new int[mMol.getAtoms()];
 		int[] molToSubstituentAtom = mMol.copyMoleculeByBonds(mBuffer, isSubstituentBond, false, null);
 		for (BackConnection backConnection:backConnectionList) {
 			int atom = mBuffer.addAtom(0);
 			mBuffer.addBond(molToSubstituentAtom[backConnection.substituentAtom], atom, backConnection.bondType);
-			int connIndex = homotopicConnIndex[backConnection.backEndAtom]++;
-			int topicity = mScaffoldData.calculateTopicity(mMol, backConnection.backEndAtom, backConnection.substituentAtom, molToCoreAtom);
-			mBuffer.setAtomCustomLabel(atom, Integer.toString(mScaffoldData.getExitVectorIndex(molToCoreAtom[backConnection.backEndAtom], connIndex, topicity)));
+			for (int evi=0; evi<exitAtoms.length; evi++) {
+				if (rootAtoms[evi] == backConnection.backEndAtom
+				 && exitAtoms[evi] == backConnection.substituentAtom) {
+					mBuffer.setAtomCustomLabel(atom, Integer.toString(evi));
+					break;
+				}
+			}
 		}
 
 		mBuffer.setFragment(false);
@@ -148,12 +156,12 @@ public class SARMoleculeData {
 	 */
 	protected void correctSubstituentRingClosureLabels() {
 		if (mSubstituentConnectsBack != null) {
-			for (int exitVectorIndex=0; exitVectorIndex<mScaffoldData.getExitVectorCount(); exitVectorIndex++) {
-				ExitVector exitVector = mScaffoldData.getExitVector(exitVectorIndex);
+			for (int exitVectorIndex = 0; exitVectorIndex<mScaffold.getExitVectorCount(); exitVectorIndex++) {
+				ExitVector exitVector = mScaffold.getExitVector(exitVectorIndex);
 				if (exitVector.substituentVaries()
 				 && mSubstituentConnectsBack[exitVectorIndex]
 				 && mSubstituent[exitVectorIndex] != null) {
-					String newIDCode = mScaffoldData.getOldToNewMap().get(mSubstituent[exitVectorIndex]);
+					String newIDCode = mScaffold.getOldToNewMap().get(mSubstituent[exitVectorIndex]);
 					if (newIDCode != null) {
 						mSubstituent[exitVectorIndex] = newIDCode;
 					}
@@ -163,11 +171,11 @@ public class SARMoleculeData {
 							String label = s.getAtomCustomLabel(atom);
 							if (label != null) {
 								int backConnectionIndex = Integer.parseInt(label);
-								s.setAtomCustomLabel(atom, Integer.toString(mScaffoldData.getExitVector(backConnectionIndex).getRGroupNo()));
+								s.setAtomCustomLabel(atom, Integer.toString(mScaffold.getExitVector(backConnectionIndex).getRGroupNo()));
 							}
 						}
 						newIDCode = new Canonizer(s, Canonizer.ENCODE_ATOM_CUSTOM_LABELS).getIDCode();
-						mScaffoldData.getOldToNewMap().put(mSubstituent[exitVectorIndex], newIDCode);
+						mScaffold.getOldToNewMap().put(mSubstituent[exitVectorIndex], newIDCode);
 						mSubstituent[exitVectorIndex] = newIDCode;
 					}
 				}

@@ -14,17 +14,17 @@ public class CoreBasedSARAnalyzer {
 	private StereoMolecule mQuery,mFragment;
 	private SSSearcher mSearcher;
 	private SSSearcherWithIndex mSearcherWithIndex;
-	private SARMoleculeData[] mMoleculeData;  // contains info of analyzed molecules, e.g. substituents and corresponding ScaffoldData
-	private TreeMap<String,ScaffoldData> mScaffoldMap;  // map of idccodes of core structures to corresponding ScaffoldData
-	private ScaffoldGroup mScaffoldGroup;
+	private SARMolecule[] mSARMolecule;  // contains info of analyzed molecules, e.g. substituents and corresponding SARScaffold
+	private TreeMap<String, SARScaffold> mScaffoldMap;  // map of core structure idcodes to corresponding SARScaffold
+	private SARScaffoldGroup mScaffoldGroup;
 	private int[] mPreferredQueryAtomRGroupMatch;
 
 	/**
 	 * This class runs a complete structure-activity-relationship (SAR) analysis from molecules that share
 	 * one or multiple common similar scaffold(s). For one given query substructure this class analyses many
 	 * molecules, whether the query substructure is found and which substituents are connected at which positions.
-	 * If the query structure matches on a substructure of multiple molecules, then these molecule substructures
-	 * may be the same in all cases, or it may differ between some molecules. This happens, for instance,
+	 * If the query substructure is found in (matches) multiple molecules, then the matching substructures
+	 * may be the same in all cases, or they may differ between some molecules. This happens, for instance,
 	 * if the <i>query</i> contains wildcard atoms that match to multiple atom types, or if a bridge bond
 	 * matches to atom chains of different lengths.<br>
 	 * The matching substructure of a molecule is called <i>core structure</i>. All molecules that share the same
@@ -38,7 +38,7 @@ public class CoreBasedSARAnalyzer {
 	 * form a <i>scaffold group</i>. R-group numbering between all <i>scaffolds</i> within the same <i>scaffold group</i>
 	 * is compatible. This means that R-groups at equivalent exit vectors of two different scaffolds within
 	 * the same group have the same number. Two exit vectors are considered equivalent, if they are connected
-	 * to atom, which matching the same query structure atom, and if they are diastereotop, e.g. both connected
+	 * to atoms, which match to the same query structure atom, and if they are diastereotop, e.g. both connected
 	 * with an up-stereo bond when super-positioning their atom coordinates.<br>
 	 * For any given molecule a scaffold structure is constructed the following way:<br>
 	 * - A substructure search locates all matches of the query structure and selects a preferred match based
@@ -73,9 +73,9 @@ public class CoreBasedSARAnalyzer {
 		mQuery = query;
 		mQuery.ensureHelperArrays(Molecule.cHelperNeighbours);
 
-		mMoleculeData = new SARMoleculeData[moleculeCount];
+		mSARMolecule = new SARMolecule[moleculeCount];
 		mScaffoldMap = new TreeMap<>();
-		mScaffoldGroup = new ScaffoldGroup(query);
+		mScaffoldGroup = new SARScaffoldGroup(query);
 
 		mFragment = new StereoMolecule();   // used as molecule buffer
 
@@ -296,26 +296,26 @@ public class CoreBasedSARAnalyzer {
 				extendedCoreIDCode = new Canonizer(extendedCore).getIDCode();
 			}*/
 
-		// Get existing or create new ScaffoldData object for this particular core structure.
+		// Get existing or create new SARScaffold object for this particular core structure.
 		String key = new Canonizer(core).getIDCode();
-		ScaffoldData scaffoldData = getScaffoldData(key, canonicalCore, queryToMolAtom, molToCoreAtom, isBridgeAtom != null);
+		SARScaffold scaffold = getScaffold(key, canonicalCore, queryToMolAtom, molToCoreAtom, isBridgeAtom != null);
 
-		mMoleculeData[index] = new SARMoleculeData(mol, scaffoldData, molToCoreAtom, mFragment);
+		mSARMolecule[index] = new SARMolecule(mol, scaffold, molToCoreAtom, mFragment);
 		}
 
 	/**
-	 * Create one ScaffoldData for every distinct core structure and assign all rows
-	 * having the same core structure to the respective ScaffoldData.
+	 * Create one SARScaffold for every distinct core structure and assign all rows
+	 * having the same core structure to the respective SARScaffold.
 	 * @param canonicalCore
 	 * @param queryToMolAtom
 	 * @param molToCoreAtom
 	 * @param hasBridgeAtoms
 	 * @return
 	 */
-	private ScaffoldData getScaffoldData(String key, StereoMolecule canonicalCore, int[] queryToMolAtom, int[] molToCoreAtom, boolean hasBridgeAtoms) {
-		ScaffoldData scaffoldData = mScaffoldMap.get(key);
+	private SARScaffold getScaffold(String key, StereoMolecule canonicalCore, int[] queryToMolAtom, int[] molToCoreAtom, boolean hasBridgeAtoms) {
+		SARScaffold scaffold = mScaffoldMap.get(key);
 
-		if (scaffoldData == null) {
+		if (scaffold == null) {
 			canonicalCore.ensureHelperArrays(Molecule.cHelperNeighbours);
 			int[] queryToCoreAtom = new int[mQuery.getAtoms()];
 			int[] coreToQueryAtom = new int[canonicalCore.getAtoms()];
@@ -332,12 +332,12 @@ public class CoreBasedSARAnalyzer {
 
 			adaptCoreAtomCoordsFromQuery(mQuery, canonicalCore, queryToCoreAtom, hasBridgeAtoms);
 
-			scaffoldData = new ScaffoldData(mQuery, canonicalCore, coreToQueryAtom, queryToCoreAtom, mScaffoldGroup);
-			mScaffoldMap.put(key, scaffoldData);
-			mScaffoldGroup.add(scaffoldData);
+			scaffold = new SARScaffold(mQuery, canonicalCore, coreToQueryAtom, queryToCoreAtom, mScaffoldGroup);
+			mScaffoldMap.put(key, scaffold);
+			mScaffoldGroup.addScaffold(scaffold);
 			}
 
-		return scaffoldData;
+		return scaffold;
 		}
 
 	/**
@@ -354,35 +354,35 @@ public class CoreBasedSARAnalyzer {
 		boolean rGroupCountExceeded = false;
 
 		// check for varying substituents to require a new column
-		for (SARMoleculeData moleculeData:mMoleculeData)
-			if (moleculeData != null)
-				moleculeData.checkSubstituents();
+		for (SARMolecule molecule: mSARMolecule)
+			if (molecule != null)
+				molecule.checkSubstituents();
 
 		// Remove substituents from atoms, which didn't see a varying substitution
-		for (SARMoleculeData moleculeData:mMoleculeData)
-			if (moleculeData != null)
-				moleculeData.removeUnchangingSubstituents();
+		for (SARMolecule molecule: mSARMolecule)
+			if (molecule != null)
+				molecule.removeUnchangingSubstituents();
 
 		int scaffoldRGroupCount = mScaffoldGroup.assignRGroups(firstRGroupNumber);
 
-		for (ScaffoldData scaffoldData:mScaffoldGroup) {
-			int rGroupsOnBridges = scaffoldData.assignRGroupsToBridgeAtoms(firstRGroupNumber + scaffoldRGroupCount);
+		for (SARScaffold scaffold :mScaffoldGroup.getScaffoldList()) {
+			int rGroupsOnBridges = scaffold.assignRGroupsToBridgeAtoms(firstRGroupNumber + scaffoldRGroupCount);
 
 			if (scaffoldRGroupCount + rGroupsOnBridges > MAX_R_GROUPS) {
-				for (SARMoleculeData moleculeData:mMoleculeData)
-					if (moleculeData != null
-					 && moleculeData.getScaffoldData().getRGroupCount() > MAX_R_GROUPS)
-						moleculeData.clear();
+				for (SARMolecule molecule: mSARMolecule)
+					if (molecule != null
+					 && molecule.getScaffold().getRGroupCount() > MAX_R_GROUPS)
+						molecule.clear();
 
 				rGroupCountExceeded = true;
 				}
 
-			scaffoldData.addRGroupsToCoreStructure();
+			scaffold.addRGroupsToCoreStructure();
 			}
 
-		for (SARMoleculeData moleculeData:mMoleculeData)
-			if (moleculeData != null)
-				moleculeData.correctSubstituentRingClosureLabels();
+		for (SARMolecule molecule: mSARMolecule)
+			if (molecule != null)
+				molecule.correctSubstituentRingClosureLabels();
 
 		return !rGroupCountExceeded;
 		}
@@ -590,17 +590,17 @@ public class CoreBasedSARAnalyzer {
 
 	public int getRGroupCount() {
 		int count = 0;
-		for (ScaffoldData scaffoldData:mScaffoldGroup)
-			count = Math.max(count, scaffoldData.getRGroupCount());
+		for (SARScaffold scaffold :mScaffoldGroup.getScaffoldList())
+			count = Math.max(count, scaffold.getRGroupCount());
 
 		return count;
 	}
 
-	public ScaffoldGroup getScaffolds() {
+	public SARScaffoldGroup getScaffoldGroup() {
 		return mScaffoldGroup;
 	}
 
-	public SARMoleculeData getMoleculeData(int index) {
-		return mMoleculeData[index];
+	public SARMolecule getMoleculeData(int index) {
+		return mSARMolecule[index];
 	}
 }
