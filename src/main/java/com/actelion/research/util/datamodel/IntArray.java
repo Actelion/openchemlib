@@ -483,7 +483,7 @@ public class IntArray implements Serializable {
 	}
 
 	public static List<Integer> toList(int [] a) {
-		List<Integer> li = new ArrayList<Integer>(a.length);
+		List<Integer> li = new ArrayList<>(a.length);
 
 		for (int i = 0; i < a.length; i++) {
 			li.add(a[i]);

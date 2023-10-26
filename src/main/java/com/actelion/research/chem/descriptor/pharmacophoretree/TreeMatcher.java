@@ -116,7 +116,7 @@ public class TreeMatcher {
 		
 		public int[][] findInitialSplits() {
 			int[] cuts = {PharmacophoreTree.CUT_LEFT,PharmacophoreTree.CUT_RIGHT};
-			double[][] initialSplitScores = new double[2*queryTree.getEdges().size()][2*baseTree.getEdges().size()];
+			double[][] initialSplitScores = new double[queryTree.getEdges().size()][2*baseTree.getEdges().size()];
 			for(int i=0;i<queryTree.getEdges().size();i++) {
 					List<Integer> sourceTreeEdges1 = new ArrayList<Integer>();
 					List<Integer> targetTreeEdges1 = new ArrayList<Integer>();
@@ -227,9 +227,7 @@ public class TreeMatcher {
 					for(int[] cut:bestCuts) {
 						if(counter>EXTENSION_MATCHES)
 							break;
-				
-						if(cut[0]==-1 || cut[1]==-1)
-							continue;
+	
 						int[] cut1 = cuts1.get(cut[0]);
 						int[] cut2 = cuts2.get(cut[1]);
 						List<List<Integer>> sourceTreeEdgeIndeces1 = new ArrayList<List<Integer>>();
