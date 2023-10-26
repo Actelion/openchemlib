@@ -41,9 +41,9 @@ public class SARScaffoldGroup {
 				int exitVectorCount = query.getLowestFreeValence(atom);
 				int occupiedValence = query.getOccupiedValence(atom);
 				for (int i=0; i<exitVectorCount; i++) {
-					// If we have two exit vectors (with both one and two connAtoms in the query)
+					// If we have >= two exit vectors (with both one and two connAtoms in the query)
 					// we assume that we can distinuish the exit vectors by topicity (any stereo criteria)
-					int topicity = (occupiedValence == 2 && exitVectorCount == 2) ? i : -1;
+					int topicity = (exitVectorCount >= 2) ? i : -1;
 					evList.add(new ExitVector(atom, true, i, topicity));
 				}
 			}

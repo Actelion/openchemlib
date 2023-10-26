@@ -330,7 +330,8 @@ public class SARScaffold {
 		// Create array of rootAtom neighbour bond angles sorted by the relevant neighbour atom indexes.
 		// Included neighbours are all neighbours that are part of the core structure plus the defined exit atom.
 		// A potential second exit atom is not considered here.
-		int count = 0;
+		int totalNeighbourCount = 0;
+		int coreNeighbourCount = 0;
 		for (int i=0; i<mol.getConnAtoms(rootAtom); i++) {
 			int connAtom = mol.getConnAtom(rootAtom, i);
 			int connBond = mol.getConnBond(rootAtom, i);
@@ -341,14 +342,18 @@ public class SARScaffold {
 				exitBond = connBond;
 			}
 			else if (molToCoreAtom[connAtom] == -1) {
+				if (otherExitAtomFound) // don't allow more than one other exit atom
+					return -1;
+
 				rank = Integer.MAX_VALUE;
 				otherExitAtomFound = true;
 			}
 			else {
 				rank = getTopicityRelevantAtomIndex(molToCoreAtom[rootAtom], molToCoreAtom[connAtom]);
+				coreNeighbourCount++;
 			}
 
-			int index = count;
+			int index = totalNeighbourCount;
 			while (index > 0 && neighbourRank[index-1] > rank) {
 				neighbourRank[index] = neighbourRank[index-1];
 				neighbourBond[index] = neighbourBond[index-1];
@@ -360,14 +365,27 @@ public class SARScaffold {
 			neighbourBond[index] = connBond;
 			neighbourAngle[index] = mol.getBondAngle(rootAtom, connAtom);
 
-			count++;
+			totalNeighbourCount++;
 		}
 
-		if (count < 3 || count > 4)
+		if (totalNeighbourCount < 3 || totalNeighbourCount > 4)
 			return -1;
 
 		int stereoType = (mol.getBondType(stereoBond) == Molecule.cBondTypeUp) ? 2 : 1;
 
+		// Here we have one of the following neighbour counts in addition to the defined exitAtom:
+		// A: 1 neighbour that exists in core structure; 1 additional exit atom
+		// B: 2 neighbours that exists in core structure; no additional exit atom
+		// C: 2 neighbours that exists in core structure; 1 additional exit atom
+		// D: 3 neighbours that exists in core structure; no additional exit atom
+
+		// Case A and B:
+		// 3 non-H neighbours at stereo center.
+		// Thus, we don't need to change up/down bond type when shifting stereo bond to other neighbour.
+
+		// Cases C and D:
+		// 4 non-H neighbours at stereo center.
+		// Thus, we need to invert up/down bond type when shifting stereo bond to direct neighbour bond.
 		if (mol.getConnAtoms(rootAtom) == 4) {
 			if (otherExitAtomFound && stereoBond == neighbourBond[3]) {
 				if (areDirectNeighbours(neighbourAngle, 2, 3))
@@ -376,7 +394,7 @@ public class SARScaffold {
 			else if (stereoBond != exitBond) {
 				// if the stereo bond is one of the core bonds and if the exit bond
 				int stereoBondIndex = -1;
-				for (int i=0; i<count; i++) {
+				for (int i=0; i<totalNeighbourCount; i++) {
 					if (stereoBond == neighbourBond[i]) {
 						stereoBondIndex = i;
 						break;
@@ -388,7 +406,7 @@ public class SARScaffold {
 			}
 		}
 
-		return calculateTHTopicity(neighbourAngle, count, stereoType);
+		return calculateTHTopicity(neighbourAngle, coreNeighbourCount, totalNeighbourCount, stereoType);
 	}
 
 	/**
@@ -412,29 +430,36 @@ public class SARScaffold {
 	}
 
 	/**
-	 * Use Canonizer's logic to calculate parities of 2D stereo center.
-	 * The difference is that we assign the highest atom index to the exit atom for which
-	 * we calculate topicity. We consider this atom (highest index) to carry the stereo bond.
-	 * To compensate for a stereo bond shift and to compensate for the second exit vector
-	 * if it exists, then stereoType must have been corrected to compensate.
+	 * If a substituent can be attached to a core structure in two distinguishable ways regarding
+	 * stereo configuration, then this method calculates in a reproducible way a topicity (0 or 1)
+	 * reflecting a given up/down bond stereo type and the bond angles from the stereo center to
+	 * all neighbour atoms. The bond angle array is expected to contain sorted core neighbours first,
+	 * followed by one or two exit vector angles. The last exit vector is considered to carry the
+	 * stereo bond. If in reality the stereo bond is a different one, then the calling method is
+	 * responsible to compensate for a stereo bond shift and/or to compensate for the second exit
+	 * vector by potentially inverting stereoType.
 	 * Topicity is defined as follows:<br>
-	 * - 2 neighbour atoms in core structure:<br>
+	 * - 1 neighbour atoms in core structure and 2 exit atoms:<br>
+	 *   If walking from first atom (lowest relevant index) via root atom to first exit atom
+	 *   making a left turn, then an up-bond connecting second exit atom gives topicity=1<br>
+	 * - 2 neighbour atoms in core structure and 1 or 2 exit atoms:<br>
 	 *   If walking from first atom (lowest relevant index) via root atom to second atom
-	 *   making a left turn, then an up-bond connected third neighbour is topicity=1<br>
-	 * - 3 neighbour atoms in core structure:<br>
+	 *   making a left turn, then an up-bond connecting first/only exist atom gives topicity=1<br>
+	 * - 3 neighbour atoms in core structure and one exit atom:<br>
 	 *   If neighbours 1,2,3 are in counter-clockwise order and forth neighbour is connected
 	 *   with an up-bond, then topicity=1<br>
 	 * @param angle bond angles at stereo center sorted by relevant atom index
-	 * @param coreNeighbourCount number of bonds at stereo center (not inlcuding a second exit atom)
+	 * @param coreNeighbourCount number of bonds at stereo center that have a counterpart in the core structure
+	 * @param totalNeighbourCount number of bonds at stereo center including a second exit atom
 	 * @param stereoType 1 (down) or 2 (up); corrected if original stereo bond is not the exit bond or/and second exit atom exists
 	 * @return topicity 0 or 1
 	 */
-	private int calculateTHTopicity(double[] angle, int coreNeighbourCount, int stereoType) {
-		for (int i=1; i<coreNeighbourCount; i++)
+	private int calculateTHTopicity(double[] angle, int coreNeighbourCount, int totalNeighbourCount, int stereoType) {
+		for (int i=1; i<totalNeighbourCount; i++)
 			if (angle[i] < angle[0])
 				angle[i] += Math.PI*2;
 
-		if (coreNeighbourCount == 3) {
+		if (coreNeighbourCount <= 2) {
 			boolean leftTurn = (angle[1] - angle[0] > Math.PI);
 			return leftTurn ^ (stereoType == 2) ? 1 : 0;
 		}
@@ -579,14 +604,14 @@ public class SARScaffold {
 		int[] neighbour = new int[3];
 		double[] angle = new double[3];
 
-		int count = 0;
+		int coreNeighbourCount = 0;
 		int piBondSum = 0;
 		for (int i=0; i<mScaffold.getConnAtoms(rootAtom); i++) {
 			int connAtom = mScaffold.getConnAtom(rootAtom, i);
 			if (connAtom < mCoreToQueryAtom.length) {
 				int neighbourAtom = getTopicityRelevantAtomIndex(rootAtom, connAtom);
 
-				int index = count;
+				int index = coreNeighbourCount;
 				while (index > 0 && neighbour[index-1] > neighbourAtom) {
 					neighbour[index] = neighbour[index-1];
 					angle[index] = angle[index-1];
@@ -596,49 +621,63 @@ public class SARScaffold {
 				neighbour[index] = neighbourAtom;
 				angle[index] = mScaffold.getBondAngle(rootAtom, connAtom);
 				piBondSum += mScaffold.getConnBondOrder(rootAtom, i) - 1;
-				count++;
+				coreNeighbourCount++;
 			}
 		}
 
 		if (piBondSum != 0) {
-			if (count == 1)
-				calculateEZExitVectorCoords(rootAtom, piBondSum, exitVector.getTopicity(), angle, coords);
+			if (coreNeighbourCount == 1)
+				calculateSP2ExitVectorCoords(rootAtom, piBondSum, exitVector.getTopicity(), angle, coords);
 			else
-				calculateFurthestAwayExitVectorCoords(rootAtom, Arrays.copyOf(angle, count), coords);
+				calculateSP3ExitVectorCoords(rootAtom, Arrays.copyOf(angle, coreNeighbourCount), coords);
 
 			// we assume that we don't have a stereo center with double bonds, e.g. at S or P
 			return Molecule.cBondTypeSingle;
 		}
 
-		calculateFurthestAwayExitVectorCoords(rootAtom, Arrays.copyOf(angle, count), coords);
+		calculateSP3ExitVectorCoords(rootAtom, Arrays.copyOf(angle, coreNeighbourCount), coords);
 
 		if (exitVector.getTopicity() == -1)
 			return Molecule.cBondTypeSingle;
 
-		angle[count] = Molecule.getAngle(mScaffold.getAtomX(rootAtom), mScaffold.getAtomY(rootAtom), coords.x, coords.y);
+		angle[coreNeighbourCount] = Molecule.getAngle(mScaffold.getAtomX(rootAtom), mScaffold.getAtomY(rootAtom), coords.x, coords.y);
 
-		int topicity = calculateTHTopicity(angle, count+1, 1);
+		int totalNeighbourCount = coreNeighbourCount + 1;
+
+		if (coreNeighbourCount == 1) {
+			angle[coreNeighbourCount+1] = angle[coreNeighbourCount] + Math.PI * 2 / 3;
+			totalNeighbourCount++;
+		}
+
+		int topicity = calculateTHTopicity(angle, coreNeighbourCount, totalNeighbourCount, 1);
 		return (topicity == -1) ? Molecule.cBondTypeSingle : (topicity == exitVector.getTopicity()) ? Molecule.cBondTypeDown : Molecule.cBondTypeUp;
 	}
 
 	/**
-	 * Assuming at least two existing neighbours, and using the scaffolds average bond length, this method
-	 * places the new neighbour at a position furthest away from any existing neighbour.
+	 * If there are at least two existing neighbours (angle.length >= 2), this method
+	 * places the new neighbour at a position furthest away from any existing neighbour
+	 * using the scaffolds average bond length. If there is only one neighbour, the new
+	 * neighbour will be placed with a bond angle 120 degrees larger.
 	 * @param atom
 	 * @param angle
 	 * @param coords
 	 */
-	private void calculateFurthestAwayExitVectorCoords(int atom, double[] angle, Coordinates coords) {
-		double exitAngle = 0.0;
+	private void calculateSP3ExitVectorCoords(int atom, double[] angle, Coordinates coords) {
+		double exitAngle = Math.PI * 2 / 3;
 
-		Arrays.sort(angle);
-		double largestDiff = -1.0;
-		for (int i=0; i<angle.length; i++) {
-			double angleDiff = (i == 0) ? angle[0] + 2*Math.PI - angle[angle.length-1] : angle[i] - angle[i-1];
-			if (largestDiff<angleDiff) {
-				largestDiff = angleDiff;
-				exitAngle = angle[i] - 0.5 * angleDiff;
+		if (angle.length >= 2) {
+			Arrays.sort(angle);
+			double largestDiff = -1.0;
+			for (int i=0; i<angle.length; i++) {
+				double angleDiff = (i == 0) ? angle[0] + 2*Math.PI - angle[angle.length-1] : angle[i] - angle[i-1];
+				if (largestDiff<angleDiff) {
+					largestDiff = angleDiff;
+					exitAngle = angle[i] - 0.5 * angleDiff;
+				}
 			}
+		}
+		else if (angle.length == 1) {
+			exitAngle = angle[0] + Math.PI * 2 / 3;
 		}
 
 		double avbl = mScaffold.getAverageBondLength();
@@ -655,7 +694,7 @@ public class SARScaffold {
 	 * @param angle
 	 * @param coords
 	 */
-	private void calculateEZExitVectorCoords(int atom, int piBondSum, int topicity, double[] angle, Coordinates coords) {
+	private void calculateSP2ExitVectorCoords(int atom, int piBondSum, int topicity, double[] angle, Coordinates coords) {
 		double exitAngle = 0.0;
 
 		if (piBondSum == 2) { // triple bond
