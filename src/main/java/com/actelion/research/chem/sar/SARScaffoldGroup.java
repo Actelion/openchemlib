@@ -7,10 +7,10 @@ import java.util.ArrayList;
 
 /**
  * A scaffold group comprises all scaffolds that arise from a match of the same query substructure in multiple
- * processed molecules. A scaffold group may contain scaffolds, if the substructure contains wild card elements
- * as atom lists, or multiple allowed bond orders. A special case are bridge bonds, which cause a query match to
- * contain more atoms than the query itself. Interestingly, these atoms may also carry R-groups, which needs to
- * be handles differently from the R-groups on the core atoms. Core atoms are those atoms for which an associated
+ * processed molecules. A scaffold group may contain more than one scaffold, if the substructure contains wild card
+ * elements like atom lists, or multiple allowed bond orders. A special case are bridge bonds, which cause a query
+ * match to contain more atoms than the query itself. Interestingly, these atoms may also carry R-groups, which needs
+ * to be handled differently from the R-groups on the core atoms. Core atoms are those atoms for which an associated
  * atom exists in the query structure. R-groups (exit vectors) on core atom are numbered consistently within all
  * scaffolds that belong to the same scaffold group, i.e. that were detected from the same query structure.
  */
@@ -39,7 +39,6 @@ public class SARScaffoldGroup {
 		for (int atom=0; atom<query.getAtoms(); atom++) {
 			if ((query.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0) {
 				int exitVectorCount = query.getLowestFreeValence(atom);
-				int occupiedValence = query.getOccupiedValence(atom);
 				for (int i=0; i<exitVectorCount; i++) {
 					// If we have >= two exit vectors (with both one and two connAtoms in the query)
 					// we assume that we can distinuish the exit vectors by topicity (any stereo criteria)
