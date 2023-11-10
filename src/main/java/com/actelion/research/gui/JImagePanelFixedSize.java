@@ -39,23 +39,30 @@ import com.actelion.research.gui.hidpi.HiDPIHelper;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 
 public class JImagePanelFixedSize extends JPanel {
-	private Image	mImage;
-	private int     mWidth,mHeight;
+	private BufferedImage   mImage;
 
     public JImagePanelFixedSize() {
 		super();
 		}
 
-    public JImagePanelFixedSize(String fileName) {
+	public JImagePanelFixedSize(String fileName) {
+		this(fileName, 1.0);
+		}
+
+    public JImagePanelFixedSize(String fileName, double scale) {
 		super();
 
 		readImage(fileName);
-	    mWidth = HiDPIHelper.scale(mImage.getWidth(this));
-	    mHeight = HiDPIHelper.scale(mImage.getHeight(this));
-		Dimension size = new Dimension(mWidth, mHeight);
+	    int width = (int)(scale * HiDPIHelper.scale(mImage.getWidth()));
+	    int height = (int)(scale * HiDPIHelper.scale(mImage.getHeight()));
+	    scaleImage(width, height);
+		Dimension size = new Dimension(width, height);
 		setMinimumSize(size);
 		setMaximumSize(size);
 		setPreferredSize(size);
@@ -67,14 +74,24 @@ public class JImagePanelFixedSize extends JPanel {
 		}
 
 	@Override public void paintComponent(Graphics g) {
-		g.drawImage(mImage,0,0, mWidth, mHeight, this);
+		g.drawImage(mImage,0,0, this);
 		}
 
 	private void readImage(String fileName) {
 		try {
-			BufferedInputStream in=new BufferedInputStream(getClass().getResourceAsStream(fileName));
+			BufferedInputStream in = new BufferedInputStream(getClass().getResourceAsStream(fileName));
 			mImage = ImageIO.read(in);
 			}
 		catch (Exception e) {}
+		}
+
+	public void scaleImage(int width, int height) {
+		if (width != mImage.getWidth()
+		 || height != mImage.getHeight()) {
+			AffineTransform scaleTransform = AffineTransform.getScaleInstance(
+					(double)width / mImage.getWidth(), (double)height / mImage.getHeight());
+			AffineTransformOp bilinearScaleOp = new AffineTransformOp(scaleTransform, AffineTransformOp.TYPE_BILINEAR);
+			mImage = bilinearScaleOp.filter(mImage, new BufferedImage(width, height, mImage.getType()));
+			}
 		}
 	}
