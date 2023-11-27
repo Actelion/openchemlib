@@ -57,7 +57,7 @@ public class StructureSearch {
 	private volatile StructureSearchDataSource mDataSource;
 	private volatile StructureSearchController mSearchController;
 	private volatile ProgressController mProgressController;
-	private volatile StereoMolecule[] mQueryFragment;
+	private volatile StereoMolecule[] mQueryFragment,mDoubleQueryFragment;
 	private volatile ByteArrayComparator mIDCodeComparator;
 	private volatile DescriptorHandler mDescriptorHandler;
 	private volatile Object[] mQueryDescriptor;
@@ -155,6 +155,15 @@ public class StructureSearch {
 					for (int i=0; i<queryStructureCount; i++) {
 						mQueryFragment[i] = new IDCodeParser(false).getCompactMolecule(mSpecification.getIDCode(i));
 						mQueryFragment[i].ensureHelperArrays(Molecule.cHelperParities);
+						}
+					if (mSpecification.isSingleMatchOnly()) {
+						mDoubleQueryFragment = new StereoMolecule[queryStructureCount];
+						for (int i=0; i<queryStructureCount; i++) {
+							mDoubleQueryFragment[i] = new StereoMolecule(mQueryFragment[i].getAtoms(), mQueryFragment[i].getBonds());
+							mDoubleQueryFragment[i].addMolecule(mQueryFragment[i]);
+							mDoubleQueryFragment[i].addMolecule(mQueryFragment[i]);
+							mDoubleQueryFragment[i].ensureHelperArrays(Molecule.cHelperParities);
+							}
 						}
 					}
 				else {
@@ -310,8 +319,17 @@ public class StructureSearch {
 							for (int i=0; i<mQueryFragment.length; i++) {
 								mSSSearcher.setFragment(mQueryFragment[i], (long[])mQueryDescriptor[i]);
 								if (mSSSearcher.isFragmentInMolecule()) {
-									isMatch = true;
-									break;
+									if (mSpecification.isSingleMatchOnly()) {
+										mSSSearcher.setFragment(mDoubleQueryFragment[i], (long[])mQueryDescriptor[i]);
+										if (!mSSSearcher.isFragmentInMolecule()) {
+											isMatch = true;
+											break;
+											}
+										}
+									else {
+										isMatch = true;
+										break;
+										}
 									}
 								}
 							}
