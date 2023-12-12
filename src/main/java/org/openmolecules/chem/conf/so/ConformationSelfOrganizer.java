@@ -836,8 +836,8 @@ if (mDWWriter != null && conformerChanged) {
 				for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 					if (neighbourCount == mMol.getAllConnAtoms(atom)
 					 && conformer.getAtomStrain(atom) > maxCageBreakoutStrain(atom)) {
-System.out.println("escape "+neighbourCount+" neighbours");
-System.out.print("strains: "); for (int i=0; i<mMol.getAllAtoms(); i++) System.out.print(" "+i+":"+conformer.getAtomStrain(i)); System.out.println();
+//System.out.println("escape "+neighbourCount+" neighbours");
+//System.out.print("strains: "); for (int i=0; i<mMol.getAllAtoms(); i++) System.out.print(" "+i+":"+conformer.getAtomStrain(i)); System.out.println();
 						if (mDWWriter != null) {
 							try {
 								writeStrains(conformer, null, "escapeCage", conformer.getAtomStrain(atom), Double.NaN);
