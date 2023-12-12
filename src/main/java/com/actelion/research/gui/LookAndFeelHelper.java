@@ -31,7 +31,14 @@ public class LookAndFeelHelper {
 		return UIManager.getLookAndFeel().getName().startsWith("Substance");
 	}
 
+	public static boolean isRadiance() {
+		return UIManager.getLookAndFeel().getName().startsWith("Radiance");
+	}
+
 	public static boolean isDarkLookAndFeel() {
-		return UIManager.getLookAndFeel().getName().startsWith("Substance Graphite");
+		String lafName = UIManager.getLookAndFeel().getName();
+		return lafName.startsWith("Substance Graphite")
+			|| lafName.startsWith("Radiance Graphite")
+			|| lafName.startsWith("Radiance Night");
 		}
 	}
