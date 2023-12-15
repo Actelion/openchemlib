@@ -34,6 +34,7 @@
 
 package com.actelion.research.gui;
 
+import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 
 import javax.swing.*;
@@ -41,6 +42,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 /**
@@ -50,34 +53,17 @@ import java.util.ArrayList;
 public class JPruningBar extends JPanel implements MouseListener, MouseMotionListener {
 	static final long serialVersionUID = 0x20070307;
 
-	private static final Color cShadowColor		 = new Color(153, 153, 153);
-	private static final Color cDarkShadowColor	 = new Color(102, 102, 102);
-	private static final Color cThumbColor		  = new Color(153, 153, 204);
-	private static final Color cThumbShadowColor	= new Color(102, 102, 153);
-	private static final Color cThumbHighlightColor = new Color(204, 204, 255);
-	private static final Color[] cWaterBlueColor = {
-							new Color(188, 216, 248), new Color(184, 215, 247),
-							new Color(170, 205, 245), new Color(150, 194, 242),
-							new Color(116, 172, 235), new Color(138, 190, 243),
-							new Color(146, 196, 247), new Color(155, 203, 252),
-							new Color(164, 208, 255), new Color(170, 215, 255),
-							new Color(177, 223, 255), new Color(193, 235, 255),
-							new Color(207, 245, 255), new Color(207, 255, 255) };
-	private static final Color[] cWaterRedColor = {
-							new Color(255, 189, 219), new Color(247, 189, 215),
-							new Color(247, 173, 207), new Color(247, 148, 195),
-							new Color(239, 115, 174), new Color(247, 140, 190),
-							new Color(247, 148, 199), new Color(255, 156, 203),
-							new Color(255, 165, 211), new Color(255, 173, 215),
-							new Color(255, 181, 223), new Color(255, 198, 235),
-							new Color(255, 206, 247), new Color(255, 206, 255) };
-	private static final int cOverallWidth = 16;
-	private static final int cThumbHeight = 14;
-	private static final int cBorder = 2;
+	private static final Color cDefaultThumbColor		  = new Color(153, 153, 204);
 
-	private float	mLowValue,mMinValue,mHighValue,mMaxValue,mSegmentSize;
+	private static final Color[] cWaterRedColor = { new Color(255, 160, 160), new Color(160, 0, 0) };
+
+	private static final int cThumbSize = HiDPIHelper.scale(14);
+	private static final int cBarWidth = HiDPIHelper.scale(8);
+	private static final int cBorder = HiDPIHelper.scale(2);
+
+	private float	mLowValue,mMinValue,mHighValue,mMaxValue, mValuePerPixel,mPosition1,mPosition2;
 	private boolean	mIsHorizontal,mUpdateNeeded,mUseRedColor,mAllowDoubleClickChange,mWasDragged;
-	private int		mID,mMousePosition,mClickedArea,mPosition1,mPosition2;
+	private int		mID,mMousePosition,mClickedArea;
 	private ArrayList<PruningBarListener> mListener;
 
 	public JPruningBar() {
@@ -109,58 +95,69 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-
+		((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		Graphics2D g2D = (Graphics2D)g;
 		Dimension theSize = getSize();
+		float lineWidth = 3.5f*HiDPIHelper.getUIScaleFactor();
+		g2D.setStroke(new BasicStroke(lineWidth, BasicStroke.CAP_BUTT,BasicStroke.JOIN_MITER));
+		Color shadowColor = LookAndFeelHelper.isDarkLookAndFeel() ?
+				ColorHelper.brighter(getBackground(), 0.8f) : ColorHelper.darker(getBackground(), 0.8f);
 
 		if (mUpdateNeeded) {
-			int x1,y1,x2,y2;
+			float x1,y1,x2,y2;  // display area without border
 			if (mIsHorizontal) {
 				x1 = cBorder;
-				x2 = theSize.width - cBorder - 1;
-				y1 = (theSize.height - cOverallWidth) / 2;
-				y2 = y1 + cOverallWidth - 1;
+				x2 = theSize.width - cBorder;
+				y1 = (theSize.height - cThumbSize) / 2;
+				y2 = y1 + cThumbSize;
 				}
 			else {
-				x1 = (theSize.width - cOverallWidth) / 2;
-				x2 = x1 + cOverallWidth - 1;
+				x1 = (theSize.width - cThumbSize) / 2;
+				x2 = x1 + cThumbSize;
 				y1 = cBorder;
-				y2 = theSize.height - cBorder - 1;
+				y2 = theSize.height - cBorder;
 				}
 
-			setColor(g, cShadowColor);
-			g.drawLine(x1+1, y1+1, x1+1, y2-1);
-			g.drawLine(x1+1, y1+1, x2-1, y1+1);
+			setColor(g, shadowColor);
+			g2D.fill(new Ellipse2D.Float(x1, y1, cThumbSize, cThumbSize));
+			g2D.fill(new Ellipse2D.Float(x2-cThumbSize, y2-cThumbSize, cThumbSize, cThumbSize));
+			if (mIsHorizontal)
+				g2D.fill(new Rectangle2D.Float(x1+cThumbSize, y1+(cThumbSize-cBarWidth)/2, x2-x1-2*cThumbSize, cBarWidth));
+			else
+				g2D.fill(new Rectangle2D.Float(x1+(cThumbSize-cBarWidth)/2, y1+cThumbSize, cBarWidth, y2-y1-2*cThumbSize));
 
-			int freePixel = (mIsHorizontal) ? x2-x1 : y2-y1;
-			freePixel -= 2 * cThumbHeight + 2;
-			float allSize = mMaxValue - mMinValue;
-			mSegmentSize = allSize / (float)freePixel;
+			float zoomSpace = (mIsHorizontal ? x2-x1 : y2-y1) - 2 * cThumbSize;
+			float valueSpace = mMaxValue - mMinValue;
+			mValuePerPixel = valueSpace / zoomSpace;
 			if (mIsHorizontal) {
-				mPosition1 = (int)((mLowValue - mMinValue + mSegmentSize/2) / mSegmentSize) + 1;
-				mPosition2 = (int)((mHighValue - mMinValue + mSegmentSize/2) / mSegmentSize) + 1 + cThumbHeight + 1;
+				mPosition1 = (mLowValue - mMinValue) / mValuePerPixel;
+				mPosition2 = (mHighValue - mMinValue) / mValuePerPixel;
 				}
 			else {   // tribute to inverted Y-scale in java
-				mPosition1 = (int)((mMaxValue - mHighValue + mSegmentSize/2) / mSegmentSize) + 1;
-				mPosition2 = (int)((mMaxValue - mLowValue + mSegmentSize/2) / mSegmentSize) + 1 + cThumbHeight + 1;
+				mPosition1 = (mMaxValue - mHighValue) / mValuePerPixel;
+				mPosition2 = (mMaxValue - mLowValue) / mValuePerPixel;
 				}
 
-			drawThumb(g, x1, y1, mPosition1);
-			drawThumb(g, x1, y1, mPosition2);
+			if (mPosition2 > mPosition1) {
+				float waterStart = (mIsHorizontal ? x1 : y1) + mPosition1 + cThumbSize;
+				float waterStop = (mIsHorizontal ? x1 : y1) + mPosition2 + cThumbSize;
 
-			if (mPosition2 > mPosition1+cThumbHeight+2) {
-				int waterStart = mPosition1 + cThumbHeight + 1;
-				int waterStop = mPosition2 - 2;
-				for (int i=0; i<14; i++) {
-					setColor(g, mUseRedColor ? cWaterRedColor[i] : cWaterBlueColor[i]);
-					if (mIsHorizontal)
-						g.drawLine(x1+waterStart, y1+i+1, x1+waterStop, y1+i+1);
-					else
-						g.drawLine(x1+i+1, y1+waterStart, x1+i+1, y1+waterStop);
-					}
+				Paint storedPaint = g2D.getPaint();
+
+				Paint paint = (mUseRedColor) ?
+						new GradientPaint(0, -1, cWaterRedColor[0], 0, cBarWidth, cWaterRedColor[1])
+						: HeaderPaintHelper.getHeaderPaint(true, cBarWidth);
+				g2D.setPaint(paint);
+				if (mIsHorizontal)
+					g2D.fill(new Rectangle2D.Float(waterStart, y1+(cThumbSize-cBarWidth)/2, waterStop-waterStart, cBarWidth));
+				else
+					g2D.fill(new Rectangle2D.Float(x1+(cThumbSize-cBarWidth)/2, waterStart, cBarWidth, waterStop-waterStart));
+
+				g2D.setPaint(storedPaint);
 				}
 
-			setColor(g, cDarkShadowColor);
-			g.drawRect(x1, y1, x2-x1, y2-y1);
+			drawThumb(g2D, x1, y1, mPosition1);
+			drawThumb(g2D, x1, y1, mPosition2 + cThumbSize);
 			}
 		}
 
@@ -320,23 +317,23 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	
 	public Dimension getMinimumSize() {
 		if (mIsHorizontal)
-			return new Dimension(4*cThumbHeight, cOverallWidth+2*cBorder);
+			return new Dimension(4* cThumbSize, cThumbSize+2*cBorder);
 		else
-			return new Dimension(cOverallWidth+2*cBorder, 4*cThumbHeight);
+			return new Dimension(cThumbSize+2*cBorder, 4* cThumbSize);
 		}
 
 	public Dimension getPreferredSize() {
 		if (mIsHorizontal)
-			return new Dimension(100, cOverallWidth+2*cBorder);
+			return new Dimension(100, cThumbSize+2*cBorder);
 		else
-			return new Dimension(cOverallWidth+2*cBorder, 100);
+			return new Dimension(cThumbSize+2*cBorder, 100);
 		}
 
 	public Dimension getMaximumSize() {
 		if (mIsHorizontal)
-			return new Dimension(Short.MAX_VALUE, cOverallWidth+2*cBorder);
+			return new Dimension(Short.MAX_VALUE, cThumbSize+2*cBorder);
 		else
-			return new Dimension(cOverallWidth+2*cBorder, Short.MAX_VALUE);
+			return new Dimension(cThumbSize+2*cBorder, Short.MAX_VALUE);
 		}
 
 	public void mousePressed(MouseEvent e) {
@@ -353,11 +350,11 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		mClickedArea = 0;
 		if (mMousePosition < mPosition1)
 			mClickedArea = 0;
-		else if (mMousePosition <= mPosition1 + cThumbHeight)
+		else if (mMousePosition <= mPosition1 + cThumbSize)
 			mClickedArea = 1;
-		else if (mMousePosition <= mPosition2)
+		else if (mMousePosition <= mPosition2+ cThumbSize)
 			mClickedArea = 2;
-		else if (mMousePosition <= mPosition2 + cThumbHeight)
+		else if (mMousePosition <= mPosition2 + 2 * cThumbSize)
 			mClickedArea = 3;
 		else
 			mClickedArea = 0;
@@ -422,7 +419,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 
 		mWasDragged = true;
 
-		float change = mSegmentSize * (float)(position - mMousePosition);
+		float change = mValuePerPixel * (float)(position - mMousePosition);
 		if (!mIsHorizontal) // tribute to inverted Y-scale in java
 			change = -change;
 		if (e.isControlDown())
@@ -496,48 +493,17 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		informListeners(false);
 		}
 
-	private void drawThumb(Graphics g, int x1, int y1, int position) {
-		int x,y;
+	private void drawThumb(Graphics2D g, float x, float y, float position) {
+		if (mIsHorizontal)
+			x += position;
+		else
+			y += position;
 
-		setColor(g, cThumbColor);
-		if (mIsHorizontal) {
-			g.fillRect(x1+position+1, y1+2, cThumbHeight-1, cOverallWidth-3);
-			x = x1+position+2;
-			y = y1+3;
-			}
-		else {
-			g.fillRect(x1+2, y1+position+1, cOverallWidth-3, cThumbHeight-1);
-			x = x1+3;
-			y = y1+position+2;
-			}
-
-		setColor(g, cThumbHighlightColor);
-		if (mIsHorizontal) {
-			g.drawLine(x1+position, y1+1, x1+position+cThumbHeight-2, y1+1);
-			g.drawLine(x1+position, y1+1, x1+position, y1+cOverallWidth-2);
-			}
-		else {
-			g.drawLine(x1+1, y1+position, x1+1, y1+position+cThumbHeight-2);
-			g.drawLine(x1+1, y1+position, x1+cOverallWidth-2, y1+position);
-			}
-		for (int i=0; i<5; i++)
-			for (int j=0; j<5; j++)
-				if (((i + j) & 1) == 0)
-					g.drawLine(x+i*2, y+j*2, x+i*2, y+j*2);
-
-		setColor(g, cThumbShadowColor);
-		if (mIsHorizontal) {
-			g.drawLine(x1+position-1, y1+1, x1+position-1, y1+cOverallWidth-2);
-			g.drawLine(x1+position+cThumbHeight, y1+1, x1+position+cThumbHeight, y1+cOverallWidth-2);
-			}
-		else {
-			g.drawLine(x1+1, y1+position-1, x1+cOverallWidth-2, y1+position-1);
-			g.drawLine(x1+1, y1+position+cThumbHeight, x1+cOverallWidth-2, y1+position+cThumbHeight);
-			}
-		for (int i=0; i<5; i++)
-			for (int j=0; j<5; j++)
-				if (((i + j) & 1) == 0)
-					g.drawLine(x+i*2+1, y+j*2+1, x+i*2+1, y+j*2+1);
+		Color themeColor = HiDPIHelper.getThemeColor(0);
+		setColor(g, themeColor);
+		g.fill(new Ellipse2D.Float(x, y, cThumbSize, cThumbSize));
+		setColor(g, LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(themeColor, 0.8f) : ColorHelper.darker(themeColor, 0.8f));
+		g.draw(new Ellipse2D.Float(x, y, cThumbSize, cThumbSize));
 		}
 
 	private void setColor(Graphics g, Color color) {
@@ -549,7 +515,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		mUpdateNeeded = true;
 		addMouseListener(this);
 		addMouseMotionListener(this);
-		mListener = new ArrayList<PruningBarListener>();
+		mListener = new ArrayList<>();
 		}
 
 	private boolean setHigh(float value) {
