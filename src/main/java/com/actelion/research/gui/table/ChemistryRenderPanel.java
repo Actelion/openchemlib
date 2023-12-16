@@ -88,7 +88,7 @@ public class ChemistryRenderPanel extends JPanel {
         Rectangle r = new Rectangle(new java.awt.Point(0,0), getSize());
 
         // Substance Graphite LaF does not consider the defined background
-        if (LookAndFeelHelper.isNewSubstance()) {
+        if (LookAndFeelHelper.isNewSubstance() || LookAndFeelHelper.isRadiance()) {
             g.setColor(getBackground());
             ((Graphics2D) g).fill(r);
             }

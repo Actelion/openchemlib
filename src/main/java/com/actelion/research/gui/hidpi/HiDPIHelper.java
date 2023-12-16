@@ -102,12 +102,21 @@ public class HiDPIHelper {
 					try { f = Float.parseFloat(dpiFactor); } catch (NumberFormatException nfe) {}
 				if (f != 0)
 					sUIScaleFactor = f;
-				else
-					sUIScaleFactor = Platform.isMacintosh() ? 1f : (float)UIManager.getFont("Label.font").getSize() / 12f;
+				else if (Platform.isMacintosh())
+					sUIScaleFactor = 1.0f;
+				else {
+					try {
+						// with JRE8 we used (float)UIManager.getFont("Label.font").getSize() / 12f
+						sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 120f;
+						if (sUIScaleFactor > 0.9f && sUIScaleFactor < 1.11f)
+							sUIScaleFactor = 1.0f;
+						}
+					catch (HeadlessException hle) {
+						sUIScaleFactor = 1.0f;
+						}
+					}
 				}
-//System.out.println("HiDPIHelper.getUIScaleFactor() retina:"+sRetinaFactor+" UI:"+sUIScaleFactor);
 			}
-
 		return sUIScaleFactor;
 		}
 
