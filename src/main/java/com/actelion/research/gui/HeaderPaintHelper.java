@@ -38,30 +38,23 @@ import javax.swing.*;
 import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Paint;
-import java.security.AccessControlException;
 
 public class HeaderPaintHelper {
-	private static Color sColor1,sColor2;
+	private static int[] sRGB = null;
 
 	public static Paint getHeaderPaint(boolean isSelected, int headerHeight) {
 		// for the development we use a yellow paint
-		boolean isDevelopment = false;
-		try {
-			isDevelopment = (System.getProperty("development") != null);
-			}
-		catch (AccessControlException ace) {}
-
 		// the lighter color on the top
-        Color color1 = LookAndFeelHelper.isDarkLookAndFeel() ?
-		        (!isSelected ? new Color(0x606060) : isDevelopment ? new Color(0xC0C000) : sColor1 != null ? sColor1 : new Color(0x3838C0))
-			  :	(!isSelected ? new Color(0xF0F0F0) : isDevelopment ? new Color(0xFFFFCD) : sColor1 != null ? sColor1 : new Color(0xAEDBFF));
+        int rgb1 = LookAndFeelHelper.isDarkLookAndFeel() ?
+		        (!isSelected ? 0x606060 : sRGB != null ? sRGB[0] : 0x3838C0)
+			  :	(!isSelected ? 0xF0F0F0 : sRGB != null ? sRGB[0] : 0xAEDBFF);
 
 		// the darker color on the bottom
-		Color color2 = LookAndFeelHelper.isDarkLookAndFeel() ?
-				(!isSelected ? new Color(0x404040) : isDevelopment ? new Color(0x404000) : sColor2 != null ? sColor2 : new Color(0x252560))
-			  : (!isSelected ? new Color(0xD0D0D0) : isDevelopment ? new Color(0xAD9C00) : sColor2 != null ? sColor2 : new Color(0x0060FF));
+		int rgb2 = LookAndFeelHelper.isDarkLookAndFeel() ?
+				(!isSelected ? 0x404040 : sRGB != null ? sRGB[1] : 0x252560)
+			  : (!isSelected ? 0xD0D0D0 : sRGB != null ? sRGB[1] : 0x0060FF);
 
-		return new GradientPaint(0, -1, color1, 0, headerHeight, color2);
+		return new GradientPaint(0, -1, new Color(rgb1), 0, headerHeight, new Color(rgb2));
 		}
 
     /**
@@ -74,12 +67,21 @@ public class HeaderPaintHelper {
         return UIManager.getColor(selected ? "InternalFrame.activeTitleBackground" : "InternalFrame.inactiveTitleBackground");
         }
 
-    public static void setSpotColors(Color c1, Color c2) {
-    	sColor1 = c1;
-    	sColor2 = c2;
+	/**
+	 * @return rgb values to paint header gradient; lighter color first
+	 */
+    public static int[] getThemeColors() {
+    	return sRGB;
 		}
 
-    /**
+	/**
+	 * @param rgb values to paint header gradient; lighter color first
+	 */
+	public static void setThemeColors(int[] rgb) {
+		sRGB = rgb;
+		}
+
+	/**
      * Determines and returns the header's text foreground color. Tries to lookup a special color from the
      * L&amp;F. In case it is absent, it uses the standard internal frame forground.
      *

@@ -94,14 +94,16 @@ public class HiDPIIcon extends ImageIcon {
 				}
 
 			// for some reason y needs to be adjusted by 1 in new substance
-			if (LookAndFeelHelper.isNewSubstance())
+			if (LookAndFeelHelper.isNewSubstance()
+			 || LookAndFeelHelper.isRadiance())
 				y++;
 
 			g.drawImage(image, x, y, width, height, null);
 			}
 		else {
 			// for some reason y needs to be adjusted by 1 in new substance
-			if (LookAndFeelHelper.isNewSubstance())
+			if (LookAndFeelHelper.isNewSubstance()
+			 || LookAndFeelHelper.isRadiance())
 				y++;
 
 			Image image = getImage();

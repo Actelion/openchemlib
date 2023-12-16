@@ -107,8 +107,7 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 
 	private void init() {
 		mImageNormal = mArea.getUIHelper().createImage("editorButtons.png");
-		if (LookAndFeelHelper.isDarkLookAndFeel())
-			HiDPIHelper.adaptForLookAndFeel(mImageNormal);
+		HiDPIHelper.adaptForLookAndFeel(mImageNormal);
 		mImageDisabled = mArea.getUIHelper().createImage("editorButtons.png");
 		HiDPIHelper.disableImage(mImageDisabled);
 

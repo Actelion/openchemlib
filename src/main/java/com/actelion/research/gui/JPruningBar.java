@@ -53,17 +53,17 @@ import java.util.ArrayList;
 public class JPruningBar extends JPanel implements MouseListener, MouseMotionListener {
 	static final long serialVersionUID = 0x20070307;
 
-	private static final Color cDefaultThumbColor		  = new Color(153, 153, 204);
+	private static final int cRedWaterRGB = Color.RED.getRGB();
+	private static final int cBlueWaterRGB = 0x156be4;
 
-	private static final Color[] cWaterRedColor = { new Color(255, 160, 160), new Color(160, 0, 0) };
-
-	private static final int cThumbSize = HiDPIHelper.scale(14);
-	private static final int cBarWidth = HiDPIHelper.scale(8);
+	private static final int cThumbSize = 2 * HiDPIHelper.scale(7);	// even integer
+	private static final int cBarWidth = cThumbSize - 2 * HiDPIHelper.scale(3);  // even integer
 	private static final int cBorder = HiDPIHelper.scale(2);
 
-	private float	mLowValue,mMinValue,mHighValue,mMaxValue, mValuePerPixel,mPosition1,mPosition2;
+	private float[] mPosition;
+	private float	mX1,mY1,mLowValue,mMinValue,mHighValue,mMaxValue, mValuePerPixel;
 	private boolean	mIsHorizontal,mUpdateNeeded,mUseRedColor,mAllowDoubleClickChange,mWasDragged;
-	private int		mID,mMousePosition,mClickedArea;
+	private int		mID,mMousePosition,mClickedArea,mActiveThumb;
 	private ArrayList<PruningBarListener> mListener;
 
 	public JPruningBar() {
@@ -91,6 +91,8 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		mIsHorizontal = isHorizontal;
 		mID = id;
 		mAllowDoubleClickChange = allowDoubleClick;
+		mPosition = new float[2];
+		mActiveThumb = -1;
 		}
 
 	public void paintComponent(Graphics g) {
@@ -98,67 +100,96 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		Graphics2D g2D = (Graphics2D)g;
 		Dimension theSize = getSize();
-		float lineWidth = 3.5f*HiDPIHelper.getUIScaleFactor();
+		float lineWidth = 2.5f*HiDPIHelper.getUIScaleFactor();
 		g2D.setStroke(new BasicStroke(lineWidth, BasicStroke.CAP_BUTT,BasicStroke.JOIN_MITER));
-		Color shadowColor = LookAndFeelHelper.isDarkLookAndFeel() ?
-				ColorHelper.brighter(getBackground(), 0.8f) : ColorHelper.darker(getBackground(), 0.8f);
+		Color shadow = LookAndFeelHelper.isDarkLookAndFeel() ?
+				ColorHelper.brighter(getBackground(), 0.7f) : ColorHelper.darker(getBackground(), 0.85f);
+		Color grayThumb = LookAndFeelHelper.isDarkLookAndFeel() ?
+				ColorHelper.brighter(getBackground(), 0.5f) : ColorHelper.darker(getBackground(), 0.75f);
 
 		if (mUpdateNeeded) {
-			float x1,y1,x2,y2;  // display area without border
+			float x2,y2;  // display area without border
 			if (mIsHorizontal) {
-				x1 = cBorder;
+				mX1 = cBorder;
 				x2 = theSize.width - cBorder;
-				y1 = (theSize.height - cThumbSize) / 2;
-				y2 = y1 + cThumbSize;
+				mY1 = (theSize.height - cThumbSize) / 2;
+				y2 = mY1 + cThumbSize;
 				}
 			else {
-				x1 = (theSize.width - cThumbSize) / 2;
-				x2 = x1 + cThumbSize;
-				y1 = cBorder;
+				mX1 = (theSize.width - cThumbSize) / 2;
+				x2 = mX1 + cThumbSize;
+				mY1 = cBorder;
 				y2 = theSize.height - cBorder;
 				}
 
-			setColor(g, shadowColor);
-			g2D.fill(new Ellipse2D.Float(x1, y1, cThumbSize, cThumbSize));
+			setColor(g, shadow);
+			g2D.fill(new Ellipse2D.Float(mX1, mY1, cThumbSize, cThumbSize));
 			g2D.fill(new Ellipse2D.Float(x2-cThumbSize, y2-cThumbSize, cThumbSize, cThumbSize));
 			if (mIsHorizontal)
-				g2D.fill(new Rectangle2D.Float(x1+cThumbSize, y1+(cThumbSize-cBarWidth)/2, x2-x1-2*cThumbSize, cBarWidth));
+				g2D.fill(new Rectangle2D.Float(mX1+cThumbSize-1, mY1+(cThumbSize-cBarWidth)/2, x2-mX1-2*cThumbSize+2, cBarWidth));
 			else
-				g2D.fill(new Rectangle2D.Float(x1+(cThumbSize-cBarWidth)/2, y1+cThumbSize, cBarWidth, y2-y1-2*cThumbSize));
+				g2D.fill(new Rectangle2D.Float(mX1+(cThumbSize-cBarWidth)/2, mY1+cThumbSize-1, cBarWidth, y2-mY1-2*cThumbSize+2));
 
-			float zoomSpace = (mIsHorizontal ? x2-x1 : y2-y1) - 2 * cThumbSize;
+			float zoomSpace = (mIsHorizontal ? x2-mX1 : y2-mY1) - 2 * cThumbSize;
 			float valueSpace = mMaxValue - mMinValue;
 			mValuePerPixel = valueSpace / zoomSpace;
 			if (mIsHorizontal) {
-				mPosition1 = (mLowValue - mMinValue) / mValuePerPixel;
-				mPosition2 = (mHighValue - mMinValue) / mValuePerPixel;
+				mPosition[0] = (mLowValue - mMinValue) / mValuePerPixel;
+				mPosition[1] = (mHighValue - mMinValue) / mValuePerPixel;
 				}
 			else {   // tribute to inverted Y-scale in java
-				mPosition1 = (mMaxValue - mHighValue) / mValuePerPixel;
-				mPosition2 = (mMaxValue - mLowValue) / mValuePerPixel;
+				mPosition[0] = (mMaxValue - mHighValue) / mValuePerPixel;
+				mPosition[1] = (mMaxValue - mLowValue) / mValuePerPixel;
 				}
 
-			if (mPosition2 > mPosition1) {
-				float waterStart = (mIsHorizontal ? x1 : y1) + mPosition1 + cThumbSize;
-				float waterStop = (mIsHorizontal ? x1 : y1) + mPosition2 + cThumbSize;
+			int rgb = mUseRedColor ? cRedWaterRGB : HeaderPaintHelper.getThemeColors() == null ? cBlueWaterRGB : HeaderPaintHelper.getThemeColors()[0];
+			Color c1 = new Color(ColorHelper.createColor(rgb, 0.7f));
+			Color c2 = new Color(ColorHelper.createColor(rgb, 0.5f));
+			Color c3 = new Color(ColorHelper.createColor(rgb, 0.3f));
+
+			if (mPosition[1] > mPosition[0]) {
+				float waterStart = (mIsHorizontal ? mX1 : mY1) + mPosition[0] + cThumbSize;
+				float waterStop = (mIsHorizontal ? mX1 : mY1) + mPosition[1] + cThumbSize;
 
 				Paint storedPaint = g2D.getPaint();
-
-				Paint paint = (mUseRedColor) ?
-						new GradientPaint(0, -1, cWaterRedColor[0], 0, cBarWidth, cWaterRedColor[1])
-						: HeaderPaintHelper.getHeaderPaint(true, cBarWidth);
-				g2D.setPaint(paint);
-				if (mIsHorizontal)
-					g2D.fill(new Rectangle2D.Float(waterStart, y1+(cThumbSize-cBarWidth)/2, waterStop-waterStart, cBarWidth));
-				else
-					g2D.fill(new Rectangle2D.Float(x1+(cThumbSize-cBarWidth)/2, waterStart, cBarWidth, waterStop-waterStart));
+				if (mIsHorizontal) {
+					float yy1 = mY1 + (cThumbSize - cBarWidth) / 2;
+					float yy2 = mY1 + (cThumbSize + cBarWidth) / 2;
+					g2D.setPaint(new GradientPaint(0, yy1, c1, 0, yy2, c3));
+					g2D.fill(new Rectangle2D.Float(waterStart, yy1, waterStop - waterStart, cBarWidth));
+					}
+				else {
+					float xx1 = mX1 + (cThumbSize - cBarWidth) / 2;
+					float xx2 = mY1 + (cThumbSize + cBarWidth) / 2;
+					g2D.setPaint(new GradientPaint(xx1, 0, c1, xx2, 0, c3));
+					g2D.fill(new Rectangle2D.Float(xx1, waterStart, cBarWidth, waterStop - waterStart));
+					}
 
 				g2D.setPaint(storedPaint);
 				}
 
-			drawThumb(g2D, x1, y1, mPosition1);
-			drawThumb(g2D, x1, y1, mPosition2 + cThumbSize);
+			for (int i=0; i<2; i++)
+				drawThumb(g2D, i, i == mActiveThumb ? c2 : grayThumb, c3);
 			}
+		}
+
+	private void drawThumb(Graphics2D g, int i, Color color1, Color color2) {
+		Ellipse2D.Float elipse = getThumbElipse(i);
+		setColor(g, color1);
+		g.fill(elipse);
+		setColor(g, color2);
+		g.draw(elipse);
+		}
+
+	private Ellipse2D.Float getThumbElipse(int i) {
+		float shift = mPosition[i] + (i == 1 ? cThumbSize : 0);
+		float x = mX1 + (mIsHorizontal ? shift : 0);
+		float y = mY1 + (mIsHorizontal ? 0 : shift);
+		return new Ellipse2D.Float(x, y, cThumbSize, cThumbSize);
+		}
+
+	private void setColor(Graphics g, Color color) {
+		g.setColor(isEnabled() ? color : ColorHelper.intermediateColor(color, Color.LIGHT_GRAY, 0.7f));
 		}
 
 	public void update(Graphics g) {
@@ -348,13 +379,13 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		mWasDragged = false;
 
 		mClickedArea = 0;
-		if (mMousePosition < mPosition1)
+		if (mMousePosition < mPosition[0])
 			mClickedArea = 0;
-		else if (mMousePosition <= mPosition1 + cThumbSize)
+		else if (mMousePosition <= mPosition[0] + cThumbSize)
 			mClickedArea = 1;
-		else if (mMousePosition <= mPosition2+ cThumbSize)
+		else if (mMousePosition <= mPosition[1]+ cThumbSize)
 			mClickedArea = 2;
-		else if (mMousePosition <= mPosition2 + 2 * cThumbSize)
+		else if (mMousePosition <= mPosition[1] + 2 * cThumbSize)
 			mClickedArea = 3;
 		else
 			mClickedArea = 0;
@@ -479,7 +510,18 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 			}
 		}
 
-	public void mouseMoved(MouseEvent e) {}
+	public void mouseMoved(MouseEvent e) {
+		int old = mActiveThumb;
+		mActiveThumb = -1;
+		for (int i=0; i<2; i++) {
+			if (getThumbElipse(i).contains(e.getX(), e.getY())) {
+				mActiveThumb = i;
+				break;
+				}
+			}
+		if (old != mActiveThumb)
+			repaint();
+		}
 
 	public void addPruningBarListener(PruningBarListener listener) {
 		mListener.add(listener);
@@ -491,23 +533,6 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 
 	public void firePruningBarChanged() {
 		informListeners(false);
-		}
-
-	private void drawThumb(Graphics2D g, float x, float y, float position) {
-		if (mIsHorizontal)
-			x += position;
-		else
-			y += position;
-
-		Color themeColor = HiDPIHelper.getThemeColor(0);
-		setColor(g, themeColor);
-		g.fill(new Ellipse2D.Float(x, y, cThumbSize, cThumbSize));
-		setColor(g, LookAndFeelHelper.isDarkLookAndFeel() ? ColorHelper.brighter(themeColor, 0.8f) : ColorHelper.darker(themeColor, 0.8f));
-		g.draw(new Ellipse2D.Float(x, y, cThumbSize, cThumbSize));
-		}
-
-	private void setColor(Graphics g, Color color) {
-		g.setColor(isEnabled() ? color : ColorHelper.intermediateColor(color, Color.LIGHT_GRAY, 0.7f));
 		}
 
 	private void init() {

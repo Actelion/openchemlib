@@ -10,13 +10,16 @@ import java.awt.*;
 import java.lang.reflect.Field;
 
 public class HiDPIHelper {
-	private static final int[] BRIGHT_TO_DARK_LAF = {   // supplied image always contains 1st color (bright L&F)
-			0x00503CB4, 0x00B4A0FF, 	// main color (bright and dark L&F)
-			0x00000000, 0x00E0E0E0 };	// second color (bright and dark L&F)
+	private static final int[] ICON_SPOT_COLOR = {   // original spot colors used in icon images (bright L&F)
+			0x00503CB4, 0x00000000 };
+
+	private static final int[] DARK_LAF_SPOT_COLOR = {   // default replacement spot colors for dark L&F)
+			0x00B4A0FF, 0x00E0E0E0 };
 
 	// This is an Apple only solution and needs to be adapted to support high-res displays of other vendors
 	private static float sRetinaFactor = -1f;
 	private static float sUIScaleFactor = -1f;
+	private static int[] sSpotColor = null;
 
 	/**
 	 * Macintosh retina display support for Java 7 and newer.
@@ -24,19 +27,23 @@ public class HiDPIHelper {
 	 * @return 1.0 on standard resolution devices and 2.0 for retina screens
 	 */
 	public static float getRetinaScaleFactor() {
+		if (!Platform.isMacintosh())
+			return 1f;
+
 		/* with Apple-Java-6 this was:
 		Object sContentScaleFactorObject = Toolkit.getDefaultToolkit().getDesktopProperty("apple.awt.contentScaleFactor");
 		private static final float sRetinaFactor = (sContentScaleFactorObject == null) ? 1f : ((Float)sContentScaleFactorObject).floatValue();
 		*/
-		if (Platform.isMacintosh()) {
-			if (sRetinaFactor != -1f)
-				return sRetinaFactor;
 
-			sRetinaFactor = 1f;
+		if (sRetinaFactor != -1f)
+			return sRetinaFactor;
 
-			GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			final GraphicsDevice device = env.getDefaultScreenDevice();
+		sRetinaFactor = 1f;
 
+		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		final GraphicsDevice device = env.getDefaultScreenDevice();
+
+		if (System.getProperty("java.version").startsWith("1.")) {
 			try {
 				Field field = device.getClass().getDeclaredField("scale");
 				if (field != null) {
@@ -47,25 +54,27 @@ public class HiDPIHelper {
 						sRetinaFactor = (Integer) scale;
 					else
 						System.out.println("Unexpected content scale (not 1 nor 2): " + scale.toString());
+					}
 				}
-			} catch (Throwable e) {
+			catch (Throwable e) {}
 			}
-	/*	the above code gives WARNING under Java 9:
-				WARNING: An illegal reflective access operation has occurred
-				WARNING: All illegal access operations will be denied in a future release
+//		else {
+/*	the above code gives WARNING under Java 9:
+			WARNING: An illegal reflective access operation has occurred
+			WARNING: All illegal access operations will be denied in a future release
 
-				If we know, we are on a Mac, we could do something like:
+			If we know, we are on a Mac, we could do something like:
 
-			if (device instanceof CGraphicsDevice) {	// apple.awt.CGraphicsDevice
-				final CGraphicsDevice cgd = (CGraphicsDevice)device;
+		if (device instanceof CGraphicsDevice) {	// apple.awt.CGraphicsDevice
+			final CGraphicsDevice cgd = (CGraphicsDevice)device;
 
-				// this is the missing correction factor, it's equal to 2 on HiDPI a.k.a. Retina displays
-				final int scaleFactor = cgd.getScaleFactor();
+			// this is the missing correction factor, it's equal to 2 on HiDPI a.k.a. Retina displays
+			final int scaleFactor = cgd.getScaleFactor();
 
-				// now we can compute the real DPI of the screen
-				final double realDPI = scaleFactor * (cgd.getXResolution() + cgd.getYResolution()) / 2;
-				}*/
-		} else {
+			// now we can compute the real DPI of the screen
+			final double realDPI = scaleFactor * (cgd.getXResolution() + cgd.getYResolution()) / 2;
+			}*/
+		else {
 			GraphicsDevice sd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 			sRetinaFactor = (float) sd.getDefaultConfiguration().getDefaultTransform().getScaleX();
 		}
@@ -122,8 +131,16 @@ public class HiDPIHelper {
 		return Math.round(getUIScaleFactor() * getRetinaScaleFactor() * value);
 		}
 
-	public static Color getThemeColor(int no) {
-		return new Color(BRIGHT_TO_DARK_LAF[2*no+(LookAndFeelHelper.isDarkLookAndFeel()?1:0)]);
+	public static void setIconSpotColors(int[] rgb) {
+		sSpotColor = rgb;
+		}
+
+	public static int[] getThemeSpotRGBs() {
+		int[] rgb = (sSpotColor != null) ? sSpotColor
+				: LookAndFeelHelper.isDarkLookAndFeel() ? DARK_LAF_SPOT_COLOR
+				: ICON_SPOT_COLOR;
+
+		return rgb;
 		}
 
 	/**
@@ -132,8 +149,10 @@ public class HiDPIHelper {
 	 * @return
 	 */
 	public static void adaptForLookAndFeel(GenericImage image) {
-		if (LookAndFeelHelper.isDarkLookAndFeel())
-			useSpotColorsForDarkLookAndFeel(image);
+		if (sSpotColor != null)
+			replaceSpotColors(image, sSpotColor);
+		else if (LookAndFeelHelper.isDarkLookAndFeel())
+			replaceSpotColors(image, DARK_LAF_SPOT_COLOR);
 	}
 
 	public static void disableImage(GenericImage image) {
@@ -150,18 +169,17 @@ public class HiDPIHelper {
 		}
 	}
 
-	private static void useSpotColorsForDarkLookAndFeel(GenericImage image) {
+	private static void replaceSpotColors(GenericImage image, int[] altRGB) {
 		for (int x=0; x<image.getWidth(); x++) {
 			for (int y=0; y<image.getHeight(); y++) {
 				int argb = image.getRGB(x, y);
 				int rgb = argb & 0x00FFFFFF;
-				for (int i=0; i<BRIGHT_TO_DARK_LAF.length; i+=2) {
-					if (rgb == BRIGHT_TO_DARK_LAF[i]) {
-						rgb = BRIGHT_TO_DARK_LAF[i + 1];
+				for (int i=0; i<ICON_SPOT_COLOR.length; i++) {
+					if (rgb == ICON_SPOT_COLOR[i]) {
+						image.setRGB(x, y, (0xFF000000 & argb) + altRGB[i]);
 						break;
 					}
 				}
-				image.setRGB(x, y, (0xFF000000 & argb) + rgb);
 			}
 		}
 	}

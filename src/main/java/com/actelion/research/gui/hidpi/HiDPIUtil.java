@@ -44,10 +44,6 @@ import java.util.WeakHashMap;
 public class HiDPIUtil {
 	private static final String version = System.getProperty("java.version");
 	public static final boolean IS_JAVA_8_OR_OLDER = version.startsWith("1.");
-	public static final boolean IS_JAVA_8 = version.startsWith("1.8");
-	public static final boolean IS_JAVA_9 = version.startsWith("9");
-	public static final boolean IS_JAVA_10 = version.startsWith("10");
-	public static final boolean IS_JAVA_11 = version.startsWith("11");
 
 	/**
 	 * Tries to look up the System property for the given key. In untrusted
