@@ -23,11 +23,6 @@ public class HiDPIHelper {
 		if (!Platform.isMacintosh())
 			return 1f;
 
-		/* with Apple-Java-6 this was:
-		Object sContentScaleFactorObject = Toolkit.getDefaultToolkit().getDesktopProperty("apple.awt.contentScaleFactor");
-		private static final float sRetinaFactor = (sContentScaleFactorObject == null) ? 1f : ((Float)sContentScaleFactorObject).floatValue();
-		*/
-
 		if (sRetinaFactor != -1f)
 			return sRetinaFactor;
 
@@ -36,7 +31,7 @@ public class HiDPIHelper {
 		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		final GraphicsDevice device = env.getDefaultScreenDevice();
 
-		if (System.getProperty("java.version").startsWith("1.")) {
+		if (System.getProperty("java.version").startsWith("1.")) {  // for JRE8 and earlier
 			try {
 				Field field = device.getClass().getDeclaredField("scale");
 				if (field != null) {
@@ -51,22 +46,6 @@ public class HiDPIHelper {
 				}
 			catch (Throwable e) {}
 			}
-//		else {
-/*	the above code gives WARNING under Java 9:
-			WARNING: An illegal reflective access operation has occurred
-			WARNING: All illegal access operations will be denied in a future release
-
-			If we know, we are on a Mac, we could do something like:
-
-		if (device instanceof CGraphicsDevice) {	// apple.awt.CGraphicsDevice
-			final CGraphicsDevice cgd = (CGraphicsDevice)device;
-
-			// this is the missing correction factor, it's equal to 2 on HiDPI a.k.a. Retina displays
-			final int scaleFactor = cgd.getScaleFactor();
-
-			// now we can compute the real DPI of the screen
-			final double realDPI = scaleFactor * (cgd.getXResolution() + cgd.getYResolution()) / 2;
-			}*/
 		else {
 			GraphicsDevice sd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 			sRetinaFactor = (float) sd.getDefaultConfiguration().getDefaultTransform().getScaleX();
@@ -75,13 +54,13 @@ public class HiDPIHelper {
 	}
 
 	/**
-	 * For Windows and Linux this method returns the user defined UI scaling factor.
-	 * This is done by judging from the size of the UIManager's Label.font
-	 * and comparing it to the unscaled default (13). Typically this factor is larger
-	 * than 1.0 on HiDPI devices. For this method to work the Look&Feel must consider
-	 * the OS provided setting and scale its fonts accordingly (Substance LaF does).<br>
-	 * On the Macintosh this factor is usually 1.0, because HiDPI device support uses
-	 * a different mechanism (see getRetinaScaleFactor()).
+	 * For Windows and Linux this method returns a (hopefully) reasonable UI scaling factor.
+	 * If DataWarrior was launched with a user supplied system property 'dpifactor', then we use
+	 * this value. Otherwise, we take the screen resolution devided by 96, which finally results
+	 * in a scaling factor of 1.0 at 96 dpi monitor resolution. If we use factor*12 point system
+	 * fonts, then these are about 3 mm high on monitors independent of their resolution.
+	 * On the Macintosh this factor is 1.0, because HiDPI device support uses
+	 * a different mechanism on OSX (see getRetinaScaleFactor()).
 	 * @return typically 1.0 or 1.25, 1.5, ...
 	 */
 	public static float getUIScaleFactor() {
@@ -100,7 +79,7 @@ public class HiDPIHelper {
 				else {
 					try {
 						// with JRE8 we used (float)UIManager.getFont("Label.font").getSize() / 12f
-						sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 120f;
+						sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96f;
 						if (sUIScaleFactor > 0.9f && sUIScaleFactor < 1.11f)
 							sUIScaleFactor = 1.0f;
 						}
