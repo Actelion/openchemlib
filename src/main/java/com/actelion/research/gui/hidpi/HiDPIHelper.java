@@ -10,16 +10,9 @@ import java.awt.*;
 import java.lang.reflect.Field;
 
 public class HiDPIHelper {
-	private static final int[] ICON_SPOT_COLOR = {   // original spot colors used in icon images (bright L&F)
-			0x00503CB4, 0x00000000 };
-
-	private static final int[] DARK_LAF_SPOT_COLOR = {   // default replacement spot colors for dark L&F)
-			0x00B4A0FF, 0x00E0E0E0 };
-
 	// This is an Apple only solution and needs to be adapted to support high-res displays of other vendors
 	private static float sRetinaFactor = -1f;
 	private static float sUIScaleFactor = -1f;
-	private static int[] sSpotColor = null;
 
 	/**
 	 * Macintosh retina display support for Java 7 and newer.
@@ -140,29 +133,11 @@ public class HiDPIHelper {
 		return Math.round(getUIScaleFactor() * getRetinaScaleFactor() * value);
 		}
 
-	public static void setIconSpotColors(int[] rgb) {
-		sSpotColor = rgb;
-		}
-
-	public static int[] getThemeSpotRGBs() {
-		int[] rgb = (sSpotColor != null) ? sSpotColor
-				: LookAndFeelHelper.isDarkLookAndFeel() ? DARK_LAF_SPOT_COLOR
-				: ICON_SPOT_COLOR;
-
-		return rgb;
-		}
-
 	/**
 	 * If the current look&feel is dark, then colors are adapted for optimal contrast.
 	 * @param image
 	 * @return
 	 */
-	public static void adaptForLookAndFeel(GenericImage image) {
-		if (sSpotColor != null)
-			replaceSpotColors(image, sSpotColor);
-		else if (LookAndFeelHelper.isDarkLookAndFeel())
-			replaceSpotColors(image, DARK_LAF_SPOT_COLOR);
-	}
 
 	public static void disableImage(GenericImage image) {
 		Color gray = LookAndFeelHelper.isDarkLookAndFeel() ?
@@ -174,21 +149,6 @@ public class HiDPIHelper {
 			for (int y=0; y<image.getHeight(); y++) {
 				int argb = image.getRGB(x, y);
 				image.setRGB(x, y, (0xFF000000 & argb) + grayRGB);
-			}
-		}
-	}
-
-	private static void replaceSpotColors(GenericImage image, int[] altRGB) {
-		for (int x=0; x<image.getWidth(); x++) {
-			for (int y=0; y<image.getHeight(); y++) {
-				int argb = image.getRGB(x, y);
-				int rgb = argb & 0x00FFFFFF;
-				for (int i=0; i<ICON_SPOT_COLOR.length; i++) {
-					if (rgb == ICON_SPOT_COLOR[i]) {
-						image.setRGB(x, y, (0xFF000000 & argb) + altRGB[i]);
-						break;
-					}
-				}
 			}
 		}
 	}

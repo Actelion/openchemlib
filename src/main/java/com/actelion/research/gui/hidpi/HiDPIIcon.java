@@ -16,19 +16,60 @@ public class HiDPIIcon extends ImageIcon {
 	private static final float ICON_SCALE_LIMIT_2 = 1.9f; // custom dpi scale factors between ICON_SCALE_LIMIT_2 and ICON_SCALE_LIMIT_3
 	private static final float ICON_SCALE_LIMIT_3 = 2.1f; // use larger image, but won't be scaled
 
+	private static final int[] ICON_SPOT_COLOR = {   // original spot colors used in icon images (bright L&F)
+			0x00503CB4, 0x00000000 };
+	private static final int[] DARK_LAF_SPOT_COLOR = {   // default replacement spot colors for dark L&F)
+			0x00B4A0FF, 0x00E0E0E0 };
+
+	private static int[] sSpotColor = null;
+
 	public HiDPIIcon(final Image image) {
 		super(image);
 		}
 
 	public static Icon createIcon(String fileName, int rotation, boolean isDisabled) {
 		GenericImage image = createIconImage(fileName);
-		HiDPIHelper.adaptForLookAndFeel(image);
+		adaptForLookAndFeel(image);
 		rotate(image, rotation);
 		if (isDisabled)
 			HiDPIHelper.disableImage(image);
 		capCorners(image);
 		return new HiDPIIcon((Image)(mustScale() ? scale(image) : image).get());
 		}
+
+	public static void setIconSpotColors(int[] rgb) {
+		sSpotColor = rgb;
+	}
+
+	public static int[] getThemeSpotRGBs() {
+		int[] rgb = (sSpotColor != null) ? sSpotColor
+				: LookAndFeelHelper.isDarkLookAndFeel() ? DARK_LAF_SPOT_COLOR
+				: ICON_SPOT_COLOR;
+
+		return rgb;
+	}
+
+	public static void adaptForLookAndFeel(GenericImage image) {
+		if (sSpotColor != null)
+			replaceSpotColors(image, sSpotColor);
+		else if (LookAndFeelHelper.isDarkLookAndFeel())
+			replaceSpotColors(image, DARK_LAF_SPOT_COLOR);
+	}
+
+	private static void replaceSpotColors(GenericImage image, int[] altRGB) {
+		for (int x=0; x<image.getWidth(); x++) {
+			for (int y=0; y<image.getHeight(); y++) {
+				int argb = image.getRGB(x, y);
+				int rgb = argb & 0x00FFFFFF;
+				for (int i=0; i<ICON_SPOT_COLOR.length; i++) {
+					if (rgb == ICON_SPOT_COLOR[i]) {
+						image.setRGB(x, y, (0xFF000000 & argb) + altRGB[i]);
+						break;
+					}
+				}
+			}
+		}
+	}
 
 	/**
 	 * Creates an image from the fileName. On HiDPI devices this is a high

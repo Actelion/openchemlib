@@ -36,6 +36,7 @@ package com.actelion.research.gui.editor;
 import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.gui.hidpi.HiDPIIcon;
 import com.actelion.research.util.ColorHelper;
 
 public class GenericEditorToolbar implements GenericEventListener<GenericMouseEvent> {
@@ -107,7 +108,7 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 
 	private void init() {
 		mImageNormal = mArea.getUIHelper().createImage("editorButtons.png");
-		HiDPIHelper.adaptForLookAndFeel(mImageNormal);
+		HiDPIIcon.adaptForLookAndFeel(mImageNormal);
 		mImageDisabled = mArea.getUIHelper().createImage("editorButtons.png");
 		HiDPIHelper.disableImage(mImageDisabled);
 

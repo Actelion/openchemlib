@@ -126,10 +126,17 @@ public class ScaledEditorKit extends HTMLEditorKit {
 			}
 		}
 		if (fg != null) {
-			rule.append(" color: ").append(ColorUtils.colorToString(fg)).append(" ; ");
+			rule.append(" color: ").append(colorToString(fg)).append(" ; ");
 		}
 		rule.append(" }");
 		return rule.toString();
+	}
+
+	private String colorToString(final Color col) {
+		if (col == null) {
+			return null;
+		}
+		return String.format("#%02x%02x%02x", col.getRed(), col.getGreen(), col.getBlue());
 	}
 
 	/**
