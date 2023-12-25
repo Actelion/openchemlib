@@ -7,6 +7,8 @@ import com.actelion.research.util.Platform;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 
 public class HiDPIHelper {
@@ -65,32 +67,51 @@ public class HiDPIHelper {
 	 */
 	public static float getUIScaleFactor() {
 		if (sUIScaleFactor == -1) {
-			if (getRetinaScaleFactor() != 1f)
-				sUIScaleFactor = 1f;
-			else {
-				float f = 0;
-				String dpiFactor = System.getProperty("dpifactor");
-				if (dpiFactor != null)
-					try { f = Float.parseFloat(dpiFactor); } catch (NumberFormatException nfe) {}
-				if (f != 0)
-					sUIScaleFactor = f;
-				else if (Platform.isMacintosh())
+			float f = 0;
+			String dpiFactor = System.getProperty("dpifactor");
+			if (dpiFactor != null)
+				try { f = Float.parseFloat(dpiFactor); } catch (NumberFormatException nfe) {}
+			if (f != 0)
+				sUIScaleFactor = f;
+			else if (Platform.isMacintosh()) {
+				sUIScaleFactor = 1.0f;
+				}
+			else if (Platform.isWindows()) {
+				try {
+					// with JRE8 we used (float)UIManager.getFont("Label.font").getSize() / 12f
+					sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96f;
+					}
+				catch (HeadlessException hle) {
 					sUIScaleFactor = 1.0f;
-				else {
-					try {
-						// with JRE8 we used (float)UIManager.getFont("Label.font").getSize() / 12f
-						sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96f;
-						if (sUIScaleFactor > 0.9f && sUIScaleFactor < 1.11f)
-							sUIScaleFactor = 1.0f;
-						}
-					catch (HeadlessException hle) {
-						sUIScaleFactor = 1.0f;
-						}
 					}
 				}
+			else {  // Linux; Toolkit.getDefaultToolkit().getScreenResolution() always returns 1.0
+				try {
+					sUIScaleFactor = 1.0f;  // default in case of error
+					Process process = Runtime.getRuntime().exec("xrdb -q");
+					process.waitFor();
+					BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+					String line;
+					while ((line = br.readLine()) != null) {
+						if (line.startsWith("Xft.dpi:")) {
+							int dpi = Integer.parseInt(line.substring(8).trim());
+							sUIScaleFactor = dpi / 96f;
+							break;
+							}
+						}
+					br.close();
+					}
+				catch (Exception ioe) {}
+				}
+			if (sUIScaleFactor < 1.1f)
+				sUIScaleFactor = 1.0f;
 			}
 		return sUIScaleFactor;
 		}
+
+	public static void setUIScaleFactor(float factor) {
+		sUIScaleFactor = factor;
+	}
 
 	/**
 	 * This is a convenience method that scales the passed int value with getUIScaleFactor()
