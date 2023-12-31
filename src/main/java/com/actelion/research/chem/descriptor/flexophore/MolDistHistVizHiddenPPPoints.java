@@ -201,7 +201,7 @@ public class MolDistHistVizHiddenPPPoints extends MolDistHistViz implements Seri
 	/**
 	 * @return the hsHiddenIndex
 	 */
-	protected HashSet<Byte> getHashSetHiddenIndex() {
+	public HashSet<Byte> getHashSetHiddenIndex() {
 		return hsHiddenIndex;
 	}
 
