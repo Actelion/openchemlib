@@ -76,7 +76,7 @@ public class ConformerSetGenerator {
 */
 		StereoMolecule largestFragment = mol.getCompactCopy();
 		largestFragment.stripSmallFragments();
-		StereoMolecule canonicalFragment = new Canonizer(largestFragment).getCanMolecule();
+		StereoMolecule canonicalFragment = new Canonizer(largestFragment).getCanMolecule(true);
 
 		int maxTorsionSets = (int) Math.max(2 * mMaxNrConfs, (1000 * Math.sqrt(mMaxNrConfs)));
 		ConformerGenerator cg = new ConformerGenerator(mSeed,false);
