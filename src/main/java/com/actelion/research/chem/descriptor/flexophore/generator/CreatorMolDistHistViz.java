@@ -134,6 +134,11 @@ public class CreatorMolDistHistViz {
     }
 
 
+    public void initializeConformersAndSetAtTypes(Molecule3D molInPlace){
+        conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
+        InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
+    }
+
     /**
      * Conformation generator of Thomas Sander
      * The molecule is standardized first.
@@ -176,7 +181,7 @@ public class CreatorMolDistHistViz {
             liMultCoordFragIndex.add(new MultCoordFragIndex(subGraphIndices.getAtomIndices()));
         }
 
-        Molecule3D molViz = createConformations(molInPlace, liMultCoordFragIndex, nConformations, conformerGenerator);
+        Molecule3D molViz = createConformations(molInPlace, liMultCoordFragIndex, nConformations);
 
         int nPotentialConformers = conformerGenerator.getPotentialConformerCount();
 
@@ -205,6 +210,11 @@ public class CreatorMolDistHistViz {
         return mdhv;
     }
 
+    public int getPotentialConformerCount(){
+        int nPotentialConformers = conformerGenerator.getPotentialConformerCount();
+        return nPotentialConformers;
+    }
+
 
     /**
      * This method must be called before:
@@ -222,12 +232,50 @@ public class CreatorMolDistHistViz {
      * @param conformerGenerator
      * @return
      */
-    public static Molecule3D createConformations(Molecule3D molInPlace, List<MultCoordFragIndex> liMultCoordFragIndex, int nConformations, ConformerGenerator conformerGenerator){
+//    public static Molecule3D createConformations(Molecule3D molInPlace, List<MultCoordFragIndex> liMultCoordFragIndex, int nConformations, ConformerGenerator conformerGenerator){
+//        int nAtoms = molInPlace.getAtoms();
+//        int ccConformationsGenerated = 0;
+//        Molecule3D molViz = null;
+//        for (int i = 0; i < nConformations; i++) {
+//            boolean conformerGenerated = generateConformerAndSetCoordinates(conformerGenerator, nAtoms, molInPlace);
+//            if(!conformerGenerated){
+//                break;
+//            }
+//            ccConformationsGenerated++;
+//            calcFragmentCenter(molInPlace, liMultCoordFragIndex);
+//            if(i==0){
+//                molViz = createPharmacophorePoints(molInPlace, liMultCoordFragIndex);
+//            }
+//        }
+//        if(ccConformationsGenerated==0){
+//            throw new ExceptionConformationGenerationFailed("Impossible to generate one conformer!");
+//        }
+//        return molViz;
+//    }
+
+
+    /**
+     * This method must be called before:
+     *  conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
+     *
+     * Time in nanoseconds for a small molecule with idcode fegPb@JByH@QdbbbarTTbb^bRIRNQsjVZjjjh@J@@@
+     * 75491600 first conformation
+     * 16700 sec conformation
+     * 37200 ...
+     * 40100 ...
+     *
+     * @param molInPlace
+     * @param liMultCoordFragIndex
+     * @param nConformations
+     * @return
+     */
+    public Molecule3D createConformations(Molecule3D molInPlace, List<MultCoordFragIndex> liMultCoordFragIndex, int nConformations) throws ExceptionConformationGenerationFailed  {
         int nAtoms = molInPlace.getAtoms();
         int ccConformationsGenerated = 0;
         Molecule3D molViz = null;
         for (int i = 0; i < nConformations; i++) {
             boolean conformerGenerated = generateConformerAndSetCoordinates(conformerGenerator, nAtoms, molInPlace);
+
             if(!conformerGenerated){
                 break;
             }
@@ -279,7 +327,7 @@ public class CreatorMolDistHistViz {
 
     /**
      * Creates the descriptor from the coordinates.
-     * @param liMultCoordFragIndex contains the ccordinates and the related atom indices of the molecule
+     * @param liMultCoordFragIndex contains the coordinates and the related atom indices of the molecule
      * @param molecule3D, must contain the interaction types.
      * @return
      */
@@ -373,13 +421,15 @@ public class CreatorMolDistHistViz {
     }
 
     public void injectNewSeed(){
-
         seed = new Date().getTime();
-
         conformerGenerator = new ConformerGenerator(seed, false);
     }
 
 
+    /**
+     * Use valid only with createMultipleConformations(StereoMolecule molOrig, int nConformations)
+     * @return
+     */
     public boolean isOnlyOneConformer() {
         return onlyOneConformer;
     }
