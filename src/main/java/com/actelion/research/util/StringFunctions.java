@@ -1473,6 +1473,14 @@ public class StringFunctions {
 		return true;
 	}
 
+	public static String toStringStackTrace(Exception ex){
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		ex.printStackTrace(pw);
+		return sw.toString();
+
+	}
+
 	public static void main(String[] args) {
 
 		String sLine = "Pos3ition: 8 15 StartName:XXXEn7890dName0";
