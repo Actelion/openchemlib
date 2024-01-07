@@ -2781,6 +2781,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * - We find the bridge size (atom count) to where it touches the smallest ring.<br>
 	 * - We also find the path length from the touch point on the smallest ring back to atom.<br>
 	 * - Using heuristics we decide with this information, whether the ring system prevents a flat geometry of atom.
+	 * e.g.: Catalytic Asymmetric Synthesis of Tröger’s Base Analogues with Nitrogen Stereocenter
+	 *       Chun Ma, Yue Sun, Junfeng Yang, Hao Guo, and Junliang Zhang
+	 *       ACS Central Science 2023 9 (1), 64-71
+	 *       DOI: 10.1021/acscentsci.2c01121
 	 * @param atom
 	 * @return true, if the attached ring system prevents a flat geometry of atom
 	 */
@@ -2861,12 +2865,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				&& getAtomicNo(bridgeHead) == 7
 				&& getAtomCharge(bridgeHead) != 1;
 
-		if (bondCountToBridgeHead == 1
-		 && !bridgeHeadIsFlat
-		 && !bridgeHeadMayInvert
-		 && smallestRingSize <= 4
-		 && bridgeAtomCount <= 3)
-			return true;
+		if (bondCountToBridgeHead == 1)
+			return !bridgeHeadIsFlat
+				&& !bridgeHeadMayInvert
+				&& smallestRingSize <= 4
+				&& bridgeAtomCount <= 3;
 
 		switch (smallestRingSize) {
 			// case 3 is fully handled
