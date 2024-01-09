@@ -511,7 +511,9 @@ public class IO {
 		String line=null;
 		StringBuilder sb = new StringBuilder();
 		while ((line = reader.readLine())!=null) {
-			sb.append(line + "\n");
+			if(sb.length()>0)
+				sb.append("\n");
+			sb.append(line);
 		}
 		reader.close();
 		return sb.toString();
@@ -596,17 +598,14 @@ public class IO {
 
 	public static String read(File file) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(file));
-		
 		String line=null;
-		
 		StringBuilder sb = new StringBuilder();
-		
 		while ((line = reader.readLine())!=null) {
-			sb.append(line + "\n");
+			if(sb.length()>0)
+				sb.append("\n");
+			sb.append(line);
 		}
-		
 		reader.close();
-
 		return sb.toString();
 	}
 
