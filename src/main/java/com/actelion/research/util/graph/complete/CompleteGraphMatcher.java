@@ -176,6 +176,8 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 			}
 		}
 
+		solutionBest = new SolutionCompleteGraph();
+
 		// System.out.println(liSolution.size());
 	}
 	
