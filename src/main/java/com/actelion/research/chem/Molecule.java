@@ -3247,7 +3247,9 @@ public class Molecule implements Serializable {
 	 * @param isPseudo true if the configuration is only meaningful relative to another one
 	 */
 	public void setAtomParity(int atom, int parity, boolean isPseudo) {
-		mAtomFlags[atom] &= ~(cAtomFlagsParity | cAtomParityIsPseudo | cAtomFlagConfigurationUnknown);
+		mAtomFlags[atom] &= ~(cAtomFlagsParity | cAtomParityIsPseudo);
+		if (parity != cAtomParityUnknown)
+			mAtomFlags[atom] &= ~cAtomFlagConfigurationUnknown;
 		mAtomFlags[atom] |= parity;
 		if (isPseudo)
 			mAtomFlags[atom] |= cAtomParityIsPseudo;
