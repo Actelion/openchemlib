@@ -145,6 +145,7 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	private void initSearch(){
 		
 		cm.reset();
+		// cm = new ContainerMemory<>(INIT_CAPACITY_MEMORY, new FactorySolution());
 		
 		nodesBase = objectiveCompleteGraph.getBase().getNumPPNodes();
 		
