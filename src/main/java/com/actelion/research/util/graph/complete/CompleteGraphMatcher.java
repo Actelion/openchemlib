@@ -143,22 +143,14 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	
 	
 	private void initSearch(){
-		
 		cm.reset();
-		// cm = new ContainerMemory<>(INIT_CAPACITY_MEMORY, new FactorySolution());
-		
 		nodesBase = objectiveCompleteGraph.getBase().getNumPPNodes();
-		
 		nodesQuery = objectiveCompleteGraph.getQuery().getNumPPNodes();
-		
 		for (List<SolutionCompleteGraph> liSolution : liliSolution) {
 			liSolution.clear();
 		}
-		
 		hsSolution.clear();
-		
 		int nodesInSolution = 1;
-
 
 		// Creates indices for all one node mappings from base and query.
 		// This is the start of the mapping process for the complete graph of the Flexophore.
@@ -183,9 +175,7 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	}
 	
 	public double calculateSimilarity () {
-		
 		initSearch();
-
 		if(nodesBase==1 && nodesQuery==1) {
 			double sim = objectiveCompleteGraph.getSimilarityNodes(0,0);
 			return sim;
@@ -200,7 +190,6 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 //					simMax=sim;
 //				}
 //			}
-//
 
 			List<SolutionCompleteGraph> liSolution = liliSolution.get(1);
 			double simMax=0;
@@ -217,13 +206,9 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 
 		int maxNumNodesWithSolution = 0;
 		for (int nodesInSolution = 1; nodesInSolution < nodesBase+1; nodesInSolution++) {
-			
 			List<SolutionCompleteGraph> liSolution = liliSolution.get(nodesInSolution);
-
 			boolean validSolutionFound = false;
-			
 			hsSolution.clear();
-			
 			for (SolutionCompleteGraph solution : liSolution) {
 				if(getNeighbourSolutions(solution)){
 					validSolutionFound = true;
@@ -235,7 +220,6 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 			
 			if(validSolutionFound){
 				maxNumNodesWithSolution = nodesInSolution+1;
-				
 				liliSolution.get(maxNumNodesWithSolution).addAll(hsSolution);
 				
 				// System.out.println("Found " + hsSolution.size() + " valid solutions for " + maxNumNodesWithSolution + " nodes.");
@@ -337,7 +321,6 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 			} else {
 				break;
 			}
-
 		}
 
 		if(maxNumNodesWithSolution==0){
