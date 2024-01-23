@@ -1320,9 +1320,9 @@ public class JDrawArea extends JPanel implements ActionListener, KeyListener, Mo
 			}
 
 			if (c instanceof Frame) {
-				mHelpDialog = new JDialog((Frame) c, "Idorsia Structure Editor Help", false);
+				mHelpDialog = new JDialog((Frame) c, "Structure Editor Help", false);
 			} else {
-				mHelpDialog = new JDialog((Dialog) c, "Idorsia Structure Editor Help", false);
+				mHelpDialog = new JDialog((Dialog) c, "Structure Editor Help", false);
 			}
 
 			mHelpDialog.setSize(HiDPIHelper.scale(520), HiDPIHelper.scale(440));
