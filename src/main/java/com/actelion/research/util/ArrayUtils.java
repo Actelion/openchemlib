@@ -394,5 +394,19 @@ public class ArrayUtils {
 		}
 	}
 
+	public final static boolean isOverlap(int[] a1, int[] a2) {
+		boolean ov = false;
+		all:
+		for (int v1 : a1) {
+			for (int v2 : a2) {
+				if(v1==v2){
+					ov=true;
+					break all;
+				}
+			}
+		}
+		return ov;
+	}
+
 
 }

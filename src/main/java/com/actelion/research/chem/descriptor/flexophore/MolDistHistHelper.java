@@ -6,6 +6,7 @@ import com.actelion.research.util.ByteArray;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 public class MolDistHistHelper {
 
@@ -203,6 +204,16 @@ public class MolDistHistHelper {
         }
         return eq;
     }
+
+    public static MolDistHist createFromNodes (List<PPNode> li){
+        MolDistHist mdh = new MolDistHist(li.size());
+        for (PPNode ppNode : li) {
+            mdh.addNode(ppNode);
+        }
+        mdh.realize();
+        return mdh;
+    }
+
 
 
 
