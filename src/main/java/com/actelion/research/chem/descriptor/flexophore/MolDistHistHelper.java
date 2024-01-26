@@ -4,9 +4,7 @@ import com.actelion.research.chem.descriptor.flexophore.generator.SubFlexophoreG
 import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.ByteArray;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class MolDistHistHelper {
 
@@ -205,7 +203,7 @@ public class MolDistHistHelper {
         return eq;
     }
 
-    public static MolDistHist createFromNodes (List<PPNode> li){
+    public static MolDistHist createFromNodes (Collection<PPNode> li){
         MolDistHist mdh = new MolDistHist(li.size());
         for (PPNode ppNode : li) {
             mdh.addNode(ppNode);
