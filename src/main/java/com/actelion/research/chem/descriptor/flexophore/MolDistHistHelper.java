@@ -214,7 +214,12 @@ public class MolDistHistHelper {
         return mdh;
     }
 
-
-
+    public static MolDistHist [] toArray(List<MolDistHist> li){
+        MolDistHist [] a = new MolDistHist[li.size()];
+        for (int i = 0; i < li.size(); i++) {
+            a[i]=li.get(i);
+        }
+        return a;
+    }
 
 }
