@@ -613,9 +613,13 @@ public class PPNode implements Comparable<PPNode>, IPPNode {
 	/**
 	 *
 	 * @param strNode i.e. 262,392,4358*2,8582,590088,598407
-	 * @return
+	 * @return the node with the atom types. If an empty string is given a node without atom types is returned.
 	 */
 	public static PPNode read(String strNode) {
+
+		if(strNode.length()==0){
+			return new PPNode();
+		}
 
 		String [] arr = strNode.split(SEPARATOR_ATOMS);
 

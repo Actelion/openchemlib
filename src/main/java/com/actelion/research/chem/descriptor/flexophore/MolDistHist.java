@@ -505,7 +505,7 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	}
 	public static MolDistHist readNodes2MDH(String strMolDistHist){
 
-		List<PPNode> liPPNode = readNodes( strMolDistHist);
+		List<PPNode> liPPNode = readNodes(strMolDistHist);
 		int size = liPPNode.size();
 		MolDistHist mdh = new MolDistHist(size);
 		for (PPNode ppNode : liPPNode) {
