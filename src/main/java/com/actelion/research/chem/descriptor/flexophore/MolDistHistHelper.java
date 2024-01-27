@@ -123,6 +123,17 @@ public class MolDistHistHelper {
         }
     }
 
+    public static MolDistHist getEmptyMolDistHist(){
+        PPNode ppNode0 = new PPNode();
+        ppNode0.realize();
+
+        MolDistHist mdhEmpty = new MolDistHist(1);
+        mdhEmpty.addNode(ppNode0);
+        mdhEmpty.realize();
+
+        return mdhEmpty;
+    }
+
     public static MolDistHist getMostDistantPairOfNodes (MolDistHist mdh){
 
         int n = mdh.getNumPPNodes();
