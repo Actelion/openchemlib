@@ -133,6 +133,19 @@ public class MolDistHistHelper {
 
         return mdhEmpty;
     }
+    public static boolean isEmptyMolDistHist(MolDistHist mdh){
+
+        boolean empty = true;
+        if(mdh.getNumPPNodes()>1){
+            empty = false;
+        } else if(mdh.getNumPPNodes()==1){
+            if(mdh.getNode(0).getInteractionTypeCount()>0){
+                empty = false;
+            }
+        }
+
+        return empty;
+    }
 
     public static MolDistHist getMostDistantPairOfNodes (MolDistHist mdh){
 
