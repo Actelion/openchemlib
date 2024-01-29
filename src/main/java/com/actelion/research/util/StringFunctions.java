@@ -957,6 +957,22 @@ public class StringFunctions {
 
 		return sb.toString();
 	}
+	public static String toString(boolean [] [] arr){
+
+		StringBuilder sb = new  StringBuilder();
+		for (int i = 0; i < arr.length; i++) {
+			for (int j = 0; j < arr[i].length; j++) {
+				if (arr[i][j]) {
+					sb.append(1);
+				} else {
+					sb.append(0);
+				}
+			}
+			sb.append("\n");
+		}
+
+		return sb.toString();
+	}
 
     public static String toString(List<Double> li, NumberFormat nf){
 
