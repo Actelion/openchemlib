@@ -1,17 +1,5 @@
 package com.actelion.research.chem.chemicalspaces.synthon;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
@@ -19,9 +7,13 @@ import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.io.RXNFileCreator;
 import com.actelion.research.chem.reaction.Reaction;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.Writer;
+import java.util.*;
+
 public class SynthonCreator {
-	
-	
+
 	/**
 	 * only works for reactions with a single product
 	 * @param rxn
@@ -32,18 +24,15 @@ public class SynthonCreator {
 		if(rxn.getProducts()>1)
 			throw new Exception("only reactions with one product are supported");
 		Reaction[] synthonTransformations = new Reaction[rxn.getReactants()];
-		Map<Integer,Integer> mappedAtomToReactant = new HashMap<Integer,Integer>(); //stores the information on which mapped atom in the product ist contributed by which reactant
+		Map<Integer,Integer> mappedAtomToReactant = new HashMap<>(); //stores the information on which mapped atom in the product ist contributed by which reactant
 		for(int r=0;r<rxn.getReactants();r++) {
 			if(rxn.getReactants()==0)
 				throw new Exception("cannot create Synthons for reactions with one reactant");
 			StereoMolecule reactant = rxn.getReactant(r);
 			for(int a=0;a<reactant.getAtoms();a++) {
 				int reactantMapNo = reactant.getAtomMapNo(a);
-				if(reactantMapNo==0)
-					continue;
-				else {
+				if(reactantMapNo!=0)
 					mappedAtomToReactant.put(reactantMapNo, r);
-				}
 			}
 		}
 		//find bonds in products that are formed between a) atoms from different reactants or b) between an unmapped and a mapped atom
@@ -58,10 +47,8 @@ public class SynthonCreator {
 			int[] atoms = rc.getRingAtoms(ringNo);
 			for(int a : atoms) {
 				int mappedA = product.getAtomMapNo(a);
-				if(mappedA==0)
-					continue;
-				int reactant = mappedAtomToReactant.get(mappedA);
-				ringReactant.add(reactant);
+				if(mappedA!=0)
+					ringReactant.add(mappedAtomToReactant.get(mappedA));
 			}
 			if(ringReactant.size()==1) {//homogeneous ring!
 				int[] ringBonds = rc.getRingBonds(ringNo);
@@ -78,17 +65,13 @@ public class SynthonCreator {
 			int mappedBondAtom1 = product.getAtomMapNo(bondAtom1);
 			int mappedBondAtom2 = product.getAtomMapNo(bondAtom2);
 			if(mappedBondAtom1==0) {
-				if(mappedBondAtom2==0) // both atoms unmapped
-					continue;
-				else //bond between a mapped and an unmapped atom
+				if(mappedBondAtom2!=0) //bond between a mapped and an unmapped atom
 					bondsToCut.add(b);
-					
 			}
 			else if(mappedBondAtom2==0) { //bond between a mapped and an umapped atom
 				bondsToCut.add(b);
-				continue;
 			}
-			else if(mappedAtomToReactant.get(mappedBondAtom1)!=mappedAtomToReactant.get(mappedBondAtom2)) { //atoms from two different reactants
+			else if(!mappedAtomToReactant.get(mappedBondAtom1).equals(mappedAtomToReactant.get(mappedBondAtom2))) { //atoms from two different reactants
 				bondsToCut.add(b);
 			}
 		}

@@ -1,22 +1,16 @@
 package com.actelion.research.chem.interactionstatistics;
 
+import com.actelion.research.util.FastSpline;
+import com.actelion.research.util.SmoothingSplineInterpolator;
+
+import java.io.*;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import com.actelion.research.util.FastSpline;
-import com.actelion.research.util.SmoothingSplineInterpolator;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 
 public class InteractionDistanceStatistics {
 	
@@ -194,9 +188,9 @@ public class InteractionDistanceStatistics {
 			}
 			InputStream is = url.openStream();
 			//InputStream is = new FileInputStream(file);
-			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 			String line;
-			while((line = reader.readLine())!=null && line.length()!=0) {
+			while((line = reader.readLine())!=null && !line.isEmpty()) {
 				String s[] = line.split(" ");
 
 				long l = Long.parseLong(s[0]);

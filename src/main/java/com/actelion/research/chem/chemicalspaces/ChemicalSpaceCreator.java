@@ -1,40 +1,21 @@
 package com.actelion.research.chem.chemicalspaces;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
-
-import com.actelion.research.chem.CanonizerUtil;
-import com.actelion.research.chem.IDCodeParser;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.SSSearcher;
-import com.actelion.research.chem.SSSearcherWithIndex;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.chemicalspaces.synthon.SynthonCreator;
 import com.actelion.research.chem.chemicalspaces.synthon.SynthonReactor;
 import com.actelion.research.chem.descriptor.DescriptorHandlerLongFFP512;
 import com.actelion.research.chem.io.DWARFileCreator;
-import com.actelion.research.chem.io.RXNFileParser;
-import com.actelion.research.chem.io.SDFileParser;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.Reactor;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 
 
@@ -87,7 +68,7 @@ public class ChemicalSpaceCreator {
 		ConcurrentMap<String,String> processedToOrigIDCode = new ConcurrentHashMap<String,String>();
 		ConcurrentMap<String,List<Map<String,String>>> reactionsWithSynthons = new ConcurrentHashMap<String,List<Map<String,String>>>(); 
 		processBuildingBlocks(this.bbs,processedToOrigIDCode,functionalizations);
-		fps = new ConcurrentHashMap<String,long[]>();
+		fps = new ConcurrentHashMap<>();
 		calcFragFPs(processedToOrigIDCode.keySet(),fps);
 		generateSynthons(reactions, processedToOrigIDCode, reactionsWithSynthons,fps,allSynthonTransformations);
 		generateCombinatoriaLibraries(reactionsWithSynthons, bbs, allSynthonTransformations);
@@ -179,7 +160,6 @@ public class ChemicalSpaceCreator {
      	reactionsWithSynthons.putIfAbsent(rxn.getName(), new ArrayList<>());
 		
      	//System.out.println("bbs");
-     	
 
      	for(int i=0;i<reactants.size();i++) {
      		List<String> rList = reactants.get(i);

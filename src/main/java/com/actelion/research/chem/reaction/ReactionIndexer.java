@@ -1372,7 +1372,7 @@ class RDFileReader
 
     public RDFileReader(InputStream is) throws IOException
     {
-        rd = new BufferedReader(new InputStreamReader(is));
+        rd = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
         String line;
         line = rd.readLine();
         if (line == null || !line.startsWith("$RDFILE "))

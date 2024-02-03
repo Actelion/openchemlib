@@ -7,6 +7,7 @@ package com.actelion.research.chem.io;
 import com.actelion.research.chem.Molecule3D;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -42,10 +43,10 @@ public abstract class AbstractParser {
 			
 			if(fileName.toUpperCase().endsWith(".GZ")) {
 				GZIPInputStream is = new GZIPInputStream(new FileInputStream(fileName));
-				r = new InputStreamReader(is);
+				r = new InputStreamReader(is, StandardCharsets.UTF_8);
 			} else if(fileName.toUpperCase().endsWith(".ZIP")) {
 				ZipInputStream is = new ZipInputStream(new FileInputStream(fileName));
-				r = new InputStreamReader(is);
+				r = new InputStreamReader(is, StandardCharsets.UTF_8);
 			} else {
 				r = new BufferedReader(new FileReader(fileName)); 				
 			}			

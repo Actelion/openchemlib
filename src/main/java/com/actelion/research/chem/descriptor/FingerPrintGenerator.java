@@ -39,6 +39,7 @@ import com.actelion.research.chem.StereoMolecule;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -263,7 +264,7 @@ public class FingerPrintGenerator
         IDCodeParser p = new IDCodeParser(false);
         StereoMolecule m = new StereoMolecule();
         BitSet referencebs = null, querybs = null;
-        BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader r = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         FingerPrintGenerator fp = null;
         try {
             if (args.length > 0) {
