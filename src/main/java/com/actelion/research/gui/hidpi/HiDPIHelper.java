@@ -78,14 +78,18 @@ public class HiDPIHelper {
 				sUIScaleFactor = 1.0f;
 				}
 			else if (Platform.isWindows()) {
-				try {
-					// with JRE8 we used (float)UIManager.getFont("Label.font").getSize() / 12f
-					sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96f;
+				// only do scaling if jre <= 1.8
+				if (System.getProperty("java.version").startsWith("1.")) {
+					try {
+						// with JRE8 we used (float)UIManager.getFont("Label.font").getSize() / 12f
+						sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96f;
+					} catch (HeadlessException hle) {
+						sUIScaleFactor = 1.0f;
 					}
-				catch (HeadlessException hle) {
+				} else {
 					sUIScaleFactor = 1.0f;
-					}
 				}
+			}
 			else {  // Linux; Toolkit.getDefaultToolkit().getScreenResolution() always returns 1.0
 				try {
 					sUIScaleFactor = 1.0f;  // default in case of error
