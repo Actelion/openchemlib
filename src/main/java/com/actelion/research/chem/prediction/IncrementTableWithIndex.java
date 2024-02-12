@@ -39,6 +39,7 @@ import com.actelion.research.chem.descriptor.DescriptorHandlerLongFFP512;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class IncrementTableWithIndex {
@@ -52,7 +53,7 @@ public class IncrementTableWithIndex {
 
 
 	protected IncrementTableWithIndex(String filename) throws Exception {
-		BufferedReader theReader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(filename)));
+		BufferedReader theReader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(filename), StandardCharsets.UTF_8));
 
 		String header = theReader.readLine();
 		if (!header.equals(cHeader))

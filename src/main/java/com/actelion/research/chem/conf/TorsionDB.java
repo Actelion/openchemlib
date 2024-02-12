@@ -38,6 +38,7 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.TreeMap;
 
 public class TorsionDB {
@@ -298,14 +299,14 @@ public class TorsionDB {
 			InputStream is = TorsionDB.class.getResourceAsStream(cBasePath+DATABASE_CSD+resourceName);
 			if (is != null) {
 				sDatabase = DATABASE_CSD;
-				return new BufferedReader(new InputStreamReader(is));
+				return new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 				}
 
 			sDatabase = DATABASE_COD;
 			}
 
 	   	return new BufferedReader(new InputStreamReader(TorsionDB.class.getResourceAsStream(
-   				cBasePath+sDatabase+resourceName)));
+   				cBasePath+sDatabase+resourceName), StandardCharsets.UTF_8));
 		}
 
 	/**

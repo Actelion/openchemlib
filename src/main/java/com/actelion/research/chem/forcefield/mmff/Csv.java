@@ -38,6 +38,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Basic CSV parser. The Csv class provides very basic CSV file parsing
@@ -91,7 +92,7 @@ public final class Csv {
 
         try {
             String line;
-            br = new BufferedReader(new InputStreamReader(Csv.class.getResourceAsStream(path)));
+            br = new BufferedReader(new InputStreamReader(Csv.class.getResourceAsStream(path), StandardCharsets.UTF_8));
 
             int size = Integer.parseInt(br.readLine().trim());
             String[] format = br.readLine().trim().split(",");

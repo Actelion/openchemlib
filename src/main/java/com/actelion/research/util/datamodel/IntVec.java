@@ -43,6 +43,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -871,7 +872,7 @@ public class IntVec implements Comparable<IntVec> {
     	List<IntVec> li = new ArrayList<IntVec>();
     	
     	try {
-			BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+			BufferedReader buf = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
 			
 			while(buf.ready()) {
 				String s = buf.readLine();

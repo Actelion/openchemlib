@@ -42,6 +42,7 @@ import com.actelion.research.io.BOMSkipper;
 import com.actelion.research.util.BinaryDecoder;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
@@ -76,7 +77,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
      */
 	public DWARFileParser(String fileName) {
         try {
-            mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+            mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
             mMode = MODE_COORDINATES_PREFER_2D;
             init();
@@ -92,7 +93,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
      */
 	public DWARFileParser(File file) {
         try {
-            mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+            mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
             mMode = MODE_COORDINATES_PREFER_2D;
             init();
@@ -124,7 +125,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
      */
     public DWARFileParser(String fileName, int mode) {
         try {
-            mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+            mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
             mMode = mode;
             init();
@@ -141,7 +142,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
      */
     public DWARFileParser(File file, int mode) {
         try {
-            mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+            mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
             mMode = mode;
             init();
