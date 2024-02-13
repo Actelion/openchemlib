@@ -88,6 +88,8 @@ public class CreatorMolDistHistViz {
     // for debugging
     private boolean onlyOneConformer;
 
+    private Exception recentException = null;
+
     private int [] arrIndexAtomNewTmp;
 
     public CreatorMolDistHistViz() {
@@ -170,35 +172,47 @@ public class CreatorMolDistHistViz {
 
         boolean successfulInitialization = false;
 
+        Exception exception = null;
+
         while (!successfulInitialization) {
 
-            if (initializationStage == 0) { // default
-                successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, false);
-            } else if (initializationStage == 1) {
-                conformerGenerator = new ConformerGenerator();
-                successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
-            }  else if (initializationStage == 2) {
-                RigidFragmentCache.getDefaultInstance().clear();
-                conformerGenerator = new ConformerGenerator();
-                successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
-            }  else if (initializationStage == 3) {
-                RigidFragmentCache.getDefaultInstance().clear();
-                conformerGenerator = new ConformerGenerator();
-                successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
-            } else if (initializationStage == 4) {
-                RigidFragmentCache.getDefaultInstance().clear();
-                conformerGenerator = new ConformerGenerator();
-                successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_SYSTEMATIC, MAX_TORSION_SETS, true);
-            } else if (initializationStage == 5) {
-                RigidFragmentCache.getDefaultInstance().clear();
-                conformerGenerator = new ConformerGenerator();
-                successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_ADAPTIVE_RANDOM, MAX_TORSION_SETS, true);
-            } else if (initializationStage > MAX_INITIALIZATION_STAGE) {
-                break;
+            try {
+                if (initializationStage == 0) { // default
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, false);
+                } else if (initializationStage == 1) {
+                    conformerGenerator = new ConformerGenerator();
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
+                }  else if (initializationStage == 2) {
+                    RigidFragmentCache.getDefaultInstance().clear();
+                    conformerGenerator = new ConformerGenerator();
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
+                }  else if (initializationStage == 3) {
+                    RigidFragmentCache.getDefaultInstance().clear();
+                    conformerGenerator = new ConformerGenerator();
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
+                } else if (initializationStage == 4) {
+                    RigidFragmentCache.getDefaultInstance().clear();
+                    conformerGenerator = new ConformerGenerator();
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_SYSTEMATIC, MAX_TORSION_SETS, true);
+                } else if (initializationStage == 5) {
+                    RigidFragmentCache.getDefaultInstance().clear();
+                    conformerGenerator = new ConformerGenerator();
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_ADAPTIVE_RANDOM, MAX_TORSION_SETS, true);
+                } else if (initializationStage > MAX_INITIALIZATION_STAGE) {
+                    break;
+                }
+            } catch (Exception e) {
+                exception = e;
+                successfulInitialization=false;
             }
 
             if (!successfulInitialization) {
-                incrementInitializationStage();
+                if(canIncrementInitializationStage())
+                    incrementInitializationStage();
+                else {
+                    successfulInitialization = false;
+                    break;
+                }
             }
 
 //            if(initializationStage>0)
@@ -206,7 +220,15 @@ public class CreatorMolDistHistViz {
 
         }
 
+        if(!successfulInitialization && exception!=null){
+            recentException = exception;
+        }
+
         return successfulInitialization;
+    }
+
+    public Exception getRecentException() {
+        return recentException;
     }
 
     /**
@@ -544,9 +566,8 @@ public class CreatorMolDistHistViz {
         boolean nextConformerAvailable = false;
 
         Conformer conformer = conformerGenerator.getNextConformer();
-
-        int ccTries=0;
             while (conformer==null) {
+                int ccTries=0;
                 while (conformer == null) {
                     conformer = conformerGenerator.getNextConformer();
                     if (conformer == null) {
