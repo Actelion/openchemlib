@@ -224,10 +224,10 @@ public class DistHist implements Serializable {
 	}
 
 	/**
-	 * The distnce histograms are stored in a single array.
+	 * The distance histograms are stored in a single array.
 	 * @param indexAt1
 	 * @param indexAt2
-	 * @param arrHist
+	 * @param arrHist a deep copy is taken.
 	 */
 	public void setDistHist(int indexAt1, int indexAt2, byte [] arrHist) {
 		

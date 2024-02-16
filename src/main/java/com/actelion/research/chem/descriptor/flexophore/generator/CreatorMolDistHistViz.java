@@ -45,10 +45,7 @@ import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalcu
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 import org.openmolecules.chem.conf.gen.RigidFragmentCache;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * CreatorMolDistHistViz
@@ -453,6 +450,43 @@ public class CreatorMolDistHistViz {
                 byte [] arrDistHist = MultCoordFragIndex.getDistHist(liMultCoordFragIndex.get(i), liMultCoordFragIndex.get(j));
                 // System.out.println(StringFunctions.toString(arrDistHist));
                 molDistHistViz.setDistHist(i,j,arrDistHist);
+            }
+        }
+
+        molDistHistViz.realize();
+
+        return molDistHistViz;
+
+    }
+    public static MolDistHistViz createWithoutCoordinates(List<SubGraphIndices> liMultCoordFragIndex, Molecule3D molecule3D){
+
+        MolDistHistViz molDistHistViz = new MolDistHistViz(liMultCoordFragIndex.size(), molecule3D);
+
+        List<PPNodeViz> liPPNodeViz = new ArrayList<>();
+        for (int i = 0; i < liMultCoordFragIndex.size(); i++) {
+            SubGraphIndices sgi = liMultCoordFragIndex.get(i);
+
+            int [] arrIndexAtomFrag = sgi.getAtomIndices();
+
+            PPNodeViz ppNodeViz = new PPNodeViz();
+            ppNodeViz.setIndex(i);
+
+            for (int index : arrIndexAtomFrag) {
+                int interactionType = molecule3D.getInteractionAtomType(index);
+                ppNodeViz.add(interactionType);
+                ppNodeViz.addIndexOriginalAtom(index);
+            }
+            liPPNodeViz.add(ppNodeViz);
+        }
+
+        molDistHistViz.set(liPPNodeViz);
+
+        byte [] arrHistPercent = new byte [ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
+        Arrays.fill(arrHistPercent, (byte)1);
+
+        for (int i = 0; i < liMultCoordFragIndex.size(); i++) {
+            for (int j = i+1; j < liMultCoordFragIndex.size(); j++) {
+                molDistHistViz.setDistHist(i,j,arrHistPercent);
             }
         }
 
