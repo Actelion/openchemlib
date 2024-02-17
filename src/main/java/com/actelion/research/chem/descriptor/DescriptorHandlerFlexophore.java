@@ -405,7 +405,7 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 		} else if (mdh.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE) {
 			String msg = "Flexophore exceeded maximum number of nodes.";
 			recentException = new RuntimeException(msg);
-			mdh = FAILED_OBJECT;;
+			mdh = FAILED_OBJECT;
 		}
 		else if (includeNodeAtoms) {
 			List<PPNodeViz> nodeList = mdhv.getNodes();
