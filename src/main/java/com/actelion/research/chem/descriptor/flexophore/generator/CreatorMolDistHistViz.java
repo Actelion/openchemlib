@@ -42,10 +42,12 @@ import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphExtractor;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.util.TimeDelta;
 import org.openmolecules.chem.conf.gen.ConformerGenerator;
 import org.openmolecules.chem.conf.gen.RigidFragmentCache;
 
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 
 /**
  * CreatorMolDistHistViz
@@ -57,6 +59,18 @@ public class CreatorMolDistHistViz {
 
     public static final long SEED = 123456789;
 
+    /**
+     * Similarity 0.977, similarity for identical molecule and a timeout of 5 min. So timeout of 6 min should be fine.
+     *
+     CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode enY\JH@@amaNe`ZPICHhdhThdleEEEDhYThddZFKGLRX@J`@jjiijjZjAPbbT@@, hence generated 8 conformers.
+     5 Minutes 52 Seconds 79 Millisec
+     CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode enY\JH@@amaNe`ZPICHhdhThdleEEEDhYThddZFKGLRX@J`@jjiijjZjAPbRR@@, hence generated 25 conformers.
+     * 5 Minutes 52 Seconds 79 Millisec
+     * [(390*2) (391) (392) (4358*6) (9,4358*6) (4358*4,4488) (590088,598407) (590088,598407)]
+     */
+    public static final long TIMEOUT_CONFORMER_CALCULATION_MS = TimeDelta.MS_MINUTE * 6;
+    // public static final long TIMEOUT_CONFORMER_CALCULATION_MS = TimeDelta.MS_SECOND * 30;
+
     // Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
     private static final int MAX_TRIES_CONFORMERS = 10;
     private static final int MAX_INITIALIZATION_STAGE = 5;
@@ -65,7 +79,6 @@ public class CreatorMolDistHistViz {
     private static final int MAX_NUM_ATOMS = 1000;
 
     private static final int CONF_GEN_TS = 0;
-
     public static final int CONF_GIVEN_SINGLE_CONFORMATION = 1;
     public static final int SINGLE_CONFORMATION = 2;
 
@@ -81,6 +94,7 @@ public class CreatorMolDistHistViz {
     private int conformationMode;
 
     private long seed;
+    private long t0ConformerCalcStarted;
 
     // for debugging
     private boolean onlyOneConformer;
@@ -88,6 +102,8 @@ public class CreatorMolDistHistViz {
     private Exception recentException = null;
 
     private int [] arrIndexAtomNewTmp;
+
+    private long timeoutConformerCalculationMS;
 
     public CreatorMolDistHistViz() {
 
@@ -103,6 +119,8 @@ public class CreatorMolDistHistViz {
         arrIndexAtomNewTmp = new int[MAX_NUM_ATOMS];
 
         initializationStage = 0;
+
+        t0ConformerCalcStarted = 0;
 
         // System.out.println("CreatorCompleteGraph conformationMode " + conformationMode);
 
@@ -145,6 +163,10 @@ public class CreatorMolDistHistViz {
     public void resetInitializationStage(){
         initializationStage=0;
     }
+
+    /**
+     * do not forget to call initializeConformers(mol) after!
+     */
     public void incrementInitializationStage(){
         initializationStage++;
         if(initializationStage>MAX_INITIALIZATION_STAGE){
@@ -217,7 +239,8 @@ public class CreatorMolDistHistViz {
 
         }
 
-        if(!successfulInitialization && exception!=null){
+        if(!successfulInitialization){
+            System.err.println("CreatorMolDistHistViz initializeConformers(...) failed for " + molInPlace.getIDCode());
             recentException = exception;
         }
 
@@ -346,7 +369,7 @@ public class CreatorMolDistHistViz {
 
     /**
      * This method must be called before:
-     *  conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
+     *  initializeConformers(molInPlace);
      *
      * Time in nanoseconds for a small molecule with idcode fegPb@JByH@QdbbbarTTbb^bRIRNQsjVZjjjh@J@@@
      * 75491600 first conformation
@@ -363,8 +386,18 @@ public class CreatorMolDistHistViz {
         int nAtoms = molInPlace.getAtoms();
         int ccConformationsGenerated = 0;
         Molecule3D molViz = null;
+
+        t0ConformerCalcStarted = System.currentTimeMillis();
         for (int i = 0; i < nConformations; i++) {
-            boolean conformerGenerated = generateConformerAndSetCoordinates(nAtoms, molInPlace);
+            boolean conformerGenerated = false;
+            try {
+                conformerGenerated = generateConformerAndSetCoordinates(nAtoms, molInPlace);
+            } catch (ExceptionTimeOutConformerGeneration e) {
+                System.err.println(
+                    "CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode " + molInPlace.getIDCode( )+ ", hence generated " + ccConformationsGenerated + " conformers.");
+                // e.printStackTrace();
+                break;
+            }
 
             if(!conformerGenerated){
                 break;
@@ -375,6 +408,7 @@ public class CreatorMolDistHistViz {
                 molViz = createPharmacophorePoints(molInPlace, liMultCoordFragIndex);
             }
         }
+
         if(ccConformationsGenerated==0){
             throw new ExceptionConformationGenerationFailed("Impossible to generate one conformer!");
         }
@@ -547,6 +581,9 @@ public class CreatorMolDistHistViz {
         return molCenter;
     }
 
+    /**
+     * Do not forget to call initializeConformers(molInPlace) after!
+     */
     public void injectNewSeed(){
         seed = new Date().getTime();
         conformerGenerator = new ConformerGenerator(seed, false);
@@ -606,10 +643,19 @@ public class CreatorMolDistHistViz {
                     conformer = conformerGenerator.getNextConformer();
                     if (conformer == null) {
                         injectNewSeed();
+                        initializeConformers(molInPlace);
                     }
                     ccTries++;
                     if (ccTries == MAX_TRIES_CONFORMERS) {
                         break;
+                    }
+
+                    if(t0ConformerCalcStarted>0) {
+                        long t1 = System.currentTimeMillis();
+                        long d = t1 - t0ConformerCalcStarted;
+                        if(d>TIMEOUT_CONFORMER_CALCULATION_MS) {
+                            throw new ExceptionTimeOutConformerGeneration();
+                        }
                     }
                 }
 
