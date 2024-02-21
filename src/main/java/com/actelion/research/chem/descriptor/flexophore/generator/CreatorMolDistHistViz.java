@@ -57,7 +57,7 @@ public class CreatorMolDistHistViz {
 
     private static final boolean DEBUG = DescriptorHandlerFlexophore.DEBUG;
 
-    public static final long SEED = 123456789;
+
 
     /**
      * Similarity 0.977, similarity for identical molecule and a timeout of 5 min. So timeout of 6 min should be fine.
@@ -68,13 +68,12 @@ public class CreatorMolDistHistViz {
      * 5 Minutes 52 Seconds 79 Millisec
      * [(390*2) (391) (392) (4358*6) (9,4358*6) (4358*4,4488) (590088,598407) (590088,598407)]
      */
-    public static final long TIMEOUT_CONFORMER_CALCULATION_MS = TimeDelta.MS_MINUTE * 6;
+
     // public static final long TIMEOUT_CONFORMER_CALCULATION_MS = TimeDelta.MS_SECOND * 30;
 
     // Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
-    private static final int MAX_TRIES_CONFORMERS = 10;
-    private static final int MAX_INITIALIZATION_STAGE = 5;
-    private static final int MAX_TORSION_SETS = 100000;
+
+
 
     private static final int MAX_NUM_ATOMS = 1000;
 
@@ -87,14 +86,10 @@ public class CreatorMolDistHistViz {
 
     private SubGraphExtractor subGraphExtractor;
 
-    private ConformerGenerator conformerGenerator;
-
-    private int initializationStage;
-
     private int conformationMode;
 
     private long seed;
-    private long t0ConformerCalcStarted;
+
 
     // for debugging
     private boolean onlyOneConformer;
@@ -103,35 +98,22 @@ public class CreatorMolDistHistViz {
 
     private int [] arrIndexAtomNewTmp;
 
-    private long timeoutConformerCalculationMS;
+    private ConformerGeneratorStageTries conformerGeneratorStageTries;
 
     public CreatorMolDistHistViz() {
 
-        seed = SEED;
-
         subGraphExtractor = new SubGraphExtractor();
-
-        conformerGenerator = new ConformerGenerator(seed, false);
-        RigidFragmentCache.getDefaultInstance().loadDefaultCache();
 
         conformationMode = CONF_GEN_TS;
 
         arrIndexAtomNewTmp = new int[MAX_NUM_ATOMS];
 
-        initializationStage = 0;
-
-        t0ConformerCalcStarted = 0;
-
-        // System.out.println("CreatorCompleteGraph conformationMode " + conformationMode);
+        conformerGeneratorStageTries = new ConformerGeneratorStageTries();
 
     }
 
     public void setThreadMaster(ThreadMaster threadMaster) {
-        conformerGenerator.setThreadMaster(threadMaster);
-    }
-
-    public void setConformationMode(int conformationMode) {
-        this.conformationMode = conformationMode;
+        conformerGeneratorStageTries.setThreadMaster(threadMaster);
     }
 
     public MolDistHistViz create(StereoMolecule molOrig) throws Exception {
@@ -156,96 +138,6 @@ public class CreatorMolDistHistViz {
         return mdhv;
     }
 
-    public ConformerGenerator getConformerGenerator(){
-        return conformerGenerator;
-    }
-
-    public void resetInitializationStage(){
-        initializationStage=0;
-    }
-
-    /**
-     * do not forget to call initializeConformers(mol) after!
-     */
-    public void incrementInitializationStage(){
-        initializationStage++;
-        if(initializationStage>MAX_INITIALIZATION_STAGE){
-            throw new RuntimeException("Maximum initialization stage exceeded!");
-        }
-    }
-
-    public boolean canIncrementInitializationStage(){
-        if(initializationStage<MAX_INITIALIZATION_STAGE){
-            return true;
-        }
-        return false;
-
-    }
-
-    /**
-     * If initializing with new molecule call resetInitializationStage() before!
-     * @param molInPlace
-     * @return
-     */
-    public boolean initializeConformers(Molecule3D molInPlace){
-
-        boolean successfulInitialization = false;
-
-        Exception exception = null;
-
-        while (!successfulInitialization) {
-
-            try {
-                if (initializationStage == 0) { // default
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, false);
-                } else if (initializationStage == 1) {
-                    conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
-                }  else if (initializationStage == 2) {
-                    RigidFragmentCache.getDefaultInstance().clear();
-                    conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
-                }  else if (initializationStage == 3) {
-                    RigidFragmentCache.getDefaultInstance().clear();
-                    conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
-                } else if (initializationStage == 4) {
-                    RigidFragmentCache.getDefaultInstance().clear();
-                    conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_SYSTEMATIC, MAX_TORSION_SETS, true);
-                } else if (initializationStage == 5) {
-                    RigidFragmentCache.getDefaultInstance().clear();
-                    conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_ADAPTIVE_RANDOM, MAX_TORSION_SETS, true);
-                } else if (initializationStage > MAX_INITIALIZATION_STAGE) {
-                    break;
-                }
-            } catch (Exception e) {
-                exception = e;
-                successfulInitialization=false;
-            }
-
-            if (!successfulInitialization) {
-                if(canIncrementInitializationStage())
-                    incrementInitializationStage();
-                else {
-                    successfulInitialization = false;
-                    break;
-                }
-            }
-
-//            if(initializationStage>0)
-//                System.out.println("CreatorMolDistHistViz initialization stage " + initializationStage);
-
-        }
-
-        if(!successfulInitialization){
-            System.err.println("CreatorMolDistHistViz initializeConformers(...) failed for " + molInPlace.getIDCode());
-            recentException = exception;
-        }
-
-        return successfulInitialization;
-    }
 
     public Exception getRecentException() {
         return recentException;
@@ -256,11 +148,7 @@ public class CreatorMolDistHistViz {
      * @param molInPlace
      * @return
      */
-    public boolean initializeConformersAndSetAtTypes(Molecule3D molInPlace){
-        boolean successfulInitialization = initializeConformers(molInPlace);
-        InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
-        return successfulInitialization;
-    }
+
 
     /**
      * Conformation generator of Thomas Sander
@@ -271,15 +159,14 @@ public class CreatorMolDistHistViz {
      */
     public MolDistHistViz createMultipleConformations(StereoMolecule molOrig, int nConformations) throws Exception {
 
-        // int nConformations = DescriptorHandlerFlexophore.NUM_CONFORMATIONS;
-        resetInitializationStage();
         StereoMolecule molStand = molOrig.getCompactCopy();
         MoleculeStandardizer.standardize(molStand, MoleculeStandardizer.MODE_GET_PARENT);
         molStand.ensureHelperArrays(Molecule.cHelperRings);
         Molecule3D molInPlace = new Molecule3D(molStand);
         molInPlace.ensureHelperArrays(Molecule.cHelperRings);
 
-        boolean successfulInitialization = initializeConformersAndSetAtTypes(molInPlace);
+        InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
+        boolean successfulInitialization = conformerGeneratorStageTries.setMolecule(molInPlace);
 
         if(!successfulInitialization){
             return null;
@@ -291,10 +178,6 @@ public class CreatorMolDistHistViz {
         List<SubGraphIndices> liSubGraphIndices = subGraphExtractor.extract(molInPlace);
         liSubGraphIndices = handleCarbonConnected2Hetero(liSubGraphIndices, molInPlace);
 
-        if(DEBUG) {
-            injectNewSeed();
-        }
-
         List<MultCoordFragIndex> liMultCoordFragIndex = new ArrayList<>();
         for (SubGraphIndices subGraphIndices : liSubGraphIndices) {
             liMultCoordFragIndex.add(new MultCoordFragIndex(subGraphIndices.getAtomIndices()));
@@ -302,7 +185,7 @@ public class CreatorMolDistHistViz {
 
         Molecule3D molViz = createConformations(molInPlace, liMultCoordFragIndex, nConformations);
 
-        int nPotentialConformers = conformerGenerator.getPotentialConformerCount();
+        int nPotentialConformers = conformerGeneratorStageTries.getPotentialConformerCount();
 
         onlyOneConformer = false;
 
@@ -324,7 +207,7 @@ public class CreatorMolDistHistViz {
     }
 
     public int getPotentialConformerCount(){
-        int nPotentialConformers = conformerGenerator.getPotentialConformerCount();
+        int nPotentialConformers = conformerGeneratorStageTries.getPotentialConformerCount();
         return nPotentialConformers;
     }
 
@@ -387,11 +270,10 @@ public class CreatorMolDistHistViz {
         int ccConformationsGenerated = 0;
         Molecule3D molViz = null;
 
-        t0ConformerCalcStarted = System.currentTimeMillis();
         for (int i = 0; i < nConformations; i++) {
             boolean conformerGenerated = false;
             try {
-                conformerGenerated = generateConformerAndSetCoordinates(nAtoms, molInPlace);
+                conformerGenerated = conformerGeneratorStageTries.generateConformerAndSetCoordinates(nAtoms, molInPlace);
             } catch (ExceptionTimeOutConformerGeneration e) {
                 System.err.println(
                     "CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode " + molInPlace.getIDCode( )+ ", hence generated " + ccConformationsGenerated + " conformers.");
@@ -412,6 +294,9 @@ public class CreatorMolDistHistViz {
         if(ccConformationsGenerated==0){
             throw new ExceptionConformationGenerationFailed("Impossible to generate one conformer!");
         }
+
+        // System.out.println("ccConformationsGenerated " + ccConformationsGenerated);
+
         return molViz;
     }
 
@@ -581,13 +466,7 @@ public class CreatorMolDistHistViz {
         return molCenter;
     }
 
-    /**
-     * Do not forget to call initializeConformers(molInPlace) after!
-     */
-    public void injectNewSeed(){
-        seed = new Date().getTime();
-        conformerGenerator = new ConformerGenerator(seed, false);
-    }
+
 
 
     /**
@@ -632,59 +511,7 @@ public class CreatorMolDistHistViz {
      * @param molInPlace
      * @return
      */
-    public boolean generateConformerAndSetCoordinates(int nAtoms, Molecule3D molInPlace){
 
-        boolean nextConformerAvailable = false;
-
-        Conformer conformer = conformerGenerator.getNextConformer();
-            while (conformer==null) {
-                int ccTries=0;
-                while (conformer == null) {
-                    conformer = conformerGenerator.getNextConformer();
-                    if (conformer == null) {
-                        injectNewSeed();
-                        initializeConformers(molInPlace);
-                    }
-                    ccTries++;
-                    if (ccTries == MAX_TRIES_CONFORMERS) {
-                        break;
-                    }
-
-                    if(t0ConformerCalcStarted>0) {
-                        long t1 = System.currentTimeMillis();
-                        long d = t1 - t0ConformerCalcStarted;
-                        if(d>TIMEOUT_CONFORMER_CALCULATION_MS) {
-                            throw new ExceptionTimeOutConformerGeneration();
-                        }
-                    }
-                }
-
-                if(conformer==null && canIncrementInitializationStage()) {
-                    incrementInitializationStage();
-                    initializeConformers(molInPlace);
-                } else {
-                    break;
-                }
-            }
-
-        if(conformer != null){
-
-            // System.out.println(ConformerUtils.toStringDistances(ConformerUtils.getDistanceMatrix(conformer)));
-
-            for (int i = 0; i < nAtoms; i++) {
-                double x = conformer.getX(i);
-                double y = conformer.getY(i);
-                double z = conformer.getZ(i);
-
-                molInPlace.setAtomX(i,x);
-                molInPlace.setAtomY(i,y);
-                molInPlace.setAtomZ(i,z);
-            }
-            nextConformerAvailable = true;
-        }
-
-        return nextConformerAvailable;
-    }
 
     /**
      * Calculates the center of the fragments and stores the coordinates in MultCoordFragIndex.
