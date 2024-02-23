@@ -405,7 +405,7 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 		} else if (mdh.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE) {
 			String msg = "Flexophore exceeded maximum number of nodes.";
 			recentException = new RuntimeException(msg);
-			mdh = FAILED_OBJECT;;
+			mdh = FAILED_OBJECT;
 		}
 		else if (includeNodeAtoms) {
 			List<PPNodeViz> nodeList = mdhv.getNodes();
@@ -437,64 +437,20 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 
 		MolDistHistViz mdhv = null;
 
-		boolean conformationGenerationFailed = true;
-
-		int ccFailed = 0;
-
 		recentException = null;
 
-		while (conformationGenerationFailed) {
-
-			conformationGenerationFailed = true;
-
+		try {
+			mdhv = creatorMolDistHistViz.create(fragBiggest);
+		} catch (Exception e) {
 			try {
-
-				mdhv = creatorMolDistHistViz.create(fragBiggest);
-
-				if(creatorMolDistHistViz.isOnlyOneConformer() && (ccFailed < MAX_TRIES_TO_GENERATE_CONFORMER_ONE_CONF)){
-					conformationGenerationFailed = true;
-				} else {
-					conformationGenerationFailed = false;
-				}
-
-			} catch (ExceptionConformationGenerationFailed e) {
-				recentException = e;
-			} catch (Exception e) {
-				recentException = e;
-				break;
-			}
-
-			if(threadMaster!=null && threadMaster.threadMustDie()){
-				break;
-			}
-
-			if(conformationGenerationFailed) {
 				if(DEBUG) {
-					System.out.println("DescriptorHandlerFlexophore Inject new seed");
+					Canonizer can = new Canonizer(fragBiggest);
+					String msg = "DescriptorHandlerFlexophore Impossible to generate conformer for\n" + can.getIDCode();
+					System.err.println(msg);
 				}
-
-				creatorMolDistHistViz.injectNewSeed();
-
-				ccFailed++;
-			}
-
-			if(ccFailed==MAX_TRIES_TO_GENERATE_CONFORMER){
-
-				try {
-					if(DEBUG) {
-
-						Canonizer can = new Canonizer(fragBiggest);
-
-						String msg = "DescriptorHandlerFlexophore Impossible to generate conformer for\n" + can.getIDCode();
-
-						System.err.println(msg);
-					}
-
-				} catch (Exception e) {
-					e.printStackTrace();
-					recentException = e;
-				}
-				break;
+			} catch (Exception e2) {
+				e2.printStackTrace();
+				recentException = e;
 			}
 		}
 
