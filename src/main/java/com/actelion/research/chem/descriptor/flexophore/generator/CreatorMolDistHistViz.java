@@ -36,18 +36,13 @@ package com.actelion.research.chem.descriptor.flexophore.generator;
 
 import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.*;
-import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphExtractor;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
-import com.actelion.research.util.TimeDelta;
-import org.openmolecules.chem.conf.gen.ConformerGenerator;
-import org.openmolecules.chem.conf.gen.RigidFragmentCache;
 
 import java.util.*;
-import java.util.concurrent.TimeoutException;
 
 /**
  * CreatorMolDistHistViz
@@ -57,6 +52,18 @@ public class CreatorMolDistHistViz {
 
     private static final boolean DEBUG = DescriptorHandlerFlexophore.DEBUG;
 
+
+    /**
+     * Aromatic imide structure with an exocyclic N. Two N in the aromatic ring. Results in an extreme electron poor
+     * exocyclic N. which is not making any interactions. Consequently, it is removed from the subgraph lists.
+     * The electron poor N is the non-aromatic N in the fragment definitions!
+     */
+    public static final String IDCODE_EXO_N_AROM_IMIDE = "eMPARVCjK|X`";
+
+    // Imide structure separated by one bond in the aromatic ring
+    public static final String IDCODE_EXO_N_AROM_IMIDE_ALPHA = "gO|@AfeJih@PA@";
+
+    public static String [] ARR_EXO_N_AROM_IMIDE = {IDCODE_EXO_N_AROM_IMIDE, IDCODE_EXO_N_AROM_IMIDE_ALPHA};
 
 
     /**
@@ -95,9 +102,10 @@ public class CreatorMolDistHistViz {
     private boolean onlyOneConformer;
 
     private Exception recentException = null;
+    // Calling SSSearcher frequently generates errors.
+    // private SSSearcher ssSearcher;
 
-    private int [] arrIndexAtomNewTmp;
-
+    private StereoMolecule [] arrElectronPoorN;
     private ConformerGeneratorStageTries conformerGeneratorStageTries;
 
     public CreatorMolDistHistViz() {
@@ -106,9 +114,17 @@ public class CreatorMolDistHistViz {
 
         conformationMode = CONF_GEN_TS;
 
-        arrIndexAtomNewTmp = new int[MAX_NUM_ATOMS];
-
         conformerGeneratorStageTries = new ConformerGeneratorStageTries();
+
+        IDCodeParser parser = new IDCodeParser();
+
+        arrElectronPoorN = new StereoMolecule[ARR_EXO_N_AROM_IMIDE.length];
+
+        for (int i = 0; i < ARR_EXO_N_AROM_IMIDE.length; i++) {
+            StereoMolecule frag = parser.getCompactMolecule(ARR_EXO_N_AROM_IMIDE[i]);
+            frag.ensureHelperArrays(Molecule.cHelperRings);
+            arrElectronPoorN[i]=frag;
+        }
 
     }
 
@@ -177,6 +193,8 @@ public class CreatorMolDistHistViz {
         //
         List<SubGraphIndices> liSubGraphIndices = subGraphExtractor.extract(molInPlace);
         liSubGraphIndices = handleCarbonConnected2Hetero(liSubGraphIndices, molInPlace);
+        liSubGraphIndices = removeExoCyclicElectronPoorN(liSubGraphIndices, molInPlace);
+
 
         List<MultCoordFragIndex> liMultCoordFragIndex = new ArrayList<>();
         for (SubGraphIndices subGraphIndices : liSubGraphIndices) {
@@ -333,6 +351,85 @@ public class CreatorMolDistHistViz {
         }
         return liSubGraphIndicesProcessed;
     }
+
+    public List<SubGraphIndices> removeExoCyclicElectronPoorN(List<SubGraphIndices> liSubGraphIndices, StereoMolecule molInPlace){
+
+        List<Integer> liElectronPoorN = getElectronPoorN(molInPlace);
+
+//        if(liElectronPoorN.size()>0)
+//            System.out.println("CreatorMolDistHistViz removeExoCyclicElectronPoorN found " + liElectronPoorN.size() + " electron poor atoms in " + molInPlace.getIDCode());
+
+        boolean [] arrMatchAtom = new boolean[molInPlace.getAtoms()];
+
+        for (int indexAt : liElectronPoorN) {
+            arrMatchAtom[indexAt]=true;
+        }
+
+        List<SubGraphIndices> liSubGraphIndicesProcessed = new ArrayList<>();
+        for (SubGraphIndices sgi : liSubGraphIndices) {
+            int[] arrIndexAtomFragment = sgi.getAtomIndices();
+            HashSet<Integer> hsIndexAtom2Remove = new HashSet<>();
+            for (int indexAtFrag : arrIndexAtomFragment) {
+                if (arrMatchAtom[indexAtFrag]) {
+                    hsIndexAtom2Remove.add(indexAtFrag);
+                }
+            }
+
+            SubGraphIndices sgiProcessed = new SubGraphIndices();
+            if (hsIndexAtom2Remove.size() > 0) {
+                for (int indexAtFrag : arrIndexAtomFragment) {
+                    if (!hsIndexAtom2Remove.contains(indexAtFrag)) {
+                        sgiProcessed.addIndex(indexAtFrag);
+                    }
+                }
+            } else {
+                sgiProcessed.addIndex(arrIndexAtomFragment);
+            }
+            if (sgiProcessed.getNumIndices() > 0)
+                liSubGraphIndicesProcessed.add(sgiProcessed);
+        }
+        return liSubGraphIndicesProcessed;
+
+
+
+    }
+
+    /**
+     * The electron poor N is the non-aromatic N!
+     * @param molInPlace
+     * @return
+     */
+    private List<Integer> getElectronPoorN(StereoMolecule molInPlace){
+        List<Integer> liElectronPoorN = new ArrayList<>();
+
+        // Calling SSSearcher frequently generates errors.
+        SSSearcher ssSearcher = new SSSearcher();
+        ssSearcher.setMolecule(molInPlace);
+        for (int i = 0; i < arrElectronPoorN.length; i++) {
+
+            ssSearcher.setFragment(arrElectronPoorN[i]);
+            int numFrags = ssSearcher.findFragmentInMolecule(
+                    SSSearcher.cCountModeOverlapping,
+                    SSSearcher.cMatchDBondToDelocalized | SSSearcher.cMatchAromDBondToDelocalized );
+            if(numFrags>0) {
+                // System.out.println("Found!");
+                List<int[]> li = ssSearcher.getMatchList();
+                for (int[] arrIndex : li) {
+                    for (int j = 0; j < arrIndex.length; j++) {
+                        int indAt = arrIndex[j];
+                        int atNo = molInPlace.getAtomicNo(indAt);
+                        if(atNo==7){
+                            if(!molInPlace.isAromaticAtom(indAt)){
+                                liElectronPoorN.add(indAt);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return liElectronPoorN;
+    }
+
 
     /**
      * Creates the descriptor from the coordinates.
