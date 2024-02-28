@@ -1163,9 +1163,7 @@ public class ExtendedMoleculeFunctions {
 	public static boolean isIsolatedCarbon(StereoMolecule mol, int indexAtCentral, int [] arrIndexAt){
 
 		boolean isolated=true;
-
 		int nConnected = mol.getConnAtoms(indexAtCentral);
-
 		boolean [] arrConnected = new boolean[mol.getAtoms()];
 
 		for (int i = 0; i < nConnected; i++) {
@@ -1176,7 +1174,6 @@ public class ExtendedMoleculeFunctions {
 			if(!arrConnected[indexAt]){
 				continue;
 			}
-
 			if(mol.getAtomicNo(indexAt)==6){
 				isolated=false;
 				break;

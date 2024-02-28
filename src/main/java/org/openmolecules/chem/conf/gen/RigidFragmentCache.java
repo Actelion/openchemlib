@@ -174,7 +174,7 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 				if (is != null) {
 					ZipInputStream zipStream = new ZipInputStream(is);
 					zipStream.getNextEntry();
-					BufferedReader reader = new BufferedReader(new InputStreamReader(zipStream));
+					BufferedReader reader = new BufferedReader(new InputStreamReader(zipStream, StandardCharsets.UTF_8));
 					loadCache(reader);
 					reader.close();
 					mDefaultCacheLoaded = true;
@@ -203,7 +203,7 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 				if (cacheFileName.endsWith(".zip")) {
 					ZipInputStream zipStream = new ZipInputStream(new FileInputStream(cacheFileName));
 					zipStream.getNextEntry();
-					reader = new BufferedReader(new InputStreamReader(zipStream));
+					reader = new BufferedReader(new InputStreamReader(zipStream, StandardCharsets.UTF_8));
 				}
 				else {
 					reader = new BufferedReader(new FileReader(cacheFileName));

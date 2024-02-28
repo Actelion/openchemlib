@@ -77,7 +77,7 @@ public class Pipeline<T> implements IPipeline<T>, Supplier<T> {
 	}
 
 	/**
-	 * Sets all to 0 and allDataIn to false..
+	 * Sets all to 0 and allDataIn to false.
 	 */
 	public void reset(){
 		allDataIn.set(false);

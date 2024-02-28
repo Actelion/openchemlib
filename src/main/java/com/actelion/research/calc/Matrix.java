@@ -2954,6 +2954,21 @@ public class Matrix {
         return var;
     }
 
+    public double getVarianceRow(int row) {
+        double var = 0;
+
+        int cols = cols();
+        double mean = getMeanRow(row);
+        double dSum = 0;
+        for (int i = 0; i < cols; i++) {
+        	dSum += (data[row][i] - mean) * (data[row][i] - mean);
+        }
+
+        var = dSum / (cols - 1.0);
+
+        return var;
+    }
+
     public double getVarianceCentered() {
         double var = 0;
 

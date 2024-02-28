@@ -30,6 +30,7 @@ package org.openmolecules.chem.conf.so;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.MolfileCreator;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 
@@ -187,7 +188,6 @@ public class TetrahedralStereoRule extends ConformationRule {
 		int stereoCenter = neighbourAtom[4];
 		int neighbours = (neighbourAtom[3] == -1) ? 3 : 4;
 
-
 		int[] fragmentNo = new int[mol.getAllAtoms()];
 		boolean[] neglectBond = new boolean[mol.getAllBonds()];
 		for (int i=0; i<neighbours; i++)
@@ -225,6 +225,7 @@ public class TetrahedralStereoRule extends ConformationRule {
 
 		boolean[] isRotatableAtom = new boolean[mol.getAllAtoms()];
 		int rotatableAtomCount = 0;
+		int staticNeighbourCount = 2;   // default
 
 		// Now we know about every fragment that touches the stereo center:
 		// - number of bonds connecting to stereo center
@@ -254,6 +255,8 @@ public class TetrahedralStereoRule extends ConformationRule {
 			for (int i=0; i<neighbourFragmentNo.length; i++) {
 				if (neighbourFragmentBondCount[i] == 1 && neighbours == 3) {
 					boolean isSmallerFragment = 2*neighbourFragmentSize[i] < mol.getAllAtoms();
+					if (!isSmallerFragment)
+						staticNeighbourCount = 1;
 					for (int a=0; a<mol.getAllAtoms(); a++) {
 						if (a != stereoCenter) {
 							if ((fragmentNo[a] == neighbourFragmentNo[i]) == isSmallerFragment) {
@@ -291,7 +294,7 @@ public class TetrahedralStereoRule extends ConformationRule {
 					break;
 				}
 			}
-			// TODO we have a 3+ neighbour bond fragment and to proportionally rotate the closer part of it and not just one atom
+			// TODO We have a >=3 neighbour-bond-fragment and to proportionally rotate the closer part of it and not just one atom
 			int remainingNeighboursToRotate = neighbours - 2 - (rotatableAtomCount == 0 ? 0 : 1);
 			for (int i=0; i<remainingNeighboursToRotate; i++) {
 				for (int j=0; j<neighbours; j++) {
@@ -312,11 +315,22 @@ public class TetrahedralStereoRule extends ConformationRule {
 
 		int staticIndex = 0;
 		int rotatableIndex = 0;
-		mStaticNeighbour = new int[2];
-		mRotatableNeighbour = new int[neighbourAtom[3] == -1 ? 1 : 2];
+		mStaticNeighbour = new int[staticNeighbourCount];
+		mRotatableNeighbour = new int[neighbours - staticNeighbourCount];
 		for (int i=0; i<neighbours; i++)
 			if (isRotatableAtom[neighbourAtom[i]])
+{
+if (rotatableIndex>=mRotatableNeighbour.length) {
+ System.out.println("##### Out of bounds exception:"+new MolfileCreator(mol).getMolfile());
+ System.out.print("neighbours:"+neighbours+" ");
+ System.out.print("neighbourAtom:"); for (int k:neighbourAtom) System.out.print(" " + k); System.out.println();
+ System.out.print("neighbourBond:"); for (int k : neighbourBond) System.out.print(" " + k); System.out.println();
+ System.out.print("fragmentNo:"); for (int k : fragmentNo) System.out.print(" " + k); System.out.println();
+ System.out.print("isNeighbourFragment:"); for (boolean k : isNeighbourFragment) System.out.print(" " + k); System.out.println();
+ System.out.print("isRotatableAtom:"); for (boolean b : isRotatableAtom) System.out.print(" " + b); System.out.println();
+}
 				mRotatableNeighbour[rotatableIndex++] = neighbourAtom[i];
+}
 			else
 				mStaticNeighbour[staticIndex++] = neighbourAtom[i];
 		}
@@ -324,7 +338,8 @@ public class TetrahedralStereoRule extends ConformationRule {
 	private Coordinates calculateRotationAxis(Conformer conformer) {
 		Coordinates axis = new Coordinates();
 
-		for (int atom:mStaticNeighbour)
+		int[] neighbour = (mStaticNeighbour.length == 2) ? mStaticNeighbour : mRotatableNeighbour;
+		for (int atom:neighbour)
 			axis.add(conformer.getCoordinates(atom));
 
 		axis.scale(0.5);
@@ -343,8 +358,8 @@ public class TetrahedralStereoRule extends ConformationRule {
 		StringBuilder sb = new StringBuilder("stereo rule:");
 		super.addAtomList(sb);
 		sb.append(" rotatable:");
-		for (int rn:mRotatableNeighbour)
-			sb.append(rn+" ");
+		for (int ra:mRotatableAtom)
+			sb.append(ra+" ");
 		return sb.toString();
 		}
 	}

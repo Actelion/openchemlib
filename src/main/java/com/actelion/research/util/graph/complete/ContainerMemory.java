@@ -63,18 +63,13 @@ public class ContainerMemory<S extends AMemorizedObject> {
 	 * @param factory
 	 */
 	public ContainerMemory(int capacity, IFactory<S> factory) {
-		
 		this.factory = factory;
-		
 		arrAvailable = new IntArray(capacity);
-		
 		li = new ArrayList<S>(capacity);
-		
 		initResources(capacity);
 	}
 	
 	public void reset(){
-		
 		arrAvailable.reset();
 		for (int i = 0; i < li.size(); i++) {
 			arrAvailable.add(i);
@@ -83,19 +78,12 @@ public class ContainerMemory<S extends AMemorizedObject> {
 	
 	
 	private void initResources(int capacity) {
-		
 		int indexStart = li.size();
-		
 		for (int i = 0; i < capacity; i++) {
-			
 			int index = indexStart+i;
-			
 			S s = factory.createObject();
-			
 			s.setPositionInContainer(index);
-			
 			li.add(s);
-			
 			arrAvailable.add(index);
 		}
 	}
@@ -104,18 +92,13 @@ public class ContainerMemory<S extends AMemorizedObject> {
 	 * @return a fresh (resetted) instance.
 	 */
 	public S get(){
-		
 		if(arrAvailable.length()==0){
-			
 			initResources(CAPACITY_ADD);
 		}
 		
 		int index = arrAvailable.removeLast();
-		
 		S s = li.get(index);
-		
 		s.reset();
-		
 		return s;
 	}
 	
@@ -124,11 +107,8 @@ public class ContainerMemory<S extends AMemorizedObject> {
 	}
 	
 	public S getWithCopy(S orign){
-		
 		S t = get();
-		
 		t.copyIntoThis(orign);
-		
 		return t;
 	}
 

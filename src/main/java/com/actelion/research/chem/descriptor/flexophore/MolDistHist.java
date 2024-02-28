@@ -485,35 +485,36 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	 * @return
 	 */
 	public static List<PPNode> readNodes(String strMolDistHist){
-
 		int start = strMolDistHist.indexOf('(');
-		
 		boolean nodesProcessed = false;
-		
 		List<PPNode> liPPNode = new ArrayList<>();
 		while(!nodesProcessed){
-			
 			int end = StringFunctions.nextClosing(strMolDistHist, start, '(', ')');
-
 			if(end==-1){
 				throw new RuntimeException("Error for MolDistHist " + strMolDistHist);
 			}
-
 			String strNode = strMolDistHist.substring(start+1, end);
-
 			PPNode n = PPNode.read(strNode);
-
 			liPPNode.add(n);
-			
 			start = strMolDistHist.indexOf('(', end);
-			
 			if(start==-1){
 				nodesProcessed = true;
 			}
 		}
-
 		return liPPNode;
 	}
+	public static MolDistHist readNodes2MDH(String strMolDistHist){
+
+		List<PPNode> liPPNode = readNodes(strMolDistHist);
+		int size = liPPNode.size();
+		MolDistHist mdh = new MolDistHist(size);
+		for (PPNode ppNode : liPPNode) {
+			mdh.addNode(ppNode);
+		}
+		return  mdh;
+	}
+
+
 
 	public static MolDistHist read(String strMolDistHist){
 

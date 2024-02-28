@@ -38,6 +38,7 @@ package com.actelion.research.chem.descriptor.flexophore;
 import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.util.BurtleHasher;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -214,18 +215,19 @@ public class PPNode implements Comparable<PPNode>, IPPNode {
 		PPNode n = (PPNode)o;
 		return equalAtoms(n);
 	}
-	
+
+	@Override
+	public int hashCode() {
+		return BurtleHasher.hashlittle(arrInteractionType, 13);
+	}
+
 	/**
 	 * May be called after finishing adding new interaction types. 
 	 */
 	public void realize(){
-		
 		int sizeBytes = size * getNumBytesEntry();
-		
 		arrInteractionType = ArrayUtilsCalc.resize(arrInteractionType, sizeBytes);
-		
 		sortInteractionTypes();
-
 		calcHasHeteroAtom();
 	}
 	
@@ -611,9 +613,13 @@ public class PPNode implements Comparable<PPNode>, IPPNode {
 	/**
 	 *
 	 * @param strNode i.e. 262,392,4358*2,8582,590088,598407
-	 * @return
+	 * @return the node with the atom types. If an empty string is given a node without atom types is returned.
 	 */
 	public static PPNode read(String strNode) {
+
+		if(strNode.length()==0){
+			return new PPNode();
+		}
 
 		String [] arr = strNode.split(SEPARATOR_ATOMS);
 

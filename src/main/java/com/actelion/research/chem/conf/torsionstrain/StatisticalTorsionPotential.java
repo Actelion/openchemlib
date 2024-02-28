@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,7 +72,7 @@ public class StatisticalTorsionPotential {
 	
 	private void initialize() {
 		BufferedReader torsionIDReader = new BufferedReader(new InputStreamReader(TorsionDB.class.getResourceAsStream(
-				BASE_PATH+database+TORSION_IDS_FILE)));
+				BASE_PATH+database+TORSION_IDS_FILE), StandardCharsets.UTF_8));
 		
 		try {
 			readTorsionIDs(torsionIDReader);

@@ -40,6 +40,7 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.io.BOMSkipper;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.TreeMap;
 
 /**
@@ -59,7 +60,7 @@ public class RDFileParser {
 	public RDFileParser(String fileName) {
 	    mNoOfRecords = 0;
 		try {
-			mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+			mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
 			readHeader();
 		} catch (IOException e) {
@@ -70,7 +71,7 @@ public class RDFileParser {
 	public RDFileParser(File file) {
         mNoOfRecords = 0;
 		try {
-    		mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+    		mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
 			readHeader();
 		} catch (IOException e) {

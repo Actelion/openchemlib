@@ -4,7 +4,7 @@ import com.actelion.research.chem.descriptor.flexophore.generator.SubFlexophoreG
 import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.ByteArray;
 
-import java.util.Arrays;
+import java.util.*;
 
 public class MolDistHistHelper {
 
@@ -64,6 +64,29 @@ public class MolDistHistHelper {
 
         return mdh;
     }
+    public static MolDistHist assembleNoDistHist (MolDistHist ... arr){
+
+        int nNodesSum = 0;
+        int maxNumNodes = 0;
+        for (MolDistHist mdhFrag : arr) {
+            int nNodes = mdhFrag.getNumPPNodes();
+            nNodesSum += nNodes;
+            if(nNodes>maxNumNodes)
+                maxNumNodes=nNodes;
+        }
+        MolDistHist mdh = new MolDistHist(nNodesSum);
+        int [] [] arrMapIndexNew = new int[arr.length][maxNumNodes];
+        int indexNew = 0;
+        for (int i = 0; i < arr.length; i++) {
+            int n = arr[i].getNumPPNodes();
+            for (int j = 0; j < n; j++) {
+                arrMapIndexNew[i][j]=indexNew;
+                indexNew++;
+                mdh.addNode(arr[i].getNode(j));
+            }
+        }
+        return mdh;
+    }
     public static boolean isZero(byte [] b){
         boolean z=true;
         for (byte v : b) {
@@ -98,6 +121,30 @@ public class MolDistHistHelper {
                 mdh.setDistHist(i,j, arrDistHist);
             }
         }
+    }
+
+    public static MolDistHist getEmptyMolDistHist(){
+        PPNode ppNode0 = new PPNode();
+        ppNode0.realize();
+
+        MolDistHist mdhEmpty = new MolDistHist(1);
+        mdhEmpty.addNode(ppNode0);
+        mdhEmpty.realize();
+
+        return mdhEmpty;
+    }
+    public static boolean isEmptyMolDistHist(MolDistHist mdh){
+
+        boolean empty = true;
+        if(mdh.getNumPPNodes()>1){
+            empty = false;
+        } else if(mdh.getNumPPNodes()==1){
+            if(mdh.getNode(0).getInteractionTypeCount()>0){
+                empty = false;
+            }
+        }
+
+        return empty;
     }
 
     public static MolDistHist getMostDistantPairOfNodes (MolDistHist mdh){
@@ -163,7 +210,36 @@ public class MolDistHistHelper {
         return mdhSub;
     }
 
+    public static boolean areNodesEqual(MolDistHist mdh1, MolDistHist mdh2){
+        boolean eq = true;
+        if(mdh1.getNumPPNodes() != mdh2.getNumPPNodes()){
+            eq = false;
+        } else {
+            for (int i = 0; i < mdh1.getNumPPNodes(); i++) {
+                if(!mdh1.getNode(i).equals(mdh2.getNode(i))){
+                    eq = false;
+                    break;
+                }
+            }
+        }
+        return eq;
+    }
 
+    public static MolDistHist createFromNodes (Collection<PPNode> li){
+        MolDistHist mdh = new MolDistHist(li.size());
+        for (PPNode ppNode : li) {
+            mdh.addNode(ppNode);
+        }
+        mdh.realize();
+        return mdh;
+    }
 
+    public static MolDistHist [] toArray(List<MolDistHist> li){
+        MolDistHist [] a = new MolDistHist[li.size()];
+        for (int i = 0; i < li.size(); i++) {
+            a[i]=li.get(i);
+        }
+        return a;
+    }
 
 }

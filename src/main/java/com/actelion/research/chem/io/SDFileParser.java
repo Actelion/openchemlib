@@ -39,6 +39,7 @@ import com.actelion.research.chem.UniqueStringList;
 import com.actelion.research.io.BOMSkipper;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class SDFileParser extends CompoundFileParser {
     private static final int DEFAULT_RECORDS_TO_INSPECT = 10240;
@@ -61,7 +62,7 @@ public class SDFileParser extends CompoundFileParser {
 		mFieldName = fieldName;
 		
 		try {
-			mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+			mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
 		} catch (IOException e) {
 			mReader = null;
@@ -81,7 +82,7 @@ public class SDFileParser extends CompoundFileParser {
         mNoOfRecords = -1;
 		mFieldName = fieldName;
 		try {
-    		mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+    		mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
 		} catch (IOException e) {
 			mReader = null;

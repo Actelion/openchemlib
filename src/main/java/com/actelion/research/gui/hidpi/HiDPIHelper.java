@@ -10,6 +10,7 @@ import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 
 public class HiDPIHelper {
 	// This is an Apple only solution and needs to be adapted to support high-res displays of other vendors
@@ -77,20 +78,24 @@ public class HiDPIHelper {
 				sUIScaleFactor = 1.0f;
 				}
 			else if (Platform.isWindows()) {
-				try {
-					// with JRE8 we used (float)UIManager.getFont("Label.font").getSize() / 12f
-					sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96f;
+				// only do scaling if jre <= 1.8
+				if (System.getProperty("java.version").startsWith("1.")) {
+					try {
+						// with JRE8 we used (float)UIManager.getFont("Label.font").getSize() / 12f
+						sUIScaleFactor = Toolkit.getDefaultToolkit().getScreenResolution() / 96f;
+					} catch (HeadlessException hle) {
+						sUIScaleFactor = 1.0f;
 					}
-				catch (HeadlessException hle) {
+				} else {
 					sUIScaleFactor = 1.0f;
-					}
 				}
+			}
 			else {  // Linux; Toolkit.getDefaultToolkit().getScreenResolution() always returns 1.0
 				try {
 					sUIScaleFactor = 1.0f;  // default in case of error
 					Process process = Runtime.getRuntime().exec("xrdb -q");
 					process.waitFor();
-					BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+					BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
 					String line;
 					while ((line = br.readLine()) != null) {
 						if (line.startsWith("Xft.dpi:")) {

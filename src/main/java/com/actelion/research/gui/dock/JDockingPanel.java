@@ -558,7 +558,7 @@ public class JDockingPanel extends JPanel implements ActionListener {
 		}
 
 	public void selectDockable(Dockable dockable) {
-		if (dockable != null) {
+		if (dockable != null && !isMaximized()) {
 			for (Dockable d:mDockableMap.values())
 				d.setSelected(d == dockable);
 	

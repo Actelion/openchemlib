@@ -36,19 +36,13 @@ package com.actelion.research.chem.descriptor.flexophore.generator;
 
 import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.*;
-import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphExtractor;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
-import org.openmolecules.chem.conf.gen.ConformerGenerator;
-import org.openmolecules.chem.conf.gen.RigidFragmentCache;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * CreatorMolDistHistViz
@@ -58,15 +52,39 @@ public class CreatorMolDistHistViz {
 
     private static final boolean DEBUG = DescriptorHandlerFlexophore.DEBUG;
 
-    public static final long SEED = 123456789;
+
+    /**
+     * Aromatic imide structure with an exocyclic N. Two N in the aromatic ring. Results in an extreme electron poor
+     * exocyclic N. which is not making any interactions. Consequently, it is removed from the subgraph lists.
+     * The electron poor N is the non-aromatic N in the fragment definitions!
+     */
+    public static final String IDCODE_EXO_N_AROM_IMIDE = "eMPARVCjK|X`";
+
+    // Imide structure separated by one bond in the aromatic ring
+    public static final String IDCODE_EXO_N_AROM_IMIDE_ALPHA = "gO|@AfeJih@PA@";
+
+    public static String [] ARR_EXO_N_AROM_IMIDE = {IDCODE_EXO_N_AROM_IMIDE, IDCODE_EXO_N_AROM_IMIDE_ALPHA};
+
+
+    /**
+     * Similarity 0.977, similarity for identical molecule and a timeout of 5 min. So timeout of 6 min should be fine.
+     *
+     CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode enY\JH@@amaNe`ZPICHhdhThdleEEEDhYThddZFKGLRX@J`@jjiijjZjAPbbT@@, hence generated 8 conformers.
+     5 Minutes 52 Seconds 79 Millisec
+     CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode enY\JH@@amaNe`ZPICHhdhThdleEEEDhYThddZFKGLRX@J`@jjiijjZjAPbRR@@, hence generated 25 conformers.
+     * 5 Minutes 52 Seconds 79 Millisec
+     * [(390*2) (391) (392) (4358*6) (9,4358*6) (4358*4,4488) (590088,598407) (590088,598407)]
+     */
+
+    // public static final long TIMEOUT_CONFORMER_CALCULATION_MS = TimeDelta.MS_SECOND * 30;
 
     // Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
-    private static final int MAX_NUM_TRIES = 10000;
+
+
 
     private static final int MAX_NUM_ATOMS = 1000;
 
     private static final int CONF_GEN_TS = 0;
-
     public static final int CONF_GIVEN_SINGLE_CONFORMATION = 1;
     public static final int SINGLE_CONFORMATION = 2;
 
@@ -75,40 +93,43 @@ public class CreatorMolDistHistViz {
 
     private SubGraphExtractor subGraphExtractor;
 
-    private ConformerGenerator conformerGenerator;
-
     private int conformationMode;
 
     private long seed;
 
+
     // for debugging
     private boolean onlyOneConformer;
 
-    private int [] arrIndexAtomNewTmp;
+    private Exception recentException = null;
+    // Calling SSSearcher frequently generates errors.
+    // private SSSearcher ssSearcher;
+
+    private StereoMolecule [] arrElectronPoorN;
+    private ConformerGeneratorStageTries conformerGeneratorStageTries;
 
     public CreatorMolDistHistViz() {
 
-        seed = SEED;
-
         subGraphExtractor = new SubGraphExtractor();
-
-        conformerGenerator = new ConformerGenerator(seed, false);
-        RigidFragmentCache.getDefaultInstance().loadDefaultCache();
 
         conformationMode = CONF_GEN_TS;
 
-        arrIndexAtomNewTmp = new int[MAX_NUM_ATOMS];
+        conformerGeneratorStageTries = new ConformerGeneratorStageTries();
 
-        // System.out.println("CreatorCompleteGraph conformationMode " + conformationMode);
+        IDCodeParser parser = new IDCodeParser();
+
+        arrElectronPoorN = new StereoMolecule[ARR_EXO_N_AROM_IMIDE.length];
+
+        for (int i = 0; i < ARR_EXO_N_AROM_IMIDE.length; i++) {
+            StereoMolecule frag = parser.getCompactMolecule(ARR_EXO_N_AROM_IMIDE[i]);
+            frag.ensureHelperArrays(Molecule.cHelperRings);
+            arrElectronPoorN[i]=frag;
+        }
 
     }
 
     public void setThreadMaster(ThreadMaster threadMaster) {
-        conformerGenerator.setThreadMaster(threadMaster);
-    }
-
-    public void setConformationMode(int conformationMode) {
-        this.conformationMode = conformationMode;
+        conformerGeneratorStageTries.setThreadMaster(threadMaster);
     }
 
     public MolDistHistViz create(StereoMolecule molOrig) throws Exception {
@@ -134,10 +155,16 @@ public class CreatorMolDistHistViz {
     }
 
 
-    public void initializeConformersAndSetAtTypes(Molecule3D molInPlace){
-        conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
-        InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
+    public Exception getRecentException() {
+        return recentException;
     }
+
+    /**
+     * If initializing with new molecule call resetInitializationStage() before!
+     * @param molInPlace
+     * @return
+     */
+
 
     /**
      * Conformation generator of Thomas Sander
@@ -148,33 +175,26 @@ public class CreatorMolDistHistViz {
      */
     public MolDistHistViz createMultipleConformations(StereoMolecule molOrig, int nConformations) throws Exception {
 
-        // int nConformations = DescriptorHandlerFlexophore.NUM_CONFORMATIONS;
-
         StereoMolecule molStand = molOrig.getCompactCopy();
-
         MoleculeStandardizer.standardize(molStand, MoleculeStandardizer.MODE_GET_PARENT);
-
         molStand.ensureHelperArrays(Molecule.cHelperRings);
-
         Molecule3D molInPlace = new Molecule3D(molStand);
-
         molInPlace.ensureHelperArrays(Molecule.cHelperRings);
 
-        conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
-        
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
+        boolean successfulInitialization = conformerGeneratorStageTries.setMolecule(molInPlace);
+
+        if(!successfulInitialization){
+            return null;
+        }
 
         //
         // Handle carbon atoms connected to hetero atoms
         //
         List<SubGraphIndices> liSubGraphIndices = subGraphExtractor.extract(molInPlace);
         liSubGraphIndices = handleCarbonConnected2Hetero(liSubGraphIndices, molInPlace);
+        liSubGraphIndices = removeExoCyclicElectronPoorN(liSubGraphIndices, molInPlace);
 
-        if(DEBUG) {
-            injectNewSeed();
-        }
-
-        int nAtoms = molInPlace.getAtoms();
 
         List<MultCoordFragIndex> liMultCoordFragIndex = new ArrayList<>();
         for (SubGraphIndices subGraphIndices : liSubGraphIndices) {
@@ -183,7 +203,7 @@ public class CreatorMolDistHistViz {
 
         Molecule3D molViz = createConformations(molInPlace, liMultCoordFragIndex, nConformations);
 
-        int nPotentialConformers = conformerGenerator.getPotentialConformerCount();
+        int nPotentialConformers = conformerGeneratorStageTries.getPotentialConformerCount();
 
         onlyOneConformer = false;
 
@@ -191,18 +211,12 @@ public class CreatorMolDistHistViz {
 
             if(DEBUG) {
                 System.out.println("CreatorCompleteGraph: only one conformer generated.");
-
                 System.out.println("Seed " + seed);
-
                 System.out.println("Potential conformer count " + nPotentialConformers);
-
                 Canonizer can = new Canonizer(molInPlace);
-
                 System.out.println(can.getIDCode());
             }
-
             onlyOneConformer = true;
-
         }
 
         MolDistHistViz mdhv = create(liMultCoordFragIndex, molViz);
@@ -211,7 +225,7 @@ public class CreatorMolDistHistViz {
     }
 
     public int getPotentialConformerCount(){
-        int nPotentialConformers = conformerGenerator.getPotentialConformerCount();
+        int nPotentialConformers = conformerGeneratorStageTries.getPotentialConformerCount();
         return nPotentialConformers;
     }
 
@@ -256,7 +270,7 @@ public class CreatorMolDistHistViz {
 
     /**
      * This method must be called before:
-     *  conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_NUM_TRIES, false);
+     *  initializeConformers(molInPlace);
      *
      * Time in nanoseconds for a small molecule with idcode fegPb@JByH@QdbbbarTTbb^bRIRNQsjVZjjjh@J@@@
      * 75491600 first conformation
@@ -273,8 +287,17 @@ public class CreatorMolDistHistViz {
         int nAtoms = molInPlace.getAtoms();
         int ccConformationsGenerated = 0;
         Molecule3D molViz = null;
+
         for (int i = 0; i < nConformations; i++) {
-            boolean conformerGenerated = generateConformerAndSetCoordinates(conformerGenerator, nAtoms, molInPlace);
+            boolean conformerGenerated = false;
+            try {
+                conformerGenerated = conformerGeneratorStageTries.generateConformerAndSetCoordinates(nAtoms, molInPlace);
+            } catch (ExceptionTimeOutConformerGeneration e) {
+                System.err.println(
+                    "CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode " + molInPlace.getIDCode( )+ ", hence generated " + ccConformationsGenerated + " conformers.");
+                // e.printStackTrace();
+                break;
+            }
 
             if(!conformerGenerated){
                 break;
@@ -285,9 +308,13 @@ public class CreatorMolDistHistViz {
                 molViz = createPharmacophorePoints(molInPlace, liMultCoordFragIndex);
             }
         }
+
         if(ccConformationsGenerated==0){
             throw new ExceptionConformationGenerationFailed("Impossible to generate one conformer!");
         }
+
+        // System.out.println("ccConformationsGenerated " + ccConformationsGenerated);
+
         return molViz;
     }
 
@@ -325,6 +352,85 @@ public class CreatorMolDistHistViz {
         return liSubGraphIndicesProcessed;
     }
 
+    public List<SubGraphIndices> removeExoCyclicElectronPoorN(List<SubGraphIndices> liSubGraphIndices, StereoMolecule molInPlace){
+
+        List<Integer> liElectronPoorN = getElectronPoorN(molInPlace);
+
+//        if(liElectronPoorN.size()>0)
+//            System.out.println("CreatorMolDistHistViz removeExoCyclicElectronPoorN found " + liElectronPoorN.size() + " electron poor atoms in " + molInPlace.getIDCode());
+
+        boolean [] arrMatchAtom = new boolean[molInPlace.getAtoms()];
+
+        for (int indexAt : liElectronPoorN) {
+            arrMatchAtom[indexAt]=true;
+        }
+
+        List<SubGraphIndices> liSubGraphIndicesProcessed = new ArrayList<>();
+        for (SubGraphIndices sgi : liSubGraphIndices) {
+            int[] arrIndexAtomFragment = sgi.getAtomIndices();
+            HashSet<Integer> hsIndexAtom2Remove = new HashSet<>();
+            for (int indexAtFrag : arrIndexAtomFragment) {
+                if (arrMatchAtom[indexAtFrag]) {
+                    hsIndexAtom2Remove.add(indexAtFrag);
+                }
+            }
+
+            SubGraphIndices sgiProcessed = new SubGraphIndices();
+            if (hsIndexAtom2Remove.size() > 0) {
+                for (int indexAtFrag : arrIndexAtomFragment) {
+                    if (!hsIndexAtom2Remove.contains(indexAtFrag)) {
+                        sgiProcessed.addIndex(indexAtFrag);
+                    }
+                }
+            } else {
+                sgiProcessed.addIndex(arrIndexAtomFragment);
+            }
+            if (sgiProcessed.getNumIndices() > 0)
+                liSubGraphIndicesProcessed.add(sgiProcessed);
+        }
+        return liSubGraphIndicesProcessed;
+
+
+
+    }
+
+    /**
+     * The electron poor N is the non-aromatic N!
+     * @param molInPlace
+     * @return
+     */
+    private List<Integer> getElectronPoorN(StereoMolecule molInPlace){
+        List<Integer> liElectronPoorN = new ArrayList<>();
+
+        // Calling SSSearcher frequently generates errors.
+        SSSearcher ssSearcher = new SSSearcher();
+        ssSearcher.setMolecule(molInPlace);
+        for (int i = 0; i < arrElectronPoorN.length; i++) {
+
+            ssSearcher.setFragment(arrElectronPoorN[i]);
+            int numFrags = ssSearcher.findFragmentInMolecule(
+                    SSSearcher.cCountModeOverlapping,
+                    SSSearcher.cMatchDBondToDelocalized | SSSearcher.cMatchAromDBondToDelocalized );
+            if(numFrags>0) {
+                // System.out.println("Found!");
+                List<int[]> li = ssSearcher.getMatchList();
+                for (int[] arrIndex : li) {
+                    for (int j = 0; j < arrIndex.length; j++) {
+                        int indAt = arrIndex[j];
+                        int atNo = molInPlace.getAtomicNo(indAt);
+                        if(atNo==7){
+                            if(!molInPlace.isAromaticAtom(indAt)){
+                                liElectronPoorN.add(indAt);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return liElectronPoorN;
+    }
+
+
     /**
      * Creates the descriptor from the coordinates.
      * @param liMultCoordFragIndex contains the coordinates and the related atom indices of the molecule
@@ -360,6 +466,43 @@ public class CreatorMolDistHistViz {
                 byte [] arrDistHist = MultCoordFragIndex.getDistHist(liMultCoordFragIndex.get(i), liMultCoordFragIndex.get(j));
                 // System.out.println(StringFunctions.toString(arrDistHist));
                 molDistHistViz.setDistHist(i,j,arrDistHist);
+            }
+        }
+
+        molDistHistViz.realize();
+
+        return molDistHistViz;
+
+    }
+    public static MolDistHistViz createWithoutCoordinates(List<SubGraphIndices> liMultCoordFragIndex, Molecule3D molecule3D){
+
+        MolDistHistViz molDistHistViz = new MolDistHistViz(liMultCoordFragIndex.size(), molecule3D);
+
+        List<PPNodeViz> liPPNodeViz = new ArrayList<>();
+        for (int i = 0; i < liMultCoordFragIndex.size(); i++) {
+            SubGraphIndices sgi = liMultCoordFragIndex.get(i);
+
+            int [] arrIndexAtomFrag = sgi.getAtomIndices();
+
+            PPNodeViz ppNodeViz = new PPNodeViz();
+            ppNodeViz.setIndex(i);
+
+            for (int index : arrIndexAtomFrag) {
+                int interactionType = molecule3D.getInteractionAtomType(index);
+                ppNodeViz.add(interactionType);
+                ppNodeViz.addIndexOriginalAtom(index);
+            }
+            liPPNodeViz.add(ppNodeViz);
+        }
+
+        molDistHistViz.set(liPPNodeViz);
+
+        byte [] arrHistPercent = new byte [ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
+        Arrays.fill(arrHistPercent, (byte)1);
+
+        for (int i = 0; i < liMultCoordFragIndex.size(); i++) {
+            for (int j = i+1; j < liMultCoordFragIndex.size(); j++) {
+                molDistHistViz.setDistHist(i,j,arrHistPercent);
             }
         }
 
@@ -420,10 +563,7 @@ public class CreatorMolDistHistViz {
         return molCenter;
     }
 
-    public void injectNewSeed(){
-        seed = new Date().getTime();
-        conformerGenerator = new ConformerGenerator(seed, false);
-    }
+
 
 
     /**
@@ -464,36 +604,11 @@ public class CreatorMolDistHistViz {
     }
 
     /**
-     * 08.03.2017 Method set to public for debugging purposes.
-     * @param conformerGenerator
      * @param nAtoms
      * @param molInPlace
      * @return
      */
-    public static boolean generateConformerAndSetCoordinates(ConformerGenerator conformerGenerator, int nAtoms, Molecule3D molInPlace){
 
-        boolean nextConformerAvailable = false;
-
-        Conformer conformer = conformerGenerator.getNextConformer();
-
-        if(conformer != null){
-
-            // System.out.println(ConformerUtils.toStringDistances(ConformerUtils.getDistanceMatrix(conformer)));
-
-            for (int i = 0; i < nAtoms; i++) {
-                double x = conformer.getX(i);
-                double y = conformer.getY(i);
-                double z = conformer.getZ(i);
-
-                molInPlace.setAtomX(i,x);
-                molInPlace.setAtomY(i,y);
-                molInPlace.setAtomZ(i,z);
-            }
-            nextConformerAvailable = true;
-        }
-
-        return nextConformerAvailable;
-    }
 
     /**
      * Calculates the center of the fragments and stores the coordinates in MultCoordFragIndex.
