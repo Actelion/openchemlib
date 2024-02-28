@@ -16,6 +16,7 @@ import com.actelion.research.chem.conf.BondLengthSet;
 import com.actelion.research.chem.conf.VDWRadii;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.chemicalspaces.synthon.SynthonReactor;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
@@ -33,7 +34,7 @@ public class PharmacophoreTreeGenerator {
 	
 	public static final int MAX_RING_SIZE = 50;
 	
-	public static final Set<String> RGROUPS = new HashSet<String>(Arrays.asList("R1", "R2", "R3", "R4"));
+	public static final Set<String> RGROUPS = new HashSet<String>(Arrays.asList("U", "Np", "Pu", "Am"));
 	
 
 	private PharmacophoreTreeGenerator() {}
@@ -141,7 +142,7 @@ public class PharmacophoreTreeGenerator {
 					PharmacophoreNode node;
 					if(RGROUPS.contains(label)) { //is a link atom
 						node = new PharmacophoreNode(Arrays.asList(currentAtom),functionalities,atomVolumes,7,false,false);
-						node.getFunctionalities()[0] = Integer.parseInt(label.split("R")[1]);
+						node.getFunctionalities()[0] = StereoMolecule.getAtomicNoFromLabel(label)+1-SynthonReactor.CONNECTOR_OFFSET;
 					}
 					else 
 						node = new PharmacophoreNode(Arrays.asList(currentAtom),functionalities,atomVolumes,false,false);
