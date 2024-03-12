@@ -523,7 +523,7 @@ public class CreatorMolDistHistViz {
             int [] arrAtomIndexList = multCoordFragIndex.getArrIndexFrag();
 
             // Calculate center coordinates.
-            Coordinates coordCenter = ExtendedMolecule.getCenterGravity(molCenter, arrAtomIndexList);
+            Coordinates coordCenter = molCenter.getCenterOfGravity(arrAtomIndexList);
 
             for (int at = 0; at < arrAtomIndexList.length; at++) {
 
@@ -622,7 +622,7 @@ public class CreatorMolDistHistViz {
             int [] arrAtomIndexList = multCoordFragIndex.getArrIndexFrag();
 
             // Calculate center coordinates.
-            Coordinates coordCenter = ExtendedMolecule.getCenterGravity(molecule3D, arrAtomIndexList);
+            Coordinates coordCenter = molecule3D.getCenterOfGravity(arrAtomIndexList);
             multCoordFragIndex.addCoord(coordCenter);
         }
     }
