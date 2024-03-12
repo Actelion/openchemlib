@@ -335,7 +335,7 @@ public class SmilesParser {
 							position++;
 							}
 
-						// Handle this before checking for atom symbols. R<n> (ring count) takes precendence to R1 - R16 (substituent pseudo label)
+						// Handle this before checking for atom symbols. R<n> (ring count) takes precedence to R1 - R16 (substituent pseudo label)
 						if (smiles[position-1] == 'R' && allowSmarts && (Character.isDigit(smiles[position]) || (mAllowCactvs && smiles[position] == '{'))) {
 							atomicNo = 6;
 							atomQueryFeatures |= Molecule.cAtomQFAny;
@@ -344,23 +344,23 @@ public class SmilesParser {
 								position--;
 							}
 						else {
-							if (!getGetInBracketAtomInfo(smiles, position-1, endIndex, atomInfo))
-								throw new Exception("SmilesParser: Unexpected character in atom definition:'"+((char)smiles[position-1])+"'");
+							if (!parseAtomInBrackets(smiles, position-1, endIndex, atomInfo))
+								throw new Exception("SmilesParser: Unexpected character in atom definition:'"+((char)smiles[position-1])+"' position:"+(position-1));
 
 							atomicNo =  atomInfo.atomicNo;
 							position += atomInfo.labelLength - 1;
-							explicitHydrogens = HYDROGEN_IMPLICIT_ZERO;
+							explicitHydrogens = HYDROGEN_IMPLICIT_ZERO;  // in case we have SMILES; neglected, if we process a SMARTS, which we may learn later when hitting a query feature
 
-							// If we have a comma after the first atom label, then we need to parse a list.
+							// If we have a comma after the first atom label, then we need to parse a (positive) atom list.
 							// In this case we also have to set aromaticity query features from upper and lower case symbols.
 							if (allowSmarts && (smiles[position] == ',' || isNotList)) {
 								boolean mayBeAromatic = atomInfo.mayBeAromatic;
 								boolean mayBeAliphatic = atomInfo.mayBeAliphatic;
 								int start = position - atomInfo.labelLength;
 								while (start < endIndex) {
-									if (!getGetInBracketAtomInfo(smiles, start, endIndex, atomInfo)) {
+									if (!parseAtomInBrackets(smiles, start, endIndex, atomInfo)) {
 										if (!isNotList)
-											throw new Exception("SmilesParser: Unexpected character in atom list:'"+((char)smiles[start])+"'");
+											throw new Exception("SmilesParser: Unexpected character in atom list:'"+((char)smiles[start])+"'. Position:"+start);
 										// a not-list may be followed by ';' and another atom condition, while a positive list must not end with ','
 										break;
 										}
@@ -412,7 +412,7 @@ public class SmilesParser {
 							}
 
 						if (smiles[position] == '[')
-							throw new Exception("SmilesParser: nested square brackets found");
+							throw new Exception("SmilesParser: nested square brackets found. Position:"+position);
 
 						if (smiles[position] == ']') {
 							position++;
@@ -422,7 +422,6 @@ public class SmilesParser {
 
 						charge = parseCharge(smiles, position, skipCount);
 						if (skipCount[0] != 0) {
-							charge = 1;
 							position += skipCount[0];
 
 							// explicit charge=0 is usually meant as query feature
@@ -638,7 +637,7 @@ public class SmilesParser {
 
 						if (smiles[position] == '$') {  // recursive SMARTS
 							if (!isNot)
-								throw new Exception("SmilesParser: non-negated recursive SMARTS relating to preceding atom are not supported yet.");
+								throw new Exception("SmilesParser: non-negated recursive SMARTS relating to preceding atom are not supported yet. Position:"+position);
 
 							position += parseRecursiveGroup(smiles, position, recursiveGroupList);
 							continue;
@@ -656,7 +655,7 @@ public class SmilesParser {
 							continue;
 							}
 
-						throw new Exception("SmilesParser: unexpected character inside brackets: '"+(char)smiles[position]+"'");
+						throw new Exception("SmilesParser: unexpected character inside brackets: '"+(char)smiles[position]+"', position:"+position);
 						}
 					}
 				else if (theChar == '*') {
@@ -716,7 +715,7 @@ public class SmilesParser {
 				///////////////////////////////////////////////////////////////////////////////
 
 				if (atomicNo == -1 && theChar != '?')
-					throw new Exception("SmilesParser: unknown element label found");
+					throw new Exception("SmilesParser: unknown element label found. Position:"+(position-1));
 
 				int atom = mMol.addAtom(atomicNo);	// this may be a hydrogen, if defined as [H]
 				mMol.setAtomCharge(atom, charge);
@@ -745,7 +744,7 @@ public class SmilesParser {
 				else {  // mark aromatic atoms
 					if (Character.isLowerCase(theChar)) {
 						if (atomicNo != 5 && atomicNo != 6 && atomicNo != 7 && atomicNo != 8 && atomicNo != 15 && atomicNo != 16 && atomicNo != 33 && atomicNo != 34)
-							throw new Exception("SmilesParser: atomicNo " + atomicNo + " must not be aromatic");
+							throw new Exception("SmilesParser: atomicNo " + atomicNo + " must not be aromatic. Position:"+(position-1));
 
 						mMol.setAtomMarker(atom, true);
 						mAromaticAtoms++;
@@ -811,7 +810,7 @@ public class SmilesParser {
 
 			if (theChar == '$') {  // recursive SMARTS
 				if (!recursiveGroupList.isEmpty())
-					throw new Exception("SmilesParser: multiple recursive SMARTS without preceding atom are not supported yet.");
+					throw new Exception("SmilesParser: multiple recursive SMARTS without preceding atom are not supported yet. Position:"+(position-1));
 
 				baseAtom[bracketLevel] = mol.getAllAtoms();
 
@@ -830,7 +829,7 @@ public class SmilesParser {
 
 			if (isBondSymbol(theChar)) {
 				if (squareBracketOpen)
-					throw new Exception("SmilesParser: unexpected bond symbol inside square brackets: '"+theChar+"'");
+					throw new Exception("SmilesParser: unexpected bond symbol inside square brackets: '"+theChar+"', position:"+(position-1));
 
 				int excludedBonds = 0;
 				while (isBondSymbol(theChar)) {
@@ -854,7 +853,7 @@ public class SmilesParser {
 						else if (theChar == ':')
 							excludedBonds |= Molecule.cBondQFDelocalized;
 						else
-							throw new Exception("SmilesParser: bond symbol '"+theChar+"' not allowed after '!'.");
+							throw new Exception("SmilesParser: bond symbol '"+theChar+"' not allowed after '!'. Position:"+(position-1));
 						}
 					else {
 						if (theChar == '@')
@@ -951,7 +950,7 @@ public class SmilesParser {
 						}
 					if (number >= ringClosureAtom.length) {
 						if (number >=MAX_CONNECTIONS)
-							throw new Exception("SmilesParser: ringClosureAtom number out of range");
+							throw new Exception("SmilesParser: ringClosureAtom number out of range: "+number);
 
 						int oldSize = ringClosureAtom.length;
 						int newSize = ringClosureAtom.length;
@@ -1007,7 +1006,7 @@ public class SmilesParser {
 				}
 
 			if (theChar == '+') {
-				throw new Exception("SmilesParser: '+' found outside brackets");
+				throw new Exception("SmilesParser: '+' found outside brackets. Position:"+(position-1));
 				}
 
 			if (theChar == '(') {
@@ -1031,7 +1030,7 @@ public class SmilesParser {
 				}
 
 			if (theChar == ']') {
-				throw new Exception("SmilesParser: closing bracket at unexpected position");
+				throw new Exception("SmilesParser: closing bracket at unexpected position:"+(position-1));
 				}
 
 			if (theChar == '%') {
@@ -1048,7 +1047,7 @@ public class SmilesParser {
 				continue;
 				}*/
 
-			throw new Exception("SmilesParser: unexpected character outside brackets: '"+theChar+"'");
+			throw new Exception("SmilesParser: unexpected character outside brackets: '"+theChar+"' position:"+(position-1));
 			}
 
 		// Check for unsatisfied open bonds
@@ -1056,7 +1055,7 @@ public class SmilesParser {
 			throw new Exception("SmilesParser: dangling open bond");
 		for (int rca:ringClosureAtom)
 			if (rca != -1)
-				throw new Exception("SmilesParser: dangling ring closure");
+				throw new Exception("SmilesParser: dangling ring closure.");
 
 		int[] handleHydrogenAtomMap = mMol.getHandleHydrogenMap();
 
@@ -1265,7 +1264,7 @@ public class SmilesParser {
 		return true;
 		}
 
-	private boolean getGetInBracketAtomInfo(byte[] smiles, int position, int endIndex, AtomInfo info) throws Exception {
+	private boolean parseAtomInBrackets(byte[] smiles, int position, int endIndex, AtomInfo info) throws Exception {
 		info.mayBeAromatic = true;
 		info.mayBeAliphatic = true;
 		if (smiles[position] == '#') {
@@ -1279,7 +1278,7 @@ public class SmilesParser {
 				position++;
 				}
 			if (info.atomicNo == 0 || info.atomicNo >= Molecule.cAtomLabel.length)
-				throw new Exception("SmilesParser: Atomic number out of range.");
+				throw new Exception("SmilesParser: Atomic number out of range. position:"+(position-1));
 			return true;
 			}
 
@@ -1321,7 +1320,7 @@ public class SmilesParser {
 
 	private int parseRecursiveGroup(byte[] smiles, int dollarIndex, ArrayList<StereoMolecule> groupList) throws Exception {
 		if (smiles[dollarIndex+1] != '(')
-			throw new Exception("SmilesParser: '$' for recursive SMARTS must be followed by '('.");
+			throw new Exception("SmilesParser: '$' for recursive SMARTS must be followed by '('. position:"+dollarIndex);
 
 		int openBrackets = 1;
 		int endIndex = dollarIndex+2;
@@ -1334,10 +1333,10 @@ public class SmilesParser {
 			}
 
 		if (openBrackets > 0)
-			throw new Exception("SmilesParser: Missing closing ')' for recursive SMARTS.");
+			throw new Exception("SmilesParser: Missing closing ')' for recursive SMARTS. '('-position:"+(dollarIndex+1));
 
 		StereoMolecule group = new StereoMolecule(16, 16);
-		new SmilesParser().parse(group, smiles, dollarIndex+2, endIndex-1);
+		new SmilesParser(mSmartsMode, mCreateSmartsWarnings).parse(group, smiles, dollarIndex+2, endIndex-1);
 		groupList.add(group);
 
 		if (smiles[dollarIndex-1] == '!')
