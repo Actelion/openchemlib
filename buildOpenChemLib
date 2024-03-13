@@ -6,6 +6,6 @@ rm -rf ./build
 mkdir build
 cp -r ./src/main/resources/* ./build/
 find . -name "*.java" > sources.txt
-javac -d ./build @sources.txt
+javac -target 8 -d ./build @sources.txt
 rm sources.txt
 jar -cf build/OpenChemLib.jar -C ./build .
