@@ -50,8 +50,8 @@ public class Canonizer {
 
 	// The following options CONSIDER_DIASTEREOTOPICITY, CONSIDER_ENANTIOTOPICITY
 	// and CONSIDER_STEREOHETEROTOPICITY have no influence on the idcode,
-	// i.e. the idcode is the same whether or not one of these options is
-	// used. However, if you require e.g. a pro-E atom always to appear
+	// i.e. the idcode is the same whether one of these options is used.
+	// However, if you require e.g. a pro-E atom always to appear
 	// before the pro-Z, e.g. because you can distinguish them from the
 	// encoded coordinates, then you need to use one of these options.
 	// Of course, pro-R or pro-S can only be assigned, if one of the bonds
@@ -928,7 +928,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 		while ((mNoOfRanks < mMol.getAtoms()) && paritiesFound) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				mCanBase[atom].init(atom);
-				mCanBase[atom].add(mAtomBits+4, (mCanRank[atom] << 4)
+				mCanBase[atom].add(mAtomBits+4, ((long)mCanRank[atom] << 4)
 											  | (mTHParity[atom] << 2));
 				}
 
@@ -987,9 +987,9 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				// then only consider the ESR type and the rank of the group.
 
 				if (!mTHESRTypeNeedsNormalization[atom]
-						&& mTHESRType[atom] != Molecule.cESRTypeAbs)
+				 && mTHESRType[atom] != Molecule.cESRTypeAbs)
 					mCanBase[atom].add((mTHESRType[atom] << 18)
-							+ (groupRank[(mTHESRType[atom] == Molecule.cESRTypeAnd) ? 0 : 1][mTHESRGroup[atom]] << 8));
+							+ ((long)groupRank[(mTHESRType[atom] == Molecule.cESRTypeAnd) ? 0 : 1][mTHESRGroup[atom]] << 8));
 
 //				if (!mTHParityNeedsNormalization[atom]) {
 					int parity = mTHParity[atom];
@@ -2503,8 +2503,8 @@ System.out.println("noOfRanks:"+canRank);
 
 	/**
 	 * If the molecule contains exactly one stereo center and if that has unknown configuration,
-	 * than assume that the configuration is meant to be racemic and update molecule accordingly.
-	 * If stereo configuration is ill defined with a stereo bond whose pointed tip is not at the
+	 * then assume that the configuration is meant to be racemic and update molecule accordingly.
+	 * If stereo configuration is ill-defined with a stereo bond whose pointed tip is not at the
 	 * stereo center, then the molecule is not touched and the stereo center kept as undefined.
 	 * @return whether a stereo center was converted to be racemic
 	 */
@@ -3754,6 +3754,25 @@ System.out.println();
 
 
 	/**
+	 * Returns the atoms's enhanced stereo representation type.
+	 * @param atom
+	 * @return one of the Molecule.cESRTypeXXX constants
+	 */
+	public int getTHESRType(int atom) {
+		return mTHESRType[atom];
+		}
+
+
+	/**
+	 * @param atom
+	 * @return whether this atom's TH-parity is pseudo
+	 */
+	public boolean isPseudoTHParity(int atom) {
+		return mTHParityIsPseudo[atom];
+		}
+
+
+	/**
 	 * Returns the absolute bond parity, which is based on priority ranks.
 	 * @param bond
 	 * @return one of the Molecule.cBondParityXXX constants
@@ -3761,6 +3780,25 @@ System.out.println();
 	public int getEZParity(int bond) {
 		return mEZParity[bond];
 		}
+
+
+	/**
+	 * Returns the bond's enhanced stereo representation type.
+	 * @param bond
+	 * @return one of the Molecule.cESRTypeXXX constants
+	 */
+	public int getEZESRType(int bond) {
+		return mEZESRType[bond];
+	}
+
+
+	/**
+	 * @param bond
+	 * @return whether this bond's EZ-parity is pseudo
+	 */
+	public boolean isPseudoEZParity(int bond) {
+		return mEZParityIsPseudo[bond];
+	}
 
 
 	/**
