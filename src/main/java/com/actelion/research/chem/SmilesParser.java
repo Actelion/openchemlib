@@ -290,6 +290,7 @@ public class SmilesParser {
 		boolean squareBracketOpen = false;
 		boolean isDoubleDigit = false;
 		boolean smartsFeatureFound = false;
+		boolean hasLeadingBracket = false;
 		int bracketLevel = 0;
 		int bondType = Molecule.cBondTypeSingle;
 		int bondQueryFeatures = 0;
@@ -636,8 +637,8 @@ public class SmilesParser {
 							}
 
 						if (smiles[position] == '$') {  // recursive SMARTS
-							if (!isNot)
-								throw new Exception("SmilesParser: non-negated recursive SMARTS relating to preceding atom are not supported yet. Position:"+position);
+//							if (!isNot)
+//								throw new Exception("SmilesParser: non-negated recursive SMARTS relating to preceding atom are not supported yet. Position:"+position);
 
 							position += parseRecursiveGroup(smiles, position, recursiveGroupList);
 							continue;
@@ -1010,8 +1011,11 @@ public class SmilesParser {
 				}
 
 			if (theChar == '(') {
-				if (baseAtom[bracketLevel] == -1)
-					throw new Exception("Smiles with leading parenthesis are not supported");
+				if (baseAtom[bracketLevel] == -1) {
+					// Leading '(' are superfluous and not good style, but we allow and ignore them including their closing counterparts
+					hasLeadingBracket = true;
+					continue;
+					}
 				bracketLevel++;
 				if (baseAtom.length == bracketLevel)
 					baseAtom = Arrays.copyOf(baseAtom, baseAtom.length + BRACKET_LEVELS);
@@ -1020,6 +1024,13 @@ public class SmilesParser {
 				}
 
 			if (theChar == ')') {
+				if (bracketLevel == 0) {
+					if (!hasLeadingBracket)
+						throw new Exception("SmilesParser: Closing ')' without opening counterpart. Position:"+(position-1));
+					baseAtom[0] = -1;
+					hasLeadingBracket = false;  // we allow for a new leading '(', e.g. after '.'
+					continue;
+					}
 				bracketLevel--;
 				continue;
 				}
@@ -1145,7 +1156,7 @@ public class SmilesParser {
 
 		correctValenceExceededNitrogen();	// convert pyridine oxides and nitro into polar structures with valid nitrogen valences
 
-		locateAromaticDoubleBonds(allowSmarts);
+		locateAromaticDoubleBonds(allowSmarts, smartsFeatureFound);
 
 		mMol.removeAtomCustomLabels();
 		mMol.setHydrogenProtection(false);
@@ -1346,7 +1357,7 @@ public class SmilesParser {
 		return endIndex - dollarIndex;
 		}
 
-	private void locateAromaticDoubleBonds(boolean allowSmartsFeatures) throws Exception {
+	private void locateAromaticDoubleBonds(boolean allowSmartsFeatures, boolean smartsFeatureFound) throws Exception {
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		mIsAromaticBond = new boolean[mMol.getBonds()];
 		mAromaticBonds = 0;
@@ -1529,6 +1540,7 @@ public class SmilesParser {
 						mMol.setAtomMarker(atom, false);
 						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFAromatic, true);
 						mAromaticAtoms--;
+						smartsFeatureFound = true;
 						}
 					}
 				}
@@ -1538,6 +1550,7 @@ public class SmilesParser {
 						mIsAromaticBond[bond] = false;
 						mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
 						mAromaticBonds--;
+						smartsFeatureFound = true;
 						}
 					}
 				}
@@ -1552,10 +1565,13 @@ public class SmilesParser {
 				}
 			}
 
-		if (mAromaticAtoms != 0)
-			throw new Exception("Assignment of aromatic double bonds failed");
-		if (mAromaticBonds != 0)
-			throw new Exception("Assignment of aromatic double bonds failed");
+		if ((mSmartsMode == SMARTS_MODE_IS_SMILES)
+		 || (mSmartsMode == SMARTS_MODE_GUESS && !smartsFeatureFound)) {
+			if (mAromaticAtoms != 0)
+				throw new Exception("Assignment of aromatic double bonds failed");
+			if (mAromaticBonds != 0)
+				throw new Exception("Assignment of aromatic double bonds failed");
+			}
 		}
 
 
