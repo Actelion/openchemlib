@@ -36,7 +36,7 @@ public class MoleculeStandardizer {
 
 	/**
 	 * Standardises a molecule and fixes some structural errors.
-	 * Typically this is done before canonicalization.
+	 * Typically, this is done before canonicalization.
 	 * It includes the following changes:<br>
 	 * - different forms of functional groups (e.g. nitro) are normalized to a preferred one<br>
 	 * - charged acidic or basic atoms are (de-)protonated to remove charges and neutralize the molecule, if possible.<br>
@@ -77,7 +77,6 @@ public class MoleculeStandardizer {
 	 * sulfonic acid, phosphoric acid, phenolic oxygen. Means: negative charges are removed.
 	 * Adds Na+ or Cl- for final charge equilibration.
 	 * @param mol
-	 * @return true if an atom was added.
 	 */
 	private static void repairAndUnify(StereoMolecule mol) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
