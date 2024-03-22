@@ -53,10 +53,10 @@ public class StructureSearch {
 	public static final int TIME_LIMIT_EXCEEDED = 6;
 	public static final String[] COMPLETION_TEXT = { "not started", "stopped", "query missing", "unsupported search type", "successful", "count limit hit", "time limit hit" };
 
-	private volatile StructureSearchSpecification mSpecification;
-	private volatile StructureSearchDataSource mDataSource;
-	private volatile StructureSearchController mSearchController;
-	private volatile ProgressController mProgressController;
+	private final StructureSearchSpecification mSpecification;
+	private final StructureSearchDataSource mDataSource;
+	private final StructureSearchController mSearchController;
+	private final ProgressController mProgressController;
 	private volatile StereoMolecule[] mQueryFragment,mDoubleQueryFragment;
 	private volatile ByteArrayComparator mIDCodeComparator;
 	private volatile DescriptorHandler mDescriptorHandler;
@@ -250,7 +250,7 @@ public class StructureSearch {
 		int[] result = new int[mResultQueue.size()];
     	int i=0;
     	for (Integer integer:mResultQueue)
-    		result[i++] = integer.intValue();
+    		result[i++] = integer;
 
     	return result;
 		}
@@ -345,23 +345,23 @@ public class StructureSearch {
 							}
 						else if (mSpecification.isSimilaritySearch()) {
 							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
-								for (int i=0; i<mQueryDescriptor.length; i++) {
-									if (mDescriptorHandler.getSimilarity(mQueryDescriptor[i], mDataSource.getDescriptor(mDescriptorColumn, row, s, mSpecification.isLargestFragmentOnly()))
-										 >= mSpecification.getSimilarityThreshold()) {
+								for (Object o : mQueryDescriptor) {
+									if (mDescriptorHandler.getSimilarity(o, mDataSource.getDescriptor(mDescriptorColumn, row, s, mSpecification.isLargestFragmentOnly()))
+											>=mSpecification.getSimilarityThreshold()) {
 										isMatch = true;
 										break;
-										}
 									}
+								}
 								}
 							}
 						else if (mSpecification.isExactSearch()) {
 							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
-								for (int i=0; i<mQueryIDCode.length; i++) {
-									if (mIDCodeComparator.compare(mQueryIDCode[i], mDataSource.getIDCode(row, s, mSpecification.isLargestFragmentOnly())) == 0) {
+								for (byte[] bytes : mQueryIDCode) {
+									if (mIDCodeComparator.compare(bytes, mDataSource.getIDCode(row, s, mSpecification.isLargestFragmentOnly())) == 0) {
 										isMatch = true;
 										break;
-										}
 									}
+								}
 								}
 							}
 						else if (mSpecification.isNoStereoSearch()) {
@@ -376,38 +376,38 @@ public class StructureSearch {
 							}
 						else if (mSpecification.isTautomerSearch()) {
 							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
-								for (int i=0; i<mQueryHashCode.length; i++) {
-									if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getTautomerCode(row, s, mSpecification.isLargestFragmentOnly())) {
+								for (long l : mQueryHashCode) {
+									if (l != 0 && l == mDataSource.getTautomerCode(row, s, mSpecification.isLargestFragmentOnly())) {
 										isMatch = true;
 										break;
-										}
 									}
+								}
 								}
 							}
 						else if (mSpecification.isNoStereoTautomerSearch()) {
 							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
-								for (int i=0; i<mQueryHashCode.length; i++) {
-									if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getNoStereoTautomerCode(row, s, mSpecification.isLargestFragmentOnly())) {
+								for (long l : mQueryHashCode) {
+									if (l != 0 && l == mDataSource.getNoStereoTautomerCode(row, s, mSpecification.isLargestFragmentOnly())) {
 										isMatch = true;
 										break;
-										}
 									}
+								}
 								}
 							}
 						else if (mSpecification.isBackboneSearch()) {
 							for (int s=0; !isMatch && s<mDataSource.getStructureCount(row); s++) {
-								for (int i=0; i<mQueryHashCode.length; i++) {
-									if (mQueryHashCode[i] != 0 && mQueryHashCode[i] == mDataSource.getBackboneCode(row, s, mSpecification.isLargestFragmentOnly())) {
+								for (long l : mQueryHashCode) {
+									if (l != 0 && l == mDataSource.getBackboneCode(row, s, mSpecification.isLargestFragmentOnly())) {
 										isMatch = true;
 										break;
-										}
 									}
+								}
 								}
 							}
 						}
 
 					if (isMatch) {
-						mResultQueue.add(new Integer(row));
+						mResultQueue.add(row);
 						mMatchCount.incrementAndGet();
 						}
 					}

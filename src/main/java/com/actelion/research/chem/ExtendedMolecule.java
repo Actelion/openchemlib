@@ -626,7 +626,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	public int getExcludedNeighbourCount(int atom) {
 		int count = 0;
 		for (int i=0; i<mConnAtoms[atom]; i++)
-			if ((mAtomQueryFeatures[i] & Molecule.cAtomQFExcludeGroup) != 0)
+			if ((mAtomQueryFeatures[mConnAtom[atom][i]] & Molecule.cAtomQFExcludeGroup) != 0)
 				count++;
 		return count;
 		}
