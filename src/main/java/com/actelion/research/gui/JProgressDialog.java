@@ -42,8 +42,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.Serial;
 
 public class JProgressDialog extends JDialog implements ActionListener,ProgressController,Runnable {
+	@Serial
 	private static final long serialVersionUID = 0x20070301;
 
 	private static final int sActionDispose = 2;
@@ -74,7 +76,7 @@ public class JProgressDialog extends JDialog implements ActionListener,ProgressC
 	/**
 	 * Creates a JProgressDialog. If invokeSetVisible is true,
 	 * then the dialog is scheduled to be set visible with invokeLater()
-	 * without blocking the current thread. Otherwise the caller needs
+	 * without blocking the current thread. Otherwise, the caller needs
 	 * to call setVisible() manually.
 	 * @param owner
 	 * @param invokeSetVisible
