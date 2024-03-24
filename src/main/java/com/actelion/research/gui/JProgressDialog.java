@@ -42,10 +42,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.Serial;
 
 public class JProgressDialog extends JDialog implements ActionListener,ProgressController,Runnable {
-	@Serial
 	private static final long serialVersionUID = 0x20070301;
 
 	private static final int sActionDispose = 2;
