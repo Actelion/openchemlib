@@ -162,7 +162,7 @@ public class InteractionDistanceStatistics {
 
 	
 	public void write(String file) throws IOException {
-		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
 		//Write the distance pair interactions
 		for(long l: interactionStatistics.keySet()) {
 			int[] occurences = interactionStatistics.get(l);

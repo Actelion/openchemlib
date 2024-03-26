@@ -115,7 +115,7 @@ public abstract class AbstractParser {
 				ZipOutputStream os = new ZipOutputStream(new FileOutputStream(fileName));
 				w = new OutputStreamWriter(os);
 			} else {
-				w = new BufferedWriter(new FileWriter(fileName)); 
+				w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), StandardCharsets.UTF_8));
 			}
 			
 			save(mol, w);

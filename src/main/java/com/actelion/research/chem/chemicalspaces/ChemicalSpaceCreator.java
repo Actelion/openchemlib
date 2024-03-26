@@ -8,10 +8,8 @@ import com.actelion.research.chem.io.DWARFileCreator;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.Reactor;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -355,6 +353,8 @@ public class ChemicalSpaceCreator {
 							StereoMolecule mol = new StereoMolecule();
 							String bb = synthons.get(synthon);
 							parser.parse(mol, synthon);
+//if (reactionPrec.getReactants() <= reactantID)  // to prevent OutOfBoundsExceptions; TLS 25-Mar-2024 in dummyReaction
+//	continue;
 							StereoMolecule reactedBB = dummyReaction(bb,reactionPrec,dummyReactants,reactantID); 
 							if(reactedBB==null)
 								continue;
@@ -455,8 +455,8 @@ public class ChemicalSpaceCreator {
 		
 		});
 		try {
-			String outfile = "space.dwar";
-			DWARFileCreator creator = new DWARFileCreator(new BufferedWriter(new FileWriter(outfile)));
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("space.dwar"), StandardCharsets.UTF_8));
+			DWARFileCreator creator = new DWARFileCreator(writer);
 			List<Integer> synthonColumns = new ArrayList<>();
 			for(int i=0;i<4;i++) {
 				synthonColumns.add(creator.addStructureColumn("Synthon" + (i + 1), "IDcode"));
@@ -546,7 +546,7 @@ public class ChemicalSpaceCreator {
 		}
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 	}
-	
+
 	private  void writeCombinatorialLibrary(CombinatorialLibrary combiLib) throws IOException {
 		File htmcdir = new File(this.outdirectory + "/CombinatorialLibraries/");
 		htmcdir.mkdir();
@@ -582,10 +582,11 @@ public class ChemicalSpaceCreator {
 					List<Map<String,String>> flowSynthons = combiLib.precursorLibs.get(i).get(flowReaction);
 					int counter=1;
 					for(Map<String,String> synthons : flowSynthons) {
-						if(synthons.size()==0)
+						if(synthons.isEmpty())
 							continue;
-						String outfile = flowDir + "_" + counter + ".dwar";
-						DWARFileCreator creator = new DWARFileCreator(new BufferedWriter(new FileWriter(outfile)));
+						BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+								new FileOutputStream(flowDir + "_" + counter + ".dwar"), StandardCharsets.UTF_8));
+						DWARFileCreator creator = new DWARFileCreator(writer);
 						int synthonColumn = creator.addStructureColumn("Synthon", "IDcode");
 						int structureColumn = creator.addStructureColumn("Building Block", "IDcode");
 						List<String> fields = new ArrayList<>();
@@ -652,7 +653,8 @@ public class ChemicalSpaceCreator {
 			}
 
 				String outfile = dir + "/" + combiLib.reaction.getName() + ".dwar";
-				DWARFileCreator creator = new DWARFileCreator(new BufferedWriter(new FileWriter(outfile)));
+				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outfile), StandardCharsets.UTF_8));
+				DWARFileCreator creator = new DWARFileCreator(writer);
 				int synthonColumn = creator.addStructureColumn("Synthon", "IDcode");
 				int structureColumn = creator.addStructureColumn("Building Block", "IDcode");
 				List<String> fields = new ArrayList<>();
