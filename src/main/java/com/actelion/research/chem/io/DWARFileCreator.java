@@ -66,6 +66,7 @@ public class DWARFileCreator {
 	 * - for every row call setRowStructure() and setRowValue() for cell values and then writeCurrentRow()<br>
 	 * - if you didn't call setMasterCopy(), then optionally call writeTemplate() to add runtime properties<br>
 	 * - call writeEnd() to close the file<br>
+	 * @param writer make sure that it encodes as UTF-8
 	 */
 	public DWARFileCreator(BufferedWriter writer) {
 		mWriter = writer;

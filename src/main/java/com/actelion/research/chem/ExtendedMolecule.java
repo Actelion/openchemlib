@@ -36,10 +36,7 @@ package com.actelion.research.chem;
 
 import com.actelion.research.util.Angle;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Arrays;
 
 /**
@@ -629,7 +626,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	public int getExcludedNeighbourCount(int atom) {
 		int count = 0;
 		for (int i=0; i<mConnAtoms[atom]; i++)
-			if ((mAtomQueryFeatures[i] & Molecule.cAtomQFExcludeGroup) != 0)
+			if ((mAtomQueryFeatures[mConnAtom[atom][i]] & Molecule.cAtomQFExcludeGroup) != 0)
 				count++;
 		return count;
 		}
@@ -4070,7 +4067,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomQueryFeatures[atom] &= ~cAtomQFNotChain;   // redundant
 
 			if (mAtomCharge[atom] != 0)	// explicit charge supersedes query features
-				mAtomFlags[atom] &= ~cAtomQFCharge;
+				mAtomQueryFeatures[atom] &= ~cAtomQFCharge;
+
+			if (getOccupiedValence(atom) == getMaxValence(atom)) {
+				mAtomQueryFeatures[atom] &= ~cAtomQFNeighbours;
+				mAtomQueryFeatures[atom] &= ~cAtomQFENeighbours;
+				mAtomQueryFeatures[atom] &= ~cAtomQFHydrogen;
+				mAtomQueryFeatures[atom] &= ~cAtomQFPiElectrons;
+				}
 			}
 		}
 
@@ -4107,37 +4111,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			}
 		}
 
-
 	private void writeObject(ObjectOutputStream stream) throws IOException {}
+
 	private void readObject(ObjectInputStream stream) throws IOException {}
-
-
-	public final static Coordinates getCenterGravity(ExtendedMolecule mol) {
-
-		int n = mol.getAllAtoms();
-
-		int [] indices = new int [n];
-
-		for (int i = 0; i < indices.length; i++) {
-			indices[i]=i;
-		}
-
-		return getCenterGravity(mol, indices);
-	}
-
-	public final static Coordinates getCenterGravity(ExtendedMolecule mol, int[] indices) {
-
-		Coordinates c = new Coordinates();
-		for (int i = 0; i < indices.length; i++) {
-			c.x += mol.getAtomX(indices[i]);
-			c.y += mol.getAtomY(indices[i]);
-			c.z += mol.getAtomZ(indices[i]);
-		}
-		c.x /= indices.length;
-		c.y /= indices.length;
-		c.z /= indices.length;
-
-		return c;
-	}
-
 }

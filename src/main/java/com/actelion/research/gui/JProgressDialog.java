@@ -74,7 +74,7 @@ public class JProgressDialog extends JDialog implements ActionListener,ProgressC
 	/**
 	 * Creates a JProgressDialog. If invokeSetVisible is true,
 	 * then the dialog is scheduled to be set visible with invokeLater()
-	 * without blocking the current thread. Otherwise the caller needs
+	 * without blocking the current thread. Otherwise, the caller needs
 	 * to call setVisible() manually.
 	 * @param owner
 	 * @param invokeSetVisible

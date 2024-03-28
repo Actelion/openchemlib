@@ -38,8 +38,10 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 
 public class ReactionClassifier {
 	private static final boolean DEBUG = true;
@@ -171,7 +173,7 @@ public class ReactionClassifier {
 		
 		if (DEBUG)
 			try {
-				gErrout = new BufferedWriter(new FileWriter("errout.txt"));
+				gErrout = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("errout.txt"), StandardCharsets.UTF_8));
 				}
 			catch (IOException ioe) {}
 

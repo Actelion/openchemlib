@@ -68,9 +68,10 @@ public class SmilesParser {
 
 	private StereoMolecule mMol;
 	private boolean[] mIsAromaticBond;
-	private int mAromaticAtoms,mAromaticBonds,mSmartsMode,mCoordinateMode;
+	private int mAromaticAtoms,mAromaticBonds,mCoordinateMode;
+	private final int mSmartsMode;
 	private long mRandomSeed;
-	private boolean mCreateSmartsWarnings,mMakeHydrogenExplicit,mAllowCactvs;
+	private final boolean mCreateSmartsWarnings,mMakeHydrogenExplicit,mAllowCactvs;
 	private StringBuilder mSmartsWarningBuffer;
 
 	/**
@@ -289,12 +290,15 @@ public class SmilesParser {
 		boolean squareBracketOpen = false;
 		boolean isDoubleDigit = false;
 		boolean smartsFeatureFound = false;
+		boolean hasLeadingBracket = false;
 		int bracketLevel = 0;
 		int bondType = Molecule.cBondTypeSingle;
 		int bondQueryFeatures = 0;
 		SortedList<Integer> atomList = new SortedList<>();
 		SmilesRange range = new SmilesRange(smiles);
 		AtomInfo atomInfo = new AtomInfo();
+		ArrayList<StereoMolecule> recursiveGroupList = new ArrayList<>();
+		int[] skipCount = new int[1];
 
 		while (smiles[position] <= 32)
 			position++;
@@ -307,7 +311,7 @@ public class SmilesParser {
 			 || theChar == '*'
 			 || theChar == '?'
 			 || (theChar == '!' && allowSmarts && squareBracketOpen)
-			 || (theChar == '#' && allowSmarts && squareBracketOpen)) { // TODO not-lists
+			 || (theChar == '#' && allowSmarts && squareBracketOpen)) {
 				int atomicNo = -1;
 				int charge = 0;
 				int mapNo = 0;
@@ -315,7 +319,7 @@ public class SmilesParser {
 				int explicitHydrogens = HYDROGEN_ANY;
 				boolean parityFound = false;
 				boolean isClockwise = false;
-				int atomQueryFeatures = 0;      // translated from obvious SMARTS features
+				long atomQueryFeatures = 0;      // translated from obvious SMARTS features
 				if (squareBracketOpen) {
 					if (theChar == '*') {
 						atomicNo = 6;
@@ -325,47 +329,54 @@ public class SmilesParser {
 						atomicNo = 0;
 						}
 					else {
-						boolean isNot = (theChar == '!');
-						if (isNot) {
+						boolean isNotList = (theChar == '!');
+						if (isNotList) {
 							smartsFeatureFound = true;
 							atomQueryFeatures |= Molecule.cAtomQFAny;
 							position++;
 							}
 
-						// Handle this before checking for atom symbols. R<n> (ring count) takes precendence to R1 - R16 (substituent pseudo label)
+						// Handle this before checking for atom symbols. R<n> (ring count) takes precedence to R1 - R16 (substituent pseudo label)
 						if (smiles[position-1] == 'R' && allowSmarts && (Character.isDigit(smiles[position]) || (mAllowCactvs && smiles[position] == '{'))) {
 							atomicNo = 6;
 							atomQueryFeatures |= Molecule.cAtomQFAny;
 							position--;
-							if (isNot)
+							if (isNotList)
 								position--;
 							}
 						else {
-							getGetInBracketAtomInfo(smiles, position-1, endIndex, atomInfo);
+							if (!parseAtomInBrackets(smiles, position-1, endIndex, atomInfo))
+								throw new Exception("SmilesParser: Unexpected character in atom definition:'"+((char)smiles[position-1])+"' position:"+(position-1));
+
 							atomicNo =  atomInfo.atomicNo;
 							position += atomInfo.labelLength - 1;
-							explicitHydrogens = HYDROGEN_IMPLICIT_ZERO;
+							explicitHydrogens = HYDROGEN_IMPLICIT_ZERO;  // in case we have SMILES; neglected, if we process a SMARTS, which we may learn later when hitting a query feature
 
-							// If we have a comma after the first atom label, then we need to parse a list.
+							// If we have a comma after the first atom label, then we need to parse a (positive) atom list.
 							// In this case we also have to set aromaticity query features from upper and lower case symbols.
-							if (allowSmarts && (smiles[position] == ',' || isNot)) {
+							if (allowSmarts && (smiles[position] == ',' || isNotList)) {
 								boolean mayBeAromatic = atomInfo.mayBeAromatic;
 								boolean mayBeAliphatic = atomInfo.mayBeAliphatic;
 								int start = position - atomInfo.labelLength;
 								while (start < endIndex) {
-									getGetInBracketAtomInfo(smiles, start, endIndex, atomInfo);
+									if (!parseAtomInBrackets(smiles, start, endIndex, atomInfo)) {
+										if (!isNotList)
+											throw new Exception("SmilesParser: Unexpected character in atom list:'"+((char)smiles[start])+"'. Position:"+start);
+										// a not-list may be followed by ';' and another atom condition, while a positive list must not end with ','
+										break;
+										}
+
 									atomList.add(atomInfo.atomicNo);
 									mayBeAromatic |= atomInfo.mayBeAromatic;
 									mayBeAliphatic |= atomInfo.mayBeAliphatic;
 									start += atomInfo.labelLength;
-									if (smiles[start] != ',')
+									if (smiles[start] != (isNotList ? ';' : ','))   // positive list: ',' e.g. "N,O"; negative lists: ';' e.g. "!#7;!#8"
+										break;
+									if (isNotList && smiles[start+1] != '!')
 										break;
 									start++;
-									if (smiles[start] == '!') {
-										if (!isNot)
-											throw new Exception("SmilesParser: inconsistent '!' in atom list.");
+									if (smiles[start] == '!')
 										start++;
-										}
 									}
 
 								if (atomList.size() > 1) {
@@ -402,7 +413,7 @@ public class SmilesParser {
 							}
 
 						if (smiles[position] == '[')
-							throw new Exception("SmilesParser: nested square brackets found");
+							throw new Exception("SmilesParser: nested square brackets found. Position:"+position);
 
 						if (smiles[position] == ']') {
 							position++;
@@ -410,34 +421,10 @@ public class SmilesParser {
 							continue;
 							}
 
-						if (smiles[position] == '+') {
-							charge = 1;
-							position++;
-							while (smiles[position] == '+') {
-								charge++;
-								position++;
-								}
-							if (charge == 1 && Character.isDigit(smiles[position])) {
-								charge = smiles[position] - '0';
-								position++;
-								}
-							// explicit charge=0 is usually meant as query feature
-							if (charge == 0)
-								atomQueryFeatures |= Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos;
-							continue;
-							}
+						charge = parseCharge(smiles, position, skipCount);
+						if (skipCount[0] != 0) {
+							position += skipCount[0];
 
-						if (smiles[position] == '-') {
-							charge = -1;
-							position++;
-							while (smiles[position] == '-') {
-								charge--;
-								position++;
-								}
-							if (charge == -1 && Character.isDigit(smiles[position])) {
-								charge = '0' - smiles[position];
-								position++;
-								}
 							// explicit charge=0 is usually meant as query feature
 							if (charge == 0)
 								atomQueryFeatures |= Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos;
@@ -452,7 +439,7 @@ public class SmilesParser {
 							position++;
 							position += range.parse(smiles, position, 1, 1);
 							explicitHydrogens = range.min;
-							int flags = 0;
+							long flags = 0;
 							if (range.min <= 0 && range.max >= 0)
 								flags |= Molecule.cAtomQFNot0Hydrogen;
 							if (range.min <= 1 && range.max >= 1)
@@ -494,9 +481,14 @@ public class SmilesParser {
 								flags |= Molecule.cAtomQFNot4Neighbours;
 
 							if (flags != 0) {
-								if (!isNot)
+								if (isNot)
+									atomQueryFeatures |= flags;
+								else if ((atomQueryFeatures & Molecule.cAtomQFNeighbours) != 0)
+									atomQueryFeatures &= ~flags;
+								else {
 									flags = flags ^ Molecule.cAtomQFNeighbours;
-								atomQueryFeatures |= flags;
+									atomQueryFeatures |= flags;
+									}
 								}
 							continue;
 							}
@@ -517,9 +509,14 @@ public class SmilesParser {
 								flags |= Molecule.cAtomQFNot4ENeighbours;
 
 							if (flags != 0) {
-								if (!isNot)
+								if (isNot)
+									atomQueryFeatures |= flags;
+								else if ((atomQueryFeatures & Molecule.cAtomQFENeighbours) != 0)
+									atomQueryFeatures &= ~flags;
+								else {
 									flags = flags ^ Molecule.cAtomQFENeighbours;
-								atomQueryFeatures |= flags;
+									atomQueryFeatures |= flags;
+									}
 								}
 							continue;
 							}
@@ -532,6 +529,18 @@ public class SmilesParser {
 								continue;
 
 							int valence = valences[0];
+
+							// if we have a locally defined charge, we update the valance properly
+							int localCharge = parseCharge(smiles, position, skipCount);
+							if (skipCount[0] != 0) {
+								if (Molecule.isAtomicNoElectronegative(atomicNo))
+									valence += localCharge;
+								else if (atomicNo == 6)
+									valence -= Math.abs(localCharge);
+								else
+									valence -= localCharge;
+								}
+
 							long flags = 0;
 							// we convert into pi-electron count using standard valence
 							if (valence-range.min <= 0 && valence-range.max >= 0)
@@ -542,9 +551,14 @@ public class SmilesParser {
 								flags |= Molecule.cAtomQFNot2PiElectrons;
 
 							if (flags != 0) {
-								if (!isNot)
+								if (isNot)
+									atomQueryFeatures |= flags;
+								else if ((atomQueryFeatures & Molecule.cAtomQFPiElectrons) != 0)
+									atomQueryFeatures &= ~flags;
+								else {
 									flags = flags ^ Molecule.cAtomQFPiElectrons;
-								atomQueryFeatures |= flags;
+									atomQueryFeatures |= flags;
+									}
 								}
 							continue;
 							}
@@ -571,9 +585,14 @@ public class SmilesParser {
 								smartsWarning((isNot?"!R":"R")+range.max);
 
 							if (flags != 0) {
-								if (!isNot)
+								if (isNot)
+									atomQueryFeatures |= flags;
+								else if ((atomQueryFeatures & Molecule.cAtomQFRingState) != 0)
+									atomQueryFeatures &= ~flags;
+								else {
 									flags = flags ^ Molecule.cAtomQFRingState;
-								atomQueryFeatures |= flags;
+									atomQueryFeatures |= flags;
+									}
 								}
 							continue;
 							}
@@ -617,13 +636,27 @@ public class SmilesParser {
 							continue;
 							}
 
+						if (smiles[position] == '$') {  // recursive SMARTS
+//							if (!isNot)
+//								throw new Exception("SmilesParser: non-negated recursive SMARTS relating to preceding atom are not supported yet. Position:"+position);
+
+							position += parseRecursiveGroup(smiles, position, recursiveGroupList);
+							continue;
+							}
+
 						if (allowSmarts && (smiles[position] == ';' || smiles[position] == '&')) { // we interpret high and low precendence AND the same way
 							smartsFeatureFound = true;
 							position++;
 							continue;
 							}
 
-						throw new Exception("SmilesParser: unexpected character inside brackets: '"+(char)smiles[position]+"'");
+						if (allowSmarts && (smiles[position] == ',' && isRepeatedAllowedORFeature(smiles, position, skipCount))) {    // we allow OR-logic for some query options if they have the same type
+							smartsFeatureFound = true;
+							position += skipCount[0] + 1;
+							continue;
+							}
+
+						throw new Exception("SmilesParser: unexpected character inside brackets: '"+(char)smiles[position]+"', position:"+position);
 						}
 					}
 				else if (theChar == '*') {
@@ -683,7 +716,7 @@ public class SmilesParser {
 				///////////////////////////////////////////////////////////////////////////////
 
 				if (atomicNo == -1 && theChar != '?')
-					throw new Exception("SmilesParser: unknown element label found");
+					throw new Exception("SmilesParser: unknown element label found. Position:"+(position-1));
 
 				int atom = mMol.addAtom(atomicNo);	// this may be a hydrogen, if defined as [H]
 				mMol.setAtomCharge(atom, charge);
@@ -712,7 +745,7 @@ public class SmilesParser {
 				else {  // mark aromatic atoms
 					if (Character.isLowerCase(theChar)) {
 						if (atomicNo != 5 && atomicNo != 6 && atomicNo != 7 && atomicNo != 8 && atomicNo != 15 && atomicNo != 16 && atomicNo != 33 && atomicNo != 34)
-							throw new Exception("SmilesParser: atomicNo " + atomicNo + " must not be aromatic");
+							throw new Exception("SmilesParser: atomicNo " + atomicNo + " must not be aromatic. Position:"+(position-1));
 
 						mMol.setAtomMarker(atom, true);
 						mAromaticAtoms++;
@@ -721,11 +754,21 @@ public class SmilesParser {
 						mMol.setAtomMarker(atom, false);
 						}
 					}
+				if (!recursiveGroupList.isEmpty()) {
+					// Recursive group(s) as further substructure restriction relating to previously parsed atom within same square brackets.
+					for (StereoMolecule group:recursiveGroupList) {
+						if (atom != 0) {
+							group.setAtomicNo(0, 0);    // use first atom as attachment point and neglect for now potential query features or negative atom lists
+							mol.addSubstituent(group, atom);
+							}
+						}
+					recursiveGroupList.clear();
+					}
 
 				// put explicitHydrogen into atomCustomLabel to keep atom-relation when hydrogens move to end of atom list in handleHydrogen()
 				if (explicitHydrogens != HYDROGEN_ANY && atomicNo != 1) {	// no custom labels for hydrogen to get useful results in getHandleHydrogenMap()
 					byte[] bytes = new byte[1];
-					bytes[0] = (byte)(explicitHydrogens == HYDROGEN_IMPLICIT_ZERO ? 0 : explicitHydrogens);
+					bytes[0] = (byte)explicitHydrogens;
 					mMol.setAtomCustomLabel(atom, bytes);
 					}
 
@@ -759,9 +802,22 @@ public class SmilesParser {
 	
 						// using position as hydrogenPosition is close enough
 						int hydrogenCount = (explicitHydrogens == HYDROGEN_IMPLICIT_ZERO) ? 0 : explicitHydrogens;
-						parityMap.put(atom, new THParity(atom, position-2, fromAtom, hydrogenCount, position-1, isClockwise));
+						parityMap.put(atom, new THParity(atom, position - 2, fromAtom, hydrogenCount, position - 1, isClockwise));
 						}
 					}
+
+				continue;
+				}
+
+			if (theChar == '$') {  // recursive SMARTS
+				if (!recursiveGroupList.isEmpty())
+					throw new Exception("SmilesParser: multiple recursive SMARTS without preceding atom are not supported yet. Position:"+(position-1));
+
+				baseAtom[bracketLevel] = mol.getAllAtoms();
+
+				position += parseRecursiveGroup(smiles, position-1, recursiveGroupList);
+				mol.addMolecule(recursiveGroupList.get(0));
+				recursiveGroupList.clear();
 
 				continue;
 				}
@@ -774,7 +830,7 @@ public class SmilesParser {
 
 			if (isBondSymbol(theChar)) {
 				if (squareBracketOpen)
-					throw new Exception("SmilesParser: unexpected bond symbol inside square brackets: '"+theChar+"'");
+					throw new Exception("SmilesParser: unexpected bond symbol inside square brackets: '"+theChar+"', position:"+(position-1));
 
 				int excludedBonds = 0;
 				while (isBondSymbol(theChar)) {
@@ -782,7 +838,7 @@ public class SmilesParser {
 						theChar = (char)smiles[position++];
 						if (theChar == '@')
 							bondQueryFeatures |= Molecule.cBondQFNotRing;
-						if ((theChar == '-' && smiles[position] == '>')
+						else if ((theChar == '-' && smiles[position] == '>')
 						 || (theChar == '<' && smiles[position] == '-')) {
 							excludedBonds |= Molecule.cBondTypeMetalLigand;
 							position++;
@@ -798,7 +854,7 @@ public class SmilesParser {
 						else if (theChar == ':')
 							excludedBonds |= Molecule.cBondQFDelocalized;
 						else
-							throw new Exception("SmilesParser: bond symbol '"+theChar+"' not allowed after '!'.");
+							throw new Exception("SmilesParser: bond symbol '"+theChar+"' not allowed after '!'. Position:"+(position-1));
 						}
 					else {
 						if (theChar == '@')
@@ -812,7 +868,7 @@ public class SmilesParser {
 						else if (theChar == ':')
 							bondType = Molecule.cBondTypeDelocalized;
 						else if (theChar == '~')
-							bondQueryFeatures |= Molecule.cBondQFBondTypes;
+							bondQueryFeatures |= Molecule.cBondQFSingle | Molecule.cBondQFDouble | Molecule.cBondQFTriple | Molecule.cBondQFDelocalized;
 						else if (theChar == '/') {
 							if (readStereoFeatures)
 								bondType = Molecule.cBondTypeUp;    // encode slash temporarily in bondType
@@ -895,7 +951,7 @@ public class SmilesParser {
 						}
 					if (number >= ringClosureAtom.length) {
 						if (number >=MAX_CONNECTIONS)
-							throw new Exception("SmilesParser: ringClosureAtom number out of range");
+							throw new Exception("SmilesParser: ringClosureAtom number out of range: "+number);
 
 						int oldSize = ringClosureAtom.length;
 						int newSize = ringClosureAtom.length;
@@ -951,12 +1007,15 @@ public class SmilesParser {
 				}
 
 			if (theChar == '+') {
-				throw new Exception("SmilesParser: '+' found outside brackets");
+				throw new Exception("SmilesParser: '+' found outside brackets. Position:"+(position-1));
 				}
 
 			if (theChar == '(') {
-				if (baseAtom[bracketLevel] == -1)
-					throw new Exception("Smiles with leading parenthesis are not supported");
+				if (baseAtom[bracketLevel] == -1) {
+					// Leading '(' are superfluous and not good style, but we allow and ignore them including their closing counterparts
+					hasLeadingBracket = true;
+					continue;
+					}
 				bracketLevel++;
 				if (baseAtom.length == bracketLevel)
 					baseAtom = Arrays.copyOf(baseAtom, baseAtom.length + BRACKET_LEVELS);
@@ -965,6 +1024,13 @@ public class SmilesParser {
 				}
 
 			if (theChar == ')') {
+				if (bracketLevel == 0) {
+					if (!hasLeadingBracket)
+						throw new Exception("SmilesParser: Closing ')' without opening counterpart. Position:"+(position-1));
+					baseAtom[0] = -1;
+					hasLeadingBracket = false;  // we allow for a new leading '(', e.g. after '.'
+					continue;
+					}
 				bracketLevel--;
 				continue;
 				}
@@ -975,7 +1041,7 @@ public class SmilesParser {
 				}
 
 			if (theChar == ']') {
-				throw new Exception("SmilesParser: closing bracket at unexpected position");
+				throw new Exception("SmilesParser: closing bracket at unexpected position:"+(position-1));
 				}
 
 			if (theChar == '%') {
@@ -992,7 +1058,7 @@ public class SmilesParser {
 				continue;
 				}*/
 
-			throw new Exception("SmilesParser: unexpected character outside brackets: '"+theChar+"'");
+			throw new Exception("SmilesParser: unexpected character outside brackets: '"+theChar+"' position:"+(position-1));
 			}
 
 		// Check for unsatisfied open bonds
@@ -1000,7 +1066,7 @@ public class SmilesParser {
 			throw new Exception("SmilesParser: dangling open bond");
 		for (int rca:ringClosureAtom)
 			if (rca != -1)
-				throw new Exception("SmilesParser: dangling ring closure");
+				throw new Exception("SmilesParser: dangling ring closure.");
 
 		int[] handleHydrogenAtomMap = mMol.getHandleHydrogenMap();
 
@@ -1013,22 +1079,27 @@ public class SmilesParser {
 				int explicitHydrogen = mMol.getAtomCustomLabelBytes(atom)[0];
 
 				if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS) {
-					if (mMakeHydrogenExplicit) {
-						for (int i=0; i<explicitHydrogen; i++)
-							mMol.addBond(atom, mMol.addAtom(1), 1);
-						}
-					else {
-						if (explicitHydrogen == 0)
-							mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot0Hydrogen, true);
-						if (explicitHydrogen == 1)
-							mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot1Hydrogen, true);
-						if (explicitHydrogen == 2)
-							mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot2Hydrogen, true);
-						if (explicitHydrogen == 3)
-							mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot3Hydrogen, true);
+					if (explicitHydrogen != HYDROGEN_IMPLICIT_ZERO) {   // in SMARTS there is not implicit zero hydrogen!
+						if (mMakeHydrogenExplicit) {
+							for (int i=0; i<explicitHydrogen; i++)
+								mMol.addBond(atom, mMol.addAtom(1), 1);
+							}
+						else {
+							if (explicitHydrogen == 0)
+								mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot0Hydrogen, true);
+							if (explicitHydrogen == 1)
+								mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot1Hydrogen, true);
+							if (explicitHydrogen == 2)
+								mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot2Hydrogen, true);
+							if (explicitHydrogen == 3)
+								mMol.setAtomQueryFeature(atom, Molecule.cAtomQFHydrogen & ~Molecule.cAtomQFNot3Hydrogen, true);
+							}
 						}
 					}
 				else {
+					if (explicitHydrogen == HYDROGEN_IMPLICIT_ZERO)
+						explicitHydrogen = 0;
+
 					if (!mMol.isMetalAtom(atom)
 					 && (!mMol.isMarkedAtom(atom)
 					  || (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == 0))) {
@@ -1085,7 +1156,7 @@ public class SmilesParser {
 
 		correctValenceExceededNitrogen();	// convert pyridine oxides and nitro into polar structures with valid nitrogen valences
 
-		locateAromaticDoubleBonds(allowSmarts);
+		locateAromaticDoubleBonds(allowSmarts, smartsFeatureFound);
 
 		mMol.removeAtomCustomLabels();
 		mMol.setHydrogenProtection(false);
@@ -1114,10 +1185,37 @@ public class SmilesParser {
 				mMol.setUnknownParitiesToExplicitlyUnknown();
 			}
 
-		if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS)
+		if (smartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS) {
 			mMol.setFragment(true);
+			mMol.validateAtomQueryFeatures();
+			mMol.validateBondQueryFeatures();
+			}
 		}
 
+	/**
+	 * @param smiles
+	 * @param position position of potential first charge symbol '+' or '-'
+	 * @param characterCount receives number of characters needed for charge encoding
+	 * @return extracted charge; 0: no charge defined or explicit charge=0 - distinguish by characterCount
+	 */
+	private int parseCharge(byte[] smiles, int position, int[] characterCount) {
+		characterCount[0] = 0;
+		if (smiles[position] == '+' || smiles[position] == '-') {
+			byte symbol = smiles[position];
+			int charge = 1;
+			characterCount[0]++;
+			while (smiles[position+characterCount[0]] == symbol) {
+				charge++;
+				characterCount[0]++;
+				}
+			if (charge == 1 && Character.isDigit(smiles[position+1])) {
+				charge = smiles[position+1] - '0';
+				characterCount[0]++;
+				}
+			return symbol == '+' ? charge : -charge;
+			}
+		return 0;
+		}
 
 	private boolean isBondSymbol(char theChar) {
 		return theChar == '-'
@@ -1133,7 +1231,51 @@ public class SmilesParser {
 			|| theChar == '@';
 		}
 
-	private void getGetInBracketAtomInfo(byte[] smiles, int position, int endIndex, AtomInfo info) throws Exception {
+	/**
+	 * If two subsequent features are delimited by comma (OR-logic), then we allow these
+	 * - if they have the same type (and atom label, if an atom label is preceding), e.g. 'NX' in NX3 and NX4+
+	 * - if the feature supports the logic of adding query features to previously given ones (D,R,X,z)
+	 * @param smiles
+	 * @param commaPosition
+	 * @param skipCount int[1] to hold the number of characters to skip for atom label (0 if there is no atom label)
+	 * @return true, if comma (OR-logic) is an allowed delimiter here
+	 */
+	private boolean isRepeatedAllowedORFeature(byte[] smiles, int commaPosition, int[] skipCount) {
+		if (commaPosition < 3)
+			return false;
+
+		int index1 = commaPosition - 1;
+		if (smiles[index1] == '+' || smiles[index1] == '-')
+			index1--;
+
+		if (!Character.isDigit(smiles[index1]))
+			return false;
+
+		index1--;
+
+		if (smiles[index1] != 'D'
+		 && smiles[index1] != 'R'
+		 && smiles[index1] != 'X'
+		 && smiles[index1] != 'z')
+			return false;
+
+		skipCount[0] = 0;
+		while (index1 > 0 && Character.isLetter(smiles[index1-1])) {
+			index1--;
+			skipCount[0]++;
+			}
+
+		int index2 = commaPosition + 1;
+		while (Character.isLetter(smiles[index1])) {
+			if (smiles.length <= index2 || smiles[index1] != smiles[index2])
+				return false;
+			index1++;
+			index2++;
+			}
+		return true;
+		}
+
+	private boolean parseAtomInBrackets(byte[] smiles, int position, int endIndex, AtomInfo info) throws Exception {
 		info.mayBeAromatic = true;
 		info.mayBeAliphatic = true;
 		if (smiles[position] == '#') {
@@ -1147,20 +1289,25 @@ public class SmilesParser {
 				position++;
 				}
 			if (info.atomicNo == 0 || info.atomicNo >= Molecule.cAtomLabel.length)
-				throw new Exception("SmilesParser: Atomic number out of range.");
+				throw new Exception("SmilesParser: Atomic number out of range. position:"+(position-1));
+			return true;
 			}
-		else if (smiles[position] >= 'A' && smiles[position] <= 'Z') {
+
+		if (smiles[position] >= 'A' && smiles[position] <= 'Z') {
 			info.labelLength = (smiles[position+1] >= 'a' && smiles[position+1] <= 'z') ? 2 : 1;
 			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
 			info.mayBeAromatic = false;
+			return true;
 			}
-		else if (smiles[position] >= 'a' && smiles[position] <= 'z') {
+
+		if (smiles[position] >= 'a' && smiles[position] <= 'z') {
 			info.labelLength = (smiles[position+1] >= 'a' && smiles[position+1] <= 'z') ? 2 : 1;
 			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
 			info.mayBeAliphatic = false;
+			return true;
 			}
-		else
-			throw new Exception("SmilesParser: Unexpected character within brackets:'"+((char)smiles[position])+"'");
+
+		return false;
 		}
 
 	private int bondSymbolToQueryFeature(char symbol) {
@@ -1182,7 +1329,35 @@ public class SmilesParser {
 			}
 		}
 
-	private void locateAromaticDoubleBonds(boolean allowSmartsFeatures) throws Exception {
+	private int parseRecursiveGroup(byte[] smiles, int dollarIndex, ArrayList<StereoMolecule> groupList) throws Exception {
+		if (smiles[dollarIndex+1] != '(')
+			throw new Exception("SmilesParser: '$' for recursive SMARTS must be followed by '('. position:"+dollarIndex);
+
+		int openBrackets = 1;
+		int endIndex = dollarIndex+2;
+		while (endIndex < smiles.length && openBrackets > 0) {
+			if (smiles[endIndex] == '(')
+				openBrackets++;
+			else if (smiles[endIndex] == ')')
+				openBrackets--;
+			endIndex++;
+			}
+
+		if (openBrackets > 0)
+			throw new Exception("SmilesParser: Missing closing ')' for recursive SMARTS. '('-position:"+(dollarIndex+1));
+
+		StereoMolecule group = new StereoMolecule(16, 16);
+		new SmilesParser(mSmartsMode, mCreateSmartsWarnings).parse(group, smiles, dollarIndex+2, endIndex-1);
+		groupList.add(group);
+
+		if (smiles[dollarIndex-1] == '!')
+			for (int atom=0; atom<group.getAllAtoms(); atom++)
+				group.setAtomQueryFeature(atom, Molecule.cAtomQFExcludeGroup, true);
+
+		return endIndex - dollarIndex;
+		}
+
+	private void locateAromaticDoubleBonds(boolean allowSmartsFeatures, boolean smartsFeatureFound) throws Exception {
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		mIsAromaticBond = new boolean[mMol.getBonds()];
 		mAromaticBonds = 0;
@@ -1204,23 +1379,22 @@ public class SmilesParser {
 		for (int ring=0; ring<ringSet.getSize(); ring++) {
 			int[] ringAtom = ringSet.getRingAtoms(ring);
 			isAromaticRing[ring] = true;
-			for (int i=0; i<ringAtom.length; i++) {
-				if (!mMol.isMarkedAtom(ringAtom[i])) {
+			for (int j : ringAtom) {
+				if (!mMol.isMarkedAtom(j)) {
 					isAromaticRing[ring] = false;
 					break;
-					}
 				}
+			}
 			if (isAromaticRing[ring]) {
-				for (int i=0; i<ringAtom.length; i++)
-					isAromaticRingAtom[ringAtom[i]] = true;
+				for (int j : ringAtom) isAromaticRingAtom[j] = true;
 
 				int[] ringBond = ringSet.getRingBonds(ring);
-				for (int i=0; i<ringBond.length; i++) {
-					if (!mIsAromaticBond[ringBond[i]]) {
-						mIsAromaticBond[ringBond[i]] = true;
+				for (int j : ringBond) {
+					if (!mIsAromaticBond[j]) {
+						mIsAromaticBond[j] = true;
 						mAromaticBonds++;
-						}
 					}
+				}
 				}
 			}
 
@@ -1262,8 +1436,7 @@ public class SmilesParser {
 		// We cache the (untrustworthy) isAromaticBond array to later find paths between single
 		// aromatic atoms.
 		boolean[] isAromaticBond = new boolean[mMol.getBonds()];
-		for (int i=0; i<mMol.getBonds(); i++)
-			isAromaticBond[i] = mIsAromaticBond[i];
+		if (mMol.getBonds()>=0) System.arraycopy(mIsAromaticBond, 0, isAromaticBond, 0, mMol.getBonds());
 
 			// Some Smiles contain 'aromatic' rings with atoms not being compatible
 			// with a PI-bond. These include: tertiary non-charged nitrogen, [nH],
@@ -1273,21 +1446,21 @@ public class SmilesParser {
 		for (int ring=0; ring<ringSet.getSize(); ring++) {
 			if (isAromaticRing[ring]) {
 				int[] ringAtom = ringSet.getRingAtoms(ring);
-				for (int i=0; i<ringAtom.length; i++) {
-					if (!qualifiesForPi(ringAtom[i])) {
-						if (mMol.isMarkedAtom(ringAtom[i])) {
-							mMol.setAtomMarker(ringAtom[i], false);// mark: atom aromaticity handled
+				for (int k : ringAtom) {
+					if (!qualifiesForPi(k)) {
+						if (mMol.isMarkedAtom(k)) {
+							mMol.setAtomMarker(k, false);// mark: atom aromaticity handled
 							mAromaticAtoms--;
-							}
-						for (int j=0; j<mMol.getConnAtoms(ringAtom[i]); j++) {
-							int connBond = mMol.getConnBond(ringAtom[i], j);
+						}
+						for (int j = 0; j<mMol.getConnAtoms(k); j++) {
+							int connBond = mMol.getConnBond(k, j);
 							if (mIsAromaticBond[connBond]) {
 								mIsAromaticBond[connBond] = false;
 								mAromaticBonds--;
-								}
 							}
 						}
 					}
+				}
 				}
 			}
 
@@ -1367,6 +1540,7 @@ public class SmilesParser {
 						mMol.setAtomMarker(atom, false);
 						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFAromatic, true);
 						mAromaticAtoms--;
+						smartsFeatureFound = true;
 						}
 					}
 				}
@@ -1376,6 +1550,7 @@ public class SmilesParser {
 						mIsAromaticBond[bond] = false;
 						mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
 						mAromaticBonds--;
+						smartsFeatureFound = true;
 						}
 					}
 				}
@@ -1390,10 +1565,13 @@ public class SmilesParser {
 				}
 			}
 
-		if (mAromaticAtoms != 0)
-			throw new Exception("Assignment of aromatic double bonds failed");
-		if (mAromaticBonds != 0)
-			throw new Exception("Assignment of aromatic double bonds failed");
+		if ((mSmartsMode == SMARTS_MODE_IS_SMILES)
+		 || (mSmartsMode == SMARTS_MODE_GUESS && !smartsFeatureFound)) {
+			if (mAromaticAtoms != 0)
+				throw new Exception("Assignment of aromatic double bonds failed");
+			if (mAromaticBonds != 0)
+				throw new Exception("Assignment of aromatic double bonds failed");
+			}
 		}
 
 
@@ -1401,8 +1579,8 @@ public class SmilesParser {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (mMol.isMarkedAtom(atom)) {
 				int[] graphLevel = new int[mMol.getAtoms()];
-				int graphAtom[] = new int[mMol.getAtoms()];
-				int graphParent[] = new int[mMol.getAtoms()];
+				int[] graphAtom = new int[mMol.getAtoms()];
+				int[] graphParent = new int[mMol.getAtoms()];
 
 				graphAtom[0] = atom;
 				graphLevel[atom] = 1;
@@ -1447,9 +1625,9 @@ public class SmilesParser {
 
 	private void addLargeAromaticRing(int bond) {
 		int[] graphLevel = new int[mMol.getAtoms()];
-		int graphAtom[] = new int[mMol.getAtoms()];
-		int graphBond[] = new int[mMol.getAtoms()];
-		int graphParent[] = new int[mMol.getAtoms()];
+		int[] graphAtom = new int[mMol.getAtoms()];
+		int[] graphBond = new int[mMol.getAtoms()];
+		int[] graphParent = new int[mMol.getAtoms()];
 
 		int atom1 = mMol.getBondAtom(0, bond);
 		int atom2 = mMol.getBondAtom(1, bond);
@@ -1509,7 +1687,7 @@ public class SmilesParser {
 				return false;
 			}
 
-		int explicitHydrogens = (mMol.getAtomCustomLabel(atom) == null) ?
+		int explicitHydrogens = (mMol.getAtomCustomLabel(atom) == null || mMol.getAtomCustomLabelBytes(atom)[0] == HYDROGEN_IMPLICIT_ZERO) ?
 								0 : mMol.getAtomCustomLabelBytes(atom)[0];
 		int freeValence = mMol.getFreeValence(atom) - explicitHydrogens;
 		if (freeValence < 1)
@@ -1520,8 +1698,7 @@ public class SmilesParser {
 		 || mMol.getAtomicNo(atom) == 52) {
 			if (mMol.getConnAtoms(atom) == 2 && mMol.getAtomCharge(atom) <= 0)
 				return false;
-			if (freeValence == 2)
-				return false;	// e.g. -S(=O)- correction to account for tetravalent S,Se
+			return freeValence != 2;	// e.g. -S(=O)- correction to account for tetravalent S,Se
 			}
 
 		return true;
@@ -1680,12 +1857,12 @@ public class SmilesParser {
 		return paritiesFound;
 		}
 
-	private class AtomInfo {
+	private static class AtomInfo {
 		boolean mayBeAromatic,mayBeAliphatic;
 		int atomicNo,labelLength;
 		}
 
-	private class ParityNeighbour {
+	private static class ParityNeighbour {
 		int mAtom,mPosition;
 
 		public ParityNeighbour(int atom, int position) {
@@ -1694,7 +1871,7 @@ public class SmilesParser {
 			}
 		}
 
-	private class THParity {
+	private static class THParity {
 		private static final int PSEUDO_ATOM_HYDROGEN = Integer.MAX_VALUE - 1;
 		private static final int PSEUDO_ATOM_LONE_PAIR = Integer.MAX_VALUE;
 
@@ -1771,8 +1948,7 @@ public class SmilesParser {
 			else if (mNeighbourList.size() != 4)
 				return Molecule.cAtomParityUnknown;
 
-			int parity = (mIsClockwise ^ isInverseOrder()) ? Molecule.cAtomParity1 : Molecule.cAtomParity2;
-/*
+			/*
 System.out.println();
 System.out.println("central:"+mCentralAtom+(mIsClockwise?" @@":" @")+" from:"
 				+((mFromAtom == -1)?"none":Integer.toString(mFromAtom))+" with "+mImplicitHydrogen+" hydrogens");
@@ -1782,7 +1958,7 @@ for (int i=1; i<mNeighborCount; i++)
 System.out.println();
 System.out.println("parity:"+parity);
 */
-			return parity;
+			return (mIsClockwise ^ isInverseOrder()) ? Molecule.cAtomParity1 : Molecule.cAtomParity2;
 		}
 
 		private boolean isInverseOrder() {
@@ -1915,7 +2091,7 @@ System.out.println("parity:"+parity);
 	}
 
 class SmilesRange {
-	private byte[] smi;
+	private final byte[] smi;
 	private int pos;
 	public int min,max;
 	public boolean isDefault;

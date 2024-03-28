@@ -2289,6 +2289,28 @@ public class Molecule implements Serializable {
 	}
 
 
+	public Coordinates getCenterOfGravity() {
+		if (mAllAtoms == 0)
+			return null;
+
+		Coordinates c = new Coordinates();
+		for (int atom = 0; atom<mAllAtoms; atom++)
+			c.add(mCoordinates[atom]);
+		return c.scale(1.0 / mAllAtoms);
+		}
+
+
+	public Coordinates getCenterOfGravity(int[] atomIndex) {
+		if (atomIndex == null || atomIndex.length==0 || atomIndex.length>mAllAtoms)
+			return null;
+
+		Coordinates c = new Coordinates();
+		for (int atom:atomIndex)
+			c.add(mCoordinates[atom]);
+		return c.scale(1.0 / atomIndex.length);
+		}
+
+
 	public double getAtomX(int atom) {
 		return mCoordinates[atom].x;
 		}
@@ -2604,10 +2626,26 @@ public class Molecule implements Serializable {
 	 * Returns the formal bond order. Delocalized rings have alternating single and double
 	 * bonds, which are returned as such. Bonds that are explicitly marked as being delocalized
 	 * are returned as 1. Dative bonds are returned as 0.
+	 * In fragments with at least one bond type set as bond query feature, the smallest
+	 * non-zero order of allowed bonds is returned.
 	 * @param bond
 	 * @return formal bond order 0 (dative bonds), 1, 2, 3, 4, or 5
 	 */
 	public int getBondOrder(int bond) {
+		if (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) != 0) {
+			if ((mBondQueryFeatures[bond] & (cBondQFSingle | cBondQFDelocalized)) != 0)
+				return 1;
+			if ((mBondQueryFeatures[bond] & cBondQFDouble) != 0)
+				return 2;
+			if ((mBondQueryFeatures[bond] & cBondQFTriple) != 0)
+				return 3;
+			if ((mBondQueryFeatures[bond] & cBondQFQuadruple) != 0)
+				return 4;
+			if ((mBondQueryFeatures[bond] & cBondQFQuintuple) != 0)
+				return 5;
+			if ((mBondQueryFeatures[bond] & cBondQFMetalLigand) != 0)
+				return 0;
+			}
 		switch (mBondType[bond] & cBondTypeMaskSimple) {
 		case cBondTypeSingle:
 		case cBondTypeDelocalized: return 1;
@@ -2796,11 +2834,11 @@ public class Molecule implements Serializable {
 	 * @param v
 	 */
 	public void setMaxBonds(int v) {
-		mBondAtom[0] = (int[])copyOf(mBondAtom[0], v);
-		mBondAtom[1] = (int[])copyOf(mBondAtom[1], v);
-		mBondType = (int[])copyOf(mBondType, v);
-		mBondFlags = (int[])copyOf(mBondFlags, v);
-		mBondQueryFeatures = (int[])copyOf(mBondQueryFeatures, v);
+		mBondAtom[0] = copyOf(mBondAtom[0], v);
+		mBondAtom[1] = copyOf(mBondAtom[1], v);
+		mBondType = copyOf(mBondType, v);
+		mBondFlags = copyOf(mBondFlags, v);
+		mBondQueryFeatures = copyOf(mBondQueryFeatures, v);
 		mMaxBonds = v;
 		}
 

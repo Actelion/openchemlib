@@ -8,27 +8,22 @@ import com.actelion.research.chem.io.DWARFileCreator;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.Reactor;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 
-
 public class ChemicalSpaceCreator {
-	
 
 	private File outdirectory;
 	private Set<String> bbs;
 	private Map<String,Map<String,List<String>>> bbData;
 	private List<Reaction> reactions;
-	private List<Reaction> functionalizations;
-	private ConcurrentMap<String,long[]> fps;
-	
+	private final List<Reaction> functionalizations;
+
 	public ChemicalSpaceCreator(Set<String> bbs, List<Reaction> reactions, File outdirectory) {
 		this.bbs = bbs;
 		this.reactions = reactions;
@@ -39,10 +34,7 @@ public class ChemicalSpaceCreator {
 				functionalizations.add(rxn);
 		}
 		reactions.removeAll(functionalizations);
-		
 	}
-	
-	
 	
 	public void setOutdirectory(File outdirectory) {
 		this.outdirectory = outdirectory;
@@ -52,11 +44,9 @@ public class ChemicalSpaceCreator {
 		this.bbs = bbs;
 	}
 
-
 	public void setBBData(Map<String, Map<String, List<String>>> bbData) {
 		this.bbData = bbData;
 	}
-
 
 	public void setReactions(List<Reaction> reactions) {
 		this.reactions = reactions;
@@ -68,14 +58,13 @@ public class ChemicalSpaceCreator {
 		ConcurrentMap<String,String> processedToOrigIDCode = new ConcurrentHashMap<String,String>();
 		ConcurrentMap<String,List<Map<String,String>>> reactionsWithSynthons = new ConcurrentHashMap<String,List<Map<String,String>>>(); 
 		processBuildingBlocks(this.bbs,processedToOrigIDCode,functionalizations);
-		fps = new ConcurrentHashMap<>();
-		calcFragFPs(processedToOrigIDCode.keySet(),fps);
-		generateSynthons(reactions, processedToOrigIDCode, reactionsWithSynthons,fps,allSynthonTransformations);
-		generateCombinatoriaLibraries(reactionsWithSynthons, bbs, allSynthonTransformations);
+		ConcurrentMap<String, long[]> fps = new ConcurrentHashMap<>();
+		calcFragFPs(processedToOrigIDCode.keySet(), fps);
+		generateSynthons(reactions, processedToOrigIDCode, reactionsWithSynthons, fps,allSynthonTransformations);
+		generateCombinatoriaLibraries(reactionsWithSynthons, allSynthonTransformations);
 	}
 	
 	private static void calcFragFPs(Collection<String> idcodes, ConcurrentMap<String,long[]> fps) {
-		//for(String idc : idcodes) {
 		idcodes.parallelStream().forEach(idc -> {
 			IDCodeParser parser = new IDCodeParser();
 			DescriptorHandlerLongFFP512 dhf = new DescriptorHandlerLongFFP512();
@@ -85,12 +74,9 @@ public class ChemicalSpaceCreator {
 				long[] desc = dhf.createDescriptor(mol);
 				fps.put(idc, desc);
 			}
-			catch(Exception e) {
-				return;
-			}
+			catch(Exception e) {}
 		});
 	}
-
 	
 	private static void processBuildingBlocks(Collection<String> bbs, ConcurrentMap<String,String> processedToOrigIDCode, List<Reaction> functionalizations) {
 		bbs.parallelStream().forEach( idcode -> {
@@ -112,26 +98,21 @@ public class ChemicalSpaceCreator {
 						StereoMolecule product = getProduct(functionalization,Arrays.asList(mol));
 						if(product!=null)
 							processedToOrigIDCode.put(product.getIDCode(), idcode);
-						}		
 					}
-					
 				}
-				
-
-			});		
+			}
+		});
 	}
 	
 	private static void generateSynthons(List<Reaction> reactions,
-			ConcurrentMap<String,String> processedBBToBB, 
-			ConcurrentMap<String,List<Map<String,String>>> reactionsWithSynthons,ConcurrentMap<String,long[]> fps, 
-			Map<String,List<Reaction>> allSynthonTransformations) {
-		
+		ConcurrentMap<String,String> processedBBToBB,
+		ConcurrentMap<String,List<Map<String,String>>> reactionsWithSynthons,ConcurrentMap<String,long[]> fps,
+		Map<String,List<Reaction>> allSynthonTransformations) {
 
 		for(Reaction rxn : reactions) {
 			processReaction(rxn, processedBBToBB, reactionsWithSynthons, fps, allSynthonTransformations);
         }
-		
-     	}
+  	}
 	
 	private static void generateSynthonTransformations(List<Reaction> reactions, Map<String,List<Reaction>> allSynthonTransformations) {
 		for(Reaction rxn : reactions) {
@@ -151,12 +132,10 @@ public class ChemicalSpaceCreator {
 			ConcurrentMap<String,List<Map<String,String>>> reactionsWithSynthons, ConcurrentMap<String,long[]> fps,
 			Map<String,List<Reaction>> synthonTransformations) {
 
-		
 		List<List<String>> reactants = new ArrayList<>();
      	//System.out.println(rxn);
      	getReactants(rxn, processedToOrigBB, reactants,fps);
 
-     	
      	reactionsWithSynthons.putIfAbsent(rxn.getName(), new ArrayList<>());
 		
      	//System.out.println("bbs");
@@ -180,15 +159,10 @@ public class ChemicalSpaceCreator {
      				synthonList.put(synthonIDCode, origIDCode);
      			}
      		});
-
-     		
-
      	}
+   	}
 
-     	
-     	
-     	}
-	private static void getReactants(Reaction rxn,  ConcurrentMap<String,String> processedToOrigIDCode, 
+	private static void getReactants(Reaction rxn,  ConcurrentMap<String,String> processedToOrigIDCode,
 			List<List<String>> reactants, Map<String,long[]> fps) {
 		
 		SSSearcherWithIndex[] searchers = new SSSearcherWithIndex[rxn.getReactants()];
@@ -218,10 +192,8 @@ public class ChemicalSpaceCreator {
 				}	
 			});
 			reactants.add(reactantList);
-			
 		}
-	
-		}
+	}
 	
 	private static String transformToSynthon(Reaction synthonTransformation, StereoMolecule bb) {
 		String synthonIDCode = null;
@@ -239,7 +211,6 @@ public class ChemicalSpaceCreator {
      		synthonIDCode = productCodes[0][0]; 
 			}
 		return synthonIDCode;
-			
 	}
 	
 	private static StereoMolecule getProduct(Reaction rxn, List<StereoMolecule> reactants) {
@@ -248,17 +219,7 @@ public class ChemicalSpaceCreator {
 		for(int i=0;i<reactants.size();i++)
 			reactor.setReactant(i, reactants.get(i));
 		StereoMolecule[][] products = reactor.getProducts();
-		StereoMolecule product;
-		if(products.length==0 || products.length>1) {
-			product = null;
-		}
-		else if(products[0].length==0 || products[0].length>1) {
-			product = null;
-		}
-		else {
-			product = products[0][0];
-		}
-		return product;
+		return products.length == 1 && products[0].length == 1 ? products[0][0] : null;
 	}
 	
 	private static int getNormalizedProductsCount(StereoMolecule[][] products) {
@@ -272,12 +233,10 @@ public class ChemicalSpaceCreator {
 	}
 	
 	private void generateCombinatoriaLibraries(ConcurrentMap<String,List<Map<String,String>>> reactionsWithSynthons,
-			Set<String> bbLib,
 			Map<String,List<Reaction>> synthonTransformations) {
-		/**
-		 * iterate over reactions twice (inner loop, outer loop)
-		 * check if synthons from the first reaction match the generic substructure of the second
-		 */
+
+		// iterate over reactions twice (inner loop, outer loop)
+		// check if synthons from the first reaction match the generic substructure of the second
 		Map<String,List<String>> productsWithSynthons = new HashMap<String,List<String>>();
 		Map<String,List<String>> productsWithBBs = new HashMap<String,List<String>>();
 		Map<String,List<String>> productsWithReactions = new HashMap<String,List<String>>();
@@ -355,6 +314,8 @@ public class ChemicalSpaceCreator {
 							StereoMolecule mol = new StereoMolecule();
 							String bb = synthons.get(synthon);
 							parser.parse(mol, synthon);
+//if (reactionPrec.getReactants() <= reactantID)  // to prevent OutOfBoundsExceptions; TLS 25-Mar-2024 in dummyReaction
+//	continue;
 							StereoMolecule reactedBB = dummyReaction(bb,reactionPrec,dummyReactants,reactantID); 
 							if(reactedBB==null)
 								continue;
@@ -366,7 +327,6 @@ public class ChemicalSpaceCreator {
 									twoConnectorSynthons.put(transformedSynthon,bb);
 							}
 							//now check if a functionalization/deprotection step can lead to additional matches to the library rxn
-
 							else {
 								for(Reaction functionalization : functionalizations) {
 									if(functionalizations.contains(reactionPrec))
@@ -379,8 +339,7 @@ public class ChemicalSpaceCreator {
 										if(product==null)
 											continue;
 										else {
-											StereoMolecule functionalizedReactant = product; 
-											if(matchesReactionRole(reaction, searchers,libReactantID,functionalizedReactant,null)) { //functionalized BB matches rxn1
+											if(matchesReactionRole(reaction, searchers,libReactantID, product,null)) { //functionalized BB matches rxn1
 												//now functionalize synthon BB and create second linker
 												StereoMolecule prod = getProduct(functionalization,Arrays.asList(mol));
 												if(prod==null)
@@ -397,15 +356,12 @@ public class ChemicalSpaceCreator {
 													}
 												}
 												precursorLib.get(precursorName).get(reactantID).put(transformedSynthon, bb);
-												
 											}
+										}
 									}
-									
-								}		
-							}
+								}
 							}
 						}
-			
 						
 						// if the BB that is used in the precursor step also matches any role of the second reaction, it is excluded (otherwise multiple products may be formed)
 						for(int j=0;j<reactionsWithSynthons.get(precursorReaction).size();j++) { //get synthons from rxn1 that are compatible with the two-connector synthon
@@ -432,31 +388,25 @@ public class ChemicalSpaceCreator {
 									mutatedSynthons.put(mutatedSynthon.getIDCode(), compatibleSynthons.get(s));
 								}
 								libSynthons.get(j).putAll(mutatedSynthons);
-
 							}
-						
 						}
 					}
-					
 				}
-				
 			}
 			combiLibrary.cleanup();
 			sizes.add(combiLibrary.getSize());
 			System.out.println(reaction.getName());
 			combiLibrary.generateRandomProducts(1000,productsWithSynthons,productsWithBBs,productsWithReactions);
 			try {
-				
 				writeCombinatorialLibrary(combiLibrary);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		
 		});
 		try {
-			String outfile = "space.dwar";
-			DWARFileCreator creator = new DWARFileCreator(new BufferedWriter(new FileWriter(outfile)));
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("space.dwar"), StandardCharsets.UTF_8));
+			DWARFileCreator creator = new DWARFileCreator(writer);
 			List<Integer> synthonColumns = new ArrayList<>();
 			for(int i=0;i<4;i++) {
 				synthonColumns.add(creator.addStructureColumn("Synthon" + (i + 1), "IDcode"));
@@ -521,20 +471,12 @@ public class ChemicalSpaceCreator {
 					reactor.setReactant(i, reactants.get(i));
 				}
 				StereoMolecule[][] products = reactor.getProducts();
-				if(products.length==0 || products.length>1) {
-					product = null;
-				}
-				else if(products[0].length==0 || products[0].length>1) {
-					product = null;
-				}
-				else {
+				if(products.length == 1 && products[0].length == 1)
 					product = products[0][0];
 			}
 		}
-		}
 		return product;
-	
-}
+	}
 	
 	private static void mutateConnectorAtoms(StereoMolecule mol, int offset) {
 		for(int a=0;a<mol.getAtoms();a++) {
@@ -546,7 +488,7 @@ public class ChemicalSpaceCreator {
 		}
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 	}
-	
+
 	private  void writeCombinatorialLibrary(CombinatorialLibrary combiLib) throws IOException {
 		File htmcdir = new File(this.outdirectory + "/CombinatorialLibraries/");
 		htmcdir.mkdir();
@@ -566,7 +508,6 @@ public class ChemicalSpaceCreator {
 			dirD = new File(htmcSubDir.getAbsolutePath() + "/D");
 			dirD.mkdir();
 		}
-		
 
 		if(combiLib.precursorLibs.size()==2) {
 			for(int i=0;i<combiLib.precursorLibs.size();i++) {
@@ -582,39 +523,43 @@ public class ChemicalSpaceCreator {
 					List<Map<String,String>> flowSynthons = combiLib.precursorLibs.get(i).get(flowReaction);
 					int counter=1;
 					for(Map<String,String> synthons : flowSynthons) {
-						if(synthons.size()==0)
+						if(synthons.isEmpty())
 							continue;
-						String outfile = flowDir + "_" + counter + ".dwar";
-						DWARFileCreator creator = new DWARFileCreator(new BufferedWriter(new FileWriter(outfile)));
+						BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+								new FileOutputStream(flowDir + "_" + counter + ".dwar"), StandardCharsets.UTF_8));
+						DWARFileCreator creator = new DWARFileCreator(writer);
 						int synthonColumn = creator.addStructureColumn("Synthon", "IDcode");
 						int structureColumn = creator.addStructureColumn("Building Block", "IDcode");
 						List<String> fields = new ArrayList<>();
-						bbData.values().stream().forEach(e -> {
-							for(String key : e.keySet()) {
-								if(!fields.contains(key))
-									fields.add(key);
-							}
-						});
-						List<Integer> fieldIndeces = new ArrayList<>();
+						if (bbData != null) {
+							bbData.values().stream().forEach(e -> {
+								for (String key : e.keySet()) {
+									if (!fields.contains(key))
+										fields.add(key);
+								}
+							});
+						}
+						List<Integer> fieldIndexes = new ArrayList<>();
 						for(String field : fields) {
 							int columnIndex = creator.addAlphanumericalColumn(field);
-							fieldIndeces.add(columnIndex);
+							fieldIndexes.add(columnIndex);
 						}
 
 						creator.writeHeader(-1);
 						for(String s : synthons.keySet()) {
 							String origIDCode = synthons.get(s);
-							Map<String,List<String>> propertyMap = bbData.get(origIDCode);
-							for(int j=0;j<fields.size();j++) {
-								String field = fields.get(j);
-								StringBuilder sb = new StringBuilder("");
-								List<String> values = propertyMap.get(field);
-								if(values!=null) {
-									values.forEach(e -> sb.append(e + ";"));
+							if (bbData != null) {
+								Map<String,List<String>> propertyMap = bbData.get(origIDCode);
+								for(int j=0;j<fields.size();j++) {
+									String field = fields.get(j);
+									StringBuilder sb = new StringBuilder();
+									List<String> values = propertyMap.get(field);
+									if(values!=null) {
+										values.forEach(e -> sb.append(e).append(";"));
+									}
+									creator.setRowValue(sb.toString(), fieldIndexes.get(j));
 								}
-								creator.setRowValue(sb.toString(), fieldIndeces.get(j));
 							}
-						
 							creator.setRowStructure(s, synthonColumn);
 							creator.setRowStructure(origIDCode,structureColumn);
 							creator.writeCurrentRow();
@@ -622,17 +567,15 @@ public class ChemicalSpaceCreator {
 						creator.writeEnd();
 						counter++;
 					}
-					
 				}
-				
-				
-				
 			}
 		}
+
 		int i=0;
 		for(Map<String,String> synthons : combiLib.bbSynthons) {
-			if(synthons.size()==0)
+			if(synthons.isEmpty())
 				continue;
+
 			File dir = null;
 			switch(i) {
 				case 0:
@@ -651,25 +594,29 @@ public class ChemicalSpaceCreator {
 					break;
 			}
 
-				String outfile = dir + "/" + combiLib.reaction.getName() + ".dwar";
-				DWARFileCreator creator = new DWARFileCreator(new BufferedWriter(new FileWriter(outfile)));
-				int synthonColumn = creator.addStructureColumn("Synthon", "IDcode");
-				int structureColumn = creator.addStructureColumn("Building Block", "IDcode");
-				List<String> fields = new ArrayList<>();
+			String outfile = dir + "/" + combiLib.reaction.getName() + ".dwar";
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outfile), StandardCharsets.UTF_8));
+			DWARFileCreator creator = new DWARFileCreator(writer);
+			int synthonColumn = creator.addStructureColumn("Synthon", "IDcode");
+			int structureColumn = creator.addStructureColumn("Building Block", "IDcode");
+			List<String> fields = new ArrayList<>();
+			if (bbData != null) {
 				bbData.values().stream().forEach(e -> {
-					for(String key : e.keySet()) {
-						if(!fields.contains(key))
+					for (String key : e.keySet()) {
+						if (!fields.contains(key))
 							fields.add(key);
 					}
 				});
-				List<Integer> fieldIndeces = new ArrayList<>();
-				for(String field : fields) {
-					int columnIndex = creator.addAlphanumericalColumn(field);
-					fieldIndeces.add(columnIndex);
-				}
-				creator.writeHeader(-1);
-				for(String s : synthons.keySet()) {
-					String origIDCode = synthons.get(s);
+			}
+			List<Integer> fieldIndeces = new ArrayList<>();
+			for(String field : fields) {
+				int columnIndex = creator.addAlphanumericalColumn(field);
+				fieldIndeces.add(columnIndex);
+			}
+			creator.writeHeader(-1);
+			for(String s : synthons.keySet()) {
+				String origIDCode = synthons.get(s);
+				if (bbData != null) {
 					Map<String,List<String>> propertyMap = bbData.get(origIDCode);
 					for(int j=0;j<fields.size();j++) {
 						String field = fields.get(j);
@@ -680,15 +627,14 @@ public class ChemicalSpaceCreator {
 						}
 						creator.setRowValue(sb.toString(), fieldIndeces.get(j));
 					}
-					creator.setRowStructure(s, synthonColumn);
-					creator.setRowStructure(synthons.get(s),structureColumn);
-					creator.writeCurrentRow();
 				}
-				creator.writeEnd();
-				i++;
+				creator.setRowStructure(s, synthonColumn);
+				creator.setRowStructure(synthons.get(s),structureColumn);
+				creator.writeCurrentRow();
 			}
-		
-		
+			creator.writeEnd();
+			i++;
+		}
 	}
 	
 	private static class CombinatorialLibrary {
@@ -704,9 +650,8 @@ public class ChemicalSpaceCreator {
 					for(Map<String,String> synthons : precursorLib.get(reaction)) {
 						if(synthons==null)
 							toRemove.add(reaction);
-						else if(synthons.size()==0)
+						else if(synthons.isEmpty())
 							toRemove.add(reaction);
-						
 					}
 				}
 				for(String r : toRemove) {
@@ -714,15 +659,13 @@ public class ChemicalSpaceCreator {
 				}
 				toRemove = new ArrayList<>();
 			}
-				
 		}
-		
 		
 		public long getSize() {
 			long sizeOneStep = 1;
 			// first calculate size of the single-step space
 			for(Map<String,String> synthons : bbSynthons) {
-				sizeOneStep*=(long)synthons.size();
+				sizeOneStep*=synthons.size();
 			}
 			if(precursorLibs.size()==2) {
 				long reactantsA = bbSynthons.get(0).size();
@@ -733,7 +676,7 @@ public class ChemicalSpaceCreator {
 					List<Map<String,String>> precLibA = precursorLibsA.get(precReaction);
 					int precSize = 1;
 					for(Map<String,String> precLib : precLibA) {
-						precSize*=(long)precLib.size();
+						precSize*=precLib.size();
 					}
 					reactantsA += precSize;
 				}
@@ -741,7 +684,7 @@ public class ChemicalSpaceCreator {
 					List<Map<String,String>> precLibB = precursorLibsB.get(precReaction);
 					int precSize = 1;
 					for(Map<String,String> precLib : precLibB) {
-						precSize*=(long)precLib.size();
+						precSize*=precLib.size();
 					}
 					reactantsB += precSize;
 				}
@@ -749,15 +692,8 @@ public class ChemicalSpaceCreator {
 			}
 			else 
 				return sizeOneStep;
-
-			
-			
 		}
-		
 
-
-	
-		
 		
 		public void generateRandomProducts(int nProducts, Map<String,List<String>> productsWithSynthons, Map<String,List<String>> productsWithBBs, Map<String,
 				List<String>> productsWithReactions ) {
@@ -774,8 +710,8 @@ public class ChemicalSpaceCreator {
 				for(int i=0;i<reaction.getReactants();i++) {
 					int r = rnd.nextInt(2);
 					Map<String,List<Map<String,String>>> libs = precursorLibs.get(i);
-					if(libs.size()<1 || r==0) { //pick commercial bb
-						if(bbSynthons.get(i).size()<1)
+					if(libs.isEmpty() || r==0) { //pick commercial bb
+						if(bbSynthons.get(i).isEmpty())
 							return ;
 						int r2 = rnd.nextInt(bbSynthons.get(i).size());
 						StereoMolecule mol = new StereoMolecule();
@@ -808,32 +744,24 @@ public class ChemicalSpaceCreator {
 						}
 						catch(Exception e) {
 							e.printStackTrace();
-							continue;
 						}
-						
 					}
 				}
 				
 				try {
 					StereoMolecule product = SynthonReactor.react(preCoupledSynthons);
+					if(product == null || productsWithSynthons.containsKey(product.getIDCode()))
+						continue;
 					List<String> bbIDCodes = synthons.stream().map(e -> e.getIDCode()).collect(Collectors.toList());
-					if(productsWithSynthons.containsKey(product.getIDCode()))
-							continue;
 					productsWithSynthons.put(product.getIDCode(),bbIDCodes);
 					productsWithBBs.put(product.getIDCode(),bbs);
 					productsWithReactions.put(product.getIDCode(),reactions);
-
 				}
 				catch(Exception e) {
 					e.printStackTrace();
-
 				}
 			}
-
-			
 		}
-
-		
 	}
 	
 
@@ -843,32 +771,21 @@ public class ChemicalSpaceCreator {
 		SSSearcherWithIndex searcher = searchers[component];
 		searcher.setMolecule(reactant,index);
 		if (searcher.isFragmentInMolecule()) {
-			
 			//check if reactant also matches other roles in the reaction, if yes, exclude it (to prevent self-polymerization)
 			for(int j=0;j<rxn.getReactants();j++) {
-				if(component==j)
-					continue;
-				else if (rxn.getReactant(component).getIDCode().equals(rxn.getReactant(j).getIDCode())) {
-					continue; //same substructure definition for the reactants
-				}
-				else {
+				if (component != j
+				 && !rxn.getReactant(component).getIDCode().equals(rxn.getReactant(j).getIDCode())) {
 					SSSearcherWithIndex searcher2 = searchers[j];
 					searcher2.setMolecule(reactant,index);
 					if(searcher2.isFragmentInMolecule()) {
 						isMatch=false;
 					}
 				}
-				
 			}
 		}
 		else {
 			isMatch = false;
 		}
 		return isMatch;
-			
 	}
-	
-
-	
-
 }

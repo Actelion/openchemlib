@@ -39,10 +39,8 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.CommandLineParser;
 import com.actelion.research.util.IO;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -171,7 +169,7 @@ public class FractalDimensionMoleculeMain {
 
         FractalDimensionMolecule fractalDimensionMolecule = new FractalDimensionMolecule(totalCapacity, elusive);
 
-        BufferedWriter bw = new BufferedWriter(new FileWriter(fiOutTbl));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fiOutTbl), StandardCharsets.UTF_8));
 
         ResultFracDimCalcHeaderTags resultFracDimCalcHeaderTags = new ResultFracDimCalcHeaderTags();
 

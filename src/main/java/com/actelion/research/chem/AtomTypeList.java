@@ -38,10 +38,7 @@ import com.actelion.research.chem.io.CompoundFileParser;
 import com.actelion.research.chem.io.DWARFileParser;
 import com.actelion.research.chem.io.SDFileParser;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -155,7 +152,7 @@ public class AtomTypeList {
 
 	public void writeTypeFile(String filename) {
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8));
 			writer.write(VERSION_STRING);
 			writer.newLine();
 
@@ -187,7 +184,7 @@ public class AtomTypeList {
 	 */
 	public void writeTextFile(String textfilename, int mode) {
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(textfilename));
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(textfilename), StandardCharsets.UTF_8));
 			writer.write("AtomType\tFrequency\t"+AtomTypeCalculator.getHeaderString(mode));
 			writer.newLine();
 

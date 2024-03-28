@@ -8,8 +8,10 @@ import com.actelion.research.chem.io.RXNFileCreator;
 import com.actelion.research.chem.reaction.Reaction;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class SynthonCreator {
@@ -133,7 +135,7 @@ public class SynthonCreator {
 			reaction.addReactant(rxn.getReactant(reactantID));
 			reaction.addProduct(frag);
 			synthonTransformations[reactantID] = reaction;
-			Writer writer = new BufferedWriter(new FileWriter(rxn.getName() + "_" + reactantID + ".rxn"));
+			Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(rxn.getName() + "_" + reactantID + ".rxn"), StandardCharsets.UTF_8));
 			new RXNFileCreator(reaction).writeRXNfile(writer);
 			writer.close();
 

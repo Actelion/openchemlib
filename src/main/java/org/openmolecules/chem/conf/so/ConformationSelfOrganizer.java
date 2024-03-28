@@ -35,8 +35,10 @@ import com.actelion.research.chem.conf.TorsionDescriptorHelper;
 import com.actelion.research.util.DoubleFormat;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -413,7 +415,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		mLastDWConformer = null;
 
 		try {
-			mDWWriter = new BufferedWriter(new FileWriter(DATAWARRIOR_DEBUG_FILE));
+			mDWWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DATAWARRIOR_DEBUG_FILE), StandardCharsets.UTF_8));
 			mDWWriter.write("<column properties>");
 			mDWWriter.newLine();
 			mDWWriter.write("<columnName=\"Structure\">");
