@@ -1209,7 +1209,7 @@ public class SubGraphExtractor {
             int atomicNo = mol.getAtomicNo(indexEndStandingAtom);
             int indAtmConn = mol.getConnAtom(indexEndStandingAtom, 0);
             if(isSmallRingAtom(indAtmConn)){
-                // If the end standing atom is of this type it will become a own pharmacophore point.
+                // If the end standing atom is of this type it will become an own pharmacophore point.
                 // Even if it is directly connected to a ring.
                 // Additionally it can be included to the atom types of the ring.
                 if(atomicNo != PeriodicTable.Nitrogen &&
@@ -1323,8 +1323,9 @@ public class SubGraphExtractor {
                     }
 
                     frag.addIndex(indexAtmConn);
-                    if(mol.getAtomicNo(indexAtmConn) != 6) {
-                        throw new RuntimeException("This should not happen!");
+                    if((mol.getAtomicNo(indexAtmConn) != 6) && (mol.getAtomicNo(indexAtmConn) != 1)) { // explicit H (Deuterium made trouble)
+                        System.err.println("Wrong non-carbon atom at this index " + indexAtmConn);
+                        throw new RuntimeException("This should not happen! But happened for " + mol.getIDCode());
                     }
                 }
             }
