@@ -114,10 +114,10 @@ public class SubGraphExtractor {
                 }
             }
             if(ccConnNonHydrogen==1){
-                liEndStandingAtoms.add(i);
+                if(mol.getAtomicNo(i)>1)
+                    liEndStandingAtoms.add(i);
             }
         }
-
         List<SubGraphIndices> liFragment = new ArrayList<>();
 
         //
@@ -142,21 +142,25 @@ public class SubGraphExtractor {
         // Hetero atoms that were not covered by the end standing groups and that are not enclosed in the small rings.
         //
         List<SubGraphIndices> liFragmentRemainingHetero = getRemainingHeteroGroups(mol, hsAtomIndicesInFragment);
-
         liFragment.addAll(liFragmentRemainingHetero);
-
         SubGraphIndices.addAtomIndices(hsAtomIndicesInFragment, liFragmentRemainingHetero);
+
 
         //
         // End standing aliphatic group
         //
+
         List<SubGraphIndices> liFragmentEndStandingAliphaticGroup = getEndStandingAliphaticGroups(mol, liEndStandingAtoms, hsAtomIndicesInFragment);
 
         liFragment.addAll(liFragmentEndStandingAliphaticGroup);
 
+
         HashSetInt hsAtomIndicesInFragmentEndStandingAliphaticGroup = new HashSetInt();
 
         SubGraphIndices.addAtomIndices(hsAtomIndicesInFragmentEndStandingAliphaticGroup, liFragmentEndStandingAliphaticGroup);
+
+
+
 
         //
         // Aliphatic groups in large rings.
@@ -654,6 +658,7 @@ public class SubGraphExtractor {
         //
 
         for (int indexEndStandingAtom : liEndStandingAtoms) {
+
             if(arrAtomIndicesUsedMap[indexEndStandingAtom]){
                 continue;
             }
@@ -690,9 +695,6 @@ public class SubGraphExtractor {
                 fragment.addIndex(indexEndStandingAtom);
                 liFragmentEndStandingAliphaticGroup.add(fragment);
             }
-
-
-
         }
 
         //
@@ -743,59 +745,41 @@ public class SubGraphExtractor {
         int [] arrAtomIndicesUsed = hsAtomIndicesUsed.getValues();
 
         for (int indexAtmUsed : arrAtomIndicesUsed) {
-
             arrAtomIndicesUsedMap[indexAtmUsed] = true;
-
         }
 
         LinkedList<Integer> liIndAtm = new LinkedList<>();
-
         int [] arrIndAtmLayer = new int[atoms];
 
         // Contains only one index.
         int [] arrIndAtm = fragment.getAtomIndices();
-
         for (int indAtm : arrIndAtm) {
             liIndAtm.add(indAtm);
             arrIndAtmLayer[indAtm] = 0;
         }
 
         while (!liIndAtm.isEmpty()){
-
             int indAtm = liIndAtm.poll();
-
             if(arrIndAtmLayer[indAtm]>maxDepth){
-
                 continue;
-
             }
 
             fragment.addIndex(indAtm);
 
             int nConnAtms = mol.getConnAtoms(indAtm);
-
             for (int i = 0; i < nConnAtms; i++) {
-
                 int indAtmConn = mol.getConnAtom(indAtm, i);
-
                 if(arrAtomIndicesUsedMap[indAtmConn]){
-
                     continue;
-
                 }
 
                 if(arrAtomInSmallRing[indAtmConn]) {
-
                     continue;
-
                 }
 
                 if(mol.getAtomicNo(indAtmConn)==6) {
-
                     liIndAtm.add(indAtmConn);
-
                     arrIndAtmLayer[indAtmConn] = arrIndAtmLayer[indAtm] + 1;
-
                 }
             }
         }
