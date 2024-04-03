@@ -26,6 +26,7 @@ public class PPNodeVizHelper {
             ppNodeViz.add(interactionType);
             ppNodeViz.addIndexOriginalAtom(index);
         }
+        ppNodeViz.realize();
         return ppNodeViz;
     }
     public static List<PPNodeViz> createWithoutCoordinates(List<SubGraphIndices> liSubGraphIndices, Molecule3D mol){
