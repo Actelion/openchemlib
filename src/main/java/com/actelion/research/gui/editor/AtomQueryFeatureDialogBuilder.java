@@ -230,6 +230,9 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
         mChoiceNeighbours.addItem("at least 2");
         mChoiceNeighbours.addItem("at least 3");
         mChoiceNeighbours.addItem("at least 4");
+		mChoiceNeighbours.addItem("1 or 2");
+		mChoiceNeighbours.addItem("1,2, or 3");
+		mChoiceNeighbours.addItem("2 or 3");
 		mDialog.add(mDialog.createLabel("Non-H neighbours:"), 1,15);
 		mDialog.add(mChoiceNeighbours, 3,15);
 
@@ -246,9 +249,9 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mChoiceENeighbours.addItem("at least 2");
 		mChoiceENeighbours.addItem("at least 3");
 		mChoiceENeighbours.addItem("at least 4");
-		mChoiceENeighbours.addItem("from 1 to 2");
-		mChoiceENeighbours.addItem("from 1 to 3");
-		mChoiceENeighbours.addItem("from 2 to 3");
+		mChoiceENeighbours.addItem("1 or 2");
+		mChoiceENeighbours.addItem("1,2, or 3");
+		mChoiceENeighbours.addItem("2 or 3");
 		mDialog.add(mDialog.createLabel("Electroneg. neighbours:"), 1,17);
 		mDialog.add(mChoiceENeighbours, 3,17);
 
@@ -262,6 +265,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mChoiceHydrogen.addItem("at least 3");
         mChoiceHydrogen.addItem("less than 2");
         mChoiceHydrogen.addItem("less than 3");
+		mChoiceHydrogen.addItem("1 or 2");
 		mDialog.add(mDialog.createLabel("Hydrogen count:"), 1,19);
 		mDialog.add(mChoiceHydrogen, 3,19);
 
@@ -430,6 +434,12 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             mChoiceNeighbours.setSelectedIndex(8);
         else if (neighbourFeatures == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours))
             mChoiceNeighbours.setSelectedIndex(9);
+		else if (neighbourFeatures == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours))
+			mChoiceNeighbours.setSelectedIndex(10);
+		else if (neighbourFeatures == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot4Neighbours))
+			mChoiceNeighbours.setSelectedIndex(11);
+		else if (neighbourFeatures == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot4Neighbours))
+			mChoiceNeighbours.setSelectedIndex(12);
 		else
 			mChoiceNeighbours.setSelectedIndex(0);
 
@@ -492,6 +502,8 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             mChoiceHydrogen.setSelectedIndex(7);
         else if (hydrogenFeatures == (Molecule.cAtomQFNot3Hydrogen))
             mChoiceHydrogen.setSelectedIndex(8);
+		else if (hydrogenFeatures == (Molecule.cAtomQFNot0Hydrogen | Molecule.cAtomQFNot3Hydrogen))
+			mChoiceHydrogen.setSelectedIndex(9);
 		else
 			mChoiceHydrogen.setSelectedIndex(0);
 
@@ -690,6 +702,24 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             else if (mMol.getConnAtoms(atom) < 3)
                 queryFeatures |= (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours);
             break;
+        case 10: // between 1 and 2 non-H neighbours
+	        if (mMol.getConnAtoms(atom) == 0)
+		        queryFeatures |= (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours);
+	        else
+		        queryFeatures |= (Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours);
+	        break;
+        case 11: // between 1 and 3 non-H neighbours
+	        if (mMol.getConnAtoms(atom) == 0)
+		        queryFeatures |= (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot4Neighbours);
+	        else
+		        queryFeatures |= Molecule.cAtomQFNot4Neighbours;
+	        break;
+        case 12: // between 2 and 3 non-H neighbours
+	        if (mMol.getConnAtoms(atom) <= 1)
+		        queryFeatures |= (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot4Neighbours);
+	        else if (mMol.getConnAtoms(atom) <= 3)
+		        queryFeatures |= Molecule.cAtomQFNot4Neighbours;
+	        break;
             }
 
 	    int eNeighbours = mMol.getAtomElectronegativeNeighbours(atom);
@@ -787,6 +817,10 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
         case 8: // less than 3 hydrogens
             queryFeatures |= (Molecule.cAtomQFNot3Hydrogen);
             break;
+	    case 9: // between 1 and 2 hydrogens
+		    queryFeatures |= (Molecule.cAtomQFNot0Hydrogen
+				            | Molecule.cAtomQFNot3Hydrogen);
+		    break;
 			}
 
         switch (mChoicePi.getSelectedIndex()) {

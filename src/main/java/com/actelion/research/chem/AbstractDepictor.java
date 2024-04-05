@@ -1727,6 +1727,8 @@ public abstract class AbstractDepictor<T> {
                     isoStr = append(isoStr, "h<3");
                 else if (hydrogens == Molecule.cAtomQFNot2Hydrogen+Molecule.cAtomQFNot3Hydrogen)
                     isoStr = append(isoStr, "h<2");
+			    else if (hydrogens == Molecule.cAtomQFNot0Hydrogen+Molecule.cAtomQFNot3Hydrogen)
+				    isoStr = append(isoStr, "h1-2");
                 }
             if ((queryFeatures & Molecule.cAtomQFCharge) != 0) {
                 long charge = (queryFeatures & Molecule.cAtomQFCharge);
@@ -1766,6 +1768,12 @@ public abstract class AbstractDepictor<T> {
                     isoStr = append(isoStr, "n>2");
                 else if (neighbours == (Molecule.cAtomQFNeighbours & ~Molecule.cAtomQFNot4Neighbours))
                     isoStr = append(isoStr, "n>3");
+                else if (neighbours == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot3Neighbours | Molecule.cAtomQFNot4Neighbours))
+	                isoStr = append(isoStr, "n1-2");
+                else if (neighbours == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot4Neighbours))
+	                isoStr = append(isoStr, "n1-3");
+                else if (neighbours == (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot4Neighbours))
+	                isoStr = append(isoStr, "n2-3");
                 }
 			if ((queryFeatures & Molecule.cAtomQFENeighbours) != 0) {
 				long eNegNeighbours = (queryFeatures & Molecule.cAtomQFENeighbours);
@@ -1791,7 +1799,7 @@ public abstract class AbstractDepictor<T> {
 					isoStr = append(isoStr, "e>2");
 				else if (eNegNeighbours == (Molecule.cAtomQFENeighbours & ~Molecule.cAtomQFNot4ENeighbours))
 					isoStr = append(isoStr, "e>3");
-				else if (eNegNeighbours == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot3ENeighbours))
+				else if (eNegNeighbours == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot3ENeighbours | Molecule.cAtomQFNot4ENeighbours))
 					isoStr = append(isoStr, "e1-2");
 				else if (eNegNeighbours == (Molecule.cAtomQFNot0ENeighbours | Molecule.cAtomQFNot4ENeighbours))
 					isoStr = append(isoStr, "e1-3");
