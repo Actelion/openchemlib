@@ -85,6 +85,7 @@ public class MolDistHistHelper {
                 mdh.addNode(arr[i].getNode(j));
             }
         }
+
         return mdh;
     }
     public static boolean isZero(byte [] b){
