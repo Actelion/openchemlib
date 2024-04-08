@@ -178,7 +178,7 @@ public class ClipboardHandler implements IClipboardHandler
 							if (mol == null || mol.getAllAtoms() == 0) {
 								mol = new StereoMolecule();
 								try {
-									new SmilesParser(smartsMode, false).parse(mol, line);
+									new SmilesParser(smartsMode).parse(mol, line);
 								}
 								catch (Exception e) {
 									mol = null;

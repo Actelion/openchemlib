@@ -1665,6 +1665,14 @@ System.out.println("noOfRanks:"+canRank);
 		if (mMol.getAtomicNo(atom) == 5 && mMol.getAllConnAtoms(atom) != 4)
 			return false;
 
+		if (mMol.isFragment()) {  // don't calculate parities if atom or some neighbours are exclude groups
+			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+				return false;
+			for (int i=0; i<mMol.getAllConnAtoms(atom); i++)
+				if ((mMol.getAtomQueryFeatures(mMol.getConnAtom(atom, i)) & Molecule.cAtomQFExcludeGroup) != 0)
+					return false;
+			}
+
 		// don't consider tetrahedral nitrogen, unless found to qualify for parity calculation
 		if (mMol.getAtomicNo(atom) == 7
 		 && !mNitrogenQualifiesForParity[atom])
@@ -2076,6 +2084,15 @@ System.out.println("noOfRanks:"+canRank);
 			// or - calculates EZ-pro-parities of allylic atoms
 		if (mEZParity[bond] != 0)
 			return false;
+
+		if (mMol.isFragment()) {  // don't calculate parities if some bond atoms or their neighbours are exclude groups
+			for (int i=0; i<2; i++) {
+				int atom = mMol.getBondAtom(i, bond);
+				for (int j=0; j<mMol.getAllConnAtoms(atom); j++)
+					if ((mMol.getAtomQueryFeatures(mMol.getConnAtom(atom, j)) & Molecule.cAtomQFExcludeGroup) != 0)
+						return false;
+				}
+			}
 
 		if (mMol.getBondOrder(bond) == 1)
 			return canCalcBINAPParity(bond, mode);
@@ -3754,7 +3771,7 @@ System.out.println();
 
 
 	/**
-	 * Returns the atoms's enhanced stereo representation type.
+	 * Returns the atom's enhanced stereo representation type.
 	 * @param atom
 	 * @return one of the Molecule.cESRTypeXXX constants
 	 */
