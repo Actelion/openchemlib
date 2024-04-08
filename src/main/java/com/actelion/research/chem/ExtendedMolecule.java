@@ -320,6 +320,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 							}
 						}
 					}
+					// if a bond id not considered it will be bondMap[minConnBond]-->-1
+					// if (minConnBond != -1 && bondMap[minConnBond]!=-1) {
 					if (minConnBond != -1) {
 						int destBond = bondMap[minConnBond];
 						destMol.setBondType(destBond, mBondType[minConnBond] == cBondTypeUp ? cBondTypeDown : cBondTypeUp);
