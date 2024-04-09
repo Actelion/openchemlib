@@ -459,46 +459,31 @@ public class StringFunctions {
 	public static String formatToCharactersAndDigits(String str) {
 		
 		String regex = "[0-9a-zA-Z ]";
-		
 		Pattern pa = Pattern.compile(regex);
-    	
     	Matcher ma = pa.matcher(str);
-		
     	StringBuilder sb = new StringBuilder();
-    	
     	int pos = 0;
     	while(ma.find(pos)){
-    		
     		MatchResult mr = ma.toMatchResult();
-    		
     		int start = mr.start();
-    		
     		int end = mr.end();
-    		
     		pos = end;
-    		
     		sb.append(str.substring(start,end));
-    		
     	}
-    	
 		return sb.toString();
 	}
 	
 	public static String format2DefinedLengthTrailing(String s, int length){
 		StringBuilder sb = new StringBuilder(s);
-		
 		while(sb.length() < length)
 			sb.append(' ');
-		
 		return sb.toString();
 	}
 	
 	public static String format2DefinedLengthLeading(String s, int length){
 		StringBuilder sb = new StringBuilder(s);
-		
 		while(sb.length() < length)
 			sb.insert(0, ' ');
-		
 		return sb.toString();
 	}
 	
