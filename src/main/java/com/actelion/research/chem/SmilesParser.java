@@ -204,7 +204,7 @@ public class SmilesParser {
 			while (index<smiles.length && smiles[index] == '.')
 				index++;
 
-			if (smiles[index] == '(') {   // useless leading brackets are reality: find and skip closing counterpart
+			if (smiles[index] == '(') {   // brackets may be used to group unconnected fragments into one molecule (in case of reactions)
 				if (closingGroupBracketIndex != -1)
 					throw new Exception("Second open group bracket found before closing first one.");
 
@@ -226,7 +226,7 @@ public class SmilesParser {
 			int end = index;
 			while (end<smiles.length
 				&& smiles[end] != '>'
-				&& !(smiles[end] == '.' && (mSingleDotSeparator || closingGroupBracketIndex==end-1 || end+1==smiles.length || smiles[end+1] == '.')))
+				&& !(smiles[end] == '.' && ((mSingleDotSeparator && closingGroupBracketIndex==-1) || closingGroupBracketIndex==end-1 || end+1==smiles.length || smiles[end+1] == '.')))
 				end++;
 
 			int molend = end;
