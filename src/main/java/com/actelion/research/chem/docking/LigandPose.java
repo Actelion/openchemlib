@@ -260,20 +260,12 @@ public class LigandPose implements Evaluable{
 		}
 		return cartState;
 	}
-	/*
-	public double getGyrationRadius() {
-		Coordinates com = DockingUtils.getCOM(ligConf);
-		double r = 0.0;
-		int counter = 0;
-		for(int a=0;a<ligConf.getMolecule().getAtoms();a++) {
-			Coordinates c = ligConf.getCoordinates(a);
-			r+= c.distanceSquared(com);
-			counter++;
-		}
-		r/=counter;
-		return Math.sqrt(r);
+
+	
+	public double getScore() {
+		return this.engine.getScore();
 	}
-	*/
+	
 	public double[] getState() {
 		return this.getState(new double[state.length]);
 	}

@@ -40,6 +40,20 @@ public class MetalTerm implements PotentialEnergyTerm {
 		
 	}
 	
+	
+	
+	public Coordinates getFitPoint() {
+		return fitPoint;
+	}
+
+
+
+	public void setFitPoint(Coordinates fitPoint) {
+		this.fitPoint = fitPoint;
+	}
+
+
+
 	public static MetalTerm create(Conformer ligand, int acceptor, int[] acceptorNeighbours,
 			Coordinates fitPoint, double scale) {
 		return new MetalTerm(ligand, acceptor, acceptorNeighbours,
@@ -47,17 +61,14 @@ public class MetalTerm implements PotentialEnergyTerm {
 	}
 
 	private double getDistTerm(double[] gradient) {
-		System.out.println("check metal");
 		Coordinates a;
 		Coordinates grad = new Coordinates();
 		double energy = 0.0;
 		a = ligand.getCoordinates(acceptor);
 		Coordinates r = a.subC(fitPoint);
-		System.out.println(a);
-		System.out.println(fitPoint);
+
 		double d = r.dist();
-		System.out.println("dist");
-		System.out.println(d);
+
 		if(d<D1) {
 			energy = 1.0;
 		}
@@ -100,7 +111,11 @@ public class MetalTerm implements PotentialEnergyTerm {
 	    double cosTheta = r0.cosAngle(r1);
 
 	    double angleTerm = Math.acos(cosTheta) - x0;
-
+	    boolean invert = false;
+	    if(angleTerm<0) {
+	    	angleTerm=-angleTerm;
+	    	invert=true;
+	    }
 	    
 	    if(angleTerm<x1)
 	    	energy = 1.0;
@@ -108,9 +123,8 @@ public class MetalTerm implements PotentialEnergyTerm {
 	    	energy = 0.0;
 	    else {
 	    	double prefactor = -1.0/(x2-x1); //derivative of energy term with respect to 
-		    if(angleTerm<0) {
+		    if(invert) {
 		    	prefactor = -prefactor;
-		    	angleTerm = -angleTerm;
 		    }
 		    energy = (x2-angleTerm)/(x2-x1);
 
@@ -163,8 +177,6 @@ public class MetalTerm implements PotentialEnergyTerm {
 			}
 		
 			double[] totGrad = new double[gradient.length];
-			System.out.println("engies");
-			System.out.println(energies);
 			totEnergy = scale*ENERGY;
 			for(double eng : energies)
 				totEnergy*=eng;
@@ -188,8 +200,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 				gradient[i]+=totGrad[i];
 			}
 		}
-		System.out.println("tot");
-		System.out.println(totEnergy);
+
 		return totEnergy;
 	}
 	

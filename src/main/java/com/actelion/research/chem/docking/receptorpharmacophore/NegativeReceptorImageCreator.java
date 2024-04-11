@@ -35,14 +35,7 @@ public class NegativeReceptorImageCreator {
 		Translation trans = new Translation(new double[] {origCOM.x,origCOM.y,origCOM.z});
 	    transformation.addTransformation(rot);
 		transformation.addTransformation(trans);
-		/*
-		bsVolume.transform(rot);
-		bsVolume.transform(trans);
-		origCOM = bsVolume.getCOM();
-		rot = bsVolume.preProcess(null);
-		transformation.addTransformation(rot.getInvert());
-		transformation.addTransformation(new Translation(new double[] {origCOM.x,origCOM.y,origCOM.z}));
-		*/
+
 
 
 		return bsVolume;

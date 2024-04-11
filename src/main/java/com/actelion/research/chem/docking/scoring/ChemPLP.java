@@ -18,6 +18,7 @@ import com.actelion.research.chem.alignment3d.KabschAlignment;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.docking.scoring.chemscore.HBTerm;
+import com.actelion.research.chem.docking.scoring.chemscore.MetalTerm;
 import com.actelion.research.chem.docking.scoring.chemscore.SimpleMetalTerm;
 import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
@@ -63,6 +64,8 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 	private Map<Integer,List<Coordinates>> metalInteractionSites;
 	
+	private static final Set<Integer> SIMPLE_METAL_ATOMS = new HashSet(Arrays.asList(12,20)); //Mg and Ca
+	
 
 	public ChemPLP(Molecule3D receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid) {
 		super(receptor, bindingSiteAtoms, grid);
@@ -91,7 +94,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		double energy = getBumpTerm();
 		for(PotentialEnergyTerm term : chemscoreHbond)
 			energy+=term.getFGValue(grad);
-		for(PotentialEnergyTerm term : chemscoreMetal) 	
+		for(PotentialEnergyTerm term : getMetalTerm(chemscoreMetal)) 	
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
@@ -118,7 +121,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		double energy = getBumpTerm();
 		for(PotentialEnergyTerm term : chemscoreHbond)
 			energy+=term.getFGValue(grad);
-		for(PotentialEnergyTerm term : chemscoreMetal) 
+		for(PotentialEnergyTerm term : getMetalTerm(chemscoreMetal)) 
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
@@ -249,7 +252,7 @@ public class ChemPLP extends AbstractScoringEngine {
 							}	
 						}
 					
-					//if(SIMPLE_METAL_ATOMS.contains(receptor.getAtomicNo(p))) {
+					if(SIMPLE_METAL_ATOMS.contains(receptor.getAtomicNo(p))) {
 						for(int l : ligandAcceptors) {
 							double scale = 1.0;
 							if(ligandAcceptorNeg.contains(l))
@@ -260,8 +263,8 @@ public class ChemPLP extends AbstractScoringEngine {
 							chemscoreMetal.add(metTerm);
 						}
 	
-						//}
-						/*
+						}
+						
 					else { //standard metal term;
 						List<Coordinates> interactionSites = metalInteractionSites.get(p);
 						for(int l : ligandAcceptors) {
@@ -270,14 +273,14 @@ public class ChemPLP extends AbstractScoringEngine {
 								scale = 2.0;
 							int[] acceptorNeighbours = IntStream.range(0, ligand.getConnAtoms(l)).map(i -> ligand.getConnAtom(l, i)).toArray();
 							for(Coordinates site : interactionSites) {
-								MetalTerm metTerm = MetalTerm.create(candidatePose, l, acceptorNeighbours, site,scale);
+								MetalTerm metTerm = MetalTerm.create(candidatePose.getLigConf(), l, acceptorNeighbours, site,scale);
 								chemscoreMetal.add(metTerm);
 							}
 					}
 					
 					
 					}
-					*/
+					
 				}
 				else { // non-polar heavy atom
 					for(int l=0;l<ligand.getAtoms();l++) { 
@@ -348,6 +351,31 @@ public class ChemPLP extends AbstractScoringEngine {
 			
 				
 		}
+	//for metal terms with coordination: only the most contributing term per interaction site is kept!
+	private List<PotentialEnergyTerm> getMetalTerm(List<PotentialEnergyTerm> metalTerms) {
+		double[] grad = new double[3*candidatePose.getLigConf().getMolecule().getAllAtoms()];
+		Map<Coordinates,List<PotentialEnergyTerm>> interactionPt2Term = new HashMap<Coordinates,List<PotentialEnergyTerm>>();
+		List<PotentialEnergyTerm> curatedTerms = new ArrayList<>();
+		for(PotentialEnergyTerm term : metalTerms) {
+			if(!(term instanceof MetalTerm)) {
+				curatedTerms.add(term);
+			}
+			else {
+				MetalTerm metalTerm = (MetalTerm) term;
+				interactionPt2Term.putIfAbsent(metalTerm.getFitPoint(),new ArrayList<>());
+				interactionPt2Term.get(metalTerm.getFitPoint()).add(metalTerm);
+			}
+		}
+		for(Coordinates key : interactionPt2Term.keySet()) {
+			PotentialEnergyTerm bestTerm = interactionPt2Term.get(key).stream().sorted((e1,e2) -> {
+				return Double.compare(e1.getFGValue(grad), e2.getFGValue(grad));
+			}).collect(Collectors.toList()).get(0);
+			curatedTerms.add(bestTerm);
+			
+		}
+		return curatedTerms;
+		
+	}
 
 
 	
@@ -507,8 +535,9 @@ public class ChemPLP extends AbstractScoringEngine {
 			hbond+=term.getFGValue(grad);
 		contributions.put("HBOND", hbond);
 		double metal = 0.0;
-		for(PotentialEnergyTerm term : chemscoreMetal) 
+		for(PotentialEnergyTerm term : getMetalTerm(chemscoreMetal)) {
 			metal+=term.getFGValue(grad);
+		}
 		contributions.put("METAL", metal);
 		double plpContr = 0.0;
 		for(PotentialEnergyTerm term : plp) 
