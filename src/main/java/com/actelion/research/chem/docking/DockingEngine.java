@@ -67,9 +67,10 @@ public class DockingEngine {
 	private StereoMolecule mcsRef;
 	private List<Integer> mcsConstrainedBonds;
 	private List<Integer> mcsConstrainedAtoms;
+	private double gridDimension;
 
 	
-	public DockingEngine(StereoMolecule rec, StereoMolecule nativeLig, int mcSteps, int startPositions,
+	public DockingEngine(StereoMolecule rec, StereoMolecule nativeLig, int mcSteps, int startPositions, double gridDimension,
 			ScoringFunction scoringFunction) throws DockingFailedException {
 		for(int ra=0;ra<rec.getAtoms();ra++) {
 			if(rec.getImplicitHydrogens(ra)>0)
@@ -90,9 +91,9 @@ public class DockingEngine {
 		ShapeVolume bsVolume = NegativeReceptorImageCreator.create(nativeLigand, receptor, transform);
 		shapeDocking = new ShapeDocking(bsVolume,transform);
 		
-		MoleculeGrid grid = new MoleculeGrid(nativeLigand,DockingEngine.GRID_RESOLUTION,
-				new Coordinates(DockingEngine.GRID_DIMENSION,DockingEngine.GRID_DIMENSION,
-						DockingEngine.GRID_DIMENSION));
+		MoleculeGrid grid = new MoleculeGrid(nativeLigand,GRID_RESOLUTION,
+				new Coordinates(gridDimension,gridDimension,
+						gridDimension));
 		
 		Set<Integer> bindingSiteAtoms = new HashSet<Integer>();
 		
@@ -111,8 +112,12 @@ public class DockingEngine {
 
 	}
 	
+	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand, double gridDimension) throws DockingFailedException {
+		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS, gridDimension,ScoringFunction.CHEMPLP);
+	}
+	
 	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand) throws DockingFailedException {
-		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS,ScoringFunction.CHEMPLP);
+		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS, GRID_DIMENSION,ScoringFunction.CHEMPLP);
 	}
 	
 	public void setThreadMaster(ThreadMaster tm) {
@@ -120,6 +125,7 @@ public class DockingEngine {
 		shapeDocking.setThreadMaster(tm);
 	}
 	
+
 	
 	/**
 	 * generate initial poses: 
