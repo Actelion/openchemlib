@@ -204,7 +204,7 @@ public class SmilesParser {
 			while (index<smiles.length && smiles[index] == '.')
 				index++;
 
-			if (smiles[index] == '(') {   // useless leading brackets are reality: find and skip closing counterpart
+			if (smiles[index] == '(') {   // brackets may be used to group unconnected fragments into one molecule (in case of reactions)
 				if (closingGroupBracketIndex != -1)
 					throw new Exception("Second open group bracket found before closing first one.");
 
@@ -226,7 +226,7 @@ public class SmilesParser {
 			int end = index;
 			while (end<smiles.length
 				&& smiles[end] != '>'
-				&& !(smiles[end] == '.' && (mSingleDotSeparator || closingGroupBracketIndex==end-1 || end+1==smiles.length || smiles[end+1] == '.')))
+				&& !(smiles[end] == '.' && ((mSingleDotSeparator && closingGroupBracketIndex==-1) || closingGroupBracketIndex==end-1 || end+1==smiles.length || smiles[end+1] == '.')))
 				end++;
 
 			int molend = end;
@@ -2153,7 +2153,7 @@ class SmilesRange {
 
 			// If we have the same query feature, comma delimited and with different number, then we extend the range...
 			int firstLetter = position-1;
-			while (firstLetter > 1 && Character.isLetter(smiles[firstLetter-1]))
+			while (firstLetter > 1 && Character.isLetterOrDigit(smiles[firstLetter-1]))
 				firstLetter--;
 			while (smiles[pos] == ',') {
 				boolean lettersMatch = true;
@@ -2162,17 +2162,18 @@ class SmilesRange {
 					if (smiles[firstLetter+i] != smiles[pos+1+i]) {
 						lettersMatch = false;
 						break;
+						}
 					}
+				if (!lettersMatch)
+					break;
+
+				pos += 1+letterCount;
+				val = parseInt();
+				if (min > val)
+					min = val;
+				else if (max < val)
+					max = val;
 				}
-				if (lettersMatch) {
-					pos += 1+letterCount;
-					val = parseInt();
-					if (min > val)
-						min = val;
-					else if (max < val)
-						max = val;
-				}
-			}
 
 			return pos - position;
 			}
@@ -2195,7 +2196,7 @@ class SmilesRange {
 		max = defaultMax;
 		isDefault = true;
 		return 0;
-	}
+		}
 
 	public boolean isSingle() {
 		return max == min;

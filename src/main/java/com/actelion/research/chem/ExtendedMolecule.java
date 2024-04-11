@@ -209,7 +209,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		destMol.mAllAtoms = 0;
 		for (int atom=0; atom<mAllAtoms;atom++) {
 			atomMap[atom] = -1;
-			for (int i=0; i< mConnAtoms[atom]; i++) {
+			for (int i=0; i<mConnAtoms[atom]; i++) {
 				if (includeBond[mConnBond[atom][i]]) {
 					atomMap[atom] = copyAtom(destMol, atom, 0, 0);
 
@@ -291,35 +291,30 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				int lostStereoBond = -1;
 				int lostAtom = -1;
 				for (int i=0; i<mAllConnAtoms[atom]; i++) {
-//if (mConnAtom.length>=atom || atomMap.length>=mConnAtom[atom][i])
-// System.out.println("mConnAtom.length:"+mConnAtom.length+" atom:"+atom+" atomMap.length:"+atomMap.length+" i:"+i+" mConnAtom[atom][i]:"+mConnAtom[atom][i]+" mAtoms:"+mAtoms+" mAllAtoms:"+mAllAtoms);
-					if (atomMap.length>mConnAtom[atom][i]
-					 && atomMap[mConnAtom[atom][i]] != -1)
+					if (bondMap[mConnBond[atom][i]] != -1)
 						remainingNeighbours++;
 					else if (mConnBondOrder[atom][i] == 1
-							&& isStereoBond(mConnBond[atom][i])
-							&& mBondAtom[0][mConnBond[atom][i]] == atom) {
+						 && isStereoBond(mConnBond[atom][i])
+						 && mBondAtom[0][mConnBond[atom][i]] == atom) {
 						lostStereoBond = mConnBond[atom][i];
 						lostAtom = mConnAtom[atom][i];
+						}
 					}
-				}
-				if (lostStereoBond != -1
-						&& remainingNeighbours >= 3) {
+				if (lostStereoBond != -1 && remainingNeighbours >= 3) {
 					double angle = getBondAngle(atom, lostAtom);
 					double minAngleDif = 10.0;
 					int minConnBond = -1;
 					for (int i=0; i<mAllConnAtoms[atom]; i++) {
 						if (mConnBondOrder[atom][i] == 1
-								&& (!isStereoBond(mConnBond[atom][i]) || mBondAtom[0][mConnBond[atom][i]] == atom)
-								&& atomMap.length>mConnAtom[atom][i]
-								&& atomMap[mConnAtom[atom][i]] != -1) {
+						 && (!isStereoBond(mConnBond[atom][i]) || mBondAtom[0][mConnBond[atom][i]] == atom)
+						 && bondMap[mConnBond[atom][i]] != -1) {
 							double angleDif = Math.abs(getAngleDif(angle, getBondAngle(atom, mConnAtom[atom][i])));
 							if (minAngleDif > angleDif) {
 								minAngleDif = angleDif;
 								minConnBond = mConnBond[atom][i];
+								}
 							}
 						}
-					}
 					if (minConnBond != -1) {
 						int destBond = bondMap[minConnBond];
 						destMol.setBondType(destBond, mBondType[minConnBond] == cBondTypeUp ? cBondTypeDown : cBondTypeUp);
