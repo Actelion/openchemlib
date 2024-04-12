@@ -26,10 +26,12 @@ public class MetalTerm implements PotentialEnergyTerm {
 	private Coordinates fitPoint;
 	private int[] acceptorNeighbours;
 	private double scale;
+	private Conformer receptor;
+	private int metal;
 
 	
 	
-	private MetalTerm(Conformer ligand, int acceptor,  
+	private MetalTerm(Conformer ligand, int acceptor, Conformer receptor, int metal,
 			 int[] acceptorNeighbours, Coordinates fitPoint, double scale) {
 		this.ligand = ligand;
 		this.acceptor = acceptor;
@@ -37,6 +39,8 @@ public class MetalTerm implements PotentialEnergyTerm {
 		this.acceptorNeighbours = acceptorNeighbours;
 		this.fitPoint = fitPoint;
 		this.scale = scale;
+		this.metal = metal;
+		this.receptor = receptor;
 		
 	}
 	
@@ -54,9 +58,10 @@ public class MetalTerm implements PotentialEnergyTerm {
 
 
 
-	public static MetalTerm create(Conformer ligand, int acceptor, int[] acceptorNeighbours,
+	public static MetalTerm create(Conformer ligand, int acceptor, Conformer receptor, int metal,
+			int[] acceptorNeighbours,
 			Coordinates fitPoint, double scale) {
-		return new MetalTerm(ligand, acceptor, acceptorNeighbours,
+		return new MetalTerm(ligand, acceptor, receptor, metal, acceptorNeighbours,
 				fitPoint, scale);
 	}
 
@@ -99,7 +104,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 
 		c2 = ligand.getCoordinates(a2);
 
-		c3 = fitPoint;
+		c3 = receptor.getCoordinates(metal);
 
 		
 	    Coordinates r0 = c1.subC(c2).unit();
@@ -188,7 +193,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 						continue;
 					double e = energies.get(j);
 					double w = e*scale*ENERGY;
-					for(int k=0;j<g.length;k++)
+					for(int k=0;k<g.length;k++)
 						g[k]*=w;
 					
 				}
@@ -200,7 +205,6 @@ public class MetalTerm implements PotentialEnergyTerm {
 				gradient[i]+=totGrad[i];
 			}
 		}
-
 		return totEnergy;
 	}
 	
