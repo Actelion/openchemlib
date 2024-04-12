@@ -2153,7 +2153,7 @@ class SmilesRange {
 
 			// If we have the same query feature, comma delimited and with different number, then we extend the range...
 			int firstLetter = position-1;
-			while (firstLetter > 1 && Character.isLetter(smiles[firstLetter-1]))
+			while (firstLetter > 1 && Character.isLetterOrDigit(smiles[firstLetter-1]))
 				firstLetter--;
 			while (smiles[pos] == ',') {
 				boolean lettersMatch = true;
@@ -2162,17 +2162,18 @@ class SmilesRange {
 					if (smiles[firstLetter+i] != smiles[pos+1+i]) {
 						lettersMatch = false;
 						break;
+						}
 					}
+				if (!lettersMatch)
+					break;
+
+				pos += 1+letterCount;
+				val = parseInt();
+				if (min > val)
+					min = val;
+				else if (max < val)
+					max = val;
 				}
-				if (lettersMatch) {
-					pos += 1+letterCount;
-					val = parseInt();
-					if (min > val)
-						min = val;
-					else if (max < val)
-						max = val;
-				}
-			}
 
 			return pos - position;
 			}
@@ -2195,7 +2196,7 @@ class SmilesRange {
 		max = defaultMax;
 		isDefault = true;
 		return 0;
-	}
+		}
 
 	public boolean isSingle() {
 		return max == min;

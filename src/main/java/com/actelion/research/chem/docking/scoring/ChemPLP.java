@@ -12,12 +12,14 @@ import java.util.stream.IntStream;
 
 import com.actelion.research.calc.combinatorics.CombinationGenerator;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.KabschAlignment;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.docking.scoring.chemscore.HBTerm;
+import com.actelion.research.chem.docking.scoring.chemscore.MetalTerm;
 import com.actelion.research.chem.docking.scoring.chemscore.SimpleMetalTerm;
 import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
@@ -39,21 +41,22 @@ import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 public class ChemPLP extends AbstractScoringEngine {
 	
 	private static final double METAL_INTERACTION_CUTOFF = 2.6;
-	private static final double STRAIN_CUTOFF = 20;
+	private static final double STRAIN_CUTOFF = 10;
+	private static final double METAL_OPTIMAL_DIST = 2.2;
 			
 	
 	private Set<Integer> receptorAcceptors;
 	private Set<Integer> receptorDonorHs;
 	private Set<Integer> receptorDonors;
-	private Set<Integer> receptorDonorHPos;
-	private Set<Integer> receptorAcceptorNeg;
+	private Map<Integer, Double>receptorDonorHPos;
+	private Map<Integer, Double> receptorAcceptorNeg;
 	private Set<Integer> receptorMetals;
 	
 	private Set<Integer> ligandAcceptors;
 	private Set<Integer> ligandDonorHs;
 	private Set<Integer> ligandDonors;
-	private Set<Integer> ligandDonorHPos;
-	private Set<Integer> ligandAcceptorNeg;
+	private Map<Integer,Double> ligandDonorHPos;
+	private Map<Integer, Double> ligandAcceptorNeg;
 	
 	private List<PotentialEnergyTerm> plp;
 	private List<PotentialEnergyTerm> chemscoreHbond;
@@ -63,14 +66,16 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 	private Map<Integer,List<Coordinates>> metalInteractionSites;
 	
+	private static final Set<Integer> SIMPLE_METAL_ATOMS = new HashSet(Arrays.asList(12,20)); //Mg and Ca
+	
 
 	public ChemPLP(Molecule3D receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid) {
 		super(receptor, bindingSiteAtoms, grid);
 		receptorAcceptors = new HashSet<>();
 		
 		receptorDonorHs = new HashSet<>();
-		receptorDonorHPos = new HashSet<>();
-		receptorAcceptorNeg = new HashSet<>();
+		receptorDonorHPos = new HashMap<Integer, Double>();
+		receptorAcceptorNeg = new HashMap<Integer, Double>();
 		receptorMetals = new HashSet<>();
 		receptorDonors = new HashSet<>();
 		identifyHBondFunctionality(receptor,receptorAcceptors,receptorDonorHs, receptorDonors, receptorMetals,receptorAcceptorNeg,
@@ -91,7 +96,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		double energy = getBumpTerm();
 		for(PotentialEnergyTerm term : chemscoreHbond)
 			energy+=term.getFGValue(grad);
-		for(PotentialEnergyTerm term : chemscoreMetal) 	
+		for(PotentialEnergyTerm term : getMetalTerm(chemscoreMetal)) 	
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
@@ -118,10 +123,24 @@ public class ChemPLP extends AbstractScoringEngine {
 		double energy = getBumpTerm();
 		for(PotentialEnergyTerm term : chemscoreHbond)
 			energy+=term.getFGValue(grad);
-		for(PotentialEnergyTerm term : chemscoreMetal) 
+		for(PotentialEnergyTerm term : getMetalTerm(chemscoreMetal)) 
 			energy+=term.getFGValue(grad);
 		for(PotentialEnergyTerm term : plp) 
 			energy+=term.getFGValue(grad);
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+
+		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+		StereoMolecule toOptimize = new StereoMolecule(candidatePose.getLigConf().getMolecule());
+		toOptimize.ensureHelperArrays(Molecule.cHelperCIP);
+		ForceFieldMMFF94 ff = new ForceFieldMMFF94(toOptimize, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+		double e = ff.getTotalEnergy();
+		ff.minimise();
+		double e0 = ff.getTotalEnergy();
+		double deltaE = e-e0;
+		if(deltaE>STRAIN_CUTOFF) {
+			energy += deltaE-STRAIN_CUTOFF;
+		}
 	
 
 		return energy;
@@ -140,8 +159,8 @@ public class ChemPLP extends AbstractScoringEngine {
 		ligandAcceptors = new HashSet<>();
 		ligandDonorHs = new HashSet<>();
 		ligandDonors = new HashSet<>();
-		ligandDonorHPos = new HashSet<>();
-		ligandAcceptorNeg = new HashSet<>();
+		ligandDonorHPos = new HashMap<Integer, Double>();
+		ligandAcceptorNeg = new HashMap<Integer, Double>();
 		constraints = new ArrayList<>();
 		
 		
@@ -150,12 +169,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
-		//ffOptions.put("angle bend", false);
-		//ffOptions.put("stretch bend", false);
-		//ffOptions.put("bond stretch", false);
-		//ffOptions.put("out of plane", false);
 
-		
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		ff = new ForceFieldMMFF94(ligand, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 		StereoMolecule receptor = receptorConf.getMolecule();
@@ -167,15 +181,16 @@ public class ChemPLP extends AbstractScoringEngine {
 				if(receptorDonorHs.contains(p)) {
 					// receptor atom is donor hydrogen
 					int d = receptor.getConnAtom(p, 0);
-					boolean chargedP = receptorDonorHPos.contains(p);
+					boolean chargedP = receptorDonorHPos.keySet().contains(p);
 					for(int l=0;l<ligand.getAtoms();l++) {
 						if(ligandAcceptors.contains(l)) {
 							final int li = l;
 							int[] acceptorNeighbours = IntStream.range(0, ligand.getConnAtoms(li)).map(i -> ligand.getConnAtom(li, i)).toArray();
-							boolean chargedL = ligandAcceptorNeg.contains(l);
+							boolean chargedL = ligandAcceptorNeg.keySet().contains(l);
 							double scale = 1.0;
-							if(chargedP && chargedL)
-								scale = 2.0;
+							if(chargedP && chargedL) {
+								scale = ligandAcceptorNeg.get(l) + receptorDonorHPos.get(p);
+							}
 							HBTerm hbTerm = HBTerm.create(receptorConf, candidatePose.getLigConf(), l, d, p, true, false, acceptorNeighbours, scale);
 							chemscoreHbond.add(hbTerm);
 						}	
@@ -201,15 +216,15 @@ public class ChemPLP extends AbstractScoringEngine {
 				}
 				else if(receptorAcceptors.contains(p)) { // receptor acceptor heavy atom
 					int[] acceptorNeighbours = IntStream.range(0, receptor.getConnAtoms(p)).map(i -> receptor.getConnAtom(p, i)).toArray();
-					boolean chargedP = receptorAcceptorNeg.contains(p);
+					boolean chargedP = receptorAcceptorNeg.keySet().contains(p);
 					for(int l=0;l<ligand.getAllAtoms();l++) { 
 						if(ligand.getAtomicNo(l)==1) { //ligand hydrogen atom
 							if(ligandDonorHs.contains(l)) {
-								boolean chargedL = ligandDonorHPos.contains(l);
+								boolean chargedL = ligandDonorHPos.keySet().contains(l);
 								int d = ligand.getConnAtom(l, 0);
 								double scale = 1.0;
 								if(chargedP && chargedL)
-									scale = 2.0;
+									scale = receptorAcceptorNeg.get(p) + ligandDonorHPos.get(l);
 								HBTerm hbTerm = HBTerm.create(receptorConf, candidatePose.getLigConf(), p, d,l, false, true, acceptorNeighbours, scale);
 								chemscoreHbond.add(hbTerm);
 							}
@@ -249,35 +264,38 @@ public class ChemPLP extends AbstractScoringEngine {
 							}	
 						}
 					
-					//if(SIMPLE_METAL_ATOMS.contains(receptor.getAtomicNo(p))) {
+					if(SIMPLE_METAL_ATOMS.contains(receptor.getAtomicNo(p))) {
 						for(int l : ligandAcceptors) {
 							double scale = 1.0;
-							if(ligandAcceptorNeg.contains(l))
-								scale = 2.0;
+							if(ligandAcceptorNeg.keySet().contains(l))
+								scale = 2.0*ligandAcceptorNeg.get(l);
 							int[] acceptorNeighbours = IntStream.range(0, ligand.getConnAtoms(l)).map(i -> ligand.getConnAtom(l, i)).toArray();
 							SimpleMetalTerm metTerm = SimpleMetalTerm.create(receptorConf, candidatePose.getLigConf(), 
 									l, p, acceptorNeighbours, scale);
 							chemscoreMetal.add(metTerm);
 						}
+					}
 	
-						//}
-						/*
+					
+					
 					else { //standard metal term;
 						List<Coordinates> interactionSites = metalInteractionSites.get(p);
 						for(int l : ligandAcceptors) {
 							double scale = 1.0;
-							if(ligandAcceptorNeg.contains(l))
-								scale = 2.0;
+							if(ligandAcceptorNeg.keySet().contains(l))
+								scale = 2.0*ligandAcceptorNeg.get(l);
 							int[] acceptorNeighbours = IntStream.range(0, ligand.getConnAtoms(l)).map(i -> ligand.getConnAtom(l, i)).toArray();
 							for(Coordinates site : interactionSites) {
-								MetalTerm metTerm = MetalTerm.create(candidatePose, l, acceptorNeighbours, site,scale);
+								MetalTerm metTerm = MetalTerm.create(candidatePose.getLigConf(), l, receptorConf,p, acceptorNeighbours, site,scale);
 								chemscoreMetal.add(metTerm);
 							}
 					}
 					
 					
 					}
-					*/
+					
+
+					
 				}
 				else { // non-polar heavy atom
 					for(int l=0;l<ligand.getAtoms();l++) { 
@@ -306,6 +324,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		List<Coordinates> interactionPoints = new ArrayList<Coordinates>();
 		Coordinates metalCoordinates = receptor.getCoordinates(metalAtom);
 		List<Coordinates> interactionSites = new ArrayList<Coordinates>();
+		interactionSites.add(new Coordinates(metalCoordinates));
 		for(int acceptor : receptorAcceptors) {
 			Coordinates acceptorCoords = receptor.getCoordinates(acceptor);
 			if(acceptorCoords.distance(metalCoordinates)<METAL_INTERACTION_CUTOFF)
@@ -316,24 +335,34 @@ public class ChemPLP extends AbstractScoringEngine {
 		double overallMinimalRMSD = Double.MAX_VALUE;
 		Coordinates[] fittedGeometry = null;;
 		int[][] finalMapping = null;
-		if(occupiedSites.length<4) {
+		if(occupiedSites.length<5) {
 			Coordinates[] idealGeom = getTetrahedron();
 			int[][] bestMapping = new int[occupiedSites.length][2];
-			overallMinimalRMSD = getBestMetalFit(idealGeom, occupiedSites,bestMapping);	
+			overallMinimalRMSD = getBestMetalFit(idealGeom, occupiedSites,bestMapping,4);	
 			fittedGeometry = idealGeom;
 			finalMapping = bestMapping;
 		}
+		//try trigonal bipyramidal
+		if(occupiedSites.length<6) {
+			Coordinates[] idealGeom3 = getTrigonalBipyramidal();
+			int[][] bestMapping3 = new int[occupiedSites.length][2];
+			if(getBestMetalFit(idealGeom3, occupiedSites,bestMapping3,5)<overallMinimalRMSD) {
+				fittedGeometry = idealGeom3;
+				finalMapping = bestMapping3;
+			}
+		}
 		//try octahedron 
-		else if(occupiedSites.length<6) {
+		if(occupiedSites.length<7) {
 			Coordinates[] idealGeom2 = getOctahedron();
 			int[][] bestMapping2 = new int[occupiedSites.length][2];
-			if(getBestMetalFit(idealGeom2, occupiedSites,bestMapping2)<overallMinimalRMSD) {
+			if(getBestMetalFit(idealGeom2, occupiedSites,bestMapping2,6)<overallMinimalRMSD) {
 				fittedGeometry = idealGeom2;
 				finalMapping = bestMapping2;
 			}
 		}
 		// identify unoccpied sites
 		if(fittedGeometry!=null) {
+
 			KabschAlignment alignment = new KabschAlignment(occupiedSites,fittedGeometry,finalMapping);
 			alignment.align();
 			List<Integer> mappedPoints = Arrays.stream(finalMapping).map(e -> e[1]).collect(Collectors.toList());
@@ -342,36 +371,81 @@ public class ChemPLP extends AbstractScoringEngine {
 					interactionPoints.add(fittedGeometry[i]);
 			}
 		}
+		//place interaction points 2.2A from Metal
+		for(Coordinates point : interactionPoints) {
+			Coordinates v = point.subC(metalCoordinates);
+			v.unit();
+			v.scale(METAL_OPTIMAL_DIST);
+			Coordinates newPoint = metalCoordinates.addC(v);
+			point.x = newPoint.x;
+			point.y = newPoint.y;
+			point.z = newPoint.z;
+		}
 		
 		return interactionPoints;
 			
 			
 				
 		}
+	//for metal terms with coordination: only the most contributing term per interaction site is kept!
+	private List<PotentialEnergyTerm> getMetalTerm(List<PotentialEnergyTerm> metalTerms) {
+		double[] grad = new double[3*candidatePose.getLigConf().getMolecule().getAllAtoms()];
+		Map<Coordinates,List<PotentialEnergyTerm>> interactionPt2Term = new HashMap<Coordinates,List<PotentialEnergyTerm>>();
+		List<PotentialEnergyTerm> curatedTerms = new ArrayList<>();
+		for(PotentialEnergyTerm term : metalTerms) {
+			if(!(term instanceof MetalTerm)) {
+				curatedTerms.add(term);
+			}
+			else {
+				MetalTerm metalTerm = (MetalTerm) term;
+				interactionPt2Term.putIfAbsent(metalTerm.getFitPoint(),new ArrayList<>());
+				interactionPt2Term.get(metalTerm.getFitPoint()).add(metalTerm);
+			}
+		}
+		for(Coordinates key : interactionPt2Term.keySet()) {
+			PotentialEnergyTerm bestTerm = interactionPt2Term.get(key).stream().sorted((e1,e2) -> {
+				return Double.compare(e1.getFGValue(grad), e2.getFGValue(grad));
+			}).collect(Collectors.toList()).get(0);
+			curatedTerms.add(bestTerm);
+			
+		}
+		return curatedTerms;
+		
+	}
 
 
 	
 	private static double getBestMetalFit(Coordinates[] idealGeom, Coordinates[] occupiedSites,
-			int[][] bestMapping) {
+			int[][] bestMapping, int coordinationNumber) {
 		double overallMinimalRMSD = Double.MAX_VALUE;
-		if(occupiedSites.length<4) {
-			List<int[]> assignments = enumerateMetalPosAssignments(4,occupiedSites.length);
+		if((occupiedSites.length-1)<coordinationNumber) {
+			List<int[]> assignments = enumerateMetalPosAssignments(coordinationNumber,occupiedSites.length-1);
 			for(int[] ass : assignments) {
 				int[][] mapping = new int[occupiedSites.length][2];
 				int counter = 0;
-				for(int i=0;i<occupiedSites.length;i++) {
+				mapping[0][0] =0;
+				mapping[0][1] =0;
+				for(int i=1;i<occupiedSites.length;i++) {
 					int[] m = new int[]{counter,ass[counter]};
+					for(int j=0;j<m.length;j++) {
+						m[j] = m[j] + 1;
+					}
 					mapping[i] = m;
 					counter++;
 				}
 				Coordinates[] idealGeomCopy = Arrays.stream(idealGeom).map(e -> new Coordinates(e)).toArray(Coordinates[]::new);
-
+				//shift mapping by one because metal is always on first position
+				
 				KabschAlignment alignment = new KabschAlignment(occupiedSites,idealGeomCopy,mapping);
 				alignment.align();
 				double rmsd = getRMSD(occupiedSites,idealGeomCopy,mapping);
 				if(rmsd<overallMinimalRMSD) {
 					overallMinimalRMSD = rmsd;
-					bestMapping = mapping;
+					for (int i = 0; i<mapping.length; i++){
+					     for (int j = 0; j<mapping[i].length; j++){
+					    	 bestMapping[i][j] = mapping[i][j];
+					     }
+					}
 					
 				}
 			}
@@ -422,7 +496,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 	
 	public static void identifyHBondFunctionality(StereoMolecule mol, Set<Integer> acceptors, Set<Integer> donorHs, Set<Integer> donors,
-			Set<Integer> metals, Set<Integer> chargedAcceptors, Set<Integer> chargedDonorHs) {
+			Set<Integer> metals, Map<Integer,Double> chargedAcceptors, Map<Integer,Double> chargedDonorHs) {
 
 		for(int a=0;a<mol.getAllAtoms();a++) {
 			if (mol.getAtomicNo(a)==7 || mol.getAtomicNo(a)==8) {
@@ -437,53 +511,51 @@ public class ChemPLP extends AbstractScoringEngine {
 				metals.add(a);
 		}
 		ChargedGroupDetector detector = new ChargedGroupDetector(mol);
-		List<ChargePoint> chargePoints = detector.detect();
-		
-		getChargedDonorsAcceptors(mol,chargePoints,acceptors,donorHs, chargedAcceptors,
-				chargedDonorHs);
-		
-	}
-	
-	
-	private static void getChargedDonorsAcceptors(StereoMolecule mol, List<ChargePoint> chargePoints, Set<Integer> acceptors, Set<Integer> donorHs,
-			Set<Integer> chargedAcceptors, Set<Integer> chargedDonorHs) {
+		detector.detect();
+		List<ArrayList<Integer>> chargedGroups = detector.getChargedGroups();
 		for(int a : acceptors) {
-			if(isPartOfChargedGroup(mol,a,chargePoints))
-				chargedAcceptors.add(a);
-				
-		}
-		
-		for(int h : donorHs) {
-			int d = mol.getConnAtom(h, 0);
-			if(isPartOfChargedGroup(mol,d,chargePoints))
-				chargedDonorHs.add(h);
-				
-		}
-	}
-	
-	
-	private static boolean isPartOfChargedGroup(StereoMolecule mol, int atom, List<ChargePoint> chargePoints) {
-		boolean isCharged = false;
-		for(ChargePoint cp : chargePoints) {
-			if(cp.getChargeAtom()==atom) {
-				isCharged=true;
-				break;
-			}
-			else {
-				int chargeAtom = cp.getChargeAtom();
-				for(int a=0;a<mol.getConnAtoms(atom);a++) {
-					if(chargeAtom==mol.getConnAtom(atom, a))
-						isCharged=true;
+			for(List<Integer> chargedGroup : chargedGroups) {
+				int invScale = chargedGroup.stream().mapToInt(e -> {
+					if(mol.getAtomicNo(e)!=6)
+						return 1;
+					else 
+						return 0;
+				}).sum();
+				double scale = 1.0/invScale;
+				if(chargedGroup.contains(a)) {
+					chargedAcceptors.put(a, scale);
 				}
 			}
-				
-				
+		
 		}
-		return isCharged;
+		for(int h : donorHs) {
+			for(List<Integer> chargedGroup : chargedGroups) {
+				int invScale = chargedGroup.stream().mapToInt(e -> {
+					if(mol.getAtomicNo(e)!=6)
+						return 1;
+					else 
+						return 0;
+				}).sum();
+				double scale = 1.0/invScale;;
+				int d = mol.getConnAtom(h, 0);
+				if(chargedGroup.contains(d)) {
+					chargedDonorHs.put(h, scale);
+				
+				}
+			}
+		
+		}
 	}
 	
+
+	
+	
+	/*
+	 * first coordinate always is the metal
+	 */
 	private static Coordinates[] getTetrahedron() {
 		 return new Coordinates[] {
+				    new Coordinates(0.0,0.0,0.0),
 					new Coordinates(2.074,0,-0.733), new Coordinates(-1.037,1.796,-0.733),
 					new Coordinates(-1.037,-1.796,-0.733), new Coordinates(0.0,0.0,2.2)
 					};
@@ -491,9 +563,19 @@ public class ChemPLP extends AbstractScoringEngine {
 	
 	private static Coordinates[] getOctahedron() {
 		return new Coordinates[] {
+				new Coordinates(0.0,0.0,0.0),
 				new Coordinates(0,0,2.2), new Coordinates(0,0,-2.2), 
 				new Coordinates(1.555,1.555,0.0), new Coordinates(1.555,-1.555,0.0),
 				new Coordinates(-1.555,1.555,0.0), new Coordinates(-1.555,-1.555,0.0)
+		};
+	}
+	
+	private static Coordinates[] getTrigonalBipyramidal() {
+		return new Coordinates[] {
+				new Coordinates(0.0,0.0,0.0),
+				new Coordinates(0,0,2.2), new Coordinates(0,0,-2.2), 
+				new Coordinates(-1.1,1.905,0.0), new Coordinates(-1.1,-1.905,0.0),
+				new Coordinates(2.2,0.0,0.0)
 		};
 	}
 
@@ -507,19 +589,28 @@ public class ChemPLP extends AbstractScoringEngine {
 			hbond+=term.getFGValue(grad);
 		contributions.put("HBOND", hbond);
 		double metal = 0.0;
-		for(PotentialEnergyTerm term : chemscoreMetal) 
+		for(PotentialEnergyTerm term : getMetalTerm(chemscoreMetal)) {
 			metal+=term.getFGValue(grad);
+		}
 		contributions.put("METAL", metal);
 		double plpContr = 0.0;
 		for(PotentialEnergyTerm term : plp) 
 			plpContr+=term.getFGValue(grad);
 		contributions.put("PLP", plpContr);
 		double strain = 0.0;
-		ff.setState(candidatePose.getCartState());
-		double ffEnergy = ff.getTotalEnergy();
-		if((ffEnergy-e0)>STRAIN_CUTOFF) {
-			strain+=ffEnergy;
-			ff.addGradient(grad);
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+
+		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+		StereoMolecule toOptimize = new StereoMolecule(candidatePose.getLigConf().getMolecule());
+		toOptimize.ensureHelperArrays(Molecule.cHelperCIP);
+		ForceFieldMMFF94 ff = new ForceFieldMMFF94(toOptimize, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+		double e = ff.getTotalEnergy();
+		ff.minimise();
+		double e0 = ff.getTotalEnergy();
+		double deltaE = e-e0;
+		if(deltaE>STRAIN_CUTOFF) {
+			strain += deltaE-STRAIN_CUTOFF;
 		}
 		contributions.put("STRAIN", strain);
 		return contributions;

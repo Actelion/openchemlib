@@ -26,10 +26,12 @@ public class MetalTerm implements PotentialEnergyTerm {
 	private Coordinates fitPoint;
 	private int[] acceptorNeighbours;
 	private double scale;
+	private Conformer receptor;
+	private int metal;
 
 	
 	
-	private MetalTerm(Conformer ligand, int acceptor,  
+	private MetalTerm(Conformer ligand, int acceptor, Conformer receptor, int metal,
 			 int[] acceptorNeighbours, Coordinates fitPoint, double scale) {
 		this.ligand = ligand;
 		this.acceptor = acceptor;
@@ -37,27 +39,41 @@ public class MetalTerm implements PotentialEnergyTerm {
 		this.acceptorNeighbours = acceptorNeighbours;
 		this.fitPoint = fitPoint;
 		this.scale = scale;
+		this.metal = metal;
+		this.receptor = receptor;
 		
 	}
 	
-	public static MetalTerm create(Conformer ligand, int acceptor, int[] acceptorNeighbours,
+	
+	
+	public Coordinates getFitPoint() {
+		return fitPoint;
+	}
+
+
+
+	public void setFitPoint(Coordinates fitPoint) {
+		this.fitPoint = fitPoint;
+	}
+
+
+
+	public static MetalTerm create(Conformer ligand, int acceptor, Conformer receptor, int metal,
+			int[] acceptorNeighbours,
 			Coordinates fitPoint, double scale) {
-		return new MetalTerm(ligand, acceptor, acceptorNeighbours,
+		return new MetalTerm(ligand, acceptor, receptor, metal, acceptorNeighbours,
 				fitPoint, scale);
 	}
 
 	private double getDistTerm(double[] gradient) {
-		System.out.println("check metal");
 		Coordinates a;
 		Coordinates grad = new Coordinates();
 		double energy = 0.0;
 		a = ligand.getCoordinates(acceptor);
 		Coordinates r = a.subC(fitPoint);
-		System.out.println(a);
-		System.out.println(fitPoint);
+
 		double d = r.dist();
-		System.out.println("dist");
-		System.out.println(d);
+
 		if(d<D1) {
 			energy = 1.0;
 		}
@@ -88,7 +104,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 
 		c2 = ligand.getCoordinates(a2);
 
-		c3 = fitPoint;
+		c3 = receptor.getCoordinates(metal);
 
 		
 	    Coordinates r0 = c1.subC(c2).unit();
@@ -100,7 +116,11 @@ public class MetalTerm implements PotentialEnergyTerm {
 	    double cosTheta = r0.cosAngle(r1);
 
 	    double angleTerm = Math.acos(cosTheta) - x0;
-
+	    boolean invert = false;
+	    if(angleTerm<0) {
+	    	angleTerm=-angleTerm;
+	    	invert=true;
+	    }
 	    
 	    if(angleTerm<x1)
 	    	energy = 1.0;
@@ -108,9 +128,8 @@ public class MetalTerm implements PotentialEnergyTerm {
 	    	energy = 0.0;
 	    else {
 	    	double prefactor = -1.0/(x2-x1); //derivative of energy term with respect to 
-		    if(angleTerm<0) {
+		    if(invert) {
 		    	prefactor = -prefactor;
-		    	angleTerm = -angleTerm;
 		    }
 		    energy = (x2-angleTerm)/(x2-x1);
 
@@ -163,8 +182,6 @@ public class MetalTerm implements PotentialEnergyTerm {
 			}
 		
 			double[] totGrad = new double[gradient.length];
-			System.out.println("engies");
-			System.out.println(energies);
 			totEnergy = scale*ENERGY;
 			for(double eng : energies)
 				totEnergy*=eng;
@@ -176,7 +193,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 						continue;
 					double e = energies.get(j);
 					double w = e*scale*ENERGY;
-					for(int k=0;j<g.length;k++)
+					for(int k=0;k<g.length;k++)
 						g[k]*=w;
 					
 				}
@@ -188,8 +205,6 @@ public class MetalTerm implements PotentialEnergyTerm {
 				gradient[i]+=totGrad[i];
 			}
 		}
-		System.out.println("tot");
-		System.out.println(totEnergy);
 		return totEnergy;
 	}
 	

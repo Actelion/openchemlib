@@ -214,18 +214,7 @@ public class LigandPose implements Evaluable{
 			torsionHelper.rotateAroundBond(b, deltaTorsion,ligConf,false);
 		}
 	}
-	/*
-	public void updateState() {
-		for(int a=0;a<mol.getAllAtoms();a++) {
-			Coordinates c = ligConf.getCoordinates(a);
-			state[3*a] = c.x;
-			state[3*a+1] = c.y;
-			state[3*a+2] = c.z;
-		}
-		engine.updateState();
 
-	}
-	*/
 
 	@Override
 	public void setState(double[] state){
@@ -260,20 +249,12 @@ public class LigandPose implements Evaluable{
 		}
 		return cartState;
 	}
-	/*
-	public double getGyrationRadius() {
-		Coordinates com = DockingUtils.getCOM(ligConf);
-		double r = 0.0;
-		int counter = 0;
-		for(int a=0;a<ligConf.getMolecule().getAtoms();a++) {
-			Coordinates c = ligConf.getCoordinates(a);
-			r+= c.distanceSquared(com);
-			counter++;
-		}
-		r/=counter;
-		return Math.sqrt(r);
+
+	
+	public double getScore() {
+		return this.engine.getScore();
 	}
-	*/
+	
 	public double[] getState() {
 		return this.getState(new double[state.length]);
 	}
