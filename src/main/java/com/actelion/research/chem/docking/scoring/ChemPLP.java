@@ -189,7 +189,7 @@ public class ChemPLP extends AbstractScoringEngine {
 							boolean chargedL = ligandAcceptorNeg.keySet().contains(l);
 							double scale = 1.0;
 							if(chargedP && chargedL) {
-								scale = ligandAcceptorNeg.get(l) + receptorDonorHPos.get(p);
+								scale += (ligandAcceptorNeg.get(l) * receptorDonorHPos.get(p));
 							}
 							HBTerm hbTerm = HBTerm.create(receptorConf, candidatePose.getLigConf(), l, d, p, true, false, acceptorNeighbours, scale);
 							chemscoreHbond.add(hbTerm);
@@ -224,7 +224,7 @@ public class ChemPLP extends AbstractScoringEngine {
 								int d = ligand.getConnAtom(l, 0);
 								double scale = 1.0;
 								if(chargedP && chargedL)
-									scale = receptorAcceptorNeg.get(p) + ligandDonorHPos.get(l);
+									scale+= (receptorAcceptorNeg.get(p) * ligandDonorHPos.get(l));
 								HBTerm hbTerm = HBTerm.create(receptorConf, candidatePose.getLigConf(), p, d,l, false, true, acceptorNeighbours, scale);
 								chemscoreHbond.add(hbTerm);
 							}
@@ -268,7 +268,7 @@ public class ChemPLP extends AbstractScoringEngine {
 						for(int l : ligandAcceptors) {
 							double scale = 1.0;
 							if(ligandAcceptorNeg.keySet().contains(l))
-								scale = 2.0*ligandAcceptorNeg.get(l);
+								scale += ligandAcceptorNeg.get(l);
 							int[] acceptorNeighbours = IntStream.range(0, ligand.getConnAtoms(l)).map(i -> ligand.getConnAtom(l, i)).toArray();
 							SimpleMetalTerm metTerm = SimpleMetalTerm.create(receptorConf, candidatePose.getLigConf(), 
 									l, p, acceptorNeighbours, scale);
@@ -283,7 +283,7 @@ public class ChemPLP extends AbstractScoringEngine {
 						for(int l : ligandAcceptors) {
 							double scale = 1.0;
 							if(ligandAcceptorNeg.keySet().contains(l))
-								scale = 2.0*ligandAcceptorNeg.get(l);
+								scale += ligandAcceptorNeg.get(l);
 							int[] acceptorNeighbours = IntStream.range(0, ligand.getConnAtoms(l)).map(i -> ligand.getConnAtom(l, i)).toArray();
 							for(Coordinates site : interactionSites) {
 								MetalTerm metTerm = MetalTerm.create(candidatePose.getLigConf(), l, receptorConf,p, acceptorNeighbours, site,scale);
@@ -516,7 +516,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		for(int a : acceptors) {
 			for(List<Integer> chargedGroup : chargedGroups) {
 				int invScale = chargedGroup.stream().mapToInt(e -> {
-					if(mol.getAtomicNo(e)!=6)
+					if(mol.getAtomicNo(e)!=6 && mol.getAtomicNo(e)!=15 && mol.getAtomicNo(e)!=16)
 						return 1;
 					else 
 						return 0;
@@ -531,7 +531,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		for(int h : donorHs) {
 			for(List<Integer> chargedGroup : chargedGroups) {
 				int invScale = chargedGroup.stream().mapToInt(e -> {
-					if(mol.getAtomicNo(e)!=6)
+					if(mol.getAtomicNo(e)!=6 && mol.getAtomicNo(e)!=15 && mol.getAtomicNo(e)!=16)
 						return 1;
 					else 
 						return 0;

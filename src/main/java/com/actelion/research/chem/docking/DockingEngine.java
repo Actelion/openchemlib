@@ -336,7 +336,6 @@ public class DockingEngine {
 				
 			}
 			double energy = mcSearch(pose,steps);
-
 			if(energy<bestEnergy) {
 				bestEnergy = pose.getScore();
 				bestPose = pose.getLigConf();
