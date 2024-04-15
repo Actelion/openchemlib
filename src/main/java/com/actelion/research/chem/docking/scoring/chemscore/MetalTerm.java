@@ -12,6 +12,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 	
 	private static final double D1 = 0.6;
 	private static final double D2 = 0.8;
+	private static final double CUTOFF_SQ = 0.64;
 
 	
 	private static final double PHI0 = Math.PI;
@@ -28,6 +29,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 	private double scale;
 	private Conformer receptor;
 	private int metal;
+	
 
 	
 	
@@ -71,27 +73,30 @@ public class MetalTerm implements PotentialEnergyTerm {
 		double energy = 0.0;
 		a = ligand.getCoordinates(acceptor);
 		Coordinates r = a.subC(fitPoint);
-
-		double d = r.dist();
-
-		if(d<D1) {
-			energy = 1.0;
+		double rSq = r.distSq();
+		if(rSq<CUTOFF_SQ) {
+			
+			double d = Math.sqrt(rSq);
+	
+			if(d<D1) {
+				energy = 1.0;
+			}
+			else if(d>D2) {
+				energy = 0.0;
+			}
+			
+			else {
+				double prefactor = -1.0/(D2-D1)*(1.0/d);
+				grad = r.scaleC(prefactor);
+	
+				gradient[3*acceptor]+= grad.x;
+				gradient[3*acceptor+1]+= grad.y;
+				gradient[3*acceptor+2]+= grad.z;
+	
+				energy = (D2-d)/(D2-D1);
+			}
 		}
-		else if(d>D2) {
-			energy = 0.0;
-		}
-		
-		else {
-			double prefactor = -1.0/(D2-D1)*(1.0/d);
-			grad = r.scaleC(prefactor);
-
-			gradient[3*acceptor]+= grad.x;
-			gradient[3*acceptor+1]+= grad.y;
-			gradient[3*acceptor+2]+= grad.z;
-
-			energy = (D2-d)/(D2-D1);
-		}
-		
+			
 		return energy;
 		
 	}
@@ -204,6 +209,7 @@ public class MetalTerm implements PotentialEnergyTerm {
 			for(int i=0;i<totGrad.length;i++) {
 				gradient[i]+=totGrad[i];
 			}
+			
 		}
 		return totEnergy;
 	}
