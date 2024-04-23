@@ -214,18 +214,7 @@ public class LigandPose implements Evaluable{
 			torsionHelper.rotateAroundBond(b, deltaTorsion,ligConf,false);
 		}
 	}
-	/*
-	public void updateState() {
-		for(int a=0;a<mol.getAllAtoms();a++) {
-			Coordinates c = ligConf.getCoordinates(a);
-			state[3*a] = c.x;
-			state[3*a+1] = c.y;
-			state[3*a+2] = c.z;
-		}
-		engine.updateState();
 
-	}
-	*/
 
 	@Override
 	public void setState(double[] state){

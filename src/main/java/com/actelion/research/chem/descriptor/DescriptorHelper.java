@@ -39,7 +39,7 @@ import com.actelion.research.chem.StereoMolecule;
 
 public class DescriptorHelper implements DescriptorConstants {
 	
-	public static final String TAG_SIMILARITY = "Similarity";
+	public static final String TAG_SIMILARITY = "Similarity ";
 	
     public static int getDescriptorType(String shortName) {
         DescriptorInfo descriptorInfo = getDescriptorInfo(unifyShortName(shortName));

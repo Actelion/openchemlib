@@ -68,7 +68,7 @@ public class PLPTerm implements PotentialEnergyTerm {
 	private double D_sq;
 	private Conformer ligand;
 	private Conformer receptor;
-	
+
 	
 	private PLPTerm(Conformer receptor, Conformer ligand, int recAtom, int ligAtom, Map<String,Double> term) {
 		A = term.get("A");
@@ -131,7 +131,6 @@ public class PLPTerm implements PotentialEnergyTerm {
 		gradient[3*ligAtom]-= grad.x;
 		gradient[3*ligAtom+1]-= grad.y;
 		gradient[3*ligAtom+2]-= grad.z;
-	
 		return energy;
 	}
 }

@@ -157,7 +157,7 @@ public class DockingEngine {
 				catch(Exception e) {
 					throw new DockingFailedException("could not assess atom types");
 				}
-				MMFFPositionConstraint constraint = new MMFFPositionConstraint(conf,50,0.2);
+				MMFFPositionConstraint constraint = new MMFFPositionConstraint(conf,50,0.5);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
 				Conformer ligConf = new Conformer(conf);
@@ -337,7 +337,7 @@ public class DockingEngine {
 			}
 			double energy = mcSearch(pose,steps);
 			if(energy<bestEnergy) {
-				bestEnergy = energy;
+				bestEnergy = pose.getScore();
 				bestPose = pose.getLigConf();
 				contributions = pose.getContributions();
 			}
@@ -419,7 +419,7 @@ public class DockingEngine {
 
 		pose.setState(bestState);
 		pose.removeConstraints();
-		bestEnergy = pose.getFGValue(new double[bestState.length]);
+		bestEnergy = pose.getScore();
 		return bestEnergy;
 		
 	}
@@ -510,7 +510,7 @@ public class DockingEngine {
 				StereoMolecule conf = conformer.toMolecule();
 				conf.ensureHelperArrays(Molecule.cHelperParities);
 				mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-				constraint = new MMFFPositionConstraint(conf,50,0.2);
+				constraint = new MMFFPositionConstraint(conf,50,0.5);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
 				Conformer ligConf = new Conformer(conf);

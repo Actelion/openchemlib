@@ -35,15 +35,15 @@ public class ProbeScanning {
 	private IPharmacophorePoint.Functionality probeType;
 	private Set<Integer> receptorAcceptors;	
 	private Set<Integer> receptorDonorHs;
-	private Set<Integer> receptorDonorHPos;
-	private Set<Integer> receptorAcceptorNeg;
+	private Map<Integer,Double> receptorDonorHPos;
+	private Map<Integer,Double> receptorAcceptorNeg;
 	private Set<Integer> receptorMetals;
 	private Set<Integer> receptorDonors;
 	
 	private Set<Integer> ligandAcceptors;
 	private Set<Integer> ligandDonors;
-	private Set<Integer> ligandDonorPos;
-	private Set<Integer> ligandAcceptorNeg;
+	private Map<Integer,Double> ligandDonorPos;
+	private Map<Integer,Double> ligandAcceptorNeg;
 	
 	private StereoMolecule receptor;
 	private Conformer receptorConf;
@@ -59,8 +59,8 @@ public class ProbeScanning {
 		this.receptorConf = new Conformer(receptor);
 		receptorAcceptors = new HashSet<>();	
 		receptorDonorHs = new HashSet<>();
-		receptorDonorHPos = new HashSet<>();
-		receptorAcceptorNeg = new HashSet<>();
+		receptorDonorHPos = new HashMap<Integer,Double>();
+		receptorAcceptorNeg = new HashMap<Integer,Double>();
 		receptorMetals = new HashSet<>();
 		receptorDonors = new HashSet<>();
 		this.receptor = receptor;
@@ -76,8 +76,8 @@ public class ProbeScanning {
 		chemscoreMetal = new ArrayList<>();
 		ligandAcceptors = new HashSet<>();
 		ligandDonors = new HashSet<>();
-		ligandDonorPos = new HashSet<>();
-		ligandAcceptorNeg = new HashSet<>();
+		ligandDonorPos = new HashMap<Integer,Double>();
+		ligandAcceptorNeg = new HashMap<Integer,Double>();
 		IPharmacophorePoint.Functionality type = probe.type;
 		switch(type) {
 			case ACCEPTOR:
@@ -87,11 +87,11 @@ public class ProbeScanning {
 				ligandDonors.add(0);
 				break;
 			case NEG_CHARGE:
-				ligandAcceptorNeg.add(0);
+				ligandAcceptorNeg.put(0,1.0);
 				ligandAcceptors.add(0);
 				break;
 			case POS_CHARGE:
-				ligandDonorPos.add(0);
+				ligandDonorPos.put(0,1.0);
 				ligandDonors.add(0);
 				break;
 			default:
@@ -103,10 +103,10 @@ public class ProbeScanning {
 				if(receptorDonorHs.contains(p)) {
 					// receptor atom is donor hydrogen
 					int d = receptor.getConnAtom(p, 0);
-					boolean chargedP = receptorDonorHPos.contains(p);
+					boolean chargedP = receptorDonorHPos.keySet().contains(p);
 					for(int l : ligandAcceptors) {
 							int[] acceptorNeighbours = new int[0];
-							boolean chargedL = ligandAcceptorNeg.contains(l);
+							boolean chargedL = ligandAcceptorNeg.keySet().contains(l);
 							double scale = 1.0;
 							if(chargedP && chargedL)
 								scale = 2.0;
@@ -134,10 +134,10 @@ public class ProbeScanning {
 				}
 				else if(receptorAcceptors.contains(p)) { // receptor acceptor heavy atom
 					int[] acceptorNeighbours = IntStream.range(0, receptor.getConnAtoms(p)).map(i -> receptor.getConnAtom(p, i)).toArray();
-					boolean chargedP = receptorAcceptorNeg.contains(p);
+					boolean chargedP = receptorAcceptorNeg.keySet().contains(p);
 					for(int l=0;l<probe.probeConf.getMolecule().getAtoms();l++) { 
 							if(ligandDonors.contains(l)) {
-								boolean chargedL = ligandDonorPos.contains(l);
+								boolean chargedL = ligandDonorPos.keySet().contains(l);
 								double scale = 1.0;
 								if(chargedP && chargedL)
 									scale = 2.0;
@@ -179,7 +179,7 @@ public class ProbeScanning {
 					//if(SIMPLE_METAL_ATOMS.contains(receptor.getAtomicNo(p))) {
 						for(int l : ligandAcceptors) {
 							double scale = 1.0;
-							if(ligandAcceptorNeg.contains(l))
+							if(ligandAcceptorNeg.keySet().contains(l))
 								scale = 2.0;
 							int[] acceptorNeighbours = new int[0];
 							SimpleMetalTerm metTerm = SimpleMetalTerm.create(receptorConf, probe.probeConf, 
