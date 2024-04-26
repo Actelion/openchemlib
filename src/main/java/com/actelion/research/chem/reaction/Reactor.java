@@ -54,7 +54,7 @@ public class Reactor {
 	private boolean[][]			mIsReactionCenter;	// reaction center flags on product atoms
 	private boolean				mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly,mAllowChargeCorrections;
 	private int					mMaxGenericMapNo,mMaxCount,mReactantMatchCombinationCount;
-	private ArrayList<int[]>[]	mMatchList;
+	private final ArrayList<int[]>[] mMatchList;
 	private int[][][]			mReactantMapNo;	// Reactant mapNos of the real reactant change with every reactant substructure match
 	private StereoMolecule[][]	mProduct;
 	private String[][]			mIDCode;
@@ -152,7 +152,7 @@ public class Reactor {
 						for (int l=0; l<product.getAtoms(); l++) {
 							if (product.getAtomMapNo(l) == mapNo) {
 								int dif = reactant.getFreeValence(j) - product.getFreeValence(l);
-								mMinFreeValence[i][j] = (dif > 0) ? dif : 0;
+								mMinFreeValence[i][j] = Math.max(dif, 0);
 								}
 							}
 						}
@@ -475,8 +475,7 @@ public class Reactor {
 	 */
 	private int[] getReactantMapNos(int reactant, int[] matchList, int firstMapNo) {
 		int[] reactantMapNo = new int[mReactant[reactant].getAtoms()];
-		for (int i=0; i<reactantMapNo.length; i++)
-			reactantMapNo[i] = -1;
+		Arrays.fill(reactantMapNo, -1);
 
 		StereoMolecule genericReactant = mGenericReaction.getReactant(reactant);
 		for (int atom=0; atom<genericReactant.getAtoms(); atom++)
@@ -509,14 +508,17 @@ public class Reactor {
 			boolean[] excludeAtom = new boolean[mReactant[i].getAtoms()];
 			boolean[] excludeBond = new boolean[mReactant[i].getBonds()];
 
-			// Exclude atoms from real reactants, which are unmapped in generic reaction
+			// Exclude atoms from real reactants, which exist in generic reactant and are not mapped in generic reaction
 			// (including attached bonds)
 			for (int j=0; j<genericReactant.getAtoms(); j++) {
 				if (matchingAtom[j] != -1) {	// non-exclude-group atoms only
 					if (genericReactant.getAtomMapNo(j) == 0) {
 						int excludedAtom = matchingAtom[j];
 						excludeAtom[excludedAtom] = true;
-						for (int k = 0; k < mReactant[i].getConnAtoms(excludedAtom); k++)
+						for (int k=0; k<mReactant[i].getConnAtoms(excludedAtom); k++)
+							excludeBond[mReactant[i].getConnBond(excludedAtom, k)] = true;
+						// To cover the rare case where we have metal bonded neighbours in generic and real reactants:
+						for (int k=mReactant[i].getAllConnAtoms(excludedAtom); k<mReactant[i].getAllConnAtomsPlusMetalBonds(excludedAtom); k++)
 							excludeBond[mReactant[i].getConnBond(excludedAtom, k)] = true;
 						}
 					else {
@@ -750,8 +752,7 @@ public class Reactor {
 
 		// delete all fragments from product which are not connected to generic product
 		boolean[] includeAtom = new boolean[product.getAllAtoms()];
-		for (int i=0; i<newAtomNo.length; i++)
-			includeAtom[newAtomNo[i]] = true;
+		for (int j : newAtomNo) includeAtom[j] = true;
 		boolean found = true;
 		while (found) {
 			found = false;
@@ -845,7 +846,7 @@ public class Reactor {
 				}
 			}
 
-		if (pseudoParityList != null && (!matchingAbsParityFound || !invertedAbsParityFound)) {
+		if (!matchingAbsParityFound || !invertedAbsParityFound) {
 			for (int[] pseudoParity : pseudoParityList) {
 				int ps = pseudoParity[1];
 				if ((ps == Molecule.cAtomParity1 || ps == Molecule.cAtomParity2) && invertedAbsParityFound)
