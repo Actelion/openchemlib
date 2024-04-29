@@ -53,7 +53,7 @@ public class CommandLineParser {
 
     public static final String HELP = "-h";
 
-    private HashMap<String,String> hmCommandValue;
+    private final HashMap<String,String> hmCommandValue;
 
     public CommandLineParser() {
         hmCommandValue=new HashMap<>();
@@ -73,8 +73,8 @@ public class CommandLineParser {
     public CommandLineParser(String parameterLine, String separatorRegEx) {
         hmCommandValue=new HashMap<>();
 
-        if(parameterLine!=null && parameterLine.length()>0) {
-            String args[] = parameterLine.split(separatorRegEx);
+        if(parameterLine!=null && !parameterLine.isEmpty()) {
+            String[] args = parameterLine.split(separatorRegEx);
             for (String command : args) {
                 String[] a = command.split("=");
                 hmCommandValue.put(a[0].trim(), a[1].trim().replace("\"", ""));
