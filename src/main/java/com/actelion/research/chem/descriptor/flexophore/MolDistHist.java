@@ -121,34 +121,24 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	 */
 	public void copy(MolDistHist copy){
 		super.copy(copy);
-		
 		copy.arrNode = new byte [arrNode.length];
-		
 		System.arraycopy(arrNode, 0, copy.arrNode, 0, arrNode.length);
-		
 		copy.posNode = posNode;
-
 		copy.modeFlexophore = modeFlexophore;
-
 		copy.realize();
-		
 	}
 	
 	public boolean equals(Object o) {
 		boolean bEQ=true;
-		
 		MolDistHist mdh=null;
 		try {
 			mdh = (MolDistHist)o;
 		} catch (RuntimeException e) {
 			return false;
 		}
-		
-		
 		if(getNumPPNodes() != mdh.getNumPPNodes())
 			return false;
-		
-		
+
 		for (int i = 0; i < getNumPPNodes(); i++) {
 			PPNode n1 = getNode(i);
 			PPNode n2 = mdh.getNode(i);
@@ -180,9 +170,7 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 
 	protected void initHistogramArray(int nNodes) {
 		super.initHistogramArray(nNodes);
-		
 		arrNode = new byte[nNodes*(PPNode.getNumBytesEntry()+1)];
-		
 		finalized = false;
 	}
 
@@ -193,11 +181,8 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	public void addNode(PPNode node) {
 
 		byte [] arr = node.get();
-
 		byte nInteractionTypeCount = (byte)node.getInteractionTypeCount();
-
 		int newLen = posNode + arr.length + 1;
-
 		if(arrNode.length < newLen){
 			int lenBuffer = SIZE_BUFFER;
 			while(arrNode.length + lenBuffer < newLen) {
@@ -208,11 +193,8 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 		}
 		
 		arrNode[posNode++] = nInteractionTypeCount;
-
 		System.arraycopy(arr, 0, arrNode, posNode, arr.length);
-
 		posNode += arr.length;
-
 		finalized = false;
 	}
 
@@ -244,33 +226,22 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	 * Resizes the node array to the needed length.
 	 */
 	public void realize(){
-
 		int size = getNumPPNodes();
-		
 		if(size==0){
 			throw new RuntimeException("No pharmacophore points in Flexophore.");
 		}
-		
 		int pos = getPositionNode(size-1);
-		
 		int len = pos + arrNode[pos] * PPNode.getNumBytesEntry() + 1;
-
 		resizeNodeArray(len);
-		
 		if(getNumPPNodes()==0)
 			return;
-
 		finalized = true;
 	}
 	
 	private void resizeNodeArray(int newsize){
-
 		byte [] arr = new byte [newsize];
-		
 		System.arraycopy(arrNode, 0, arr, 0, Math.min(arrNode.length, newsize));
-		
 		arrNode = arr;
-		
 		finalized = false;
 	}
 	
@@ -388,6 +359,23 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 		}
 		
 		return sb.toString();
+	}
+
+	public boolean containsFilledDistHist(){
+
+		if(arrDistHists == null || arrDistHists.length==0){
+			return false;
+		}
+
+		boolean filled=false;
+		for (byte v : arrDistHists) {
+			if(v>0){
+				filled=true;
+				break;
+			}
+		}
+
+		return filled;
 	}
 
 	

@@ -1,6 +1,7 @@
 package com.actelion.research.chem.descriptor.flexophore;
 
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
+import com.actelion.research.util.StringFunctions;
 
 /**
  * SlidingWindowDistHist
@@ -29,6 +30,9 @@ public class SlidingWindowDistHist {
         int nNodes = distHist.getNumPPNodes();
         int n = ConstantsFlexophoreGenerator.BINS_HISTOGRAM;
         int end = n - lenFilHalf;
+
+        // System.out.println(StringFunctions.toStringShort(distHist.getDistHists()));
+
         for (int i = 0; i < nNodes; i++) {
             for (int j = i+1; j < nNodes; j++) {
                 int indexStart = distHist.getIndexPosStartForDistHist(i,j);
@@ -42,6 +46,11 @@ public class SlidingWindowDistHist {
                 }
             }
         }
+
+
         System.arraycopy(arrTmp, 0, distHist.arrDistHists, 0, distHist.arrDistHists.length);
+
+//        System.out.println("\n\n");
+//        System.out.println(StringFunctions.toStringShort(distHist.arrDistHists));
     }
 }
