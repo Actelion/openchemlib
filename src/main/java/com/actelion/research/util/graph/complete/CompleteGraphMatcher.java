@@ -268,6 +268,11 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 		
 		return similarity;
 	}
+
+	/**
+	 * Be careful! The histogram similarity is still considered if not explicitly set to false in the objective.
+	 * @return
+	 */
 	public double calculateNodeSimilarity () {
 
 		initSearch();

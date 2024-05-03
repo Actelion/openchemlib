@@ -218,11 +218,11 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		
-		if(nodes>-1) {
+		if(sizeHeap>0) {
 			
-			for (int i = 0; i < nodes; i++) {
+			for (int i = 0; i < sizeHeap; i++) {
 				sb.append(arrSolution[i]);
-				if(i < nodes -1)
+				if(i < sizeHeap -1)
 					sb.append(" ");
 			}
 			
