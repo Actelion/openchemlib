@@ -2445,8 +2445,8 @@ public class Molecule implements Serializable {
 	 * If there are no bonds, then the smallest distance between unconnected atoms is
 	 * determined and a reasonable potential bond length derived from that is returned.
 	 * If we have less than 2 atoms, defaultBondLength is returned.
-	 * @param atoms atom indexes >= this are not considered
-	 * @param bonds bond indexes >= this are not considered
+	 * @param atoms atom indexes >= these are not considered
+	 * @param bonds bond indexes >= these are not considered
 	 * @param defaultBondLength
 	 * @param coords to be used, either the molecule's coordinates, or an alternative, e.g. from a Conformer
 	 * @return

@@ -41,7 +41,7 @@ import com.actelion.research.gui.generic.GenericDrawContext;
 import com.actelion.research.gui.generic.GenericRectangle;
 
 import java.awt.*;
-
+import java.util.PriorityQueue;
 
 
 public class ExtendedDepictor {
@@ -231,7 +231,7 @@ public class ExtendedDepictor {
 
     public void paintFragmentNumbers(GenericDrawContext context) {
         if (mFragmentNoColor != 0 && mMolecule != null) {
-            double averageBondLength = calculateAverageBondLength();
+            double averageBondLength = calculateMedianBondLength() / mTransformation.getScaling();
             context.setRGB(mFragmentNoColor);
             context.setFont((int)(1.6*averageBondLength), true, false);
             for (int i=0; i<mMolecule.length; i++) {
@@ -267,7 +267,7 @@ public class ExtendedDepictor {
 
     public void paintStructures(GenericDrawContext context) {
         if (mDepictor != null) {
-	        double avbl = calculateAverageBondLength() / mTransformation.getScaling();  // this still contains individual depictor scaling
+	        double avbl = calculateMedianBondLength() / mTransformation.getScaling();  // this still contains individual depictor scaling
             for (GenericDepictor d:mDepictor) {
                 d.setDisplayMode(mDisplayMode);
 				d.setAtomLabelAVBL(avbl);
@@ -367,7 +367,7 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
         if (boundingRect == null)
             return null;
 
-        double avbl = calculateAverageBondLength();
+        double avbl = calculateMedianBondLength();
 
         DepictorTransformation t = new DepictorTransformation(boundingRect, viewRect, avbl, mode);
 
@@ -388,20 +388,72 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
         return null;
         }
 
-    private double calculateAverageBondLength() {
+	private double calculateMedianBondLength() {
+		PriorityQueue<Double> maxHeap = new PriorityQueue<>((a, b) -> (a > b) ? -1 : (a < b) ? 1 : 0);
+		PriorityQueue<Double> minHeap = new PriorityQueue<>();
+
+		if (mMolecule != null) {
+			for (int i=0; i<mMolecule.length; i++) {
+				for (int bond=0; bond<mMolecule[i].getAllBonds(); bond++) {
+					maxHeap.offer(mDepictor[i].getTransformation().getScaling() * mMolecule[i].getBondLength(bond));
+					minHeap.offer(maxHeap.poll());
+					if (maxHeap.size() < minHeap.size())
+						maxHeap.offer(minHeap.poll());
+					}
+				}
+			}
+
+		int bondCount = maxHeap.size() + minHeap.size();
+		return (bondCount == 0) ? calculatePseudoBondLengthFromBounds() : mTransformation.getScaling() *
+			((bondCount % 2 == 0) ? (maxHeap.peek() + minHeap.peek()) / 2.0 : maxHeap.peek());
+		}
+
+	private double calculatePseudoBondLengthFromBounds() {
+		double x1 = Double.MAX_VALUE;
+		double x2 = -Double.MAX_VALUE;
+		double y1 = Double.MAX_VALUE;
+		double y2 = -Double.MAX_VALUE;
+		int count = 0;
+		if (mMolecule != null) {
+			for (int i=0; i<mMolecule.length; i++) {
+				for (int atom=0; atom<mMolecule[i].getAllAtoms(); atom++) {
+					double x = mDepictor[i].getTransformation().transformX(mMolecule[i].getCoordinates(atom).x);
+					double y = mDepictor[i].getTransformation().transformY(mMolecule[i].getCoordinates(atom).y);
+					x1 = Math.min(x1, x);
+					x2 = Math.max(x2, x);
+					y1 = Math.min(y1, y);
+					y2 = Math.max(y2, y);
+					count ++;
+					}
+				}
+			}
+
+		if (count <= 1)
+			return mDefaultAVBL;
+
+		double dx = x2 - x1;
+		double dy = y2 - y1;
+		double meanEdgeLength = (dx + dy) / 2;
+		double targetArea = 3.0 * count;  // we assume 2/3 of empty space
+		double area = dx * dy;
+		double b = meanEdgeLength / (1 - targetArea);
+		return Math.sqrt(b * b - area / (1 - targetArea)) - b;
+		}
+
+	private double calculateAverageBondLength() {
     	float averageBondLength = 0.0f;
         int bondCount = 0;
         if (mMolecule != null) {
             for (int i=0; i<mMolecule.length; i++) {
                 if (mMolecule[i].getAllAtoms() != 0) {
                     if (mMolecule[i].getAllBonds() != 0) {
-                        averageBondLength += mDepictor[i].getTransformation().getScaling()
-                                * mMolecule[i].getAllBonds() * mMolecule[i].getAverageBondLength();
+                        averageBondLength += (float)(mDepictor[i].getTransformation().getScaling()
+			                                * mMolecule[i].getAllBonds() * mMolecule[i].getAverageBondLength());
                         bondCount += mMolecule[i].getAllBonds();
                         }
                     else {
-						averageBondLength += mDepictor[i].getTransformation().getScaling()
-								* mMolecule[i].getAverageBondLength();
+						averageBondLength += (float)(mDepictor[i].getTransformation().getScaling()
+											* mMolecule[i].getAverageBondLength());
 						bondCount ++;
                         }
                     }

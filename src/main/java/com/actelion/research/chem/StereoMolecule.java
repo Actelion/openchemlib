@@ -74,6 +74,12 @@ public class StereoMolecule extends ExtendedMolecule {
 		}
 
 
+	@Override
+	public void clear() {
+		super.clear();
+		mCanonizer = null;
+		}
+
 	public StereoMolecule getCompactCopy() {
 		StereoMolecule theCopy = new StereoMolecule(mAllAtoms, mAllBonds);
 		copyMolecule(theCopy);
@@ -94,7 +100,7 @@ public class StereoMolecule extends ExtendedMolecule {
 		// the rare case where we have valid parities and no atom coordinates.
 		// Then mCanonizer is null and the parities were read as part of a persistent
 		// molecule. In this case and parity and CIP validity needs to be copied.
-		// Otherwise parity is a perceived property from up/down bonds or 3D atom coords
+		// Otherwise, parity is a perceived property from up/down bonds or 3D atom coords
 		// and should be freshly calculated. 
 		if (mCanonizer != null)
 			destMol.mValidHelperArrays = cHelperNone;

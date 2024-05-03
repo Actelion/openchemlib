@@ -4050,16 +4050,25 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperRings);
 
 		for (int atom=0; atom<mAtoms; atom++) {
-			if (isRingAtom(atom))
-				mAtomQueryFeatures[atom] &= ~(cAtomQFRingSize0 | cAtomQFNotChain);  // forbidden
+			if (isRingAtom(atom)) {
+				// don't remove cAtomQFNotChain, if it is part of more complex ringstate
+				if ((mAtomQueryFeatures[atom] & cAtomQFRingState) == cAtomQFNotChain)
+					mAtomQueryFeatures[atom] &= ~cAtomQFNotChain;  // redundant
+				mAtomQueryFeatures[atom] &= ~cAtomQFRingSize0;  // forbidden
+				}
 
 			if (isAromaticAtom(atom))
 				mAtomQueryFeatures[atom] &= ~cAtomQFAromState;   // redundant or impossible
 			else if ((mAtomQueryFeatures[atom] & cAtomQFAromatic) != 0)
 				mAtomQueryFeatures[atom] &= ~cAtomQFNotAromatic;
 
-			if ((mAtomQueryFeatures[atom] & cAtomQFSmallRingSize) != 0)
-				mAtomQueryFeatures[atom] &= ~cAtomQFNotChain;   // redundant
+			if ((mAtomQueryFeatures[atom] & cAtomQFSmallRingSize) != 0  // of (legacy) smallest ring size is defined
+			 || ((mAtomQueryFeatures[atom] & cAtomQFNewRingSize) != 0)  // allowed list of ring sizes is provided and doesn't contain 'no-ring'
+			  && ((mAtomQueryFeatures[atom] & cAtomQFRingSize0) == 0)) {
+				// don't remove cAtomQFNotChain, if it is part of more complex ringstate
+				if ((mAtomQueryFeatures[atom] & cAtomQFRingState) == cAtomQFNotChain)
+					mAtomQueryFeatures[atom] &= ~cAtomQFNotChain;  // redundant
+				}
 
 			if (mAtomCharge[atom] != 0)	// explicit charge supersedes query features
 				mAtomQueryFeatures[atom] &= ~cAtomQFCharge;
