@@ -51,7 +51,7 @@ import java.util.ArrayList;
  */
 
 public class JPruningBar extends JPanel implements MouseListener, MouseMotionListener {
-	static final long serialVersionUID = 0x20070307;
+	private static final long serialVersionUID = 0x20070307;
 
 	private static final int cRedWaterRGB = Color.RED.getRGB();
 	private static final int cBlueWaterRGB = 0x156be4;
@@ -60,9 +60,11 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	private static final int cBarWidth = cThumbSize - 2 * HiDPIHelper.scale(3);  // even integer
 	private static final int cBorder = HiDPIHelper.scale(2);
 
-	private float[] mPosition;
-	private float	mX1,mY1,mLowValue,mMinValue,mHighValue,mMaxValue, mValuePerPixel;
-	private boolean	mIsHorizontal,mUpdateNeeded,mUseRedColor,mAllowDoubleClickChange,mWasDragged;
+	private final float[] mPosition;
+	private float	mX1,mY1;
+	private double	mValuePerPixel,mLowValue,mMinValue,mHighValue,mMaxValue;
+	private final boolean	mIsHorizontal,mAllowDoubleClickChange;
+	private boolean mUpdateNeeded,mUseRedColor,mWasDragged;
 	private int		mID,mMousePosition,mClickedArea,mActiveThumb;
 	private ArrayList<PruningBarListener> mListener;
 
@@ -78,11 +80,11 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		this(0, 100, isHorizontal, id, false);
 		}
 
-	public JPruningBar(float min, float max, boolean isHorizontal, int id) {
+	public JPruningBar(double min, double max, boolean isHorizontal, int id) {
 		this(min, max, isHorizontal, id, false);
 		}
 
-	public JPruningBar(float min, float max, boolean isHorizontal, int id, boolean allowDoubleClick) {
+	public JPruningBar(double min, double max, boolean isHorizontal, int id, boolean allowDoubleClick) {
 		init();
 		mMinValue = min;
 		mLowValue = min;
@@ -131,15 +133,15 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 				g2D.fill(new Rectangle2D.Float(mX1+(cThumbSize-cBarWidth)/2, mY1+cThumbSize-1, cBarWidth, y2-mY1-2*cThumbSize+2));
 
 			float zoomSpace = (mIsHorizontal ? x2-mX1 : y2-mY1) - 2 * cThumbSize;
-			float valueSpace = mMaxValue - mMinValue;
+			double valueSpace = mMaxValue - mMinValue;
 			mValuePerPixel = valueSpace / zoomSpace;
 			if (mIsHorizontal) {
-				mPosition[0] = (mLowValue - mMinValue) / mValuePerPixel;
-				mPosition[1] = (mHighValue - mMinValue) / mValuePerPixel;
+				mPosition[0] = (float)((mLowValue - mMinValue) / mValuePerPixel);
+				mPosition[1] = (float)((mHighValue - mMinValue) / mValuePerPixel);
 				}
 			else {   // tribute to inverted Y-scale in java
-				mPosition[0] = (mMaxValue - mHighValue) / mValuePerPixel;
-				mPosition[1] = (mMaxValue - mLowValue) / mValuePerPixel;
+				mPosition[0] = (float)((mMaxValue - mHighValue) / mValuePerPixel);
+				mPosition[1] = (float)((mMaxValue - mLowValue) / mValuePerPixel);
 				}
 
 			int rgb = mUseRedColor ? cRedWaterRGB : HeaderPaintHelper.getThemeColors() == null ? cBlueWaterRGB : HeaderPaintHelper.getThemeColors()[0];
@@ -196,19 +198,19 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		paint(g);
 		}
 
-	public float getLowValue() {
+	public double getLowValue() {
 		return mLowValue;
 		}
 
-	public float getHighValue() {
+	public double getHighValue() {
 		return mHighValue;
 		}
 
-	public float getMaximumValue() {
+	public double getMaximumValue() {
 		return mMaxValue;
 		}
 
-	public float getMinimumValue() {
+	public double getMinimumValue() {
 		return mMinValue;
 		}
 
@@ -234,7 +236,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	 * @param high
 	 * @param silent if true, PruningBarEvents are suppressed
 	 */
-	public void setLowAndHigh(float low, float high, boolean silent) {
+	public void setLowAndHigh(double low, double high, boolean silent) {
 		if (low < mMinValue)
 			low = mMinValue;
 		if (high > mMaxValue)
@@ -255,7 +257,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	 * Sends PruningBarEvents in case of a successful change.
 	 * @param low
 	 */
-	public void setLowValue(float low) {
+	public void setLowValue(double low) {
 		if (setLow(low)) {
 			informListeners(false);
 			mUpdateNeeded = true;
@@ -272,7 +274,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	 * Sends PruningBarEvents in case of a successful change.
 	 * @param high
 	 */
-	public void setHighValue(float high) {
+	public void setHighValue(double high) {
 		if (setHigh(high)) {
 			informListeners(false);
 			mUpdateNeeded = true;
@@ -285,7 +287,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	 * Sends PruningBarEvents in case of a successful change.
 	 * @param max
 	 */
-	public void setMaximumValue(float max) {
+	public void setMaximumValue(double max) {
 		if (max < mMinValue)
 			max = mMinValue;
 
@@ -307,7 +309,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	 * Sends PruningBarEvents in case of a successful change.
 	 * @param min
 	 */
-	public void setMinimumValue(float min) {
+	public void setMinimumValue(double min) {
 			// changes the allowed min value; may update low and high to stay within limits
 		if (min > mMaxValue)
 			min = mMaxValue;
@@ -331,7 +333,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 	 * @param min
 	 * @param max
 	 */
-	public void setMinAndMax(float min, float max) {
+	public void setMinAndMax(double min, double max) {
 		mLowValue = mMinValue = min;
 		mHighValue = mMaxValue = max;
 		mUpdateNeeded = true;
@@ -450,7 +452,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 
 		mWasDragged = true;
 
-		float change = mValuePerPixel * (float)(position - mMousePosition);
+		double change = mValuePerPixel * (position - mMousePosition);
 		if (!mIsHorizontal) // tribute to inverted Y-scale in java
 			change = -change;
 		if (e.isControlDown())
@@ -543,7 +545,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		mListener = new ArrayList<>();
 		}
 
-	private boolean setHigh(float value) {
+	private boolean setHigh(double value) {
 		if (value < mLowValue)
 			value = mLowValue;
 		else if (value > mMaxValue)
@@ -556,7 +558,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		return true;
 		}
 
-	private boolean setLow(float value) {
+	private boolean setLow(double value) {
 		if (value < mMinValue)
 			value = mMinValue;
 		else if (value > mHighValue)
@@ -569,7 +571,7 @@ public class JPruningBar extends JPanel implements MouseListener, MouseMotionLis
 		return true;
 		}
 
-	private void informListeners(float low, float high) {
+	private void informListeners(double low, double high) {
 		for (int i=0; i<mListener.size(); i++)
 			mListener.get(i).pruningBarChanged(
 				new PruningBarEvent(this, low, high, false, mID, PruningBarEvent.TYPE_TYPED));

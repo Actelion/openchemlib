@@ -42,15 +42,15 @@ public class PruningBarEvent extends EventObject {
     public static final int TYPE_DRAGGED = 1;
 	public static final int TYPE_TYPED = 2;
 
-    private float mLowValue,mHighValue;
+    private double mLowValue,mHighValue;
 	private int mType,mID;
 	private boolean mAdjusting;
 
-	public PruningBarEvent(Object source, float low, float high, boolean adjusting, int id) {
+	public PruningBarEvent(Object source, double low, double high, boolean adjusting, int id) {
 		this(source, low, high, adjusting, id, TYPE_DRAGGED);
 		}
 
-    public PruningBarEvent(Object source, float low, float high, boolean adjusting, int id, int type) {
+    public PruningBarEvent(Object source, double low, double high, boolean adjusting, int id, int type) {
 		super(source);
 		mLowValue = low;
 		mHighValue = high;
@@ -59,11 +59,11 @@ public class PruningBarEvent extends EventObject {
 		mType = type;
 	    }
 
-	public float getLowValue() {
+	public double getLowValue() {
 		return mLowValue;
 		}
 
-	public float getHighValue() {
+	public double getHighValue() {
 		return mHighValue;
 		}
 
