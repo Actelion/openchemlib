@@ -150,6 +150,10 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 	}
 
+	/**
+	 * Allows mapping of small Flexophores, up to one pharmacophore node.
+	 * @param fragmentNodesMapping
+	 */
 	public void setFragmentNodesMapping(boolean fragmentNodesMapping) {
 		this.fragmentNodesMapping = fragmentNodesMapping;
 	}
