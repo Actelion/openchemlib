@@ -43,11 +43,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Reaction implements java.io.Serializable {
-	static final long serialVersionUID = 0x2006CAFE;
+	private static final long serialVersionUID = 0x2006CAFE;
 
-	private ArrayList<StereoMolecule> mReactant;
-	private ArrayList<StereoMolecule> mProduct;
-	private ArrayList<StereoMolecule> mCatalyst;
+	private final ArrayList<StereoMolecule> mReactant;
+	private final ArrayList<StereoMolecule> mProduct;
+	private final ArrayList<StereoMolecule> mCatalyst;
 	private DrawingObjectList mDrawingObjectList;
 	private String mName;
 	private int mMaxMapNo;
@@ -167,10 +167,8 @@ public class Reaction implements java.io.Serializable {
 	public Reaction(StereoMolecule[] mol, int reactantCount) {
 		this();
 		if (mol != null) {
-			for (int i = 0; i < reactantCount; i++)
-				mReactant.add(mol[i]);
-			for (int i = reactantCount; i < mol.length; i++)
-				mProduct.add(mol[i]);
+			mReactant.addAll(Arrays.asList(mol).subList(0, reactantCount));
+			mProduct.addAll(Arrays.asList(mol).subList(reactantCount, mol.length));
 			}
 		mIsFragment = determineFragment();
 		}
@@ -352,11 +350,8 @@ public class Reaction implements java.io.Serializable {
 				}
 			}
 
-		if (mapNoCount != 0)
-			return false;
-
-		return true;
-		}
+		return mapNoCount == 0;
+	}
 
 	/**
 	 * Checks, whether all non-hydrogen and non-exclude-group atoms are mapped,
@@ -449,13 +444,11 @@ public class Reaction implements java.io.Serializable {
 	 * @throws Exception
 	 */
 	public void validateMapping() throws Exception {
-		StereoMolecule reactant,product;
 		int maxMapNo = getHighestMapNo();
 
 		boolean[] mapNoInReactant = new boolean[maxMapNo+1];
-		for (int i=0; i<mReactant.size(); i++) {
-			reactant = mReactant.get(i);
-			for (int j=0; j<reactant.getAllAtoms(); j++) {
+		for (StereoMolecule reactant : mReactant) {
+			for (int j = 0; j<reactant.getAllAtoms(); j++) {
 				int mapNo = reactant.getAtomMapNo(j);
 				if (mapNo != 0) {
 					if (mapNoInReactant[mapNo])
@@ -466,9 +459,8 @@ public class Reaction implements java.io.Serializable {
 			}
 
 		boolean[] mapNoInProduct = new boolean[maxMapNo+1];
-		for (int i=0; i<mProduct.size(); i++) {
-			product = mProduct.get(i);
-			for (int j=0; j<product.getAllAtoms(); j++) {
+		for (StereoMolecule product : mProduct) {
+			for (int j = 0; j<product.getAllAtoms(); j++) {
 				int mapNo = product.getAtomMapNo(j);
 				if (mapNo != 0) {
 					if (mapNoInProduct[mapNo])
@@ -485,24 +477,20 @@ public class Reaction implements java.io.Serializable {
 				newMapNo[i] = ++mapNo;
 
 		if (mapNo != maxMapNo) {
-			for (int i=0; i<mReactant.size(); i++) {
-				reactant = mReactant.get(i);
-				for (int j=0; j<reactant.getAllAtoms(); j++)
+			for (StereoMolecule reactant : mReactant)
+				for (int j = 0; j<reactant.getAllAtoms(); j++)
 					reactant.setAtomMapNo(j, newMapNo[reactant.getAtomMapNo(j)], reactant.isAutoMappedAtom(j));
-				}
 
-			for (int i=0; i<mProduct.size(); i++) {
-				product = mProduct.get(i);
-				for (int j=0; j<product.getAllAtoms(); j++)
+			for (StereoMolecule product : mProduct)
+				for (int j = 0; j<product.getAllAtoms(); j++)
 					product.setAtomMapNo(j, newMapNo[product.getAtomMapNo(j)], product.isAutoMappedAtom(j));
-				}
 			}
 		}
 
 	/**
 	 * This method determines the largest mapping number in use (maxMapNo), creates a boolean array[maxMapNo+1],
 	 * and within this array flags every mapping number that refers to atoms, which change bonds in the course
-	 * of the reaction. Mapped atoms that are connected to unpammed atoms are also considered being part of the
+	 * of the reaction. Mapped atoms that are connected to unmapped atoms are also considered being part of the
 	 * reaction center. If the reaction is unmapped or has no reactants or products, then null is returned.
 	 * @return null or boolean array indicating, which mapping numbers are referring to the reaction center
 	 */
@@ -647,19 +635,61 @@ public class Reaction implements java.io.Serializable {
 	 */
 	public Reaction getMergedCopy() {
 		Reaction mergedReaction = new Reaction();
-		if (mReactant.size() != 0) {
+		if (!mReactant.isEmpty()) {
 			StereoMolecule reactant = new StereoMolecule(mReactant.get(0));
 			for (int i=1; i<mReactant.size(); i++)
 				reactant.addMolecule(mReactant.get(i));
 			mergedReaction.addReactant(reactant);
 			}
-		if (mProduct.size() != 0) {
+		if (!mProduct.isEmpty()) {
 			StereoMolecule product = new StereoMolecule(mProduct.get(0));
 			for (int i=1; i<mProduct.size(); i++)
 				product.addMolecule(mProduct.get(i));
 			mergedReaction.addProduct(product);
 			}
 		return mergedReaction;
+		}
+
+	/**
+	 * Determines for every existing mapNo the corresponding reactant index and atom index.
+	 * @param reactantNo array not smaller than getHighestMapNo()+1
+	 * @param atom array not smaller than getHighestMapNo()+1
+	 */
+	public void assignReactantAtomsToMapNos(int[] reactantNo, int[] atom) {
+		Arrays.fill(reactantNo, -1);
+		Arrays.fill(atom, -1);
+		for (int r=0; r<mReactant.size(); r++) {
+			StereoMolecule reactant = mReactant.get(r);
+			reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
+			for (int a=0; a<reactant.getAtoms(); a++) {
+				int mapNo = reactant.getAtomMapNo(a);
+				if (mapNo != 0) {
+					reactantNo[mapNo] = r;
+					atom[mapNo] = a;
+					}
+				}
+			}
+		}
+
+	/**
+	 * Determines for every existing mapNo the corresponding product index and atom index.
+	 * @param productNo array not smaller than getHighestMapNo()+1
+	 * @param atom array not smaller than getHighestMapNo()+1
+	 */
+	public void assignProductAtomsToMapNos(int[] productNo, int[] atom) {
+		Arrays.fill(productNo, -1);
+		Arrays.fill(atom, -1);
+		for (int p=0; p<mProduct.size(); p++) {
+			StereoMolecule product = mProduct.get(p);
+			product.ensureHelperArrays(Molecule.cHelperNeighbours);
+			for (int a=0; a<product.getAtoms(); a++) {
+				int mapNo = product.getAtomMapNo(a);
+				if (mapNo != 0) {
+					productNo[mapNo] = p;
+					atom[mapNo] = a;
+					}
+				}
+			}
 		}
 
 	/*	public void removeEmptyMolecules() {

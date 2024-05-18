@@ -45,10 +45,9 @@ public class DrawingObjectList extends ArrayList<AbstractDrawingObject> {
 	public DrawingObjectList(DrawingObjectList l) {
 		super();
 		try {
-			if (l != null) {
-				for (int i = 0; i < l.size(); i++)
-					add((AbstractDrawingObject) l.get(i).clone());
-			}
+			if (l != null)
+				for (AbstractDrawingObject abstractDrawingObject : l)
+					add(abstractDrawingObject.clone());
 		} catch (Exception e) {
 		} finally {
 
@@ -57,7 +56,7 @@ public class DrawingObjectList extends ArrayList<AbstractDrawingObject> {
 
 	public DrawingObjectList(String objectString) {
 		super();
-		if (objectString == null || objectString.length() == 0)
+		if (objectString == null || objectString.isEmpty())
 			return;
 
 		int index1 = 0;
@@ -72,9 +71,9 @@ public class DrawingObjectList extends ArrayList<AbstractDrawingObject> {
 		}
 
 	public String toString() {
-		StringBuffer objectString = new StringBuffer();
-		for (int i=0; i<size(); i++)
-			objectString.append(get(i).getDescriptor()+"\n");
+		StringBuilder objectString = new StringBuilder();
+		for (AbstractDrawingObject abstractDrawingObject : this)
+			objectString.append(abstractDrawingObject.getDescriptor()).append("\n");
 		return objectString.toString();
 		}
 	}
