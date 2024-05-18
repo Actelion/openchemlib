@@ -4,7 +4,10 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 public class DateAnalysis {
-	private int[] max,min,value;
+	private static final String TIME_FORMAT = "\\s\\d\\d:\\d\\d:\\d\\d";
+	private static final int TIME_FORMAT_LENGTH = 9;
+
+	private final int[] max,min,value;
 	private int day,month,year,currentYear;
 	private Calendar calendar;
 	private boolean isTwoDigitYear;
@@ -30,6 +33,9 @@ public class DateAnalysis {
 	 * @return false if entry cannot be a date
 	 */
 	public boolean analyse(String entry) {
+		if (endsWithTime(entry))
+			entry = entry.substring(0, entry.length() - TIME_FORMAT_LENGTH);
+
 		if (!interpreteValues(entry))
 			return false;
 
@@ -107,13 +113,25 @@ public class DateAnalysis {
 	}
 
 	public long getDateMillis(String entry) {
+		int hour = 12;
+		int minute = 0;
+		int second = 0;
+
+		if (endsWithTime(entry)) {
+			int index = entry.length()-TIME_FORMAT_LENGTH;
+			hour   = Integer.parseInt(entry.substring(index + 1, index + 3));
+			minute = Integer.parseInt(entry.substring(index + 4, index + 6));
+			second = Integer.parseInt(entry.substring(index + 7, index + 9));
+			entry = entry.substring(0, entry.length() - TIME_FORMAT_LENGTH);
+		}
+
 		if (!interpreteValues(entry))
 			return -1;
 
 		if (isTwoDigitYear)
 			value[year] += (value[year] <= currentYear) ? 2000 : 1900;
 
-		calendar.set(value[year], value[month]-1, value[day], 12, 0, 0);
+		calendar.set(value[year], value[month]-1, value[day], hour, minute, second);
 		return calendar.getTimeInMillis();
 	}
 
@@ -164,5 +182,11 @@ public class DateAnalysis {
 		if (item.startsWith("dec") || item.startsWith("dez"))
 			return 12;
 		return -1;
+	}
+
+	private boolean endsWithTime(String entry) {
+		return entry != null
+			&& entry.length() > TIME_FORMAT_LENGTH
+			&& entry.substring(entry.length()-TIME_FORMAT_LENGTH).matches(TIME_FORMAT);
 	}
 }
