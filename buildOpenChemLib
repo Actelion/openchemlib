@@ -9,3 +9,4 @@ find . -name "*.java" > sources.txt
 javac -target 8 -d ./build @sources.txt
 rm sources.txt
 jar -cf build/OpenChemLib.jar -C ./build .
+ls -al build/OpenChemLib.jar

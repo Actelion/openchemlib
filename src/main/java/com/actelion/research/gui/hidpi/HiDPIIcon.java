@@ -3,7 +3,6 @@ package com.actelion.research.gui.hidpi;
 import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.generic.GenericImage;
 import com.actelion.research.gui.swing.SwingImage;
-import com.actelion.research.util.Platform;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +33,7 @@ public class HiDPIIcon extends ImageIcon {
 		if (isDisabled)
 			HiDPIHelper.disableImage(image);
 		capCorners(image);
-		return new HiDPIIcon((Image)(mustScale() ? scale(image) : image).get());
+		return new HiDPIIcon((Image)scale(image).get());
 		}
 
 	public static void setIconSpotColors(int[] rgb) {
@@ -87,52 +86,42 @@ public class HiDPIIcon extends ImageIcon {
 		return fileName.substring(0, index).concat("@2x").concat(fileName.substring(index));
 		}
 
-	public static float getIconScaleFactor() {
+	public static GenericImage scale(GenericImage image) {
 		if (!mustScale())
-			return 1f;
+			return image;
 
-		float scale = HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor();
+		float scale = HiDPIHelper.getIconScaleFactor();
 		if (useDoubleImage())
 			scale *= 0.5f;
 
-		return scale;
-		}
-
-	public static GenericImage scale(GenericImage image) {
-		float scale = getIconScaleFactor();
 		image.scale(Math.round(scale * image.getWidth()), Math.round(scale * image.getHeight()));
 		return image;
 		}
 
 	private static boolean mustScale() {
-		return (HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor() > ICON_SCALE_LIMIT_1
-				&& HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor() < ICON_SCALE_LIMIT_2)
-				|| HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor() < ICON_SCALE_LIMIT_3;
+		return (HiDPIHelper.getIconScaleFactor() > ICON_SCALE_LIMIT_1
+			 && HiDPIHelper.getIconScaleFactor() < ICON_SCALE_LIMIT_2)
+			|| HiDPIHelper.getIconScaleFactor() > ICON_SCALE_LIMIT_3;
 		}
 
 
 	private static boolean useDoubleImage() {
-		return HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor() > ICON_SCALE_LIMIT_1;
+		return HiDPIHelper.getIconScaleFactor() > ICON_SCALE_LIMIT_1;
 		}
 
+	@Override
 	public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-		if (HiDPIHelper.getRetinaScaleFactor() != 1f) {
+		if (HiDPIHelper.getPixelPerComponentSizeFactor() != 1f) {
 			Image image = getImage();
-			int width = Math.round(image.getWidth(null) / HiDPIHelper.getRetinaScaleFactor());
-			int height = Math.round(image.getHeight(null) / HiDPIHelper.getRetinaScaleFactor());
+			int width = Math.round(image.getWidth(null) / HiDPIHelper.getPixelPerComponentSizeFactor());
+			int height = Math.round(image.getHeight(null) / HiDPIHelper.getPixelPerComponentSizeFactor());
 
 //			System.out.println("HiDPIIcon.paintIcon() x:"+x+" y:"+y);
 
-			// because of double size image, x and y are too small and need to be corrected
+			// because of larger size image, x and y are too small and need to be corrected
 			// (in case of aqua x & y are 1 - size/2, in case of new substance and Windows x & y are 0)
-			if (Platform.isMacintosh()) {
-				x += Math.round(width / HiDPIHelper.getRetinaScaleFactor());
-				y += Math.round(height / HiDPIHelper.getRetinaScaleFactor());
-				}
-			else {
-				x += (image.getWidth(null) - width) / 2;
-				y += (image.getHeight(null) - height) / 2;
-				}
+			x += Math.round(width / HiDPIHelper.getPixelPerComponentSizeFactor());
+			y += Math.round(height / HiDPIHelper.getPixelPerComponentSizeFactor());
 
 			// for some reason y needs to be adjusted by 1 in new substance
 			if (LookAndFeelHelper.isNewSubstance()

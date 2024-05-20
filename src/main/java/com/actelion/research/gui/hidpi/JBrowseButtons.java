@@ -11,7 +11,7 @@ import java.awt.event.KeyListener;
 
 public class JBrowseButtons extends JPanel implements KeyListener {
 	private boolean mShiftPressed;
-	private ActionListener mActionListener;
+	private final ActionListener mActionListener;
 
 	public JBrowseButtons(boolean isVertical, ActionListener al) {
 		this(isVertical, 4, 4, al);
@@ -22,17 +22,17 @@ public class JBrowseButtons extends JPanel implements KeyListener {
 		JButton b1,b2,b3,b4;
 		if (isVertical) {
 			setLayout(new VerticalFlowLayout(VerticalFlowLayout.LEFT, VerticalFlowLayout.TOP, hgap, vgap, true));
-			b1 = new HiDPIIconButton("toLast.png", null, "|<", 270, "bevel");
-			b2 = new HiDPIIconButton("toNext.png", null, "<", 270, "bevel");
-			b3 = new HiDPIIconButton("toNext.png", null, ">", 90, "bevel");
-			b4 = new HiDPIIconButton("toLast.png", null, ">|", 90, "bevel");
+			b1 = new HiDPIIconButton("toLast.png", null, "|<", 270);
+			b2 = new HiDPIIconButton("toNext.png", null, "<", 270);
+			b3 = new HiDPIIconButton("toNext.png", null, ">", 90);
+			b4 = new HiDPIIconButton("toLast.png", null, ">|", 90);
 			}
 		else {
 			setLayout(new FlowLayout(FlowLayout.CENTER, hgap, vgap));
-			b1 = new HiDPIIconButton("toLast.png", null, "|<", 180, "bevel");
-			b2 = new HiDPIIconButton("toNext.png", null, "<", 180, "bevel");
-			b3 = new HiDPIIconButton("toNext.png", null, ">", 0, "bevel");
-			b4 = new HiDPIIconButton("toLast.png", null, ">|", 0, "bevel");
+			b1 = new HiDPIIconButton("toLast.png", null, "|<", 180);
+			b2 = new HiDPIIconButton("toNext.png", null, "<", 180);
+			b3 = new HiDPIIconButton("toNext.png", null, ">", 0);
+			b4 = new HiDPIIconButton("toLast.png", null, ">|", 0);
 			}
 		b1.addActionListener(al);
 		b2.addActionListener(al);
