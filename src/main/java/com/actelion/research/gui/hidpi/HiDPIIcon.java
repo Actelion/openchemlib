@@ -21,10 +21,12 @@ public class HiDPIIcon extends ImageIcon {
 	private static final int[] DARK_LAF_SPOT_COLOR = {   // default replacement spot colors for dark L&F)
 			0x00B4A0FF, 0x00E0E0E0 };
 
+	private final Image mUnscaledImage;
 	private static int[] sSpotColor = null;
 
-	public HiDPIIcon(final Image image) {
-		super(image);
+	public HiDPIIcon(Image scaled, Image unscaled) {
+		super(scaled);
+		mUnscaledImage = unscaled;
 		}
 
 	public static Icon createIcon(String fileName, int rotation, boolean isDisabled) {
@@ -34,7 +36,8 @@ public class HiDPIIcon extends ImageIcon {
 		if (isDisabled)
 			HiDPIHelper.disableImage(image);
 		capCorners(image);
-		return new HiDPIIcon((Image)(mustScale() ? scale(image) : image).get());
+		Image unscaled = (Image)image.get();
+		return new HiDPIIcon((Image)scale(image).get(), unscaled);
 		}
 
 	public static void setIconSpotColors(int[] rgb) {
@@ -42,11 +45,9 @@ public class HiDPIIcon extends ImageIcon {
 	}
 
 	public static int[] getThemeSpotRGBs() {
-		int[] rgb = (sSpotColor != null) ? sSpotColor
+		return (sSpotColor != null) ? sSpotColor
 				: LookAndFeelHelper.isDarkLookAndFeel() ? DARK_LAF_SPOT_COLOR
 				: ICON_SPOT_COLOR;
-
-		return rgb;
 	}
 
 	public static void adaptForLookAndFeel(GenericImage image) {
@@ -87,59 +88,70 @@ public class HiDPIIcon extends ImageIcon {
 		return fileName.substring(0, index).concat("@2x").concat(fileName.substring(index));
 		}
 
-	public static float getIconScaleFactor() {
+	public static GenericImage scale(GenericImage image) {
 		if (!mustScale())
-			return 1f;
+			return image;
 
-		float scale = HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor();
+		float scale = HiDPIHelper.getIconScaleFactor();
 		if (useDoubleImage())
 			scale *= 0.5f;
 
-		return scale;
-		}
-
-	public static GenericImage scale(GenericImage image) {
-		float scale = getIconScaleFactor();
 		image.scale(Math.round(scale * image.getWidth()), Math.round(scale * image.getHeight()));
 		return image;
 		}
 
 	private static boolean mustScale() {
-		return (HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor() > ICON_SCALE_LIMIT_1
-				&& HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor() < ICON_SCALE_LIMIT_2)
-				|| HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor() < ICON_SCALE_LIMIT_3;
+		return (HiDPIHelper.getIconScaleFactor() > ICON_SCALE_LIMIT_1
+			 && HiDPIHelper.getIconScaleFactor() < ICON_SCALE_LIMIT_2)
+			|| HiDPIHelper.getIconScaleFactor() > ICON_SCALE_LIMIT_3;
 		}
 
 
 	private static boolean useDoubleImage() {
-		return HiDPIHelper.getUIScaleFactor() * HiDPIHelper.getRetinaScaleFactor() > ICON_SCALE_LIMIT_1;
+		return HiDPIHelper.getIconScaleFactor() > ICON_SCALE_LIMIT_1;
 		}
 
+	@Override
 	public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-		if (HiDPIHelper.getRetinaScaleFactor() != 1f) {
-			Image image = getImage();
-			int width = Math.round(image.getWidth(null) / HiDPIHelper.getRetinaScaleFactor());
-			int height = Math.round(image.getHeight(null) / HiDPIHelper.getRetinaScaleFactor());
-
-//			System.out.println("HiDPIIcon.paintIcon() x:"+x+" y:"+y);
-
-			// because of double size image, x and y are too small and need to be corrected
-			// (in case of aqua x & y are 1 - size/2, in case of new substance and Windows x & y are 0)
+		if (HiDPIHelper.getPixelPerComponentSizeFactor() != 1f) {
 			if (Platform.isMacintosh()) {
-				x += Math.round(width / HiDPIHelper.getRetinaScaleFactor());
-				y += Math.round(height / HiDPIHelper.getRetinaScaleFactor());
-				}
-			else {
-				x += (image.getWidth(null) - width) / 2;
-				y += (image.getHeight(null) - height) / 2;
-				}
+				Image image = getImage();
+				int width = Math.round(image.getWidth(null) / HiDPIHelper.getPixelPerComponentSizeFactor());
+				int height = Math.round(image.getHeight(null) / HiDPIHelper.getPixelPerComponentSizeFactor());
 
-			// for some reason y needs to be adjusted by 1 in new substance
-			if (LookAndFeelHelper.isNewSubstance()
-			 || LookAndFeelHelper.isRadiance())
-				y++;
+				// because of larger size image, x and y are too small and need to be corrected
+				// (in case of aqua x & y are 1 - size/2, in case of new substance and Windows x & y are 0)
+				x += Math.round(width / HiDPIHelper.getPixelPerComponentSizeFactor());
+				y += Math.round(height / HiDPIHelper.getPixelPerComponentSizeFactor());
 
-			g.drawImage(image, x, y, width, height, null);
+				// for some reason y needs to be adjusted by 1 in new substance
+				if (LookAndFeelHelper.isNewSubstance()
+				 || LookAndFeelHelper.isRadiance())
+					y++;
+
+				g.drawImage(image, x, y, width, height, null);
+				}
+			else if (Platform.isWindows()) {
+				// we have a centered viewport on a rectangle of the size of the image
+				Image image = getImage();
+				float width = image.getWidth(null) / HiDPIHelper.getPixelPerComponentSizeFactor();
+				float height = image.getHeight(null) / HiDPIHelper.getPixelPerComponentSizeFactor();
+
+//				System.out.println("HiDPIIcon.paintIcon() x:"+x+" icw:"+getIconWidth()+" w:"+width+" imw:"+image.getWidth(null)+" pixFac:"+HiDPIHelper.getPixelPerComponentSizeFactor());
+
+				// because of larger size image, x and y are too small and need to be corrected
+				// (in case of aqua x & y are 1 - size/2, in case of new substance and Windows x & y are 0)
+				int dx = Math.round((image.getWidth(null) - width) / 2f);
+				int dy = Math.round((image.getHeight(null) - height) / 2f);
+
+				// for some reason y needs to be adjusted by 1 in new substance
+				if (LookAndFeelHelper.isNewSubstance()
+				 || LookAndFeelHelper.isRadiance())
+					dy++;
+
+				g.drawImage(image, dx, dy, Math.round(width), Math.round(height), null);
+//				g.drawImage(mUnscaledImage, dx, dy, Math.round(width), Math.round(height), null);
+				}
 			}
 		else {
 			// for some reason y needs to be adjusted by 1 in new substance

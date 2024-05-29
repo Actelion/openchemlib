@@ -40,8 +40,8 @@ import java.awt.*;
  * Created by sandert on 04/12/15.
  */
 public class HiDPIIconButton extends JButton {
-	private String mImageName,mStyle;
-	private int mRotation;
+	private final String mImageName;
+	private final int mRotation;
 	private Icon[] mAnimationIcon;
 	private Animator mAnimator;
 
@@ -56,7 +56,7 @@ public class HiDPIIconButton extends JButton {
 	 * @param command action command to be used for action listeners (may be null)
 	 */
 	public HiDPIIconButton(String imageName, String tooltip, String command) {
-		this(imageName, tooltip, command, 0, "bevel");
+		this(imageName, tooltip, command, 0);
 		}
 
 		/**
@@ -69,14 +69,12 @@ public class HiDPIIconButton extends JButton {
 		 * @param tooltip may be null
 		 * @param command action command to be used for action listeners (may be null)
 		 * @param rotation 0, 90, 180, or 270 degrees in clockwise direction
-		 * @param style one of "bevel","square",null (used for Quaqua LaF only)
 		 */
-	public HiDPIIconButton(String imageName, String tooltip, String command, int rotation, String style) {
+	public HiDPIIconButton(String imageName, String tooltip, String command, int rotation) {
 		super();
 
 		mImageName = imageName;
 		mRotation = rotation;
-		mStyle = style;
 		updateIconSet();
 
 		if (command != null)
@@ -125,8 +123,8 @@ public class HiDPIIconButton extends JButton {
 			setDisabledIcon(HiDPIIcon.createIcon(mImageName, mRotation, true));
 
 			Icon icon = getIcon();
-			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getRetinaScaleFactor()) + 2;
-			int h = Math.round(icon.getIconHeight() / HiDPIHelper.getRetinaScaleFactor()) + 2;
+			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getPixelPerComponentSizeFactor()) + 2;
+			int h = Math.round(icon.getIconHeight() / HiDPIHelper.getPixelPerComponentSizeFactor()) + 2;
 			setPreferredSize(new Dimension(w, h));
 			}
 		}
@@ -139,7 +137,7 @@ public class HiDPIIconButton extends JButton {
 
 	private class Animator {
 		private static final long FRAME_RATE = 80L;
-		private volatile int mFrameCount;
+		private final int mFrameCount;
 		private volatile boolean mRunning;
 
 		public Animator(int frameCount) {

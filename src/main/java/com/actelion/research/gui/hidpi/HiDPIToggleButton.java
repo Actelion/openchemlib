@@ -7,7 +7,7 @@ import java.awt.*;
  * Created by thomas on 07/12/15.
  */
 public class HiDPIToggleButton extends JToggleButton {
-	private String mImageName1,mImageName2;
+	private final String mImageName1,mImageName2;
 
 	/**
 	 * Creates a button that, if image2 is given, toggles between two states indicated
@@ -45,8 +45,8 @@ public class HiDPIToggleButton extends JToggleButton {
 			setDisabledSelectedIcon(HiDPIIcon.createIcon(mImageName2 != null ? mImageName2 : mImageName1, 0, true));
 
 			Icon icon = getIcon();
-			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getRetinaScaleFactor()) + 2;
-			int h = Math.round(icon.getIconHeight() / HiDPIHelper.getRetinaScaleFactor()) + 2;
+			int w = Math.round(icon.getIconWidth() / HiDPIHelper.getPixelPerComponentSizeFactor()) + 2;
+			int h = Math.round(icon.getIconHeight() / HiDPIHelper.getPixelPerComponentSizeFactor()) + 2;
 			setPreferredSize(new Dimension(w, h));
 			}
 		}

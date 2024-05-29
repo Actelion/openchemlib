@@ -16,6 +16,8 @@ public class HiDPIHelper {
 	// This is an Apple only solution and needs to be adapted to support high-res displays of other vendors
 	private static float sRetinaFactor = -1f;
 	private static float sUIScaleFactor = -1f;
+	private static float sIconScaleFactor = -1f;
+	private static float sPixelPerComponentSizeFactor = -1f;
 
 	/**
 	 * Macintosh retina display support for Java 7 and newer.
@@ -37,15 +39,13 @@ public class HiDPIHelper {
 		if (System.getProperty("java.version").startsWith("1.")) {  // for JRE8 and earlier
 			try {
 				Field field = device.getClass().getDeclaredField("scale");
-				if (field != null) {
-					field.setAccessible(true);
-					Object scale = field.get(device);
+				field.setAccessible(true);
+				Object scale = field.get(device);
 
-					if (scale instanceof Integer)
-						sRetinaFactor = (Integer) scale;
-					else
-						System.out.println("Unexpected content scale (not 1 nor 2): " + scale.toString());
-					}
+				if (scale instanceof Integer)
+					sRetinaFactor = (Integer) scale;
+				else
+					System.out.println("Unexpected content scale (not 1 nor 2): " + scale.toString());
 				}
 			catch (Throwable e) {}
 			}
@@ -114,6 +114,31 @@ public class HiDPIHelper {
 		return sUIScaleFactor;
 		}
 
+	/**
+	 * Depending on the operating system, reported sizes for Java components are often smaller
+	 * than the real number of pixels if high resolution monitors are used.
+	 * This method is supposed to report the factor needed between these.
+	 * Note: For a multiscreen setup, ideally, this should be screen dependent.
+	 * @return the (largest) image scaling factor of all connected screens
+	 */
+	public static float getPixelPerComponentSizeFactor() {
+		if (sPixelPerComponentSizeFactor == -1)
+			sPixelPerComponentSizeFactor = Platform.isWindows() ? getMaxDeviceUIScaling() : Platform.isMacintosh() ? getRetinaScaleFactor() : 1.0f;
+
+		return sPixelPerComponentSizeFactor;
+		}
+
+	/**
+	 * Factor describing the screen resolution increase (of highest resolution device) in regard to 96-dpi
+	 * @return
+	 */
+	public static float getIconScaleFactor() {
+		if (sIconScaleFactor == -1)
+			sIconScaleFactor = Platform.isWindows() ? getMaxDeviceUIScaling() : Platform.isMacintosh() ? getRetinaScaleFactor() : getUIScaleFactor();
+
+		return sIconScaleFactor;
+		}
+
 	public static void setUIScaleFactor(float factor) {
 		sUIScaleFactor = factor;
 	}
@@ -138,12 +163,20 @@ public class HiDPIHelper {
 		return Math.round(getUIScaleFactor() * getRetinaScaleFactor() * value);
 		}
 
+	private static float getMaxDeviceUIScaling() {
+		double scaling = 1.0;
+		for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+			double deviceScaling = gd.getDisplayMode().getWidth() / (double)gd.getDefaultConfiguration().getBounds().width;
+			scaling = Math.max(scaling, deviceScaling);
+			}
+		return (float)scaling;
+		}
+
 	/**
 	 * If the current look&feel is dark, then colors are adapted for optimal contrast.
 	 * @param image
 	 * @return
 	 */
-
 	public static void disableImage(GenericImage image) {
 		Color gray = LookAndFeelHelper.isDarkLookAndFeel() ?
 				ColorHelper.brighter(UIManager.getColor("Panel.background"), 0.8f)
