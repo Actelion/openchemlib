@@ -38,6 +38,8 @@ import com.actelion.research.chem.descriptor.DescriptorConstants;
 import com.actelion.research.chem.descriptor.DescriptorHandlerLongFFP512;
 import com.actelion.research.chem.descriptor.DescriptorHandlerStandard2DFactory;
 import com.actelion.research.chem.descriptor.DescriptorHelper;
+import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.io.BOMSkipper;
 import com.actelion.research.util.BinaryDecoder;
 
@@ -577,6 +579,36 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 		String s = mFieldData[mCoordinate3DColumn];
 		return (s == null || s.length() == 0) ? null : s;
 		}
+
+	public Reaction getReaction(boolean ensureCoordinates) {
+		String rxnCode = null;
+		String rxnColumn = null;
+		for (SpecialField sf : mSpecialFieldMap.values()) {
+			if (CompoundTableConstants.cColumnTypeRXNCode.equals(sf.type)) {
+				rxnColumn = sf.name;
+				rxnCode = mFieldData[sf.fieldIndex];
+				break;
+			}
+		}
+
+		if (rxnCode == null)
+			return null;
+
+		String rxnMapping = null;
+		String rxnCoords = null;
+		String rxnCatalysts = null;
+		for (SpecialField sf : mSpecialFieldMap.values()) {
+			if (CompoundTableConstants.cColumnTypeReactionMapping.equals(sf.type) && rxnColumn.equals(sf.parent))
+				rxnMapping = mFieldData[sf.fieldIndex];
+			else if (CompoundTableConstants.cColumnType2DCoordinates.equals(sf.type) && rxnColumn.equals(sf.parent))
+				rxnCoords = mFieldData[sf.fieldIndex];
+			else if (CompoundTableConstants.cColumnTypeIDCode.equals(sf.type)
+					&& sf.name.equals(getColumnProperties(rxnColumn).getProperty(cColumnPropertyRelatedCatalystColumn)))
+				rxnCatalysts = mFieldData[sf.fieldIndex];
+		}
+
+		return ReactionEncoder.decode(rxnCode, rxnMapping, rxnCoords, null, rxnCatalysts, ensureCoordinates, null);
+	}
 
 	public String getMoleculeName() {
         if (mMoleculeNameColumn == -1)
