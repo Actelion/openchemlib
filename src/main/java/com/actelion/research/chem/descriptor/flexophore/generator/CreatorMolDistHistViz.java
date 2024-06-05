@@ -225,8 +225,7 @@ public class CreatorMolDistHistViz {
     }
 
     public int getPotentialConformerCount(){
-        int nPotentialConformers = conformerGeneratorStageTries.getPotentialConformerCount();
-        return nPotentialConformers;
+	    return conformerGeneratorStageTries.getPotentialConformerCount();
     }
 
 

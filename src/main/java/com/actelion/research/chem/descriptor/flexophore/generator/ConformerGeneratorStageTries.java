@@ -1,26 +1,5 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
-/*
- 
- Copyright (c) 2024 Alipheron AG. All rights reserved.
- 
- This file is part of the Alipheron AG software suite.
- 
- Licensed under the Alipheron AG Software License Agreement (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at the company's official website or upon request.
- 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License. 
- 
- Created by Modest von Korff 
- 21/02/2024
- 
- */
-
 import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.conf.Conformer;
@@ -94,15 +73,14 @@ public class ConformerGeneratorStageTries {
     public boolean setMolecule(Molecule3D molInPlace) {
         this.molInPlace = molInPlace;
         resetInitializationStage();
-        boolean successfulInitialization = initializeConformers();
-        return successfulInitialization;
+        return initializeConformers();
     }
 
     /**
      * setMolecule(Molecule3D molInPlace) first!
      * @return
      */
-    public boolean initializeConformers(){
+    private boolean initializeConformers(){
         initializeHelper();
         boolean successfulInitialization = false;
         Exception exception = null;
@@ -136,26 +114,22 @@ public class ConformerGeneratorStageTries {
                 }
             } catch (Exception e) {
                 exception = e;
-                successfulInitialization=false;
             }
 
             if (!successfulInitialization) {
                 System.out.println("Initialization failed for stage " + initializationStage);
 
-                if(canIncrementInitializationStage())
-                    if(!incrementInitializationStage()){
-                        successfulInitialization = false;
+                if(canIncrementInitializationStage()) {
+                    if(!incrementInitializationStage())
                         break;
                     }
                 else {
-                    successfulInitialization = false;
                     break;
                 }
             }
 
 //            if(initializationStage>0)
 //                System.out.println("CreatorMolDistHistViz initialization stage " + initializationStage);
-
         }
 
         if(!successfulInitialization){
