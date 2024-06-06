@@ -221,7 +221,6 @@ public class CoordinateInventor {
 
 		joinMetalBondedFragments();
 		joinChargedFragments();
-System.out.println("CooridnateInventor disconnected fragments: "+ mFragmentList.size());
 
 		// using one-by-one rotate and approximate strategy
 		joinRemainingFragments();

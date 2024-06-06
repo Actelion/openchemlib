@@ -3225,7 +3225,6 @@ public class GenericEditorArea implements GenericEventListener {
 		if (fragments<2) {
 			return fragments;
 		}
-System.out.print("Joining "+fragments+" fragments to ");
 
 		boolean[][] mergeFragments = new boolean[fragments][];
 		for (int i = 1; i<fragments; i++) {
@@ -3282,7 +3281,6 @@ System.out.print("Joining "+fragments+" fragments to ");
 		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
 			fragmentNo[atom] = newFragmentIndex[fragmentNo[atom]];
 		}
-System.out.println((fragments - mergeCount)+" joint fragments");
 
 		return fragments - mergeCount;
 	}
