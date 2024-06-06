@@ -34,8 +34,17 @@ public class PharmTreeSynthonLibrary {
 	public List<StereoMolecule> getGenericReactants() {
 		List<StereoMolecule> genericReactants = new ArrayList<>();
 		for(List<PharmTreeSynthon> synthonList : synthons) {
+
+
 			StereoMolecule minimalSynthon = synthonList.get(0).createMinimalSynthon();
-			genericReactants.add(minimalSynthon);
+
+			try {
+				genericReactants.add(minimalSynthon);
+			} catch (Exception e) {
+				System.err.println(minimalSynthon.getIDCode());
+				e.printStackTrace();
+
+			}
 		}
 		return genericReactants;
 	}

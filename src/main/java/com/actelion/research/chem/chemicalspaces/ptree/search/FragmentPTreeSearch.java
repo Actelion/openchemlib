@@ -278,6 +278,8 @@ public class FragmentPTreeSearch {
 											resultString.append(r.synthon.getId());
 											resultString.append("____");
 										});
+										resultString.append(synthonLib.getReactionID());
+
 										String rs = resultString.toString();
 										if(hits.containsKey(rs)) {
 											double oldSim = hits.get(rs);
