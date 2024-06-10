@@ -108,8 +108,8 @@ public class GenericEditorArea implements GenericEventListener {
 	private static final long WARNING_MILLIS = 1200;
 
 	private static final float FRAGMENT_MAX_CLICK_DISTANCE = 24.0f;
-	private static final float FRAGMENT_GROUPING_DISTANCE = 1.4f;    // in average bond lengths
-	private static final float FRAGMENT_CLEANUP_DISTANCE = 1.5f;    // in average bond lengths
+	private static final float FRAGMENT_GROUPING_DISTANCE = CoordinateInventor.JOIN_DISTANCE_UNCHARGED_FRAGMENTS + 0.1f;    // in average bond lengths
+	private static final float FRAGMENT_CLEANUP_DISTANCE = CoordinateInventor.JOIN_DISTANCE_UNCHARGED_FRAGMENTS + 0.2f; // in average bond lengths
 	private static final float DEFAULT_ARROW_LENGTH = 0.08f;        // relative to panel width
 
 	protected static final int UPDATE_NONE = 0;
@@ -281,7 +281,7 @@ public class GenericEditorArea implements GenericEventListener {
 		context.setRGB(background);
 		context.fillRectangle(0, 0, mWidth, mHeight);
 
-		if ((mMode & MODE_REACTION) != 0 && mDrawingObjectList.size() == 0) {
+		if ((mMode & MODE_REACTION) != 0 && mDrawingObjectList.isEmpty()) {
 			float mx = 0.5f * (float)mWidth;
 			float my = 0.5f * (float)mHeight;
 			float dx = 0.5f * DEFAULT_ARROW_LENGTH * (float)mWidth;
@@ -2150,7 +2150,7 @@ public class GenericEditorArea implements GenericEventListener {
 				// make sure that negative manual mapNo is in TreeMap
 				Integer newMapNo = oldToNewMapNo.get(-manualMapNo);
 				if (newMapNo == null)
-					oldToNewMapNo.put(-manualMapNo, newMapNo = new Integer(nextMapNo++));
+					oldToNewMapNo.put(-manualMapNo, newMapNo = nextMapNo++);
 
 				mFragment[fragment].setAtomMass(fragmentAtom[fragment], fakeAtomMassBase + newMapNo);
 			}
@@ -2184,7 +2184,7 @@ public class GenericEditorArea implements GenericEventListener {
 					if (generatedMapNo != 0) {
 						newMapNo = oldToNewMapNo.get(generatedMapNo);
 						if (newMapNo == null)
-							oldToNewMapNo.put(generatedMapNo, newMapNo = new Integer(nextMapNo++));
+							oldToNewMapNo.put(generatedMapNo, newMapNo = nextMapNo++);
 					}
 
 					mMol.setAtomMapNo(atom, newMapNo, true);
