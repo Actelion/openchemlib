@@ -129,6 +129,8 @@ public class ConstantsDWAR {
 	 */
 	public static final String TAG_COOR3D = "idcoordinates3D";
 
+	public static final String TAG_COOR3D_MMFF = "3D-Structure (low-energy random, mmff94s+)";
+
 	/**
 	 * Contains the idcode and the 3d coordinates.
 	 */
