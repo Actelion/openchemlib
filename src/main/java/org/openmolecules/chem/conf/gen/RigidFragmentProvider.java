@@ -222,7 +222,7 @@ public class RigidFragmentProvider {
 		String key = null;
 		boolean invertedEnantiomer = false;
 
-		boolean useCache = (mCache != null && atomCount <= MAX_ATOMS_FOR_CACHING);
+		boolean useCache = (mCache != null && mCache.canAddEntry() && atomCount <= MAX_ATOMS_FOR_CACHING);
 
 		// Generate stereo parities for all potential stereo features in the fragment.
 		// If one or more potential stereo features are unknown, then the fragment doesn't qualify to be cached.

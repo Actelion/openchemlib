@@ -55,9 +55,10 @@ import java.util.zip.ZipInputStream;
  * For special purposes you may consider creating an own custom cache file using the createCacheFiles() method.
  **/
 public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentCache.CacheEntry> implements Serializable {
+	private static final int DEFAULT_MAX_ENTRY_COUNT = 500000;
 	private static final String DEFAULT_CACHE_FILE = "/resources/defaultRigidFragments.zip";
 	private static RigidFragmentCache sInstance;
-	private int mHitCount,mGetCount, mNonCachableCount;
+	private int mHitCount,mGetCount,mNonCachableCount,mMaxEntryCount;
 	private boolean mDefaultCacheLoaded;
 	private TreeSet<String> mSetOfLoadedCacheFiles;
 
@@ -79,7 +80,9 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 		return cache;
 	}
 
-	private RigidFragmentCache() {}
+	private RigidFragmentCache() {
+		mMaxEntryCount = DEFAULT_MAX_ENTRY_COUNT;
+	}
 
 	@Override
 	public void clear() {
@@ -123,6 +126,19 @@ public class RigidFragmentCache extends ConcurrentHashMap<String, RigidFragmentC
 		mHitCount = 0;
 		mGetCount = 0;
 		}
+
+	public void setMaxEntryCount(int count) {
+		mMaxEntryCount = count;
+		}
+
+	public boolean canAddEntry() {
+		return size() < mMaxEntryCount;
+	}
+
+	@Override
+	public RigidFragmentCache.CacheEntry put(String key, RigidFragmentCache.CacheEntry cacheEntry) {
+		return (size() < mMaxEntryCount) ? super.put(key, cacheEntry) : null;
+	}
 
 	/**
 	 * Writes for every distinct fragment: one idcode, multiple encoded coordinate sets, multiple conformer likelihoods
