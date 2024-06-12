@@ -13,17 +13,17 @@ import java.util.Date;
  * Tries different initializations for the conformation generator.
  */
 public class ConformerGeneratorStageTries {
-    public static final long TIMEOUT_CONFORMER_CALCULATION_MS = TimeDelta.MS_MINUTE * 6;
+    public static final long TIMEOUT_CONFORMER_CALCULATION_MS = TimeDelta.MS_MINUTE * 3;
     public static final long SEED = 123456789;
     private static final int MAX_TORSION_SETS = 100000;
     private static final int MAX_TRIES_CONFORMERS = 10;
 
-    private static final int MAX_INITIALIZATION_STAGE = 5;
+    private static final int MAX_INITIALIZATION_STAGE = 3;
     private ConformerGenerator conformerGenerator;
     private int initializationStage;
 
     private long seed;
-    private long t0ConformerCalcStarted;
+
     private Exception recentException = null;
 
     private int ccGeneratedConformers;
@@ -37,13 +37,12 @@ public class ConformerGeneratorStageTries {
     public ConformerGeneratorStageTries() {
         seed = SEED;
         conformerGenerator = new ConformerGenerator(seed, false);
+        conformerGenerator.setTimeOut(TIMEOUT_CONFORMER_CALCULATION_MS);
         RigidFragmentCache.getDefaultInstance().loadDefaultCache();
         initializationStage = 0;
-        t0ConformerCalcStarted = 0;
     }
 
     private void initializeHelper() {
-        t0ConformerCalcStarted = System.currentTimeMillis();
         ccGeneratedConformers = 0;
     }
 
@@ -94,19 +93,9 @@ public class ConformerGeneratorStageTries {
                     conformerGenerator = new ConformerGenerator();
                     successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
                 }  else if (initializationStage == 2) {
-                    RigidFragmentCache.getDefaultInstance().clear();
-                    conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
-                }  else if (initializationStage == 3) {
-                    RigidFragmentCache.getDefaultInstance().clear();
-                    conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
-                } else if (initializationStage == 4) {
-                    RigidFragmentCache.getDefaultInstance().clear();
                     conformerGenerator = new ConformerGenerator();
                     successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_SYSTEMATIC, MAX_TORSION_SETS, true);
-                } else if (initializationStage == 5) {
-                    RigidFragmentCache.getDefaultInstance().clear();
+                } else if (initializationStage == 3) {
                     conformerGenerator = new ConformerGenerator();
                     successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_ADAPTIVE_RANDOM, MAX_TORSION_SETS, true);
                 } else if (initializationStage > MAX_INITIALIZATION_STAGE) {

@@ -612,7 +612,7 @@ public class CreatorMolDistHistViz {
     /**
      * Calculates the center of the fragments and stores the coordinates in MultCoordFragIndex.
      * @param molecule3D
-     * @param liMultCoordFragIndex
+     * @param liMultCoordFragIndex, the coordinates are added to this list.
      */
     public static void calcFragmentCenter(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
 
