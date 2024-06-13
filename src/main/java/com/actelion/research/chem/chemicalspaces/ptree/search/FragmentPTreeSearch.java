@@ -58,11 +58,9 @@ public class FragmentPTreeSearch {
 	private static final int SYNTHON_ID_MASK = 56;
 	private static final int SYNTHON_SHIFT = 3;
 
-	
-	public static final double RECURSION_BREAK_SIMILARITY = 0.5;//if similarity of extension match is below this, the recursion breaks
-	public static final double RECURSION_BREAK_SIZE_CUTOFF = 6;
 
 	private static final double SUBTREE_MATCHING_BUFFER = 0.3;
+	private static final int N_BEST_SOLUTIONS = 2000;
 	
 	private PharmacophoreTree queryTree;
 	private PharmTreeSynthonLibrary synthonLib;
@@ -82,7 +80,7 @@ public class FragmentPTreeSearch {
 		this.pTreeSimilarityCutoff = pTreeSimilarityCutoff;
 		this.synthonLib = synthonLib;
 		cuts = new int[] {PharmacophoreTree.CUT_LEFT,PharmacophoreTree.CUT_RIGHT};
-		nBestSolutions = 2000;
+		nBestSolutions = N_BEST_SOLUTIONS;
 		linkerToSynthons = new HashMap<Integer,Map<PharmTreeSynthon,int[]>>();
 
 	}
