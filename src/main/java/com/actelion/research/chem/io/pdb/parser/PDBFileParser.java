@@ -34,20 +34,16 @@
 
 package com.actelion.research.chem.io.pdb.parser;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.net.URI;
+import java.net.URLConnection;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.AbstractMap;
+import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.stream.IntStream;
+import java.util.zip.GZIPInputStream;
 
 /**
  * PDBFileParser
@@ -114,7 +110,7 @@ public class PDBFileParser {
     public static final String TAG_DBREF1_DBREF2 = "DBREF1/DBREF2";
     // Optional Mandatory if sequence conflict exists.
     public static final String TAG_SEQADV = "SEQADV";
-    // Mandatory Mandatory if ATOM records exist.
+    // Mandatory if ATOM records exist.
     public static final String TAG_SEQRES = "SEQRES";
     // Optional Mandatory if modified group exists in the coordinates.
     public static final String TAG_MODRES = "MODRES";
@@ -184,24 +180,27 @@ public class PDBFileParser {
 
 
 
-    private DateFormat dfDateDeposition;
+    private final DateFormat dfDateDeposition;
 
-    private RemarkParser remarkParser;
+	private final HetNameParser hetNameParser;
 
-    private HetNameParser hetNameParser;
+    private final HetSynonymParser hetSynonymParser;
+    private final FormulaParser formulaParser;
 
-    private HetSynonymParser hetSynonymParser;
-    private FormulaParser formulaParser;
+    private final SiteParser siteParser;
 
-    private SiteParser siteParser;
+    private final ModelParser modelParser;
 
-    private ModelParser modelParser;
+	public PDBCoordEntryFile getFromPDB(String pdbID) throws Exception {
+		URLConnection con = new URI("https://files.rcsb.org/download/"+pdbID+".pdb.gz").toURL().openConnection();
+		return new PDBFileParser().parse(new BufferedReader(new InputStreamReader(new GZIPInputStream(con.getInputStream()))));
+	}
 
     public PDBFileParser() {
 
         dfDateDeposition = new SimpleDateFormat(DATE_FORMAT);
 
-        remarkParser = new RemarkParser();
+	    RemarkParser remarkParser = new RemarkParser();
 
         hetNameParser = new HetNameParser();
 

@@ -1753,17 +1753,17 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return whether the atom is a member of a delocalized ring (subset of aromatic rings)
 	 */
 	public boolean isDelocalizedAtom(int atom) {
-		return (atom < mAtoms) ? mRingSet.isDelocalizedAtom(atom) : false;
+		return atom<mAtoms && mRingSet.isDelocalizedAtom(atom);
 	}
 
 
 	public boolean isAromaticBond(int bond) {
-		return (bond < mBonds) ? mRingSet.isAromaticBond(bond) : false;
+		return bond<mBonds && mRingSet.isAromaticBond(bond);
 	}
 
 
 	public boolean isHeteroAromaticBond(int bond) {
-		return (bond < mBonds) ? mRingSet.isHeteroAromaticBond(bond) : false;
+		return bond<mBonds && mRingSet.isHeteroAromaticBond(bond);
 	}
 
 
@@ -3499,12 +3499,12 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if ((mValidHelperArrays & cHelperBitNeighbours) == 0) {
 			handleHydrogens();
 			calculateNeighbours();
-
 			mValidHelperArrays |= cHelperBitNeighbours;
 
 			if (convertHydrogenToQueryFeatures()) {
 				handleHydrogens();
 				calculateNeighbours();
+				mValidHelperArrays |= cHelperBitNeighbours;
 				}
 			}
 
