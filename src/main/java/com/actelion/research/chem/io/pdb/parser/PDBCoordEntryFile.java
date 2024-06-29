@@ -580,11 +580,14 @@ public class PDBCoordEntryFile {
     }
     
     public Map<String,List<Molecule3D>> extractMols() {
-    	StructureAssembler assembler = new StructureAssembler(liConnect,protAtomRecords,hetAtomRecords);
-    	return assembler.assemble();
+        return extractMols(false);
     }
-    
-    
+
+    public Map<String,List<Molecule3D>> extractMols(boolean detachCovalentLigands) {
+        StructureAssembler assembler = new StructureAssembler(liConnect,protAtomRecords,hetAtomRecords);
+        assembler.setDetachCovalentLigands(detachCovalentLigands);
+        return assembler.assemble();
+    }
 
     @Override
     public String toString() {

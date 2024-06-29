@@ -26,57 +26,48 @@ public class StructureAssembler {
 	public static final String LIGAND_GROUP = "ligand";
 	
 	private Map<String,List<AtomRecord>> groups;
-	private List<int[]> bondList;
-	private List<AtomRecord> atomRecords;
-	private List<AtomRecord> hetAtomRecords;
-	Map<String,List<Molecule3D>> mols;
+	private final List<int[]> bondList;
+	private final List<AtomRecord> protAtomRecords;
+	private final List<AtomRecord> hetAtomRecords;
+	private boolean detachCovalentLigands;
+	private Map<String,List<Molecule3D>> mols;
 
-	
-	public StructureAssembler(List<int[]> bondList, List<AtomRecord> atomRecords, List<AtomRecord> hetAtomRecords) {
+
+	public StructureAssembler(List<int[]> bondList, List<AtomRecord> protAtomRecords, List<AtomRecord> hetAtomRecords) {
 		this.bondList = bondList;
-		this.atomRecords = atomRecords;
+		this.protAtomRecords = protAtomRecords;
 		this.hetAtomRecords = hetAtomRecords;
-		groups = new HashMap<String,List<AtomRecord>>();
-		mols = new HashMap<String,List<Molecule3D>>();
 	}
-	
-	
+
+	public void setDetachCovalentLigands(boolean b) {
+		detachCovalentLigands = b;
+	}
+
 	public Map<String,List<Molecule3D>> assemble() {
+		groups = new HashMap<>();
+		mols = new HashMap<>();
+
 		group();
 		List<Molecule3D> protMols = new ArrayList<>();
-		mols.putIfAbsent(SOLVENT_GROUP, new ArrayList<Molecule3D>());
-		mols.putIfAbsent(LIGAND_GROUP, new ArrayList<Molecule3D>());
+		mols.putIfAbsent(SOLVENT_GROUP, new ArrayList<>());
+		mols.putIfAbsent(LIGAND_GROUP, new ArrayList<>());
 		protMols.add(buildProtein());
 		mols.put(PROTEIN_GROUP, protMols);
 		buildHetResidues();
 		mols.forEach((k,v) -> v.forEach(e -> coupleBonds(e)));
 		return mols;
-		
 	}
 	
 	private void group() {
-		groups.put(PROTEIN_GROUP, atomRecords);
+		groups.put(PROTEIN_GROUP, new ArrayList<>(protAtomRecords));
 		
-		hetAtomRecords.forEach(e -> { 
-			String s = e.getString();
-			if(groups.get(s)!=null) {
-				List<AtomRecord> li = groups.get(s);
-				li.add(e);
-			}
-			else { 
-				List<AtomRecord> li = new ArrayList<AtomRecord>();
-				li.add(e);
-				groups.put(s, li);
-			}
+		hetAtomRecords.forEach(e -> {
+			List<AtomRecord> li = groups.computeIfAbsent(e.getString(), k -> new ArrayList<>());
+			li.add(e);
 		});
-		for(int[] bond : bondList) {
-			try {
-				 processBond(bond);
-			}
-			catch(Exception e) {
-				continue;
-			}
-		}
+
+		for(int[] bond : bondList)
+			processBond(bond);
 	}
 	
 	private Molecule3D buildProtein() {
@@ -114,14 +105,11 @@ public class StructureAssembler {
 						protMols.add(proteinSynthesizer.retrieveProtein());
 						proteinSynthesizer = new ProteinSynthesizer();
 					}
-					else 
-						continue;
 				}
 				else { //coupling failed
 					protMols.add(proteinSynthesizer.retrieveProtein());
 					proteinSynthesizer = new ProteinSynthesizer();
 					proteinSynthesizer.addResidue(fragment);
-						
 				}
 			}
 		Molecule3D nextMol = proteinSynthesizer.retrieveProtein();
@@ -131,15 +119,12 @@ public class StructureAssembler {
 			mol1.addMolecule(mol2);
 			return mol1;})
 				.get();
-//		protein.ensureHelperArrays(Molecule.cHelperCIP);    // very expensive. Should not be done here just in case somebody might need parities
 		return protein;
 		}
 	
 	private void buildHetResidues() {
 		for(String group : groups.keySet()) {
-			if(group.equals(PROTEIN_GROUP))
-				continue;
-			else {
+			if(!group.equals(PROTEIN_GROUP)) {
 				List<AtomRecord> records = groups.get(group);
 				Residue atomGroup = new Residue(records);
 				Molecule3D fragment = atomGroup.getMolecule();
@@ -186,21 +171,23 @@ public class StructureAssembler {
 				grps[1] = k;
 			});
 
-		if(grps[0].equals(grps[1]))
-			return;
-		else {
+		if(!grps[0].equals(grps[1])) {
 			if(grps[0].equals(PROTEIN_GROUP)) {
-				groups.get(grps[0]).addAll(groups.get(grps[1]));
-				groups.remove(grps[1]);
+				if (!detachCovalentLigands) {
+					groups.get(grps[0]).addAll(groups.get(grps[1]));
+					groups.remove(grps[1]);
 				}
+			}
 			else if(grps[1].equals(PROTEIN_GROUP)) {
-				groups.get(grps[1]).addAll(groups.get(grps[0]));
-				groups.remove(grps[0]);
+				if (!detachCovalentLigands) {
+					groups.get(grps[1]).addAll(groups.get(grps[0]));
+					groups.remove(grps[0]);
 				}
+			}
 			else {
 				groups.get(grps[0]).addAll(groups.get(grps[1]));
 				groups.remove(grps[1]);
-				}
+			}
 		}
 	}
 }
