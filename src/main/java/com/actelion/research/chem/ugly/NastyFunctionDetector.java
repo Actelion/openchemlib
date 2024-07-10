@@ -32,7 +32,9 @@
  * @author Thomas Sander
  */
 
-package com.actelion.research.chem;
+package com.actelion.research.chem.ugly;
+
+import com.actelion.research.chem.*;
 
 import java.util.ArrayList;
 
