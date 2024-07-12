@@ -1675,24 +1675,11 @@ public class Molecule implements Serializable {
 	 * @param atom
 	 */
 	public void deleteAtom(int atom) {
-		for (int bnd=0; bnd<mAllBonds; bnd++) {
-			for (int i=0; i<2; i++) {
-				if (mBondAtom[i][bnd] == atom) {
+		for (int bnd=0; bnd<mAllBonds; bnd++)
+			for (int i=0; i<2; i++)
+				if (mBondAtom[i][bnd] == atom)
 					mBondType[bnd] = cBondTypeDeleted;	// mark for delete
-					int bonds = 0;
-					for (int j=0; j<mAllBonds; j++) {
-						if (j == bnd) continue;
-						if ((mBondAtom[0][j] == mBondAtom[1-i][bnd])
-						 || (mBondAtom[1][j] == mBondAtom[1-i][bnd]))
-							bonds++;
-						}
-					if (bonds == 0) {
-						removeMappingNo(mAtomMapNo[mBondAtom[1-i][bnd]]);
-						mAtomicNo[mBondAtom[1-i][bnd]] = -1;
-						}			// mark for delete
-					}
-				}
-			}
+
 		removeMappingNo(mAtomMapNo[atom]);
 		mAtomicNo[atom] = -1;		// mark for delete
 		if (mAtomList != null)
