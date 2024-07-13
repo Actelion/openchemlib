@@ -168,19 +168,14 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		if(mdh.getNumPPNodes()==0){
 			throw new RuntimeException("Empty object given into constructor.");
 		}
-		
 		mdh.copy(this);
-
 		modeFlexophore = mdh.getModeFlexophore();
-		
-		liPPNodeViz=new ArrayList<PPNodeViz>(mdh.getNumPPNodes());
+		liPPNodeViz=new ArrayList<>(mdh.getNumPPNodes());
 		for (int i = 0; i < mdh.getNumPPNodes(); i++) {
 			PPNodeViz node = new PPNodeViz(mdh.getNode(i));
 			liPPNodeViz.add(node);
 		}
-		
-		hsIndexInevitablePPPoints = new HashSet<Integer>();
-		
+		hsIndexInevitablePPPoints = new HashSet<>();
 		realize();
 	}
 
@@ -636,7 +631,7 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 	}
 	@Override
 	public double getWeightPharmacophorePoint(int indexNode) {
-		return 1.0;
+		return arrWeight[indexNode];
 	}
 	public boolean isAliphatic(int indexNode) {
 		

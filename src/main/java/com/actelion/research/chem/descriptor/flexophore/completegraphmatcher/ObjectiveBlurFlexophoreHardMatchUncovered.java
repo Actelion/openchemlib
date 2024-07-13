@@ -325,11 +325,8 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		//
 		if(mapping){
 			for (int i = 0; i < heap; i++) {
-
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
-
 				int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
-
 				if(!areNodesMapping(indexNodeQuery, indexNodeBase)) {
 					mapping = false;
 					break;
