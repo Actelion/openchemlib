@@ -55,7 +55,7 @@ public class SmilesParser {
 	public static final int MODE_NO_CACTUS_SYNTAX = 16;  // if not set, then some CACTVS SMARTS extensions will be recognized and translated as close as possible
 	public static final int MODE_SINGLE_DOT_SEPARATOR = 32;  // CONSIDER single dots '.' (rather than '..') as moelcule separator when parsing reactions
 	public static final int MODE_CREATE_SMARTS_WARNING = 64;
-	public static final int MODE_FIRST_SMARTS_OPTION_ONLY = 128; // If multiple ',' separated atom options exist, then always use the first one
+	public static final int MODE_ENUMERATE_SMARTS = 128;
 
 	private static final int INITIAL_CONNECTIONS = 16;
 	private static final int MAX_CONNECTIONS = 100; // largest allowed one in SMILES is 99
@@ -68,14 +68,12 @@ public class SmilesParser {
 
 	private StereoMolecule mMol;
 	private boolean[] mIsAromaticBond;
-	private int mSmartsMode,mAromaticAtoms,mAromaticBonds,mCoordinateMode;
-	private final int mMode;
+	private int mMode,mSmartsMode,mAromaticAtoms,mAromaticBonds,mCoordinateMode;
 	private long mRandomSeed;
 	private final boolean mCreateSmartsWarnings,mMakeHydrogenExplicit,mSingleDotSeparator;
 	private StringBuilder mSmartsWarningBuffer;
 	private boolean mSmartsFeatureFound;
-	private TreeMap<Integer,OptionCounter> mOptionMap;
-	private OptionCounter mControllingOptionCounter;
+	private ArrayList<EnumerationPosition> mEnumerationPositionList;
 
 	/**
 	 * Creates a new SmilesParser that doesn't allow SMARTS features to be present in
@@ -258,21 +256,41 @@ public class SmilesParser {
 		return rxn;
 		}
 
-	public StereoMolecule[] enumerateSmarts(String smarts) {
+	protected ArrayList<EnumerationPosition> getEnumerationPositionList() {
+		return mEnumerationPositionList;
+	}
+
+	protected void setEnumerationPositionList(ArrayList<EnumerationPosition> l) {
+		mEnumerationPositionList = l;
+	}
+
+	public String[] enumerateSmarts(String smarts) throws Exception {
+		mEnumerationPositionList = new ArrayList<>();
 		mSmartsMode = SMARTS_MODE_IS_SMARTS;
-		mOptionMap = new TreeMap<>();
-		ArrayList<StereoMolecule> enumeration = new ArrayList<>();
-		while (mControllingOptionCounter == null || mControllingOptionCounter.increase()) {
-			StereoMolecule mol = new StereoMolecule();
-			try {
-				parse(mol, smarts);
-			}
-			catch (Exception e) {
-				return null;
-			}
-			enumeration.add(mol);
+		mMode |= MODE_ENUMERATE_SMARTS;
+
+		ArrayList<String> smartsList = new ArrayList<>();
+		smartsList.add(smarts);
+
+		try {
+			parse(new StereoMolecule(), smarts);
 		}
-		return enumeration.toArray(new StereoMolecule[0]);
+		catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+
+		EnumerationPosition[] options = mEnumerationPositionList.toArray(new EnumerationPosition[0]);
+		Arrays.sort(options);
+
+		for (EnumerationPosition option : options) {
+			ArrayList<String> enumeration = new ArrayList<>();
+			for (String s : smartsList)
+				option.enumerate(this, s.getBytes(StandardCharsets.UTF_8), enumeration);
+
+			smartsList = enumeration;
+		}
+
+		return smartsList.toArray(new String[0]);
 	}
 
 	/**
@@ -360,23 +378,15 @@ public class SmilesParser {
 				if (!squareBracketOpen) {
 					position = atomParser.parseAtomOutsideBrackets(smiles, position, endIndex, allowSmarts);
 				}
-				else if ((mMode & MODE_FIRST_SMARTS_OPTION_ONLY) != 0) {
-					position = atomParser.parseAtomInsideBrackets(smiles, position, endIndex, 0);
-				}
-				else if (mOptionMap != null) {
-					OptionCounter counter = mOptionMap.get(position);
-					if (counter == null) {
-						position = atomParser.parseAtomInsideBrackets(smiles, position, endIndex, 0);
-						if (smiles[position] != ']') {  // we have multiple options and create a counter
-							counter = new OptionCounter(mControllingOptionCounter);
-							mOptionMap.put(position, counter);
-							mControllingOptionCounter = counter;
+				else if ((mMode & MODE_ENUMERATE_SMARTS) != 0) {
+					EnumerationPosition ep = new EnumerationPosition(position-1);
+					position = atomParser.parseAtomInsideBrackets(smiles, position, endIndex, true, true);
+					if (smiles[position-1] != ']') {  // we have multiple options and create an option list
+						while (smiles[position-1] != ']') {
+							position = atomParser.parseAtomInsideBrackets(smiles, position+1, endIndex, true, true);
+							ep.increase();
 						}
-					}
-					else {
-						position = atomParser.parseAtomInsideBrackets(smiles, position, endIndex, counter.mIndex);
-						if (counter.mCount == 0 && smiles[position] != ']') // now we know the max count
-							counter.mCount = counter.mIndex+1;
+					mEnumerationPositionList.add(ep);
 					}
 				}
 				else {
@@ -386,8 +396,23 @@ public class SmilesParser {
 				squareBracketOpen = false;
 
 				if (atomParser.getRecursiveGroup() != null) {
+					fromAtom = baseAtom[bracketLevel];
+
 					baseAtom[bracketLevel] = mol.getAllAtoms();
 					mol.addMolecule(atomParser.getRecursiveGroup());
+
+					if (fromAtom != -1 && bondType != Molecule.cBondTypeDeleted) {
+						int bond = mMol.addBond(fromAtom, fromAtom, bondType);
+						if (bondQueryFeatures != 0) {
+							mSmartsFeatureFound = true;
+							mMol.setBondQueryFeature(bond, bondQueryFeatures, true);
+						}
+					}
+
+					// Reset bond type and query features to default.
+					bondType = Molecule.cBondTypeSingle;
+					bondQueryFeatures = 0;
+
 					continue;
 				}
 
@@ -407,8 +432,8 @@ public class SmilesParser {
 					mAromaticAtoms++;
 
 				fromAtom = baseAtom[bracketLevel];
-				if (baseAtom[bracketLevel] != -1 && bondType != Molecule.cBondTypeDeleted) {
-					int bond = mMol.addBond(baseAtom[bracketLevel], atom, bondType);
+				if (fromAtom != -1 && bondType != Molecule.cBondTypeDeleted) {
+					int bond = mMol.addBond(fromAtom, atom, bondType);
 					if (bondQueryFeatures != 0) {
 						mSmartsFeatureFound = true;
 						mMol.setBondQueryFeature(bond, bondQueryFeatures, true);
@@ -1353,26 +1378,45 @@ public class SmilesParser {
 		return paritiesFound;
 		}
 
-	private static class OptionCounter {
-		int mIndex,mCount;
-		OptionCounter mPrevious;
+	private class EnumerationPosition implements Comparable<EnumerationPosition> {
+		int mPosition,mCount;
 
-		public OptionCounter(OptionCounter previous) {
-			mPrevious = previous;
+		/**
+		 * @param position position of first option in original smarts
+		 */
+		public EnumerationPosition(int position) {
+			mPosition = position;
+			mCount = 1;
 			}
 
-		public boolean increase() {
-			if (mPrevious.increase())
-				return true;
-
-			mIndex++;
-			if (mIndex < mCount)
-				return true;
-
-			mIndex = 0;
-			return false;
+		public void increase() {
+			mCount++;
 			}
+
+		public void enumerate(SmilesParser parser, byte[] smarts, ArrayList<String> enumeration) throws Exception {
+			ArrayList<String> optionList = new ArrayList<>();
+
+			int start = mPosition;
+			SmilesAtomParser atomParser = new SmilesAtomParser(parser, mMode | mSmartsMode);
+			int end = atomParser.parseAtomInsideBrackets(smarts, start+1, smarts.length, true, true)-1;
+			if (smarts[end] != ']') {  // we have multiple options and create an option list
+				optionList.add(new String(smarts, start, end-start));
+				while (smarts[end] != ']') {
+					start = end+1;
+					end = atomParser.parseAtomInsideBrackets(smarts, start+1, smarts.length, true, true)-1;
+					optionList.add(new String(smarts, start, end-start));
+				}
+			}
+
+			for (String option : optionList)
+				enumeration.add(new String(smarts, 0, mPosition) + option + new String(smarts, end, smarts.length-end));
+			}
+
+		@Override
+		public int compareTo(EnumerationPosition o) {
+			return Integer.compare(o.mPosition, mPosition);
 		}
+	}
 
 	private static class ParityNeighbour {
 		int mAtom,mPosition;

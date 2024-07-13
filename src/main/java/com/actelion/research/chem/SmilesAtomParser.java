@@ -92,19 +92,6 @@ public class SmilesAtomParser {
 		return position;
 	}
 
-	private int advanceToNextOption(byte[] smiles, int position) {
-		int start = position;
-		int level = 0;
-		while ((position < smiles.length && smiles[position] != ',' && smiles[position] != ']') || level != 0) {
-			if (smiles[position] == '[')
-				level++;
-			else if (smiles[position] == ']')
-				level--;
-			position++;
-		}
-		return position+1;
-	}
-
 	private int advanceJustAfterClosingBracket(byte[] smiles, int position) throws Exception {
 		int level = 0;
 		while (position < smiles.length && (smiles[position] != ']' || level != 0)) {
@@ -124,39 +111,23 @@ public class SmilesAtomParser {
 
 	/**
 	 * @param smiles
-	 * @param position
-	 * @param endIndex
-	 * @param option index for ','-separated atom alternatives as non-negated recursive SMARTS
-	 * @return
-	 * @throws Exception
-	 */
-	protected int parseAtomInsideBrackets(byte[] smiles, int position, int endIndex, int option) throws Exception {
-		while (option > 0) {
-			position = parseAtomInsideBrackets(smiles, position, endIndex, true, true);
-			option--;
-		}
-
-		return parseAtomInsideBrackets(smiles, position, endIndex, true, true);
-	}
-
-	/**
-	 * @param smiles
-	 * @param position
+	 * @param position points to second character of atom description, e.g. of the atom label
 	 * @param endIndex
 	 * @param allowSmarts
-	 * @return
+	 * @return position of first character after closing ']' (or delimiting ',' if enumerating SMARTS)
 	 * @throws Exception
 	 */
-	protected int parseAtomInsideBrackets(byte[] smiles, int position, int endIndex, boolean allowSmarts, boolean allowOptions) throws Exception {
+	protected int parseAtomInsideBrackets(byte[] smiles, int position, int endIndex, boolean allowSmarts, boolean allowAtomOptions) throws Exception {
 		if (smiles[position-1] == '$') {  // recursive SMARTS
 			recursiveSmartsList = new ArrayList<>();
 			position += parseRecursiveGroup(smiles, position-1, recursiveSmartsList) - 1;
 
 			if (smiles[position++] != ']') {
-				if (!allowOptions)
+				if (!allowAtomOptions)
 					throw new Exception("SmilesParser: A positive recursive SMARTS followed by another one or by atom query features is not supported. Position:" + (position - 1));
 
-				position = advanceJustAfterClosingBracket(smiles, position);
+				if ((mMode & SmilesParser.MODE_ENUMERATE_SMARTS) == 0)
+					position = advanceJustAfterClosingBracket(smiles, position);
 			}
 
 			return position;
@@ -319,7 +290,9 @@ public class SmilesAtomParser {
 				continue;
 			}
 
-			if (smiles[position] == 'D') {   // non-H-neighbours
+			if (smiles[position] == 'D'      // number of explicit neighbours (incl. explicit H)
+			 || smiles[position] == 'd') {   // (RDKit extension) number of non-H-neighbours
+				// we translate both to the number of non-H neighbours (for 'D' we assume no explicit H to be present)
 				position++;
 				position += range.parse(position, 1, 1);
 				long flags = 0;
@@ -347,7 +320,7 @@ public class SmilesAtomParser {
 				continue;
 			}
 
-			if (smiles[position] == 'z' && mAllowCactvs) {   // electro-negative neighbour count (CACTVS extension)
+			if (smiles[position] == 'z' && mAllowCactvs) {   // electro-negative neighbour count (CACTVS,RDKit extension)
 				position++;
 				position += range.parse(position, 1, 4);
 				long flags = 0;
@@ -490,11 +463,33 @@ public class SmilesAtomParser {
 				continue;
 			}
 
+			if (smiles[position] == '^') {  // RDKit hybridisation is translated into number of pi-electrons
+				position++;
+
+				int hybridization = smiles[position++] - '0';
+
+				if (hybridization < 1 || hybridization > 3)
+					throw new Exception("SmilesParser: Unsupported hybridization. Position:"+position);
+
+				long piElectrons = (hybridization == 1) ? Molecule.cAtomQFNot2PiElectrons
+								 : (hybridization == 2) ? Molecule.cAtomQFNot1PiElectron : Molecule.cAtomQFNot0PiElectrons;
+
+				if (!isNot)
+					piElectrons = Molecule.cAtomQFPiElectrons & ~piElectrons;
+
+				atomQueryFeatures |= piElectrons;
+
+				continue;
+			}
+
 			if (smiles[position] == '$') {  // recursive SMARTS
 				if (!isNot)
 					throw new Exception("SmilesParser: non-negated recursive SMARTS relating to preceding atom are not supported yet. Position:"+position);
 
-				position += parseRecursiveGroup(smiles, position, getExcludeGroupList());
+				if (excludeGroupList == null)
+					excludeGroupList = new ArrayList<>();
+
+				position += parseRecursiveGroup(smiles, position, excludeGroupList);
 				continue;
 			}
 
@@ -504,11 +499,20 @@ public class SmilesAtomParser {
 				continue;
 			}
 
-			if (allowSmarts && (smiles[position] == ',' && isRepeatedAllowedORFeature(smiles, position, skipCount))) {    // we allow OR-logic for some query options if they have the same type
+			if (allowSmarts && smiles[position] == ',' && isRepeatedAllowedORFeature(smiles, position, skipCount)) {    // we allow OR-logic for some query options if they have the same type
 				smartsFeatureFound = true;
 				position += skipCount[0] + 1;
 				continue;
 			}
+
+			if (allowSmarts && smiles[position] == ',' && (mMode & SmilesParser.MODE_ENUMERATE_SMARTS) != 0) {
+				smartsFeatureFound = true;
+				position += 1;
+				break;
+			}
+
+			if (smiles[position] == ',')
+				throw new Exception("SmilesParser: alternative atom definitions not supported. (Tip: enumerate SMARTS): '"+(char)smiles[position]+"', position:"+position);
 
 			throw new Exception("SmilesParser: unexpected character inside brackets: '"+(char)smiles[position]+"', position:"+position);
 		}
@@ -516,7 +520,7 @@ public class SmilesAtomParser {
 		return position;
 	}
 
-	protected boolean parseAtomLabelInBrackets(byte[] smiles, int position, int endIndex, AtomLabelInfo info) throws Exception {
+	private boolean parseAtomLabelInBrackets(byte[] smiles, int position, int endIndex, AtomLabelInfo info) throws Exception {
 		info.mayBeAromatic = true;
 		info.mayBeAliphatic = true;
 		if (smiles[position] == '#') {
@@ -538,12 +542,30 @@ public class SmilesAtomParser {
 		if (smiles[position] >= 'A' && smiles[position] <= 'Z') {
 			info.labelLength = (smiles[position+1] >= 'a' && smiles[position+1] <= 'z') ? 2 : 1;
 			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
+			if (info.labelLength == 2 && info.atomicNo == 0) {
+				info.labelLength = 1;
+				info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
+			}
 			info.mayBeAromatic = false;
+			if (info.atomicNo == 0)
+				throw new Exception("SmilesParser: Unknown atom label. position:"+(position-1));
 			return true;
 		}
 
-		if (smiles[position] >= 'a' && smiles[position] <= 'z') {
-			info.labelLength = (smiles[position+1] >= 'a' && smiles[position+1] <= 'z') ? 2 : 1;
+		if ((smiles[position] == 'A' && smiles[position+1] == 's')
+		 || (smiles[position] == 'S' && smiles[position+1] == 'e')) {
+			info.labelLength = 2;
+			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
+			info.mayBeAliphatic = false;
+			return true;
+		}
+
+		if (smiles[position] == 'c'
+		 || smiles[position] == 'n'
+		 || smiles[position] == 'o'
+		 || smiles[position] == 'p'
+		 || smiles[position] == 's') {
+			info.labelLength = 1;
 			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
 			info.mayBeAliphatic = false;
 			return true;
@@ -646,7 +668,10 @@ public class SmilesAtomParser {
 			throw new Exception("SmilesParser: Missing closing ')' for recursive SMARTS. '('-position:"+(dollarIndex+1));
 
 		StereoMolecule group = new StereoMolecule(16, 16);
-		new SmilesParser(mMode).parse(group, smiles, dollarIndex+2, endIndex-1);
+		group.setFragment(true);
+		SmilesParser parser = new SmilesParser(mMode);
+		parser.setEnumerationPositionList(mParentParser.getEnumerationPositionList());
+		parser.parse(group, smiles, dollarIndex+2, endIndex-1);
 		groupList.add(group);
 
 		if (smiles[dollarIndex-1] == '!')
@@ -705,8 +730,6 @@ public class SmilesAtomParser {
 	}
 
 	public ArrayList<StereoMolecule> getExcludeGroupList() {
-		if (excludeGroupList == null)
-			excludeGroupList = new ArrayList<>();
 		return excludeGroupList;
 	}
 
