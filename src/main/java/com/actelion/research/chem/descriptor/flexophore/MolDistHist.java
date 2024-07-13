@@ -459,8 +459,11 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 
 	@Override
 	public boolean isInevitablePharmacophorePoint(int indexNode) {
-		// TODO Auto-generated method stub
 		return false;
+	}
+	@Override
+	public double getWeightPharmacophorePoint(int indexNode) {
+		return 1.0;
 	}
 
 	public static int getNumBytesEntry(){
