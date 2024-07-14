@@ -41,11 +41,13 @@ import com.actelion.research.gui.dnd.MoleculeDragAdapter;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.generic.GenericDepictor;
+import com.actelion.research.gui.generic.GenericPolygon;
 import com.actelion.research.gui.generic.GenericRectangle;
+import com.actelion.research.gui.generic.GenericShape;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
+import com.actelion.research.gui.swing.SwingCursorHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.util.ColorHelper;
-import com.actelion.research.gui.swing.SwingCursorHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +59,8 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 public class JStructureView extends JComponent implements ActionListener,MouseListener,MouseMotionListener,StructureListener {
-    static final long serialVersionUID = 0x20061113;
+    private static final long serialVersionUID = 0x20061113;
+	private static final Color DEFAULT_SELECTION_BACKGROUND = new Color(128,164,192);
 
     private static final String ITEM_COPY = "Copy Structure";
 	private static final String ITEM_COPY_SMILES = "Copy Structure As SMILES-String";
@@ -73,7 +76,8 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	private String mIDCode;
 	private StereoMolecule mMol,mDisplayMol;
     private GenericDepictor mDepictor;
-	private boolean mShowBorder,mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mIsEditable,mDisableBorder;
+	private boolean mShowBorder,mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mIsEditable,mDisableBorder,
+			mIsSelectable,mIsSelecting,mIsLassoSelect;
 	private int mChiralTextPosition,mDisplayMode;
 	private String[] mAtomText;
 	private IClipboardHandler mClipboardHandler;
@@ -83,7 +87,9 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	private String mWarningMessage;
 	private int[] mAtomHiliteColor;
 	private float[] mAtomHiliteRadius;
-	private double mTextSizeFactor;
+	private double mTextSizeFactor,mX1,mY1,mX2,mY2;
+	private GenericPolygon mLassoRegion;
+
 
 	public JStructureView() {
         this(null);
@@ -160,6 +166,10 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		addMouseMotionListener(this);
 		initializeDragAndDrop(dragAction, dropAction);
 	    }
+
+	public void setSelectable(boolean s) {
+		mIsSelectable = s;
+		}
 
 	@Override
 	public void updateUI() {
@@ -330,7 +340,37 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 					insets.top+metrics.getHeight());
 			g.setColor(original);
 			}
+
+		if (mIsSelecting) {
+			if (mIsLassoSelect) {
+				g.setColor(lassoColor());
+				java.awt.Polygon p = new java.awt.Polygon();
+				for (int i = 0; i<mLassoRegion.getSize(); i++)
+					p.addPoint(Math.round((float)mLassoRegion.getX(i)), Math.round((float)mLassoRegion.getY(i)));
+				g.drawPolygon(p);
+				g.setColor(getForeground());
+			}
+			else {
+				int x = (mX1 < mX2) ? (int) mX1 : (int) mX2;
+				int y = (mY1 < mY2) ? (int) mY1 : (int) mY2;
+				int w = (int) Math.abs(mX2 - mX1);
+				int h = (int) Math.abs(mY2 - mY1);
+				g.setColor(lassoColor());
+				g.drawRect(x, y, w, h);
+				g.setColor(getForeground());
+				}
+			}
 		}
+
+	private Color lassoColor() {
+		Color selectionColor = selectionColor();
+		return ColorHelper.createColor(selectionColor, LookAndFeelHelper.isDarkLookAndFeel() ? 0.65f : 0.35f);
+	}
+
+	private Color selectionColor() {
+		Color selectionColor = UIManager.getColor("TextArea.selectionBackground");
+		return (selectionColor != null) ? selectionColor : DEFAULT_SELECTION_BACKGROUND;
+	}
 
 	public void setIDCode(String idcode) {
 		int index = (idcode == null) ? -1 : idcode.indexOf(' ');
@@ -439,11 +479,30 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		handlePopupTrigger(e);
+		if (handlePopupTrigger(e))
+			return;
+
+		if (mIsSelectable
+		 && (e.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
+			mX1 = e.getX();
+			mY1 = e.getY();
+			mIsSelecting = true;
+			mIsLassoSelect = !e.isAltDown();
+			if (mIsLassoSelect) {
+				mLassoRegion = new GenericPolygon();
+				mLassoRegion.addPoint(mX1, mY1);
+				mLassoRegion.addPoint(mX1, mY1);
+				}
+			}
 		}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		if (mIsSelecting) {
+			mIsSelecting = false;
+			repaint();
+			}
+
 		handlePopupTrigger(e);
 		}
 
@@ -451,12 +510,9 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	public void mouseMoved(MouseEvent e) {
 		int x = e.getX();
 		int y = e.getY();
-		boolean isInRect = false;
-		if (mDepictor != null && (mAllowedDragAction & DnDConstants.ACTION_COPY) != 0) {
-			GenericRectangle bounds = shrink(mDepictor.getBoundingRect());
-			if (bounds != null && bounds.contains(x, y))
-				isInRect = true;
-			}
+		boolean isInRect = mDepictor != null
+				&& (mAllowedDragAction & DnDConstants.ACTION_COPY) != 0
+				&& shrink(mDepictor.getBoundingRect()).contains(x, y);
 
 		updateBorder(isInRect);
 		setCursor(SwingCursorHelper.getCursor(isInRect ? SwingCursorHelper.cHandCursor : SwingCursorHelper.cPointerCursor));
@@ -469,7 +525,38 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		return new GenericRectangle((int)rect.x+marginX, (int)rect.y+marginY, (int)rect.width-2*marginX, (int)rect.height-2*marginY);
 	}
 
-	@Override public void mouseDragged(MouseEvent e) {}
+	@Override public void mouseDragged(MouseEvent e) {
+		if (mIsSelecting) {
+			mX2 = e.getX();
+			mY2 = e.getY();
+
+			GenericShape selectedShape = null;
+
+			if (mIsLassoSelect) {
+				if ((Math.abs(mX2 - mLassoRegion.getX(mLassoRegion.getSize() - 1)) >= 3)
+				 || (Math.abs(mY2 - mLassoRegion.getY(mLassoRegion.getSize() - 1)) >= 3)) {
+					mLassoRegion.removeLastPoint();
+					mLassoRegion.addPoint(mX2, mY2);
+					mLassoRegion.addPoint(mX1, mY1);
+
+					selectedShape = mLassoRegion;
+					}
+				}
+			else {
+				selectedShape = new GenericRectangle(Math.min(mX1, mX2), Math.min(mY1, mY2), Math.abs(mX2 - mX1), Math.abs(mY2 - mY1));
+				}
+
+			if (selectedShape != null && mDepictor != null) {
+				for (int atom=0; atom<mDisplayMol.getAllAtoms(); atom++) {
+					boolean isSelected = selectedShape.contains((int)mDepictor.getAtomX(atom), (int)mDepictor.getAtomY(atom));
+					if (isSelected != mDisplayMol.isSelectedAtom(atom)) {
+						mDisplayMol.setAtomSelection(atom, isSelected);
+						}
+					}
+				repaint();
+				}
+			}
+		}
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().equals(ITEM_COPY)) {
@@ -518,8 +605,11 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			setBackground(bg);
 		}
 
-	private void handlePopupTrigger(MouseEvent e) {
-		if (mMol != null && e.isPopupTrigger() && mClipboardHandler != null) {
+	private boolean handlePopupTrigger(MouseEvent e) {
+		if (!e.isPopupTrigger())
+			return false;
+
+		if (mMol != null && mClipboardHandler != null) {
 			JPopupMenu popup = new JPopupMenu();
 
 			JMenuItem item1 = new JMenuItem(ITEM_COPY);
@@ -548,6 +638,8 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
 			popup.show(this, e.getX(), e.getY());
 			}
+
+		return true;
 		}
 
 	private void informListeners() {
