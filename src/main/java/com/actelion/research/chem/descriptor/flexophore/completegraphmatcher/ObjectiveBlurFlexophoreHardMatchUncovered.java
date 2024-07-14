@@ -1,5 +1,6 @@
 package com.actelion.research.chem.descriptor.flexophore.completegraphmatcher;
 
+import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.graph.MinimumSpanningTree;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
@@ -92,6 +93,8 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	private double [][] arrRelativeDistanceMatrixQuery;
 
 	private double [][] arrRelativeDistanceMatrixBase;
+
+	private double [] arrSimilarityTmp;
 
 	private Matrix maHelperAdjacencyQuery;
 
@@ -192,6 +195,8 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			arrSimilarityHistograms[i] = new float [maxNumHistograms];
 			Arrays.fill(arrSimilarityHistograms[i], INIT_VAL);
 		}
+
+		arrSimilarityTmp=new double[ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE];
 	}
 
 	/**
@@ -320,11 +325,8 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		//
 		if(mapping){
 			for (int i = 0; i < heap; i++) {
-
 				int indexNodeQuery = solution.getIndexQueryFromHeap(i);
-
 				int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
-
 				if(!areNodesMapping(indexNodeQuery, indexNodeBase)) {
 					mapping = false;
 					break;
@@ -467,9 +469,16 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		}
 
 
-		double sumPairwiseMapping = 0;
+		// double sumPairwiseMapping = 0;
 
 		// double productPairwiseMapping = 0;
+
+		int cc=0;
+
+		int nMappings = ((heap * heap)-heap) / 2;
+
+		double [] arrMappingWeights = new double[nMappings];
+		double [] arrSimilarityWeighted = new double[nMappings];
 
 		for (int i = 0; i < heap; i++) {
 			
@@ -484,17 +493,25 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 				double scorePairwiseMapping = getScorePairwiseMapping(indexNode1Query, indexNode2Query, indexNode1Base, indexNode2Base);
 
-				sumPairwiseMapping += scorePairwiseMapping;
+				double w =
+						mdhvQuery.getWeightPharmacophorePoint(indexNode1Query)
+								* mdhvQuery.getWeightPharmacophorePoint(indexNode2Query);
+
+				arrMappingWeights[cc]=w;
+
+				arrSimilarityWeighted[cc++]=scorePairwiseMapping * w;
 
 				if(verbose) {
 					System.out.println("scorePairwiseMapping " + Formatter.format2(scorePairwiseMapping));
 				}
 			}
 		}
-		
-		double mappings = ((heap * heap)-heap) / 2.0;
-	
-		avrPairwiseMappingScaled = sumPairwiseMapping/mappings;
+		// double mappings = ((heap * heap)-heap) / 2.0;
+
+		double sumMappingWeights = ArrayUtilsCalc.sum(arrMappingWeights);
+		double sumSimilarityWeighted = ArrayUtilsCalc.sum(arrSimilarityWeighted);
+
+		avrPairwiseMappingScaled = sumSimilarityWeighted/sumMappingWeights;
 				
 		coverageQuery = getRatioMinimumSpanningTreeQuery(solution);
 		
@@ -633,16 +650,19 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			return (float)similarity;
 		}
 
-		double sumSimilarityNodes = 0;
+		double sumSimilarityNodesWeighted = 0;
+
+		double sumWeights = 0;
 		for (int i = 0; i < heap; i++) {
 			int indexNodeQuery = solution.getIndexQueryFromHeap(i);
+			double w = mdhvQuery.getWeightPharmacophorePoint(indexNodeQuery);
 			int indexNodeBase = solution.getIndexCorrespondingBaseNode(indexNodeQuery);
-			double similarityNodePair = getSimilarityNodes(indexNodeQuery, indexNodeBase);
-			sumSimilarityNodes += similarityNodePair;
+			double similarityNodePairWeighted = getSimilarityNodes(indexNodeQuery, indexNodeBase)*w;
+			sumSimilarityNodesWeighted += similarityNodePairWeighted;
+			sumWeights+=w;
 		}
 
-		double mappings = heap;
-		avrPairwiseMappingScaled = sumSimilarityNodes/mappings;
+		avrPairwiseMappingScaled = sumSimilarityNodesWeighted / sumWeights;
 		coverageQuery = 0;
 		coverageBase = 0;
 		double ratioNodesMatchQuery = Math.min(nodesQuery, heap) / (double)Math.max(nodesQuery, heap);

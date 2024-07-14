@@ -45,7 +45,9 @@ public interface IMolDistHist extends ICompleteGraph {
 	byte [] getDistHist(int indexAt1, int indexAt2, byte[] arr);
 	
 	boolean isInevitablePharmacophorePoint(int indexNode);
-	
+
+	double getWeightPharmacophorePoint(int indexNode);
+
 	int getNumInevitablePharmacophorePoints();
 
 	
