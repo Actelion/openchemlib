@@ -1440,7 +1440,6 @@ public class StringFunctions {
 		boolean lower=false;
 		
 	    for(char c : s.toCharArray()) {
-	    	
 	       if(Character.isUpperCase(c)) {
 	    	   upper = true;
 	        } else if(Character.isLowerCase(c)) {
@@ -1454,7 +1453,6 @@ public class StringFunctions {
 	    if(upper && lower){
 	    	return true;
 	    }
-	    
 	    return false;
 	}
 	
@@ -1468,7 +1466,6 @@ public class StringFunctions {
 	public static boolean isMissingParenthesis(String name) {
 		
 		int ccOpen=0;
-		
 		int ccClose=0;
 		for (int i = 0; i < name.length(); i++) {
 			if(name.charAt(i) == '(') {
@@ -1482,7 +1479,6 @@ public class StringFunctions {
 			return false;
 		}
 		
-		
 		return true;
 	}
 
@@ -1493,7 +1489,6 @@ public class StringFunctions {
 		return sw.toString();
 
 	}
-
 	public static void main(String[] args) {
 
 		String sLine = "Pos3ition: 8 15 StartName:XXXEn7890dName0";

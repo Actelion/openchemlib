@@ -408,5 +408,19 @@ public class ArrayUtils {
 		return ov;
 	}
 
-
+	/**
+	 *
+	 * @param s string with single digits '123456789'.
+	 * @return
+	 */
+	public static int [] parseSingleDigitString(String s) {
+		if (s == null)
+			return null;
+		int[] arr = new int[s.length()];
+		for (int i = 0; i < s.length(); i++) {
+			int c = Integer.parseInt(Character.toString(s.charAt(i)));
+			arr[i] = c;
+		}
+		return arr;
+	}
 }
