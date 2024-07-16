@@ -142,7 +142,7 @@ public class MolDistHistVizEncoder {
 			byte [] arrIndexInevitablePPPoints = de.decodeCounts(strInevitablePPPoints);
 			
 			for (int i = 0; i < arrIndexInevitablePPPoints.length; i++) {
-				mdhv.addInevitablePharmacophorePoint(arrIndexInevitablePPPoints[i]);
+				mdhv.addMandatoryPharmacophorePoint(arrIndexInevitablePPPoints[i]);
 			}
 			
 		}

@@ -49,7 +49,7 @@ import java.util.List;
  */
 public class CommandLineParser {
 
-    public static final String SEP_TAG = ";";
+    public static final String SEP_TAG = ",";
 
     public static final String HELP = "-h";
 
@@ -131,6 +131,16 @@ public class CommandLineParser {
             l.add(tok.trim());
         }
         return l;
+    }
+    public int [] getAsIntegerArray(String command) {
+        String s = hmCommandValue.get(command);
+        String [] a = s.split(SEP_TAG);
+        int [] b = new int[a.length];
+        for (int i = 0; i < a.length; i++) {
+            b[i]=Integer.parseInt(a[i]);
+        }
+
+        return b;
     }
 
     public File getAsFile(String command) {

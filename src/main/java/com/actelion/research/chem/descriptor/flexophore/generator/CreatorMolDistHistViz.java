@@ -184,6 +184,9 @@ public class CreatorMolDistHistViz {
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
         boolean successfulInitialization = conformerGeneratorStageTries.setMolecule(molInPlace);
 
+
+
+
         if(!successfulInitialization){
             return null;
         }
@@ -196,10 +199,14 @@ public class CreatorMolDistHistViz {
         liSubGraphIndices = removeExoCyclicElectronPoorN(liSubGraphIndices, molInPlace);
 
 
+
+
         List<MultCoordFragIndex> liMultCoordFragIndex = new ArrayList<>();
         for (SubGraphIndices subGraphIndices : liSubGraphIndices) {
             liMultCoordFragIndex.add(new MultCoordFragIndex(subGraphIndices.getAtomIndices()));
         }
+
+
 
         Molecule3D molViz = createConformations(molInPlace, liMultCoordFragIndex, nConformations);
 
@@ -218,6 +225,8 @@ public class CreatorMolDistHistViz {
             }
             onlyOneConformer = true;
         }
+
+
 
         MolDistHistViz mdhv = create(liMultCoordFragIndex, molViz);
 

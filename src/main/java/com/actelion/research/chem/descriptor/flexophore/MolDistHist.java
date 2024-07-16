@@ -452,13 +452,13 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	 * Only for interface compliance needed.
 	 */
 	@Override
-	public int getNumInevitablePharmacophorePoints() {
+	public int getNumMandatoryPharmacophorePoints() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public boolean isInevitablePharmacophorePoint(int indexNode) {
+	public boolean isMandatoryPharmacophorePoint(int indexNode) {
 		return false;
 	}
 	@Override

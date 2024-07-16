@@ -1,8 +1,10 @@
 package com.actelion.research.chem.descriptor.flexophore;
 
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.descriptor.flexophore.generator.MultCoordFragIndex;
+import com.actelion.research.util.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,4 +64,36 @@ public class MolDistHistVizHelper {
     }
 
 
+    public static void setWeights(MolDistHistViz mdhv, int [] arrWeight){
+
+        // The molecule in the descriptor contains the pharmacophore points as additional single atoms.
+        Molecule3D m3D = new Molecule3D(mdhv.getMolecule());
+        m3D.ensureHelperArrays(Molecule.cHelperRings);
+        m3D.stripSmallFragments();
+
+        if(m3D.getAtoms()!=arrWeight.length){
+            throw new RuntimeException("Weight vector differs in dimension to number of atoms!");
+        }
+
+        for (PPNodeViz ppNodeViz : mdhv.getNodes()) {
+            int [] a = ppNodeViz.getArrayIndexOriginalAtoms();
+            int [] w = new int[a.length];
+            for (int i = 0; i < a.length; i++) {
+                w[i]=arrWeight[a[i]];
+            }
+            int maxWeight = ArrayUtils.max(w);
+            if(ConstantsFlexophore.LABEL_MANDATORY==maxWeight){
+                mdhv.addMandatoryPharmacophorePoint(ppNodeViz.getIndex());
+                mdhv.setNodeWeight(ppNodeViz.getIndex(), ConstantsFlexophore.VAL_WEIGHT_MANDATORY);
+            } else if(ConstantsFlexophore.LABEL_LOW==maxWeight){
+                mdhv.setNodeWeight(ppNodeViz.getIndex(), ConstantsFlexophore.VAL_WEIGHT_LOW);
+            }
+
+//            System.out.println(ArrayUtils.toString(a));
+//            System.out.println(ArrayUtils.toString(w));
+//            System.out.println();
+//
+        }
+
+    }
 }

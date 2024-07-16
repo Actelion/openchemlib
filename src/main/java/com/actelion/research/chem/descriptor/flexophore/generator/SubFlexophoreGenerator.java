@@ -272,17 +272,17 @@ public class SubFlexophoreGenerator {
 		for (int [] arr : liIndices) {
 
 			boolean inevitableAllInSub = true;
-			if(mdh.getNumInevitablePharmacophorePoints()>0){
+			if(mdh.getNumMandatoryPharmacophorePoints()>0){
 				
 				int nInevitableInSub = 0;
 				for (int i = 0; i < arr.length; i++) {
 					
-					if(mdh.isInevitablePharmacophorePoint(arr[i])){
+					if(mdh.isMandatoryPharmacophorePoint(arr[i])){
 						nInevitableInSub++;	
 					}
 				}
 				
-				if(nInevitableInSub < mdh.getNumInevitablePharmacophorePoints()){
+				if(nInevitableInSub < mdh.getNumMandatoryPharmacophorePoints()){
 					inevitableAllInSub = false;
 				}
 			}

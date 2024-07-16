@@ -108,13 +108,13 @@ public class MolDistHistVizHiddenPPPoints extends MolDistHistViz implements Seri
 		
 	}
 	
-	public void addInevitablePharmacophorePoint(int indexNodeAbsolute){
+	public void addMandatoryPharmacophorePoint(int indexNodeAbsolute){
 		
 		if(isHiddenPharmacophorePointAbsolute((byte)indexNodeAbsolute)) {
 			removeHiddenPharmacophorePoint((byte)indexNodeAbsolute);
 		}
 		
-		super.addInevitablePharmacophorePoint(indexNodeAbsolute);
+		super.addMandatoryPharmacophorePoint(indexNodeAbsolute);
 		
 	}
 
@@ -168,7 +168,7 @@ public class MolDistHistVizHiddenPPPoints extends MolDistHistViz implements Seri
 	}
 	
 	public boolean isInevitablePharmacophorePointSkipHidden(int indexNode) {
-		return super.isInevitablePharmacophorePoint(arrMapHiddenPPPoints[indexNode]);
+		return super.isMandatoryPharmacophorePoint(arrMapHiddenPPPoints[indexNode]);
 	}
 	
 	public int getNumInevitablePharmacophorePointsSkipHidden() {
@@ -213,7 +213,7 @@ public class MolDistHistVizHiddenPPPoints extends MolDistHistViz implements Seri
 	}
 
 	public boolean isInevitablePharmacophorePointAbsolute(int indexNodeAbsolute) {
-		return super.isInevitablePharmacophorePoint(indexNodeAbsolute);
+		return super.isMandatoryPharmacophorePoint(indexNodeAbsolute);
 	}
 	
 
@@ -243,7 +243,7 @@ public class MolDistHistVizHiddenPPPoints extends MolDistHistViz implements Seri
 				int indexNNew = mdhv.addNode(node);
 				
 				if(isInevitablePharmacophorePointAbsolute(i)){
-					mdhv.addInevitablePharmacophorePoint(indexNNew);
+					mdhv.addMandatoryPharmacophorePoint(indexNNew);
 				}
 				
 //				System.out.println(i + " " + node.toString());
