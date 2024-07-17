@@ -113,12 +113,21 @@ public class ExitVectorPoint implements IPharmacophorePoint {
 	}
 	
 	@Override
-	public void updateAtomIndeces(int[] map) {
+	public void updateAtomIndices(int[] map) {
 		coreAtom = map[coreAtom];
 		exitAtom = map[exitAtom];
 		
 	}
 
+	/**
+	 * exitAtom
+	 * @return coreAtom and exitAtom
+	 */
+	@Override
+	public int[] getAtomIndices() {
+		int [] a = {coreAtom, exitAtom};
+		return a;
+	}
 	@Override
 	public IPharmacophorePoint copyPharmacophorePoint() {
 		// TODO Auto-generated method stub

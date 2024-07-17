@@ -121,8 +121,14 @@ public class SimplePharmacophorePoint implements IPharmacophorePoint {
 	}
 
 	@Override
-	public void updateAtomIndeces(int[] map) {
+	public void updateAtomIndices(int[] map) {
 		atomID = map[atomID];
+	}
+
+	@Override
+	public int[] getAtomIndices() {
+		int [] a = {atomID};
+		return a;
 	}
 
 	@Override

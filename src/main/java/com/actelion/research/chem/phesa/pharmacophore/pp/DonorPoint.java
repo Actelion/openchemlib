@@ -110,10 +110,20 @@ public class DonorPoint implements IPharmacophorePoint {
 	}
 	
 	@Override
-	public void updateAtomIndeces(int[] map) {
+	public void updateAtomIndices(int[] map) {
 		donorAtom = map[donorAtom];
 		donorHydrogen = map[donorHydrogen];
 		
+	}
+
+	/**
+	 *
+	 * @return donorAtom and donorHydrogen
+	 */
+	@Override
+	public int[] getAtomIndices() {
+		int [] a = {donorAtom, donorHydrogen};
+		return a;
 	}
 
 	@Override

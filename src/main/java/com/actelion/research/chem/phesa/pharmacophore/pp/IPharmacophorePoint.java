@@ -40,7 +40,9 @@ public interface IPharmacophorePoint {
 	
 	public void setDirectionality(Coordinates directionality);
 	
-	public void updateAtomIndeces(int[] map);
+	public void updateAtomIndices(int[] map);
+
+	int [] getAtomIndices();
 	
 	public IPharmacophorePoint copyPharmacophorePoint();
 	

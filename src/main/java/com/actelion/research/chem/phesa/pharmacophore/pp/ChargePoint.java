@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.util.ArrayUtils;
 
 public class ChargePoint implements IPharmacophorePoint {
 	private int chargeAtom;
@@ -50,9 +51,6 @@ public class ChargePoint implements IPharmacophorePoint {
 		center = com;
 	}
 	
-
-	
-
 	@Override
 	public Coordinates getDirectionality() {
 		// TODO Auto-generated method stub
@@ -133,16 +131,21 @@ public class ChargePoint implements IPharmacophorePoint {
 	}
 	
 	@Override
-	public void updateAtomIndeces(int[] map) {
+	public void updateAtomIndices(int[] map) {
 		chargeAtom = map[chargeAtom];
 
 		for(int i=0;i<neighbours.size();i++) {
 			int neighbour = map[neighbours.get(i)];
 			neighbours.set(i, neighbour);
 		}
-
-		
 	}
+
+	@Override
+	public int[] getAtomIndices() {
+		int [] a = {chargeAtom};
+		return a;
+	}
+
 
 	@Override
 	public IPharmacophorePoint copyPharmacophorePoint() {

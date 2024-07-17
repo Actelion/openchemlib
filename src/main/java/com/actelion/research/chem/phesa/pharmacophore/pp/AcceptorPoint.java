@@ -339,15 +339,18 @@ public class AcceptorPoint implements IPharmacophorePoint {
 	}
 
 	@Override
-	public void updateAtomIndeces(int[] map) {
+	public void updateAtomIndices(int[] map) {
 		acceptorAtom = map[acceptorAtom];
-
 		for(int i=0;i<neighbours.size();i++) {
 			int neighbour = map[neighbours.get(i)];
 			neighbours.set(i, neighbour);
 		}
+	}
 
-		
+	@Override
+	public int[] getAtomIndices() {
+		int [] a = {acceptorAtom};
+		return a;
 	}
 
 	@Override

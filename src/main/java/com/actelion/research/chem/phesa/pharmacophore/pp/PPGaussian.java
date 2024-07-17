@@ -1,16 +1,10 @@
 package com.actelion.research.chem.phesa.pharmacophore.pp;
 
-import com.actelion.research.util.EncoderFloatingPointNumbers;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
-import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.EncodeFunctions;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;
@@ -179,7 +173,7 @@ public class PPGaussian extends Gaussian3D {
 	@Override
 	public void updateAtomIndeces(int[] map) {
 		atomId = map[atomId];
-		pp.updateAtomIndeces(map);
+		pp.updateAtomIndices(map);
 	}
 
 	@Override

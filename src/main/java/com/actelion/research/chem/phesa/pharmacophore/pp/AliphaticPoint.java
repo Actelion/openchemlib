@@ -4,6 +4,7 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
+import com.actelion.research.util.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,12 @@ public class AliphaticPoint implements IPharmacophorePoint {
 	private Coordinates center;
 	private static final Coordinates directionality = new Coordinates(1.0,0.0,0.0);
 
+	/**
+	 *
+	 * @param mol
+	 * @param a is included in atoms
+	 * @param atoms
+	 */
 	public AliphaticPoint(StereoMolecule mol, int a, List<Integer> atoms) {
 		referenceAtom = a;
 		this.atoms = atoms;
@@ -122,14 +129,17 @@ public class AliphaticPoint implements IPharmacophorePoint {
 	
 
 	@Override
-	public void updateAtomIndeces(int[] map) {
+	public void updateAtomIndices(int[] map) {
 		referenceAtom = map[referenceAtom];
 		for(int i=0;i<atoms.size();i++) {
 			int neighbour = map[atoms.get(i)];
 			atoms.set(i, neighbour);
 		}
+	}
 
-		
+	@Override
+	public int[] getAtomIndices() {
+		return ArrayUtils.toIntArray(atoms);
 	}
 
 	@Override

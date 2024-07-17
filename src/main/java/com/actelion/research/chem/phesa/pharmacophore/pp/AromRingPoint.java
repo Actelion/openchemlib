@@ -6,13 +6,20 @@ import java.util.List;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.util.ArrayUtils;
 
 public class AromRingPoint implements IPharmacophorePoint {
 	private int referenceAtom;
 	private List<Integer> ringAtoms;
 	private Coordinates center;
 	private static final Coordinates directionality = new Coordinates(1.0,0.0,0.0);
-	
+
+	/**
+	 *
+	 * @param mol
+	 * @param a is included in ringAtoms
+	 * @param ringAtoms
+	 */
 	public AromRingPoint(StereoMolecule mol, int a, List<Integer> ringAtoms) {
 		referenceAtom = a;
 		this.ringAtoms = ringAtoms;
@@ -115,14 +122,17 @@ public class AromRingPoint implements IPharmacophorePoint {
 	
 
 	@Override
-	public void updateAtomIndeces(int[] map) {
+	public void updateAtomIndices(int[] map) {
 		referenceAtom = map[referenceAtom];
 		for(int i=0;i<ringAtoms.size();i++) {
 			int neighbour = map[ringAtoms.get(i)];
 			ringAtoms.set(i, neighbour);
 		}
+	}
 
-		
+	@Override
+	public int[] getAtomIndices() {
+		return ArrayUtils.toIntArray(ringAtoms);
 	}
 
 	@Override
