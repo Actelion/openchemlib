@@ -34,12 +34,11 @@
 
 package com.actelion.research.chem.descriptor.flexophore.redgraph;
 
+import com.actelion.research.chem.ExtendedMoleculeFunctions;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.hash.HashSetInt;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * SubGraphIndices
@@ -53,8 +52,6 @@ import java.util.List;
 public class SubGraphIndices {
 
     private HashSetInt hsIndexAtom;
-
-
 
 
     public SubGraphIndices() {
@@ -179,6 +176,18 @@ public class SubGraphIndices {
         return sb.toString();
     }
 
+
+    public static boolean isOnlyCarbon(StereoMolecule mol, SubGraphIndices sgi){
+        boolean carbon=true;
+        for (int atomIndex : sgi.getAtomIndices()) {
+            if(mol.getAtomicNo(atomIndex)!=6){
+                carbon=false;
+                break;
+            }
+        }
+        return carbon;
+    }
+
     /**
      * Merges fragments containing a common atom index. The fragments in the list are merged and the list is
      * shrinked.
@@ -216,7 +225,6 @@ public class SubGraphIndices {
             SubGraphIndices frag1 = liFragment.get(i);
             OverlappingFragments overlappingFragments = new OverlappingFragments(frag1);
             liOverlappingFragments.add(overlappingFragments);
-
         }
 
         boolean merged = true;
@@ -252,6 +260,64 @@ public class SubGraphIndices {
             hs.add(fragment.getAtomIndices());
         }
     }
+
+    /**
+     *
+     * @param mol
+     * @param liSGI
+     * @param indexSGI index for the {@link SubGraphIndices} undr consideration.
+     * @return true if the {@link SubGraphIndices} under consideration connects two or more other {@link SubGraphIndices}.
+     */
+    public static boolean isLinker(StereoMolecule mol, List<SubGraphIndices> liSGI, int indexSGI){
+
+        int atoms = mol.getAtoms();
+
+        SubGraphIndices sgi = liSGI.get(indexSGI);
+
+        boolean [] arrAtomIndicesUsedMap = new boolean[atoms];
+
+        for (int indexAtmUsed : sgi.getAtomIndices()) {
+            arrAtomIndicesUsedMap[indexAtmUsed] = true;
+        }
+
+        boolean [] mapSGI = new boolean[liSGI.size()];
+
+        for (int indAtmStart : sgi.getAtomIndices()) {
+            LinkedList<Integer> liIndAtm = new LinkedList<>();
+            liIndAtm.add(indAtmStart);
+
+            out:
+            while (!liIndAtm.isEmpty()) {
+                int indAtm = liIndAtm.poll();
+                int nConnAtms = mol.getConnAtoms(indAtm);
+                for (int i = 0; i < nConnAtms; i++) {
+                    int indAtmConn = mol.getConnAtom(indAtm, i);
+                    if (arrAtomIndicesUsedMap[indAtmConn]) {
+                        continue;
+                    }
+                    arrAtomIndicesUsedMap[indAtmConn] = true;
+                    // Is in neighbour sgi?
+                    for (int j = 0; j < liSGI.size(); j++) {
+                        if(indexSGI==j)
+                            continue;
+                        SubGraphIndices sgi2Check = liSGI.get(j);
+                        if(sgi2Check.contains(indAtmConn)){
+                            mapSGI[j]=true;
+                            break out;
+                        }
+                    }
+                    liIndAtm.add(indAtmConn);
+                }
+            }
+        }
+
+        int ccLinked=0;
+        for (boolean b : mapSGI) {
+            if(b)ccLinked++;
+        }
+        return (ccLinked>1);
+    }
+
 
     public static Comparator<SubGraphIndices> getComparatorNumIndices() {
 

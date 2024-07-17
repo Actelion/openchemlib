@@ -63,7 +63,6 @@ public class MolDistHistVizHelper {
         return molDistHistViz;
     }
 
-
     public static void setWeights(MolDistHistViz mdhv, int [] arrWeight){
 
         // The molecule in the descriptor contains the pharmacophore points as additional single atoms.
@@ -82,18 +81,12 @@ public class MolDistHistVizHelper {
                 w[i]=arrWeight[a[i]];
             }
             int maxWeight = ArrayUtils.max(w);
-            if(ConstantsFlexophore.LABEL_MANDATORY==maxWeight){
+            if(ConstantsFlexophore.LABEL_WEIGHT_MANDATORY ==maxWeight){
                 mdhv.addMandatoryPharmacophorePoint(ppNodeViz.getIndex());
                 mdhv.setNodeWeight(ppNodeViz.getIndex(), ConstantsFlexophore.VAL_WEIGHT_MANDATORY);
-            } else if(ConstantsFlexophore.LABEL_LOW==maxWeight){
+            } else if(ConstantsFlexophore.LABEL_WEIGHT_LOW ==maxWeight){
                 mdhv.setNodeWeight(ppNodeViz.getIndex(), ConstantsFlexophore.VAL_WEIGHT_LOW);
             }
-
-//            System.out.println(ArrayUtils.toString(a));
-//            System.out.println(ArrayUtils.toString(w));
-//            System.out.println();
-//
         }
-
     }
 }

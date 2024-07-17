@@ -346,12 +346,9 @@ public class StringFunctions {
 		String maxo = "";
 		
 		List<String> liPat = getAllSubStrings(li.get(0), minsize);
-		
 		for (int i = 0; i < liPat.size(); i++) {
 			String pat = liPat.get(i);
-			
 			Pattern p = Pattern.compile(pat);
-			
 			boolean match=true;
 			for (int j = 1; j < li.size(); j++) {
 				String line = li.get(j);
@@ -519,9 +516,6 @@ public class StringFunctions {
 				cLastLetter = replacement;
 			}
 		}
-		
-		
-		
 		return sb.toString();
 	}
 	
@@ -535,13 +529,10 @@ public class StringFunctions {
 	 */
 	public static String getString(String sLine, String sStart, String sEnd) {
 		String str = "";
-
 		int iStart = sLine.indexOf(sStart) + sStart.length();
 		int iEnd = sLine.indexOf(sEnd);
-
 		if (iStart > -1 && iEnd > -1)
 			str = sLine.substring(iStart, iEnd);
-
 		return str;
 	}
 
@@ -554,12 +545,9 @@ public class StringFunctions {
 	public static String getStringFromRegEx(String str, String regex) {
 
 		Pattern pa = Pattern.compile(regex);
-    	
     	Matcher ma = pa.matcher(str);
-    	
 		int start = -1;
 		int end = -1;
-		
     	if(ma.find()){
     		MatchResult mr = ma.toMatchResult();
     		start = mr.start();
@@ -572,14 +560,10 @@ public class StringFunctions {
 	}
 
 	public static Point getStartEnd(String str, String regex) {
-
 		Pattern pa = Pattern.compile(regex);
-
 		Matcher ma = pa.matcher(str);
-
 		int start = -1;
 		int end = -1;
-
 		if(ma.find()){
 			MatchResult mr = ma.toMatchResult();
 			start = mr.start();
@@ -587,17 +571,13 @@ public class StringFunctions {
 		} else {
 			return null;
 		}
-
 		return new Point(start,end);
 	}
 
 	
 	public static boolean isRegexInString(String str, String regex) {
-
 		Pattern pa = Pattern.compile(regex);
-    	
     	Matcher ma = pa.matcher(str);
-    	
     	if(ma.find()){
     		return true;
     	} else {
@@ -612,20 +592,13 @@ public class StringFunctions {
 	 * @return expression which was matched by regex.
 	 */
 	public static String extract(String str, String regex) {
-
 		String substring = "";
-		
 		Pattern pa = Pattern.compile(regex);
-    	
     	Matcher ma = pa.matcher(str);
-    	
     	if(ma.find()) {
-			
 			MatchResult mr = ma.toMatchResult();
-			
 			substring = mr.group();
     	}
-    	
     	return substring;
 	}
 	
@@ -638,26 +611,16 @@ public class StringFunctions {
 	public static String extractInverse(String str, String regex) {
 
 		String substring = "";
-		
 		Pattern pa = Pattern.compile(regex);
-    	
     	Matcher ma = pa.matcher(str);
-    	
     	if(ma.find()) {
-
 			MatchResult mr = ma.toMatchResult();
-
 			int start = mr.start();
-
 			int end = mr.end();
-
 			String rest1 = str.substring(0, start);
-
 			String rest2 = str.substring(end);
-
 			substring = rest1 + rest2;
 		}
-
     	return substring;
 	}
 
@@ -1055,18 +1018,12 @@ public class StringFunctions {
 	}
 
 	public static String toString(int [] arr, String seperator){
-
 		StringBuilder sb = new  StringBuilder();
-
 		for (int i = 0; i < arr.length; i++) {
-
 			if(sb.length()>0)
 				sb.append(seperator);
-
 			sb.append(Integer.toString(arr[i]));
-
 		}
-
 		return sb.toString();
 	}
 
@@ -1076,25 +1033,18 @@ public class StringFunctions {
 	 * @return
 	 */
 	public static String toStringTabNL(String [][] arr){
-
 		StringBuilder sb = new  StringBuilder();
-
 		for (int i = 0; i < arr.length; i++) {
-
 			for (int j = 0; j < arr[i].length; j++) {
 				sb.append(arr[i][j]);
-
 				if(j <arr [i].length-1){
 					sb.append("\t");
 				}
 			}
-
 			if(i < arr.length-1){
 				sb.append("\n");
 			}
-
 		}
-
 		return sb.toString();
 	}
 
@@ -1129,29 +1079,22 @@ public class StringFunctions {
 	
 	public static String toStringLong(List<Long> li, String sep) {
 		StringBuilder sb = new StringBuilder();
-		
 		for (int i = 0; i < li.size(); i++) {
 			sb.append(li.get(i));
-			
 			if(i < li.size()-1){
 				sb.append(sep);
 			}
 		}
-		
 		return sb.toString();
 	}
 	public static String toStringInt(List<Integer> li, String sep) {
-
 		StringBuilder sb = new StringBuilder();
-
 		for (int i = 0; i < li.size(); i++) {
 			sb.append(li.get(i));
-
 			if(i < li.size()-1){
 				sb.append(sep);
 			}
 		}
-
 		return sb.toString();
 	}
 	public static String toStringInt(List<Integer> li) {
@@ -1160,13 +1103,10 @@ public class StringFunctions {
 
 	public static String toSortedString(List<String> li) {
 		StringBuilder sb = new StringBuilder();
-		
 		Collections.sort(li);
-		
 		for (String s : li) {
 			sb.append(s);
 		}
-		
 		return sb.toString();
 	}
 

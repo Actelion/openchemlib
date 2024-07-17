@@ -14,9 +14,9 @@ public class ConstantsFlexophore {
 
 
 
-    public static final int LABEL_LOW = 0;
-    public static final int LABEL_NORMAL = 1;
-    public static final int LABEL_MANDATORY = 2;
+    public static final int LABEL_WEIGHT_LOW = 0;
+    public static final int LABEL_WEIGHT_NORMAL = 1;
+    public static final int LABEL_WEIGHT_MANDATORY = 2;
     public static final double VAL_WEIGHT_LOW = 0.5;
     public static final double VAL_WEIGHT_NORMAL = 1;
     public static final double VAL_WEIGHT_MANDATORY = 2;

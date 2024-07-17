@@ -436,9 +436,7 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	public MolDistHistViz createVisualDescriptor(StereoMolecule fragBiggest) {
 
 		MolDistHistViz mdhv = null;
-
 		recentException = null;
-
 		try {
 			mdhv = creatorMolDistHistViz.create(fragBiggest);
 		} catch (Exception e) {
@@ -453,7 +451,6 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 				recentException = e;
 			}
 		}
-
 		return mdhv;
 	}
 

@@ -119,8 +119,6 @@ public class SubGraphExtractor {
             }
         }
 
-
-
         List<SubGraphIndices> liFragment = new ArrayList<>();
 
         //
@@ -128,13 +126,9 @@ public class SubGraphExtractor {
         //
         List<SubGraphIndices> liFragmentHetero = getEndStandingHeteroGroups(mol, liEndStandingAtoms);
 
-
-
         liFragment.addAll(liFragmentHetero);
         HashSetInt hsAtomIndicesInFragment = new HashSetInt();
         SubGraphIndices.addAtomIndices(hsAtomIndicesInFragment, liFragmentHetero);
-
-
 
         //
         // Small rings
@@ -144,7 +138,6 @@ public class SubGraphExtractor {
         HashSetInt hsAtomIndicesInSmallRings = new HashSetInt();
         SubGraphIndices.addAtomIndices(hsAtomIndicesInSmallRings, liFragmentRings);
         hsAtomIndicesInFragment.add(hsAtomIndicesInSmallRings.getValues());
-
 
         //
         // Remaining hetero atoms
