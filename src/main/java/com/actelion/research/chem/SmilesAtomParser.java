@@ -23,6 +23,7 @@ public class SmilesAtomParser {
 		mParentParser = parser;
 		mMode = mode;
 		mAllowCactvs = (mode & SmilesParser.MODE_NO_CACTUS_SYNTAX) == 0;
+		atomicNo = -1;
 		charge = 0;
 		mapNo = 0;
 		abnormalValence = -1;
