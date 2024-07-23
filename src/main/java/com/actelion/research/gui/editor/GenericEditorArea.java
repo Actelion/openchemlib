@@ -44,7 +44,6 @@ import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
-import com.actelion.research.gui.swing.SwingCursorHelper;
 import com.actelion.research.util.ColorHelper;
 
 import java.awt.*;
@@ -199,7 +198,7 @@ public class GenericEditorArea implements GenericEventListener {
 		mAllowQueryFeatures = true;
 		mAllowFragmentChangeOnPasteOrDrop = false;
 		mPendingRequest = cRequestNone;
-		mCurrentCursor = SwingCursorHelper.cPointerCursor;
+		mCurrentCursor = GenericCursorHelper.cPointerCursor;
 		mAtomKeyStrokeBuffer = new StringBuilder();
 
 		mAllowedPseudoAtoms = DEFAULT_ALLOWED_PSEUDO_ATOMS;
@@ -3365,39 +3364,39 @@ public class GenericEditorArea implements GenericEventListener {
 		int cursor = -1;
 		switch (mCurrentTool) {
 			case GenericEditorToolbar.cToolZoom:
-				cursor = SwingCursorHelper.cZoomCursor;
+				cursor = GenericCursorHelper.cZoomCursor;
 				break;
 			case GenericEditorToolbar.cToolLassoPointer:
 				if ((mCurrentHiliteAtom != -1 && mMol.isSelectedAtom(mCurrentHiliteAtom))
 						|| (mCurrentHiliteBond != -1 && mMol.isSelectedBond(mCurrentHiliteBond))) {
-					cursor = mMouseIsDown ? SwingCursorHelper.cFistCursor
-							: mShiftIsDown ? SwingCursorHelper.cHandPlusCursor
-							: SwingCursorHelper.cHandCursor;
+					cursor = mMouseIsDown ? GenericCursorHelper.cFistCursor
+							: mShiftIsDown ? GenericCursorHelper.cHandPlusCursor
+							: GenericCursorHelper.cHandCursor;
 				} else if (mCurrentHiliteAtom != -1
 						|| mCurrentHiliteBond != -1) {
-					cursor = SwingCursorHelper.cPointerCursor;
+					cursor = GenericCursorHelper.cPointerCursor;
 				} else if (mCurrentHiliteObject != null) {
-					cursor = mMouseIsDown ? SwingCursorHelper.cFistCursor
+					cursor = mMouseIsDown ? GenericCursorHelper.cFistCursor
 							: (mShiftIsDown
 							&& !(mCurrentHiliteObject instanceof ReactionArrow)) ?
-							SwingCursorHelper.cHandPlusCursor : SwingCursorHelper.cHandCursor;
+							GenericCursorHelper.cHandPlusCursor : GenericCursorHelper.cHandCursor;
 				} else {
 					cursor = mShiftIsDown ?
-							(mAltIsDown ? SwingCursorHelper.cSelectRectPlusCursor : SwingCursorHelper.cLassoPlusCursor)
-							: (mAltIsDown ? SwingCursorHelper.cSelectRectCursor : SwingCursorHelper.cLassoCursor);
+							(mAltIsDown ? GenericCursorHelper.cSelectRectPlusCursor : GenericCursorHelper.cLassoPlusCursor)
+							: (mAltIsDown ? GenericCursorHelper.cSelectRectCursor : GenericCursorHelper.cLassoCursor);
 				}
 				break;
 			case GenericEditorToolbar.cToolDelete:
-				cursor = SwingCursorHelper.cDeleteCursor;
+				cursor = GenericCursorHelper.cDeleteCursor;
 				break;
 			case GenericEditorToolbar.cToolChain:
-				cursor = SwingCursorHelper.cChainCursor;
+				cursor = GenericCursorHelper.cChainCursor;
 				break;
 			case GenericEditorToolbar.cToolText:
-				cursor = SwingCursorHelper.cTextCursor;
+				cursor = GenericCursorHelper.cTextCursor;
 				break;
 			default:
-				cursor = SwingCursorHelper.cPointerCursor;
+				cursor = GenericCursorHelper.cPointerCursor;
 				break;
 		}
 
