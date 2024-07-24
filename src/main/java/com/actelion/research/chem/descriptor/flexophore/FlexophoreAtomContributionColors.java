@@ -117,7 +117,7 @@ public class FlexophoreAtomContributionColors {
 		return mRefRadius;
 	}
 
-	private int[] createDiverseColorList(int colorCount) {
+	public static int[] createDiverseColorList(int colorCount) {
 		if (colorCount <= cDiverseColor.length)
 			return cDiverseColor;
 
