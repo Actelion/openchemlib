@@ -592,10 +592,11 @@ public class GenericEditorArea implements GenericEventListener {
 		if (mCurrentTool != newTool) {
 			if (mCurrentTool == GenericEditorToolbar.cToolMapper
 					|| newTool == GenericEditorToolbar.cToolMapper) {
+				mCurrentTool = newTool;
 				update(UPDATE_REDRAW);
+			} else {
+				mCurrentTool = newTool;
 			}
-
-			mCurrentTool = newTool;
 		}
 	}
 
