@@ -358,7 +358,7 @@ public class GenericEditorArea implements GenericEventListener {
 			mDepictor.paintDrawingObjects(context);
 		}
 
-		if (mCurrentHiliteAtom != -1 && !mAtomKeyStrokeBuffer.isEmpty()) {
+		if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0) {
 			int x = (int)mMol.getAtomX(mCurrentHiliteAtom);
 			int y = (int)mMol.getAtomY(mCurrentHiliteAtom);
 			String s = mAtomKeyStrokeBuffer.toString();
@@ -951,7 +951,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	private void eventHappened(GenericMouseEvent e) {
 		if (e.getWhat() == GenericMouseEvent.MOUSE_PRESSED) {
-			if (mCurrentHiliteAtom != -1 && !mAtomKeyStrokeBuffer.isEmpty())
+			if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0)
 				expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
 
 			mAtomKeyStrokeBuffer.setLength(0);
@@ -1283,7 +1283,7 @@ public class GenericEditorArea implements GenericEventListener {
 				}
 			} else if (mCurrentHiliteAtom != -1) {
 				int ch = e.getKey();
-				boolean isFirst = (mAtomKeyStrokeBuffer.isEmpty());
+				boolean isFirst = (mAtomKeyStrokeBuffer.length() == 0);
 				if (isFirst)
 					mFirstAtomKey = ch;
 				else {
@@ -2570,7 +2570,7 @@ public class GenericEditorArea implements GenericEventListener {
 				|| hiliteObject != null);
 
 		if (mCurrentHiliteAtom != theAtom) {
-			if (mCurrentHiliteAtom != -1 && !mAtomKeyStrokeBuffer.isEmpty())
+			if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0)
 				expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
 
 			mCurrentHiliteAtom = theAtom;
