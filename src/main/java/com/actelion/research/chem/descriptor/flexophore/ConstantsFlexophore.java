@@ -13,11 +13,8 @@ public class ConstantsFlexophore {
     public static final String TAG_FLEXOPHORE_OBJECT =  "FlexDecoded";
 
 
-
-    public static final int LABEL_WEIGHT_LOW = 0;
-    public static final int LABEL_WEIGHT_NORMAL = 1;
-    public static final int LABEL_WEIGHT_MANDATORY = 2;
     public static final double VAL_WEIGHT_LOW = 0.5;
-    public static final double VAL_WEIGHT_NORMAL = 1;
-    public static final double VAL_WEIGHT_MANDATORY = 2;
+    public static final double VAL_WEIGHT_NORMAL = 1.0;
+    public static final double VAL_WEIGHT_HIGH = 2;
+    public static final double VAL_WEIGHT_HIGH_USER = 2.5;
 }

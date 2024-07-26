@@ -696,7 +696,7 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 	public void realize() {
 
 		arrWeight = new double[liPPNodeViz.size()];
-		Arrays.fill(arrWeight, 1.0);
+		Arrays.fill(arrWeight, ConstantsFlexophore.VAL_WEIGHT_NORMAL);
 
 		for(PPNodeViz node : liPPNodeViz){
 			node.realize();

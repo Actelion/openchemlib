@@ -269,7 +269,6 @@ public class SubGraphIndices {
      * @return true if the {@link SubGraphIndices} under consideration connects two or more other {@link SubGraphIndices}.
      */
     public static boolean isLinker(StereoMolecule mol, List<SubGraphIndices> liSGI, int indexSGI){
-
         int atoms = mol.getAtoms();
 
         SubGraphIndices sgi = liSGI.get(indexSGI);
