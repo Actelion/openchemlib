@@ -39,7 +39,7 @@ import com.actelion.research.chem.StereoMolecule;
 
 public class DescriptorHelper implements DescriptorConstants {
 	
-	public static final String TAG_SIMILARITY = "Similarity ";
+	public static final String TAG_SIMILARITY = " Similarity";
 	
     public static int getDescriptorType(String shortName) {
         DescriptorInfo descriptorInfo = getDescriptorInfo(unifyShortName(shortName));
@@ -88,23 +88,22 @@ public class DescriptorHelper implements DescriptorConstants {
 	/**
 	 * Creates a header tag name from the descriptor short name.
 	 * The tag is used to store virtual screening scores. 
-	 * @param dh
+	 * @param shortName
 	 * @return
 	 */
-	public static String getTagDescriptorSimilarity(ISimilarityCalculator<?> dh) {
-		return TAG_SIMILARITY + dh.getInfo().shortName;
-		}
-
 	public static String getTagDescriptorSimilarity(String shortName) {
-		return TAG_SIMILARITY + shortName;
+		return shortName + TAG_SIMILARITY;
 		}
+	public static String getTagDescriptorSimilarity(ISimilarityCalculator<?> dh) {
+		return getTagDescriptorSimilarity(dh.getInfo().shortName);
+	}
 
 	public static String getTagDescriptorSimilarity(SimilarityCalculatorInfo info) {
-		return TAG_SIMILARITY + info.shortName;
+		return getTagDescriptorSimilarity(info.shortName);
 		}
 
 	public static String getTagDescriptorSimilarity(DescriptorInfo dh){
-		return TAG_SIMILARITY + dh.shortName;
+		return getTagDescriptorSimilarity(dh.shortName);
 		}
 
 	public static<T> T create(DescriptorHandler<T, StereoMolecule> dh, String idcode){
