@@ -574,6 +574,22 @@ public class StringFunctions {
 		return new Point(start,end);
 	}
 
+	public static List<String> splitIncludeSEP(String str, String regex) {
+		List<String> li=new ArrayList<>();
+		Pattern pa = Pattern.compile(regex);
+		Matcher ma = pa.matcher(str);
+		int start = 0;
+		int end = -1;
+		while(ma.find()){
+			MatchResult mr = ma.toMatchResult();
+			end = mr.start();
+			String s = str.substring(start, end);
+			start = end;
+			li.add(s);
+		}
+		return li;
+	}
+
 	
 	public static boolean isRegexInString(String str, String regex) {
 		Pattern pa = Pattern.compile(regex);
