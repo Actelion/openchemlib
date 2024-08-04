@@ -71,7 +71,7 @@ public class JFileChooserOverwrite extends JFileChooser {
 				        	found = true;
 
 				    if (!found) {
-						JOptionPane.showMessageDialog(this, "uncompatible file name extension.");
+						JOptionPane.showMessageDialog(this, "Incompatible file name extension.");
 					    return;
 						}
 					}

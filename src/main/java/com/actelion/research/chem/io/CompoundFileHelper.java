@@ -619,7 +619,7 @@ public abstract class CompoundFileHelper {
 			 || dotIndex < slashIndex)
 				fileName = fileName.concat(extension);
 		    else if (!fileName.substring(dotIndex).equalsIgnoreCase(extension)) {
-				showMessage("uncompatible file name extension.");
+				showMessage("Incompatible file name extension.");
 			    return;
 				}
 
