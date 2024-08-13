@@ -552,5 +552,23 @@ public class AtomFunctionAnalyzer {
 				}
 			}
 		return false;
-		}
 	}
+
+	public static boolean isAmphiphilic(StereoMolecule mol) {
+		boolean amphiphilic=true;
+
+		boolean acidic=false;
+		boolean basic=false;
+		for (int at = 0; at < mol.getAtoms(); at++) {
+			if(isAcidicOxygen(mol, at)){
+				acidic=true;
+			}
+			if(isBasicNitrogen(mol, at)){
+				basic=true;
+			}
+		}
+
+		amphiphilic = basic && acidic;
+		return amphiphilic;
+	}
+}

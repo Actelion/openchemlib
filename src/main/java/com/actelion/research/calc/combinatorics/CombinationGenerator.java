@@ -32,6 +32,7 @@
 package com.actelion.research.calc.combinatorics;
 
 import com.actelion.research.util.ListUtils;
+import com.actelion.research.util.StringFunctions;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -312,7 +313,7 @@ public class CombinationGenerator {
 	}
 
 	public static void main(String[] args) {
-		examplePermutations();
+		exampleGetAllOutOf2();
 
 	}
 	public static void examplePermutations() {
@@ -353,6 +354,27 @@ public class CombinationGenerator {
 		for(List li : liComb) {
 			System.out.println(ListUtils.toStringInteger(li));
 		}
+	}
+
+	public static void exampleGetAllOutOf() {
+
+		int object = 4;
+		int sampleSize = 3;
+		List<int[]>  liComb = getAllOutOf(object, sampleSize);
+		for(int [] a : liComb) {
+			System.out.println(StringFunctions.toString(a, ","));
+		}
+	}
+	public static void exampleGetAllOutOf2() {
+
+		int object = 4;
+		for (int sampleSize = 1; sampleSize < object; sampleSize++) {
+			List<int[]>  liComb = getAllOutOf(object, sampleSize);
+			for(int [] a : liComb) {
+				System.out.println(StringFunctions.toString(a, ","));
+			}
+		}
+
 	}
 
 
