@@ -1271,19 +1271,31 @@ public class ExtendedMoleculeFunctions {
 	}
 
 
-	public static int getNumAlcoholicOxygen(StereoMolecule mol){
-
+	public static int getTotalCharge(StereoMolecule mol){
 		int n = 0;
-
 		for (int i = 0; i < mol.getAllAtoms(); i++) {
+			n+=mol.getAtomCharge(i);
+		}
+		return n;
+	}
+	public static int getNumAtomsCharged(StereoMolecule mol){
+		int n = 0;
+		for (int i = 0; i < mol.getAllAtoms(); i++) {
+			if(mol.getAtomCharge(i)!=0){
+				n++;
+			}
+		}
+		return n;
+	}
 
+	public static int getNumAlcoholicOxygen(StereoMolecule mol){
+		int n = 0;
+		for (int i = 0; i < mol.getAllAtoms(); i++) {
 			if(isAlcoholicOxygen(mol, i)){
 				n++;
 			}
 		}
-
 		return n;
-
 	}
 
 	public static int getNumThioEther(StereoMolecule mol){

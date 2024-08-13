@@ -187,6 +187,14 @@ public class SubGraphIndices {
         }
         return carbon;
     }
+    public static boolean isCharged(StereoMolecule mol, SubGraphIndices sgi){
+        int charge=0;
+        // A nitro group compensates to 0.
+        for (int atomIndex : sgi.getAtomIndices()) {
+            charge+=mol.getAtomCharge(atomIndex);
+        }
+        return (charge!=0);
+    }
 
     /**
      * Merges fragments containing a common atom index. The fragments in the list are merged and the list is
