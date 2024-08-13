@@ -101,6 +101,9 @@ public class DescriptorWeightsHelper {
                 if(!SubGraphIndices.isOnlyCarbon(molecule3D, sgi)) {
                     indexWeight = DescriptorWeightsHelper.LABEL_WEIGHT_MANDATORY;
                 }
+                if(SubGraphIndices.isCharged(molecule3D, sgi)) {
+                    indexWeight = DescriptorWeightsHelper.LABEL_WEIGHT_MANDATORY;
+                }
             } else {
                 indexWeight = DescriptorWeightsHelper.LABEL_WEIGHT_MANDATORY;
             }
