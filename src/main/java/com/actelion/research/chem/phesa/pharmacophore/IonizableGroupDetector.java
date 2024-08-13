@@ -1,15 +1,15 @@
 package com.actelion.research.chem.phesa.pharmacophore;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.phesa.pharmacophore.pp.ChargePoint;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -48,8 +48,6 @@ public class IonizableGroupDetector {
 						tetrazole.get(2),tetrazole.get(3)),-1);
 				chargePoints.add(cp);
 			}
-			
-			
 		}
 		for(int a=0;a<mol.getAtoms();a++) {
 			if(alreadyDetected(a)) continue;
@@ -58,7 +56,7 @@ public class IonizableGroupDetector {
 					continue;
 				int aa = mol.getConnAtom(a,0);
 				if(alreadyDetected(aa)) continue;
-				if(isPartOfAcid(mol, a)) { //COOH,SO3H,PO3H2, N(+)-OH
+				if(AtomFunctionAnalyzer.isAcidicOxygen(mol, a, false)) { //COOH,SO3H,PO3H2, N(+)-OH
 					if(mol.getAtomicNo(aa)==6) { //COOH
 						ionizableGroup = new ArrayList<Integer>();
 						ionizableGroup.add(a);
@@ -86,7 +84,6 @@ public class IonizableGroupDetector {
 								if(alreadyDetected(aaa)) continue;
 								ionizableGroup.add(aaa);
 							}
-							
 						}
 						ionizableGroups.add(ionizableGroup);
 						ChargePoint cp = new ChargePoint(mol,aa,new ArrayList<Integer>(),-1);
@@ -185,9 +182,7 @@ public class IonizableGroupDetector {
 	}
 	
 	private boolean alreadyDetected(int a) {
-
-		boolean isDetected = ionizableGroups.stream().flatMap(List::stream).collect(Collectors.toList()).contains(a) ? true : false;
-		return isDetected;
+		return ionizableGroups.stream().flatMap(List::stream).collect(Collectors.toList()).contains(a) ? true : false;
 	}
 	
 	/**

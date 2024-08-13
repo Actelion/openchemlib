@@ -39,7 +39,7 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
 public class AtomAssembler {
-	private StereoMolecule mMol;
+	private final StereoMolecule mMol;
 
 	public AtomAssembler(StereoMolecule mol) {
 		mMol = mol;
@@ -54,7 +54,6 @@ public class AtomAssembler {
 
 		return total;
 		}
-	
 
 
 	public int addImplicitHydrogens(int atom) {

@@ -75,7 +75,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * @return
 	 */
 	public StereoMolecule getCompactMolecule(String idcode) {
-		return (idcode == null || idcode.isEmpty()) ? null : getCompactMolecule(idcode.getBytes(StandardCharsets.UTF_8), null);
+		return (idcode == null || idcode.isEmpty()) ? null : getCompactMolecule(idcode.getBytes(StandardCharsets.UTF_8));
 		}
 
 	/**

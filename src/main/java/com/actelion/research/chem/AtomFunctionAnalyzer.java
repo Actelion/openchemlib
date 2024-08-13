@@ -195,8 +195,12 @@ public class AtomFunctionAnalyzer {
 	}
 
 	public static boolean isAcidicOxygen(StereoMolecule mol, int atom) {
+		return isAcidicOxygen(mol, atom, true);
+		}
+
+	public static boolean isAcidicOxygen(StereoMolecule mol, int atom, boolean considerCharge) {
 		if (mol.getAtomicNo(atom) != 8
-		 || mol.getAtomCharge(atom) != 0
+		 || (considerCharge && mol.getAtomCharge(atom) != 0)
 		 || mol.getConnAtoms(atom) != 1
 		 || mol.getConnBondOrder(atom, 0) != 1)
 			return false;
@@ -246,13 +250,18 @@ public class AtomFunctionAnalyzer {
 			
 			if(nDoubleBondedO2S == 2)
 				return true;
-		} else if(isAcidicOxygenAtPhosphoricAcid(mol, atom)) // CP=O(OH)(OH)
+
+		} else if(isAcidicOxygenAtPhosphoricAcid(mol, atom, considerCharge)) // CP=O(OH)(OH)
 			return true;
 
 		return false;
 	}
-	
+
 	public static boolean isAcidicOxygenAtPhosphoricAcid(StereoMolecule mol, int atom) {
+		return isAcidicOxygenAtPhosphoricAcid(mol, atom, true);
+	}
+
+	public static boolean isAcidicOxygenAtPhosphoricAcid(StereoMolecule mol, int atom, boolean considerCharge) {
 		if (mol.getAtomicNo(atom) != 8)
 			return false;
 		
@@ -351,11 +360,15 @@ public class AtomFunctionAnalyzer {
 		return nitro;
 	}
 
-	
-	
+
 	public static boolean isBasicNitrogen(StereoMolecule mol, int atom) {
+		return isBasicNitrogen(mol, atom, true);
+	}
+
+
+	public static boolean isBasicNitrogen(StereoMolecule mol, int atom, boolean considerCharge) {
 		if (mol.getAtomicNo(atom) != 7
-		 || mol.getAtomCharge(atom) != 0
+		 || (considerCharge && mol.getAtomCharge(atom) != 0)
 		 || (mol.getConnAtoms(atom) + mol.getAtomPi(atom) > 3))
 			return false;
 
