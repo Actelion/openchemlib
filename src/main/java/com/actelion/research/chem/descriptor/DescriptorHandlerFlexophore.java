@@ -155,6 +155,8 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	private boolean singleConformationModeQuery;
 	private boolean includeNodeAtoms;
 
+	private SolutionCompleteGraph solution;
+
 	private ThreadMaster threadMaster;
 
 	public DescriptorHandlerFlexophore(String parameter) {
@@ -518,9 +520,15 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 
 		double sc = (float)cgMatcher.calculateSimilarity();
 
+		solution = cgMatcher.getBestMatchingSolution();
+
 		queueCGM.add(cgMatcher);
 
 		return sc;
+	}
+
+	public SolutionCompleteGraph getRecentSolution(){
+		return solution;
 	}
 
 	/**

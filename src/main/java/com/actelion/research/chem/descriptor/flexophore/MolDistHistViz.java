@@ -255,8 +255,10 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 	public void copy(MolDistHistViz copy){
 		super.copy(copy);
 		copy.flagsDescribe = flagsDescribe;
-		if(molecule3D !=null)
+		if(molecule3D !=null) {
 			copy.molecule3D = new Molecule3D(molecule3D);
+			copy.molecule3D.ensureHelperArrays(Molecule.cHelperRings);
+		}
 		
 		copy.liPPNodeViz = new ArrayList<PPNodeViz>();
 		for (int i = 0; i < liPPNodeViz.size(); i++) {

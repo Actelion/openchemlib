@@ -423,6 +423,13 @@ public class CreatorMolDistHistViz {
         return molDistHistViz;
 
     }
+    public MolDistHistViz createWithoutCoordinates(Molecule3D molecule3D){
+        InteractionAtomTypeCalculator.setInteractionTypes(molecule3D);
+        List<SubGraphIndices> sgis = getSubGraphIndices(molecule3D);
+        return  createWithoutCoordinates(sgis, molecule3D);
+    }
+
+
     public static MolDistHistViz createWithoutCoordinates(List<SubGraphIndices> liMultCoordFragIndex, Molecule3D molecule3D){
 
         MolDistHistViz molDistHistViz = new MolDistHistViz(liMultCoordFragIndex.size(), molecule3D);

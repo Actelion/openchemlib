@@ -233,6 +233,20 @@ public class ArrayUtils {
 		}
 		return res;
 	}
+	public final static int max(int[] [] array) {
+		if(array.length==0) return 0;
+
+		int r = array.length;
+		int c = array[0].length;
+
+		int res = array[0][0];
+		for(int i=0; i<r; i++) {
+			for(int j=0; j<c; j++) {
+				res = Math.max(res, array[i][j]);
+			}
+		}
+		return res;
+	}
 	public final static int min(int[] array) {
 		if(array.length==0) return 0;
 		int res = array[0];

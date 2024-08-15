@@ -32,6 +32,8 @@
 
 package com.actelion.research.util.graph.complete;
 
+import com.actelion.research.chem.descriptor.flexophore.completegraphmatcher.ObjectiveBlurFlexophoreHardMatchUncovered;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -275,7 +277,12 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 	 */
 	public double calculateNodeSimilarity () {
 
+		if(!((ObjectiveBlurFlexophoreHardMatchUncovered)objectiveCompleteGraph).isExcludeHistogramSimilarity()){
+			throw new RuntimeException("Histogram similarity was not excluded from objective!");
+		}
+
 		initSearch();
+
 
 		if(nodesBase==1 && nodesQuery==1) {
 			double sim = objectiveCompleteGraph.getSimilarityNodes(0,0);
@@ -365,9 +372,7 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 
 	public SolutionCompleteGraph getBestMatchingSolution(){
 		SolutionCompleteGraph solution = new SolutionCompleteGraph();
-		
 		solution.copyIntoThis(solutionBest);
-		
 		return solution;
 	}
 	

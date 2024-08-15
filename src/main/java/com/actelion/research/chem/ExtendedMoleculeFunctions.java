@@ -66,6 +66,8 @@
 package com.actelion.research.chem;
 
 import com.actelion.research.calc.ArrayUtilsCalc;
+import com.actelion.research.calc.statistics.StatisticsOverview;
+import com.actelion.research.calc.statistics.median.MedianStatisticFunctions;
 import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
 import com.actelion.research.util.BurtleHasher;
@@ -770,6 +772,18 @@ public class ExtendedMoleculeFunctions {
 		return arr;
 	}
 
+	public final static int getMedianTopologicalDistance(int [][] topoDistMatrix, int [] at1, int [] at2) {
+
+		int [] d = new int[at1.length*at2.length];
+		int cc=0;
+		for (int i = 0; i < at1.length; i++) {
+			for (int j = 0; j < at2.length; j++) {
+				d[cc++]=topoDistMatrix[at1[i]][at2[j]];
+			}
+		}
+		int medTopoDist = MedianStatisticFunctions.getMedianForInteger(d).median;
+		return medTopoDist;
+	}
 
 	public final static int getTopologicalDistance(ExtendedMolecule mol, int at1, int at2) {
 		int dist = 0;

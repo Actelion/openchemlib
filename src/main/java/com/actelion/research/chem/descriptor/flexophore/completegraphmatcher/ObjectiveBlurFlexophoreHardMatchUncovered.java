@@ -181,6 +181,9 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	public void setExcludeHistogramSimilarity(boolean excludeHistogramSimilarity) {
 		this.excludeHistogramSimilarity = excludeHistogramSimilarity;
 	}
+	public boolean isExcludeHistogramSimilarity() {
+		return excludeHistogramSimilarity;
+	}
 
 	private void initSimilarityMatrices(){
 		

@@ -34,6 +34,10 @@
 
 package com.actelion.research.calc.statistics.median;
 
+import com.actelion.research.util.ArrayUtils;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -212,23 +216,18 @@ public class MedianStatisticFunctions {
 	 * @return
 	 */
 	public static ModelMedianInteger getMedianForInteger(List<Integer> liScore) {
-		
 		Collections.sort(liScore);
-		
 		ModelMedianInteger modelMedian = new ModelMedianInteger();
-		
 		modelMedian.lowerQuartile = (int)(MedianStatisticFunctions.getPercentileFromSortedInt(liScore, 0.25) + 0.5);
-		
 		modelMedian.median = (int)(MedianStatisticFunctions.getPercentileFromSortedInt(liScore, 0.5) + 0.5);
-		
 		modelMedian.upperQuartile = (int)(MedianStatisticFunctions.getPercentileFromSortedInt(liScore, 0.75) + 0.5);
-		
 		modelMedian.size = liScore.size();
-		
 		return modelMedian;
-
 	}
-	
+	public static ModelMedianInteger getMedianForInteger(int [] a) {
+		return getMedianForInteger(ArrayUtils.toList(a));
+	}
+
 	public static ModelMedianLong getMedianForLong(List<Long> liScore) {
 
 		Collections.sort(liScore);
@@ -249,11 +248,16 @@ public class MedianStatisticFunctions {
 
 	/**
 	 * 
-	 * @param liScore the list is sorted in the method.
+	 * @param
 	 * @return
 	 */
-	public static ModelMedianDouble getMedianForDouble(List<Double> liScore) {
-		
+	public static ModelMedianDouble getMedianForDouble(Collection<Double> liScoreRaw) {
+
+		if(liScoreRaw.size()<1)
+			return null;
+
+		List<Double> liScore = new ArrayList<>(liScoreRaw);
+
 		Collections.sort(liScore);
 		
 		ModelMedianDouble modelMedian = new ModelMedianDouble();
