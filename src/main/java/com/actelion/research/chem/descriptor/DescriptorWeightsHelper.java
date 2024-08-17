@@ -6,6 +6,7 @@ import com.actelion.research.chem.descriptor.flexophore.generator.CreatorMolDist
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.chem.phesa.DescriptorHandlerShape;
 import com.actelion.research.chem.phesa.PheSAMolecule;
+import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 import com.actelion.research.util.datamodel.IntArray;
 
@@ -66,14 +67,38 @@ public class DescriptorWeightsHelper {
         int [] weights = calcWeightLabels(liSubGraphIndices, molecule3D);
         return weights;
     }
+    public int [] deriveWeightLabelsPheSA(PheSAMolecule queryPheSA) {
+
+
+        for (PPGaussian ppGaussian : queryPheSA.getVolumes().get(0).getPPGaussians()) {
+
+        }
+
+        return null;
+    }
+
     public int [] calcWeightLabelsPheSA(Molecule3D molecule3D){
+        PheSAMolecule pheSAMolecule = dhShape.createDescriptor(molecule3D);
+        List<IPharmacophorePoint> liPPPoints = new ArrayList<>();
+        for (PPGaussian ppGaussian : pheSAMolecule.getVolumes().get(0).getPPGaussians()) {
+            liPPPoints.add(ppGaussian.getPharmacophorePoint());
+        }
+        int [] weights = calcWeightLabelsPheSA(molecule3D, liPPPoints);
+        return weights;
+    }
+
+    /**
+     * The Pahrmacophore points mus be derived from molecule3D.
+     * @param molecule3D
+     * @param liPPPoints
+     * @return
+     */
+    public int [] calcWeightLabelsPheSA(Molecule3D molecule3D, List<IPharmacophorePoint> liPPPoints){
 
         int atoms = molecule3D.getAtoms();
-
-        PheSAMolecule pheSAMolecule = dhShape.createDescriptor(molecule3D);
         liSubGraphIndices = new ArrayList<>();
-        for (PPGaussian ppGaussian : pheSAMolecule.getVolumes().get(0).getPPGaussians()) {
-            int [] a = ppGaussian.getPharmacophorePoint().getAtomIndices();
+        for (IPharmacophorePoint ppPoint : liPPPoints) {
+            int [] a = ppPoint.getAtomIndices();
             // PheSA descriptor is also using indices for hydrogen atoms.
             IntArray ia = new IntArray(a.length);
             for (int v : a) {
@@ -89,6 +114,13 @@ public class DescriptorWeightsHelper {
         return weights;
     }
 
+    /**
+     * - End standing pp points are set mandatory.
+     * - Charged pp points are set mandatory.
+     * @param liSubGraphIndices
+     * @param molecule3D
+     * @return
+     */
     private static int [] calcWeightLabels(List<SubGraphIndices> liSubGraphIndices, Molecule3D molecule3D){
 
         int [] weights = new int[molecule3D.getAtoms()];
@@ -114,8 +146,6 @@ public class DescriptorWeightsHelper {
 
         return weights;
     }
-
-
 
     public static int [] mergeWeightLabels(int[] arrWeightLabel, int[] arrWeightLabelUser) {
 
