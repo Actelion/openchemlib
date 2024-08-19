@@ -124,7 +124,7 @@ public class DescriptorWeightsHelper {
             } else if(arrWeightLabel[i] == LABEL_WEIGHT_MANDATORY && arrWeightLabelUser[i] == LABEL_WEIGHT_MANDATORY){
                 label = LABEL_WEIGHT_HIGH_USER;
             } else if(arrWeightLabelUser[i] == LABEL_WEIGHT_MANDATORY){
-                label = LABEL_WEIGHT_MANDATORY;
+                label = LABEL_WEIGHT_HIGH_USER;
             }
             arrWeightLabelMerged[i]=label;
         }
