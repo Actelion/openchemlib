@@ -47,13 +47,11 @@ public class DescriptorWeightsHelper {
 
     private CreatorMolDistHistViz creatorMolDistHistViz;
 
-    private List<SubGraphIndices> liSubGraphIndices;
 
-    DescriptorHandlerShape dhShape;
 
     public DescriptorWeightsHelper() {
         this.creatorMolDistHistViz = new CreatorMolDistHistViz();
-        dhShape = new DescriptorHandlerShape();
+
     }
 
     /**
@@ -63,7 +61,7 @@ public class DescriptorWeightsHelper {
      * @return
      */
     public int [] calcWeightLabelsFlexophore(Molecule3D molecule3D){
-        liSubGraphIndices = creatorMolDistHistViz.getSubGraphIndices(molecule3D);
+        List<SubGraphIndices> liSubGraphIndices = creatorMolDistHistViz.getSubGraphIndices(molecule3D);
         int [] weights = calcWeightLabels(liSubGraphIndices, molecule3D);
         return weights;
     }
@@ -77,42 +75,7 @@ public class DescriptorWeightsHelper {
         return null;
     }
 
-    public int [] calcWeightLabelsPheSA(Molecule3D molecule3D){
-        PheSAMolecule pheSAMolecule = dhShape.createDescriptor(molecule3D);
-        List<IPharmacophorePoint> liPPPoints = new ArrayList<>();
-        for (PPGaussian ppGaussian : pheSAMolecule.getVolumes().get(0).getPPGaussians()) {
-            liPPPoints.add(ppGaussian.getPharmacophorePoint());
-        }
-        int [] weights = calcWeightLabelsPheSA(molecule3D, liPPPoints);
-        return weights;
-    }
 
-    /**
-     * The Pahrmacophore points mus be derived from molecule3D.
-     * @param molecule3D
-     * @param liPPPoints
-     * @return
-     */
-    public int [] calcWeightLabelsPheSA(Molecule3D molecule3D, List<IPharmacophorePoint> liPPPoints){
-
-        int atoms = molecule3D.getAtoms();
-        liSubGraphIndices = new ArrayList<>();
-        for (IPharmacophorePoint ppPoint : liPPPoints) {
-            int [] a = ppPoint.getAtomIndices();
-            // PheSA descriptor is also using indices for hydrogen atoms.
-            IntArray ia = new IntArray(a.length);
-            for (int v : a) {
-                if(v<atoms)ia.add(v);
-            }
-
-            SubGraphIndices sgi = new SubGraphIndices(ia.get());
-            liSubGraphIndices.add(sgi);
-        }
-
-        int [] weights = calcWeightLabels(liSubGraphIndices, molecule3D);
-
-        return weights;
-    }
 
     /**
      * - End standing pp points are set mandatory.
@@ -121,7 +84,7 @@ public class DescriptorWeightsHelper {
      * @param molecule3D
      * @return
      */
-    private static int [] calcWeightLabels(List<SubGraphIndices> liSubGraphIndices, Molecule3D molecule3D){
+    public static int [] calcWeightLabels(List<SubGraphIndices> liSubGraphIndices, Molecule3D molecule3D){
 
         int [] weights = new int[molecule3D.getAtoms()];
         Arrays.fill(weights, DescriptorWeightsHelper.LABEL_WEIGHT_NORMAL);
