@@ -515,11 +515,7 @@ public class CreatorMolDistHistViz {
         InteractionAtomTypeCalculator.setInteractionTypes(molStart);
         Molecule3D molInPlace = new Molecule3D(molStart);
         molInPlace.ensureHelperArrays(Molecule.cHelperRings);
-
         List<SubGraphIndices> liSubGraphIndices = getSubGraphIndices(molInPlace);
-
-
-
         List<MultCoordFragIndex> liMultCoordFragIndex = new ArrayList<>();
         for (SubGraphIndices subGraphIndices : liSubGraphIndices) {
             liMultCoordFragIndex.add(new MultCoordFragIndex(subGraphIndices.getAtomIndices()));

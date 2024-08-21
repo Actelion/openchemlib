@@ -53,4 +53,22 @@ public class SlidingWindowDistHist {
 //        System.out.println("\n\n");
 //        System.out.println(StringFunctions.toStringShort(distHist.arrDistHists));
     }
+
+    public byte [] getBlurred(byte [] hist){
+
+        byte [] histBlurred = new byte[ConstantsFlexophoreGenerator.BINS_HISTOGRAM];
+
+        int n = ConstantsFlexophoreGenerator.BINS_HISTOGRAM;
+        int end = n - lenFilHalf;
+
+        for (int k = lenFilHalf; k < end; k++) {
+            double v = 0;
+            for (int l = 0; l < arrFilter.length; l++) {
+                int ind = k - lenFilHalf + l;
+                v +=  hist[ind] * arrFilter[l];
+            }
+            histBlurred[k] = (byte)(v+0.5);
+        }
+        return histBlurred;
+    }
 }

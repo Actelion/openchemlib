@@ -836,7 +836,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		}
 
 
-		if(!fragmentNodesMapping)
+		if((slidingWindowDistHist!=null) && !fragmentNodesMapping)
 			slidingWindowDistHist.apply(mdhvBaseBlurredHist);
 
 		nodesBase = iMolDistHistBase.getNumPPNodes();
@@ -851,7 +851,11 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 		deltaNanoBaseBlur += System.nanoTime()-t0;
 	}
-	
+
+	public void setSlidingWindowDistHistNull() {
+		this.slidingWindowDistHist = null;
+	}
+
 	public void setQuery(IMolDistHist iMolDistHistQuery) {
 
 		if(iMolDistHistQuery.getNumPPNodes()>=ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE){
@@ -868,7 +872,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 			mdhvQueryBlurredHist = new MolDistHistViz((MolDistHist) iMolDistHistQuery);
 		}
 
-		if(!fragmentNodesMapping)
+		if((slidingWindowDistHist!=null) && !fragmentNodesMapping)
 			slidingWindowDistHist.apply(mdhvQueryBlurredHist);
 
 		nodesQuery = iMolDistHistQuery.getNumPPNodes();
@@ -1153,9 +1157,12 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 
 		if(arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase] < 0){
 
-			float similarityHistogram =
+			float similarityHistogram = 0;
+
+			similarityHistogram =
 					(float)HistogramMatchCalculator.getSimilarity(
 							mdhvQueryBlurredHist, indexNode1Query, indexNode2Query, mdhvBaseBlurredHist, indexNode1Base, indexNode2Base);
+
 
 			arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase]=similarityHistogram;
 		}

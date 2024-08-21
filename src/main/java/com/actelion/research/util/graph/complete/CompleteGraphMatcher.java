@@ -401,8 +401,9 @@ public class CompleteGraphMatcher<T extends ICompleteGraph> {
 						if(objectiveCompleteGraph.areNodesMapping(indexNodeQuery, indexNodeBase)){
 						
 							SolutionCompleteGraph solutionNew = cm.getWithCopy(solution);
-							
-							solutionNew.copyIntoThis(solution);
+
+							// to do: is this necessary?, no 21.08.2024
+							// solutionNew.copyIntoThis(solution);
 							
 							solutionNew.setNodesQuery(nodesQuery);
 							

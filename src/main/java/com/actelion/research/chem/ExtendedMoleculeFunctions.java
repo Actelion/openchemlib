@@ -772,7 +772,7 @@ public class ExtendedMoleculeFunctions {
 		return arr;
 	}
 
-	public final static int getMedianTopologicalDistance(int [][] topoDistMatrix, int [] at1, int [] at2) {
+	public final static int [] getTopologicalDistances(int [][] topoDistMatrix, int [] at1, int [] at2) {
 
 		int [] d = new int[at1.length*at2.length];
 		int cc=0;
@@ -781,6 +781,11 @@ public class ExtendedMoleculeFunctions {
 				d[cc++]=topoDistMatrix[at1[i]][at2[j]];
 			}
 		}
+
+		return d;
+	}
+	public final static int getMedianTopologicalDistance(int [][] topoDistMatrix, int [] at1, int [] at2) {
+		int [] d = getTopologicalDistances(topoDistMatrix, at1, at2);
 		int medTopoDist = MedianStatisticFunctions.getMedianForInteger(d).median;
 		return medTopoDist;
 	}

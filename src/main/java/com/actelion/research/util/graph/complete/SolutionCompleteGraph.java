@@ -220,10 +220,10 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 		
 		if(sizeHeap>0) {
 			
-			for (int i = 0; i < sizeHeap; i++) {
-				sb.append(arrSolution[i]);
-				if(i < sizeHeap -1)
+			for (int i = 0; i < maxIndexNodeQuery+1; i++) {
+				if(sb.length()>0)
 					sb.append(" ");
+				sb.append(arrSolution[i]);
 			}
 			
 		} else {
