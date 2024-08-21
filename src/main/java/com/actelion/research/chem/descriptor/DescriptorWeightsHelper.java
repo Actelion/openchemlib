@@ -65,17 +65,6 @@ public class DescriptorWeightsHelper {
         int [] weights = calcWeightLabels(liSubGraphIndices, molecule3D);
         return weights;
     }
-    public int [] deriveWeightLabelsPheSA(PheSAMolecule queryPheSA) {
-
-
-        for (PPGaussian ppGaussian : queryPheSA.getVolumes().get(0).getPPGaussians()) {
-
-        }
-
-        return null;
-    }
-
-
 
     /**
      * - End standing pp points are set mandatory.
@@ -86,8 +75,7 @@ public class DescriptorWeightsHelper {
      */
     public static int [] calcWeightLabels(List<SubGraphIndices> liSubGraphIndices, Molecule3D molecule3D){
 
-        int [] weights = new int[molecule3D.getAtoms()];
-        Arrays.fill(weights, DescriptorWeightsHelper.LABEL_WEIGHT_NORMAL);
+        int [] weights = getBasisWeightLabels(molecule3D);
 
         for (int i = 0; i < liSubGraphIndices.size(); i++) {
             SubGraphIndices sgi = liSubGraphIndices.get(i);
@@ -107,6 +95,12 @@ public class DescriptorWeightsHelper {
             }
         }
 
+        return weights;
+    }
+
+    public static int [] getBasisWeightLabels(Molecule3D molecule3D){
+        int [] weights = new int[molecule3D.getAtoms()];
+        Arrays.fill(weights, DescriptorWeightsHelper.LABEL_WEIGHT_NORMAL);
         return weights;
     }
 
