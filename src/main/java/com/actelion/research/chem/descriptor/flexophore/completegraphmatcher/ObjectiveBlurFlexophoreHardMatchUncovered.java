@@ -43,7 +43,10 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 	// 03.03.2016 Top result so far for 0.9
 	// 13.04.2020 Maybe obsolete
 	// ToDo
-	final static double THRESH_NODE_SIMILARITY_START = 0.5;
+	// final static double THRESH_NODE_SIMILARITY_START = 0.5;
+
+	// Changed to 0.9 21.08.2024 MvK
+	final static double THRESH_NODE_SIMILARITY_START = 0.9;
 
 	private static final float INIT_VAL = -1;
 

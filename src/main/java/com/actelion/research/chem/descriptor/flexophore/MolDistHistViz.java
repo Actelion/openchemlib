@@ -176,6 +176,14 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		}
 		arrWeight[indexNode]=weight;
 	}
+	public void resetNodeWeights(){
+		if(!finalized){
+			throw new RuntimeException("MolDistHistViz not finalized!");
+		}
+		for (int i = 0; i < liPPNodeViz.size(); i++) {
+			arrWeight[i]=1;
+		}
+	}
 
 	public void removeInevitablePharmacophorePoint(int indexPPNode){
 		hsIndexMandatoryPPPoints.remove(indexPPNode);
