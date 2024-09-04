@@ -812,7 +812,7 @@ public class SmilesParser {
 
 			if (parityMap != null) {
 				for (THParity parity:parityMap.values())
-					mMol.setAtomParity(parity.mCentralAtom, parity.calculateParity(handleHydrogenAtomMap), false);
+					mMol.setAtomParity(handleHydrogenAtomMap[parity.mCentralAtom], parity.calculateParity(handleHydrogenAtomMap), false);
 
 				mMol.setParitiesValid(0);
 				}
