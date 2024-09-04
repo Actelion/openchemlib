@@ -38,6 +38,7 @@ import com.actelion.research.util.Formatter;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Random;
 
@@ -83,6 +84,15 @@ public class Histogram {
 		initialize(arrRaw,min,max,bins);
 	}
 
+	public Histogram(Collection<Double> values, double min, double max, int bins) {
+		double [] v = new double[values.size()];
+		int c=0;
+		for (Double value : values) {
+			v[c++]=value;
+		}
+		initialize(v,min,max,bins);
+	}
+
 	public Histogram(double [] arrRaw, int bins) {
 
 		double max = -Double.MAX_VALUE;
@@ -96,7 +106,6 @@ public class Histogram {
 				min=v;
 			}
 		}
-
 		initialize(arrRaw,min,max,bins);
 	}
 
