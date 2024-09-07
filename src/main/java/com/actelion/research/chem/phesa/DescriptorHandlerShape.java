@@ -248,7 +248,8 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	 * additional output:
 	 * element 0: total similarity (identical to getSimilarity(...))
 	 * element 1: pharmacophore similarity
-	 * element 2: contribution to similarity that originates from additional volumes (incl/excl)
+	 * element 2: shape similarity
+	 * element 3: contribution to similarity that originates from additional volumes (incl/excl)
 	 * @return
 	 */
 	public double[] getPreviousPheSAResult() {
