@@ -37,6 +37,8 @@ package com.actelion.research.chem.descriptor.flexophore.generator;
 import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.conf.ConformerSet;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphExtractor;
@@ -209,6 +211,29 @@ public class CreatorMolDistHistViz {
         }
         MolDistHistViz mdhv = create(liMultCoordFragIndex, molViz);
         return mdhv;
+    }
+    public MolDistHistViz createFromConformerSet(ConformerSet conformerSet)  {
+
+        Molecule3D mol = new Molecule3D(conformerSet.iterator().next().toMolecule());
+        mol.ensureHelperArrays(Molecule.cHelperRings);
+        InteractionAtomTypeCalculator.setInteractionTypes(mol);
+
+        List<SubGraphIndices> liSGI = getSubGraphIndices(mol);
+        List<MultCoordFragIndex> liMultCoordFragIndex = new ArrayList<>();
+        for (SubGraphIndices subGraphIndices : liSGI) {
+            liMultCoordFragIndex.add(new MultCoordFragIndex(subGraphIndices.getAtomIndices()));
+        }
+
+        Iterator<Conformer> it = conformerSet.iterator();
+        while (it.hasNext()){
+            Conformer c = it.next();
+            Molecule3D molConf = new Molecule3D(c.toMolecule());
+            molConf.ensureHelperArrays(Molecule.cHelperRings);
+            calcFragmentCenter(molConf, liMultCoordFragIndex);
+        }
+
+        Molecule3D molViz = createPharmacophorePoints(mol, liMultCoordFragIndex);
+        return create(liMultCoordFragIndex, molViz);
     }
 
     public List<SubGraphIndices> getSubGraphIndices(Molecule3D molInPlace){
