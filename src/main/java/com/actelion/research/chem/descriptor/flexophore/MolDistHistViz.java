@@ -128,13 +128,19 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		hsIndexMandatoryPPPoints = new HashSet<>();
 		modeFlexophore = ConstantsFlexophore.MODE_SOFT_PPPOINTS;
 	}
-	
+
+	/**
+	 *
+	 * @param nNodes
+	 * @param molecule3D
+	 */
 	public MolDistHistViz(int nNodes, Molecule3D molecule3D) {
 		initHistogramArray(nNodes);
 		flagsDescribe = DESCRIBE_ALL;
 		if(molecule3D!=null) {
 			this.molecule3D = new Molecule3D(molecule3D);
 			this.molecule3D.ensureHelperArrays(Molecule.cHelperRings);
+			this.molecule3D.stripSmallFragments();
 		}
 		hsIndexMandatoryPPPoints = new HashSet<>();
 		modeFlexophore = ConstantsFlexophore.MODE_SOFT_PPPOINTS;
@@ -708,9 +714,21 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		arrWeight = new double[liPPNodeViz.size()];
 		Arrays.fill(arrWeight, ConstantsFlexophore.VAL_WEIGHT_NORMAL);
 
+		int maxAtIndex=0;
 		for(PPNodeViz node : liPPNodeViz){
 			node.realize();
+			if(molecule3D!=null) {
+				int[] a = node.getArrayIndexOriginalAtoms();
+				maxAtIndex = Math.max(maxAtIndex, ArrayUtilsCalc.max(a));
+			}
 		}
+
+		if(molecule3D!=null) {
+			if(maxAtIndex > molecule3D.getAtoms()-1){
+				throw new RuntimeException("Error in Flexophore creation! Largest atom index in PPNode is higher than number of atoms in corresponding molecule!");
+			}
+		}
+
 		canonize();
 		calculate();
 		finalized=true;
