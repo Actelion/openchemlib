@@ -166,6 +166,11 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		this.fragmentNodesMapping = fragmentNodesMapping;
 	}
 
+	/**
+	 * Only used in mode query
+	 * The query must hit with all pharmacophore nodes except margin. Margin gives the number of nodes that need
+	 * @param marginQuery
+	 */
 	public void setMarginQuery(int marginQuery) {
 		this.marginQuery = marginQuery;
 	}
