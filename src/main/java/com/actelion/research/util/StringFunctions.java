@@ -1358,6 +1358,19 @@ public class StringFunctions {
 	public static boolean isAlphaNumeric(char char1) {
 		return (char1 >= 'a' && char1 <= 'z') || (char1 >= 'A' && char1 <= 'Z') || (char1 >= '0' && char1 <= '9');
 	}
+
+	public static boolean isAlphaNumeric(String s) {
+		boolean a = true;
+		for (int i = 0; i < s.length(); i++) {
+			Character c = s.charAt(i);
+			if(!isAlphaNumeric(c)){
+				a = false;
+				break;
+			}
+		}
+		return a;
+	}
+
 	/**
 	 * 
 	 * @param s
