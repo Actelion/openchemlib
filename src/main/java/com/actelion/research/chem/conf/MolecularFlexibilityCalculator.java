@@ -74,7 +74,7 @@ public class MolecularFlexibilityCalculator {
 	 */
 	public float calculateMolecularFlexibility(StereoMolecule mol) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
-		if (mol.getAtoms() == 0)
+		if (mol.getAllAtoms() == 0)
 			return 0f;
 
 		boolean[] isRotatableBond = new boolean[mol.getBonds()];
@@ -82,36 +82,7 @@ public class MolecularFlexibilityCalculator {
 		if (rotatableBondCount == 0)
 			return 0f;
 
-		// calculate flexibility values of individual rotatable bonds
-		float[] bondFlexibility = new float[mol.getBonds()];
-		for (int bond=0; bond<mol.getBonds(); bond++) {
-			if (isRotatableBond[bond]) {
-				int[] torsionAtom = new int[4];
-				String torsionID = TorsionDB.getTorsionID(mol, bond, torsionAtom, null);
-				short[] torsion = TorsionDB.getTorsions(torsionID);
-				short[] frequency = null;
-				short[][] range = null;
-				if (torsion != null) {
-					frequency = TorsionDB.getTorsionFrequencies(torsionID);
-					range = TorsionDB.getTorsionRanges(torsionID);
-					}
-				else {
-					TorsionPrediction prediction = new TorsionPrediction(mol, torsionAtom);
-					torsion = prediction.getTorsions();
-					frequency = prediction.getTorsionFrequencies();
-					range = prediction.getTorsionRanges();
-					}
-
-				if (!mol.isAromaticBond(bond)) {
-					bondFlexibility[bond] = calculateBondFlexibility(torsion, frequency, range);
-
-					// we need to reduce in rings increasingly with ring size, because flexibility is hampered
-					if (mol.isRingBond(bond))
-						bondFlexibility[bond] *= 0.5f * (1f - 3f / mol.getBondRingSize(bond));
-					}
-				}
-			}
-
+		float[] bondFlexibility = calculateBondFlexibilities(mol, isRotatableBond);
 		float[] bondImportance = TorsionRelevanceHelper.getRelevance(mol, (boolean[])null);
 
 /*
@@ -145,6 +116,38 @@ for (int bond=0; bond<mol.getBonds(); bond++) {
 		return calculateMoleculeFlexibility(bondFlexibility, bondImportance);
 		}
 
+	public float[] calculateBondFlexibilities(StereoMolecule mol, boolean[] isRotatableBond) {
+		float[] bondFlexibility = new float[mol.getBonds()];
+		for (int bond=0; bond<mol.getBonds(); bond++) {
+			if (isRotatableBond[bond]) {
+				int[] torsionAtom = new int[4];
+				String torsionID = TorsionDB.getTorsionID(mol, bond, torsionAtom, null);
+				short[] torsion = TorsionDB.getTorsions(torsionID);
+				short[] frequency = null;
+				short[][] range = null;
+				if (torsion != null) {
+					frequency = TorsionDB.getTorsionFrequencies(torsionID);
+					range = TorsionDB.getTorsionRanges(torsionID);
+				}
+				else {
+					TorsionPrediction prediction = new TorsionPrediction(mol, torsionAtom);
+					torsion = prediction.getTorsions();
+					frequency = prediction.getTorsionFrequencies();
+					range = prediction.getTorsionRanges();
+				}
+
+				if (!mol.isAromaticBond(bond)) {
+					bondFlexibility[bond] = calculateBondFlexibility(torsion, frequency, range);
+
+					// we need to reduce in rings increasingly with ring size, because flexibility is hampered
+					if (mol.isRingBond(bond))
+						bondFlexibility[bond] *= 0.5f * (1f - 3f / mol.getBondRingSize(bond));
+				}
+			}
+		}
+		return bondFlexibility;
+	}
+
 	private float calculateBondFlexibility(short[] torsion, short[] frequency, short[][] range) {
 //		for (int i=0; i<torsion.length; i++)
 //			System.out.println("torsion:"+torsion[i]+" frequency:"+frequency[i]+" range:"+range[i][0]+"-"+range[i][1]);
@@ -173,7 +176,7 @@ for (int bond=0; bond<mol.getBonds(); bond++) {
 		int ti = maxEmptySpaceIndex;
 		while (right(ti, count) != maxFrequencyIndex) {
 			ti = right(ti, count);
-			factor *= (1f - Math.pow(frequency[ti] / maxFrequency, 0.3));
+			factor *= (float)(1f - Math.pow(frequency[ti] / maxFrequency, 0.3));
 			emptyRangeSum += factor * (rightEmptySpace(ti, count, range) + range[ti][1] - range[ti][0]);
 			}
 		factor = 1f;
@@ -181,7 +184,7 @@ for (int bond=0; bond<mol.getBonds(); bond++) {
 		while (ti != maxFrequencyIndex) {
 			int oi = ti;
 			ti = left(ti, count);
-			factor *= (1f - Math.sqrt(frequency[oi] / maxFrequency));
+			factor *= (1f - (float)Math.sqrt(frequency[oi] / maxFrequency));
 			emptyRangeSum += factor * (rightEmptySpace(ti, count, range) + range[oi][1] - range[oi][0]);
 			}
 

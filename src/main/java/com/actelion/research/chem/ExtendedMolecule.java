@@ -1437,7 +1437,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	public boolean supportsImplicitHydrogen(int atom) {
 		if ((mAtomFlags[atom] & cAtomFlagsValence) != 0)
 			return true;
-		if (mAtomicNo[atom] == 1)
+		if (mAtomicNo[atom] <= 1)
 			return false;
 		return isOrganicAtom(atom)
 				|| mAtomicNo[atom] == 13	// Al
@@ -1461,6 +1461,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		// H, metals except Al, noble gases don't have implicit hydrogens
 		if (!supportsImplicitHydrogen(atom))
+			return 0;
+
+		if ("*".equals(getAtomCustomLabel(atom)))
 			return 0;
 
 		ensureHelperArrays(cHelperNeighbours);
@@ -3476,8 +3479,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * bonds leading to them are moved to the end of the bond table. This way algorithms can skip
 	 * hydrogen atoms easily. For every atom directly connected atoms and bonds (with and without
 	 * hydrogens) are determined. The number of pi electrons is counted.<br>
+	 * If this Molecule is a substructure (mFragment=true) and has no 3-dimensional atom coordinates,
+	 * then all explicit hydrogen atoms are converted into query features, unless setHydrogenProtection(true)
+	 * was called before on this Molecule.<br>
 	 * <i>cHelperRings</i>: Aromatic and non-aromatic rings are detected. Atom and bond ring
-	 * properties are set and a ring collection provides a total set of small rings (7 or less atoms).
+	 * properties are set and a ring collection provides a total set of small rings (7 or fewer atoms).
 	 * Atoms being in allylic/benzylic or stabilized (neighbor of a carbonyl or similar group) position
 	 * are flagged as such.<br>
 	 * <i>cHelperParities</i>: Atom (tetrahedral or axial) and bond (E/Z or atrop) parities are calculated
@@ -3501,7 +3507,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			calculateNeighbours();
 			mValidHelperArrays |= cHelperBitNeighbours;
 
-			if (convertHydrogenToQueryFeatures()) {
+			if (mIsFragment && !is3D() && convertHydrogenToQueryFeatures()) {
 				handleHydrogens();
 				calculateNeighbours();
 				mValidHelperArrays |= cHelperBitNeighbours;
@@ -3989,9 +3995,6 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return true if hydrogens were deleted and, thus, mConnAtoms are invalid
 	 */
 	private boolean convertHydrogenToQueryFeatures() {
-		if (!mIsFragment)
-			return false;
-
 		// if an atom has no free valence then cAtomQFNoMoreNeighbours is not necessary
 		// and cAtomQFMoreNeighbours is not possible
 		// unless it is an uncharged N- or O-family atom that could be e.g. methylated
@@ -4001,12 +4004,15 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomQueryFeatures[atom] &= ~(cAtomQFNoMoreNeighbours | cAtomQFMoreNeighbours);
 			}
 
-			// approximate explicit hydrogens by query features
-			// and remove explicit hydrogens except those with stereo bonds
+		if (mProtectHydrogen)
+			return false;
+
+		// approximate explicit hydrogens by query features
+		// and remove explicit hydrogens except those with stereo bonds
 		boolean deleteHydrogens = false;
 		for (int atom=0; atom<mAtoms; atom++) {
 			int explicitHydrogens = getExplicitHydrogens(atom);
-			if (!mProtectHydrogen && explicitHydrogens > 0) {
+			if (explicitHydrogens > 0) {
 				if ((mAtomQueryFeatures[atom] & cAtomQFNoMoreNeighbours) == 0) {
 						// add query feature hydrogen to explicit hydrogens
 					int queryFeatureHydrogens =
@@ -4048,6 +4054,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 					}
 				}
 			}
+
 		if (deleteHydrogens)
 			compressMolTable();
 
