@@ -168,7 +168,13 @@ public class AromaticityResolver {
                     }
                 }
 
-            if (!bondsPromoted) {
+
+			if (bondsPromoted) {
+				promoteObviousBonds();
+				continue;
+				}
+
+			if (!bondsPromoted) {
                 // find and promote one aromatic bond
                 // (should never happen, but to prevent an endless loop nonetheless)
                 for (int bond=0; bond<mMol.getBonds(); bond++) {

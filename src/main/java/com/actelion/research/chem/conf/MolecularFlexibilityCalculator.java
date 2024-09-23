@@ -137,7 +137,7 @@ for (int bond=0; bond<mol.getBonds(); bond++) {
 				}
 
 				if (!mol.isAromaticBond(bond)) {
-					bondFlexibility[bond] = calculateBondFlexibility(torsion, frequency, range);
+					bondFlexibility[bond] = (torsion == null) ? 1f : calculateBondFlexibility(torsion, frequency, range);
 
 					// we need to reduce in rings increasingly with ring size, because flexibility is hampered
 					if (mol.isRingBond(bond))

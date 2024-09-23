@@ -786,6 +786,9 @@ public class IDCodeParserWithoutCoordinateInvention {
 								mMol.setAtomY(hydrogen, mMol.getAtomY(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
 								if (coordsAre3D)
 									mMol.setAtomZ(hydrogen, mMol.getAtomZ(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
+
+								if (mMol.isSelectedAtom(atom))
+									mMol.setAtomSelection(hydrogen, true);
 								}
 							}
 
