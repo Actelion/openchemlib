@@ -198,7 +198,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
             if (line.startsWith("<"+cNativeFileVersion)) {
                 String version = extractValue(line);
                 if (!version.startsWith("3.")
-                 && !version.equals(""))
+                 && !version.isEmpty())
                     throw new IOException("unsupported .dwar file version");
                 }
 
@@ -294,7 +294,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
                 }
             else {
     			columnNameList.add(columnName);
-    			columnIndexList.add(new Integer(sourceColumn));
+    			columnIndexList.add(sourceColumn);
                 }
 
 			sourceColumn++;
@@ -304,7 +304,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 		mFieldIndex = new int[columnNameList.size()];
 		for (int i=0; i<columnNameList.size(); i++) {
 			mFieldName[i] = columnNameList.get(i);
-			mFieldIndex[i] = columnIndexList.get(i).intValue();
+			mFieldIndex[i] = columnIndexList.get(i);
 			}
 
 		mFieldData = new String[sourceColumn];
@@ -352,7 +352,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 					 && DescriptorHelper.getDescriptorInfo(specialColumn.type).version.equals(specialColumn.version)) {
                         if (mDescriptorColumnMap == null)
                             mDescriptorColumnMap = new TreeMap<String,Integer>();
-                        mDescriptorColumnMap.put(specialColumn.type, new Integer(specialColumn.fieldIndex));
+                        mDescriptorColumnMap.put(specialColumn.type, specialColumn.fieldIndex);
                         }
                     }
                 }
@@ -548,7 +548,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
         if (mIDCodeColumn == -1)
             return null;
 		String s = mFieldData[mIDCodeColumn];
-		return (s == null || s.length() == 0) ? null : s;
+		return (s == null || s.isEmpty()) ? null : s;
 		}
 
 	/**
@@ -563,21 +563,21 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
         if (mCoordinateColumn == -1)
             return null;
 		String s = mFieldData[mCoordinateColumn];
-		return (s == null || s.length() == 0) ? null : s;
+		return (s == null || s.isEmpty()) ? null : s;
 		}
 
 	public String getCoordinates2D() {
 		if (mCoordinate2DColumn == -1)
 			return null;
 		String s = mFieldData[mCoordinate2DColumn];
-		return (s == null || s.length() == 0) ? null : s;
+		return (s == null || s.isEmpty()) ? null : s;
 		}
 
 	public String getCoordinates3D() {
 		if (mCoordinate3DColumn == -1)
 			return null;
 		String s = mFieldData[mCoordinate3DColumn];
-		return (s == null || s.length() == 0) ? null : s;
+		return (s == null || s.isEmpty()) ? null : s;
 		}
 
 	public Reaction getReaction(boolean ensureCoordinates) {
@@ -614,13 +614,13 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
         if (mMoleculeNameColumn == -1)
             return null;
         String s = mFieldData[mMoleculeNameColumn];
-        return (s == null || s.length() == 0) ? null : s;
+        return (s == null || s.isEmpty()) ? null : s;
         }
 
     public Object getDescriptor(String shortName) {
         Integer column = (mDescriptorColumnMap == null) ? null : mDescriptorColumnMap.get(shortName);
         String s = (column == null) ? null : mFieldData[column.intValue()];
-        return (s == null || s.length() == 0) ? super.getDescriptor(shortName)
+        return (s == null || s.isEmpty()) ? super.getDescriptor(shortName)
              : (getDescriptorHandlerFactory() == null) ? null
              : getDescriptorHandlerFactory().getDefaultDescriptorHandler(shortName).decode(s);
         }
@@ -632,7 +632,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
         if (mFragFpColumn == -1)
             return null;
 		String s = mFieldData[mFragFpColumn];
-		return (s == null || s.length() == 0) ? null : s;
+		return (s == null || s.isEmpty()) ? null : s;
 		}
 
 	public String getFieldData(int no) {
