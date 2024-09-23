@@ -34,6 +34,7 @@
 
 package com.actelion.research.chem.io;
 
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.descriptor.DescriptorConstants;
 import com.actelion.research.chem.descriptor.DescriptorHandlerLongFFP512;
 import com.actelion.research.chem.descriptor.DescriptorHandlerStandard2DFactory;
@@ -45,10 +46,8 @@ import com.actelion.research.util.BinaryDecoder;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Properties;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DWARFileParser extends CompoundFileParser implements DescriptorConstants,CompoundTableConstants {
 
@@ -468,6 +467,76 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
     public String getRow() {
         return mLine;
         }
+
+	/**
+	 * Returns the raw data in the following format:
+	 * Columns are sorted according to the order of how they appear in DataWarrior:
+	 *
+ 	 * @param includeHeaderRow
+	 * @return
+	 */
+	public String[][] getRawData(boolean includeHeaderRow, boolean structureAsSmiles) {
+
+		String[] fn  = getFieldNames();
+		TreeMap<String,SpecialField> sfn = getSpecialFieldMap();
+
+		List<String> allFieldNames = new ArrayList<>();
+
+		allFieldNames.addAll(Arrays.stream(fn).collect(Collectors.toList()));
+		for(String sfi : sfn.keySet().stream().sorted(  (x,y) -> Integer.compare( sfn.get(x).fieldIndex , sfn.get(y).fieldIndex ) ).collect(Collectors.toList())) {
+			allFieldNames.add( sfn.get(sfi).fieldIndex , sfi );
+		}
+
+		int nDataRows = getRowCount();
+		int nOutputRows = nDataRows + (includeHeaderRow?1:0);
+
+		String[][] rawData = new String[ nOutputRows ][ allFieldNames.size() ];
+
+		if(includeHeaderRow) {
+			for(int zi=0;zi<fn.length;zi++) {
+				String fi = fn[zi];
+				rawData[0][zi] = fi;
+			}
+		}
+
+		next();
+
+		for(int zi=0;zi<nDataRows;zi++) {
+			int zOutput = zi + (includeHeaderRow?1:0);
+
+			for(int zj=0;zj<allFieldNames.size();zj++) {
+				// determine if structure column or not
+				String fi = allFieldNames.get(zj);//fn[zj];
+				String rawData_i = "";
+
+				if(sfn.containsKey(fi)) {
+					rawData_i = getSpecialFieldData(getSpecialFieldIndex(fi));
+					// special column..
+					if( sfn.get(fi).type.equals(mIDCodeColumn) ) {
+						if(structureAsSmiles) {
+							try{
+								StereoMolecule mi = new StereoMolecule();
+								IDCodeParser icp = new IDCodeParser();
+								icp.parse(mi,rawData_i);
+								IsomericSmilesCreator isc = new IsomericSmilesCreator(mi);
+								rawData_i = isc.getSmiles();
+							}
+							catch(Exception ex) {
+								System.out.println("Exception for: "+rawData_i);
+							}
+						}
+					}
+				}
+				else {
+					// normal column:
+					rawData_i = getFieldData( getFieldIndex( fi ) );
+				}
+				rawData[zOutput][zj] = rawData_i;
+			}
+			this.next();
+		}
+		return rawData;
+	}
 
     protected boolean advanceToNext() {
 		if (mReader == null)
