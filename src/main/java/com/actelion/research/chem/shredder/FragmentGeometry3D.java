@@ -61,7 +61,7 @@ public class FragmentGeometry3D {
 		ArrayList<ExitVector> exitVectorList = new ArrayList<>();
 		for (int atom=0; atom<mMol.getAllAtoms(); atom++)
 			if ("*".equals(mMol.getAtomCustomLabel(atom)))
-				exitVectorList.add(new com.actelion.research.chem.sar.ExitVector(mMol.getConnAtom(atom, 0), atom, mMol.getAtomicNo(atom)));
+				exitVectorList.add(new ExitVector(mMol.getConnAtom(atom, 0), atom, mMol.getAtomicNo(atom)));
 
 		mExitVector = exitVectorList.toArray(new ExitVector[0]);
 	}
