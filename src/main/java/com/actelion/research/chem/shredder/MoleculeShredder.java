@@ -34,12 +34,12 @@ public class MoleculeShredder {
 
 	public static final int cColorFragmentsInMolecule = 256;
 
-	private final int cMaxCoreFragments = 8;
+	private static final int cMaxCoreFragments = 8;
 
-	private StereoMolecule mMol;
+	private final StereoMolecule mMol;
 	private boolean[]			mIsCuttableBond;
 	private boolean[][]			mAreNeighbours;
-	private int					mMode;
+	private final int			mMode;
 	private int					mCuttableBonds;
 	private int					mCoreFragments;
 	private int[]				mCoreFragmentNo;
@@ -69,7 +69,7 @@ public class MoleculeShredder {
 
 	public StereoMolecule getFragment(StereoMolecule theFragment, int fragmentNo) {
 		boolean[] isMember = new boolean[mMol.getAtoms()];
-		long fragmentBits = mFragmentList.get(fragmentNo).longValue();
+		long fragmentBits = mFragmentList.get(fragmentNo);
 		for (int coreFragment=0; coreFragment<mCoreFragments; coreFragment++)
 			if ((fragmentBits & ((long)1 << coreFragment)) != 0)
 				for (int atom=0; atom<mMol.getAtoms(); atom++)
@@ -97,7 +97,7 @@ public class MoleculeShredder {
 			theFragment.setFragment(true);
 			}
 		else {
-			theFragment.deleteMolecule();
+			theFragment.clear();
 			theFragment.setFragment(true);
 			}
 
@@ -205,7 +205,7 @@ public class MoleculeShredder {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (mCoreFragmentNo[atom] == -1) {
 				mCoreFragmentNo[atom] = mCoreFragments;
-				int graphAtom[] = new int[mMol.getAtoms()];
+				int[] graphAtom = new int[mMol.getAtoms()];
 				graphAtom[0] = atom;
 				int current = 0;
 				int highest = 0;
@@ -254,7 +254,7 @@ public class MoleculeShredder {
 			return;
 
 		for (int fragment=0; fragment<mCoreFragments; fragment++)
-			mFragmentList.add(new Long((long)1 << fragment));
+			mFragmentList.add((long)1 << fragment);
 
 		if ((mMode & cModeCoreFragmentsOnly) != 0)
 			return;
@@ -274,7 +274,7 @@ public class MoleculeShredder {
 		for (int fragmentSize=2; fragmentSize<mCoreFragments; fragmentSize++) {
 			int firstOfThisSize = mFragmentList.size();
 			while (current < firstOfThisSize) {
-				long currentFragment = mFragmentList.get(current).longValue();
+				long currentFragment = mFragmentList.get(current);
 				for (int coreFragment=0; coreFragment<mCoreFragments; coreFragment++) {
 					if ((currentFragment & ((long)1 << coreFragment)) != 0) {
 						for (int coreNeighbour=0; coreNeighbour<mCoreFragments; coreNeighbour++) {
@@ -283,14 +283,14 @@ public class MoleculeShredder {
 								long proposedFragment = currentFragment | ((long)1 << coreNeighbour);
 								boolean found = false;
 								for (int i=firstOfThisSize; i<mFragmentList.size(); i++) {
-									if (proposedFragment == mFragmentList.get(i).longValue()) {
+									if (proposedFragment == mFragmentList.get(i)) {
 										found = true;
 										break;
 										}
 									}
 
 								if (!found)
-									mFragmentList.add(new Long(proposedFragment));
+									mFragmentList.add(proposedFragment);
 								}
 							}
 						}
@@ -305,28 +305,28 @@ public class MoleculeShredder {
 
 		ArrayList<Integer> centralCoreList = new ArrayList<Integer>();
 		for (int fragment=0; fragment<mCoreFragments; fragment++)
-			centralCoreList.add(new Integer(fragment));
+			centralCoreList.add(fragment);
 
 		for (int fragmentSize=2; fragmentSize<mCoreFragments; fragmentSize++) {
 			int firstOfThisSize = mFragmentList.size();
 			while (current < firstOfThisSize) {
-				long currentFragment = mFragmentList.get(current).longValue();
-				int coreFragment = centralCoreList.get(current).intValue();
+				long currentFragment = mFragmentList.get(current);
+				int coreFragment = centralCoreList.get(current);
 				for (int coreNeighbour=0; coreNeighbour<mCoreFragments; coreNeighbour++) {
 					if (mAreNeighbours[coreFragment][coreNeighbour]
 					 && (currentFragment & ((long)1 << coreNeighbour)) == 0) {
 						long proposedFragment = currentFragment | ((long)1 << coreNeighbour);
 						boolean found = false;
 						for (int i=firstOfThisSize; i<mFragmentList.size(); i++) {
-							if (proposedFragment == mFragmentList.get(i).longValue()) {
+							if (proposedFragment == mFragmentList.get(i)) {
 								found = true;
 								break;
 								}
 							}
 
 						if (!found) {
-							mFragmentList.add(new Long(proposedFragment));
-							centralCoreList.add(new Integer(centralCoreList.get(current).intValue()));
+							mFragmentList.add(proposedFragment);
+							centralCoreList.add(centralCoreList.get(current));
 							}
 						}
 					}
