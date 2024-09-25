@@ -30,8 +30,8 @@ public class FragmentGeometry3D {
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 
 		switch (mode) {
-			case MODE_SELECTED_ATOMS -> initMoleculeWithSelection();
-			case MODE_FRAGMENT_WITH_EXIT_VECTORS -> initFragmentWithExitVectors();
+			case MODE_SELECTED_ATOMS: initMoleculeWithSelection();
+			case MODE_FRAGMENT_WITH_EXIT_VECTORS: initFragmentWithExitVectors();
 		}
 
 		Arrays.sort(mExitVector);
