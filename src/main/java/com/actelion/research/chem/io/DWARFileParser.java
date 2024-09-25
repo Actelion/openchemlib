@@ -472,7 +472,7 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 	 * Returns the raw data in the following format:
 	 * Columns are sorted according to the order of how they appear in DataWarrior:
 	 *
- 	 * @param includeHeaderRow
+	 * @param includeHeaderRow
 	 * @return
 	 */
 	public String[][] getRawData(boolean includeHeaderRow, boolean structureAsSmiles) {
@@ -483,8 +483,13 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 		List<String> allFieldNames = new ArrayList<>();
 
 		allFieldNames.addAll(Arrays.stream(fn).collect(Collectors.toList()));
+		List<String> allFieldNamesForOutput = new ArrayList<>();
+		allFieldNamesForOutput.addAll(allFieldNames);
 		for(String sfi : sfn.keySet().stream().sorted(  (x,y) -> Integer.compare( sfn.get(x).fieldIndex , sfn.get(y).fieldIndex ) ).collect(Collectors.toList())) {
-			allFieldNames.add( sfn.get(sfi).fieldIndex , sfi );
+			if(sfn.get(sfi).type.equals(cColumnTypeIDCode)) {
+				allFieldNames.add(sfn.get(sfi).fieldIndex, sfi);
+				allFieldNamesForOutput.add(sfi);
+			}
 		}
 
 		int nDataRows = getRowCount();
@@ -493,8 +498,8 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 		String[][] rawData = new String[ nOutputRows ][ allFieldNames.size() ];
 
 		if(includeHeaderRow) {
-			for(int zi=0;zi<fn.length;zi++) {
-				String fi = fn[zi];
+			for(int zi=0;zi<allFieldNamesForOutput.size();zi++) {
+				String fi = allFieldNamesForOutput.get(zi);
 				rawData[0][zi] = fi;
 			}
 		}
@@ -504,15 +509,15 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 		for(int zi=0;zi<nDataRows;zi++) {
 			int zOutput = zi + (includeHeaderRow?1:0);
 
-			for(int zj=0;zj<allFieldNames.size();zj++) {
+			for(int zj=0;zj<allFieldNamesForOutput.size();zj++) {
 				// determine if structure column or not
-				String fi = allFieldNames.get(zj);//fn[zj];
+				String fi = allFieldNamesForOutput.get(zj); //allFieldNames.get(zj);//fn[zj];
 				String rawData_i = "";
 
 				if(sfn.containsKey(fi)) {
 					rawData_i = getSpecialFieldData(getSpecialFieldIndex(fi));
 					// special column..
-					if( sfn.get(fi).type.equals(mIDCodeColumn) ) {
+					if( sfn.get(fi).type.equals(cColumnTypeIDCode) ) {
 						if(structureAsSmiles) {
 							try{
 								StereoMolecule mi = new StereoMolecule();
@@ -538,7 +543,39 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 		return rawData;
 	}
 
-    protected boolean advanceToNext() {
+	public static void main(String args[]) {
+		//DWARFileParser dwfp = new DWARFileParser("C:\\data\\ActelionFragmentLibrary_smallFragments.dwar");
+		//DWARFileParser dwfp = new DWARFileParser("C:\\data\\hitexpclusteringtool\\input\\Ox1_HTS_215_Hits.dwar");
+		DWARFileParser dwfp = new DWARFileParser("C:\\dev\\pyocl\\data\\Wikipedia_Compounds_6.dwar");
+
+		String[][] rawData_a = dwfp.getRawData(true,false);
+		dwfp = new DWARFileParser("C:\\dev\\pyocl\\data\\Wikipedia_Compounds_6.dwar");
+		String[][] rawData_b = dwfp.getRawData(false,true);
+		dwfp = new DWARFileParser("C:\\dev\\pyocl\\data\\Wikipedia_Compounds_6.dwar");
+		String[][] rawData_c = dwfp.getRawData(true,true);
+		System.out.println("DATA:\n");
+		for(int zi=0;zi<rawData_a.length;zi++) {
+			for(int zj=0;zj<rawData_a[0].length;zj++) {
+				System.out.print(rawData_a[zi][zj]+" ;; ");
+			}
+			System.out.println("");
+		}
+		for(int zi=0;zi<rawData_b.length;zi++) {
+			for(int zj=0;zj<rawData_b[0].length;zj++) {
+				System.out.print(rawData_b[zi][zj]+" ;; ");
+			}
+			System.out.println();
+		}
+		for(int zi=0;zi<rawData_c.length;zi++) {
+			for(int zj=0;zj<rawData_c[0].length;zj++) {
+				System.out.print(rawData_c[zi][zj]+" ;; ");
+			}
+			System.out.println();
+		}
+	}
+
+
+	protected boolean advanceToNext() {
 		if (mReader == null)
 			return false;
 
