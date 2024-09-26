@@ -1,5 +1,7 @@
 package com.actelion.research.chem.shredder;
 
+import com.actelion.research.calc.Matrix;
+import com.actelion.research.calc.SingularValueDecomposition;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
@@ -14,8 +16,9 @@ public class FragmentGeometry3D {
 	private StereoMolecule mMol;
 	private ExitVector[] mExitVector;
 	private String mFootPrint;	// canonical String describing atomic numbers or exit vectors
-	private int[][] mPermutations;
-	private Coordinates[] mCoordinates;
+	private int[][] mPermutation;
+	private Coordinates[] mAlignmentCoords;
+	private Coordinates mAlignmentCOG;
 
 	/**
 	 * Creates a FragmentGeometry3D from a StereoMolecule with the mode defining the situation.
@@ -30,16 +33,29 @@ public class FragmentGeometry3D {
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 
 		switch (mode) {
-			case MODE_SELECTED_ATOMS: initMoleculeWithSelection();
-			case MODE_FRAGMENT_WITH_EXIT_VECTORS: initFragmentWithExitVectors();
+		case MODE_SELECTED_ATOMS:
+			initMoleculeWithSelection();
+			break;
+		case MODE_FRAGMENT_WITH_EXIT_VECTORS:
+			initFragmentWithExitVectors();
+			break;
 		}
 
 		Arrays.sort(mExitVector);
 
 		StringBuilder footprint = new StringBuilder();
 		for (ExitVector ev : mExitVector)
-			footprint.append(ev.atomicNo);
+			footprint.append(Molecule.cAtomLabel[ev.atomicNo]);
 		mFootPrint = footprint.toString();
+
+		// compile coordinates of all root atoms and calculat their center of gravity
+		mAlignmentCoords = new Coordinates[2*mExitVector.length];
+		for (int i=0; i<mExitVector.length; i++)
+			mAlignmentCoords[i] = mMol.getCoordinates(mExitVector[i].rootAtom);
+		for (int i=0; i<mExitVector.length; i++)
+			mAlignmentCoords[mExitVector.length+i] = mMol.getCoordinates(mExitVector[i].exitAtom);
+
+		mAlignmentCOG = centerOfGravity(mAlignmentCoords);
 	}
 
 	public void initMoleculeWithSelection() {
@@ -66,6 +82,22 @@ public class FragmentGeometry3D {
 		mExitVector = exitVectorList.toArray(new ExitVector[0]);
 	}
 
+	public int getExitVectorCount() {
+		return mExitVector.length;
+	}
+
+	public int getExitAtom(int i) {
+		return mExitVector[i].exitAtom;
+	}
+
+	public int getRootAtom(int i) {
+		return mExitVector[i].rootAtom;
+	}
+
+	public int getPermutedExitVectorIndex(int permutation, int i) {
+		return mPermutation[permutation][i];
+	}
+
 	/**
 	 * @param geometry
 	 * @return whether it has the same number and kind of exit vectors
@@ -74,23 +106,47 @@ public class FragmentGeometry3D {
 		return mFootPrint.equals(geometry.mFootPrint);
 	}
 
-	public float align(FragmentGeometry3D geometry, int[] permutation) {
-		if (mCoordinates == null) {
-			mCoordinates = new Coordinates[mExitVector.length];
-			for (int i=0; i<mExitVector.length; i++)
-				mCoordinates[i] = mMol.getCoordinates(mExitVector[i].rootAtom);
+	/**
+	 * Aligns all root atoms of the passed geometry to this geometry. If the RMSD of all aligned
+	 * root atoms is lower than maxRMSD, then the rotations matrix is returned. Otherwise, null
+	 * is returned.
+	 * @param geometry the geometry to be aligned with this
+	 * @param permutation permutation index for equivalent root atoms of the passed geometry
+	 * @return rotation matrix or null, depending on whether alignment is acceptable
+	 */
+	public double[][] alignRootAndExitAtoms(FragmentGeometry3D geometry, int permutation, double maxRMSD) {
+		ExitVector[] geomEV = geometry.mExitVector;
+		Coordinates[] coords = new Coordinates[2*geomEV.length];
+		for (int i=0; i<geomEV.length; i++)
+			coords[i] = new Coordinates(geometry.mMol.getCoordinates(geomEV[mPermutation[permutation][i]].rootAtom));
+		for (int i=0; i<geomEV.length; i++)
+			coords[geomEV.length+i] = new Coordinates(geometry.mMol.getCoordinates(geomEV[mPermutation[permutation][i]].exitAtom));
+
+		double[][] matrix = kabschAlign(mAlignmentCoords, coords, mAlignmentCOG, geometry.mAlignmentCOG);
+
+		for (Coordinates c : coords) {
+			c.sub(geometry.mAlignmentCOG);
+			c.rotate(matrix);
+			c.add(mAlignmentCOG);
 		}
 
-		Coordinates[] coords = new Coordinates[mExitVector.length];
-		for (int i=0; i<mExitVector.length; i++)
-			coords[i] = geometry.mMol.getCoordinates(mExitVector[permutation[i]].rootAtom);
-
-		// TODO align...
-		return 0;
+		return Coordinates.getRmsd(mAlignmentCoords, coords) > maxRMSD ? null : matrix;
 	}
 
-	public int[][] getPermutations() {
-		if (mPermutations == null) {
+	public boolean hasMatchingExitVectors(FragmentGeometry3D geometry, Coordinates[] coords, int permutation, double maxDiversion) {
+		for (int i = 0; i<mExitVector.length; i++) {
+			ExitVector ev1 = mExitVector[i];
+			Coordinates v1 = mMol.getCoordinates(ev1.exitAtom).subC(mMol.getCoordinates(ev1.rootAtom));
+			ExitVector ev2 = geometry.mExitVector[mPermutation[permutation][i]];
+			Coordinates v2 = coords[ev2.exitAtom].subC(coords[ev2.rootAtom]);
+			if (v1.getAngle(v2) > maxDiversion)
+				return false;
+		}
+		return true;
+	}
+
+	public int getPermutationCount() {
+		if (mPermutation == null) {
 			int[] sameCount = new int[mExitVector.length];
 			int[] permCount = new int[mExitVector.length];
 			int index = 0;
@@ -107,12 +163,12 @@ public class FragmentGeometry3D {
 				index += sameCount[index];
 			}
 
-			mPermutations = new int[totalPermCount][mExitVector.length];
+			mPermutation = new int[totalPermCount][mExitVector.length];
 			int multiplier = 1;
 			for (int i=0; i<mExitVector.length; i++) {
 				if (sameCount[i] <= 1) {
 					for (int p=0; p<totalPermCount; p++)
-						mPermutations[p][i] = i;
+						mPermutation[p][i] = i;
 				}
 				else {
 					int[][] basePerm = createPermutations(sameCount[i]);
@@ -121,7 +177,7 @@ public class FragmentGeometry3D {
 						for (int p=0; p<basePerm.length; p++) {
 							for (int j=0; j<sameCount[i]; j++) {
 								for (int m=0; m<multiplier; m++) {
-									mPermutations[tp+m][i+j] = i+basePerm[p][j];
+									mPermutation[tp+m][i+j] = i+basePerm[p][j];
 								}
 							}
 						}
@@ -132,7 +188,7 @@ public class FragmentGeometry3D {
 			}
 		}
 
-		return mPermutations;
+		return mPermutation.length;
 	}
 
 	private int[][] createPermutations(int objectCount) {
@@ -160,6 +216,66 @@ public class FragmentGeometry3D {
 			else
 				addToPermutation(output, max, list);
 		}
+	}
+
+	public Coordinates getAlignmentCOG() {
+		return mAlignmentCOG;
+	}
+
+	public static Coordinates centerOfGravity(Coordinates[] coords) {
+		int counter = 0;
+		Coordinates cog = new Coordinates();
+		for(Coordinates c:coords) {
+			cog.add(c);
+			counter++;
+		}
+		cog.scale(1.0/counter);
+		return cog;
+	}
+
+	/**
+	 * Calculates the rotation matrix to rigidly align coords2 on coords1.
+	 * coords1 and coords2 are not touched.<br>
+	 * To actually perform the alignment with any set of coordinates do:<br>
+	 * for (Coordinates c : anyCoords) { c.sub(cog2); c.rotate(matrix); c.add(cog1); }
+	 * @param coords1
+	 * @param coords2
+	 * @param cog1
+	 * @param cog2
+	 * @return
+	 */
+	public static double[][] kabschAlign(Coordinates[] coords1, Coordinates[] coords2,
+										 Coordinates cog1, Coordinates cog2) {
+		double[][] m = new double[3][3];
+		double[][] c1 = Arrays.stream(coords1).map(e -> new double[] {e.x-cog1.x,e.y-cog1.y,e.z-cog1.z}).toArray(double[][]::new);
+		double[][] c2 = Arrays.stream(coords2).map(e -> new double[] {e.x-cog2.x,e.y-cog2.y,e.z-cog2.z}).toArray(double[][]::new);
+		for(int i=0;i<3;i++) {
+			for(int j=0;j<3;j++) {
+				double rij = 0.0;
+				for(int a=0; a<c1.length; a++)
+					rij+= c2[a][i]* c1[a][j];
+				m[i][j] = rij;
+			}
+		}
+
+		SingularValueDecomposition svd = new SingularValueDecomposition(m,null,null);
+
+		Matrix u = new Matrix(svd.getU());
+		Matrix v = new Matrix(svd.getV());
+		Matrix ut = u.getTranspose();
+		Matrix vut = v.multiply(ut);
+		double det = vut.det();
+
+		Matrix ma = new Matrix(3,3);
+		ma.set(0,0,1.0);
+		ma.set(1,1,1.0);
+		ma.set(2,2,det);
+
+		Matrix rot = ma.multiply(ut);
+		rot = v.multiply(rot);
+		assert(rot.det()>0.0);
+		rot = rot.getTranspose();
+		return rot.getArray();
 	}
 
 	private static class ExitVector implements Comparable<ExitVector> {

@@ -2047,7 +2047,7 @@ public class Matrix {
     public boolean equal(Matrix ma) {
         boolean bEQ = true;
 
-        if(equalDimension(ma) == true) {
+        if(equalDimension(ma)) {
             for (int i = 0; i < getRowDim(); i++) {
                 for (int j = 0; j < getColDim(); j++) {
                     if(data[i][j] != ma.data[i][j]) {
@@ -2066,7 +2066,7 @@ public class Matrix {
     public boolean equal(Matrix ma, double dLimit) {
         boolean bEQ = true;
 
-        if(equalDimension(ma) == true) {
+        if(equalDimension(ma)) {
             for (int i = 0; i < getRowDim(); i++) {
                 for (int j = 0; j < getColDim(); j++) {
                     double dDiff = Math.abs(data[i][j] - ma.data[i][j]);
@@ -2305,7 +2305,7 @@ public class Matrix {
         //
         
         // C = A * B
-        if ( (transA == false) && (transB == false)) {
+        if (!transA && !transB) {
         	
             int n = cols();
             
@@ -2364,7 +2364,7 @@ public class Matrix {
         // C = A' * B
         //
         // Matrix A is transposed
-        if ( (transA == true) && (transB == false)) {
+        if (transA && !transB) {
 
             // Reverse n
             int n = rows();
@@ -2429,7 +2429,7 @@ public class Matrix {
         // C = A * B'
         //
         // Matrix B is transposed
-        if ( (transA == false) && (transB == true)) {
+        if (!transA && transB) {
             int n = cols();
             
             int m = rows();
@@ -2483,7 +2483,7 @@ public class Matrix {
         // C = A' * B'
         //
         // Matrix A + B are transposed
-        if ( (transA == true) && (transB == true)) {
+        if (transA && transB) {
         	
             // Reverse n
             int n = rows();
@@ -2792,7 +2792,7 @@ public class Matrix {
     public List<Double> getRowAsList(int row) {
         List<Double> list = new ArrayList<Double>();
         for (int ii = 0; ii < data[0].length; ii++) {
-          list.add(new Double(data[row][ii]));
+          list.add(data[row][ii]);
         }
         return list;
     }
@@ -3878,9 +3878,6 @@ public class Matrix {
     	return sbAll.toString();
     }
 
-    
-    
-    
 	public void writeSerialized(File fiOut) throws IOException {
 		FileOutputStream fos = new FileOutputStream(fiOut);
 		ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -3934,7 +3931,7 @@ public class Matrix {
             BufferedWriter writer = new BufferedWriter(new FileWriter(new File(
                 sFile), bApppend));
 
-            StringBuffer sVal = new StringBuffer();
+            StringBuffer sVal;
             for (int ii = 0; ii < data.length; ii++) {
                 sVal = new StringBuffer();
                 for (int jj = 0; jj < data[0].length; jj++) {

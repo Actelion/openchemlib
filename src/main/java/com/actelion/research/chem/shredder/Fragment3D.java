@@ -39,7 +39,7 @@ public class Fragment3D implements Comparable<Fragment3D> {
 	@Override public int compareTo(Fragment3D f) {
 		int comparison = mIDCode.compareTo(f.mIDCode);
 		if (comparison != 0 || mTorsions == null)	// different structure or no rotatable bonds
-		return comparison;
+			return comparison;
 
 		return mTorsions.compareTo(f.mTorsions);
 		}
