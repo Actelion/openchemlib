@@ -202,6 +202,8 @@ public class ArrayUtilsCalc {
 
 		return bFound;
 	}
+
+
     public static final double getCorrPearson(List<PointDouble> li) {
 
     	final double [] a = new double [li.size()];
@@ -213,7 +215,7 @@ public class ArrayUtilsCalc {
         
         return getCorrPearson(a, b);
     }
-    
+
     public static final double getCorrPearson(Matrix A, Matrix B) {
         
         
