@@ -62,7 +62,7 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	private byte maxIndexNodeQuery;
 	
 	/**
-	 * The index is the index of the node in the query molecule.
+	 * The index is the index of the node in the query molecule. Not matched query nodes contain a -1.
 	 * The value at 'index' is the index of the node in the base molecule.
 	 * Contains the same information as heapIndexBase and heapIndexQuery. Used for fast lookup.
 	 */
