@@ -172,7 +172,7 @@ public class Canonizer {
 	private ArrayList<int[]> mTHParityNormalizationGroupList;
 	private int mMode,mNoOfRanks,mNoOfPseudoGroups;
 	private boolean mIsOddParityRound;
-	private boolean mZCoordinatesAvailable;
+	private boolean mZCoordinatesAvailable,mAllHydrogensAreExplicit;
 	private boolean mCIPParityNoDistinctionProblem;
 	private boolean mEncodeAvoid127;
 
@@ -225,6 +225,18 @@ public class Canonizer {
 			canFindNitrogenQualifyingForParity();
 
 		mZCoordinatesAvailable = ((mode & COORDS_ARE_3D) != 0) || mMol.is3D();
+
+		mAllHydrogensAreExplicit = false;
+		if (mMol.getAllAtoms() > mMol.getAtoms()
+		 && !mMol.isFragment()) {
+			mAllHydrogensAreExplicit = true;
+			for (int i=0; i<mMol.getAtoms(); i++) {
+				if (mMol.getImplicitHydrogens(i) != 0) {
+					mAllHydrogensAreExplicit = false;
+					break;
+					}
+				}
+			}
 
 		if ((mMode & NEGLECT_ANY_STEREO_INFORMATION) == 0) {
 			mTHParity = new byte[mMol.getAtoms()];
@@ -3175,6 +3187,43 @@ System.out.println();
 				}
 			}
 
+		if (mAllHydrogensAreExplicit && (mMode & ENCODE_ATOM_SELECTION) != 0) {
+			count = 0;
+			int connBits = 0;
+			for (int i=0; i<mMol.getAtoms(); i++) {
+				int atom = mGraphAtom[i];
+				int conns = 0;
+				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++) {
+					if (mMol.isSelectedAtom(mMol.getConnAtom(atom, j))) {
+						int hIndex = j - mMol.getConnAtoms(atom);
+						conns |= (1 << hIndex);
+						connBits = Math.max(connBits, hIndex+1);
+						}
+					}
+				if (conns != 0)
+					count++;
+				}
+			if (count != 0) {
+				encodeFeatureNo(38);    // 38 = datatype 'selected hydrogens'
+				encodeBits(count, nbits);
+				encodeBits(connBits, 3);
+				for (int i=0; i<mMol.getAtoms(); i++) {
+					int atom = mGraphAtom[i];
+					int conns = 0;
+					for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++) {
+						if (mMol.isSelectedAtom(mMol.getConnAtom(atom, j))) {
+							int hIndex = j - mMol.getConnAtoms(atom);
+							conns |= (1 << hIndex);
+							}
+						}
+					if (conns != 0) {
+						encodeBits(atom, nbits);
+						encodeBits(conns, connBits);
+						}
+					}
+				}
+			}
+
 		encodeBits(0, 1);
 		mIDCode = encodeBitsEnd();
 		}
@@ -3370,18 +3419,7 @@ System.out.println();
 			}
 
 		// if we have 3D-coords and explicit hydrogens and if all hydrogens are explicit then encode hydrogen coordinates
-		boolean includeHydrogenCoordinates = false;
-		if (mZCoordinatesAvailable
-		 && mMol.getAllAtoms() > mMol.getAtoms()
-		 && !mMol.isFragment()) {
-			includeHydrogenCoordinates = true;
-			for (int i=0; i<mMol.getAtoms(); i++) {
-				if (mMol.getImplicitHydrogens(i) != 0) {
-					includeHydrogenCoordinates = false;
-					break;
-					}
-				}
-			}
+		boolean includeHydrogenCoordinates = mZCoordinatesAvailable & mAllHydrogensAreExplicit;
 
 		int resolutionBits = mZCoordinatesAvailable ? 16 : 8;	// must be an even number
 		encodeBitsStart(true);

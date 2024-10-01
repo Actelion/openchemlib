@@ -13,12 +13,12 @@ public class FragmentGeometry3D {
 	public static final int MODE_SELECTED_ATOMS = 1;	// molecule with fragment atoms selected, exit vector atoms not selected
 	public static final int MODE_FRAGMENT_WITH_EXIT_VECTORS = 2;	// defined as atom custom label "*"
 
-	private StereoMolecule mMol;
+	private final StereoMolecule mMol;
 	private ExitVector[] mExitVector;
-	private String mFootPrint;	// canonical String describing atomic numbers or exit vectors
+	private final String mFootPrint;	// canonical String describing atomic numbers or exit vectors
 	private int[][] mPermutation;
-	private Coordinates[] mAlignmentCoords;
-	private Coordinates mAlignmentCOG;
+	private final Coordinates[] mAlignmentCoords;
+	private final Coordinates mAlignmentCOG;
 
 	/**
 	 * Creates a FragmentGeometry3D from a StereoMolecule with the mode defining the situation.
@@ -48,13 +48,8 @@ public class FragmentGeometry3D {
 			footprint.append(Molecule.cAtomLabel[ev.atomicNo]);
 		mFootPrint = footprint.toString();
 
-		// compile coordinates of all root atoms and calculat their center of gravity
-		mAlignmentCoords = new Coordinates[2*mExitVector.length];
-		for (int i=0; i<mExitVector.length; i++)
-			mAlignmentCoords[i] = mMol.getCoordinates(mExitVector[i].rootAtom);
-		for (int i=0; i<mExitVector.length; i++)
-			mAlignmentCoords[mExitVector.length+i] = mMol.getCoordinates(mExitVector[i].exitAtom);
-
+		// compile coordinates of all root atoms and calculate their center of gravity
+		mAlignmentCoords = determineAlignmentCoords();
 		mAlignmentCOG = centerOfGravity(mAlignmentCoords);
 	}
 
@@ -71,6 +66,22 @@ public class FragmentGeometry3D {
 		}
 
 		mExitVector = exitVectorList.toArray(new ExitVector[0]);
+	}
+
+	private Coordinates[] determineAlignmentCoords() {
+		Coordinates[] coords = new Coordinates[2*mExitVector.length];
+		for (int i=0; i<mExitVector.length; i++) {
+			coords[i] = mMol.getCoordinates(mExitVector[i].rootAtom);
+			coords[mExitVector.length + i] = mMol.getCoordinates(mExitVector[i].exitAtom);
+
+			// for lonely hydrogens (selected H connects to other exit atom)
+			// we need to place the root coord (hydrogen) further away from the exit atom,
+			// to reflect the longer bond length of a C-C compared to H-C
+			if (mMol.getAtomicNo(mExitVector[i].rootAtom) == 1)
+				coords[i] = (coords[mExitVector.length + i]).subC(coords[i]).scale(0.3).add(coords[i]);
+		}
+
+		return coords;
 	}
 
 	private void initFragmentWithExitVectors() {
@@ -118,9 +129,9 @@ public class FragmentGeometry3D {
 		ExitVector[] geomEV = geometry.mExitVector;
 		Coordinates[] coords = new Coordinates[2*geomEV.length];
 		for (int i=0; i<geomEV.length; i++)
-			coords[i] = new Coordinates(geometry.mMol.getCoordinates(geomEV[mPermutation[permutation][i]].rootAtom));
+			coords[i] = new Coordinates(geometry.mAlignmentCoords[mPermutation[permutation][i]]);
 		for (int i=0; i<geomEV.length; i++)
-			coords[geomEV.length+i] = new Coordinates(geometry.mMol.getCoordinates(geomEV[mPermutation[permutation][i]].exitAtom));
+			coords[geomEV.length+i] = new Coordinates(geometry.mAlignmentCoords[geomEV.length+mPermutation[permutation][i]]);
 
 		double[][] matrix = kabschAlign(mAlignmentCoords, coords, mAlignmentCOG, geometry.mAlignmentCOG);
 
@@ -135,8 +146,7 @@ public class FragmentGeometry3D {
 
 	public boolean hasMatchingExitVectors(FragmentGeometry3D geometry, Coordinates[] coords, int permutation, double maxDiversion) {
 		for (int i = 0; i<mExitVector.length; i++) {
-			ExitVector ev1 = mExitVector[i];
-			Coordinates v1 = mMol.getCoordinates(ev1.exitAtom).subC(mMol.getCoordinates(ev1.rootAtom));
+			Coordinates v1 = mAlignmentCoords[mExitVector.length+i].subC(mAlignmentCoords[i]);
 			ExitVector ev2 = geometry.mExitVector[mPermutation[permutation][i]];
 			Coordinates v2 = coords[ev2.exitAtom].subC(coords[ev2.rootAtom]);
 			if (v1.getAngle(v2) > maxDiversion)

@@ -433,6 +433,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 		mMol.setFragment(decodeBits(1) == 1);
 
 		int[] aromaticSPBond = null;
+		int[] selectedHydrogenBits = null;
 
 		int offset = 0;
 		while (decodeBits(1) == 1) {
@@ -724,6 +725,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 					mMol.setBondType(bond, bondType);
 					}
 				break;
+			case 38:	//	datatype 'selected hydrogen'
+				no = decodeBits(abits);
+				int connBits = decodeBits(3);
+				selectedHydrogenBits = new int[allAtoms];
+				for (int i=0; i<no; i++)
+					selectedHydrogenBits[decodeBits(abits)] = decodeBits(connBits);
+				break;
 				}
 			}
 
@@ -787,7 +795,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 								if (coordsAre3D)
 									mMol.setAtomZ(hydrogen, mMol.getAtomZ(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
 
-								if (mMol.isSelectedAtom(atom))
+								if (selectedHydrogenBits != null && (selectedHydrogenBits[atom] & (1 << i)) != 0)
 									mMol.setAtomSelection(hydrogen, true);
 								}
 							}
