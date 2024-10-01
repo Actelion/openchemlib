@@ -30,6 +30,7 @@ public class ConstantsFlexophoreGenerator {
      */
     // public static final double [] FILTER = FILTER05;
     public static final double [] FILTER07_ = {0.125, 0.125, 0.125,0.25,0.125, 0.125, 0.125};
+    public static final double [] FILTER05_ = {0.125, 0.25,0.25,0.25, 0.125};
 
     public static final double [] FILTER = FILTER07_;
 
