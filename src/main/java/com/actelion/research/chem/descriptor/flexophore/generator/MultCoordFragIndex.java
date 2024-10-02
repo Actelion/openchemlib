@@ -3,6 +3,7 @@ package com.actelion.research.chem.descriptor.flexophore.generator;
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.histogram.MatrixBasedHistogram;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.descriptor.flexophore.DistHistHelper;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.util.Formatter;
 import com.actelion.research.util.datamodel.DoubleArray;
@@ -80,27 +81,12 @@ public class MultCoordFragIndex {
 
         Matrix maHist =  MatrixBasedHistogram.getHistogram(daDistances.get(), maBins);
 
-        double [] arrHist = maHist.getRow(2);
+        double [] arrHistRaw = maHist.getRow(2);
 
 //            System.out.println(StringFunctions.toString(daDistances.get()));
 //            System.out.println(StringFunctions.toString(arrHist));
 
-        int countValuesInHistogram = 0;
-
-        for (int i = 0; i < arrHist.length; i++) {
-            countValuesInHistogram += arrHist[i];
-        }
-
-        // Here, the percentage values for the histograms are calculated.
-        byte [] arrHistPercent = new byte [maHist.getColDim()];
-
-        for (int i = 0; i < arrHist.length; i++) {
-            arrHistPercent[i]= (byte)  (((arrHist[i] / countValuesInHistogram) * 100.0) + 0.5);
-        }
-
-//            System.out.println(StringFunctions.toString(arrHistPercent));
-
-        return arrHistPercent;
+        return DistHistHelper.normalize(arrHistRaw);
 
     }
 

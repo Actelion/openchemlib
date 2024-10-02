@@ -36,6 +36,7 @@ package com.actelion.research.chem.descriptor.flexophore;
 
 import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.calc.statistics.median.ModelMedianInteger;
+import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.util.datamodel.IntArray;
 
 /**
@@ -172,6 +173,53 @@ public class DistHistHelper {
         rangeStatisticsTotal.medianRange = mmi.median;
 
         return rangeStatisticsTotal;
+    }
+
+    public static int count(byte [] a){
+        int c = 0;
+        for (int i = 0; i < a.length; i++) {
+            c += a[i];
+        }
+        return c;
+    }
+
+    public static byte [] normalize(double [] arrHistRaw){
+
+        int countValuesInHistogram = 0;
+        for (int i = 0; i < arrHistRaw.length; i++) {
+            countValuesInHistogram += arrHistRaw[i];
+        }
+        byte [] arrHistPercent = new byte [arrHistRaw.length];
+
+        for (int i = 0; i < arrHistRaw.length; i++) {
+            arrHistPercent[i]= (byte)  (((arrHistRaw[i] / countValuesInHistogram) * ConstantsFlexophoreGenerator.SUM_VAL_HIST) + 0.5);
+        }
+
+//            System.out.println(StringFunctions.toString(arrHistPercent));
+
+        return arrHistPercent;
+
+    }
+    public static byte [] normalize(byte [] arrHistRaw){
+
+        double countValuesInHistogram = 0;
+        for (int i = 0; i < arrHistRaw.length; i++) {
+            countValuesInHistogram += arrHistRaw[i];
+        }
+        byte [] arrHistPercent = new byte [arrHistRaw.length];
+
+        for (int i = 0; i < arrHistRaw.length; i++) {
+
+            double v = ((arrHistRaw[i] / countValuesInHistogram) * ConstantsFlexophoreGenerator.SUM_VAL_HIST) + 0.5;
+
+
+            arrHistPercent[i]= (byte)  v;
+        }
+
+//            System.out.println(StringFunctions.toString(arrHistPercent));
+
+        return arrHistPercent;
+
     }
 
 

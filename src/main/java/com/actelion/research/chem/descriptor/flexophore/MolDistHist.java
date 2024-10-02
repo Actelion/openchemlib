@@ -129,6 +129,33 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 	}
 	
 	public boolean equals(Object o) {
+		if(!equalNodes(o)){
+			return false;
+		}
+		MolDistHist mdh=null;
+		try {
+			mdh = (MolDistHist)o;
+		} catch (RuntimeException e) {
+			return false;
+		}
+		boolean bEQ=true;
+		
+		for (int i = 0; i < getNumPPNodes(); i++) {
+			for (int j = i+1; j < getNumPPNodes(); j++) {
+				byte [] a1 = getDistHist(i,j);
+				byte [] a2 = mdh.getDistHist(i,j);
+				for (int k = 0; k < a2.length; k++) {
+					if(a1[k]!=a2[k]){
+						bEQ = false;
+						break;
+					}
+				}
+			}
+		}
+		
+		return bEQ;
+	}
+	public boolean equalNodes(Object o) {
 		boolean bEQ=true;
 		MolDistHist mdh=null;
 		try {
@@ -147,20 +174,7 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 				break;
 			}
 		}
-		
-		for (int i = 0; i < getNumPPNodes(); i++) {
-			for (int j = i+1; j < getNumPPNodes(); j++) {
-				byte [] a1 = getDistHist(i,j);
-				byte [] a2 = mdh.getDistHist(i,j);
-				for (int k = 0; k < a2.length; k++) {
-					if(a1[k]!=a2[k]){
-						bEQ = false;
-						break;
-					}
-				}
-			}
-		}
-		
+
 		return bEQ;
 	}
 
