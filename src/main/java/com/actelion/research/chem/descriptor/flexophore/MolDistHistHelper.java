@@ -1,5 +1,6 @@
 package com.actelion.research.chem.descriptor.flexophore;
 
+import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
 import com.actelion.research.chem.descriptor.flexophore.generator.SubFlexophoreGenerator;
 import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.ByteArray;
@@ -256,6 +257,22 @@ public class MolDistHistHelper {
             a[i]=li.get(i);
         }
         return a;
+    }
+
+    public static void reNormalizeDistHist(MolDistHist mdh, int margin){
+        int n = mdh.getNumPPNodes();
+        for (int i = 0; i < n; i++) {
+            for (int j = i+1; j < n; j++) {
+                byte [] b = mdh.getDistHist(i,j);
+                int c = DistHistHelper.count(b);
+                if(Math.abs(ConstantsFlexophoreGenerator.SUM_VAL_HIST-c) > margin){
+                    byte [] distHistNew = DistHistHelper.normalize(b);
+                    mdh.setDistHist(i,j,distHistNew);
+//                    int c2 = DistHistHelper.count(distHistNew);
+//                    System.out.println(c2);
+                }
+            }
+        }
     }
 
 }

@@ -135,13 +135,12 @@ public class SolutionCompleteGraph extends AMemorizedObject implements Comparabl
 	/**
 	 * The index is the index of the node in the query molecule.
 	 * The value at 'index' is the index of the node in the base molecule.
+	 * Can contain -1 if a node is not mapping.
 	 */
 	public byte [] getSolution (){
 		return arrSolution;
 	}
-	
 
-	
 	public boolean equals(Object obj) {
 		
 		boolean eq = true;
