@@ -4118,24 +4118,32 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperRings);
 
 		for (int bond=0; bond<mBonds; bond++) {
-			if (isDelocalizedBond(bond))
-				mBondQueryFeatures[bond] &= ~cBondQFDelocalized;
+			int bondTypeQFCount = Integer.bitCount(mBondQueryFeatures[bond] & (Molecule.cBondQFBondTypes | Molecule.cBondQFRareBondTypes));
 
-			int bondType = mBondType[bond] & cBondTypeMaskSimple;
-			if (bondType == cBondTypeSingle)
-				mBondQueryFeatures[bond] &= ~cBondQFSingle;
-			else if (bondType == cBondTypeDouble)
-				mBondQueryFeatures[bond] &= ~cBondQFDouble;
-			else if (bondType == cBondTypeTriple)
-				mBondQueryFeatures[bond] &= ~cBondQFTriple;
-			else if (bondType == cBondTypeQuadruple)
-				mBondQueryFeatures[bond] &= ~cBondQFQuadruple;
-			else if (bondType == cBondTypeQuintuple)
-				mBondQueryFeatures[bond] &= ~cBondQFQuintuple;
-			else if (bondType == cBondTypeMetalLigand)
-				mBondQueryFeatures[bond] &= ~cBondQFMetalLigand;
-			else if (bondType == cBondTypeDelocalized)
+			if (isDelocalizedBond(bond) & (mBondQueryFeatures[bond] & cBondQFDelocalized) != 0) {
 				mBondQueryFeatures[bond] &= ~cBondQFDelocalized;
+				bondTypeQFCount--;
+				}
+
+			// if we have allowed bond types defined, then make sure,
+			// that the explicit bond type is one of them.
+			if (bondTypeQFCount != 0) {
+				int bondType = mBondType[bond] & cBondTypeMaskSimple;
+				if (bondType == cBondTypeSingle)
+					mBondQueryFeatures[bond] |= cBondQFSingle;
+				else if (bondType == cBondTypeDouble)
+					mBondQueryFeatures[bond] |= cBondQFDouble;
+				else if (bondType == cBondTypeTriple)
+					mBondQueryFeatures[bond] |= cBondQFTriple;
+				else if (bondType == cBondTypeQuadruple)
+					mBondQueryFeatures[bond] |= cBondQFQuadruple;
+				else if (bondType == cBondTypeQuintuple)
+					mBondQueryFeatures[bond] |= cBondQFQuintuple;
+				else if (bondType == cBondTypeMetalLigand)
+					mBondQueryFeatures[bond] |= cBondQFMetalLigand;
+				else if (bondType == cBondTypeDelocalized)
+					mBondQueryFeatures[bond] |= cBondQFDelocalized;
+				}
 			}
 		}
 
