@@ -135,8 +135,8 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 	public void paintContent(GenericDrawContext context) {
 		int background = mToolbarCanvas.getBackgroundRGB();
 		boolean isDark = (ColorHelper.perceivedBrightness(background) < 0.5);
-		int highlightBackground = isDark ? ColorHelper.brighter(background, 0.6f) : ColorHelper.darker(background, 0.6f);
-		int selectedBackground = isDark ? ColorHelper.brighter(background, 0.8f) : ColorHelper.darker(background, 0.8f);
+		int highlightBackground = isDark ? ColorHelper.brighter(background, 0.3f) : ColorHelper.darker(background, 0.6f);
+		int selectedBackground = isDark ? ColorHelper.brighter(background, 0.5f) : ColorHelper.darker(background, 0.8f);
 
 		int sw = mImageNormal.getWidth();
 		int sh = mImageNormal.getHeight();

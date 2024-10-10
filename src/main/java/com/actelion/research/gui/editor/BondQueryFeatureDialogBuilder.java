@@ -313,11 +313,6 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 				queryFeatures |= Molecule.cBondQFQuadruple;
 				selectionCount++;
 				}
-			if (mCBDelocalized.isSelected()) {
-				bondType = Molecule.cBondTypeDelocalized;
-				queryFeatures |= Molecule.cBondQFDelocalized;
-				selectionCount++;
-				}
 			if (mCBTriple.isSelected()) {
 				bondType = Molecule.cBondTypeTriple;
 				queryFeatures |= Molecule.cBondQFTriple;
@@ -326,6 +321,11 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			if (mCBDouble.isSelected()) {
 				bondType = Molecule.cBondTypeDouble;
 				queryFeatures |= Molecule.cBondQFDouble;
+				selectionCount++;
+				}
+			if (mCBDelocalized.isSelected()) {
+				bondType = Molecule.cBondTypeDelocalized;
+				queryFeatures |= Molecule.cBondQFDelocalized;
 				selectionCount++;
 				}
 			if (mCBSingle.isSelected()) {

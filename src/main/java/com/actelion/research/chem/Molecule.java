@@ -3475,8 +3475,9 @@ public class Molecule implements Serializable {
 			mBondQueryFeatures[bond] |= feature;
 		else
 			mBondQueryFeatures[bond] &= ~feature;
-		mValidHelperArrays = cHelperNone;	// there is an influence on occipied valence, bond order, etc.
-		mIsFragment = true;
+		mValidHelperArrays = cHelperNone;	// there is an influence on occupied valence, bond order, etc.
+		if (value && feature != 0)
+			mIsFragment = true;
 		}
 
 
