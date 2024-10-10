@@ -979,14 +979,18 @@ public class GenericEditorArea implements GenericEventListener {
 			}
 
 			if (e.getButton() == 1) {
+				mMouseIsDown = false;
+				updateCursor();
+				mouseReleasedButton1();
+			}
+		}
+
+		if (e.getWhat() == GenericMouseEvent.MOUSE_CLICKED) {
+			if (e.getButton() == 1) {
 				if (e.getClickCount() == 2) {
 					handleDoubleClick(e.getX(), e.getY());
 					return;
 				}
-
-				mMouseIsDown = false;
-				updateCursor();
-				mouseReleasedButton1();
 			}
 		}
 
