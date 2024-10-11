@@ -144,12 +144,13 @@ public class FragmentGeometry3D {
 		return Coordinates.getRmsd(mAlignmentCoords, coords) > maxRMSD ? null : matrix;
 	}
 
-	public boolean hasMatchingExitVectors(FragmentGeometry3D geometry, Coordinates[] coords, int permutation, double maxDiversion) {
+	public boolean hasMatchingExitVectors(FragmentGeometry3D geometry, Coordinates[] coords, int permutation, double maxAngleDivergence) {
+		maxAngleDivergence *= Math.PI / 180;
 		for (int i = 0; i<mExitVector.length; i++) {
 			Coordinates v1 = mAlignmentCoords[mExitVector.length+i].subC(mAlignmentCoords[i]);
 			ExitVector ev2 = geometry.mExitVector[mPermutation[permutation][i]];
 			Coordinates v2 = coords[ev2.exitAtom].subC(coords[ev2.rootAtom]);
-			if (v1.getAngle(v2) > maxDiversion)
+			if (v1.getAngle(v2) > maxAngleDivergence)
 				return false;
 		}
 		return true;

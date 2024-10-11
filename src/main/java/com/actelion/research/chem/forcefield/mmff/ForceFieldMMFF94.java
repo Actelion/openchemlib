@@ -33,16 +33,12 @@
 
 package com.actelion.research.chem.forcefield.mmff;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.forcefield.AbstractForceField;
 
-/**
+import java.util.*;
+
+/*
  * The MMFF ForceField class is the top level class used to perform
  * energy calculations/minimisation on a molecule. It accepts an
  * ExtendedMolecule and the string name of the parameter tables to use.
@@ -68,7 +64,7 @@ import com.actelion.research.chem.forcefield.AbstractForceField;
  *      (default: 1.0)
  *  - "dielectric model": A string for the dielectric model. "distance"
  *      selects a distance-dependent dielectric model, everything else
-*       selects the constant dielectric model (default: "constant")
+ *      selects the constant dielectric model (default: "constant")
  *  - "angle bend": A boolean, default True, for whether to include angle
  *      bending energy terms.
  *  - "bond stretch": A boolean, default True, for whether to include bond
@@ -76,17 +72,13 @@ import com.actelion.research.chem.forcefield.AbstractForceField;
  *  - "electrostatic": A boolean, default True, for whether to include the
  *      nonbonded electrostatic energy terms.
  *  - "out of plane": A boolean, default True, for whether to include out
-        of plane energy terms.
+ *      of plane energy terms.
  *  - "stretch bend": A boolean, default True, for whether to include
-        stretch bending energy terms.
+ *      stretch bending energy terms.
  *  - "torsion angle": A boolean, default True, for whether to include
  *      torsional angle energy terms.
  *  - "van der waals": A boolean, default True, for whether to include the
  *      nonbonded van der Waals energy terms.
- */
-/**
- * @author joel
- *
  */
 /**
  * @author joel
@@ -98,10 +90,9 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
     public static final String MMFF94SPLUS = "MMFF94s+";
 
 
-    //protected final ExtendedMolecule mol;
     private final MMFFMolecule mMMFFMol;
-    public static Map<String, Tables> mTables = new HashMap<String, Tables>();
-    private List<EnergyTerm> mEnergies = new ArrayList<EnergyTerm>();
+    public static Map<String, Tables> mTables = new HashMap<>();
+    private final List<EnergyTerm> mEnergies = new ArrayList<>();
 
     
     /**
@@ -114,25 +105,21 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
      *      See class description of a list of options.
      */
     
-    public ForceFieldMMFF94(StereoMolecule m, String tablename,
-            Map<String, Object> options) {
+    public ForceFieldMMFF94(StereoMolecule m, String tablename, Map<String, Object> options)
+			throws BadAtomTypeException,BadRingAromException {
     	super(m);
     	mMMFFMol = new com.actelion.research.chem.forcefield.mmff.MMFFMolecule(m);
     	mMol.ensureHelperArrays(StereoMolecule.cHelperRings);
         Tables table = mTables.get(tablename);
 
         double nonBondedThresh = options.containsKey("nonbonded cutoff")
-            ? ((Double)options.get("nonbonded cutoff")).doubleValue()
+            ? (Double)options.get("nonbonded cutoff")
             : 100.0;
 
         double dielConst = options.containsKey("dielectric constant")
-            ? ((Double)options.get("dielectric constant")).doubleValue() : 1.0;
+            ? (Double)options.get("dielectric constant") : 1.0;
 
-        boolean dielModel = options.containsKey("dielectric model")
-            ? ((String)options.get("dielectric model")).equals("distance")
-            : false;
-
-
+        boolean dielModel = options.containsKey("dielectric model") && (options.get("dielectric model")).equals("distance");
 
         Separation sep = new Separation(mMMFFMol);
 
@@ -174,8 +161,8 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
      *      must be a table with this name that has been loaded with
      *      "loadTable()".
      */
-    public ForceFieldMMFF94(StereoMolecule mol, String tablename) {
-        this(mol, tablename, new HashMap<String, Object>());
+    public ForceFieldMMFF94(StereoMolecule mol, String tablename) throws BadAtomTypeException,BadRingAromException {
+        this(mol, tablename, new HashMap<>());
     }
 
     /**

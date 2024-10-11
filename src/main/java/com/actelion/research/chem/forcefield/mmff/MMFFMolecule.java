@@ -36,25 +36,24 @@ package com.actelion.research.chem.forcefield.mmff;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.RingCollection;
 
+import java.util.Arrays;
+
 /**
  * MMFF molecule is a wrapper class for the ExtendedMolecule. It holds some
  * additional data such as a cache of the atom types, whether the molecule is
  * valid for MMFF and the ring mmff aromaticity property.
  */
 public final class MMFFMolecule extends StereoMolecule  {
-    private RingBoolean[] mRingArom;
-    private int[] mAtomTypes;
-    private int[] mHydrogenMap;
+    private final RingBoolean[] mRingArom;
+    private final int[] mAtomTypes;
+    private final int[] mHydrogenMap;
 
-    public MMFFMolecule(StereoMolecule mol) throws BadAtomTypeException,
-                                                 BadRingAromException
-    {
+    public MMFFMolecule(StereoMolecule mol) throws BadAtomTypeException,BadRingAromException {
     	super(mol);
         mHydrogenMap = getHandleHydrogenMap();
         RingCollection rings = getRingSet();
         mRingArom = new RingBoolean[rings.getSize()];
-        for (int i=0; i<mRingArom.length; i++)
-            mRingArom[i] = RingBoolean.NOT_SET;
+		Arrays.fill(mRingArom, RingBoolean.NOT_SET);
 
         boolean allset = false, changed = true;
         while (!allset && changed) {
@@ -109,7 +108,7 @@ public final class MMFFMolecule extends StereoMolecule  {
      *  @return True if the ring is aromatic, false otherwise.
      */
     public boolean ringIsMMFFAromatic(int r) {
-        return mRingArom[r] == RingBoolean.TRUE ? true : false;
+        return mRingArom[r] == RingBoolean.TRUE;
     }
 
     /**
@@ -118,7 +117,7 @@ public final class MMFFMolecule extends StereoMolecule  {
      *  @return True if the ring has had its flag set, false otherwise.
      */
     public boolean isSetRingMMFFAromaticity(int r) {
-        return mRingArom[r] == RingBoolean.NOT_SET ? false : true;
+        return mRingArom[r] != RingBoolean.NOT_SET;
     }
 
 

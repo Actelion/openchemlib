@@ -1,10 +1,5 @@
 package com.actelion.research.chem.phesaflex;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.PheSASetting;
 import com.actelion.research.chem.alignment3d.PheSAAlignmentOptimizer.SimilarityMode;
@@ -17,6 +12,11 @@ import com.actelion.research.chem.optimization.MCHelper;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
 import com.actelion.research.chem.phesa.MolecularVolume;
 import com.actelion.research.chem.phesa.PheSAAlignment;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 
 /**
@@ -44,11 +44,11 @@ import com.actelion.research.chem.phesa.PheSAAlignment;
 public class FlexibleShapeAlignment {
 	private static final int MC_STEPS = 50;
 	public static final double ENERGY_CUTOFF = 10.0;
-	private StereoMolecule refMol;
-	private StereoMolecule fitMol;
-	private MolecularVolume refVol;
-	private MolecularVolume fitVol;
-	private Map<String, Object> ffOptions;
+	private final StereoMolecule refMol;
+	private final StereoMolecule fitMol;
+	private final MolecularVolume refVol;
+	private final MolecularVolume fitVol;
+	private final Map<String, Object> ffOptions;
 	private PheSASetting settings;
 	
 	public PheSASetting getSettings() {
@@ -69,7 +69,7 @@ public class FlexibleShapeAlignment {
 		this.fitMol = fitMol;
 		this.refVol = refVol;
 		this.fitVol = fitVol;
-		ffOptions = new HashMap<String, Object>();
+		ffOptions = new HashMap<>();
 		ffOptions.put("dielectric constant", 4.0);
 		settings = new PheSASetting();
 	}
@@ -80,7 +80,7 @@ public class FlexibleShapeAlignment {
 		
 		double e0 = calcMin(fitMol);
 		if(Double.isNaN(e0)) {
-			System.err.print("no force field parameters for this structure");
+			System.err.println("no force field parameters for this structure");
 			return result;
 		}
 		
@@ -89,7 +89,7 @@ public class FlexibleShapeAlignment {
 		boolean[] isHydrogen = new boolean[fitMol.getAllAtoms()];
 		for(int at=0;at<fitMol.getAllAtoms();at++) {
 			
-			isHydrogen[at] = fitMol.getAtomicNo(at)==1 ? true : false;
+			isHydrogen[at] = fitMol.getAtomicNo(at) == 1;
 		}
 		Conformer fitConf = new Conformer(fitMol);
 		BondRotationHelper  torsionHelper = new BondRotationHelper(fitConf.getMolecule(),true);
@@ -138,9 +138,7 @@ public class FlexibleShapeAlignment {
 	}
 	
 	private double getSimilarity(EvaluableFlexibleOverlap eval, PheSAAlignment shapeAlign) { 
-		boolean tversky = true;
-		if(settings.getSimMode()==SimilarityMode.TANIMOTO)
-			tversky=false;
+		boolean tversky = settings.getSimMode() != SimilarityMode.TANIMOTO;
 		double ppWeight = settings.getPpWeight();
 		double tverskyCoeff = settings.getSimMode()==SimilarityMode.TVERSKY ? PheSAAlignment.TVERSKY_COEFFICIENT : 1.0-PheSAAlignment.TVERSKY_COEFFICIENT;
 		double Obb = eval.getFGValueShapeSelf(new double[3*fitMol.getAllAtoms()], shapeAlign.getMolGauss(),false);
@@ -158,7 +156,7 @@ public class FlexibleShapeAlignment {
 		double OaaPP = eval.getFGValueSelfPP(shapeAlign.getRefMolGauss(),true);
 		double OabPP = eval.getFGValuePP();
 		double Tpp = 0.0;
-		if(shapeAlign.getRefMolGauss().getPPGaussians().size()==0 && shapeAlign.getMolGauss().getPPGaussians().size()==0 )
+		if(shapeAlign.getRefMolGauss().getPPGaussians().isEmpty() && shapeAlign.getMolGauss().getPPGaussians().isEmpty())
 			Tpp = 1.0;
 		else {
 			if(tversky)
@@ -171,9 +169,8 @@ public class FlexibleShapeAlignment {
 			Tshape = 1.0f;
 		if(!tversky && Tpp>1.0) //can happen because of weights
 			Tpp = 1.0f;
-		double T = (1.0f-(float)ppWeight)*Tshape + (float)ppWeight*Tpp;
 
-		return T;
+		return (1.0f-(float)ppWeight)*Tshape + (float)ppWeight*Tpp;
 	}
 	
 	
@@ -186,18 +183,17 @@ public class FlexibleShapeAlignment {
 	}
 	
 	public double calcMin(StereoMolecule fitMol) {
-		
-		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
-		ForceFieldMMFF94 forceField = new ForceFieldMMFF94(new StereoMolecule(fitMol), ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-		forceField.minimise();
-		double e0 = forceField.getTotalEnergy();
-		return e0;
-		
-		
+		try {
+			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+			ForceFieldMMFF94 forceField = new ForceFieldMMFF94(new StereoMolecule(fitMol), ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+			forceField.minimise();
+			return forceField.getTotalEnergy();
+		} catch (RuntimeException rte) {
+			return Double.NaN;
+		}
 	}
 	
 	public void restrainedRelaxation(StereoMolecule fitMol, double e0) {
-		
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		double init = 0.2;
 		boolean notRelaxed = true;
@@ -212,12 +208,6 @@ public class FlexibleShapeAlignment {
 			notRelaxed = (e>e0) && (e-e0>ENERGY_CUTOFF);
 			init += 0.2;
 			cycles++;
-
 		}
-		
 	}
-	
-	
-	
-
 }
