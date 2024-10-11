@@ -45,7 +45,7 @@ public class FXEditorArea extends Canvas implements GenericCanvas {
 
 		setOnMousePressed(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_PRESSED) );
 		setOnMouseReleased(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_RELEASED) );
-//		setOnMouseClicked(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_CLICKED) ); not used
+		setOnMouseClicked(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_CLICKED) );
 		setOnMouseEntered(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_ENTERED) );
 //		setOnMouseExited(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_EXITED) ); not used
 		setOnMouseMoved(me -> mouseHandler.fireEvent(me, GenericMouseEvent.MOUSE_MOVED) );
