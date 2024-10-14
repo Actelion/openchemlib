@@ -57,7 +57,7 @@ public class HistogramMatchCalculator {
 	 * @param indexDistHist2At2
 	 * @return integral of overlap
 	 */
-	public static double getSimilarity(DistHist dh1, int indexDistHist1At1, int indexDistHist1At2, DistHist dh2, int indexDistHist2At1, int indexDistHist2At2){
+	public static double getFractionOverlapIntegral(DistHist dh1, int indexDistHist1At1, int indexDistHist1At2, DistHist dh2, int indexDistHist2At1, int indexDistHist2At2){
 		int indexPostStartDistHist1 = dh1.getIndexPosStartForDistHist(indexDistHist1At1, indexDistHist1At2);
 		int indexPostStartDistHist2 = dh2.getIndexPosStartForDistHist(indexDistHist2At1, indexDistHist2At2);
 		int n = ConstantsFlexophoreGenerator.BINS_HISTOGRAM;
@@ -71,6 +71,26 @@ public class HistogramMatchCalculator {
 			sumMax += Math.max(v1, v2);
 		}
 		double score = sumMin / sumMax;
+		return score;
+	}
+	public static double getFractionOverlappingBins(DistHist dh1, int indexDistHist1At1, int indexDistHist1At2, DistHist dh2, int indexDistHist2At1, int indexDistHist2At2){
+		int indexPostStartDistHist1 = dh1.getIndexPosStartForDistHist(indexDistHist1At1, indexDistHist1At2);
+		int indexPostStartDistHist2 = dh2.getIndexPosStartForDistHist(indexDistHist2At1, indexDistHist2At2);
+		int n = ConstantsFlexophoreGenerator.BINS_HISTOGRAM;
+		double sumMin = 0;
+		double sumMax = 0;
+
+		double sum1=0;
+		double sum2=0;
+		for (int i = 0; i < n; i++) {
+			int v1 = (dh1.getValueAtAbsolutePosition(indexPostStartDistHist1+i)==0)?0:1;
+			int v2 = (dh2.getValueAtAbsolutePosition(indexPostStartDistHist2+i)==0)?0:1;
+			sum1 += v1;
+			sum2 += v2;
+			sumMin += Math.min(v1, v2);
+			sumMax += Math.max(v1, v2);
+		}
+		double score = sumMin / Math.min(sum1, sum2);
 		return score;
 	}
 

@@ -1156,7 +1156,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		if(arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase] < 0){
 			float similarityHistogram = 0;
 			similarityHistogram =
-					(float)HistogramMatchCalculator.getSimilarity(
+					(float)HistogramMatchCalculator.getFractionOverlappingBins(
 							mdhvQueryBlurredHist, indexNode1Query, indexNode2Query, mdhvBaseBlurredHist, indexNode1Base, indexNode2Base);
 			arrSimilarityHistograms[indexHistogramQuery][indexHistogramBase]=similarityHistogram;
 		}
