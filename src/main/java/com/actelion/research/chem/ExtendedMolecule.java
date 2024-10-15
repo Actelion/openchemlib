@@ -1445,7 +1445,28 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 	/**
-	 * Calculates and return the number of implicit hydrogens at atom.
+	 * Calculates and returns the number of implicit hydrogens of the molecule.
+	 * For hydrogens atoms, metals except Al, or a noble gases, 0 is assumed.
+	 * For all other atom kinds the number of implicit hydrogens is basically
+	 * the lowest typical valence that is compatible with the occupied valence,
+	 * minus the occupied valence corrected by atom charge and radical state.
+	 * If this molecule is a fragment, then 0 is returned.
+	 * @return number of implicit hydrogens of the molecule
+	 */
+	public int getImplicitHydrogens() {
+		if (mIsFragment)
+			return 0;
+
+		ensureHelperArrays(cHelperNeighbours);
+		int implicitHydrogens = 0;
+		for (int atom=0; atom<mAtoms; atom++)
+			implicitHydrogens += getImplicitHydrogens(atom);
+
+		return implicitHydrogens;
+		}
+
+	/**
+	 * Calculates and returns the number of implicit hydrogens at atom.
 	 * If atom is itself a hydrogen atom, a metal except Al, or a noble gas,
 	 * then 0 is returned. For all other atom kinds the number of
 	 * implicit hydrogens is basically the lowest typical valence that is compatible
@@ -1463,8 +1484,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if (!supportsImplicitHydrogen(atom))
 			return 0;
 
-		if ("*".equals(getAtomCustomLabel(atom)))
-			return 0;
+		// attachment points have at least a valence of 1, i.e. they must be connected to something
+		if (mAtomicNo[atom] == 0 || "*".equals(getAtomCustomLabel(atom)))
+			return mAllConnAtoms[atom] == 0 ? 1 : 0;
 
 		ensureHelperArrays(cHelperNeighbours);
 

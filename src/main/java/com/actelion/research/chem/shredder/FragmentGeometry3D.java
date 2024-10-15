@@ -74,7 +74,7 @@ public class FragmentGeometry3D {
 			coords[i] = mMol.getCoordinates(mExitVector[i].rootAtom);
 			coords[mExitVector.length + i] = mMol.getCoordinates(mExitVector[i].exitAtom);
 
-			// for lonely hydrogens (selected H connects to other exit atom)
+			// for lonely hydrogens (single selected H connecting to non-selected exit atom)
 			// we need to place the root coord (hydrogen) further away from the exit atom,
 			// to reflect the longer bond length of a C-C compared to H-C
 			if (mMol.getAtomicNo(mExitVector[i].rootAtom) == 1)
@@ -123,9 +123,10 @@ public class FragmentGeometry3D {
 	 * is returned.
 	 * @param geometry the geometry to be aligned with this
 	 * @param permutation permutation index for equivalent root atoms of the passed geometry
+	 * @param rmsdHolder null or double[1] to receive RMSD value
 	 * @return rotation matrix or null, depending on whether alignment is acceptable
 	 */
-	public double[][] alignRootAndExitAtoms(FragmentGeometry3D geometry, int permutation, double maxRMSD) {
+	public double[][] alignRootAndExitAtoms(FragmentGeometry3D geometry, int permutation, double[] rmsdHolder, double maxRMSD) {
 		ExitVector[] geomEV = geometry.mExitVector;
 		Coordinates[] coords = new Coordinates[2*geomEV.length];
 		for (int i=0; i<geomEV.length; i++)
@@ -141,19 +142,27 @@ public class FragmentGeometry3D {
 			c.add(mAlignmentCOG);
 		}
 
-		return Coordinates.getRmsd(mAlignmentCoords, coords) > maxRMSD ? null : matrix;
+		double rmsd = Coordinates.getRmsd(mAlignmentCoords, coords);
+		if (rmsdHolder != null)
+			rmsdHolder[0] = rmsd;
+
+		return rmsd > maxRMSD ? null : matrix;
 	}
 
-	public boolean hasMatchingExitVectors(FragmentGeometry3D geometry, Coordinates[] coords, int permutation, double maxAngleDivergence) {
-		maxAngleDivergence *= Math.PI / 180;
-		for (int i = 0; i<mExitVector.length; i++) {
+	public boolean hasMatchingExitVectors(FragmentGeometry3D geometry, Coordinates[] coords, int permutation, double[][] angleHolder, double maxAngleDivergence) {
+		double[] angleDif = new double[mExitVector.length];
+		boolean qualifies = true;
+		for (int i=0; i<mExitVector.length; i++) {
 			Coordinates v1 = mAlignmentCoords[mExitVector.length+i].subC(mAlignmentCoords[i]);
 			ExitVector ev2 = geometry.mExitVector[mPermutation[permutation][i]];
 			Coordinates v2 = coords[ev2.exitAtom].subC(coords[ev2.rootAtom]);
-			if (v1.getAngle(v2) > maxAngleDivergence)
-				return false;
+			angleDif[i] = v1.getAngle(v2) * 180 / Math.PI;
+			if (angleDif[i] > maxAngleDivergence)
+				qualifies = false;
 		}
-		return true;
+		if (angleHolder != null)
+			angleHolder[0] = angleDif;
+		return qualifies;
 	}
 
 	public int getPermutationCount() {
