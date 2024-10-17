@@ -64,6 +64,11 @@ public class MolDistHistVizHelper {
         return molDistHistViz;
     }
 
+    /**
+     * Sets the weights in MolDistHistViz. Rule based unification of weight labels for a pharmacophore node.
+     * @param mdhv
+     * @param arrWeightLabel Array dimension must equal number of atoms in the molecule in mdhv.
+     */
     public static void setWeights(MolDistHistViz mdhv, int [] arrWeightLabel){
 
         // The molecule in the descriptor contains the pharmacophore points as additional single atoms.
@@ -75,6 +80,9 @@ public class MolDistHistVizHelper {
             throw new RuntimeException("Weight vector differs in dimension to number of atoms!");
         }
 
+        //
+        // Rule based unification of weight labels for a pharmacophore node
+        //
         for (PPNodeViz ppNodeViz : mdhv.getNodes()) {
             int [] a = ppNodeViz.getArrayIndexOriginalAtoms();
             int [] w = new int[a.length];
@@ -84,7 +92,7 @@ public class MolDistHistVizHelper {
 
             int maxWeightLabel = ArrayUtils.max(w);
 
-            // If label is not high, low is king.
+            // If label is not high, low is king. Means the standard wight label is overruled.
             if(maxWeightLabel< DescriptorWeightsHelper.LABEL_WEIGHT_MANDATORY){
                 maxWeightLabel = ArrayUtils.min(w);
             }

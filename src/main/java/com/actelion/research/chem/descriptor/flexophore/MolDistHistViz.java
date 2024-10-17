@@ -41,6 +41,7 @@ import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexo
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
+import com.actelion.research.util.Formatter;
 import com.actelion.research.util.graph.complete.ICompleteGraph;
 
 import java.io.Serializable;
@@ -1056,7 +1057,36 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		
 		return b.toString();
 	}
-	
+
+	public String toStringShortWithWeights(){
+
+		if(!finalized)
+			realize();
+		StringBuffer b = new StringBuffer();
+
+		b.append("[");
+		for (int i = 0; i < getNumPPNodes(); i++) {
+			b.append(Formatter.format1(arrWeight[i]));
+			b.append(getNode(i).toStringShort());
+			if(i<getNumPPNodes()-1){
+				b.append(" ");
+			} else {
+				b.append("]");
+			}
+		}
+
+		for (int i = 0; i < getNumPPNodes(); i++) {
+			for (int j = i+1; j < getNumPPNodes(); j++) {
+				byte [] arrHist = getDistHist(i,j);
+
+				if(arrHist!=null)
+					b.append("[" + ArrayUtilsCalc.toString(arrHist) + "]");
+			}
+		}
+
+		return b.toString();
+	}
+
 	
 	public boolean equals(Object o) {
 		boolean bEQ=true;

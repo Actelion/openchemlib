@@ -71,7 +71,7 @@ public class DescriptorWeightsHelper {
      * - Charged pp points are set mandatory.
      * @param liSubGraphIndices
      * @param molecule3D
-     * @return
+     * @return array with dimension molecule3D.getAtoms().
      */
     public static int [] calcWeightLabels(List<SubGraphIndices> liSubGraphIndices, Molecule3D molecule3D){
 
