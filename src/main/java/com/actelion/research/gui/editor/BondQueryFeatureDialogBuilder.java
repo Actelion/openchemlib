@@ -116,6 +116,8 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mComboBoxRingSize.addItem("is in 5-membered ring");
 		mComboBoxRingSize.addItem("is in 6-membered ring");
 		mComboBoxRingSize.addItem("is in 7-membered ring");
+		mComboBoxRingSize.addItem("smallest ring 8 to 11");
+		mComboBoxRingSize.addItem("smallest ring >= 12");
 		mDialog.add(mComboBoxRingSize, 1,13,3,13);
 
 		mCBMatchFormalOrder = mDialog.createCheckBox("Match formal bond order");
@@ -223,7 +225,7 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			mComboBoxRing.setSelectedIndex(0);
 
 		int ringSize = (queryFeatures & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift;
-		mComboBoxRingSize.setSelectedIndex((ringSize == 0) ? 0 : ringSize-2);
+		mComboBoxRingSize.setSelectedIndex((ringSize == 0) ? 0 : (ringSize <= 2) ? ringSize+5 : ringSize-2);
 
         if ((queryFeatures & Molecule.cBondQFBridge) != 0) {
             mCBIsBridge.setSelected(true);
@@ -361,9 +363,12 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 
 			if (mComboBoxRingSize.getSelectedIndex() != 0) {
 				int ringSize = mComboBoxRingSize.getSelectedIndex() + 2;
+				if (ringSize > 7)	// ringsize 8-11 is encoded as 1; ringsize >12 is encoded as 2
+					ringSize -= 7;
 				int implicitSize = mMol.getBondRingSize(bond);
-				if (ringSize != implicitSize)
+				if (ringSize <= 2 || ringSize != implicitSize) {	// options 1 and 2 cover spans and cannot be implicit
 					queryFeatures |= (ringSize << Molecule.cBondQFRingSizeShift);
+					}
 				}
             }
 

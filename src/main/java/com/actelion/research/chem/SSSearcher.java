@@ -1322,6 +1322,14 @@ System.out.println();
 			 && ringSize == (mMolecule.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift)
 				return true;
 
+			if (ringSize <= 2) {    // ring size 8-11 is encoded as 1; ring size >=12 is encoded as 2
+				int moleculeRingSize = mMolecule.getBondRingSize(moleculeBond);
+				if (ringSize == 1)
+					return (moleculeRingSize >= 8) && (moleculeRingSize <= 12);
+				else
+					return moleculeRingSize >= 12;
+				}
+
 			boolean found = false;
 			RingCollection ringSet = mMolecule.getRingSet();
 			for (int i=0; i<ringSet.getSize(); i++) {
