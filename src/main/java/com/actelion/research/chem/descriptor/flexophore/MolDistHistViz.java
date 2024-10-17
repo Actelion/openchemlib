@@ -1058,6 +1058,10 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		return b.toString();
 	}
 
+	/**
+	 * Shows the weights
+	 * @return
+	 */
 	public String toStringShortWithWeights(){
 
 		if(!finalized)
