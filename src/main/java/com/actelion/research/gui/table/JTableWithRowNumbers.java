@@ -15,12 +15,11 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.io.Serial;
 import java.util.Vector;
 
 public class JTableWithRowNumbers extends JTable implements TableModelListener {
 	protected static Cursor	sResizeCursor,sDefaultCursor;
-    @Serial
+
 	private static final long serialVersionUID = 0x20060906;
 
 	private RowNumberPanel	mRowNumberPanel;
@@ -187,7 +186,6 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
 	// is considered important enough on this screen to re-enforce it with a visual.
 
 class RowNumberPanel extends JPanel implements ListSelectionListener,MouseListener,MouseMotionListener {
-	@Serial
 	private static final long serialVersionUID = 0x20060906;
 
 	private static final int cResizeTolerance = 2;
