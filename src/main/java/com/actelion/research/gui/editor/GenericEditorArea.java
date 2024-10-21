@@ -951,7 +951,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	private void eventHappened(GenericMouseEvent e) {
 		if (e.getWhat() == GenericMouseEvent.MOUSE_PRESSED) {
-			if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0)
+			if (mCurrentHiliteAtom != -1 && !mAtomKeyStrokeBuffer.isEmpty())
 				expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
 
 			mAtomKeyStrokeBuffer.setLength(0);
@@ -1049,8 +1049,8 @@ public class GenericEditorArea implements GenericEventListener {
 							s2 = -s2;
 						}
 						for (int i = 0; i<mChainAtoms; i++) {
-							mChainAtomX[i] = mX1 + 0.5 * (i + 1) * s1;
-							mChainAtomY[i] = mY1 + 0.5 * (i + 1) * (s0 + s2);
+							mChainAtomX[i] = mX1 + ((i + 1) / 2) * s1;
+							mChainAtomY[i] = mY1 + ((i + 1) / 2) * (s0 + s2);
 							if ((i & 1) == 0) {
 								mChainAtomY[i] += s0;
 							}
