@@ -88,7 +88,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 
 	private final static int cWhiteSpace = 4;
 
-	private CompoundCollectionModel<T> mModel;
+	private final CompoundCollectionModel<T> mModel;
 	private IClipboardHandler   mClipboardHandler;
 	private MoleculeFilter		mCompoundFilter;
 	private int					mDisplayMode,mSelectedIndex,mHighlightedIndex,
@@ -99,7 +99,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 								mIsEnabled,mShowValidationError,mInternalDragAndDropIsMove;
 	private String[]            mMessage;
 	private ArrayList<JMenuItem> mCustomPopupItemList;
-	private ScrollPaneAutoScrollerWhenDragging mScroller;
+	private final ScrollPaneAutoScrollerWhenDragging mScroller;
 
 
 	/**
@@ -541,6 +541,9 @@ public class CompoundCollectionPane<T> extends JScrollPane
 		if (mModel.getSize() == 0 || mCellSize.width == 0 || mCellSize.height == 0)
 			return -1;
 
+		if ((mIsVertical && x >= getViewport().getViewRect().width) || (!mIsVertical && y >= getViewport().getViewRect().height))
+			return -1;
+
 		Point p = getViewport().getViewPosition();
 		int index = (mIsVertical) ? (y+p.y) / mCellSize.height
 								  : (x+p.x) / mCellSize.width;
@@ -554,7 +557,9 @@ public class CompoundCollectionPane<T> extends JScrollPane
 		}
 
 	public void mouseEntered(MouseEvent e) {}
-	public void mouseExited(MouseEvent e) {}
+	public void mouseExited(MouseEvent e) {
+		setCursor(SwingCursorHelper.getCursor(SwingCursorHelper.cPointerCursor));
+		}
 
 	public void mousePressed(MouseEvent e) {
 		if (mIsEnabled) {
@@ -584,9 +589,9 @@ public class CompoundCollectionPane<T> extends JScrollPane
 			int index = getMoleculeIndex(e.getX(), e.getY());
 			if (mHighlightedIndex != index) {
 				mHighlightedIndex = index;
-				setCursor(SwingCursorHelper.getCursor(index == -1 ? SwingCursorHelper.cPointerCursor : SwingCursorHelper.cHandCursor));
 				repaint();
 				}
+			setCursor(SwingCursorHelper.getCursor(index == -1 ? SwingCursorHelper.cPointerCursor : SwingCursorHelper.cHandCursor));
 			}
 		mDragIndex = -1;
 		}
