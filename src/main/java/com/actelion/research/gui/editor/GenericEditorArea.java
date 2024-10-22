@@ -1020,75 +1020,8 @@ public class GenericEditorArea implements GenericEventListener {
 
 			switch (mPendingRequest) {
 				case cRequestNewChain:
-					double lastX, lastY;
-					if (mChainAtoms>0) {
-						lastX = mChainAtomX[mChainAtoms - 1];
-						lastY = mChainAtomY[mChainAtoms - 1];
-					} else {
-						lastX = 0;
-						lastY = 0;
-					}
-					double avbl = getScaledAVBL();
-					double s0 = (int)avbl;
-					double s1 = (int)(0.866 * avbl);
-					double s2 = (int)(0.5 * avbl);
-					double dx = mX2 - mX1;
-					double dy = mY2 - mY1;
-					if (Math.abs(dy)>Math.abs(dx)) {
-						mChainAtoms = (int)(2 * Math.abs(dy) / (s0 + s2));
-						if (Math.abs(dy) % (s0 + s2)>s0) {
-							mChainAtoms++;
-						}
-						mChainAtomX = new double[mChainAtoms];
-						mChainAtomY = new double[mChainAtoms];
-						if (mX2<mX1) {
-							s1 = -s1;
-						}
-						if (mY2<mY1) {
-							s0 = -s0;
-							s2 = -s2;
-						}
-						for (int i = 0; i<mChainAtoms; i++) {
-							mChainAtomX[i] = mX1 + 0.5 * (i + 1) * s1;
-							mChainAtomY[i] = mY1 + 0.5 * (i + 1) * (s0 + s2);
-							if ((i & 1) == 0) {
-								mChainAtomY[i] += s0;
-							}
-						}
-					} else {
-						mChainAtoms = (int)(Math.abs(dx) / s1);
-						mChainAtomX = new double[mChainAtoms];
-						mChainAtomY = new double[mChainAtoms];
-						if (mX2<mX1) {
-							s1 = -s1;
-						}
-						if (mY2<mY1) {
-							s2 = -s2;
-						}
-						for (int i = 0; i<mChainAtoms; i++) {
-							mChainAtomX[i] = mX1 + (i + 1) * s1;
-							mChainAtomY[i] = mY1;
-							if ((i & 1) == 0) {
-								mChainAtomY[i] += s2;
-							}
-						}
-					}
-					if (mChainAtoms>0) {
-						mChainAtom = new int[mChainAtoms];
-						for (int i = 0; i<mChainAtoms; i++) {
-							mChainAtom[i] = mMol.findAtom(mChainAtomX[i], mChainAtomY[i]);
-							if (mChainAtom[i] != -1) {
-								mChainAtomX[i] = mMol.getAtomX(mChainAtom[i]);
-								mChainAtomY[i] = mMol.getAtomY(mChainAtom[i]);
-							}
-						}
-						if (mChainAtomX[mChainAtoms - 1] != lastX
-								|| mChainAtomY[mChainAtoms - 1] != lastY) {
-							repaintNeeded = true;
-						}
-					} else if (lastX != 0 || lastY != 0) {
+					if (suggestNewChain())
 						repaintNeeded = true;
-					}
 					break;
 				case cRequestNewBond:
 					if ((mX2 - mX1) * (mX2 - mX1) + (mY2 - mY1) * (mY2 - mY1)<MIN_BOND_LENGTH_SQUARE) {
@@ -1206,6 +1139,94 @@ public class GenericEditorArea implements GenericEventListener {
 				mCanvas.repaint();
 			}
 		}
+	}
+
+	private boolean suggestNewChain() {
+		double mouseAngle = Molecule.getAngle(mX1, mY1, mX2, mY2);
+
+		double mdx = mX2 - mX1;
+		double mdy = mY2 - mY1;
+
+		int lastChainAtoms = mChainAtoms;
+		int lastX1 = 0;
+		int lastY1 = 0;
+		int lastX2 = 0;
+		int lastY2 = 0;
+		if (lastChainAtoms > 0) {
+			lastX1 = (int)Math.round(mChainAtomX[0]);
+			lastY1 = (int)Math.round(mChainAtomY[0]);
+		}
+		if (lastChainAtoms > 1) {
+			lastX2 = (int)Math.round(mChainAtomX[1]);
+			lastY2 = (int)Math.round(mChainAtomY[1]);
+		}
+
+		double exitAngle = 0;
+		if (mAtom1 == -1 || mMol.getAllConnAtomsPlusMetalBonds(mAtom1) == 0) {
+			exitAngle = Math.PI / 3 * Math.round(mouseAngle * 3 / Math.PI);
+		}
+		else if (mMol.getAllConnAtomsPlusMetalBonds(mAtom1) == 1) {
+			double bondAngle = mMol.getBondAngle(mMol.getConnAtom(mAtom1, 0), mAtom1);
+			double candidate1 = bondAngle - Math.PI / 3;
+			double candidate2 = bondAngle + Math.PI / 3;
+			exitAngle = Math.abs(Molecule.getAngleDif(mouseAngle, candidate1))
+					  < Math.abs(Molecule.getAngleDif(mouseAngle, candidate2)) ? candidate1 : candidate2;
+		}
+		else {
+			double[] connAngle = new double[mMol.getAllConnAtomsPlusMetalBonds(mAtom1)];
+			for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(mAtom1); i++)
+				connAngle[i] = mMol.getBondAngle(mAtom1, mMol.getConnAtom(mAtom1, i));
+
+			Arrays.sort(connAngle);
+			for (int i=0; i<connAngle.length; i++) {
+				double leftAngle = (i == 0) ? connAngle[connAngle.length-1] - 2.0*Math.PI : connAngle[i-1];
+				if (leftAngle < mouseAngle && mouseAngle < connAngle[i]) {
+					exitAngle = (connAngle[i] + leftAngle) / 2.0;
+					break;
+				}
+				if (leftAngle < mouseAngle - 2.0 * Math.PI && mouseAngle - 2.0 * Math.PI < connAngle[i]) {
+					exitAngle = (connAngle[i] + leftAngle) / 2.0;
+					break;
+				}
+			}
+		}
+
+		double avbl = getScaledAVBL();
+		mChainAtoms = Math.abs(Molecule.getAngleDif(mouseAngle, exitAngle)) > Math.PI / 3 ? 0 : (int)(Math.sqrt(mdx*mdx + mdy*mdy) / avbl);
+		if (mChainAtoms > 0) {
+			if (mChainAtomX == null || mChainAtomX.length < mChainAtoms) {
+				mChainAtomX = new double[mChainAtoms];
+				mChainAtomY = new double[mChainAtoms];
+			}
+			double[] dx = new double[2];
+			double[] dy = new double[2];
+			double nextAngle = Molecule.getAngleDif(mouseAngle, exitAngle) < 0 ? exitAngle - Math.PI / 3 : exitAngle + Math.PI / 3;
+			dx[0] = avbl * Math.sin(exitAngle);
+			dy[0] = avbl * Math.cos(exitAngle);
+			dx[1] = avbl * Math.sin(nextAngle);
+			dy[1] = avbl * Math.cos(nextAngle);
+			for (int i=0; i<mChainAtoms; i++) {
+				mChainAtomX[i] = (i == 0 ? mX1 : mChainAtomX[i-1]) + dx[i & 1];
+				mChainAtomY[i] = (i == 0 ? mY1 : mChainAtomY[i-1]) + dy[i & 1];
+			}
+
+			mChainAtom = new int[mChainAtoms];
+			for (int i = 0; i<mChainAtoms; i++) {
+				mChainAtom[i] = mMol.findAtom(mChainAtomX[i], mChainAtomY[i]);
+				if (mChainAtom[i] != -1) {
+					mChainAtomX[i] = mMol.getAtomX(mChainAtom[i]);
+					mChainAtomY[i] = mMol.getAtomY(mChainAtom[i]);
+				}
+			}
+		}
+
+		return lastChainAtoms != mChainAtoms
+			|| ((mChainAtoms != 0)
+			 && (lastX1 != (int)Math.round(mChainAtomX[0])
+			  || lastY1 != (int)Math.round(mChainAtomY[0])))
+			|| ((mChainAtoms > 1)
+			 && (lastX2 != (int)Math.round(mChainAtomX[1])
+			  || lastY2 != (int)Math.round(mChainAtomY[1])));
 	}
 
 	public void showHelpDialog() {
@@ -2404,7 +2425,7 @@ public class GenericEditorArea implements GenericEventListener {
 	{
 		double newAngle = Math.PI * 2 / 3;
 		if (atom != -1) {
-			double angle[] = new double[MAX_CONNATOMS + 1];
+			double[] angle = new double[MAX_CONNATOMS + 1];
 			for (int i = 0; i<mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
 				angle[i] = mMol.getBondAngle(atom, mMol.getConnAtom(atom, i));
 			}

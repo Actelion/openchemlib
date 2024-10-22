@@ -1,6 +1,7 @@
 package com.actelion.research.gui.table;
 
 import com.actelion.research.gui.LookAndFeelHelper;
+import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 
 import javax.swing.*;
@@ -8,7 +9,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.*;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -16,13 +18,13 @@ import java.awt.event.MouseMotionListener;
 import java.util.Vector;
 
 public class JTableWithRowNumbers extends JTable implements TableModelListener {
-    private static final long serialVersionUID = 0x20060906;
+	protected static Cursor	sResizeCursor,sDefaultCursor;
 
-	private RowNumberTable	mRowNumberTable = null;
+	private static final long serialVersionUID = 0x20060906;
+
+	private RowNumberPanel	mRowNumberPanel;
 	private JScrollPane		mScrollPane = null;
-	private Cursor			mResizeCursor,mDefaultCursor;
-	private boolean			mIsResizing;
-	private int				mRowHeaderMinWidth,mResizingRowY,mResizingRowHeight, mHeaderLineCount;
+	private int				mRowHeaderMinWidth;
 
 	public JTableWithRowNumbers() {
 		super();
@@ -52,38 +54,39 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
     public JTableWithRowNumbers(TableModel dm, TableColumnModel cm, ListSelectionModel sm) {
 		super(dm, cm, sm);
 		initialize();
-		mRowNumberTable.setSelectionModel(sm);
 		}
 
-    @SuppressWarnings("unchecked")
 	public JTableWithRowNumbers(final Vector rowData, final Vector columnNames) {
 		super(rowData, columnNames);
 		initialize();
 		}
 
 	private void initialize() {
-		mRowNumberTable = new RowNumberTable();
-		mRowNumberTable.setRowHeight(getRowHeight());
+		mRowNumberPanel = new RowNumberPanel(this);
+
 		setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		mDefaultCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
-		mResizeCursor = Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR);
-		mHeaderLineCount = 1;
+		sDefaultCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+		sResizeCursor = Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR);
 		}
 
-	public JTable getRowNumberTable() {
-		return mRowNumberTable;
+	public void addHighlightListener(HighlightListener l) {
+		mRowNumberPanel.addHighlightListener(l);
+	}
+
+	public void removeHighlightListener(HighlightListener l) {
+		mRowNumberPanel.removeHighlightListener(l);
+	}
+
+	public int getHighlightedRow() {
+		return mRowNumberPanel.getHighlightedRow();
 		}
 
-	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
+	public void setHighlightedRow(int row, boolean informListeners) {
+		mRowNumberPanel.setHighlightedRow(row, informListeners);
+		}
 
-		if (mIsResizing) {
-			int tableWidth = getWidth();
-			g.setColor(LookAndFeelHelper.isDarkLookAndFeel() ? Color.WHITE : Color.BLACK);
-			g.drawLine(0, mResizingRowY, tableWidth, mResizingRowY);
-			g.drawLine(0, mResizingRowY+mResizingRowHeight, tableWidth, mResizingRowY+mResizingRowHeight);
-			}
+	public JScrollPane getScrollPane() {
+		return mScrollPane;
 		}
 
 	/**
@@ -100,8 +103,8 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
 		Font font = new Font(Font.SANS_SERIF, Font.PLAIN, fontSize);
 		super.setFont(font);
 		getTableHeader().setFont(font);
-		if (mRowNumberTable != null) {
-			mRowNumberTable.setFont(font);
+		if (mRowNumberPanel != null) {
+			mRowNumberPanel.setFont(font);
 			validateRowNumberColumnWidth();
 			}
 		}
@@ -112,8 +115,8 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
 	@Override
 	public void setRowHeight(int height) {
 		super.setRowHeight(height);
-		if (mRowNumberTable != null)
-			mRowNumberTable.setRowHeight(height);
+		if (mRowNumberPanel != null)
+			mRowNumberPanel.repaint();
 		}
 
 	/**
@@ -123,8 +126,8 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
 	@Override
 	public void setRowHeight(int row, int height) {
 		super.setRowHeight(row, height);
-		if (mRowNumberTable != null)
-			mRowNumberTable.setRowHeight(row, height);
+		if (mRowNumberPanel != null)
+			mRowNumberPanel.repaint();
 		}
 
 	@Override
@@ -133,11 +136,12 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
 
 		if (getParent().getParent() instanceof JScrollPane) {
 			mScrollPane = (JScrollPane) getParent().getParent();
-			mScrollPane.setRowHeaderView(mRowNumberTable);
+			mScrollPane.setRowHeaderView(mRowNumberPanel);
+			mScrollPane.getVerticalScrollBar().getModel().addChangeListener(e -> mRowNumberPanel.repaint() );
 
 			validateRowNumberColumnWidth();
 
-	// make the background of the scrollpane match that of the table.
+// make the background of the scrollpane match that of the table.
 //			pane.getViewport().setBackground(getBackground());
 //			pane.getColumnHeader().setBackground(getBackground());
 //			pane.getRowHeader().setBackground(getBackground());
@@ -153,7 +157,7 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
 		if (mScrollPane != null) {
 			JViewport viewport = mScrollPane.getRowHeader();
 			Dimension size = viewport.getPreferredSize();
-			int maxWidth = mRowNumberTable.getFontMetrics(mRowNumberTable.getFont()).stringWidth(Integer.toString(getRowCount()));
+			int maxWidth = mRowNumberPanel.getFontMetrics(mRowNumberPanel.getFont()).stringWidth("  "+getRowCount());
 			size.width = Math.max(mRowHeaderMinWidth, maxWidth);
 			viewport.setPreferredSize(size);
 			}
@@ -163,10 +167,10 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
 	public void tableChanged(TableModelEvent e) {
 		super.tableChanged(e);
 
-		if (mRowNumberTable != null) {
+		if (mRowNumberPanel != null) {
 			validateRowNumberColumnWidth();
-			mRowNumberTable.invalidate();
-			mRowNumberTable.repaint();
+			mRowNumberPanel.invalidate();
+			mRowNumberPanel.repaint();
 			}
 		}
 
@@ -175,175 +179,210 @@ public class JTableWithRowNumbers extends JTable implements TableModelListener {
 
 	public void setSelectionModel(ListSelectionModel selectionModel) {
 		super.setSelectionModel(selectionModel);
-		if (mRowNumberTable != null)
-			mRowNumberTable.setSelectionModel(selectionModel);
 		}
+	}
 
 	// Inner class used to display the row numbers on the left side of the table. Order
 	// is considered important enough on this screen to re-enforce it with a visual.
 
-	private class RowNumberTable extends JTable implements ListSelectionListener,MouseListener,MouseMotionListener {
-        private static final long serialVersionUID = 0x20060906;
+class RowNumberPanel extends JPanel implements ListSelectionListener,MouseListener,MouseMotionListener {
+	private static final long serialVersionUID = 0x20060906;
 
-        private static final int cResizeTolerance = 2;
+	private static final int cResizeTolerance = 2;
 
-		private boolean mFullRowSelection;
-		private int mDragStartY,mDragStartRow,mDragStartRowHeight;
+	private final JTableWithRowNumbers mTable;
+	private final Vector<HighlightListener> mHighlightListeners;
+	private boolean mFullRowSelection,mIsResizing;
+	private int mDragStartY,mDragStartRow,mResizingStartRow,mCurrentDragRow,mDragStartRowHeight,mAchorSelectionRow;
+	private int mResizingRowHeight,mHighlightedRow;
 
-		public RowNumberTable() {
-			super();
+	public RowNumberPanel(JTableWithRowNumbers table) {
+		mTable = table;
+		mAchorSelectionRow = -1;
+		mHighlightedRow = -1;
+		mHighlightListeners = new Vector<>();
+		addMouseListener(this);
+		addMouseMotionListener(this);
+	}
 
-			setAutoCreateColumnsFromModel(false);
-			setModel(new RowNumberTableModel());
-			JTableWithRowNumbers.this.setRowHeight(JTableWithRowNumbers.this.getRowHeight());
+	@Override
+	public void setFont(Font font) {
+		super.setFont(font.deriveFont(Font.BOLD));
+	}
 
-			setColumnSelectionAllowed(false);
-			setRowSelectionAllowed(true);
+	private int rowFromMouseY(MouseEvent e) {
+		return (e.getY() + mTable.getScrollPane().getViewport().getViewRect().y) / mTable.getRowHeight();
+	}
 
-			TableColumn column = new TableColumn();
-			column.setResizable(false);
-			column.setCellRenderer(new RowNumberRenderer());
-			addColumn(column);
+	public void mouseClicked(MouseEvent e) {
+		if (mResizingStartRow == -1)
+			mTable.rowNumberClicked(rowFromMouseY(e));
+	}
 
-			addMouseListener(this);
-			addMouseMotionListener(this);
-			}
-
-//		public boolean isFocusTraversable() {
-//			return false;
-//			}
-
-		@Override
-		public void setFont(Font font) {
-			super.setFont(font.deriveFont(Font.BOLD));
-			}
-
-		public void mouseClicked(MouseEvent e) {
-			if (getCursor() != mResizeCursor)
-				rowNumberClicked(rowAtPoint(e.getPoint()));
-			}
-
-		public void mousePressed(MouseEvent e) {
-			mIsResizing = (getCursor() == mResizeCursor);
-			mFullRowSelection = !mIsResizing;
-			if (mIsResizing) {
-				Point p = e.getPoint();
-				p.y -= cResizeTolerance;
-				int row = rowAtPoint(p);
-				mResizingRowY = getCellRect(row, 0, false).y-1;
-				mDragStartY = e.getY();
-				mDragStartRow = row;
-				mDragStartRowHeight = mResizingRowHeight = getRowHeight(row);
+	public void mousePressed(MouseEvent e) {
+		mIsResizing = (mResizingStartRow != -1);
+		mFullRowSelection = !mIsResizing;
+		mCurrentDragRow = mDragStartRow = rowFromMouseY(e);
+		if (mFullRowSelection) {
+			if (e.isShiftDown()) {
+				if (mAchorSelectionRow != -1) {
+					mTable.getSelectionModel().setSelectionInterval(mAchorSelectionRow, mCurrentDragRow);
+					mAchorSelectionRow = -1;
+					}
+				else {
+					mTable.getSelectionModel().addSelectionInterval(mCurrentDragRow, mCurrentDragRow);
+					}
 				}
-			}
-
-		public void mouseReleased(MouseEvent e) {
-			if (mIsResizing) {
-				mIsResizing = false;
-				if (mDragStartRowHeight != mResizingRowHeight)
-					JTableWithRowNumbers.this.setRowHeight(mResizingRowHeight);
-				}
-			}
-
-		public void mouseEntered(MouseEvent e) {
-			}
-
-		public void mouseExited(MouseEvent e) {
-			mFullRowSelection = false;
-			if (!mIsResizing)
-				setCursor(mDefaultCursor);
-			}
-
-		public void mouseMoved(MouseEvent e) {
-			int row = rowAtPoint(e.getPoint());
-			Rectangle cellRect = getCellRect(row, 0, false);
-			int y = e.getY() - cellRect.y;
-			if ((y < cResizeTolerance && row != 0) || (y > cellRect.height-cResizeTolerance) && row != this.getRowCount()-1) {
-				setCursor(mResizeCursor);
-				this.setSelectionModel(new DefaultListSelectionModel());
+			else if (e.isControlDown()) {
+				mTable.getSelectionModel().removeSelectionInterval(mCurrentDragRow, mCurrentDragRow);
+				mAchorSelectionRow = -1;
 				}
 			else {
-				setCursor(mDefaultCursor);
-				this.setSelectionModel(JTableWithRowNumbers.this.getSelectionModel());
+				mTable.getSelectionModel().setSelectionInterval(mCurrentDragRow, mCurrentDragRow);
+				mAchorSelectionRow = mCurrentDragRow;
 				}
+			repaint();
 			}
-
-		public void mouseDragged(MouseEvent e) {
-			if (mIsResizing) {
-				int rowHeight = Math.max(16, mDragStartRowHeight + e.getY() - mDragStartY);
-				if (mResizingRowHeight != rowHeight) {
-					mResizingRowHeight = rowHeight;
-					JTableWithRowNumbers.this.setRowHeight(mDragStartRow, mResizingRowHeight);
-					}
-				}
-			}
-
-		public void valueChanged(ListSelectionEvent e) {
-			if (!e.getValueIsAdjusting()) {
-				int[] selectedRow = getSelectedRows();
-
-				if (selectedRow.length > 0) {
-					JTableWithRowNumbers theTable = JTableWithRowNumbers.this;
-
-					if (mFullRowSelection && theTable.getColumnCount() != 0)
-						theTable.setColumnSelectionInterval(0, theTable.getColumnCount()-1);
-					}
-				}
-
-            repaint();
-			}
+		if (mIsResizing) {
+			mDragStartY = e.getY();
+			mResizingRowHeight = mDragStartRowHeight;
 		}
+	}
 
- 	private class RowNumberTableModel extends AbstractTableModel {
-        private static final long serialVersionUID = 0x20060906;
-
-        public int getColumnCount() {
-			return 1;
-			}
-
-		public int getRowCount() {
-			if (getModel() != null)
-				return getModel().getRowCount();
-
-			return 0;
-			}
-
-		public Object getValueAt(int r, int c) {
-			return ""+(r+1);
-			}
-		}
-
-	private class RowNumberRenderer extends JPanel implements TableCellRenderer {
-        private static final long serialVersionUID = 0x20060906;
-
-        private String mRowHeader;
-		private Font mFont;
-
-		public RowNumberRenderer() {
-			super();
-			}
-
-		public void paintComponent(Graphics g) {
-			super.paintComponent(g);
-
-			Color bg = ColorHelper.darker(UIManager.getColor("Table.background"), 0.75f);
-			Color fg = LookAndFeelHelper.isDarkLookAndFeel() ?
-					  ColorHelper.darker(UIManager.getColor("Table.foreground"), 0.8f)
-					: ColorHelper.brighter(UIManager.getColor("Table.foreground"), 0.6f);
-			Dimension size = getSize();
-			g.setColor(bg);
-			g.fillRect(0, 0, size.width, size.height);
-			g.setColor(fg);
-			g.setFont(mFont);
-			int x = (getWidth() - g.getFontMetrics().stringWidth(mRowHeader)) / 2;
-			g.drawString(mRowHeader, x, (size.height+mFont.getSize())/2);
-			}
-
-		public Component getTableCellRendererComponent(JTable table, Object value,
-								boolean isSelected, boolean hasFocus, int row, int col) {
-			mRowHeader = Integer.toString(row+1);
-			mFont = table.getFont();
-			return this;
+	public void mouseReleased(MouseEvent e) {
+		if (mIsResizing) {
+			mIsResizing = false;
+			if (mDragStartRowHeight != mResizingRowHeight) {
+				int scrollValue = mTable.getScrollPane().getVerticalScrollBar().getValue();
+				int newScrollValue = scrollValue + mResizingStartRow * (mResizingRowHeight - mDragStartRowHeight);
+				mTable.setRowHeight(mResizingRowHeight);
+				mTable.getScrollPane().getVerticalScrollBar().setValue(newScrollValue);
 			}
 		}
 	}
+
+	public void mouseEntered(MouseEvent e) {
+	}
+
+	public void mouseExited(MouseEvent e) {
+		if (!mIsResizing)
+			setCursor(JTableWithRowNumbers.sDefaultCursor);
+	}
+
+	public void mouseMoved(MouseEvent e) {
+		Point p = e.getPoint();
+
+		int y = p.y + mTable.getScrollPane().getViewport().getViewRect().y;
+		mDragStartRowHeight = mTable.getRowHeight();
+		int tolerance = HiDPIHelper.scale(cResizeTolerance);
+		int row = y / mDragStartRowHeight;
+		int fracY = y % mDragStartRowHeight;
+
+		mResizingStartRow = (fracY <= tolerance && row > 0) ? row - 1 : (fracY >= mDragStartRowHeight - tolerance) ? row : -1;
+		setCursor(mResizingStartRow == -1 ? JTableWithRowNumbers.sDefaultCursor : JTableWithRowNumbers.sResizeCursor);
+
+		if (mHighlightedRow != row) {
+			mHighlightedRow = row;
+			informListeners();
+			repaint();
+		}
+	}
+
+	public void mouseDragged(MouseEvent e) {
+		if (mFullRowSelection) {
+			int row = rowFromMouseY(e);
+			if (mCurrentDragRow != row) {
+				mCurrentDragRow = row;
+				if (e.isShiftDown())
+					mTable.getSelectionModel().addSelectionInterval(mDragStartRow, mCurrentDragRow);
+				else if (e.isControlDown())
+					mTable.getSelectionModel().removeSelectionInterval(mDragStartRow, mCurrentDragRow);
+				else
+					mTable.getSelectionModel().setSelectionInterval(mDragStartRow, mCurrentDragRow);
+				repaint();
+			}
+		}
+		if (mIsResizing) {
+			int rowHeight = Math.min(getHeight()*4/5, Math.max(HiDPIHelper.scale(16), mDragStartRowHeight + e.getY() - mDragStartY));
+			if (mResizingRowHeight != rowHeight) {
+				mResizingRowHeight = rowHeight;
+				mTable.setRowHeight(mResizingStartRow, mResizingRowHeight);
+			}
+			repaint();
+		}
+	}
+
+	public void valueChanged(ListSelectionEvent e) {
+		repaint();
+	}
+
+	public void addHighlightListener(HighlightListener l) {
+		mHighlightListeners.add(l);
+	}
+
+	public void removeHighlightListener(HighlightListener l) {
+		mHighlightListeners.remove(l);
+	}
+
+	public int getHighlightedRow() {
+		return mHighlightedRow;
+		}
+
+	public void setHighlightedRow(int row, boolean informListeners) {
+		mHighlightedRow = row;
+		if (informListeners)
+			informListeners();
+
+		repaint();
+		}
+
+	private void informListeners() {
+		for (HighlightListener l : mHighlightListeners)
+			l.highlightedRowChanged(mHighlightedRow);
+	}
+
+	@Override public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+
+		JScrollPane scrollPane = mTable.getScrollPane();
+		if (scrollPane == null)
+			return;
+
+		Color bg = ColorHelper.darker(UIManager.getColor("Table.background"), 0.75f);
+		Color fg = LookAndFeelHelper.isDarkLookAndFeel() ?
+				ColorHelper.darker(UIManager.getColor("Table.foreground"), 0.8f)
+				: ColorHelper.brighter(UIManager.getColor("Table.foreground"), 0.6f);
+		Color lc = UIManager.getColor("Table.background");
+		Color sbg = ColorHelper.darker(UIManager.getColor("Table.selectionBackground"), 0.75f);
+		Dimension size = getSize();
+
+		Rectangle viewRect = scrollPane.getViewport().getViewRect();
+		int rowAtTop = mTable.rowAtPoint(new Point(0, viewRect.y));
+		int rowAtBottom = mTable.rowAtPoint(new Point(0, viewRect.y + viewRect.height));
+		int firstRow = Math.max(0, rowAtTop);
+		int lastRow = (rowAtBottom == -1) ? mTable.getRowCount()-1 : rowAtBottom;
+		int tableRowHeight = mTable.getRowHeight();
+
+		int y = firstRow * tableRowHeight - viewRect.y;
+		for (int row=firstRow; row<=lastRow; row++) {
+			int rowHeight = (mIsResizing && row == mResizingStartRow) ? mResizingRowHeight : tableRowHeight;
+			String rowHeader = Integer.toString(row+1);
+			g.setColor(mTable.getSelectionModel().isSelectedIndex(row) ? sbg : bg);
+			g.fillRect(0, y, size.width, rowHeight);
+			g.setColor(fg);
+			g.setFont(getFont());
+			int x = (getWidth() - g.getFontMetrics().stringWidth(rowHeader)) / 2;
+			g.drawString(rowHeader, x, y + (rowHeight + getFont().getSize()) / 2);
+			if (row == mHighlightedRow) {
+				g.setColor(Color.BLUE);
+				for (int i=0; i<HiDPIHelper.scale(2); i++)
+					g.drawRect(i, y+i, size.width-(2*i+1), rowHeight-(2*i+1));
+			}
+			else {
+				g.setColor(lc);
+				g.drawLine(0, y+rowHeight-1, size.width-1, y+rowHeight-1);
+			}
+			y += rowHeight;
+		}
+	}
+}
