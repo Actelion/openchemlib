@@ -951,7 +951,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	private void eventHappened(GenericMouseEvent e) {
 		if (e.getWhat() == GenericMouseEvent.MOUSE_PRESSED) {
-			if (mCurrentHiliteAtom != -1 && !mAtomKeyStrokeBuffer.isEmpty())
+			if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0)
 				expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
 
 			mAtomKeyStrokeBuffer.setLength(0);
