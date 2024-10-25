@@ -161,6 +161,13 @@ public class CommandLineParser {
         }
         return d;
     }
+    public File getAsDirOrFile(String command) throws NotDirectoryException {
+        File d = getAsFile(command);
+        if(!d.isDirectory() && !d.isFile()){
+            throw new NotDirectoryException("Not a file or dir " + d.getAbsolutePath());
+        }
+        return d;
+    }
 
     public double getAsDouble(String command) {
         return Double.parseDouble(get(command));
