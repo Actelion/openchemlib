@@ -9,6 +9,18 @@ import java.util.*;
 
 public class MolDistHistHelper {
 
+
+    public static int getNumNodesNotEmpty(MolDistHist mdh){
+
+        if(mdh==null)
+            return 0;
+
+        if(MolDistHistHelper.isEmptyMolDistHist(mdh))
+            return 0;
+
+        return mdh.getNumPPNodes();
+    }
+
     /**
      * Creates a single {@link MolDistHist} object from several MolDistHist. Missing descriptor histograms are added
      * and filled with ones.
