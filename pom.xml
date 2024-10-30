@@ -8,7 +8,7 @@
     Please follow the naming scheme YEAR.MONTH.RELEASE_NO_OF_MONTH
     (eg. 2016.4.1 for second release in Apr 2016)
     -->
-    <version>2024.10.2-SNAPSHOT</version>
+    <version>2024.10.3-SNAPSHOT</version>
 
     <name>OpenChemLib</name>
     <description>Open Source Chemistry Library</description>
@@ -48,8 +48,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javafx.version>21.0.2</javafx.version>
-        <java.version.alipheron>21</java.version.alipheron>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <javafx.version>11.0.2</javafx.version>
     </properties>
 
     <!-- Disable doclint for Java 8 -->
@@ -129,12 +130,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0</version>
-                <configuration>
-                    <source>${java.version.alipheron}</source>
-                    <target>${java.version.alipheron}</target>
-                    <encoding>UTF-8</encoding>
-                </configuration>
+                <version>3.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

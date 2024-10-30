@@ -203,6 +203,7 @@ class RowNumberPanel extends JPanel implements ListSelectionListener,MouseListen
 		mHighlightListeners = new Vector<>();
 		addMouseListener(this);
 		addMouseMotionListener(this);
+		table.getSelectionModel().addListSelectionListener(this);
 	}
 
 	@Override

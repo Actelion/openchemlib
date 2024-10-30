@@ -270,7 +270,7 @@ public class CompoundCollectionPane<T> extends JScrollPane
 						errorCount++;
 					}
 				if (errorCount != 0)
-					JOptionPane.showMessageDialog(getParentFrame(), errorCount+" compound(s) could not be added, because they doesn't qualify.");
+					JOptionPane.showMessageDialog(getParentFrame(), errorCount+" compound(s) could not be added, because they don't qualify.");
 				}
 			}
 		else if (e.getActionCommand().equals(ADD)) {

@@ -55,7 +55,7 @@ public class Fragmenter3D {
 		int fragmentCount = mol.getFragmentNumbers(fragmentNo, isRotatableBond, true);
 
 		int[] atomCount = new int[fragmentCount];
-		for (int atom=0; atom<mol.getAllAtoms(); atom++)
+		for (int atom=0; atom<mol.getAtoms(); atom++)
 			atomCount[fragmentNo[atom]]++;
 
 		BaseFragmentInfo[] fragmentData = new BaseFragmentInfo[fragmentCount];
