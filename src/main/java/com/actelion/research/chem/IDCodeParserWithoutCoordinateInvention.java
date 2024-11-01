@@ -771,10 +771,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 							from = 0;
 							factor = 8.0;
 							}
-						mMol.setAtomX(atom, mMol.getAtomX(from) + factor * (decodeBits(resolutionBits) - binCount / 2.0));
-						mMol.setAtomY(atom, mMol.getAtomY(from) + factor * (decodeBits(resolutionBits) - binCount / 2.0));
+						double decodedDX = factor * (decodeBits(resolutionBits)+1 - binCount / 2.0);
+						double decodedDY = factor * (decodeBits(resolutionBits)+1 - binCount / 2.0);
+						//System.out.println("[DEC] "+atom+" : "+decodedDX+" " +decodedDY);
+						mMol.setAtomX(atom, mMol.getAtomX(from) + decodedDX);
+						mMol.setAtomY(atom, mMol.getAtomY(from) + decodedDY);
 						if (coordsAre3D)
-							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits) - binCount / 2.0));
+							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits)+1 - binCount / 2.0));
 						}
 
 					if (coordinates[coordsStart] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
