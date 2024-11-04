@@ -771,13 +771,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 							from = 0;
 							factor = 8.0;
 							}
-						double decodedDX = factor * (decodeBits(resolutionBits)+1 - binCount / 2.0);
-						double decodedDY = factor * (decodeBits(resolutionBits)+1 - binCount / 2.0);
-						//System.out.println("[DEC] "+atom+" : "+decodedDX+" " +decodedDY);
+
+						double decodedDX = factor * (decodeBits(resolutionBits) + 1 - (binCount >> 1));
+						double decodedDY = factor * (decodeBits(resolutionBits) + 1 - (binCount >> 1));
 						mMol.setAtomX(atom, mMol.getAtomX(from) + decodedDX);
 						mMol.setAtomY(atom, mMol.getAtomY(from) + decodedDY);
 						if (coordsAre3D)
-							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits)+1 - binCount / 2.0));
+							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits) + 1 - (binCount >> 1)));
 						}
 
 					if (coordinates[coordsStart] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
@@ -793,10 +793,10 @@ public class IDCodeParserWithoutCoordinateInvention {
 								int hydrogen = mMol.addAtom(1);
 								mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
 
-								mMol.setAtomX(hydrogen, mMol.getAtomX(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
-								mMol.setAtomY(hydrogen, mMol.getAtomY(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
+								mMol.setAtomX(hydrogen, mMol.getAtomX(atom) + (decodeBits(resolutionBits) + 1 - (binCount >> 1)));
+								mMol.setAtomY(hydrogen, mMol.getAtomY(atom) + (decodeBits(resolutionBits) + 1 - (binCount >> 1)));
 								if (coordsAre3D)
-									mMol.setAtomZ(hydrogen, mMol.getAtomZ(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
+									mMol.setAtomZ(hydrogen, mMol.getAtomZ(atom) + (decodeBits(resolutionBits) + 1 - (binCount >> 1)));
 
 								if (selectedHydrogenBits != null && (selectedHydrogenBits[atom] & (1 << i)) != 0)
 									mMol.setAtomSelection(hydrogen, true);
