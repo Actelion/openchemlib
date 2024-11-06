@@ -3417,7 +3417,7 @@ System.out.println();
 		mEncodingBuffer.append(includeHydrogenCoordinates ? '#' : '!');
 		encodeBits(mZCoordinatesAvailable ? 1 : 0, 1);
 		encodeBits(keepPositionAndScale ? 1 : 0, 1);
-		encodeBits(resolutionBits/2, 4);	// resolution bits devided by 2
+		encodeBits(resolutionBits >> 1, 4);	// resolution bits divided by 2
 
 		double maxDelta = 0.0;
 		for (int i=1; i<mMol.getAtoms(); i++)
@@ -3436,8 +3436,8 @@ System.out.println();
 			}
 
 		int binCount = (1 << resolutionBits);
-		double increment = maxDelta / (binCount / 2.0 - 1);
-		double maxDeltaPlusHalfIncrement = maxDelta + increment / 2.0;
+		double increment = maxDelta / ((binCount >> 1) - 1);
+		double maxDeltaPlusHalfIncrement = maxDelta + 0.5 * increment;
 
 		for (int i=1; i<mMol.getAtoms(); i++)
 			encodeCoords(mGraphAtom[i], (mGraphFrom[i] == -1) ? -1 : mGraphAtom[mGraphFrom[i]], maxDeltaPlusHalfIncrement, increment, resolutionBits, coords);

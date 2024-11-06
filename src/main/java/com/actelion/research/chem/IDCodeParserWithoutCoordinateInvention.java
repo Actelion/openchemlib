@@ -771,10 +771,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 							from = 0;
 							factor = 8.0;
 							}
-						mMol.setAtomX(atom, mMol.getAtomX(from) + factor * (decodeBits(resolutionBits) - binCount / 2.0));
-						mMol.setAtomY(atom, mMol.getAtomY(from) + factor * (decodeBits(resolutionBits) - binCount / 2.0));
+
+						double decodedDX = factor * (decodeBits(resolutionBits) + 1 - (binCount >> 1));
+						double decodedDY = factor * (decodeBits(resolutionBits) + 1 - (binCount >> 1));
+						mMol.setAtomX(atom, mMol.getAtomX(from) + decodedDX);
+						mMol.setAtomY(atom, mMol.getAtomY(from) + decodedDY);
 						if (coordsAre3D)
-							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits) - binCount / 2.0));
+							mMol.setAtomZ(atom, mMol.getAtomZ(from) + factor * (decodeBits(resolutionBits) + 1 - (binCount >> 1)));
 						}
 
 					if (coordinates[coordsStart] == '#') {    // we have 3D-coordinates that include implicit hydrogen coordinates
@@ -790,10 +793,10 @@ public class IDCodeParserWithoutCoordinateInvention {
 								int hydrogen = mMol.addAtom(1);
 								mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
 
-								mMol.setAtomX(hydrogen, mMol.getAtomX(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
-								mMol.setAtomY(hydrogen, mMol.getAtomY(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
+								mMol.setAtomX(hydrogen, mMol.getAtomX(atom) + (decodeBits(resolutionBits) + 1 - (binCount >> 1)));
+								mMol.setAtomY(hydrogen, mMol.getAtomY(atom) + (decodeBits(resolutionBits) + 1 - (binCount >> 1)));
 								if (coordsAre3D)
-									mMol.setAtomZ(hydrogen, mMol.getAtomZ(atom) + (decodeBits(resolutionBits) - binCount / 2.0));
+									mMol.setAtomZ(hydrogen, mMol.getAtomZ(atom) + (decodeBits(resolutionBits) + 1 - (binCount >> 1)));
 
 								if (selectedHydrogenBits != null && (selectedHydrogenBits[atom] & (1 << i)) != 0)
 									mMol.setAtomSelection(hydrogen, true);
@@ -866,10 +869,12 @@ public class IDCodeParserWithoutCoordinateInvention {
 
 		boolean coords2DAvailable = (coordinates != null && !coordsAre3D);
 
+		fixMultipleBondTypes();
+
 		// If we have or create 2D-coordinates, then we need to set all double bonds to a cross bond, which
 		// - have distinguishable substituents on both ends, i.e. is a stereo double bond
 		// - are not in a small ring
-		// Here we don't know, whether a double bond without E/Z parity is a stereo bond with unknown
+		// Here we don't know whether a double bond without E/Z parity is a stereo bond with unknown
 		// configuration or not a stereo bond. Therefore, we need to set a flag, that causes the Canonizer
 		// during the next stereo recognition with atom coordinates to assign an unknown configuration rather
 		// than E or Z based on created or given coordinates.
@@ -904,6 +909,57 @@ public class IDCodeParserWithoutCoordinateInvention {
 			mMol.setParitiesValid(0);
 			}
 		}
+
+	/**
+	 * New convention is that in case of a substructure bond with multiple allowed bond types,
+	 * all allowed bond types are set as query feature and in addition the boind itself has to
+	 * be the lowest bond type of these.
+	 */
+	private void fixMultipleBondTypes() {
+		for (int bond=0; bond<mMol.getAllBonds(); bond++) {
+			int queryFeatures = mMol.getBondQueryFeatures(bond);
+			if ((queryFeatures & Molecule.cBondQFBondTypes) == 0)
+				continue;
+
+			int bondType = -1;
+			int selectionCount = 0;
+
+			if ((queryFeatures & Molecule.cBondQFMetalLigand) != 0) {
+				bondType = Molecule.cBondTypeMetalLigand;
+				selectionCount++;
+			}
+			if ((queryFeatures & Molecule.cBondQFQuintuple) != 0) {
+				bondType = Molecule.cBondTypeQuintuple;
+				selectionCount++;
+			}
+			if ((queryFeatures & Molecule.cBondQFQuadruple) != 0) {
+				bondType = Molecule.cBondTypeQuadruple;
+				selectionCount++;
+			}
+			if ((queryFeatures & Molecule.cBondQFTriple) != 0) {
+				bondType = Molecule.cBondTypeTriple;
+				selectionCount++;
+			}
+			if ((queryFeatures & Molecule.cBondQFDouble) != 0) {
+				bondType = Molecule.cBondTypeDouble;
+				selectionCount++;
+			}
+			if ((queryFeatures & Molecule.cBondQFDelocalized) != 0) {
+				bondType = Molecule.cBondTypeDelocalized;
+				selectionCount++;
+			}
+			if ((queryFeatures & Molecule.cBondQFSingle) != 0) {
+				bondType = Molecule.cBondTypeSingle;
+				selectionCount++;
+			}
+
+			if (bondType != -1) {
+				mMol.setBondType(bond, bondType);    // set to the lowest bond order of query options
+				if (selectionCount == 1)
+					mMol.setBondQueryFeature(bond, Molecule.cBondQFBondTypes, false);
+			}
+		}
+	}
 
 	protected void inventCoordinates(StereoMolecule mol) throws Exception {
 		throw new Exception("Unexpected request to invent coordinates. Check source code logic!");

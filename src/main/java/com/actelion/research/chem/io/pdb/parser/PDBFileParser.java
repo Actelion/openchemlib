@@ -42,7 +42,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.stream.IntStream;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -563,11 +562,13 @@ public class PDBFileParser {
         //
         // Parsing atom connections
         //
-        
 
         
-        List<int[]> bonds = new ArrayList<int[]>();
-        
+        List<int[]> bonds = new ArrayList<>();
+		indexLine = parseCONECTLines(liRaw, indexLine, bonds);
+		pdbCoordEntryFile.setLiConnect(bonds);
+
+ /* replaced by something more efficient, because the original was limited to atom indexes <= 9999; TLS 6Nov2024
         if(liRaw.get(indexLine).startsWith(TAG_CONECT)) {
             ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_CONECT);
             for(String bondInfo:liIndex.getLi()) {
@@ -590,6 +591,8 @@ public class PDBFileParser {
             indexLine = liIndex.getId();
         }
         pdbCoordEntryFile.setLiConnect(bonds);
+
+  */
 
         if(liRaw.get(indexLine).startsWith(TAG_MASTER)) {
             pdbCoordEntryFile.setMaster(liRaw.get(indexLine).substring(10).trim());
@@ -714,16 +717,37 @@ public class PDBFileParser {
             } else {
                 break;
             }
-
         }
 
         ListInteger liTextIndex = new ListInteger(liTxt, indexLine);
 
         return liTextIndex;
-
     }
 
-    private static ListInteger<String> parseMultipleTimesMultipleLinesSEQRES(List<String> liRaw, int indexLine, String tag) throws ParseException {
+	private int parseCONECTLines(List<String> liRaw, int lineIndex, List<int[]> bondList) throws ParseException {
+		while (liRaw.get(lineIndex).startsWith(TAG_CONECT)) {
+			String line = liRaw.get(lineIndex++);
+			if (line.length() >= 16) {
+				int atom1 = Integer.parseInt(line.substring(6,11).trim());
+				int index = 16;
+				while (line.length() >= index) {
+					String s = line.substring(index-5, index).trim();
+					if (s.isEmpty())
+						break;
+					int atom2 = Integer.parseInt(s);
+					int[] atoms = new int[2];
+					atoms[0] = atom1;
+					atoms[1] = atom2;
+					bondList.add(atoms);
+					index += 5;
+				}
+			}
+		}
+
+		return lineIndex;
+	}
+
+	private static ListInteger<String> parseMultipleTimesMultipleLinesSEQRES(List<String> liRaw, int indexLine, String tag) throws ParseException {
 
         String l0 = liRaw.get(indexLine);
         if(!l0.startsWith(tag)) {
