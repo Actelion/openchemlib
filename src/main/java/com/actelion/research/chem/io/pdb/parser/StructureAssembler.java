@@ -1,6 +1,7 @@
 package com.actelion.research.chem.io.pdb.parser;
 
 import com.actelion.research.chem.Molecule3D;
+import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
 import com.actelion.research.util.SortedList;
 
 import java.util.*;
@@ -155,19 +156,26 @@ System.out.println("coupleBonds mol:"+mol);
 	}*/
 
 	private void coupleBonds(Molecule3D mol) {
-		TreeMap<Integer,Integer> sequenceToAtomMap = new TreeMap<>();
-		for (int atom=0; atom<mol.getAllAtoms(); atom++) {
-			int sequence = mol.getAtomSequence(atom);
-			if (sequence != -1)
-				sequenceToAtomMap.put(sequence, atom);
-		}
+		if (bondList.size() != 0) {
+			TreeMap<Integer,Integer> sequenceToAtomMap = new TreeMap<>();
+			for (int atom=0; atom<mol.getAllAtoms(); atom++) {
+				int sequence = mol.getAtomSequence(atom);
+				if (sequence != -1)
+					sequenceToAtomMap.put(sequence, atom);
+			}
 
-		for(int i=0; i<bondList.size(); i++) {
-			int[] bond = bondList.get(i);
-			Integer atom1 = sequenceToAtomMap.get(bond[0]);
-			Integer atom2 = sequenceToAtomMap.get(bond[1]);
-			if (atom1 != null && atom2 != null)
-				mol.addBond(atom1, atom2);
+			for(int i=0; i<bondList.size(); i++) {
+				int[] bond = bondList.get(i);
+				Integer atom1 = sequenceToAtomMap.get(bond[0]);
+				Integer atom2 = sequenceToAtomMap.get(bond[1]);
+				if (atom1 != null && atom2 != null)
+					mol.addBond(atom1, atom2);
+			}
+
+			try {
+				BondsCalculator.calculateBondOrders(mol, true);
+			}
+			catch (Exception e) {}
 		}
 	}
 
