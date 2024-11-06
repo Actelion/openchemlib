@@ -34,6 +34,9 @@
 
 package com.actelion.research.chem.io.pdb.parser;
 
+import com.actelion.research.util.IntArrayComparator;
+import com.actelion.research.util.SortedList;
+
 import java.io.*;
 import java.net.URI;
 import java.net.URLConnection;
@@ -563,8 +566,8 @@ public class PDBFileParser {
         // Parsing atom connections
         //
 
-        
-        List<int[]> bonds = new ArrayList<>();
+
+		SortedList<int[]> bonds = new SortedList<>(new IntArrayComparator());
 		indexLine = parseCONECTLines(liRaw, indexLine, bonds);
 		pdbCoordEntryFile.setLiConnect(bonds);
 
@@ -724,7 +727,7 @@ public class PDBFileParser {
         return liTextIndex;
     }
 
-	private int parseCONECTLines(List<String> liRaw, int lineIndex, List<int[]> bondList) throws ParseException {
+	private int parseCONECTLines(List<String> liRaw, int lineIndex, SortedList<int[]> bondList) throws ParseException {
 		while (liRaw.get(lineIndex).startsWith(TAG_CONECT)) {
 			String line = liRaw.get(lineIndex++);
 			if (line.length() >= 16) {
@@ -736,8 +739,14 @@ public class PDBFileParser {
 						break;
 					int atom2 = Integer.parseInt(s);
 					int[] atoms = new int[2];
-					atoms[0] = atom1;
-					atoms[1] = atom2;
+					if (atom1 < atom2) {
+						atoms[0] = atom1;
+						atoms[1] = atom2;
+					}
+					else {
+						atoms[0] = atom2;
+						atoms[1] = atom1;
+					}
 					bondList.add(atoms);
 					index += 5;
 				}

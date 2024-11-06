@@ -52,15 +52,16 @@ import java.util.Map;
 public class Residue {
 	public static double BOND_CUTOFF_SQ = 3.24;
     private List<AtomRecord> records;
-    private boolean isTerminal;
+    private boolean isTerminal,mAddBonds,mIncludeAltLocs;
     private Molecule3D mol;
 
-    public Residue(List<AtomRecord> records) {
+    public Residue(List<AtomRecord> records, boolean addBonds, boolean includeAltLocations) {
         this.records = records;
         this.isTerminal = isTerminal();
+		mAddBonds = addBonds;
+		mIncludeAltLocs = includeAltLocations;
         mol = constructFragment();
     }
-        
 
 	public boolean isTerminal() {
 		isTerminal = false;
@@ -70,9 +71,7 @@ public class Residue {
 		}
 		return isTerminal;
 	}
-    
 
-    
     private Molecule3D constructFragment() {
     	boolean isAA = false;
     	if(AminoAcidsLabeledContainer.INSTANCE.get(getResname())!=null)
@@ -102,7 +101,14 @@ public class Residue {
     
 	private Molecule3D constructFragmentFromGeometry(String resname) {
 		Molecule3D fragment = new Molecule3D();
+		String altLoc = null;
 		for(AtomRecord record : records) {
+			if (!mIncludeAltLocs) {
+				if (altLoc == null)
+					altLoc = record.getAltLoc();
+				else if (!altLoc.equals(record.getAltLoc()))
+					continue;
+			}
 			int atomicNo = record.getAtomicNo();
 			int atom = fragment.addAtom(atomicNo);
 			fragment.setAtomName(atom, record.getAtomName());
@@ -116,13 +122,14 @@ public class Residue {
 			fragment.setAtomZ(atom,record.getZ());
 		}
 
-		fragment.ensureHelperArrays(Molecule.cHelperCIP);
-		try {
-			BondsCalculator.createBonds(fragment, true,null);
-			BondsCalculator.calculateBondOrders(fragment,true);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			System.err.println();
+		if (mAddBonds) {
+			try {
+				BondsCalculator.createBonds(fragment, true,null);
+				BondsCalculator.calculateBondOrders(fragment,true);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				System.err.println();
+			}
 		}
 
 		return fragment;
@@ -179,9 +186,5 @@ public class Residue {
 				areBonded=true;
 		}
 		return areBonded;
-		
 	}
-		
-		
-
 }

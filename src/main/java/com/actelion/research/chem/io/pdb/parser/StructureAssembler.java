@@ -1,13 +1,10 @@
 package com.actelion.research.chem.io.pdb.parser;
 
 import com.actelion.research.chem.Molecule3D;
+import com.actelion.research.util.SortedList;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * @author JW
@@ -26,14 +23,14 @@ public class StructureAssembler {
 	public static final String LIGAND_GROUP = "ligand";
 	
 	private Map<String,List<AtomRecord>> groups;
-	private final List<int[]> bondList;
+	private final SortedList<int[]> bondList;
 	private final List<AtomRecord> protAtomRecords;
 	private final List<AtomRecord> hetAtomRecords;
 	private boolean detachCovalentLigands;
 	private Map<String,List<Molecule3D>> mols;
 
 
-	public StructureAssembler(List<int[]> bondList, List<AtomRecord> protAtomRecords, List<AtomRecord> hetAtomRecords) {
+	public StructureAssembler(SortedList<int[]> bondList, List<AtomRecord> protAtomRecords, List<AtomRecord> hetAtomRecords) {
 		this.bondList = bondList;
 		this.protAtomRecords = protAtomRecords;
 		this.hetAtomRecords = hetAtomRecords;
@@ -66,8 +63,8 @@ public class StructureAssembler {
 			li.add(e);
 		});
 
-		for(int[] bond : bondList)
-			processBond(bond);
+		for(int i=0; i<bondList.size(); i++)
+			processBond(bondList.get(i));
 	}
 	
 	private Molecule3D buildProtein() {
@@ -75,7 +72,7 @@ public class StructureAssembler {
 		Map<String,List<AtomRecord>> residues_;
 		List<AtomRecord> proteinRecords = groups.get(PROTEIN_GROUP);
 		residues_ = proteinRecords.stream().collect(Collectors.groupingBy(AtomRecord::getString));
-		List<Residue> residues = residues_.values().stream().map(v -> new Residue(v)).collect(Collectors.toList());
+		List<Residue> residues = residues_.values().stream().map(v -> new Residue(v, true, false)).collect(Collectors.toList());
 		residues.sort((c1,c2) -> {
 				if(!c1.getChainID().equals(c2.getChainID())) //different chains
 					return c1.getChainID().compareTo(c2.getChainID());
@@ -121,12 +118,12 @@ public class StructureAssembler {
 				.get();
 		return protein;
 		}
-	
+
 	private void buildHetResidues() {
 		for(String group : groups.keySet()) {
 			if(!group.equals(PROTEIN_GROUP)) {
 				List<AtomRecord> records = groups.get(group);
-				Residue atomGroup = new Residue(records);
+				Residue atomGroup = new Residue(records, false, false);
 				Molecule3D fragment = atomGroup.getMolecule();
 				if(fragment.getAtomAmino(0).equals("HOH")) {
 					mols.putIfAbsent(SOLVENT_GROUP, new ArrayList<Molecule3D>());
@@ -140,8 +137,10 @@ public class StructureAssembler {
 		}
 	}
 	
-	private void coupleBonds(Molecule3D mol) {
-		for(int[] bond:bondList) {
+/*	private void coupleBonds(Molecule3D mol) {
+System.out.println("coupleBonds mol:"+mol);
+		for(int i=0; i<bondList.size(); i++) {
+			int[] bond = bondList.get(i);
 			int [] bondedAtoms = {-1,-1};
 			IntStream.range(0,mol.getAllAtoms()).forEach( e -> {
 				int pdbAtomID = mol.getAtomSequence(e);
@@ -151,10 +150,27 @@ public class StructureAssembler {
 					bondedAtoms[1]=e;
 			});
 			if(bondedAtoms[0]!=-1 && bondedAtoms[1]!=-1)
-				mol.addBond(bondedAtoms[0], bondedAtoms[1]);		
+				mol.addBond(bondedAtoms[0], bondedAtoms[1]);
+		}
+	}*/
+
+	private void coupleBonds(Molecule3D mol) {
+		TreeMap<Integer,Integer> sequenceToAtomMap = new TreeMap<>();
+		for (int atom=0; atom<mol.getAllAtoms(); atom++) {
+			int sequence = mol.getAtomSequence(atom);
+			if (sequence != -1)
+				sequenceToAtomMap.put(sequence, atom);
+		}
+
+		for(int i=0; i<bondList.size(); i++) {
+			int[] bond = bondList.get(i);
+			Integer atom1 = sequenceToAtomMap.get(bond[0]);
+			Integer atom2 = sequenceToAtomMap.get(bond[1]);
+			if (atom1 != null && atom2 != null)
+				mol.addBond(atom1, atom2);
 		}
 	}
-	
+
 	/**
 	 * merge atom groups that are connected by a bond
 	 * @param bond

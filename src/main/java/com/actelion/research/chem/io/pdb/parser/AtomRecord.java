@@ -114,8 +114,12 @@ public class AtomRecord {
     public String getAnisou() {
         return anisou;
     }
-    
-    public String getAtomName() {
+
+	public String getAltLoc() {
+		return altLoc;
+	}
+
+	public String getAtomName() {
     	return atomName;
     }
     
