@@ -49,70 +49,71 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	// change bonding of the reaction the rule is applied to. Nevertheless, the rule's entire reactant is used
 	// for the substructure search that identifies applicability.
 	private static final ChemicalRule[] CHEMICAL_RULE = {
-		new ChemicalRule("d","gGQ@@eKtrAkDH!gGQ@@djsRIKVPP#qMsT qM\\V#!R_yL@dw~l@Jp@dsNR_@", 3.5f),
-		new ChemicalRule("e","daXJ@@PjyITuiX@`!dahJ@@SJYIMMfPB#IaLJfxP IaAhl[`#!ROrp?Ds|lOqNk?g?l_zLsSGp", 1.5f),
+// With cleaned coordinates:
+			new ChemicalRule("d","gGQ@@eKtRA@!gGQ@@djqRA@#qMsT qM\\V#!B_qL@Dw}l@Fp@Dp !B@AL@[@@S@Fp@Dp##", 3.5f),
+			new ChemicalRule("e","daXJ@@PjyITuiX@`!dahJ@@SJYIMMfPB#IaLJfxP IaAhl[`#!BDpAl@AL@[@Be}aL@[@@ !B|Osp?QZR?O_}}zGze`@##", 1.5f),
 // bad	new ChemicalRule("f","gJQ`@bdjt`P!gKa`@ldfrA@#qbqh qqlP#!R_zq?dw~l_yLsXgp", 0.5f),
-		new ChemicalRule("g","gBa`@lde@XS@!gCA`@mDPOdku`#qbq qJt#!R_zq?dxgFLvHB", 5.5f),
+			new ChemicalRule("g","gBa`@lde@XS@!gCA`@mDPOdku`#qbq qJt#!B[G|S_qgq !BjW}q]cga##", 5.5f),
 // no evidence		new ChemicalRule("h","daXL@@Klb`JSSHA@!daXL@@[dfTBijh@`#IyjFDp` IyjEL``#!R?g~HO[\\}[Lfw?K_}m?psLap", 7.5f),
 // evidences covered by aldol		new ChemicalRule("aldolEnoneCyclisation","daXD@@kHh`Ttl@P!daxD@@yIeRfZZ`B#IqBbay` IqHKjXP#!R_g}wwWC]]xKCfXbBbMtshep", 6.5f),
 // fishy    	new ChemicalRule("j","gBi@DDcXCnR`!gBi@HDFXCnY`#qbq qfQ#!R_vpy`W}lLvK|", 3.5f),
 // no evidence		new ChemicalRule("l","daxH@@RUUjjPB!daDH@@RVU[jij@H#IGfhlR@ IGfbdK@#!R@IL@k@BS@Jp@dpBl@ILs|kp", 0.5f),
 // no evidence		new ChemicalRule("m","gFQHBGAISiPH!gGQHJGAIUjhB#qNT] qNTk#!R@AL@[@@Sa_x@DsNro@", 0.5f),
 // no evidence		new ChemicalRule("n","gOp`@|dRaqij`H!gOp`@tiUMij`H#qosJ` qgSqh#!RTv]`YRqg?g~HPh`}L{H|", 0.5f),
-		new ChemicalRule("o","gGQHDDqIUjdB!gGQHHDqAeMjhB#qbqk qfQ]#!R_zq?dw~l_yM?kCM|?@", 0.5f),
+			new ChemicalRule("o","gGQHDDqIUjdB!gGQHHDqAeMjhB#qbqk qfQ]#!B@AL@[@@S@Fp@Dp !BFQ{~_q|ZGvUSYp##", 0.5f),
 // no evidence	new ChemicalRule("p","gGQ@@eJuRA@!gFQ@@diuPD#qqUc qrcM#!R_zp@kG~S@IM?kCLb?@", 5.5f),
-		new ChemicalRule("r","gOQdEjHbAFQRBrtAaJ!gNQdEbHbABCTKPFDH#qbMwX qbM~X#!RCwpb@@M`CpL}cg@CL|jB", 0.5f),
-		new ChemicalRule("s","gOp`ATigujj`H!gOp`ATiVKjj`H#qnyS` qY~eP#!R?`@_YQ|ZFBqSFHc}L{IB", 0.5f),
-		new ChemicalRule("t","gOP`@dcUZdB!gNp`@tiTMjj@`#q{ir` qkLrx#!R@ANZXPAl@AL@[@@SLtj|", 0.5f),
-		new ChemicalRule("u","daXB`Hrn@HrPEILt`D!daXB`DJn@HRUMjV@H#IxVaLJ` IylJhPP#!R_zL@hs`Q_zq?dw~l_yLsBkp", 0.5f),
+			new ChemicalRule("r","gOQdEjHbAFQRBrtAaJ!gNQdEbHbABCTKPFDH#qbMwX qbM~X#!BNDm`ra?UjW~YBYX@ !Ba[zw?_x@?g~H?XO~##", 0.5f),
+			new ChemicalRule("s","gOp`ATigujj`H!gOp`ATiVKjj`H#qnyS` qY~eP#!BTLtk^sE?BOs|]pc} !BbOvw?_y??g~H?[_}##", 0.5f),
+			new ChemicalRule("t","gOP`@dcUZdB!gNp`@tiTMjj@`#q{ir` qkLrx#!Be`Bzr_wp?OC}|Osp !B?g~w@k_}m?vw@n[a##", 0.5f),
+			new ChemicalRule("u","daXB`Hrn@HrPEILt`D!daXB`DJn@HRUMjV@H#IxVaLJ` IylJhPP#!B[G}l@OKyDpAl@AL@[@@ !B@Fp@DpAl@AN]?`Al@AL##", 0.5f),
 
-		new ChemicalRule("Sakurai", "gOQH@wAINvZ@pdcFe@x@!gOQH@wAIgJi@pdcFe@x@#qreKx qrLkx#!R_g~HO_fQbOvw?[_|L}r\\", 4.5f),
-		new ChemicalRule("Mitsunobu", "gFP`ATfRjdPp`}KEYg]d@!gFP`ATfRjd`pekL{l`#qrLk qZLn#!Rw`Bg?Hc|i}uUYcMb``", 4.5f),
+			new ChemicalRule("Sakurai", "gOQH@wAINvZ@pdcFe@x@!gOQH@wAIgJi@pdcFe@x@#qreKx qrLkx#!BDpAl@IknDw|S@Fp@ !Bb@JH?_x@b@JH?Ven##", 4.5f),
+			new ChemicalRule("Mitsunobu", "gFP`ATfRhdPp`}KEYg]d@!gFP`ATfRhd`pekL{l`#qrLk qZLn#!B@hc}b@C~@h`YM` !B@hc}b@C~@h`YM`##", 4.5f),
 
-		new ChemicalRule("Aldol-Addition", "gOQ@AdTAcS@^Pvb}GdThXJg@HUfI\u007FlP!gGQ@@dsuRAcJg@HUaH#qYEbp qYub#!Rw[\\\\mw?^akFC|CtwLtI\\", 1.5f),
-		new ChemicalRule("Aldol-Condensation", "gOQ@AdTAcS@^Pvb}GdThXJg@HUfI\u007FlP!gFQ@@`rrpdlHHpipBEXb@#qYEbp q^aU#!Rw[\\\\mw?^akFC|CtwLtI\\", 2.5f),
-		new ChemicalRule("Acetal-Aldol-Addition", "dmdB@@serQS@sJjfd@p`Xir\\@`j\\@aUJHI@!daxL@@[df[ZjT@qQdxACdxABjTQb@#qB@`OuX qBtM{#!RM?rH?C]}_`CW?Ev^@T@wwS^B_`@sHop", 1.5f),
-		new ChemicalRule("Acetal-Aldol-Condensation", "dmdB@@serQS@sJjfd@p`Xir\\@`j\\@aUJHI@!gNp`CTjUiV@qQS`DJg@HUVHR@#qB@`OuX qqj{`#!RM?rH?C]}_`CW?Ev^@T@wwS^B_`@sHop", 1.5f),
-		new ChemicalRule("Acetal-Aldol-Condensation-Cyclization", "dkLB@@ZURYUvUjejhHYpaHpr\\@aUJHp`!didD@@EIfU[hBA@CFAS`DJqq@#IXljNPY@@@ IXljXxT#!R_`CW@h`BuwvH_[yOb@I~@M_|bOsW_Wx@LuJb", 7.5f),
-		new ChemicalRule("Enolester-Cleavage", "gOQ`@fdscT`_Qp!gOQ`@cdTASS@P#q}Kr` q}cNP#!R?g~H?[_}bOrH?WzeLyH\\", 5.3f),
+			new ChemicalRule("Aldol-Addition", "gOQ@AdTAcW@[Q^crJTLES`DO}b@!gGQ@@dsuVAcJg@H@#qYEbp qYub#!B@O{|b@Jw\\o{~@Oy? !Bb@K~@Hc}b@JH@`##", 1.5f),
+			new ChemicalRule("Aldol-Condensation", "gOQ@AdTAcW@[Q^crJTLES`DO}b@!gFQ@@`v|pblHHqIpB@#qYEbp q\\VM#!B@O{|b@Jw\\o{~@Oy? !BxpE?[@@S@Fp@Dp##", 2.5f),
+			new ChemicalRule("Acetal-Aldol-Addition", "dmdB@@serQS@sJjnl@p`Xir\\@`j\\@`!daxL@@[df[Zj|@qQdxACdxA@#qB@`OuX qBtM{#!B?[_}b@Jw_?{}mwk~?X`Bmwvw_[\\ !Bb@K~@Hc}b@Jw@h`BmpH##", 1.5f),
+			new ChemicalRule("Acetal-Aldol-Condensation", "dmdB@@serQS@sJjnl@p`Xir\\@`j\\@`!gNp`ITkez^@qTS`DJg@H@#qB@`OuX qOuS`#!B?[_}b@Jw_?{}mwk~?X`Bm?vw_[\\ !Bm?rH__y?b@K~_xa}##", 1.5f),
+			new ChemicalRule("Acetal-Aldol-Condensation-Cyclization", "dkLB@@ZURYUvUjljh@paHpr\\@`!didD@@yIfUXXHL@CFNS`D@#IXljNPY@@@ IXljIyA#!BbOw~_x`Bm?vH?[_}b@JH?_y?b@Jw?Xc} !BbOvH?Oy??`BH?Xa}?`C~_p##", 7.5f),
+			new ChemicalRule("Enolester-Cleavage", "gOQ`@fdscT`_Qp!gOQ`@cdTASS@P#q}Kr` q}cNP#!B@k]}mpC~@k]}mqdY !Bb@K~@Hc}BfzH@hc}##", 5.3f),
 
-		new ChemicalRule("propargylEnone", "gCa@@dmXFD@!gCa@@dkHD#qNT qLV#!RXIq`pp@sLwI|", 5.5f),
-		new ChemicalRule("Arndt-Eistert", "daiDaJYBBHj^{HhAYMpAaA@!daiD`FzLBHPVsZl@p`@#IyHHZ[@ IzDGBi`#!R@W|h_U\\}X{GUJU\\}TEpsHap", 11.5f),
-		new ChemicalRule("Curtius", "gO]IcVaDF[s{HhCIe@`!gN]HMWADHJfm`XP@#q~Jk` qytUX#!R?g}HoU_]U\\eWwQ@\\Lwq\\", 9.5f),
-		new ChemicalRule("diazomethanHomologation", "gFU@lQioIIs\\AyH!gFU@CPdimXD#qbM^ qbqk#!Rk}rop?v~k|L@kKNB@`", 7.5f),
+			new ChemicalRule("propargylEnone", "gCa@@dmXFD@!gCa@@dkHD#qNT qLV#!BbOw~_?y? !B@AL@[@@S##", 5.5f),
+			new ChemicalRule("Arndt-Eistert", "daiDaJYBBHj^{HhAYMpAaA@!daiD`FzLBHPVsZl@p`@#IyHHZ[@ IzDGBi`#!B?`Bw?H`Bn]{~\\g?~@Ox !B@rzH?_y?b@JH?_n~bOt##", 11.5f),
+			new ChemicalRule("Curtius", "gO]IcVaDF[s{HhCIe@`!gN]HMWADHJfm`XP@#q~Jk` qytUX#!B@O{|b@Jw\\o{~_?x@ !Bj]y??g?~?[^G_hc}##", 9.5f),
+			new ChemicalRule("diazomethanHomologation", "gFU@lQioIIs\\AyH!gFU@CPdimXD#qbM^ qbqk#!B?X`BbFZN?`C~_p !B@AL@[@@Su[x@Dp##", 7.5f),
 
-		// methathese
-		new ChemicalRule("ene-Metathesis","daX@@LdPLSSPHEelRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLSSPHEelRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!RNIu^@O{wD^EGhkzO?aBsdcp", 3.5f),
-		new ChemicalRule("yne-Metathesis","daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!RZmoi@Fjo|SFe|IkGiUBSLop", 3.5f),
-		new ChemicalRule("ene-yne-Metathesis","dcd@@LdPLPLWSSPIdulrXwKlVRFCHXFa`zFAXXMa`udqnWP!dcT@@LdbbplTsTtFPx}[MeMr{Ela`jFAhXNa`VFCXXO}[J[et#qe@N@S@ qeHP@s@#!R_c}~@Gx?QgF}bKwW@h`yoosW?Hb}usNRO@", 7.5f),
-		new ChemicalRule("Alkyne-Cyclisation", "gG`@DcO|CFAFC`@!gFp@DiTt@@CFAFC`@#qi\\V qiSt#!Rb@JNyk\\Bl^{~@CORp`", 8.5f),
+			// methathese
+			new ChemicalRule("ene-Metathesis","daX@@LdPLSSPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLSSPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!BNIu^@O{wD^EGhkzO?a@ !BNIu^@O{wD^EGhkzO?a@##", 3.5f),
+			new ChemicalRule("yne-Metathesis","daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!BZmoi@Fjo|SFe|IkGiU@ !BZmoi@Fjo|SFe|IkGiU@##", 3.5f),
+			new ChemicalRule("ene-yne-Metathesis","dcd@@LdPLPLWSSPAlrXwKlVRFCHXFa`zFAXXMa`udqnWP!dcT@@LdbbplTsTt@[MeMr{Ela`jFAhXNa`VFCXXO}[J[et#qe@N@S@ qeHP@s@#!B?g?~@Oy?^gG}bOvw?H`E@PJw@hc}mp !B?`BH?[_}mpJH@oy??`AuC`Jw@hc}mp##", 7.5f),
+			new ChemicalRule("Alkyne-Cyclisation", "gG`@DcO|CFAFC`@!gFp@DiTt@@CFAFC`@#qi\\V qiSt#!B_y[qA`Biu^zV@@ !B?g~w@k_}m?vw@`##", 8.5f),
 
-		// two step
-		new ChemicalRule("Elimination-Claisen", "gNp`AldTQji@~a`!gOP`@teTZdCzN@#qtHUX qtSi@#!RupI~Owx@uwwW_]_|LyK|", 4.5f),
-		new ChemicalRule("imineFormationAzaCope", "daZH@LAIMUjd@pRL@!daZH@HAAn]jd@p`@#IGfaLJ` IFDzfK@#!RXpAl@HYrXs}lOvL?[C|sTdH", 8.5f),
-		new ChemicalRule("didehydroCopeWithAromatisation", "gNp@Di]ejDcjbrlwK`!gOp@DjWkB@@H#qrLkx q\\oQp#!R?`Bw?[\\BmpK~@K\\BL~JB", 4.5f),
+			// two-step
+			new ChemicalRule("Elimination-Claisen", "gNp`AldTQji@~a`!gOP`@teTZdCzN@#qtHUX qtSi@#!Bm?vH?[\\B?g~H@hc} !B@AL@[@@S@Fp@DweA##", 4.5f),
+			new ChemicalRule("imineFormationAzaCope", "daZH@LAIMUjd@pRL@!daZH@HAAn]jd@p`@#IGfaLJ` IFDzfK@#!BDpAl@IkqDpAl@AL@[@@ !BFaFw@h`BbOw~@H`BbOt##", 8.5f),
+			new ChemicalRule("didehydroCopeWithAromatisation", "gNp@DiuVYDsj`rLwA`!gOp@DjWkB@@H#q]yr` q\\oQp#!Bm?vH@k\\Bm?w~_{_} !Bm?w~@Hc}mpJw@ox@##", 4.5f),
 
-		// multi step with cyclisation/condensation
-		new ChemicalRule("symAldolNitrogenRing", "dovJ@GBfttf\\v\\qjViPCADGbDodnGp!doNJ@JCSmtefWTCaYjje@H#IlZXi]]yL~C IqMVCzaIim?#!R@hb}b@A~Owz}uzyl_]\\Bus}~@GxBbLfaOwzUicMbX`", 0.5f),
+			// multi-step with cyclisation/condensation
+			new ChemicalRule("symAldolNitrogenRing", "dovJ@GBfttf\\v\\qjViPCADGbDodnGp!doNJ@JCSmtefWTCaYjje@H#IlZXi]]yL~C IqMVCzaIim?#!BQtl_riY?Qtl_rfuvNCQ`uZd@NCQ`uVVu}?sA]P !B?`BH@ox@bGvH@k\\Bb@JH_Xa}b@K~_rYltUr|W@##", 0.5f),
 
-		// pericyclic
-		new ChemicalRule("Diels-Alder","gFP@LdPLjA@!gFp@DiTujhB#qiZf qMSf#!R?`BH?X`BIo[~_sNr``", 3.5f),
-		new ChemicalRule("Cope", "gGQ@DeZmRAbhcApIF@P@!gGQ@HeZmRAbhc@HIFC`@#qkNT qi\\V#!R@BM_Hu}lWrM_[COBO@", 5.5f),
-		new ChemicalRule("OxyCope", "gNq@@dr}SHFD@!gNq@@djkUHD#qynZ` qykbp#!Ro`AH`c]|\\KtwoS]|LvIB", 4.5f),
+			// pericyclic
+			new ChemicalRule("Diels-Alder","gFP@LdPLjA@!gFp@DiTujhB#qiZf qMSf#!B?_C}}?spIPFV@@ !B?g~w@k_}m?vw@`##", 3.5f),
+			new ChemicalRule("Cope", "gGQ@DeZmRAbhcApIF@P@!gGQ@HeZmRAbhc@HIFC`@#qkNT qi\\V#!B_vp@[@@S@Fp@Dp !B_vp@[@@S@Fp@Dp##", 5.5f),
+			new ChemicalRule("OxyCope", "gNq@@dr}SHFD@!gNq@@djkUHD#qynZ` qykbp#!B?g~w?Xc}mpJH@hc} !B@Fp@DpAl@AL@[@@S##", 4.5f),
 
-		// rearrangements
-		new ChemicalRule("Vinylcyclopropane", "gKP@DklVj@`!gKP@Di\\Vj@`#qaVh qTqh#!Rm?t@?h`BbOtsdop", 3.5f),
-		new ChemicalRule("Furan-CH2-OH-Rearrangement", "gOp`@tiguif`H!gOp`@tfWMZZ`H#qZna@ qZtM@#!RTXC@z]BRe?s|bKx@L}KB", 6.5f),
-		new ChemicalRule("rearrangement1032", "gOp`ATieMji`H!gOp`ATeekZj`H#qaSnx qa]~P#!ROh]`lkoYCONJ_quT|qJl", 5.5f),
+			// rearrangements
+			new ChemicalRule("Vinylcyclopropane", "gKP@DklVj@`!gKP@Di\\Vj@`#qaVh qTqh#!Bm?vH?PC~?K\\ !B?g|_Fa}eTv\\##", 3.5f),
+			new ChemicalRule("Furan-CH2-OH-Rearrangement", "gOp`@tiguif`H!gOp`@tfWMZZ`H#qZna@ qZtM@#!BTLtk^sE?BOs|]pc} !BBOuPtdy?UGm@V]Ho##", 6.5f),
+			new ChemicalRule("rearrangement1032", "gOp`ATieMji`H!gOp`ATeekZj`H#qaSnx qa]~P#!BTLtk^pc|LW?|]pc} !BBOpH?UCRSg}T^tAY##", 5.5f),
 
-		// 1,2-shifts
-		new ChemicalRule("Pinacol-Rearrangement", "gNp`ATffjj@pPh!gOP`@tfXZhCAA`#qb^ix qb^oH#!R?m}WoRb}Og?~wu^BLsH\\", 6.5f),
-		new ChemicalRule("1,3-WaterEliminationWith12Shift", "gJQ@@dmU@_SP!gKa@@`vtA}A@#qiTp qjap#!R?`ADddRm?basHdH", 6.5f),
+			// 1,2-shifts
+			new ChemicalRule("Pinacol-Rearrangement", "gNp`ATffjj@pPh!gOP`@tfXZhCAA`#qb^ix qb^oH#!B@k^H@k_}@k_~@Hc} !BbOvH@oy??`BH?PFf##", 6.5f),
+			new ChemicalRule("1,3-WaterEliminationWith12Shift", "gJQ@@dmU@_SP!gKa@@`vtA}A@#qiTp qjap#!BbOvH@ox@bOt !BJdE?[@Al@AL##", 6.5f),
 
-		// oxidative rearrangements
-		new ChemicalRule("Epoxydation", "gB``ADcdCB@!gC``AhtUPGtt@#qqb qtQ#!R_vsFWg}lLvK|", 6.3f),
-		new ChemicalRule("oxydativePropargylAmine13Shift", "gKi@HDEZpLHOQP!gJY@BDeVXQL#qMr` qNTh#!R|Wk@H|@\\@BrStnH", 6.5f),
-		new ChemicalRule("Baeyer-Villiger", "gFQ`@[dTAZ`LHP!gFQ`@jdrMPGtl@#qrak qrlK#!R?g~H?[_}AZfw?COBG@", 7.5f),
+			// oxidative rearrangements
+			new ChemicalRule("Epoxydation", "gB``ADcdCB@!gC``AhtUPGtt@#qqb qtQ#!BjW}Y\\YX@ !B?g~w?^Va##", 6.3f),
+			new ChemicalRule("oxydativePropargylAmine13Shift", "gKi@HDEZpLHOQP!gJY@BDeVXB#qMr` qNTh#!BqiXTy{U?mW| !B@Fp@DpAl@AL##", 6.5f),
+			new ChemicalRule("Baeyer-Villiger", "gFQ`@[dTAZ`LHP!gFQ`@jdrMPGtl@#qrak qrlK#!B_?{}mwvHs^FVP@ !BbOvH@oy?bOuQzP##", 7.5f),
 	};
 
 	private static boolean sInitialized;
