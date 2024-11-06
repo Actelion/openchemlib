@@ -540,9 +540,7 @@ public class ExtendedMoleculeFunctions {
 		int bndno = getBondNo(mol, atm1,atm2);
 		if(bndno==-1)
 			return false;
-
 		mol.deleteBond(bndno);
-
 		return true;
 	}
 
