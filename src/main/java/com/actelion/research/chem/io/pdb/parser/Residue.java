@@ -73,14 +73,9 @@ public class Residue {
 	}
 
     private Molecule3D constructFragment() {
-    	boolean isAA = false;
-    	if(AminoAcidsLabeledContainer.INSTANCE.get(getResname())!=null)
-    		isAA = true;
-    	Molecule3D fragment;
-    	if(isAA) 
-    		fragment = constructFragmentFromIDCode(getResname());
-    	else 
-    		fragment = constructFragmentFromGeometry(getResname());
+    	boolean isAA = AminoAcidsLabeledContainer.INSTANCE.get(getResname()) != null;
+		Molecule3D fragment = isAA ? constructFragmentFromIDCode(getResname())
+    							   : constructFragmentFromGeometry();
     	fragment.ensureHelperArrays(Molecule.cHelperNeighbours);
     	return fragment;
     }
@@ -94,12 +89,12 @@ public class Residue {
 		}
 		fragment = AminoAcidsLabeledContainer.INSTANCE.get(resname).createResidue(recordMap);
 		if(fragment==null) {
-			fragment = constructFragmentFromGeometry(resname);
+			fragment = constructFragmentFromGeometry();
 		}
 		return fragment;
     }
     
-	private Molecule3D constructFragmentFromGeometry(String resname) {
+	private Molecule3D constructFragmentFromGeometry() {
 		Molecule3D fragment = new Molecule3D();
 		String altLoc = null;
 		for(AtomRecord record : records) {
@@ -127,8 +122,7 @@ public class Residue {
 				BondsCalculator.createBonds(fragment, true,null);
 				BondsCalculator.calculateBondOrders(fragment,true);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				System.err.println();
+				e.printStackTrace();
 			}
 		}
 

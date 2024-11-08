@@ -156,7 +156,17 @@ System.out.println("coupleBonds mol:"+mol);
 	}*/
 
 	private void coupleBonds(Molecule3D mol) {
-		if (bondList.size() != 0) {
+		if (bondList.size() == 0) {
+			if (mol.getAllAtoms() > 1) {
+				try {
+					BondsCalculator.createBonds(mol, true,null);
+					BondsCalculator.calculateBondOrders(mol,true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		else {
 			TreeMap<Integer,Integer> sequenceToAtomMap = new TreeMap<>();
 			for (int atom=0; atom<mol.getAllAtoms(); atom++) {
 				int sequence = mol.getAtomSequence(atom);

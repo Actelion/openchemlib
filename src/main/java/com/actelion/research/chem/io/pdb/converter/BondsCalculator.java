@@ -192,33 +192,31 @@ public class BondsCalculator {
 	 * @param mol
 	 */
 	public static void calculateBondOrders(StereoMolecule mol, boolean lenient) throws Exception {
-
-		int N = mol.getAllBonds();
-		boolean visited[] = new boolean[N];
-		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+		boolean[] visited = new boolean[mol.getAllBonds()];
+		mol.ensureHelperArrays(Molecule.cHelperRings);
 
 		//Hybridization State Determination
 		int[] spOrder = new int[mol.getAllAtoms()];
-		for(int i=0; i<mol.getAllAtoms(); i++) {
+		for(int atom=0; atom<mol.getAllAtoms(); atom++) {
 			
-			if(mol.getConnAtoms(i)<=1) {
-				spOrder[i] = 1;
-			} else if(mol.getConnAtoms(i)==2) {				
-				double angle = GeometryCalculator.getAngle(mol, mol.getConnAtom(i, 0), i, mol.getConnAtom(i, 1));
-				if(Math.abs(angle-Math.PI)<Math.PI/6) spOrder[i] = 1;
-				else spOrder[i] = 2; 								
-			} else if(mol.getConnAtoms(i)==3) {
-				Coordinates c = mol.getCoordinates(i);
-				Coordinates u = c.subC(mol.getCoordinates(mol.getConnAtom(i, 0)));
-				Coordinates v = c.subC(mol.getCoordinates(mol.getConnAtom(i, 1)));
-				Coordinates w = c.subC(mol.getCoordinates(mol.getConnAtom(i, 2)));
+			if(mol.getConnAtoms(atom)<=1) {
+				spOrder[atom] = 1;
+			} else if(mol.getConnAtoms(atom)==2) {
+				double angle = GeometryCalculator.getAngle(mol, mol.getConnAtom(atom, 0), atom, mol.getConnAtom(atom, 1));
+				if(Math.abs(angle-Math.PI)<Math.PI/6) spOrder[atom] = 1;
+				else spOrder[atom] = 2;
+			} else if(mol.getConnAtoms(atom)==3) {
+				Coordinates c = mol.getCoordinates(atom);
+				Coordinates u = c.subC(mol.getCoordinates(mol.getConnAtom(atom, 0)));
+				Coordinates v = c.subC(mol.getCoordinates(mol.getConnAtom(atom, 1)));
+				Coordinates w = c.subC(mol.getCoordinates(mol.getConnAtom(atom, 2)));
 				Coordinates normal = u.cross(v);
 				if(normal.distSq()>0) { 
 					double proj = normal.unitC().dot(w) / w.dist();
-					if(Math.abs(proj)<0.3) spOrder[i] = 2;
-					else spOrder[i] = 3;
+					if(Math.abs(proj)<0.3) spOrder[atom] = 2;
+					else spOrder[atom] = 3;
 				} else {
-					spOrder[i] = 3;
+					spOrder[atom] = 3;
 				}
 			}
 		}
@@ -226,49 +224,49 @@ public class BondsCalculator {
 		//////////////////////////////////
 		// Functional Group Recognition
 		
-		for(int i=0; i<mol.getAllAtoms(); i++) {
-			if(mol.getAllConnAtoms(i)==2) {
+		for(int atom=0; atom<mol.getAllAtoms(); atom++) {
+			if(mol.getAllConnAtoms(atom)==2) {
 				//RN=N=N
 				
 				
-			} else if(mol.getAllConnAtoms(i)==3) {
+			} else if(mol.getAllConnAtoms(atom)==3) {
 				int a, b;
-				int a1 = mol.getConnAtom(i, 0);
-				int a2 = mol.getConnAtom(i, 1);
-				int a3 = mol.getConnAtom(i, 2);
-				if(mol.getAtomicNo(i)==6 && spOrder[i]==2) {
-					if(mol.getAtomRingSize(i)>0) continue;
+				int a1 = mol.getConnAtom(atom, 0);
+				int a2 = mol.getConnAtom(atom, 1);
+				int a3 = mol.getConnAtom(atom, 2);
+				if(mol.getAtomicNo(atom)==6 && spOrder[atom]==2) {
+					if(mol.getAtomRingSize(atom)>0) continue;
 
 					//C(R)(O)(=O)
 					if( (mol.getAtomicNo(a2)==8 && mol.getAtomicNo(a3)==8 && mol.getAllConnAtoms(a2)==1 && mol.getAllConnAtoms(a3)==1) ||
 						(mol.getAtomicNo(a1)==8 && mol.getAtomicNo(a3)==8 && mol.getAllConnAtoms(a1)==1 && mol.getAllConnAtoms(a3)==1) ||
 						(mol.getAtomicNo(a1)==8 && mol.getAtomicNo(a2)==8 && mol.getAllConnAtoms(a1)==1 && mol.getAllConnAtoms(a2)==1)) {
-							mol.setBondOrder(shortestBond(mol, i, 8, false), 2); continue;
+							mol.setBondOrder(shortestBond(mol, atom, 8, false), 2); continue;
 					}										
 					
 					//C(R)(OR)(=O)
-					a = connectedAtom(mol, i, 8, 2, 0, 0);
-					b = connectedBond(mol, i, 8, 1);
+					a = connectedAtom(mol, atom, 8, 2, 0, 0);
+					b = connectedBond(mol, atom, 8, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 
 					
 					//C(R)(SR)(=O)
-					a = connectedAtom(mol, i, 16, 2, 0, 0);
-					b = connectedBond(mol, i, 8, 1);
+					a = connectedAtom(mol, atom, 16, 2, 0, 0);
+					b = connectedBond(mol, atom, 8, 1);
 					if(a>=0 && b>=0) { mol.setBondOrder(b, 2); continue;} 
 					
 					//C(R)(NR)(=O)
-					a = connectedAtom(mol, i, 7, 2, 0, 0);
-					b = connectedBond(mol, i, 8, 1);
+					a = connectedAtom(mol, atom, 7, 2, 0, 0);
+					b = connectedBond(mol, atom, 8, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 
 					
 					//C(R)(SR)(=S)
-					a = connectedAtom(mol, i, 16, 2, 0, 0);
-					b = connectedBond(mol, i, 16, 1);
+					a = connectedAtom(mol, atom, 16, 2, 0, 0);
+					b = connectedBond(mol, atom, 16, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 
 					
 					//C(R)(NR)(=S)
-					a = connectedAtom(mol, i, 7, 2, 0, 0);
-					b = connectedBond(mol, i, 16, 1);
+					a = connectedAtom(mol, atom, 7, 2, 0, 0);
+					b = connectedBond(mol, atom, 16, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;}
 					
 					
@@ -276,19 +274,19 @@ public class BondsCalculator {
 					if((mol.getAtomicNo(a1)==6 && mol.getAtomicNo(a2)==7 && mol.getAtomicNo(a3)==7 && mol.getAllConnAtoms(a2)==1 && mol.getAllConnAtoms(a3)==1) ||
 						(mol.getAtomicNo(a1)==7 && mol.getAtomicNo(a2)==6 && mol.getAtomicNo(a3)==7 && mol.getAllConnAtoms(a1)==1 && mol.getAllConnAtoms(a3)==1) ||
 						(mol.getAtomicNo(a1)==7 && mol.getAtomicNo(a2)==7 && mol.getAtomicNo(a3)==6 && mol.getAllConnAtoms(a1)==1 && mol.getAllConnAtoms(a2)==1)) {
-							mol.setBondOrder(shortestBond(mol, i, 7, true), 2); continue;
+							mol.setBondOrder(shortestBond(mol, atom, 7, true), 2); continue;
 					}				
 					//C(NR)(N)(=N) -> Arginin
 					if(mol.getAtomicNo(a1)==7 && mol.getAtomicNo(a2)==7 && mol.getAtomicNo(a3)==7) {
 						if(mol.getConnAtoms(a1)==2 && mol.getConnAtoms(a2)==1 && mol.getConnAtoms(a3)==1) {
-							if(mol.getCoordinates(i).distSquareTo(mol.getCoordinates(a2))<mol.getCoordinates(i).distSquareTo(mol.getCoordinates(a3))) {mol.setBondOrder(mol.getConnBond(i, 1), 2); continue;}
-							else {mol.setBondOrder(mol.getConnBond(i, 2), 2); continue;}
+							if(mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a2))<mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a3))) {mol.setBondOrder(mol.getConnBond(atom, 1), 2); continue;}
+							else {mol.setBondOrder(mol.getConnBond(atom, 2), 2); continue;}
 						} else if(mol.getConnAtoms(a1)==1 && mol.getConnAtoms(a2)==2 && mol.getConnAtoms(a3)==1) {
-							if(mol.getCoordinates(i).distSquareTo(mol.getCoordinates(a1))<mol.getCoordinates(i).distSquareTo(mol.getCoordinates(a3))) {mol.setBondOrder(mol.getConnBond(i, 0), 2); continue;}
-							else {mol.setBondOrder(mol.getConnBond(i, 2), 2); continue;}
+							if(mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a1))<mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a3))) {mol.setBondOrder(mol.getConnBond(atom, 0), 2); continue;}
+							else {mol.setBondOrder(mol.getConnBond(atom, 2), 2); continue;}
 						} else if(mol.getConnAtoms(a1)==1 && mol.getConnAtoms(a2)==1 && mol.getConnAtoms(a3)==2) {
-							if(mol.getCoordinates(i).distSquareTo(mol.getCoordinates(a1))<mol.getCoordinates(i).distSquareTo(mol.getCoordinates(a2))) {mol.setBondOrder(mol.getConnBond(i, 0), 2); continue;}
-							else {mol.setBondOrder(mol.getConnBond(i, 1), 2); continue;}
+							if(mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a1))<mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a2))) {mol.setBondOrder(mol.getConnBond(atom, 0), 2); continue;}
+							else {mol.setBondOrder(mol.getConnBond(atom, 1), 2); continue;}
 						}
 					}								
 					/*
@@ -299,45 +297,45 @@ public class BondsCalculator {
 					}
 					*/
 
-				} else if(mol.getAtomicNo(i)==7) {
+				} else if(mol.getAtomicNo(atom)==7) {
 					//N(R)(R)C=O -> Amide
-					a = connectedAtom(mol, i, 6, 2, 8, 1);
+					a = connectedAtom(mol, atom, 6, 2, 8, 1);
 					b = connectedBond(mol, a, 8, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 					
 
 					//N(=O)(=O) -> Nitro
-					for (int j = 0; j < mol.getAllConnAtoms(i); j++) {
+					for (int j = 0; j < mol.getAllConnAtoms(atom); j++) {
 						if(mol.getAtomicNo(a1)==8 && mol.getAllConnAtoms(a1)==1 && mol.getAtomicNo(a2)==8 && mol.getAllConnAtoms(a2)==1) {
-							mol.setBondOrder(mol.getConnBond(i,0), 2);
-							mol.setBondOrder(mol.getConnBond(i,1), 2);
+							mol.setBondOrder(mol.getConnBond(atom,0), 2);
+							mol.setBondOrder(mol.getConnBond(atom,1), 2);
 						} else if(mol.getAtomicNo(a1)==8 && mol.getAllConnAtoms(a1)==1 && mol.getAtomicNo(a3)==8 && mol.getAllConnAtoms(a3)==1) {
-							mol.setBondOrder(mol.getConnBond(i,0), 2);
-							mol.setBondOrder(mol.getConnBond(i,2), 2);
+							mol.setBondOrder(mol.getConnBond(atom,0), 2);
+							mol.setBondOrder(mol.getConnBond(atom,2), 2);
 						} else if(mol.getAtomicNo(a2)==8 && mol.getAllConnAtoms(a2)==1 && mol.getAtomicNo(a3)==8 && mol.getAllConnAtoms(a3)==1) {
-							mol.setBondOrder(mol.getConnBond(i,1), 2);
-							mol.setBondOrder(mol.getConnBond(i,2), 2);
+							mol.setBondOrder(mol.getConnBond(atom,1), 2);
+							mol.setBondOrder(mol.getConnBond(atom,2), 2);
 						} 
 					}
 					
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 					
 					
 				} 
-			} else if(mol.getAllConnAtoms(i)==4) {
-				if(mol.getAtomicNo(i)==16) {
+			} else if(mol.getAllConnAtoms(atom)==4) {
+				if(mol.getAtomicNo(atom)==16) {
 					int count = 0;
-					for(int j=0; count<2 && j<mol.getAllConnAtoms(i); j++) {
-						if(mol.getAtomicNo(mol.getConnAtom(i, j))==8 && mol.getAllConnAtoms(mol.getConnAtom(i, j))==1) {
-							mol.setBondOrder(mol.getConnBond(i, j), 2);
+					for(int j=0; count<2 && j<mol.getAllConnAtoms(atom); j++) {
+						if(mol.getAtomicNo(mol.getConnAtom(atom, j))==8 && mol.getAllConnAtoms(mol.getConnAtom(atom, j))==1) {
+							mol.setBondOrder(mol.getConnBond(atom, j), 2);
 							count++;
 						}
 					}
-					for(int j=0; count<2 && j<mol.getAllConnAtoms(i); j++) {
-						if(mol.getAtomicNo(mol.getConnAtom(i, j))==7 && mol.getAllConnAtoms(mol.getConnAtom(i, j))==1) {
-							mol.setBondOrder(mol.getConnBond(i, j), 2);
+					for(int j=0; count<2 && j<mol.getAllConnAtoms(atom); j++) {
+						if(mol.getAtomicNo(mol.getConnAtom(atom, j))==7 && mol.getAllConnAtoms(mol.getConnAtom(atom, j))==1) {
+							mol.setBondOrder(mol.getConnBond(atom, j), 2);
 							count++;
 						}
 					}
-				} else if(mol.getAtomicNo(i)==15) {
+				} else if(mol.getAtomicNo(atom)==15) {
 /*					int b = shortestBond(mol, i, 8, false);
 					if( b>=0) {
 						if((mol.getBondAtom(0, b)==i && mol.getAllConnAtoms(mol.getBondAtom(1, b))==1) ||
@@ -349,23 +347,23 @@ public class BondsCalculator {
 			}
 		}
 		//Preliminary pass: process obvious bonds outside rings		
-		for (int i = 0; i < mol.getAllBonds(); i++) {
-			int a1 = mol.getBondAtom(0, i);
-			int a2 = mol.getBondAtom(1, i);
+		for (int bond = 0; bond < mol.getAllBonds(); bond++) {
+			int a1 = mol.getBondAtom(0, bond);
+			int a2 = mol.getBondAtom(1, bond);
 
 //			if(atomToRings[a1].size()>0 || atomToRings[a2].size()>0) continue;
-			if (mol.isRingBond(i)) continue;    // instead
+			if (mol.isRingBond(bond)) continue;    // instead
 
 			if(mol.getImplicitHydrogens(a1)==0 || mol.getImplicitHydrogens(a2)==0) continue;
 			if(!isPlanar(mol, a1, a2)) continue;
 
 			double order = getLikelyOrder(mol, a1, a2);
 			if(order>3.0 && spOrder[a1]==1 && spOrder[a2]==1 && mol.getImplicitHydrogens(a1)>=2 && mol.getImplicitHydrogens(a2)>=2) {
-				mol.setBondOrder(i, 3);
-				visited[i] = true;
+				mol.setBondOrder(bond, 3);
+				visited[bond] = true;
 			} else if(order>2.6 && spOrder[a1]<=2 && spOrder[a2]<=2 ) {
-				mol.setBondOrder(i, 2);
-				visited[i] = true;
+				mol.setBondOrder(bond, 2);
+				visited[bond] = true;
 			}
 			
 		}
@@ -558,14 +556,14 @@ public class BondsCalculator {
 		//Initialize the visited atoms 
 		boolean[] visited2 = new boolean[mol.getAllAtoms()];
 		Set<Integer> nonAromaticAtom = new HashSet<Integer>();
-		for (int a=0; a<mol.getAllAtoms(); a++) {
-			if(connected(mol, a, -1, 2)>=0) visited2[a] = true; //This atom has been processed above
-			if(mol.getAtomicNo(a)==6) {
+		for (int atom=0; atom<mol.getAllAtoms(); atom++) {
+			if(connected(mol, atom, -1, 2)>=0) visited2[atom] = true; //This atom has been processed above
+			if(mol.getAtomicNo(atom)==6) {
 				boolean ok = false;
-				if (atomToRings[a] != null)
-					for(int r: atomToRings[a])
+				if (atomToRings[atom] != null)
+					for(int r: atomToRings[atom])
 						if(aromaticRing[r]) ok = true;
-				if(!ok) nonAromaticAtom.add(a);
+				if(!ok) nonAromaticAtom.add(atom);
 			}
 		}
 		
@@ -590,21 +588,21 @@ public class BondsCalculator {
 
 		/////////////////////////////////
 		//2nd pass: find obvious double bonds on sp2 carbons outside aromatic rings
-		for(int i=0; i<mol.getAllAtoms(); i++) {
-			if(spOrder[i]==2 && !aromaticAtoms[i] && mol.getAtomicNo(i)==6 && mol.getAllConnAtoms(i)==3 && mol.getImplicitHydrogens(i)>0 && connected(mol, i, -1, 2)>=0) {
-				int a1 = mol.getConnAtom(i, 0);
-				int a2 = mol.getConnAtom(i, 1);
-				int a3 = mol.getConnAtom(i, 2);
+		for(int atom=0; atom<mol.getAllAtoms(); atom++) {
+			if(spOrder[atom]==2 && !aromaticAtoms[atom] && mol.getAtomicNo(atom)==6 && mol.getAllConnAtoms(atom)==3 && mol.getImplicitHydrogens(atom)>0 && connected(mol, atom, -1, 2)>=0) {
+				int a1 = mol.getConnAtom(atom, 0);
+				int a2 = mol.getConnAtom(atom, 1);
+				int a3 = mol.getConnAtom(atom, 2);
 				double order1, order2, order3;
 
 				if(mol.getImplicitHydrogens(a1)==0 && connected(mol, a1, -1, 2)>=0) order1 = 1;
-				else order1 = getLikelyOrder(mol, i, a1);
+				else order1 = getLikelyOrder(mol, atom, a1);
 
 				if(mol.getImplicitHydrogens(a2)==0 && connected(mol, a2, -1, 2)>=0) order2 = 1;
-				else order2 = getLikelyOrder(mol, i, a2);
+				else order2 = getLikelyOrder(mol, atom, a2);
 				
 				if(mol.getImplicitHydrogens(a3)==0 && connected(mol, a3, -1, 2)>=0) order3 = 1;
-				else order3 = getLikelyOrder(mol, i, a3);
+				else order3 = getLikelyOrder(mol, atom, a3);
 				
 				
 				//the highest is the most likely to have a double bond
@@ -618,15 +616,15 @@ public class BondsCalculator {
 				}  	
 				
 				if(connBond>=0) {
-					mol.setBondOrder(mol.getConnBond(i, connBond), 2);
+					mol.setBondOrder(mol.getConnBond(atom, connBond), 2);
 				} 
 			}
 		}		
 
-		//3rd pass, double bonds inside non aromatic rings
+		//3rd pass, double bonds inside non-aromatic rings
 		IntQueue queue = new IntQueue();
-		for(int i=0; i<N; i++) {
-			if(!visited[i]) queue.push(i);
+		for(int bond=0; bond<mol.getAllBonds(); bond++) {
+			if(!visited[bond]) queue.push(bond);
 			while(!queue.isEmpty()) {
 				int bnd = queue.pop();
 				if(visited[bnd]) continue;
