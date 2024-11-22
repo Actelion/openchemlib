@@ -3188,7 +3188,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			|| atomicNo == 11	// Na
 			|| atomicNo == 19	// K
 			|| atomicNo == 37	// Rb
-			|| atomicNo == 55;	// Cs
+			|| atomicNo == 55	// Cs
+			|| atomicNo == 87;	// Fr
 		}
 
 	/**
@@ -3197,10 +3198,12 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 */
 	public boolean isEarthAlkaliMetal(int atom) {
 		int atomicNo = mAtomicNo[atom];
-		return atomicNo == 12	// Mg
+		return atomicNo == 4	// Be
+			|| atomicNo == 12	// Mg
 			|| atomicNo == 20	// Ca
 			|| atomicNo == 38	// Sr
-			|| atomicNo == 56;	// Ba
+			|| atomicNo == 56	// Ba
+			|| atomicNo == 88;	// Ra
 		}
 
 	/**
@@ -3223,7 +3226,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return atomicNo == 8	// O
 			|| atomicNo == 16	// S
 			|| atomicNo == 34	// Se
-			|| atomicNo == 52;	// Te
+			|| atomicNo == 52	// Te
+			|| atomicNo == 84;	// Po
 		}
 
 	/**
@@ -3235,7 +3239,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return atomicNo == 9	// F
 			|| atomicNo == 17	// Cl
 			|| atomicNo == 35	// Br
-			|| atomicNo == 53;	// I
+			|| atomicNo == 53	// I
+			|| atomicNo == 85;	// At
 		}
 
 	/**

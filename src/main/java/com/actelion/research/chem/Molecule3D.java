@@ -213,7 +213,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		infos[atm][INFO_ATOMSEQUENCE] = a;
 	}
 	
-	public final void setResSequence(int atm, int a) {
+	public void setResSequence(int atm, int a) {
 		infos[atm][INFO_RESSEQUENCE] = a;
 	}
 
