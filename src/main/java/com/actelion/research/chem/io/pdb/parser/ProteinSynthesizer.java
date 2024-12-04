@@ -6,12 +6,8 @@ import com.actelion.research.chem.Molecule3D;
 
 public class ProteinSynthesizer {
 	
-	private Molecule3D protein;
-	private int terminalC=-1;
-	
-	public ProteinSynthesizer() {
-	}
-	
+	private Molecule3D mProtein;
+	private int mTerminalC =-1;
 	
 	/**
 	 * an amino acid is added to the protein structure and a peptide coupling is performed, 
@@ -27,42 +23,40 @@ public class ProteinSynthesizer {
 				newTerminalN = atom;
 			if(residue.getAtomicNo(atom)==6 && residue.getAtomCustomLabel(atom)==null)
 				newTerminalC = atom;
-			
 		}
-		if(protein==null) { // first residue
-			protein = residue;
-			terminalC = newTerminalC;
+		if(mProtein ==null) { // first residue
+			mProtein = residue;
+			mTerminalC = newTerminalC;
 			coupled = true;
 		}
-		else if(newTerminalN>-1 && terminalC>-1) { //coupling should be performed
-			Coordinates coordsC = protein.getCoordinates(terminalC);
+		else if(newTerminalN>-1 && mTerminalC >-1) { //coupling should be performed
+			Coordinates coordsC = mProtein.getCoordinates(mTerminalC);
 			Coordinates coordsN = residue.getCoordinates(newTerminalN);
 			if(coordsC.distanceSquared(coordsN)<Residue.BOND_CUTOFF_SQ) {
 				boolean notFound = true;
-				for(int i=0;i<protein.getConnAtoms(terminalC) && notFound;i++) {
-					int a = protein.getConnAtom(terminalC, i);
-					int b = protein.getBond(terminalC, a);
-					if(protein.getAtomicNo(a)==8 && protein.getBondOrder(b)==1) {
+				for(int i = 0; i< mProtein.getConnAtoms(mTerminalC) && notFound; i++) {
+					int a = mProtein.getConnAtom(mTerminalC, i);
+					int b = mProtein.getBond(mTerminalC, a);
+					if(mProtein.getAtomicNo(a)==8 && mProtein.getBondOrder(b)==1) {
 						notFound=false;
-						toDelete = protein.getConnAtom(terminalC, i);
+						toDelete = mProtein.getConnAtom(mTerminalC, i);
 					}
 				}
 		
 				if(toDelete>=0) {
-					protein.deleteAtom(toDelete);
-					int[] atomMap = protein.addMolecule(residue);
-					protein.addBond(terminalC, atomMap[newTerminalN], 1);
-					terminalC = protein.getAllAtoms()-(residue.getAllAtoms()-newTerminalC);
+					mProtein.deleteAtom(toDelete);
+					int[] atomMap = mProtein.addMolecule(residue);
+					mProtein.addBond(mTerminalC, atomMap[newTerminalN], 1);
+					mTerminalC = mProtein.getAllAtoms()-(residue.getAllAtoms()-newTerminalC);
 					coupled = true;
 				}
 			}
 		}
-		protein.ensureHelperArrays(Molecule.cHelperNeighbours);
+		mProtein.ensureHelperArrays(Molecule.cHelperNeighbours);
 		return coupled;
 	}
 	
-	public Molecule3D retrieveProtein() {
-		return protein;
+	public Molecule3D getProtein() {
+		return mProtein;
 	}
-
 }

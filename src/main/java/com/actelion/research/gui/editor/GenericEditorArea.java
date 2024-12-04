@@ -1903,7 +1903,7 @@ public class GenericEditorArea implements GenericEventListener {
 				changeAtomicNo(53);
 				break;
 			case GenericEditorToolbar.cToolCustomAtom:
-				if (gme.isControlDown()) {
+				if (gme.isControlDown() || gme.isAltDown()) {
 					int atom = mMol.findAtom(mX1, mY1);
 					if (atom != -1) {
 						showCustomAtomDialog(atom);

@@ -3607,7 +3607,7 @@ public class Molecule implements Serializable {
 				label = null;
 			else {
 				int atomicNo = getAtomicNoFromLabel(label);
-				if ((atomicNo != 0 && label.equals(cAtomLabel[atomicNo]))
+				if ((atomicNo != 0 && atomicNo == mAtomicNo[atom])
 				 || label.equals("?")) {
 					setAtomicNo(atom, atomicNo);
 					label = null;

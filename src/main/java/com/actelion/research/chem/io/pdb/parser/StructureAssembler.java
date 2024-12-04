@@ -69,10 +69,8 @@ public class StructureAssembler {
 	}
 	
 	private Molecule3D buildProtein() {
-		ProteinSynthesizer proteinSynthesizer = new ProteinSynthesizer();
-		Map<String,List<AtomRecord>> residues_;
 		List<AtomRecord> proteinRecords = groups.get(PROTEIN_GROUP);
-		residues_ = proteinRecords.stream().collect(Collectors.groupingBy(AtomRecord::getString));
+		Map<String,List<AtomRecord>> residues_ = proteinRecords.stream().collect(Collectors.groupingBy(AtomRecord::getString));
 		List<Residue> residues = residues_.values().stream().map(v -> new Residue(v, true, false)).collect(Collectors.toList());
 		residues.sort((c1,c2) -> {
 				if(!c1.getChainID().equals(c2.getChainID())) //different chains
@@ -85,32 +83,33 @@ public class StructureAssembler {
 					}
 				}
 			});
-		
+
+		ProteinSynthesizer proteinSynthesizer = new ProteinSynthesizer();
 		List<Molecule3D> protMols = new ArrayList<Molecule3D>();
 		for(Residue residue : residues) {
-				Molecule3D fragment = residue.getMolecule();
-				if(fragment.getAtomAmino(0).trim().equals("ACT") || fragment.getAtomAmino(0).trim().equals("LIG")) {
-					mols.get(LIGAND_GROUP).add(fragment);
-					continue;
-				}
-				else if(fragment.getAtomAmino(0).trim().equals("HOH")) {
-					mols.get(SOLVENT_GROUP).add(fragment);
-					continue;
-				}
-				boolean coupled = proteinSynthesizer.addResidue(fragment);
-				if(coupled) { 
-					if(residue.isTerminal()) {
-						protMols.add(proteinSynthesizer.retrieveProtein());
-						proteinSynthesizer = new ProteinSynthesizer();
-					}
-				}
-				else { //coupling failed
-					protMols.add(proteinSynthesizer.retrieveProtein());
+			Molecule3D fragment = residue.getMolecule();
+			if(fragment.getAtomAmino(0).trim().equals("ACT") || fragment.getAtomAmino(0).trim().equals("LIG")) {
+				mols.get(LIGAND_GROUP).add(fragment);
+				continue;
+			}
+			else if(fragment.getAtomAmino(0).trim().equals("HOH")) {
+				mols.get(SOLVENT_GROUP).add(fragment);
+				continue;
+			}
+
+			if(proteinSynthesizer.addResidue(fragment)) {
+				if(residue.isTerminal()) {
+					protMols.add(proteinSynthesizer.getProtein());
 					proteinSynthesizer = new ProteinSynthesizer();
-					proteinSynthesizer.addResidue(fragment);
 				}
 			}
-		Molecule3D nextMol = proteinSynthesizer.retrieveProtein();
+			else { //coupling failed
+				protMols.add(proteinSynthesizer.getProtein());
+				proteinSynthesizer = new ProteinSynthesizer();
+				proteinSynthesizer.addResidue(fragment);
+			}
+		}
+		Molecule3D nextMol = proteinSynthesizer.getProtein();
 		if(nextMol!=null && !protMols.contains(nextMol))
 				protMols.add(nextMol);
 		Molecule3D protein = protMols.stream().reduce((mol1,mol2) ->{
