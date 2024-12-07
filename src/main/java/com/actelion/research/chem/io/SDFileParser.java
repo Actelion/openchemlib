@@ -51,6 +51,7 @@ public class SDFileParser extends CompoundFileParser {
 	private String[]			mFieldName;
 	private String[]			mFieldData;
 	private int					mNoOfRecords,mIDFieldIndex;
+	private boolean				mAssumeChiralTrue;
 
 	public SDFileParser(String fileName) {
 		this(fileName, null);
@@ -102,6 +103,17 @@ public class SDFileParser extends CompoundFileParser {
 		mReader = (reader instanceof BufferedReader) ? (BufferedReader)reader : new BufferedReader(reader);
 		
 		init();
+		}
+
+
+	/**
+	 * Some software exports mol/sd-files with an unset chiral flag despite
+	 * the original molecule is a pure enantiomer. This method allows the
+	 * MolfileParser to override the molfile's chiral flag for such cases.
+	 * @param b
+	 */
+	public void setAssumeChiralTrue(boolean b) {
+		mAssumeChiralTrue = b;
 		}
 
 
@@ -269,7 +281,11 @@ public class SDFileParser extends CompoundFileParser {
 	    if (mMol != null)
 	        return mMol;
 
-	    mMol = new MolfileParser().getCompactMolecule(getNextMolFile());
+		MolfileParser molfileParser = new MolfileParser();
+		if (mAssumeChiralTrue)
+			molfileParser.setAssumeChiralTrue(true);
+
+	    mMol = molfileParser.getCompactMolecule(getNextMolFile());
 	    if (mMol != null && (mMol.getName() == null || mMol.getName().length() == 0))
 	        mMol.setName(getMoleculeName());
 	    return mMol;
