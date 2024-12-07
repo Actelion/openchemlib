@@ -67,8 +67,7 @@ public class SDFileParser extends CompoundFileParser {
 		} catch (IOException e) {
 			mReader = null;
 		}
-		
-		
+
 		init();
 		}
 
@@ -155,7 +154,7 @@ public class SDFileParser extends CompoundFileParser {
 	/**
 	 * Only accurate if getFieldNames() or getFieldNames(int) was called earlier
 	 * and if the number of records of the SD-file is smaller than the number
-	 * of records that were examined within the the getFieldNames() method.
+	 * of records that were examined within the getFieldNames() method.
 	 * If not all records of the file were seen, then -1 is returned.
 	 * For getRowCount() to reliably return the record count call getFieldNames(Integer.MAX_VALUE) first.
 	 * @return number of rows or -1
