@@ -392,8 +392,8 @@ public class SmilesAtomParser {
 			}
 
 			if (smiles[position] == 'A' || smiles[position] == 'a') {
-				position++;
 				atomQueryFeatures |= (isNot ^ smiles[position] == 'A') ? Molecule.cAtomQFNotAromatic : Molecule.cAtomQFAromatic;
+				position++;
 				continue;
 			}
 

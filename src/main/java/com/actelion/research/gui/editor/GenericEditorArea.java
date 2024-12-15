@@ -38,7 +38,11 @@ import com.actelion.research.chem.coords.CoordinateInventor;
 import com.actelion.research.chem.io.RDFileParser;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.name.StructureNameResolver;
-import com.actelion.research.chem.reaction.*;
+import com.actelion.research.chem.reaction.IReactionMapper;
+import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.chem.reaction.ReactionArrow;
+import com.actelion.research.chem.reaction.ReactionEncoder;
+import com.actelion.research.chem.reaction.mapping.SimilarityGraphBasedReactionMapper;
 import com.actelion.research.gui.FileHelper;
 import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
@@ -50,7 +54,6 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.TreeMap;
 
 public class GenericEditorArea implements GenericEventListener {
 	public static final int MODE_MULTIPLE_FRAGMENTS = 1;
@@ -1918,7 +1921,10 @@ public class GenericEditorArea implements GenericEventListener {
 				break;
 			case GenericEditorToolbar.cToolMapper:
 				mAtom1 = mMol.findAtom(mX1, mY1);
-				if (mAtom1 != -1 && mAtom1<mMol.getAtoms()) {
+				if (mAtom1 != -1
+				 && mAtom1<mMol.getAtoms()
+				 && mMol.isFragment()
+				 && (mMol.getAtomQueryFeatures(mAtom1) & Molecule.cAtomQFExcludeGroup) == 0) {
 					mX1 = mMol.getAtomX(mAtom1);
 					mY1 = mMol.getAtomY(mAtom1);
 					mPendingRequest = cRequestMapAtoms;
@@ -2038,6 +2044,13 @@ public class GenericEditorArea implements GenericEventListener {
 			case cRequestMapAtoms:
 				boolean mapNoChanged = false;
 				int atom2 = mCurrentHiliteAtom;
+
+				// exclude group atoms cannot be mapped
+				if (atom2 != -1
+				 && mMol.isFragment()
+				 && (mMol.getAtomQueryFeatures(atom2) & Molecule.cAtomQFExcludeGroup) != 0)
+					atom2 = -1;
+
 //				System.out.printf("Map Request Atom %d => %d (%d)\n", mAtom1, mAtom2, atom2);
 				int mapNoAtom1 = mMol.getAtomMapNo(mAtom1);
 				if (atom2 == -1) {
@@ -2096,12 +2109,31 @@ public class GenericEditorArea implements GenericEventListener {
 	}
 
 	/**
+	 * Considering all manually assigned atom mapping numbers from the display molecule,
+	 * copies them into the current fragments, creates a Reaction from these,
+	 * uses the SimilarityGraphBasedReactionMapper to map the reaction and returns the Reaction's mapping
+	 * into the display molecule.
+	 */
+	private void autoMapReaction() {
+		// We take the current fragments into a reaction, which we map.
+		new SimilarityGraphBasedReactionMapper().map(getReaction());
+
+		// Copy new mapping numbers from current fragments into the display molecule.
+		int[] fragmentAtom = new int[mFragment.length];
+		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
+			int fragment = mFragmentNo[atom];
+			mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], mMol.getAtomMapNo(atom), mMol.isAutoMappedAtom(atom));
+			fragmentAtom[fragment]++;
+		}
+	}
+
+	/**
 	 * Takes the manually mapped atom mapping numbers from the display molecule,
 	 * copies them into the current fragments, creates a reaction from these,
 	 * uses the MCS-mapper to map the reaction and returns the rxn's mapping
 	 * into the display molecule.
-	 */
-	private void autoMapReaction() {
+	 *
+	private void autoMapReactionOld() {
 		if (sMapper == null)
 			sMapper = new MCSReactionMapper();
 
@@ -2110,16 +2142,30 @@ public class GenericEditorArea implements GenericEventListener {
 //			return;
 //		}
 
+		final int fakeAtomMassBase = 512;
+
 		// We assume that we use the MCS-mapper, which doesn't care about manually mapped atoms.
 		// Thus, we need a hack to ensure that manually mapped atoms are reliably part of
-		// the MCS-mapper's result. Therefore we give every manually mapped atom pair a
+		// the MCS-mapper's result. Therefore, we give every manually mapped atom pair a
 		// unique fake atom mass. Original atom masses are copied and later restored.
 		// We also provide an updated SSSearcher(), which requires atom mass equivalence for
 		// atoms to match.
+		// In addition, any exclude group atom is always considered dissimilar to any other atom.
 
 		SSSearcher sss = new SSSearcher() {
 			@Override
 			public boolean areAtomsSimilar(int moleculeAtom, int fragmentAtom) {
+				// exclude group atoms are never similar
+				if ((mMolecule.isFragment()
+				  && (mMolecule.getAtomQueryFeatures(moleculeAtom) & Molecule.cAtomQFExcludeGroup) != 0)
+				 || (mFragment.isFragment()
+				  && (mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFExcludeGroup) != 0))
+					return false;
+
+				if (mMolecule.getAtomMass(moleculeAtom) > fakeAtomMassBase
+				 || mFragment.getAtomMass(fragmentAtom) > fakeAtomMassBase)
+					return mMolecule.getAtomMass(moleculeAtom) == mFragment.getAtomMass(fragmentAtom);
+
 				if (mMolecule.getAtomicNo(moleculeAtom) == mFragment.getAtomicNo(fragmentAtom)) {
 					if (mMolecule.getAtomMass(moleculeAtom) != mFragment.getAtomMass(fragmentAtom))
 						return false;
@@ -2148,8 +2194,6 @@ public class GenericEditorArea implements GenericEventListener {
 		// manual mapNos a put as negative keys!!!
 		TreeMap<Integer, Integer> oldToNewMapNo = new TreeMap<>();
 		int nextMapNo = 1;
-
-		final int fakeAtomMassBase = 512;
 
 		// Mark the manually mapped atoms such that the mapper uses them first priority and
 		// to be able to re-assign them later as manually mapped.
@@ -2215,36 +2259,7 @@ public class GenericEditorArea implements GenericEventListener {
 				fragmentAtom[fragment]++;
 			}
 		}
-
-
-//		mMapper.resetFragments(mappedReaction);
-
-//		AStarReactionMapper m = new AStarReactionMapper();
-//		Reaction rxn = getReaction();
-//		List<AStarReactionMapper.SlimMapping> l = m.map(rxn);
-//		if (l != null && l.size() > 0) {
-//			AStarReactionMapper.SlimMapping sm = l.get(0);
-////			int[] mps = sm.getMapping();
-////			for (int i = 0; i < mps.length; i++) {
-////				System.out.printf("Maps %d -> %d\n", i, mps[i]);
-////			}
-//			m.activateMapping(sm);
-////			for (int i = 0; i < mFragment.length; i++) {
-////				StereoMolecule mol = mFragment[i];
-////				for (int a = 0; a < mol.getAllAtoms(); a++) {
-////					System.out.printf("T Map %d = %d\n", a, mol.getAtomMapNo(a));
-////				}
-////			}
-//
-//			int[] fragmentAtom = new int[mFragment.length];
-//			for (int atom = 0; atom < mMol.getAllAtoms(); atom++) {
-//				int fragment = mFragmentNo[atom];
-//				if (mMol.getAtomMapNo(atom) == 0)
-//					mMol.setAtomMapNo(atom, mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]), true);
-//				fragmentAtom[fragment]++;
-//			}
-//		}
-	}
+	}	*/
 
 	/**
 	 * Checks whether this bond is a stereo bond and whether it refers to a

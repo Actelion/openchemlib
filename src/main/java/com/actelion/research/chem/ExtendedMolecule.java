@@ -4130,6 +4130,10 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomQueryFeatures[atom] &= ~cAtomQFHydrogen;
 				mAtomQueryFeatures[atom] &= ~cAtomQFPiElectrons;
 				}
+
+			if ((mAtomQueryFeatures[atom] & cAtomQFExcludeGroup) != 0
+			 && mAtomMapNo[atom] != 0)
+				removeMappingNo(mAtomMapNo[atom]);
 			}
 		}
 

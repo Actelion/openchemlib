@@ -90,14 +90,14 @@ public class MCSReactionMapper implements IReactionMapper
 
                 StereoMolecule target = reaction.getReactant(mcsResult.getReactant());
                 // matchlist returns the indices on the
-                // A matchlist contains the the matched atom index for each atom on the target
-                // (Atom-) Array[0..n] (of fragment) contains indizes of the matched target atoms
+                // A matchlist contains the matched atom index for each atom on the target
+                // (Atom-) Array[0..n] (of fragment) contains indexes of the matched target atoms
                 // Fragment atom(f)[x] => atom(t)[matchList[x]] in target
-                int matchList[] = findMatches(fragment, target, sss);
+                int[] matchList = findMatches(fragment, target, sss);
                 if (matchList != null && matchList.length > 0) {
                     applyMaps(fragment, target, matchList);
 
-                    // We mark temporarely the atom with an invalid atom number, so it gets excluded from the SSS in MCS
+                    // We mark temporarily the atom with an invalid atom number, so it gets excluded from the SSS in MCS
                     // TLS 11Feb2021: this is an awful hack that destroys atom lists in the SSS matching. We need to do that better in the new due ReactionMapper!!!
                     // TLS 11Feb2021: Introduced restoration of atom mass to be able to use atom mass matching by the SSSearcher
                     for (int i = 0; i < matchList.length; i++) {
@@ -133,7 +133,7 @@ public class MCSReactionMapper implements IReactionMapper
                 }
             }
 
-            // Reset the temporarely marked atoms
+            // Reset the temporarily marked atoms
             for (int i = 0; i < reaction.getMolecules(); i++) {
                 StereoMolecule mol = reaction.getMolecule(i);
                 for (int j = 0; j < mol.getAllAtoms(); j++) {

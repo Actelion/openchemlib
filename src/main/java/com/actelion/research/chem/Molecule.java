@@ -1157,6 +1157,7 @@ public class Molecule implements Serializable {
 	 * Copies all atoms and bonds of mol to the end of this Molecule's atom and bond
 	 * tables. If mol is a fragment then this Molecule's fragment flag is set to true
 	 * and all query features of mol are also copied.
+	 * If this Molecule is a fragment that contains exclude groups, these are included.
 	 * High level function for constructing a molecule. Does not require any helper arrays.
 	 * @param mol
 	 * @return atom mapping from original mol to this molecule after incorporation of mol
@@ -1172,6 +1173,7 @@ public class Molecule implements Serializable {
 	 * and all query features of mol are also copied. Typically, this is used to add a
 	 * molecule without explicit hydrogen atoms. If parities of copied molecules are valid,
 	 * then you may call setParitiesValid() on this molecule after adding molecules.
+	 * If this Molecule is a fragment that contains exclude groups, these are included.
 	 * High level function for constructing a molecule. Does not require any helper arrays.
 	 * @param mol
 	 * @param atoms count of atoms to be copied
@@ -1179,8 +1181,26 @@ public class Molecule implements Serializable {
 	 * @return atom mapping from original mol to this molecule after incorporation of mol
 	 */
 	public int[] addMolecule(Molecule mol, int atoms, int bonds) {
-		return addMolecule(mol, 0, atoms, 0, bonds);
+		return addMolecule(mol, 0, atoms, 0, bonds, true);
 		}
+
+
+	/**
+	 * Copies first atoms and first bonds of mol to the end of this Molecule's atom and bond
+	 * tables. If mol is a fragment then this Molecule's fragment flag is set to true
+	 * and all query features of mol are also copied. Typically, this is used to add a
+	 * molecule without explicit hydrogen atoms. If parities of copied molecules are valid,
+	 * then you may call setParitiesValid() on this molecule after adding molecules.
+	 * High level function for constructing a molecule. Does not require any helper arrays.
+	 * @param mol
+	 * @param atoms count of atoms to be copied
+	 * @param bonds count of bonds to be copied
+	 * @param includeExcludeGroups whether atoms and bonds of exclude groups shall be included
+	 * @return atom mapping from original mol to this molecule after incorporation of mol
+	 */
+	public int[] addMolecule(Molecule mol, int atoms, int bonds, boolean includeExcludeGroups) {
+		return addMolecule(mol, 0, atoms, 0, bonds, includeExcludeGroups);
+	}
 
 
 	/**
@@ -1195,20 +1215,24 @@ public class Molecule implements Serializable {
 	 * @param atom2 1+last atom to be copied
 	 * @param bond1 first bond to be copied
 	 * @param bond2 one+last bond to be copied
+	 * @param includeExcludeGroups whether atoms and bonds of exclude groups shall be included
 	 * @return atom mapping from original mol to this molecule after incorporation of mol
 	 */
-	public int[] addMolecule(Molecule mol, int atom1, int atom2, int bond1, int bond2) {
+	public int[] addMolecule(Molecule mol, int atom1, int atom2, int bond1, int bond2, boolean includeExcludeGroups) {
 		mIsFragment |= mol.mIsFragment;
 
 		int[] atomMap = new int[mol.mAllAtoms];
 		int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
 		int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
-		for (int atom=atom1; atom<atom2; atom++) {
-			atomMap[atom] = mol.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
-		}
-		for (int bond=bond1; bond<bond2; bond++) {
-			mol.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
-		}
+		for (int atom=atom1; atom<atom2; atom++)
+			if (includeExcludeGroups || (mol.getAtomQueryFeatures(atom) & cAtomQFExcludeGroup) == 0)
+				atomMap[atom] = mol.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
+
+		for (int bond=bond1; bond<bond2; bond++)
+			if (includeExcludeGroups
+			 || ((mol.getAtomQueryFeatures(mol.getBondAtom(0, bond)) & cAtomQFExcludeGroup) == 0
+			  && (mol.getAtomQueryFeatures(mol.getBondAtom(1, bond)) & cAtomQFExcludeGroup) == 0))
+				mol.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
 
 		mIsRacemate = (mIsRacemate && mol.mIsRacemate);
 		mChirality = cChiralityUnknown;

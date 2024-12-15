@@ -119,7 +119,7 @@ public class MCS {
 	 * @param frag
 	 * @param excluded
 	 */
-	public void set(StereoMolecule mol, StereoMolecule frag, boolean excluded[]) {
+	public void set(StereoMolecule mol, StereoMolecule frag, boolean[] excluded) {
 
 		StereoMolecule fragBiggestSub = new StereoMolecule(frag);
 

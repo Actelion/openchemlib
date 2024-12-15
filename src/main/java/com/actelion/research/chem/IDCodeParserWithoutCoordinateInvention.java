@@ -912,51 +912,53 @@ public class IDCodeParserWithoutCoordinateInvention {
 
 	/**
 	 * New convention is that in case of a substructure bond with multiple allowed bond types,
-	 * all allowed bond types are set as query feature and in addition the boind itself has to
+	 * all allowed bond types are set as query feature and in addition the bond itself has to
 	 * be the lowest bond type of these.
 	 */
 	private void fixMultipleBondTypes() {
-		for (int bond=0; bond<mMol.getAllBonds(); bond++) {
-			int queryFeatures = mMol.getBondQueryFeatures(bond);
-			if ((queryFeatures & Molecule.cBondQFBondTypes) == 0)
-				continue;
+		if (mMol.isFragment()) {
+			for (int bond=0; bond<mMol.getAllBonds(); bond++) {
+				int queryFeatures = mMol.getBondQueryFeatures(bond);
+				if ((queryFeatures & Molecule.cBondQFBondTypes) == 0)
+					continue;
 
-			int bondType = -1;
-			int selectionCount = 0;
+				int bondType = -1;
+				int selectionCount = 0;
 
-			if ((queryFeatures & Molecule.cBondQFMetalLigand) != 0) {
-				bondType = Molecule.cBondTypeMetalLigand;
-				selectionCount++;
-			}
-			if ((queryFeatures & Molecule.cBondQFQuintuple) != 0) {
-				bondType = Molecule.cBondTypeQuintuple;
-				selectionCount++;
-			}
-			if ((queryFeatures & Molecule.cBondQFQuadruple) != 0) {
-				bondType = Molecule.cBondTypeQuadruple;
-				selectionCount++;
-			}
-			if ((queryFeatures & Molecule.cBondQFTriple) != 0) {
-				bondType = Molecule.cBondTypeTriple;
-				selectionCount++;
-			}
-			if ((queryFeatures & Molecule.cBondQFDouble) != 0) {
-				bondType = Molecule.cBondTypeDouble;
-				selectionCount++;
-			}
-			if ((queryFeatures & Molecule.cBondQFDelocalized) != 0) {
-				bondType = Molecule.cBondTypeDelocalized;
-				selectionCount++;
-			}
-			if ((queryFeatures & Molecule.cBondQFSingle) != 0) {
-				bondType = Molecule.cBondTypeSingle;
-				selectionCount++;
-			}
+				if ((queryFeatures & Molecule.cBondQFMetalLigand) != 0) {
+					bondType = Molecule.cBondTypeMetalLigand;
+					selectionCount++;
+				}
+				if ((queryFeatures & Molecule.cBondQFQuintuple) != 0) {
+					bondType = Molecule.cBondTypeQuintuple;
+					selectionCount++;
+				}
+				if ((queryFeatures & Molecule.cBondQFQuadruple) != 0) {
+					bondType = Molecule.cBondTypeQuadruple;
+					selectionCount++;
+				}
+				if ((queryFeatures & Molecule.cBondQFTriple) != 0) {
+					bondType = Molecule.cBondTypeTriple;
+					selectionCount++;
+				}
+				if ((queryFeatures & Molecule.cBondQFDouble) != 0) {
+					bondType = Molecule.cBondTypeDouble;
+					selectionCount++;
+				}
+				if ((queryFeatures & Molecule.cBondQFDelocalized) != 0) {
+					bondType = Molecule.cBondTypeDelocalized;
+					selectionCount++;
+				}
+				if ((queryFeatures & Molecule.cBondQFSingle) != 0) {
+					bondType = Molecule.cBondTypeSingle;
+					selectionCount++;
+				}
 
-			if (bondType != -1) {
-				mMol.setBondType(bond, bondType);    // set to the lowest bond order of query options
-				if (selectionCount == 1)
-					mMol.setBondQueryFeature(bond, Molecule.cBondQFBondTypes, false);
+				if (bondType != -1) {
+					mMol.setBondType(bond, bondType);    // set to the lowest bond order of query options
+					if (selectionCount == 1)
+						mMol.setBondQueryFeature(bond, Molecule.cBondQFBondTypes, false);
+				}
 			}
 		}
 	}

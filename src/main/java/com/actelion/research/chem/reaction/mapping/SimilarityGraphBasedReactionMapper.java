@@ -461,14 +461,14 @@ if (DEBUG) {
 		for (int i=0; i<rxn.getReactants(); i++) {
 			StereoMolecule reactant = rxn.getReactant(i);
 			reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
-			mReactant.addMolecule(reactant, reactant.getAtoms(), reactant.getBonds());
+			mReactant.addMolecule(reactant, reactant.getAtoms(), reactant.getBonds(), !reactant.isFragment());
 			}
 
 		mProduct = new StereoMolecule();
 		for (int i=0; i<rxn.getProducts(); i++) {
 			StereoMolecule product = rxn.getProduct(i);
 			product.ensureHelperArrays(Molecule.cHelperNeighbours);
-			mProduct.addMolecule(product, product.getAtoms(), product.getBonds());
+			mProduct.addMolecule(product, product.getAtoms(), product.getBonds(), !product.isFragment());
 			}
 
 		mReactant.normalizeAmbiguousBonds();
@@ -489,29 +489,33 @@ if (DEBUG) {
 	 */
 	public void copyMapNosToReaction(Reaction rxn, int[] reactantMapNo, int[] productMapNo, int graphMapNoCount) {
 		int reactantIndex = 0;
-		int reactantAtom = 0;
+		int reactantAtom = -1;
 		for (int atom=0; atom<mReactant.getAtoms(); atom++) {
 			StereoMolecule reactant = rxn.getReactant(reactantIndex);
 			reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
-			if (reactantAtom == reactant.getAtoms()) {
-				reactantAtom = 0;
-				reactant = rxn.getReactant(++reactantIndex);
-				}
+			do {
+				if (++reactantAtom == reactant.getAtoms()) {
+					reactantAtom = 0;
+					reactant = rxn.getReactant(++reactantIndex);
+					}
+				} while (reactant.isFragment()
+					&& (reactant.getAtomQueryFeatures(reactantAtom) & Molecule.cAtomQFExcludeGroup) != 0);
 			reactant.setAtomMapNo(reactantAtom, reactantMapNo[atom], reactantMapNo[atom] <= graphMapNoCount);
-			reactantAtom++;
 			}
 
 		int productIndex = 0;
-		int productAtom = 0;
+		int productAtom = -1;
 		for (int atom=0; atom<mProduct.getAtoms(); atom++) {
 			StereoMolecule product = rxn.getProduct(productIndex);
 			product.ensureHelperArrays(Molecule.cHelperNeighbours);
-			if (productAtom == product.getAtoms()) {
-				productAtom = 0;
-				product = rxn.getProduct(++productIndex);
-				}
+			do {
+				if (++productAtom == product.getAtoms()) {
+					productAtom = 0;
+					product = rxn.getProduct(++productIndex);
+					}
+				} while (product.isFragment()
+					&& (product.getAtomQueryFeatures(productAtom) & Molecule.cAtomQFExcludeGroup) != 0);
 			product.setAtomMapNo(productAtom, productMapNo[atom], productMapNo[atom] <= graphMapNoCount);
-			productAtom++;
 			}
 		}
 
