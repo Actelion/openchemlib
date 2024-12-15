@@ -594,7 +594,7 @@ public class GenericEditorArea implements GenericEventListener {
 	public void toolChanged(int newTool) {
 		if (mCurrentTool != newTool) {
 			if (mCurrentTool == GenericEditorToolbar.cToolMapper
-					|| newTool == GenericEditorToolbar.cToolMapper) {
+			 || newTool == GenericEditorToolbar.cToolMapper) {
 				mCurrentTool = newTool;
 				update(UPDATE_REDRAW);
 			} else {
@@ -1922,9 +1922,9 @@ public class GenericEditorArea implements GenericEventListener {
 			case GenericEditorToolbar.cToolMapper:
 				mAtom1 = mMol.findAtom(mX1, mY1);
 				if (mAtom1 != -1
-				 && mAtom1<mMol.getAtoms()
-				 && mMol.isFragment()
-				 && (mMol.getAtomQueryFeatures(mAtom1) & Molecule.cAtomQFExcludeGroup) == 0) {
+				 && mAtom1 < mMol.getAtoms()
+				 && (!mMol.isFragment()
+				  || (mMol.getAtomQueryFeatures(mAtom1) & Molecule.cAtomQFExcludeGroup) == 0)) {
 					mX1 = mMol.getAtomX(mAtom1);
 					mY1 = mMol.getAtomY(mAtom1);
 					mPendingRequest = cRequestMapAtoms;
@@ -2115,14 +2115,17 @@ public class GenericEditorArea implements GenericEventListener {
 	 * into the display molecule.
 	 */
 	private void autoMapReaction() {
+		analyzeFragmentMembership();
+
 		// We take the current fragments into a reaction, which we map.
 		new SimilarityGraphBasedReactionMapper().map(getReaction());
 
-		// Copy new mapping numbers from current fragments into the display molecule.
+		// Copy new mapping numbers from current fragments into the display molecule,
+		// but mark all those atom as auto-mapped that originally were unmapped or auto-mapped.
 		int[] fragmentAtom = new int[mFragment.length];
-		for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
 			int fragment = mFragmentNo[atom];
-			mFragment[fragment].setAtomMapNo(fragmentAtom[fragment], mMol.getAtomMapNo(atom), mMol.isAutoMappedAtom(atom));
+			mMol.setAtomMapNo(atom, mFragment[fragment].getAtomMapNo(fragmentAtom[fragment]), mMol.getAtomMapNo(atom) == 0 || mMol.isAutoMappedAtom(atom));
 			fragmentAtom[fragment]++;
 		}
 	}
@@ -2908,17 +2911,17 @@ public class GenericEditorArea implements GenericEventListener {
 		return mFragment;
 	}
 
-	public void setFragments(StereoMolecule[]fragment) {
+	public void setFragments(StereoMolecule[] fragment) {
 		mMol.clear();
 		mFragment = fragment;
-		for (int i = 0; i<fragment.length; i++) {
+		for (int i=0; i<fragment.length; i++) {
 			mMol.addMolecule(mFragment[i]);
 		}
 		storeState();
 
 		mFragmentNo = new int[mMol.getAllAtoms()];
-		for (int atom = 0, f = 0; f<mFragment.length; f++) {
-			for (int j = 0; j<mFragment[f].getAllAtoms(); j++) {
+		for (int atom=0, f=0; f<mFragment.length; f++) {
+			for (int j=0; j<mFragment[f].getAllAtoms(); j++) {
 				mFragmentNo[atom++] = f;
 			}
 		}
