@@ -48,6 +48,8 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	// Of course, when a rule is applied, then only the mapped region of the rule is used as a template to
 	// change bonding of the reaction the rule is applied to. Nevertheless, the rule's entire reactant is used
 	// for the substructure search that identifies applicability.
+	// NOTE: Rule reactions must contain one reactant and one product only (usually these consist of multiple fragments)!
+	// NOTE: You may use the idcodeexplorer.jar to generate new rules.
 	private static final ChemicalRule[] CHEMICAL_RULE = {
 // With cleaned coordinates:
 			new ChemicalRule("d","gGQ@@eKtRA@!gGQ@@djqRA@#qMsT qM\\V#!B_qL@Dw}l@Fp@Dp !B@AL@[@@S@Fp@Dp##", 3.5f),
@@ -70,10 +72,10 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 			new ChemicalRule("Sakurai", "gOQH@wAINvZ@pdcFe@x@!gOQH@wAIgJi@pdcFe@x@#qreKx qrLkx#!BDpAl@IknDw|S@Fp@ !Bb@JH?_x@b@JH?Ven##", 4.5f),
 			new ChemicalRule("Mitsunobu", "gFP`ATfRhdPp`}KEYg]d@!gFP`ATfRhd`pekL{l`#qrLk qZLn#!B@hc}b@C~@h`YM` !B@hc}b@C~@h`YM`##", 4.5f),
 
-			new ChemicalRule("Aldol-Addition", "gOQ@AdTAcW@[Q^crJTLES`DO}b@!gGQ@@dsuVAcJg@H@#qYEbp qYub#!B@O{|b@Jw\\o{~@Oy? !Bb@K~@Hc}b@JH@`##", 1.5f),
-			new ChemicalRule("Aldol-Condensation", "gOQ@AdTAcW@[Q^crJTLES`DO}b@!gFQ@@`v|pblHHqIpB@#qYEbp q\\VM#!B@O{|b@Jw\\o{~@Oy? !BxpE?[@@S@Fp@Dp##", 2.5f),
-			new ChemicalRule("Acetal-Aldol-Addition", "dmdB@@serQS@sJjnl@p`Xir\\@`j\\@`!daxL@@[df[Zj|@qQdxACdxA@#qB@`OuX qBtM{#!B?[_}b@Jw_?{}mwk~?X`Bmwvw_[\\ !Bb@K~@Hc}b@Jw@h`BmpH##", 1.5f),
-			new ChemicalRule("Acetal-Aldol-Condensation", "dmdB@@serQS@sJjnl@p`Xir\\@`j\\@`!gNp`ITkez^@qTS`DJg@H@#qB@`OuX qOuS`#!B?[_}b@Jw_?{}mwk~?X`Bm?vw_[\\ !Bm?rH__y?b@K~_xa}##", 1.5f),
+			new ChemicalRule("Aldol-Addition", "gOQ@AdTAcS@[Q^crJTLES`DJsL?vH!gGQ@@dsuRAcJg@HUaX#qYEbp qYub#!BxOyBzLKg`dG~xG~{ !Bb@K~@Hc}FBIA@@##", 1.5f),
+			new ChemicalRule("Aldol-Condensation", "gOQ@AdTAcS@[Q^crJTLES`DJsL?vH!gFQ@@`rrpdlHHpipBEXf@#qYEbp q^aU#!B{ZRRqA?AQfyA@L_C !B}QFw@h`B_tnH_P##", 2.5f),
+			new ChemicalRule("Acetal-Aldol-Addition", "dmdB@@serQS@sJjfd@p`Xir\\@`j\\@aUJXK@!daxL@@[df[ZjT@qQdxACdxABjTqf@#qB@`OuX qBtM{#!B_]]}rHKWw?y}uy[~GJbBu{wWqG| !BfJK~TIa]fJJghg{`pP@##", 1.5f),
+			new ChemicalRule("Acetal-Aldol-Condensation", "dmdB@@serQS@sJjfd@p`Xir\\@`j\\@aUJXK@!gNp`CTjUiV@qQS`DJg@HUVXV@#qB@`OuX qqj{`#!B?[_}b@Jw_?{}m~[~[N@Bm?vwkN| !BfsK~yzPrw}m?rzQM##", 1.5f),
 			new ChemicalRule("Acetal-Aldol-Condensation-Cyclization", "dkLB@@ZURYUvUjljh@paHpr\\@`!didD@@yIfUXXHL@CFNS`D@#IXljNPY@@@ IXljIyA#!BbOw~_x`Bm?vH?[_}b@JH?_y?b@Jw?Xc} !BbOvH?Oy??`BH?Xa}?`C~_p##", 7.5f),
 			new ChemicalRule("Enolester-Cleavage", "gOQ`@fdscT`_Qp!gOQ`@cdTASS@P#q}Kr` q}cNP#!B@k]}mpC~@k]}mqdY !Bb@K~@Hc}BfzH@hc}##", 5.3f),
 
@@ -91,7 +93,7 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 			// two-step
 			new ChemicalRule("Elimination-Claisen", "gNp`AldTQji@~a`!gOP`@teTZdCzN@#qtHUX qtSi@#!Bm?vH?[\\B?g~H@hc} !B@AL@[@@S@Fp@DweA##", 4.5f),
 			new ChemicalRule("imineFormationAzaCope", "daZH@LAIMUjd@pRL@!daZH@HAAn]jd@p`@#IGfaLJ` IFDzfK@#!BDpAl@IkqDpAl@AL@[@@ !BFaFw@h`BbOw~@H`BbOt##", 8.5f),
-			new ChemicalRule("didehydroCopeWithAromatisation", "gNp@DiuVYDsj`rLwA`!gOp@DjWkB@@H#q]yr` q\\oQp#!Bm?vH@k\\Bm?w~_{_} !Bm?w~@Hc}mpJw@ox@##", 4.5f),
+			new ChemicalRule("didehydroCopeWithAromatisation", "gNp@Di]ejDcjcr|wK`!gOp@DjWkB@@H#qrLkx q\\oQp#!B?g~H?K_}bGvH?H`B !Bm?w~@Hc}mpJw@ox@##", 4.5f),
 
 			// multi-step with cyclisation/condensation
 			new ChemicalRule("symAldolNitrogenRing", "dovJ@GBfttf\\v\\qjViPCADGbDodnGp!doNJ@JCSmtefWTCaYjje@H#IlZXi]]yL~C IqMVCzaIim?#!BQtl_riY?Qtl_rfuvNCQ`uZd@NCQ`uVVu}?sA]P !B?`BH@ox@bGvH@k\\Bb@JH_Xa}b@K~_rYltUr|W@##", 0.5f),
@@ -114,6 +116,9 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 			new ChemicalRule("Epoxydation", "gB``ADcdCB@!gC``AhtUPGtt@#qqb qtQ#!BjW}Y\\YX@ !B?g~w?^Va##", 6.3f),
 			new ChemicalRule("oxydativePropargylAmine13Shift", "gKi@HDEZpLHOQP!gJY@BDeVXB#qMr` qNTh#!BqiXTy{U?mW| !B@Fp@DpAl@AL##", 6.5f),
 			new ChemicalRule("Baeyer-Villiger", "gFQ`@[dTAZ`LHP!gFQ`@jdrMPGtl@#qrak qrlK#!B_?{}mwvHs^FVP@ !BbOvH@oy?bOuQzP##", 7.5f),
+
+			// condensation with ring closure
+			new ChemicalRule("Hantzsch Thiazol", "gOYDGaDDHRTve`H!gKXHL@aJWFe`H#qB`ip qiV`#!B_vq?Dw}lL{y?[G|S !BTqa`FbpX?`@##", 3.5f),
 	};
 
 	private static boolean sInitialized;

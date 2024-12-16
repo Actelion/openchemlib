@@ -2872,7 +2872,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	/**
 	 * Redraws the molecule(s) or the reaction after scaling coordinates.
-	 * Then analyses fragment membership and recreate individual molecules, reaction, or markush structure
+	 * Then analyses fragment membership and recreates individual molecules, reaction, or markush structure
 	 * Then, fires molecule change events with userChange=false, i.e. external change.
 	 */
 	public void moleculeChanged() {

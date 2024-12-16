@@ -71,6 +71,10 @@ public class ChemicalRule {
 
 	public void initialize() {
 		Reaction rxn = ReactionEncoder.decode(mIDCode, false);
+		if (rxn.getReactants() != 1 || rxn.getProducts() != 1)
+			System.out.println("ERROR: Rule '"+mName+"' doesn't contain exactly one reactant and one product!");
+		if (!rxn.isFragment())
+			System.out.println("ERROR: Rule '"+mName+"' reactant and product are not marked as fragment!");
 		mReactant = rxn.getReactant(0);
 		mProduct = rxn.getProduct(0);
 		mReactant.ensureHelperArrays(Molecule.cHelperNeighbours);
@@ -137,7 +141,27 @@ public class ChemicalRule {
 					}
 				}
 			}
+
+		calculatePenalty();
 		}
+
+	private void calculatePenalty() {
+		MappingScorer scorer = new MappingScorer(mReactant, mProduct);
+		int[] reactantMapNo = new int[mReactant.getAllAtoms()];
+		for (int i=0; i<mReactant.getAllAtoms(); i++)
+			reactantMapNo[i] = mReactant.getAtomMapNo(i);
+		int[] productMapNo = new int[mProduct.getAllAtoms()];
+		for (int i=0; i<mProduct.getAllAtoms(); i++)
+			productMapNo[i] = mProduct.getAtomMapNo(i);
+
+		mPanalty = -scorer.scoreMapping(scorer.createReactantToProductAtomMap(reactantMapNo, productMapNo)) * 0.25f;
+//		mPanalty = -scorer.scoreMapping(scorer.createReactantToProductAtomMap(reactantMapNo, productMapNo)) - 1.5f;	// is a positive value
+
+		// The idea is that when a rule is applied, then the score should be better than
+		// the simple calculated score from bond changes, because we know that we use
+		// reasonable chemistry. How much better, whether a constant of whether rule-dependent
+		// remains to be determined...
+	}
 
 	private boolean isTHParityInversion(int reactantAtom, int[] mapNoToProduct) {
 		boolean inversion = false;
@@ -210,12 +234,12 @@ public class ChemicalRule {
 	 * scoring redundant mapping graphs, these should be sorted out early. Reasons for
 	 * redundant matches may be:<br>
 	 * - if the rule reactant is one fragment, this may be symmetrical Cn or Dn<br>
-	 * - the rule reactant may contain multiple equivalent fragments, e.g. metathese<br>
-	 * - matching atoms in the real reactant my be symmetrical<br>
+	 * - the rule reactant may contain multiple equivalent fragments, e.g. metathesis<br>
+	 * - matching atoms in the real reactant may be symmetrical<br>
 	 * Otherwise, there certain causes may exist, that break these symmetries:<br>
-	 * - a symmetrical rule fragment must not considered symmetrical, if it doesn't react
+	 * - a symmetrical rule fragment must not be considered symmetrical, if it doesn't react
 	 *   symmetrically, i.e. if its matching rule product atoms are not equivalent anymore.
-	 * - in case of multiple symmetrical fragments in the rule's reactant (e.g. metathese),
+	 * - in case of multiple symmetrical fragments in the rule's reactant (e.g. metathesis),
 	 *   inverted/rotated individual fragment matches cause different products, that means
 	 *   that the relative match orientation of multiple symmetrical fragments breaks symmetry,
 	 *   if the real matching atoms are not equivalent.<br>

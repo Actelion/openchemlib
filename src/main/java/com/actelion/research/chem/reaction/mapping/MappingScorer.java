@@ -46,11 +46,11 @@ public class MappingScorer {
 	private static final boolean SCORE_SIMPLE = false;
 	private static final boolean SCORE_HYDROGEN = false;
 
-	private StereoMolecule mReactant,mProduct;
+	private final StereoMolecule mReactant,mProduct;
 
 	/**
 	 * Instantiates a mapping scorer that judges the quality of a mapping by adding penalties for every bond
-	 * being broken, created, or changed. In principle the panelty for any created or broken bond is 2.0,
+	 * being broken, created, or changed. In principle the penalty for any created or broken bond is 2.0,
 	 * and for any changed bond order is 1.0. A change from/to delocalized to/from single or double is considered
 	 * a change. Broken or created bonds at typical break locations, e.g. ester cleavage, get slightly lower
 	 * penalties than 2.0. Changes of implicit hydrogen counts contribute with a factor of 2.0.
@@ -97,6 +97,12 @@ public class MappingScorer {
 		for (int rBond=0; rBond<mReactant.getBonds(); rBond++) {
 			int rAtom1 = mReactant.getBondAtom(0, rBond);
 			int rAtom2 = mReactant.getBondAtom(1, rBond);
+
+			if (mReactant.isFragment()
+			 && ((mReactant.getAtomQueryFeatures(rAtom1) & Molecule.cAtomQFExcludeGroup) != 0
+			  || (mReactant.getAtomQueryFeatures(rAtom2) & Molecule.cAtomQFExcludeGroup) != 0))
+				continue;
+
 			int pAtom1 = reactantToProductAtom[rAtom1];
 			int pAtom2 = reactantToProductAtom[rAtom2];
 
@@ -138,6 +144,11 @@ public class MappingScorer {
 			}
 
 		for (int pBond=0; pBond<mProduct.getBonds(); pBond++) {
+			if (mProduct.isFragment()
+			 && ((mProduct.getAtomQueryFeatures(mProduct.getBondAtom(0, pBond)) & Molecule.cAtomQFExcludeGroup) != 0
+			  || (mProduct.getAtomQueryFeatures(mProduct.getBondAtom(1, pBond)) & Molecule.cAtomQFExcludeGroup) != 0))
+				continue;
+
 			if (!productBondHandled[pBond]) {
 				penalty += getBondCreateOrBreakPenalty(mProduct, pBond);
 
