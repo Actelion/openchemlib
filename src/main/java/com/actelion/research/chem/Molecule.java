@@ -3877,8 +3877,30 @@ public class Molecule implements Serializable {
 			double ay = mCoordinates[atom].y - y;
 			mCoordinates[atom].x = x + ax * cos - ay * sin;
 			mCoordinates[atom].y = y + ay * cos + ax * sin;
+			}
 		}
-	}
+
+
+	/**
+	 * Flips coordinates by mirroring the molecule at the axis defined by x,y and angle.
+	 * This method also inverts all stereo bonds to keep correct stereo center configurations.
+	 * @param x
+	 * @param y
+	 * @param angle
+	 */
+	public void flipCoordinates(double x, double y, double angle) {
+		double a = Math.cos(angle);
+		double b = -Math.sin(angle);
+		double c = -a * x - b * y;
+		for (int atom=0; atom<mAllAtoms; atom++) {
+			double d = a * mCoordinates[atom].x + b * mCoordinates[atom].y + c;
+			mCoordinates[atom].x -= 2 * a * d;
+			mCoordinates[atom].y -= 2 * b * d;
+			}
+		for (int bond=0; bond<mAllBonds; bond++)
+			if (isStereoBond(bond))
+				mBondType[bond] = (mBondType[bond] == cBondTypeUp) ? cBondTypeDown : cBondTypeUp;
+		}
 
 
 	public void zoomAndRotateInit(double x, double y) {
