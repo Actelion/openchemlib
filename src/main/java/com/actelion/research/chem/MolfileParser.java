@@ -1075,13 +1075,13 @@ public class MolfileParser
 		if(bondType > 4){
 			switch(bondType){
 				case 5:
-					queryFeatures |= Molecule.cBondQFSingle | Molecule.cBondQFDouble;
+					queryFeatures |= Molecule.cBondTypeSingle | Molecule.cBondTypeDouble;
 					break;
 				case 6:
-					queryFeatures |= Molecule.cBondQFSingle | Molecule.cBondQFDelocalized;
+					queryFeatures |= Molecule.cBondTypeSingle | Molecule.cBondTypeDelocalized;
 					break;
 				case 7:
-					queryFeatures |= Molecule.cBondQFDouble | Molecule.cBondQFDelocalized;
+					queryFeatures |= Molecule.cBondTypeDouble | Molecule.cBondTypeDelocalized;
 					break;
 				case 8:
 					if (realBondType != Molecule.cBondTypeMetalLigand)

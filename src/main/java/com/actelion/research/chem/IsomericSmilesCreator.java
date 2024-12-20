@@ -820,37 +820,37 @@ public class IsomericSmilesCreator {
 		if (mEZHalfParity[bond] != 0)
 			builder.append(mEZHalfParity[bond] == 1 ? '/' : '\\');
 		if (mMode == MODE_CREATE_SMARTS) {
-			int bondTypes = mMol.getBondQueryFeatures(bond) & (Molecule.cBondQFBondTypes | Molecule.cBondQFRareBondTypes);
-			if (bondTypes != 0) {
-				if ((bondTypes & Molecule.cBondTypeSingle) != 0 && mEZHalfParity[bond] == 0) {
+			int bondQFTypes = mMol.getBondQueryFeatures(bond) & (Molecule.cBondQFBondTypes | Molecule.cBondQFRareBondTypes);
+			if (bondQFTypes != 0) {
+				if ((bondQFTypes & Molecule.cBondTypeSingle) != 0 && mEZHalfParity[bond] == 0) {
 					builder.append('-');
 					}
-				if ((bondTypes & Molecule.cBondTypeDouble) != 0) {
+				if ((bondQFTypes & Molecule.cBondTypeDouble) != 0) {
 					if (builder.length() != startLength)
 						builder.append(',');
 					builder.append('=');
 					}
-				if ((bondTypes & Molecule.cBondTypeTriple) != 0) {
+				if ((bondQFTypes & Molecule.cBondTypeTriple) != 0) {
 					if (builder.length() != startLength)
 						builder.append(',');
 					builder.append('#');
 					}
-				if ((bondTypes & Molecule.cBondTypeQuadruple) != 0) {
+				if ((bondQFTypes & Molecule.cBondTypeQuadruple) != 0) {
 					if (builder.length() != startLength)
 						builder.append(',');
 					builder.append('$');
 					}
-				if ((bondTypes & Molecule.cBondTypeQuintuple) != 0) {   // SMILES doesn't support quintuple bonds, thus we use quadruple
+				if ((bondQFTypes & Molecule.cBondTypeQuintuple) != 0) {   // SMILES doesn't support quintuple bonds, thus we use quadruple
 					if (builder.length() != startLength)
 						builder.append(',');
 					builder.append('$');
 					}
-				if ((bondTypes & Molecule.cBondTypeDelocalized) != 0) {
+				if ((bondQFTypes & Molecule.cBondTypeDelocalized) != 0) {
 					if (builder.length() != startLength)
 						builder.append(',');
 					builder.append(':');
 					}
-				if ((bondTypes & Molecule.cBondTypeMetalLigand) != 0) {
+				if ((bondQFTypes & Molecule.cBondTypeMetalLigand) != 0) {
 					if (builder.length() != startLength)
 						builder.append(',');
 					builder.append(mMol.isMetalAtom(parentAtom) ? "<-" : "->");

@@ -390,7 +390,7 @@ public class TautomerHelper {
 		for (int bond=0; bond<mol.getBonds(); bond++) {
 			if (mIsTautomerBond[bond]) {
 				mol.setBondType(bond, Molecule.cBondTypeSingle);
-				mol.setBondQueryFeature(bond, Molecule.cBondQFSingle | Molecule.cBondQFDouble, true);
+				mol.setBondQueryFeature(bond, Molecule.cBondTypeSingle | Molecule.cBondTypeDouble, true);
 				}
 			}
 

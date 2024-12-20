@@ -253,13 +253,13 @@ public class MolfileCreator {
             // if query features cannot be expressed exactly stay on the loosely defined side
             int bondType = mol.getBondQueryFeatures(bond) & Molecule.cBondQFBondTypes;
             if (bondType != 0) {
-                if (bondType == Molecule.cBondQFDelocalized)
+                if (bondType == Molecule.cBondTypeDelocalized)
                     order = 4;	// aromatic
-                else if (bondType == (Molecule.cBondQFSingle | Molecule.cBondQFDouble))
+                else if (bondType == (Molecule.cBondTypeSingle | Molecule.cBondTypeDouble))
                     order = 5;	// single or double
-                else if (bondType == (Molecule.cBondQFSingle | Molecule.cBondQFDelocalized))
+                else if (bondType == (Molecule.cBondTypeSingle | Molecule.cBondTypeDelocalized))
                     order = 6;	// single or aromatic
-                else if (bondType == (Molecule.cBondQFDouble | Molecule.cBondQFDelocalized))
+                else if (bondType == (Molecule.cBondTypeDouble | Molecule.cBondTypeDelocalized))
                     order = 7;	// single or double
                 else
                     order = 8;	// any

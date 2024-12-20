@@ -42,13 +42,13 @@ public class TransformerRule extends Object implements Comparable<TransformerRul
 		// we don't use the delocalized type
 		int bondType = mol.getBondTypeSimple(bond);
 		if (bondType == Molecule.cBondTypeMetalLigand)
-			mBondQFTypes |= Molecule.cBondQFMetalLigand;
+			mBondQFTypes |= Molecule.cBondTypeMetalLigand;
 		else if (bondType == Molecule.cBondTypeDouble)
-			mBondQFTypes |= Molecule.cBondQFDouble;
+			mBondQFTypes |= Molecule.cBondTypeDouble;
 		else if (bondType == Molecule.cBondTypeTriple)
-			mBondQFTypes |= Molecule.cBondQFTriple;
+			mBondQFTypes |= Molecule.cBondTypeTriple;
 		else
-			mBondQFTypes |= Molecule.cBondQFSingle;
+			mBondQFTypes |= Molecule.cBondTypeSingle;
 
 		mType = TYPE.UNKNOWN;
 	}
@@ -92,20 +92,20 @@ public class TransformerRule extends Object implements Comparable<TransformerRul
 			mType = TYPE.NO_CHANGE;
 		}
 		else if (Integer.bitCount(productRule.mBondQFTypes) == 1) {
-			mTargetBondType = productRule.mBondQFTypes == Molecule.cBondQFSingle ? Molecule.cBondTypeSingle
-					: productRule.mBondQFTypes == Molecule.cBondQFDouble ? Molecule.cBondTypeCross
-					: productRule.mBondQFTypes == Molecule.cBondQFTriple ? Molecule.cBondTypeTriple
-					: productRule.mBondQFTypes == Molecule.cBondQFMetalLigand ? Molecule.cBondTypeMetalLigand
+			mTargetBondType = productRule.mBondQFTypes == Molecule.cBondTypeSingle ? Molecule.cBondTypeSingle
+					: productRule.mBondQFTypes == Molecule.cBondTypeDouble ? Molecule.cBondTypeCross
+					: productRule.mBondQFTypes == Molecule.cBondTypeTriple ? Molecule.cBondTypeTriple
+					: productRule.mBondQFTypes == Molecule.cBondTypeMetalLigand ? Molecule.cBondTypeMetalLigand
 					: Molecule.cBondTypeDelocalized;
 			mType = TYPE.CHANGE_ABS;
 		}
 		else {
-			int sourceBondOrder = (mBondQFTypes & Molecule.cBondQFMetalLigand) != 0 ? 0
-					: (mBondQFTypes & Molecule.cBondQFSingle) != 0 ? 1
-					: (mBondQFTypes & Molecule.cBondQFDouble) != 0 ? 2 : 3;
-			int targetBondOrder = (productRule.mBondQFTypes & Molecule.cBondQFMetalLigand) != 0 ? 0
-					: (productRule.mBondQFTypes & Molecule.cBondQFSingle) != 0 ? 1
-					: (productRule.mBondQFTypes & Molecule.cBondQFDouble) != 0 ? 2 : 3;
+			int sourceBondOrder = (mBondQFTypes & Molecule.cBondTypeMetalLigand) != 0 ? 0
+					: (mBondQFTypes & Molecule.cBondTypeSingle) != 0 ? 1
+					: (mBondQFTypes & Molecule.cBondTypeDouble) != 0 ? 2 : 3;
+			int targetBondOrder = (productRule.mBondQFTypes & Molecule.cBondTypeMetalLigand) != 0 ? 0
+					: (productRule.mBondQFTypes & Molecule.cBondTypeSingle) != 0 ? 1
+					: (productRule.mBondQFTypes & Molecule.cBondTypeDouble) != 0 ? 2 : 3;
 			if (targetBondOrder == sourceBondOrder)
 				mType = TYPE.NO_CHANGE;
 			else {

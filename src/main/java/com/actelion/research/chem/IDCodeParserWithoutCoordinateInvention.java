@@ -925,31 +925,31 @@ public class IDCodeParserWithoutCoordinateInvention {
 				int bondType = -1;
 				int selectionCount = 0;
 
-				if ((queryFeatures & Molecule.cBondQFMetalLigand) != 0) {
+				if ((queryFeatures & Molecule.cBondTypeMetalLigand) != 0) {
 					bondType = Molecule.cBondTypeMetalLigand;
 					selectionCount++;
 				}
-				if ((queryFeatures & Molecule.cBondQFQuintuple) != 0) {
+				if ((queryFeatures & Molecule.cBondTypeQuintuple) != 0) {
 					bondType = Molecule.cBondTypeQuintuple;
 					selectionCount++;
 				}
-				if ((queryFeatures & Molecule.cBondQFQuadruple) != 0) {
+				if ((queryFeatures & Molecule.cBondTypeQuadruple) != 0) {
 					bondType = Molecule.cBondTypeQuadruple;
 					selectionCount++;
 				}
-				if ((queryFeatures & Molecule.cBondQFTriple) != 0) {
+				if ((queryFeatures & Molecule.cBondTypeTriple) != 0) {
 					bondType = Molecule.cBondTypeTriple;
 					selectionCount++;
 				}
-				if ((queryFeatures & Molecule.cBondQFDouble) != 0) {
+				if ((queryFeatures & Molecule.cBondTypeDouble) != 0) {
 					bondType = Molecule.cBondTypeDouble;
 					selectionCount++;
 				}
-				if ((queryFeatures & Molecule.cBondQFDelocalized) != 0) {
+				if ((queryFeatures & Molecule.cBondTypeDelocalized) != 0) {
 					bondType = Molecule.cBondTypeDelocalized;
 					selectionCount++;
 				}
-				if ((queryFeatures & Molecule.cBondQFSingle) != 0) {
+				if ((queryFeatures & Molecule.cBondTypeSingle) != 0) {
 					bondType = Molecule.cBondTypeSingle;
 					selectionCount++;
 				}

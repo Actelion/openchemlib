@@ -194,15 +194,15 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 					  || mMol.isDelocalizedBond(mBond)) ?
 						4 : mMol.getBondOrder(mBond);
 
-		if ((queryFeatures & Molecule.cBondQFSingle) != 0 || bondOrder == 1)
+		if ((queryFeatures & Molecule.cBondTypeSingle) != 0 || bondOrder == 1)
 			mCBSingle.setSelected(true);
-		if ((queryFeatures & Molecule.cBondQFDouble) != 0 || bondOrder == 2)
+		if ((queryFeatures & Molecule.cBondTypeDouble) != 0 || bondOrder == 2)
 			mCBDouble.setSelected(true);
-		if ((queryFeatures & Molecule.cBondQFTriple) != 0 || bondOrder == 3)
+		if ((queryFeatures & Molecule.cBondTypeTriple) != 0 || bondOrder == 3)
 			mCBTriple.setSelected(true);
-		if ((queryFeatures & Molecule.cBondQFDelocalized) != 0 || bondOrder == 4)
+		if ((queryFeatures & Molecule.cBondTypeDelocalized) != 0 || bondOrder == 4)
 			mCBDelocalized.setSelected(true);
-		if ((queryFeatures & Molecule.cBondQFMetalLigand) != 0 || bondOrder == 0)
+		if ((queryFeatures & Molecule.cBondTypeMetalLigand) != 0 || bondOrder == 0)
 			mCBMetalLigand.setSelected(true);
 		if ((queryFeatures & Molecule.cBondQFMatchStereo) != 0)
 			mCBMatchStereo.setSelected(true);
@@ -309,15 +309,15 @@ public class JBondQueryFeatureDialog extends JDialog implements ActionListener {
 				}
 
             if (mCBSingle.isSelected() && bondOrder != 1)
-    			queryFeatures |= Molecule.cBondQFSingle;
+    			queryFeatures |= Molecule.cBondTypeSingle;
     		if (mCBDouble.isSelected() && bondOrder != 2)
-    			queryFeatures |= Molecule.cBondQFDouble;
+    			queryFeatures |= Molecule.cBondTypeDouble;
     		if (mCBTriple.isSelected() && bondOrder != 3)
-    			queryFeatures |= Molecule.cBondQFTriple;
+    			queryFeatures |= Molecule.cBondTypeTriple;
     		if (mCBDelocalized.isSelected() && bondOrder != 4)
-    			queryFeatures |= Molecule.cBondQFDelocalized;
+    			queryFeatures |= Molecule.cBondTypeDelocalized;
 			if (mCBMetalLigand.isSelected() && bondOrder != 0)
-				queryFeatures |= Molecule.cBondQFMetalLigand;
+				queryFeatures |= Molecule.cBondTypeMetalLigand;
     		if (mCBMatchStereo.isSelected())
     			queryFeatures |= Molecule.cBondQFMatchStereo;
 

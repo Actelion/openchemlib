@@ -490,15 +490,15 @@ public class SmilesParser {
 							position++;
 							}
 						else if (theChar == '-')
-							excludedBonds |= Molecule.cBondQFSingle;
+							excludedBonds |= Molecule.cBondTypeSingle;
 						else if (theChar == '=')
-							excludedBonds |= Molecule.cBondQFDouble;
+							excludedBonds |= Molecule.cBondTypeDouble;
 						else if (theChar == '#')
-							excludedBonds |= Molecule.cBondQFTriple;
+							excludedBonds |= Molecule.cBondTypeTriple;
 						else if (theChar == '$')
-							excludedBonds |= Molecule.cBondQFQuadruple;
+							excludedBonds |= Molecule.cBondTypeQuadruple;
 						else if (theChar == ':')
-							excludedBonds |= Molecule.cBondQFDelocalized;
+							excludedBonds |= Molecule.cBondTypeDelocalized;
 						else
 							throw new Exception("SmilesParser: bond symbol '"+theChar+"' not allowed after '!'. Position:"+(position-1));
 						}
@@ -514,7 +514,7 @@ public class SmilesParser {
 						else if (theChar == ':')
 							bondType = Molecule.cBondTypeDelocalized;
 						else if (theChar == '~')
-							bondQueryFeatures |= Molecule.cBondQFSingle | Molecule.cBondQFDouble | Molecule.cBondQFTriple | Molecule.cBondQFDelocalized;
+							bondQueryFeatures |= Molecule.cBondTypeSingle | Molecule.cBondTypeDouble | Molecule.cBondTypeTriple | Molecule.cBondTypeDelocalized;
 						else if (theChar == '/') {
 							if (readStereoFeatures)
 								bondType = Molecule.cBondTypeUp;    // encode slash temporarily in bondType
@@ -860,12 +860,12 @@ public class SmilesParser {
 		}
 
 	private int bondSymbolToQueryFeature(char symbol) {
-		return symbol == '=' ? Molecule.cBondQFDouble
-			 : symbol == '#' ? Molecule.cBondQFTriple
-			 : symbol == '$' ? Molecule.cBondQFQuadruple
-			 : symbol == ':' ? Molecule.cBondQFDelocalized
-			 : symbol == '>' ? Molecule.cBondQFMetalLigand
-			 : symbol == '~' ? Molecule.cBondQFBondTypes : Molecule.cBondQFSingle;
+		return symbol == '=' ? Molecule.cBondTypeDouble
+			 : symbol == '#' ? Molecule.cBondTypeTriple
+			 : symbol == '$' ? Molecule.cBondTypeQuadruple
+			 : symbol == ':' ? Molecule.cBondTypeDelocalized
+			 : symbol == '>' ? Molecule.cBondTypeMetalLigand
+			 : symbol == '~' ? Molecule.cBondQFBondTypes : Molecule.cBondTypeSingle;
 		}
 
 	protected void smartsWarning(String feature) {

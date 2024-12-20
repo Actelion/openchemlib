@@ -207,13 +207,13 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFIsNotStereo     = 0x0000200000000000L;
 	public static final long cAtomQFHeteroAromatic  = 0x0000400000000000L;
 
-	public static final int cBondTypeSingle			= 0x00000001;
-	public static final int cBondTypeDouble			= 0x00000002;
-	public static final int cBondTypeTriple			= 0x00000004;
-	public static final int cBondTypeQuadruple		= 0x00000008;
-	public static final int cBondTypeQuintuple		= 0x00000010;
-	public static final int cBondTypeMetalLigand	= 0x00000020;
-	public static final int cBondTypeDelocalized	= 0x00000040;
+	public static final int cBondTypeSingle			= 0x00000001;	// first 5 bond types must not be changed,
+	public static final int cBondTypeDouble			= 0x00000002;	// because they are part of the idcode
+	public static final int cBondTypeTriple			= 0x00000004;	// within the bond query features
+	public static final int cBondTypeDelocalized	= 0x00000008;
+	public static final int cBondTypeMetalLigand	= 0x00000010;
+	public static final int cBondTypeQuadruple		= 0x00000020;
+	public static final int cBondTypeQuintuple		= 0x00000040;
 	public static final int cBondTypeDown			= 0x00000081;
 	public static final int cBondTypeUp				= 0x00000101;
 	public static final int cBondTypeCross			= 0x00000182;
@@ -279,13 +279,6 @@ public class Molecule implements Serializable {
 	public static final int cBondQFNarrowing		= 0x00600180;
 	public static final int cBondQFBondTypes		= 0x0000001F;   // original 5 bond types for idcode
 	public static final int cBondQFRareBondTypes    = 0x00000060;   // using OR logic for all 7 bond types
-	public static final int cBondQFSingle           = 0x00000001;
-	public static final int cBondQFDouble           = 0x00000002;
-	public static final int cBondQFTriple           = 0x00000004;
-	public static final int cBondQFDelocalized      = 0x00000008;
-	public static final int cBondQFMetalLigand      = 0x00000010;
-	public static final int cBondQFQuadruple        = 0x00000020;
-	public static final int cBondQFQuintuple        = 0x00000040;
 	public static final int cBondQFRingState		= 0x00000180;
 	public static final int cBondQFNotRing			= 0x00000080;
 	public static final int cBondQFRing				= 0x00000100;
@@ -2664,17 +2657,17 @@ public class Molecule implements Serializable {
 	 */
 	public int getBondOrder(int bond) {
 		if (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) != 0) {
-			if ((mBondQueryFeatures[bond] & (cBondQFSingle | cBondQFDelocalized)) != 0)
+			if ((mBondQueryFeatures[bond] & (cBondTypeSingle | cBondTypeDelocalized)) != 0)
 				return 1;
-			if ((mBondQueryFeatures[bond] & cBondQFDouble) != 0)
+			if ((mBondQueryFeatures[bond] & cBondTypeDouble) != 0)
 				return 2;
-			if ((mBondQueryFeatures[bond] & cBondQFTriple) != 0)
+			if ((mBondQueryFeatures[bond] & cBondTypeTriple) != 0)
 				return 3;
-			if ((mBondQueryFeatures[bond] & cBondQFQuadruple) != 0)
+			if ((mBondQueryFeatures[bond] & cBondTypeQuadruple) != 0)
 				return 4;
-			if ((mBondQueryFeatures[bond] & cBondQFQuintuple) != 0)
+			if ((mBondQueryFeatures[bond] & cBondTypeQuintuple) != 0)
 				return 5;
-			if ((mBondQueryFeatures[bond] & cBondQFMetalLigand) != 0)
+			if ((mBondQueryFeatures[bond] & cBondTypeMetalLigand) != 0)
 				return 0;
 			}
 		switch (mBondType[bond] & cBondTypeMaskSimple) {

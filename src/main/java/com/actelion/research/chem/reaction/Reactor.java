@@ -682,17 +682,17 @@ public class Reactor {
 								int rBondOrder = mReactant[i].getBondOrder(rBond);
 
 								// only consider simple bond order features
-								reactantQFBondType &= Molecule.cBondQFSingle | Molecule.cBondQFDouble | Molecule.cBondQFTriple;
-								productQFBondType &= Molecule.cBondQFSingle | Molecule.cBondQFDouble | Molecule.cBondQFTriple;
+								reactantQFBondType &= Molecule.cBondTypeSingle | Molecule.cBondTypeDouble | Molecule.cBondTypeTriple;
+								productQFBondType &= Molecule.cBondTypeSingle | Molecule.cBondTypeDouble | Molecule.cBondTypeTriple;
 
 								// increase in bond order
-								if (reactantQFBondType == (Molecule.cBondQFSingle | Molecule.cBondQFDouble)
-								 && productQFBondType == (Molecule.cBondQFDouble | Molecule.cBondQFTriple)) {
+								if (reactantQFBondType == (Molecule.cBondTypeSingle | Molecule.cBondTypeDouble)
+								 && productQFBondType == (Molecule.cBondTypeDouble | Molecule.cBondTypeTriple)) {
 									product.setBondType(productBond, rBondOrder <= 1 ? Molecule.cBondTypeDouble : Molecule.cBondTypeTriple);
 									}
 								// decrease in bond order
-								else if (reactantQFBondType == (Molecule.cBondQFDouble | Molecule.cBondQFTriple)
-								 && productQFBondType == (Molecule.cBondQFSingle | Molecule.cBondQFDouble)) {
+								else if (reactantQFBondType == (Molecule.cBondTypeDouble | Molecule.cBondTypeTriple)
+								 && productQFBondType == (Molecule.cBondTypeSingle | Molecule.cBondTypeDouble)) {
 									product.setBondType(productBond, rBondOrder == 3 ? Molecule.cBondTypeDouble : Molecule.cBondTypeSingle);
 									}
 								else {

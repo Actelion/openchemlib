@@ -4151,8 +4151,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		for (int bond=0; bond<mBonds; bond++) {
 			int bondTypeQFCount = Integer.bitCount(mBondQueryFeatures[bond] & (Molecule.cBondQFBondTypes | Molecule.cBondQFRareBondTypes));
 
-			if (isDelocalizedBond(bond) & (mBondQueryFeatures[bond] & cBondQFDelocalized) != 0) {
-				mBondQueryFeatures[bond] &= ~cBondQFDelocalized;
+			if (isDelocalizedBond(bond) & (mBondQueryFeatures[bond] & cBondTypeDelocalized) != 0) {
+				mBondQueryFeatures[bond] &= ~cBondTypeDelocalized;
 				bondTypeQFCount--;
 				}
 
@@ -4161,19 +4161,19 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			if (bondTypeQFCount != 0) {
 				int bondType = mBondType[bond] & cBondTypeMaskSimple;
 				if (bondType == cBondTypeSingle)
-					mBondQueryFeatures[bond] |= cBondQFSingle;
+					mBondQueryFeatures[bond] |= cBondTypeSingle;
 				else if (bondType == cBondTypeDouble)
-					mBondQueryFeatures[bond] |= cBondQFDouble;
+					mBondQueryFeatures[bond] |= cBondTypeDouble;
 				else if (bondType == cBondTypeTriple)
-					mBondQueryFeatures[bond] |= cBondQFTriple;
+					mBondQueryFeatures[bond] |= cBondTypeTriple;
 				else if (bondType == cBondTypeQuadruple)
-					mBondQueryFeatures[bond] |= cBondQFQuadruple;
+					mBondQueryFeatures[bond] |= cBondTypeQuadruple;
 				else if (bondType == cBondTypeQuintuple)
-					mBondQueryFeatures[bond] |= cBondQFQuintuple;
+					mBondQueryFeatures[bond] |= cBondTypeQuintuple;
 				else if (bondType == cBondTypeMetalLigand)
-					mBondQueryFeatures[bond] |= cBondQFMetalLigand;
+					mBondQueryFeatures[bond] |= cBondTypeMetalLigand;
 				else if (bondType == cBondTypeDelocalized)
-					mBondQueryFeatures[bond] |= cBondQFDelocalized;
+					mBondQueryFeatures[bond] |= cBondTypeDelocalized;
 				}
 			}
 		}

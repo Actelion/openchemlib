@@ -1300,13 +1300,13 @@ System.out.println();
 			int frgBondType = mFragment.getBondTypeSimple(fragmentBond);
 			int frgBondTypes = mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFBondTypes;
 			if (molBondType != frgBondType
-			 && !(molBondType == Molecule.cBondTypeSingle && (frgBondTypes & Molecule.cBondQFSingle) != 0)
-			 && !(molBondType == Molecule.cBondTypeDouble && (frgBondTypes & Molecule.cBondQFDouble) != 0)
-			 && !(molBondType == Molecule.cBondTypeTriple && (frgBondTypes & Molecule.cBondQFTriple) != 0)
-			 && !(molBondType == Molecule.cBondTypeQuadruple && (frgBondTypes & Molecule.cBondQFQuadruple) != 0)
-			 && !(molBondType == Molecule.cBondTypeQuintuple && (frgBondTypes & Molecule.cBondQFQuintuple) != 0)
-			 && !(molBondType == Molecule.cBondTypeMetalLigand && (frgBondTypes & Molecule.cBondQFMetalLigand) != 0)
-			 && !(molBondType == Molecule.cBondTypeDelocalized && (frgBondTypes & Molecule.cBondQFDelocalized) != 0))
+			 && !(molBondType == Molecule.cBondTypeSingle && (frgBondTypes & Molecule.cBondTypeSingle) != 0)
+			 && !(molBondType == Molecule.cBondTypeDouble && (frgBondTypes & Molecule.cBondTypeDouble) != 0)
+			 && !(molBondType == Molecule.cBondTypeTriple && (frgBondTypes & Molecule.cBondTypeTriple) != 0)
+			 && !(molBondType == Molecule.cBondTypeQuadruple && (frgBondTypes & Molecule.cBondTypeQuadruple) != 0)
+			 && !(molBondType == Molecule.cBondTypeQuintuple && (frgBondTypes & Molecule.cBondTypeQuintuple) != 0)
+			 && !(molBondType == Molecule.cBondTypeMetalLigand && (frgBondTypes & Molecule.cBondTypeMetalLigand) != 0)
+			 && !(molBondType == Molecule.cBondTypeDelocalized && (frgBondTypes & Molecule.cBondTypeDelocalized) != 0))
 				return false;
 
 			molDefaults &= ~Molecule.cBondQFBondTypes;
@@ -1588,13 +1588,13 @@ System.out.println();
 
 			// match fragment's single/double bonds to delocalized molecule bonds also
 			if ((matchMode & cMatchDBondToDelocalized) != 0) {
-				if ((mFragmentBondFeatures[bond] & Molecule.cBondQFDouble) != 0)
-					mFragmentBondFeatures[bond] |= Molecule.cBondQFDelocalized;
+				if ((mFragmentBondFeatures[bond] & Molecule.cBondTypeDouble) != 0)
+					mFragmentBondFeatures[bond] |= Molecule.cBondTypeDelocalized;
 				}
 			else if ((matchMode & cMatchAromDBondToDelocalized) != 0) {
-				if ((mFragmentBondFeatures[bond] & Molecule.cBondQFDouble) != 0
+				if ((mFragmentBondFeatures[bond] & Molecule.cBondTypeDouble) != 0
 						&& fragment.isAromaticBond(bond))
-					mFragmentBondFeatures[bond] |= Molecule.cBondQFDelocalized;
+					mFragmentBondFeatures[bond] |= Molecule.cBondTypeDelocalized;
 				}
 			}
 		}
@@ -1801,25 +1801,25 @@ System.out.println();
 
 		if (mol.isDelocalizedBond(bond)
 		 || mol.getBondType(bond) == Molecule.cBondTypeDelocalized)
-			queryDefaults |= Molecule.cBondQFDelocalized;
+			queryDefaults |= Molecule.cBondTypeDelocalized;
 		else switch (mol.getBondOrder(bond)) {
 			case 0:
 				queryDefaults |= Molecule.cBondTypeMetalLigand;
 				break;
 			case 1:
-				queryDefaults |= Molecule.cBondQFSingle;
+				queryDefaults |= Molecule.cBondTypeSingle;
 				break;
 			case 2:
-				queryDefaults |= Molecule.cBondQFDouble;
+				queryDefaults |= Molecule.cBondTypeDouble;
 				break;
 			case 3:
-				queryDefaults |= Molecule.cBondQFTriple;
+				queryDefaults |= Molecule.cBondTypeTriple;
 				break;
 			case 4:
-				queryDefaults |= Molecule.cBondQFQuadruple;
+				queryDefaults |= Molecule.cBondTypeQuadruple;
 				break;
 			case 5:
-				queryDefaults |= Molecule.cBondQFQuintuple;
+				queryDefaults |= Molecule.cBondTypeQuintuple;
 				break;
 			}
 
