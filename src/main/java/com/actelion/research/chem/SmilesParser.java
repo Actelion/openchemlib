@@ -948,7 +948,11 @@ public class SmilesParser {
 				}
 			}
 
-		mMol.ensureHelperArrays(Molecule.cHelperRings);	// to accomodate for the structure changes
+		mMol.ensureHelperArrays(Molecule.cHelperRings);	// to accommodate for the structure changes
+
+		if (mSmartsMode == SMARTS_MODE_IS_SMARTS
+		 || (mSmartsMode == SMARTS_MODE_GUESS && mSmartsFeatureFound))
+			protectExplicitAromaticBonds();
 
 		// Since Smiles don't have aromaticity information about bonds, we assume that all
 		// bonds of a ring are aromatic if all of its atoms are aromatic. This is not always true
@@ -959,11 +963,11 @@ public class SmilesParser {
 		boolean[] isAromaticBond = new boolean[mMol.getBonds()];
 		if (mMol.getBonds()>=0) System.arraycopy(mIsAromaticBond, 0, isAromaticBond, 0, mMol.getBonds());
 
-			// Some Smiles contain 'aromatic' rings with atoms not being compatible
-			// with a PI-bond. These include: tertiary non-charged nitrogen, [nH],
-			// sulfur, non-charged oxygen, charged carbon, etc...
-			// All these atoms and attached bonds are marked as handled to avoid
-			// attached bonds to be promoted (changed to double bond) later.
+		// Some Smiles contain 'aromatic' rings with atoms not being compatible
+		// with a PI-bond. These include: tertiary non-charged nitrogen, [nH],
+		// sulfur, non-charged oxygen, charged carbon, etc...
+		// All these atoms and attached bonds are marked as handled to avoid
+		// attached bonds to be promoted (changed to double bond) later.
 		for (int ring=0; ring<ringSet.getSize(); ring++) {
 			if (isAromaticRing[ring]) {
 				int[] ringAtom = ringSet.getRingAtoms(ring);
@@ -1007,8 +1011,8 @@ public class SmilesParser {
 				}
 			}
 
-			// handle remaining annelated rings (naphtalines, azulenes, etc.) starting from bridge heads (qualifyingNo=5)
-			// and then handle and simple rings (qualifyingNo=4)
+		// handle remaining annelated rings (naphtalines, azulenes, etc.) starting from bridge heads (qualifyingNo=5)
+		// and then handle and simple rings (qualifyingNo=4)
 		boolean qualifyingBondFound;
 		for (int qualifyingNo=5; qualifyingNo>=4; qualifyingNo--) {
 			do {
@@ -1246,9 +1250,50 @@ public class SmilesParser {
 			}
 		}
 
+	/**
+	 * In general, we kekulize the bonds of any aromatic ring even if the input is SMARTS.
+	 * For non-ring chains of lower case atoms we also assume that alternating double-single bonds
+	 * are the desired outcome. If the input is SMARTS, however, an aromatic bond may be meant
+	 * as query feature. For now, we only consider separated aromatic bonds as intentional
+	 * query feature. We might consider doing that for non-ring chains as well.
+	 */
+	private void protectExplicitAromaticBonds() {
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
+			if (mIsAromaticBond[bond]) {
+				boolean isSingleAromaticBond = true;
+				for (int i=0; i<2 && isSingleAromaticBond; i++) {
+					int bondAtom = mMol.getBondAtom(i, bond);
+					for (int j=0; j<mMol.getConnAtoms(bondAtom) && isSingleAromaticBond; j++) {
+						if (bond != mMol.getConnBond(bondAtom, j)
+						 && mIsAromaticBond[mMol.getConnBond(bondAtom, j)])
+							isSingleAromaticBond = false;
+					}
+				}
 
+				if (isSingleAromaticBond) {
+					mMol.setBondType(bond, Molecule.cBondTypeDelocalized);
+					mAromaticBonds--;
+					for (int i=0; i<2; i++) {
+						int bondAtom = mMol.getBondAtom(i, bond);
+						if (mMol.isMarkedAtom(bondAtom)) {
+							mMol.setAtomMarker(bondAtom, false);
+							mAromaticAtoms--;
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+
+	/**
+	 * Locate bonds that have no aromatic neighbour bond on at least one side.
+	 * Convert these terminal or single aromatic bonds to a double bond
+	 * and their aromatic neighbour bonds to a single bond.
+	 * Do this until no terminal or single aromatic ring bonds remains.
+ 	 */
 	private void promoteObviousBonds() {
-			// handle bond orders of aromatic bonds along the chains attached to 5- or 7-membered ring
 		boolean terminalAromaticBondFound;
 		do {
 			terminalAromaticBondFound = false;
