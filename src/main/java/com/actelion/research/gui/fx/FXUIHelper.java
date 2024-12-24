@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.net.URL;
 
 public class FXUIHelper implements GenericUIHelper {
-	private Node mParentNode;
+	private final Node mParentNode;
 	private Stage mHelpDialog;
 
 	public FXUIHelper(Node parent) {
@@ -86,47 +86,20 @@ public class FXUIHelper implements GenericUIHelper {
 	@Override
 	public void showHelpDialog(String url, String title) {
 		if (mHelpDialog == null) {
-			mHelpDialog = new Stage();
 			WebView view = new WebView();
 			view.setZoom(HiDPIHelper.getUIScaleFactor());
 			view.getEngine().load(createURL(url).toExternalForm());
-			Scene scene = new Scene(view, HiDPIHelper.scale(640), HiDPIHelper.scale(480));
+			Scene scene = new Scene(view);
+
+			mHelpDialog = new Stage();
 			mHelpDialog.setScene(scene);
+			mHelpDialog.setMinWidth(scene.getRoot().prefWidth(640));
+			mHelpDialog.setMinHeight(scene.getRoot().prefHeight(480));
 			mHelpDialog.show();
 		}
-
-
-/*		if (mHelpDialog == null || !mHelpDialog.isVisible()) {
-			JEditorPane helpPane = new JEditorPane();
-			helpPane.setEditorKit(HiDPIHelper.getUIScaleFactor() == 1f ? new HTMLEditorKit() : new ScaledEditorKit());
-			helpPane.setEditable(false);
-			try {
-				helpPane.setPage(getClass().getResource(url));
-			}
-			catch (Exception ex) {
-				helpPane.setText(ex.toString());
-			}
-
-			Component c = getParent();
-			if (c instanceof Frame)
-				mHelpDialog = new JDialog((Frame)c, title, false);
-			else
-				mHelpDialog = new JDialog((Dialog)c, title, false);
-
-			mHelpDialog.setSize(HiDPIHelper.scale(520), HiDPIHelper.scale(440));
-			mHelpDialog.getContentPane().add(new JScrollPane(helpPane,
-					JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-					JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
-			int x = (c.getX()>=8 + mHelpDialog.getWidth()) ? c.getX() - 8 - mHelpDialog.getWidth() : c.getX() + 8 + c.getWidth();
-			mHelpDialog.setLocation(x, c.getY());
-			mHelpDialog.setVisible(true);
-		}
 		else {
-			Component c = getParent();
-			int x = (mHelpDialog.getX() + mHelpDialog.getWidth() / 2>=c.getX() + c.getWidth() / 2) ?
-					c.getX() - 8 - mHelpDialog.getWidth() : c.getX() + 8 + c.getWidth();
-			mHelpDialog.setLocation(x, c.getY());
-		}*/
+			mHelpDialog.toFront();
+		}
 	}
 
 	public static URL createURL(String urlText) {
