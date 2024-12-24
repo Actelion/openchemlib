@@ -2,12 +2,12 @@ package com.actelion.research.gui.fx;
 
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
-import com.actelion.research.gui.swing.SwingCursorHelper;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.web.WebView;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
@@ -68,13 +68,20 @@ public class FXUIHelper implements GenericUIHelper {
 
 	@Override
 	public File openChemistryFile(boolean isReaction) {
-		return null;
-/*		return isReaction ?
-				FileHelper.getFile(mDrawArea, "Please select a reaction file",
-						FileHelper.cFileTypeRXN | CompoundFileHelper.cFileTypeRD)
-				: FileHelper.getFile(mDrawArea, "Please select a molecule file",
-				FileHelper.cFileTypeMOL | CompoundFileHelper.cFileTypeMOL2);
-*/	}
+		FileChooser fileChooser = new FileChooser();
+		if (isReaction) {
+			fileChooser.setTitle("Please select a reaction file");
+			fileChooser.getExtensionFilters().addAll(
+					new FileChooser.ExtensionFilter("Reaction Files", "*.rxn"));
+		}
+		else {
+			fileChooser.setTitle("Please select a molecule file");
+			fileChooser.getExtensionFilters().addAll(
+					new FileChooser.ExtensionFilter("MDL Molfiles", "*.mol"),
+					new FileChooser.ExtensionFilter("Mol2-Files", "*.mol2"));
+		}
+		return fileChooser.showOpenDialog(mParentNode.getScene().getWindow());
+	}
 
 	@Override
 	public void showHelpDialog(String url, String title) {

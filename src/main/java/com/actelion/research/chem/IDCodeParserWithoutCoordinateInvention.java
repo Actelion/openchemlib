@@ -971,7 +971,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	 * This method parses an id-coordinate string (new format only) and writes the coordinates into a Coordinates array.
 	 * If the id-coordinates contain implicit hydrogen coordinates, then this method does not(!!!) add these hydrogen atoms
 	 * to the Molecule. Thus, for 3D-coordinates with implicit hydrogen coordinates, you need to make sure that all
-	 * of the Molecule's hydrogen atoms are explicit and that the Coordinates array's size covers all hydrogens atoms.
+	 * the Molecule's hydrogen atoms are explicit and that the Coordinates array's size covers all hydrogens atoms.
 	 * For instance, if parsing idcodes and coordinates of a conformer set, you may parse the first conformer with one
 	 * of the getCompactMolecule() or parse() methods.
 	 * This adds all implicit hydrogens as explicit ones to the Molecule and conformer object. All subsequent conformers

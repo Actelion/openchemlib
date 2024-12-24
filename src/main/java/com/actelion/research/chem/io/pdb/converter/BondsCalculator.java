@@ -34,10 +34,7 @@
 
 package com.actelion.research.chem.io.pdb.converter;
 
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.RingCollection;
-import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.*;
 import com.actelion.research.chem.conf.VDWRadii;
 import com.actelion.research.util.IntQueue;
 
@@ -725,7 +722,7 @@ public class BondsCalculator {
 					System.out.println("Could not aromatize ring "+i);
 					aromaticRings[i] = false;
 					ok = false;
-				}				
+				}
 			}
 		}
 		return ok; 
