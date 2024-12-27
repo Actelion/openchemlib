@@ -242,8 +242,10 @@ public class PDBFileParser {
         		indexLine++;
         	}
     	}
-        String data = liRaw.get(indexLine);
-	    while((!data.startsWith(TAG_ATOM) && !data.startsWith(TAG_HETATM)) && indexLine<liRaw.size()-1) {
+
+	    while(indexLine<liRaw.size()
+		   && !liRaw.get(indexLine).startsWith(TAG_ATOM)
+		   && !liRaw.get(indexLine).startsWith(TAG_HETATM)) {
 	        // Not mandatory
 	    	if(liRaw.get(indexLine).startsWith(TAG_OBSOLTE)) {
 	            SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_OBSOLTE);
@@ -256,10 +258,7 @@ public class PDBFileParser {
 	            pdbCoordEntryFile.setTitle(siIndex.getKey());
 	            indexLine = siIndex.getValue();
 	        }
-	        //} else {
-	        //    throw new RuntimeException("Missing " + TAG_TITLE);
-	        //}
-	
+
 	        // Not mandatory
 	        if(liRaw.get(indexLine).startsWith(TAG_SPLIT)) {
 	        	SimpleEntry<String, Integer> siIndex = parseOneTimeMultipleLines(liRaw, indexLine, TAG_SPLIT);
@@ -335,12 +334,10 @@ public class PDBFileParser {
 	
 	        // Mandatory
 	        if(liRaw.get(indexLine).startsWith(TAG_REVDAT)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_REVDAT);
-	            pdbCoordEntryFile.setRevdat(liIndex.getLi());
-	            indexLine = liIndex.getId();
-	        } //else {
-	           // throw new RuntimeException("Missing " + TAG_REVDAT);
-	        //}
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_REVDAT);
+	            pdbCoordEntryFile.setRevdat(liIndex);
+	            indexLine += liIndex.size();
+	        }
 	
 	        // Optional Mandatory for a replacement entry.
 	        if(liRaw.get(indexLine).startsWith(TAG_SPRSDE)) {
@@ -351,39 +348,37 @@ public class PDBFileParser {
 	
 	        // Optional Mandatory for a publication describes the experiment.
 	        if(liRaw.get(indexLine).startsWith(TAG_JRNL)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_JRNL);
-	            pdbCoordEntryFile.setJrnl(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_JRNL);
+	            pdbCoordEntryFile.setJrnl(liIndex);
+	            indexLine += liIndex.size();
 	        }
-	        /*
-	        remarkParser.parse(liRaw, indexLine);
-	
-	        HashMap<Integer, String> hmNo_Remark = remarkParser.getHmNo_Remark();
-	
-	        indexLine = remarkParser.getIndexLine();
-	
-	        pdbCoordEntryFile.setRemarks(hmNo_Remark);
-	        */
-	
+
+			while (liRaw.get(indexLine).startsWith(TAG_REMARK))
+				indexLine++;
+//	        remarkParser.parse(liRaw, indexLine);
+//	        HashMap<Integer, String> hmNo_Remark = remarkParser.getHmNo_Remark();
+//	        indexLine = remarkParser.getIndexLine();
+//	        pdbCoordEntryFile.setRemarks(hmNo_Remark);
+
 	        // Mandatory for all polymers.
 	        if(liRaw.get(indexLine).startsWith(TAG_DBREF)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_DBREF);
-	            pdbCoordEntryFile.setDBRef(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_DBREF);
+	            pdbCoordEntryFile.setDBRef(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        // Mandatory for all polymers.
 	        if(liRaw.get(indexLine).startsWith(TAG_DBREF1_DBREF2)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_DBREF1_DBREF2);
-	            pdbCoordEntryFile.setDBRef1DBRef2(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_DBREF1_DBREF2);
+	            pdbCoordEntryFile.setDBRef1DBRef2(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        // Mandatory if sequence conflict exists.
 	        if(liRaw.get(indexLine).startsWith(TAG_SEQADV)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SEQADV);
-	            pdbCoordEntryFile.setSEQADV(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SEQADV);
+	            pdbCoordEntryFile.setSEQADV(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        // Mandatory if ATOM records exist.
@@ -397,9 +392,9 @@ public class PDBFileParser {
 	        // Mandatory if modified group exists in the coordinates.
 	        // Identification of modifications to standard residues.
 	        if(liRaw.get(indexLine).startsWith(TAG_MODRES)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MODRES);
-	            pdbCoordEntryFile.setModRes(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MODRES);
+	            pdbCoordEntryFile.setModRes(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        // Mandatory if a non-standard group other than water appears in the coordinates.
@@ -408,9 +403,9 @@ public class PDBFileParser {
 	        String patternHET = TAG_HET + " ";
 	
 	        if(liRaw.get(indexLine).startsWith(patternHET)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, patternHET);
-	            pdbCoordEntryFile.setHet(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, patternHET);
+	            pdbCoordEntryFile.setHet(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        //
@@ -437,33 +432,33 @@ public class PDBFileParser {
 	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_HELIX)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_HELIX);
-	            pdbCoordEntryFile.setHelix(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_HELIX);
+	            pdbCoordEntryFile.setHelix(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_SHEET)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SHEET);
-	            pdbCoordEntryFile.setSheet(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	            List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SHEET);
+	            pdbCoordEntryFile.setSheet(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_SSBOND)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SSBOND);
-	            pdbCoordEntryFile.setSSBond(liIndex.getLi());
-	            indexLine = liIndex.getId();
+				List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_SSBOND);
+	            pdbCoordEntryFile.setSSBond(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_LINK)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_LINK);
-	            pdbCoordEntryFile.setLink(liIndex.getLi());
-	            indexLine = liIndex.getId();
+				List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_LINK);
+	            pdbCoordEntryFile.setLink(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_CISPEP)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_CISPEP);
-	            pdbCoordEntryFile.setCisPep(liIndex.getLi());
-	            indexLine = liIndex.getId();
+				List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_CISPEP);
+	            pdbCoordEntryFile.setCisPep(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_SITE)) {
@@ -476,79 +471,60 @@ public class PDBFileParser {
 	        if(liRaw.get(indexLine).startsWith(TAG_CRYST1)) {
 	            pdbCoordEntryFile.setCryst1(liRaw.get(indexLine).substring(6));
 	            indexLine++;
-	        } //else {
-	        //    throw new RuntimeException("Missing " + TAG_CRYST1);
-	        //}
+	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_ORIGX1)) {
 	            pdbCoordEntryFile.setOrigX1(liRaw.get(indexLine).substring(10));
 	            indexLine++;
-	        } //else {
-	        //   throw new RuntimeException("Missing " + TAG_ORIGX1);
-	        //}
+	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_ORIGX2)) {
 	            pdbCoordEntryFile.setOrigX2(liRaw.get(indexLine).substring(10));
 	            indexLine++;
-	        } //else {
-	           // throw new RuntimeException("Missing " + TAG_ORIGX2);
-	        //}
+	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_ORIGX3)) {
 	            pdbCoordEntryFile.setOrigX3(liRaw.get(indexLine).substring(10));
 	            indexLine++;
-	        } //else {
-	        //    throw new RuntimeException("Missing " + TAG_ORIGX3);
-	        //}
+	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_SCALE1)) {
 	            pdbCoordEntryFile.setScale1(liRaw.get(indexLine).substring(10));
 	            indexLine++;
-	        } //else {
-	           // throw new RuntimeException("Missing " + TAG_SCALE1);
-	        //}
+	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_SCALE2)) {
 	            pdbCoordEntryFile.setScale2(liRaw.get(indexLine).substring(10));
 	            indexLine++;
-	        } //else {
-	        //    throw new RuntimeException("Missing " + TAG_SCALE2);
-	        //}
+	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_SCALE3)) {
 	            pdbCoordEntryFile.setScale3(liRaw.get(indexLine).substring(10));
 	            indexLine++;
-	        } //else {
-	        //    throw new RuntimeException("Missing " + TAG_SCALE3);
-	        //}
-	
-	        if(liRaw.get(indexLine).startsWith(TAG_MTRIX1)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX1);
-	            pdbCoordEntryFile.setMtrix1(liIndex.getLi());
-	            indexLine = liIndex.getId();
+	        }
+
+			if(liRaw.get(indexLine).startsWith(TAG_MODEL)) {
+				pdbCoordEntryFile.setModel(liRaw.get(indexLine).substring(10));
+				indexLine++;
+			}
+
+			if(liRaw.get(indexLine).startsWith(TAG_MTRIX1)) {
+				List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX1);
+	            pdbCoordEntryFile.setMtrix1(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_MTRIX2)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX2);
-	            pdbCoordEntryFile.setMtrix2(liIndex.getLi());
-	            indexLine = liIndex.getId();
+				List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX2);
+	            pdbCoordEntryFile.setMtrix2(liIndex);
+	            indexLine += liIndex.size();
 	        }
 	
 	        if(liRaw.get(indexLine).startsWith(TAG_MTRIX3)) {
-	            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX3);
-	            pdbCoordEntryFile.setMtrix3(liIndex.getLi());
-	            indexLine = liIndex.getId();
+				List<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_MTRIX3);
+	            pdbCoordEntryFile.setMtrix3(liIndex);
+	            indexLine += liIndex.size();
 	        }
-	        else {
-	        	indexLine++;
-	        }
-	        
-	        data = liRaw.get(indexLine);
-	        
-	        
-	        //
-	        // Parsing atoms and their coordinates
-	        //
 	    }
 	    
 	    //indexLine--;
@@ -670,7 +646,6 @@ public class PDBFileParser {
             } else {
                 break;
             }
-
         }
 
         AbstractMap.SimpleEntry<String, Integer> siTextIndex = new AbstractMap.SimpleEntry<>(sb.toString(), indexLine);
@@ -679,9 +654,7 @@ public class PDBFileParser {
 
     }
 
-    private ListInteger<String> parseMultipleTimesOneLine(List<String> liRaw, int indexLine, String tag) throws ParseException {
-
-        int skipFirst = 1;
+    private List<String> parseMultipleTimesOneLine(List<String> liRaw, int indexLine, String tag) throws ParseException {
 
         String l0 = liRaw.get(indexLine);
         if(!l0.startsWith(tag)) {
@@ -693,20 +666,15 @@ public class PDBFileParser {
 
         liTxt.add(titleSub0);
 
-        indexLine++;
-
-        int start = indexLine;
-
-        for (int i = start; i < liRaw.size(); i++) {
+        for (int i = indexLine+1; i < liRaw.size(); i++) {
 
             String l = liRaw.get(i);
             if(l.startsWith(tag)) {
-
                 StringBuilder sb = new StringBuilder();
 
                 String [] arr = l.split("[ ]+");
                 sb.append(" ");
-                for (int j = skipFirst; j < arr.length; j++) {
+                for (int j = 1; j < arr.length; j++) {
                     sb.append(arr[j]);
 
                     if(j < arr.length-1) {
@@ -715,16 +683,12 @@ public class PDBFileParser {
                 }
 
                 liTxt.add(sb.toString());
-
-                indexLine++;
             } else {
                 break;
             }
         }
 
-        ListInteger liTextIndex = new ListInteger(liTxt, indexLine);
-
-        return liTextIndex;
+        return liTxt;
     }
 
 	private int parseCONECTLines(List<String> liRaw, int lineIndex, SortedList<int[]> bondList) throws ParseException {

@@ -407,6 +407,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * This is different from the Hendrickson pi-value, which considers pi-bonds to carbons only.
+	 * Requires helper arrays state cHelperNeighbours.
 	 * @param atom
 	 * @return the number pi electrons at atom (the central atom of acetone would have 1)
 	 */
@@ -1108,7 +1109,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		if (isFragmentMember == null)
 			isFragmentMember = new boolean[mAllAtoms];
 
-		int graphAtom[] = new int[mAllAtoms];
+		int[] graphAtom = new int[mAllAtoms];
 
 		graphAtom[0] = rootAtom;
 		isFragmentMember[rootAtom] = true;

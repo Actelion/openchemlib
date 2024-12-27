@@ -145,47 +145,41 @@ public class AromaticityResolver {
         while (mAromaticBonds != 0) {
             boolean bondsPromoted = false;
 
-            if (!bondsPromoted) {
-                // try to find and promote one entire aromatic 6-ring
-                for (int ring=0; ring<ringSet.getSize(); ring++) {
-                    if (ringSet.getRingSize(ring) == 6) {
-                        boolean isAromaticRing = true;
-                        int[] ringBond = ringSet.getRingBonds(ring);
-                        for (int i=0; i<6; i++) {
-                            if (!mIsDelocalizedBond[ringBond[i]]) {
-                                isAromaticRing = false;
-                                break;
-                                }
-                            }
-    
-                        if (isAromaticRing) {
-                            for (int i=0; i<6; i+=2)
-                                promoteBond(ringBond[i]);
-                            bondsPromoted = true;
-                            break;
-                            }
-                        }
-                    }
-                }
+			// try to find and promote one entire aromatic 6-ring
+			for (int ring=0; ring<ringSet.getSize(); ring++) {
+				if (ringSet.getRingSize(ring) == 6) {
+					boolean isAromaticRing = true;
+					int[] ringBond = ringSet.getRingBonds(ring);
+					for (int i=0; i<6; i++) {
+						if (!mIsDelocalizedBond[ringBond[i]]) {
+							isAromaticRing = false;
+							break;
+							}
+						}
 
+					if (isAromaticRing) {
+						for (int i=0; i<6; i+=2)
+							promoteBond(ringBond[i]);
+						bondsPromoted = true;
+						break;
+						}
+					}
+				}
 
 			if (bondsPromoted) {
 				promoteObviousBonds();
 				continue;
 				}
 
-			if (!bondsPromoted) {
-                // find and promote one aromatic bond
-                // (should never happen, but to prevent an endless loop nonetheless)
-                for (int bond=0; bond<mMol.getBonds(); bond++) {
-                    if (mIsDelocalizedBond[bond]) {
-                        promoteBond(bond);
-                        promoteObviousBonds();
-                        bondsPromoted = true;
-                        break;
-                        }
-                    }
-                }
+			// Find and promote one aromatic bond.
+			// (should never happen, but to prevent an endless loop nonetheless)
+			for (int bond=0; bond<mMol.getBonds(); bond++) {
+				if (mIsDelocalizedBond[bond]) {
+					promoteBond(bond);
+					promoteObviousBonds();
+					break;
+					}
+				}
             }
 
 /*		for (int atom=0; atom<mMol.getAtoms(); atom++) {

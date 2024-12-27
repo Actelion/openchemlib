@@ -79,6 +79,8 @@ public class PDBCoordEntryFile {
 
     private String keywords;
 
+    private String model;
+
     private String expdata;
     private String nummdl;
     private String mdltyp;
@@ -258,6 +260,14 @@ public class PDBCoordEntryFile {
 
     public void setMdltyp(String mdltyp) {
         this.mdltyp = mdltyp;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
     }
 
     public String getAuthor() {

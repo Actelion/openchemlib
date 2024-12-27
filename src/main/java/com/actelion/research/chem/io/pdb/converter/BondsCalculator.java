@@ -372,7 +372,7 @@ public class BondsCalculator {
 		mol.ensureHelperArrays(Molecule.cHelperRingsSimple);
 		RingCollection ringSet = mol.getRingSetSimple();
 		ArrayList<Integer>[] atomToRings = getAtomToRings(mol);
-		boolean[] aromaticRing = new boolean[ringSet.getSize()];
+		boolean[] isAromaticRing = new boolean[ringSet.getSize()];
 
 
 		//int[] pyroles = new int[allRings.size()];
@@ -515,7 +515,7 @@ public class BondsCalculator {
 					continue;
 				}
 			}
-			aromaticRing[ringNo] = true;
+			isAromaticRing[ringNo] = true;
 			/*
 			if(start<0) start = 0;
 			pyrolles[ringNo] = nPyroles;
@@ -559,24 +559,67 @@ public class BondsCalculator {
 				boolean ok = false;
 				if (atomToRings[atom] != null)
 					for(int r: atomToRings[atom])
-						if(aromaticRing[r]) ok = true;
+						if(isAromaticRing[r]) ok = true;
 				if(!ok) nonAromaticAtom.add(atom);
 			}
 		}
-		
-		for (int i = 0; i < aromaticRing.length; i++) {			
-			if(aromaticRing[i]) {
-				boolean success = aromatize(mol, atomToRings,ringSet, i, aromaticRing, nonAromaticAtom, visited2, 0, ringSet.getRingSize(i)%2, new ArrayList<Integer>(), true);
-				if(!success) success = aromatize(mol, atomToRings, ringSet, i, aromaticRing, nonAromaticAtom, visited2, 0, ringSet.getRingSize(i)%2, new ArrayList<Integer>(), false);
+
+		// Two alternatives: aromatize() for every ring,
+		// or AromaticityResolver.locateDelocalizedDoubleBonds() for the entire molecule
+
+		// OPTION aromatize(): about 5% of the <2.5 angstrom .pdb files cannot be aromatized!!!
+/*		boolean needsChargeCorrection = true;
+		for (int i = 0; i < isAromaticRing.length; i++) {
+			if(isAromaticRing[i]) {
+//StereoMolecule copy = new StereoMolecule(mol);
+				boolean success = aromatize(mol, atomToRings,ringSet, i, isAromaticRing, nonAromaticAtom, visited2, 0, ringSet.getRingSize(i)%2, new ArrayList<Integer>(), true);
+				if(!success) success = aromatize(mol, atomToRings, ringSet, i, isAromaticRing, nonAromaticAtom, visited2, 0, ringSet.getRingSize(i)%2, new ArrayList<Integer>(), false);
 				if(!success) {
+//System.out.println(new MolfileCreator(copy).getMolfile());
 					System.out.println("Could not aromatize ring "+i);
-					aromaticRing[i] = false;
+					isAromaticRing[i] = false;
+				}
+			}
+		}*/
+
+		// OPTION AromaticityResolver.locateDelocalizedDoubleBonds():
+		// TODO we still have a some aromaticity resolving issues, e.g. int PDB entry 1AZ1
+		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+		boolean needsChargeCorrection = false;
+		boolean[] isAromaticBond = new boolean[mol.getAllBonds()];
+		for (int r=0; r<isAromaticRing.length; r++) {
+			if (isAromaticRing[r]) {
+				int[] ringAtom = ringSet.getRingAtoms(r);
+				int[] ringBond = ringSet.getRingBonds(r);
+				// we need to change exocyclic oxo and similar to a single bond and create the tautomer
+				for (int i=0; i<ringAtom.length; i++) {
+					for (int j=0; j<mol.getConnAtoms(ringAtom[i]); j++) {
+						if (mol.getConnBondOrder(ringAtom[i], j) == 2) {
+							int connAtom = mol.getConnAtom(ringAtom[i], j);
+							if (mol.getAtomicNo(connAtom) == 7 || mol.getAtomicNo(connAtom) == 8 || mol.getAtomicNo(connAtom) == 16)
+								mol.setBondType(mol.getConnBond(ringAtom[i], j), Molecule.cBondTypeSingle);
+							break;
+						}
+					}
+				}
+				for (int rb : ringBond) {
+					mol.setBondOrder(rb, 1);
+					isAromaticBond[rb] = true;
 				}
 			}
 		}
+
+//StereoMolecule copy = new StereoMolecule(mol);
+		if (!new AromaticityResolver(mol).locateDelocalizedDoubleBonds(isAromaticBond, true, false)) {
+//System.out.println("Bondscalculator aromatization failed here: "+new MolfileCreator(copy).getMolfile());
+//for (int i=0; i<isAromaticBond.length; i++) if (isAromaticBond[i]) System.out.print(" "+i);
+//System.out.print("\n");
+			System.out.println("Could not aromatize all rings.");
+		}
+
 		boolean[] aromaticAtoms = new boolean[mol.getAllAtoms()];
 		for (int i = 0; i < ringSet.getSize(); i++) {
-			if(aromaticRing[i]) {
+			if(isAromaticRing[i]) {
 				for(int atm: ringSet.getRingAtoms(i)) {
 					aromaticAtoms[atm] = true;
 				}
@@ -600,7 +643,6 @@ public class BondsCalculator {
 				
 				if(mol.getImplicitHydrogens(a3)==0 && connected(mol, a3, -1, 2)>=0) order3 = 1;
 				else order3 = getLikelyOrder(mol, atom, a3);
-				
 				
 				//the highest is the most likely to have a double bond
 				int connBond = -1;
@@ -663,6 +705,16 @@ public class BondsCalculator {
 					}
 				}
 			}
+		}
+
+		// We need to add an atom charge if a new pi-bond increased a valence beyond the uncharged maximum.
+		if (needsChargeCorrection) {
+			mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+			for (int atom=0; atom<mol.getAtoms(); atom++)
+				if ((mol.getAtomicNo(atom) == 7 || mol.getAtomicNo(atom) == 8)
+				 && mol.getAtomCharge(atom) == 0
+				 && mol.getOccupiedValence(atom) > mol.getDefaultMaxValenceUncharged(atom))
+					mol.setAtomCharge(atom, 1);
 		}
 	}
 

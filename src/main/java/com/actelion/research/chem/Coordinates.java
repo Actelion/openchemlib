@@ -260,7 +260,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 	public Coordinates unit() {
 		double d = dist();
 		if(d==0) {
-			System.err.println("Cannot call unit() on a null vector. Returned (1,0,0)");
+			System.out.println("Cannot call unit() on a null vector. Returned (1,0,0)");
 //			Thread.dumpStack();
 			x = 1;
 			y = 0;
