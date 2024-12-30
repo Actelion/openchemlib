@@ -353,8 +353,12 @@ public class PDBFileParser {
 	            indexLine += liIndex.size();
 	        }
 
-			while (liRaw.get(indexLine).startsWith(TAG_REMARK))
+			while (liRaw.get(indexLine).startsWith(TAG_REMARK)) {
+				String line = liRaw.get(indexLine).trim();
+				if (line.contains("RESOLUTION.") && line.endsWith("ANGSTROMS."))
+					pdbCoordEntryFile.setResolution(line.substring(12+line.indexOf("RESOLUTION."), line.length()-11).trim());
 				indexLine++;
+			}
 //	        remarkParser.parse(liRaw, indexLine);
 //	        HashMap<Integer, String> hmNo_Remark = remarkParser.getHmNo_Remark();
 //	        indexLine = remarkParser.getIndexLine();

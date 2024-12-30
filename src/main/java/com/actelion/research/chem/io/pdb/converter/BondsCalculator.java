@@ -34,6 +34,7 @@
 
 package com.actelion.research.chem.io.pdb.converter;
 
+import com.actelion.research.calc.SingularValueDecomposition;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.conf.VDWRadii;
 import com.actelion.research.util.IntQueue;
@@ -195,7 +196,6 @@ public class BondsCalculator {
 		//Hybridization State Determination
 		int[] spOrder = new int[mol.getAllAtoms()];
 		for(int atom=0; atom<mol.getAllAtoms(); atom++) {
-			
 			if(mol.getConnAtoms(atom)<=1) {
 				spOrder[atom] = 1;
 			} else if(mol.getConnAtoms(atom)==2) {
@@ -265,8 +265,7 @@ public class BondsCalculator {
 					a = connectedAtom(mol, atom, 7, 2, 0, 0);
 					b = connectedBond(mol, atom, 16, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;}
-					
-					
+
 					//C(CR)(N)(=N)
 					if((mol.getAtomicNo(a1)==6 && mol.getAtomicNo(a2)==7 && mol.getAtomicNo(a3)==7 && mol.getAllConnAtoms(a2)==1 && mol.getAllConnAtoms(a3)==1) ||
 						(mol.getAtomicNo(a1)==7 && mol.getAtomicNo(a2)==6 && mol.getAtomicNo(a3)==7 && mol.getAllConnAtoms(a1)==1 && mol.getAllConnAtoms(a3)==1) ||
@@ -313,8 +312,8 @@ public class BondsCalculator {
 							mol.setBondOrder(mol.getConnBond(atom,2), 2);
 						} 
 					}
-					
-					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 					
+
+					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;}
 					
 				} 
 			} else if(mol.getAllConnAtoms(atom)==4) {
@@ -343,7 +342,8 @@ public class BondsCalculator {
 				}
 			}
 		}
-		//Preliminary pass: process obvious bonds outside rings		
+
+		//Preliminary pass: process obvious bonds outside rings
 		for (int bond = 0; bond < mol.getAllBonds(); bond++) {
 			int a1 = mol.getBondAtom(0, bond);
 			int a2 = mol.getBondAtom(1, bond);
@@ -362,7 +362,6 @@ public class BondsCalculator {
 				mol.setBondOrder(bond, 2);
 				visited[bond] = true;
 			}
-			
 		}
 
 		/////////////////////////////////////////////////////////
@@ -379,44 +378,50 @@ public class BondsCalculator {
 		//int[] oxo = new int[allRings.size()];
 		//int[] toDo = new int[mol.getAllAtoms()];
 
-		for (int size = 5; size <= 6; size++)
-		for (int ringNo = 0; ringNo < ringSet.getSize(); ringNo++) {
-			int[] ring = ringSet.getRingAtoms(ringNo);
-			if(ring.length!=size) continue;  
-						
-			Coordinates c0 = mol.getCoordinates(ring[0]);
-			Coordinates c1 = mol.getCoordinates(ring[1]);
-			Coordinates c2 = mol.getCoordinates(ring[2]);
-			Coordinates normal = c1.subC(c0).cross(c1.subC(c2));
-			if(normal.distSq()==0) continue;
-			//int startIndex = 0;
-			boolean planar = true;
-			
-			for(int i=0; i<ring.length && planar; i++) {
-				Coordinates c3 = mol.getCoordinates(ring[i]);
-				Coordinates w = c1.subC(c3);
-				if(Math.abs(normal.unitC().dot(w) / w.dist())>0.3) {planar=false;}
-				
-				//Make sure that all carbon in the ring are planar
-				if(mol.getAtomicNo(ring[i])==6 || mol.getAtomicNo(ring[i])==7) {
-					if(spOrder[ring[i]]!=2) {planar=false;}
-				} else if(mol.getAtomicNo(ring[i])>16) {
-					planar=false;  //continue if the ring has a metal atom
-				}
-			}			
-			if(!planar) continue;
+		Coordinates normal = new Coordinates();
+		Coordinates cog = new Coordinates();
+		double[][] coords = new double[7][3];
 
-			//
+		for (int size = 5; size <= 7; size++)
+		for (int ringNo = 0; ringNo < ringSet.getSize(); ringNo++) {
+			int[] ringAtom = ringSet.getRingAtoms(ringNo);
+			if (ringAtom.length != size)
+				continue;
+
+			boolean planar = true;
+			for (int i=0; i<ringAtom.length && planar; i++) {
+				if ((mol.getAtomicNo(ringAtom[i])==6 || mol.getAtomicNo(ringAtom[i])==7)
+				 && spOrder[ringAtom[i]] != 2)			// carbon/nitrogen in the ring must be planar
+					planar = false;
+				if (mol.getConnAtoms(ringAtom[i]) > 3	// e.g. boron cluster
+				 || mol.getAtomicNo(ringAtom[i]) > 16)	// metal atoms
+					planar = false;
+				}
+			if (!planar)
+				continue;
+
+			// If any of the ring atoms is further away from the ring plane than 0.12 Angstrom,
+			// then conclude that the ring is not aromatic.
+			calculateNearestPlane(mol, ringAtom, cog, normal, coords);
+
+			planar = true;
+			for (int i=0; i<ringAtom.length && planar; i++)
+				if (Math.abs(normal.x * coords[i][0] + normal.y * coords[i][1] + normal.z * coords[i][2])
+						> (size == 5 ? 0.05 : 0.10))	// 5-membered rings must have stricter limits
+					planar = false;
+			if (!planar)
+				continue;
+
 			//Special case 1: Histidine (some obfuscated code in order to avoid a SS search)
-			if(ring.length==5) {
+			if(ringAtom.length==5) {
 				//Central C:			
 				int start = -1;
 				int[] posN = {-1, -1};
 				boolean ok = true;
-				for(int i=0; ok && i<ring.length; i++) {
-					if(mol.getAtomicNo(ring[i])==6 && mol.getAllConnAtoms(ring[i])==3) {start = i;}
-					else if(mol.getAllConnAtoms(ring[i])!=2) ok = false;
-					else if(mol.getAtomicNo(ring[i])==7) {
+				for(int i=0; ok && i<ringAtom.length; i++) {
+					if(mol.getAtomicNo(ringAtom[i])==6 && mol.getAllConnAtoms(ringAtom[i])==3) {start = i;}
+					else if(mol.getAllConnAtoms(ringAtom[i])!=2) ok = false;
+					else if(mol.getAtomicNo(ringAtom[i])==7) {
 						if(posN[0]<0) posN[0] = i;
 						else if(posN[1]<0) posN[1] = i;
 						else ok = false;
@@ -424,37 +429,34 @@ public class BondsCalculator {
 				}
 				if(ok && start>=0 && posN[1]>=0) {
 					if((start+2)%5==posN[0] && (start+4)%5==posN[1]) {
-						mol.setBondOrder(mol.getBond(ring[start], ring[(start+1)%5]), 2);
-						mol.setBondOrder(mol.getBond(ring[(start+3)%5], ring[(start+4)%5]), 2);
+						mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+1)%5]), 2);
+						mol.setBondOrder(mol.getBond(ringAtom[(start+3)%5], ringAtom[(start+4)%5]), 2);
 						continue;	
 					} else if((start+2)%5==posN[1] && (start+4)%5==posN[0]) {
-						mol.setBondOrder(mol.getBond(ring[start], ring[(start+1)%5]), 2);
-						mol.setBondOrder(mol.getBond(ring[(start+3)%5], ring[(start+4)%5]), 2);
+						mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+1)%5]), 2);
+						mol.setBondOrder(mol.getBond(ringAtom[(start+3)%5], ringAtom[(start+4)%5]), 2);
 						continue;	
 					} else if((start+3)%5==posN[0] && (start+1)%5==posN[1]) {
-						mol.setBondOrder(mol.getBond(ring[start], ring[(start+4)%5]), 2);
-						mol.setBondOrder(mol.getBond(ring[(start+1)%5], ring[(start+2)%5]), 2);
+						mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+4)%5]), 2);
+						mol.setBondOrder(mol.getBond(ringAtom[(start+1)%5], ringAtom[(start+2)%5]), 2);
 						continue;	
 					} else if((start+3)%5==posN[1] && (start+1)%5==posN[0]) {
-						mol.setBondOrder(mol.getBond(ring[start], ring[(start+4)%5]), 2);
-						mol.setBondOrder(mol.getBond(ring[(start+1)%5], ring[(start+2)%5]), 2);
+						mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+4)%5]), 2);
+						mol.setBondOrder(mol.getBond(ringAtom[(start+1)%5], ringAtom[(start+2)%5]), 2);
 						continue;	
 					}
-					
 				}
-				
 			}
 
-			// 
 			//Check Huckel's rule and Find the starting position
 			int start = -1;
 			int nElectrons = 0;
 			int nAmbiguousN = 0;
 			int nAmbiguousC = 0;
-			for(int i=0; i<ring.length; i++) {
-				int a1 = ring[(i)%ring.length];				
-				int a2 = ring[(i+1)%ring.length];				
-				int a0 = ring[(i-1+ring.length)%ring.length];				
+			for(int i=0; i<ringAtom.length; i++) {
+				int a1 = ringAtom[(i)%ringAtom.length];
+				int a2 = ringAtom[(i+1)%ringAtom.length];
+				int a0 = ringAtom[(i-1+ringAtom.length)%ringAtom.length];
 				int bnd1 = mol.getBond(a1, a2);
 				int bnd2 = mol.getBond(a1, a0);
 				if(mol.getAtomicNo(a1)==6) {
@@ -497,14 +499,12 @@ public class BondsCalculator {
 				nOxo+=Math.min(diff, Math.max(0, nAmbiguousC)); nElectrons-=nOxo;
 			}
 
-//			if(ringNo==29) {
-			
 			if(nElectrons%4!=2) {
-				if(ring.length==3) continue; //cyclopropane is of course planar but not aromatic
+				if(ringAtom.length==3) continue; //cyclopropane is of course planar but not aromatic
 				boolean ok = false;
 				if(diff>0) {
-					for (int i = 0; i < ring.length; i++) {
-						if(mol.getAtomicNo(ring[i])==7) {							
+					for (int i = 0; i < ringAtom.length; i++) {
+						if(mol.getAtomicNo(ringAtom[i])==7) {
 							//toDo[ring[i]]=2;//Protonated N?
 							ok=true;
 						}
@@ -515,6 +515,7 @@ public class BondsCalculator {
 					continue;
 				}
 			}
+
 			isAromaticRing[ringNo] = true;
 			/*
 			if(start<0) start = 0;
@@ -549,9 +550,13 @@ public class BondsCalculator {
 			
 		}
 
+		// Two alternatives: aromatize() for every ring,
+		// or AromaticityResolver.locateDelocalizedDoubleBonds() for the entire molecule
+
+		// OPTION 1, aromatize(): about 5% of the <2.5 angstrom .pdb files cannot be aromatized!!!
 		//Aromatizer
 		//Initialize the visited atoms 
-		boolean[] visited2 = new boolean[mol.getAllAtoms()];
+/*		boolean[] visited2 = new boolean[mol.getAllAtoms()];
 		Set<Integer> nonAromaticAtom = new HashSet<Integer>();
 		for (int atom=0; atom<mol.getAllAtoms(); atom++) {
 			if(connected(mol, atom, -1, 2)>=0) visited2[atom] = true; //This atom has been processed above
@@ -564,11 +569,7 @@ public class BondsCalculator {
 			}
 		}
 
-		// Two alternatives: aromatize() for every ring,
-		// or AromaticityResolver.locateDelocalizedDoubleBonds() for the entire molecule
-
-		// OPTION aromatize(): about 5% of the <2.5 angstrom .pdb files cannot be aromatized!!!
-/*		boolean needsChargeCorrection = true;
+		boolean needsChargeCorrection = true;
 		for (int i = 0; i < isAromaticRing.length; i++) {
 			if(isAromaticRing[i]) {
 //StereoMolecule copy = new StereoMolecule(mol);
@@ -582,7 +583,12 @@ public class BondsCalculator {
 			}
 		}*/
 
-		// OPTION AromaticityResolver.locateDelocalizedDoubleBonds():
+// TODO remove
+StereoMolecule copy = new StereoMolecule(mol);
+int delocalizedBondsCount = 0;
+int exoBondConversionCount = 0;
+
+		// OPTION 2, AromaticityResolver.locateDelocalizedDoubleBonds():
 		// TODO we still have a some aromaticity resolving issues, e.g. int PDB entry 1AZ1
 		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		boolean needsChargeCorrection = false;
@@ -596,24 +602,41 @@ public class BondsCalculator {
 					for (int j=0; j<mol.getConnAtoms(ringAtom[i]); j++) {
 						if (mol.getConnBondOrder(ringAtom[i], j) == 2) {
 							int connAtom = mol.getConnAtom(ringAtom[i], j);
-							if (mol.getAtomicNo(connAtom) == 7 || mol.getAtomicNo(connAtom) == 8 || mol.getAtomicNo(connAtom) == 16)
+							if (mol.getAtomicNo(connAtom) == 7 || mol.getAtomicNo(connAtom) == 8 || mol.getAtomicNo(connAtom) == 16) {
 								mol.setBondType(mol.getConnBond(ringAtom[i], j), Molecule.cBondTypeSingle);
+exoBondConversionCount++;
+							}
 							break;
 						}
 					}
 				}
 				for (int rb : ringBond) {
-					mol.setBondOrder(rb, 1);
-					isAromaticBond[rb] = true;
+					if (!isAromaticBond[rb]) {
+						mol.setBondOrder(rb, 1);
+						isAromaticBond[rb] = true;
+delocalizedBondsCount++;
+					}
 				}
 			}
 		}
 
-//StereoMolecule copy = new StereoMolecule(mol);
+boolean[] isDelocalizedBond = isAromaticBond.clone();
+
 		if (!new AromaticityResolver(mol).locateDelocalizedDoubleBonds(isAromaticBond, true, false)) {
+
 //System.out.println("Bondscalculator aromatization failed here: "+new MolfileCreator(copy).getMolfile());
-//for (int i=0; i<isAromaticBond.length; i++) if (isAromaticBond[i]) System.out.print(" "+i);
-//System.out.print("\n");
+copy.setFragment(true);
+for (int i=0; i<isDelocalizedBond.length; i++) {
+ if (isDelocalizedBond[i]) {
+  copy.setBondType(i, Molecule.cBondTypeDelocalized);
+  copy.setBondQueryFeature(i, Molecule.cBondTypeDelocalized, true);
+ }
+}
+Canonizer c1 = new Canonizer(copy);
+System.out.println("$$$ "+c1.getIDCode()+"\t"+c1.getEncodedCoordinates()+"\t"+delocalizedBondsCount+"\t"+exoBondConversionCount);
+Canonizer c2 = new Canonizer(mol);
+System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t");
+
 			System.out.println("Could not aromatize all rings.");
 		}
 
@@ -716,6 +739,44 @@ public class BondsCalculator {
 				 && mol.getOccupiedValence(atom) > mol.getDefaultMaxValenceUncharged(atom))
 					mol.setAtomCharge(atom, 1);
 		}
+	}
+
+	/**
+	 * @param mol
+	 * @param atom
+	 * @param cog receives the center of gravity
+	 * @param n receives normal vector of plane nearest to all atoms
+	 * @param coords receives original atom coordinates minus the center of gravity [atom count][3]
+	 */
+	private static void calculateNearestPlane(StereoMolecule mol, int[] atom, Coordinates cog, Coordinates n, double[][] coords) {
+		cog.set(0, 0, 0);
+		for (int i=0; i<atom.length; i++)
+			cog.add(mol.getCoordinates(atom[i]));
+		cog.scale(1.0 / atom.length);
+
+		for (int i=0; i<atom.length; i++) {
+			coords[i][0] = mol.getAtomX(atom[i]) - cog.x;
+			coords[i][1] = mol.getAtomY(atom[i]) - cog.y;
+			coords[i][2] = mol.getAtomZ(atom[i]) - cog.z;
+		}
+
+		double[][] squareMatrix = new double[3][3];
+		for (int i=0; i<atom.length; i++)
+			for (int j=0; j<3; j++)
+				for (int k=0; k<3; k++)
+					squareMatrix[j][k] += coords[i][j] * coords[i][k];
+
+		SingularValueDecomposition svd = new SingularValueDecomposition(squareMatrix, null, null);
+		double[] S = svd.getSingularValues();
+		int minIndex = 0;
+		for (int i=1; i<3; i++)
+			if (S[i] < S[minIndex])
+				minIndex = i;
+
+		double[][] U = svd.getU();
+		n.x = U[0][minIndex];
+		n.y = U[1][minIndex];
+		n.z = U[2][minIndex];
 	}
 
 	private static ArrayList<Integer>[] getAtomToRings(StereoMolecule mol) {

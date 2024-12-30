@@ -37,8 +37,9 @@ package com.actelion.research.chem;
 public class AromaticityResolver {
 	ExtendedMolecule	mMol;
 	private boolean		mAllHydrogensAreExplicit;
-	private boolean[]	mIsDelocalizedAtom,mIsDelocalizedBond;
-    private int         mAromaticAtoms,mAromaticBonds,mPiElectronsAdded;
+	private boolean[]	mIsDelocalizedRing,mIsDelocalizedAtom,mIsDelocalizedBond,mIsDelocalizedBridgeHead,
+						mIsDelocalizedFiveRingMember,mIsDelocalizedThreeOrSevenRingMember;
+    private int mDelocalizedAtoms, mDelocalizedBonds,mPiElectronsAdded;
 
     /**
      * Creates a new AromaticityResolver for molecule mol.
@@ -78,44 +79,24 @@ public class AromaticityResolver {
 	 * on whether we have a molecule or a query fragment. For fragments the respective bond
 	 * types will be set to cBondTypeDelocalized; for molecules the chain will
 	 * have alternating single and double bonds starting with double at a non-ring end.
-	 * @param isAromaticBond if null, then bond type cBondTypeDelocalized is used to indicate delocalized bonds
+	 * @param isDelocalizedBond if null, then bond type cBondTypeDelocalized is used to indicate delocalized bonds
 	 * @param mayChangeAtomCharges true if input molecule doesn't carry atom charges and these may be added to achieve aromaticity
 	 * @param allHydrogensAreExplicit true this method can rely on all hydrogens being explicitly present
 	 * @return true if all bonds of the delocalized area could be consistently converted.
 	 */
-	public boolean locateDelocalizedDoubleBonds(boolean[] isAromaticBond, boolean mayChangeAtomCharges, boolean allHydrogensAreExplicit) {
+	public boolean locateDelocalizedDoubleBonds(boolean[] isDelocalizedBond, boolean mayChangeAtomCharges, boolean allHydrogensAreExplicit) {
+		// Helper arrays are calculated once only and stay untouched until entire kekulization is done!
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 
-		if (isAromaticBond != null) {
-			mIsDelocalizedBond = isAromaticBond;
-			}
-		else {
-			mIsDelocalizedBond = new boolean[mMol.getBonds()];
-			for (int bond=0; bond<mMol.getBonds(); bond++) {
-				if (mMol.getBondType(bond) == Molecule.cBondTypeDelocalized) {
-					mIsDelocalizedBond[bond] = true;
-					mMol.setBondType(bond, Molecule.cBondTypeSingle);
-					}
-				}
-			}
-
-		mPiElectronsAdded = 0;
-
-		mIsDelocalizedAtom = new boolean[mMol.getAtoms()];
-		for (int bond=0; bond<mMol.getBonds(); bond++) {
-			if (mIsDelocalizedBond[bond]) {
-				mAromaticBonds++;
-				for (int i=0; i<2; i++) {
-					if (!mIsDelocalizedAtom[mMol.getBondAtom(i, bond)]) {
-						mIsDelocalizedAtom[mMol.getBondAtom(i, bond)] = true;
-						mAromaticAtoms++;
-						}
-					}
-				}
-			}
-
-		if (mAromaticBonds == 0)
+		RingCollection ringSet = new RingCollection(mMol, RingCollection.MODE_SMALL_RINGS_ONLY);
+		initialize(isDelocalizedBond, ringSet);
+		if (mDelocalizedBonds == 0)
             return true;
+
+		if (mayChangeAtomCharges)
+			for (int atom=0; atom<mMol.getAtoms(); atom++)
+				if (mIsDelocalizedAtom[atom] && mMol.getAtomicNo(atom) == 7 && mMol.getConnAtoms(atom) == 3)
+					mMol.setAtomCharge(atom, 1);
 
 		mAllHydrogensAreExplicit = allHydrogensAreExplicit;
 
@@ -124,15 +105,7 @@ public class AromaticityResolver {
         if (mMol.isFragment())
         	promoteDelocalizedChains();
 
-		// create small-ring set without aromaticity information
-		RingCollection ringSet = new RingCollection(mMol, RingCollection.MODE_SMALL_RINGS_ONLY);
-
-		if (mayChangeAtomCharges)
-			addObviousAtomCharges(ringSet);
-
-        // find mandatory conjugation breaking atoms in 3-, 5-, and 7-membered rings,
-		// i.e. atoms whose neighbour bonds must be single bonds
-		protectObviousDelocalizationLeaks(ringSet);
+		protectObviousNonRingLeaks(ringSet);
 
 		protectAmideBonds(ringSet);	// using rules for detecting aromatic (thio-)amide bonds
 		protectDoubleBondAtoms();
@@ -142,191 +115,227 @@ public class AromaticityResolver {
 		while (promoteOuterShellDelocalizedRingSystems(ringSet))
 			promoteObviousBonds();
 
-        while (mAromaticBonds != 0) {
-            boolean bondsPromoted = false;
+		// try to find and promote entirely aromatic 6-rings
+		if (promoteSixMemberedAromaticRings(ringSet, mayChangeAtomCharges))
+			promoteObviousBonds();
 
-			// try to find and promote one entire aromatic 6-ring
-			for (int ring=0; ring<ringSet.getSize(); ring++) {
-				if (ringSet.getRingSize(ring) == 6) {
-					boolean isAromaticRing = true;
-					int[] ringBond = ringSet.getRingBonds(ring);
-					for (int i=0; i<6; i++) {
-						if (!mIsDelocalizedBond[ringBond[i]]) {
-							isAromaticRing = false;
-							break;
-							}
-						}
+		// try to find and promote other fully aromatic rings
+		while (promoteOneDelocalizationLeak(ringSet, mayChangeAtomCharges))
+			promoteObviousBonds();
 
-					if (isAromaticRing) {
-						for (int i=0; i<6; i+=2)
-							promoteBond(ringBond[i]);
-						bondsPromoted = true;
-						break;
-						}
-					}
-				}
-
-			if (bondsPromoted) {
-				promoteObviousBonds();
-				continue;
-				}
-
-			// Find and promote one aromatic bond.
-			// (should never happen, but to prevent an endless loop nonetheless)
+		// Find and promote remaining aromatic bonds
+        while (mDelocalizedBonds != 0) {
 			for (int bond=0; bond<mMol.getBonds(); bond++) {
 				if (mIsDelocalizedBond[bond]) {
 					promoteBond(bond);
 					promoteObviousBonds();
-					break;
 					}
 				}
             }
 
-/*		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (mIsDelocalizedAtom[atom] && mMol.getImplicitHydrogens(atom) != 0) {
-				mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
-				mPiElectronsAdded++;
-				}
-			}*/
+// maybe not needed???		correctDisconnectedSingletons();
 
-		return (mAromaticAtoms == mPiElectronsAdded);
-		}
-
-
-	private void protectObviousDelocalizationLeaks(RingCollection ringSet) {
-		for (int r=0; r<ringSet.getSize(); r++) {
-			int ringSize = ringSet.getRingSize(r);
-			if (ringSize == 3 || ringSize == 5 || ringSize == 7) {
-				int[] ringAtom = ringSet.getRingAtoms(r);
-				for (int i=0; i<ringSize; i++) {
-					int atom = ringAtom[i];
-					if (isAromaticAtom(atom)) {
-						if (ringSize == 5) {
-							// C(-),N,O,S in cyclopentadienyl, furan, pyrrol, etc.
-							if ((mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == -1 && mMol.getAllConnAtoms(atom) == 3)
-							 || (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 0 && mMol.getAllConnAtoms(atom) == 3)
-							 || (mMol.getAtomicNo(atom) == 8 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2)
-							 || (mMol.getAtomicNo(atom) == 16 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2)
-							 || (mMol.getAtomicNo(atom) == 34 && mMol.getAtomCharge(atom) == 0 && mMol.getConnAtoms(atom) == 2))
-								protectAtom(atom);
-							}
-						else {
-							// B,C+ in tropylium
-							if ((mMol.getAtomicNo(atom) == 5 && mMol.getAtomCharge(atom) == 0 && mMol.getAllConnAtoms(atom) == 3)
-							 || (mMol.getAtomicNo(atom) == 6 && mMol.getAtomCharge(atom) == 1))
-								protectAtom(atom);
-							}
-						}
+		if (mayChangeAtomCharges) {
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+				if (mIsDelocalizedAtom[atom] && mMol.getImplicitHydrogens(atom) != 0) {
+					mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+					mPiElectronsAdded++;
 					}
 				}
 			}
 
-		// in 5-membered rings with 5 delocalized bonds and more than one negative carbon, we choose the most obvious as leak
-		for (int r=0; r<ringSet.getSize(); r++) {
-			if (ringSet.getRingSize(r) == 5) {
-				int[] ringBond = ringSet.getRingBonds(r);
-				boolean isDelocalized = true;
+		return (mDelocalizedAtoms == mPiElectronsAdded);
+		}
+
+	private void initialize(boolean[] isDelocalizedBond, RingCollection ringSet) {
+		if (isDelocalizedBond != null) {
+			mIsDelocalizedBond = isDelocalizedBond;
+		}
+		else {
+			mIsDelocalizedBond = new boolean[mMol.getBonds()];
+			for (int bond=0; bond<mMol.getBonds(); bond++) {
+				if (mMol.getBondType(bond) == Molecule.cBondTypeDelocalized) {
+					mIsDelocalizedBond[bond] = true;
+					mMol.setBondType(bond, Molecule.cBondTypeSingle);
+				}
+			}
+		}
+
+		for (int bond=0; bond<mMol.getBonds(); bond++)
+			if (mIsDelocalizedBond[bond])
+				mDelocalizedBonds++;
+
+		mIsDelocalizedAtom = new boolean[mMol.getAtoms()];
+		mIsDelocalizedBridgeHead = new boolean[mMol.getAtoms()];
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			int delocalizedConnBonds = 0;
+			for (int i=0; i<mMol.getConnAtoms(atom); i++)
+				if (mIsDelocalizedBond[mMol.getConnBond(atom, i)])
+					delocalizedConnBonds++;
+			if (delocalizedConnBonds > 0) {
+				mIsDelocalizedAtom[atom] = true;
+				mDelocalizedAtoms++;
+				if (delocalizedConnBonds == 3)
+					mIsDelocalizedBridgeHead[atom] = true;
+			}
+		}
+
+		mIsDelocalizedRing = new boolean[ringSet.getSize()];
+		for (int ring=0; ring<ringSet.getSize(); ring++) {
+			mIsDelocalizedRing[ring] = true;
+			for (int bond : ringSet.getRingBonds(ring)) {
+				if (!mIsDelocalizedBond[bond]) {
+					mIsDelocalizedRing[ring] = false;
+					break;
+				}
+			}
+		}
+
+		mIsDelocalizedThreeOrSevenRingMember = new boolean[mMol.getAtoms()];
+		mIsDelocalizedFiveRingMember = new boolean[mMol.getAtoms()];
+		for (int ring=0; ring<ringSet.getSize(); ring++) {
+			if (mIsDelocalizedRing[ring] && ringSet.getRingSize(ring) != 6) {
+				for (int atom : ringSet.getRingAtoms(ring)) {
+					if (ringSet.getRingSize(ring) == 5)
+						mIsDelocalizedFiveRingMember[atom] = true;
+					else
+						mIsDelocalizedThreeOrSevenRingMember[atom] = true;
+				}
+			}
+		}
+
+		mPiElectronsAdded = 0;
+	}
+
+	private boolean promoteSixMemberedAromaticRings(RingCollection ringSet, boolean mayChangeAtomCharges) {
+		boolean found = false;
+		for (int ring=0; ring<ringSet.getSize(); ring++) {
+			if (ringSet.getRingSize(ring) == 6) {
+				boolean isQualifyingRing = true;
+				int[] ringAtom = ringSet.getRingAtoms(ring);
+				int[] ringBond = ringSet.getRingBonds(ring);
+				for (int i=0; i<6; i++) {
+					if (!checkAtomTypePi1(ringAtom[i], false)
+					 || !mIsDelocalizedBond[ringBond[i]]) {
+						isQualifyingRing = false;
+						break;
+					}
+				}
+
+				if (isQualifyingRing) {
+					if (mayChangeAtomCharges)
+						for (int i=0; i<6; i+=2)
+							checkAtomTypePi1(ringAtom[i], true);
+
+					for (int i=0; i<6; i+=2)
+						promoteBond(ringBond[i]);
+
+					found = true;
+					break;
+				}
+			}
+		}
+		return found;
+	}
+
+	private boolean promoteOneDelocalizationLeak(RingCollection ringSet, boolean mayChangeAtomCharges) {
+		for (int ring=0; ring<ringSet.getSize(); ring++) {
+			if (ringSet.getRingSize(ring) != 6 && mIsDelocalizedRing[ring]) {
+				boolean isFullyDelocalizedRing = true;
+				int[] ringBond = ringSet.getRingBonds(ring);
 				for (int i=0; i<ringBond.length; i++) {
 					if (!mIsDelocalizedBond[ringBond[i]]) {
-						isDelocalized = false;
+						isFullyDelocalizedRing = false;
 						break;
+					}
+				}
+
+				if (isFullyDelocalizedRing) {
+					int bestDelocalizationLeakIndex = -1;
+					int bestDelocalizationLeakPriority = 0;
+					int[] ringAtom = ringSet.getRingAtoms(ring);
+					for (int i=0; i<ringAtom.length; i++) {
+						int atom = ringAtom[i];
+						int priority = mIsDelocalizedFiveRingMember[atom] ?
+								checkAtomTypeLeak5(atom, false)
+							  : checkAtomTypeLeak7(atom, false);
+						if (bestDelocalizationLeakPriority < priority) {
+							bestDelocalizationLeakPriority = priority;
+							bestDelocalizationLeakIndex = i;
 						}
 					}
-				if (isDelocalized) {
-					int[] ringAtom = ringSet.getRingAtoms(r);
-					int negativeCarbonPriority = 0;
-					int negativeCarbon = -1;
-					for (int i=0; i<ringBond.length; i++) {
-						if (mMol.getAtomCharge(ringAtom[i]) == -1 && mMol.getAtomicNo(ringAtom[i]) == 6) {
-							int priority = mMol.getAllConnAtoms(ringAtom[i]) == 3 ? 3
-										 : mMol.getAllConnAtomsPlusMetalBonds(ringAtom[i]) == 3 ? 2 : 1;
-							if (negativeCarbonPriority < priority) {
-								negativeCarbonPriority = priority;
-								negativeCarbon = ringAtom[i];
-								}
-							}
+					if (bestDelocalizationLeakIndex != -1) {
+						int atom = ringAtom[bestDelocalizationLeakIndex];
+						if (mayChangeAtomCharges) {
+							if (mIsDelocalizedFiveRingMember[atom])
+								checkAtomTypeLeak5(atom, true);
+							else
+								checkAtomTypeLeak7(atom, true);
 						}
-					if (negativeCarbon != -1)
-						protectAtom(negativeCarbon);
+						protectAtom(atom);
+						return true;
 					}
 				}
 			}
 		}
-
+		return false;
+	}
 
 	private boolean promoteOuterShellDelocalizedRingSystems(RingCollection ringSet) {
 		int[] sharedDelocalizedRingCount = new int[mMol.getBonds()];
 		for (int r=0; r<ringSet.getSize(); r++) {
 			int[] ringBond = ringSet.getRingBonds(r);
 			boolean isDelocalized = true;
-			for (int i = 0; i < ringBond.length; i++) {
+			for (int i=0; i<ringBond.length; i++) {
 				if (!mIsDelocalizedBond[ringBond[i]]) {
 					isDelocalized = false;
 					break;
-					}
 				}
+			}
 			if (isDelocalized)
 				for (int i=0; i<ringBond.length; i++)
 					sharedDelocalizedRingCount[ringBond[i]]++;
-			}
+		}
 
-		int delocalizedBonds = mAromaticBonds;
+		int delocalizedBonds = mDelocalizedBonds;
 
-		for (int bond=0; bond<mMol.getBonds(); bond++) {
-			if (sharedDelocalizedRingCount[bond]==1) {
-				for (int i=0; i<2 && mIsDelocalizedBond[bond]; i++) {
-					int atom1 = mMol.getBondAtom(i, bond);
-					int atom2 = mMol.getBondAtom(1-i, bond);
-					if (hasSharedDelocalizedBond(atom1, sharedDelocalizedRingCount)
-					 && !hasSharedDelocalizedBond(atom2, sharedDelocalizedRingCount)) {
-						int connIndex;
-						while (-1 != (connIndex = getNextOuterDelocalizedConnIndex(atom2, atom1, sharedDelocalizedRingCount))) {
-							int atom3 = mMol.getConnAtom(atom2, connIndex);
-							int bond2to3 = mMol.getConnBond(atom2, connIndex);
-							if (!mIsDelocalizedBond[bond2to3])
-								break;
-
-							promoteBond(bond2to3);
-							connIndex = getNextOuterDelocalizedConnIndex(atom3, atom2, sharedDelocalizedRingCount);
-							if (connIndex == -1)
-								break;
-
-							atom1 = atom3;
-							atom2 = mMol.getConnAtom(atom3, connIndex);
+		for (int r=0; r<ringSet.getSize(); r++) {
+			boolean found = false;
+			int[] ringAtom = ringSet.getRingAtoms(r);
+			int[] ringBond = ringSet.getRingBonds(r);
+			for (int i=0; i<ringBond.length && !found; i++) {
+				if (sharedDelocalizedRingCount[ringBond[i]] > 1) {
+					int first = nextIndex(i, ringBond.length);
+					if (sharedDelocalizedRingCount[ringBond[first]] == 1) {	// first unshared aromatic bond
+						boolean incompatibleAtomFound = false;
+						int next = nextIndex(first, ringBond.length);
+						while (sharedDelocalizedRingCount[ringBond[next]] == 1) {
+							if (!checkAtomTypePi1(ringAtom[next], false)
+							 ||	(ringBond.length != 6 && mMol.getAtomicNo(ringAtom[next]) != 6))
+								incompatibleAtomFound = true;
+							next = nextIndex(next, ringBond.length);
+						}
+						if (!incompatibleAtomFound) {
+							int bridgeBonds = (next > first) ? next - first : next + ringBond.length -first;
+							if (bridgeBonds > 2 && (bridgeBonds & 1) == 1) {
+								for (int j=1; j<bridgeBonds; j+=2) {
+									int index = (first+j < ringBond.length) ? first+j : first+j-ringBond.length;
+									promoteBond(ringBond[index]);
+								}
+								found = true;
 							}
 						}
 					}
 				}
 			}
-
-		return delocalizedBonds != mAromaticBonds;
 		}
 
+		return delocalizedBonds != mDelocalizedBonds;
+	}
 
-	private boolean hasSharedDelocalizedBond(int atom, int[] sharedDelocalizedRingCount) {
-		for (int i=0; i<mMol.getConnAtoms(atom); i++)
-			if (sharedDelocalizedRingCount[mMol.getConnBond(atom, i)] > 1)
-				return true;
-		return false;
-		}
-
-
-	private int getNextOuterDelocalizedConnIndex(int atom, int previousAtom, int[] sharedDelocalizedRingCount) {
-		for (int i=0; i<mMol.getConnAtoms(atom); i++)
-			if (sharedDelocalizedRingCount[mMol.getConnBond(atom, i)] == 1
-			 && mMol.getConnAtom(atom, i) != previousAtom)
-				return i;
-		return -1;
-		}
-
-
-	private boolean isAromaticAtom(int atom) {
-		for (int i=0; i<mMol.getConnAtoms(atom); i++)
-			if (mIsDelocalizedBond[mMol.getConnBond(atom, i)])
-				return true;
-		return false;
-		}
-
+	private int nextIndex(int i, int size) {
+		return i == size-1 ? 0 : i+1;
+	}
 
 	private void protectFullValenceAtoms(boolean mayChangeAtomCharges) {
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
@@ -339,21 +348,19 @@ public class AromaticityResolver {
 				protectAtom(atom);
 		}
 
-
 	private void protectAtom(int atom) {
 		if (mIsDelocalizedAtom[atom]) {
 			mIsDelocalizedAtom[atom] = false;
-			mAromaticAtoms--;
+			mDelocalizedAtoms--;
 			}
 		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 			int connBond = mMol.getConnBond(atom, i);
             if (mIsDelocalizedBond[connBond]) {
                 mIsDelocalizedBond[connBond] = false;
-                mAromaticBonds--;
+                mDelocalizedBonds--;
                 }
             }
 		}
-
 
 	private void promoteBond(int bond) {
 		if (mMol.getBondType(bond) == Molecule.cBondTypeSingle) {
@@ -368,12 +375,11 @@ public class AromaticityResolver {
 				int connBond = mMol.getConnBond(bondAtom, j);
                 if (mIsDelocalizedBond[connBond]) {
                     mIsDelocalizedBond[connBond] = false;
-                    mAromaticBonds--;
+                    mDelocalizedBonds--;
                     }
                 }
 			}
 		}
-
 
 	private void promoteObviousBonds() {
 			// handle bond orders of aromatic bonds along the chains attached to 5- or 7-membered ring
@@ -408,10 +414,11 @@ public class AromaticityResolver {
 			} while (terminalAromaticBondFound);
 		}
 
-
+	/**
+	 * Protect query features cBondQFDelocalized in open aromatic chains of fragments
+	 * with incomplete aromatic rings
+	 */
 	private void promoteDelocalizedChains() {
-        // protect query features cBondQFDelocalized in open aromatic chains of fragments
-	    // with incomplete aromatic rings
         for (int bond=0; bond<mMol.getBonds(); bond++) {
             if (mIsDelocalizedBond[bond]) {
                 for (int i=0; i<2; i++) {
@@ -429,7 +436,7 @@ public class AromaticityResolver {
                         int bridgeAtom = mMol.getBondAtom(1-i, bond);
                         while (terminalBond != -1) {
                             mIsDelocalizedBond[terminalBond] = false;
-                            mAromaticBonds--;
+                            mDelocalizedBonds--;
                             mMol.setBondType(terminalBond, Molecule.cBondTypeDelocalized);
                             terminalBond = -1;
                             terminalAtom = bridgeAtom;
@@ -482,38 +489,26 @@ public class AromaticityResolver {
 			}
 		}
 
-	private void addObviousAtomCharges(RingCollection ringSet) {
-		// count for every atom of how many delocalized rings it is a member
-		boolean[] isDelocalized = new boolean[ringSet.getSize()];
-		int[] delocalizedRingCount = new int[mMol.getAtoms()];
-		for (int r=0; r<ringSet.getSize(); r++) {
-			isDelocalized[r] = true;
-			for (int bond:ringSet.getRingBonds(r)) {
-				if (!mIsDelocalizedBond[bond]) {
-					isDelocalized[r] = false;
-					break;
-					}
-				}
-			if (isDelocalized[r])
-				for (int atom:ringSet.getRingAtoms(r))
-					delocalizedRingCount[atom]++;
-			}
-
+	private void protectObviousNonRingLeaks(RingCollection ringSet) {
 		// for all ring atoms add charges and protect preferred delocalization leak atoms
-		boolean[] isAromaticRingAtom = new boolean[mMol.getAtoms()];
+/*		boolean[] isAromaticRingAtom = new boolean[mMol.getAtoms()];
 		for (int ring=0; ring<ringSet.getSize(); ring++) {
 			int ringSize = ringSet.getRingSize(ring);
 			if (ringSize == 3 || ringSize == 5 || ringSize == 6 || ringSize == 7) {
-				if (isDelocalized[ring]) {
+				if (mIsDelocalizedRing[ring]) {
 					for (int atom:ringSet.getRingAtoms(ring))
 						isAromaticRingAtom[atom] = true;
 
 					boolean possible = true;
 					int leakAtom = -1;
 					int leakPriority = 0;
+					int bridgeHeadCount = 0;
 
 					for (int atom:ringSet.getRingAtoms(ring)) {
-						if (ringSize == 6 || delocalizedRingCount[atom] > 1) {	// bridgehead atom
+						if (mIsDelocalizedBridgeHead[atom])
+							bridgeHeadCount++;
+
+						if (ringSize == 6 || mIsDelocalizedBridgeHead[atom]) {	// 6-membered or bridgehead atom
 							if (!checkAtomTypePi1(atom, false)) {
 								possible = false;
 								break;
@@ -537,7 +532,7 @@ public class AromaticityResolver {
 							}
 						}
 
-					if (possible) {
+					if (possible && (ringSize == 6 || bridgeHeadCount == 0)) {
 						for (int atom : ringSet.getRingAtoms(ring)) {
 							if (atom == leakAtom) {
 								if (ringSize == 5)
@@ -554,7 +549,18 @@ public class AromaticityResolver {
 						}
 					}
 				}
+			}*/
+
+		boolean[] isAromaticRingAtom = new boolean[mMol.getAtoms()];
+		for (int ring=0; ring<ringSet.getSize(); ring++) {
+			int ringSize = ringSet.getRingSize(ring);
+			if (ringSize == 3 || ringSize == 5 || ringSize == 6 || ringSize == 7) {
+				if (mIsDelocalizedRing[ring]) {
+					for (int atom : ringSet.getRingAtoms(ring))
+						isAromaticRingAtom[atom] = true;
+				}
 			}
+		}
 
 		// From here locate delocalized strings of atoms, which are not member
 		// of an aromatic ring. Protect preferred atoms and add obvious atom charges.
@@ -582,7 +588,7 @@ public class AromaticityResolver {
 		// Then mark every second atom from the startAtom as not being capable to assume
 		// the role of a delocalization leak (priority:-1).
 		int[] priority = new int[mMol.getAtoms()];
-		int graphAtom[] = new int[mMol.getAtoms()];
+		int[] graphAtom = new int[mMol.getAtoms()];
 		for (int seedAtom=0; seedAtom<mMol.getAtoms(); seedAtom++) {
 			if (delocalizedNeighbourCount[seedAtom] == 1) {
 				graphAtom[0] = seedAtom;
@@ -611,7 +617,7 @@ public class AromaticityResolver {
 
 		// For every connected delocalized area not being part of an aromatic ring
 		// calculate delocalization leak priorities for all atoms not marked above.
-		// Then protect the atom with highest priority.
+		// Then protect the atom with the highest priority.
 		boolean[] atomHandled = new boolean[mMol.getAtoms()];
 		for (int seedAtom=0; seedAtom<mMol.getAtoms(); seedAtom++) {
 			if (!atomHandled[seedAtom] && delocalizedNeighbourCount[seedAtom] != 0) {
@@ -672,6 +678,62 @@ public class AromaticityResolver {
 			}
 		}
 
+	private void correctDisconnectedSingletons() {
+		for (int atom = 0; atom<mMol.getAtoms() && mDelocalizedBonds> 0; atom++) {
+			if (mIsDelocalizedAtom[atom]) {
+				boolean found = false;
+
+				int[] graphAtom = new int[mMol.getAtoms()];
+				int[] parentAtom = new int[mMol.getAtoms()];
+				int[] graphLevel = new int[mMol.getAtoms()];
+
+				graphAtom[0] = atom;
+				parentAtom[atom] = -1;
+				graphLevel[atom] = 1;
+
+				int current = 0;
+				int highest = 0;
+
+				while (current <= highest && !found) {
+					int currentAtom = graphAtom[current];
+					for (int i=0; i<mMol.getConnAtoms(currentAtom) && !found; i++) {
+						// We need alternating bond orders!
+						boolean isCompatibleBond = ((graphLevel[currentAtom] & 1) == 1) ^ (mMol.getConnBondOrder(currentAtom, i) > 1);
+						int candidate = mMol.getConnAtom(currentAtom, i);
+						if (graphLevel[candidate] == 0 && isCompatibleBond) {
+							if (mIsDelocalizedAtom[candidate]) {
+								if ((graphLevel[currentAtom] & 1) == 1) {	// odd number of bonds
+									mIsDelocalizedAtom[atom] = false;
+									mIsDelocalizedAtom[candidate] = false;
+									mPiElectronsAdded += 2;
+									int parent = currentAtom;
+									for (int j=0; j<graphLevel[currentAtom]; j++) {
+										// trace candidate back to root atom and invert bond orders!
+										int bond = mMol.getBond(candidate, parent);
+										if (mIsDelocalizedBond[bond]) {
+											mIsDelocalizedBond[bond] = false;
+											mDelocalizedBonds--;
+										}
+										mMol.setBondOrder(bond, mMol.getBondOrder(bond) == 1 ? 2 : mMol.getBondOrder(bond)-1);
+										candidate = parentAtom[candidate];
+										parent = parentAtom[candidate];
+									}
+									found = true;
+								}
+							}
+							else {
+								graphAtom[++highest] = candidate;
+								parentAtom[candidate] = currentAtom;
+								graphLevel[candidate] = graphLevel[currentAtom]+1;
+							}
+						}
+					}
+					current++;
+				}
+			}
+		}
+	}
+
 	/**
 	 * Checks, whether the atom is compatible with an aromatic atom of the type
 	 * that carries one half of a delocalized double bond.
@@ -712,11 +774,14 @@ public class AromaticityResolver {
 	 * @return 0 (not compatible) or priority to be used (higher numbers have higher priority)
 	 */
 	private int checkAtomTypeLeak5(int atom, boolean correctCharge) {
+		if (mIsDelocalizedBridgeHead[atom])
+			return 0;
+
 		if (mMol.getAtomicNo(atom) == 7) {
 			if (mMol.getAllConnAtoms(atom) == 3)
 				return 6;
 			else if (mMol.getConnAtoms(atom) == 2)
-				return 4;
+				return mAllHydrogensAreExplicit ? 0 : 4;
 			}
 		else if (mMol.getAtomicNo(atom) == 8) {
 			return 10;
@@ -727,9 +792,19 @@ public class AromaticityResolver {
 			}
 		else if (mMol.getAtomicNo(atom) == 16 || mMol.getAtomicNo(atom) == 34 || mMol.getAtomicNo(atom) == 52) {
 			if (mMol.getConnAtoms(atom) == 2)
-				return 12;
+				return 11;
+			if (mMol.getConnAtoms(atom) == 3) {
+				if (mMol.getAtomCharge(atom) == 1)
+					return 12;
+				if (correctCharge)
+					mMol.setAtomCharge(atom, 1);
+				return 5;
+				}
 			}
 		else if (mMol.getAtomicNo(atom) == 6) {
+			if (mMol.getAtomCharge(atom) == -1)
+				return mMol.getAllConnAtoms(atom) == 3 ? 16
+					 : mMol.getAllConnAtomsPlusMetalBonds(atom) == 3 ? 15 : 14;;
 			if (correctCharge)
 				mMol.setAtomCharge(atom, -1);
 			return (mMol.getAllConnAtoms(atom) != mMol.getAllConnAtomsPlusMetalBonds(atom)) ? 2 : 3;
@@ -747,6 +822,9 @@ public class AromaticityResolver {
 	 * @return 0 (not compatible) or priority to be used (higher numbers have higher priority)
 	 */
 	private int checkAtomTypeLeak7(int atom, boolean correctCharge) {
+		if (mIsDelocalizedBridgeHead[atom])
+			return 0;
+
 		if (mAllHydrogensAreExplicit) {
 			if (mMol.getAllConnAtoms(atom) != 3)
 				return 0;

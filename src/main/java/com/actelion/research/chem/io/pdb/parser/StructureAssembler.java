@@ -158,8 +158,10 @@ System.out.println("coupleBonds mol:"+mol);
 		if (bondList.size() == 0) {
 			if (mol.getAllAtoms() > 1) {
 				try {
-					BondsCalculator.createBonds(mol, true,null);
-					BondsCalculator.calculateBondOrders(mol,true);
+//					AntanasBondsCalculator.createBonds(mol, true);
+//					AntanasBondsCalculator.calculateBondOrders(mol);
+					BondsCalculator.createBonds(mol, true, null);
+					BondsCalculator.calculateBondOrders(mol, true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

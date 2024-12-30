@@ -58,15 +58,15 @@ public class RingCollection {
 	private static final int FEATURES_DELOCALIZED = 0x00020000;
 	private static final int FEATURES_HETERO_AROMATIC = 0x00040000;
 
-	private ExtendedMolecule mMol;
-	private ArrayList<int[]> mRingAtomSet;
-	private ArrayList<int[]> mRingBondSet;
-	private int[] mAtomRingFeatures;
-	private int[] mBondRingFeatures;
+	private final ExtendedMolecule mMol;
+	private final ArrayList<int[]> mRingAtomSet;
+	private final ArrayList<int[]> mRingBondSet;
+	private final int[] mAtomRingFeatures;
+	private final int[] mBondRingFeatures;
 	private int[] mHeteroPosition;
 	private boolean[] mIsAromatic;
 	private boolean[] mIsDelocalized;
-	private int mMaxSmallRingSize;
+	private final int mMaxSmallRingSize;
 
 	/**
 	 * Generates the complete set of small rings, which don't contain metal atoms
@@ -196,8 +196,13 @@ public class RingCollection {
 		}
 
 
+	/**
+	 * Find the smallest ring of the given bond
+	 * @param bond
+	 * @param isConfirmedChainAtom
+	 * @return
+	 */
 	private int[] findSmallestRing(int bond, boolean[] isConfirmedChainAtom) {
-		// find smallest ring of given bond
 		int atom1 = mMol.getBondAtom(0, bond);
 		int atom2 = mMol.getBondAtom(1, bond);
 		int graphAtom[] = new int[mMol.getAtoms()];
@@ -317,7 +322,7 @@ public class RingCollection {
 				}
 			}
 
-		int sortedRing[] = new int[ringSize];
+		int[] sortedRing = new int[ringSize];
 		int leftIndex = (lowIndex > 0) ? lowIndex - 1 : ringSize - 1;
 		int rightIndex = (lowIndex < ringSize - 1) ? lowIndex + 1 : 0;
 		boolean inverse = (ringAtom[leftIndex] < ringAtom[rightIndex]);
@@ -333,20 +338,19 @@ public class RingCollection {
 				}
 			}
 
-		for (int i=0; i<mRingAtomSet.size(); i++) {
-			int ringOfSet[] = mRingAtomSet.get(i);
-			if (ringOfSet.length != ringSize)
-				continue;
-			boolean equal = true;
-			for (int j=0; j<ringSize; j++) {
-				if (ringOfSet[j] != sortedRing[j]) {
-					equal = false;
-					break;
+		for (int[] ringOfSet : mRingAtomSet) {
+			if (ringOfSet.length == ringSize) {
+				boolean equal = true;
+				for (int j = 0; j<ringSize; j++) {
+					if (ringOfSet[j] != sortedRing[j]) {
+						equal = false;
+						break;
 					}
 				}
-			if (equal)
-				return;
+				if (equal)
+					return;
 			}
+		}
 
 		mRingAtomSet.add(sortedRing);
 		int[] ringBond = getRingBonds(sortedRing);
@@ -361,11 +365,25 @@ public class RingCollection {
 		}
 
 
+	/**
+	 * Returns normalised list of all ring atoms such that the smallest atom index is first,
+	 * followed by that one of its neighbours, which has the smaller atom index,
+	 * continuing with all remaining ring atoms in the direction defined by the first two.
+	 * @param ringNo
+	 * @return
+	 */
 	public int[] getRingAtoms(int ringNo) {
 		return mRingAtomSet.get(ringNo);
 		}
 
 
+	/**
+	 * Returns all ring bonds starting with the bond connecting ringAtom[0] and ringAtom[1]
+	 * and continuing with the neighbour ring bonds in the same direction that getRingAtom()
+	 * returns ring atoms.
+	 * @param ringNo
+	 * @return
+	 */
 	public int[] getRingBonds(int ringNo) {
 		return mRingBondSet.get(ringNo);
 		}
@@ -620,7 +638,7 @@ public class RingCollection {
 
 	private int[] getRingBonds(int[] ringAtom) {
 		int ringAtoms = ringAtom.length;
-		int ringBond[] = new int[ringAtoms];
+		int[] ringBond = new int[ringAtoms];
 		for (int i=0; i<ringAtoms; i++) {
 			int atom = (i == ringAtoms - 1) ? ringAtom[0] : ringAtom[i+1];
 			for (int j=0; j<mMol.getConnAtoms(ringAtom[i]); j++) {
@@ -688,10 +706,19 @@ public class RingCollection {
 			}
 		}
 
+	/**
+	 * @param ringNo
+	 * @param annelatedRing
+	 * @param aromaticityHandled
+	 * @param isAromatic
+	 * @param isDelocalized
+	 * @param heteroPosition
+	 * @param includeTautomericBonds
+	 * @return true if it can successfully determine and set the ring's aromaticity
+	 */
 	private boolean determineAromaticity(int ringNo, int[][] annelatedRing, boolean[] aromaticityHandled,
 										 boolean []isAromatic, boolean[] isDelocalized, int[] heteroPosition,
 										 boolean includeTautomericBonds) {
-			// returns true if it can successfully determine and set the ring's aromaticity
 		int ringAtom[] = mRingAtomSet.get(ringNo);
 		for (int atom:ringAtom)
 			if (!qualifiesAsAromaticAtom(atom))
