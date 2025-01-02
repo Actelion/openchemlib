@@ -133,7 +133,8 @@ public class AromaticityResolver {
 				}
             }
 
-// maybe not needed???		correctDisconnectedSingletons();
+		if (mDelocalizedAtoms - mPiElectronsAdded >= 2)
+			connectSeparatedSingletons();
 
 		if (mayChangeAtomCharges) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
@@ -678,7 +679,7 @@ public class AromaticityResolver {
 			}
 		}
 
-	private void correctDisconnectedSingletons() {
+	private void connectSeparatedSingletons() {
 		for (int atom = 0; atom<mMol.getAtoms() && mDelocalizedBonds> 0; atom++) {
 			if (mIsDelocalizedAtom[atom]) {
 				boolean found = false;
