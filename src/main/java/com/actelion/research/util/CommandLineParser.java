@@ -100,6 +100,13 @@ public class CommandLineParser {
         }
         return v;
     }
+    public long getOrDefault(String command, long defaultVal){
+        long v=defaultVal;
+        if(contains(command)){
+            v=getAsInt(command);
+        }
+        return v;
+    }
     public double getOrDefault(String command, double defaultVal){
         double v=defaultVal;
         if(contains(command)){
