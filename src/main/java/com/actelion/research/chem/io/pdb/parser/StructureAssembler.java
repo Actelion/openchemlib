@@ -137,29 +137,10 @@ public class StructureAssembler {
 		}
 	}
 	
-/*	private void coupleBonds(Molecule3D mol) {
-System.out.println("coupleBonds mol:"+mol);
-		for(int i=0; i<bondList.size(); i++) {
-			int[] bond = bondList.get(i);
-			int [] bondedAtoms = {-1,-1};
-			IntStream.range(0,mol.getAllAtoms()).forEach( e -> {
-				int pdbAtomID = mol.getAtomSequence(e);
-				if(pdbAtomID==bond[0])
-					bondedAtoms[0]=e;
-				else if(pdbAtomID==bond[1])
-					bondedAtoms[1]=e;
-			});
-			if(bondedAtoms[0]!=-1 && bondedAtoms[1]!=-1)
-				mol.addBond(bondedAtoms[0], bondedAtoms[1]);
-		}
-	}*/
-
 	private void coupleBonds(Molecule3D mol) {
 		if (bondList.size() == 0) {
 			if (mol.getAllAtoms() > 1) {
 				try {
-//					AntanasBondsCalculator.createBonds(mol, true);
-//					AntanasBondsCalculator.calculateBondOrders(mol);
 					BondsCalculator.createBonds(mol, true, null);
 					BondsCalculator.calculateBondOrders(mol, true);
 				} catch (Exception e) {
@@ -184,6 +165,8 @@ System.out.println("coupleBonds mol:"+mol);
 			}
 
 			try {
+				if (mol.getAllBonds() == 0)	// CONECT records didn't cover this molecule
+					BondsCalculator.createBonds(mol, true, null);
 				BondsCalculator.calculateBondOrders(mol, true);
 			}
 			catch (Exception e) {}

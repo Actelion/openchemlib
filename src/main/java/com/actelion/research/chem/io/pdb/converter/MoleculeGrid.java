@@ -69,6 +69,7 @@ public class MoleculeGrid {
 	public MoleculeGrid(StereoMolecule mol, double gridWidth, Coordinates extension) {
 		this.mol = mol;
 		this.gridWidth = gridWidth;
+
 		//1. Find the Molecule's bounds
 		Coordinates[] bounds = GeometryCalculator.getBounds(mol);
 		
@@ -90,13 +91,11 @@ public class MoleculeGrid {
 		grid = new Set[Math.max(0, gridSize[0])][Math.max(0, gridSize[1])][Math.max(0, gridSize[2])];		
 		
 		//3. Put each atom in the grid
-
-		int atoms = mol.getAtoms();
-		for (int i = 0; i < atoms; i++) {
+		for (int i=0; i<mol.getAllAtoms(); i++) {
 			int x = (int)((mol.getAtomX(i)-min.x)/gridWidth);
 			int y = (int)((mol.getAtomY(i)-min.y)/gridWidth);
 			int z = (int)((mol.getAtomZ(i)-min.z)/gridWidth);			
-			if(grid[x][y][z]==null) grid[x][y][z] = new TreeSet<Integer>();
+			if(grid[x][y][z]==null) grid[x][y][z] = new TreeSet<>();
 			grid[x][y][z].add(i); 
 		}
 	}

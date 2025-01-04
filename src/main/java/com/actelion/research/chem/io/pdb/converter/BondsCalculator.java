@@ -64,20 +64,18 @@ public class BondsCalculator {
 
 		//1. Create a grid
 		MoleculeGrid grid = new MoleculeGrid(mol);
-		TreeSet<Integer> atomsToRemove = new TreeSet<Integer>();
 	 	List<int[]> potentialBonds = new ArrayList<int[]>();
 		int[] neighborCount = new int[mol.getAllAtoms()];
 	 	
 		//2. For each atom, check the neighbours and
 		//   Create a connection if the distance is close to the sum of VDW
 		for(int i=0; i<mol.getAllAtoms(); i++) {			
-			if(atomsToRemove.contains(i)) continue;
 			if(!mol.isOrganicAtom(i)) continue;
 			
 			//Get the neighbours
-			Set<Integer> set = grid.getNeighbours(getCoordinates(mol, i), 3.2, false);
+			Set<Integer> set = grid.getNeighbours(mol.getAtomCoordinates(i), 3.2, false);
 			for(int j:set) {
-				if(i>=j || atomsToRemove.contains(j)) continue;
+				if(i>=j) continue;
 				if(!mol.isOrganicAtom(j)) continue;
 				
 				double dist = Math.sqrt(mol.getCoordinates(i).distanceSquared(mol.getCoordinates(j)));
@@ -127,14 +125,6 @@ public class BondsCalculator {
 			}
 		}
 		
-		if(atomsToRemove.size()>0) {
-			if(!lenient && atomsToRemove.size()>4) throw new Exception(atomsToRemove.size()+" atoms in close proximity");
-			System.err.println(atomsToRemove.size()+" atoms in too close proximity");
-
-			for (int atom:atomsToRemove)
-				mol.markAtomForDeletion(atom);
-			mol.deleteMarkedAtomsAndBonds();
-		}
 		//System.out.println("Create bonds in "+(System.currentTimeMillis()-s)+"ms");
 	}
 
@@ -159,10 +149,6 @@ public class BondsCalculator {
 			 : atomicNo == 35 ? 6   // Br
 			 : atomicNo == 52 ? 6
 			 : atomicNo == 53 ? 6 : 8;
-	}
-
-	private static Coordinates getCoordinates(StereoMolecule mol, int atom) {
-		return new Coordinates(mol.getAtomX(atom), mol.getAtomY(atom), mol.getAtomZ(atom));
 	}
 
 	private static boolean match(String g1, String g2) {
@@ -1056,7 +1042,7 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 		return mol.getFreeValence(a) + mol.getImplicitHydrogens(a);
 	}
 
-	public static int connected(StereoMolecule mol, int a, int atomicNo, int bondOrder) {
+	private static int connected(StereoMolecule mol, int a, int atomicNo, int bondOrder) {
 		for(int i=0; i<mol.getAllConnAtoms(a); i++) {
 			int atm = mol.getConnAtom(a, i);
 			if(atomicNo>=0 && mol.getAtomicNo(atm)!=atomicNo) continue;

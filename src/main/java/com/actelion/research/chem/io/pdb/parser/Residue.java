@@ -75,6 +75,7 @@ public class Residue {
 		if (fragment == null)
 			fragment = constructFragmentFromGeometry();
     	fragment.ensureHelperArrays(Molecule.cHelperNeighbours);
+		fragment.setName(records.get(0).getResName());
     	return fragment;
     }
     

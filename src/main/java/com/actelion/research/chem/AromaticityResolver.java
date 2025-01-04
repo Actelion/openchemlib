@@ -139,7 +139,11 @@ public class AromaticityResolver {
 		if (mayChangeAtomCharges) {
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				if (mIsDelocalizedAtom[atom] && mMol.getImplicitHydrogens(atom) != 0) {
-					mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+					if ((mMol.getAtomCharge(atom) == 1 && mMol.isElectronegative(atom))
+					 || (mMol.getAtomCharge(atom) == -1 && mMol.getAtomicNo(atom) == 5))
+						mMol.setAtomCharge(atom, 0);
+					else
+						mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
 					mPiElectronsAdded++;
 					}
 				}
@@ -680,7 +684,8 @@ public class AromaticityResolver {
 		}
 
 	private void connectSeparatedSingletons() {
-		for (int atom = 0; atom<mMol.getAtoms() && mDelocalizedBonds> 0; atom++) {
+		for (int atom = 0; atom<mMol.getAtoms(); atom++) {
+			mMol.ensureHelperArrays(Molecule.cHelperNeighbours);	// make sure, connBondOrders are
 			if (mIsDelocalizedAtom[atom]) {
 				boolean found = false;
 
@@ -699,7 +704,7 @@ public class AromaticityResolver {
 					int currentAtom = graphAtom[current];
 					for (int i=0; i<mMol.getConnAtoms(currentAtom) && !found; i++) {
 						// We need alternating bond orders!
-						boolean isCompatibleBond = ((graphLevel[currentAtom] & 1) == 1) ^ (mMol.getConnBondOrder(currentAtom, i) > 1);
+						boolean isCompatibleBond = ((graphLevel[currentAtom] & 1) == 1) ^ (mMol.getBondOrder(mMol.getConnBond(currentAtom, i)) > 1);
 						int candidate = mMol.getConnAtom(currentAtom, i);
 						if (graphLevel[candidate] == 0 && isCompatibleBond) {
 							if (mIsDelocalizedAtom[candidate]) {
@@ -716,7 +721,7 @@ public class AromaticityResolver {
 											mDelocalizedBonds--;
 										}
 										mMol.setBondOrder(bond, mMol.getBondOrder(bond) == 1 ? 2 : mMol.getBondOrder(bond)-1);
-										candidate = parentAtom[candidate];
+										candidate = parent;
 										parent = parentAtom[candidate];
 									}
 									found = true;

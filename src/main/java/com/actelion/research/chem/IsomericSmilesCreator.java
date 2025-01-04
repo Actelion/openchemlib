@@ -113,7 +113,7 @@ public class IsomericSmilesCreator {
 	 * @param mol
 	 */
 	public IsomericSmilesCreator(StereoMolecule mol) {
-		this(mol, false);
+		this(mol, 0);
 	}
 
 	/**
@@ -124,16 +124,6 @@ public class IsomericSmilesCreator {
 	public IsomericSmilesCreator(StereoMolecule mol, int mode) {
 		mMol = mol;
 		mMode = mode;
-	}
-
-	/**
-	 * Creates an IsomericSmilesCreator, which may include atom mapping numbers into generated smiles.
-	 * @param mol
-	 * @param includeAtomMapping
-	 */
-	@Deprecated
-	public IsomericSmilesCreator(StereoMolecule mol, boolean includeAtomMapping) {
-		this(mol, includeAtomMapping ? MODE_INCLUDE_MAPPING : 0);
 	}
 
 	public String getSmiles() {
@@ -894,6 +884,13 @@ public class IsomericSmilesCreator {
 		 && mMol.getConnAtoms(atom) == 2
 		 && mMol.getConnBondOrder(atom,0) == 2
 		 && mMol.getConnBondOrder(atom,1) == 2) {   // allene parities
+			for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+				int connAtom = mMol.getConnAtom(atom, i);
+				if (connAtom != parent && mMol.getConnAtoms(connAtom) == 2) {
+					inversion = true;
+					break;
+				}
+			}
 			for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 				int connAtom = mMol.getConnAtom(atom,i);
 				int neighbours = 0;

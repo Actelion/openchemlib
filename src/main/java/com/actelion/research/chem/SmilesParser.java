@@ -1600,7 +1600,7 @@ System.out.println("parity:"+parity);
 								  { "Br[C@@H](F)1.I1", "F[C@H](Br)I" },
 
 								  { "C[S@@](CC)=O", "CC[S@](C)=O" },
-								  { "[S@](=O)(C)CC", "CC[S](C)=O" } };
+								  { "[S@](=O)(C)CC", "CC[S@](C)=O" } };
 		StereoMolecule mol = new StereoMolecule();
 		for (String[] test:data) {
 			try {
@@ -1671,6 +1671,25 @@ System.out.println("parity:"+parity);
 								  { "C[C@@](C)(O1)C[C@@H](O)[C@@]1(O2)[C@@H](C)[C@@H]3CC=C4[C@]3(C2)C(=O)C[C@H]5[C@H]4CC[C@@H](C6)[C@]5(C)Cc(n7)c6nc(C[C@@]89(C))c7C[C@@H]8CC[C@@H]%10[C@@H]9C[C@@H](O)[C@@]%11(C)C%10=C[C@H](O%12)[C@]%11(O)[C@H](C)[C@]%12(O%13)[C@H](O)C[C@@]%13(C)CO",
 									"Cephalostatin-1",
 									"gdKe@h@@K`H@XjKHuYlnoP\\bbdRbbVTLbTrJbRaQRRRbTJTRTrfrfTTOBPHtFODPhLNSMdIERYJmShLfs]aqy|uUMUUUUUUE@UUUUMUUUUUUTQUUTPR`nDdQQKB|RIFbiQeARuQt`rSSMNtGS\\ct@@" },
+								  { "OC=[C@]=CF", "allene-1", "gJQHBIAIVVb`@" },
+								  { "OC([H])=[C@]=CF", "allene-1", "gJQHBIAIVVb`@" },
+								  { "OC=[C@]=C([H])F", "allene-1", "gJQHBIAIVVb`@" },
+								  { "F1.OC=[C@]=C1", "allene-1", "gJQHBIAIVVb`@" },
+								  { "OC=[C@]=C1F.[H]1", "allene-1", "gJQHBIAIVVb`@" },
+								  { "[H]C(O)=[C@@]=CF", "allene-1", "gJQHBIAIVVb`@" },
+								  { "C(O)=[C@@]=CF", "allene-1", "gJQHBIAIVVb`@" },
+								  { "OC=[C@@]=C(F)[H]", "allene-1", "gJQHBIAIVVb`@" },
+								  { "CC(F)=[C@@]=CO", "allene-2", "gGQHJIAIgfZJ@" },
+								  { "OC=[C@]=C(C)F", "allene-2", "gGQHJIAIgfZJ@" },
+								  { "OC=[C@]=C(C)F", "allene-2", "gGQHJIAIgfZJ@" },
+								  { "OC(F)=[C@@]=CO", "allene-2", "gGQHJIAIgfZJ@" },
+								  { "OC(F)=[C@]=C(O)[H]", "allene-2", "gGQHJIAIgfZJ@" },
+								  { "CC(F)=[C@]=C(O)Cl", "allene-3", "gNqDDHbrBS[TmSH@" },
+								  { "OC(Cl)=[C@]=C(C)F", "allene-3", "gNqDDHbrBS[TmSH@" },
+								  { "ClC(O)=[C@]=C(F)C", "allene-3", "gNqDDHbrBS[TmSH@" },
+								  { "OC(Cl)=[C@]=C(C)F", "allene-3", "gNqDDHbrBS[TmSH@" },
+								  { "C1(Cl)=[C@]=C(C)F.O1", "allene-3", "gNqDDHbrBS[TmSH@" },
+								  { "C(O)(Cl)=[C@]=C(C)F", "allene-3", "gNqDDHbrBS[TmSH@" },
 									};
 
 		StereoMolecule mol = new StereoMolecule();
