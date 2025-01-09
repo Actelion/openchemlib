@@ -38,6 +38,7 @@ import com.actelion.research.util.datamodel.DoubleArray;
 import java.awt.Point;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -831,6 +832,26 @@ public class StringFunctions {
 		
 		return li;
 	}
+
+	public static String shuffle(String s) {
+
+		List<Character> characters = new ArrayList<>();
+		for (char c : s.toCharArray()) {
+			characters.add(c);
+		}
+
+		// Shuffle the list
+		Collections.shuffle(characters);
+
+		// Convert the list back to String
+		StringBuilder shuffledString = new StringBuilder();
+		for (char c : characters) {
+			shuffledString.append(c);
+		}
+
+		return shuffledString.toString();
+	}
+
 
 	/**
 	 * https://stackoverflow.com/questions/4385623/bytes-of-a-string-in-java
