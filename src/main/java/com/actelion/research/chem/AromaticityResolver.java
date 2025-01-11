@@ -112,7 +112,7 @@ public class AromaticityResolver {
 
 		promoteObviousBonds();
 
-		while (promoteOuterShellDelocalizedRingSystems(ringSet))
+		while (promoteOuterShellDelocalizedRingSystems(ringSet, mayChangeAtomCharges))
 			promoteObviousBonds();
 
 		// try to find and promote entirely aromatic 6-rings
@@ -136,16 +136,22 @@ public class AromaticityResolver {
 		if (mDelocalizedAtoms - mPiElectronsAdded >= 2)
 			connectSeparatedSingletons();
 
-		if (mayChangeAtomCharges) {
-			for (int atom=0; atom<mMol.getAtoms(); atom++) {
-				if (mIsDelocalizedAtom[atom] && mMol.getImplicitHydrogens(atom) != 0) {
-					if ((mMol.getAtomCharge(atom) == 1 && mMol.isElectronegative(atom))
-					 || (mMol.getAtomCharge(atom) == -1 && mMol.getAtomicNo(atom) == 5))
-						mMol.setAtomCharge(atom, 0);
-					else
-						mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
-					mPiElectronsAdded++;
-					}
+		// If finally one or more single delocalized atoms remain, and if these carry an implicit hydrogen,
+		// and if it is allowed and possible, then add/remove a charge to make the atom's lone pair contribute
+		// to the neighbour atom's delocalization. If modifying charges is not allowed, then remove an implicit
+		// hydrogen including one of its binding electrons. An unpaired electron is closer to the intended aromatic
+		// state than a wrong hybridisation and one implicit hydrogen too much.
+		// In addition, during id-coordinate parsing of implicit hydrogen atoms, the number of implicit hydrogens
+		// per non-H atom must exactly match the one given when the idcode with coordinates was encoded.
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			if (mIsDelocalizedAtom[atom] && mMol.getImplicitHydrogens(atom) != 0) {
+				if (mayChangeAtomCharges
+				 &&	((mMol.getAtomCharge(atom) == 1 && mMol.isElectronegative(atom))
+				  || (mMol.getAtomCharge(atom) == -1 && mMol.getAtomicNo(atom) == 5)))
+					mMol.setAtomCharge(atom, 0);
+				else
+					mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+				mPiElectronsAdded++;
 				}
 			}
 
@@ -229,7 +235,7 @@ public class AromaticityResolver {
 
 				if (isQualifyingRing) {
 					if (mayChangeAtomCharges)
-						for (int i=0; i<6; i+=2)
+						for (int i=0; i<6; i++)
 							checkAtomTypePi1(ringAtom[i], true);
 
 					for (int i=0; i<6; i+=2)
@@ -286,7 +292,7 @@ public class AromaticityResolver {
 		return false;
 	}
 
-	private boolean promoteOuterShellDelocalizedRingSystems(RingCollection ringSet) {
+	private boolean promoteOuterShellDelocalizedRingSystems(RingCollection ringSet, boolean mayChangeAtomCharges) {
 		int[] sharedDelocalizedRingCount = new int[mMol.getBonds()];
 		for (int r=0; r<ringSet.getSize(); r++) {
 			int[] ringBond = ringSet.getRingBonds(r);
@@ -325,6 +331,10 @@ public class AromaticityResolver {
 							if (bridgeBonds > 2 && (bridgeBonds & 1) == 1) {
 								for (int j=1; j<bridgeBonds; j+=2) {
 									int index = (first+j < ringBond.length) ? first+j : first+j-ringBond.length;
+									if (mayChangeAtomCharges) {
+										checkAtomTypePi1(ringAtom[index], true);
+										checkAtomTypePi1(ringAtom[index == ringAtom.length-1 ? 0 : index+1], true);
+									}
 									promoteBond(ringBond[index]);
 								}
 								found = true;

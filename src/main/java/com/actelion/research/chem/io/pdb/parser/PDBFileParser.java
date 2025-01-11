@@ -40,6 +40,7 @@ import com.actelion.research.util.SortedList;
 import java.io.*;
 import java.net.URI;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -199,37 +200,31 @@ public class PDBFileParser {
 	}
 
     public PDBFileParser() {
-
         dfDateDeposition = new SimpleDateFormat(DATE_FORMAT);
-
 	    RemarkParser remarkParser = new RemarkParser();
-
         hetNameParser = new HetNameParser();
-
         hetSynonymParser = new HetSynonymParser();
-
         formulaParser = new FormulaParser();
-
         siteParser = new SiteParser();
-
         modelParser = new ModelParser();
-
     }
 
     public PDBCoordEntryFile parse(File fiPDB) throws IOException, ParseException {
-        return parse(new BufferedReader(new FileReader(fiPDB)));
+		InputStream stream = fiPDB.getName().toLowerCase().endsWith(".pdb.gz") ?
+				new GZIPInputStream(new FileInputStream(fiPDB))
+			  : new FileInputStream(fiPDB);
+		return parse(new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)));
     }
 
     public PDBCoordEntryFile parse(BufferedReader br) throws IOException, ParseException {
         PDBCoordEntryFile pdbCoordEntryFile = new PDBCoordEntryFile();
         
-		ArrayList<String> liRaw = new ArrayList<String>();
+		ArrayList<String> liRaw = new ArrayList<>();
 
 		String sCurrentLine;
 		while ((sCurrentLine = br.readLine()) != null) {
 			liRaw.add(sCurrentLine);
 		}
-
 
         int indexLine = 0;
         
