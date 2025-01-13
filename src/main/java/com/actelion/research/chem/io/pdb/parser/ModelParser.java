@@ -35,6 +35,7 @@
 package com.actelion.research.chem.io.pdb.parser;
 
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * ModelParser
@@ -44,8 +45,8 @@ public class ModelParser {
 
     private int indexLine;
 
-    public void parse(List<String> liRaw, int indexLine, List<AtomRecord> protAtomRecords, 
-    		List<AtomRecord> hetAtomRecords) {
+    public void parse(List<String> liRaw, int indexLine, TreeSet<AtomRecord> protAtomRecords,
+                      TreeSet<AtomRecord> hetAtomRecords) {
     	
         String tagAtom = PDBFileParser.TAG_ATOM;
         String tagHeteroAtom = PDBFileParser.TAG_HETATM;
@@ -64,7 +65,6 @@ public class ModelParser {
         // rather use Optional here! 
         AtomRecord lastRecord = null;
         for (int i = start; i < liRaw.size(); i++) {
-
             String line = liRaw.get(i);
             if(line.startsWith(tagAtom)) {
                 AtomRecord modelAtom = parseAtom(line);
@@ -99,8 +99,6 @@ public class ModelParser {
                 break;
             }
         }
-
-
     }
 
     private AtomRecord parseAtom(String line){
@@ -131,7 +129,7 @@ public class ModelParser {
         element = element.toLowerCase();
         element = element.substring(0, 1).toUpperCase() + element.substring(1);
 
-        AtomRecord modelAtom = new AtomRecord(serialId,
+        return new AtomRecord(serialId,
                 atomName,
                 altLoc,
                 residueName,
@@ -144,8 +142,6 @@ public class ModelParser {
                 occupancy,
                 tempFactor,
                 element);
-
-        return modelAtom;
     }
 
     public int getIndexLine() {

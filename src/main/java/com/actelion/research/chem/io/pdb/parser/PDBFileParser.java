@@ -527,21 +527,20 @@ public class PDBFileParser {
 	    }
 	    
 	    //indexLine--;
-        List<AtomRecord> hetAtomRecords = new ArrayList<AtomRecord>();
-        List<AtomRecord> protAtomRecords = new ArrayList<AtomRecord>();
+        TreeSet<AtomRecord> hetAtomRecords = new TreeSet<>();
+		TreeSet<AtomRecord> protAtomRecords = new TreeSet<AtomRecord>();
         modelParser.parse(liRaw, indexLine,protAtomRecords,hetAtomRecords);
 
-        pdbCoordEntryFile.setProtAtomRecords(protAtomRecords);
-        pdbCoordEntryFile.setHetAtomRecords(hetAtomRecords);
+        pdbCoordEntryFile.setProtAtomRecords(protAtomRecords.stream().toList());
+        pdbCoordEntryFile.setHetAtomRecords(hetAtomRecords.stream().toList());
         //List<ModelModel> liModelModel = modelParser.getLiModelModel();
         //pdbCoordEntryFile.setLiModelModel(liModelModel);
 
         indexLine = modelParser.getIndexLine();
+
         //
         // Parsing atom connections
         //
-
-
 		SortedList<int[]> bonds = new SortedList<>(new IntArrayComparator());
 		indexLine = parseCONECTLines(liRaw, indexLine, bonds);
 		pdbCoordEntryFile.setLiConnect(bonds);
@@ -633,7 +632,9 @@ public class PDBFileParser {
 
                 String [] arr = l.split("[ ]+");
                 sb.append(" ");
-                for (int j = 1; j < arr.length; j++) {
+
+				int first = (arr.length >= 2 && arr[1].equals(Integer.toString(i-start+2)) ? 2 : 1);
+                for (int j = first; j < arr.length; j++) {
                     sb.append(arr[j]);
 
                     if(j < arr.length-1) {
@@ -650,7 +651,6 @@ public class PDBFileParser {
         AbstractMap.SimpleEntry<String, Integer> siTextIndex = new AbstractMap.SimpleEntry<>(sb.toString(), indexLine);
 
         return siTextIndex;
-
     }
 
     private List<String> parseMultipleTimesOneLine(List<String> liRaw, int indexLine, String tag) throws ParseException {
