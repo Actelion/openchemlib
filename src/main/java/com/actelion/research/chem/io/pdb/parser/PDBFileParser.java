@@ -531,8 +531,16 @@ public class PDBFileParser {
 		TreeSet<AtomRecord> protAtomRecords = new TreeSet<AtomRecord>();
         modelParser.parse(liRaw, indexLine,protAtomRecords,hetAtomRecords);
 
-        pdbCoordEntryFile.setProtAtomRecords(protAtomRecords.stream().toList());
-        pdbCoordEntryFile.setHetAtomRecords(hetAtomRecords.stream().toList());
+		ArrayList<AtomRecord> protAtomList = new ArrayList<>();
+		for (AtomRecord ar : protAtomRecords)
+			protAtomList.add(ar);
+
+		ArrayList<AtomRecord> hetAtomList = new ArrayList<>();
+		for (AtomRecord ar : hetAtomRecords)
+			hetAtomList.add(ar);
+
+		pdbCoordEntryFile.setProtAtomRecords(protAtomList);
+        pdbCoordEntryFile.setHetAtomRecords(hetAtomList);
         //List<ModelModel> liModelModel = modelParser.getLiModelModel();
         //pdbCoordEntryFile.setLiModelModel(liModelModel);
 
