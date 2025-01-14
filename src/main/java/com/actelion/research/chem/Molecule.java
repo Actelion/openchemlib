@@ -3499,6 +3499,55 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 * If a molecule is a substructure fragment, and if multiple allowed bond types
+	 * are defined in a bond's query features, then the explicit bond type must match
+	 * the lowest order of the allowed query feature bond types.
+	 * Call this function after setting bond type and query features to make sure,
+	 * the correct bond type is used.
+	 * @param bond
+	 */
+	public void adaptBondTypeToQueryFeatures(int bond) {
+		int bondType = -1;
+		int selectionCount = 0;
+
+		if ((mBondQueryFeatures[bond] & Molecule.cBondTypeMetalLigand) != 0) {
+			bondType = Molecule.cBondTypeMetalLigand;
+			selectionCount++;
+		}
+		if ((mBondQueryFeatures[bond] & Molecule.cBondTypeQuintuple) != 0) {
+			bondType = Molecule.cBondTypeQuintuple;
+			selectionCount++;
+		}
+		if ((mBondQueryFeatures[bond] & Molecule.cBondTypeQuadruple) != 0) {
+			bondType = Molecule.cBondTypeQuadruple;
+			selectionCount++;
+		}
+		if ((mBondQueryFeatures[bond] & Molecule.cBondTypeTriple) != 0) {
+			bondType = Molecule.cBondTypeTriple;
+			selectionCount++;
+		}
+		if ((mBondQueryFeatures[bond] & Molecule.cBondTypeDouble) != 0) {
+			bondType = Molecule.cBondTypeDouble;
+			selectionCount++;
+		}
+		if ((mBondQueryFeatures[bond] & Molecule.cBondTypeDelocalized) != 0) {
+			bondType = Molecule.cBondTypeDelocalized;
+			selectionCount++;
+		}
+		if ((mBondQueryFeatures[bond] & Molecule.cBondTypeSingle) != 0) {
+			bondType = Molecule.cBondTypeSingle;
+			selectionCount++;
+		}
+
+		if (bondType != -1 && bondType != (mBondType[bond] & cBondTypeMaskSimple))
+			mBondType[bond] = bondType;	// set to the lowest bond order of query options
+
+		if (selectionCount < 2)
+			mBondQueryFeatures[bond] &= ~(cBondQFBondTypes + cBondQFRareBondTypes);
+	}
+
+
+	/**
 	 * Sets the bond type based on bond order without stereo orientation.
 	 * @param bond
 	 * @param order 1,2, or 3

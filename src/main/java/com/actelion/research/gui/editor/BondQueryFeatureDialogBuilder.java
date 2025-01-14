@@ -296,51 +296,20 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			mMol.setBondType(bond, Molecule.cBondTypeSingle);
             }
         else {
-        	// priority in order of bond orders (except 0)
-            int bondType = -1;
-			int selectionCount = 0;
-
-			if (mCBMetalLigand.isSelected()) {
-				bondType = Molecule.cBondTypeMetalLigand;
-				queryFeatures |= Molecule.cBondTypeMetalLigand;
-				selectionCount++;
-				}
-			if (mCBQuintuple.isSelected()) {
-				bondType = Molecule.cBondTypeQuintuple;
-				queryFeatures |= Molecule.cBondTypeQuintuple;
-				selectionCount++;
-				}
-			if (mCBQuadruple.isSelected()) {
-				bondType = Molecule.cBondTypeQuadruple;
-				queryFeatures |= Molecule.cBondTypeQuadruple;
-				selectionCount++;
-				}
-			if (mCBTriple.isSelected()) {
-				bondType = Molecule.cBondTypeTriple;
-				queryFeatures |= Molecule.cBondTypeTriple;
-				selectionCount++;
-				}
-			if (mCBDouble.isSelected()) {
-				bondType = Molecule.cBondTypeDouble;
-				queryFeatures |= Molecule.cBondTypeDouble;
-				selectionCount++;
-				}
-			if (mCBDelocalized.isSelected()) {
-				bondType = Molecule.cBondTypeDelocalized;
-				queryFeatures |= Molecule.cBondTypeDelocalized;
-				selectionCount++;
-				}
-			if (mCBSingle.isSelected()) {
-				bondType = Molecule.cBondTypeSingle;
+			if (mCBSingle.isSelected())
 				queryFeatures |= Molecule.cBondTypeSingle;
-				selectionCount++;
-				}
-
-			if (bondType != -1)
-				mMol.setBondType(bond, bondType);	// set to the lowest bond order of query options
-
-			if (selectionCount < 2)
-				queryFeatures = 0;
+			if (mCBDouble.isSelected())
+				queryFeatures |= Molecule.cBondTypeDouble;
+			if (mCBTriple.isSelected())
+				queryFeatures |= Molecule.cBondTypeTriple;
+			if (mCBQuadruple.isSelected())
+				queryFeatures |= Molecule.cBondTypeQuadruple;
+			if (mCBQuintuple.isSelected())
+				queryFeatures |= Molecule.cBondTypeQuintuple;
+			if (mCBDelocalized.isSelected())
+				queryFeatures |= Molecule.cBondTypeDelocalized;
+			if (mCBMetalLigand.isSelected())
+				queryFeatures |= Molecule.cBondTypeMetalLigand;
 
 			if (mComboBoxRing.getSelectedIndex() != 0) {
 				if (mComboBoxRing.getSelectedIndex() == 1) {
@@ -374,6 +343,7 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 
 		mMol.setBondQueryFeature(bond, Molecule.cBondQFAllFeatures, false);
 		mMol.setBondQueryFeature(bond, queryFeatures, true);
+		mMol.adaptBondTypeToQueryFeatures(bond);
 		}
 
     private boolean isSelectedBond(int bond) {

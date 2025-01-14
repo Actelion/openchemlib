@@ -432,6 +432,7 @@ public class SmilesParser {
 						if (bondQueryFeatures != 0) {
 							mSmartsFeatureFound = true;
 							mMol.setBondQueryFeature(bond, bondQueryFeatures, true);
+							mMol.adaptBondTypeToQueryFeatures(bond);
 						}
 					}
 
@@ -462,6 +463,7 @@ public class SmilesParser {
 					if (bondQueryFeatures != 0) {
 						mSmartsFeatureFound = true;
 						mMol.setBondQueryFeature(bond, bondQueryFeatures, true);
+						mMol.adaptBondTypeToQueryFeatures(bond);
 					}
 				}
 
@@ -667,6 +669,7 @@ public class SmilesParser {
 						if (bondQueryFeatures != 0) {
 							mSmartsFeatureFound = true;
 							mMol.setBondQueryFeature(bond, ringClosureBondQueryFeatures[number], true);
+							mMol.adaptBondTypeToQueryFeatures(bond);
 						}
 						ringClosureAtom[number] = -1; // for number re-usage
 					}
