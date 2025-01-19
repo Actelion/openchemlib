@@ -713,7 +713,8 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 				rxnCatalysts = mFieldData[sf.fieldIndex];
 		}
 
-		return ReactionEncoder.decode(rxnCode, rxnMapping, rxnCoords, null, rxnCatalysts, ensureCoordinates, null);
+		return rxnMapping == null && rxnCoords == null && rxnCatalysts == null ? ReactionEncoder.decode(rxnCode, ensureCoordinates)
+				: ReactionEncoder.decode(rxnCode, rxnMapping, rxnCoords, null, rxnCatalysts, ensureCoordinates, null);
 	}
 
 	public String getMoleculeName() {
