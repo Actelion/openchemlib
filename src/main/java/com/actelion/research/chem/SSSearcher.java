@@ -77,7 +77,7 @@ public class SSSearcher {
 	// - if an atom charge/mass is specified then this charge/mass must match for the atom to match
 
 	// defines details of similarity between atoms and bonds
-	private int mDefaultMatchMode;
+	private final int mDefaultMatchMode;
 
 	// The molecule which is analyzed
 	protected StereoMolecule mMolecule;
@@ -111,7 +111,7 @@ public class SSSearcher {
 
 	// depending on the fragment count mode this may contain atom lists
 	// of all till now located matching sub-fragments
-	private TreeSet<int[]> mSortedMatchSet;
+	private final TreeSet<int[]> mSortedMatchSet;
 	private ArrayList<int[]> mMatchList;
 	private ArrayList<BridgeBond> mBridgeBondList;
 	private ArrayList<boolean[]> mBridgeBondAtomList;
@@ -229,10 +229,9 @@ public class SSSearcher {
 		mFragmentAtomContextRank = null;
 
 		if (mFragmentExcludeAtoms != 0) {
-			if (mFragmentExcludeAtoms != 0)
-				for (int bond = 0; bond < mFragment.getBonds(); bond++)
-					if (mIsExcludeAtom[mFragment.getBondAtom(0, bond)] || mIsExcludeAtom[mFragment.getBondAtom(1, bond)])
-						mFragmentExcludeBonds++;
+			for (int bond=0; bond<mFragment.getBonds(); bond++)
+				if (mIsExcludeAtom[mFragment.getBondAtom(0, bond)] || mIsExcludeAtom[mFragment.getBondAtom(1, bond)])
+					mFragmentExcludeBonds++;
 
 			// find all independent exclude groups
 			for (int atom=0; atom<mFragment.getAllAtoms(); atom++)
@@ -447,7 +446,7 @@ System.out.println();
 	 * sets of molecule atoms. Multiple matches involving the same atoms, e.g. with a benzene ring,
 	 * are counted and listed only once. If count mode is different from cCountModeExistance,
 	 * then an atom mapping from fragment to molecule is collected and can be retrieved with getMatchList().
-	 * @param countMode one of cCountModeExistance, cCountModeFirstMatch, cCountModeOverlapping, cCountModeRigorous
+	 * @param countMode one of cCountModeExistance, cCountModeFirstMatch, cCountModeSeparated, cCountModeOverlapping, cCountModeUnique, cCountModeRigorous
 	 * @param matchMode cDefaultMatchMode or combination of cMatchAtomCharge, cMatchAtomMass, cMatchDBondToDelocalized, cMatchAromDBondToDelocalized
 	 * @return count of sub-structure matches of fragment in molecule
 	 */
@@ -1645,7 +1644,7 @@ System.out.println();
 				queryDefaults |= (Molecule.cAtomQFNotChargeNeg | Molecule.cAtomQFNotChargePos);
 			else if (charge < 0)
 				queryDefaults |= (Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargePos);
-			else if (charge > 0)
+			else
 				queryDefaults |= (Molecule.cAtomQFNotCharge0 | Molecule.cAtomQFNotChargeNeg);
 
 			int hydrogens = mol.getAllHydrogens(atom);
@@ -1853,7 +1852,7 @@ System.out.println();
 			}
 		}
 
-	private class BridgeBond {
+	private static class BridgeBond {
 		int atom1,atom2,minBridgeSize,maxBridgeSize;
 		}
 
