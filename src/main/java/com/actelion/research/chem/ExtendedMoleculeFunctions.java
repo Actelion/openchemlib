@@ -1096,7 +1096,10 @@ public class ExtendedMoleculeFunctions {
 					int bo = mol.getConnBondOrder(i,j);
 					sumBO+=bo;
 				}
-				five=(sumBO>4)?true:false;
+				if(sumBO>4){
+					five=true;
+					break;
+				}
 			}
 		}
 
