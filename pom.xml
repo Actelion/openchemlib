@@ -8,7 +8,7 @@
     Please follow the naming scheme YEAR.MONTH.RELEASE_NO_OF_MONTH
     (eg. 2016.4.1 for second release in Apr 2016)
     -->
-    <version>2025.2.0</version>
+    <version>2025.2.1-SNAPSHOT</version>
 
     <name>OpenChemLib</name>
     <description>Open Source Chemistry Library</description>
@@ -207,7 +207,7 @@
         <connection>scm:git:git@github.com:Actelion/openchemlib.git</connection>
         <developerConnection>scm:git:git@github.com:Actelion/openchemlib.git</developerConnection>
         <url>https://github.com/Actelion/openchemlib</url>
-      <tag>openchemlib-2025.2.0</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <distributionManagement>
