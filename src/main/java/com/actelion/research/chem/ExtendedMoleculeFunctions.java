@@ -1105,6 +1105,27 @@ public class ExtendedMoleculeFunctions {
 
 		return five;
 	}
+	public static boolean containsFiveBindingNitrogenWithoutCharge(StereoMolecule mol) {
+
+		boolean fiveBindingNNoPositiveCharge=false;
+		for (int i = 0; i < mol.getAtoms(); i++) {
+			if(mol.getAtomicNo(i)==5){
+				int sumBO=0;
+				for (int j = 0; j < mol.getConnAtoms(i); j++) {
+					int bo = mol.getConnBondOrder(i,j);
+					sumBO+=bo;
+				}
+				if(sumBO==5){
+					if(mol.getAtomCharge(i)!=1) {
+						fiveBindingNNoPositiveCharge = true;
+						break;
+					}
+				}
+			}
+		}
+
+		return fiveBindingNNoPositiveCharge;
+	}
 
 	/**
 	 *
