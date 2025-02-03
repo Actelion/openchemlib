@@ -5,7 +5,6 @@ package com.actelion.research.share.gui;
  * Creation Date: 8/24/2016
  */
 @Deprecated
-@Deprecated
 public abstract class DrawConfig
 {
     public final long createColor(double r, double g, double b, double alpha)
