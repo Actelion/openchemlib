@@ -39,6 +39,7 @@ package com.actelion.research.share.gui.editor.chem;
  * Date: 11/24/2014
  * Time: 5:49 PM
  */
+@Deprecated
 public interface IReactionArrow
 {
 }

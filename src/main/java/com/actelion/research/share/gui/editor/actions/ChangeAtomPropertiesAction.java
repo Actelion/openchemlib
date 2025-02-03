@@ -46,6 +46,7 @@ import com.actelion.research.share.gui.editor.io.IMouseEvent;
  * Date: 2/1/13
  * Time: 4:13 PM
  */
+@Deprecated
 public class ChangeAtomPropertiesAction extends AtomHighlightAction
 {
 

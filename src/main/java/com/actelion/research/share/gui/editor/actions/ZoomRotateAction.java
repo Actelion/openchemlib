@@ -47,6 +47,7 @@ import java.awt.geom.Point2D;
  * Date: 4/28/2014
  * Time: 12:39 PM
  */
+@Deprecated
 public class ZoomRotateAction extends DrawAction {
     private java.awt.geom.Point2D origin = null;
 

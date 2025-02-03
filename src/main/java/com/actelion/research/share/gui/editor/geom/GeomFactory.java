@@ -50,6 +50,7 @@ import com.actelion.research.share.gui.editor.io.IKeyCode;
  * Date: 11/24/2014
  * Time: 3:15 PM
  */
+@Deprecated
 public abstract class GeomFactory
 {
 

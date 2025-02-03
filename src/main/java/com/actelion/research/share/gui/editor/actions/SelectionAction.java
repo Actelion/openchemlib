@@ -58,6 +58,7 @@ import java.util.List;
  * Date: 1/24/13
  * Time: 5:57 PM
  */
+@Deprecated
 public class SelectionAction extends BondHighlightAction//DrawAction
 {
 

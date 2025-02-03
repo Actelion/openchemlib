@@ -36,6 +36,7 @@ package com.actelion.research.share.gui;
 /**
  * Return values from Dialog calls
  */
+@Deprecated
 public enum DialogResult
 {
     IDOK, IDCANCEL, IDYES, IDNO, IDABORT, IDRETRY,

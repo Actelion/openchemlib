@@ -44,6 +44,7 @@ import com.actelion.research.share.gui.editor.io.IMouseEvent;
 /**
  * Basic Interface for all editor actions
  */
+@Deprecated
 public interface Action
 {
     /**

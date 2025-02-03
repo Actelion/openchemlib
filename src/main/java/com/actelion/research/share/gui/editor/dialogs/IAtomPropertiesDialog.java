@@ -39,6 +39,7 @@ package com.actelion.research.share.gui.editor.dialogs;
  * Date: 11/24/2014
  * Time: 5:03 PM
  */
+@Deprecated
 public interface IAtomPropertiesDialog extends IDialog
 {
 }

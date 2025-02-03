@@ -44,6 +44,7 @@ import java.awt.*;
  * Date: 5/16/13
  * Time: 3:39 PM
  */
+@Deprecated
 public abstract class PasteAction extends CommandAction
 {
     java.awt.Dimension bounds;

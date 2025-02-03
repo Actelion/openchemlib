@@ -53,6 +53,7 @@ import javafx.scene.text.TextAlignment;
  * Date: 11/24/2014
  * Time: 6:24 PM
  */
+@Deprecated
 public class GraphicsContextImpl implements IDrawContext<GraphicsContext>
 {
     GraphicsContext ctx;
@@ -69,10 +70,10 @@ public class GraphicsContextImpl implements IDrawContext<GraphicsContext>
     }
     public static Color createColor(long color)
     {
-        double r = (double) ((color & 0xFF000000l) >> 24) / 255.0;
-        double g = (double) ((color & 0x00FF0000l) >> 16) / 255.0;
-        double b = (double) ((color & 0x0000FF00l) >> 8) / 255.0;
-        double a = (double) (color & 0x000000FFl ) / 255.0;
+        double r = (double) ((color & 0xFF000000L) >> 24) / 255.0;
+        double g = (double) ((color & 0x00FF0000L) >> 16) / 255.0;
+        double b = (double) ((color & 0x0000FF00L) >> 8) / 255.0;
+        double a = (double) (color & 0x000000FFL ) / 255.0;
         return new Color(r, g, b, a);
     }
 

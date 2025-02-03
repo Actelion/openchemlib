@@ -39,6 +39,7 @@ package com.actelion.research.share.gui.editor.listeners;
  * Date: 11/24/2014
  * Time: 3:27 PM
  */
+@Deprecated
 public interface IValidationListener
 {
     void valueInvalidated();

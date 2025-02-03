@@ -44,6 +44,7 @@ import com.actelion.research.share.gui.editor.geom.IDrawContext;
  * Date: 11/24/2014
  * Time: 3:26 PM
  */
+@Deprecated
 public interface IDepictor<T>
 {
     DepictorTransformation updateCoords(IDrawContext<T> g, GenericRectangle aFloat, int cModeInflateToMaxAVBL);

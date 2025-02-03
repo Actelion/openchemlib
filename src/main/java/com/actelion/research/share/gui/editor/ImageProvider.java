@@ -36,6 +36,8 @@ package com.actelion.research.share.gui.editor;
 /**
  * Created by rufenec on 08/05/15.
  */
+@Deprecated
+@Deprecated
 public abstract class ImageProvider<T>
 {
     public abstract T getESRImage(boolean up);

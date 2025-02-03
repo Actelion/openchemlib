@@ -40,6 +40,7 @@ package com.actelion.research.share.gui.editor.io;
  * Date: 11/24/2014
  * Time: 3:20 PM
  */
+@Deprecated
 public interface IKeyEvent
 {
     IKeyCode getCode();

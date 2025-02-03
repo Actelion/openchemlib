@@ -44,6 +44,7 @@ import com.actelion.research.share.gui.editor.io.IMouseEvent;
  * Date: 3/26/13
  * Time: 4:33 PM
  */
+@Deprecated
 public class UnknownParityAction extends AtomHighlightAction
 {
 

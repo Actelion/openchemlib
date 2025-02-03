@@ -41,6 +41,7 @@ import java.awt.*;
  * Date: 11/24/2014
  * Time: 3:21 PM
  */
+@Deprecated
 public interface ICursor
 {
 

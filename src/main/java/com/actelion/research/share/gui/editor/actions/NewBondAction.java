@@ -29,4 +29,31 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-*/package com.actelion.research.share.gui.editor.actions;import com.actelion.research.chem.Molecule;import com.actelion.research.share.gui.editor.Model;/** * Project: * User: rufenec * Date: 1/28/13 * Time: 1:28 PM */public class NewBondAction extends BondBaseAction{    public NewBondAction(Model model)    {        super(model);    }    public int getBondType()    {        return Molecule.cBondTypeSingle;    }}
+*/
+
+package com.actelion.research.share.gui.editor.actions;
+
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.share.gui.editor.Model;
+
+/**
+ * Project:
+ * User: rufenec
+ * Date: 1/28/13
+ * Time: 1:28 PM
+ */
+@Deprecated
+public class NewBondAction extends BondBaseAction
+{
+    public NewBondAction(Model model)
+    {
+        super(model);
+    }
+
+    public int getBondType()
+    {
+        return Molecule.cBondTypeSingle;
+    }
+
+
+}

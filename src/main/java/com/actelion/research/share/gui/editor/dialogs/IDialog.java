@@ -35,6 +35,7 @@ package com.actelion.research.share.gui.editor.dialogs;
 
 import com.actelion.research.share.gui.DialogResult;
 
+@Deprecated
 public interface IDialog
 {
     DialogResult doModal();

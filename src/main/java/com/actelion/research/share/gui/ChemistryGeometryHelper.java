@@ -43,6 +43,7 @@ import com.actelion.research.gui.generic.GenericRectangle;
 import java.awt.*;
 
 
+@Deprecated
 public class ChemistryGeometryHelper
 {
     public static final int REACTION_TYPE_NOMOLS = 0;

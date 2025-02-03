@@ -44,6 +44,7 @@ import com.actelion.research.share.gui.editor.io.IMouseEvent;
  * handle single type of actions: the action is executed when
  * pressing the button and the current drawing action will remain unchanged
  */
+@Deprecated
 public abstract class CommandAction implements Action
 {
     protected Model model;

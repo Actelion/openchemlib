@@ -46,6 +46,7 @@ import com.actelion.research.share.gui.editor.io.IMouseEvent;
  * Date: 1/28/13
  * Time: 1:07 PM
  */
+@Deprecated
 public abstract class BondBaseAction extends BondHighlightAction
 {
 

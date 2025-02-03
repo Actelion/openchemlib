@@ -39,6 +39,7 @@ package com.actelion.research.share.gui.editor.chem;
  * Date: 11/24/2014
  * Time: 3:28 PM
  */
+@Deprecated
 public interface IArrow extends IDrawingObject
 {
     int getLength();

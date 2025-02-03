@@ -33,6 +33,7 @@
 
 package com.actelion.research.share.gui;
 
+@Deprecated
 public class Delegator<T>
 {
     T delegate;

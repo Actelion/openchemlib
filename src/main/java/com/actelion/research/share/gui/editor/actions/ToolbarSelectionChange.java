@@ -38,6 +38,7 @@ import com.actelion.research.share.gui.editor.actions.Action;
 /**
  * Created by rufenec on 5/3/16.
  */
+@Deprecated
 public interface ToolbarSelectionChange {
     void changed(Action a);
 }

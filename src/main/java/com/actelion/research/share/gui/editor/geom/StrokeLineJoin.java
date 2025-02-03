@@ -39,6 +39,7 @@ package com.actelion.research.share.gui.editor.geom;
  * Date: 11/24/2014
  * Time: 4:20 PM
  */
+@Deprecated
 public interface StrokeLineJoin
 {
 }

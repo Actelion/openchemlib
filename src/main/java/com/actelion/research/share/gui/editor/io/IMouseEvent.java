@@ -39,6 +39,7 @@ package com.actelion.research.share.gui.editor.io;
  * Date: 11/24/2014
  * Time: 3:19 PM
  */
+@Deprecated
 public interface IMouseEvent
 {
     double getX();

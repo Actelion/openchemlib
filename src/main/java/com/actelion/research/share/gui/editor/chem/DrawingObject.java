@@ -44,6 +44,7 @@ import com.actelion.research.share.gui.editor.geom.IDrawContext;
  * Time: 12:31 PM
  */
 
+@Deprecated
 public abstract class DrawingObject
         implements Cloneable,IDrawingObject
 {

@@ -47,6 +47,7 @@ import com.actelion.research.share.gui.editor.io.IMouseEvent;
 /**
  * Basic class which handles all actions which interact with the drawing surface
  */
+@Deprecated
 public abstract class DrawAction implements Action
 {
     public static final double HIGHLIGHT_ATOM_RADIUS = 5;

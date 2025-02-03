@@ -43,6 +43,7 @@ import com.actelion.research.share.gui.editor.geom.IDrawContext;
  * Date: 11/24/2014
  * Time: 3:28 PM
  */
+@Deprecated
 public interface IDrawingObject
 {
     void setSelected(boolean b);

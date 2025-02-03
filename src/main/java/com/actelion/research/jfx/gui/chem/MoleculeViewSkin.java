@@ -34,6 +34,8 @@ package com.actelion.research.jfx.gui.chem;
 
 import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.fx.FXDrawContext;
+import com.actelion.research.gui.generic.GenericDepictor;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.jfx.gui.misc.ClipboardHelper;
 import com.actelion.research.jfx.gui.misc.Selector;
@@ -78,7 +80,7 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
     private Canvas canvas = new Canvas();
     private MoleculeView control = null;
     private Canvas dragCanvas = null;
-    private JFXCanvasDepictor dragDepictor;
+    private GenericDepictor dragDepictor;
     private Pane glassPane;
     private Color backgroundColor = DEFAULT_BG;
     private Color foregroundColor = null;   // determine automatically
@@ -370,7 +372,7 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
                         (int) (localPoint.getY() - dragCanvas.getBoundsInLocal().getHeight() / 2));
                     GraphicsContext ctx = (dragCanvas.getGraphicsContext2D());
                     ctx.clearRect(0, 0, dragCanvas.getWidth(), dragCanvas.getHeight());
-                    dragDepictor.paint(ctx);
+                    dragDepictor.paint(new FXDrawContext(ctx));
                     Node n = findDragParentNode(e);
                     if (n != null) {
                         Event.fireEvent(n, e);
@@ -442,7 +444,7 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
             if (!glassPane.getChildren().contains(dragCanvas)) {
                 glassPane.getChildren().add(dragCanvas);
             }
-            dragDepictor = new JFXCanvasDepictor(mol);
+            dragDepictor = new GenericDepictor(mol);
             dragDepictor.validateView(null, new GenericRectangle(0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT), JFXCanvasDepictor.cModeInflateToMaxAVBL);
             dragCanvas.setOpacity(0.7);
             dragCanvas.toFront();

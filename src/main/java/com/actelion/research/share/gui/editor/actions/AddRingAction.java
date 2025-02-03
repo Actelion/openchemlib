@@ -45,6 +45,7 @@ import com.actelion.research.share.gui.editor.io.IMouseEvent;
  * Date: 2/1/13
  * Time: 4:03 PM
  */
+@Deprecated
 public class AddRingAction extends BondHighlightAction
 {
     Model model;
