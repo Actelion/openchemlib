@@ -143,14 +143,14 @@ public abstract class AbstractDepictor<T> {
 	public static final int cDModeNoImplicitHydrogen = 0x2000;
 	public static final int cDModeDrawBondsInGray = 0x4000;
 
-	private static final double cFactorTextSize = 0.6;
+	private static double cFactorTextSize = 0.6;
+	private static double cFactorLineWidth = 0.06;
+	private static double cFactorBondSpacing = 0.15;
 	private static final double cFactorChiralTextSize = 0.5;
-	private static final double cFactorBondSpacing = 0.15;
 	private static final double cFactorBondHiliteRadius = 0.38;
 	private static final double cFactorExcludeGroupRadius = 0.47;
 	private static final double cFactorDotDiameter = 0.12;
 	private static final double cFactorQFDiameter = 0.40;
-	private static final double cFactorLineWidth = 0.06;
 
 	private boolean[]				mAtomIsConnected;
 	private boolean[]				mAtomLabelDisplayed;
@@ -2727,7 +2727,19 @@ public abstract class AbstractDepictor<T> {
 	protected abstract void setLineWidth(double lineWidth);
 	protected abstract void setRGB(int rgb);
 
-    public static class DepictorDot {
+	public static void setBondSpacingFactor(double bs) {
+		cFactorBondSpacing = bs;
+	}
+
+	public static void setTextSizeFactor(double ts) {
+		cFactorTextSize = ts;
+	}
+
+	public static void setLineWidthFactor(double lw) {
+		cFactorLineWidth = lw;
+	}
+
+	public static class DepictorDot {
         public double x,y;
         public int color;
 
