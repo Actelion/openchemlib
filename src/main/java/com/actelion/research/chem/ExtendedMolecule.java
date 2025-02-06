@@ -1634,6 +1634,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		return false;
 		}
 
+	/**
+	 * @return number of distinct aromatic rings in the molecule
+	 */
 	public int getAromaticRingCount() {
 		ensureHelperArrays(cHelperRings);
 		int count = 0;
@@ -1775,6 +1778,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * Requires helper arrays state cHelperRings.
 	 * @param atom
 	 * @return whether the atom is a member of a delocalized ring (subset of aromatic rings)
 	 */
@@ -1783,11 +1787,21 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	}
 
 
+	/**
+	 * Requires helper arrays state cHelperRings.
+	 * @param bond
+	 * @return whether the bond is a member of an aromatic ring
+	 */
 	public boolean isAromaticBond(int bond) {
 		return bond<mBonds && mRingSet.isAromaticBond(bond);
 	}
 
 
+	/**
+	 * Requires helper arrays state cHelperRings.
+	 * @param bond
+	 * @return whether the bond is a member of an aromatic ring that contains at least one hetero atom
+	 */
 	public boolean isHeteroAromaticBond(int bond) {
 		return bond<mBonds && mRingSet.isHeteroAromaticBond(bond);
 	}
@@ -1800,26 +1814,38 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * Indole has 6 delocalized bonds.
 	 * This method also returns true, if the molecule is a fragment and if the bond is explicitly
 	 * defined to be delocalized.
+	 * Requires helper arrays state cHelperRings.
 	 * @param bond
 	 * @return
 	 */
 	@Override
 	public boolean isDelocalizedBond(int bond) {
-		return (bond < mBonds) ? mRingSet.isDelocalizedBond(bond) || mBondType[bond] == cBondTypeDelocalized : false;
+		return bond<mBonds && (mRingSet.isDelocalizedBond(bond) || mBondType[bond] == cBondTypeDelocalized);
 		}
 
 
+	/**
+	 * Requires helper arrays state cHelperRings.
+	 * @param atom
+	 * @return whether the atom is a member of ring of any size
+	 */
 	public boolean isRingAtom(int atom) {
 		return (mAtomFlags[atom] & cAtomFlagsRingBonds) != 0;
 		}
 
 
-	public boolean isRingBond(int bnd) {
-		return (mBondFlags[bnd] & cBondFlagRing) != 0;
+	/**
+	 * Requires helper arrays state cHelperRings.
+	 * @param bond
+	 * @return whether the bond is a member of ring of any size
+	 */
+	public boolean isRingBond(int bond) {
+		return (mBondFlags[bond] & cBondFlagRing) != 0;
 		}
 
 
 	/**
+	 * Requires helper arrays state cHelperRings.
 	 * @param atom
 	 * @return whether atom is a member of a ring not larger than 7 atoms
 	 */
@@ -1829,6 +1855,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * Requires helper arrays state cHelperRings.
 	 * @param bond
 	 * @return whether bond is a member of a ring not larger than 7 atoms
 	 */
@@ -1838,6 +1865,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
+	 * Requires helper arrays state cHelperNeighbours.
 	 * @param atom
 	 * @return whether atom has a neighbor that is connected through a double/triple bond to a hetero atom
 	 */
@@ -1846,6 +1874,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
+	/**
+	 * Requires helper arrays state cHelperRings.
+	 * @param atom
+	 * @return number of connected bonds, which are member of a ring
+	 */
 	public int getAtomRingBondCount(int atom) {
 		int flags = (mAtomFlags[atom] & cAtomFlagsRingBonds);
 		return (flags == 0) ? 0

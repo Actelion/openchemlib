@@ -450,6 +450,7 @@ public class AromaticityResolver {
                         int terminalBond = bond;
                         int bridgeAtom = mMol.getBondAtom(1-i, bond);
                         while (terminalBond != -1) {
+							mIsDelocalizedAtom[terminalAtom] = false;
                             mIsDelocalizedBond[terminalBond] = false;
                             mDelocalizedBonds--;
                             mMol.setBondType(terminalBond, Molecule.cBondTypeDelocalized);
@@ -462,13 +463,15 @@ public class AromaticityResolver {
                                         bridgeAtom = mMol.getConnAtom(terminalAtom, j);
                                         }
                                     else {
-                                        terminalAtom = -1;
+                                        terminalAtom = -1;	// Stop here! We have hit an aromatic branch.
                                         terminalBond = -1;
                                         break;
                                         }
                                     }
                                 }
                             }
+						if (terminalAtom != -1)		// Regular end of aromatic chain (no branch).
+							mIsDelocalizedAtom[bridgeAtom] = false;
                         break;
                         }
                     }
