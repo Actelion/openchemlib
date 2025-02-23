@@ -788,6 +788,18 @@ public class ExtendedMoleculeFunctions {
 		return medTopoDist;
 	}
 
+	public static List<StereoMolecule> parseIdCodes(List<String> idcodes){
+		List<StereoMolecule> mols = new ArrayList<>();
+		IDCodeParser parser = new IDCodeParser();
+		for (String idcode : idcodes) {
+			StereoMolecule mol = parser.getCompactMolecule(idcode);
+			mol.ensureHelperArrays(Molecule.cHelperRings);
+			mols.add(mol);
+		}
+
+		return mols;
+	}
+
 	public final static int getTopologicalDistance(ExtendedMolecule mol, int at1, int at2) {
 		int dist = 0;
 
@@ -1496,10 +1508,11 @@ public class ExtendedMoleculeFunctions {
 		}
 		return cc;
 	}
-
-
-
-
+	public static void createSkeleton(ExtendedMolecule mol) {
+		for (int i = 0; i < mol.getAllAtoms(); i++) {
+			mol.setAtomicNo(i, 6);
+		}
+	}
 
 	/**
 	 * Removes all molecules that are a substructure of one of the molecules in the input list.
@@ -1803,10 +1816,69 @@ public class ExtendedMoleculeFunctions {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
 
+
+		boolean[] atomMask = getSphereAtomMask(mol, rootAtom, depth);
+
+		mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
+		return fragment;
+
+	}
+	public static StereoMolecule getSphereWithDummyAtom(StereoMolecule mol, int rootAtom, int depth, int atNoDummy){
+
+		mol.ensureHelperArrays(Molecule.cHelperRings);
+		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
+
+		boolean[] atomMask = getSphereAtomMask(mol, rootAtom, depth);
+
+		int atomsCopied=0;
+		for (int i = 0; i < atomMask.length; i++) {
+			if(atomMask[i])
+				atomsCopied++;
+		}
+
+
+		// Atoms that contained a connection to an atom outside the fragment.
+		boolean[] atomMask4Dummies = new boolean[mol.getAtoms()];
+
+		for (int i = 0; i < mol.getAtoms(); i++) {
+			if(atomMask[i]){
+				int nConn = mol.getConnAtoms(i);
+				for (int j = 0; j < nConn; j++) {
+					int indConAt = mol.getConnAtom(i,j);
+					if(!atomMask[indConAt]){
+						atomMask4Dummies[i]=true;
+					}
+				}
+			}
+		}
+		int [] atomMap = new int[atomsCopied];
+		mol.copyMoleculeByAtoms(fragment, atomMask, true, atomMap);
+
+		int [] atomMapInvers = new int[atomMask.length];
+		for (int i = 0; i < atomMap.length; i++) {
+			atomMapInvers[atomMap[i]]=i;
+		}
+
+		for (int i = 0; i < atomMask4Dummies.length; i++) {
+			if(atomMask4Dummies[i]){
+				int indAtConn = atomMapInvers[i];
+				int indAtNew = fragment.addAtom(atNoDummy);
+				fragment.addBond(indAtConn, indAtNew);
+			}
+		}
+		fragment.ensureHelperArrays(Molecule.cHelperRings);
+
+		return fragment;
+
+	}
+	public static boolean [] getSphereAtomMask(StereoMolecule mol, int rootAtom, int depth){
+
+		mol.ensureHelperArrays(Molecule.cHelperRings);
+		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
+
 		int[] atomList = new int[mol.getAtoms()];
+		boolean[] atomMaskSphere = new boolean[mol.getAtoms()];
 		boolean[] atomMask = new boolean[mol.getAtoms()];
-		if (rootAtom != 0)
-			Arrays.fill(atomMask, false);
 
 		int min = 0;
 		int max = 0;
@@ -1814,7 +1886,7 @@ public class ExtendedMoleculeFunctions {
 		for (int sphere=0; sphere<depth && max<mol.getAtoms(); sphere++) {
 			if (max == 0) {
 				atomList[0] = rootAtom;
-				atomMask[rootAtom] = true;
+				atomMaskSphere[rootAtom] = true;
 				max = 1;
 			}
 			else {
@@ -1823,8 +1895,8 @@ public class ExtendedMoleculeFunctions {
 					int atom = atomList[i];
 					for (int j=0; j<mol.getConnAtoms(atom); j++) {
 						int connAtom = mol.getConnAtom(atom, j);
-						if (!atomMask[connAtom]) {
-							atomMask[connAtom] = true;
+						if (!atomMaskSphere[connAtom]) {
+							atomMaskSphere[connAtom] = true;
 							atomList[newMax++] = connAtom;
 						}
 					}
@@ -1833,10 +1905,13 @@ public class ExtendedMoleculeFunctions {
 				max = newMax;
 			}
 
-			mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
+			for (int i = 0; i < atomMaskSphere.length; i++) {
+				if(atomMaskSphere[i])
+					atomMask[i]=true;
+			}
 		}
 
-		return fragment;
+		return atomMask;
 
 	}
 
