@@ -1829,14 +1829,6 @@ public class ExtendedMoleculeFunctions {
 		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
 
 		boolean[] atomMask = getSphereAtomMask(mol, rootAtom, depth);
-
-		int atomsCopied=0;
-		for (int i = 0; i < atomMask.length; i++) {
-			if(atomMask[i])
-				atomsCopied++;
-		}
-
-
 		// Atoms that contained a connection to an atom outside the fragment.
 		boolean[] atomMask4Dummies = new boolean[mol.getAtoms()];
 
@@ -1851,11 +1843,13 @@ public class ExtendedMoleculeFunctions {
 				}
 			}
 		}
-		int [] atomMap = new int[atomsCopied];
+		int [] atomMap = new int[atomMask.length];
 		mol.copyMoleculeByAtoms(fragment, atomMask, true, atomMap);
 
 		int [] atomMapInvers = new int[atomMask.length];
 		for (int i = 0; i < atomMap.length; i++) {
+			if(atomMap[i]==-1)
+				continue;
 			atomMapInvers[atomMap[i]]=i;
 		}
 
@@ -1863,18 +1857,16 @@ public class ExtendedMoleculeFunctions {
 			if(atomMask4Dummies[i]){
 				int indAtConn = atomMapInvers[i];
 				int indAtNew = fragment.addAtom(atNoDummy);
-				fragment.addBond(indAtConn, indAtNew);
+				int bnd = fragment.addBond(indAtConn, indAtNew);
+				fragment.setBondType(bnd, Molecule.cBondTypeSingle);
 			}
 		}
 		fragment.ensureHelperArrays(Molecule.cHelperRings);
-
 		return fragment;
-
 	}
 	public static boolean [] getSphereAtomMask(StereoMolecule mol, int rootAtom, int depth){
 
 		mol.ensureHelperArrays(Molecule.cHelperRings);
-		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
 
 		int[] atomList = new int[mol.getAtoms()];
 		boolean[] atomMaskSphere = new boolean[mol.getAtoms()];
