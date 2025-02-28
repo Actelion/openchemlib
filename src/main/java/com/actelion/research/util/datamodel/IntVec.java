@@ -261,6 +261,14 @@ public class IntVec implements Comparable<IntVec> {
         return Math.sqrt(bitsXOR);
     }
 
+    public static int getOverlappingBitCount(int [] a, int [] b){
+        int bits = 0;
+        for (int i = 0; i < a.length; i++) {
+            bits += Integer.bitCount(a[i] & b[i]);
+        }
+        return bits;
+    }
+
     /**
      * Euclidean distance without sqrt
      * @param dVec1
@@ -1665,6 +1673,11 @@ public class IntVec implements Comparable<IntVec> {
 
     }
 
+    public static void setAllBits(int [] a){
+        for (int i = 0; i < a.length; i++) {
+            a[i]=0xFFFFF;
+        }
+    }
     public static void writeBitStringDense(File fi, List<IntVec> li) throws IOException{
     	
     	BufferedWriter bw = new BufferedWriter(new FileWriter(fi));

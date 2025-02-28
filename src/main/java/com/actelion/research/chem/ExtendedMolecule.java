@@ -1244,7 +1244,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * If small fragments were removed, then canonizeCharge() is called to
 	 * neutralize charges after potential removal of counter ions.
 	 * Metal ligand bonds may or may not be considered a connection.
-	 * @param considerMetalBonds
+	 * @param considerMetalBonds, if true the connected metal is not removed
 	 * @return atom mapping from old to new index; null if no fragments were removed
 	 */
 	public int[] stripSmallFragments(boolean considerMetalBonds) {

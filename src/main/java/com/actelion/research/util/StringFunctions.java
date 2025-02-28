@@ -70,6 +70,14 @@ public class StringFunctions {
 		}
 		return arrDouble;
 	}
+	public static int[] parse2Int(String s, String sepRegEx){
+		String [] a = s.split(sepRegEx);
+		int [] vals = new int[a.length];
+		for (int i = 0; i < a.length; i++) {
+			vals[i]=Integer.parseInt(a[i]);
+		}
+		return vals;
+	}
 
 
 	public static String getAppendedSorted(String s1, String s2) {
