@@ -36,6 +36,7 @@ import com.actelion.research.chem.AbstractDepictor;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.gui.fx.FXDrawContext;
 import com.actelion.research.gui.generic.GenericDepictor;
+import com.actelion.research.gui.generic.GenericDrawContext;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.jfx.gui.misc.ClipboardHelper;
 import com.actelion.research.jfx.gui.misc.Selector;
@@ -247,8 +248,9 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
             java.awt.Color fg = (ColorHelper.perceivedBrightness(bg)>0.5) ? java.awt.Color.BLACK : java.awt.Color.WHITE;
             depictor.setForegroundColor(fg, bg);
         }
-	    depictor.validateView(null, new GenericRectangle(0, 0, (float) w, (float) h), AbstractDepictor.cModeInflateToMaxAVBL + (int) (d));
-        depictor.paint(ctx);
+        GenericDrawContext context = new FXDrawContext(ctx);
+	    depictor.validateView(context, new GenericRectangle(0, 0, (float) w, (float) h), AbstractDepictor.cModeInflateToMaxAVBL + (int) (d));
+        depictor.paint(context);
     }
 
 
@@ -445,7 +447,7 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
                 glassPane.getChildren().add(dragCanvas);
             }
             dragDepictor = new GenericDepictor(mol);
-            dragDepictor.validateView(null, new GenericRectangle(0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT), JFXCanvasDepictor.cModeInflateToMaxAVBL);
+            dragDepictor.validateView(new FXDrawContext(canvas.getGraphicsContext2D()), new GenericRectangle(0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT), JFXCanvasDepictor.cModeInflateToMaxAVBL);
             dragCanvas.setOpacity(0.7);
             dragCanvas.toFront();
             dragCanvas.setMouseTransparent(true);
@@ -455,7 +457,6 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
                 (int) (mouseEvent.getSceneY() - dragCanvas.getBoundsInLocal().getHeight() / 2));
         }
     }
-
 
     private void setupGlassPane()
     {
