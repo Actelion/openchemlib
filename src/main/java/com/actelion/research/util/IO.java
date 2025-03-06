@@ -35,11 +35,9 @@ package com.actelion.research.util;
 
 
 import java.io.*;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -520,18 +518,13 @@ public class IO {
 		return sb.toString();
 	}
 	
-	public static List<Integer> readListIntger(File fiTxt) throws IOException {
-		
+	public static List<Integer> readListInteger(File fiTxt) throws IOException {
 		Scanner scanner = new Scanner(fiTxt);
-		
 	    List<Integer> li = new ArrayList<Integer>();
-	    
 	    while (scanner.hasNextInt()) {
 	        li.add(scanner.nextInt());
 	    }
-	    
 	    scanner.close();
-	    
 	    return li;
 	}
 
@@ -610,19 +603,17 @@ public class IO {
 		return sb.toString();
 	}
 
-	
+
+
+
     public static String readLine(Reader is) throws IOException {
 		StringBuffer b = new StringBuffer();
-		
 		int c=0;
-		
 		c=is.read();
-		
 		while((c != -1)&&(c != '\n')) {
 			b.append((char)c);
 			c=is.read();
 		}
-		
 		return b.toString();
 	}
     
@@ -673,19 +664,25 @@ public class IO {
 
 
 	
+	public static String readFirstLine(File file) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(file));
+		String line = reader.readLine();
+		reader.close();
+		return line;
+	}
 	public static List<String> readLines2List(File file) throws IOException {
 		List<String> li = new ArrayList<String>();
-		
+
 		BufferedReader reader = new BufferedReader(new FileReader(file));
-		
+
 		String line = null;
-		
+
 		while ((line = reader.readLine())!=null) {
 			li.add(line);
 		}
-		
+
 		reader.close();
-		
+
 		return li;
 	}
 
