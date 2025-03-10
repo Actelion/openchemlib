@@ -350,46 +350,30 @@ public class IntArray implements Serializable {
 			if(i < types-1){
 				sb.append(seperator);
 			}
-			
 		}
 					
 		return sb.toString();
     }
     
     public static IntArray read(InputStream s) throws IOException{
-    	
-    	
     	int size = parseInteger(s);
-    	
     	int delta_capacity = parseInteger(s);
-    	
     	int hash = parseInteger(s);
-    	
     	int [] a = new int [size];
-    	
     	for (int i = 0; i < size; i++) {
     		a[i] = parseInteger(s);
 		}
-    	
 
     	IntArray ia = new IntArray();
-    	
     	ia.data = a;
-    	
     	ia.size = size;
-    	
     	ia.delta_capacity = delta_capacity;
-    	
     	ia.hash = hash;
-    	
     	return ia;
-    	
     }
     
     public String write2String() throws IOException{
-    	
     	StringBuilder sb = new StringBuilder();
-
     	sb.append(size);
     	sb.append(" ");
     	sb.append(delta_capacity);
@@ -397,9 +381,7 @@ public class IntArray implements Serializable {
     	sb.append(hash);
     	sb.append(" ");
     	sb.append(toString());
-    	
     	return sb.toString();
-    	
     }
     
     public static int parseInteger(InputStream s) throws IOException{
@@ -426,31 +408,20 @@ public class IntArray implements Serializable {
     }
 
     public static void shuffle(IntArray arr){
-    
     	Random rnd = new Random();
-    	
     	int cycles = 7;
-    	
     	int size = arr.length();
-    	
     	for (int i = 0; i < cycles; i++) {
-			
     		for (int j = 0; j < size; j++) {
 				int dest = rnd.nextInt(size);
-				
 				if(dest==j){
 					continue;
 				}
-				
 				int v = arr.get(j);
-				
 				arr.set(j, arr.get(dest));
-				
 				arr.set(dest, v);
 			}
-    		
 		}
-    	
     }
     
     public static IntArray read(String l){
@@ -494,31 +465,26 @@ public class IntArray implements Serializable {
 
 	public static int [] resize(int [] data, int newlen){
 		int [] arr = null;
-
 		if(data.length == newlen){
 			return arr;
 		}
-
 		int intNewlen = 0;
-
 		long max = Integer.MAX_VALUE;
-
 		if(newlen >= max) {
-
 			intNewlen = Integer.MAX_VALUE;
-
 			new RuntimeException("Warning! Maximum length of integer array reached.").printStackTrace();
-
 		} else {
 			intNewlen = newlen;
 		}
-
 		arr = new int [intNewlen];
-
 		System.arraycopy(data, 0, arr, 0, Math.min(data.length, intNewlen));
-
 		return arr;
 
 	}
 
+	public static void setAllBits(int [] a){
+		for (int i = 0; i < a.length; i++) {
+			a[i]=0xFFFFF;
+		}
+	}
 }

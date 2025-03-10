@@ -33,10 +33,7 @@
 
 package com.actelion.research.jfx.dataformat;
 
-import com.actelion.research.chem.dnd.ChemistryFlavors;
 import javafx.scene.input.DataFormat;
-
-import java.awt.datatransfer.SystemFlavorMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -48,18 +45,15 @@ import java.awt.datatransfer.SystemFlavorMap;
 @Deprecated
 public class MoleculeDataFormats
 {
-    public static final DataFormat DF_SERIALIZEDMOLECULE    = new DataFormat(SystemFlavorMap.encodeDataFlavor(ChemistryFlavors.DF_SERIALIZED_MOLECULE));
-    public static final DataFormat DF_MDLMOLFILE            = new DataFormat(SystemFlavorMap.encodeDataFlavor(ChemistryFlavors.DF_MDLMOLFILE));
-    public static final DataFormat DF_MDLMOLFILEV3          = new DataFormat(SystemFlavorMap.encodeDataFlavor(ChemistryFlavors.DF_MDLMOLFILEV3));
-    public static final DataFormat DF_SMILES                = new DataFormat(SystemFlavorMap.encodeDataFlavor(ChemistryFlavors.DF_SMILES));
-
-    public static final DataFormat DF_SERIALIZEDREACTANT    = new DataFormat("com.actelion.research.mercury.model.Reactant");
+    public static final DataFormat DF_SERIALIZEDMOLECULE    = new DataFormat("application/x-java-serialized-object;class=com.actelion.research.chem.StereoMolecule");
+    public static final DataFormat DF_MDLMOLFILE            = new DataFormat("chemical/x-mdl-molfile");
+    public static final DataFormat DF_MDLMOLFILEV3          = new DataFormat("chemical/x-mdl-molfilev3");
+    public static final DataFormat DF_SMILES                = new DataFormat("chemical/x-daylight-smiles");
 
     public static final DataFormat[] DATA_FORMATS = {
             DF_SERIALIZEDMOLECULE,
             DF_MDLMOLFILEV3,
             DF_MDLMOLFILE,
-            DF_SERIALIZEDREACTANT,
             DataFormat.PLAIN_TEXT,
             DF_SMILES
     };

@@ -157,6 +157,8 @@ public class ConstantsDWAR {
 	public static final String TAG_NAME = "Name";
 	
 	public static final String TAG_RECORD_NO = "Record No";
+	public static final String TAG_TRANSFORMATION = "Transformation";
+
 
 	@Deprecated // use TAG_CMP_ID instead!
 	public static final String TAG_ACTNO = "Idorsia No";
@@ -167,6 +169,7 @@ public class ConstantsDWAR {
 
 	public static final String ATTR_YES = "Y";
 	public static final String ATTR_NO = "N";
+
 
 
 
