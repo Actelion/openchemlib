@@ -95,7 +95,9 @@ public class AromaticityResolver {
 
 		if (mayChangeAtomCharges)
 			for (int atom=0; atom<mMol.getAtoms(); atom++)
-				if (mIsDelocalizedAtom[atom] && mMol.getAtomicNo(atom) == 7 && mMol.getConnAtoms(atom) == 3)
+				if (mIsDelocalizedAtom[atom] && mMol.getAtomicNo(atom) == 7
+				 && (mIsDelocalizedBridgeHead[atom]
+				  || (mMol.getConnAtoms(atom) == 3 && !mIsDelocalizedFiveRingMember[atom])))
 					mMol.setAtomCharge(atom, 1);
 
 		mAllHydrogensAreExplicit = allHydrogensAreExplicit;
