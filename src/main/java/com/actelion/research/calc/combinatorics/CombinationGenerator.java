@@ -299,16 +299,11 @@ public class CombinationGenerator {
 	 * @return
 	 */
 	public static BigInteger getBinomialCoefficient(int n, int k){
-
 		BigInteger nFac = getFactorial(n);
 		BigInteger kFac = getFactorial(k);
-
 		BigInteger nMinus_k_Fac = getFactorial(n-k);
-
 		BigInteger dev = nMinus_k_Fac.multiply(kFac);
-
 		BigInteger bc = nFac.divide(dev);
-
 		return bc;
 	}
 
@@ -374,14 +369,5 @@ public class CombinationGenerator {
 				System.out.println(StringFunctions.toString(a, ","));
 			}
 		}
-
 	}
-
-
-
-
-
-		
-
-
 }
