@@ -367,5 +367,7 @@ public class Formatter {
 		System.out.println(cleanDateTime("10/10/2013"));
 		System.out.println(cleanDateTime("toto"));
 
+		System.out.println(dfI2.format(5));
+
 	}
 }
