@@ -1320,7 +1320,7 @@ public class GenericEditorArea implements GenericEventListener {
 				if (isFirst)
 					mFirstAtomKey = ch;
 				else {
-					if (mFirstAtomKey == 'l') { // if we don't want first 'l' to be a chlorine
+					if (ch != '\n' && mFirstAtomKey == 'l') { // if we don't want first 'l' to be a chlorine
 						mAtomKeyStrokeBuffer.setLength(0);
 						mAtomKeyStrokeBuffer.append('L');
 						}
@@ -2668,6 +2668,8 @@ public class GenericEditorArea implements GenericEventListener {
 			if (mMol.changeAtom(mCurrentHiliteAtom, atomicNo, 0, -1, 0)) {
 				updateAndFireEvent(UPDATE_CHECK_COORDS);
 				return;
+			} else {
+				update(UPDATE_NONE);
 			}
 		}
 
