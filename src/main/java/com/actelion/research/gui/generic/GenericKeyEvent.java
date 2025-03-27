@@ -8,6 +8,7 @@ public class GenericKeyEvent extends GenericEvent {
 	public static final int KEY_BACK_SPACE = -5;
 	public static final int KEY_HELP = -6;
 	public static final int KEY_ESCAPE = -7;
+	public static final int KEY_ENTER = -8;
 
 	public static final int KEY_PRESSED = 1;
 	public static final int KEY_RELEASED = 2;

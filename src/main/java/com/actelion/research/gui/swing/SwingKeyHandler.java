@@ -36,6 +36,7 @@ public class SwingKeyHandler extends GenericEventHandler<GenericKeyEvent> implem
 				: e.getKeyCode() == KeyEvent.VK_BACK_SPACE ? GenericKeyEvent.KEY_BACK_SPACE
 				: e.getKeyCode() == KeyEvent.VK_HELP ? GenericKeyEvent.KEY_HELP
 				: e.getKeyCode() == KeyEvent.VK_ESCAPE ? GenericKeyEvent.KEY_ESCAPE
+				: e.getKeyCode() == KeyEvent.VK_ENTER ? GenericKeyEvent.KEY_ENTER
 				: e.getKeyChar();
 		if (key >= 1 && key <= 26)  // strangely, if Ctrl is pressed, letters are encoded from 1-26
 			key = 'a' + key - 1;

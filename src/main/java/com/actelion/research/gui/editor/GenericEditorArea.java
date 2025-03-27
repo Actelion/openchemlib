@@ -1282,6 +1282,11 @@ public class GenericEditorArea implements GenericEventListener {
 			} else if (e.getKey() == GenericKeyEvent.KEY_HELP || (mCurrentHiliteAtom == -1 && e.getKey() == '?')) {
 				showHelpDialog();
 				return;
+			} else if (e.getKey() == GenericKeyEvent.KEY_ENTER) {
+				if (mAtomKeyStrokeBuffer.length() != 0) {
+					expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
+					mAtomKeyStrokeBuffer.setLength(0);
+				}
 			} else if (mCurrentHiliteBond != -1) {
 				int ch = e.getKey();
 				if (ch == 'q' && mMol.isFragment()) {
