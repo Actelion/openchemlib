@@ -115,4 +115,21 @@ public class SwingDialog extends JDialog implements ActionListener,GenericDialog
 	public GenericComboBox createComboBox() {
 		return new SwingComboBox();
 	}
+	
+	public static void main(String[] args) {
+		String smiles = JOptionPane.showInputDialog("enter a SMILES",
+				"CN1CC[C@@]23[C@H]4OC5=C(O)C=CC(=C25)C[C@@H]1[C@@H]3C=C[C@@H]4O");
+		StereoMolecule mol = new SmilesParser().parseMolecule(smiles);
+		SwingEditorPanel p = new SwingEditorPanel(mol);
+		p.setSize(new Dimension(500, 500));
+		int mode = 0;
+		SwingEditorArea area = (SwingEditorArea) p.getComponent(0);
+		GenericEditorArea drawing = area.getGenericDrawArea();
+		drawing.setDisplayMode(mode);
+		JFrame d = new JFrame("OCLFrame");
+		d.setSize(new Dimension(500, 500));
+		d.add(p);
+		d.setVisible(true);
+	}
+	
 	}
