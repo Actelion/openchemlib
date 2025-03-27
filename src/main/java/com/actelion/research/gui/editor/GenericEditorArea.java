@@ -1320,7 +1320,7 @@ public class GenericEditorArea implements GenericEventListener {
 				if (isFirst)
 					mFirstAtomKey = ch;
 				else {
-					if (ch != '\n' && mFirstAtomKey == 'l') { // if we don't want first 'l' to be a chlorine
+					if (mFirstAtomKey == 'l') { // if we don't want first 'l' to be a chlorine
 						mAtomKeyStrokeBuffer.setLength(0);
 						mAtomKeyStrokeBuffer.append('L');
 						}

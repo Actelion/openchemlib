@@ -1,5 +1,10 @@
 package com.actelion.research.gui.swing;
 
+import com.actelion.research.chem.SmilesParser;
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.gui.editor.GenericEditorArea;
+import com.actelion.research.gui.editor.SwingEditorArea;
+import com.actelion.research.gui.editor.SwingEditorPanel;
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import info.clearthought.layout.TableLayout;
