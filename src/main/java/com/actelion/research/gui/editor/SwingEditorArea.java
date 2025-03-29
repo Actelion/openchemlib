@@ -23,6 +23,8 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 	private GenericEditorArea mDrawArea;
 	private SwingKeyHandler mKeyHandler;
 
+	private Graphics2D mTempGraphics;
+
 	public SwingEditorArea(StereoMolecule mol, int mode) {
 		setFocusable(true);
 
@@ -52,7 +54,10 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 
 	@Override
 	public GenericDrawContext getDrawContext() {
-		return new SwingDrawContext((Graphics2D)getGraphics());
+		// BH only called by GenericEditorArea.addPastedOrDropped
+		// BH this allows us to dispose of the graphics after the 
+		// BH repaint operation.
+		return new SwingDrawContext(mTempGraphics = (Graphics2D)getGraphics());
 		}
 
 	@Override
@@ -83,7 +88,18 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 		if (dropAction != DnDConstants.ACTION_NONE) {
 			MoleculeDropAdapter d = new MoleculeDropAdapter() {
 				public void onDropMolecule(StereoMolecule mol, Point p) {
-					mDrawArea.addPastedOrDropped(mol, new GenericPoint(p.x, p.y));
+					// BH GenericEditorArea.addPastedOrDropped
+					// BH will create a new Graphics2D object and 
+					// BH never dispose of it. While this is not a 
+					// BH disaster in Java, in JavaScript it is critical
+					// BH to dispose properly of all Graphics2D objects.
+					mTempGraphics = null;
+					mDrawArea.addPastedOrDropped(mol, (p == null ? null : new GenericPoint(p.x, p.y)));
+					if (mTempGraphics != null) {
+						mTempGraphics.dispose();
+					}
+					
+					
 				}
 			};
 
