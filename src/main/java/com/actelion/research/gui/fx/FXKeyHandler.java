@@ -19,6 +19,7 @@ public class FXKeyHandler extends GenericEventHandler<GenericKeyEvent> {
 				: ke.getCode() == KeyCode.BACK_SPACE ? GenericKeyEvent.KEY_BACK_SPACE
 				: ke.getCode() == KeyCode.HELP ? GenericKeyEvent.KEY_HELP
 				: ke.getCode() == KeyCode.ESCAPE ? GenericKeyEvent.KEY_ESCAPE
+				: ke.getCode() == KeyCode.ENTER ? GenericKeyEvent.KEY_ENTER
 				: ke.getText().length() != 1 ? 0 : ke.getText().charAt(0);
 		if (key >= 1 && key <= 26)  // strangely, if Ctrl is pressed, letters are encoded from 1-26
 			key = 'a' + key - 1;
