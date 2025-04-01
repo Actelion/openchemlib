@@ -6,6 +6,7 @@ import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.generic.GenericCanvas;
 import com.actelion.research.gui.generic.GenericDrawContext;
 import com.actelion.research.gui.generic.GenericPoint;
+import com.actelion.research.gui.generic.GenericUIHelper;
 import com.actelion.research.gui.swing.SwingDrawContext;
 import com.actelion.research.gui.swing.SwingKeyHandler;
 import com.actelion.research.gui.swing.SwingMouseHandler;
@@ -20,13 +21,60 @@ import java.awt.dnd.DropTarget;
 public class SwingEditorArea extends JPanel implements GenericCanvas {
 	private static final int ALLOWED_DROP_ACTIONS = DnDConstants.ACTION_COPY_OR_MOVE;
 
-	private GenericEditorArea mDrawArea;
+	private SwingEditorDrawArea mDrawArea;
 	private SwingKeyHandler mKeyHandler;
+
+	public class SwingEditorDrawArea extends GenericEditorArea {
+
+		public SwingEditorDrawArea(StereoMolecule mol, int mode, GenericUIHelper helper, GenericCanvas canvas) {
+			super(mol, mode, helper, canvas);
+		}
+
+		/**
+		 * Allows for proper disposal of the Graphics2D object after a synchronous
+		 * RepaintManager.repaintImmediately call during a drag-drop operation.
+		 * this.initializeDragAndDrop creates a MoleculeDropAdapter whose 
+		 * onDropMolecule method calls GenericEditorArea.addPastedOrDropped. 
+		 * That method comes back here to getDrawContext. 
+		 * which itself is called by MoleculeDropAdapter.  
+		 * Disposed of immediately following that call.
+		 * 
+		 */
+		private Graphics2D mTempGraphics;
+
+		public boolean addPastedOrDropped(StereoMolecule mol, GenericPoint p) {
+			// BH GenericEditorArea.addPastedOrDropped
+			// BH will create a new Graphics2D object and 
+			// BH never dispose of it. While this is not a 
+			// BH disaster in Java, in JavaScript it is critical
+			// BH to dispose properly of all Graphics2D objects.
+			// BH Otherwise, the offsets get messed up.
+			flushGraphics();
+			boolean ret = super.addPastedOrDropped(mol, p);
+			flushGraphics();
+			return ret;
+		}
+
+		private void flushGraphics() {
+			if (mTempGraphics != null) {
+				mTempGraphics.dispose();
+				mTempGraphics = null;
+			}
+		}
+
+		/**
+		 * called from super.addPastedOrDropped via get getDrawContext();
+		 */
+		protected GenericDrawContext getSwingDrawContext() {
+			return new SwingDrawContext(mTempGraphics = (Graphics2D) getGraphics());
+		}
+
+	}
 
 	public SwingEditorArea(StereoMolecule mol, int mode) {
 		setFocusable(true);
 
-		mDrawArea = new GenericEditorArea(mol, mode, new SwingUIHelper(this), this);
+		mDrawArea = new SwingEditorDrawArea(mol, mode, new SwingUIHelper(this), this);
 
 		initializeDragAndDrop(ALLOWED_DROP_ACTIONS);
 
@@ -52,7 +100,10 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 
 	@Override
 	public GenericDrawContext getDrawContext() {
-		return new SwingDrawContext((Graphics2D)getGraphics());
+		// BH only called by GenericEditorArea.addPastedOrDropped
+		// BH this allows us to dispose of the graphics after the 
+		// BH repaint operation.
+		return mDrawArea.getSwingDrawContext();
 		}
 
 	@Override
@@ -83,7 +134,7 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 		if (dropAction != DnDConstants.ACTION_NONE) {
 			MoleculeDropAdapter d = new MoleculeDropAdapter() {
 				public void onDropMolecule(StereoMolecule mol, Point p) {
-					mDrawArea.addPastedOrDropped(mol, new GenericPoint(p.x, p.y));
+					mDrawArea.addPastedOrDropped(mol, (p == null ? null : new GenericPoint(p.x, p.y)));
 				}
 			};
 
