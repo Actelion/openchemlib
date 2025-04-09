@@ -873,7 +873,16 @@ public class ExtendedMoleculeFunctions {
 		}
 		return hetero;
 	}
-
+	public static boolean isOnlyLinkingAtom(StereoMolecule mol, int atomIndex) {
+		if(mol.getFragments().length>1){
+			throw new RuntimeException("Molecule already fragmented!");
+		}
+		StereoMolecule m = new StereoMolecule(mol);
+		m.ensureHelperArrays(Molecule.cHelperRings);
+		m.deleteAtom(atomIndex);
+		m.ensureHelperArrays(Molecule.cHelperRings);
+		return (m.getFragments().length>1)?true:false;
+	}
 	/**
 	 *
 	 * @param mol

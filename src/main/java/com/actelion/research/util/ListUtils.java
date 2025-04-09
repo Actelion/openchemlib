@@ -1,6 +1,7 @@
 package com.actelion.research.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -72,6 +73,16 @@ public class ListUtils {
             liIndex.add(i);
         }
         return liIndex;
+    }
+
+    public static int [] toArrayInt(Collection<Integer> c){
+        int [] a = new int[c.size()];
+        int b=0;
+        for (Integer i : c) {
+            a[b++]=i;
+        }
+        return a;
+
     }
 
 

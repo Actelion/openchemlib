@@ -273,7 +273,7 @@ public class SubGraphIndices {
      *
      * @param mol
      * @param liSGI
-     * @param indexSGI index for the {@link SubGraphIndices} undr consideration.
+     * @param indexSGI index for the {@link SubGraphIndices} under consideration.
      * @return true if the {@link SubGraphIndices} under consideration connects two or more other {@link SubGraphIndices}.
      */
     public static boolean isLinker(StereoMolecule mol, List<SubGraphIndices> liSGI, int indexSGI){

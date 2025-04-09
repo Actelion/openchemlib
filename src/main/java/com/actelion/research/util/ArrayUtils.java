@@ -109,6 +109,23 @@ public class ArrayUtils {
 		return res;
 	}
 
+	public final static boolean[] toBoolean(Collection<Integer> list, int size) {
+		boolean[] res = new boolean[size];
+		Iterator iter = list.iterator();
+		while(iter.hasNext()) {
+			Integer i = (Integer) iter.next();
+			res[i] = true;
+		}
+		return res;
+	}
+	public final static boolean[] toBoolean(int [] a, int size) {
+		boolean[] res = new boolean[size];
+		for (int i : a) {
+			res[i] = true;
+		}
+		return res;
+	}
+
 	public final static<T> List<T> toList(T [] arr) {
 		List<T> li = new ArrayList<T>(arr.length);
 
