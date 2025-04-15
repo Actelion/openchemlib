@@ -1480,7 +1480,7 @@ public class StringFunctions {
 		return true;
 	}
 
-	public static String toStringStackTrace(Exception ex){
+	public static String toStringStackTrace(Throwable ex){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 		ex.printStackTrace(pw);

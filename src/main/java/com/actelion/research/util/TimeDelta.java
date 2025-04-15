@@ -181,7 +181,6 @@ public class TimeDelta {
         
         if(precision == PRECISION_MINUTES)
         	return str.trim();
-
         if(millisecRemaining / MS_SECOND >= 1) {
         	String s = "";
         	if(millisecRemaining / MS_SECOND == 1){
@@ -217,28 +216,20 @@ public class TimeDelta {
      * @return true if the date t is more than <code>days</code> days before the current date.
      */
     public static boolean isOlderThanDays(long t, int days){
-    	
     	boolean older = false;
-    	
     	long diff = new Date().getTime() - t;
-    	
     	if(diff > MS_DAY * days){
     		older = true;
     	}
-    	
     	return older;
     }
 
     public static boolean isOlderThanMilliseconds(long t, long ms){
-
     	boolean older = false;
-
     	long diff = new Date().getTime() - t;
-
     	if(diff > ms){
     		older = true;
     	}
-
     	return older;
     }
 
