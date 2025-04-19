@@ -47,13 +47,14 @@ public class Reactor {
 	public static final int MODE_REMOVE_DUPLICATE_PRODUCTS = 4;
 	public static final int MODE_ALLOW_CHARGE_CORRECTIONS = 8;
 
-	private Reaction			mGenericReaction;
-	private SSSearcher			mSSSearcher;
-	private	StereoMolecule[]	mReactant;
-	private int[][]				mMinFreeValence;	// minimum required free valence on reactant atoms
-	private boolean[][]			mIsReactionCenter;	// reaction center flags on product atoms
-	private boolean				mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly,mAllowChargeCorrections;
-	private int					mMaxGenericMapNo,mMaxCount,mReactantMatchCombinationCount;
+	private final Reaction		mGenericReaction;
+	private final SSSearcher	mSSSearcher;
+	private	final StereoMolecule[] mReactant;
+	private final int[][]		mMinFreeValence;	// minimum required free valence on reactant atoms
+	private final boolean[][]	mIsReactionCenter;	// reaction center flags on product atoms
+	private final boolean		mRetainCoordinates,mFullyMapReactions,mUniqueProductsOnly,mAllowChargeCorrections;
+	private final int			mMaxCount;
+	private int					mMaxGenericMapNo,mReactantMatchCombinationCount;
 	private final ArrayList<int[]>[] mMatchList;
 	private int[][][]			mReactantMapNo;	// Reactant mapNos of the real reactant change with every reactant substructure match
 	private StereoMolecule[][]	mProduct;
@@ -491,7 +492,6 @@ public class Reactor {
 
 
 	private StereoMolecule generateProduct(ArrayList<int[]>[] matchList, int[] matchListIndex, int genericProductNo) {
-		// currently only support for first product of generic reaction
 		StereoMolecule genericProduct = mGenericReaction.getProduct(genericProductNo);
 
 		StereoMolecule product = new StereoMolecule();

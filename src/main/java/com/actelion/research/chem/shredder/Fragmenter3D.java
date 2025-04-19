@@ -45,7 +45,7 @@ public class Fragmenter3D {
 		if (withHydrogen)
 			new AtomAssembler(mol).addImplicitHydrogens();
 		else
-			mol.removeExplicitHydrogens(false, true);
+			mol.removeExplicitHydrogens(false);
 
 		boolean[] isRotatableBond = new boolean[mol.getAllBonds()];
 		TorsionDB.findRotatableBonds(mol, true, isRotatableBond);

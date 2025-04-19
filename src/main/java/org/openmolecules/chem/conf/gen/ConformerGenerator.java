@@ -29,7 +29,9 @@
 package org.openmolecules.chem.conf.gen;
 
 import com.actelion.research.calc.ThreadMaster;
-import com.actelion.research.chem.*;
+import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.conf.TorsionDB;
 import com.actelion.research.chem.conf.VDWRadii;
@@ -116,17 +118,18 @@ public class ConformerGenerator {
 		for (int atom=0; atom<mol.getAtoms(); atom++)
 			implicitHydrogen[atom] = mol.getImplicitHydrogens(atom);
 
-		double hydrogenBondLength = 0.8 * mol.getAverageBondLength();
-
 		for (int atom=0; atom<implicitHydrogen.length; atom++)
 			if (implicitHydrogen[atom] != 0)
 				for (int i=0; i<implicitHydrogen[atom]; i++)
 					mol.addBond(atom, mol.addAtom(1), Molecule.cBondTypeSingle);
 
 		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+
+		double bondLength = 0.8 * mol.getAverageBondLength();
+
 		for (int atom=0; atom<implicitHydrogen.length; atom++)
 			if (implicitHydrogen[atom] != 0)
-				setHydrogenLocations(mol, atom, implicitHydrogen[atom], hydrogenBondLength);
+				setHydrogenLocations(mol, atom, implicitHydrogen[atom], bondLength);
 
 		// addAtom() and addBond() clear the helper status, i.e. flag all helpers as invalid.
 		// Adding hydrogens does not destroy parities. Though, we may flag them to be valid again.
@@ -141,9 +144,9 @@ public class ConformerGenerator {
 	 * @param mol
 	 * @param atom
 	 * @param newHydrogenCount new hydrogen atoms added to atom
-	 * @param avbl
+	 * @param bondLength
 	 */
-	private static void setHydrogenLocations(StereoMolecule mol, int atom, int newHydrogenCount, double avbl) {
+	private static void setHydrogenLocations(StereoMolecule mol, int atom, int newHydrogenCount, double bondLength) {
 		int firstNewHydrogenConnIndex = mol.getAllConnAtoms(atom) - newHydrogenCount;
 
 		int stereoBondIndex = -1;
@@ -202,8 +205,9 @@ public class ConformerGenerator {
 					}
 				}
 			int newHydrogen = mol.getConnAtom(atom, firstNewHydrogenConnIndex+i);
-			mol.setAtomX(newHydrogen, mol.getAtomX(atom) + avbl * Math.sin(hydrogenAngle));
-			mol.setAtomY(newHydrogen, mol.getAtomY(atom) + avbl * Math.cos(hydrogenAngle));
+
+			mol.setAtomX(newHydrogen, mol.getAtomX(atom) + bondLength * Math.sin(hydrogenAngle));
+			mol.setAtomY(newHydrogen, mol.getAtomY(atom) + bondLength * Math.cos(hydrogenAngle));
 			}
 		}
 

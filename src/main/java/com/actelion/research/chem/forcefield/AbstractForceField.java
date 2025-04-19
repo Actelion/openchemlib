@@ -1,8 +1,8 @@
 package com.actelion.research.chem.forcefield;
 
-import java.util.ArrayList;
-
 import com.actelion.research.chem.StereoMolecule;
+
+import java.util.ArrayList;
 
 public abstract class AbstractForceField implements ForceField {
 	public static final double FUNCTOL = 1e-4;
@@ -110,22 +110,21 @@ public abstract class AbstractForceField implements ForceField {
         return minimise(4000, 1e-4, 1e-6);
     }
     
-   @Override 
-   public void setFixedAtoms(int[] fixedAtoms) {
+	@Override
+	public void setFixedAtoms(int[] fixedAtoms) {
 	   mFixedAtoms = fixedAtoms;
    }
    
  
-  public void zeroGradient() {
-	   if (mFixedAtoms!=null) {
-	   for (int i:mFixedAtoms) {
-		   mGrad[3*i] = 0.0;
-		   mGrad[3*i+1] = 0.0;
-		   mGrad[3*i+2] = 0.0;
-	   }
-   }
-   }
-
+	public void zeroGradient() {
+		if (mFixedAtoms!=null) {
+			for (int i:mFixedAtoms) {
+				mGrad[3*i] = 0.0;
+				mGrad[3*i+1] = 0.0;
+				mGrad[3*i+2] = 0.0;
+	   		}
+		}
+	}
 	
     /**
      * Minimise the current molecule.
@@ -135,9 +134,7 @@ public abstract class AbstractForceField implements ForceField {
      *  @return Return code, 0 on success.
      */
     public int minimise(int maxIts, double gradTol, double funcTol) {
-
         int res = 1;
-
 
         for (int i=0; i<mMol.getAllAtoms(); i++) {
     	    mPos[3*i    ] = mMol.getAtomX(i); //+ delta[0];
@@ -158,8 +155,8 @@ public abstract class AbstractForceField implements ForceField {
 	    }
         return res;
     }
-    
-    public int run_minimiser(int maxIts, double gradTol, double funcTol) {
+
+	public int run_minimiser(int maxIts, double gradTol, double funcTol) {
 		double sum,maxStep,fp;
 		mGrad = new double[mDim];
 		double[] dGrad = new double[mDim];

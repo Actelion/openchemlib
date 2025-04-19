@@ -3869,7 +3869,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * custom labels even if they have a non-standard bonding situation (everything being different
 	 * from having one single bonded non-simple-hydrogen neighbour, e.g. unbonded hydrogen, H2,
 	 * a metal ligand bond to another atom, two single bonds, etc.)
-	 * If unusual bonding needs to be considered, check for that independently from this method.
+	 * If unusual bonding needs to be considered, check for that independently of this method.
 	 * @param atom
 	 * @return
 	 */
@@ -3884,24 +3884,13 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * Removes all plain explicit hydrogens atoms from the molecule, converting them effectively to implicit ones.
-	 * Assuming that this molecule has 2D-coordinates, this method perceives stereo configurations from up/down-bonds
-	 * to explicit hydrogens before deleting them and turns another bond into a stereo bond to indicate the proper configuration.
-	 * If the removal of a hydrogen atom would change an atom's implicit valence, the atom's abnormal valence is set accordingly.
-	 */
-	public void removeExplicitHydrogens() {
-		removeExplicitHydrogens(true, false);
-		}
-
-	/**
-	 * Removes all plain explicit hydrogens atoms from the molecule, converting them effectively to implicit ones.
 	 * If the molecules has 2D-coordinates (hasValid2DCoords==true), then this method initially perceives stereo
 	 * configurations E/Z/R/S from coordinates and up/down-bonds to explicit hydrogens before deleting them
 	 * and turns another bond into a stereo bond to indicate the proper configuration.
 	 * If the removal of a hydrogen atom would change an atom's implicit valence, the atom's abnormal valence is set accordingly.
-	 * @param hasValid2DCoords pass true, if molecule has 2D-atom-coordinates
-	 * @param hasValid3DCoords pass true, if molecule has 3D-atom-coordinates
+	 * @param hasValid2DCoords whether molecule has 2D-atom-coordinates and, thus, new stereo bonds need to be assigned
 	 */
-	public void removeExplicitHydrogens(boolean hasValid2DCoords, boolean hasValid3DCoords) {
+	public void removeExplicitHydrogens(boolean hasValid2DCoords) {
 		// calculate EZ and TH stereo parities if 2D-atom coordinates are available
 		ensureHelperArrays(hasValid2DCoords ? cHelperParities : cHelperNeighbours);
 		mAllAtoms = mAtoms;

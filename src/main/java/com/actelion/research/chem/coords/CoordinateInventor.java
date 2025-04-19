@@ -172,7 +172,7 @@ public class CoordinateInventor {
 			mRandom = new Random();
 
 		if ((mMode & MODE_REMOVE_HYDROGEN) != 0)
-			mol.removeExplicitHydrogens(false, false);
+			mol.removeExplicitHydrogens(false);
 
 		mMol = mol;
 		mMol.ensureHelperArrays(Molecule.cHelperRings);

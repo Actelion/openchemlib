@@ -50,14 +50,27 @@ public class AtomAssembler {
 		int total = 0;
 
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			total += addImplicitHydrogens(atom);
+			total += addImplicitHydrogens(atom, true);
+
+		for (int atom=0; atom<mMol.getAtoms(); atom++)
+			total += addImplicitHydrogens(atom, false);
 
 		return total;
 		}
 
 
 	public int addImplicitHydrogens(int atom) {
-		if (mMol.getAtomicNo(atom) == 0)
+		return addImplicitHydrogens(atom, false);
+	}
+
+	/**
+	 * @param atom
+	 * @param skipRotatableHydrogens if true and if atom is rotatable such that new hydrogen positions depend on atom rear bond rotation, then skip adding these atoms for now
+	 * @return
+	 */
+	private int addImplicitHydrogens(int atom, boolean skipRotatableHydrogens) {
+		int atomicNo = mMol.getAtomicNo(atom);
+		if (atomicNo == 0)
 			return 0;
 
 		int count = mMol.getImplicitHydrogens(atom);
@@ -68,14 +81,15 @@ public class AtomAssembler {
 			return addHydrogensToSingleAtom(atom, count);
 
 		int pi = mMol.getAtomPi(atom);
-		int sp = (pi == 2) ? 1 : (pi == 1 || mMol.getAtomicNo(atom) == 5 || mMol.isFlatNitrogen(atom)) ? 2 : 3;
+		int sp = (atomicNo >= 15) ? 3 : (pi == 2) ? 1 : (pi == 1 || atomicNo == 5 || mMol.isFlatNitrogen(atom)) ? 2 : 3;
 
 		Coordinates croot = mMol.getCoordinates(atom);
-		double length = BondLengthSet.getBondLength(BondLengthSet.getBondIndex(1, false, false, mMol.getAtomicNo(atom), 1, pi, 0));
+
+		double bondLength = getHydrogenBondLength(atom);
 
 		if (sp == 1) {	// simple case, where we need to extend linearly
 			Coordinates cconn = mMol.getCoordinates(mMol.getConnAtom(atom, 0));
-			Coordinates cnew = croot.addC(croot.subC(cconn).unit().scale(length));
+			Coordinates cnew = croot.addC(croot.subC(cconn).unit().scale(bondLength));
 			int newAtom = mMol.addAtom(1);
 			mMol.setAtomX(newAtom, cnew.x);
 			mMol.setAtomY(newAtom, cnew.y);
@@ -89,63 +103,83 @@ public class AtomAssembler {
 		atomSequence[2] = atom;
 		for (int i1=0; i1<mMol.getConnAtoms(atom); i1++) {
 			atomSequence[1] = mMol.getConnAtom(atom, i1);
-			for (int i0 = 0; i0 < mMol.getConnAtoms(atomSequence[1]); i0++) {
+			for (int i0=0; i0<mMol.getConnAtoms(atomSequence[1]); i0++) {
 				atomSequence[0] = mMol.getConnAtom(atomSequence[1], i0);
-				if (atomSequence[0] != atomSequence[2]) {
+				if (atomSequence[0] != atom) {
 					// sequence found. Now we check whether certain dihedrals are already blocked
 
-					if (mMol.getConnAtoms(atomSequence[2]) == 3) {
+					if (mMol.getConnAtoms(atom) == 3) {
 						// must be sp3 with already two of three positions occupied; we calculate the dihedral of the missing H
 						atomSequence[3] = -1;
 						double dihedral = TorsionDB.calculateTorsionExtended(mMol, atomSequence);
-						addAtomWithConstraints(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
-								mMol.getCoordinates(atomSequence[2]), atom, 1,Math.PI*109/180, dihedral, length);
+						addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+								mMol.getCoordinates(atom), atom, Math.PI*109/180, dihedral, bondLength);
 						return 1;
 						}
 
 					double angle = (sp == 2) ? Math.PI*2/3 : Math.PI*109/180;
 
-					if (mMol.getConnAtoms(atomSequence[2]) == 2) {
+					if (mMol.getConnAtoms(atom) == 2) {
 						// we have one position already occupied
-						for (int i3 = 0; i3 < mMol.getConnAtoms(atomSequence[2]); i3++) {
-							atomSequence[3] = mMol.getConnAtom(atomSequence[2], i3);
+
+						if (count == 1 && skipRotatableHydrogens)
+							return 0;
+
+						for (int i3=0; i3<mMol.getConnAtoms(atom); i3++) {
+							atomSequence[3] = mMol.getConnAtom(atom, i3);
 							if (atomSequence[3] != atomSequence[1]) {
 								double dihedral = TorsionDB.calculateTorsionExtended(mMol, atomSequence);
 								dihedral += (sp == 2) ? Math.PI : Math.PI*2/3;
 								if (dihedral > Math.PI)
 									dihedral -= 2*Math.PI;
-								addAtomWithConstraints(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
-										mMol.getCoordinates(atomSequence[2]), atom, 1, angle, dihedral, length);
+								// TODO in case of count==1 we might avoid a potentially crowded side
+								addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+										mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
 
 								if (count != 1) {
 									dihedral += Math.PI*2/3;
 									if (dihedral > Math.PI)
 										dihedral -= 2*Math.PI;
-									addAtomWithConstraints(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
-											mMol.getCoordinates(atomSequence[2]), atom, 1, angle, dihedral, length);
+									addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+											mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
 									}
 								return count;
 								}
 							}
 						}
 
+					if (skipRotatableHydrogens)
+						return 0;
+
 					// no competing atoms
 					// if we have a single bonded option for atomSequence[0], then take that
 					for (int i=i0+1; i<mMol.getConnAtoms(atomSequence[1]); i++) {
 						int alternative = mMol.getConnAtom(atomSequence[1], i);
-						if (alternative != atomSequence[2]
-								&& mMol.getConnBondOrder(atomSequence[1], i) == 1) {
+						if (alternative != atom && mMol.getConnBondOrder(atomSequence[1], i) == 1) {
 							atomSequence[0] = alternative;
 							break;
 							}
 						}
 
-					int pi1 = mMol.getAtomPi(atomSequence[1]);
-					int sp1 = (pi1 == 2) ? 1 : (pi1 == 1 || mMol.getAtomicNo(atomSequence[1]) == 5 || mMol.isFlatNitrogen(atomSequence[1])) ? 2 : 3;
-					double dihedral = (sp1 == 2) ? -Math.PI*5/6 : -Math.PI;
+					// Here we have one of more hydrogen atoms at a terminal atom, i.e. an atom with one non-H neighbour!
+
+					// If we have a double bond or flat nitrogen, we cannot really rotate. Preferred is then anti (PI) to single bonded atomSequence[0],
+					// e.g. we prefer -OH syn to =O in carboxylic acid, which is anti to alpha carbon
+					double dihedral = Math.PI;
+
+					// If we have a rotatable bond, we look for the closest colliding atom and choose a rotation state to avoid that
+					if (sp == 3) {
+						dihedral = getMostBlockedDihedral(atomSequence, bondLength);
+						if (count == 3)
+							dihedral += Math.PI/3;
+						else if (count == 2)
+							dihedral += Math.PI*2/3;
+						else if (count == 1)
+							dihedral += Math.PI;
+					}
 					for (int i=0; i<count; i++) {
-						addAtomWithConstraints(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
-								mMol.getCoordinates(atomSequence[2]), atom, 1, angle, dihedral, length);
+						addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+								mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
 
 						dihedral += (sp == 2) ? Math.PI : Math.PI*2/3;
 						}
@@ -154,7 +188,7 @@ public class AtomAssembler {
 				}
 			}
 
-		// from here are atoms with only one shell of neighbours where we cannot apply the digedral procedure
+		// from here are atoms with only one shell of neighbours where we cannot apply the dihedral procedure
 
 		if (count == 1 && sp == mMol.getConnAtoms(atom)) {
 			// simple case, where we can just invert the sum of all neighbor bond vectors
@@ -164,9 +198,9 @@ public class AtomAssembler {
 			v.unit();
 			int hydrogen = mMol.addAtom(1);
 			mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
-			mMol.setAtomX(hydrogen, croot.x + length * v.x);
-			mMol.setAtomY(hydrogen, croot.y + length * v.y);
-			mMol.setAtomZ(hydrogen, croot.z + length * v.z);
+			mMol.setAtomX(hydrogen, croot.x + bondLength * v.x);
+			mMol.setAtomY(hydrogen, croot.y + bondLength * v.y);
+			mMol.setAtomZ(hydrogen, croot.z + bondLength * v.z);
 			return 1;
 			}
 
@@ -216,12 +250,12 @@ public class AtomAssembler {
 			}
 
 		if (vIsParallelToZ) {
-			double dz = -Math.cos(angle) * length;
+			double dz = -Math.cos(angle) * bondLength;
 			if (upsideDown) {
 				rotation += Math.PI;
 				dz = -dz;
 				}
-			double r = length * Math.sin(Math.PI - angle);
+			double r = bondLength * Math.sin(Math.PI - angle);
 			for (int i=0; i<count; i++) {
 				int hydrogen = mMol.addAtom(1);
 				mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
@@ -241,7 +275,7 @@ public class AtomAssembler {
 				Coordinates c2 = mMol.getCoordinates(rearAtom);
 				Coordinates c3 = mMol.getCoordinates(atom);
 
-				addAtomWithConstraints(c1, c2, c3, atom, 1, angle, rotation, length);
+				addHydrogen(c1, c2, c3, atom, angle, rotation, bondLength);
 
 				rotation += rotationDif;
 				}
@@ -252,7 +286,7 @@ public class AtomAssembler {
 
 	private int addHydrogensToSingleAtom(int atom, int count) {
 		Coordinates p = mMol.getCoordinates(atom);
-		double length = BondLengthSet.getBondLength(BondLengthSet.getBondIndex(1, false, false, mMol.getAtomicNo(atom), 1, 0, 0));
+		double length = getHydrogenBondLength(atom);
 		switch (count) {
 		case 1:
 			int hydrogen = mMol.addAtom(1);
@@ -334,6 +368,11 @@ public class AtomAssembler {
 		return 0;
 		}
 
+	private double getHydrogenBondLength(int atom) {
+		int index = BondLengthSet.getBondIndex(1, false, false, mMol.getAtomicNo(atom), 1, mMol.getAtomPi(atom), 0);
+		return (index == -1) ? 1.09 : BondLengthSet.getBondLength(index);
+	}
+
 	private double calculateDihedral(Coordinates c1, Coordinates c2, Coordinates c3, Coordinates c4) {
 		Coordinates v1 = c2.subC(c1);
 		Coordinates v2 = c3.subC(c2);
@@ -347,6 +386,58 @@ public class AtomAssembler {
 
 	/**
 	 * Adds a new single bonded atom to rootAtom such that bond length c3->newAtom, angle c2->c3->newAtom and dihedral c1->c2->c3->newAtom are met.
+	 * @param atomSequence
+	 * @param bondLength
+	 */
+	private double getMostBlockedDihedral(int[] atomSequence, double bondLength) {
+		Coordinates croot = mMol.getCoordinates(atomSequence[2]);
+		Coordinates cconn = mMol.getCoordinates(atomSequence[2]);
+		Coordinates ctest = croot.addC(croot.subC(cconn).unit().scale(0.5*bondLength));
+		final double angle = 109*Math.PI/180;
+		double orbitRadius = bondLength * Math.sin(angle);
+
+		final double FACTOR = 0.85;
+		double maxCollision = 0.0;
+		double maxTorsion = Double.NaN;
+		for (int atom=0; atom<mMol.getAllAtoms(); atom++) {
+			if (atom != atomSequence[1] && atom != atomSequence[2]) {
+				Coordinates catom = mMol.getCoordinates(atom);
+				// Simplified approach: we keep catom probe in center of the orbit of its potential positions
+				// and add the orbit radius to the accepted VDW-radii distance.
+				double minDist = orbitRadius + FACTOR * VDWRadii.getVDWRadius(1)+VDWRadii.getVDWRadius(mMol.getAtomicNo(atom));
+				double dx = Math.abs(ctest.x - catom.x);
+				if (dx < minDist) {
+					double dy = Math.abs(ctest.y - catom.y);
+					if (dy < minDist) {
+						double dz = Math.abs(ctest.z - catom.z);
+						if (dz < minDist) {
+							if (Math.sqrt(dx*dx + dy*dy + dz*dz) < minDist) {	// we have a potential collision and need to calculate precisely
+								atomSequence[3] = atom;
+								double dihedral = (atom == atomSequence[0]) ? 0.0 : TorsionDB.calculateTorsionExtended(mMol, atomSequence);
+								Coordinates p = getCoordinatesWithConstraints(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+										mMol.getCoordinates(atomSequence[2]), angle, dihedral, bondLength);
+
+								dx = Math.abs(p.x - catom.x);
+								dy = Math.abs(p.y - catom.y);
+								dz = Math.abs(p.z - catom.z);
+								double distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+								double collision = minDist - orbitRadius - distance;
+								if (maxCollision < collision) {
+									maxCollision = collision;
+									maxTorsion = dihedral;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return maxTorsion;
+	}
+
+	/**
+	 * Adds a new single bonded atom to rootAtom such that bond length c3->newAtom, angle c2->c3->newAtom and dihedral c1->c2->c3->newAtom are met.
 	 * @param c1
 	 * @param c2
 	 * @param c3
@@ -355,7 +446,25 @@ public class AtomAssembler {
 	 * @param dihedral
 	 * @param bondLength
 	 */
-	private void addAtomWithConstraints(Coordinates c1, Coordinates c2, Coordinates c3, int rootAtom, int atomicNo, double angle, double dihedral, double bondLength) {
+	private void addHydrogen(Coordinates c1, Coordinates c2, Coordinates c3, int rootAtom, double angle, double dihedral, double bondLength) {
+		Coordinates p = getCoordinatesWithConstraints(c1, c2, c3, angle, dihedral, bondLength);
+		int hydrogen = mMol.addAtom(1);
+		mMol.addBond(rootAtom, hydrogen, Molecule.cBondTypeSingle);
+		mMol.setAtomX(hydrogen, p.x);
+		mMol.setAtomY(hydrogen, p.y);
+		mMol.setAtomZ(hydrogen, p.z);
+	}
+
+	/**
+	 * Adds a new single bonded atom to rootAtom such that bond length c3->newAtom, angle c2->c3->newAtom and dihedral c1->c2->c3->newAtom are met.
+	 * @param c1
+	 * @param c2
+	 * @param c3
+	 * @param angle
+	 * @param dihedral
+	 * @param bondLength
+	 */
+	private Coordinates getCoordinatesWithConstraints(Coordinates c1, Coordinates c2, Coordinates c3, double angle, double dihedral, double bondLength) {
 		double r = bondLength * Math.sin(Math.PI - angle);
 		double x = -r * Math.sin(dihedral);
 		double y = r * Math.cos(dihedral);
@@ -375,11 +484,6 @@ public class AtomAssembler {
 		m[2][0] = axisZ.x;
 		m[2][1] = axisZ.y;
 		m[2][2] = axisZ.z;
-		Coordinates p = new Coordinates(x, y, z).rotate(m).add(c3);
-		int hydrogen = mMol.addAtom(atomicNo);
-		mMol.addBond(rootAtom, hydrogen, Molecule.cBondTypeSingle);
-		mMol.setAtomX(hydrogen, p.x);
-		mMol.setAtomY(hydrogen, p.y);
-		mMol.setAtomZ(hydrogen, p.z);
+		return new Coordinates(x, y, z).rotate(m).add(c3);
 		}
 	}

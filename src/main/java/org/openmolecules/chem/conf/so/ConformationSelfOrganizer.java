@@ -116,7 +116,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 */
 		mMol = mol;
 		if (!keepHydrogen)
-		    mMol.removeExplicitHydrogens();
+		    mMol.removeExplicitHydrogens(true);
 		mMol.ensureHelperArrays(Molecule.cHelperParities);
 
 		mRuleList = new ArrayList<>();

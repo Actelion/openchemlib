@@ -829,7 +829,7 @@ public class SmilesParser {
 		}
 
 		if (!mMakeHydrogenExplicit && (mSmartsFeatureFound || mSmartsMode == SMARTS_MODE_IS_SMARTS))
-			mMol.removeExplicitHydrogens();
+			mMol.removeExplicitHydrogens(false);
 
 		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 
