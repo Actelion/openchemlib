@@ -180,7 +180,7 @@ public interface CompoundTableConstants {
     String cColumnPropertyProteinCavity = "proteinCavity";	// idcode+coords of protein cavity to be displayed in every cell
     String cColumnPropertyNaturalLigand = "naturalLigand";	// idcode+coords of natural ligand, if proteinCavity is given (not shown, used for surface creation)
     String cColumnPropertyShowNaturalLigand = "showNaturalLigand";	// whether to show the natural ligand in addition to row's structure; default is true
-    String cColumnPropertySuperpose = "superpose";  // cSuperposeValueReferenceRow or null
+    String cColumnPropertySuperpose = "superpose";  // cSuperposeValueReferenceRow, other 3D-coords column, or null
     String cColumnPropertySuperposeAlign = "align";  // cSuperposeAlignValueShape or null
     String cColumnProperty3DFragmentSplit = "split3D"; // if "true": unconnected fragments of 3D-structure are shown as differently colored V3DMolecules
     String cColumnPropertyProteinCavityColumn = "proteinCavityColumn";	// for a ligand 3D-coords column this refers to a cavity 3D-coords column
