@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.forcefield.mmff;
 
+import com.actelion.research.util.DoubleFormat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,15 +101,30 @@ public class Electrostatic implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
+        return getEnergy(pos, null);
+    }
+
+    /**
+     * Calculates the electrostatic energy.
+     *  @return The energy.
+     */
+    @Override
+    public double getEnergy(double[] pos, StringBuilder detail) {
         double dist = new Vector3(pos, a1, a2).length();
         double corr_dist = dist + 0.05;
         double diel = 332.0716;
 
+// TODO check, whether is was not actually meant:
+//        corr_dist *= (distModel ? corr_dist * corr_dist : corr_dist);
         if (distModel)
             corr_dist *= corr_dist;
 
-        return diel * charge_term / corr_dist *
-                (rel == Separation.Relation.ONE_FOUR ? 0.75 : 1.0);
+        double e = diel * charge_term / corr_dist * (rel == Separation.Relation.ONE_FOUR ? 0.75 : 1.0);
+
+        if (detail != null)
+                detail.append("electrostatic\t"+ DoubleFormat.toString(dist)+"\t\t"+a1+","+a2+"\t"+DoubleFormat.toString(e)+"\n");
+
+        return e;
     }
 
     /**

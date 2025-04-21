@@ -173,14 +173,11 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
         return mMMFFMol.getAllAtoms();
     }
 
-
     /**
      * Minimise the current molecule using default parameter values for
      * the number of iterations, energy tolerance and gradient tolerance.
      *  @return Return code, 0 on success.
      */
-    
-    
 
     @Override
     public double updateGradient() {
@@ -208,24 +205,22 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
     
     @Override 
     public void zeroGradient() {
- 	   if (mFixedAtoms!=null) {
- 		  int[] hydrogenMap = mMMFFMol.getHydrogenMap();
- 		  for (int i:mFixedAtoms) {
- 			  int mappedIndex = hydrogenMap[i];
- 			  mGrad[3*mappedIndex] = 0.0;
- 			  mGrad[3*mappedIndex+1] = 0.0;
- 			  mGrad[3*mappedIndex+2] = 0.0;
- 	   }
-    }
+ 		if (mFixedAtoms!=null) {
+ 			int[] hydrogenMap = mMMFFMol.getHydrogenMap();
+ 			for (int i:mFixedAtoms) {
+ 				int mappedIndex = hydrogenMap[i];
+ 				mGrad[3*mappedIndex] = 0.0;
+				mGrad[3*mappedIndex+1] = 0.0;
+ 				mGrad[3*mappedIndex+2] = 0.0;
+ 	   		}
+    	}
     }
 
-    
     @Override
     public double[] getCurrentPositions() {
     	double[] pos = Arrays.copyOf(mPos, mPos.length);
 
     	return getMappedPositions(pos);
-    	
     }
     
     private double[] getMappedPositions(double[] pos) {
@@ -237,30 +232,27 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
     		mappedPos[3*i+2] = pos[3*atomMap[i]+2];
     	}
     	return mappedPos;
-    	
     }
     
     /**
      * Gets the total energy of the molecule as the sum of the energy
      * terms.Requires the atomic positions to be in the correct order.
-     *  @param pos The positions array representing the atoms positions in
-     *      space.
+     *  @param pos The positions array representing the atoms positions in space.
      *  @return The total force field energy.
      */
-        
-    
-    public double getTotalEnergy(double[] pos) {
+	public double getTotalEnergy(double[] pos) {
+		return getTotalEnergy(pos, null);
+	}
+
+	private double getTotalEnergy(double[] pos, StringBuilder detail) {
+		if (detail != null)
+			detail.append("type\tis_property\topt_property\tatoms\tenergy\n");
+
         double total = 0.0;
         for (EnergyTerm term : mEnergies)
-            total += term.getEnergy(pos);
+            total += term.getEnergy(pos, detail);
         return total;
     }
-    
-    
-
-    
-
-
 
     /**
      * Gets the total energy of the molecule as the sum of the energy
@@ -269,10 +261,21 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
      *  @return The total force field energy.
      */
     public double getTotalEnergy() {
-    	return getTotalEnergy(mPos);
+    	return getTotalEnergy(mPos, null);
     }
 
-    public static void initialize(String tableSet) {
+	/**
+	 * Gets the total energy of the molecule as the sum of the energy
+	 * terms. This function passes the force fields `pos` array to
+	 * getTotalEnergy().
+	 * @param detail if !=null received detailed break down of energy contributions
+	 *  @return The total force field energy.
+	 */
+	public double getTotalEnergy(StringBuilder detail) {
+		return getTotalEnergy(mPos, detail);
+	}
+
+	public static void initialize(String tableSet) {
         ForceFieldMMFF94.loadTable(tableSet, Tables.newMMFF94(tableSet));
     }
 
@@ -296,8 +299,6 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
         return mTables.get(name);
     }
 
-
-	
 	public MMFFMolecule getMMFFMolecule() {
 		return mMMFFMol;
 	}

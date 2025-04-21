@@ -38,5 +38,6 @@ package com.actelion.research.chem.forcefield.mmff;
  */
 public interface EnergyTerm {
     public double getEnergy(double[] pos);
+    public double getEnergy(double[] pos, StringBuilder detail);
     public void getGradient(double[] pos, double[] grad);
 }

@@ -1,6 +1,7 @@
 package com.actelion.research.chem.forcefield.mmff;
 
 import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.util.DoubleFormat;
 
 public class MMFFPositionConstraint implements EnergyTerm {
 	private double[] refPos;
@@ -24,13 +25,14 @@ public class MMFFPositionConstraint implements EnergyTerm {
 		this.k = k;
 		this.d = d;
 	}
-	
-	
-	
-	
 
 	@Override
 	public double getEnergy(double[] pos) {
+		return getEnergy(pos, null);
+	}
+
+	@Override
+	public double getEnergy(double[] pos, StringBuilder detail) {
 		double energy = 0.0;
 		for(int a=0;a<pos.length;a+=3) {
 			int atomId = a/3;
@@ -47,6 +49,10 @@ public class MMFFPositionConstraint implements EnergyTerm {
 				prefactor = 0.0;
 			energy+=0.5*k*prefactor*prefactor;
 		}
+
+		if (detail != null)
+			detail.append("posConstraint\tNaN\tNaN\tall\t"+DoubleFormat.toString(energy)+"\n");
+
 		return energy;
 	}
 

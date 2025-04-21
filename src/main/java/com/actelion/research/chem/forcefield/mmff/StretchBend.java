@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.forcefield.mmff;
 
+import com.actelion.research.util.DoubleFormat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,13 +86,33 @@ public class StretchBend implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
+        return getEnergy(pos, null);
+    }
+
+    /**
+     * Calculates the stretch bend energy.
+     *  @param pos The atoms current positions array.
+     *  @return The energy.
+     */
+    @Override
+    public double getEnergy(double[] pos, StringBuilder detail) {
         double dist1 = new Vector3(pos, a2, a1).length();
         double dist2 = new Vector3(pos, a2, a3).length();
         double theta = new Vector3(pos,a2,a1).angle(new Vector3(pos,a2,a3));
         double factor = Constants.MDYNE_A_TO_KCAL_MOL * Constants.DEG2RAD
             * (Math.toDegrees(theta) - theta0);
 
-        return factor*(dist1 - r0i)*kba_ijk + factor*(dist2 - r0k)*kba_kji;
+        double e = factor*(dist1 - r0i)*kba_ijk + factor*(dist2 - r0k)*kba_kji;
+
+        if (detail != null)
+            detail.append("stretchBend\t"
+                    +DoubleFormat.toString(dist1)+","+DoubleFormat.toString(dist2)+","
+                    +DoubleFormat.toString(Math.toDegrees(theta))+"\t"
+                    +DoubleFormat.toString(r0i)+","+DoubleFormat.toString(r0k)+","
+                    +DoubleFormat.toString(theta0)+"\t"
+                    +a1+","+a2+","+a3+"\t"+ DoubleFormat.toString(e)+"\n");
+
+        return e;
     }
 
     /**

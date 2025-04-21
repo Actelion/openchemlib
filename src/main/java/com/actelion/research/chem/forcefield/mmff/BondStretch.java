@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.forcefield.mmff;
 
+import com.actelion.research.util.DoubleFormat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,12 +81,28 @@ public class BondStretch implements EnergyTerm {
      *  @return The energy.
      */
     public double getEnergy(double[] pos) {
+        return getEnergy(pos, null);
+    }
+
+    /**
+     * Calculates the bond stretch energy.
+     *  @param pos The atoms current positions array.
+     *  @return The energy.
+     */
+    public double getEnergy(double[] pos, StringBuilder detail) {
         final double c1 = 143.9325;
         final double cs = -2.0;
         final double c3 = 7.0 / 12.0;
         final double dist = new Vector3(pos,a1).distance(new Vector3(pos,a2));
         final double diff = (dist - r0)*(dist - r0);
-        return (0.5*c1*kb*diff * (1.0 + cs*(dist - r0) + c3*cs*cs*diff));
+
+        double e = (0.5*c1*kb*diff * (1.0 + cs*(dist - r0) + c3*cs*cs*diff));
+
+        if (detail != null)
+            detail.append("bondStretch\t"+DoubleFormat.toString(dist)+"\t"
+                    +DoubleFormat.toString(r0)+"\t"+a1+","+a2+"\t"+ DoubleFormat.toString(e)+"\n");
+
+        return e;
     }
 
     /**

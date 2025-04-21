@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.forcefield.mmff;
 
+import com.actelion.research.util.DoubleFormat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -108,7 +110,6 @@ public class VanDerWaals implements EnergyTerm {
             * rstar_ij2 * rstar_ij2 * rstar_ij2));
     }
 
-
     /**
      * Calculates the van der Waals energy.
      *  @param pos The atoms current positions array.
@@ -116,6 +117,16 @@ public class VanDerWaals implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
+        return getEnergy(pos, null);
+    }
+
+    /**
+     * Calculates the van der Waals energy.
+     *  @param pos The atoms current positions array.
+     *  @return The energy.
+     */
+    @Override
+    public double getEnergy(double[] pos, StringBuilder detail) {
         final double dist = new Vector3(pos, a1, a2).length();
         final double vdw1 = 1.07;
         final double vdw1m1 = vdw1 - 1.0;
@@ -129,7 +140,13 @@ public class VanDerWaals implements EnergyTerm {
         final double rstar_ij2 = rstar_ij * rstar_ij;
         final double rstar_ij7 = rstar_ij2 * rstar_ij2 * rstar_ij2 * rstar_ij;
         final double bTerm = vdw2*rstar_ij7 / (dist7 + vdw2m1*rstar_ij7) - 2.0;
-        return aTerm7 * bTerm * well_depth;
+
+        double e = aTerm7 * bTerm * well_depth;
+
+        if (detail != null)
+            detail.append("vanDerWaals\t"+ DoubleFormat.toString(dist)+"\t\t"+a1+","+a2+"\t"+DoubleFormat.toString(e)+"\n");
+
+        return e;
     }
 
     /**

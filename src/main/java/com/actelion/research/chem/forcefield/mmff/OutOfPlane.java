@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.forcefield.mmff;
 
+import com.actelion.research.util.DoubleFormat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,6 +87,16 @@ public class OutOfPlane implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
+        return getEnergy(pos, null);
+    }
+
+    /**
+     * Calculates the out of plane energy.
+     *  @param pos The atoms current positions array.
+     *  @return The energy.
+     */
+    @Override
+    public double getEnergy(double[] pos, StringBuilder detail) {
         Vector3 rji = new Vector3(pos, ac, a1).normalise();
         Vector3 rjk = new Vector3(pos, ac, a2).normalise();
         Vector3 rjl = new Vector3(pos, ac, a3).normalise();
@@ -93,7 +105,13 @@ public class OutOfPlane implements EnergyTerm {
         double chi = Constants.RAD2DEG * Math.asin(n.dot(rjl));
         double c2 = Constants.MDYNE_A_TO_KCAL_MOL * Constants.DEG2RAD
             * Constants.DEG2RAD;
-        return 0.5 * c2 * koop * chi * chi;
+
+        double e = 0.5 * c2 * koop * chi * chi;
+
+        if (detail != null)
+            detail.append("outOfPlane\t"+DoubleFormat.toString(chi)+"\t\t"+a1+","+a2+","+a3+"\t"+ DoubleFormat.toString(e)+"\n");
+
+        return e;
     }
 
     /**

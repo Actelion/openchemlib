@@ -33,6 +33,8 @@
 
 package com.actelion.research.chem.forcefield.mmff;
 
+import com.actelion.research.util.DoubleFormat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,6 +78,16 @@ public class AngleBend implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
+        return getEnergy(pos, null);
+    }
+
+    /**
+     * Calculates the angle energy.
+     *  @param pos The atoms current positions array.
+     *  @return The energy.
+     */
+    @Override
+    public double getEnergy(double[] pos, StringBuilder detail) {
         double theta = new Vector3(pos, a2, a1).angle(new Vector3(pos, a2, a3));
         double angle = Math.toDegrees(theta) - theta0;
 
@@ -88,7 +100,13 @@ public class AngleBend implements EnergyTerm {
         if (isLinear)
             return Constants.MDYNE_A_TO_KCAL_MOL*ka*(1.0 + Math.cos(theta));
 
-        return 0.5*c2*ka*angle*angle*(1.0 + cb*angle);
+        double e = 0.5*c2*ka*angle*angle*(1.0 + cb*angle);
+
+        if (detail != null)
+            detail.append("angleBend\t"+DoubleFormat.toString(Math.toDegrees(theta))+"\t"+DoubleFormat.toString(theta0)
+                    +"\t"+a1+","+a2+","+a3+"\t"+ DoubleFormat.toString(e)+"\n");
+
+        return e;
     }
 
     /**
