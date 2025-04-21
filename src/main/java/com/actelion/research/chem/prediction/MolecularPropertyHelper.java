@@ -41,26 +41,28 @@ import com.actelion.research.chem.conf.MolecularFlexibilityCalculator;
 
 public class MolecularPropertyHelper {
 	public static final int MOLECULAR_PROPERTY_MOLWEIGHT = 0;
-	public static final int MOLECULAR_PROPERTY_CLOGP = 1;
-	public static final int MOLECULAR_PROPERTY_CLOGS = 2;
-	public static final int MOLECULAR_PROPERTY_TPSA = 3;
-	public static final int MOLECULAR_PROPERTY_HDONORS = 4;
-	public static final int MOLECULAR_PROPERTY_HACCEPTORS = 5;
-	public static final int MOLECULAR_PROPERTY_FLEXIBILITY = 6;
-	public static final int MOLECULAR_PROPERTY_COMPLEXITY = 7;
-	public static final int MOLECULAR_PROPERTY_SHAPE = 8;
-	public static final int MOLECULAR_PROPERTY_ROTATABLEBONDS = 9;
-	public static final int MOLECULAR_PROPERTY_STEREOCENTERS = 10;
-	public static final int MOLECULAR_PROPERTY_SMALLRINGCOUNT = 11;
-	public static final int MOLECULAR_PROPERTY_AROMRINGCOUNT = 12;
-	public static final int MOLECULAR_PROPERTY_BASIC_NITROGENS = 13;
-	public static final int MOLECULAR_PROPERTY_ACIDIC_OXYGENS = 14;
-	public static final int MOLECULAR_PROPERTY_TOXICITY_RISK = 15;
+	public static final int MOLECULAR_PROPERTY_NON_H_ATOMS = 1;
+	public static final int MOLECULAR_PROPERTY_CLOGP = 2;
+	public static final int MOLECULAR_PROPERTY_CLOGS = 3;
+	public static final int MOLECULAR_PROPERTY_TPSA = 4;
+	public static final int MOLECULAR_PROPERTY_HDONORS = 5;
+	public static final int MOLECULAR_PROPERTY_HACCEPTORS = 6;
+	public static final int MOLECULAR_PROPERTY_FLEXIBILITY = 7;
+	public static final int MOLECULAR_PROPERTY_COMPLEXITY = 8;
+	public static final int MOLECULAR_PROPERTY_SHAPE = 9;
+	public static final int MOLECULAR_PROPERTY_ROTATABLEBONDS = 10;
+	public static final int MOLECULAR_PROPERTY_STEREOCENTERS = 11;
+	public static final int MOLECULAR_PROPERTY_SMALLRINGCOUNT = 12;
+	public static final int MOLECULAR_PROPERTY_AROMRINGCOUNT = 13;
+	public static final int MOLECULAR_PROPERTY_BASIC_NITROGENS = 14;
+	public static final int MOLECULAR_PROPERTY_ACIDIC_OXYGENS = 15;
+	public static final int MOLECULAR_PROPERTY_TOXICITY_RISK = 16;
 
 	// Fitness between min and max is 1.0. Fitness at min-halfWidth or max+halfWidth is 1.0/e
 	// rangeMin and rangeMax are used as limits for the graph depicting the fuzzy score
 	private static final PropertySpecification[] SPEC = {
 			new PropertySpecification("molweight", "Molecular weight", "", "400", 50f, 0f, 800f),
+			new PropertySpecification("nonHAtoms", "non-H atom count", "", "25", 3f, 0f, 50f),
 			new PropertySpecification("cLogP", "cLogP", "", "4", 0.5f, 0f, 8f),
 			new PropertySpecification("cLogS", "cLogS", "-4", "", 0.5f, -8f, 2f),
 			new PropertySpecification("tpsa", "Polar surface area", "", "120", 20f, 0f, 250f),
@@ -80,6 +82,7 @@ public class MolecularPropertyHelper {
 
 	public static float calculateProperty(StereoMolecule mol, int type) {
 		return (type == MOLECULAR_PROPERTY_MOLWEIGHT) ? mol.getMolweight()
+				: (type == MOLECULAR_PROPERTY_NON_H_ATOMS) ? getNonHAtomCount(mol)
 				: (type == MOLECULAR_PROPERTY_CLOGP) ? new CLogPPredictor().assessCLogP(mol)
 				: (type == MOLECULAR_PROPERTY_CLOGS) ? new SolubilityPredictor().assessSolubility(mol)
 				: (type == MOLECULAR_PROPERTY_TPSA) ? new PolarSurfaceAreaPredictor().assessPSA(mol)
@@ -175,6 +178,11 @@ public class MolecularPropertyHelper {
 				result += 2;
 			}
 		return result;
+	}
+
+	private static int getNonHAtomCount(StereoMolecule mol) {
+		mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+		return mol.getAtoms();
 	}
 
 	private static int getHAcceptorCount(StereoMolecule mol) {
