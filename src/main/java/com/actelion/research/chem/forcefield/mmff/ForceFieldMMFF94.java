@@ -246,11 +246,15 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
 
 	private double getTotalEnergy(double[] pos, StringBuilder detail) {
 		if (detail != null)
-			detail.append("type\tis_property\topt_property\tatoms\tenergy\n");
+			detail.append("no\ttype\tis_property\topt_property\tatoms\tenergy\n");
 
         double total = 0.0;
-        for (EnergyTerm term : mEnergies)
-            total += term.getEnergy(pos, detail);
+		int no = 0;
+        for (EnergyTerm term : mEnergies) {
+			if (detail != null)
+				detail.append(++no).append("\t");
+			total += term.getEnergy(pos, detail);
+		}
         return total;
     }
 

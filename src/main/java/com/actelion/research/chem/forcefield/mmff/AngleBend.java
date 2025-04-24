@@ -95,12 +95,9 @@ public class AngleBend implements EnergyTerm {
         final double c2 = Constants.MDYNE_A_TO_KCAL_MOL * Constants.DEG2RAD
             * Constants.DEG2RAD;
 
-        // isLinear is a property of the central atom and can be found in the
-        // prop table.
-        if (isLinear)
-            return Constants.MDYNE_A_TO_KCAL_MOL*ka*(1.0 + Math.cos(theta));
-
-        double e = 0.5*c2*ka*angle*angle*(1.0 + cb*angle);
+        // isLinear is a property of the central atom and can be found in the prop table.
+        double e = (isLinear) ? Constants.MDYNE_A_TO_KCAL_MOL * ka * (1.0 + Math.cos(theta))
+                : 0.5*c2*ka*angle*angle*(1.0 + cb*angle);
 
         if (detail != null)
             detail.append("angleBend\t"+DoubleFormat.toString(Math.toDegrees(theta))+"\t"+DoubleFormat.toString(theta0)
