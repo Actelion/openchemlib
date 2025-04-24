@@ -51,7 +51,7 @@ import java.util.function.Supplier;
  */
 public class Pipeline<T> implements IPipeline<T>, Supplier<T> {
 
-	private AtomicBoolean allDataIn;
+	private volatile AtomicBoolean allDataIn;
 	
 	private ConcurrentLinkedQueue<T> queue;
 	
