@@ -729,8 +729,11 @@ public class IDCodeParserWithoutCoordinateInvention {
 				no = decodeBits(abits);
 				int connBits = decodeBits(3);
 				selectedHydrogenBits = new int[allAtoms];
-				for (int i=0; i<no; i++)
-					selectedHydrogenBits[decodeBits(abits)] = decodeBits(connBits);
+				for (int i=0; i<no; i++) {
+					int atom = decodeBits(abits);
+					int conns = decodeBits(connBits);
+					selectedHydrogenBits[atom] = conns;
+					}
 				break;
 				}
 			}
@@ -1708,6 +1711,18 @@ public class IDCodeParserWithoutCoordinateInvention {
 						System.out.print("Rare Bond Type:");
 						for (int i=0; i<no; i++)
 							System.out.print(" " + decodeBits(bbits) + ":" + (decodeBits(1) == 0 ? "quadruple" : "quintuple"));
+						System.out.println();
+						break;
+					case 38:	//	datatype 'selected hydrogen'
+						no = decodeBits(abits);
+						int connBits = decodeBits(3);
+						System.out.print("Selected hydrogen:");
+						for (int i=0; i<no; i++) {
+							int atom = decodeBits(abits);
+							int conns = decodeBits(connBits);
+							System.out.print(" " + atom + ":" + conns);
+						}
+						System.out.println();
 						break;
 					}
 				}

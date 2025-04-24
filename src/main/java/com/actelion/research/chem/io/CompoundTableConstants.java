@@ -189,8 +189,9 @@ public interface CompoundTableConstants {
     String cColumnPropertyChemistryTextSize = "chemistryTextSize"; // display text size for molecule atom labels; default is 1.0
     String cColumnPropertySARFirstRGroup = "firstRGroup"; // first R-group number used with core-based SAR on Scaffolds (sub-SAR)
 
-    String cSuperposeValueReferenceRow = "refRow";  // "reference" or null
-    String cSuperposeAlignValueShape = "shape";  // "reference" or null
+    String cSuperposeValueReferenceRow = "refRow";
+    String cSuperposeAlignValueShape = "shape";
+    String cSuperposeAlignValueMCS = "mcs";
 
     String cNativeFileHeaderStart = "<datawarrior-fileinfo>";
     String cNativeFileHeaderEnd = "</datawarrior-fileinfo>";
