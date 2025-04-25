@@ -60,7 +60,8 @@ public class PeriodicTable {
 	public static final int Bromine = 35;
 	
 	public static final int Iodine = 53;
-	
+	public static final int Uranium = 92;
+
 	
 	
 	private static Element[] arrData;
