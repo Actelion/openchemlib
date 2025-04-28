@@ -45,21 +45,19 @@ public class MCS {
 	private static final int CAPACITY = (60 + 60) * 10;
 	private StereoMolecule mol;
 	private StereoMolecule frag;
-	private HashSet<IntVec> hsIndexFragCandidates;
-	private HashSet<IntVec> hsIndexFragGarbage;
-	private HashSet<IntVec> hsIndexFragSolution;
+	private final HashSet<IntVec> hsIndexFragCandidates;
+	private final HashSet<IntVec> hsIndexFragGarbage;
+	private final HashSet<IntVec> hsIndexFragSolution;
 	private SSSearcher sss;
-	private ComparatorBitsSet comparatorBitsSet;
+	private final ComparatorBitsSet comparatorBitsSet;
 	private StereoMolecule molMCS;
 	private boolean considerAromaticRings;
 	private boolean considerRings;
 	// The largest valid solutions.
-	private List<IntVec> liMCSSolutions;
-	private HashMap<Integer, List<int[]>> hmRingBnd_ListRingBnds;
-	private HashMap<Integer, List<int[]>> hmAromaticRingBnd_ListRingBnds;
-	private RingCollection ringCollection;
-	boolean excluded[] = null;
-	private int [] arrMatchListFrag2Mol;
+	private final HashMap<Integer, List<int[]>> hmRingBnd_ListRingBnds;
+	private final HashMap<Integer, List<int[]>> hmAromaticRingBnd_ListRingBnds;
+	private boolean[] excluded = null;
+	private int[] arrMatchListFrag2Mol;
 
 	public MCS() {
 		this(PAR_CLEAVE_RINGS, null);
@@ -87,7 +85,6 @@ public class MCS {
 		hsIndexFragCandidates = new HashSet<IntVec>(CAPACITY);
 		hsIndexFragGarbage = new HashSet<IntVec>(CAPACITY);
 		hsIndexFragSolution = new HashSet<IntVec>(CAPACITY);
-		liMCSSolutions = new ArrayList<IntVec>(CAPACITY);
 		if (searcher == null)
 			sss = new SSSearcher();
 		else
@@ -120,19 +117,13 @@ public class MCS {
 	 * @param excluded
 	 */
 	public void set(StereoMolecule mol, StereoMolecule frag, boolean[] excluded) {
-
 		StereoMolecule fragBiggestSub = new StereoMolecule(frag);
-
 		fragBiggestSub.ensureHelperArrays(Molecule.cHelperRings);
-
 		fragBiggestSub.stripSmallFragments();
-
 		fragBiggestSub.ensureHelperArrays(Molecule.cHelperRings);
 
 		this.mol = mol;
-
 		this.frag = fragBiggestSub;
-
 		this.excluded = excluded;
 
 		init();
@@ -142,14 +133,13 @@ public class MCS {
 		hsIndexFragCandidates.clear();
 		hsIndexFragGarbage.clear();
 		hsIndexFragSolution.clear();
-		liMCSSolutions.clear();
 		hmRingBnd_ListRingBnds.clear();
 		hmAromaticRingBnd_ListRingBnds.clear();
 		initCandidates();
 	}
 
 	private void initCandidates() {
-		ringCollection = frag.getRingSet();
+		RingCollection ringCollection = frag.getRingSet();
 		int rings = ringCollection.getSize();
 		for (int i = 0; i < rings; i++) {
 			int[] arrIndexBnd = ringCollection.getRingBonds(i);
@@ -229,7 +219,7 @@ public class MCS {
 			if (sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cMatchDBondToDelocalized, excluded) > 0) {
 				molMCS = frag;
 				List<IntVec> liIndexFragCandidates = new ArrayList<IntVec>(hsIndexFragCandidates);
-				if (liIndexFragCandidates != null && !liIndexFragCandidates.isEmpty()) {
+				if (!liIndexFragCandidates.isEmpty()) {
 					IntVec iv = liIndexFragCandidates.get(0);
 					iv.setBits(0, iv.sizeBits());
 					iv.calculateHashCode();
@@ -282,14 +272,14 @@ public class MCS {
 				hsIndexFragGarbage.add(iv);
 			}
 		}
-		if (hsIndexFragSolution.size() == 0) {
+		if (hsIndexFragSolution.isEmpty()) {
 			return null;
 		}
 		return getFinalSolutionSet(hsIndexFragSolution);
 	}
 
 	/**
-	 * All molecules which are sub structures of an other molecule in the list are removed.
+	 * All molecules which are sub structures of another molecule in the list are removed.
 	 *
 	 * @return
 	 */
@@ -298,7 +288,7 @@ public class MCS {
 		if (liIndexFragSolution == null) {
 			return null;
 		}
-		Collections.sort(liIndexFragSolution, comparatorBitsSet);
+		liIndexFragSolution.sort(comparatorBitsSet);
 		IntVec ivMCS = liIndexFragSolution.get(liIndexFragSolution.size() - 1);
 		molMCS = getSubFrag(frag, ivMCS);
 		List<StereoMolecule> li = new ArrayList<StereoMolecule>();
@@ -316,7 +306,7 @@ public class MCS {
 		if (liIndexFragSolution == null) {
 			return null;
 		}
-		Collections.sort(liIndexFragSolution, comparatorBitsSet);
+		liIndexFragSolution.sort(comparatorBitsSet);
 		IntVec ivMCS = liIndexFragSolution.get(liIndexFragSolution.size() - 1);
 		molMCS = getSubFrag(frag, ivMCS);
 		return molMCS;
@@ -337,7 +327,7 @@ public class MCS {
 		if(liIndexFragSolution==null){
 			return null;
 		}
-		Collections.sort(liIndexFragSolution, comparatorBitsSet);
+		liIndexFragSolution.sort(comparatorBitsSet);
 		// Get largest mcs.
 		IntVec ivMCSLargest = liIndexFragSolution.get(liIndexFragSolution.size()-1);
 		int bonds = frag.getBonds();
@@ -394,8 +384,7 @@ public class MCS {
 		for (int i = 0; i < arrMatchListSubFrag2Frag.length; i++) {
 			hmIndexSubFrag_IndexFrag.put(i, arrMatchListSubFrag2Frag[i]);
 		}
-		for (int i = 0; i < arrMatchListSubFrag2Mol.length; i++) {
-			int indexAtSubFragment = i;
+		for (int indexAtSubFragment=0; indexAtSubFragment< arrMatchListSubFrag2Mol.length; indexAtSubFragment++) {
 			int indexAtFragment = hmIndexSubFrag_IndexFrag.get(indexAtSubFragment);
 			arrMatchListFrag2Mol[indexAtFragment]=arrMatchListSubFrag2Mol[indexAtSubFragment];
 		}
@@ -404,9 +393,8 @@ public class MCS {
 	
     private boolean[] getBondArrayMolecule(int[] arrMatchFragment2Mol, boolean[] arrBondMCSFrag, boolean[] arrBondMCSMol)
     {
-		for (int i = 0; i < arrMatchFragment2Mol.length; i++) {
-			int indexAtFrag = i;
-			int indexAtMol = arrMatchFragment2Mol[i];
+		for (int indexAtFrag=0; indexAtFrag<arrMatchFragment2Mol.length; indexAtFrag++) {
+			int indexAtMol = arrMatchFragment2Mol[indexAtFrag];
 			int nConn2Frag = frag.getConnAtoms(indexAtFrag);
 			for (int j = 0; j < nConn2Frag; j++) {
 				int indexAtFragConn = frag.getConnAtom(indexAtFrag, j);
@@ -423,7 +411,7 @@ public class MCS {
 		return arrBondMCSMol;
 	}
 
-// The original procedure missed atom charge, mass, etc, which is particularly annoying,
+// The original procedure missed atom charge, mass, etc., which is particularly annoying,
 // when providing a custom SSSearcher(), which matches these properties. TLS 11Feb2021
 	private static StereoMolecule getSubFrag(StereoMolecule frag, IntVec iv) {
 		boolean[] isFragmentAtom = new boolean[frag.getAtoms()];
@@ -556,7 +544,7 @@ public class MCS {
 		return liIndexFragSolution;
 	}
 	
-    private static final boolean isCandidateInSolution(IntVec ivSolution, IntVec ivCandidate)
+    private static boolean isCandidateInSolution(IntVec ivSolution, IntVec ivCandidate)
     {
 		IntVec iv = IntVec.OR(ivSolution, ivCandidate);
 		if(iv.equals(ivSolution)){

@@ -1,13 +1,11 @@
 package com.actelion.research.chem.alignment3d;
 
-import java.util.Arrays;
-
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.SingularValueDecomposition;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.conf.Conformer;
 
-
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
@@ -39,7 +37,6 @@ public class KabschAlignment {
 				IntStream.range(0, conf1.getMolecule().getAtoms()).mapToObj(e -> new int[]{e,e}).toArray(int[][]::new));
 	}
 	
-	
 	private Coordinates getCOM(Coordinates[] coords) {
 		int counter = 0;
 		Coordinates com = new Coordinates();
@@ -49,7 +46,6 @@ public class KabschAlignment {
 		}
 		com.scale(1.0/counter);
 		return com;
-	
 	}
 	
 	public void align() {
@@ -57,7 +53,6 @@ public class KabschAlignment {
 	}
 	
 	public void align(Coordinates trans1, Matrix rot, Coordinates trans2) {
-		
 		com1 = getCOM(coords1);
 		com2 = getCOM(coords2);
 		for(Coordinates c1 : coords1)
@@ -100,14 +95,11 @@ public class KabschAlignment {
 		ma.set(0,0,1.0);
 		ma.set(1,1,1.0);
 		ma.set(2,2,det);
-		
-		
+
 		Matrix r = ma.multiply(ut);
 		r = v.multiply(r);
 		assert(r.det()>0.0);
 		r = r.getTranspose();
-		
-		
 		
 	    for(Coordinates c : coords2) {
 	    	c.rotate(r.getArray());
@@ -119,12 +111,6 @@ public class KabschAlignment {
 	    }
 	    
 	    rot.set(r.getArray());
-	    
-
-		
 	}
-	
-	
-
 }
 

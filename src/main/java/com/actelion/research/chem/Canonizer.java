@@ -3181,12 +3181,11 @@ System.out.println();
 		if (mAllHydrogensAreExplicit && (mMode & ENCODE_ATOM_SELECTION) != 0) {
 			count = 0;
 			int connBits = 0;
-			for (int i=0; i<mMol.getAtoms(); i++) {
-				int atom = mGraphAtom[i];
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				int conns = 0;
-				for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++) {
-					if (mMol.isSelectedAtom(mMol.getConnAtom(atom, j))) {
-						int hIndex = j - mMol.getConnAtoms(atom);
+				for (int j=mMol.getConnAtoms(mGraphAtom[atom]); j<mMol.getAllConnAtoms(mGraphAtom[atom]); j++) {
+					if (mMol.isSelectedAtom(mMol.getConnAtom(mGraphAtom[atom], j))) {
+						int hIndex = j - mMol.getConnAtoms(mGraphAtom[atom]);
 						conns |= (1 << hIndex);
 						connBits = Math.max(connBits, hIndex+1);
 						}
@@ -3198,12 +3197,11 @@ System.out.println();
 				encodeFeatureNo(38);    // 38 = datatype 'selected hydrogens'
 				encodeBits(count, nbits);
 				encodeBits(connBits, 3);
-				for (int i=0; i<mMol.getAtoms(); i++) {
-					int atom = mGraphAtom[i];
+				for (int atom=0; atom<mMol.getAtoms(); atom++) {
 					int conns = 0;
-					for (int j=mMol.getConnAtoms(atom); j<mMol.getAllConnAtoms(atom); j++) {
-						if (mMol.isSelectedAtom(mMol.getConnAtom(atom, j))) {
-							int hIndex = j - mMol.getConnAtoms(atom);
+					for (int j=mMol.getConnAtoms(mGraphAtom[atom]); j<mMol.getAllConnAtoms(mGraphAtom[atom]); j++) {
+						if (mMol.isSelectedAtom(mMol.getConnAtom(mGraphAtom[atom], j))) {
+							int hIndex = j - mMol.getConnAtoms(mGraphAtom[atom]);
 							conns |= (1 << hIndex);
 							}
 						}
