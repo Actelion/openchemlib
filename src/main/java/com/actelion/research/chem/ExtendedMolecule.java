@@ -3895,11 +3895,15 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(hasValid2DCoords ? cHelperParities : cHelperNeighbours);
 		mAllAtoms = mAtoms;
 		mAllBonds = mBonds;
+		boolean[] removedStereoBond = new boolean[mAtoms];
 		for (int atom=0; atom<mAtoms; atom++) {
 			if (mAllConnAtoms[atom] != mConnAtoms[atom]) {
 				// If we have an abnormal valence implicitly defined by explicit
 				// hydrogens, we need to explicitly define that abnormal valence!
 				int abnormalValence = getImplicitHigherValence(atom, false);
+
+				removedStereoBond[atom] = mAllConnAtoms[atom] == mConnAtoms[atom]+1
+									   && isStereoBond(mConnBond[atom][mConnAtoms[atom]]);
 
 				mAllConnAtoms[atom] = mConnAtoms[atom];
 
@@ -3915,7 +3919,9 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			}
 
 		if (hasValid2DCoords)
-			setStereoBondsFromParity();
+			for (int atom=0; atom<mAtoms; atom++)
+				if (removedStereoBond[atom])
+					setStereoBondFromAtomParity(atom);
 
 		mValidHelperArrays = cHelperNone;
 		}
