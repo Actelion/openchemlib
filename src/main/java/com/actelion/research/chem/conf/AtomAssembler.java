@@ -52,12 +52,14 @@ public class AtomAssembler {
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
 			total += addImplicitHydrogens(atom, true);
 
+		if (total != 0)
+			mMol.ensureHelperArrays(Molecule.cHelperRings);
+
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
 			total += addImplicitHydrogens(atom, false);
 
 		return total;
 		}
-
 
 	public int addImplicitHydrogens(int atom) {
 		return addImplicitHydrogens(atom, false);
@@ -81,7 +83,10 @@ public class AtomAssembler {
 			return addHydrogensToSingleAtom(atom, count);
 
 		int pi = mMol.getAtomPi(atom);
-		int sp = (atomicNo >= 15) ? 3 : (pi == 2) ? 1 : (pi == 1 || atomicNo == 5 || mMol.isFlatNitrogen(atom)) ? 2 : 3;
+		int sp = (atomicNo >= 15) ? 3
+				: (pi == 2) ? 1
+				: (pi == 1 || atomicNo == 5 || mMol.isFlatNitrogen(atom)
+				|| (mMol.getAtomicNo(atom)==8 && mMol.getAtomPi(mMol.getConnAtom(atom, 0)) != 0)) ? 2 : 3;
 
 		Coordinates croot = mMol.getCoordinates(atom);
 
@@ -113,77 +118,97 @@ public class AtomAssembler {
 						atomSequence[3] = -1;
 						double dihedral = TorsionDB.calculateTorsionExtended(mMol, atomSequence);
 						addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
-								mMol.getCoordinates(atom), atom, Math.PI*109/180, dihedral, bondLength);
+								mMol.getCoordinates(atom), atom, Math.PI * 109 / 180, dihedral, bondLength);
 						return 1;
-						}
+					}
 
-					double angle = (sp == 2) ? Math.PI*2/3 : Math.PI*109/180;
+					double angle = (sp == 2) ? Math.PI * 2 / 3 : Math.PI * 109 / 180;
 
 					if (mMol.getConnAtoms(atom) == 2) {
-						// we have one position already occupied
+						// we have sp2 or sp3 and one position already occupied
 
-						if (count == 1 && skipRotatableHydrogens)
-							return 0;
+						if (count == 1 && sp == 3 && skipRotatableHydrogens)
+							return 0;    // we have two options and decide later
 
-						for (int i3=0; i3<mMol.getConnAtoms(atom); i3++) {
+						for (int i3 = 0; i3<mMol.getConnAtoms(atom); i3++) {
 							atomSequence[3] = mMol.getConnAtom(atom, i3);
 							if (atomSequence[3] != atomSequence[1]) {
 								double dihedral = TorsionDB.calculateTorsionExtended(mMol, atomSequence);
-								dihedral += (sp == 2) ? Math.PI : Math.PI*2/3;
-								if (dihedral > Math.PI)
-									dihedral -= 2*Math.PI;
+								dihedral += (sp == 2) ? Math.PI : Math.PI * 2 / 3;
+								if (dihedral>Math.PI)
+									dihedral -= 2 * Math.PI;
 								// TODO in case of count==1 we might avoid a potentially crowded side
 								addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
 										mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
 
 								if (count != 1) {
-									dihedral += Math.PI*2/3;
-									if (dihedral > Math.PI)
-										dihedral -= 2*Math.PI;
+									dihedral += Math.PI * 2 / 3;
+									if (dihedral>Math.PI)
+										dihedral -= 2 * Math.PI;
 									addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
 											mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
-									}
-								return count;
 								}
+								return count;
 							}
 						}
+					}
+
+					if (count == sp) {    // We need to fill all positions at a terminal atom. sp2: -XH2; sp3: -XH3
+						double dihedral = (sp == 2) ? 0.0 : Math.PI / 3;
+						for (int i = 0; i<count; i++) {
+							addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+									mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
+							dihedral += (sp == 2) ? Math.PI : Math.PI * 2 / 3;
+						}
+						return count;
+					}
 
 					if (skipRotatableHydrogens)
-						return 0;
+						return 0;    // we don't fill all directions and need to choose later
 
 					// no competing atoms
 					// if we have a single bonded option for atomSequence[0], then take that
-					for (int i=i0+1; i<mMol.getConnAtoms(atomSequence[1]); i++) {
+					for (int i = i0 + 1; i<mMol.getConnAtoms(atomSequence[1]); i++) {
 						int alternative = mMol.getConnAtom(atomSequence[1], i);
 						if (alternative != atom && mMol.getConnBondOrder(atomSequence[1], i) == 1) {
 							atomSequence[0] = alternative;
 							break;
-							}
 						}
+					}
 
 					// Here we have one of more hydrogen atoms at a terminal atom, i.e. an atom with one non-H neighbour!
 
 					// If we have a double bond or flat nitrogen, we cannot really rotate. Preferred is then anti (PI) to single bonded atomSequence[0],
 					// e.g. we prefer -OH syn to =O in carboxylic acid, which is anti to alpha carbon
-					double dihedral = Math.PI;
 
-					// If we have a rotatable bond, we look for the closest colliding atom and choose a rotation state to avoid that
-					if (sp == 3) {
-						dihedral = getMostBlockedDihedral(atomSequence, bondLength);
-						if (count == 3)
-							dihedral += Math.PI/3;
-						else if (count == 2)
-							dihedral += Math.PI*2/3;
-						else if (count == 1)
-							dihedral += Math.PI;
-					}
-					for (int i=0; i<count; i++) {
-						addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
-								mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
-
-						dihedral += (sp == 2) ? Math.PI : Math.PI*2/3;
+					// We look for the closest colliding atom and choose a rotation state to avoid that
+					double blockedDihedral = getMostBlockedDihedral(atomSequence, bondLength);
+					if (count == 1) {
+						if (sp == 2) {
+							double dihedral = Double.isNaN(blockedDihedral) ? Math.PI
+											: (Math.abs(blockedDihedral)<Math.PI / 2) ? Math.PI : 0.0;
+							addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+									mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
+						} else {    // sp3
+							double dihedral = Double.isNaN(blockedDihedral) ? Math.PI
+									: (Math.abs(blockedDihedral)<Math.PI / 3) ? Math.PI
+									: (blockedDihedral<-Math.PI / 3) ? Math.PI / 3 : -Math.PI / 3;
+							addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+									mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
+							}
+						return 1;
 						}
-					return count;
+					else {	// must be sp3 and count==2
+						double dihedral = Double.isNaN(blockedDihedral) ? Math.PI
+										: (blockedDihedral < 0 && blockedDihedral > -Math.PI*2/3) ? Math.PI/3
+										: (blockedDihedral >= 0 && blockedDihedral < Math.PI*2/3) ? -Math.PI : -Math.PI/3;
+						for (int i=0; i<count; i++) {
+							addHydrogen(mMol.getCoordinates(atomSequence[0]), mMol.getCoordinates(atomSequence[1]),
+									mMol.getCoordinates(atom), atom, angle, dihedral, bondLength);
+							dihedral += Math.PI*2/3;
+							}
+						return count;
+						}
 					}
 				}
 			}
@@ -391,7 +416,7 @@ public class AtomAssembler {
 	 */
 	private double getMostBlockedDihedral(int[] atomSequence, double bondLength) {
 		Coordinates croot = mMol.getCoordinates(atomSequence[2]);
-		Coordinates cconn = mMol.getCoordinates(atomSequence[2]);
+		Coordinates cconn = mMol.getCoordinates(atomSequence[1]);
 		Coordinates ctest = croot.addC(croot.subC(cconn).unit().scale(0.5*bondLength));
 		final double angle = 109*Math.PI/180;
 		double orbitRadius = bondLength * Math.sin(angle);
