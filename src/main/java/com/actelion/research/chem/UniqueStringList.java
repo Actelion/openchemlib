@@ -63,7 +63,7 @@ public class UniqueStringList extends SortedStringList implements Serializable {
 		int position = mOriginalOrder.size();
 
 		mOriginalOrder.add(theString);
-		mIndexList.add(index, new Integer(position));
+		mIndexList.add(index, position);
 
 		return position;
 		}
