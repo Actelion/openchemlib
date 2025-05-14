@@ -1108,23 +1108,23 @@ public class MolfileParser
 		if (mAtomIndexMap == null)
 			mAtomIndexMap = new TreeMap<Integer,Integer>();
 
-		mAtomIndexMap.put(new Integer(sourceAtomIndex), new Integer(usedAtomIndex));
+		mAtomIndexMap.put(sourceAtomIndex, usedAtomIndex);
 	}
 
 	private void mapBondIndex(int sourceBondIndex, int usedBondIndex) {
 		if (mBondIndexMap == null)
 			mBondIndexMap = new TreeMap<Integer,Integer>();
 
-		mBondIndexMap.put(new Integer(sourceBondIndex), new Integer(usedBondIndex));
+		mBondIndexMap.put(sourceBondIndex, usedBondIndex);
 	}
 
 	private int getUsedAtomIndex(int sourceAtomIndex) {
-		Integer ui = (mAtomIndexMap == null) ? null : mAtomIndexMap.get(new Integer(sourceAtomIndex));
+		Integer ui = (mAtomIndexMap == null) ? null : mAtomIndexMap.get(sourceAtomIndex);
 		return (ui == null) ? sourceAtomIndex-1 : ui.intValue();
 	}
 
 	private int getUsedBondIndex(int sourceBondIndex) {
-		Integer ui = (mBondIndexMap == null) ? null : mBondIndexMap.get(new Integer(sourceBondIndex));
+		Integer ui = (mBondIndexMap == null) ? null : mBondIndexMap.get(sourceBondIndex);
 		return (ui == null) ? sourceBondIndex-1 : ui.intValue();
 	}
 
