@@ -57,6 +57,7 @@ public class MolfileParser
 												| Molecule.cPseudoAtomsRGroups
 												| Molecule.cPseudoAtomsAminoAcids;
 	public static final int ALLOWED_ATOM_LABELS_IN_LIST = Molecule.cPseudoAtomsHydrogenIsotops;
+	public static final String FIELD_NAME_CUSTOM_LABEL = "NOSEARCH_OCL_CUSTOM_LABEL";
 
 	public static boolean debug = false;
 	private StereoMolecule mMol;
@@ -526,7 +527,8 @@ public class MolfileParser
 		final int MODE_CTAB = 1;
 		final int MODE_CTAB_ATOM = 2;
 		final int MODE_CTAB_BOND = 3;
-		final int MODE_CTAB_COLLECTION = 4;
+		final int MODE_CTAB_SGROUP = 4;
+		final int MODE_CTAB_COLLECTION = 5;
 
 		if (mAtomIndexMap != null)
 			mAtomIndexMap.clear();
@@ -553,6 +555,8 @@ public class MolfileParser
 					mode = MODE_CTAB_ATOM;
 				} else if(modeString.startsWith("BOND")){
 					mode = MODE_CTAB_BOND;
+				} else if(modeString.startsWith("SGROUP")){
+					mode = MODE_CTAB_SGROUP;
 				} else if(modeString.startsWith("COLLECTION")){
 					mode = MODE_CTAB_COLLECTION;
 				} else{
@@ -567,6 +571,8 @@ public class MolfileParser
 				interpretV3AtomLine(line);
 			} else if(mode == MODE_CTAB_BOND){
 				interpretV3BondLine(line);
+			} else if(mode == MODE_CTAB_SGROUP){
+				interpretV3SgroupLine(line);
 			} else if(mode == MODE_CTAB_COLLECTION){
 				interpretV3CollectionLine(line);
 			} else{
@@ -809,6 +815,62 @@ public class MolfileParser
 		int bond = buildBond(atom1,atom2,bondType,stereo,topology);
 		if(bond + 1 != bondIndex)
 			mapBondIndex(bondIndex, bond);
+	}
+
+	private void interpretV3SgroupLine(String line) throws IOException
+	{
+		int index1 = 0;
+		int index2 = endOfItem(line,index1);
+		String value = line.substring(index1,index2);
+
+		if ("DEFAULT".equals(value)) {
+			index1 = indexOfNextItem(line,index2);
+			index2 = endOfItem(line,index1);
+			value = line.substring(index1,index2);
+
+			if (value.startsWith("CLASS")) {
+				index1 = indexOfNextItem(line,index2);
+				index2 = endOfItem(line,index1);
+				value = line.substring(index1,index2);
+
+				if ("-".equals(value)) {
+					index1 = indexOfNextItem(line,index2);
+					index2 = endOfItem(line,index1);
+					value = line.substring(index1,index2);
+				}
+			}
+		}
+
+		int sgroupIndex = Integer.parseInt(value);
+
+		index1 = indexOfNextItem(line,index2);
+		index2 = endOfItem(line,index1);
+		String type = line.substring(index1,index2);
+
+		if (!"DAT".equals(type))	// only DAT supported
+			return;
+
+		index1 = indexOfNextItem(line,index2);
+		index2 = endOfItem(line,index1);
+		int extIndex = Integer.parseInt(line.substring(index1,index2));
+
+		TreeMap<String,String> map = new TreeMap<>();
+		index1 = indexOfNextItem(line,index2);
+		while (index1 != -1)
+			index1 = readKeyValuePair(map, line, index1);
+
+		String atoms = map.get("ATOMS");
+		String fieldName = map.get("FIELDNAME");
+		String fieldData = map.get("FIELDDATA");
+
+		if (!FIELD_NAME_CUSTOM_LABEL.equals(fieldName) || atoms == null || fieldData == null)
+			return;
+
+		String[] atom = atoms.split(" ");
+		if (atom.length != 2)
+			return;
+
+		mMol.setAtomCustomLabel(Integer.parseInt(atom[1]), fieldData);
 	}
 
 	private void interpretV3CollectionLine(String line)
@@ -1130,19 +1192,42 @@ public class MolfileParser
 
 	private int parseIntOrSpaces(String s) throws NumberFormatException
 	{
-		return(s.length() == 0) ? 0 : Integer.parseInt(s);
+		return(s.isEmpty()) ? 0 : Integer.parseInt(s);
 	}
 
 	private int endOfItem(String line,int start)
 	{
-		int end = indexOfWhiteSpace(line,start + 1);
+		int end = indexOfWhiteSpace(line,start);
 		return(end == -1) ? line.length() : end;
+	}
+
+	private int indexOfEqualSign(String line,int fromIndex)
+	{
+		for(int i = fromIndex;i<line.length();i++) {
+			char theChar = line.charAt(i);
+			if(theChar == ' ' || theChar == '\t')
+				return -1;
+			if (theChar == '=')
+				return i;
+		}
+
+		return -1;
 	}
 
 	private int indexOfWhiteSpace(String line,int fromIndex)
 	{
+		boolean braceOpen=false;
+		boolean quotesOpen=false;
 		for(int i = fromIndex;i < line.length();i++){
-			if(line.charAt(i) == ' ' || line.charAt(i) == '\t'){
+			char theChar = line.charAt(i);
+			if (theChar == '(')
+				braceOpen = true;
+			else if (theChar == ')')
+				braceOpen = false;
+			else if (theChar == '"')
+				quotesOpen = !quotesOpen;
+
+			if(!braceOpen && !quotesOpen && (theChar == ' ' || theChar == '\t')){
 				return i;
 			}
 		}
@@ -1154,12 +1239,28 @@ public class MolfileParser
 		if(afterPreviousItem == -1){
 			return -1;
 		}
-		for(int i = afterPreviousItem + 1;i < line.length();i++){
+		for(int i=afterPreviousItem + 1; i<line.length(); i++){
 			if(line.charAt(i) != ' ' && line.charAt(i) != '\t'){
 				return i;
 			}
 		}
 		return -1;
+	}
+
+	private int readKeyValuePair(TreeMap<String,String> map, String line, int start) {
+		int equalIndex = indexOfEqualSign(line, start);
+		if (equalIndex == -1)
+			return -1;
+
+		int end = endOfItem(line, equalIndex+1);
+		String key = line.substring(start, equalIndex);
+		String val = line.substring(equalIndex+1, end);
+		if ((val.startsWith("(") && val.endsWith(")"))
+		 || (val.startsWith("\"") && val.endsWith("\"")))
+			val = val.substring(1, val.length()-1);
+
+		map.put(key, val);
+		return indexOfNextItem(line, end);
 	}
 
 	void TRACE(String s)
