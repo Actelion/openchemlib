@@ -193,7 +193,6 @@
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
                     <!-- keeps release checkout directory on same directory level (allows referencing other files using relative paths) -->
                     <workingDirectory>${project.basedir}/../${project.artifactId}-ReleaseBuild</workingDirectory>
