@@ -1095,11 +1095,15 @@ public class StringFunctions {
 
 
 	public static String toString(Exception ex) {
-
 		StringWriter sw = new StringWriter();
 		ex.printStackTrace(new PrintWriter(sw));
 		String exceptionAsString = sw.toString();
-
+		return exceptionAsString;
+	}
+	public static String toString(Throwable ex) {
+		StringWriter sw = new StringWriter();
+		ex.printStackTrace(new PrintWriter(sw));
+		String exceptionAsString = sw.toString();
 		return exceptionAsString;
 	}
 
