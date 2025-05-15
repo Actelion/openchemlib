@@ -206,13 +206,6 @@
         <connection>scm:git:git@github.com:Actelion/openchemlib.git</connection>
         <developerConnection>scm:git:git@github.com:Actelion/openchemlib.git</developerConnection>
         <url>https://github.com/Actelion/openchemlib</url>
-      <tag>HEAD</tag>
-  </scm>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
+        <tag>HEAD</tag>
+    </scm>
 </project>
