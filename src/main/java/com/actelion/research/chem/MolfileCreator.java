@@ -491,6 +491,58 @@ public class MolfileCreator {
                 }
             }
 
+        no = 0;
+        for (int atom=0; atom<mol.getAllAtoms(); atom++)
+            if (mol.getAtomCustomLabel(atom) != null)
+                no++;
+
+        if (no != 0) {
+            int sgroupNo = 0;
+            for (int atom = 0; atom<mol.getAllAtoms(); atom++) {
+                String label = mol.getAtomCustomLabel(atom);
+                if (label != null) {
+                    sgroupNo++;
+
+                    mBuilder.append("M  STY  1 ");
+                    appendThreeDigitInt(sgroupNo);
+                    mBuilder.append(" DAT");
+                    mBuilder.append(nl);
+
+                    mBuilder.append("M  SLB  1 ");
+                    appendThreeDigitInt(sgroupNo);    // sgroup-no
+                    mBuilder.append(" ");
+                    appendThreeDigitInt(sgroupNo);    // extindex
+                    mBuilder.append(nl);
+
+                    mBuilder.append("M  SAL ");
+                    appendThreeDigitInt(sgroupNo);    // sgroup-no
+                    mBuilder.append("  1 ");
+                    appendThreeDigitInt(atom+1); // atom
+                    mBuilder.append(nl);
+
+                    mBuilder.append("M  SDT ");
+                    appendThreeDigitInt(sgroupNo);    // sgroup-no
+                    mBuilder.append(" ");
+                    mBuilder.append(MolfileParser.FIELD_NAME_CUSTOM_LABEL);
+                    mBuilder.append(nl);
+
+                    mBuilder.append("M  SDD ");
+                    appendThreeDigitInt(sgroupNo);    // sgroup-no
+                    mBuilder.append(" ");
+                    appendTenDigitDouble(mol.getAtomX(atom));   // absolute and detached coords (DA)
+                    appendTenDigitDouble(mol.getAtomY(atom));
+                    mBuilder.append("    DA    ALL  1       5");
+                    mBuilder.append(nl);
+
+                    mBuilder.append("M  SED ");
+                    appendThreeDigitInt(sgroupNo);    // sgroup-no
+                    mBuilder.append(" ");
+                    mBuilder.append(label);
+                    mBuilder.append(nl);
+                }
+            }
+        }
+
         mBuilder.append("M  END"+nl);
         }
 

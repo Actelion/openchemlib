@@ -93,6 +93,8 @@ public class MolfileParser
 								// Thus, we must check, whether we just have a charged normal valence atom
 								// before setting an abnormal valence for the atom.
 
+		TreeMap<String,CustomLabel> customLabelMap = null;
+
 		try{
 			String line;
 			int natoms,nbonds,nlists;
@@ -454,6 +456,27 @@ public class MolfileParser
 					}
 				}
 
+				if ((line.startsWith("M  SAL") && line.length() >= 17)
+				 || (line.startsWith("M  SDT") && line.length() >= 12)
+				 || (line.startsWith("M  SED") && line.length() >= 12)) {
+					if (customLabelMap == null)
+						customLabelMap = new TreeMap<>();
+
+					String sgroupNo = line.substring(7, 10);
+					CustomLabel cl = customLabelMap.get(sgroupNo);
+					if (cl == null) {
+						cl = new CustomLabel();
+						customLabelMap.put(sgroupNo, cl);
+					}
+
+					if (line.startsWith("M  SAL") && line.startsWith("  1", 10))
+						cl.atom = Integer.parseInt(line.substring(13,17).trim());
+					else if (line.startsWith("M  SDT"))
+						cl.isOCLCUstomLabel = line.substring(11).startsWith(MolfileParser.FIELD_NAME_CUSTOM_LABEL);
+					else if (line.startsWith("M  SED"))
+						cl.label = line.substring(11).trim();
+				}
+
 				line = reader.readLine();
 			}
 		} catch(Exception e){
@@ -461,6 +484,11 @@ public class MolfileParser
 			System.err.println("error reading molfile " + e);
 			return false;
 		}
+
+		if (customLabelMap != null)
+			for (CustomLabel cl : customLabelMap.values())
+				if (cl.isOCLCUstomLabel && cl.atom != 0 && cl.label != null)
+					mMol.setAtomCustomLabel(cl.atom-1, cl.label);
 
 		if (mDeduceMissingCharges) {
 			introduceObviousMetalBonds();
@@ -870,7 +898,7 @@ public class MolfileParser
 		if (atom.length != 2)
 			return;
 
-		mMol.setAtomCustomLabel(Integer.parseInt(atom[1]), fieldData);
+		mMol.setAtomCustomLabel(Integer.parseInt(atom[1])-1, fieldData);
 	}
 
 	private void interpretV3CollectionLine(String line)
@@ -1356,5 +1384,11 @@ public class MolfileParser
 		byte[] os = (atomicNo < Molecule.cCommonOxidationState.length) ?
 				Molecule.cCommonOxidationState[atomicNo] : null;
 		return (os == null) ? 0 : os[os.length-1];
+	}
+
+	private static class CustomLabel {
+		String label;
+		int atom;
+		boolean isOCLCUstomLabel;
 	}
 }
