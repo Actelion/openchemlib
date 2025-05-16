@@ -36,6 +36,9 @@ package com.actelion.research.chem;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 /**
  * This class generates an MDL molfile version 3.0 from a StereoMolecule
@@ -50,9 +53,10 @@ import java.io.Writer;
  */
 public class MolfileV3Creator
 {
-    private StringBuilder mMolfile;
+    private final StringBuilder mMolfile;
     private static final double TARGET_AVBL = 1.5;
     private static final double PRECISION_FACTOR = 10000;
+	private DecimalFormat mDoubleFormat;
 
     private double mScalingFactor = 1.0;
 
@@ -100,6 +104,7 @@ public class MolfileV3Creator
      * @param builder null or StringBuilder to append to
      */
     public MolfileV3Creator(StereoMolecule mol, boolean allowScaling, double scalingFactor, StringBuilder builder) {
+		mDoubleFormat = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.ENGLISH)); //English local ('.' for the dot)
 		mol.ensureHelperArrays(Molecule.cHelperParities);
 		final String nl = System.lineSeparator();
 
@@ -431,11 +436,35 @@ public class MolfileV3Creator
 
         mMolfile.append("M  V30 END BOND"+nl);
 
+		// We use SGROUP to save atom custom labels
+		boolean customLabelFound = false;
+		for(int atom=0; atom<mol.getAllAtoms();atom++) {
+			if (mol.getAtomCustomLabel(atom) != null) {
+				customLabelFound = true;
+				break;
+			}
+		}
+		if (customLabelFound) {
+			mMolfile.append("M  V30 BEGIN SGROUP"+nl);
+			int count = 0;
+			for(int atom=0; atom<mol.getAllAtoms();atom++) {
+				if (mol.getAtomCustomLabel(atom) != null) {
+					count++;
+					mMolfile.append("M  V30 "+count+" DAT "+count+" ATOMS=(1 "+(atom+1)+") FIELDNAME=\""+MolfileParser.FIELD_NAME_CUSTOM_LABEL+"\" -"+nl);
+					mMolfile.append("M  V30 FIELDDISP=\"");
+					appendTenDigitDouble(hasCoordinates ? mScalingFactor * mol.getAtomX(atom) : 0.0);
+					appendTenDigitDouble(hasCoordinates ? mScalingFactor * mol.getAtomY(atom) : 0.0);
+					mMolfile.append("    DA    ALL  1       5\" FIELDDATA=\""+mol.getAtomCustomLabel(atom)+"\""+nl);
+				}
+			}
+			mMolfile.append("M  V30 END SGROUP"+nl);
+		}
+
         boolean paritiesFound = false;
         int absAtomsCount = 0;
         int[] orAtomsCount = new int[Molecule.cESRMaxGroups];
         int[] andAtomsCount = new int[Molecule.cESRMaxGroups];
-        for(int atom = 0;atom < mol.getAtoms();atom++) {
+        for(int atom=0; atom<mol.getAtoms(); atom++) {
             if (mol.getAtomParity(atom) == Molecule.cAtomParity1
              || mol.getAtomParity(atom) == Molecule.cAtomParity2) {
                 paritiesFound = true;
@@ -572,4 +601,10 @@ public class MolfileV3Creator
     public void writeMolfile(Writer theWriter) throws IOException {
         theWriter.write(mMolfile.toString());
 	    }
+
+	private void appendTenDigitDouble(double theDouble) {
+		String val = mDoubleFormat.format(theDouble);
+		for(int i=val.length(); i<10; i++) mMolfile.append(' ');
+			mMolfile.append(val);
+		}
 	}

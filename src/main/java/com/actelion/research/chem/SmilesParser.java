@@ -490,7 +490,7 @@ public class SmilesParser {
 						int hydrogenCount = (atomParser.explicitHydrogens == HYDROGEN_IMPLICIT_ZERO) ? 0
 								: atomParser.explicitHydrogens;
 						// BH this is great, but it does not solve the problem for allene neighbors
-						parityMap.put(atom, new THParity(atom, position - 2, fromAtom, hydrogenCount, position - 1,
+						parityMap.put(atom, new THParity(atom, position - 2, fromAtom, hydrogenCount,
 								atomParser.isClockwise));
 					}
 				}
@@ -1542,10 +1542,9 @@ public class SmilesParser {
 		 * @param centralAtomPosition position in SMILES of central atom
 		 * @param fromAtom index of parent atom of centralAtom (-1 if centralAtom is first atom in smiles)
 		 * @param explicitHydrogen Daylight syntax: hydrogen atoms defined within square bracket of other atom
-		 * @param hydrogenPosition position in SMILES of central atom
 		 * @param isClockwise true if central atom is marked with @@ rather than @
 		 */
-		public THParity(int centralAtom, int centralAtomPosition, int fromAtom, int explicitHydrogen, int hydrogenPosition, boolean isClockwise) {
+		public THParity(int centralAtom, int centralAtomPosition, int fromAtom, int explicitHydrogen, boolean isClockwise) {
 			if (explicitHydrogen != 0 && explicitHydrogen != 1) {
 				mError = true;
 				}
@@ -1602,6 +1601,9 @@ public class SmilesParser {
 			boolean isInverse = false;
 			switch (mNeighbourList.size()) {
 			case 2:
+				if (mNeighbourList.get(0).mAtom >= PSEUDO_ATOM_HYDROGEN
+				 || mNeighbourList.get(1).mAtom >= PSEUDO_ATOM_HYDROGEN)
+					return Molecule.cAtomParityUnknown;	// result of wrong SMILES as CC(=[N@H])N
 				isInverse = isInverseOrderAllene(handleHydrogenAtomMap);
 				break;
 			case 3:
