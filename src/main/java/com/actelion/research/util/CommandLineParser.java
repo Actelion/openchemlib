@@ -103,14 +103,14 @@ public class CommandLineParser {
     public long getOrDefault(String command, long defaultVal){
         long v=defaultVal;
         if(contains(command)){
-            v=getAsInt(command);
+            v=getAsLong(command);
         }
         return v;
     }
     public double getOrDefault(String command, double defaultVal){
         double v=defaultVal;
         if(contains(command)){
-            v=getAsInt(command);
+            v=getAsDouble(command);
         }
         return v;
     }
@@ -183,6 +183,7 @@ public class CommandLineParser {
     public int getAsInt(String command) {
         return Integer.parseInt(get(command));
     }
+
 
     public long getAsLong(String command) {
         return Long.parseLong(get(command));
