@@ -108,13 +108,6 @@ jobs:
           server-password: MAVEN_PASSWORD # env variable for token in deploy
           gpg-private-key: ${{ secrets.GPG_SECRET_KEY }} # Value of the GPG private key to import
           gpg-passphrase: MAVEN_GPG_PASSPHRASE # env variable for GPG private key passphrase
-      - id: build_artifacts
-        name: Build Artifacts
-        run: |
-          mvn \
-            --no-transfer-progress \
-            --batch-mode \
-            package
       - id: extract_version
         name: Extract Version
         run: |
@@ -139,6 +132,11 @@ jobs:
           # make version available to the next steps
           echo "new_version=${new_version}" >> $GITHUB_ENV
           #------------------------------------------------------
+      - id: setup-gpg
+        name: Install gpg secret key
+        run: |
+          # Install gpg secret key
+          cat <(echo -e "${{ secrets.GPG_SECRET_KEY }}") | gpg --batch --import
       - id: publish_artifacts
         name: Publish Artifacts
         env:
@@ -149,8 +147,6 @@ jobs:
           mvn \
             --no-transfer-progress \
             --batch-mode \
-            --activate-profiles production \
-            -DskipTests=true \
             deploy
       - id: create_tag
         name: Create Tag
