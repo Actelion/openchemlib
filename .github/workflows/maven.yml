@@ -80,6 +80,7 @@ jobs:
           mvn versions:set -DnewVersion=${new_version} -DgenerateBackupPoms=false
           git config user.name "GitHub Actions"
           git config user.email "github-actions@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/Actelion/openchemlib.git
           git commit -am "Incremented version to ${new_version}"
           git push
 
