@@ -132,11 +132,6 @@ jobs:
           # make version available to the next steps
           echo "new_version=${new_version}" >> $GITHUB_ENV
           #------------------------------------------------------
-      - id: setup-gpg
-        name: Install gpg secret key
-        run: |
-          # Install gpg secret key
-          cat <(echo -e "${{ secrets.GPG_SECRET_KEY }}") | gpg --batch --import
       - id: publish_artifacts
         name: Publish Artifacts
         env:
@@ -147,6 +142,7 @@ jobs:
           mvn \
             --no-transfer-progress \
             --batch-mode \
+            --activate-profiles enable-sign-artifacts \
             deploy
       - id: create_tag
         name: Create Tag
