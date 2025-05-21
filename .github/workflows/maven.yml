@@ -113,8 +113,6 @@ jobs:
           mvn \
             --no-transfer-progress \
             --batch-mode \
-            --activate-profiles production \
-            -DskipTests=true \
             package
       - id: extract_version
         name: Extract Version
