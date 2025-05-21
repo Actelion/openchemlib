@@ -44,6 +44,9 @@ jobs:
       - id: checkout
         name: Checkout sources
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # Checking out GIT repo using PAT allows to re-triggering the workflow
+          persist-credentials: false  # Ensures the supplied token is used for subsequent Git operations
       - id: extract_version
         name: Extract Version
         run: |
