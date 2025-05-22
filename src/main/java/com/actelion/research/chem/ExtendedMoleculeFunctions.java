@@ -248,14 +248,16 @@ public class ExtendedMoleculeFunctions {
 		return bnds;
 	}
 	public static int getNumNonHydrogenAtoms(ExtendedMolecule mol) {
+		return getNumNonHydrogenAtoms(mol, 1000);
+	}
+	public static int getNumNonHydrogenAtoms(ExtendedMolecule mol, int atNosNot2Consider) {
 		int non = 0;
 		for (int i = 0; i < mol.getAtoms(); i++) {
 			int atomicNo = mol.getAtomicNo(i);
-			if(atomicNo!=1) {
-				non++;
-			}
+			if((atomicNo==1) || (atomicNo>=atNosNot2Consider))
+				continue;
+			non++;
 		}
-
 		return non;
 	}
 	public static int getNumCarbonAtoms(ExtendedMolecule mol) {
