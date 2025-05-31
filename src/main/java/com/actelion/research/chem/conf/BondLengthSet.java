@@ -141,35 +141,55 @@ public class BondLengthSet {
 		}
 
 	public static String getBondIDString(int index) {
-		if (index == -1)
+		return (index == -1) ? "unknown" : idToString(BOND_ID[index]);
+		}
+
+	public static String idToString(int id) {
+		if (id == -1)
 			return "unknown";
-		int id = BOND_ID[index];
-		int order = (id & 0xFF000000) >> 24;
-		int pi1 = (id & 0x00F00000) >> 20;
-		int pi2 = (id & 0x00000F00) >> 8;
-		int atomicNo1 = (id & 0x000FF000) >> 12;
-		int atomicNo2 = (id & 0x000000FF);
-		String piString1 = (isPiConsidered(atomicNo1)) ? Integer.toString(pi1) : "";
-		String piString2 = (isPiConsidered(atomicNo2)) ? Integer.toString(pi2) : "";
-		String s = (order == 0) ? "d" : ((order > 3) ? "a" : "") + (order & 3);
-		return s+Molecule.cAtomLabel[atomicNo1]+piString1+Molecule.cAtomLabel[atomicNo2]+piString2;
+		int order = (id & 0x0F000000) >> 24;
+		int atomicNo1 = (id & 0x00FE0000) >> 17;
+		int atomicNo2 = (id & 0x00000FE0) >> 5;
+		int pi1 = (id & 0x00018000) >> 15;
+		int pi2 = (id & 0x00000018) >> 3;
+		int conns1 = (id & 0x00007000) >> 12;
+		int conns2 = (id & 0x00000007);
+		String piString1 = (isPiConsidered(atomicNo1)) ? "pi" + pi1 : "";
+		String piString2 = (isPiConsidered(atomicNo2)) ? "pi" + pi2 : "";
+		String connsString1 = "c"+conns1;
+		String connsString2 = "c"+conns2;
+		String s = (order == 8) ? "d" : ((order > 7) ? "a" : "") + (order & 7);
+		return s+Molecule.cAtomLabel[atomicNo1]+piString1+connsString1+Molecule.cAtomLabel[atomicNo2]+piString2+connsString2;
 		}
 
 	/**
-	 * Constructs a bond classification ID from individual parameters and returns the ID's
-	 * index in the sorted list of bond length information.
-	 * The index can be used to get typical bond length and standard deviation.
+	 * Constructs a bond classification ID from individual parameters and returns the ID's index.
+	 * If there is no bond length entry for the precise bond definition (precision == 2) and if exact==false,
+	 * then lower precision bond definitions are searched for a match to find a close, but not exact, entry.
+	 * If not even a close entry can be found, -1 is returned.
+	 * Bond indexes refers to the sorted list of bond length information.
+	 * The index can be used to look up a typical bond length and standard deviation.
 	 * @param bondOrder
 	 * @param isAromatic
 	 * @param isDelocalized
 	 * @param atomicNo1
 	 * @param atomicNo2
-	 * @param atomPi1
-	 * @param atomPi2
+	 * @param atomPi1 pi electron count of 1st atom
+	 * @param atomPi2 pi electron count of 2st atom
+	 * @param conns1 non-hydrogen neighbours of 1st atom
+	 * @param conns2 non-hydrogen neighbours of 2nd atom
+	 * @param exact if true, then -1 is returned if the bond cannot be found in the maximum precision (i.e. 2) bond indexes
 	 * @return
 	 */
-	public static int getBondIndex(int bondOrder, boolean isAromatic, boolean isDelocalized, int atomicNo1, int atomicNo2, int atomPi1, int atomPi2) {
-		return lookupBondIndex(getBondID(bondOrder, isAromatic, isDelocalized, atomicNo1, atomicNo2, atomPi1, atomPi2));
+	public static int getBondIndex(int bondOrder, boolean isAromatic, boolean isDelocalized,
+								   int atomicNo1, int atomicNo2, int atomPi1, int atomPi2, int conns1, int conns2, boolean exact) {
+		int index = lookupBondIndex(getBondID(bondOrder, isAromatic, isDelocalized, atomicNo1, atomicNo2, atomPi1, atomPi2, conns1, conns2));
+		if (!exact && index == -1) {
+			index = lookupBondIndex(getBondID(bondOrder, isAromatic, isDelocalized, atomicNo1, atomicNo2, atomPi1, atomPi2, 7, 7));
+			if (index == -1)
+				index = lookupBondIndex(getBondID(bondOrder, isAromatic, isDelocalized, atomicNo1, atomicNo2, 3, 3, 7, 7));
+		}
+		return index;
 		}
 
 	/**
@@ -183,44 +203,78 @@ public class BondLengthSet {
 	 * @param atomPi2
 	 * @return
 	 */
-	private static int getBondID(int bondOrder, boolean isAromatic, boolean isDelocalized, int atomicNo1, int atomicNo2, int atomPi1, int atomPi2) {
-		int pi1 = (atomicNo1 < CONSIDER_PI.length && CONSIDER_PI[atomicNo1]) ? atomPi1 << 8 : 0;
-		int pi2 = (atomicNo2 < CONSIDER_PI.length && CONSIDER_PI[atomicNo2]) ? atomPi2 << 8 : 0;
-		int atomType1 = pi1 + atomicNo1;
-		int atomType2 = pi2 + atomicNo2;
-		int bondType = isDelocalized ? 0 : isAromatic ? 4+bondOrder : bondOrder;
+	private static int getBondID(int bondOrder, boolean isAromatic, boolean isDelocalized, int atomicNo1, int atomicNo2,
+								 int atomPi1, int atomPi2, int conns1, int conns2) {
+		int pi1 = (atomicNo1 < CONSIDER_PI.length && CONSIDER_PI[atomicNo1]) ? Math.min(3, atomPi1) : 0;	// 2 bits
+		int pi2 = (atomicNo2 < CONSIDER_PI.length && CONSIDER_PI[atomicNo2]) ? Math.min(3, atomPi2) : 0;	// 2 bits
+		conns1 = Math.min(7, conns1);		// 2 bits
+		conns2 = Math.min(7, conns2);		// 2 bits
+		int atomType1 = conns1 + (pi1 << 3) + (Math.min(127, atomicNo1) << 5);	// 7+2+3 bits
+		int atomType2 = conns2 + (pi2 << 3) + (Math.min(127, atomicNo2) << 5);	// 7+2+3 bits
+		int bondType = isDelocalized ? 8 : isAromatic ? 8+bondOrder : bondOrder;
 		return (bondType<<24)+((atomType1<atomType2)?(atomType1<<12)+atomType2:(atomType2<<12)+atomType1);
 		}
 
 	/**
-	 * Constructs a bond classification ID from a specific bond in a molecule and returns the ID's
-	 * index in the sorted list of bond length information.
-	 * The index can be used to get typical bond length and standard deviation.
+	 * Constructs a bond classification ID from the given bond and returns the ID's index.
+	 * If there is no bond length entry for the precise bond definition (precision == 2),
+	 * then lower precision bond definitions are searched for a match to find a close, but not exact, entry.
+	 * If not even a close entry can be found, -1 is returned.
+	 * Bond indexes refers to the sorted list of bond length information.
+	 * The index can be used to look up a typical bond length and standard deviation.
 	 * @param mol
 	 * @param bond
 	 * @return
 	 */
 	public static int getBondIndex(StereoMolecule mol, int bond) {
+		return getBondIndex(mol, bond, false);
+	}
+
+	/**
+	 * Constructs a bond classification ID from the given bond and returns the ID's index.
+	 * If there is no bond length entry for the precise bond definition (precision == 2) and if exact==false,
+	 * then lower precision bond definitions are searched for a match to find a close, but not exact, entry.
+	 * If not even a close entry can be found, -1 is returned.
+	 * Bond indexes refers to the sorted list of bond length information.
+	 * The index can be used to look up a typical bond length and standard deviation.
+	 * @param mol
+	 * @param bond
+	 * @param exact
+	 * @return
+	 */
+	public static int getBondIndex(StereoMolecule mol, int bond, boolean exact) {
 		int atom1 = mol.getBondAtom(0, bond);
 		int atom2 = mol.getBondAtom(1, bond);
 		int atomicNo1 = mol.getAtomicNo(atom1);
 		int atomicNo2 = mol.getAtomicNo(atom2);
-		return getBondIndex(mol.getBondOrder(bond), mol.isAromaticBond(bond), mol.isDelocalizedBond(bond), atomicNo1, atomicNo2, getAtomPi(mol, atom1), getAtomPi(mol, atom2));
+		int conns1 = mol.getConnAtoms(atom1);
+		int conns2 = mol.getConnAtoms(atom2);
+		return getBondIndex(mol.getBondOrder(bond), mol.isAromaticBond(bond), mol.isDelocalizedBond(bond), atomicNo1, atomicNo2,
+				getAtomPi(mol, atom1), getAtomPi(mol, atom2), conns1, conns2, exact);
 		}
 
 	/**
 	 * Constructs a bond classification index from a specific bond in a molecule.
 	 * The index can be used to get typical bond length and standard deviation.
+	 * Requires Molecule.cHelperRings.
 	 * @param mol
 	 * @param bond
+	 * @param precision 2 (pi & cons included), 1 (pi included), or 0 (simple bond description)
 	 * @return
 	 */
-	public static int getBondID(StereoMolecule mol, int bond) {
+	public static int getBondID(StereoMolecule mol, int bond, int precision) {
 		int atom1 = mol.getBondAtom(0, bond);
 		int atom2 = mol.getBondAtom(1, bond);
 		int atomicNo1 = mol.getAtomicNo(atom1);
 		int atomicNo2 = mol.getAtomicNo(atom2);
-		return getBondID(mol.getBondOrder(bond), mol.isAromaticBond(bond), mol.isDelocalizedBond(bond), atomicNo1, atomicNo2, getAtomPi(mol, atom1), getAtomPi(mol, atom2));
+		int conns1 = mol.getConnAtoms(atom1);
+		int conns2 = mol.getConnAtoms(atom2);
+		return precision == 2 ? getBondID(mol.getBondOrder(bond), mol.isAromaticBond(bond), mol.isDelocalizedBond(bond),
+						atomicNo1, atomicNo2, getAtomPi(mol, atom1), getAtomPi(mol, atom2), conns1, conns2)
+			 : precision == 1 ? getBondID(mol.getBondOrder(bond), mol.isAromaticBond(bond), mol.isDelocalizedBond(bond),
+						atomicNo1, atomicNo2, getAtomPi(mol, atom1), getAtomPi(mol, atom2), 7, 7)
+						: getBondID(mol.getBondOrder(bond), mol.isAromaticBond(bond), mol.isDelocalizedBond(bond),
+						atomicNo1, atomicNo2, 3, 3, 7, 7);
 		}
 
 	/**
@@ -308,7 +362,7 @@ public class BondLengthSet {
 	 * the median of equally classified bonds within the COD or CSD database. Statistics of
 	 * purely organic bonds (no metal atoms) are taken from the organic subset of the COD/CSD.
 	 * @param index bond id index obtained with getBondIndex()
-	 * @return
+	 * @return mean bond length if indexed bond or DEFAULT_BOND_LENGTH if index==-1
 	 */
 	public static float getBondLength(int index) {
 		return (index == -1) ? DEFAULT_BOND_LENGTH : BOND_LENGTH[index];
@@ -332,7 +386,7 @@ public class BondLengthSet {
 	/**
 	 * Returns an estimate of the bond length based on atom and bond characteristics.
 	 * Requires cHelperRings level of helper arrays.
-	 * If no statistics information is available, then it return DEFAULT_BOND_LENGTH,
+	 * If no statistics information is available, then it returns DEFAULT_BOND_LENGTH,
 	 * which is garanteed to be different from any value in the statistics table.
 	 * @param id valid bond classification obtained with one of the getBondType() methods
 	 * @return DEFAULT_BOND_LENGTH if no statistics information is available for that bond type
@@ -346,9 +400,9 @@ public class BondLengthSet {
 		if (!isInitialized)
 			initialize();
 
-		int index = 2048;
-		int increment = 1024;
-		for (int i=0; i<12; i++) {
+		int index = 4096;
+		int increment = 2048;
+		for (int i=0; i<13; i++) {
 			int comparison = (index >= BOND_ID.length || id < BOND_ID[index]) ? -1
 					: (id == BOND_ID[index]) ? 0 : 1;
 			if (comparison == 0)

@@ -145,7 +145,7 @@ public class TextDrawingObject extends AbstractDrawingObject {
 		detail.append(" x=\""+mPoint[0].x + "\"");
 		detail.append(" y=\""+mPoint[0].y + "\"");
 		if (mSize != DEFAULT_SIZE)
-			detail.append(String.format(" size=\"%.4f\"", new Double(mSize)));
+			detail.append(String.format(" size=\"%.4f\"", mSize));
 		if (mStyle != DEFAULT_STYLE)
 			detail.append(" style=\""+mStyle+ "\"");
 

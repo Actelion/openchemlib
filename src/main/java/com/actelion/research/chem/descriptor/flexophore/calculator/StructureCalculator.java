@@ -1432,7 +1432,7 @@ public class StructureCalculator {
 	public static void rotateLigand(Molecule3D mol, double angle, Coordinates normal, Coordinates center) {
 		for(int i = 0; i<mol.getAllAtoms(); i++) {
 			if(mol.isAtomFlag(i, Molecule3D.LIGAND)) {
-				mol.setCoordinates(i, mol.getCoordinates(i).subC(center).rotate(normal, angle).addC(center));
+				mol.setCoordinates(i, mol.getCoordinates(i).subC(center).rotateC(normal, angle).addC(center));
 			}
 		}				
 	}			
@@ -1896,7 +1896,7 @@ public class StructureCalculator {
 		Coordinates normal = mol.getCoordinates(a3).subC(mol.getCoordinates(a2)).unitC();
 		for (int j: seen) {
 			Coordinates c = mol.getCoordinates(j).subC(mol.getCoordinates(a3));
-			mol.setCoordinates(j, c.rotate(normal, angle).addC(mol.getCoordinates(a3)));
+			mol.setCoordinates(j, c.rotateC(normal, angle).addC(mol.getCoordinates(a3)));
 		}
 	}
 	

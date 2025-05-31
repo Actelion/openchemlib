@@ -5,8 +5,6 @@ import java.util.List;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
 import com.actelion.research.chem.phesaflex.MathHelper;
 
 public class AcceptorPoint implements IPharmacophorePoint {
@@ -68,7 +66,7 @@ public class AcceptorPoint implements IPharmacophorePoint {
 			Coordinates v2 = coords[aa2].subC(center);
 			Coordinates rotAxis = v1.cross(v2).unit();
 			double theta = acceptorID == 1 ? 45.0/180.0*Math.PI :  -45.0/180.0*Math.PI;
-			directionality = v1.rotate(rotAxis, theta);
+			directionality = v1.rotateC(rotAxis, theta);
 		}
 		
 		

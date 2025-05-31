@@ -191,11 +191,10 @@ public class PeriodicTable {
 
     	};
 
-    	for (int i = 0; i < arrData.length; i++) {
-			htblDataAtNo
-					.put(new Integer(arrData[i].getOrderNumber()), arrData[i]);
-			htblDataName.put(arrData[i].getName(), arrData[i]);
-			htblDataSymbol.put(arrData[i].getSymbol(), arrData[i]);
+		for (Element arrDatum : arrData) {
+			htblDataAtNo.put(arrDatum.getOrderNumber(), arrDatum);
+			htblDataName.put(arrDatum.getName(), arrDatum);
+			htblDataSymbol.put(arrDatum.getSymbol(), arrDatum);
 		}
 
 		arrAlkaline = new boolean[arrData.length];

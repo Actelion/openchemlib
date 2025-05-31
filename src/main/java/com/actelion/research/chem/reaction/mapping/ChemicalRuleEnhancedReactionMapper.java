@@ -49,7 +49,8 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	// change bonding of the reaction the rule is applied to. Nevertheless, the rule's entire reactant is used
 	// for the substructure search that identifies applicability.
 	// NOTE: Rule reactions must contain one reactant and one product only (usually these consist of multiple fragments)!
-	// NOTE: You may use the idcodeexplorer.jar to generate new rules.
+	// NOTE: You may use the idcodeexplorer.jar to generate new rules. An up-to-date version should always be available
+	//       from https://openmolecules.org/idcodeexplorer.jar
 	private static final ChemicalRule[] CHEMICAL_RULE = {
 // With cleaned coordinates:
 			new ChemicalRule("d","gGQ@@eKtRA@!gGQ@@djqRA@#qMsT qM\\V#!B_qL@Dw}l@Fp@Dp !B@AL@[@@S@Fp@Dp##", 3.5f),
@@ -85,9 +86,10 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 			new ChemicalRule("diazomethanHomologation", "gFU@lQioIIs\\AyH!gFU@CPdimXD#qbM^ qbqk#!B?X`BbFZN?`C~_p !B@AL@[@@Su[x@Dp##", 7.5f),
 
 			// methathese
-			new ChemicalRule("ene-Metathesis","daX@@LdPLSSPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLSSPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!BNIu^@O{wD^EGhkzO?a@ !BNIu^@O{wD^EGhkzO?a@##", 3.5f),
+			new ChemicalRule("ene-Metathesis", "deD@@LdbEdSTu@FqHWSDda`JFChXIa`?tdKi@!deD@@Ldb`\\SUM@FqHPsDda`JF@XXIa`?tdHY@#qTEApX qQECf@#!BQzK~}ubbW`BEgcb]?a@gg[zO !BQzK~}ubbW`Ag{VVAQzJ~c?xP##", 3.5f),
+//			new ChemicalRule("ene-Metathesis","daX@@LdPLSSPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLSSPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!BNIu^@O{wD^EGhkzO?a@ !BNIu^@O{wD^EGhkzO?a@##", 3.5f),
 			new ChemicalRule("yne-Metathesis","daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!BZmoi@Fjo|SFe|IkGiU@ !BZmoi@Fjo|SFe|IkGiU@##", 3.5f),
-			new ChemicalRule("ene-yne-Metathesis","dcd@@LdPLPLWSSPAlrXwKlVRFCHXFa`zFAXXMa`udqnWP!dcT@@LdbbplTsTt@[MeMr{Ela`jFAhXNa`VFCXXO}[J[et#qe@N@S@ qeHP@s@#!B?g?~@Oy?^gG}bOvw?H`E@PJw@hc}mp !B?`BH?[_}mpJH@oy??`AuC`Jw@hc}mp##", 7.5f),
+			new ChemicalRule("ene-yne-Metathesis","dcd@@LdPLPLWSSPAlrXwKlVRFCHXFa`zFAXXMa`?udqnWP!dcT@@LdbbplTsTt@[MeMr{Ela`jFAhXNa`VFCXXO}[J[et#qe@N@S@ qeHP@s@#!B?g?~@Oy?^gG}bOvw?H`E@PJw@hc}mp !B?`BH?[_}mpJH@oy??`AuC`Jw@hc}mp##", 7.5f),
 			new ChemicalRule("Alkyne-Cyclisation", "gG`@DcO|CFAFC`@!gFp@DiTt@@CFAFC`@#qi\\V qiSt#!B_y[qA`Biu^zV@@ !B?g~w@k_}m?vw@`##", 8.5f),
 
 			// two-step
@@ -119,6 +121,9 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 
 			// condensation with ring closure
 			new ChemicalRule("Hantzsch Thiazol", "gOYDGaDDHRTve`H!gKXHL@aJWFe`H#qB`ip qiV`#!B_vq?Dw}lL{y?[G|S !BTqa`FbpX?`@##", 3.5f),
+
+			// ester cleavage
+//			new ChemicalRule("Ester cleavage", "gKa`@bdhtA@!gKa`@ldftA@#qbqh qbnH#!BDw}l_qM?i^d !B?OC}|IfVjW|##", 1.5f),
 	};
 
 	private static boolean sInitialized;

@@ -69,6 +69,13 @@ public class AminoAcids {
         return ensureAAMap().get(label.toLowerCase());
     }
 
+    /**
+     * Build the residue (i.e. the amino acid fragment) as Molecule3D from the given atom records
+     * using their coordinates and annotations and taking bond orders from a respective amino acid template.
+     * @param label
+     * @param atomRecordList
+     * @return residue with all atoms that part of the atomRecordList
+     */
     public static Molecule3D createResidue(String label, List<AtomRecord> atomRecordList) {
         StereoMolecule mol = getStructure(label);
         if (mol != null) {

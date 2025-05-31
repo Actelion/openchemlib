@@ -106,6 +106,7 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mComboBoxRing.addItem("is any ring bond");
 		mComboBoxRing.addItem("is non-aromatic ring bond");
 		mComboBoxRing.addItem("is aromatic bond");
+		mComboBoxRing.addItem("is any non-aromatic bond");
 		mComboBoxRing.addEventConsumer(this);
 		mDialog.add(mComboBoxRing,1,11,3,11);
 
@@ -213,16 +214,10 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			mComboBoxRing.setSelectedIndex(1);
 		else if (aromState == Molecule.cBondQFAromatic)
 			mComboBoxRing.setSelectedIndex(4);
-		else if (ringState == Molecule.cBondQFRing) {
-			if (aromState == 0)
-				mComboBoxRing.setSelectedIndex(2);
-			else if (aromState == Molecule.cBondQFNotAromatic)
-				mComboBoxRing.setSelectedIndex(3);
-			else
-				mComboBoxRing.setSelectedIndex(0);
-			}
+		else if (ringState == Molecule.cBondQFRing)
+			mComboBoxRing.setSelectedIndex(aromState == 0 ? 2 : 3);
 		else
-			mComboBoxRing.setSelectedIndex(0);
+			mComboBoxRing.setSelectedIndex(aromState == 0 ? 0 : 5);
 
 		int ringSize = (queryFeatures & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift;
 		mComboBoxRingSize.setSelectedIndex((ringSize == 0) ? 0 : (ringSize <= 2) ? ringSize+5 : ringSize-2);
@@ -327,6 +322,10 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 				else if (mComboBoxRing.getSelectedIndex() == 4) {
 					if (!mMol.isAromaticBond(bond))
 						queryFeatures |= Molecule.cBondQFAromatic;
+					}
+				else if (mComboBoxRing.getSelectedIndex() == 5) {
+					if (!mMol.isAromaticBond(bond))
+						queryFeatures |= Molecule.cBondQFNotAromatic;
 					}
     			}
 

@@ -735,6 +735,14 @@ public class IDCodeParserWithoutCoordinateInvention {
 					selectedHydrogenBits[atom] = conns;
 					}
 				break;
+			case 39: //  datatype 'AtomQFOxydationState'
+				no = decodeBits(abits);
+				for (int i=0; i<no; i++) {
+					int atom = decodeBits(abits);
+					long oxydationState = (long)decodeBits(Molecule.cAtomQFOxidationStateBits) << Molecule.cAtomQFOxidationStateShift;
+					mMol.setAtomQueryFeature(atom, oxydationState, true);
+				}
+				break;
 				}
 			}
 
@@ -1722,6 +1730,13 @@ public class IDCodeParserWithoutCoordinateInvention {
 							int conns = decodeBits(connBits);
 							System.out.print(" " + atom + ":" + conns);
 						}
+						System.out.println();
+						break;
+					case 39: //  datatype 'AtomQFOxydationState'
+						no = decodeBits(abits);
+						System.out.print("AtomQFOxydationState:");
+						for (int i=0; i<no; i++)
+							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFOxidationStateBits));
 						System.out.println();
 						break;
 					}

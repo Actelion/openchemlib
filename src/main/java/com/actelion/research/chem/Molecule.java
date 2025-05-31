@@ -125,7 +125,7 @@ public class Molecule implements Serializable {
 	protected static final int cAtomFlagsValence	= 0x78000000;
 	private static final int cAtomFlagsValenceShift = 27;
 
-	public static final int cAtomQFNoOfBits			= 46;
+	public static final int cAtomQFNoOfBits			= 51;
 	public static final int cAtomQFAromStateBits	= 2;
 	public static final int cAtomQFAromStateShift	= 1;
 	public static final int cAtomQFRingStateBits	= 4;
@@ -148,8 +148,11 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFENeighbourShift	= 39;
 	public static final int cAtomQFStereoStateBits	= 2;
 	public static final int cAtomQFStereoStateShift = 44;
+	public static final int cAtomQFOxidationStateBits = 4;
+	public static final int cAtomQFOxidationStateShift = 47;
+	public static final int cAtomQFOxidationStateOffset = 7;
 	public static final long cAtomQFSimpleFeatures	= 0x00007F800E3FC7FEL;
-	public static final long cAtomQFNarrowing		= 0x00007FFF0FFFFFFEL;
+	public static final long cAtomQFNarrowing		= 0x0007FFFF0FFFFFFEL;
 	public static final long cAtomQFAny				= 0x00000001;
 	public static final long cAtomQFAromState		= 0x0000400000000006L;
 	public static final long cAtomQFAromatic		= 0x00000002;
@@ -206,6 +209,7 @@ public class Molecule implements Serializable {
 	public static final long cAtomQFIsStereo        = 0x0000100000000000L;
 	public static final long cAtomQFIsNotStereo     = 0x0000200000000000L;
 	public static final long cAtomQFHeteroAromatic  = 0x0000400000000000L;
+	public static final long cAtomQFOxidationState = 0x0007800000000000L;	// 0:any 1-15: 7+oxidationState (range -6 to 8)
 
 	public static final int cBondTypeSingle			= 0x00000001;	// first 5 bond types must not be changed,
 	public static final int cBondTypeDouble			= 0x00000002;	// because they are part of the idcode
@@ -4262,11 +4266,7 @@ public class Molecule implements Serializable {
 		if (isAtomicNoElectronegative(atomicNo))
 			return false;
 
-		if (atomicNo == 2	// He
-		 || atomicNo == 10	// Ne
-		 || atomicNo == 18	// Ar
-		 || atomicNo == 36	// Kr
-		 || atomicNo == 54)	// Xe
+		if (isAtomicNoNobleGas(atomicNo))
 			return false;
 
 		if (atomicNo > 103)	// amino acids etc.
@@ -4275,6 +4275,14 @@ public class Molecule implements Serializable {
 		return true;
 		}
 
+	public static boolean isAtomicNoNobleGas(int atomicNo) {
+		return atomicNo == 2	// He
+			|| atomicNo == 10	// Ne
+			|| atomicNo == 18	// Ar
+			|| atomicNo == 36	// Kr
+			|| atomicNo == 54	// Xe
+			|| atomicNo == 86;	// Rn
+	}
 
 	/**
 	 * @param atom

@@ -605,9 +605,7 @@ public class PDBCoordEntryFile {
     }
 
     public Map<String,List<Molecule3D>> extractMols(boolean detachCovalentLigands) {
-        StructureAssembler assembler = new StructureAssembler(liConnect,protAtomRecords,hetAtomRecords);
-        assembler.setDetachCovalentLigands(detachCovalentLigands);
-        return assembler.assemble();
+        return new StructureAssembler(liConnect, protAtomRecords, hetAtomRecords, detachCovalentLigands).assemble();
     }
 
     @Override

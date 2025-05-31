@@ -38,51 +38,61 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.io.pdb.converter.AminoAcids;
 import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
+import com.actelion.research.chem.io.pdb.converter.BondOrderCalculator;
+import org.openmolecules.chem.cifsdf.BondCalculator;
 
 import java.util.List;
 
 /**
- * ModelGroupAtoms
- * handles a group of atoms, e.g. a Ligand Molecule or an AminoAcid residue
+ * Residue handles a group of atoms, e.g. a Ligand Molecule or an AminoAcid residue
  *
  * Created by korffmo1 on 11.04.18.
  */
 public class Residue {
 	public static double BOND_CUTOFF_SQ = 3.24;
-    private List<AtomRecord> records;
-    private boolean isTerminal,mAddBonds,mIncludeAltLocs;
-    private Molecule3D mol;
+    private final List<AtomRecord> mAtomRecordList;
+	private boolean mIsTerminal;
+	private final boolean mAddBonds,mIncludeAltLocs;
+    private final Molecule3D mMol;
 
+	/**
+	 * @param records
+	 * @param addBonds
+	 * @param includeAltLocations
+	 */
     public Residue(List<AtomRecord> records, boolean addBonds, boolean includeAltLocations) {
-        this.records = records;
-        this.isTerminal = isTerminal();
+        mAtomRecordList = records;
 		mAddBonds = addBonds;
 		mIncludeAltLocs = includeAltLocations;
-        mol = constructFragment();
-    }
+        mMol = constructFragment();
+
+		for(AtomRecord record : mAtomRecordList) {
+			if(record.isTerminalC()) {
+				mIsTerminal = true;
+				break;
+			}
+		}
+	}
 
 	public boolean isTerminal() {
-		isTerminal = false;
-		for(AtomRecord record : records) {
-			if(record.isTerminalC())
-				isTerminal = true;
-		}
-		return isTerminal;
+		return mIsTerminal;
 	}
 
     private Molecule3D constructFragment() {
-		Molecule3D fragment = AminoAcids.createResidue(getResname(), records);
+		AtomRecord ar = mAtomRecordList.get(0);
+		Molecule3D fragment = AminoAcids.createResidue(getResname(), mAtomRecordList);
 		if (fragment == null)
 			fragment = constructFragmentFromGeometry();
     	fragment.ensureHelperArrays(Molecule.cHelperNeighbours);
-		fragment.setName(records.get(0).getResName());
+		// We use '1' as Model-No.
+		fragment.setName(ar.getResName()+"_1_"+ar.getChainID()+"_"+ar.getResNum());
     	return fragment;
     }
-    
+
 	private Molecule3D constructFragmentFromGeometry() {
 		Molecule3D fragment = new Molecule3D();
 		String altLoc = null;
-		for(AtomRecord record : records) {
+		for(AtomRecord record : mAtomRecordList) {
 			if (!mIncludeAltLocs) {
 				if (altLoc == null)
 					altLoc = record.getAltLoc();
@@ -104,8 +114,14 @@ public class Residue {
 
 		if (mAddBonds) {
 			try {
-				BondsCalculator.createBonds(fragment, true,null);
-				BondsCalculator.calculateBondOrders(fragment,true);
+				if (StructureAssembler.USE_NEW_BONDORDER_CALCULATOR) {
+					new BondCalculator().createBonds(fragment, true);
+					new BondOrderCalculator(fragment).calculateBondOrders();
+				}
+				else {
+					BondsCalculator.createBonds(fragment, true,null);
+					BondsCalculator.calculateBondOrders(fragment,true);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -115,42 +131,41 @@ public class Residue {
 	}
 	
 	public int getResnum() {
-		return records.get(0).getResNum();
+		return mAtomRecordList.get(0).getResNum();
 	}
 	
 	public Molecule3D getMolecule() {
-		return mol;
+		return mMol;
 	}
 	
 	public String getResname() {
-		return records.get(0).getResName();
+		return mAtomRecordList.get(0).getResName();
 	}
 	
 	public String getChainID() {
-		return records.get(0).getChainID();
+		return mAtomRecordList.get(0).getChainID();
 	}
 	
 	public String getInsertionCode() {
-		return records.get(0).getInsertionCode();
+		return mAtomRecordList.get(0).getInsertionCode();
 	}
-	
 	
 	/*
 	 * check if two residues are connected by a peptide bond, this is the residue with the (supposedly) terminal nitrogen,
 	 * resC should contain the terminal carbon
-	 */
+	 *
 	public boolean areBonded(Residue resN) { 
 		AtomRecord recordC = null; 
 		AtomRecord recordN = null;
 		boolean areBonded = false;
-		for(AtomRecord rec : this.records) {
+		for(AtomRecord rec : this.mAtomRecordList) {
 			if (rec.getAtomName().equals("C")) {
 				recordN = rec;
 				break;
 			}
 		}
 		
-		for(AtomRecord rec : resN.records) {
+		for(AtomRecord rec : resN.mAtomRecordList) {
 			if (rec.getAtomName().equals("N")) {
 				recordC = rec;
 				break;
@@ -165,5 +180,5 @@ public class Residue {
 				areBonded=true;
 		}
 		return areBonded;
-	}
+	}*/
 }

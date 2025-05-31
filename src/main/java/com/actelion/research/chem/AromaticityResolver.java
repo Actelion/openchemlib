@@ -36,20 +36,31 @@ package com.actelion.research.chem;
 
 public class AromaticityResolver {
 	ExtendedMolecule	mMol;
-	private boolean		mAllHydrogensAreExplicit;
+	private boolean		mAllHydrogensAreExplicit,mConsiderGeometry;
 	private boolean[]	mIsDelocalizedRing,mIsDelocalizedAtom,mIsDelocalizedBond,mIsDelocalizedBridgeHead,
 						mIsDelocalizedFiveRingMember,mIsDelocalizedThreeOrSevenRingMember;
     private int mDelocalizedAtoms, mDelocalizedBonds,mPiElectronsAdded;
+	private double[]	mBondLength;
 
     /**
      * Creates a new AromaticityResolver for molecule mol.
      * @param mol
      */
     public AromaticityResolver(ExtendedMolecule mol) {
-        mMol = mol;
+        this(mol, null);
         }
 
-    /**
+	/**
+	 * Creates a new AromaticityResolver for molecule mol.
+	 * @param mol
+	 * @param bondLength null or bondLengths to consider for choices
+	 */
+	public AromaticityResolver(ExtendedMolecule mol, double[] bondLength) {
+		mMol = mol;
+		mBondLength = bondLength;
+	}
+
+	/**
      * This method promotes all necessary bonds of the defined delocalized part of the molecule
      * from single to double bonds in order to create a valid delocalized system
      * of conjugated single and double bonds.
@@ -134,6 +145,9 @@ public class AromaticityResolver {
 					}
 				}
             }
+
+		if (mayChangeAtomCharges)
+			unchargeImmoniumNHChains();
 
 		if (mDelocalizedAtoms - mPiElectronsAdded >= 2)
 			connectSeparatedSingletons();
@@ -266,6 +280,7 @@ public class AromaticityResolver {
 				if (isFullyDelocalizedRing) {
 					int bestDelocalizationLeakIndex = -1;
 					int bestDelocalizationLeakPriority = 0;
+					double bestBondLengthSum = 0.0;
 					int[] ringAtom = ringSet.getRingAtoms(ring);
 					for (int i=0; i<ringAtom.length; i++) {
 						int atom = ringAtom[i];
@@ -275,17 +290,29 @@ public class AromaticityResolver {
 						if (bestDelocalizationLeakPriority < priority) {
 							bestDelocalizationLeakPriority = priority;
 							bestDelocalizationLeakIndex = i;
+							if (mBondLength != null)
+								bestBondLengthSum = mBondLength[(i==0?ringAtom.length:i)-1] + mBondLength[i];
+						}
+						else if (bestDelocalizationLeakPriority == priority && mBondLength != null) {
+							double bondLengthSum = mBondLength[(i==0?ringAtom.length:i)-1] + mBondLength[i];
+							if (bestBondLengthSum < bondLengthSum) {
+								bestDelocalizationLeakIndex = i;
+								bestBondLengthSum = bondLengthSum;
+							}
 						}
 					}
 					if (bestDelocalizationLeakIndex != -1) {
-						int atom = ringAtom[bestDelocalizationLeakIndex];
+						int leakAtom = ringAtom[bestDelocalizationLeakIndex];
 						if (mayChangeAtomCharges) {
-							if (mIsDelocalizedFiveRingMember[atom])
-								checkAtomTypeLeak5(atom, true);
+							for (int atom : ringAtom)
+								if (atom != leakAtom)
+									checkAtomTypePi1(atom, true);
+							if (mIsDelocalizedFiveRingMember[leakAtom])
+								checkAtomTypeLeak5(leakAtom, true);
 							else
-								checkAtomTypeLeak7(atom, true);
+								checkAtomTypeLeak7(leakAtom, true);
 						}
-						protectAtom(atom);
+						protectAtom(leakAtom);
 						return true;
 					}
 				}
@@ -697,6 +724,60 @@ public class AromaticityResolver {
 				}
 			}
 		}
+
+	/**
+	 * Flip pi-electrons in delocalized (N+)=C(-C=C)n-NH chains to the uncharged state N-C(=C-C)n=N
+	 */
+	private void unchargeImmoniumNHChains() {
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			mMol.ensureHelperArrays(Molecule.cHelperNeighbours);	// make sure, connBondOrders are
+			if (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 1 && mMol.getAtomPi(atom) == 1) {
+				boolean found = false;
+
+				int[] graphAtom = new int[mMol.getAtoms()];
+				int[] parentAtom = new int[mMol.getAtoms()];
+				int[] graphLevel = new int[mMol.getAtoms()];
+
+				graphAtom[0] = atom;
+				parentAtom[atom] = -1;
+				graphLevel[atom] = 1;
+
+				int current = 0;
+				int highest = 0;
+
+				while (current <= highest && !found) {
+					int currentAtom = graphAtom[current];
+					for (int i=0; i<mMol.getConnAtoms(currentAtom) && !found; i++) {
+						// We need alternating bond orders!
+						boolean isCompatibleBond = ((graphLevel[currentAtom] & 1) == 0) ^ (mMol.getBondOrder(mMol.getConnBond(currentAtom, i)) > 1);
+						int candidate = mMol.getConnAtom(currentAtom, i);
+						if (graphLevel[candidate] == 0 && isCompatibleBond) {
+							if (mMol.getAtomicNo(candidate) == 7 && mMol.getAtomPi(candidate) == 0 && mMol.getConnAtoms(candidate) == 2) {
+								if ((graphLevel[currentAtom] & 1) == 0) {	// even number of bonds
+									mMol.setAtomCharge(atom, 0);
+									int parent = currentAtom;
+									for (int j=0; j<graphLevel[currentAtom]; j++) {
+										// trace candidate back to root atom and invert bond orders!
+										int bond = mMol.getBond(candidate, parent);
+										mMol.setBondOrder(bond, mMol.getBondOrder(bond) == 1 ? 2 : mMol.getBondOrder(bond)-1);
+										candidate = parent;
+										parent = parentAtom[candidate];
+									}
+									found = true;
+								}
+							}
+							else {
+								graphAtom[++highest] = candidate;
+								parentAtom[candidate] = currentAtom;
+								graphLevel[candidate] = graphLevel[currentAtom]+1;
+							}
+						}
+					}
+					current++;
+				}
+			}
+		}
+	}
 
 	private void connectSeparatedSingletons() {
 		for (int atom = 0; atom<mMol.getAtoms(); atom++) {

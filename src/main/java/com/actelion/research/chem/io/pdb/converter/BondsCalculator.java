@@ -81,7 +81,7 @@ public class BondsCalculator {
 				double dist = Math.sqrt(mol.getCoordinates(i).distanceSquared(mol.getCoordinates(j)));
 				double idealDist = VDWRadii.COVALENT_RADIUS[mol.getAtomicNo(i)] + VDWRadii.COVALENT_RADIUS[mol.getAtomicNo(j)];
 				if(atomToGroup!=null) {
-					if(!match(atomToGroup.get(i), atomToGroup.get(j))
+					if(!atomToGroup.get(i).equals(atomToGroup.get(j))
 						|| (mol.getAllAtoms()>200 && ((j-i)>12 && (j-i)>mol.getAllAtoms()/50))) {
 						if(dist>idealDist + .45) continue;
 						potentialBonds.add(new int[]{i, j});
@@ -151,30 +151,17 @@ public class BondsCalculator {
 			 : atomicNo == 53 ? 6 : 8;
 	}
 
-	private static boolean match(String g1, String g2) {
-		return g1.equals(g2);
-		/*
-		String s1[] = g1.split(" ");
-		String s2[] = g2.split(" ");
-		for (String ss1 : s1) {
-			for (String ss2 : s2) {
-				if(ss1.equals(ss2)) return true;
-			}			
-		}
-		return false;
-		*/
-	}
-	
 	/**
 	 * Calculate the bond orders of the molecule (without knowing the hydrogens).
-	 * The calculation is based on the bond distance between each atoms.
-	 * 
-	 * 
+	 * The calculation is based on the bond lengths and angles.
+	 *
 	 * http://www.ccp14.ac.uk/ccp/web-mirrors/i_d_brown/valence.txt
 	 * s = exp((Ro - R)/B)
 	 *
 	 * @param mol
+	 * @deprecated use the BondOrderCalculator instead.
 	 */
+	@Deprecated
 	public static void calculateBondOrders(StereoMolecule mol, boolean lenient) throws Exception {
 		boolean[] visited = new boolean[mol.getAllBonds()];
 		mol.ensureHelperArrays(Molecule.cHelperRings);
@@ -228,27 +215,27 @@ public class BondsCalculator {
 					}										
 					
 					//C(R)(OR)(=O)
-					a = connectedAtom(mol, atom, 8, 2, 0, 0);
+					a = getSpecifiedConnAtom(mol, atom, 8, 2, 0, 0);
 					b = connectedBond(mol, atom, 8, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 
 					
 					//C(R)(SR)(=O)
-					a = connectedAtom(mol, atom, 16, 2, 0, 0);
+					a = getSpecifiedConnAtom(mol, atom, 16, 2, 0, 0);
 					b = connectedBond(mol, atom, 8, 1);
 					if(a>=0 && b>=0) { mol.setBondOrder(b, 2); continue;} 
 					
 					//C(R)(NR)(=O)
-					a = connectedAtom(mol, atom, 7, 2, 0, 0);
+					a = getSpecifiedConnAtom(mol, atom, 7, 2, 0, 0);
 					b = connectedBond(mol, atom, 8, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 
 					
 					//C(R)(SR)(=S)
-					a = connectedAtom(mol, atom, 16, 2, 0, 0);
+					a = getSpecifiedConnAtom(mol, atom, 16, 2, 0, 0);
 					b = connectedBond(mol, atom, 16, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 
 					
 					//C(R)(NR)(=S)
-					a = connectedAtom(mol, atom, 7, 2, 0, 0);
+					a = getSpecifiedConnAtom(mol, atom, 7, 2, 0, 0);
 					b = connectedBond(mol, atom, 16, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;}
 
@@ -281,7 +268,7 @@ public class BondsCalculator {
 
 				} else if(mol.getAtomicNo(atom)==7) {
 					//N(R)(R)C=O -> Amide
-					a = connectedAtom(mol, atom, 6, 2, 8, 1);
+					a = getSpecifiedConnAtom(mol, atom, 6, 2, 8, 1);
 					b = connectedBond(mol, a, 8, 1);
 					if(a>=0 && b>=0) {mol.setBondOrder(b, 2); continue;} 					
 
@@ -356,185 +343,11 @@ public class BondsCalculator {
 		// atoms in the ring and their neighbours are within the plane defined by the normal
 		mol.ensureHelperArrays(Molecule.cHelperRingsSimple);
 		RingCollection ringSet = mol.getRingSetSimple();
-		ArrayList<Integer>[] atomToRings = getAtomToRings(mol);
-		boolean[] isAromaticRing = new boolean[ringSet.getSize()];
-
+		boolean[] isAromaticRing = determineRingAromaticity(mol, spOrder, lenient);
 
 		//int[] pyroles = new int[allRings.size()];
 		//int[] oxo = new int[allRings.size()];
 		//int[] toDo = new int[mol.getAllAtoms()];
-
-		Coordinates normal = new Coordinates();
-		Coordinates cog = new Coordinates();
-		double[][] coords = new double[7][3];
-
-		for (int size = 5; size <= 7; size++)
-		for (int ringNo = 0; ringNo < ringSet.getSize(); ringNo++) {
-			int[] ringAtom = ringSet.getRingAtoms(ringNo);
-			if (ringAtom.length != size)
-				continue;
-
-			boolean planar = true;
-			for (int i=0; i<ringAtom.length && planar; i++) {
-				if ((mol.getAtomicNo(ringAtom[i])==6 || mol.getAtomicNo(ringAtom[i])==7)
-				 && spOrder[ringAtom[i]] != 2)			// carbon/nitrogen in the ring must be planar
-					planar = false;
-				if (mol.getConnAtoms(ringAtom[i]) > 3	// e.g. boron cluster
-				 || mol.getAtomicNo(ringAtom[i]) > 16)	// metal atoms
-					planar = false;
-				}
-			if (!planar)
-				continue;
-
-			// If any of the ring atoms is further away from the ring plane than 0.12 Angstrom,
-			// then conclude that the ring is not aromatic.
-			calculateNearestPlane(mol, ringAtom, cog, normal, coords);
-
-			planar = true;
-			for (int i=0; i<ringAtom.length && planar; i++)
-				if (Math.abs(normal.x * coords[i][0] + normal.y * coords[i][1] + normal.z * coords[i][2])
-						> (size == 5 ? 0.05 : 0.10))	// 5-membered rings must have stricter limits
-					planar = false;
-			if (!planar)
-				continue;
-
-			//Special case 1: Histidine (some obfuscated code in order to avoid a SS search)
-			if(ringAtom.length==5) {
-				//Central C:			
-				int start = -1;
-				int[] posN = {-1, -1};
-				boolean ok = true;
-				for(int i=0; ok && i<ringAtom.length; i++) {
-					if(mol.getAtomicNo(ringAtom[i])==6 && mol.getAllConnAtoms(ringAtom[i])==3) {start = i;}
-					else if(mol.getAllConnAtoms(ringAtom[i])!=2) ok = false;
-					else if(mol.getAtomicNo(ringAtom[i])==7) {
-						if(posN[0]<0) posN[0] = i;
-						else if(posN[1]<0) posN[1] = i;
-						else ok = false;
-					}
-				}
-				if(ok && start>=0 && posN[1]>=0) {
-					if((start+2)%5==posN[0] && (start+4)%5==posN[1]) {
-						mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+1)%5]), 2);
-						mol.setBondOrder(mol.getBond(ringAtom[(start+3)%5], ringAtom[(start+4)%5]), 2);
-						continue;	
-					} else if((start+2)%5==posN[1] && (start+4)%5==posN[0]) {
-						mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+1)%5]), 2);
-						mol.setBondOrder(mol.getBond(ringAtom[(start+3)%5], ringAtom[(start+4)%5]), 2);
-						continue;	
-					} else if((start+3)%5==posN[0] && (start+1)%5==posN[1]) {
-						mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+4)%5]), 2);
-						mol.setBondOrder(mol.getBond(ringAtom[(start+1)%5], ringAtom[(start+2)%5]), 2);
-						continue;	
-					} else if((start+3)%5==posN[1] && (start+1)%5==posN[0]) {
-						mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+4)%5]), 2);
-						mol.setBondOrder(mol.getBond(ringAtom[(start+1)%5], ringAtom[(start+2)%5]), 2);
-						continue;	
-					}
-				}
-			}
-
-			//Check Huckel's rule and Find the starting position
-			int start = -1;
-			int nElectrons = 0;
-			int nAmbiguousN = 0;
-			int nAmbiguousC = 0;
-			for(int i=0; i<ringAtom.length; i++) {
-				int a1 = ringAtom[(i)%ringAtom.length];
-				int a2 = ringAtom[(i+1)%ringAtom.length];
-				int a0 = ringAtom[(i-1+ringAtom.length)%ringAtom.length];
-				int bnd1 = mol.getBond(a1, a2);
-				int bnd2 = mol.getBond(a1, a0);
-				if(mol.getAtomicNo(a1)==6) {
-					if(mol.getAllConnAtoms(a1)==3 && (connectedAtom(mol, a1, 8, -1, 0, 0)>=0 || connectedAtom(mol, a1, 16, -1, 0, 0)>=0) ) {
-						int valence = mol.getConnBondOrder(a1, 0) + mol.getConnBondOrder(a1, 1) + mol.getConnBondOrder(a1, 2);
-						if(valence==4 && (mol.getBondOrder(bnd1)==2 || mol.getBondOrder(bnd2)==2)) nElectrons++;
-						else if(valence==4) nElectrons += 0;
-						else {nAmbiguousC++; nElectrons++;/*if(start<0) start = i; */} 											
-					} else { 
-						if(mol.getConnAtoms(a1)==3 && start<0) start=i;
-						nElectrons++;
-					}
-				} else if(mol.getAtomicNo(a1)==7) {
-					if(mol.getConnAtoms(a1)==3) {
-						nElectrons+=2;
-					} else if(mol.getConnAtoms(a1)==2) {
-						nAmbiguousN++; nElectrons++; 
-					} else {
-						nElectrons++;
-					}
-				} else {
-					nElectrons+=2;
-				}
-
-				if(mol.getBondOrder(bnd2)>1) start = i;
-				else if(mol.getImplicitHydrogens(a1)>0
-					 && mol.getImplicitHydrogens(a0)>0
-					 &&	(mol.getAtomRingBondCount(a1)==2 || mol.getAtomRingBondCount(a0)==2)) {
-					if(mol.getConnAtoms(a1)==3 || mol.getConnAtoms(a0)==3)  start = i;
-					else if(start<0) start = i;
-				}				
-			}
-			
-			int nPyroles = 0;
-			int nOxo = 0;
-			int diff = nElectrons%4-2; 
-			if(diff<0) {
-				nPyroles+=Math.min(-diff, Math.max(0, nAmbiguousN)); nElectrons+=nPyroles;
-			} else if(diff>0) {
-				nOxo+=Math.min(diff, Math.max(0, nAmbiguousC)); nElectrons-=nOxo;
-			}
-
-			if(nElectrons%4!=2) {
-				if(ringAtom.length==3) continue; //cyclopropane is of course planar but not aromatic
-				boolean ok = false;
-				if(diff>0) {
-					for (int i = 0; i < ringAtom.length; i++) {
-						if(mol.getAtomicNo(ringAtom[i])==7) {
-							//toDo[ring[i]]=2;//Protonated N?
-							ok=true;
-						}
-					}					
-				} 
-				if(!ok) {
-					if(!lenient) throw new Exception("Huckel's rule not verified");
-					continue;
-				}
-			}
-
-			isAromaticRing[ringNo] = true;
-			/*
-			if(start<0) start = 0;
-			pyrolles[ringNo] = nPyroles;
-			oxo[ringNo] = nOxo;
-			/*
-			for(int i=0; i<ring.length; i++) {
-				int a1 = ring[i];
-				if(StructureCalculator.getImplicitHydrogens(mol, a1)==0) continue;
-				if(mol.getAtomicNo(a1)==7) {
-					if(nPyroles>0) {
-						toDo[a1] = 2; //This N may not need a double bond
-					} else {
-						toDo[a1] = 1; //this N needs a double bond
-					}
-				} else if(mol.getAtomicNo(a1)==6) {
-					double doub = 0; for (int j = 0; j < mol.getAllConnAtoms(a1); j++) if(mol.getConnBondOrder(a1, j)>1) doub++;
-					if(doub==0) {
-						toDo[a1] = 1;
-						if(nOxo>0) { 
-							for (int j = 0; j < mol.getAllConnAtoms(a1); j++) {
-								int a2 = mol.getConnAtom(a1, j);
-								if(mol.getAtomicNo(a2)==8 && mol.getAllConnAtoms(a2)==1) {
-									toDo[a2] = 2;
-								}
-							}
-						}
-					}
-				}				
-			}
-			*/
-			
-		}
 
 		// Two alternatives: aromatize() for every ring,
 		// or AromaticityResolver.locateDelocalizedDoubleBonds() for the entire molecule
@@ -652,7 +465,7 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 				
 				if(mol.getImplicitHydrogens(a3)==0 && connected(mol, a3, -1, 2)>=0) order3 = 1;
 				else order3 = getLikelyOrder(mol, atom, a3);
-				
+
 				//the highest is the most likely to have a double bond
 				int connBond = -1;
 				if(order1>order2 && order1>order3 && order1>1 /*&& ((mol.getAtomicNo(i)!=6 && mol.getAtomicNo(a1)!=6) || isPlanar(mol, i, a1))*/) {
@@ -725,6 +538,148 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 				 && mol.getOccupiedValence(atom) > mol.getDefaultMaxValenceUncharged(atom))
 					mol.setAtomCharge(atom, 1);
 		}
+	}
+
+	private static boolean[] determineRingAromaticity(StereoMolecule mol, int[] spOrder, boolean lenient) throws Exception {
+		Coordinates normal = new Coordinates();
+		Coordinates cog = new Coordinates();
+		double[][] coords = new double[7][3];
+
+		RingCollection ringSet = mol.getRingSet();
+		boolean[] isAromaticRing = new boolean[ringSet.getSize()];
+
+		for (int size=5; size <= 7; size++) {
+			for (int ringNo = 0; ringNo < ringSet.getSize(); ringNo++) {
+				int[] ringAtom = ringSet.getRingAtoms(ringNo);
+				if (ringAtom.length != size)
+					continue;
+
+				boolean planar = true;
+				for (int i=0; i<ringAtom.length && planar; i++) {
+					if ((mol.getAtomicNo(ringAtom[i])==6 || mol.getAtomicNo(ringAtom[i])==7)
+							&& spOrder[ringAtom[i]] != 2)			// carbon/nitrogen in the ring must be planar
+						planar = false;
+					if (mol.getConnAtoms(ringAtom[i]) > 3	// e.g. boron cluster
+							|| mol.getAtomicNo(ringAtom[i]) > 16)	// metal atoms
+						planar = false;
+				}
+				if (!planar)
+					continue;
+
+				// If any of the ring atoms is further away from the ring plane than 0.12 Angstrom,
+				// then conclude that the ring is not aromatic.
+				calculateNearestPlane(mol, ringAtom, cog, normal, coords);
+
+				planar = true;
+				for (int i=0; i<ringAtom.length && planar; i++)
+					if (Math.abs(normal.x * coords[i][0] + normal.y * coords[i][1] + normal.z * coords[i][2])
+							> (size == 5 ? 0.05 : 0.10))	// 5-membered rings must have stricter limits
+						planar = false;
+				if (!planar)
+					continue;
+
+				//Special case 1: Histidine (some obfuscated code in order to avoid a SS search)
+				if(ringAtom.length==5) {
+					//Central C:
+					int start = -1;
+					int[] posN = {-1, -1};
+					boolean ok = true;
+					for(int i=0; ok && i<ringAtom.length; i++) {
+						if(mol.getAtomicNo(ringAtom[i])==6 && mol.getAllConnAtoms(ringAtom[i])==3) {start = i;}
+						else if(mol.getAllConnAtoms(ringAtom[i])!=2) ok = false;
+						else if(mol.getAtomicNo(ringAtom[i])==7) {
+							if(posN[0]<0) posN[0] = i;
+							else if(posN[1]<0) posN[1] = i;
+							else ok = false;
+						}
+					}
+					if(ok && start>=0 && posN[1]>=0) {
+						if((start+2)%5==posN[0] && (start+4)%5==posN[1]) {
+							mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+1)%5]), 2);
+							mol.setBondOrder(mol.getBond(ringAtom[(start+3)%5], ringAtom[(start+4)%5]), 2);
+							continue;
+						} else if((start+2)%5==posN[1] && (start+4)%5==posN[0]) {
+							mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+1)%5]), 2);
+							mol.setBondOrder(mol.getBond(ringAtom[(start+3)%5], ringAtom[(start+4)%5]), 2);
+							continue;
+						} else if((start+3)%5==posN[0] && (start+1)%5==posN[1]) {
+							mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+4)%5]), 2);
+							mol.setBondOrder(mol.getBond(ringAtom[(start+1)%5], ringAtom[(start+2)%5]), 2);
+							continue;
+						} else if((start+3)%5==posN[1] && (start+1)%5==posN[0]) {
+							mol.setBondOrder(mol.getBond(ringAtom[start], ringAtom[(start+4)%5]), 2);
+							mol.setBondOrder(mol.getBond(ringAtom[(start+1)%5], ringAtom[(start+2)%5]), 2);
+							continue;
+						}
+					}
+				}
+
+				//Check Huckel's rule and Find the starting position
+				int nElectrons = 0;
+				int nAmbiguousN = 0;	// one or two electrons
+				int nAmbiguousC = 0;	// zero or one electron (carbenium)
+				int nCarbons = 0;
+				for(int i=0; i<ringAtom.length; i++) {
+					int a1 = ringAtom[(i)%ringAtom.length];
+					int a2 = ringAtom[(i+1)%ringAtom.length];
+					int a0 = ringAtom[(i-1+ringAtom.length)%ringAtom.length];
+					int bnd1 = mol.getBond(a1, a2);
+					int bnd2 = mol.getBond(a1, a0);
+					if(mol.getAtomicNo(a1)==6) {
+						nCarbons++;
+						if (mol.getAllConnAtoms(a1)==3
+								&& (getSpecifiedConnAtom(mol, a1, 8, -1, 0, 0) != -1
+								|| getSpecifiedConnAtom(mol, a1, 16, -1, 0, 0) != -1) ) {
+							int valence = mol.getConnBondOrder(a1, 0) + mol.getConnBondOrder(a1, 1) + mol.getConnBondOrder(a1, 2);
+							if(valence==4 && (mol.getBondOrder(bnd1)==2 || mol.getBondOrder(bnd2)==2)) nElectrons++;
+							else if(valence==4) nElectrons += 0;
+							else {nAmbiguousC++; nElectrons++;}
+						} else {
+							nElectrons++;
+						}
+					} else if(mol.getAtomicNo(a1)==7) {
+						if(mol.getAllConnAtoms(a1)==3) {
+							nElectrons+=2;
+						} else if(mol.getConnAtoms(a1)==2) {
+							nAmbiguousN++; nElectrons++;
+						} else {
+							nElectrons++;
+						}
+					} else {
+						nElectrons+=2;
+					}
+				}
+
+				int diff = nElectrons%4-2;
+				if(diff<0)
+					nElectrons += Math.min(-diff, Math.max(0, nAmbiguousN));
+				else if(diff>0)
+					nElectrons -= Math.min(diff, Math.max(0, nAmbiguousC));
+
+				// cyclopentadienyl
+				if (diff == -1 && nCarbons == 5 && ringAtom.length == 5)
+					nElectrons++;
+
+				if(nElectrons%4!=2) {
+					boolean ok = false;
+					if(diff>0) {
+						for (int i = 0; i < ringAtom.length; i++) {
+							if(mol.getAtomicNo(ringAtom[i])==7) {
+								//toDo[ring[i]]=2;//Protonated N?
+								ok=true;
+							}
+						}
+					}
+					if(!ok) {
+						if(!lenient) throw new Exception("Huckel's rule not verified");
+						continue;
+					}
+				}
+
+				isAromaticRing[ringNo] = true;
+			}
+		}
+		return isAromaticRing;
 	}
 
 	/**
@@ -978,35 +933,35 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 	}
 
 	/**
-	 * Util function for substructure searches
+	 * Checks for and returns neighbour atom with defined properties
 	 * @param mol
-	 * @param a
-	 * @param atomicNo
-	 * @param valence
-	 * @param otherAtomicNo
-	 * @param otherValence
+	 * @param rootAtom
+	 * @param atomicNo 0 or required atomicNo of neighbour
+	 * @param allConnAtoms 0 or required allConnAtom count of neighbour
+	 * @param otherAtomicNo 0 or required atomicNo of neighbour's neighbour
+	 * @param otherAllConnAtoms 0 or required allConnAtom count of neighbour's neighbour
 	 * @return
 	 */
-	private final static int connectedAtom(StereoMolecule mol, int a, int atomicNo, int valence, int otherAtomicNo, int otherValence) {
-		loop: for(int i=0; i<mol.getAllConnAtoms(a); i++) {
-			int atm = mol.getConnAtom(a, i);
-			if(atomicNo>0 && mol.getAtomicNo(atm)!=atomicNo) continue;
-			if(valence>0 && mol.getAllConnAtoms(atm)!=valence) continue;
-			if(otherAtomicNo>0 || otherValence>0) {
-				for (int j = 0; j < mol.getAllConnAtoms(atm); j++) {
-					int otherAtm = mol.getConnAtom(atm, j);
-					if(otherAtm==a) continue loop;
+	private static int getSpecifiedConnAtom(StereoMolecule mol, int rootAtom, int atomicNo, int allConnAtoms, int otherAtomicNo, int otherAllConnAtoms) {
+		loop: for(int i=0; i<mol.getAllConnAtoms(rootAtom); i++) {
+			int connAtom = mol.getConnAtom(rootAtom, i);
+			if(atomicNo>0 && mol.getAtomicNo(connAtom)!=atomicNo) continue;
+			if(allConnAtoms>0 && mol.getAllConnAtoms(connAtom)!=allConnAtoms) continue;
+			if(otherAtomicNo>0 || otherAllConnAtoms>0) {
+				for (int j = 0; j < mol.getAllConnAtoms(connAtom); j++) {
+					int otherAtm = mol.getConnAtom(connAtom, j);
+					if(otherAtm==rootAtom) continue loop;
 					if(otherAtomicNo>0 && mol.getAtomicNo(otherAtm)!=otherAtomicNo) continue loop;
-					if(otherValence>0 && mol.getAllConnAtoms(otherAtm)!=otherValence) continue loop;					
+					if(otherAllConnAtoms>0 && mol.getAllConnAtoms(otherAtm)!=otherAllConnAtoms) continue loop;
 				}	
 			}
 			
-			return atm;
+			return connAtom;
 		}
 		return -1;
 	}
 	
-	private final static int connectedBond(StereoMolecule mol, int a, int atomicNo, int valence) {
+	private static int connectedBond(StereoMolecule mol, int a, int atomicNo, int valence) {
 		if(a<0) return -1;
 		for(int i=0; i<mol.getAllConnAtoms(a); i++) {
 			int atm = mol.getConnAtom(a, i);

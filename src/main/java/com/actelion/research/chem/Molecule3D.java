@@ -381,11 +381,11 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		}*/
 
 			if (o instanceof String)
-				newObject = new String((String)o);
+				newObject = o;
 			else if(o instanceof Integer)
-				newObject = new Integer((Integer)o);
+				newObject = Integer.valueOf((Integer)o);
 			else if(o instanceof Double)
-				newObject = new Double((Double)o);
+				newObject = Double.valueOf((Double)o);
 			else {
 				System.out.println("ERROR: unexpected Object type. Add support for new type: "+o);
 			}

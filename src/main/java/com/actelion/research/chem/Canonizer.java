@@ -3213,6 +3213,9 @@ System.out.println();
 				}
 			}
 
+		if (mMol.isFragment())
+			addAtomQueryFeatures(39, nbits, Molecule.cAtomQFOxidationState, Molecule.cAtomQFOxidationStateBits, Molecule.cAtomQFOxidationStateShift);
+
 		encodeBits(0, 1);
 		mIDCode = encodeBitsEnd();
 		}

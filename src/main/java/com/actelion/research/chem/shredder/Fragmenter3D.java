@@ -43,7 +43,7 @@ public class Fragmenter3D {
 
 		mol.stripSmallFragments();
 		if (withHydrogen)
-			new AtomAssembler(mol).addImplicitHydrogens();
+			new HydrogenAssembler(mol).addImplicitHydrogens();
 		else
 			mol.removeExplicitHydrogens(false);
 

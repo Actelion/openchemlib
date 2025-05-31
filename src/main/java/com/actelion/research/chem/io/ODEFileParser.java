@@ -33,19 +33,14 @@
 
 package com.actelion.research.chem.io;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Properties;
-import java.util.TreeMap;
-
 import com.actelion.research.chem.SSSearcherWithIndex;
 import com.actelion.research.chem.descriptor.DescriptorConstants;
 import com.actelion.research.chem.descriptor.DescriptorHandlerFFP512;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Properties;
+import java.util.TreeMap;
 
 public class ODEFileParser extends CompoundFileParser implements CompoundTableConstants,DescriptorConstants {
 	private BufferedReader	mReader;
@@ -193,7 +188,7 @@ public class ODEFileParser extends CompoundFileParser implements CompoundTableCo
 			 && sourceColumn != mIndexColumn
 			 && sourceColumn != mOutdatedIndexColumn) {
 				columnNameList.add(columnName);
-				columnIndexList.add(new Integer(sourceColumn));
+				columnIndexList.add(sourceColumn);
 				}
 
 			sourceColumn++;

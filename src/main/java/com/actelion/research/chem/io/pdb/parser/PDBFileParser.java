@@ -407,7 +407,6 @@ public class PDBFileParser {
 	            indexLine += liIndex.size();
 	        }
 	
-	        //
 	        // Compound name of the heterogens.
 	        if(liRaw.get(indexLine).startsWith(TAG_HETNAM)) {
 	            hetNameParser.parse(liRaw, indexLine);
@@ -541,8 +540,6 @@ public class PDBFileParser {
 
 		pdbCoordEntryFile.setProtAtomRecords(protAtomList);
         pdbCoordEntryFile.setHetAtomRecords(hetAtomList);
-        //List<ModelModel> liModelModel = modelParser.getLiModelModel();
-        //pdbCoordEntryFile.setLiModelModel(liModelModel);
 
         indexLine = modelParser.getIndexLine();
 
@@ -552,32 +549,6 @@ public class PDBFileParser {
 		SortedList<int[]> bonds = new SortedList<>(new IntArrayComparator());
 		indexLine = parseCONECTLines(liRaw, indexLine, bonds);
 		pdbCoordEntryFile.setLiConnect(bonds);
-
- /* replaced by something more efficient, because the original was limited to atom indexes <= 9999; TLS 6Nov2024
-        if(liRaw.get(indexLine).startsWith(TAG_CONECT)) {
-            ListInteger<String> liIndex = parseMultipleTimesOneLine(liRaw, indexLine, TAG_CONECT);
-            for(String bondInfo:liIndex.getLi()) {
-            	bondInfo = bondInfo.trim();
-            	String[] strArr = bondInfo.split("\\s+");
-            	try {
-            	int firstAtom = Integer.parseInt(strArr[0]);
-            	IntStream.range(1,strArr.length).forEach(e -> {
-            		int[] bond = new int[2];
-            		bond[0] = firstAtom;
-            		bond[1] = Integer.parseInt(strArr[e]);
-            		bonds.add(bond);
-            	});
-            	}
-            	catch(Exception e) {
-            		continue;
-            	}
-
-            }
-            indexLine = liIndex.getId();
-        }
-        pdbCoordEntryFile.setLiConnect(bonds);
-
-  */
 
         if(liRaw.get(indexLine).startsWith(TAG_MASTER)) {
             pdbCoordEntryFile.setMaster(liRaw.get(indexLine).substring(10).trim());

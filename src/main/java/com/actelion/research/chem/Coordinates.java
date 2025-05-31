@@ -231,12 +231,25 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		double c = Math.cos(theta);
 		double s = Math.sin(theta);
 		double t = 1-c;
-		Coordinates opp = new Coordinates(
-				(t*x*x+c)*this.x 	+ (t*x*y+s*z)*this.y + (t*x*z-s*y)*this.z,
-				(t*x*y-s*z)*this.x	+ (t*y*y+c)*this.y 	+ (t*y*z+s*x)*this.z,
-				(t*x*z+s*y)*this.x 	+ (t*z*y-s*x)*this.y + (t*z*z+c)*this.z
-		);
-		return opp;
+		double newX = (t*x*x+c)*this.x 	+ (t*x*y+s*z)*this.y + (t*x*z-s*y)*this.z;
+		double newY = (t*x*y-s*z)*this.x	+ (t*y*y+c)*this.y 	+ (t*y*z+s*x)*this.z;
+		this.z = (t*x*z+s*y)*this.x 	+ (t*z*y-s*x)*this.y + (t*z*z+c)*this.z;
+		this.y = newY;
+		this.x = newX;
+		return this;
+	}
+
+	public Coordinates rotateC(Coordinates normal, double theta) {
+		if(Math.abs(normal.x*normal.x+normal.y*normal.y+normal.z*normal.z-1)>1E-6) throw new IllegalArgumentException("normal needs to a unit vector: "+normal);
+		double x = normal.x;
+		double y = normal.y;
+		double z = normal.z;
+		double c = Math.cos(theta);
+		double s = Math.sin(theta);
+		double t = 1-c;
+		return new Coordinates((t*x*x+c)*this.x 	+ (t*x*y+s*z)*this.y + (t*x*z-s*y)*this.z,
+							   (t*x*y-s*z)*this.x	+ (t*y*y+c)*this.y 	+ (t*y*z+s*x)*this.z,
+							   (t*x*z+s*y)*this.x 	+ (t*z*y-s*x)*this.y + (t*z*z+c)*this.z);
 	}
 
 

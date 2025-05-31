@@ -122,7 +122,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 	private GenericTextField    mTFAtomList;
 	private GenericCheckBox     mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo,mCBExcludeGroup;
 	private GenericComboBox     mChoiceArom,mChoiceRingState,mChoiceSmallRingSize,mChoiceRingSize,mChoiceCharge,
-								mChoiceNeighbours,mChoiceHydrogen,mChoicePi, mChoiceENeighbours,mChoiceReactionParityHint,
+								mChoiceNeighbours,mChoiceHydrogen,mChoicePi,mChoiceOxidationState,mChoiceENeighbours,mChoiceReactionParityHint,
 								mChoiceStereoCenter;
     private ExtendedMolecule	mMol;
 	private int					mAtom;
@@ -149,7 +149,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mAtom = atom;
 
 		int gap = HiDPIHelper.scale(8);
-		int[] gap1 = { gap, gap/2, gap*3/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap*3/2, gap/4, gap/2, gap/2, gap/4 };
+		int[] gap1 = { gap, gap/2, gap*3/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap/2, gap*3/2, gap/4, gap/2, gap/2, gap/4 };
 		int[] gap2 = { gap*3/2, gap/2 };
 		int[] hLayout = {gap, GenericDialog.PREFERRED, gap, GenericDialog.PREFERRED, gap};
 		int[] vLayout = new int[1 + 2*gap1.length + (includeReactionHints ? 2*gap2.length : 0)];
@@ -278,35 +278,42 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		mDialog.add(mDialog.createLabel("Pi-electron count:"), 1,21);
 		mDialog.add(mChoicePi,3,21);
 
+		mChoiceOxidationState = mDialog.createComboBox();
+		mChoiceOxidationState.addItem("any");
+		for (int i=1; i<15; i++)
+			mChoiceOxidationState.addItem(Integer.toString(i-Molecule.cAtomQFOxidationStateOffset));
+		mDialog.add(mDialog.createLabel("Oxidation state:"), 1,23);
+		mDialog.add(mChoiceOxidationState,3,23);
+
 		mCBBlocked = mDialog.createCheckBox("prohibit further substitution");
 		mCBBlocked.addEventConsumer(this);
-		mDialog.add(mCBBlocked, 1,23,3,23);
+		mDialog.add(mCBBlocked, 1,25,3,25);
 
 		mCBSubstituted = mDialog.createCheckBox("require further substitution");
 		mCBSubstituted.addEventConsumer(this);
-		mDialog.add(mCBSubstituted, 1,25,3,25);
+		mDialog.add(mCBSubstituted, 1,27,3,27);
 
 		mChoiceStereoCenter = mDialog.createComboBox();
 		mChoiceStereoCenter.addItem("any");
 		mChoiceStereoCenter.addItem("is a stereo center");
 		mChoiceStereoCenter.addItem("is not a stereo center");
-		mDialog.add(mDialog.createLabel("Stereo center:"), 1,27);
-		mDialog.add(mChoiceStereoCenter,3,27);
+		mDialog.add(mDialog.createLabel("Stereo center:"), 1,29);
+		mDialog.add(mChoiceStereoCenter,3,29);
 
 		mCBMatchStereo = mDialog.createCheckBox("match stereo center");
-		mDialog.add(mCBMatchStereo, 1,29,3,29);
+		mDialog.add(mCBMatchStereo, 1,31,3,31);
 
 		mCBExcludeGroup = mDialog.createCheckBox("is part of exclude group");
-		mDialog.add(mCBExcludeGroup, 1,31,3,31);
+		mDialog.add(mCBExcludeGroup, 1,33,3,33);
 
 		if (includeReactionHints) {
-			mDialog.add(mDialog.createLabel("Stereo center hint for product:"), 1,33,3,33);
+			mDialog.add(mDialog.createLabel("Stereo center hint for product:"), 1,35,3,35);
 			mChoiceReactionParityHint = mDialog.createComboBox();
 			mChoiceReactionParityHint.addItem("Copy from generic product");
 			mChoiceReactionParityHint.addItem("Keep reactant configuration");
 			mChoiceReactionParityHint.addItem("Invert reactant configuration");
 			mChoiceReactionParityHint.addItem("Racemise configuration");
-			mDialog.add(mChoiceReactionParityHint, 1,35,3,35);
+			mDialog.add(mChoiceReactionParityHint, 1,37,3,37);
 			}
 
 		mMol.ensureHelperArrays(Molecule.cHelperCIP);
@@ -518,6 +525,9 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             mChoicePi.setSelectedIndex(4);
 	    else
 		    mChoicePi.setSelectedIndex(0);
+
+		long rawOxidationStateIndex = (queryFeatures & Molecule.cAtomQFOxidationState) >> Molecule.cAtomQFOxidationStateShift;
+		mChoiceOxidationState.setSelectedIndex((int)rawOxidationStateIndex);
 
 		if ((queryFeatures & Molecule.cAtomQFNoMoreNeighbours) != 0)
 			mCBBlocked.setSelected(true);
@@ -842,6 +852,9 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
             queryFeatures |= Molecule.cAtomQFNot0PiElectrons;
             break;
             }
+
+		if (mChoiceOxidationState.getSelectedIndex() != 0)
+			queryFeatures |= ((long)mChoiceOxidationState.getSelectedIndex() << Molecule.cAtomQFOxidationStateShift);
 
 		if (mCBBlocked.isSelected()
 		 && (mMol.getFreeValence(atom) > 0

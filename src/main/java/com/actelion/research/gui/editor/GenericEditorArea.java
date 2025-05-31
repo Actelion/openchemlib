@@ -94,7 +94,10 @@ public class GenericEditorArea implements GenericEventListener {
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE_STRUCTURE + " or Name";
 	private static final String ITEM_LOAD_REACTION = "Open Reaction File...";
 	private static final String ITEM_ADD_AUTO_MAPPING = "Auto-Map Reaction";
-	private static final String ITEM_REMOVE_MAPPING = "Remove Manual Atom Mapping";
+	private static final String ITEM_REMOVE_ALL_MAPPING = "Remove All Atom Mapping";
+	private static final String ITEM_REMOVE_AUTO_MAPPING = "Remove Automatic Mapping (green)";
+	private static final String ITEM_REMOVE_EXPLICIT_MAPPING = "Remove Explicit Atom Mapping (red)";
+	private static final String ITEM_MAKE_AUTO_MAPPING_EXPLICIT = "Make automatic mapping explicit";
 	private static final String ITEM_FLIP_HORIZONTALLY = "Flip Horizontally";
 	private static final String ITEM_FLIP_VERTICALLY = "Flip Vertically";
 	private static final String ITEM_FLIP_ROTATE180 = "Rotate 180°";
@@ -636,8 +639,14 @@ public class GenericEditorArea implements GenericEventListener {
 		} else if (command.equals(ITEM_ADD_AUTO_MAPPING)) {
 			autoMapReaction();
 			updateAndFireEvent(Math.max(mUpdateMode, UPDATE_REDRAW));
-		} else if (command.equals(ITEM_REMOVE_MAPPING)) {
-			removeManualMapping();
+		} else if (command.equals(ITEM_REMOVE_ALL_MAPPING)) {
+			removeMapping(true,true);
+		} else if (command.equals(ITEM_REMOVE_EXPLICIT_MAPPING)) {
+			removeMapping(false,true);
+		} else if (command.equals(ITEM_REMOVE_AUTO_MAPPING)) {
+			removeMapping(true,false);
+		} else if (command.equals(ITEM_MAKE_AUTO_MAPPING_EXPLICIT)) {
+			makeAutoMappingExplicit();
 		} else if (command.equals(ITEM_FLIP_HORIZONTALLY)) {
 			flip(true);
 		} else if (command.equals(ITEM_FLIP_VERTICALLY)) {
@@ -668,10 +677,10 @@ public class GenericEditorArea implements GenericEventListener {
 		}
 	}
 
-	private void removeManualMapping() {
+	private void removeMapping(boolean autoMapping, boolean explicitMapping) {
 		boolean changed = false;
 		for (int atom = 0; atom<mMol.getAtoms(); atom++) {
-			if (mMol.getAtomMapNo(atom) != 0 && !mMol.isAutoMappedAtom(atom)) {
+			if (mMol.getAtomMapNo(atom) != 0 && ((explicitMapping && !mMol.isAutoMappedAtom(atom)) || (autoMapping && mMol.isAutoMappedAtom(atom)))) {
 				if (!changed) {
 					storeState();
 					changed = true;
@@ -682,7 +691,26 @@ public class GenericEditorArea implements GenericEventListener {
 		}
 
 		if (changed) {
-			autoMapReaction();
+			if (!autoMapping)
+				autoMapReaction();
+			updateAndFireEvent(Math.max(mUpdateMode, UPDATE_REDRAW));
+		}
+	}
+
+	private void makeAutoMappingExplicit() {
+		boolean changed = false;
+		for (int atom = 0; atom<mMol.getAtoms(); atom++) {
+			if (mMol.getAtomMapNo(atom) != 0 && mMol.isAutoMappedAtom(atom)) {
+				if (!changed) {
+					storeState();
+					changed = true;
+				}
+
+				mMol.setAtomMapNo(atom, mMol.getAtomMapNo(atom), false);
+			}
+		}
+
+		if (changed) {
 			updateAndFireEvent(Math.max(mUpdateMode, UPDATE_REDRAW));
 		}
 	}
@@ -1471,7 +1499,10 @@ public class GenericEditorArea implements GenericEventListener {
 				popup.addSeparator();
 
 			popup.addItem(ITEM_ADD_AUTO_MAPPING, null, true);
-			popup.addItem(ITEM_REMOVE_MAPPING, null, true);
+			popup.addItem(ITEM_REMOVE_ALL_MAPPING, null, true);
+			popup.addItem(ITEM_REMOVE_EXPLICIT_MAPPING, null, true);
+			popup.addItem(ITEM_REMOVE_AUTO_MAPPING, null, true);
+			popup.addItem(ITEM_MAKE_AUTO_MAPPING_EXPLICIT, null, true);
 			}
 
 		if (mCurrentTool == GenericEditorToolbar.cToolZoom) {

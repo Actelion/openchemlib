@@ -816,16 +816,21 @@ System.out.println();
 		 && mFragment.getAtomRadical(fragmentAtom) != mMolecule.getAtomRadical(moleculeAtom))
 			return false;
 
-		int smallestRingSize = (int)((mFragment.getAtomQueryFeatures(fragmentAtom) & Molecule.cAtomQFSmallRingSize) >> Molecule.cAtomQFSmallRingSizeShift);
+		long oxidationState = fragmentQF & Molecule.cAtomQFOxidationState;
+		if (oxidationState != 0L
+		 && mMolecule.getOxidationState(moleculeAtom) != (int)(oxidationState >> Molecule.cAtomQFOxidationStateShift)
+				- Molecule.cAtomQFOxidationStateOffset)
+			return false;
+
+		long smallestRingSize = fragmentQF & Molecule.cAtomQFSmallRingSize;
 		if (smallestRingSize != 0) {
+			smallestRingSize >>= Molecule.cAtomQFSmallRingSizeShift;
 			if (!mMolecule.isFragment()) {
-				if (mMolecule.getAtomRingSize(moleculeAtom) != smallestRingSize)
-					return false;
+				return mMolecule.getAtomRingSize(moleculeAtom) == (int)(smallestRingSize);
 				}
 			else {
 				int targetRingSize = (int)((mMolecule.getAtomQueryFeatures(moleculeAtom) & Molecule.cAtomQFSmallRingSize) >> Molecule.cAtomQFSmallRingSizeShift);
-				if (smallestRingSize != targetRingSize)
-					return false;
+				return (int)smallestRingSize == targetRingSize;
 				}
 			}
 

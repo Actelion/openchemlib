@@ -138,7 +138,11 @@ public class AtomRecord implements Comparable<AtomRecord> {
     public double getZ() {
     	return z;
     }
-    
+
+	public double getOccupancy() {
+		return occupancy;
+	}
+
     public String getInsertionCode() {
     	return insertionCode;
     }
