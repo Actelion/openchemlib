@@ -6,7 +6,6 @@ import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
 import com.actelion.research.chem.io.pdb.converter.BondOrderCalculator;
 import com.actelion.research.util.SortedList;
-import org.openmolecules.chem.cifsdf.BondCalculator;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -190,8 +189,7 @@ public class StructureAssembler {
 			if (mol.getAllAtoms() > 1) {
 				try {
 					if (USE_NEW_BONDORDER_CALCULATOR) {
-						BondCalculator bc = new BondCalculator();
-						bc.createBonds(mol, true);
+						BondsCalculator.createBonds(mol, true, null);
 						new BondOrderCalculator(mol).calculateBondOrders();
 					}
 					else {
@@ -222,7 +220,7 @@ public class StructureAssembler {
 			try {
 				if (USE_NEW_BONDORDER_CALCULATOR) {
 					if (mol.getAllBonds() == 0)    // CONECT records didn't cover this molecule
-						new BondCalculator().createBonds(mol, true);
+						BondsCalculator.createBonds(mol, true, null);
 					new BondOrderCalculator(mol).calculateBondOrders();
 				}
 				else {

@@ -39,7 +39,6 @@ import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.io.pdb.converter.AminoAcids;
 import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
 import com.actelion.research.chem.io.pdb.converter.BondOrderCalculator;
-import org.openmolecules.chem.cifsdf.BondCalculator;
 
 import java.util.List;
 
@@ -115,7 +114,7 @@ public class Residue {
 		if (mAddBonds) {
 			try {
 				if (StructureAssembler.USE_NEW_BONDORDER_CALCULATOR) {
-					new BondCalculator().createBonds(fragment, true);
+					BondsCalculator.createBonds(fragment, true,null);
 					new BondOrderCalculator(fragment).calculateBondOrders();
 				}
 				else {
