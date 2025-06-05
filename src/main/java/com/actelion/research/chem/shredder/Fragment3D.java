@@ -3,14 +3,15 @@ package com.actelion.research.chem.shredder;
 import com.actelion.research.chem.conf.TorsionDescriptor;
 
 public class Fragment3D implements Comparable<Fragment3D> {
-	private final String mIDCode;
+	private final String mIDCode,mSourceID;
 	private String mIDCoords;
 	private final TorsionDescriptor mTorsions;
 	private final int[] mExitAtoms;
 
-	public Fragment3D(String idcode, String coords, TorsionDescriptor td, int[] exitAtoms) {
+	public Fragment3D(String idcode, String coords, String sourceID, TorsionDescriptor td, int[] exitAtoms) {
 		this.mIDCode = idcode;
 		this.mIDCoords = coords;
+		this.mSourceID = sourceID;
 		this.mTorsions = td;
 		this.mExitAtoms = exitAtoms;
 		}
@@ -22,6 +23,10 @@ public class Fragment3D implements Comparable<Fragment3D> {
 	public String getIDCoordinates() {
 		return mIDCoords;
 		}
+
+	public String getSourceID() {
+		return mSourceID;
+	}
 
 	public int[] getExitAtoms() {
 		return mExitAtoms;

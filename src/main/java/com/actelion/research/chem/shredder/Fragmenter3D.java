@@ -34,11 +34,12 @@ public class Fragmenter3D {
 	 * the given 3D-molecule and returns all generated 3D-fragments as an ArrayList.
 	 * The list is re-used by subsequent calls to this nethod. Thus, process/consume the
 	 * fragment list before calling this method again.
-	 * @param mol
+	 * @param mol original molecule
+	 * @param molID null or identifier of the original molecule
 	 * @param withHydrogen whether built fragments shall include hydrogen atoms
 	 * @return Fragment3D list of given molecule
 	 */
-	public ArrayList<Fragment3D> buildFragments(StereoMolecule mol, boolean withHydrogen) {
+	public ArrayList<Fragment3D> buildFragments(StereoMolecule mol, String molID, boolean withHydrogen) {
 		mFragmentList.clear();
 
 		mol.stripSmallFragments();
@@ -67,7 +68,7 @@ public class Fragmenter3D {
 		for (int i=0; i<fragmentCount; i++) {
 			isMemberFragment[i] = true;
 
-			addNewFragments(mol, fragmentNo, bondFlexibility, 0f, isMemberFragment, i, 1,
+			addNewFragments(mol, molID, fragmentNo, bondFlexibility, 0f, isMemberFragment, i, 1,
 					fragmentData[i].atomCount, baseFragmentCombinationSet, fragmentData);
 
 			isMemberFragment[i] = false;
@@ -81,7 +82,7 @@ public class Fragmenter3D {
 	 * provided that the size criteria are fullfilled.
 	 * @param mol
 	 */
-	private void addNewFragments(StereoMolecule mol, int[] fragmentNo, float[] bondFlexibility, float bondFlexibilitySum,
+	private void addNewFragments(StereoMolecule mol, String molID, int[] fragmentNo, float[] bondFlexibility, float bondFlexibilitySum,
 	                             boolean[] isMemberFragment, int previousBaseFragment, int usedBaseFragmentCount, int atomCount,
 	                             TreeSet<int[]> baseFragmentCombinationSet, BaseFragmentInfo[] baseFragmentInfo) {
 		if (atomCount > mMaxAtoms)
@@ -100,7 +101,7 @@ public class Fragmenter3D {
 
 		// build the Fragment3D from the base fragment members and add it to the queue
 		if (atomCount >= mMinAtoms)
-			addFragment(mol, fragmentNo, isMemberFragment);
+			addFragment(mol, molID, fragmentNo, isMemberFragment);
 
 		BaseFragmentInfo previousBaseFragmentInfo = baseFragmentInfo[previousBaseFragment];
 		for (int i=0; i<previousBaseFragmentInfo.neighbourCount; i++) {
@@ -110,7 +111,7 @@ public class Fragmenter3D {
 			 && bondFlexibilitySum + bondFlexibility[neighbourBond] <= mMaxBondFlexibilitySum) {
 				isMemberFragment[neighbour] = true;
 
-				addNewFragments(mol, fragmentNo, bondFlexibility, bondFlexibilitySum + bondFlexibility[neighbourBond],
+				addNewFragments(mol, molID, fragmentNo, bondFlexibility, bondFlexibilitySum + bondFlexibility[neighbourBond],
 						isMemberFragment, neighbour, usedBaseFragmentCount+1,
 						atomCount+baseFragmentInfo[neighbour].atomCount, baseFragmentCombinationSet, baseFragmentInfo);
 
@@ -119,7 +120,7 @@ public class Fragmenter3D {
 			}
 		}
 
-	private void addFragment(StereoMolecule mol, int[] fragmentNo, boolean[] isMemberFragment) {
+	private void addFragment(StereoMolecule mol, String molID, int[] fragmentNo, boolean[] isMemberFragment) {
 		int atomCount = 0;
 		int extendedAtomCount = 0;
 
@@ -176,7 +177,7 @@ public class Fragmenter3D {
 		for (int i=0; i<exitAtom.length; i++)
 			exitAtom[i] = canonizer.getGraphIndexes()[exitAtom[i]];
 
-		mFragmentList.add(new Fragment3D(idcode, coords, td, exitAtom));
+		mFragmentList.add(new Fragment3D(idcode, coords, molID, td, exitAtom));
 		}
 	}
 
