@@ -287,7 +287,7 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
             int atomSpan = mComboBoxMaxAtoms.getSelectedIndex();
             queryFeatures |= (minAtoms << Molecule.cBondQFBridgeMinShift);
             queryFeatures |= (atomSpan << Molecule.cBondQFBridgeSpanShift);
-            queryFeatures &= ~Molecule.cBondQFBondTypes;
+            queryFeatures &= ~Molecule.cBondQFAllBondTypes;
 			mMol.setBondType(bond, Molecule.cBondTypeSingle);
             }
         else {

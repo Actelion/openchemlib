@@ -283,6 +283,7 @@ public class Molecule implements Serializable {
 	public static final int cBondQFNarrowing		= 0x00600180;
 	public static final int cBondQFBondTypes		= 0x0000001F;   // original 5 bond types for idcode
 	public static final int cBondQFRareBondTypes    = 0x00000060;   // using OR logic for all 7 bond types
+	public static final int cBondQFAllBondTypes		= cBondQFBondTypes | cBondQFRareBondTypes;   // all 7 bond types
 	public static final int cBondQFRingState		= 0x00000180;
 	public static final int cBondQFNotRing			= 0x00000080;
 	public static final int cBondQFRing				= 0x00000100;
@@ -2660,7 +2661,7 @@ public class Molecule implements Serializable {
 	 * @return formal bond order 0 (dative bonds), 1, 2, 3, 4, or 5
 	 */
 	public int getBondOrder(int bond) {
-		if (mIsFragment && (mBondQueryFeatures[bond] & cBondQFBondTypes) != 0) {
+		if (mIsFragment && (mBondQueryFeatures[bond] & cBondQFAllBondTypes) != 0) {
 			if ((mBondQueryFeatures[bond] & (cBondTypeSingle | cBondTypeDelocalized)) != 0)
 				return 1;
 			if ((mBondQueryFeatures[bond] & cBondTypeDouble) != 0)
@@ -3547,7 +3548,7 @@ public class Molecule implements Serializable {
 			mBondType[bond] = bondType;	// set to the lowest bond order of query options
 
 		if (selectionCount < 2)
-			mBondQueryFeatures[bond] &= ~(cBondQFBondTypes + cBondQFRareBondTypes);
+			mBondQueryFeatures[bond] &= ~cBondQFAllBondTypes;
 	}
 
 

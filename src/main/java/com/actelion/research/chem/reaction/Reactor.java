@@ -655,6 +655,7 @@ public class Reactor {
 
 			// If we have multiple allowed bond types on generic product bond, then we need to calculate
 			// the new bond order from reactant bond order and generic reaction bond order change.
+			// Note: we don't support quadruple or quintuple bonds here!
 			int productQFBondType = genericProduct.getBondQueryFeatures(gpBond) & Molecule.cBondQFBondTypes;
 			if (productQFBondType != 0) {
 				boolean found = false;

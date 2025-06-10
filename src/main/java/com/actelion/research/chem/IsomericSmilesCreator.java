@@ -810,7 +810,7 @@ public class IsomericSmilesCreator {
 		if (mEZHalfParity[bond] != 0)
 			builder.append(mEZHalfParity[bond] == 1 ? '/' : '\\');
 		if (mMode == MODE_CREATE_SMARTS) {
-			int bondQFTypes = mMol.getBondQueryFeatures(bond) & (Molecule.cBondQFBondTypes | Molecule.cBondQFRareBondTypes);
+			int bondQFTypes = mMol.getBondQueryFeatures(bond) & Molecule.cBondQFAllBondTypes;
 			if (bondQFTypes != 0) {
 				if ((bondQFTypes & Molecule.cBondTypeSingle) != 0 && mEZHalfParity[bond] == 0) {
 					builder.append('-');

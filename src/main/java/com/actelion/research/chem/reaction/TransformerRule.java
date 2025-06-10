@@ -23,6 +23,7 @@ public class TransformerRule extends Object implements Comparable<TransformerRul
 			mMapNo2 = mapNo1;
 		}
 
+		// Note: we don't support quadruple or quintuple bonds here!
 		mBondQFTypes = mol.getBondQueryFeatures(bond) & Molecule.cBondQFBondTypes;
 
 //		if (mol.getBondType(bond) == Molecule.cBondTypeDelocalized || mol.isDelocalizedBond(bond))

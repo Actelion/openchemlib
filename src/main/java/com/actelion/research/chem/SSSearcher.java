@@ -1302,7 +1302,7 @@ System.out.println();
 		if ((mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFMatchFormalOrder) != 0) {
 			int molBondType = mMolecule.getBondTypeSimple(moleculeBond);
 			int frgBondType = mFragment.getBondTypeSimple(fragmentBond);
-			int frgBondTypes = mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFBondTypes;
+			int frgBondTypes = mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFAllBondTypes;
 			if (molBondType != frgBondType
 			 && !(molBondType == Molecule.cBondTypeSingle && (frgBondTypes & Molecule.cBondTypeSingle) != 0)
 			 && !(molBondType == Molecule.cBondTypeDouble && (frgBondTypes & Molecule.cBondTypeDouble) != 0)
@@ -1313,8 +1313,8 @@ System.out.println();
 			 && !(molBondType == Molecule.cBondTypeDelocalized && (frgBondTypes & Molecule.cBondTypeDelocalized) != 0))
 				return false;
 
-			molDefaults &= ~Molecule.cBondQFBondTypes;
-			frgDefaults &= ~Molecule.cBondQFBondTypes;
+			molDefaults &= ~Molecule.cBondQFAllBondTypes;
+			frgDefaults &= ~Molecule.cBondQFAllBondTypes;
 			}
 
 		if ((molDefaults & ~frgDefaults) != 0)

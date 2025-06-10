@@ -105,6 +105,7 @@ public class ChemicalRule {
 					bondList.add(new ChemicalRuleBond(atom1, atom2, mapNo1, mapNo2, productBondType));
 					}
 				else {
+					// Note: we don't support quadruple or quintuple bonds here!
 					if ((mReactant.getBondQueryFeatures(reactantBond) & Molecule.cBondQFBondTypes) == 0) {
 						int reactantBondType = mReactant.getBondTypeSimple(reactantBond);
 						if (reactantBondType != productBondType)

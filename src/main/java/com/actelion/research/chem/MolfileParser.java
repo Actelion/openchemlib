@@ -1175,7 +1175,7 @@ public class MolfileParser
 					break;
 				case 8:
 					if (realBondType != Molecule.cBondTypeMetalLigand)
-						queryFeatures |= Molecule.cBondQFBondTypes;
+						queryFeatures |= Molecule.cBondQFAllBondTypes;
 					break;
 			}
 		}

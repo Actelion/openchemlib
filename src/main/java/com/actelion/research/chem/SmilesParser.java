@@ -584,7 +584,7 @@ public class SmilesParser {
 					}
 
 					if (excludedBonds != 0)
-						bondQueryFeatures |= Molecule.cBondQFBondTypes & ~excludedBonds;
+						bondQueryFeatures |= Molecule.cBondQFAllBondTypes & ~excludedBonds;
 
 					break;
 				}
@@ -912,7 +912,7 @@ public class SmilesParser {
 			 : symbol == '$' ? Molecule.cBondTypeQuadruple
 			 : symbol == ':' ? Molecule.cBondTypeDelocalized
 			 : symbol == '>' ? Molecule.cBondTypeMetalLigand
-			 : symbol == '~' ? Molecule.cBondQFBondTypes : Molecule.cBondTypeSingle;
+			 : symbol == '~' ? Molecule.cBondQFAllBondTypes : Molecule.cBondTypeSingle;
 		}
 
 	protected void smartsWarning(String feature) {

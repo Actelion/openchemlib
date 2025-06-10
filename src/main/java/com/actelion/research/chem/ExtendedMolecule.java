@@ -4257,7 +4257,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperRings);
 
 		for (int bond=0; bond<mBonds; bond++) {
-			int bondTypeQFCount = Integer.bitCount(mBondQueryFeatures[bond] & (Molecule.cBondQFBondTypes | Molecule.cBondQFRareBondTypes));
+			int bondTypeQFCount = Integer.bitCount(mBondQueryFeatures[bond] & Molecule.cBondQFAllBondTypes);
 
 			if (isDelocalizedBond(bond) & (mBondQueryFeatures[bond] & cBondTypeDelocalized) != 0) {
 				mBondQueryFeatures[bond] &= ~cBondTypeDelocalized;
