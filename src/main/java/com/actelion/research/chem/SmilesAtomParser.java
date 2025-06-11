@@ -9,9 +9,8 @@ import java.util.Arrays;
 public class SmilesAtomParser {
 	private static final int HYDROGEN_ANY = -1;
 
-	boolean parityFound,isClockwise,smartsFeatureFound;
-	;
-	int atomicNo,abnormalValence,charge,mapNo,explicitHydrogens;
+	private boolean parityFound,isClockwise,smartsFeatureFound;
+	private int atomicNo,abnormalValence,charge,mapNo,explicitHydrogens;
 	private final boolean mAllowCactvs;
 	private final int mMode;
 	private long atomQueryFeatures;      // translated from obvious SMARTS features
@@ -29,6 +28,26 @@ public class SmilesAtomParser {
 		abnormalValence = -1;
 		explicitHydrogens = HYDROGEN_ANY;
 		atomQueryFeatures = 0L;
+	}
+
+	public int getAtomicNo() {
+		return atomicNo;
+	}
+
+	public int getExplicitHydrogens() {
+		return explicitHydrogens;
+	}
+
+	public boolean isClockwise() {
+		return isClockwise;
+	}
+
+	public boolean foundParities() {
+		return parityFound;
+	}
+
+	public boolean foundSmartsFeatures() {
+		return smartsFeatureFound;
 	}
 
 	private void addAtomToList(int atomicNo) {
@@ -120,6 +139,7 @@ public class SmilesAtomParser {
 	 */
 	protected int parseAtomInsideBrackets(byte[] smiles, int position, int endIndex, boolean allowSmarts, boolean allowAtomOptions) throws Exception {
 		if (smiles[position-1] == '$') {  // recursive SMARTS
+			smartsFeatureFound = true;
 			recursiveSmartsList = new ArrayList<>();
 			position += parseRecursiveGroup(smiles, position-1, recursiveSmartsList) - 1;
 
@@ -490,6 +510,7 @@ public class SmilesAtomParser {
 				if (excludeGroupList == null)
 					excludeGroupList = new ArrayList<>();
 
+				smartsFeatureFound = true;
 				position += parseRecursiveGroup(smiles, position, excludeGroupList);
 				continue;
 			}
@@ -636,7 +657,9 @@ public class SmilesAtomParser {
 		if (excludeGroupList != null) {
 			// Recursive group(s) as further substructure restriction relating to previously parsed atom within same square brackets.
 			for (StereoMolecule group:excludeGroupList) {
+				smartsFeatureFound = true;
 				group.setAtomicNo(0, 0);    // use first atom as attachment point and neglect for now potential query features or negative atom lists
+				mol.setFragment(true);	// make sure to copy query features
 				mol.addSubstituent(group, atom);
 			}
 		}
@@ -669,10 +692,10 @@ public class SmilesAtomParser {
 			throw new Exception("SmilesParser: Missing closing ')' for recursive SMARTS. '('-position:"+(dollarIndex+1));
 
 		StereoMolecule group = new StereoMolecule(16, 16);
-		group.setFragment(true);
 		SmilesParser parser = new SmilesParser(mMode);
 		parser.setEnumerationPositionList(mParentParser.getEnumerationPositionList());
 		parser.parse(group, smiles, dollarIndex+2, endIndex-1);
+		group.setFragment(true);
 		groupList.add(group);
 
 		if (smiles[dollarIndex-1] == '!')
@@ -728,10 +751,6 @@ public class SmilesAtomParser {
 
 	public boolean atomQueryFeaturesFound() {
 		return atomQueryFeatures != 0L || atomList != null;
-	}
-
-	public ArrayList<StereoMolecule> getExcludeGroupList() {
-		return excludeGroupList;
 	}
 
 	public StereoMolecule getRecursiveGroup() {

@@ -447,10 +447,10 @@ public class SmilesParser {
 				// At this position the atom is determined and the square bracket is closed! //
 				///////////////////////////////////////////////////////////////////////////////
 
-				if (atomParser.atomicNo == -1 && theChar != '?')
+				if (atomParser.getAtomicNo() == -1 && theChar != '?')
 					throw new Exception("SmilesParser: unknown element label found. Position:" + (position - 1));
 
-				if (atomParser.atomQueryFeaturesFound())
+				if (atomParser.foundSmartsFeatures())
 					mSmartsFeatureFound = true;
 
 				int atom = atomParser.addParsedAtom(mMol, theChar, position);
@@ -480,18 +480,18 @@ public class SmilesParser {
 				if (readStereoFeatures) {
 					THParity parity = (parityMap == null) ? null : parityMap.get(fromAtom);
 					if (parity != null) // if previous atom is a stereo center
-						parity.addNeighbor(atom, position, atomParser.atomicNo == 1 && mMol.getAtomMass(atom) == 0);
+						parity.addNeighbor(atom, position, atomParser.getAtomicNo() == 1 && mMol.getAtomMass(atom) == 0);
 
-					if (atomParser.parityFound) { // if this atom is a stereo center
+					if (atomParser.foundParities()) { // if this atom is a stereo center
 						if (parityMap == null)
 							parityMap = new TreeMap<>();
 
 						// using position as hydrogenPosition is close enough
-						int hydrogenCount = (atomParser.explicitHydrogens == HYDROGEN_IMPLICIT_ZERO) ? 0
-								: atomParser.explicitHydrogens;
+						int hydrogenCount = (atomParser.getExplicitHydrogens() == HYDROGEN_IMPLICIT_ZERO) ? 0
+								: atomParser.getExplicitHydrogens();
 						// BH this is great, but it does not solve the problem for allene neighbors
 						parityMap.put(atom, new THParity(atom, position - 2, fromAtom, hydrogenCount,
-								atomParser.isClockwise));
+								atomParser.isClockwise()));
 					}
 				}
 
