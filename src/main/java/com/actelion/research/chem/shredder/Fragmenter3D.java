@@ -9,7 +9,8 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 
 public class Fragmenter3D {
-	private final int mMinAtoms,mMaxAtoms,mMaxBondFlexibilitySum,mMinExits,mMaxExits;
+	private final int mMinAtoms,mMaxAtoms,mMinExits,mMaxExits;
+	private final float mMaxBondFlexibilitySum;
 	private final ArrayList<Fragment3D> mFragmentList;
 
 	/**
@@ -20,7 +21,7 @@ public class Fragmenter3D {
 	 * @param minExits
 	 * @param maxExits
 	 */
-	public Fragmenter3D(int minAtoms, int maxAtoms, int maxBondFlexibilitySum, int minExits, int maxExits) {
+	public Fragmenter3D(int minAtoms, int maxAtoms, float maxBondFlexibilitySum, int minExits, int maxExits) {
 		mMinAtoms = minAtoms;
 		mMaxAtoms = maxAtoms;
 		mMaxBondFlexibilitySum = maxBondFlexibilitySum;
