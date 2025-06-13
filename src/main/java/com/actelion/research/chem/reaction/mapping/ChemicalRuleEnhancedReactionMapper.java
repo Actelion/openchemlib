@@ -128,7 +128,6 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 
 	private static boolean sInitialized;
 
-	private StereoMolecule mReactant,mProduct;
 	private float mScore;
 	private int mMaxRuleTries;
 	private ChemicalRule mAppliedRule;
@@ -156,16 +155,16 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 		SimilarityGraphBasedReactionMapper mapper = new SimilarityGraphBasedReactionMapper();
 		mapper.mergeReactantsAndProducts(rxn);
 
-		mReactant = mapper.getReactant();
-		mProduct = mapper.getProduct();
-		mReactant.ensureHelperArrays(Molecule.cHelperNeighbours);
-		mProduct.ensureHelperArrays(Molecule.cHelperNeighbours);
+		StereoMolecule reactant = mapper.getReactant();
+		StereoMolecule product = mapper.getProduct();
+		reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
+		product.ensureHelperArrays(Molecule.cHelperNeighbours);
 
 		// TODO use indexes
 		SSSearcher reactantSearcher = new SSSearcher();
 		SSSearcher productSearcher = new SSSearcher();
-		reactantSearcher.setMolecule(mReactant);
-		productSearcher.setMolecule(mProduct);
+		reactantSearcher.setMolecule(reactant);
+		productSearcher.setMolecule(product);
 
 		mScore = Integer.MIN_VALUE;
 		int[] bestReactantMapNo = null;
@@ -178,7 +177,7 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 if (SimilarityGraphBasedReactionMapper.DEBUG)
  System.out.println("Reaction\tScore");
 
-		StereoMolecule reactant = new StereoMolecule(); // reusable container
+		StereoMolecule adaptedReactant = new StereoMolecule(); // reusable container
 
 		for (ChemicalRule rule:CHEMICAL_RULE) {
 			if (ruleApplicationCount++ == mMaxRuleTries)
@@ -195,12 +194,12 @@ float historyScore = -10000;
 						if (ruleApplicationCount++ >= mMaxRuleTries)
 							break;
 
-						mReactant.copyMolecule(reactant);
-						rule.apply(reactant, reactantMatch);
-						int[] reactantMapNo = new int[mReactant.getAtoms()];
-						int[] productMapNo = new int[mProduct.getAtoms()];
+						reactant.copyMolecule(adaptedReactant);
+						rule.apply(adaptedReactant, reactantMatch);
+						int[] reactantMapNo = new int[reactant.getAtoms()];
+						int[] productMapNo = new int[product.getAtoms()];
 //System.out.println(new MolfileCreator(reactant).getMolfile());
-						mapper.map(reactant, mProduct, reactantMapNo, productMapNo);
+						mapper.map(adaptedReactant, product, reactantMapNo, productMapNo);
 						float score = mapper.getScore() - rule.getPanalty();
 
 if (historyScore < score) historyScore = score;
@@ -219,9 +218,9 @@ mHistory.append(rule.getName()+historyScore+pairSequences+"\n");
 			}
 
 		// map and score the reaction without applying any rules
-		int[] reactantMapNo = new int[mReactant.getAtoms()];
-		int[] productMapNo = new int[mProduct.getAtoms()];
-		mapper.map(mReactant, mProduct, reactantMapNo, productMapNo);
+		int[] reactantMapNo = new int[reactant.getAtoms()];
+		int[] productMapNo = new int[product.getAtoms()];
+		mapper.map(reactant, product, reactantMapNo, productMapNo);
 		float score = mapper.getScore();
 
 		if (mScore <= score) {
