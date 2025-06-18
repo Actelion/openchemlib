@@ -75,7 +75,7 @@ public class DescriptorWeightsHelper {
      */
     public static int [] calcWeightLabels(List<SubGraphIndices> liSubGraphIndices, Molecule3D molecule3D){
 
-        int [] weights = getBasisWeightLabels(molecule3D);
+        int [] weights = getBasisWeightLabels(molecule3D.getAtoms());
 
         for (int i = 0; i < liSubGraphIndices.size(); i++) {
             SubGraphIndices sgi = liSubGraphIndices.get(i);
@@ -98,8 +98,8 @@ public class DescriptorWeightsHelper {
         return weights;
     }
 
-    public static int [] getBasisWeightLabels(Molecule3D molecule3D){
-        int [] weights = new int[molecule3D.getAtoms()];
+    public static int [] getBasisWeightLabels(int atoms){
+        int [] weights = new int[atoms];
         Arrays.fill(weights, DescriptorWeightsHelper.LABEL_WEIGHT_NORMAL);
         return weights;
     }
