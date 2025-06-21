@@ -40,6 +40,7 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.util.SortedList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -56,21 +57,18 @@ import java.util.Arrays;
  * created, or broken in the query reactant. A
  */
 public class ChemicalRule {
-	private String mName,mIDCode;
-	private float mPanalty;
-	private StereoMolecule mReactant,mProduct;
-	private ChemicalRuleBond[] mRuleBonds;
-	private int[] mInvertedTHParity;
-	private int[] mReactantAtomSymmetryConstraint;
+	private final String mName;
+	private final float mPanalty;
+	private final StereoMolecule mReactant,mProduct;
+	private final ChemicalRuleBond[] mRuleBonds;
+	private final ArrayList<RuleIncomingFragment> mRuleFragmentList;
+	private final int[] mReactantAtomsForRemoval,mMapNoToReactantAtom;
+	private int[] mInvertedTHParity,mReactantAtomSymmetryConstraint;
 
-	public ChemicalRule(String name, String idcode, float panalty) {
+	public ChemicalRule(String name, String idcode) {
 		mName = name;
-		mIDCode = idcode;
-		mPanalty = panalty;
-	}
 
-	public void initialize() {
-		Reaction rxn = ReactionEncoder.decode(mIDCode, false);
+		Reaction rxn = ReactionEncoder.decode(idcode, false);
 		if (rxn.getReactants() != 1 || rxn.getProducts() != 1)
 			System.out.println("ERROR: Rule '"+mName+"' doesn't contain exactly one reactant and one product!");
 		if (!rxn.isFragment())
@@ -85,20 +83,22 @@ public class ChemicalRule {
 
 		SortedList<ChemicalRuleBond> bondList = new SortedList<>();
 
-		int[] mapNoToReactantAtom = new int[mReactant.getAtoms()+1];
-		mapNoToReactantAtom[0] = -1;    // to cause exceptions in case of faulty logic
+		mMapNoToReactantAtom = new int[mReactant.getAtoms()+1];
+		mMapNoToReactantAtom[0] = -1;    // to cause exceptions in case of faulty logic
 		for (int atom=0; atom<mReactant.getAtoms(); atom++)
-			mapNoToReactantAtom[mReactant.getAtomMapNo(atom)] = atom;
+			mMapNoToReactantAtom[mReactant.getAtomMapNo(atom)] = atom;
 
-		calculateReactantAtomSymmetryConstraints(mapNoToReactantAtom);
+		calculateReactantAtomSymmetryConstraints(mMapNoToReactantAtom);
 
 		boolean[] reactantBondFoundInProduct = new boolean[mReactant.getBonds()];
 		for (int productBond=0; productBond<mProduct.getBonds(); productBond++) {
-			int mapNo1 = mProduct.getAtomMapNo(mProduct.getBondAtom(0, productBond));
-			int mapNo2 = mProduct.getAtomMapNo(mProduct.getBondAtom(1, productBond));
+			int productAtom1 = mProduct.getBondAtom(0, productBond);
+			int productAtom2 = mProduct.getBondAtom(1, productBond);
+			int mapNo1 = mProduct.getAtomMapNo(productAtom1);
+			int mapNo2 = mProduct.getAtomMapNo(productAtom2);
 			if (mapNo1 != 0 && mapNo2 != 0) {   // exclude atoms are not mapped and don't go into the bond list
-				int atom1 = mapNoToReactantAtom[mapNo1];
-				int atom2 = mapNoToReactantAtom[mapNo2];
+				int atom1 = mMapNoToReactantAtom[mapNo1];
+				int atom2 = mMapNoToReactantAtom[mapNo2];
 				int productBondType = mProduct.getBondTypeSimple(productBond);
 				int reactantBond = mReactant.getBond(atom1, atom2);
 				if (reactantBond == -1) {
@@ -129,24 +129,44 @@ public class ChemicalRule {
 
 		mRuleBonds = bondList.toArray(new ChemicalRuleBond[0]);
 
+		// Collect all non-mapped disappearing atoms in rule's reactant
+		int count = 0;
+		for (int atom=0; atom<mReactant.getAtoms(); atom++)
+			if (mReactant.getAtomMapNo(atom) == 0 && (mReactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0)
+				count++;
+		mReactantAtomsForRemoval = new int[count];
+		count = 0;
+		for (int atom=0; atom<mReactant.getAtoms(); atom++)
+			if (mReactant.getAtomMapNo(atom) == 0 && (mReactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0)
+				mReactantAtomsForRemoval[count++] = atom;
+
+		// List all non-mapped incoming fragments in rule's product
+		mRuleFragmentList = new ArrayList<>();
+		boolean[] isHandledFragmentAtom = new boolean[mProduct.getAtoms()];
+		for (int atom=0; atom<mProduct.getAtoms(); atom++)
+			if (mProduct.getAtomMapNo(atom) == 0
+			 && (mProduct.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0
+			 && !isHandledFragmentAtom[atom])
+				mRuleFragmentList.add(new RuleIncomingFragment(mProduct, atom, isHandledFragmentAtom));
+
 		mInvertedTHParity = new int[0];
 		for (int productAtom=0; productAtom<mProduct.getAtoms(); productAtom++) {
 			int productParity = mProduct.getAtomParity(productAtom);
 			if (productParity == Molecule.cAtomParity1
 			 || productParity == Molecule.cAtomParity2) {
-				int reactantAtom = mapNoToReactantAtom[mProduct.getAtomMapNo(productAtom)];
+				int reactantAtom = mMapNoToReactantAtom[mProduct.getAtomMapNo(productAtom)];
 				if (reactantAtom != -1) {
 					int reactantParity = mReactant.getAtomParity(reactantAtom);
-					if (isTHParityInversion(productAtom, mapNoToReactantAtom) == (reactantParity == productParity))
+					if (isTHParityInversion(productAtom, mMapNoToReactantAtom) == (reactantParity == productParity))
 						addInvertedParityAtom(reactantAtom);
 					}
 				}
 			}
 
-		calculatePenalty();
+		mPanalty = calculatePenalty();
 		}
 
-	private void calculatePenalty() {
+	private float calculatePenalty() {
 		MappingScorer scorer = new MappingScorer(mReactant, mProduct);
 		int[] reactantMapNo = new int[mReactant.getAllAtoms()];
 		for (int i=0; i<mReactant.getAllAtoms(); i++)
@@ -155,8 +175,8 @@ public class ChemicalRule {
 		for (int i=0; i<mProduct.getAllAtoms(); i++)
 			productMapNo[i] = mProduct.getAtomMapNo(i);
 
-		mPanalty = -scorer.scoreMapping(scorer.createReactantToProductAtomMap(reactantMapNo, productMapNo)) * 0.25f;
-//		mPanalty = -scorer.scoreMapping(scorer.createReactantToProductAtomMap(reactantMapNo, productMapNo)) - 1.5f;	// is a positive value
+		return -scorer.scoreMapping(scorer.createReactantToProductAtomMap(reactantMapNo, productMapNo)) * 0.25f;
+//		return -scorer.scoreMapping(scorer.createReactantToProductAtomMap(reactantMapNo, productMapNo)) - 1.5f;	// is a positive value
 
 		// The idea is that when a rule is applied, then the score should be better than
 		// the simple calculated score from bond changes, because we know that we use
@@ -186,8 +206,33 @@ public class ChemicalRule {
 		mInvertedTHParity[mInvertedTHParity.length-1] = atom;
 		}
 
-	public void apply(StereoMolecule reactant, int[] match) {
+	/**
+	 * Applies the chemical rule to the reactant to basically convert the given reactant
+	 * into the rule's product, which will be the basis then for similarity graph based mapping
+	 * in the hope that the mapping is a much simpler one then.
+	 * Applying the rule means changing connectivity and possibly removing some atoms that are
+	 * part of the rule's reactant but not of the rule's product.
+	 * @param reactant
+	 * @param match
+	 * return
+	 */
+	public int[] apply(StereoMolecule reactant, int[] match) {
 		reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
+
+		// If we have unmapped atoms in the rule's reactant, then mark these atoms for removal.
+		// Also mark all connected atoms for removal that either are not represented in the match
+		// or that are not mapped in the match.
+		if (mReactantAtomsForRemoval.length != 0) {
+			boolean[] isMappedRuleAtom = new boolean[reactant.getAtoms()];
+			for (int i=0; i<match.length; i++)
+				if (match[i] != -1 && mReactant.getAtomMapNo(i) != 0)
+					isMappedRuleAtom[match[i]] = true;
+
+			for (int atom : mReactantAtomsForRemoval)
+				if (!reactant.isAtomMarkedForDeletion(match[atom]))
+					markSubstituentForDeletion(reactant, match[atom], isMappedRuleAtom);
+		}
+
 		for (ChemicalRuleBond ruleBond:mRuleBonds) {
 			int reactantAtom1 = match[ruleBond.atom1];
 			int reactantAtom2 = match[ruleBond.atom2];
@@ -199,16 +244,46 @@ public class ChemicalRule {
 			else if (ruleBond.newBondType != ChemicalRuleBond.BOND_TYPE_KEEP_UNCHANGED)
 				reactant.setBondType(reactantBond, ruleBond.newBondType);
 			}
-		reactant.deleteMarkedAtomsAndBonds();
+
+		int[] originalToAppliedAtom = reactant.deleteMarkedAtomsAndBonds();
+
+		for (RuleIncomingFragment ruleFragment : mRuleFragmentList)
+			ruleFragment.apply(reactant, match, originalToAppliedAtom, mMapNoToReactantAtom);
 
 		if (mInvertedTHParity.length != 0) {
 			reactant.ensureHelperArrays(Molecule.cHelperRings);
 			for (int atom:mInvertedTHParity) {
-				int reactantAtom = match[atom];
+				int reactantAtom = originalToAppliedAtom[match[atom]];
 				int reactantParity = reactant.getAtomParity(reactantAtom);
 				reactant.setAtomParity(reactantAtom, reactantParity == Molecule.cAtomParity1 ?
 						Molecule.cAtomParity2 : Molecule.cAtomParity1, false);
 				reactant.setStereoBondFromAtomParity(reactantAtom);
+			}
+		}
+
+		return originalToAppliedAtom;
+	}
+
+	/**
+	 * Starting from atom marks all connected atoms for removal, which either are not part of the match
+	 * or where the associated atom in the matching rule reactant has no mapping number.
+	 * @param reactant of reaction to be mapped
+	 * @param atom first atom of potentially more to be removed from reactant
+	 * @param isMappedRuleAtom
+	 */
+	private void markSubstituentForDeletion(StereoMolecule reactant, int atom, boolean[] isMappedRuleAtom) {
+		int[] workAtom = new int[reactant.getAtoms()];
+		workAtom[0] = atom;
+		int highest = 0;
+		for (int i=0; i<=highest; i++) {
+			int currentAtom = workAtom[highest];
+			reactant.markAtomForDeletion(currentAtom);
+			for (int j=0; j<reactant.getConnAtoms(currentAtom); j++) {
+				int connAtom = reactant.getConnAtom(currentAtom, j);
+				if (!isMappedRuleAtom[connAtom] && !reactant.isAtomMarkedForDeletion(connAtom)) {
+					reactant.markAtomForDeletion(connAtom);
+					workAtom[++highest] = connAtom;
+				}
 			}
 		}
 	}
@@ -308,5 +383,61 @@ class ChemicalRuleBond implements Comparable<ChemicalRuleBond> {
 
 	public void setNewBondType(int newBondType) {
 		this.newBondType = newBondType;
+	}
+}
+
+class RuleIncomingFragment {
+	private final StereoMolecule mRuleProduct;
+	private final int[] mGraphAtom;
+	private final int mGraphAtoms;
+
+	public RuleIncomingFragment(StereoMolecule ruleProduct, int rootAtom, boolean[] isUsedAtom) {
+		mGraphAtom = new int[ruleProduct.getAtoms()];
+		mGraphAtom[0] = rootAtom;
+		isUsedAtom[rootAtom] = true;
+		int current = 0;
+		int highest = 0;
+		while (current <= highest) {
+			int connAtoms = ruleProduct.getConnAtoms(mGraphAtom[current]);
+			for (int i=0; i<connAtoms; i++) {
+				int candidate = ruleProduct.getConnAtom(mGraphAtom[current], i);
+				if (ruleProduct.getAtomMapNo(candidate) == 0
+				 && (ruleProduct.getAtomQueryFeatures(candidate) & Molecule.cAtomQFExcludeGroup) == 0
+				 && !isUsedAtom[candidate]) {
+					mGraphAtom[++highest] = candidate;
+					isUsedAtom[candidate] = true;
+				}
+			}
+			current++;
+		}
+
+		mGraphAtoms = current;
+		mRuleProduct = ruleProduct;
+	}
+
+	public void apply(StereoMolecule reactant, int[] match, int[] originalToAppliedAtom, int[] mapNoToReactantAtom) {
+		// copy fragment atoms first
+		int[] ruleToReactantAtom = new int[mRuleProduct.getAtoms()];
+		for (int i=0; i<mGraphAtoms; i++)
+			ruleToReactantAtom[mGraphAtom[i]] = mRuleProduct.copyAtom(reactant, mGraphAtom[i], 0, 0);
+
+		// then copy bonds between fragment atoms and between a fragment atom and a mapped atom
+		boolean[] isBondHandled = new boolean[mRuleProduct.getBonds()];
+		for (int i=0; i<mGraphAtoms; i++) {
+			for (int j=0; j<mRuleProduct.getConnAtoms(mGraphAtom[i]); j++) {
+				int connAtom = mRuleProduct.getConnAtom(mGraphAtom[i], j);
+				if ((mRuleProduct.getAtomQueryFeatures(connAtom) & Molecule.cAtomQFExcludeGroup) == 0) {
+					int connBond = mRuleProduct.getConnBond(mGraphAtom[i], j);
+					if (mRuleProduct.getAtomMapNo(connAtom) != 0)
+						mRuleProduct.copyBond(reactant, connBond, 0, 0,
+								ruleToReactantAtom[mGraphAtom[i]], originalToAppliedAtom[match[mapNoToReactantAtom[mRuleProduct.getAtomMapNo(connAtom)]]], false);
+					else if (!isBondHandled[connBond]) {
+						mRuleProduct.copyBond(reactant, connBond, 0, 0,
+								ruleToReactantAtom[mGraphAtom[i]], ruleToReactantAtom[connAtom], false);
+						isBondHandled[connBond] = true;
+					}
+				}
+			}
+		}
 	}
 }

@@ -42,7 +42,7 @@ import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionArrow;
 import com.actelion.research.chem.reaction.ReactionEncoder;
-import com.actelion.research.chem.reaction.mapping.SimilarityGraphBasedReactionMapper;
+import com.actelion.research.chem.reaction.mapping.ChemicalRuleEnhancedReactionMapper;
 import com.actelion.research.gui.FileHelper;
 import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
@@ -2154,7 +2154,8 @@ public class GenericEditorArea implements GenericEventListener {
 		analyzeFragmentMembership();
 
 		// We take the current fragments into a reaction, which we map.
-		new SimilarityGraphBasedReactionMapper().map(getReaction());
+//		new SimilarityGraphBasedReactionMapper().map(getReaction());
+		new ChemicalRuleEnhancedReactionMapper().map(getReaction());
 
 		// Copy new mapping numbers from current fragments into the display molecule,
 		// but mark all those atom as auto-mapped that originally were unmapped or auto-mapped.

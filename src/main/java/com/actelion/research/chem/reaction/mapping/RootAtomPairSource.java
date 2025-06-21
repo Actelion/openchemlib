@@ -54,17 +54,18 @@ public class RootAtomPairSource {
 	private static final int PSEUDO_MAP_NO_SKIPPED_PAIR = -99999;
 
 	private ArrayList<RootAtomPair> mPairBuffer;
-	private StereoMolecule mReactant,mProduct;
+	private final StereoMolecule mReactant,mProduct;
 	private Canonizer mReactantCanonizer,mProductCanonizer;
 	private CanonizerBaseValue[] mCanBase;
 	private int mSequenceCount,mCurrentRadius,mManualMapCount,mMappableAtomCount,mCurrentEnvIndex0,mCurrentEnvIndex1,mCurrentEnvIndex2,mCurrentEnvIndex3;
 	private RootAtomPairDecisionHelper mDecisionHelper;
-	private boolean mIsStoichiometric;
-	private int[] mReactantRank,mProductRank,mReactantFragmentNo,mProductFragmentNo,mReactantMapNo,mProductMapNo;
+	private final boolean mIsStoichiometric;
+	private int[] mReactantRank,mProductRank;
+	private final int[] mReactantFragmentNo,mProductFragmentNo,mReactantMapNo,mProductMapNo;
 	private int mAtomBits,mMaxConnAtoms,mHighestReactionRank,mHighestProductRank;
-	private boolean[] mReactantFragmentUsed,mProductFragmentUsed;
-	private TreeMap<byte[],int[][]>[] mEnvToAtomsMap; // index: radius
-	private byte[][][] mEnvKey;
+	private final boolean[] mReactantFragmentUsed,mProductFragmentUsed;
+	private final TreeMap<byte[],int[][]>[] mEnvToAtomsMap; // index: radius
+	private final byte[][][] mEnvKey;
 
 	public RootAtomPairSource(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo) {
 		mReactant = reactant;

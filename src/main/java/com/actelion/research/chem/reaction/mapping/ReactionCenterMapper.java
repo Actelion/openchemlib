@@ -51,10 +51,11 @@ import java.util.TreeMap;
 public class ReactionCenterMapper {
 	private static final int MAX_PERMUTATION_COUNT = 4000000;
 
-	private ArrayList<UnmappedCenterAtoms> mAtomClasses;
-	private StereoMolecule mReactant,mProduct;
-	private int[] mReactantMapNo,mProductMapNo;
-	private int mStartMapNo,mMapNo;
+	private final ArrayList<UnmappedCenterAtoms> mAtomClasses;
+	private final StereoMolecule mReactant,mProduct;
+	private final int[] mReactantMapNo,mProductMapNo;
+	private final int mStartMapNo;
+	private int mMapNo;
 
 	public ReactionCenterMapper(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, int mapNo) {
 		mReactant = reactant;
@@ -105,7 +106,7 @@ public class ReactionCenterMapper {
 		MappingScorer scorer = new MappingScorer(mReactant, mProduct);
 		int[] reactantToProductAtom = scorer.createReactantToProductAtomMap(mReactantMapNo, mProductMapNo);
 
-		if (mAtomClasses.size() == 0)
+		if (mAtomClasses.isEmpty())
 			return scorer.scoreMapping(reactantToProductAtom);
 
 		double totalPermutationCount = 1;
@@ -113,7 +114,7 @@ public class ReactionCenterMapper {
 			totalPermutationCount *= uca.getPermutationCount();
 		if (totalPermutationCount > MAX_PERMUTATION_COUNT) {
 			System.out.println("permutationCount exceeds maximum:"+totalPermutationCount);
-			return 0;
+			return (float)-totalPermutationCount;
 			}
 
 		int atomCount = 0;
@@ -130,7 +131,7 @@ public class ReactionCenterMapper {
 		int[] bestReactantAtom = null;
 		int[] bestProductAtom = null;
 		int[] permutationIndex = new int[mAtomClasses.size()];
-		boolean nextPermutationAvailable = (mAtomClasses.size() != 0);
+		boolean nextPermutationAvailable = (!mAtomClasses.isEmpty());
 		while (nextPermutationAvailable) {
 			for (int i=0; i<mAtomClasses.size(); i++)
 				mAtomClasses.get(i).completeReactantToProductAtomMap(permutationIndex[i], reactantToProductAtom);

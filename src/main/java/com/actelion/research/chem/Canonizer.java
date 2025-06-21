@@ -110,6 +110,9 @@ public class Canonizer {
 
 	public static final int NEGLECT_ANY_STEREO_INFORMATION = 2048;
 
+	// Don't consider tetrahedral stereo information on Si,P,S
+	public static final int NEGLECT_LARGE_ATOM_STEREO_INFORMATION = 4096;
+
 	protected static final int cIDCodeVersion2 = 8;
 		// productive version till May 2006 based on the molfile version 2
 
@@ -1647,6 +1650,11 @@ System.out.println("noOfRanks:"+canRank);
 		 && mMol.getAtomicNo(atom) != 15
 		 && mMol.getAtomicNo(atom) != 16)
 			return false;
+
+		if ((mMode & NEGLECT_LARGE_ATOM_STEREO_INFORMATION) != 0
+		 && mMol.getAtomicNo(atom) >= 14)
+			return false;
+
 
 		if (mMol.getAtomPi(atom) != 0) {
 			if (mMol.isCentralAlleneAtom(atom))

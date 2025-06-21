@@ -1324,7 +1324,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	/**
 	 * Determines all atoms of the substituent attached to coreAtom and starting
 	 * with firstAtom. If isMemberAtom!=null, then all substituent member atoms
-	 * will have the the respective index being flagged upon return. This includes
+	 * will have their corresponding bit set to true upon return. This includes
 	 * firstAtom and excludes coreAtom.
 	 * If substituent!=null, then it will contain the substituent as Molecule.
 	 * At the position of the coreAtom substituent will contain a wildcard atom.
