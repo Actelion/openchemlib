@@ -320,7 +320,7 @@ public class Reaction implements java.io.Serializable {
 				int mapNo = reactant.getAtomMapNo(atom);
 				if (mapNo != 0) {
 					mapNoCount++;
-					if (reactant.isFragment() && (reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+					if (reactant.isFragment() && reactant.isExcludeGroupAtom(atom))
 						return false;
 
 					if (isUsed[mapNo])
@@ -339,7 +339,7 @@ public class Reaction implements java.io.Serializable {
 				int mapNo = product.getAtomMapNo(atom);
 				if (mapNo != 0) {
 					mapNoCount--;
-					if (product.isFragment() && (product.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+					if (product.isFragment() && product.isExcludeGroupAtom(atom))
 						return false;
 
 					if (!isUsed[mapNo])
@@ -365,7 +365,7 @@ public class Reaction implements java.io.Serializable {
 			reactant.ensureHelperArrays(Molecule.cHelperNeighbours);
 			if (reactant.isFragment()) {
 				for (int atom = 0; atom<reactant.getAtoms(); atom++) {
-					if ((reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0)
+					if (!reactant.isExcludeGroupAtom(atom))
 						atoms++;
 					else if (reactant.getAtomMapNo(atom) != 0)
 						return false;
@@ -379,7 +379,7 @@ public class Reaction implements java.io.Serializable {
 			product.ensureHelperArrays(Molecule.cHelperNeighbours);
 			if (product.isFragment()) {
 				for (int atom = 0; atom<product.getAtoms(); atom++) {
-					if ((product.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0)
+					if (!product.isExcludeGroupAtom(atom))
 						atoms--;
 					else if (product.getAtomMapNo(atom) != 0)
 						return false;
@@ -398,7 +398,7 @@ public class Reaction implements java.io.Serializable {
 
 		for (StereoMolecule reactant:mReactant) {
 			for (int atom=0; atom<reactant.getAtoms(); atom++) {
-				if (!reactant.isFragment() || (reactant.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0) {
+				if (!reactant.isFragment() || !reactant.isExcludeGroupAtom(atom)) {
 					int mapNo = reactant.getAtomMapNo(atom);
 					if (isUsed[mapNo])
 						return false;
@@ -410,7 +410,7 @@ public class Reaction implements java.io.Serializable {
 		for (StereoMolecule product:mProduct) {
 			product.ensureHelperArrays(Molecule.cHelperNeighbours);
 			for (int atom=0; atom<product.getAtoms(); atom++) {
-				if (!product.isFragment() || (product.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0) {
+				if (!product.isFragment() || !product.isExcludeGroupAtom(atom)) {
 					int mapNo = product.getAtomMapNo(atom);
 					if (mapNo >= maxMapNo || !isUsed[mapNo])
 						return false;

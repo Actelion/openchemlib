@@ -919,10 +919,10 @@ public class SSSearcherWithIndex {
 	private StereoMolecule removeExcludeGroups(StereoMolecule mol) {
 		if (mol.isFragment()) {
 			for (int atom=0; atom<mol.getAllAtoms(); atom++) {
-				if ((mol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0) {
+				if (mol.isExcludeGroupAtom(atom)) {
 					mol = new StereoMolecule(mol);
 					for (int i=atom; i<mol.getAllAtoms(); i++)
-						if ((mol.getAtomQueryFeatures(i) & Molecule.cAtomQFExcludeGroup) != 0)
+						if (mol.isExcludeGroupAtom(i))
 							mol.markAtomForDeletion(i);
 					mol.deleteMarkedAtomsAndBonds();
 					}

@@ -1223,13 +1223,13 @@ public class Molecule implements Serializable {
 		int esrGroupCountAND = renumberESRGroups(cESRTypeAnd);
 		int esrGroupCountOR = renumberESRGroups(cESRTypeOr);
 		for (int atom=atom1; atom<atom2; atom++)
-			if (includeExcludeGroups || (mol.getAtomQueryFeatures(atom) & cAtomQFExcludeGroup) == 0)
+			if (includeExcludeGroups || !mol.isExcludeGroupAtom(atom))
 				atomMap[atom] = mol.copyAtom(this, atom, esrGroupCountAND, esrGroupCountOR);
 
 		for (int bond=bond1; bond<bond2; bond++)
 			if (includeExcludeGroups
-			 || ((mol.getAtomQueryFeatures(mol.getBondAtom(0, bond)) & cAtomQFExcludeGroup) == 0
-			  && (mol.getAtomQueryFeatures(mol.getBondAtom(1, bond)) & cAtomQFExcludeGroup) == 0))
+			 || (!mol.isExcludeGroupAtom(mol.getBondAtom(0, bond))
+			  && !mol.isExcludeGroupAtom(mol.getBondAtom(1, bond))))
 				mol.copyBond(this, bond, esrGroupCountAND, esrGroupCountOR, atomMap, false);
 
 		mIsRacemate = (mIsRacemate && mol.mIsRacemate);
@@ -3052,6 +3052,14 @@ public class Molecule implements Serializable {
 
 
 	/**
+	 * Convenience method to check, whether the atom is marked to be part of an exclude group.
+	 */
+	public boolean isExcludeGroupAtom(int atom) {
+		return (mAtomQueryFeatures[atom] & cAtomQFExcludeGroup) != 0;
+	}
+
+
+	/**
 	 * Used for depiction only.
 	 * @param bond
 	 */
@@ -3824,7 +3832,7 @@ public class Molecule implements Serializable {
 		boolean isChanged = false;
 
 		for (int atom=0; atom<mAllAtoms; atom++) {
-			if ((mAtomQueryFeatures[atom] & cAtomQFExcludeGroup) != 0) {
+			if (isExcludeGroupAtom(atom)) {
 				markAtomForDeletion(atom);
 				isChanged = true;
 				}

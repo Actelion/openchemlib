@@ -100,7 +100,7 @@ public class ClipboardHandler implements IClipboardHandler
 	@Override
 	public StereoMolecule pasteMolecule(boolean prefer2D, int smartsMode) {
 		ArrayList<StereoMolecule> molList = pasteMolecules(prefer2D, false, smartsMode);
-		return molList.size() == 0 ? null : molList.get(0);
+		return molList.isEmpty() ? null : molList.get(0);
 	}
 
 	/**
@@ -123,7 +123,7 @@ public class ClipboardHandler implements IClipboardHandler
 		if (mol != null)
 			molList.add(mol);
 
-		if (molList.size() == 0) {
+		if (molList.isEmpty()) {
 			// get StringFlavor from clipboard and try parsing it as idcode, molfile, smiles, or (if NameResolver exists) as name
 			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 			String text = null;
@@ -141,7 +141,7 @@ public class ClipboardHandler implements IClipboardHandler
 
 				ArrayList<String> unresolvedNameList = null;
 
-				if (molList.size() == 0) {
+				if (molList.isEmpty()) {
 					boolean isFirstLine = true;
 					int column = -1;    // in case we have a TAB-delimited table with '[idcode]' tags, use first tagged column
 					BufferedReader reader = new BufferedReader(new StringReader(text));
@@ -161,7 +161,7 @@ public class ClipboardHandler implements IClipboardHandler
 								if (column != -1)
 									continue;
 							}
-							if (line.length() == 0)
+							if (line.isEmpty())
 								continue;
 							try {
 								String idcode = line;
@@ -209,7 +209,7 @@ public class ClipboardHandler implements IClipboardHandler
 					catch (IOException ioe) {}
 				}
 
-				if (unresolvedNameList != null && unresolvedNameList.size() != 0) {
+				if (unresolvedNameList != null && !unresolvedNameList.isEmpty()) {
 					String[] idcodes = StructureNameResolver.resolveRemote(unresolvedNameList.toArray(new String[0]));
 					for (String idcode:idcodes) {
 						try {
@@ -231,7 +231,7 @@ public class ClipboardHandler implements IClipboardHandler
 			}
 		}
 
-		System.out.println("returned mol(s): " + molList.size());
+//		System.out.println("returned mol(s): " + molList.size());
 		return molList;
 	}
 
@@ -507,8 +507,6 @@ public class ClipboardHandler implements IClipboardHandler
 			RXNFileParser p = new RXNFileParser();
 			p.parse(rxn, ctab);
 			ok = copyReactionToClipboard(ctab, rxn);
-		} catch (IOException e) {
-			System.err.println("ClipboardHandler: Exception copying reaction " + e);
 		} catch (Exception e) {
 			System.err.println("ClipboardHandler: Exception copying reaction " + e);
 		}
@@ -559,7 +557,7 @@ public class ClipboardHandler implements IClipboardHandler
 		d.paint(g);
 
 		if (sketch != null) {
-			byte temp[] = new byte[MDLSK.length + sketch.length];
+			byte[] temp = new byte[MDLSK.length + sketch.length];
 			System.arraycopy(MDLSK, 0, temp, 0, MDLSK.length);
 			System.arraycopy(sketch, 0, temp, MDLSK.length, sketch.length);
 			wmf.escape(WMF.MFCOMMENT, temp);
@@ -583,7 +581,7 @@ public class ClipboardHandler implements IClipboardHandler
 	 * @return boolean
 	 */
 	public static boolean copyMetaFile(byte []data) {
-		return Platform.isWindows() ? setClipBoardData(NativeClipboardAccessor.NC_METAFILE,data) : false;
+		return Platform.isWindows() && setClipBoardData(NativeClipboardAccessor.NC_METAFILE, data);
 		}
 
 /*	private boolean writeRXN2Metafile(File temp, byte sketch[], Reaction m)

@@ -114,8 +114,7 @@ public class MoleculeAutoMapper implements AutoMapper {
 	private void matchFragments() {
 		// locate disconnected unmapped areas as fragments
 		for (int atom=0; atom<mMol.getAtoms(); atom++)
-			mMol.setAtomMarker(atom, mMol.getAtomMapNo(atom) == 0
-					&& (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0);
+			mMol.setAtomMarker(atom, mMol.getAtomMapNo(atom) == 0 && !mMol.isExcludeGroupAtom(atom));
 		for (int atom=mMol.getAtoms(); atom<mMol.getAllAtoms(); atom++)
 			mMol.setAtomMarker(atom, false);
 		int[] fragmentNo = new int[mMol.getAllAtoms()];
@@ -139,7 +138,7 @@ public class MoleculeAutoMapper implements AutoMapper {
 		int[] fragmentAtom = new int[fragmentCount];
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (mMol.getAtomMapNo(atom) == 0
-			 && (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0) {
+			 && !mMol.isExcludeGroupAtom(atom)) {
 				int fNo = fragmentNo[atom];
 				int fAtom = fragmentAtom[fNo]++;
 
@@ -360,8 +359,7 @@ public class MoleculeAutoMapper implements AutoMapper {
 		int count = 0;
 		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 			int connAtom = mMol.getConnAtom(atom, i);
-			if (mMol.getAtomMapNo(connAtom) == 0
-			 && (mMol.getAtomQueryFeatures(connAtom) & Molecule.cAtomQFExcludeGroup) == 0)
+			if (mMol.getAtomMapNo(connAtom) == 0 && !mMol.isExcludeGroupAtom(connAtom))
 				count++;
 			}
 
@@ -373,7 +371,7 @@ public class MoleculeAutoMapper implements AutoMapper {
 		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
 			int connAtom = mMol.getConnAtom(atom, i);
 			if (mMol.getAtomMapNo(connAtom) == 0
-			 && (mMol.getAtomQueryFeatures(connAtom) & Molecule.cAtomQFExcludeGroup) == 0)
+			 && !mMol.isExcludeGroupAtom(connAtom))
 				neighborInfo[count++] = (mMol.getAtomicNo(connAtom) << 24)
 									  + (mMol.getAtomMass(connAtom) << 16)
 									  + connAtom;

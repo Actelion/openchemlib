@@ -218,7 +218,7 @@ public class SSSearcher {
 
 		mIsExcludeAtom = new boolean[mFragment.getAtoms()];
 		for (int atom=0; atom<mFragment.getAtoms(); atom++) {
-			mIsExcludeAtom[atom] = ((mFragment.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0);
+			mIsExcludeAtom[atom] = mFragment.isExcludeGroupAtom(atom);
 			if (mIsExcludeAtom[atom])
 				mFragmentExcludeAtoms++;
 			}

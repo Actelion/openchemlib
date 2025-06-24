@@ -62,17 +62,20 @@ public class RootAtomPairSource {
 	private final boolean mIsStoichiometric;
 	private int[] mReactantRank,mProductRank;
 	private final int[] mReactantFragmentNo,mProductFragmentNo,mReactantMapNo,mProductMapNo;
+	private final boolean[][] mVetoMatrix;
 	private int mAtomBits,mMaxConnAtoms,mHighestReactionRank,mHighestProductRank;
 	private final boolean[] mReactantFragmentUsed,mProductFragmentUsed;
 	private final TreeMap<byte[],int[][]>[] mEnvToAtomsMap; // index: radius
 	private final byte[][][] mEnvKey;
 
-	public RootAtomPairSource(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo) {
+	public RootAtomPairSource(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, boolean[][] vetoMatrix) {
 		mReactant = reactant;
 		mProduct = product;
 
 		mReactantMapNo = reactantMapNo;
 		mProductMapNo = productMapNo;
+
+		mVetoMatrix = vetoMatrix;
 
 		// Reactant and product atom ranks are updated with every assigned pair in order to reflect
 		// decreasing symmetry due to unsymmetrically assigned atom mapping.
@@ -382,7 +385,7 @@ public class RootAtomPairSource {
 		}
 
 	private RootAtomPair nextRawPair() {
-		while (mPairBuffer.size() != 0) {
+		while (!mPairBuffer.isEmpty()) {
 			RootAtomPair pair = mPairBuffer.remove(0);
 			if (mReactantMapNo[pair.reactantAtom] == 0 && mProductMapNo[pair.productAtom] == 0)
 				return pair;
@@ -526,6 +529,9 @@ public class RootAtomPairSource {
 		}
 
 	private RootAtomPair tryCreatePair(int reactantAtom, int productAtom) {
+		if (mVetoMatrix != null && mVetoMatrix[reactantAtom] != null && mVetoMatrix[reactantAtom][productAtom])
+			return null;
+
 		if (mReactantMapNo[reactantAtom] == 0 && mProductMapNo[productAtom] == 0)
 			return createPair(reactantAtom, productAtom);
 

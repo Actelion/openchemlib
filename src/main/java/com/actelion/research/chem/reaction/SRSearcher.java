@@ -422,7 +422,7 @@ public class SRSearcher {
 	private int getNonExcludedNeighbours(StereoMolecule mol, int atom) {
 		int count = 0;
 		for (int i=0; i<mol.getConnAtoms(atom); i++)
-			if ((mol.getAtomQueryFeatures(mol.getConnAtom(atom, i)) & Molecule.cAtomQFExcludeGroup) == 0)
+			if (!mol.isExcludeGroupAtom(mol.getConnAtom(atom, i)))
 				count++;
 		return count;
 		}

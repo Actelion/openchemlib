@@ -1,6 +1,5 @@
 package com.actelion.research.chem.sar;
 
-import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
 import java.util.ArrayList;
@@ -37,7 +36,7 @@ public class SARScaffoldGroup {
 	private void analyzeExitVectors(StereoMolecule query) {
 		ArrayList<ExitVector> evList = new ArrayList<>();
 		for (int atom=0; atom<query.getAtoms(); atom++) {
-			if ((query.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) == 0) {
+			if (!query.isExcludeGroupAtom(atom)) {
 				int exitVectorCount = query.getLowestFreeValence(atom);
 				for (int i=0; i<exitVectorCount; i++) {
 					// If we have >= two exit vectors (with both one and two connAtoms in the query)

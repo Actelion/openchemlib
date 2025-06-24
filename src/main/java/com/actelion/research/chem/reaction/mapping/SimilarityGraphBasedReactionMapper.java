@@ -47,8 +47,8 @@ public class SimilarityGraphBasedReactionMapper {
 
 	// When building the mapping graph, next neighbors are added based on directed environment similarity.
 	// To determine this similarity, directed radial substructures are precalculated for every atom from
-	// the perspective of every of one its neighbour atoms (fromAtom). The smallest fragment just contains
-	// the neighbor and the atom itself. The next fragment is build from the first by adding all direct
+	// the perspective of every one of its neighbour atoms (fromAtom). The smallest fragment just contains
+	// the fromAtom and the atom itself. The next fragment is build from the first by adding all direct
 	// neighbours to the atom (except fromAtom neighbours).
 	private static final int SIMILARITY_SHIFT = 8;  // bit shift to allow for lower significant features to distinguish equal environment similarities
 	private static final int NO_PI_PENALTY = 1;
@@ -79,18 +79,24 @@ public class SimilarityGraphBasedReactionMapper {
 	 */
 	public void map(Reaction rxn) {
 		mergeReactantsAndProducts(rxn);
-		map(mReactant, mProduct, new int[mReactant.getAtoms()], new int[mProduct.getAtoms()]);
+		map(mReactant, mProduct, new int[mReactant.getAtoms()], new int[mProduct.getAtoms()], null);
 		copyMapNosToReaction(rxn, mReactantMapNo, mProductMapNo, mGraphMapNoCount);
 		}
 
 	/**
 	 * Entirely maps the given reaction by setting all reactant's and product's mapping numbers.
+	 * Optionally, vetoMatrix contains forbidden mapping combinations from reactantAtoms to productAtoms.
+	 * vetoMatrix may be null and vetoMatrix[reactantAtom] may be null for individual reactantAtoms.
+	 * If neither is null and if vetoMatrix[reactantAtom][productAtom]==true then reactantAtom
+	 * may not be mapped to productAtom. You may use this method to prohibit mappings of any leaving
+	 * atom to any incoming atom.
 	 * @param reactant all reactants merged into one molecule; may contain seed mapping
 	 * @param product all products merged into one molecule; may contain seed mapping
 	 * @param reactantMapNo array to receive the created mapping numbers
 	 * @param productMapNo array to receive the created mapping numbers
+	 * @param vetoMatrix null or matrix of prohibited atom mappings
 	 */
-	public void map(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo) {
+	public void map(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, boolean[][] vetoMatrix) {
 		mReactant = reactant;
 		mProduct = product;
 
@@ -109,7 +115,7 @@ public class SimilarityGraphBasedReactionMapper {
 		mSimilarityComparator = new ByteArrayComparator();
 		mScore = -1e10f;
 
-		RootAtomPairSource rootAtomPairSource = new RootAtomPairSource(reactant, product, mReactantMapNo, mProductMapNo);
+		RootAtomPairSource rootAtomPairSource = new RootAtomPairSource(reactant, product, mReactantMapNo, mProductMapNo, vetoMatrix);
 
 		mAtomPairSequenceCount = 0;
 
@@ -131,7 +137,7 @@ if (PRINT_SCORES)  { System.out.print("@ pMapNo:"); for (int mapNo:mProductMapNo
 
 			float score;
 			if (mMapNo < mMappableAtomCount) {
-				ReactionCenterMapper centerMapper = new ReactionCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo);
+				ReactionCenterMapper centerMapper = new ReactionCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo, vetoMatrix);
 				score = centerMapper.completeAndScoreMapping();
 				mMapNo += centerMapper.getMappedAtomCount();
 				}
@@ -498,8 +504,7 @@ if (DEBUG) {
 					reactantAtom = 0;
 					reactant = rxn.getReactant(++reactantIndex);
 					}
-				} while (reactant.isFragment()
-					&& (reactant.getAtomQueryFeatures(reactantAtom) & Molecule.cAtomQFExcludeGroup) != 0);
+				} while (reactant.isFragment() && reactant.isExcludeGroupAtom(reactantAtom));
 			reactant.setAtomMapNo(reactantAtom, reactantMapNo[atom], reactantMapNo[atom] <= graphMapNoCount);
 			}
 
@@ -513,8 +518,7 @@ if (DEBUG) {
 					productAtom = 0;
 					product = rxn.getProduct(++productIndex);
 					}
-				} while (product.isFragment()
-					&& (product.getAtomQueryFeatures(productAtom) & Molecule.cAtomQFExcludeGroup) != 0);
+				} while (product.isFragment() && product.isExcludeGroupAtom(productAtom));
 			product.setAtomMapNo(productAtom, productMapNo[atom], productMapNo[atom] <= graphMapNoCount);
 			}
 		}

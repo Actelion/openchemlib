@@ -39,6 +39,7 @@ import com.actelion.research.chem.SSSearcher;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.util.DoubleFormat;
 
 /**
  * This class is openchemlib's most advanced reaction mapper and should be used whenever a reaction's atoms need to be mapped,
@@ -80,22 +81,21 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	// NOTE: OpenChemLib distinguishes between manual (red) and automatic (green) mapping numbers. Rules should contain
 	//       exclusively manual mapping numbers (use popup menu in mapping mode to change).
 	private static final String[][] CHEMICAL_RULE = {
-			{"d","gGQ@@eKtRA@!gGQ@@djqRA@#qMsT qM\\V#!B_qL@Dw}l@Fp@Dp !B@AL@[@@S@Fp@Dp##"},
-			{"e","daXJ@@PjyITuiX@`!dahJ@@SJYIMMfPB#IaLJfxP IaAhl[`#!BDpAl@AL@[@Be}aL@[@@ !B|Osp?QZR?O_}}zGze`@##"},
-// bad		{"f","gJQ`@bdjt`P!gKa`@ldfrA@#qbqh qqlP#!R_zq?dw~l_yLsXgp"},
-			{"g","gBa`@lde@XS@!gCA`@mDPOdku`#qbq qJt#!B[G|S_qgq !BjW}q]cga##"},
-// no evidence	{"h","daXL@@Klb`JSSHA@!daXL@@[dfTBijh@`#IyjFDp` IyjEL``#!R?g~HO[\\}[Lfw?K_}m?psLap"},
-// evidences covered by aldol		{"aldolEnoneCyclisation","daXD@@kHh`Ttl@P!daxD@@yIeRfZZ`B#IqBbay` IqHKjXP#!R_g}wwWC]]xKCfXbBbMtshep"},
-// fishy    	{"j","gBi@DDcXCnR`!gBi@HDFXCnY`#qbq qfQ#!R_vpy`W}lLvK|"},
-// no evidence	{"l","daxH@@RUUjjPB!daDH@@RVU[jij@H#IGfhlR@ IGfbdK@#!R@IL@k@BS@Jp@dpBl@ILs|kp"},
-// no evidence	{"m","gFQHBGAISiPH!gGQHJGAIUjhB#qNT] qNTk#!R@AL@[@@Sa_x@DsNro@"},
-// no evidence	{"n","gOp`@|dRaqij`H!gOp`@tiUMij`H#qosJ` qgSqh#!RTv]`YRqg?g~HPh`}L{H|"},
-			{"o","gGQHDDqIUjdB!gGQHHDqAeMjhB#qbqk qfQ]#!B@AL@[@@S@Fp@Dp !BFQ{~_q|ZGvUSYp##"},
-// no evidence	{"p","gGQ@@eJuRA@!gFQ@@diuPD#qqUc qrcM#!R_zp@kG~S@IM?kCLb?@"},
-			{"r","gOQdEjHbAFQRBrtAaJ!gNQdEbHbABCTKPFDH#qbMwX qbM~X#!BNDm`ra?UjW~YBYX@ !Ba[zw?_x@?g~H?XO~##"},
-			{"s","gOp`ATigujj`H!gOp`ATiVKjj`H#qnyS` qY~eP#!BTLtk^sE?BOs|]pc} !BbOvw?_y??g~H?[_}##"},
-			{"t","gOP`@dcUZdB!gNp`@tiTMjj@`#q{ir` qkLrx#!Be`Bzr_wp?OC}|Osp !B?g~w@k_}m?vw@n[a##"},
-			{"u","daXB`Hrn@HrPEILt`D!daXB`DJn@HRUMjV@H#IxVaLJ` IylJhPP#!B[G}l@OKyDpAl@AL@[@@ !B@Fp@DpAl@AN]?`Al@AL##"},
+			{"e", "daXJ@@PjyITuiX@`!dahJ@@SJYIMMfPB#IaLJfxP IaAhl[`#!BDpAl@AL@[@Be}aL@[@@ !B|Osp?QZR?O_}}zGze`@##"},
+// bad		{"f", "gJQ`@bdjt`P!gKa`@ldfrA@#qbqh qqlP#!R_zq?dw~l_yLsXgp"},
+			{"g", "gBa`@lde@XS@!gCA`@mDPOdku`#qbq qJt#!B[G|S_qgq !BjW}q]cga##"},
+// no evidence	{"h", "daXL@@Klb`JSSHA@!daXL@@[dfTBijh@`#IyjFDp` IyjEL``#!R?g~HO[\\}[Lfw?K_}m?psLap"},
+// evidences covered by aldol		{"aldolEnoneCyclisation", "daXD@@kHh`Ttl@P!daxD@@yIeRfZZ`B#IqBbay` IqHKjXP#!R_g}wwWC]]xKCfXbBbMtshep"},
+// fishy    	{"j", "gBi@DDcXCnR`!gBi@HDFXCnY`#qbq qfQ#!R_vpy`W}lLvK|"},
+// no evidence	{"l", "daxH@@RUUjjPB!daDH@@RVU[jij@H#IGfhlR@ IGfbdK@#!R@IL@k@BS@Jp@dpBl@ILs|kp"},
+// no evidence	{"m", "gFQHBGAISiPH!gGQHJGAIUjhB#qNT] qNTk#!R@AL@[@@Sa_x@DsNro@"},
+// no evidence	{"n", "gOp`@|dRaqij`H!gOp`@tiUMij`H#qosJ` qgSqh#!RTv]`YRqg?g~HPh`}L{H|"},
+			{"o", "gGQHDDqIUjdB!gGQHHDqAeMjhB#qbqk qfQ]#!B@AL@[@@S@Fp@Dp !BFQ{~_q|ZGvUSYp##"},
+// no evidence	{"p", "gGQ@@eJuRA@!gFQ@@diuPD#qqUc qrcM#!R_zp@kG~S@IM?kCLb?@"},
+			{"r", "gOQdEjHbAFQRBrtAaJ!gNQdEbHbABCTKPFDH#qbMwX qbM~X#!BNDm`ra?UjW~YBYX@ !Ba[zw?_x@?g~H?XO~##"},
+			{"s", "gOp`ATigujj`H!gOp`ATiVKjj`H#qnyS` qY~eP#!BTLtk^sE?BOs|]pc} !BbOvw?_y??g~H?[_}##"},
+			{"t", "gOP`@dcUZdB!gNp`@tiTMjj@`#q{ir` qkLrx#!Be`Bzr_wp?OC}|Osp !B?g~w@k_}m?vw@n[a##"},
+			{"u", "daXB`Hrn@HrPEILt`D!daXB`DJn@HRUMjV@H#IxVaLJ` IylJhPP#!B[G}l@OKyDpAl@AL@[@@ !B@Fp@DpAl@AN]?`Al@AL##"},
 
 			{"Sakurai", "gOQH@wAINvZ@pdcFe@x@!gOQH@wAIgJi@pdcFe@x@#qreKx qrLkx#!BDpAl@IknDw|S@Fp@ !Bb@JH?_x@b@JH?Ven##"},
 			{"Mitsunobu", "gFP`ATfRhdPp`}KEYg]d@!gFP`ATfRhd`pekL{l`#qrLk qZLn#!B@hc}b@C~@h`YM` !B@hc}b@C~@h`YM`##"},
@@ -114,9 +114,9 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 
 			// methathese
 			{"ene-Metathesis", "deD@@LdbEdSTu@FqHWSDda`JFChXIa`?tdKi@!deD@@Ldb`\\SUM@FqHPsDda`JF@XXIa`?tdHY@#qTEApX qQECf@#!BQzK~}ubbW`BEgcb]?a@gg[zO !BQzK~}ubbW`Ag{VVAQzJ~c?xP##"},
-			{"ene-Metathesis", /* non-stochiometric */ "deD@@LdbEdSTu@FqHWSDda`JFChXIa`?tdKi@!gC`@DiZDE@#qPDA@p qQf#!BmpK~_x`Bm?tAs[]}?`BH_[_| !B_vp@[G|S##"},
-			{"yne-Metathesis","daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!BZmoi@Fjo|SFe|IkGiU@ !BZmoi@Fjo|SFe|IkGiU@##"},
-			{"ene-yne-Metathesis","dcd@@LdPLPLWSSPAlrXwKlVRFCHXFa`zFAXXMa`?udqnWP!dcT@@LdbbplTsTt@[MeMr{Ela`jFAhXNa`VFCXXO}[J[et#qe@N@S@ qeHP@s@#!B?g?~@Oy?^gG}bOvw?H`E@PJw@hc}mp !B?`BH?[_}mpJH@oy??`AuC`Jw@hc}mp##"},
+			{"ene-Metathesis", "deD@@LdbEdSTu@FqHWSDda`JFChXIa`?tdKi@!gC`@DiZDE@#qPDA@p qQf#!BmpK~_x`Bm?tAs[]}?`BH_[_| !B_vp@[G|S##"},
+			{"yne-Metathesis", "daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`!daX@@LdPLWWPAlRXwQIHXLa`ZFChXO}IL[`#qT@q@ qt@Q@#!BZmoi@Fjo|SFe|IkGiU@ !BZmoi@Fjo|SFe|IkGiU@##"},
+			{"ene-yne-Metathesis", "dcd@@LdPLPLWSSPAlrXwKlVRFCHXFa`zFAXXMa`?udqnWP!dcT@@LdbbplTsTt@[MeMr{Ela`jFAhXNa`VFCXXO}[J[et#qe@N@S@ qeHP@s@#!B?g?~@Oy?^gG}bOvw?H`E@PJw@hc}mp !B?`BH?[_}mpJH@oy??`AuC`Jw@hc}mp##"},
 			{"Alkyne-Cyclisation", "gG`@DcO|CFAFC`@!gFp@DiTt@@CFAFC`@#qi\\V qiSt#!B_y[qA`Biu^zV@@ !B?g~w@k_}m?vw@`##"},
 
 			// two-step
@@ -128,7 +128,8 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 			{"symAldolNitrogenRing", "dovJ@GBfttf\\v\\qjViPCADGbDodnGp!doNJ@JCSmtefWTCaYjje@H#IlZXi]]yL~C IqMVCzaIim?#!BQtl_riY?Qtl_rfuvNCQ`uZd@NCQ`uVVu}?sA]P !B?`BH@ox@bGvH@k\\Bb@JH_Xa}b@K~_rYltUr|W@##"},
 
 			// pericyclic
-			{"Diels-Alder","gFP@LdPLjA@!gFp@DiTujhB#qiZf qMSf#!B?_C}}?spIPFV@@ !B?g~w@k_}m?vw@`##"},
+			{"Diels-Alder", "gFP@LdPLjA@!gFp@DiTujhB#qiZf qMSf#!B?_C}}?spIPFV@@ !B?g~w@k_}m?vw@`##"},
+			{"Claisen-RA", "gGQ@@eKtRA@!gGQ@@djqRA@#qMsT qM\\V#!B_qL@Dw}l@Fp@Dp !B@AL@[@@S@Fp@Dp##"},
 			{"Cope", "gGQ@DeZmRAbhcApIF@P@!gGQ@HeZmRAbhc@HIFC`@#qkNT qi\\V#!B_vp@[@@S@Fp@Dp !B_vp@[@@S@Fp@Dp##"},
 			{"OxyCope", "gNq@@dr}SHFD@!gNq@@djkUHD#qynZ` qykbp#!B?g~w?Xc}mpJH@hc} !B@Fp@DpAl@AL@[@@S##"},
 
@@ -139,11 +140,11 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 
 			// 1,2-shifts
 			{"Pinacol-Rearrangement", "gNp`ATffjj@pPh!gOP`@tfXZhCAA`#qb^ix qb^oH#!B@k^H@k_}@k_~@Hc} !BbOvH@oy??`BH?PFf##"},
-			{"1,3-WaterEliminationWith12Shift", "gJQ@@dmU@_SP!gKa@@`vtA}A@#qiTp qjap#!BbOvH@ox@bOt !BJdE?[@Al@AL##"},
+/*TODO check this!*/	{"1,3-WaterEliminationWith12Shift", "gJQ@@dmU@_SP!gKa@@`vtA}A@#qiTp qjap#!BbOvH@ox@bOt !BJdE?[@Al@AL##"},
 
 			// oxidative rearrangements
 			{"Epoxydation", "gB``ADcdCB@!gC``AhtUPGtt@#qqb qtQ#!BjW}Y\\YX@ !B?g~w?^Va##"},
-			{"oxydativePropargylAmine13Shift", "gKi@HDEZpLHOQP!gJY@BDeVXB#qMr` qNTh#!BqiXTy{U?mW| !B@Fp@DpAl@AL##"},
+/*TODO check this!*/	{"oxydativePropargylAmine13Shift", "gKi@HDEZpLHOQP!gJY@BDeVXB#qMr` qNTh#!BqiXTy{U?mW| !B@Fp@DpAl@AL##"},
 			{"Baeyer-Villiger", "gFQ`@[dTAZ`LHP!gFQ`@jdrMPGtl@#qrak qrlK#!B_?{}mwvHs^FVP@ !BbOvH@oy?bOuQzP##"},
 
 			// condensation with ring closure
@@ -223,21 +224,36 @@ if (SimilarityGraphBasedReactionMapper.DEBUG)
 			reactantSearcher.setFragmentSymmetryConstraints(rule.getReactantAtomSymmetryConstraints());
 			if (0 != reactantSearcher.findFragmentInMolecule(SSSearcher.cCountModeUnique, SSSearcher.cDefaultMatchMode)) {
 				productSearcher.setFragment(rule.getProduct());
-				if (productSearcher.isFragmentInMolecule()
+				if (0 != productSearcher.findFragmentInMolecule(SSSearcher.cCountModeFirstMatch, SSSearcher.cDefaultMatchMode)
 				 && reactantSearcher.getMatchList().size() <= MAX_MATCH_COUNT) {
 float historyScore = -10000;
+					int[] productMatch = productSearcher.getMatchList().get(0);
 					for (int[] reactantMatch:reactantSearcher.getMatchList()) {
 						if (ruleApplicationCount++ >= mMaxRuleTries)
 							break;
 
+						// For every given rule we check, whether we can apply the rule and whether we get a mapping score better than anything else:
+						// We do for all rule reactant substructure matches on the real reactant:
+						// - if there is rule product substructure match on the real product then
+						//   - we apply the rule to the real reactant by
+						//     - changing all changing rule bonds between mapped reactants
+						//     - deleting all bonds between mapped and unmapped reactant rule bonds (bonds to leaving atoms)
+						//     - if the rule has leaving AND incoming (unmapped) atoms, then create a veto matrix:
+						//       - for every leaving atom list all incoming atoms as forbidden mapping partners
+						//         (here we assume that the substructure match on the product is the relevant one to locate the correct
+						//          real product atom from the rule's unmapped atom. Of course, this is not necessarily correct.)
+						//     - using the similarity based mapper we map the reaction of the modified reactant and untouched product
+						//     - we score that atom mapping and finally use the best scoring mapping numbers as solution.
+
 						reactant.copyMolecule(adaptedReactant);
 						int[] originalToAdaptedAtom = rule.apply(adaptedReactant, reactantMatch);
+						boolean[][] vetoMatrix = rule.createVetoMatrix(reactant.getAtoms(), reactantMatch, product.getAtoms(), productMatch);
 
 						adaptedReactant.ensureHelperArrays(Molecule.cHelperNeighbours);
 						int[] adaptedReactantMapNo = new int[adaptedReactant.getAtoms()];
 						int[] productMapNo = new int[product.getAtoms()];
 //System.out.println(new MolfileCreator(reactant).getMolfile());
-						mapper.map(adaptedReactant, product, adaptedReactantMapNo, productMapNo);
+						mapper.map(adaptedReactant, product, adaptedReactantMapNo, productMapNo, vetoMatrix);
 						float score = mapper.getScore() - rule.getPanalty();
 
 /* write out the modified reaction after applying the rule including mapping
@@ -259,7 +275,7 @@ if (historyScore < score) historyScore = score;
 							}
 						}
 String pairSequences = mapper.getAtomPairSequenceCount() <= 1 ? "" : " (rootPairSets:"+mapper.getAtomPairSequenceCount()+")";
-mHistory.append(rule.getName()+historyScore+pairSequences+"\n");
+mHistory.append(rule.getName()+ DoubleFormat.toString(historyScore)+pairSequences+"\n");
 					}
 				}
 			}
@@ -267,7 +283,7 @@ mHistory.append(rule.getName()+historyScore+pairSequences+"\n");
 		// map and score the reaction without applying any rules
 		int[] reactantMapNo = new int[reactant.getAtoms()];
 		int[] productMapNo = new int[product.getAtoms()];
-		mapper.map(reactant, product, reactantMapNo, productMapNo);
+		mapper.map(reactant, product, reactantMapNo, productMapNo, null);
 		float score = mapper.getScore();
 
 		if (mScore <= score) {
@@ -278,7 +294,7 @@ mHistory.append(rule.getName()+historyScore+pairSequences+"\n");
 			bestGraphMapNoCount = mapper.getGraphMapNoCount();
 			}
 String pairSequences = mapper.getAtomPairSequenceCount() <= 1 ? "" : " (rootPairSets:"+mapper.getAtomPairSequenceCount()+")";
-mHistory.append("no rule:"+score+pairSequences+"\n");
+mHistory.append("no rule:"+DoubleFormat.toString(score)+pairSequences+"\n");
 
 		if (mScore != Integer.MIN_VALUE)
 			mapper.copyMapNosToReaction(rxn, bestReactantMapNo, bestProductMapNo, bestGraphMapNoCount);

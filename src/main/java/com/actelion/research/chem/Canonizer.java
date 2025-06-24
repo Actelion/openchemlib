@@ -1677,10 +1677,10 @@ System.out.println("noOfRanks:"+canRank);
 			return false;
 
 		if (mMol.isFragment()) {  // don't calculate parities if atom or some neighbours are exclude groups
-			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+			if (mMol.isExcludeGroupAtom(atom))
 				return false;
 			for (int i=0; i<mMol.getAllConnAtoms(atom); i++)
-				if ((mMol.getAtomQueryFeatures(mMol.getConnAtom(atom, i)) & Molecule.cAtomQFExcludeGroup) != 0)
+				if (mMol.isExcludeGroupAtom(mMol.getConnAtom(atom, i)))
 					return false;
 			}
 
@@ -2100,7 +2100,7 @@ System.out.println("noOfRanks:"+canRank);
 			for (int i=0; i<2; i++) {
 				int atom = mMol.getBondAtom(i, bond);
 				for (int j=0; j<mMol.getAllConnAtoms(atom); j++)
-					if ((mMol.getAtomQueryFeatures(mMol.getConnAtom(atom, j)) & Molecule.cAtomQFExcludeGroup) != 0)
+					if (mMol.isExcludeGroupAtom(mMol.getConnAtom(atom, j)))
 						return false;
 				}
 			}

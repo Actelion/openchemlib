@@ -636,7 +636,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		int count = 0;
 		if (mIsFragment)
 			for (int i=0; i<mConnAtoms[atom]; i++)
-				if ((mAtomQueryFeatures[mConnAtom[atom][i]] & Molecule.cAtomQFExcludeGroup) != 0)
+				if (isExcludeGroupAtom(mConnAtom[atom][i]))
 					count++;
 		return count;
 		}
@@ -693,7 +693,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		boolean delocalizedBondFound = false;
 		int valence = 0;
 		for (int i=0; i<mAllConnAtoms[atom]; i++) {
-			if (!mIsFragment || (mAtomQueryFeatures[mConnAtom[atom][i]] & cAtomQFExcludeGroup) == 0) {
+			if (!mIsFragment || !isExcludeGroupAtom(mConnAtom[atom][i])) {
 				int order = mConnBondOrder[atom][i];
 				valence += order;
 				if (order > 1)
@@ -4239,7 +4239,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				mAtomQueryFeatures[atom] &= ~cAtomQFPiElectrons;
 				}
 
-			if ((mAtomQueryFeatures[atom] & cAtomQFExcludeGroup) != 0
+			if (isExcludeGroupAtom(atom)
 			 && mAtomMapNo[atom] != 0)
 				removeMappingNo(mAtomMapNo[atom]);
 			}

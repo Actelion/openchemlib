@@ -1959,8 +1959,7 @@ public class GenericEditorArea implements GenericEventListener {
 				mAtom1 = mMol.findAtom(mX1, mY1);
 				if (mAtom1 != -1
 				 && mAtom1 < mMol.getAtoms()
-				 && (!mMol.isFragment()
-				  || (mMol.getAtomQueryFeatures(mAtom1) & Molecule.cAtomQFExcludeGroup) == 0)) {
+				 && (!mMol.isFragment() || !mMol.isExcludeGroupAtom(mAtom1))) {
 					mX1 = mMol.getAtomX(mAtom1);
 					mY1 = mMol.getAtomY(mAtom1);
 					mPendingRequest = cRequestMapAtoms;
@@ -2084,7 +2083,7 @@ public class GenericEditorArea implements GenericEventListener {
 				// exclude group atoms cannot be mapped
 				if (atom2 != -1
 				 && mMol.isFragment()
-				 && (mMol.getAtomQueryFeatures(atom2) & Molecule.cAtomQFExcludeGroup) != 0)
+				 && !mMol.isExcludeGroupAtom(atom2))
 					atom2 = -1;
 
 //				System.out.printf("Map Request Atom %d => %d (%d)\n", mAtom1, mAtom2, atom2);
@@ -2532,10 +2531,10 @@ public class GenericEditorArea implements GenericEventListener {
 		mY2 = ((atom == -1) ? mY1 : mMol.getAtomY(atom)) + avbl * (float)Math.cos(newAngle);
 	}
 
-	private boolean areAtomsMappingCompatible(int atom1, int atom2){
+	private boolean areAtomsMappingCompatible(int atom1, int atom2) {
 		if (mMol.isFragment()) {
-			if ((mMol.getAtomQueryFeatures(atom1) & Molecule.cAtomQFExcludeGroup) != 0
-					|| (mMol.getAtomQueryFeatures(atom1) & Molecule.cAtomQFExcludeGroup) != 0)
+			if (mMol.isExcludeGroupAtom(atom1)
+			 || mMol.isExcludeGroupAtom(atom2))
 				return false;
 
 			int[] atomList1 = mMol.getAtomList(atom1);

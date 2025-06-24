@@ -99,8 +99,8 @@ public class MappingScorer {
 			int rAtom2 = mReactant.getBondAtom(1, rBond);
 
 			if (mReactant.isFragment()
-			 && ((mReactant.getAtomQueryFeatures(rAtom1) & Molecule.cAtomQFExcludeGroup) != 0
-			  || (mReactant.getAtomQueryFeatures(rAtom2) & Molecule.cAtomQFExcludeGroup) != 0))
+			 && (mReactant.isExcludeGroupAtom(rAtom1)
+			  || mReactant.isExcludeGroupAtom(rAtom2)))
 				continue;
 
 			int pAtom1 = reactantToProductAtom[rAtom1];
@@ -145,8 +145,8 @@ public class MappingScorer {
 
 		for (int pBond=0; pBond<mProduct.getBonds(); pBond++) {
 			if (mProduct.isFragment()
-			 && ((mProduct.getAtomQueryFeatures(mProduct.getBondAtom(0, pBond)) & Molecule.cAtomQFExcludeGroup) != 0
-			  || (mProduct.getAtomQueryFeatures(mProduct.getBondAtom(1, pBond)) & Molecule.cAtomQFExcludeGroup) != 0))
+			 && (mProduct.isExcludeGroupAtom(mProduct.getBondAtom(0, pBond))
+			  || mProduct.isExcludeGroupAtom(mProduct.getBondAtom(1, pBond))))
 				continue;
 
 			if (!productBondHandled[pBond]) {

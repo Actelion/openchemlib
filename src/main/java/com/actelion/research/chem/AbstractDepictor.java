@@ -498,7 +498,7 @@ public abstract class AbstractDepictor<T> {
 
 		GenericRectangle rect = new GenericRectangle();
 		for (int i=0; i<mMol.getAllAtoms(); i++) {
-			double radius = (mMol.getAtomQueryFeatures(i) & Molecule.cAtomQFExcludeGroup) != 0 ? avbl*cFactorExcludeGroupRadius
+			double radius = mMol.isExcludeGroupAtom(i) ? avbl*cFactorExcludeGroupRadius
 					: isAtomHilited[i] ? avbl*cFactorBondHiliteRadius : 0;
 
 			if (radius != 0) {
@@ -806,7 +806,7 @@ public abstract class AbstractDepictor<T> {
 			double radius = mpExcludeGroupRadius;
 			setColorCode(COLOR_EXCLUDE_GROUP_BG);
 			for (int atom = 0; atom < mMol.getAtoms(); atom++)
-				if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+				if (mMol.isExcludeGroupAtom(atom))
 					fillCircle(getAtomX(atom)-radius, getAtomY(atom)-radius, 2*radius);
 
 			setLineWidth(2f*mpExcludeGroupRadius);
@@ -1953,7 +1953,7 @@ public abstract class AbstractDepictor<T> {
 
 		double labelWidth = 0.0;
 
-		if (!mMol.isSelectedAtom(atom) & (mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFExcludeGroup) != 0)
+		if (!mMol.isSelectedAtom(atom) & mMol.isExcludeGroupAtom(atom))
 			setColorCode(COLOR_EXCLUDE_GROUP_FG);
 
 		if (atomStr != null) {

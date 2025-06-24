@@ -54,16 +54,18 @@ public class ReactionCenterMapper {
 	private final ArrayList<UnmappedCenterAtoms> mAtomClasses;
 	private final StereoMolecule mReactant,mProduct;
 	private final int[] mReactantMapNo,mProductMapNo;
+	private final boolean[][] mVetoMatrix;
 	private final int mStartMapNo;
 	private int mMapNo;
 
-	public ReactionCenterMapper(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, int mapNo) {
+	public ReactionCenterMapper(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, int mapNo, boolean[][] vetoMatrix) {
 		mReactant = reactant;
 		mProduct = product;
 		mReactantMapNo = reactantMapNo;
 		mProductMapNo = productMapNo;
 		mStartMapNo = mapNo;
 		mMapNo = mapNo;
+		mVetoMatrix = vetoMatrix;
 
 		// For every atomicNo/isotop create an UnmappedCenterAtoms class with respective reactant and product atoms
 		TreeMap<Integer, UnmappedCenterAtoms> atomClassMap = new TreeMap<>();
@@ -133,27 +135,39 @@ public class ReactionCenterMapper {
 		int[] permutationIndex = new int[mAtomClasses.size()];
 		boolean nextPermutationAvailable = (!mAtomClasses.isEmpty());
 		while (nextPermutationAvailable) {
-			for (int i=0; i<mAtomClasses.size(); i++)
-				mAtomClasses.get(i).completeReactantToProductAtomMap(permutationIndex[i], reactantToProductAtom);
+			boolean veto = false;
+			if (mVetoMatrix != null) {
+				for (int i=0; i<mAtomClasses.size(); i++) {
+					if (mAtomClasses.get(i).isVetoPermutation(permutationIndex[i], mVetoMatrix)) {
+						veto = true;
+						break;
+						}
+					}
+				}
 
-			float score = scorer.scoreMapping(reactantToProductAtom);
+			if (!veto) {
+				for (int i=0; i<mAtomClasses.size(); i++)
+					mAtomClasses.get(i).completeReactantToProductAtomMap(permutationIndex[i], reactantToProductAtom);
+
+				float score = scorer.scoreMapping(reactantToProductAtom);
 //System.out.print("score:"+score);
 //for (int i=0; i<mAtomClasses.size(); i++)
 // for (int j=0; j<mAtomClasses.get(i).mReactantAtom.length; j++)
 //  System.out.print(" "+mAtomClasses.get(i).mReactantAtom[j]+":"+reactantToProductAtom[mAtomClasses.get(i).mReactantAtom[j]]);
 //System.out.println();
 
-			if (bestScore < score) {
-				bestScore = score;
+				if (bestScore < score) {
+					bestScore = score;
 
-				bestReactantAtom = new int[atomCount];
-				bestProductAtom = new int[atomCount];
-				int atomOffset = 0;
-				for (int i=0; i<mAtomClasses.size(); i++) {
-					UnmappedCenterAtoms uca = mAtomClasses.get(i);
-					uca.getReactantAtoms(permutationIndex[i], bestReactantAtom, atomOffset);
-					uca.getProductAtoms(permutationIndex[i], bestProductAtom, atomOffset);
-					atomOffset += uca.mMappableAtomCount;
+					bestReactantAtom = new int[atomCount];
+					bestProductAtom = new int[atomCount];
+					int atomOffset = 0;
+					for (int i=0; i<mAtomClasses.size(); i++) {
+						UnmappedCenterAtoms uca = mAtomClasses.get(i);
+						uca.getReactantAtoms(permutationIndex[i], bestReactantAtom, atomOffset);
+						uca.getProductAtoms(permutationIndex[i], bestProductAtom, atomOffset);
+						atomOffset += uca.mMappableAtomCount;
+						}
 					}
 				}
 
@@ -206,36 +220,37 @@ public class ReactionCenterMapper {
 		/**
 		 * If we have only one atom of this kind, or if we have all equal un-bonded atoms
 		 * on one reaction side, then we can safely map these atoms.
-		 * @return true if all mappable atoms were mapped
+		 * @return true if all mappable atoms were mapped or cannot be mapped because of vetos
 		 */
 		public boolean mapObviousAtoms() {
 			if (mMappableAtomCount == 0)
 				return true;
 
 			if (mReactantAtom.length == 1 && mProductAtom.length == 1) {
-				mMapNo++;
-				mReactantMapNo[mReactantAtom[0]] = mMapNo;
-				mProductMapNo[mProductAtom[0]] = mMapNo;
+				if (mVetoMatrix == null || mVetoMatrix[mReactantAtom[0]] == null || !mVetoMatrix[mReactantAtom[0]][mProductAtom[0]]) {
+					mMapNo++;
+					mReactantMapNo[mReactantAtom[0]] = mMapNo;
+					mProductMapNo[mProductAtom[0]] = mMapNo;
+				}
 				return true;
 				}
 
-			// to qualify as equal in the context of already mapped atoms,
-			// atoms must not only be symmetrical, they must also not have any neighbours.
-			boolean reactantAtomsAreEqual = areEqualSingleAtoms(mReactantAtom, mReactant);
-			if (reactantAtomsAreEqual && mReactantAtom.length <= mProductAtom.length) {
-				for (int i=0; i<mReactantAtom.length; i++) {
-					mMapNo++;
-					mReactantMapNo[mReactantAtom[i]] = mMapNo;
-					mProductMapNo[mProductAtom[i]] = mMapNo;
-					}
-				return true;
-				}
-			boolean productAtomsAreEqual = areEqualSingleAtoms(mProductAtom, mProduct);
-			if (productAtomsAreEqual && mReactantAtom.length >= mProductAtom.length) {
-				for (int i=0; i<mProductAtom.length; i++) {
-					mMapNo++;
-					mReactantMapNo[mReactantAtom[i]] = mMapNo;
-					mProductMapNo[mProductAtom[i]] = mMapNo;
+			if (areEqualSingleAtoms(mReactantAtom, mReactant)
+			 || areEqualSingleAtoms(mProductAtom, mProduct)) {
+				int matchable = Math.min(mReactantAtom.length, mProductAtom.length);
+				for (int r=0; matchable!=0 && r<mReactantAtom.length; r++) {
+					for (int p=0; p<mProductAtom.length; p++) {
+						if (mProductMapNo[mProductAtom[p]] == 0
+						 && (mVetoMatrix == null
+						  || mVetoMatrix[mReactantAtom[r]] == null
+						  || !mVetoMatrix[mReactantAtom[r]][mProductAtom[p]])) {
+							matchable--;
+							mMapNo++;
+							mReactantMapNo[mReactantAtom[r]] = mMapNo;
+							mProductMapNo[mProductAtom[p]] = mMapNo;
+							break;
+							}
+						}
 					}
 				return true;
 				}
@@ -290,6 +305,21 @@ public class ReactionCenterMapper {
 					isUsed[i] = false;
 					}
 				}
+			}
+
+		public boolean isVetoPermutation(int permutationIndex, boolean[][] vetoMatrix) {
+			int[] permutation = mPermutationList.get(permutationIndex);
+			if (mReactantAtom.length <= mProductAtom.length) {
+				for (int i=0; i<mMappableAtomCount; i++)
+					if (vetoMatrix[mReactantAtom[i]] != null && vetoMatrix[mReactantAtom[i]][mProductAtom[permutation[i]]])
+						return true;
+			}
+			else {
+				for (int i=0; i<mMappableAtomCount; i++)
+					if (vetoMatrix[mReactantAtom[permutation[i]]] != null && vetoMatrix[mReactantAtom[permutation[i]]][mProductAtom[i]])
+						return true;
+				}
+			return false;
 			}
 
 		// For the given permutation and all known reactant atoms this method
