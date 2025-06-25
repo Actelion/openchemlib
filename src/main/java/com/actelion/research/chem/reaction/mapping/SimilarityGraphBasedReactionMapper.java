@@ -36,6 +36,7 @@ package com.actelion.research.chem.reaction.mapping;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.util.ByteArrayComparator;
 
 import java.nio.charset.StandardCharsets;
@@ -43,6 +44,8 @@ import java.util.Arrays;
 
 public class SimilarityGraphBasedReactionMapper {
 	public static final boolean DEBUG = false;
+	private static final boolean DEBUG_PRINT_REACTION_BEFORE_CENTER_MAPPING = false;
+	private static final boolean DEBUG_PRINT_MOLFILES_BEFORE_CENTER_MAPPING = false;
 	public static final boolean PRINT_SCORES = false;
 
 	// When building the mapping graph, next neighbors are added based on directed environment similarity.
@@ -63,7 +66,9 @@ public class SimilarityGraphBasedReactionMapper {
 	private static final int ENDO_RING_PLUS = 128;
 
 	private StereoMolecule mReactant,mProduct;
-	private int mMapNo,mGraphMapNoCount,mMappableAtomCount,mAtomPairSequenceCount;
+	private int mMapNo;
+	private int mGraphMapNoCount;
+	private int mAtomPairSequenceCount;
 	private int[] mReactantMapNo,mProductMapNo,mReactantRingMembership,mProductRingMembership;
 	private float mScore;
 	private ByteArrayComparator mSimilarityComparator;
@@ -122,7 +127,7 @@ public class SimilarityGraphBasedReactionMapper {
 		while (rootAtomPairSource.hasNextPairSequence()) {
 			mAtomPairSequenceCount++;
 			mMapNo = rootAtomPairSource.getManualMapCount();
-			mMappableAtomCount = rootAtomPairSource.getMappableAtomCount();
+			int mappableAtomCount = rootAtomPairSource.getMappableAtomCount();
 
 			RootAtomPair pair = rootAtomPairSource.nextPair();
 			while (pair != null) {
@@ -136,7 +141,25 @@ if (PRINT_SCORES)  { System.out.print("@ pMapNo:"); for (int mapNo:mProductMapNo
 			mGraphMapNoCount = mMapNo;
 
 			float score;
-			if (mMapNo < mMappableAtomCount) {
+			if (mMapNo <mappableAtomCount) {
+
+if (DEBUG_PRINT_REACTION_BEFORE_CENTER_MAPPING || DEBUG_PRINT_MOLFILES_BEFORE_CENTER_MAPPING) {
+ StereoMolecule mappedReactant = new StereoMolecule(mReactant);
+ StereoMolecule mappedProduct = new StereoMolecule(mProduct);
+ for (int i=0; i<mReactantMapNo.length; i++) mappedReactant.setAtomMapNo(i, mReactantMapNo[i], true);
+ for (int i=0; i<mProductMapNo.length; i++) mappedProduct.setAtomMapNo(i, mProductMapNo[i], true);
+ if (DEBUG_PRINT_MOLFILES_BEFORE_CENTER_MAPPING) {
+  System.out.println("Reactant before center mapping:" + new MolfileCreator(mappedReactant).getMolfile());
+  System.out.println("Product before center mapping:" + new MolfileCreator(mappedProduct).getMolfile());
+ }
+ if (DEBUG_PRINT_REACTION_BEFORE_CENTER_MAPPING) {
+  Reaction rxn = new Reaction();
+  rxn.addReactant(mappedReactant);
+  rxn.addProduct(mappedProduct);
+  System.out.println("Before center mapping:" + ReactionEncoder.encode(rxn, false, ReactionEncoder.INCLUDE_DEFAULT));
+ }
+}
+
 				ReactionCenterMapper centerMapper = new ReactionCenterMapper(mReactant, mProduct, mReactantMapNo, mProductMapNo, mMapNo, vetoMatrix);
 				score = centerMapper.completeAndScoreMapping();
 				mMapNo += centerMapper.getMappedAtomCount();

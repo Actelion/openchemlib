@@ -35,10 +35,12 @@
 package com.actelion.research.chem.reaction.mapping;
 
 import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.MolfileCreator;
 import com.actelion.research.chem.SSSearcher;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.reaction.IReactionMapper;
 import com.actelion.research.chem.reaction.Reaction;
+import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.util.DoubleFormat;
 
 /**
@@ -63,6 +65,9 @@ import com.actelion.research.util.DoubleFormat;
  */
 public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	private static final int MAX_MATCH_COUNT = 512;  // Protection for combinatorial explosion, e.g. for metathesis or DielsAlder in fullerene
+
+	private static final boolean DEBUG_PRINT_REACTION_AFTER_APPLYING_RULE = false;
+	private static final boolean DEBUG_PRINT_MOLFILES_AFTER_APPLYING_RULE = false;
 
 	// Chemical rule reactions must neither be stoichiometrically complete, nor must they be completely mapped!!!
 	// If rules contain exclude atoms, these must not be mapped.
@@ -146,6 +151,10 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 			{"Epoxydation", "gB``ADcdCB@!gC``AhtUPGtt@#qqb qtQ#!BjW}Y\\YX@ !B?g~w?^Va##"},
 /*TODO check this!*/	{"oxydativePropargylAmine13Shift", "gKi@HDEZpLHOQP!gJY@BDeVXB#qMr` qNTh#!BqiXTy{U?mW| !B@Fp@DpAl@AL##"},
 			{"Baeyer-Villiger", "gFQ`@[dTAZ`LHP!gFQ`@jdrMPGtl@#qrak qrlK#!B_?{}mwvHs^FVP@ !BbOvH@oy?bOuQzP##"},
+
+			// addition with ring closure
+			{"Halogenation ring closure", "gGa@@dYs@XPQQrHqJryDXeX!gFQ@@eNUPFJNQFIVWHcDkLpH#qbqk qfQk#!B@AOIDW}lC]E?[@ !B_qL@Dw}l_qNcDP##"},
+			{"Halogenation ring closure", "gBa@@d\\`XP@!gJQ@@eOU@XpyDXeYfA@#qbq qfQ@#!B@AOIDW}l !B_qL@Dw}l_qL##"},
 
 			// condensation with ring closure
 			{"Hantzsch Thiazol", "daZHPDp@chaIMefh@ppDzTD~hYmC^bhbcPp]dQbUg~pp!gKXHL@aJWFe`H#qNPe@ qNj`#!BvuK[KUxv_yS[k_zhvuH !BTqa`FbpX?`@##"},
@@ -256,14 +265,18 @@ float historyScore = -10000;
 						mapper.map(adaptedReactant, product, adaptedReactantMapNo, productMapNo, vetoMatrix);
 						float score = mapper.getScore() - rule.getPanalty();
 
-/* write out the modified reaction after applying the rule including mapping
-Reaction adaptedReaction = new Reaction();
-adaptedReaction.addReactant(adaptedReactant);
-adaptedReaction.addProduct(product);
-System.out.println("Rule "+rule.getName()+" applied: "+ ReactionEncoder.encode(adaptedReaction, false, ReactionEncoder.INCLUDE_DEFAULT));
-System.out.println(new MolfileCreator(adaptedReactant).getMolfile());
-System.out.println(new MolfileCreator(product).getMolfile());
-*/
+if (DEBUG_PRINT_REACTION_AFTER_APPLYING_RULE || DEBUG_PRINT_MOLFILES_AFTER_APPLYING_RULE) {
+ if (DEBUG_PRINT_REACTION_AFTER_APPLYING_RULE) {
+  Reaction adaptedReaction = new Reaction();
+  adaptedReaction.addReactant(adaptedReactant);
+  adaptedReaction.addProduct(product);
+  System.out.println("Rule " + rule.getName() + " score:" + DoubleFormat.toString(score) + " applied: " + ReactionEncoder.encode(adaptedReaction, false, ReactionEncoder.INCLUDE_DEFAULT));
+ }
+ if (DEBUG_PRINT_MOLFILES_AFTER_APPLYING_RULE) {
+  System.out.println(new MolfileCreator(adaptedReactant).getMolfile());
+  System.out.println(new MolfileCreator(product).getMolfile());
+ }
+}
 
 if (historyScore < score) historyScore = score;
 						if (mScore < score) {

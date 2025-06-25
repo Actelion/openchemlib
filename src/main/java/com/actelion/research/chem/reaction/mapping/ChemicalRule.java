@@ -87,7 +87,8 @@ public class ChemicalRule {
 		mMapNoToReactantAtom = new int[mReactant.getAtoms()+1];
 		mMapNoToReactantAtom[0] = -1;    // to cause exceptions in case of faulty logic
 		for (int atom=0; atom<mReactant.getAtoms(); atom++)
-			mMapNoToReactantAtom[mReactant.getAtomMapNo(atom)] = atom;
+			if (mReactant.getAtomMapNo(atom) != 0)
+				mMapNoToReactantAtom[mReactant.getAtomMapNo(atom)] = atom;
 
 		calculateReactantAtomSymmetryConstraints(mMapNoToReactantAtom);
 
@@ -356,7 +357,8 @@ public class ChemicalRule {
 		// break symmetries because of un-symmetrical rule products
 		mReactantAtomSymmetryConstraint = new int[mReactant.getAtoms()];
 		for (int atom=0; atom<mProduct.getAtoms(); atom++)
-			mReactantAtomSymmetryConstraint[mapNoToReactantAtom[mProduct.getAtomMapNo(atom)]] = mProduct.getSymmetryRank(atom);
+			if (mProduct.getAtomMapNo(atom) != 0)
+				mReactantAtomSymmetryConstraint[mapNoToReactantAtom[mProduct.getAtomMapNo(atom)]] = mProduct.getSymmetryRank(atom);
 
 		int[] fragmentNo = new int[mReactant.getAllAtoms()];
 		int fragmentCount = mReactant.getFragmentNumbers(fragmentNo, false, false);
