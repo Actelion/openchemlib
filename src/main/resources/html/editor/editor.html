@@ -263,19 +263,26 @@ Selected areas may also be removed by pressing the delete key from the keyboard.
   <td>Zoom and Rotate Tool</td>
   <td>This tool allows to zoom or rotate the entire drawing or a selected subset.
 Just click at the intended origin for the rotation or zooming and drag the mouse vertically
-to zoom or horizontically to rotate.</td>
+to zoom or horizontally to rotate.</td>
  </tr>
  <tr>
   <td><img src="mappingTool.png" border="0"></td>
   <td>Mapping Tool</td>
   <td>This tool is only available when a reaction is edited. Use this tool to
-map reactant atoms to the respective product atoms. This is done by clicking on
-a reactant atom and dragging the mouse onto the corresponding product atom. The
-editor will acknowledge the link by displaying a red mapping number at both atoms.
-Afterwards it tries to map atoms in the vicinity automatically and displays green
-numbers at automatically mapped atoms. Please assign manually as many reactant-product
-pairs as are needed that the entire reaction is mapped completely and correctly.
-Pressing the 'Delete' key while this tool is selected removes all mapping from the reaction.</td>
+associate any reactant atom to the same atom in the product. This is done by pressing
+the mouse button on a reactant atom, dragging the mouse onto the corresponding product atom,
+and releasing the mouse button there. The editor will acknowledge the link by displaying the
+same red mapping number at both atoms. Afterward, if <i>Automatically Complete Mapping</i>
+is selected, the editor tries to automatically map all remaining atoms of the reaction and
+displays green numbers on all auto-mapped atoms. If the automatic mapping is correct, you may
+make it persistent by selecting <i>Make Auto-Mapping Explicit</i> from the popup menu.
+Individual atoms can be unmapped by just clicking on them. The auto-mapping, manual mapping,
+or entire mapping can be removed from the reaction using the popup menu.<br>
+DataWarrior's automatic mapping algorithm applies chemical knowledge together with
+neighbourhood similarity. Often it is correct without specifying any explicitly (manually)
+mapped atoms. If the auto-mapping is not correct, then you may map some key atoms manually,
+until the remainder is auto-mapped correctly.
+</td>
  </tr>
  <tr>
   <td><img src="textTool.png" border="0"></td>

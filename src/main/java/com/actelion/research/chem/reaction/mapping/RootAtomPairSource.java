@@ -195,55 +195,52 @@ public class RootAtomPairSource {
 
 		int[] atomList = new int[mol.getAtoms()];
 		boolean[] atomMask = new boolean[mol.getAtoms()];
+		boolean[] bondMask = new boolean[mol.getBonds()];
 		for (int rootAtom=0; rootAtom<mol.getAtoms(); rootAtom++) {
-			if (rootAtom != 0)
+			if (rootAtom != 0) {
 				Arrays.fill(atomMask, false);
+				Arrays.fill(bondMask, false);
+			}
+
+			environment[rootAtom][0] = new byte[2];
+			environment[rootAtom][0][0] = (byte)mol.getAtomicNo(rootAtom);
+			environment[rootAtom][0][1] = (byte)mol.getAtomMass(rootAtom);
+
+			atomList[0] = rootAtom;
+			atomMask[rootAtom] = true;
 
 			int min = 0;
-			int max = 0;
+			int max = 1;
 
 			// we need to mark the root atom, because otherwise close-by root atoms may end up with the same fragment
 			mol.setAtomSelection(rootAtom, true);
 
-			for (int sphere = 0; sphere<=MAX_ENVIRONMENT_RADIUS && max<mol.getAtoms(); sphere++) {
-				if (max == 0) {
-					atomList[0] = rootAtom;
-					atomMask[rootAtom] = true;
-					max = 1;
-					}
-				else {
-					int newMax = max;
-					for (int i=min; i<max; i++) {
-						int atom = atomList[i];
-						for (int j=0; j<mol.getConnAtoms(atom); j++) {
-							int connAtom = mol.getConnAtom(atom, j);
-							if (!atomMask[connAtom]) {
-								atomMask[connAtom] = true;
-								atomList[newMax++] = connAtom;
-								}
+			for (int sphere=1; sphere<=MAX_ENVIRONMENT_RADIUS && max<mol.getAtoms(); sphere++) {
+				int newMax = max;
+				for (int i=min; i<max; i++) {
+					int atom = atomList[i];
+					for (int j=0; j<mol.getConnAtoms(atom); j++) {
+						int connAtom = mol.getConnAtom(atom, j);
+						if (!atomMask[connAtom]) {
+							atomMask[connAtom] = true;
+							atomList[newMax++] = connAtom;
 							}
+						bondMask[mol.getConnBond(atom, j)] = true;
 						}
-
-					if (newMax == max)
-						break;
-
-					min = max;
-					max = newMax;
 					}
 
-				if (sphere == 0) {
-					environment[rootAtom][sphere] = new byte[2];
-					environment[rootAtom][sphere][0] = (byte)mol.getAtomicNo(rootAtom);
-					environment[rootAtom][sphere][1] = (byte)mol.getAtomMass(rootAtom);
+				if (newMax == max)
+					break;
+
+				min = max;
+				max = newMax;
+
+				mol.copyMoleculeByBonds(fragment, bondMask, true, null);
+				for (int atom=0; atom<fragment.getAllAtoms(); atom++) {
+					fragment.setAtomCharge(atom, 0);
+					fragment.setAtomRadical(atom, 0);
 					}
-				else {
-					mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
-					for (int atom=0; atom<fragment.getAllAtoms(); atom++) {
-						fragment.setAtomCharge(atom, 0);
-						fragment.setAtomRadical(atom, 0);
-						}
-					environment[rootAtom][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes(StandardCharsets.UTF_8);
-					}
+				environment[rootAtom][sphere] = new Canonizer(fragment, Canonizer.ENCODE_ATOM_SELECTION).getIDCode().getBytes(StandardCharsets.UTF_8);
 				}
 
 			mol.setAtomSelection(rootAtom, false);
@@ -365,7 +362,7 @@ public class RootAtomPairSource {
 			if (reactantAtomHasUnmappedNeighbours && productAtomHasUnmappedNeighbours)
 				break;
 
-			// we need to mark refused pairs as being used to avaid getting them again
+			// we need to mark refused pairs as being used to avoid getting them again
 			mReactantMapNo[pair.reactantAtom] = PSEUDO_MAP_NO_SKIPPED_PAIR;
 			mProductMapNo[pair.productAtom] = PSEUDO_MAP_NO_SKIPPED_PAIR;
 
@@ -436,13 +433,13 @@ public class RootAtomPairSource {
 			// that are not mapped yet, are in separate fragments. If this is the case, and if we have at least
 			// as many equivalent atoms as atoms on the other side, then we just match unmapped reactant atoms
 			// to unmapped product atoms in order of appearance.
-			while (mCurrentEnvIndex3 < mEnvKey[mCurrentRadius].length) {
+			while (mCurrentRadius == 0 && mCurrentEnvIndex3 < mEnvKey[mCurrentRadius].length) {
 				byte[] envKey = mEnvKey[mCurrentRadius][mCurrentEnvIndex3++];
 				int[][] atoms = mEnvToAtomsMap[mCurrentRadius].get(envKey);
 				if ((atoms[0].length >= atoms[1].length
-				  && areInDistinctEquivalentFragments(atoms[0], mReactantMapNo, mReactantFragmentNo, mReactantFragmentUsed, mReactantRank))
+				  && areEquivalentAndInDifferentUnusedFragments(atoms[0], mReactantMapNo, mReactantFragmentNo, mReactantFragmentUsed, mReactantRank))
 				 || (atoms[1].length >= atoms[0].length
-				  && areInDistinctEquivalentFragments(atoms[1], mProductMapNo, mProductFragmentNo, mProductFragmentUsed, mProductRank))) {
+				  && areEquivalentAndInDifferentUnusedFragments(atoms[1], mProductMapNo, mProductFragmentNo, mProductFragmentUsed, mProductRank))) {
 					int reactantIndex = 0;
 					int productIndex = 0;
 					while (reactantIndex < atoms[0].length && mReactantMapNo[atoms[0][reactantIndex]] != 0)
@@ -655,14 +652,28 @@ public class RootAtomPairSource {
 		return canRank;
 		}
 
-	private boolean areInDistinctEquivalentFragments(int[] atom, int[] mapNo, int[] fragmentNo, boolean[] fragmentUsed, int[] symmetryRank) {
-		for (int a:atom)
-			if (mapNo[a] == 0 && fragmentUsed[fragmentNo[a]])
-				return false;
+	// Checks, whether all unmapped of the given atoms have the same symmetry rank and are all in different unused fragments
+	private boolean areEquivalentAndInDifferentUnusedFragments(int[] atom, int[] mapNo, int[] fragmentNo, boolean[] fragmentUsed, int[] symmetryRank) {
+		boolean[] sameFragmentUsed = new boolean[fragmentUsed.length];
+		for (int a:atom) {
+			if (mapNo[a] == 0) {
+				if (fragmentUsed[fragmentNo[a]])
+					return false;
+				if (sameFragmentUsed[fragmentNo[a]])
+					return false;
+				sameFragmentUsed[fragmentNo[a]] = true;
+				}
+			}
 
-		for (int i=1; i<atom.length; i++)
-			if (symmetryRank[atom[i]] != symmetryRank[atom[0]])
-				return false;
+		int rank = -1;
+		for (int a:atom) {
+			if (mapNo[a] == 0) {
+				if (rank == -1)
+					rank = symmetryRank[a];
+				else if (symmetryRank[a] != rank)
+					return false;
+				}
+			}
 
 		return true;
 		}

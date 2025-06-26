@@ -43,6 +43,10 @@ import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
 import com.actelion.research.util.DoubleFormat;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
 /**
  * This class is openchemlib's most advanced reaction mapper and should be used whenever a reaction's atoms need to be mapped,
  * which means when an automatic procedure shall associate reactant atoms to their corresponding product atoms.
@@ -64,6 +68,7 @@ import com.actelion.research.util.DoubleFormat;
  * and scored. The unmodified reaction is mapped and scored as well. The best scoring mapping is finally added to the given reaction.
  */
 public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
+	private static final String RULES_DATAWARRIOR_FILE = "/home/thomas/data/reactionmapping/ChemicalRuleEnhancedReactionMapper_allRules.dwar";
 	private static final int MAX_MATCH_COUNT = 512;  // Protection for combinatorial explosion, e.g. for metathesis or DielsAlder in fullerene
 
 	private static final boolean DEBUG_PRINT_REACTION_AFTER_APPLYING_RULE = false;
@@ -153,8 +158,8 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 			{"Baeyer-Villiger", "gFQ`@[dTAZ`LHP!gFQ`@jdrMPGtl@#qrak qrlK#!B_?{}mwvHs^FVP@ !BbOvH@oy?bOuQzP##"},
 
 			// addition with ring closure
-			{"Halogenation ring closure", "gGa@@dYs@XPQQrHqJryDXeX!gFQ@@eNUPFJNQFIVWHcDkLpH#qbqk qfQk#!B@AOIDW}lC]E?[@ !B_qL@Dw}l_qNcDP##"},
-			{"Halogenation ring closure", "gBa@@d\\`XP@!gJQ@@eOU@XpyDXeYfA@#qbq qfQ@#!B@AOIDW}l !B_qL@Dw}l_qL##"},
+			{"Halogenation ring closure", "gGa@@dYs@XHFJIBDQbUeHPbLRl@!gFQ@@eNUPFJIBDQbUeHPbLRls@`#qbq] qfQk#!B@AOIDW}l@tD@Dp !B_qL@Dw}l_qNcDP##"},
+			{"Halogenation ring closure", "gBa@@d\\`XP@!gJQ@@eOU@XpdHQFIVY`P#qbq qfQ@#!B@AOIDW}l !B_qL@Dw}l_qL##"},
 
 			// condensation with ring closure
 			{"Hantzsch Thiazol", "daZHPDp@chaIMefh@ppDzTD~hYmC^bhbcPp]dQbUg~pp!gKXHL@aJWFe`H#qNPe@ qNj`#!BvuK[KUxv_yS[k_zhvuH !BTqa`FbpX?`@##"},
@@ -364,4 +369,57 @@ if (SimilarityGraphBasedReactionMapper.DEBUG)
 	public ChemicalRule getAppliedRule() {
 		return mAppliedRule;
 		}
+
+	public static void main(String args[]) {
+		writeRulesDWARFile();
+		}
+
+	private static void writeRulesDWARFile() {
+		initialize();
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(RULES_DATAWARRIOR_FILE));
+			writer.write("<datawarrior-fileinfo>\n" +
+					"<version=\"3.3\">\n" +
+					"</datawarrior-fileinfo>\n" +
+					"<column properties>\n" +
+					"<columnName=\"RxnFP\">\n" +
+					"<columnProperty=\"parent\tReaction\">\n" +
+					"<columnProperty=\"specialType\tRxnFP\">\n" +
+					"<columnProperty=\"version\t1.0.0\">\n" +
+					"<columnName=\"FragFp\">\n" +
+					"<columnProperty=\"parent\tReaction\">\n" +
+					"<columnProperty=\"specialType\tFragFp\">\n" +
+					"<columnProperty=\"reactionPart\tproducts\">\n" +
+					"<columnProperty=\"version\t1.2.1\">\n" +
+					"<columnName=\"Reaction\">\n" +
+					"<columnProperty=\"specialType\trxncode\">\n" +
+					"</column properties>\n" +
+					"RxnFP\tFragFp\tName\tReaction\tPenalty\n");
+			for (int i = 0; i<CHEMICAL_RULE.length; i++)
+				writer.write("\t\t" + sChemicalRule[i].getName() + "\t" + CHEMICAL_RULE[i][1] + "\t" + DoubleFormat.toString(sChemicalRule[i].getPanalty()) + "\n");
+			writer.write("<datawarrior properties>\n" +
+					"<columnFilter_Table=\"\">\n" +
+					"<columnWidth_Table_Name=\"166\">\n" +
+					"<columnWidth_Table_Penalty=\"80\">\n" +
+					"<columnWidth_Table_Reaction=\"401\">\n" +
+					"<detailView=\"height[Data]=0.5;height[Reaction]=0.5\">\n" +
+					"<filter0=\"#string#\tName\">\n" +
+					"<filter1=\"#reaction#\tReaction\">\n" +
+					"<filter2=\"#double#\tPenalty\">\n" +
+					"<filterAnimation2=\"state=stopped low2=80% high1=20% time=10\">\n" +
+					"<headerLines_Table=\"2\">\n" +
+					"<mainSplitting=\"0.71982\">\n" +
+					"<mainView=\"Table\">\n" +
+					"<mainViewCount=\"1\">\n" +
+					"<mainViewDockInfo0=\"root\">\n" +
+					"<mainViewName0=\"Table\">\n" +
+					"<mainViewType0=\"tableView\">\n" +
+					"<rightSplitting=\"0.66326\">\n" +
+					"<rowHeight_Table=\"113\">\n" +
+					"</datawarrior properties>\n");
+			writer.close();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
 	}
+}

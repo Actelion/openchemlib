@@ -94,10 +94,11 @@ public class GenericEditorArea implements GenericEventListener {
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE_STRUCTURE + " or Name";
 	private static final String ITEM_LOAD_REACTION = "Open Reaction File...";
 	private static final String ITEM_ADD_AUTO_MAPPING = "Auto-Map Reaction";
-	private static final String ITEM_REMOVE_ALL_MAPPING = "Remove All Atom Mapping";
-	private static final String ITEM_REMOVE_AUTO_MAPPING = "Remove Automatic Mapping (green)";
-	private static final String ITEM_REMOVE_EXPLICIT_MAPPING = "Remove Explicit Atom Mapping (red)";
-	private static final String ITEM_MAKE_AUTO_MAPPING_EXPLICIT = "Make automatic mapping explicit";
+	private static final String ITEM_REMOVE_ALL_MAPPING = "Remove Entire Atom Mapping";
+	private static final String ITEM_REMOVE_AUTO_MAPPING = "Remove Auto-Mapping (green)";
+	private static final String ITEM_REMOVE_EXPLICIT_MAPPING = "Remove Explicit Mapping (red)";
+	private static final String ITEM_MAKE_AUTO_MAPPING_EXPLICIT = "Make Auto-Mapping Explicit";
+	private static final String ITEM_KEEP_AUTO_MAPPED = "Automatically Complete Mapping";
 	private static final String ITEM_FLIP_HORIZONTALLY = "Flip Horizontally";
 	private static final String ITEM_FLIP_VERTICALLY = "Flip Vertically";
 	private static final String ITEM_FLIP_ROTATE180 = "Rotate 180°";
@@ -153,6 +154,7 @@ public class GenericEditorArea implements GenericEventListener {
 	private static IReactionMapper sMapper;
 	private static String[][] sReactionQueryTemplates;
 	private final int mMaxAVBL;
+	private static boolean sKeepAutoMapped = true;
 	private int mMode, mChainAtoms, mCurrentTool, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical,
 			mCurrentHiliteAtom, mCurrentHiliteBond, mPendingRequest, mEventsScheduled, mFirstAtomKey,
 			mCurrentCursor, mReactantCount, mUpdateMode, mDisplayMode, mAtom1, mAtom2, mAllowedPseudoAtoms;
@@ -647,6 +649,10 @@ public class GenericEditorArea implements GenericEventListener {
 			removeMapping(true,false);
 		} else if (command.equals(ITEM_MAKE_AUTO_MAPPING_EXPLICIT)) {
 			makeAutoMappingExplicit();
+		} else if (command.equals(ITEM_KEEP_AUTO_MAPPED)) {
+			sKeepAutoMapped = !sKeepAutoMapped;
+			if (sKeepAutoMapped)
+				autoMapReaction();
 		} else if (command.equals(ITEM_FLIP_HORIZONTALLY)) {
 			flip(true);
 		} else if (command.equals(ITEM_FLIP_VERTICALLY)) {
@@ -1290,21 +1296,12 @@ public class GenericEditorArea implements GenericEventListener {
 					paste();
 				}
 			} else if (e.getKey() == GenericKeyEvent.KEY_DELETE) {
-				storeState();
-				if (mCurrentTool == GenericEditorToolbar.cToolMapper) {
-					boolean found = false;
-					for (int atom = 0; atom<mMol.getAllAtoms(); atom++) {
-						if (mMol.getAtomMapNo(atom) != 0) {
-							mMol.setAtomMapNo(atom, 0, false);
-							found = true;
+				if (mCurrentTool != GenericEditorToolbar.cToolMapper) {
+					storeState();
+					if (!deleteHilited()) {
+						if (mMol.deleteSelectedAtoms()) {
+							updateAndFireEvent(UPDATE_REDRAW);
 						}
-					}
-					if (found) {
-						updateAndFireEvent(UPDATE_REDRAW);
-					}
-				} else if (!deleteHilited()) {
-					if (mMol.deleteSelectedAtoms()) {
-						updateAndFireEvent(UPDATE_REDRAW);
 					}
 				}
 			} else if (e.getKey() == GenericKeyEvent.KEY_HELP || (mCurrentHiliteAtom == -1 && e.getKey() == '?')) {
@@ -1503,6 +1500,7 @@ public class GenericEditorArea implements GenericEventListener {
 			popup.addItem(ITEM_REMOVE_EXPLICIT_MAPPING, null, true);
 			popup.addItem(ITEM_REMOVE_AUTO_MAPPING, null, true);
 			popup.addItem(ITEM_MAKE_AUTO_MAPPING_EXPLICIT, null, true);
+			popup.addRadioButtonItem(ITEM_KEEP_AUTO_MAPPED, null, 0, sKeepAutoMapped);
 			}
 
 		if (mCurrentTool == GenericEditorToolbar.cToolZoom) {
@@ -2083,7 +2081,7 @@ public class GenericEditorArea implements GenericEventListener {
 				// exclude group atoms cannot be mapped
 				if (atom2 != -1
 				 && mMol.isFragment()
-				 && !mMol.isExcludeGroupAtom(atom2))
+				 && mMol.isExcludeGroupAtom(atom2))
 					atom2 = -1;
 
 //				System.out.printf("Map Request Atom %d => %d (%d)\n", mAtom1, mAtom2, atom2);
@@ -2092,23 +2090,28 @@ public class GenericEditorArea implements GenericEventListener {
 					storeState();
 					if (mapNoAtom1 != 0) {
 						mapNoChanged = true;
+						boolean wasAutoMapped = false;
 						for (int atom = 0; atom<mMol.getAtoms(); atom++) {
 							if (mMol.getAtomMapNo(atom) == mapNoAtom1) {
+								wasAutoMapped |= mMol.isAutoMappedAtom(atom);
 								mMol.setAtomMapNo(atom, 0, false);
 							}
 						}
 
-						autoMapReaction();
+						if (sKeepAutoMapped && !wasAutoMapped)
+							autoMapReaction();
 					}
 				} else {
 					storeState();
 					mapNoChanged = true;
+					boolean wasAutoMapped = false;
 
 					// If we only clicked on a mapped atom, then reset the map number
 					if (mAtom1 == atom2) {
 						int mapNo = mMol.getAtomMapNo(mAtom1);
 						for (int atom = 0; atom<mMol.getAtoms(); atom++) {
 							if (mMol.getAtomMapNo(atom) == mapNo) {
+								wasAutoMapped |= mMol.isAutoMappedAtom(atom);
 								mMol.setAtomMapNo(atom, 0, false);
 							}
 						}
@@ -2132,7 +2135,8 @@ public class GenericEditorArea implements GenericEventListener {
 						mMol.setAtomMapNo(atom2, freeMapNo, false);
 					}
 
-					autoMapReaction();
+					if (sKeepAutoMapped && !wasAutoMapped)
+						autoMapReaction();
 				}
 
 				if (mapNoChanged)
