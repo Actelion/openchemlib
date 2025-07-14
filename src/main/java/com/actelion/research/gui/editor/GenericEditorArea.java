@@ -1271,6 +1271,9 @@ public class GenericEditorArea implements GenericEventListener {
 	}
 
 	private void eventHappened(GenericKeyEvent e) {
+		if (mMouseIsDown)
+			return;
+
 		if (e.getWhat() == GenericKeyEvent.KEY_PRESSED) {
 			if (e.getKey() == GenericKeyEvent.KEY_SHIFT) {
 				mShiftIsDown = true;
