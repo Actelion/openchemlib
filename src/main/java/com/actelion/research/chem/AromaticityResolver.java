@@ -40,7 +40,7 @@ public class AromaticityResolver {
 	private boolean[]	mIsDelocalizedRing,mIsDelocalizedAtom,mIsDelocalizedBond,mIsDelocalizedBridgeHead,
 						mIsDelocalizedFiveRingMember,mIsDelocalizedThreeOrSevenRingMember;
     private int mDelocalizedAtoms, mDelocalizedBonds,mPiElectronsAdded;
-	private double[]	mBondLength;
+	private final double[] mBondLength;
 
     /**
      * Creates a new AromaticityResolver for molecule mol.

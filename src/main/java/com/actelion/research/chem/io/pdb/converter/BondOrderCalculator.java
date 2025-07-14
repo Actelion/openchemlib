@@ -17,9 +17,14 @@ public class BondOrderCalculator {
 	private static final double SP2_ANGLE_SUM = 2.000 * Math.PI;
 	private static final double SP3_ANGLE_SUM = 1.833 * Math.PI;
 	private static final double OUT_OF_PLANE_TORSION_LIMIT = 0.20 * Math.PI;	// relaxed setting, because PDB errors are sometimes substantial
+	private static final double CIS_TORSION_LIMIT = 0.10 * Math.PI;
 	private static final double SINGLE_DOUBLE_BOND_LENGTH_FACTOR = 0.92;
 	private static final double DOUBLE_TRIPLE_BOND_LENGTH_FACTOR = 0.88;
 	private static final double AROMATIC_BOND_LENGTH_TOLERANCE = 0.1;
+	private static final double CHINONE_BOND_LENGTH_TOLERANCE = 0.04;
+	// TODO do we really want to put a preference on endo-cyclic just because guanine is usually drawn that way?
+	private static final double GUANIDINE_AROM_NEIGHBOUR_BONUS = 0.025;	// allowed additional deviation to prefer endo-cyclic guanine type double bonds in resonance to aromatic ring
+
 	private static final double PYRIDINONE_CN_CUT_OFF = 1.370;
 	private static final double PYRIDINONE_CO_CUT_OFF = 1.285;
 	private static final double QUINONE_CO_CUT_OFF = 1.310;
@@ -38,6 +43,8 @@ public class BondOrderCalculator {
 	 * Neither bonds nor hydrogen atoms are required, but may be present.
 	 * If the molecule contains bonds, then these are expected to be metal and single bonds only.
 	 * For all atoms the molecule must contain 3D-coordinates, e.g. taken from a PDB or MMCIF file.
+	 * The BondOrderCalculator is not thread-safe, which means every separate thread needs its own
+	 * BondOrderCalculator.
 	 * @param mol
 	 */
 	public BondOrderCalculator(Molecule3D mol) throws Exception {
@@ -78,6 +85,7 @@ public class BondOrderCalculator {
 				assignBond(bond, 1, true);
 
 		boolean[] isAromaticBond = determineAromaticBonds(isOutOfPlaneTorsionBond);
+		determineAromaticRingExoDoubleBonds(isAromaticBond, isOutOfPlaneTorsionBond);
 		boolean success = new AromaticityResolver(mMol, mBondLength).locateDelocalizedDoubleBonds(isAromaticBond.clone(), true, false);
 		if (!success)
 			System.out.println("WARNING: Assignment of aromatic ring bonds failed.");
@@ -100,6 +108,8 @@ public class BondOrderCalculator {
 		correctExceededValences();
 
 		assignForgottenDoubleBonds(isOutOfPlaneTorsionBond);
+
+		convertObviousHydroxyIminesToAmides();
 
 		correctMetalLigandCharges();
 
@@ -177,6 +187,7 @@ public class BondOrderCalculator {
 				continue;
 
 			if (conns1 > 1 && conns2 > 1) {
+				boolean cisFound = false;
 				for (int i=0; i<conns1 && !isOutOfPlaneTorsionBond[bond]; i++) {
 					tAtom[0] = mMol.getConnAtom(tAtom[1], i);
 					if (tAtom[0] != tAtom[2]) {
@@ -184,41 +195,85 @@ public class BondOrderCalculator {
 							tAtom[3] = mMol.getConnAtom(tAtom[2], j);
 							if (tAtom[3] != tAtom[1]) {
 								double torsion = TorsionDB.calculateTorsionExtended(mMol, tAtom);
+								if (torsion < CIS_TORSION_LIMIT)
+									cisFound = true;
 								isOutOfPlaneTorsionBond[bond] = (HALF_PI - Math.abs(Math.abs(torsion) - HALF_PI)) > OUT_OF_PLANE_TORSION_LIMIT;
 							}
 						}
 					}
 				}
 
-				mIsFlatBond[bond] = conns1 + conns2 >= 5 & !isOutOfPlaneTorsionBond[bond];
+				mIsFlatBond[bond] = (cisFound || (conns1 + conns2 >= 5)) && !isOutOfPlaneTorsionBond[bond];
 			}
 		}
 
 		return isOutOfPlaneTorsionBond;
 	}
 
-	private void determineKnownGroups(boolean[] isAromaticAtom ) {
+	private void determineAromaticRingExoDoubleBonds(boolean[] isAromaticBond, boolean[] isOutOfPlaneTorsionBond) {
+
+	}
+
+	private void determineKnownGroups(boolean[] isAromaticAtom) {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (isAromaticAtom[atom])
 				continue;
 
+			// N-C(=N)-N
+			if (mMol.getAtomicNo(atom) == 6 && mMol.getConnAtoms(atom) == 3 && mHybridisation[atom] == 2) {
+				Neighbour[] nitrogens = getNeighbourAtoms(atom, 7, 0, 0, 0, false);
+//				Neighbour[] nitrogens = getNeighbourAtoms(atom, 7, 0, 0, 0, true);
+				if (nitrogens.length == 3) {
+					// if one of the guanidine nitrogens is connected to an aromatic ring (usually in guanine),
+					// then the double bond is in resonance to that even if its bond length is slightly longer than the exocyclic one
+					Neighbour preferredNitrogen = null;
+					double preferredDeviation = 100;
+					for (Neighbour nitrogen : nitrogens) {
+						double deviation = nitrogen.getBondLengthDeviation();
+						if (hasAromaticNeighbour(nitrogen.getAtom(), isAromaticAtom))
+							deviation -= GUANIDINE_AROM_NEIGHBOUR_BONUS;
+						if (deviation < preferredDeviation) {
+							preferredNitrogen = nitrogen;
+							preferredDeviation = deviation;
+						}
+					}
+					for (Neighbour nitrogen : nitrogens)
+						assignBond(nitrogen.getBond(), nitrogen == preferredNitrogen ? 2 : 1, true);
+					continue;
+				}
+			}
+
 			// X-C(=X)-X
 			if (mMol.getAtomicNo(atom) == 6 && mMol.getConnAtoms(atom) == 3 && mHybridisation[atom] == 2) {
 				Neighbour[] electronegative = getNeighbourAtoms(atom, -1, 0, 0, 0, true);
-				if (electronegative.length == 3)
-					for (int i=0; i<electronegative.length; i++)
+				if (electronegative.length == 3) {
+					for (int i = 0; i<electronegative.length; i++)
 						assignBond(electronegative[i].getBond(), i == 0 ? 2 : 1, true);
+					continue;
+				}
 			}
 
 			// any-C(=O)-O
 			if (mMol.getAtomicNo(atom) == 6 && mMol.getConnAtoms(atom) == 3 && mHybridisation[atom] == 2) {
 				Neighbour[] oxygen = getNeighbourAtoms(atom, 8, 1, 0, 0, false);
-				if (oxygen.length >= 2)
-					for (int i=0; i<oxygen.length; i++)
+				if (oxygen.length >= 2) {
+					for (int i = 0; i<oxygen.length; i++)
 						assignBond(oxygen[i].getBond(), i == 0 ? 2 : 1, true);
+					continue;
+				}
 			}
 
-				// any-N(=O)-O
+			// any-C(=O)-X
+			if (mMol.getAtomicNo(atom) == 6 && mMol.getConnAtoms(atom) == 3 && mHybridisation[atom] == 2) {
+				Neighbour[] electronegative = getNeighbourAtoms(atom, -1, 1, 0, 0, true);
+				if (electronegative.length >= 2 && mMol.getAtomicNo(electronegative[0].getAtom()) == 8) {
+					for (int i = 0; i<electronegative.length; i++)
+						assignBond(electronegative[i].getBond(), i == 0 ? 2 : 1, true);
+					continue;
+				}
+			}
+
+			// any-N(=O)-O
 			if (mMol.getAtomicNo(atom) == 7 && mMol.getConnAtoms(atom) == 3) {
 				Neighbour[] oxygen = getNeighbourAtoms(atom, 8, 1, 0, 0, false);
 				if (oxygen.length >= 2) {
@@ -228,33 +283,48 @@ public class BondOrderCalculator {
 							mMol.setAtomCharge(oxygen[i].getAtom(), -1);
 						assignBond(oxygen[i].getBond(), i == 0 ? 2 : 1, true);
 					}
+					continue;
 				}
 			}
 
 			// any-P(=O)(-any)-any
 			if (mMol.getAtomicNo(atom) == 15 && mMol.getConnAtoms(atom) == 4) {
 				Neighbour[] oxygen = getNeighbourAtoms(atom, 8, 1, 0, 0, false);
-				if (oxygen.length >= 1)
-					for (int i=0; i<oxygen.length; i++)
+				if (oxygen.length >= 1) {
+					for (int i = 0; i<oxygen.length; i++)
 						assignBond(oxygen[i].getBond(), i == 0 ? 2 : 1, true);
+					continue;
+				}
 			}
 
 			// any-S(=O)-any
 			if (mMol.getAtomicNo(atom) == 16 && mMol.getConnAtoms(atom) == 3) {
 				Neighbour[] oxygen = getNeighbourAtoms(atom, 8, 1, 0, 0, false);
-				if (oxygen.length >= 1)
-					for (int i=0; i<oxygen.length; i++)
+				if (oxygen.length >= 1) {
+					for (int i = 0; i<oxygen.length; i++)
 						assignBond(oxygen[i].getBond(), i == 0 ? 2 : 1, true);
+					continue;
+				}
 			}
 
 			// any-S(=O)(=O)-any
 			if (mMol.getAtomicNo(atom) == 16 && mMol.getConnAtoms(atom) == 4) {
 				Neighbour[] oxygen = getNeighbourAtoms(atom, 8, 1, 0, 0, false);
-				if (oxygen.length >= 2)
-					for (int i=0; i<oxygen.length; i++)
-						assignBond(oxygen[i].getBond(), i < 2 ? 2 : 1, true);
+				if (oxygen.length >= 2) {
+					for (int i = 0; i<oxygen.length; i++)
+						assignBond(oxygen[i].getBond(), i<2 ? 2 : 1, true);
+					continue;
+				}
 			}
 		}
+	}
+
+	private boolean hasAromaticNeighbour(int atom, boolean[] isAromaticAtom) {
+		for (int i=0; i<mMol.getConnAtoms(atom); i++)
+			if (isAromaticAtom[mMol.getConnAtom(atom, i)])
+				return true;
+
+		return false;
 	}
 
 	private boolean[] determineAromaticBonds(boolean[] isOutOfPlaneTorsionBond) {
@@ -265,7 +335,9 @@ public class BondOrderCalculator {
 		boolean[] isDelocalizedBond = new boolean[mMol.getBonds()];
 
 		for (int r=0; r<ringSet.getSize(); r++) {
-			for (int bond : ringSet.getRingBonds(r)) {
+			int[] ringBond = ringSet.getRingBonds(r);
+
+			for (int bond : ringBond) {
 				if (isOutOfPlaneTorsionBond[bond]) {
 					isAromaticRing[r] = false;
 					break;
@@ -273,6 +345,20 @@ public class BondOrderCalculator {
 			}
 			if (!isAromaticRing[r])
 				continue;
+
+			if (ringBond.length >= 5 && ringBond.length <= 7) {	// TODO: should we consider 5-membered rings only? What about 3-rings?
+				for (int bond : ringBond) {
+					if (!isAromCompatibleLength(bond, ringBond.length == 6)
+					|| (!mIsFlatBond[bond]
+					  && mMol.getConnAtoms(mMol.getBondAtom(0, bond)) == 3
+					  && mMol.getConnAtoms(mMol.getBondAtom(1, bond)) == 3)) {
+						isAromaticRing[r] = false;
+						break;
+					}
+				}
+				if (!isAromaticRing[r])
+					continue;
+			}
 
 			int[] ringAtom = ringSet.getRingAtoms(r);
 
@@ -287,10 +373,31 @@ public class BondOrderCalculator {
 					break;
 				}
 			}
-
 			if (!isAromaticRing[r])
 				continue;
 
+/*			for (int i=0; i<ringAtom.length; i++) {
+				int connIndex = getExocyclicIndex(ringAtom, i);
+				if (connIndex != -1) {
+					int oxygen = mMol.getConnAtom(ringAtom[i], connIndex);
+					if (mMol.getAtomicNo(oxygen) == 8 && mMol.getConnAtoms(oxygen) == 1) {
+						int index = BondLengthSet.getBondIndex(2, false, false, mMol.getAtomicNo(ringAtom[i]), 8, 1, 1, 3, 1, true);
+						if (index != -1) {
+							int connBond = mMol.getConnBond(ringAtom[i], connIndex);
+							if (mBondLength[connBond] < BondLengthSet.getBondLength(index) + PHENOL_BOND_LENGTH_TOLERANCE) {
+//								assignBond(connBond, 2, true);
+//								int[] ringConnBond = ringNeighbourBonds(ringBond, i);
+//								assignBond(ringConnBond[0], 1, true);
+//								assignBond(ringConnBond[1], 1, true);
+								isAromaticRing[r] = false;
+							}
+						}
+					}
+				}
+			}
+			if (!isAromaticRing[r])
+				continue;
+*/
 			if (ringAtom.length != 3) {    // 3-rings are always flat
 				double angleSum = 0.0;
 				for (int i = 0; i<ringAtom.length; i++)
@@ -385,7 +492,72 @@ public class BondOrderCalculator {
 			}
 		}
 
+		// determine exo-aromatic double bonds (currently only oxo)
+		for (int r=0; r<ringSet.getSize(); r++) {
+			if (ringSet.isAromatic(r)) {
+				int[] ringAtom = ringSet.getRingAtoms(r);
+				for (int i=0; i<ringAtom.length; i++) {
+					int connIndex = getExocyclicIndex(ringAtom, i);
+					if (connIndex != -1) {
+						int exoAtom = mMol.getConnAtom(ringAtom[i], connIndex);
+						if (mMol.getAtomicNo(exoAtom) == 8 && mMol.getConnAtoms(exoAtom) == 1) {
+							int index = BondLengthSet.getBondIndex(2, false, false, mMol.getAtomicNo(ringAtom[i]), mMol.getAtomicNo(exoAtom), 1, 1, 3, mMol.getConnAtoms(exoAtom), true);
+							if (index != -1) {
+								int connBond = mMol.getConnBond(ringAtom[i], connIndex);
+								if (mBondLength[connBond] < BondLengthSet.getBondLength(index) + CHINONE_BOND_LENGTH_TOLERANCE)
+									isAromaticBond[connBond] = true;
+							}
+						}
+					}
+				}
+			}
+		}
+
 		return isAromaticBond;
+	}
+
+	private boolean isAromCompatibleLength(int bond, boolean delocalized) {
+		int atom1 = mMol.getBondAtom(0, bond);
+		int atom2 = mMol.getBondAtom(1, bond);
+		int pi1 = mMol.isElectronegative(atom1) ? 0 : 1;
+		int pi2 = mMol.isElectronegative(atom2) ? 0 : 1;
+		if (pi1 + pi2 == 0) {
+			if (mMol.getAtomicNo(atom1) == 7)
+				pi1 = 1;
+			else if (mMol.getAtomicNo(atom2) == 7)
+				pi2 = 1;
+		}
+		int conns1 = mMol.getConnAtoms(atom1);
+		int conns2 = mMol.getConnAtoms(atom2);
+		int atomicNo1 = mMol.getAtomicNo(atom1);
+		int atomicNo2 = mMol.getAtomicNo(atom2);
+		int index1 = BondLengthSet.getBondIndex(1, true,
+				delocalized, atomicNo1, atomicNo2, pi1, pi2, conns1, conns2, false);
+		if (index1 == -1)
+			return true;
+		int index2 = BondLengthSet.getBondIndex(1, false,
+				false, atomicNo1, atomicNo2, 0, 0, conns1, conns2, false);
+		if (index2 == -1)
+			return true;
+		float aromLength = BondLengthSet.getBondLength(index1);
+		float nonAromLength = BondLengthSet.getBondLength(index2);
+		if (nonAromLength - aromLength < 0.1) {
+			System.out.println("Non predictive arom and non-arom bond lengths; atomicNos:"+atomicNo1+","+atomicNo2);
+			return true;
+		}
+		return (nonAromLength - mBondLength[bond]) / (nonAromLength - aromLength) > 0.2;	// conservative threshold: return false only if length is very close to non-aromatic reference length
+	}
+
+	private int getExocyclicIndex(int[] ringAtom, int i) {
+		if (mMol.getConnAtoms(ringAtom[i]) > 2) {
+			int[] ringConn = ringNeighbourAtoms(ringAtom, i);
+			for (int j=0; j<mMol.getConnAtoms(ringAtom[i]); j++) {
+				int connAtom = mMol.getConnAtom(ringAtom[i], j);
+				if (connAtom != ringConn[0] && connAtom != ringConn[1])
+					return j;
+			}
+		}
+		return -1;
 	}
 
 	private int[] ringNeighbourAtoms(int[] ringAtom, int i) {
@@ -430,7 +602,7 @@ public class BondOrderCalculator {
 				}
 
 				if (!mNeighbourList.isEmpty()) {
-					calculateBondLengthsForNeighbourList(atom);
+					calculateBondLengthDeviationsForNeighbourList(atom);
 					Neighbour[] neighbour = mNeighbourList.toArray(new Neighbour[0]);
 					Arrays.sort(neighbour);
 					assignBond(neighbour[0].getBond(), 2, true);
@@ -476,6 +648,11 @@ public class BondOrderCalculator {
 			return false;
 
 		mHybridisation[atom] = hybridisation;
+
+		if (hybridisation == 3 && mMol.getAtomicNo(atom) <= 9)
+			for (int i=0; i<mMol.getConnAtoms(atom); i++)
+				assignBond(mMol.getConnBond(atom, i), 1, true);
+
 		return true;
 	}
 
@@ -502,7 +679,7 @@ public class BondOrderCalculator {
 	/**
 	 * Considering current pi electron counts and neighbour counts for both bond atoms,
 	 * lookup the typical bond length for single and double bonds. Return the order that
-	 * better matchtes real length of this bond.
+	 * better matches real length of this bond.
 	 * @param bond
 	 * @return most likely order
 	 */
@@ -568,14 +745,37 @@ public class BondOrderCalculator {
 				if (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 0) {
 					mMol.setAtomCharge(atom, 1);
 					freeValence++;
-					for (int i=0; i<mMol.getConnAtoms(atom); i++) {
-						int connAtom = mMol.getConnAtom(atom, i);
-						if (mMol.getAtomicNo(connAtom) == 8
-						 && mMol.getBondOrder(mMol.getConnBond(atom, i)) == 1
-						 && mMol.getConnAtoms(connAtom) == 1
-						 && mMol.getAtomCharge(connAtom) == 0) {
-							mMol.setAtomCharge(connAtom, -1);
-							break;
+					if (mHybridisation[atom] == 1) {
+						for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+							int connAtom = mMol.getConnAtom(atom, i);
+							// isonitrile: add a negative charge to the carbon
+							if (mMol.getAtomicNo(connAtom) == 6
+							 && mMol.getBondOrder(mMol.getConnBond(atom, i)) == 3
+							 && mMol.getConnAtoms(connAtom) == 1
+							 && mMol.getAtomCharge(connAtom) == 0) {
+								mMol.setAtomCharge(connAtom, -1);
+								break;
+							}
+							// azide: add a negative charge to the nitrogen neighbour
+							if (mMol.getAtomicNo(connAtom) == 7
+							 && mMol.getBondOrder(mMol.getConnBond(atom, i)) == 2
+							 && mMol.getConnAtoms(connAtom) == 1
+							 && mMol.getAtomCharge(connAtom) == 0) {
+								mMol.setAtomCharge(connAtom, -1);
+								break;
+							}
+						}
+					}
+					else {
+						for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+							int connAtom = mMol.getConnAtom(atom, i);
+							if (mMol.getAtomicNo(connAtom) == 8
+							 && mMol.getBondOrder(mMol.getConnBond(atom, i)) == 1
+							 && mMol.getConnAtoms(connAtom) == 1
+							 && mMol.getAtomCharge(connAtom) == 0) {
+								mMol.setAtomCharge(connAtom, -1);
+								break;
+							}
 						}
 					}
 				}
@@ -604,6 +804,30 @@ public class BondOrderCalculator {
 			}
 		}
 
+	}
+
+	private void convertObviousHydroxyIminesToAmides() {
+		for (int oxygen=0; oxygen<mMol.getAtoms(); oxygen++) {
+			if (mMol.getAtomicNo(oxygen) == 8
+			 && mMol.getConnAtoms(oxygen) == 1) {
+				int oxygenBond = mMol.getConnBond(oxygen, 0);
+				if (mMol.getBondType(oxygenBond) == Molecule.cBondTypeSingle) {
+					int carbon = mMol.getConnAtom(oxygen, 0);
+					Neighbour[] neighbour = getNeighbourAtoms(carbon, -1, 0, 0, 0, true);
+					if (neighbour.length >= 2) {
+						if (neighbour[0].getAtom() == oxygen) {
+							for (int i=1; i<neighbour.length; i++) {
+								if (mMol.getBondType(neighbour[i].getBond()) == Molecule.cBondTypeDouble) {
+									assignBond(neighbour[i].getBond(), 1, true);
+									assignBond(oxygenBond, 2, true);
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	private void correctMetalLigandCharges() {
@@ -688,7 +912,8 @@ public class BondOrderCalculator {
 		int j=0;
 		while ((j<valenceList.length-1) && (occupiedValence > valenceList[j]))
 			j++;
-		return valenceList[j] - occupiedValence;
+		int potentialChargeIncrease = (mMol.getAtomicNo(atom) == 7) ? 1 : 0;
+		return valenceList[j] - occupiedValence + potentialChargeIncrease;
 	}
 
 	/**
@@ -731,7 +956,7 @@ public class BondOrderCalculator {
 		}
 
 		if (useBondLengthStatistics)
-			calculateBondLengthsForNeighbourList(rootAtom);
+			calculateBondLengthDeviationsForNeighbourList(rootAtom);
 
 		Neighbour[] neighbours = mNeighbourList.toArray(new Neighbour[0]);
 		Arrays.sort(neighbours);
@@ -744,7 +969,7 @@ public class BondOrderCalculator {
 	 * meaningful sorting based on the bond length deviation from the expected bonds lengths.
 	 * @param rootAtom
 	 */
-	private void calculateBondLengthsForNeighbourList(int rootAtom) {
+	private void calculateBondLengthDeviationsForNeighbourList(int rootAtom) {
 		double[] expectedBondLength = new double[mNeighbourList.size()];
 		for (int i=0; i<mNeighbourList.size(); i++) {
 			int index = BondLengthSet.getBondIndex(1, false,
@@ -758,19 +983,19 @@ public class BondOrderCalculator {
 		}
 		if (expectedBondLength != null)
 			for (int i=0; i<mNeighbourList.size(); i++)
-				mNeighbourList.get(i).setExpectedBondLength(expectedBondLength[i]);
+				mNeighbourList.get(i).subtractExpectedBondLength(expectedBondLength[i]);
 	}
 
 }
 
 class Neighbour implements Comparable<Neighbour> {
-	private double mBondLength;
+	private double mBondLengthDeviation;
 	private final int mAtom,mBond;
 
 	public Neighbour(int atom, int bond, double bondLength) {
 		mAtom = atom;
 		mBond = bond;
-		mBondLength = bondLength;
+		mBondLengthDeviation = bondLength;
 	}
 
 	public int getAtom() {
@@ -781,14 +1006,18 @@ class Neighbour implements Comparable<Neighbour> {
 		return mBond;
 	}
 
+	public double getBondLengthDeviation() {
+		return mBondLengthDeviation;
+	}
+
 	// Use this method if neighbours are of different kinds. Then, instead of sorting based on bond lengths,
 	// we need to sort based on deviations from expected bond lengths.
-	public void setExpectedBondLength(double bondLength) {
-		mBondLength -= bondLength;
+	public void subtractExpectedBondLength(double bondLength) {
+		mBondLengthDeviation -= bondLength;
 	}
 
 	@Override
 	public int compareTo(Neighbour o) {
-		return Double.compare(mBondLength, o.mBondLength);
+		return Double.compare(mBondLengthDeviation, o.mBondLengthDeviation);
 	}
 }

@@ -169,7 +169,7 @@ public class BondLengthSet {
 	 * If not even a close entry can be found, -1 is returned.
 	 * Bond indexes refers to the sorted list of bond length information.
 	 * The index can be used to look up a typical bond length and standard deviation.
-	 * @param bondOrder
+	 * @param bondOrder not used, if isDelocalized
 	 * @param isAromatic
 	 * @param isDelocalized
 	 * @param atomicNo1
@@ -194,7 +194,7 @@ public class BondLengthSet {
 
 	/**
 	 * Constructs a bond classification index from individual parameters.
-	 * @param bondOrder
+	 * @param bondOrder not used, if isDelocalized
 	 * @param isAromatic
 	 * @param isDelocalized
 	 * @param atomicNo1

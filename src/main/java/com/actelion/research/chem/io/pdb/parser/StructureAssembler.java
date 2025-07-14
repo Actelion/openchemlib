@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 
 public class StructureAssembler {
-	public static final boolean USE_NEW_BONDORDER_CALCULATOR = false;
+	public static final boolean USE_NEW_BONDORDER_CALCULATOR = true;
 
 	public static final String PROTEIN_GROUP = "protein";
 	public static final String SOLVENT_GROUP = "water";
@@ -240,9 +240,9 @@ public class StructureAssembler {
 		// build map from group names to corresponding atom lists
 		mGroupAtomRecordListMap = new HashMap<>();
 		mGroupAtomRecordListMap.put(PROTEIN_GROUP, new ArrayList<>(mProteinAtomRecordList));
-		mHetAtomRecordList.forEach(e -> {
-			List<AtomRecord> li = mGroupAtomRecordListMap.computeIfAbsent(e.getString(), k -> new ArrayList<>());
-			li.add(e);
+		mHetAtomRecordList.forEach(hetAtom -> {
+			List<AtomRecord> li = mGroupAtomRecordListMap.computeIfAbsent(hetAtom.getString(), k -> new ArrayList<>());
+			li.add(hetAtom);
 		});
 
 		// Merge atom groups that are connected by a bond
