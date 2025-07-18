@@ -134,11 +134,11 @@ public class RingCollection {
 			return;		 // no rings found
 
 				// find all rings with less than 8 members of all closure bonds
-		int graphAtom[] = new int[mMol.getAtoms()];
+		int[] graphAtom = new int[mMol.getAtoms()];
 		graphAtom[0] = startAtom;
 		int[] parent = new int[mMol.getAtoms()];
 		parent[0] = -1;
-		int fragmentNo[] = new int[mMol.getAtoms()];
+		int[] fragmentNo = new int[mMol.getAtoms()];
 		fragmentNo[startAtom] = 1;
 		int current = 0;
 		int highest = 0;
@@ -187,7 +187,7 @@ public class RingCollection {
 		if ((mode & MODE_LARGE_RINGS) != 0) {
 			for (int bond=0; bond<mMol.getBonds(); bond++) {
 				if (!isConfirmedChainBond[bond] && mMol.getBondOrder(bond) != 0) {
-					int ringAtom[] = findSmallestRing(bond, isConfirmedChainAtom);
+					int[] ringAtom = findSmallestRing(bond, isConfirmedChainAtom);
 					if (ringAtom != null)
 						updateRingSize(ringAtom, getRingBonds(ringAtom));
 					}
@@ -205,9 +205,9 @@ public class RingCollection {
 	private int[] findSmallestRing(int bond, boolean[] isConfirmedChainAtom) {
 		int atom1 = mMol.getBondAtom(0, bond);
 		int atom2 = mMol.getBondAtom(1, bond);
-		int graphAtom[] = new int[mMol.getAtoms()];
-		int graphLevel[] = new int[mMol.getAtoms()];
-		int graphParent[] = new int[mMol.getAtoms()];
+		int[] graphAtom = new int[mMol.getAtoms()];
+		int[] graphLevel = new int[mMol.getAtoms()];
+		int[] graphParent = new int[mMol.getAtoms()];
 		graphAtom[0] = atom1;
 		graphAtom[1] = atom2;
 		graphLevel[atom1] = 1;
@@ -220,7 +220,7 @@ public class RingCollection {
 			for (int i=0; i<mMol.getConnAtoms(graphAtom[current]); i++) {
 				int candidate = mMol.getConnAtom(graphAtom[current], i);
 				if ((current > 1) && candidate == atom1) {
-					int ringAtom[] = new int[graphLevel[graphAtom[current]]];
+					int[] ringAtom = new int[graphLevel[graphAtom[current]]];
 					int atom = graphAtom[current];
 					for (int j = 0; j < ringAtom.length; j++) {
 						ringAtom[j] = atom;
@@ -541,20 +541,18 @@ public class RingCollection {
 
 
 	public boolean isAtomMember(int ringNo, int atom) {
-		int[] ringAtom = mRingAtomSet.get(ringNo);
-		for (int i=0; i<ringAtom.length; i++)
-			if (atom == ringAtom[i])
-				return true;
+        for (int ringAtom : mRingAtomSet.get(ringNo))
+            if (atom == ringAtom)
+                return true;
 
 		return false;
 		}
 
 
 	public boolean isBondMember(int ringNo, int bond) {
-		int[] ringBond = mRingBondSet.get(ringNo);
-		for (int i=0; i<ringBond.length; i++)
-			if (bond == ringBond[i])
-				return true;
+        for (int ringBond : mRingBondSet.get(ringNo))
+            if (bond == ringBond)
+                return true;
 
 		return false;
 		}
@@ -575,19 +573,20 @@ public class RingCollection {
 
 	private void updateRingSize(int[] ringAtom, int[] ringBond) {
 		int ringSize = ringAtom.length;
-		for (int i=0; i<ringSize; i++) {
-			int currentSize = mAtomRingFeatures[ringAtom[i]] & FEATURES_RING_SIZE;
-			if (currentSize == 0 || currentSize>ringSize) {
-				mAtomRingFeatures[ringAtom[i]] &= ~FEATURES_RING_SIZE;
-				mAtomRingFeatures[ringAtom[i]] |= ringSize;
-				}
-			}
 
-		for (int i=0; i<ringSize; i++) {
-			int currentSize = mBondRingFeatures[ringBond[i]] & FEATURES_RING_SIZE;
+        for (int atom : ringAtom) {
+            int currentSize = mAtomRingFeatures[atom] & FEATURES_RING_SIZE;
+            if (currentSize == 0 || currentSize > ringSize) {
+                mAtomRingFeatures[atom] &= ~FEATURES_RING_SIZE;
+                mAtomRingFeatures[atom] |= ringSize;
+            }
+        }
+
+		for (int bond : ringBond) {
+			int currentSize = mBondRingFeatures[bond] & FEATURES_RING_SIZE;
 			if (currentSize == 0 || currentSize>ringSize) {
-				mBondRingFeatures[ringBond[i]] &= ~FEATURES_RING_SIZE;
-				mBondRingFeatures[ringBond[i]] |= ringSize;
+				mBondRingFeatures[bond] &= ~FEATURES_RING_SIZE;
+				mBondRingFeatures[bond] |= ringSize;
 				}
 			}
 		}
@@ -904,7 +903,7 @@ public class RingCollection {
 						if ((mMol.getAtomicNo(connAtom) == 8 || mMol.getAtomicNo(connAtom) == 16)
 						 && mMol.getBondOrder(connBond) == 2
 						 && mMol.getConnAtoms(connAtom) == 1)
-						return true;
+							return true;
 						}
 					}
 				}
