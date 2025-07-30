@@ -1408,6 +1408,23 @@ public class ExtendedMoleculeFunctions {
 		return molReduced;
 	}
 
+	/**
+	 *
+	 * @param mol
+	 * @param bond
+	 * @param minAtomsDistance minimum number bonds between the atoms.
+	 * @param maxSpanAtoms minAtomsDistance + maxSpanAtoms is the maximum number bonds between the atoms.
+	 */
+	public static void setAtomBridge(ExtendedMolecule mol, int bond, int minAtomsDistance, int maxSpanAtoms){
+		int queryFeatures = 0;
+		queryFeatures |= (minAtomsDistance << Molecule.cBondQFBridgeMinShift);
+		queryFeatures |= (maxSpanAtoms << Molecule.cBondQFBridgeSpanShift);
+		queryFeatures &= ~Molecule.cBondQFAllBondTypes;
+		mol.setBondType(bond, Molecule.cBondTypeSingle);
+		mol.setBondQueryFeature(bond, Molecule.cBondQFAllFeatures, false);
+		mol.setBondQueryFeature(bond, queryFeatures, true);
+		mol.adaptBondTypeToQueryFeatures(bond);
+	}
 
 	public static void setColorMCS2Molecule(StereoMolecule mol, StereoMolecule molMCS){
 		for (int i = 0; i < mol.getAtoms(); i++) {
