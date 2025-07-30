@@ -845,7 +845,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperNeighbours);
 
 		int[] graphLevel = new int[mAllAtoms];
-		int graphAtom[] = new int[mAllAtoms];
+		int[] graphAtom = new int[mAllAtoms];
 
 		graphAtom[0] = atom1;
 		graphLevel[atom1] = 1;
@@ -883,7 +883,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperNeighbours);
 
 		int[] graphLevel = new int[mAllAtoms];
-		int graphAtom[] = new int[mAllAtoms];
+		int[] graphAtom = new int[mAllAtoms];
 
 		graphAtom[0] = atom1;
 		graphLevel[atom1] = 1;
@@ -941,8 +941,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		ensureHelperArrays(cHelperNeighbours);
 
 		int[] graphLevel = new int[mAllAtoms];
-		int graphAtom[] = new int[mAllAtoms];
-		int parentAtom[] = new int[mAllAtoms];
+		int[] graphAtom = new int[mAllAtoms];
+		int[] parentAtom = new int[mAllAtoms];
 
 		graphAtom[0] = atom1;
 		graphLevel[atom1] = 1;
@@ -1151,7 +1151,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		for (int atom=0; atom<mAllAtoms; atom++) {
 			if (fragmentNo[atom] == -1) {
 				fragmentNo[atom] = fragments;
-				int graphAtom[] = new int[mAllAtoms];
+				int[] graphAtom = new int[mAllAtoms];
 				graphAtom[0] = atom;
 				int current = 0;
 				int highest = 0;
@@ -1199,7 +1199,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			if (fragmentNo[atom] == -1
 			 && (!markedAtomsOnly || isMarkedAtom(atom))) {
 				fragmentNo[atom] = fragments;
-				int graphAtom[] = new int[mAllAtoms];
+				int[] graphAtom = new int[mAllAtoms];
 				graphAtom[0] = atom;
 				int current = 0;
 				int highest = 0;
@@ -1361,7 +1361,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 	while (current <= highest) {
 //			int connAtoms = getAllConnAtomsPlusMetalBonds(graphAtom[current]);
 //		    for (int i=0; i<connAtoms; i++) {     the default for graph methods is to neglect dative bonds; TLS 27 May 2020
-// If dative bonds must be considered on a certain context, the we need to introduce a flag e.g. as in getFragmentAtoms()
+// If dative bonds must be considered on a certain context, then we need to introduce a flag e.g. as in getFragmentAtoms()
 			for (int i=0; i<mAllConnAtoms[graphAtom[current]]; i++) {
 				int candidate = mConnAtom[graphAtom[current]][i];
 				if (candidate == coreAtom) {
@@ -3441,7 +3441,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 						int newStereoBond = preferredTHStereoBond(stereoCenter, false);
 						if (mBondAtom[0][newStereoBond] != stereoCenter) {
 							mBondAtom[1][newStereoBond] = mBondAtom[0][newStereoBond];
-							mBondAtom[1][newStereoBond] = stereoCenter;
+							mBondAtom[0][newStereoBond] = stereoCenter;
 							}
 						}
 					}
@@ -3518,7 +3518,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return true if atom has a neighbour with a negative charge
 	 */
 	private boolean hasNegativeNeighbour(int atom) {
-		for (int i = 0; i< mConnAtoms[atom]; i++)
+		for (int i=0; i<mConnAtoms[atom]; i++)
 			if (mAtomCharge[mConnAtom[atom][i]] < 0)
 				return true;
 		return false;
@@ -3530,7 +3530,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * @return true if atom has a neighbour with a positive charge
 	 */
 	private boolean hasPositiveNeighbour(int atom) {
-		for (int i = 0; i< mConnAtoms[atom]; i++)
+		for (int i=0; i<mConnAtoms[atom]; i++)
 			if (mAtomCharge[mConnAtom[atom][i]] > 0)
 				return true;
 		return false;

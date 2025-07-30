@@ -36,7 +36,7 @@ package com.actelion.research.chem;
 
 public class AromaticityResolver {
 	ExtendedMolecule	mMol;
-	private boolean		mAllHydrogensAreExplicit,mConsiderGeometry;
+	private boolean		mAllHydrogensAreExplicit;
 	private boolean[]	mIsDelocalizedRing,mIsDelocalizedAtom,mIsDelocalizedBond,mIsDelocalizedBridgeHead,
 						mIsDelocalizedFiveRingMember,mIsDelocalizedThreeOrSevenRingMember;
     private int mDelocalizedAtoms, mDelocalizedBonds,mPiElectronsAdded;
@@ -284,6 +284,7 @@ public class AromaticityResolver {
 					int[] ringAtom = ringSet.getRingAtoms(ring);
 					for (int i=0; i<ringAtom.length; i++) {
 						int atom = ringAtom[i];
+						double bondLengthSum = (mBondLength == null) ? 0.0 : mBondLength[ringBond[i]] + mBondLength[ringBond[(i==0?ringAtom.length:i)-1]];
 						int priority = mIsDelocalizedFiveRingMember[atom] ?
 								checkAtomTypeLeak5(atom, false)
 							  : checkAtomTypeLeak7(atom, false);
@@ -291,10 +292,9 @@ public class AromaticityResolver {
 							bestDelocalizationLeakPriority = priority;
 							bestDelocalizationLeakIndex = i;
 							if (mBondLength != null)
-								bestBondLengthSum = mBondLength[(i==0?ringAtom.length:i)-1] + mBondLength[i];
+								bestBondLengthSum = bondLengthSum;
 						}
 						else if (bestDelocalizationLeakPriority == priority && mBondLength != null) {
-							double bondLengthSum = mBondLength[(i==0?ringAtom.length:i)-1] + mBondLength[i];
 							if (bestBondLengthSum < bondLengthSum) {
 								bestDelocalizationLeakIndex = i;
 								bestBondLengthSum = bondLengthSum;
@@ -781,7 +781,7 @@ public class AromaticityResolver {
 
 	private void connectSeparatedSingletons() {
 		for (int atom = 0; atom<mMol.getAtoms(); atom++) {
-			mMol.ensureHelperArrays(Molecule.cHelperNeighbours);	// make sure, connBondOrders are
+//			mMol.ensureHelperArrays(Molecule.cHelperNeighbours);	// evidently not needed; TLS 19Jul2025
 			if (mIsDelocalizedAtom[atom]) {
 				boolean found = false;
 
@@ -881,12 +881,12 @@ public class AromaticityResolver {
 
 		if (mMol.getAtomicNo(atom) == 7) {
 			if (mMol.getAllConnAtoms(atom) == 3)
-				return 6;
+				return 6;	// -N(-*)-
 			else if (mMol.getConnAtoms(atom) == 2)
-				return mAllHydrogensAreExplicit ? 0 : 4;
+				return mAllHydrogensAreExplicit ? 0 : 4;	// -N-
 			}
 		else if (mMol.getAtomicNo(atom) == 8) {
-			return 10;
+			return 10;	// furan
 			}
 		else if (mMol.getAtomicNo(atom) == 15 || mMol.getAtomicNo(atom) == 33) {
 			if (mMol.getConnAtoms(atom) == 3)
@@ -894,19 +894,19 @@ public class AromaticityResolver {
 			}
 		else if (mMol.getAtomicNo(atom) == 16 || mMol.getAtomicNo(atom) == 34 || mMol.getAtomicNo(atom) == 52) {
 			if (mMol.getConnAtoms(atom) == 2)
-				return 11;
+				return 11;	// thiophene
 			if (mMol.getConnAtoms(atom) == 3) {
 				if (mMol.getAtomCharge(atom) == 1)
-					return 12;
+					return 12;	// -S(+)(-*)-
 				if (correctCharge)
 					mMol.setAtomCharge(atom, 1);
-				return 5;
+				return 5;	// -S(-*)-
 				}
 			}
 		else if (mMol.getAtomicNo(atom) == 6) {
 			if (mMol.getAtomCharge(atom) == -1)
-				return mMol.getAllConnAtoms(atom) == 3 ? 16
-					 : mMol.getAllConnAtomsPlusMetalBonds(atom) == 3 ? 15 : 14;;
+				return mMol.getAllConnAtoms(atom) == 3 ? 16		// -C(-)(-*)-
+					 : mMol.getAllConnAtomsPlusMetalBonds(atom) == 3 ? 15 : 14;			// -C(-)...Met  	-C(-)-
 			if (correctCharge)
 				mMol.setAtomCharge(atom, -1);
 			return (mMol.getAllConnAtoms(atom) != mMol.getAllConnAtomsPlusMetalBonds(atom)) ? 2 : 3;
