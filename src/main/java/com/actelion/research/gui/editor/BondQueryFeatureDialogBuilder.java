@@ -338,6 +338,11 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 					queryFeatures |= (ringSize << Molecule.cBondQFRingSizeShift);
 					}
 				}
+
+			if (mCBMatchFormalOrder.isSelected())
+				queryFeatures |= Molecule.cBondQFMatchFormalOrder;
+			if (mCBMatchStereo.isSelected())
+				queryFeatures |= Molecule.cBondQFMatchStereo;
             }
 
 		mMol.setBondQueryFeature(bond, Molecule.cBondQFAllFeatures, false);
