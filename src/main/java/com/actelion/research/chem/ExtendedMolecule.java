@@ -610,7 +610,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 
 	/**
-	 * This method returns the non-hydrogen neighbour count of atom.
+	 * This method returns the non-hydrogen neighbour count of atom not counting metal bonds.
 	 * It excludes any hydrogen atoms in contrast to getConnAtoms(), which only
 	 * excludes plain hydrogen (not deuterium, tritium, custom labelled hydrogen, etc.).
 	 * Don't use this method's return value for loops with getConnAtom(),

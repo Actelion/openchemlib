@@ -87,7 +87,8 @@ public class GraphWalker {
 
 			if (!mIsUsedAtom[atom]
 			 && (level != 0 || nextAtom == -1 || atom == nextAtom)
-			 && qualifiesAsNext(parentAtom, atom, bond, level+2)) {
+			 && ((level == 0 && qualifiesAsFirst(parentAtom, atom, bond))
+			  || (level != 0 && qualifiesAsNext(parentAtom, atom, bond, level+2)))) {
 				mParentAtom[atom] = parentAtom;
 
 				if (qualifiesAsFinal(parentAtom, atom, bond, level+2)) {
@@ -114,7 +115,19 @@ public class GraphWalker {
 	}
 
 	/**
-	 * Overwrite this method to control, which atoms qualify to be added to a growing graph.
+	 * Overwrite this method, if the first atom/bond to be added to the graph needs different conditions
+	 * than any subsequent atom/bond. Don't override if the first atom/bond criteria are not different.
+	 * @param parentAtom second front atom of current path
+	 * @param atom front atom of current graph
+	 * @param bond front bond of current graph connecting parentAtom and atom
+	 * @return whether atom qualifies to be added via bond to the current graph ending with parentAtom
+	 */
+	public boolean qualifiesAsFirst(int parentAtom, int atom, int bond) {
+		return qualifiesAsNext(parentAtom, atom, bond, 2);
+	}
+
+	/**
+	 * Overwrite this method to control, which atoms/bonds qualify to be added to a growing graph.
 	 * @param parentAtom second front atom of current path
 	 * @param atom front atom of current graph
 	 * @param bond front bond of current graph connecting parentAtom and atom
@@ -126,7 +139,8 @@ public class GraphWalker {
 	}
 
 	/**
-	 * Overwrite this method to control, which atoms qualify to finalize a growing graph.
+	 * Overwrite this method to specify additional criterion to qualifiesAsNext(), which are given for an
+	 * atom/bond to qualify as the last atom/bond in a path.
 	 * @param parentAtom second front atom of current path
 	 * @param atom front atom of current graph
 	 * @param bond front bond of current graph connecting parentAtom and atom
@@ -135,7 +149,7 @@ public class GraphWalker {
 	 * @return
 	 */
 	public boolean qualifiesAsFinal(int parentAtom, int atom, int bond, int size) {
-		return size == mMaxDepth;
+		return true;
 	}
 
 	/**

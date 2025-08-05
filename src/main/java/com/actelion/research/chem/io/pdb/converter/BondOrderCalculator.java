@@ -49,29 +49,33 @@ public class BondOrderCalculator {
 	private static final double SP3_ANGLE_SUM = 1.833 * Math.PI;
 	private static final double OUT_OF_PLANE_TORSION_LIMIT_DBOND = 0.25 * Math.PI;	// relaxed setting, because PDB errors are sometimes substantial
 	private static final double OUT_OF_PLANE_TORSION_LIMIT_SBOND = 0.10 * Math.PI;	// tolerance increases with decreasing bond length, i.e. higher double bond likelyhood
+	private static final double OUT_OF_PLANE_TORSION_FLATNESS_LIMIT = 0.20 * Math.PI;	// value considered to have flatness 0.0
+	private static final double METAL_HYDROGEN_COLLISION_ANGLE = 0.25 * Math.PI;
 	private static final double SINGLE_DOUBLE_BOND_LENGTH_FACTOR = 0.92;
 	private static final double DOUBLE_TRIPLE_BOND_LENGTH_FACTOR = 0.88;
 	private static final double MIN_DIF_SINGLE_TO_DOUBLE_BOND_LENGTH = 0.08;
 	private static final double MIN_DIF_SINGLE_TO_AROM_BOND_LENGTH = 0.05;
-	private static final double AROMATIC_5RING_BOND_LENGTH_TOLERANCE = 0.1;
+	private static final double MIN_DIF_DOUBLE_TO_TRIPLE_BOND_LENGTH = 0.08;
+	private static final double AROMATIC_5RING_BOND_LENGTH_TOLERANCE = 0.07;	// larger values -> more aromatic 5-rings
+	private static final double AROMATIC_5RING_MIN_BOND_LENGTH_SCORE = 1.0;
+	private static final double RING_BOND_AROMATICITY_LIMIT = 0.25;
 	private static final double SP_BOND_LENGTH_SUM_TOLERANCE = 0.1;
 	private static final double SP_BOND_LENGTH_SUM_CONTRIBUTION_FACTOR = 10;
 	private static final double PROPARGYL_LIKELYHOOD_INCREASE = 0.6;
-	private static final double PATH_START_AND_END_TOLERANCE = 0.05;
-	private static final double CHINONE_CONVERSION_MINIMUM_SCORE = 0.05;
+	private static final double PATH_START_AND_END_TOLERANCE = 0.1;
+	private static final double CHINONE_CONVERSION_MINIMUM_SCORE = 0.02;
 	private static final double HETERO_ATOM_CHARGE_PENALTY = 0.1;
 	private static final double DELOCALIZED_ZERO_PI_NITROGEN_MALUS = 0.05;
-	private static final double PYRIDONONE_BONUS = DELOCALIZED_ZERO_PI_NITROGEN_MALUS + 0.05;	// must overcompensate the malus
+	private static final double ENOL_TAUTOMER_MALUS = 0.2;
+	private static final double PYRIDINONE_BONUS = 0.1;
 	private static final double METAL_LIGAND_BONUS = 0.02;
 	// TODO do we really want to put a preference on endo-cyclic just because guanine is usually drawn that way?
 	private static final double GUANIDINE_AROM_NEIGHBOUR_BONUS = 0.01;	// allowed additional deviation to prefer endo-cyclic guanine type double bonds in resonance to aromatic ring
 
-	private static final double PYRIDINONE_CN_CUT_OFF = 1.370;
-	private static final double PYRIDINONE_CO_CUT_OFF = 1.285;
 	private static final int MAX_ASSIGNMENT_ROUNDS = 5;
 
 	private final Molecule3D mMol;
-	private double[] mBondLength;
+	private double[] mBondLength,mFractionalBondOrder;
 	private final double[] mBondFlatness;
 	private final int[] mHybridisation;
 	private final boolean[] mIsOutOfPlaneBond,mBondIsFinal;
@@ -102,8 +106,8 @@ public static void setDebugLigandID(String id) { sDebugLigandID = id; }
 
 		mMol.ensureHelperArrays(Molecule.cHelperRings);
 		mHybridisation = new int[mMol.getAtoms()];
-		mIsOutOfPlaneBond = new boolean[mMol.getBonds()];
 		mBondIsFinal = new boolean[mMol.getBonds()];
+		mIsOutOfPlaneBond = new boolean[mMol.getBonds()];
 		mBondFlatness = new double[mMol.getBonds()];
 	}
 
@@ -122,6 +126,8 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 		mBondLength = new double[mMol.getBonds()];
 		for (int bond=0; bond<mMol.getBonds(); bond++)
 			mBondLength[bond] = mMol.getCoordinates(mMol.getBondAtom(0, bond)).subC(mMol.getCoordinates(mMol.getBondAtom(1, bond))).getLength();
+
+		calculateFractionalBondOrders();
 
 		determineObviousHybridisation();
 
@@ -170,18 +176,13 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 		convertObviousHydroxyIminesToAmides();
 
 		// doesn't care about final bonds
-		correctWrongCumulatedDoubleBonds();
+		correctNonLinearTripleBonds();
 
 		// doesn't care about final bonds
 		correctExceededValences();
 
 		// doesn't care about final bonds
 		correctForgottenSP2();
-
-		// make aromatic  bonds accessible, but keep known group bonds protected
-//		for (int bond=0; bond<mMol.getBonds(); bond++)
-//			if (mIsAromaticBond[bond])
-//				mBondIsFinal[bond] = false;
 
 		// non-final bonds only
 		correctTautomers(false);
@@ -190,7 +191,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 
 		correctMetalLigandCharges();
 
-		try { mMol.canonizeCharge(true, true); } catch(Exception e) {}
+		try { mMol.canonizeCharge(true, false); } catch(Exception e) {}
 	}
 
 	private void determineObviousHybridisation() {
@@ -221,35 +222,29 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 								+ GeometryCalculator.getAngle(mMol, mMol.getConnAtom(atom, 1), atom, mMol.getConnAtom(atom, 2));
 				double planarity = (angleSum - SP3_ANGLE_SUM) / (SP2_ANGLE_SUM - SP3_ANGLE_SUM);
 
-				// for carbon atoms we also consider relative bond length of a potential double bond as 33% of the criterion
+				// for carbon atoms we also consider relative bond length of a potential double bond as 20% of the criterion
+				double adjustSP2 = 0.0;
+				double adjustSP3 = 0.0;
 				if (mMol.getAtomicNo(atom) == 6) {
-					double doubleBondLikelyhood = -1.0;
+					double fractionalBondOrder = 1.0;
 					int conns = mMol.getConnAtoms(atom);
 					for (int i=0; i<conns; i++) {
 						int connAtom = mMol.getConnAtom(atom, i);
-						int connConns = mMol.getConnAtoms(connAtom);
-						int doubleBondIndex = BondLengthSet.getBondIndex(2, false, false,
-								mMol.getAtomicNo(atom), mMol.getAtomicNo(connAtom), 1, 1, conns, connConns, false);
-						int singleBondIndex = BondLengthSet.getBondIndex(1, false, false,
-								mMol.getAtomicNo(atom), mMol.getAtomicNo(connAtom), 0, 0, conns, connConns, false);
-						if (singleBondIndex != -1 && doubleBondIndex != -1) {
-							int connBond = mMol.getConnBond(atom, i);
-							double singleBondLength = BondLengthSet.getBondLength(singleBondIndex);
-							double doubleBondLength = BondLengthSet.getBondLength(doubleBondIndex);
-							if (singleBondLength > doubleBondLength + MIN_DIF_SINGLE_TO_DOUBLE_BOND_LENGTH) {
-								double likelyhood = (singleBondLength - mBondLength[connBond]) / (singleBondLength - doubleBondLength);
-								if (doubleBondLikelyhood < likelyhood)
-									doubleBondLikelyhood = likelyhood;
-							}
-						}
+						int connBond = mMol.getConnBond(atom, i);
+						if (!mIsOutOfPlaneBond[connBond]
+						 && mHybridisation[connAtom] != 3
+						 && fractionalBondOrder < mFractionalBondOrder[connBond])
+							fractionalBondOrder = Math.min(2.0, mFractionalBondOrder[connBond]);
 					}
-					if (doubleBondLikelyhood != -1.0)
-						planarity = (4.0*planarity + doubleBondLikelyhood) / 5.0;
+
+					adjustSP2 = 0.4 * (fractionalBondOrder - 1.5);
+					adjustSP3 = 0.4 * (fractionalBondOrder - 1.5);
+//					planarity = 0.2 * (4.0 * planarity + (fractionalBondOrder - 1.0));
 				}
 
-				if (planarity > 0.85)
+				if (planarity + adjustSP2 > 0.90)
 					assignAtom(atom, 2);
-				else if (planarity < 0.5)
+				else if (planarity + adjustSP3 < 0.5)
 					assignAtom(atom, 3);
 			}
 			else if (mMol.getAllConnAtoms(atom) == 4) {
@@ -287,7 +282,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 							tAtom[3] = mMol.getConnAtom(tAtom[2], j);
 							if (tAtom[3] != tAtom[1]) {
 								double outOfPlaneTorsion = HALF_PI - Math.abs(Math.abs(TorsionDB.calculateTorsionExtended(mMol, tAtom)) - HALF_PI);
-								if (outOfPlaneTorsion > OUT_OF_PLANE_TORSION_LIMIT_DBOND) {
+								if (outOfPlaneTorsion > OUT_OF_PLANE_TORSION_LIMIT_SBOND) {
 									if (adaptedOutOfPlaneLimit == -1.0) {
 										double doubleBondLikelyhood = 0.8;	// relaxed default
 										int doubleBondIndex = BondLengthSet.getBondIndex(2, false, false,
@@ -306,9 +301,9 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 									if (outOfPlaneTorsion > adaptedOutOfPlaneLimit)
 										mIsOutOfPlaneBond[bond] = true;
 								}
-								else {
-									double flatness = 1.0 - outOfPlaneTorsion / OUT_OF_PLANE_TORSION_LIMIT_DBOND;
-									if (mBondFlatness[bond] == 0 || mBondFlatness[bond] > flatness)
+								if (mMol.getConnAtoms(tAtom[1]) + mMol.getConnAtoms(tAtom[2]) == 6) {
+									double flatness = Math.max(0.01, 1.0 - outOfPlaneTorsion / OUT_OF_PLANE_TORSION_FLATNESS_LIMIT);
+									if (mBondFlatness[bond] == 0.0 || mBondFlatness[bond] > flatness)
 										mBondFlatness[bond] = flatness;
 								}
 							}
@@ -457,6 +452,87 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 	}
 
 	/**
+	 * Calculates for all non-aromatic bonds a fractional bond order between 1.0 and 3.0 representing
+	 * bond order probability values when comparing real bond lengths with the ones from the crystallographic database.
+	 * This method assumes that all neighbour bonds are single bonds, if they are not already defined otherwise.
+	 */
+	private void calculateFractionalBondOrders() {
+		mFractionalBondOrder = new double[mMol.getBonds()];
+
+		int[] atom = new int[2];
+		int[] piCount = new int[2];
+		int[] conns = new int[2];
+		int[] freeValence = new int[2];
+
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
+			double metalLigandBonus = 0.0;	// if we have a coordinating metal atom, we increase tendency to higher bond order
+
+			for (int i=0; i<2; i++) {
+				atom[i] = mMol.getBondAtom(i, bond);
+				if (mHybridisation[atom[i]] == 3 && mMol.getAtomicNo(atom[i]) < 14) {
+					mFractionalBondOrder[bond] = 1.0;
+					break;
+				}
+
+				freeValence[i] = getFreeAtomValence(atom[i], bond, true);
+				if (freeValence[i] == 0) {
+					mFractionalBondOrder[bond] = 1.0;
+					break;
+				}
+
+				conns[i] = mMol.getConnAtoms(atom[i]);
+				for (int k=0; k<conns[i]; k++) {
+					int connBond = mMol.getConnBond(atom[i], k);
+					if (connBond != bond)
+						piCount[i] += mMol.getBondOrder(connBond) - 1;
+				}
+
+				if (mMol.getAllConnAtomsPlusMetalBonds(atom[i]) > mMol.getAllConnAtoms(atom[i]))
+					metalLigandBonus = METAL_LIGAND_BONUS;
+			}
+			if (mFractionalBondOrder[bond] != 0.0)
+				continue;
+
+			int doubleBondIndex = BondLengthSet.getBondIndex(2, false, false,
+					mMol.getAtomicNo(atom[0]), mMol.getAtomicNo(atom[1]), piCount[0]+1, piCount[1]+1, conns[0], conns[1], false);
+			int singleBondIndex = BondLengthSet.getBondIndex(1, false, false,
+					mMol.getAtomicNo(atom[0]), mMol.getAtomicNo(atom[1]), piCount[0], piCount[1], conns[0], conns[1], false);
+
+			if (singleBondIndex == -1 && doubleBondIndex == -1) {
+				mFractionalBondOrder[bond] = 1.5;	// we don't know
+				continue;
+			}
+
+			double singleBondLength = BondLengthSet.getBondLength(singleBondIndex);
+			double doubleBondLength = BondLengthSet.getBondLength(doubleBondIndex);
+
+			if (singleBondIndex == -1)
+				singleBondLength = doubleBondLength / SINGLE_DOUBLE_BOND_LENGTH_FACTOR;
+			if (doubleBondIndex == -1)
+				doubleBondLength = SINGLE_DOUBLE_BOND_LENGTH_FACTOR * singleBondLength;
+
+			double realBondLength = mBondLength[bond] - metalLigandBonus;
+
+			if (freeValence[0] >= 2 && freeValence[1] >= 2
+					&& (conns[0] == 1 || mHybridisation[atom[0]] == 1)
+					&& (conns[1] == 1 || mHybridisation[atom[1]] == 1)) {
+				int tripleBondIndex = BondLengthSet.getBondIndex(3, false, false,
+						mMol.getAtomicNo(atom[0]), mMol.getAtomicNo(atom[1]), 2, 2, conns[0], conns[1], false);
+				double tripleBondLength = (tripleBondIndex == -1) ?
+						DOUBLE_TRIPLE_BOND_LENGTH_FACTOR * doubleBondLength : BondLengthSet.getBondLength(tripleBondIndex);
+				if (doubleBondLength - tripleBondLength < MIN_DIF_DOUBLE_TO_TRIPLE_BOND_LENGTH)
+					tripleBondLength = doubleBondLength - MIN_DIF_DOUBLE_TO_TRIPLE_BOND_LENGTH;
+				if (realBondLength < doubleBondLength) {
+					mFractionalBondOrder[bond] = 2.0 + (doubleBondLength - realBondLength) / (doubleBondLength - tripleBondLength);
+					continue;
+				}
+			}
+
+			mFractionalBondOrder[bond] = 1.0 + (singleBondLength - realBondLength) / (singleBondLength - doubleBondLength);
+		}
+	}
+
+	/**
 	 * Call this method to set bond to a double bond and to continue
 	 * setting obvious bond orders from the far atom of this bond.
 	 * Continuation depends on knowledge of the hybridisation of atom
@@ -594,15 +670,6 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 					continue;
 				}
 			}
-
-			// X-C(=X)-X
-			if (mMol.getAtomicNo(atom) == 6 && mMol.getConnAtoms(atom) == 3 && mHybridisation[atom] == 2) {
-				Neighbour[] electronegative = getNeighbourAtoms(atom, -1, 0, 0, 0, true);
-				if (electronegative.length == 3) {
-					assignDoubleToFirstNeighbours(electronegative, 1);
-					continue;
-				}
-			}
 		}
 	}
 
@@ -649,7 +716,8 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 			}
 
 			for (int bond : ringBond) {
-				if (mBondIsFinal[bond]) {
+				if (mBondIsFinal[bond]
+				 || mIsOutOfPlaneBond[bond]) {
 					isAromaticRing[r] = false;
 					break;
 				}
@@ -662,31 +730,21 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 				angleSum += GeometryCalculator.getAngle(mMol, ringAtom[(i + 1) % ringAtom.length], ringAtom[i], ringAtom[(i + ringAtom.length - 1) % ringAtom.length]);
 
 			double angleSumDeviation = Math.PI * (ringAtom.length - 2) - angleSum;
-			if (angleSumDeviation > ((ringAtom.length == 4) ? Math.PI / 20
-					: (ringAtom.length == 5) ? Math.PI / 30    // tiny margin: 108 degrees is flat 5-ring; 109.5 degrees is perfect sp3
-					: (ringAtom.length == 6) ? Math.PI / 16 : Math.PI / 15)) {
+			double flatness = Math.max(0.0, 1.0 - angleSumDeviation /
+				 ((ringAtom.length == 4) ? 0.10 * Math.PI
+				: (ringAtom.length == 5) ? 0.067 * Math.PI    // tiny margin: 108 degrees is flat 5-ring; 109.5 degrees is perfect sp3
+				: (ringAtom.length == 6) ? 0.125 * Math.PI : 0.133 * Math.PI));
+
+			double[] bondAromaticity = new double[ringAtom.length];
+			for (int i=0; i<ringAtom.length; i++)
+				bondAromaticity[i] = getBondAromaticityFromLength(ringBond[i], ringBond.length);
+			Arrays.sort(bondAromaticity);
+
+			// we use the second-worst bond aromaticity to tolerate one too long bond
+			if (flatness * bondAromaticity[1] < RING_BOND_AROMATICITY_LIMIT) {
 				isAromaticRing[r] = false;
 				continue;
 			}
-
-			for (int i=0; i<ringAtom.length; i++) {
-				int exoIndex = getExocyclicIndex(ringAtom, i);
-				int exoAtom = (exoIndex == -1) ? -1 : mMol.getConnAtom(ringAtom[i], exoIndex);
-				int exoBond = (exoIndex == -1) ? -1 : mMol.getConnBond(ringAtom[i], exoIndex);
-				hasBulkySubstituent[i] = exoAtom != -1 && !mMol.isRingBond(exoBond) && (mMol.getAtomicNo(exoAtom)>12 || mMol.getConnAtoms(exoAtom)>=3);
-			}
-			hasBulkySubstituent[ringAtom.length] = hasBulkySubstituent[0];
-			for (int i=0; i<ringAtom.length; i++) {
-				int bond = ringBond[i];
-				if ((!(hasBulkySubstituent[i] && hasBulkySubstituent[i+1])
-				  && !isAromCompatibleLength(bond, ringBond.length, angleSumDeviation))
-				 || mIsOutOfPlaneBond[bond]) {
-					isAromaticRing[r] = false;
-					break;
-				}
-			}
-			if (!isAromaticRing[r])
-				continue;
 
 			int oxaCount = 0;
 			int carbonCount = 0;
@@ -718,36 +776,6 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 			if (!isAromaticRing[r])
 				continue;
 
-// Change hydroxy-imine to amide tautomer where bond lengths suggest that within aromatic 6-rings
-//			if (ringAtom.length == 6) {
-/*				for (int i=0; i<ringAtom.length; i++) {
-					int[] neighbourAtom = ringNeighbourAtoms(ringAtom, i);
-					int atom = ringAtom[i];
-					int oxo = -1;
-					int oxoBond = -1;
-					for (int j=0; j<mMol.getConnAtoms(atom); j++) {
-						int connAtom = mMol.getConnAtom(atom, j);
-						int atomicNo = mMol.getAtomicNo(connAtom);
-						if (connAtom != neighbourAtom[0] && connAtom != neighbourAtom[1] && mMol.getConnAtoms(connAtom) == 1
-								&& (atomicNo == 8 || atomicNo == 16 || atomicNo == 34)) {	// O,S,Se
-							oxo = connAtom;
-							oxoBond = mMol.getConnBond(atom, j);
-						}
-					}
-					if (oxo != -1) {
-						int[] neighbourBond = ringNeighbourBonds(ringSet.getRingBonds(r), i);
-						for (int j=0; j<2; j++) {
-							if (mMol.getAtomicNo(neighbourAtom[j]) == 7
-									&& (PYRIDINONE_CO_CUT_OFF - mBondLength[oxoBond] + mBondLength[neighbourBond[j]] - PYRIDINONE_CN_CUT_OFF > 0)) {
-								assignBond(oxoBond, 2, true);
-								isAromaticRing[r] = false;
-								break;
-							}
-						}
-					}
-				}*/
-//			}
-
 			if (ringSet.getRingSize(r) == 6)
 				for (int bond : ringSet.getRingBonds(r))
 					isDelocalizedBond[bond] = true;
@@ -756,7 +784,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 		// flat 5-rings may not be aromatic; we check bond lengths and set ring as non-aromatic in case of too long bond
 		for (int r=0; r<ringSet.getSize(); r++) {
 			int[] ringBond = ringSet.getRingBonds(r);
-			if (ringBond.length == 5) {
+			if (ringBond.length == 5 && isAromaticRing[r]) {
 				for (int bond : ringBond) {
 					if (!isDelocalizedBond[bond]) {
 						int atom1 = mMol.getBondAtom(0, bond);
@@ -772,7 +800,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 						int bondIndex = BondLengthSet.getBondIndex(1, true, false, atomicNo1, atomicNo2, isAtom1SOrO ? 0 : 1, isAtom2SOrO ? 0 : 1, conns1, conns2, false);
 						if (bondIndex != -1) {
 							double bondLength = BondLengthSet.getBondLength(bondIndex);
-							if (mIsOutOfPlaneBond[bond] || mBondLength[bond] - bondLength >AROMATIC_5RING_BOND_LENGTH_TOLERANCE) {
+							if (mBondLength[bond] - bondLength >AROMATIC_5RING_BOND_LENGTH_TOLERANCE) {
 								isAromaticRing[r] = false;
 								break;
 							}
@@ -787,7 +815,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 		for (int r=0; r<ringSet.getSize(); r++) {
 			if (isAromaticRing[r]) {
 				for (int atom : ringSet.getRingAtoms(r))
-					if (!isSPSeTe(atom) || mMol.getConnAtoms(atom) == 2)
+					if ((!isSPSeTe(atom) || mMol.getConnAtoms(atom) == 2))
 						assignAtom(atom, 2);
 
 				for (int bond : mMol.getRingSet().getRingBonds(r)) {
@@ -797,34 +825,9 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 				}
 			}
 		}
-
-/*		// determine exo-aromatic double bonds (currently only oxo)
-		for (int r=0; r<ringSet.getSize(); r++) {
-			if (ringSet.isAromatic(r)) {
-				int[] ringAtom = ringSet.getRingAtoms(r);
-				for (int i=0; i<ringAtom.length; i++) {
-					int connIndex = getExocyclicIndex(ringAtom, i);
-					if (connIndex != -1) {
-						int exoAtom = mMol.getConnAtom(ringAtom[i], connIndex);
-						if (mMol.getAtomicNo(exoAtom) == 8 && mMol.getConnAtoms(exoAtom) == 1) {
-							int index = BondLengthSet.getBondIndex(2, false, false, mMol.getAtomicNo(ringAtom[i]), mMol.getAtomicNo(exoAtom), 1, 1, 3, mMol.getConnAtoms(exoAtom), true);
-							if (index != -1) {
-								int connBond = mMol.getConnBond(ringAtom[i], connIndex);
-								if (mBondLength[connBond] < BondLengthSet.getBondLength(index) + CHINONE_BOND_LENGTH_TOLERANCE)
-									mIsAromaticBond[connBond] = true;
-							}
-						}
-					}
-				}
-			}
-		}*/
 	}
 
-	private boolean isAromCompatibleLength(int bond, int ringSize, double angleSumDeviation) {
-		// for superflat rings with 6+ members we consider any long bonds as error; wrong: found flat 6rings with non-aromatic bonds
-//		if (ringSize >= 6 && angleSumDeviation < 0.01)
-//			return true;
-
+	private double getBondAromaticityFromLength(int bond, int ringSize) {
 		int atom1 = mMol.getBondAtom(0, bond);
 		int atom2 = mMol.getBondAtom(1, bond);
 		int pi1 = mMol.isElectronegative(atom1) ? 0 : 1;
@@ -842,25 +845,24 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 		int index1 = BondLengthSet.getBondIndex(1, true,
 				ringSize == 6, atomicNo1, atomicNo2, pi1, pi2, conns1, conns2, false);
 		if (index1 == -1)
-			return true;
+			return 1.0;
 		int index2 = BondLengthSet.getBondIndex(1, false,
 				false, atomicNo1, atomicNo2, 0, 0, conns1, conns2, false);
 		if (index2 == -1)
-			return true;
+			return 1.0;
 		float aromLength = BondLengthSet.getBondLength(index1);
 		float nonAromLength = BondLengthSet.getBondLength(index2);
-		if (nonAromLength - aromLength < MIN_DIF_SINGLE_TO_AROM_BOND_LENGTH) {
-			System.out.println("$$$ Non predictive arom and non-arom bond lengths; atomicNos:"+atomicNo1+","+atomicNo2);
-			return true;
-		}
-		double aromaticity = (nonAromLength - mBondLength[bond]) / (nonAromLength - aromLength);
-		// We use a tolerant threshold: return false only if length is very close to non-aromatic reference length.
-		// For 6-membered rings we use a dynamic threshold that is even more tolerant for very flat rings,
-		// but less tolerant for slightly bent rings. There are length errors in the database and flatness is the more
-		// important criterion. For 6-membered rings we lower the threshold to a non-aromatic-bond for completely flat
-		// rings and increase by 0.033 per degree of deviation.
-		double threshold = ringSize != 6 ? 0.2 : 0.0 + Math.min(0.4, 2.0*angleSumDeviation);
-		return aromaticity > threshold;	//
+
+		// No show-stopper, if difference between aromatic and non-aromatic bond lengths is insignificant; typically N-N, N-O
+		if (nonAromLength - aromLength < MIN_DIF_SINGLE_TO_AROM_BOND_LENGTH)
+			return 1.0;
+
+		// if we have bond flatness information, then we include it as 50% of the result value
+		double aromaticity = Math.max(0.0, (nonAromLength - mBondLength[bond]) / (nonAromLength - aromLength));
+		if (mBondFlatness[bond] != 0)
+			aromaticity = 0.5 * (mBondFlatness[bond] + aromaticity);
+
+		return aromaticity;
 	}
 
 	private int getExocyclicIndex(int[] ringAtom, int i) {
@@ -880,13 +882,6 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 		atom[0] = ringAtom[i==0 ? ringAtom.length-1 : i-1];
 		atom[1] = ringAtom[i==ringAtom.length-1 ? 0 : i+1];
 		return atom;
-	}
-
-	private int[] ringNeighbourBonds(int[] ringBond, int i) {
-		int[] bond = new int[2];
-		bond[0] = ringBond[i==0 ? ringBond.length-1 : i-1];
-		bond[1] = ringBond[i];
-		return bond;
 	}
 
 	private boolean isSPSeTe(int atom) {
@@ -956,7 +951,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 						// force to override potentially final bonds
 						int bond = mMol.getBond(bestPath[i-1], bestPath[i]);
 						mMol.setBondOrder(bond, mMol.getBondOrder(bond) == 1 ? 2 : mMol.getBondOrder(bond)-1);
-						mBondIsFinal[bond] = true;
+//TLS						mBondIsFinal[bond] = true;
 					}
 				}
 			}
@@ -964,7 +959,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 	}
 
 	private void correctTautomers(boolean aromatic) {
-		GraphWalker walker = createTautomerWalker(aromatic, 0.0);
+		GraphWalker walker = createTautomerWalker(aromatic, 0.0, true, true);
 
 		boolean changed=true;
 		for (int i=0; changed && i<MAX_ASSIGNMENT_ROUNDS; i++) {
@@ -977,7 +972,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 	}
 
 	private void correctPyridinonesAndAlike() {
-		GraphWalker walker = createTautomerWalker(true, PYRIDONONE_BONUS);
+		GraphWalker walker = createTautomerWalker(true, PYRIDINONE_BONUS, false, false);
 
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			if (mMol.getConnAtoms(atom) == 1) {
@@ -985,11 +980,10 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 				int connAtom = mMol.getConnAtom(atom, 0);
 				int connBond = mMol.getConnBond(atom, 0);
 				if ((atomicNo == 8 || atomicNo == 16 || atomicNo == 34)
-				 && mMol.getBondOrder(mMol.getConnBond(atom, 0)) == 1
+				 && mMol.getBondOrder(connBond) == 1
 				 && mIsAromaticAtom[connAtom]) {
-					mIsAromaticBond[connBond] = true;	// we need to cheat for the first bond
-					tryChangeTautomer(atom, connAtom, connBond, walker);
-					mIsAromaticBond[connBond] = false;
+					if (tryChangeTautomer(atom, connAtom, connBond, walker))
+						mBondIsFinal[connBond] = true;
 				}
 			}
 		}
@@ -1038,24 +1032,25 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 			}
 		};
 
-		for (int bond=0; bond<mMol.getBonds(); bond++) {
-			if (mMol.getBondOrder(bond) == 1
-			 && !mBondIsFinal[bond]
-			 && !mIsAromaticBond[bond]) {
-				for (int i=0; i<2; i++) {
-					int atom = mMol.getBondAtom(i, bond);
-					int connAtom = mMol.getBondAtom(1-i, bond);
-					if (mHybridisation[atom] != 3
-					 && getAtomPi(atom) == 0
-					 && getAtomPi(connAtom) != 0
-					 && calculateBondChangeScore(bond, 2, 0, connAtom, -1) > 0.0) {
-						walker.find(atom, connAtom);
-						if (!Double.isNaN(walker.getBestScore()) && walker.getBestScore() > CHINONE_CONVERSION_MINIMUM_SCORE) {
-							int[] bestPath = walker.getBestScoringPath();
-							if (bestPath != null) {
-								for (int j=1; j<bestPath.length; j++) {
-									int pathBond = mMol.getBond(bestPath[j-1], bestPath[j]);
-									assignBond(pathBond, mMol.getBondOrder(pathBond) == 1 ? 2 : mMol.getBondOrder(pathBond)-1, false);
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			if (mHybridisation[atom] != 3
+			 && getAtomPi(atom) == 0) {
+				for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+					int bond = mMol.getConnBond(atom, i);
+					if (mMol.getBondOrder(bond) == 1
+					 && !mBondIsFinal[bond]
+					 && !mIsAromaticBond[bond]) {
+						int connAtom = mMol.getConnAtom(atom, i);
+						if (getAtomPi(connAtom) != 0
+						 && calculateBondChangeScore(bond, 2, 0, connAtom, -1) > 0.0) {
+							walker.find(atom, connAtom);
+							if (!Double.isNaN(walker.getBestScore()) && walker.getBestScore() > CHINONE_CONVERSION_MINIMUM_SCORE) {
+								int[] bestPath = walker.getBestScoringPath();
+								if (bestPath != null) {
+									for (int j=1; j<bestPath.length; j++) {
+										int pathBond = mMol.getBond(bestPath[j-1], bestPath[j]);
+										assignBond(pathBond, mMol.getBondOrder(pathBond) == 1 ? 2 : mMol.getBondOrder(pathBond)-1, false);
+									}
 								}
 							}
 						}
@@ -1063,18 +1058,57 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 				}
 			}
 		}
+
+//		for (int bond=0; bond<mMol.getBonds(); bond++) {
+//			if (mMol.getBondOrder(bond) == 1
+//			 && !mBondIsFinal[bond]
+//			 && !mIsAromaticBond[bond]) {
+//				for (int i=0; i<2; i++) {
+//					int atom = mMol.getBondAtom(i, bond);
+//					int connAtom = mMol.getBondAtom(1-i, bond);
+//					if (mHybridisation[atom] != 3
+//					 && getAtomPi(atom) == 0
+//					 && getAtomPi(connAtom) != 0
+//					 && calculateBondChangeScore(bond, 2, 0, connAtom, -1) > 0.0) {
+//						walker.find(atom, connAtom);
+//						if (!Double.isNaN(walker.getBestScore()) && walker.getBestScore() > CHINONE_CONVERSION_MINIMUM_SCORE) {
+//							int[] bestPath = walker.getBestScoringPath();
+//							if (bestPath != null) {
+//								for (int j=1; j<bestPath.length; j++) {
+//									int pathBond = mMol.getBond(bestPath[j-1], bestPath[j]);
+//									assignBond(pathBond, mMol.getBondOrder(pathBond) == 1 ? 2 : mMol.getBondOrder(pathBond)-1, false);
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
 	}
 
 	/**
 	 * Creates a walker that finds chains of conjugated double bonds, which start with a single bond,
-	 * end with a double bond, and can be potentially flipped into the inverse tautomer.
+	 * ends with a double bond, and can be potentially flipped into the inverse tautomer.
 	 */
-	private GraphWalker createTautomerWalker(boolean aromatic, double startScore) {
-		GraphWalker walker = new GraphWalker(mMol, 12) {
+	private GraphWalker createTautomerWalker(final boolean aromatic, final double startScore,
+											 final boolean applyZeroPiNitrogenMalus,
+											 final boolean firstBondIsAromatic) {
+		return new GraphWalker(mMol, 12) {
+			@Override
+			public boolean qualifiesAsFirst(int parentAtom, int atom, int bond) {
+				return (!aromatic || firstBondIsAromatic == mIsAromaticBond[bond])
+					  && !mBondIsFinal[bond]
+					  && mMol.getBondOrder(bond) == 1
+					  && !mIsOutOfPlaneBond[bond]
+					  && mHybridisation[atom] != 3
+					  && getAtomPi(atom) != 0
+					  && mMol.getConnAtoms(atom)<=3;
+			}
+
 			@Override
 			public boolean qualifiesAsNext(int parentAtom, int atom, int bond, int size) {
-				return ((aromatic && (/*size==2 ||*/ mIsAromaticBond[bond]))
-					 || (!aromatic && !mBondIsFinal[bond]))
+				return aromatic == mIsAromaticBond[bond]
+					&& !mBondIsFinal[bond]
 					&& (((size & 1) == 0) ^ (mMol.getBondOrder(bond)>1))
 					&& !mIsOutOfPlaneBond[bond]
 					&& mHybridisation[atom] != 3
@@ -1094,8 +1128,12 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 				double score = startScore;
 
 				// for tautomers within the aromatic part we give a malus for nitrogen in 6-membered rings if we remove the pi-bond
-				if (aromatic && mMol.getAtomicNo(finalAtom) == 7 && mMol.getAtomRingSize(finalAtom) == 6)
+				if (aromatic && applyZeroPiNitrogenMalus && mMol.getAtomicNo(finalAtom) == 7 && mMol.getAtomRingSize(finalAtom) == 6)
 					score -= DELOCALIZED_ZERO_PI_NITROGEN_MALUS;
+
+				// for non-aromatic tautomers with an enol at the end, we give a malus
+				if (!aromatic && mMol.getAtomicNo(finalAtom) == 8 && mMol.getConnAtoms(finalAtom) == 1)
+					score -= ENOL_TAUTOMER_MALUS;
 
 				int atom2 = finalAtom;
 				int atom1 = graphParent[atom2];
@@ -1103,7 +1141,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 					int bond = mMol.getBond(atom1, atom2);
 					score += calculateBondChangeScore(bond,
 							mMol.getBondOrder(bond) == 1 ? 2 : mMol.getBondOrder(bond) - 1,
-							0,
+							firstBondIsAromatic ? 0 : 2,
 							graphParent[atom1] != -1 ? atom1 : -1,
 							atom2 != finalAtom ? atom2 : -1);
 					atom2 = atom1;
@@ -1111,10 +1149,14 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 				}
 
 				// for tautomers within the aromatic part we give a bonus for nitrogen in 6-membered rings if we re-establish a pi-bond
-				if (aromatic && mMol.getAtomicNo(atom2) == 7 && mMol.getAtomRingSize(atom2) == 6)
+				if (aromatic && applyZeroPiNitrogenMalus && mMol.getAtomicNo(atom2) == 7 && mMol.getAtomRingSize(atom2) == 6)
 					score += DELOCALIZED_ZERO_PI_NITROGEN_MALUS;
 
-if (DEBUG_OUTPUT) {
+				// for non-aromatic tautomers with an enol at the end, we give a malus
+				if (!aromatic && mMol.getAtomicNo(atom2) == 8 && mMol.getConnAtoms(atom2) == 1)
+					score += ENOL_TAUTOMER_MALUS;
+
+				if (DEBUG_OUTPUT) {
  System.out.print("tauto path:");
  while (finalAtom != -1) {
   System.out.print(" " + finalAtom);
@@ -1125,15 +1167,12 @@ if (DEBUG_OUTPUT) {
 				return score;
 			}
 		};
-
-		return walker;
 	}
 
 	private boolean tryChangeBondOrder(int bond) {
-		if (mBondIsFinal[bond])
-			return false;
-
-		int order = guessBondOrderFromBondLength(bond);
+// using pre-calculated value is faster, but creates slightly worse results than using live up-to-date neighbour bond orders
+//		int order = (mFractionalBondOrder[bond] < 1.5) ? 1 : (mFractionalBondOrder[bond] < 2.5) ? 2 : 3;
+		int order = guessBondOrderFromBondLength(bond);		// this uses live up-to-date neighbour bond orders
 		if (order == mMol.getBondOrder(bond))
 			return false;
 
@@ -1147,7 +1186,7 @@ if (DEBUG_OUTPUT) {
 	 * and, if a score suggests it, shifts double bonds to generate the respective tautomer.
 	 */
 	private boolean tryChangeTautomer(int atom, int nextAtom, int bond, GraphWalker walker) {
-		if (walker.qualifiesAsNext(atom, nextAtom, bond, 2)
+		if (walker.qualifiesAsFirst(atom, nextAtom, bond)
 		 && getAtomPi(atom) == 0
 		 && getFreeAtomValence(atom, -1, false) != 0
 		 && calculateBondChangeScore(bond, 2, 0, nextAtom, -1) > -PATH_START_AND_END_TOLERANCE) {
@@ -1164,6 +1203,13 @@ if (DEBUG_OUTPUT) {
 					for (int k=1; k<bestPath.length; k++) {
 						int pathBond = mMol.getBond(bestPath[k-1], bestPath[k]);
 						assignBond(pathBond, mMol.getBondOrder(pathBond) == 1 ? 2 : mMol.getBondOrder(pathBond)-1, false);
+						if (k == bestPath.length-1) {
+							int  finalAtom = bestPath[k];
+							if (mMol.getAtomicNo(finalAtom) == 6)
+								mHybridisation[finalAtom] = 0;    // remove sp2 indication
+							if (mMol.getAtomCharge(finalAtom) == 1 && mMol.isElectronegative(finalAtom))
+								mMol.setAtomCharge(finalAtom, 0);
+						}
 					}
 					return true;
 				}
@@ -1217,16 +1263,18 @@ if (DEBUG_OUTPUT) {
 		if (Molecule.isAtomicNoElectronegative(atomicNo2) && conns2 == 3 && atom2 != noPiChangeAtom1 && atom2 != noPiChangeAtom2 && !hasNegativeNeighbour(atom2))
 			nitrogenPenalty += (newOrder > oldOrder) ? HETERO_ATOM_CHARGE_PENALTY : -HETERO_ATOM_CHARGE_PENALTY;
 
-		double newDistance = mBondLength[bond] - BondLengthSet.getBondLength(newBondIndex);
-		double oldDistance = mBondLength[bond] - BondLengthSet.getBondLength(oldBondIndex);
-		if ((newOrder > oldOrder) ^ (newDistance > oldDistance)) {
+		double newExpectedLength = BondLengthSet.getBondLength(newBondIndex);
+		double oldExpectedLength = BondLengthSet.getBondLength(oldBondIndex);
+		double newDistance = (newOrder > oldOrder) ? mBondLength[bond] - newExpectedLength : newExpectedLength - mBondLength[bond];
+		double oldDistance = (oldOrder > newOrder) ? mBondLength[bond] - oldExpectedLength : oldExpectedLength - mBondLength[bond];
+		if ((newOrder > oldOrder) == (newExpectedLength > oldExpectedLength)) {
 			newDistance = 0.0;
 			oldDistance = 0.0;
 		}
 
 		// we multiply with a value close to 1.0 to slightly prefer bonds that are far off, if they go in the right direction
-		double newPenalty = Math.abs(newDistance) * (1.0 + 0.1 * Math.abs(newDistance));
-		double oldPenalty = Math.abs(oldDistance) * (1.0 + 0.1 * Math.abs(oldDistance));
+		double newPenalty = Math.max(0, newDistance) * (1.0 + newDistance);
+		double oldPenalty = Math.max(0, oldDistance) * (1.0 + oldDistance);
 
 if (DEBUG_OUTPUT) {
 //if (bond==13 || bond==14) {
@@ -1261,7 +1309,7 @@ if (DEBUG_OUTPUT) {
 	 * of predicted bond orders.
 	 */
 	private void assignNonAromaticBondOrders() {
-		GraphWalker tautomerWalker = createTautomerWalker(false, 0.0);
+		GraphWalker tautomerWalker = createTautomerWalker(false, 0.0, false, false);
 
 		int[] randomAndBondIndex = new int[mMol.getBonds()];
 		for (int i=0; i<MAX_ASSIGNMENT_ROUNDS; i++) {
@@ -1269,14 +1317,18 @@ if (DEBUG_OUTPUT) {
 				randomAndBondIndex[bond] = bond + (mRandom.nextInt(0x00007FFF) << 16);
 			Arrays.sort(randomAndBondIndex);
 
-			boolean changed = false;
+			boolean changedAny = false;
 			for (int rabi : randomAndBondIndex) {
 				int bond = rabi & 0x0000FFFF;
-				changed |= tryChangeTautomer(mMol.getBondAtom(0, bond), mMol.getBondAtom(1, bond), bond, tautomerWalker)
-						|| tryChangeTautomer(mMol.getBondAtom(1, bond), mMol.getBondAtom(0, bond), bond, tautomerWalker)
-						|| (!mBondIsFinal[bond] && tryChangeBondOrder(bond));
+				if (!mBondIsFinal[bond]) {
+					boolean changed = tryChangeBondOrder(bond);
+					if (!changed)
+						changed = tryChangeTautomer(mMol.getBondAtom(0, bond), mMol.getBondAtom(1, bond), bond, tautomerWalker)
+							   || tryChangeTautomer(mMol.getBondAtom(1, bond), mMol.getBondAtom(0, bond), bond, tautomerWalker);
+					changedAny |= changed;
+				}
 			}
-			if (!changed)
+			if (!changedAny)
 				break;
 		}
 	}
@@ -1377,10 +1429,7 @@ if (DEBUG_OUTPUT) {
 				return 3;
 		}
 
-// TODO: decide on removal; not much evidence so far
-//		double flatnessBonus = 0.25 * mBondFlatness[bond];
-
-		return mBondLength[bond] < (0.5 * (doubleBondLength + singleBondLength) /* + flatnessBonus */ + metalLigandBonus) ? 2 : 1;
+		return mBondLength[bond] < (0.5 * (doubleBondLength + singleBondLength) + metalLigandBonus) ? 2 : 1;
 	}
 
 	private void correctAtomCharges() {
@@ -1411,6 +1460,14 @@ if (DEBUG_OUTPUT) {
 							mMol.setAtomCharge(connAtom, -1);
 							break;
 						}
+						// amine oxid: add a negative charge to the oxygen neighbour
+						if (mMol.getAtomicNo(connAtom) == 8
+						 && mMol.getBondOrder(mMol.getConnBond(atom, i)) == 1
+						 && mMol.getConnAtoms(connAtom) == 1
+						 && mMol.getAtomCharge(connAtom) == 0) {
+							mMol.setAtomCharge(connAtom, -1);
+							break;
+						}
 					}
 				}
 				else {
@@ -1431,24 +1488,44 @@ if (DEBUG_OUTPUT) {
 						mMol.setAtomCharge(unchargedOxygen, -1);
 				}
 			}
+		else if (mMol.isElectronegative(atom) && mMol.getAtomCharge(atom) == 1 && occupiedValence <= 3)
+			mMol.setAtomCharge(atom, 0);
 		}
 	}
 
 	private void correctExceededValences() {
+		int[] freeValence = new int[mMol.getAtoms()];
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			int freeValence = getFreeAtomValence(atom, -1, false);
-			for (int i=0; i<-freeValence; i++) {
+			freeValence[atom] = getFreeAtomValence(atom, -1, false);
+
+			// we also correct wrong cumulated double bonds here
+			if (freeValence[atom] >= 0
+			 && getAtomPi(atom) == 2
+			 && mMol.getConnAtoms(atom) == 2
+			 && mHybridisation[atom] != 1
+			 && mMol.getAtomicNo(atom) <= 7)
+				freeValence[atom] = -1;
+		}
+
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			while (freeValence[atom] < 0) {
 				int bestConnBond = -1;
 				double bestDelta = -10.0;	// make sure to even handle much too short bonds
 				for (int j=0; j<mMol.getConnAtoms(atom); j++) {
 					int connBond = mMol.getConnBond(atom, j);
 					if (mMol.getBondOrder(connBond) == 2) {
 						int connAtom = mMol.getConnAtom(atom, j);
-						if (mMol.getLowestFreeValence(connAtom) < 0) {
-							bestConnBond = connBond;
-							break;
-						}
-						double delta = mBondLength[connBond] - predictedNonAromaticBondLength(connBond);
+//						if (mMol.getLowestFreeValence(connAtom) < 0) {
+//							bestConnBond = connBond;
+//							break;
+//						}
+						double delta = mBondLength[connBond] - predictedNonAromaticDoubleBondLength(connBond);
+						if (freeValence[connAtom] < 0)
+							delta += 10;	// make sure to prefer exceeded-valence-neighbours
+
+						if (mMol.getAtomicNo(connAtom) == 8 && mMol.getConnAtoms(connAtom) == 1 && getAtomPi(atom) == 2)
+							delta -= ENOL_TAUTOMER_MALUS;
+
 						if (bestDelta < delta) {
 							bestDelta = delta;
 							bestConnBond = connBond;
@@ -1459,6 +1536,11 @@ if (DEBUG_OUTPUT) {
 					// Override final bonds if necessary
 					mMol.setBondOrder(bestConnBond, 1);
 					mBondIsFinal[bestConnBond] = true;
+					freeValence[mMol.getBondAtom(0, bestConnBond)]++;
+					freeValence[mMol.getBondAtom(1, bestConnBond)]++;
+				}
+				else {
+					break;
 				}
 			}
 		}
@@ -1492,28 +1574,17 @@ if (DEBUG_OUTPUT) {
 		}
 	}
 
-	private void correctWrongCumulatedDoubleBonds() {
-		for (int atom=0; atom<mMol.getAtoms(); atom++) {
-			if (getAtomPi(atom) == 2
-			 && mMol.getConnAtoms(atom) == 2
-			 && mHybridisation[atom] != 1
-			 && mMol.getAtomicNo(atom) <= 7) {
-				mNeighbourList.clear();
-				for (int i=0; i<mMol.getConnAtoms(atom); i++) {
-					int bond = mMol.getConnBond(atom, i);
-					if (mMol.getBondOrder(bond) == 3) {
-						mMol.setBondType(bond, Molecule.cBondTypeDouble);
+	private void correctNonLinearTripleBonds() {
+		for (int bond=0; bond<mMol.getBonds(); bond++) {
+			if (mMol.getBondOrder(bond) == 3) {
+				for (int i=0; i<2; i++) {
+					int atom = mMol.getBondAtom(i, bond);
+					if (mMol.getConnAtoms(atom) == 2
+					 && mHybridisation[atom] != 1
+					 && mMol.getAtomicNo(atom) <= 7) {
+						mMol.setBondOrder(bond, 2);
 						break;
 					}
-					if (mMol.getBondOrder(bond) == 2) {
-						mNeighbourList.add(new Neighbour(atom, mMol.getConnAtom(atom, i), bond, mBondLength[bond]));
-					}
-				}
-				if (mNeighbourList.size() == 2) {
-					calculateBondLengthDeviationsForNeighbourList();
-					Neighbour[] neighbour = mNeighbourList.toArray(new Neighbour[0]);
-					Arrays.sort(neighbour);
-					mMol.setBondType(neighbour[1].getBond(), Molecule.cBondTypeSingle);
 				}
 			}
 		}
@@ -1558,8 +1629,8 @@ if (DEBUG_OUTPUT) {
 		 || mMol.getAtomCharge(atom) != 0)
 			return false;
 
-//		if (AtomFunctionAnalyzer.isAcidicOxygen(mMol, atom))
-		if (mMol.isElectronegative(atom))	// any electronegative atom with implicit hydrogen
+		if (mMol.isHalogene(atom)
+		 || AtomFunctionAnalyzer.isAcidicOxygen(mMol, atom))	// any electronegative atom with implicit hydrogen
 			return true;
 
 		if (implicitHydrogenCollidesWithMetalBond(atom, metal))
@@ -1578,7 +1649,7 @@ if (DEBUG_OUTPUT) {
 	}
 
 	private void oxydateMetalAtom(int metalAtom) {
-		byte[] oxidationState = Molecule.cCommonOxidationState[metalAtom];
+		byte[] oxidationState = Molecule.cCommonOxidationState[mMol.getAtomicNo(metalAtom)];
 		if (oxidationState != null) {
 			int maxOxidationState = oxidationState[oxidationState.length-1];
 			if (mMol.getAtomCharge(metalAtom) < maxOxidationState)
@@ -1593,12 +1664,12 @@ if (DEBUG_OUTPUT) {
 			for (int i=0; i<mMol.getConnAtoms(atom); i++)
 				neighbourDirection.add(mMol.getCoordinates(atom).subC(mMol.getCoordinates(mMol.getConnAtom(atom, i))));
 
-			return metalDirection.getAngle(neighbourDirection) < 0.25 * Math.PI;
+			return metalDirection.getAngle(neighbourDirection) < METAL_HYDROGEN_COLLISION_ANGLE;
 		}
 		return false;
 	}
 
-	private double predictedNonAromaticBondLength(int bond) {
+	private double predictedNonAromaticDoubleBondLength(int bond) {
 		int[] atom = new int[2];
 		int[] piCount = new int[2];
 		int[] conns = new int[2];

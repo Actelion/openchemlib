@@ -497,13 +497,11 @@ public class TorsionDB {
 			if (atom[3*i] != -1) {
 				int central = 2-i;
 				int terminal = 3-3*i;
-				assert(mol.getNonHydrogenNeighbourCount(atom[central]) == 3);
-	
+
 				int index = 0;
 				for (int j=0; j<3; j++) {
 					int connAtom = mol.getConnAtom(atom[central], j);
 		   			if (connAtom != rearAtom[1-i] && mol.getAtomicNo(connAtom) != 1) {
-//					if (connAtom != atom[3-central]) {
 						atom[terminal] = connAtom;
 						if (conformer != null)
 							angle1[index++] = conformer.calculateTorsion(atom);
@@ -523,14 +521,11 @@ public class TorsionDB {
 		for (int i=0; i<3; i++) {
 			int terminal1 = mol.getConnAtom(atom[1], i);
 			if (terminal1 != rearAtom[0] && mol.getAtomicNo(terminal1) != 1) {
-//			if (terminal1 != atom[2]) {
-				assert(mol.getNonHydrogenNeighbourCount(atom[2]) == 3);
 				atom[0] = terminal1;
 				int index2 = 0;
 				for (int j=0; j<3; j++) {
 					int terminal2 = mol.getConnAtom(atom[2], j);
 					if (terminal2 != rearAtom[1] && mol.getAtomicNo(terminal2) != 1) {
-//				  if (terminal2 != atom[1]) {
 						atom[3] = terminal2;
 						if (conformer != null)
 							angle2[index2++] = conformer.calculateTorsion(atom);

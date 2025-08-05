@@ -129,7 +129,7 @@ public class AromaticityResolver {
 			promoteObviousBonds();
 
 		// try to find and promote entirely aromatic 6-rings
-		if (promoteSixMemberedAromaticRings(ringSet, mayChangeAtomCharges))
+		while (promoteSixMemberedAromaticRings(ringSet, mayChangeAtomCharges))
 			promoteObviousBonds();
 
 		// try to find and promote other fully aromatic rings
@@ -147,7 +147,7 @@ public class AromaticityResolver {
             }
 
 		if (mayChangeAtomCharges)
-			unchargeImmoniumNHChains();
+			unchargeImmoniumNHChains(mayChangeAtomCharges);
 
 		if (mDelocalizedAtoms - mPiElectronsAdded >= 2)
 			connectSeparatedSingletons();
@@ -728,10 +728,10 @@ public class AromaticityResolver {
 	/**
 	 * Flip pi-electrons in delocalized (N+)=C(-C=C)n-NH chains to the uncharged state N-C(=C-C)n=N
 	 */
-	private void unchargeImmoniumNHChains() {
+	private void unchargeImmoniumNHChains(boolean mayChangeAtomCharges) {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			mMol.ensureHelperArrays(Molecule.cHelperNeighbours);	// make sure, connBondOrders are
-			if (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 1 && mMol.getAtomPi(atom) == 1) {
+			if (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 1 && mMol.getAtomPi(atom) == 1&& !isAmineOxid(atom, mayChangeAtomCharges)) {
 				boolean found = false;
 
 				int[] graphAtom = new int[mMol.getAtoms()];
@@ -777,6 +777,18 @@ public class AromaticityResolver {
 				}
 			}
 		}
+	}
+
+	private boolean isAmineOxid(int atom, boolean mayChangeAtomCharges) {
+		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+			int connAtom = mMol.getConnAtom(atom, i);
+			if (mMol.getAtomicNo(connAtom) == 8 && mMol.getConnAtoms(connAtom) == 1) {
+				if (mayChangeAtomCharges && mMol.getAtomCharge(connAtom) == 0)
+					mMol.setAtomCharge(connAtom, -1);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void connectSeparatedSingletons() {

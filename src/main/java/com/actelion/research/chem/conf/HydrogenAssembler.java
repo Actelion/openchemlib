@@ -84,7 +84,7 @@ public class HydrogenAssembler {
 		if (count == 0)
 			return 0;
 
-		if (mMol.getConnAtoms(atom) == 0)
+		if (mMol.getAllConnAtoms(atom) == 0)
 			return addHydrogensToSingleAtom(atom, count);
 
 		int pi = mMol.getAtomPi(atom);
@@ -115,14 +115,15 @@ public class HydrogenAssembler {
 		// find an 3-atom sequence that will be the basis for dihedral angle positioning
 		int[] atomSequence = new int[4];
 		atomSequence[2] = atom;
-		for (int i1=0; i1<mMol.getConnAtoms(atom); i1++) {
+		for (int i1=0; i1<mMol.getAllConnAtoms(atom); i1++) {
 			atomSequence[1] = mMol.getConnAtom(atom, i1);
-			for (int i0=0; i0<mMol.getConnAtoms(atomSequence[1]); i0++) {
+			for (int i0=0; i0<mMol.getAllConnAtoms(atomSequence[1]); i0++) {
 				atomSequence[0] = mMol.getConnAtom(atomSequence[1], i0);
 				if (atomSequence[0] != atom) {
 					// sequence found. Now we check whether certain dihedrals are already blocked
 
-					if (mMol.getConnAtoms(atom) == 3) {
+					if (mMol.getAllConnAtoms(atom) == 3
+					 || (count == 1 && mMol.getAllConnAtomsPlusMetalBonds(atom) == 3)) {
 						// must be sp3 with already two of three positions occupied; we calculate the dihedral of the missing H
 						atomSequence[3] = -1;
 						double dihedral = TorsionDB.calculateTorsionExtended(mMol, atomSequence);
@@ -133,13 +134,13 @@ public class HydrogenAssembler {
 
 					double angle = (sp == 2) ? Math.PI * 2 / 3 : Math.PI * 109 / 180;
 
-					if (mMol.getConnAtoms(atom) == 2) {
+					if (mMol.getAllConnAtoms(atom) == 2) {
 						// we have sp2 or sp3 and one position already occupied
 
 						if (count == 1 && sp == 3 && skipRotatableHydrogens)
 							return 0;    // we have two options and decide later
 
-						for (int i3 = 0; i3<mMol.getConnAtoms(atom); i3++) {
+						for (int i3 = 0; i3<mMol.getAllConnAtoms(atom); i3++) {
 							atomSequence[3] = mMol.getConnAtom(atom, i3);
 							if (atomSequence[3] != atomSequence[1]) {
 								double dihedral = TorsionDB.calculateTorsionExtended(mMol, atomSequence);
@@ -177,7 +178,7 @@ public class HydrogenAssembler {
 
 					// no competing atoms
 					// if we have a single bonded option for atomSequence[0], then take that
-					for (int i = i0 + 1; i<mMol.getConnAtoms(atomSequence[1]); i++) {
+					for (int i = i0 + 1; i<mMol.getAllConnAtoms(atomSequence[1]); i++) {
 						int alternative = mMol.getConnAtom(atomSequence[1], i);
 						if (alternative != atom && mMol.getConnBondOrder(atomSequence[1], i) == 1) {
 							atomSequence[0] = alternative;
@@ -224,10 +225,10 @@ public class HydrogenAssembler {
 
 		// from here are atoms with only one shell of neighbours where we cannot apply the dihedral procedure
 
-		if (count == 1 && sp == mMol.getConnAtoms(atom)) {
+		if (count == 1 && sp == mMol.getAllConnAtoms(atom)) {
 			// simple case, where we can just invert the sum of all neighbor bond vectors
 			Coordinates v = new Coordinates();
-			for (int i=0; i<mMol.getConnAtoms(atom); i++)
+			for (int i=0; i<mMol.getAllConnAtoms(atom); i++)
 				v.add(croot.subC(mMol.getCoordinates(mMol.getConnAtom(atom, i))).unit());
 			v.unit();
 			int hydrogen = mMol.addAtom(1);
@@ -264,7 +265,7 @@ public class HydrogenAssembler {
 
 		double rotation = 0.0;
 
-		if (mMol.getConnAtoms(atom) == 2) {
+		if (mMol.getAllConnAtoms(atom) == 2) {
 			// we have another neighbour that determines the rotation of the hydrogen atom(s); atom must be sp3
 
 			// if v is reasonably parallel to the z-axis, we swap v and v2
