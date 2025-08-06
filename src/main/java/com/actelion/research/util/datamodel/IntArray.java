@@ -70,13 +70,9 @@ public class IntArray implements Serializable {
 	 */
 	public IntArray(int [] a) {
 		data = a;
-		
 		size = data.length;
-		
 		delta_capacity = size/2;
-		
 		calculateHashCode();
-		
 	}
 
 	/**
@@ -85,13 +81,9 @@ public class IntArray implements Serializable {
 	 */
 	public IntArray(IntArray ia) {
 		init(ia.data.length);
-		
 		System.arraycopy(ia.data, 0, data, 0, ia.size);
-
 		size = ia.size;
-		
 		delta_capacity = ia.delta_capacity;
-		
 		hash = ia.hash;
 	}
 	
@@ -104,7 +96,6 @@ public class IntArray implements Serializable {
 	
     public void calculateHashCode(){
     	int h = BurtleHasher.hashlittle(data, 13, size);
-    	
     	hash = h;
     }
 
@@ -118,44 +109,33 @@ public class IntArray implements Serializable {
      * @param value
      */
     public void removeValue(int value){
-    	
     	int ccFound=0;
     	for (int i = 0; i < size; i++) {
 			if(data[i]==value){
 				ccFound++;
 			}
 		}
-    	
     	if(ccFound==0){
     		return;
     	}
-    	
     	int newlen = size-ccFound;
-    	
     	int [] arr = new int [newlen];
-    	
     	int cc=0;
     	for (int i = 0; i < size; i++) {
 			if(data[i]!=value){
 				arr[cc++]=data[i];
 			}
 		}
-    	
     	data=arr;
-    	
     	size = newlen;
-    	
     }
     
     public boolean equals(Object o) {
-    	
     	IntArray ia = (IntArray)o;
-    	
         boolean eq = true;
         if(length() != ia.length()){
         	return false;
         }
-        
         for (int i = 0; i < size; i++) {
           if(data[i] != ia.data[i]) {
               eq = false;
@@ -184,40 +164,35 @@ public class IntArray implements Serializable {
 	}
 	
 	public int add(int v){
-		
 		facultativeResize();
-		
 		data[size]=v;
-		
 		int index = size;
-		
 		size++;
-
 		hash = -1;
-		
 		return index;
 	}
 
 	public int max(){
-
 		int max = Integer.MIN_VALUE;
 		for (int i = 0; i < size; i++) {
 			if(data[i]>max){
 				max=data[i];
 			}
 		}
-
 		return max;
+	}
+	public long sum(){
+		long sum = 0;
+		for (int i = 0; i < size; i++) {
+			sum+=data[i];
+		}
+		return sum;
 	}
 
 	private void facultativeResize(){
-		
 		if(size == data.length){
-			
 			long newsize = (long)data.length + (long)delta_capacity;
-						
 			resize(newsize);
-			
 			if(delta_capacity<MAX_DELTA_CAPACITY){
 				delta_capacity *= 2;
 			}
@@ -225,19 +200,13 @@ public class IntArray implements Serializable {
 	}
 	
 	public void add(int [] a){
-
 		int newsize = size + a.length;
-		
 		if(newsize > data.length){
 			resize(newsize);
 		}
-		
 		System.arraycopy(a, 0, data, size, a.length);
-
 		size = newsize;
-
 		hash = -1;
-		
 	}
 	
 	public void add(List<Integer> li){
@@ -248,11 +217,9 @@ public class IntArray implements Serializable {
 	}
 	
 	public void add(byte [] a){
-				
 		for (int i = 0; i < a.length; i++) {
 			add(a[i]);
 		}
-		
 	}
 
 	/**
@@ -272,35 +239,21 @@ public class IntArray implements Serializable {
 		size--;
 		return last;
 	}
-
-
-
 	private void resize(long newlen){
-		
 		if(data.length == newlen){
 			return;
 		}
-		
 		int intNewlen = 0;
-		
 		long max = Integer.MAX_VALUE;
-		
 		if(newlen >= max) {
-						
 			intNewlen = Integer.MAX_VALUE;
-			
 			new RuntimeException("Warning! Maximum length of integer array reached.").printStackTrace();
-			
 		} else {
 			intNewlen = (int)newlen;
 		}
-		
 		int [] arr = new int [intNewlen];
-		
 		System.arraycopy(data, 0, arr, 0, Math.min(data.length, intNewlen));
-		
 		data = arr;
-		
 	}
 	
 	public void set(int index, int value){
@@ -309,11 +262,9 @@ public class IntArray implements Serializable {
 	
 	public List<Integer> toList() {
 		List<Integer> li = new ArrayList<Integer>(length());
-
 		for (int i = 0; i < length(); i++) {
 			li.add(get(i));
 		}
-		
 		return li;
 	}
 
@@ -326,32 +277,23 @@ public class IntArray implements Serializable {
 	}
 	
     public String toString() {
-    	
     	StringBuilder sb = new StringBuilder();
-    	
         DecimalFormat nf = new DecimalFormat("0");
-
         for (int i = 0; i < size; i++) {
             sb.append(nf.format(data[i]) + " ");
         }
-
         return sb.toString();
     }
     
     public String toString(String seperator) {
-    	
     	int types = length();
-		
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < types; i++) {
-			
 			sb.append(get(i));
-			
 			if(i < types-1){
 				sb.append(seperator);
 			}
 		}
-					
 		return sb.toString();
     }
     
@@ -389,16 +331,12 @@ public class IntArray implements Serializable {
     	int i = -1;
     	StringBuilder sb = new StringBuilder();
     	while(' ' != (i=s.read())){
-    		
     		if(i==-1){
     			break;
     		}
-    		
-    		sb.append((char)i); 
+    		sb.append((char)i);
     	}
-    	
     	int val = Integer.parseInt(sb.toString());
-    	
     	return val;
     }
 
@@ -436,30 +374,36 @@ public class IntArray implements Serializable {
     }
 
     public static boolean equals(int [] a, int [] b){
-
 		boolean eq = true;
 		if(a.length != b.length){
 			return false;
 		}
-
 		for (int i = 0; i < a.length; i++) {
 			if(a[i] != b[i]) {
 				eq = false;
 				break;
 			}
 		}
-
 		return eq;
 
 	}
 
+	public static int max(int [] a){
+		int max = Integer.MIN_VALUE;
+		for (int i = 0; i < a.length; i++) {
+			if(a[i]>max){
+				max=a[i];
+			}
+		}
+		return max;
+	}
+
 	public static List<Integer> toList(int [] a) {
 		List<Integer> li = new ArrayList<>(a.length);
-
 		for (int i = 0; i < a.length; i++) {
 			li.add(a[i]);
 		}
-		
+
 		return li;
 	}
 
