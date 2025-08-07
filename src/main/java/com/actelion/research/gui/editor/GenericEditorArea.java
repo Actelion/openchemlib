@@ -953,7 +953,7 @@ public class GenericEditorArea implements GenericEventListener {
 			try {
 				Reaction reaction = null;
 
-				if (FileHelper.getFileType(rxnFile.getName()) == FileHelper.cFileTypeRXN) {
+				if (FileHelper.getFileType(rxnFile) == FileHelper.cFileTypeRXN) {
 					reaction = new RXNFileParser().getReaction(rxnFile);
 				} else {
 					RDFileParser rdfParser = new RDFileParser(rxnFile);

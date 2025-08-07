@@ -194,6 +194,7 @@ public class PDBFileParser {
 
     private final ModelParser modelParser;
 
+	@Deprecated // use MMCIFParser.getFromPDB()
 	public PDBCoordEntryFile getFromPDB(String pdbID) throws Exception {
 		URLConnection con = new URI("https://files.rcsb.org/download/"+pdbID+".pdb.gz").toURL().openConnection();
 		return new PDBFileParser().parse(new BufferedReader(new InputStreamReader(new GZIPInputStream(con.getInputStream()))));

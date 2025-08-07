@@ -43,7 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public abstract class CompoundFileHelper {
-	public static final int cFileTypeMask = 0x007FFFFF;
+	public static final int cFileTypeMask = 0x00FFFFFF;
 	public static final int cFileTypeDataWarrior = 0x00000001;
 	public static final int cFileTypeDataWarriorTemplate = 0x00000002;
 	public static final int cFileTypeDataWarriorQuery = 0x00000004;
@@ -70,9 +70,10 @@ public abstract class CompoundFileHelper {
 	public static final int cFileTypeMOL = 0x00040000;
 	public static final int cFileTypeMOL2 = 0x00080000;
 	public static final int cFileTypePDB = 0x00100000;
-	public static final int cFileTypeMMTF = 0x00200000;
-	public static final int cFileTypeProtein = cFileTypePDB | cFileTypeMMTF;
-	public static final int cFileTypeSDGZ = 0x00400000;
+	public static final int cFileTypeMMCIF = 0x00200000;
+	public static final int cFileTypeMMTF = 0x00400000;
+	public static final int cFileTypeProtein = cFileTypePDB | cFileTypeMMCIF | cFileTypeMMTF;
+	public static final int cFileTypeSDGZ = 0x00800000;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
 
@@ -375,9 +376,22 @@ public abstract class CompoundFileHelper {
         if (filetypes == cFileTypePictureFile) {
             filter.setDescription("Image files");
             }
-		if ((filetypes & cFileTypePDB) != 0) {
+		if ((filetypes & cFileTypePDB) != 0 && (filetypes & cFileTypeMMCIF) != 0) {
 			filter.addExtension("pdb");
-			filter.addDescription("Protein Data Bank files");
+			filter.addExtension("cif");
+			filter.addExtension("mmcif");
+			filter.addDescription("PDB/MMCIF Protein Data Bank files");
+		}
+		else {
+			if ((filetypes & cFileTypePDB) != 0) {
+				filter.addExtension("pdb");
+				filter.addDescription("Classical Protein Data Bank files");
+				}
+			if ((filetypes & cFileTypeMMCIF) != 0) {
+				filter.addExtension("cif");
+				filter.addExtension("mmcif");
+				filter.addDescription("MMCIF Protein Data Bank files");
+				}
 			}
 		if ((filetypes & cFileTypeMMTF) != 0) {
 			filter.addExtension("mmtf");
@@ -452,8 +466,13 @@ public abstract class CompoundFileHelper {
 		}
 
 	/**
-	 * Note: If
-	 * @param filename
+	 * @return one or multiple filtetypes that matching the extension of the given filename
+	 */
+	public static int getFileType(File file) {
+		return file == null ? cFileTypeUnknown : getFileType(file.getName());
+	}
+
+	/**
 	 * @return one or multiple filtetypes that matching the extension of the given filename
 	 */
 	public static int getFileType(String filename) {
@@ -499,6 +518,8 @@ public abstract class CompoundFileHelper {
 			return cFileTypeMOL2;
 		if (extension.equals(".pdb"))
 			return cFileTypePDB;
+		if (extension.equals(".cif") || extension.equals(".mmcif"))
+			return cFileTypeMMCIF;
 		if (extension.equals(".mmtf"))
 			return cFileTypeMMTF;
 
@@ -599,7 +620,17 @@ public abstract class CompoundFileHelper {
 		case cFileTypePDB:
 			extensions.add(".pdb");
 			break;
+		case cFileTypeMMCIF:
+			extensions.add(".cif");
+			extensions.add(".mmcif");
+			break;
 		case cFileTypeMMTF:
+			extensions.add(".mmtf");
+			break;
+		case cFileTypeProtein:
+			extensions.add(".pdb");
+			extensions.add(".cif");
+			extensions.add(".mmcif");
 			extensions.add(".mmtf");
 			break;
 		case cFileTypeSDGZ:

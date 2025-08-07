@@ -57,13 +57,12 @@ public class BondOrderCalculator {
 	private static final double MIN_DIF_SINGLE_TO_AROM_BOND_LENGTH = 0.05;
 	private static final double MIN_DIF_DOUBLE_TO_TRIPLE_BOND_LENGTH = 0.08;
 	private static final double AROMATIC_5RING_BOND_LENGTH_TOLERANCE = 0.07;	// larger values -> more aromatic 5-rings
-	private static final double AROMATIC_5RING_MIN_BOND_LENGTH_SCORE = 1.0;
 	private static final double RING_BOND_AROMATICITY_LIMIT = 0.25;
 	private static final double SP_BOND_LENGTH_SUM_TOLERANCE = 0.1;
 	private static final double SP_BOND_LENGTH_SUM_CONTRIBUTION_FACTOR = 10;
 	private static final double PROPARGYL_LIKELYHOOD_INCREASE = 0.6;
 	private static final double PATH_START_AND_END_TOLERANCE = 0.1;
-	private static final double CHINONE_CONVERSION_MINIMUM_SCORE = 0.02;
+	private static final double CHINONE_CONVERSION_MINIMUM_SCORE = 0.02;	// was 0.02
 	private static final double HETERO_ATOM_CHARGE_PENALTY = 0.1;
 	private static final double DELOCALIZED_ZERO_PI_NITROGEN_MALUS = 0.05;
 	private static final double ENOL_TAUTOMER_MALUS = 0.2;
