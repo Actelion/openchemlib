@@ -70,7 +70,9 @@ import com.actelion.research.calc.statistics.StatisticsOverview;
 import com.actelion.research.calc.statistics.median.MedianStatisticFunctions;
 import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
+import com.actelion.research.chem.mcs.ListWithIntVec;
 import com.actelion.research.util.BurtleHasher;
+import com.actelion.research.util.datamodel.IntegerDouble;
 
 import java.util.*;
 
@@ -1613,5 +1615,109 @@ public class ExtendedMoleculeFunctions {
 			throw new RuntimeException("");
 		}
 		return arrRGroupsAtomicNo[r-1];
+	}
+
+	/**
+	 * Topological centaer atoms are the atoms with the lowest squared sum of topological distances to all atoms.
+	 * @param
+	 * @return
+	 */
+	public final static List<Integer> getTopologicalCenter(int [][] arrTopoDist) {
+		List<Integer> liTopoCenterAtoms = new ArrayList<>();
+		List<IntegerDouble> li = new ArrayList<>();
+		for (int i = 0; i < arrTopoDist.length; i++) {
+			double sum=0;
+			for (int j = 0; j < arrTopoDist.length; j++) {
+				sum += arrTopoDist[i][j]*arrTopoDist[i][j];
+			}
+			li.add(new IntegerDouble(i,sum));
+		}
+		Collections.sort(li, IntegerDouble.getComparatorDouble());
+		liTopoCenterAtoms.add(li.get(0).getInt());
+		for (int i = 1; i < li.size(); i++) {
+			if(li.get(i).getDouble()==li.get(0).getDouble()){
+				liTopoCenterAtoms.add(li.get(i).getInt());
+			}
+		}
+		return liTopoCenterAtoms;
+	}
+
+	public final static List<Integer> getTopologicalCenter(int [][] arrTopoDist, ListWithIntVec ilIndexAtoms) {
+		List<Integer> liTopoCenterAtoms = new ArrayList<Integer>();
+
+		List<IntegerDouble> li = new ArrayList<IntegerDouble>();
+
+		for (int i = 0; i < ilIndexAtoms.size(); i++) {
+
+			int indexAt1 = ilIndexAtoms.get(i);
+
+			double sum=0;
+			for (int j = 0; j < ilIndexAtoms.size(); j++) {
+
+				int indexAt2 = ilIndexAtoms.get(j);
+
+				sum += arrTopoDist[indexAt1][indexAt2]*arrTopoDist[indexAt1][indexAt2];
+			}
+
+			li.add(new IntegerDouble(indexAt1,sum));
+		}
+
+		Collections.sort(li, IntegerDouble.getComparatorDouble());
+
+		liTopoCenterAtoms.add(li.get(0).getInt());
+
+		for (int i = 1; i < li.size(); i++) {
+			if(li.get(i).getDouble()==li.get(0).getDouble()){
+				liTopoCenterAtoms.add(li.get(i).getInt());
+			}
+		}
+
+		return liTopoCenterAtoms;
+	}
+
+	/**
+	 * Gets the points with the maximum sum of squared topological distances to all atoms.
+
+	 * @param arrTopoDist
+	 * @return
+	 */
+	public final static List<Integer> getPeriphericPoints(int [][] arrTopoDist) {
+		List<Integer> liPeripheric = new ArrayList<>();
+		List<IntegerDouble> li = new ArrayList<>();
+		for (int i = 0; i < arrTopoDist.length; i++) {
+			double sum=0;
+			for (int j = 0; j < arrTopoDist.length; j++) {
+				sum += arrTopoDist[i][j]*arrTopoDist[i][j];
+			}
+			li.add(new IntegerDouble(i,sum));
+		}
+		Collections.sort(li, IntegerDouble.getComparatorDouble());
+		Collections.reverse(li);
+		liPeripheric.add(li.get(0).getInt());
+		for (int i = 1; i < li.size(); i++) {
+			if(li.get(i).getDouble()==li.get(0).getDouble()){
+				liPeripheric.add(li.get(i).getInt());
+			}
+		}
+		return liPeripheric;
+	}
+
+	/**
+	 * Distance is the sum of squares for every atom index.
+	 * Sorted in ascending order.
+	 * @param arrTopoDist
+	 * @return
+	 */
+	public final static List<IntegerDouble> getAllIndicesSortedByDistance(int [][] arrTopoDist) {
+		List<IntegerDouble> li = new ArrayList<>();
+		for (int i = 0; i < arrTopoDist.length; i++) {
+			double sum=0;
+			for (int j = 0; j < arrTopoDist.length; j++) {
+				sum += arrTopoDist[i][j]*arrTopoDist[i][j];
+			}
+			li.add(new IntegerDouble(i,sum));
+		}
+		Collections.sort(li, IntegerDouble.getComparatorDouble());
+		return li;
 	}
 }
