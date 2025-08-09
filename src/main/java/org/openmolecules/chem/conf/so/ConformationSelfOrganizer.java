@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 public class ConformationSelfOrganizer {
@@ -49,9 +50,11 @@ public class ConformationSelfOrganizer {
 	private static final int PHASE_OPTIMIZATION = 3;
 	private static final int PHASE_MINIMIZATION = 4;
 	private static final int[] PHASE_CYCLES = { 40, 20, 20, 100, 20 };
-	private static final double[] PHASE_FACTOR = { 40, 20, 20, 100, 40 };
+//	private static final double[] PHASE_FACTOR = { 40, 20, 20, 100, 40 };
 	private static final String[] PHASE_NAME = { "preparation", "pre-optimization", "breakout", "optimization", "minimization" };
 
+	private static final int    MAIN_POOL_INDEX = 0;
+	private static final int    BACKUP_POOL_INDEX = 1;	// we use a backup pool for collecting second-choice conformers
 	private static final int    INITIAL_POOL_SIZE = 8;
 	private static final int    MAX_CONFORMER_TRIES = 12;
 	private static final int    MAX_BREAKOUT_ROUNDS = 3;
@@ -66,7 +69,8 @@ public class ConformationSelfOrganizer {
 	private static final double TWIST_BOAT_ESCAPE_ANGLE = 0.6;  // angle to rotate ring member out of plane (from mid point between ring center and atom), after rotating it into the plane from the other side
 	private static final int    TWIST_BOAT_ESCAPE_FREQUENCY = 10;   // in every tenth cycle we try escaping trapped twist boats
 	private static final double	BREAKOUT_DISTANCE = 8.0;
-	private static final double	MAX_POOL_STRAIN_DIF = 2.72;     // 2 * 1.36 kcal/mol, which is factor 100
+	private static final double	MAX_POOL_STRAIN_DIF = 2.72;
+	private static final double	MAX_POOL_STRAIN_FACTOR = 2.0;
 
 public static boolean KEEP_INITIAL_COORDINATES = false;
 public static boolean WRITE_DW_FILE = false;
@@ -83,7 +87,7 @@ private double[] mDWStrain; 	// TODO get rid of this section
     private boolean				mPoolIsClosed;
 	private final ArrayList<ConformationRule> mRuleList;
 	private ArrayList<SelfOrganizedConformer> mConformerList;
-	private double              mMinStrainInPool;
+	private double[]            mMinStrainInPool;
 	private final int[]			mRuleCount;
 	private final boolean[]		mSkipRule;
 	private int[]				mRotatableBondForDescriptor;
@@ -276,8 +280,11 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 	public void initializeConformers(long randomSeed, int maxConformers) {
         mRandom = (randomSeed == 0) ? new Random() : new Random(randomSeed);
 
-        mConformerList = new ArrayList<>();
-		mMinStrainInPool = Double.MAX_VALUE;
+		mConformerList = new ArrayList<>();
+		ArrayList<SelfOrganizedConformer> backupConformerList = new ArrayList<>();
+		mMinStrainInPool = new double[2];	// 0: main pool; 1: backup pool
+		mMinStrainInPool[MAIN_POOL_INDEX] = Double.MAX_VALUE;
+		mMinStrainInPool[BACKUP_POOL_INDEX] = Double.MAX_VALUE;
         mPoolIsClosed = false;
 
 		int freeBondCount = 0;
@@ -303,28 +310,28 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 		SelfOrganizedConformer conformer = null;
 		int finalPoolSize = mConformerList.size() + newConformerCount;
 		int tryCount = newConformerCount * MAX_CONFORMER_TRIES;
+		ArrayList<SelfOrganizedConformer> backupConformerList = new ArrayList<>();
 		for (int i=0; i<tryCount && mConformerList.size()<finalPoolSize && !mustStop(); i++) {
 			if (conformer == null)
 				conformer = new SelfOrganizedConformer(mMol);
 			if (tryGenerateConformer(conformer)) {
 				// if optimization is successful, we have a good conformer
-				if (addIfNewOrReplaceIfBetter(conformer))
+				if (addIfNewOrReplaceIfBetter(conformer, mConformerList, MAIN_POOL_INDEX))
 					conformer = null;
 				}
-			else {
-				if (bestRefusedConformer == null) {
-					bestRefusedConformer = conformer;
+			else {	// keep second choice conformers
+				if (addIfNewOrReplaceIfBetter(conformer, backupConformerList, BACKUP_POOL_INDEX))
 					conformer = null;
-				}
-				else if (bestRefusedConformer.isWorseThan(conformer)) {
-					SelfOrganizedConformer tempConformer = bestRefusedConformer;
-					bestRefusedConformer = conformer;
-					conformer = tempConformer;
-				}
 			}
 		}
-		if (mConformerList.isEmpty() && bestRefusedConformer != null)
-			mConformerList.add(bestRefusedConformer);
+
+		if (mConformerList.isEmpty() && !backupConformerList.isEmpty()) {
+			SelfOrganizedConformer[] backupConformer = backupConformerList.toArray(new SelfOrganizedConformer[0]);
+			Arrays.sort(backupConformer, (c1, c2) -> Double.compare(c1.getTotalStrain(), c2.getTotalStrain()));
+			mConformerList.addAll(Arrays.asList(backupConformer).subList(0, Math.min(newConformerCount, backupConformer.length)));
+			mPoolIsClosed = true;
+		}
+
 		if (mConformerList.size() < finalPoolSize
 		 || mConformerList.size() == mMaxConformers)
 			mPoolIsClosed = true;
@@ -334,23 +341,25 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 	 * @param conformer
 	 * @return true if the conformer was added or replaced another one
 	 */
-	private boolean addIfNewOrReplaceIfBetter(SelfOrganizedConformer conformer) {
+	private boolean addIfNewOrReplaceIfBetter(SelfOrganizedConformer conformer, ArrayList<SelfOrganizedConformer> conformerList, int poolIndex) {
 		if (mRotatableBondForDescriptor == null)
 			mRotatableBondForDescriptor = TorsionDescriptorHelper.findRotatableBonds(getMolecule());
 
-		if (conformer.getTotalStrain() > mMinStrainInPool + MAX_POOL_STRAIN_DIF)
+		double maxStrain = Math.max(mMinStrainInPool[poolIndex] + MAX_POOL_STRAIN_DIF, mMinStrainInPool[poolIndex] * MAX_POOL_STRAIN_FACTOR);
+
+		if (conformer.getTotalStrain() > maxStrain)
 			return false;
 
 		conformer.calculateDescriptor(mRotatableBondForDescriptor);
 
-		for (int i=mConformerList.size()-1; i>=0; i--) {
-			SelfOrganizedConformer soc = mConformerList.get(i);
+		for (int i=conformerList.size()-1; i>=0; i--) {
+			SelfOrganizedConformer soc = conformerList.get(i);
 			if (conformer.equals(soc)) {
 				if (soc.isWorseThan(conformer)) {
-					mConformerList.remove(i);
-					mConformerList.add(conformer);
-					if (mMinStrainInPool > conformer.getTotalStrain())
-						mMinStrainInPool = conformer.getTotalStrain();
+					conformerList.remove(i);
+					conformerList.add(conformer);
+					if (mMinStrainInPool[poolIndex] > conformer.getTotalStrain())
+						mMinStrainInPool[poolIndex] = conformer.getTotalStrain();
 					return true;
 					}
 
@@ -358,14 +367,14 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 				}
 			}
 
-		mConformerList.add(conformer);
-		if (mMinStrainInPool > conformer.getTotalStrain()) {
-			mMinStrainInPool = conformer.getTotalStrain();
+		conformerList.add(conformer);
+		if (mMinStrainInPool[poolIndex] > conformer.getTotalStrain()) {
+			mMinStrainInPool[poolIndex] = conformer.getTotalStrain();
 
-			for (int i=mConformerList.size()-1; i>=0; i--) {
-				SelfOrganizedConformer soc = mConformerList.get(i);
-				if (soc.getTotalStrain() > mMinStrainInPool + MAX_POOL_STRAIN_DIF)
-					mConformerList.remove(i);
+			for (int i=conformerList.size()-1; i>=0; i--) {
+				SelfOrganizedConformer soc = conformerList.get(i);
+				if (soc.getTotalStrain() > maxStrain)
+					conformerList.remove(i);
 				}
 			}
 
@@ -376,7 +385,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 	 * Picks a new conformer from the conformer pool created by initializeConformers().
 	 * Low strain conformers and conformers being most different from already selected ones
 	 * are selected first. If the pool is getting short on conformers, new conformers are
-	 * created as long as molecule flexibility allows. If a representative set of low strain
+	 * created as long as molecule flexibility allows. Once a representative set of low strain
 	 * molecules have been picked, this method returns null, provided that at least one conformer
 	 * was returned.
 	 * Internally, TorsionDescriptors are compared to decide whether a conformer is new.
