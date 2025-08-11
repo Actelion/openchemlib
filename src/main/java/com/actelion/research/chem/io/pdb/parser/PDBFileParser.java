@@ -539,8 +539,8 @@ public class PDBFileParser {
 		for (AtomRecord ar : hetAtomRecords)
 			hetAtomList.add(ar);
 
-		pdbCoordEntryFile.setProtAtomRecords(protAtomList);
-        pdbCoordEntryFile.setHetAtomRecords(hetAtomList);
+		pdbCoordEntryFile.setProteinAtoms(protAtomList);
+        pdbCoordEntryFile.setHetAtoms(hetAtomList);
 
         indexLine = modelParser.getIndexLine();
 
@@ -549,7 +549,7 @@ public class PDBFileParser {
         //
 		SortedList<int[]> bonds = new SortedList<>(new IntArrayComparator());
 		indexLine = parseCONECTLines(liRaw, indexLine, bonds);
-		pdbCoordEntryFile.setLiConnect(bonds);
+		pdbCoordEntryFile.setConnections(bonds);
 
         if(liRaw.get(indexLine).startsWith(TAG_MASTER)) {
             pdbCoordEntryFile.setMaster(liRaw.get(indexLine).substring(10).trim());

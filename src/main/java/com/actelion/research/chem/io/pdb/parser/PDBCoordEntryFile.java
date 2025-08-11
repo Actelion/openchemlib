@@ -35,6 +35,7 @@
 package com.actelion.research.chem.io.pdb.parser;
 
 import com.actelion.research.chem.Molecule3D;
+import com.actelion.research.chem.io.pdb.mmcif.MMCIFParser;
 import com.actelion.research.util.SortedList;
 
 import java.util.*;
@@ -136,8 +137,8 @@ public class PDBCoordEntryFile {
     private List<AtomRecord> protAtomRecords;
     private List<AtomRecord> hetAtomRecords;
 
-
-    private SortedList<int[]> liConnect;
+    private SortedList<int[]> connections1;
+    private ArrayList<String[]> connections2;
 
     private String master;
 
@@ -179,7 +180,7 @@ public class PDBCoordEntryFile {
     	return protAtomRecords;
     }
     
-    public void setProtAtomRecords(List<AtomRecord> protAtomRecords) {
+    public void setProteinAtoms(List<AtomRecord> protAtomRecords) {
     	this.protAtomRecords = protAtomRecords;
     }
     
@@ -187,7 +188,7 @@ public class PDBCoordEntryFile {
     	return hetAtomRecords;
     }
     
-    public void setHetAtomRecords(List<AtomRecord> hetAtomRecords) {
+    public void setHetAtoms(List<AtomRecord> hetAtomRecords) {
     	this.hetAtomRecords = hetAtomRecords;
     }
   
@@ -576,12 +577,12 @@ public class PDBCoordEntryFile {
         this.liMtrix3 = liMtrix3;
     }
 
-    public SortedList<int[]> getLiConnect() {
-        return liConnect;
+    public void setConnections(SortedList<int[]> connections) {
+        this.connections1 = connections;
     }
 
-    public void setLiConnect(SortedList<int[]> liConnect) {
-        this.liConnect = liConnect;
+    public void setConnections(ArrayList<String[]> connections) {
+        this.connections2 = connections;
     }
 
     public String getMaster() {
@@ -605,7 +606,21 @@ public class PDBCoordEntryFile {
     }
 
     public Map<String,List<Molecule3D>> extractMols(boolean detachCovalentLigands) {
-        return new StructureAssembler(liConnect, protAtomRecords, hetAtomRecords, detachCovalentLigands).assemble();
+        // translate connections defined by atom names to global atom indexes
+        if (connections2 != null && !connections2.isEmpty()) {
+            TreeMap<String,Integer> atomNameToIDMap = new TreeMap<>();
+            for (AtomRecord atom : protAtomRecords)
+                atomNameToIDMap.put(MMCIFParser.atomDescription(atom.getAtomName(), atom.getResName(), Integer.toString(atom.getResNum()), atom.getChainID()), atom.getSerialId());
+            for (AtomRecord atom : hetAtomRecords)
+                atomNameToIDMap.put(MMCIFParser.atomDescription(atom.getAtomName(), atom.getResName(), Integer.toString(atom.getResNum()), atom.getChainID()), atom.getSerialId());
+            for (String[] connection : connections2) {
+                int[] bond = new int[2];
+                bond[0] = atomNameToIDMap.get(connection[0]);
+                bond[1] = atomNameToIDMap.get(connection[1]);
+                connections1.add(bond);
+            }
+        }
+        return new StructureAssembler(connections1, protAtomRecords, hetAtomRecords, detachCovalentLigands).assemble();
     }
 
     @Override
