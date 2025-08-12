@@ -36,6 +36,7 @@ package com.actelion.research.util.datamodel;
 import com.actelion.research.calc.INumericalDataColumn;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 
@@ -49,23 +50,26 @@ public class DoubleArray implements INumericalDataColumn {
 	private static final int MAX_DELTA_CAPACITY = (int)Math.pow(2, 20);
 	
 	private double [] data;
-	
 	private int size;
-	
 	private int delta_capacity;
-	
 	public DoubleArray() {
 		init(START_CAPACITY);
 	}
-	
 	public DoubleArray(int capacity) {
 		init(capacity);
 	}
 
 	/**
 	 * Deep constructor
-	 * @param a
+	 * @param l
 	 */
+	public DoubleArray(List<Double> l) {
+		init(l.size());
+		for (int i = 0; i < l.size(); i++) {
+			data[i]=l.get(i);
+		}
+		size = l.size();
+	}
 	public DoubleArray(double[] a) {
 		init(a.length);
 		System.arraycopy(a,0, data, 0, a.length);
