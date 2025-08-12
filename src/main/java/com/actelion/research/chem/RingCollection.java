@@ -61,6 +61,7 @@ public class RingCollection {
 	private final ExtendedMolecule mMol;
 	private final ArrayList<int[]> mRingAtomSet;
 	private final ArrayList<int[]> mRingBondSet;
+	private final ArrayList<Integer> mAzuleneBridgeBonds;
 	private final int[] mAtomRingFeatures;
 	private final int[] mBondRingFeatures;
 	private int[] mHeteroPosition;
@@ -96,6 +97,7 @@ public class RingCollection {
 		mMaxSmallRingSize = maxSmallRingSize;
 		mRingAtomSet = new ArrayList<>();
 		mRingBondSet = new ArrayList<>();
+		mAzuleneBridgeBonds = new ArrayList<>();
 
 		mAtomRingFeatures = new int[mMol.getAtoms()];
 		mBondRingFeatures = new int[mMol.getBonds()];
@@ -618,6 +620,9 @@ public class RingCollection {
 					}
 				}
 			}
+
+		for (int bond : mAzuleneBridgeBonds)
+			mBondRingFeatures[bond] = 0;
 		}
 
 	private boolean qualifiesAsHeteroAtom(int atom) {
@@ -718,12 +723,12 @@ public class RingCollection {
 	private boolean determineAromaticity(int ringNo, int[][] annelatedRing, boolean[] aromaticityHandled,
 										 boolean []isAromatic, boolean[] isDelocalized, int[] heteroPosition,
 										 boolean includeTautomericBonds) {
-		int ringAtom[] = mRingAtomSet.get(ringNo);
+		int[] ringAtom = mRingAtomSet.get(ringNo);
 		for (int atom:ringAtom)
 			if (!qualifiesAsAromaticAtom(atom))
 				return true;
 
-		int ringBond[] = mRingBondSet.get(ringNo);
+		int[] ringBond = mRingBondSet.get(ringNo);
 		int ringBonds = ringBond.length;
 
 		int bondSequence = 0;
@@ -853,6 +858,42 @@ public class RingCollection {
 						heteroPosition[ringNo] = carbeniumPosition;
 						if ((aromaticButNotDelocalizedSequence & cSequence7Ring[carbeniumPosition]) == 0)
 							hasDelocalizationLeak = false;
+						}
+					else {	// Check for Azulene-like annelated rings and in case of success mark both rings as aromatic and delocalized,
+							// but put shared bond into a list to remove aromaticity from it later.
+						for (int i=0; i<2; i++) {
+							int sharedBondIndex = (carbeniumPosition+6+i) % 7;
+							int sharedBond = ringBond[sharedBondIndex];
+							int sharedRing = annelatedRing[ringNo][sharedBondIndex];
+							if (sharedRing != -1 && !isAromatic[sharedRing] && getRingSize(sharedRing) == 5) {
+								int[] sharedRingBond = mRingBondSet.get(sharedRing);
+								int index = 0;
+								while (sharedRingBond[index] != sharedBond)
+									index++;
+								boolean isPiBond = false;
+								int piBondCount = 0;
+								for (int j=1; j<=4; j++) {
+									int bond = sharedRingBond[(index+j) % 5];
+									boolean nextIsPiBond = qualifiesAsPiBond(bond)
+										|| (includeTautomericBonds && qualifiesAsAmideTypeBond(bond));
+									if (nextIsPiBond && isPiBond) {	// in the annelated ring we expect 2 pi-bonds, which don't touch
+										piBondCount = 0;
+										break;
+										}
+									isPiBond = nextIsPiBond;
+									if (isPiBond)
+										piBondCount++;
+									}
+								if (piBondCount == 2) {
+									isAromatic[ringNo] = true;
+									isAromatic[sharedRing] = true;
+									isDelocalized[ringNo] = true;
+									isDelocalized[sharedRing] = true;
+									mAzuleneBridgeBonds.add(sharedBond);
+									break;
+									}
+								}
+							}
 						}
 					}
 				}
