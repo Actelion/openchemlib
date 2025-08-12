@@ -64,6 +64,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 	private int[] atomFlags;
 	private Object[][] infos;
 	private double[] partialCharges;
+	private boolean isCovalentLigand;
 
 	//Molecule properties (calculated during the first call at getRings)
 	//private List<Integer>[] mAtomToRings = null;
@@ -250,8 +251,14 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		return (String) infos[atm][INFO_AMINO];
 	}
 	
+	public boolean isCovalentLigand() {
+		return isCovalentLigand;
+	}
 
-	
+	public void setCovalentLigand(boolean b) {
+		isCovalentLigand = b;
+	}
+
 	public final double getAtomBfactor(int atm) {
 		return (double) infos[atm][INFO_BFACTOR];
 	}

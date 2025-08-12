@@ -4112,8 +4112,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 			}
 
 		for (int ringNo=0; ringNo<mRingSet.getSize(); ringNo++) {
-			int ringAtom[] = mRingSet.getRingAtoms(ringNo);
-			int ringBond[] = mRingSet.getRingBonds(ringNo);
+			int[] ringAtom = mRingSet.getRingAtoms(ringNo);
+			int[] ringBond = mRingSet.getRingBonds(ringNo);
 			int ringAtoms = ringAtom.length;
 			for (int i=0; i<ringAtoms; i++) {
 				mAtomFlags[ringAtom[i]] |= cAtomFlagSmallRing;

@@ -29,6 +29,7 @@ public class StructureAssembler {
 	private final SortedList<int[]> mConnectionList;
 	private final List<AtomRecord> mProteinAtomRecordList;
 	private final List<AtomRecord> mHetAtomRecordList;
+	private ArrayList<String> mCovalentLigandGroupList;
 	private final boolean mDetachCovalentLigands;
 	private Map<String,List<Molecule3D>> mMolTypeListMap;
 
@@ -177,6 +178,8 @@ public class StructureAssembler {
 				}
 				else {
 					buildBonds(fragment);
+					if (mCovalentLigandGroupList.contains(groupName))
+						fragment.setCovalentLigand(true);
 					mMolTypeListMap.putIfAbsent(LIGAND_GROUP, new ArrayList<>());
 					mMolTypeListMap.get(LIGAND_GROUP).add(fragment);
 				}
@@ -244,6 +247,7 @@ public class StructureAssembler {
 			List<AtomRecord> li = mGroupAtomRecordListMap.computeIfAbsent(hetAtom.getString(), k -> new ArrayList<>());
 			li.add(hetAtom);
 		});
+		mCovalentLigandGroupList = new ArrayList<>();
 
 		// Merge atom groups that are connected by a bond
 		for (int i=0; i<mConnectionList.size(); i++) {
@@ -265,11 +269,17 @@ public class StructureAssembler {
 						mGroupAtomRecordListMap.get(grps[0]).addAll(mGroupAtomRecordListMap.get(grps[1]));
 						mGroupAtomRecordListMap.remove(grps[1]);
 					}
+					else {
+						mCovalentLigandGroupList.add(grps[1]);
+					}
 				}
 				else if(grps[1].equals(PROTEIN_GROUP)) {
 					if (!mDetachCovalentLigands) {
 						mGroupAtomRecordListMap.get(grps[1]).addAll(mGroupAtomRecordListMap.get(grps[0]));
 						mGroupAtomRecordListMap.remove(grps[0]);
+					}
+					else {
+						mCovalentLigandGroupList.add(grps[0]);
 					}
 				}
 				else {

@@ -194,7 +194,7 @@ public class PeriodicTable {
 		for (Element arrDatum : arrData) {
 			htblDataAtNo.put(arrDatum.getOrderNumber(), arrDatum);
 			htblDataName.put(arrDatum.getName(), arrDatum);
-			htblDataSymbol.put(arrDatum.getSymbol(), arrDatum);
+			htblDataSymbol.put(arrDatum.getSymbol().toLowerCase(), arrDatum);
 		}
 
 		arrAlkaline = new boolean[arrData.length];
@@ -230,7 +230,7 @@ public class PeriodicTable {
 
 		Element el = getInstance().htblDataName.get(sNameOrSymbol);
 		if (el == null)
-			el = getInstance().htblDataSymbol.get(sNameOrSymbol);
+			el = getInstance().htblDataSymbol.get(sNameOrSymbol.toLowerCase());
 
 		if (el != null)
 			iOrderNumber = el.getOrderNumber();

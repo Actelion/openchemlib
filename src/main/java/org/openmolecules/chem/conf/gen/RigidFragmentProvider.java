@@ -304,15 +304,18 @@ public class RigidFragmentProvider {
 				conformer = selfOrganizer.getNextConformer();
 				}
 
+			// Calculate fraction values of the population from strain values, which de-facto are by a factor of 5-10 higher than energies in kcal/mol
+			double SO_ENERGY_FOR_FACTOR_10 = 10 * 1.36; // strain value before minimization are ; 1.36 kcal/mol is factor 10
+
 			// Calculate fraction values of the population from strain values, which somewhat resemble energies in kcal/mol
-			double ENERGY_FOR_FACTOR_10 = 1.36; // The ConformerSelfOrganizer and MMFF use kcal/mol; 1.36 kcal/mol is factor 10
+			double MMFF_ENERGY_FOR_FACTOR_10 = 1.36; // The ConformerSelfOrganizer and MMFF use kcal/mol; 1.36 kcal/mol is factor 10
 
 			double minStrain = Double.MAX_VALUE;
-			for(Conformer conf:conformerList)
-				minStrain = Math.min(minStrain, ((SelfOrganizedConformer)conf).getTotalStrain());
+			for(SelfOrganizedConformer conf:conformerList)
+				minStrain = Math.min(minStrain, conf.getTotalStrain());
 
-			// Strain values resemble energies in kcal/mol, but not as reliable. Therefore we are less strict and allow factor 1000
-			double strainLimit = minStrain + 3.0 * ENERGY_FOR_FACTOR_10;
+			// Strain values resemble energies in kcal/mol, but not as reliable. Therefore, we are less strict and allow factor 1000
+			double strainLimit = 2 * minStrain;
 			for (int i=conformerList.size()-1; i>=0; i--)
 				if (conformerList.get(i).getTotalStrain()>strainLimit)
 					conformerList.remove(i);
@@ -322,7 +325,7 @@ public class RigidFragmentProvider {
 			int index = 0;
 			for(int i=0; i<conformerList.size(); i++) {
 				SelfOrganizedConformer conf = conformerList.get(i);
-				likelihood[i] = Math.pow(10, (minStrain - conf.getTotalStrain()) / ENERGY_FOR_FACTOR_10);
+				likelihood[i] = Math.pow(10, (minStrain - conf.getTotalStrain()) / SO_ENERGY_FOR_FACTOR_10);
 				likelihoodSum += likelihood[i];
 				}
 			for (int i=0; i<conformerList.size(); i++)
@@ -341,7 +344,7 @@ public class RigidFragmentProvider {
 					conf.copyFrom(fragment);
 					}
 
-				double energyLimit = minEnergy + 2.0 * ENERGY_FOR_FACTOR_10;    // population of less than 1% of best conformer
+				double energyLimit = minEnergy + 2.0 * MMFF_ENERGY_FOR_FACTOR_10;    // population of less than 1% of best conformer
 				for(Conformer conf:conformerList) {
 					if (!Double.isNaN(conf.getEnergy()) && conf.getEnergy()>energyLimit) {
 						conf.setEnergy(Double.NaN);
@@ -359,7 +362,7 @@ public class RigidFragmentProvider {
 						if (Double.isNaN(conf.getEnergy()))
 							conformerList.remove(i);
 						else {
-							population[index] = Math.pow(10, (minEnergy - conf.getEnergy()) / ENERGY_FOR_FACTOR_10);
+							population[index] = Math.pow(10, (minEnergy - conf.getEnergy()) / MMFF_ENERGY_FOR_FACTOR_10);
 							populationSum += population[index];
 							index++;
 							}
