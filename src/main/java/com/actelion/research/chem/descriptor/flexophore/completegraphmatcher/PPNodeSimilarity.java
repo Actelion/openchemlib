@@ -78,7 +78,7 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 	 A similarity thresh of 0.99 allows 58 pairwise interactions.
 	 */
-	public static final double THRESH_SIMILARITY_HARD_MATCH = 0.9;
+	public static final double THRESH_SIMILARITY_HARD_MATCH = 0.89;
 
 	public static final double HARD_MATCH_OPTIMISTIC_PERCENTILE = 0.75;
 
@@ -105,13 +105,9 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 	 * This constructor is used for parallel mode.
 	 */
 	public PPNodeSimilarity(int versionInteractionTable, int modePPNodeSimilarity){
-
 		maSimilarity = new Matrix(SIZE_SIM_MATRIX, SIZE_SIM_MATRIX);
-
 		interactionSimilarityTable = InteractionSimilarityTable.getInstance();
-
 		similarityMode = modePPNodeSimilarity;
-
 		threshSimilarityHardMatch = THRESH_SIMILARITY_HARD_MATCH;
 	}
 
@@ -204,28 +200,19 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
          * @throws Exception
          */
 	public double getSimilaritySimple(PPNode query, PPNode base) {
-
 		maSimilarity.set(0);
-
 		for (int i = 0; i < query.getInteractionTypeCount(); i++) {
-
 			int interactionTypeQuery = query.getInteractionType(i);
-
 			for (int j = 0; j < base.getInteractionTypeCount(); j++) {
-
 				int interactionTypeBase = base.getInteractionType(j);
-
 				double similarity = 1.0 - interactionSimilarityTable.getDistance(interactionTypeQuery, interactionTypeBase);
-
 				maSimilarity.set(i,j,similarity);
 			}
 		}
 
 		if(verbose) {
 			System.out.println("PPNodeSimilarityMultiplicative");
-
 			TableModelString tableModelString = new TableModelString(query.getInteractionTypeCount(), base.getInteractionTypeCount());
-
 			for (int i = 0; i < query.getInteractionTypeCount(); i++) {
 				int interactionType = query.getInteractionType(i);
 				String s = InteractionAtomTypeCalculator.getString(interactionType);
@@ -237,34 +224,25 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 				String s = InteractionAtomTypeCalculator.getString(interactionType);
 				tableModelString.setColName(i, s);
 			}
-
 			tableModelString.set(maSimilarity, 2);
-
 			System.out.println(tableModelString.toString());
-
 		}
 
 
 		List<Double> liSimilarities = new ArrayList<>();
-
 		if(base.getInteractionTypeCount() > query.getInteractionTypeCount()) {
-
 			for (int col = 0; col < base.getInteractionTypeCount(); col++) {
-
 				double maxSimInCol = 0;
 				for (int row = 0; row < query.getInteractionTypeCount(); row++) {
 					if(maSimilarity.get(row,col)>maxSimInCol){
 						maxSimInCol = maSimilarity.get(row,col);
 					}
 				}
-
 				liSimilarities.add(maxSimInCol);
-
 				// System.out.println("Sim maxSimInCol " + Formatter.format2(maxSimInCol) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
 			}
 		} else {
 			for (int row = 0; row < query.getInteractionTypeCount(); row++) {
-
 				double maxSimInRow = 0;
 				for (int col = 0; col < base.getInteractionTypeCount(); col++) {
 					if(maSimilarity.get(row,col) > maxSimInRow){
@@ -285,7 +263,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 			}
 		}
 
-
 		if(verbose) {
 			System.out.println("Sim " + Formatter.format2(sim));
 			System.out.println();
@@ -294,23 +271,15 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 		return sim;
 	}
 	public double getSimilarityHardMatchMultiplicative(PPNode query, PPNode base) {
-
 		IPPNode queryCmp = query;
-
 		PPNode baseCmp = base;
-
 		if(base.hasHeteroAtom() && query.hasHeteroAtom()){
-
 			queryCmp = PPNode.getHeteroOnlyNode(query);
-
 			baseCmp = PPNode.getHeteroOnlyNode(base);
-
 		}
 
 		List<Double> liSimilarities = getSimilarityList((PPNode)queryCmp, baseCmp);
-
 		double sim = 0;
-
 		if(liSimilarities.size()>0) {
 			sim = 1;
 			for (double simPart : liSimilarities) {
@@ -379,9 +348,7 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 
 	private static double [] getTopValues(Matrix maSimilarity, int rows, int cols, double thresh){
-
 		double [] arrTopSim = new double[Math.max(rows, cols)];
-
 		if(rows==1 && cols==1){
 			arrTopSim[0]=maSimilarity.get(0,0);
 			return arrTopSim;
@@ -477,11 +444,8 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 	public double getSimilarityHardMatchAverage(PPNode query, PPNode base) {
 		List<Double> liSimilarities = getSimilarityList(query, base);
-
 		double sumSim = 0;
-
 		if(liSimilarities.size()>0) {
-
 			for (double simPart : liSimilarities) {
 				if(simPart< threshSimilarityHardMatch){
 					sumSim = 0;
@@ -492,7 +456,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 		}
 
 		double sim = sumSim/liSimilarities.size();
-
 		if(verbose) {
 			System.out.println("Sim " + Formatter.format2(sim));
 			System.out.println();
@@ -525,11 +488,8 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 	}
 
 	public double getSimilarityExtraCarbonConsideration(PPNode query, PPNode base) {
-
 		maSimilarity.set(0);
-
 		final double valNoInteraction = -1;
-
 		boolean lowCarbonFractionQuery = (query.getFractionCarbonInteractions()< THRESH_CARBON_INTERACTIONS)?true:false;
 		boolean lowCarbonFractionBase = (base.getFractionCarbonInteractions()< THRESH_CARBON_INTERACTIONS)?true:false;
 
@@ -539,7 +499,6 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 //				System.out.println("Sulfur interaction");
 //			}
 //		}
-
 
 		for (int i = 0; i < query.getInteractionTypeCount(); i++) {
 
@@ -598,38 +557,27 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 
 		}
 
-
 		List<Double> liSimilarities = new ArrayList<>();
-
 		if(base.getInteractionTypeCount() > query.getInteractionTypeCount()) {
-
 			for (int col = 0; col < base.getInteractionTypeCount(); col++) {
-
 				int interactionTypeQuery=-1;
 				int interactionTypeBase=-1;
-
 				double maxSimInCol = valNoInteraction;
 				for (int row = 0; row < query.getInteractionTypeCount(); row++) {
 					if(maSimilarity.get(row,col)>maxSimInCol){
 						maxSimInCol = maSimilarity.get(row,col);
-
 						interactionTypeBase = base.getInteractionType(col);
 						interactionTypeQuery = query.getInteractionType(row);
 					}
 				}
-
-
 				if(Math.abs(maxSimInCol-valNoInteraction)<TINY){
 					continue;
 				}
-
 				liSimilarities.add(maxSimInCol);
-
 				// System.out.println("Sim maxSimInCol " + Formatter.format2(maxSimInCol) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
 			}
 		} else {
 			for (int row = 0; row < query.getInteractionTypeCount(); row++) {
-
 				int interactionTypeQuery=-1;
 				int interactionTypeBase=-1;
 
@@ -643,45 +591,35 @@ public class PPNodeSimilarity implements IPPNodeSimilarity {
 					}
 				}
 				// System.out.println("Sim maxSimInRow " + Formatter.format2(maxSimInRow) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeBase) + "\t" + InteractionAtomTypeCalculator.getString(interactionTypeQuery));
-
-
 				if(Math.abs(maxSimInRow-valNoInteraction)<TINY){
 					continue;
 				}
-
-				liSimilarities.add(maxSimInRow);							}
+				liSimilarities.add(maxSimInRow);
+			}
 		}
-
-
 		double sim = 0;
-
 		if(liSimilarities.size()>0) {
 			sim = 1;
 			for (Double simPart : liSimilarities) {
 				sim *= simPart;
 			}
 		}
-
-
 		if(verbose) {
 			System.out.println("Sim " + Formatter.format2(sim));
 			System.out.println();
 		}
-
 		return sim;
 	}
 
 
 	public boolean isValidType(int type){
 		boolean valid = true;
-
 		try {
 			int key = InteractionDistanceStatistics.getInstance().getKey(type);
 			interactionSimilarityTable.getDistance(key, key);
 		} catch (Exception e) {
 			valid = false;
 		}
-
 		return valid;
 	}
 	
