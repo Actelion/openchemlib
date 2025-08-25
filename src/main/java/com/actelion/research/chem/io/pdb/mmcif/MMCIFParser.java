@@ -158,8 +158,6 @@ public class MMCIFParser {
 			for (AtomRecord atom : mHetAtoms)
 				sortedAtoms.add(atom);
 
-for (int i=0; i<sortedAtoms.size(); i++) System.out.println(sortedAtoms.get(i).getSerialId()+"-"+sortedAtoms.get(i).getLabelAtomName()+"-"+sortedAtoms.get(i).getResName()+"-"+sortedAtoms.get(i).getChainID()+"-"+sortedAtoms.get(i).getAuthSeqID());
-
 			for (String[] connection : mTemplateConnections) {
 				probe.setAtomAndCompName(connection[1], connection[0]);
 				int index1 = sortedAtoms.getIndexAboveEqual(probe);
@@ -185,7 +183,6 @@ for (int i=0; i<sortedAtoms.size(); i++) System.out.println(sortedAtoms.get(i).g
 									bond[1] = atom1.getSerialId();
 								}
 								connections.add(bond);
-System.out.println("adding connection: "+atom1.getResName()+"."+atom1.getLabelAtomName()+"."+atom1.getChainID()+"-"+atom1.getAuthSeqID()+"-"+atom2.getResName()+"."+atom2.getLabelAtomName()+"."+atom2.getChainID()+"-"+atom2.getAuthSeqID()+"  "+atom1.getSerialId()+"-"+atom2.getSerialId()+"  "+connection[0]+"-"+connection[1]+"-"+connection[2]);
 							}
 						}
 					}
