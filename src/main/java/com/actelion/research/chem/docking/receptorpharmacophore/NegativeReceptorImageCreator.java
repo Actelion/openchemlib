@@ -1,6 +1,5 @@
 package com.actelion.research.chem.docking.receptorpharmacophore;
 
-import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
@@ -11,7 +10,6 @@ import com.actelion.research.chem.alignment3d.transformation.Translation;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.ShapeVolume;
 import com.actelion.research.chem.phesa.MolecularVolume;
-import com.actelion.research.chem.phesa.PheSAAlignment;
 
 public class NegativeReceptorImageCreator {
 	
@@ -43,12 +41,12 @@ public class NegativeReceptorImageCreator {
 	
 	private static void rotateMols(Molecule3D receptor, Molecule3D ligand, Rotation rotation, Coordinates origCOM) {
 		for(int a=0;a<ligand.getAllAtoms();a++) {
-			Coordinates c = ligand.getCoordinates(a);
+			Coordinates c = ligand.getAtomCoordinates(a);
 			c.sub(origCOM);
 			rotation.apply(c);
 		}
 		for(int a=0;a<receptor.getAllAtoms();a++) {
-			Coordinates c = receptor.getCoordinates(a);
+			Coordinates c = receptor.getAtomCoordinates(a);
 			c.sub(origCOM);
 			rotation.apply(c);
 		}

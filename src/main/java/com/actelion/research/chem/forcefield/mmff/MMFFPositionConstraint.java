@@ -4,13 +4,15 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.DoubleFormat;
 
 public class MMFFPositionConstraint implements EnergyTerm {
-	private double[] refPos;
-	private boolean[] constrained;
-	private double k;
-	private double d;
+	private final StereoMolecule mol;
+	private final double[] refPos;
+	private final boolean[] constrained;
+	private final double k;
+	private final double d;
 	
 	
 	public MMFFPositionConstraint (StereoMolecule mol, double k, double d) {
+		this.mol = mol;
 		refPos = new double[3*mol.getAllAtoms()];
 		constrained = new boolean[mol.getAllAtoms()];
 		for(int a=0;a<mol.getAllAtoms();a++) {
@@ -28,15 +30,15 @@ public class MMFFPositionConstraint implements EnergyTerm {
 
 	@Override
 	public double getEnergy(double[] pos) {
-		return getEnergy(pos, null);
+		return getEnergy(pos, null, null, false);
 	}
 
 	@Override
-	public double getEnergy(double[] pos, StringBuilder detail) {
+	public double getEnergy(double[] pos, StringBuilder detail, String detailID, boolean skipHydrogen) {
 		double energy = 0.0;
 		for(int a=0;a<pos.length;a+=3) {
 			int atomId = a/3;
-			if(!constrained[atomId])
+			if(!constrained[atomId] || (skipHydrogen && mol.getAtomicNo(atomId) == 1))
 				continue;
 			double dx = pos[a]-refPos[a];
 			double dy = pos[a+1]-refPos[a+1];
@@ -51,7 +53,7 @@ public class MMFFPositionConstraint implements EnergyTerm {
 		}
 
 		if (detail != null)
-			detail.append("posConstraint\tNaN\tNaN\tall\t"+DoubleFormat.toString(energy)+"\n");
+			detail.append(detailID+"\tposConstraint\tNaN\tNaN\tall\t"+DoubleFormat.toString(energy)+"\n");
 
 		return energy;
 	}
@@ -75,9 +77,5 @@ public class MMFFPositionConstraint implements EnergyTerm {
 			grad[a+1] += prefactor*dy/Math.max(dist, 1E-08);
 			grad[a+2] += prefactor*dz/Math.max(dist, 1E-08);
 		}
-
 	}
-		
-	
-
 }

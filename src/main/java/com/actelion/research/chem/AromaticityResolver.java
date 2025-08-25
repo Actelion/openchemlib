@@ -38,7 +38,7 @@ public class AromaticityResolver {
 	ExtendedMolecule	mMol;
 	private boolean		mAllHydrogensAreExplicit;
 	private boolean[]	mIsDelocalizedRing,mIsDelocalizedAtom,mIsDelocalizedBond,mIsDelocalizedBridgeHead,
-						mIsDelocalizedFiveRingMember,mIsDelocalizedThreeOrSevenRingMember;
+						mIsDelocalizedFiveRingMember;
     private int mDelocalizedAtoms, mDelocalizedBonds,mPiElectronsAdded;
 	private final double[] mBondLength;
 
@@ -218,15 +218,15 @@ public class AromaticityResolver {
 			}
 		}
 
-		mIsDelocalizedThreeOrSevenRingMember = new boolean[mMol.getAtoms()];
+//		mIsDelocalizedThreeOrSevenRingMember = new boolean[mMol.getAtoms()];
 		mIsDelocalizedFiveRingMember = new boolean[mMol.getAtoms()];
 		for (int ring=0; ring<ringSet.getSize(); ring++) {
 			if (mIsDelocalizedRing[ring] && ringSet.getRingSize(ring) != 6) {
 				for (int atom : ringSet.getRingAtoms(ring)) {
 					if (ringSet.getRingSize(ring) == 5)
 						mIsDelocalizedFiveRingMember[atom] = true;
-					else
-						mIsDelocalizedThreeOrSevenRingMember[atom] = true;
+//					else
+//						mIsDelocalizedThreeOrSevenRingMember[atom] = true;
 				}
 			}
 		}
@@ -313,6 +313,8 @@ public class AromaticityResolver {
 								checkAtomTypeLeak7(leakAtom, true);
 						}
 						protectAtom(leakAtom);
+						if (mIsDelocalizedFiveRingMember[leakAtom])
+							protectIfIsHeme(ringAtom, ringBond, bestDelocalizationLeakIndex);
 						return true;
 					}
 				}
@@ -379,6 +381,38 @@ public class AromaticityResolver {
 
 	private int nextIndex(int i, int size) {
 		return i == size-1 ? 0 : i+1;
+	}
+
+	private void protectIfIsHeme(int[] ringAtom, int[] ringBond, int leakIndex) {
+		int leftAtom = ringAtom[leakIndex == 0 ? 4 : leakIndex-1];
+		int rightAtom = ringAtom[leakIndex == 4 ? 0 : leakIndex+1];
+		if (mMol.getConnAtoms(leftAtom) == 3 && mMol.getConnAtoms(rightAtom) == 3) {
+			int[] pathAtom = new int[mMol.getAtoms()];
+			boolean[] neglectBond = new boolean[mMol.getBonds()];
+			for (int bond : ringBond)
+				neglectBond[bond] = true;
+			for (int bond=0; bond<mMol.getBonds(); bond++)
+				if (!mIsDelocalizedBond[bond])
+					neglectBond[bond] = true;
+
+			int pathLen = mMol.getPath(pathAtom, leftAtom, rightAtom, 14, neglectBond);
+			if (pathLen == 14) {
+				boolean qualifies = true;
+				for (int i=2; i<=12; i++) {
+					if ((i & 3) != 1 ^ mMol.getAtomRingSize(pathAtom[i]) == 5) {
+						qualifies = false;
+						break;
+					}
+				}
+				if (qualifies) {
+					protectAtom(pathAtom[7]);
+					for (int i=1; i<=5; i+=2) {
+						promoteBond(mMol.getBond(pathAtom[i], pathAtom[i+1]));
+						promoteBond(mMol.getBond(pathAtom[i+7], pathAtom[i+8]));
+					}
+				}
+			}
+		}
 	}
 
 	private void protectFullValenceAtoms(boolean mayChangeAtomCharges) {

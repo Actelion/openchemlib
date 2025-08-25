@@ -245,7 +245,7 @@ public class DockingEngine {
 			Coordinates[] coords2 = new Coordinates[map1.length];
 			int counter = 0;
 			for(int key : map.keySet()) {
-				coords1[counter] = new Coordinates(nativeLigand.getCoordinates(key));
+				coords1[counter] = new Coordinates(nativeLigand.getAtomCoordinates(key));
 				coords2[counter] = new Coordinates(conf.getCoordinates(map.get(key)));
 				counter++;
 			}
@@ -296,7 +296,7 @@ public class DockingEngine {
 			mmff.minimise();
 			double e = mmff.getTotalEnergy();
 			for(int a=0;a<aligned.getAllAtoms();a++) {
-				conf.setCoordinates(a, new Coordinates(aligned.getCoordinates(a)));
+				conf.setCoordinates(a, new Coordinates(aligned.getAtomCoordinates(a)));
 			}
 			initialPos.add(conf);
 			if(e<eMin)
@@ -444,7 +444,7 @@ public class DockingEngine {
 			atoms = receptor.getAllAtoms();
 		
 		for(int i=0;i<atoms;i++) {
-			int[] gridC = grid.getGridCoordinates(receptor.getCoordinates(i));
+			int[] gridC = grid.getGridCoordinates(receptor.getAtomCoordinates(i));
 			int x = gridC[0];
 			int y = gridC[1];
 			int z = gridC[2];	

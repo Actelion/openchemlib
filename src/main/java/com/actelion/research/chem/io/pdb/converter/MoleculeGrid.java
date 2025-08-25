@@ -157,7 +157,7 @@ public class MoleculeGrid {
 // TODO check whether this was used somewhere
 //                  			if(requiredFlags>=0 && !mol.isAtomFlag(elt, requiredFlags)) continue;
 
-								if(mol.getCoordinates(elt).distSquareTo(c)>maxDist*maxDist ) continue;
+								if(mol.getAtomCoordinates(elt).distSquareTo(c)>maxDist*maxDist ) continue;
 								res.add(elt);
 							}
 						} else {
@@ -181,7 +181,7 @@ public class MoleculeGrid {
 				for (int k = Math.max(0, z-radius); k<= Math.min(gridSize[2]-1, z+radius); k++) {
 					if(grid[i][j][k]!=null) {						
 						for(int a : grid[i][j][k]) {
-							if(mol.getCoordinates(a).distSquareTo(c)<=maxDist*maxDist ) {
+							if(mol.getAtomCoordinates(a).distSquareTo(c)<=maxDist*maxDist ) {
 								return true;
 							}
 						}
@@ -243,7 +243,7 @@ public class MoleculeGrid {
 		int closest = -1;
 		double bestDist = maxDist;
 		for (int a : set) {
-			double d = mol.getCoordinates(a).distanceSquared(c);
+			double d = mol.getAtomCoordinates(a).distanceSquared(c);
 			if(d<bestDist) {
 				closest = a;
 				bestDist = d;
@@ -288,7 +288,7 @@ public class MoleculeGrid {
     }
 	
 	 public Set<Integer> getNeighbours(Molecule mol, int atom, double maxDist, boolean enforceDist) {
-	        Set<Integer> res = getNeighbours(mol.getCoordinates(atom), maxDist, enforceDist);
+	        Set<Integer> res = getNeighbours(mol.getAtomCoordinates(atom), maxDist, enforceDist);
 	        res.remove(Integer.valueOf(atom));
 	        return res;
 	    }

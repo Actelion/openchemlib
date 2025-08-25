@@ -12,10 +12,15 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
 public class MMCIFParser {
+	private ArrayList<AtomRecord> mProteinAtoms,mHetAtoms;
+	private ArrayList<String[]> mTemplateConnections,mNonStandardConnections;
+	private final BufferedReader mReader;
+
 	public static PDBCoordEntryFile getFromPDB(String pdbID) throws Exception {
 		URLConnection con = new URI("https://files.rcsb.org/download/"+pdbID+".cif.gz").toURL().openConnection();
 		return MMCIFParser.parse(new BufferedReader(new InputStreamReader(new GZIPInputStream(con.getInputStream()))));
@@ -33,15 +38,26 @@ public class MMCIFParser {
 	}
 
 	public static PDBCoordEntryFile parse(BufferedReader reader) throws IOException {
+		return new MMCIFParser(reader).parse();
+	}
+
+	private MMCIFParser(BufferedReader reader) {
+		mReader = reader;
+	}
+
+	private PDBCoordEntryFile parse() throws IOException {
+		// ChimeraX Guidelines: https://www.cgl.ucsf.edu/chimerax/docs/devel/modules/mmcif/mmcif_guidelines.html
 		PDBCoordEntryFile entryFile = new PDBCoordEntryFile();
+		mTemplateConnections = new ArrayList<>();
+		mNonStandardConnections = new ArrayList<>();
 
 		String line;
-		while ((line = reader.readLine()) != null) {
+		while ((line = mReader.readLine()) != null) {
 			if (line.startsWith("data_")) {
-				reader.readLine();	// '#'
+				mReader.readLine();	// '#'
 			}
 			else if (line.startsWith("_")) {
-				MMCIFBlock block = new MMCIFBlock(line, reader);
+				MMCIFBlock block = new MMCIFBlock(line, mReader);
 
 				if (block.is("entry"))
 					entryFile.setID(block.get("id"));
@@ -57,32 +73,43 @@ public class MMCIFParser {
 				}
 			}
 			else if (line.startsWith("loop_")) {
-				MMCIFTable table = new MMCIFTable(reader);
+				MMCIFTable table = new MMCIFTable(mReader);
 				if (table.getName().equals("_atom_site"))
-					processAtomTable(table, reader, entryFile);
+					processAtomTable(table, entryFile);
+				else if (table.getName().equals("_chem_comp_bond"))
+					processTemplateConnections(table);
 				else if (table.getName().equals("_struct_conn"))
-					processConnectionTable(table, reader, entryFile);
+					processNonStandardConnections(table, entryFile);
 				else
-					table.skip(reader);
+					table.skip(mReader);
 			}
 		}
+
+		entryFile.setProteinAtoms(mProteinAtoms);
+		entryFile.setHetAtoms(mHetAtoms);
+		entryFile.setNonStandardConnections(mNonStandardConnections);
+		entryFile.setTemplateConnections(translateTemplateConnections());
 
 		return entryFile;
 	}
 
-	private static void processAtomTable(MMCIFTable table, BufferedReader reader, PDBCoordEntryFile entryFile) throws IOException {
+	private void processAtomTable(MMCIFTable table, PDBCoordEntryFile entryFile) throws IOException {
 		TreeSet<AtomRecord> proteinAtoms = new TreeSet<>();
 		TreeSet<AtomRecord> hetAtoms = new TreeSet<>();
 
 		String[] row;
-		while ((row = table.parseRow(reader)) != null) {
+		while ((row = table.parseRow(mReader)) != null) {
+			// Used in ChimeraX (†:required): id, label_entity_id, label_asym_id†, auth_asym_id, pdbx_PDB_ins_code,
+			// label_seq_id†, auth_seq_id, label_alt_id, type_symbol†, label_atom_id†, auth_atom_id, label_comp_id†,
+			// auth_comp_id, Cartn_x†, Cartn_y†, Cartn_z†, occupancy, B_iso_or_equiv, pdbx_PDB_model_num
 			AtomRecord atomRecord = new AtomRecord(
 					Integer.parseInt(row[table.getIndex("id")]),
 					row[table.getIndex("label_atom_id")],
 					row[table.getIndex("label_alt_id")],
-					row[table.getIndex("label_comp_id")],
-					row[table.getIndex("label_asym_id")],
 					parseInt(row[table.getIndex("label_seq_id")]),
+					row[table.getIndex("auth_comp_id")],
+					row[table.getIndex("auth_asym_id")],
+					parseInt(row[table.getIndex("auth_seq_id")]),
 					row[table.getIndex("pdbx_PDB_ins_code")],
 					Double.parseDouble(row[table.getIndex("Cartn_x")]),
 					Double.parseDouble(row[table.getIndex("Cartn_y")]),
@@ -97,53 +124,117 @@ public class MMCIFParser {
 				hetAtoms.add(atomRecord);
 		}
 
-		ArrayList<AtomRecord> proteinAtomList = new ArrayList<>(proteinAtoms);
-		ArrayList<AtomRecord> hetAtomList = new ArrayList<>(hetAtoms);
-
-		entryFile.setProteinAtoms(proteinAtomList);
-		entryFile.setHetAtoms(hetAtomList);
-		entryFile.setConnections(new SortedList<>(new IntArrayComparator()));
+		mProteinAtoms = new ArrayList<>(proteinAtoms);
+		mHetAtoms = new ArrayList<>(hetAtoms);
 	}
 
-	private static void processConnectionTable(MMCIFTable table, BufferedReader reader, PDBCoordEntryFile entryFile) throws IOException {
-		ArrayList<String[]> connectionList = new ArrayList<>();
+	private void processTemplateConnections(MMCIFTable table) throws IOException {
+		// Used in ChimeraX (†:required): comp_id†, atom_id_1†, atom_id_2†
 		String[] row;
-		while ((row = table.parseRow(reader)) != null) {
-			String connTypeID = row[table.getIndex("conn_type_id")];
-			if ("covale".equals(connTypeID)) {
-				String[] atomDescription = new String[2];
-				atomDescription[0] = atomDescription(
-					row[table.getIndex("ptnr1_label_atom_id")],
-					row[table.getIndex("ptnr1_label_comp_id")],
-					row[table.getIndex("ptnr1_label_seq_id")],
-					row[table.getIndex("ptnr1_label_asym_id")]
-				);
-				atomDescription[1] = atomDescription(
-					row[table.getIndex("ptnr2_label_atom_id")],
-					row[table.getIndex("ptnr2_label_comp_id")],
-					row[table.getIndex("ptnr2_label_seq_id")],
-					row[table.getIndex("ptnr2_label_asym_id")]
-				);
-				connectionList.add(atomDescription);
+		while ((row = table.parseRow(mReader)) != null) {
+//			String connTypeID = row[table.getIndex("conn_type_id")];
+			String[] connection = new String[3];
+			connection[0] = row[table.getIndex("comp_id")];
+			connection[1] = row[table.getIndex("atom_id_1")];
+			connection[2] = row[table.getIndex("atom_id_2")];
+			mTemplateConnections.add(connection);
+		}
+	}
+
+	private SortedList<int[]> translateTemplateConnections() {
+		SortedList<int[]> connections = new SortedList<>(new IntArrayComparator());
+		if (!mTemplateConnections.isEmpty()) {
+			Comparator<AtomRecord> comparator = (o1, o2) -> {
+				int c = o1.getResName().compareTo(o2.getResName());
+				if (c != 0) return c;
+				c = o1.getLabelAtomName().compareTo(o2.getLabelAtomName());
+				if (c != 0) return c;
+				c = Integer.compare(o1.getAuthSeqID(), o2.getAuthSeqID());
+				if (c != 0) return c;
+				return o1.getChainID().compareTo(o2.getChainID());
+			};
+			SortedList<AtomRecord> sortedAtoms = new SortedList<>(comparator);
+			AtomRecord probe = new AtomRecord();
+			for (AtomRecord atom : mHetAtoms)
+				sortedAtoms.add(atom);
+
+for (int i=0; i<sortedAtoms.size(); i++) System.out.println(sortedAtoms.get(i).getSerialId()+"-"+sortedAtoms.get(i).getLabelAtomName()+"-"+sortedAtoms.get(i).getResName()+"-"+sortedAtoms.get(i).getChainID()+"-"+sortedAtoms.get(i).getAuthSeqID());
+
+			for (String[] connection : mTemplateConnections) {
+				probe.setAtomAndCompName(connection[1], connection[0]);
+				int index1 = sortedAtoms.getIndexAboveEqual(probe);
+				probe.setAtomAndCompName(connection[2], connection[0]);
+				int index2 = sortedAtoms.getIndexAboveEqual(probe);
+				if (index1 != -1 && index2 != -1) {
+					for (int i1=index1; i1<sortedAtoms.size()
+							&& connection[0].equals(sortedAtoms.get(i1).getResName())
+							&& connection[1].equals(sortedAtoms.get(i1).getLabelAtomName()); i1++) {
+						AtomRecord atom1 = sortedAtoms.get(i1);
+						for (int i2=index2; i2<sortedAtoms.size()
+								&& connection[0].equals(sortedAtoms.get(i2).getResName())
+								&& connection[2].equals(sortedAtoms.get(i2).getLabelAtomName()); i2++) {
+							AtomRecord atom2 = sortedAtoms.get(i2);
+							if (atom1.getChainID().equals(atom2.getChainID()) && atom1.getAuthSeqID()==atom2.getAuthSeqID()) {
+								int[] bond = new int[2];
+								if (atom1.getSerialId() < atom2.getSerialId()) {
+									bond[0] = atom1.getSerialId();
+									bond[1] = atom2.getSerialId();
+								}
+								else {
+									bond[0] = atom2.getSerialId();
+									bond[1] = atom1.getSerialId();
+								}
+								connections.add(bond);
+System.out.println("adding connection: "+atom1.getResName()+"."+atom1.getLabelAtomName()+"."+atom1.getChainID()+"-"+atom1.getAuthSeqID()+"-"+atom2.getResName()+"."+atom2.getLabelAtomName()+"."+atom2.getChainID()+"-"+atom2.getAuthSeqID()+"  "+atom1.getSerialId()+"-"+atom2.getSerialId()+"  "+connection[0]+"-"+connection[1]+"-"+connection[2]);
+							}
+						}
+					}
+				}
+			}
+		}
+		return connections;
+	}
+
+	private void processNonStandardConnections(MMCIFTable table, PDBCoordEntryFile entryFile) throws IOException {
+		// Used in ChimeraX (†:required): conn_type_id†, ptnr1_label_asym_id†, pdbx_ptnr1_PDB_ins_code, ptnr1_label_seq_id†,
+		// ptnr1_auth_seq_id, pdbx_ptnr1_label_alt_id, ptnr1_label_atom_id†, ptnr1_label_comp_id†, ptnr1_symmetry,
+		// ptnr2_label_asym_id†, pdbx_ptnr2_PDB_ins_code, ptnr2_label_seq_id†, ptnr2_auth_seq_id, pdbx_ptnr2_label_alt_id,
+		// ptnr2_label_atom_id†, ptnr2_label_comp_id†, ptnr2_symmetry, pdbx_dist_value
+		String[] row;
+		while ((row = table.parseRow(mReader)) != null) {
+//			String connTypeID = row[table.getIndex("conn_type_id")];
+			String[] atomDescription = new String[2];
+			atomDescription[0] = atomDescription(
+				row[table.getIndex("ptnr1_label_atom_id")],
+				row[table.getIndex("ptnr1_label_seq_id")],
+				row[table.getIndex("ptnr1_auth_comp_id")],
+				row[table.getIndex("ptnr1_auth_seq_id")],
+				row[table.getIndex("ptnr1_auth_asym_id")]
+			);
+			atomDescription[1] = atomDescription(
+				row[table.getIndex("ptnr2_label_atom_id")],
+				row[table.getIndex("ptnr2_label_seq_id")],
+				row[table.getIndex("ptnr2_auth_comp_id")],
+				row[table.getIndex("ptnr2_auth_seq_id")],
+				row[table.getIndex("ptnr2_auth_asym_id")]
+			);
+			mNonStandardConnections.add(atomDescription);
 
 //			for (String hn : table.getHeaderNames())
 //				System.out.println(hn+":"+row[table.getIndex(hn)]);
 //			System.out.println("-----");
-			}
 		}
-
-		if (!connectionList.isEmpty())
-			entryFile.setConnections(connectionList);
 	}
 
-	public static String atomDescription(String atomID, String compID, String seqID, String asymID) {
+	public static String atomDescription(String atomID, String labelSeqID, String authCompID, String authSeqID, String authAsymID) {
 		return atomID
-			 + (compID.equals(".") || compID.equals("?") ? "_." : "_"+compID)
-			 + (seqID.equals(".") || seqID.equals("?") ? "_0" : "_"+seqID)
-			 + (asymID.equals(".") || asymID.equals("?") ? "_." : "_"+asymID);
+			 + (labelSeqID.equals(".") || labelSeqID.equals("?") ? "_0" : "_"+labelSeqID)
+			 + (authCompID.equals(".") || authCompID.equals("?") ? "_." : "_"+authCompID)
+			 + (authSeqID.equals(".") || authSeqID.equals("?") ? "_0" : "_"+authSeqID)
+			 + (authAsymID.equals(".") || authAsymID.equals("?") ? "_." : "_"+authAsymID);
 	}
 
-	private static int parseInt(String s) {
+	private int parseInt(String s) {
 		return s.equals(".") ? 0 : Integer.parseInt(s);
 	}
 }

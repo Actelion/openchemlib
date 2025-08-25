@@ -44,6 +44,7 @@ import java.util.List;
  * with an angle at A2.
  */
 public class AngleBend implements EnergyTerm {
+    private final MMFFMolecule mol;
     public final int a1;
     public final int a2; // Central atom.
     public final int a3;
@@ -60,8 +61,8 @@ public class AngleBend implements EnergyTerm {
      *  @param a2 Index of atom 2 (the central atom) in mol.
      *  @param a3 Index of atom 3 in mol.
      */
-    public AngleBend(Tables table, MMFFMolecule mol, int a1, int a2,
-					 int a3) {
+    public AngleBend(Tables table, MMFFMolecule mol, int a1, int a2, int a3) {
+        this.mol = mol;
         this.a1 = a1;
         this.a2 = a2;
         this.a3 = a3;
@@ -78,7 +79,7 @@ public class AngleBend implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
-        return getEnergy(pos, null);
+        return getEnergy(pos, null, null, false);
     }
 
     /**
@@ -87,20 +88,22 @@ public class AngleBend implements EnergyTerm {
      *  @return The energy.
      */
     @Override
-    public double getEnergy(double[] pos, StringBuilder detail) {
+    public double getEnergy(double[] pos, StringBuilder detail, String detailID, boolean skipHydrogen) {
+        if (skipHydrogen && (mol.getAtomicNo(a1) == 1 || mol.getAtomicNo(a3) == 1))
+            return 0.0;
+
         double theta = new Vector3(pos, a2, a1).angle(new Vector3(pos, a2, a3));
         double angle = Math.toDegrees(theta) - theta0;
 
         final double cb = -0.006981317;
-        final double c2 = Constants.MDYNE_A_TO_KCAL_MOL * Constants.DEG2RAD
-            * Constants.DEG2RAD;
+        final double c2 = Constants.MDYNE_A_TO_KCAL_MOL * Constants.DEG2RAD * Constants.DEG2RAD;
 
         // isLinear is a property of the central atom and can be found in the prop table.
         double e = (isLinear) ? Constants.MDYNE_A_TO_KCAL_MOL * ka * (1.0 + Math.cos(theta))
                 : 0.5*c2*ka*angle*angle*(1.0 + cb*angle);
 
         if (detail != null)
-            detail.append("angleBend\t"+DoubleFormat.toString(Math.toDegrees(theta))+"\t"+DoubleFormat.toString(theta0)
+            detail.append(detailID+"\tangleBend\t"+DoubleFormat.toString(Math.toDegrees(theta))+"\t"+DoubleFormat.toString(theta0)
                     +"\t"+a1+","+a2+","+a3+"\t"+ DoubleFormat.toString(e)+"\n");
 
         return e;

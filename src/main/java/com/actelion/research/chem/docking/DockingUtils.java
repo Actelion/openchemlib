@@ -34,7 +34,7 @@ public class DockingUtils {
 		int counter = 0;
 		Coordinates com = new Coordinates();
 		for(int a=0;a<conf.getAtoms();a++) {
-			Coordinates coords = conf.getCoordinates(a);
+			Coordinates coords = conf.getAtomCoordinates(a);
 			com.add(coords);
 			counter++;
 		}

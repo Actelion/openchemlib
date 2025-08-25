@@ -124,7 +124,7 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 		// Calculate lengths of all bonds
 		mBondLength = new double[mMol.getBonds()];
 		for (int bond=0; bond<mMol.getBonds(); bond++)
-			mBondLength[bond] = mMol.getCoordinates(mMol.getBondAtom(0, bond)).subC(mMol.getCoordinates(mMol.getBondAtom(1, bond))).getLength();
+			mBondLength[bond] = mMol.getAtomCoordinates(mMol.getBondAtom(0, bond)).subC(mMol.getAtomCoordinates(mMol.getBondAtom(1, bond))).getLength();
 
 		calculateFractionalBondOrders();
 
@@ -824,6 +824,8 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 				}
 			}
 		}
+
+		markHemeBridgesAsAromatic(isAromaticRing);
 	}
 
 	private double getBondAromaticityFromLength(int bond, int ringSize) {
@@ -873,6 +875,94 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 					return j;
 			}
 		}
+		return -1;
+	}
+
+	private void markHemeBridgesAsAromatic(boolean[] isAromaticRing) {
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			if (qualifiesForHemeBridge(atom)) {
+				int leftNextRoot = findNextHemeBridgeRootAtom(mMol.getConnAtom(atom, 0));
+				if (leftNextRoot != -1) {
+					int rightNextRoot = findNextHemeBridgeRootAtom(mMol.getConnAtom(atom, 1));
+					if (rightNextRoot != -1) {
+						int leftBridgeAtom = findNextHemeBridgeAtom(leftNextRoot);
+						if (leftBridgeAtom != -1) {
+							int rightBridgeAtom = findNextHemeBridgeAtom(rightNextRoot);
+							if (rightBridgeAtom != -1) {
+								int leftRemoteRoot = findNextHemeBridgeRootAtom(mMol.getConnAtom(
+										leftBridgeAtom,mMol.getConnAtom(leftBridgeAtom, 0) == leftNextRoot ? 1 : 0));
+								if (leftRemoteRoot != -1) {
+									int rightRemoteRoot = findNextHemeBridgeRootAtom(mMol.getConnAtom(
+											rightBridgeAtom,mMol.getConnAtom(rightBridgeAtom, 0) == rightNextRoot ? 1 : 0));
+									if (rightRemoteRoot != -1) {
+										int leftRemoteBridgeAtom = findNextHemeBridgeAtom(leftRemoteRoot);
+										if (leftRemoteBridgeAtom != -1) {
+											int rightRemoteBridgeAtom = findNextHemeBridgeAtom(rightRemoteRoot);
+											if (rightRemoteBridgeAtom == leftRemoteBridgeAtom) {
+												mIsAromaticBond[mMol.getConnBond(atom, 0)] = true;
+												mIsAromaticBond[mMol.getConnBond(atom, 1)] = true;
+												mIsAromaticBond[mMol.getConnBond(leftBridgeAtom, 0)] = true;
+												mIsAromaticBond[mMol.getConnBond(leftBridgeAtom, 1)] = true;
+												mIsAromaticBond[mMol.getConnBond(rightBridgeAtom, 0)] = true;
+												mIsAromaticBond[mMol.getConnBond(rightBridgeAtom, 1)] = true;
+												mIsAromaticBond[mMol.getConnBond(leftRemoteBridgeAtom, 0)] = true;
+												mIsAromaticBond[mMol.getConnBond(leftRemoteBridgeAtom, 1)] = true;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private boolean qualifiesForHemeBridge(int atom) {
+		if (mMol.getConnAtoms(atom) == 2 && mHybridisation[atom] != 3) {
+			int connAtom1 = mMol.getConnAtom(atom, 0);
+			int connAtom2 = mMol.getConnAtom(atom, 1);
+			if (mMol.getAtomRingSize(connAtom1) == 5
+			 && (mIsAromaticBond[mMol.getConnBond(connAtom1, 0)] || mIsAromaticBond[mMol.getConnBond(connAtom1, 1)])
+			 && mMol.getAtomRingSize(connAtom2) == 5
+			 && (mIsAromaticBond[mMol.getConnBond(connAtom2, 0)] || mIsAromaticBond[mMol.getConnBond(connAtom2, 1)])) {
+				int connBond1 = mMol.getConnBond(atom, 0);
+				int connBond2 = mMol.getConnBond(atom, 1);
+				if (!mIsAromaticBond[connBond1] && !mIsOutOfPlaneBond[connBond1]
+				 && !mIsAromaticBond[connBond2] && !mIsOutOfPlaneBond[connBond2])
+					return true;
+			}
+		}
+		return false;
+	}
+
+	private int findNextHemeBridgeRootAtom(int atom) {
+		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+			int nitrogen = mMol.getConnAtom(atom, i);
+			if (mMol.getAtomicNo(nitrogen) == 7
+			 && mMol.getAtomRingSize(nitrogen) == 5
+			 && mIsAromaticBond[mMol.getConnBond(atom, i)]) {
+				for (int j=0; j<mMol.getConnAtoms(nitrogen); j++) {
+					int connAtom = mMol.getConnAtom(nitrogen, j);
+					if (connAtom != atom
+					 && mMol.getConnAtoms(connAtom) == 3
+					 && mMol.getAtomRingSize(connAtom) == 5
+					 && mIsAromaticBond[mMol.getConnBond(nitrogen, j)]) {
+						return connAtom;
+					}
+				}
+			}
+		}
+		return -1;
+	}
+
+	private int findNextHemeBridgeAtom(int atom) {
+		for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+			int connAtom = mMol.getConnAtom(atom, i);
+			if (qualifiesForHemeBridge(connAtom))
+				return connAtom;
+			}
 		return -1;
 	}
 
@@ -1658,10 +1748,10 @@ if (DEBUG_OUTPUT) {
 
 	private boolean implicitHydrogenCollidesWithMetalBond(int atom, int metal) {
 		if (mMol.getConnAtoms(atom) != 0) {
-			Coordinates metalDirection = mMol.getCoordinates(metal).subC(mMol.getCoordinates(atom));
+			Coordinates metalDirection = mMol.getAtomCoordinates(metal).subC(mMol.getAtomCoordinates(atom));
 			Coordinates neighbourDirection = new Coordinates();
 			for (int i=0; i<mMol.getConnAtoms(atom); i++)
-				neighbourDirection.add(mMol.getCoordinates(atom).subC(mMol.getCoordinates(mMol.getConnAtom(atom, i))));
+				neighbourDirection.add(mMol.getAtomCoordinates(atom).subC(mMol.getAtomCoordinates(mMol.getConnAtom(atom, i))));
 
 			return metalDirection.getAngle(neighbourDirection) < METAL_HYDROGEN_COLLISION_ANGLE;
 		}

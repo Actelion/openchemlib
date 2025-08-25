@@ -196,7 +196,7 @@ public class PheSAAlignment {
 		
 		int nrOfAtoms = mol.getAllAtoms();
 		for (int i=0;i<nrOfAtoms;i++) {
-			Coordinates coords = mol.getCoordinates(i);
+			Coordinates coords = mol.getAtomCoordinates(i);
 			double[][] m = rotor.getRotMatrix().getArray();
 			coords.rotate(m);	
 			coords.scale(normFactor);
@@ -209,7 +209,7 @@ public class PheSAAlignment {
 	public static void rotateMol(StereoMolecule mol,double[][] m) {
 		int nrOfAtoms = mol.getAllAtoms();
 		for (int i=0;i<nrOfAtoms;i++) {
-			Coordinates coords = mol.getCoordinates(i);
+			Coordinates coords = mol.getAtomCoordinates(i);
 			coords.rotate(m);
 		}
 		
@@ -229,7 +229,7 @@ public class PheSAAlignment {
 	public static void translateMol(StereoMolecule mol,double[] translate) {
 		int nrOfAtoms = mol.getAllAtoms();
 		for (int i=0;i<nrOfAtoms;i++) {
-			Coordinates coords = mol.getCoordinates(i);
+			Coordinates coords = mol.getAtomCoordinates(i);
 			coords.x += translate[0];
 			coords.y += translate[1];
 			coords.z += translate[2];

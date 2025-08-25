@@ -46,6 +46,7 @@ import java.util.List;
  * separated by distances larger than the cutoff.
  */
 public class VanDerWaals implements EnergyTerm {
+    private final MMFFMolecule mol;
     public final int a1t;
     public final int a2t;
     public final double rstar_ij;
@@ -64,6 +65,7 @@ public class VanDerWaals implements EnergyTerm {
      *  @param a2 Index of atom 2 (the central atom) in mol.
      */
     public VanDerWaals(Tables table, MMFFMolecule mol, int a1, int a2) {
+        this.mol = mol;
         a1t = mol.getAtomType(a1);
         a2t = mol.getAtomType(a2);
         this.a1 = a1;
@@ -117,7 +119,7 @@ public class VanDerWaals implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
-        return getEnergy(pos, null);
+        return getEnergy(pos, null, null, false);
     }
 
     /**
@@ -126,7 +128,10 @@ public class VanDerWaals implements EnergyTerm {
      *  @return The energy.
      */
     @Override
-    public double getEnergy(double[] pos, StringBuilder detail) {
+    public double getEnergy(double[] pos, StringBuilder detail, String detailID, boolean skipHydrogen) {
+        if (skipHydrogen && (mol.getAtomicNo(a1) == 1 || mol.getAtomicNo(a2) == 1))
+            return 0.0;
+
         final double dist = new Vector3(pos, a1, a2).length();
         final double vdw1 = 1.07;
         final double vdw1m1 = vdw1 - 1.0;
@@ -144,7 +149,7 @@ public class VanDerWaals implements EnergyTerm {
         double e = aTerm7 * bTerm * well_depth;
 
         if (detail != null)
-            detail.append("vanDerWaals\t"+ DoubleFormat.toString(dist)+"\t\t"+a1+","+a2+"\t"+DoubleFormat.toString(e)+"\n");
+            detail.append(detailID+"\tvanDerWaals\t"+ DoubleFormat.toString(dist)+"\t\t"+a1+","+a2+"\t"+DoubleFormat.toString(e)+"\n");
 
         return e;
     }

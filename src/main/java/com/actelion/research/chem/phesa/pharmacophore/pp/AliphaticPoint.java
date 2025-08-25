@@ -2,7 +2,6 @@ package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.util.ArrayUtils;
 

@@ -57,9 +57,9 @@ public class GeometryCalculator {
 	 * @return the angle
 	 */
 	public final static double getAngle(StereoMolecule mol, int a1, int a2, int a3) {
-		Coordinates c1 = mol.getCoordinates(a1);
-		Coordinates c2 = mol.getCoordinates(a2);
-		Coordinates c3 = mol.getCoordinates(a3);
+		Coordinates c1 = mol.getAtomCoordinates(a1);
+		Coordinates c2 = mol.getAtomCoordinates(a2);
+		Coordinates c3 = mol.getAtomCoordinates(a3);
 
 		return c1.subC(c2).getAngle(c3.subC(c2));
 	}
@@ -78,10 +78,10 @@ public class GeometryCalculator {
 	 * @return the angle
 	 */
 	public final static double getDihedral(StereoMolecule mol, int a1, int a2, int a3, int a4) {
-		Coordinates c1 = mol.getCoordinates(a1);
-		Coordinates c2 = mol.getCoordinates(a2);
-		Coordinates c3 = mol.getCoordinates(a3);
-		Coordinates c4 = mol.getCoordinates(a4);
+		Coordinates c1 = mol.getAtomCoordinates(a1);
+		Coordinates c2 = mol.getAtomCoordinates(a2);
+		Coordinates c3 = mol.getAtomCoordinates(a3);
+		Coordinates c4 = mol.getAtomCoordinates(a4);
 		return c1.getDihedral(c2, c3, c4);
 	}
 		

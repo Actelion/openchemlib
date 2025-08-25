@@ -100,7 +100,7 @@ public class TorsionAngle implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
-        return getEnergy(pos, null);
+        return getEnergy(pos, null, null, false);
     }
 
     /**
@@ -109,7 +109,7 @@ public class TorsionAngle implements EnergyTerm {
      *  @return The energy.
      */
     @Override
-    public double getEnergy(double[] pos, StringBuilder detail) {
+    public double getEnergy(double[] pos, StringBuilder detail, String detailID, boolean skipHydrogen) {
         Vector3 r1 = new Vector3(pos, a1, a2);
         Vector3 r2 = new Vector3(pos, a3, a2);
         Vector3 r3 = new Vector3(pos, a2, a3);
@@ -127,7 +127,7 @@ public class TorsionAngle implements EnergyTerm {
                         + v3*(1.0 + cos3Phi));
 
         if (detail != null)
-            detail.append("torsion\t"+DoubleFormat.toString(Math.toDegrees(t1.angle(t2)))+"\t\t"+a1+","+a2+","+a3+","+a4+"\t"+DoubleFormat.toString(e)+"\n");
+            detail.append(detailID+"\ttorsion\t"+DoubleFormat.toString(Math.toDegrees(t1.angle(t2)))+"\t\t"+a1+","+a2+","+a3+","+a4+"\t"+DoubleFormat.toString(e)+"\n");
 
         return e;
     }

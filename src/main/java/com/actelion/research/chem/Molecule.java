@@ -2134,7 +2134,7 @@ public class Molecule implements Serializable {
 		}
 
 	/**
-	 * @return the entire atom coordinate array
+	 * @return atom coordinates of the given atom
 	 */
 	public Coordinates getAtomCoordinates(int atom) {
 		return mCoordinates[atom];
@@ -2142,10 +2142,16 @@ public class Molecule implements Serializable {
 
 
 	/**
-	 * @return the entire atom coordinate array
+	 * @return the entire atom coordinate array, which usually is larger than the number of atoms!!!
 	 */
 	public Coordinates[] getAtomCoordinates() {
 		return mCoordinates;
+	}
+
+
+	@Deprecated
+	public Coordinates getCoordinates(int atom) {
+		return mCoordinates[atom];
 	}
 
 
@@ -2311,11 +2317,6 @@ public class Molecule implements Serializable {
 	public int getAtomRadical(int atom) {
 		return mAtomFlags[atom] & cAtomRadicalState;
 		}
-
-
-	public Coordinates getCoordinates(int atom) {
-		return mCoordinates[atom];
-	}
 
 
 	public Coordinates getCenterOfGravity() {

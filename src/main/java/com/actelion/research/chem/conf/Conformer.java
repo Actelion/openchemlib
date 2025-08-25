@@ -58,7 +58,7 @@ public class Conformer implements Comparable<Conformer> {
 		mMol = mol;
 		mCoordinates = new Coordinates[mol.getAllAtoms()];
 		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
-			mCoordinates[atom] = new Coordinates(mol.getCoordinates(atom));
+			mCoordinates[atom] = new Coordinates(mol.getAtomCoordinates(atom));
 
 		mEnergy = Double.NaN;
 	}
@@ -281,7 +281,7 @@ public class Conformer implements Comparable<Conformer> {
 	 */
 	public void copyFrom(StereoMolecule mol) {
 		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
-			mCoordinates[atom].set(mol.getCoordinates(atom));
+			mCoordinates[atom].set(mol.getAtomCoordinates(atom));
 	}
 
 	/**
@@ -291,7 +291,7 @@ public class Conformer implements Comparable<Conformer> {
 	 */
 	public void copyTo(StereoMolecule mol) {
 		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
-			mol.getCoordinates(atom).set(mCoordinates[atom]);
+			mol.getAtomCoordinates(atom).set(mCoordinates[atom]);
 	}
 
 	/**
@@ -330,7 +330,7 @@ public class Conformer implements Comparable<Conformer> {
 		if (mol == null)
 			mol = mMol.getCompactCopy();
 		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
-			mol.getCoordinates(atom).set(mCoordinates[atom]);
+			mol.getAtomCoordinates(atom).set(mCoordinates[atom]);
 		if (mName != null)
 			mol.setName(mName);
 		return mol;

@@ -1,18 +1,13 @@
 package com.actelion.research.chem.chemicalspaces.synthon;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.MoleculeStandardizer;
-import com.actelion.research.chem.SmilesCreator;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.coords.CoordinateInventor;
 
@@ -185,8 +180,8 @@ public class SynthonReactor {
 	 * @param a2
 	 */
 	public static void alignSynthons(StereoMolecule s1, StereoMolecule s2,int u1, int u2, int a1, int a2) {
-		Coordinates v1 = s1.getCoordinates(u1).subC(s1.getCoordinates(a1));
-		Coordinates v2 = s2.getCoordinates(a2).subC(s2.getCoordinates(u2));
+		Coordinates v1 = s1.getAtomCoordinates(u1).subC(s1.getAtomCoordinates(a1));
+		Coordinates v2 = s2.getAtomCoordinates(a2).subC(s2.getAtomCoordinates(u2));
 		v1.unit();
 		v2.unit();
 
@@ -205,17 +200,17 @@ public class SynthonReactor {
 
 		//Rodrigues' rotation formula 
 
-		Coordinates t = s1.getCoordinates(a1).scaleC(-1.0);
+		Coordinates t = s1.getAtomCoordinates(a1).scaleC(-1.0);
 		for(int a=0;a<s1.getAtoms();a++) {
-			s1.getCoordinates(a).add(t);
+			s1.getAtomCoordinates(a).add(t);
 		}
-		t = s2.getCoordinates(u2).scaleC(-1.0);
+		t = s2.getAtomCoordinates(u2).scaleC(-1.0);
 		for(int a=0;a<s2.getAtoms();a++) {
-			s2.getCoordinates(a).add(t);
+			s2.getAtomCoordinates(a).add(t);
 		}
 
 		for(int a=0;a<s2.getAtoms();a++) {
-			Coordinates newCoords = eulerRodrigues(s2.getCoordinates(a),n,-alpha);
+			Coordinates newCoords = eulerRodrigues(s2.getAtomCoordinates(a),n,-alpha);
 			s2.setAtomX(a,newCoords.x);
 			s2.setAtomY(a,newCoords.y);
 			s2.setAtomZ(a,newCoords.z);

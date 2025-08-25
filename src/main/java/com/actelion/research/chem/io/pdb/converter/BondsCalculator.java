@@ -78,7 +78,7 @@ public class BondsCalculator {
 				if(i>=j) continue;
 				if(!mol.isOrganicAtom(j)) continue;
 				
-				double dist = Math.sqrt(mol.getCoordinates(i).distanceSquared(mol.getCoordinates(j)));
+				double dist = Math.sqrt(mol.getAtomCoordinates(i).distanceSquared(mol.getAtomCoordinates(j)));
 				double idealDist = VDWRadii.COVALENT_RADIUS[mol.getAtomicNo(i)] + VDWRadii.COVALENT_RADIUS[mol.getAtomicNo(j)];
 				if(atomToGroup!=null) {
 					if(!atomToGroup.get(i).equals(atomToGroup.get(j))
@@ -176,10 +176,10 @@ public class BondsCalculator {
 				if(Math.abs(angle-Math.PI)<Math.PI/6) spOrder[atom] = 1;
 				else spOrder[atom] = 2;
 			} else if(mol.getConnAtoms(atom)==3) {
-				Coordinates c = mol.getCoordinates(atom);
-				Coordinates u = c.subC(mol.getCoordinates(mol.getConnAtom(atom, 0)));
-				Coordinates v = c.subC(mol.getCoordinates(mol.getConnAtom(atom, 1)));
-				Coordinates w = c.subC(mol.getCoordinates(mol.getConnAtom(atom, 2)));
+				Coordinates c = mol.getAtomCoordinates(atom);
+				Coordinates u = c.subC(mol.getAtomCoordinates(mol.getConnAtom(atom, 0)));
+				Coordinates v = c.subC(mol.getAtomCoordinates(mol.getConnAtom(atom, 1)));
+				Coordinates w = c.subC(mol.getAtomCoordinates(mol.getConnAtom(atom, 2)));
 				Coordinates normal = u.cross(v);
 				if(normal.distSq()>0) { 
 					double proj = normal.unitC().dot(w) / w.dist();
@@ -248,13 +248,13 @@ public class BondsCalculator {
 					//C(NR)(N)(=N) -> Arginin
 					if(mol.getAtomicNo(a1)==7 && mol.getAtomicNo(a2)==7 && mol.getAtomicNo(a3)==7) {
 						if(mol.getConnAtoms(a1)==2 && mol.getConnAtoms(a2)==1 && mol.getConnAtoms(a3)==1) {
-							if(mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a2))<mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a3))) {mol.setBondOrder(mol.getConnBond(atom, 1), 2); continue;}
+							if(mol.getAtomCoordinates(atom).distSquareTo(mol.getAtomCoordinates(a2))<mol.getAtomCoordinates(atom).distSquareTo(mol.getAtomCoordinates(a3))) {mol.setBondOrder(mol.getConnBond(atom, 1), 2); continue;}
 							else {mol.setBondOrder(mol.getConnBond(atom, 2), 2); continue;}
 						} else if(mol.getConnAtoms(a1)==1 && mol.getConnAtoms(a2)==2 && mol.getConnAtoms(a3)==1) {
-							if(mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a1))<mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a3))) {mol.setBondOrder(mol.getConnBond(atom, 0), 2); continue;}
+							if(mol.getAtomCoordinates(atom).distSquareTo(mol.getAtomCoordinates(a1))<mol.getAtomCoordinates(atom).distSquareTo(mol.getAtomCoordinates(a3))) {mol.setBondOrder(mol.getConnBond(atom, 0), 2); continue;}
 							else {mol.setBondOrder(mol.getConnBond(atom, 2), 2); continue;}
 						} else if(mol.getConnAtoms(a1)==1 && mol.getConnAtoms(a2)==1 && mol.getConnAtoms(a3)==2) {
-							if(mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a1))<mol.getCoordinates(atom).distSquareTo(mol.getCoordinates(a2))) {mol.setBondOrder(mol.getConnBond(atom, 0), 2); continue;}
+							if(mol.getAtomCoordinates(atom).distSquareTo(mol.getAtomCoordinates(a1))<mol.getAtomCoordinates(atom).distSquareTo(mol.getAtomCoordinates(a2))) {mol.setBondOrder(mol.getConnBond(atom, 0), 2); continue;}
 							else {mol.setBondOrder(mol.getConnBond(atom, 1), 2); continue;}
 						}
 					}								
@@ -692,7 +692,7 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 	private static void calculateNearestPlane(StereoMolecule mol, int[] atom, Coordinates cog, Coordinates n, double[][] coords) {
 		cog.set(0, 0, 0);
 		for (int i=0; i<atom.length; i++)
-			cog.add(mol.getCoordinates(atom[i]));
+			cog.add(mol.getAtomCoordinates(atom[i]));
 		cog.scale(1.0 / atom.length);
 
 		for (int i=0; i<atom.length; i++) {
@@ -892,16 +892,16 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 	}
 	
 	private static boolean isPlanar(StereoMolecule mol, int a1, int a2) {
-		Coordinates ci = mol.getCoordinates(a1);		
+		Coordinates ci = mol.getAtomCoordinates(a1);
 		Coordinates u = null, v =null;
 		
 		for (int i = 0; v==null && i < mol.getAllConnAtoms(a1); i++) {
-			if(u==null) u = mol.getCoordinates(mol.getConnAtom(a1, i)).subC(ci);
-			else {v = mol.getCoordinates(mol.getConnAtom(a1, i)).subC(ci);} 
+			if(u==null) u = mol.getAtomCoordinates(mol.getConnAtom(a1, i)).subC(ci);
+			else {v = mol.getAtomCoordinates(mol.getConnAtom(a1, i)).subC(ci);}
 		}
 		for (int i = 0; v==null && i < mol.getAllConnAtoms(a2); i++) {
-			if(u==null) u = mol.getCoordinates(mol.getConnAtom(a2, i)).subC(ci);
-			else {v = mol.getCoordinates(mol.getConnAtom(a2, i)).subC(ci);} 
+			if(u==null) u = mol.getAtomCoordinates(mol.getConnAtom(a2, i)).subC(ci);
+			else {v = mol.getAtomCoordinates(mol.getConnAtom(a2, i)).subC(ci);}
 		}
 		
 		if(u==null) return false;
@@ -910,13 +910,13 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 		if(normal.distSq()==0) return false; //what to do?
 		normal = normal.unitC();
 
-		Coordinates cj = mol.getCoordinates(a2);					
+		Coordinates cj = mol.getAtomCoordinates(a2);
 		for(int k=0; k<mol.getAllConnAtoms(a2); k++) {
-			Coordinates ck = mol.getCoordinates(mol.getConnAtom(a2, k));
+			Coordinates ck = mol.getAtomCoordinates(mol.getConnAtom(a2, k));
 			if(Math.abs(ck.subC(cj).dot(normal))>0.2) return false;
 		}					
 		for(int k=0; k<mol.getAllConnAtoms(a1); k++) {
-			Coordinates ck = mol.getCoordinates(mol.getConnAtom(a1, k));
+			Coordinates ck = mol.getAtomCoordinates(mol.getConnAtom(a1, k));
 			if(Math.abs(ck.subC(cj).dot(normal))>0.2) return false;
 		}					
 		return true;		
@@ -928,7 +928,7 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 		if(k>=PARAMS.length) return 1;
 						
 		//Calculate the order
-		double r = mol.getCoordinates(atm1).distance(mol.getCoordinates(atm2));
+		double r = mol.getAtomCoordinates(atm1).distance(mol.getAtomCoordinates(atm2));
 		return Math.exp((PARAMS[k][2] - r) / PARAMS[k][3]);
 	}
 
@@ -978,7 +978,7 @@ System.out.println("$$$ "+c2.getIDCode()+"\t"+c2.getEncodedCoordinates()+"\t\t")
 			int atm = mol.getConnAtom(a, i);					
 			if(toAtomicNo>0 && mol.getAtomicNo(atm)!=toAtomicNo) continue;
 			if(getMaxFreeValence(mol, atm)==0) continue;
-			double dist = mol.getCoordinates(a).distance(mol.getCoordinates(atm));
+			double dist = mol.getAtomCoordinates(a).distance(mol.getAtomCoordinates(atm));
 			if (privilegeRing && mol.isRingBond(mol.getConnBond(a, i)))
 				dist -= 2;
 			if(dist<bestDist) {

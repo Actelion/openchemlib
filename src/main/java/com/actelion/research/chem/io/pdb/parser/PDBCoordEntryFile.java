@@ -36,6 +36,7 @@ package com.actelion.research.chem.io.pdb.parser;
 
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.io.pdb.mmcif.MMCIFParser;
+import com.actelion.research.util.IntArrayComparator;
 import com.actelion.research.util.SortedList;
 
 import java.util.*;
@@ -50,16 +51,6 @@ public class PDBCoordEntryFile {
 	 *  description of pdb-file format: http://www.wwpdb.org/documentation/file-format
 	 */
 
-    //
-    // Header information
-    //
-	
-	/**
-	*  Classification may be based on function, metabolic role, molecule type, cellular location, etc.
-	*  This record can describe dual functions of a molecules, and when applicable, separated by a
-	*  comma “
-	*/
-	
     private String classification;
 
     private String pdbID;
@@ -137,8 +128,8 @@ public class PDBCoordEntryFile {
     private List<AtomRecord> protAtomRecords;
     private List<AtomRecord> hetAtomRecords;
 
-    private SortedList<int[]> connections1;
-    private ArrayList<String[]> connections2;
+    private SortedList<int[]> templateConnections;
+    private ArrayList<String[]> mmcifConnections;
 
     private String master;
 
@@ -577,12 +568,12 @@ public class PDBCoordEntryFile {
         this.liMtrix3 = liMtrix3;
     }
 
-    public void setConnections(SortedList<int[]> connections) {
-        this.connections1 = connections;
+    public void setTemplateConnections(SortedList<int[]> templateConnections) {
+        this.templateConnections = templateConnections;
     }
 
-    public void setConnections(ArrayList<String[]> connections) {
-        this.connections2 = connections;
+    public void setNonStandardConnections(ArrayList<String[]> connections) {
+        this.mmcifConnections = connections;
     }
 
     public String getMaster() {
@@ -606,21 +597,35 @@ public class PDBCoordEntryFile {
     }
 
     public Map<String,List<Molecule3D>> extractMols(boolean detachCovalentLigands) {
-        // translate connections defined by atom names to global atom indexes
-        if (connections2 != null && !connections2.isEmpty()) {
+        if (templateConnections == null)
+            templateConnections = new SortedList<>(new IntArrayComparator());
+
+        SortedList<int[]> nonStandardConnections = new SortedList<>(new IntArrayComparator());
+        // If we have the data from an mmcif file, then translate connections defined by atom names to global atom indexes
+        if (mmcifConnections != null && !mmcifConnections.isEmpty()) {
             TreeMap<String,Integer> atomNameToIDMap = new TreeMap<>();
             for (AtomRecord atom : protAtomRecords)
-                atomNameToIDMap.put(MMCIFParser.atomDescription(atom.getAtomName(), atom.getResName(), Integer.toString(atom.getResNum()), atom.getChainID()), atom.getSerialId());
+                atomNameToIDMap.put(MMCIFParser.atomDescription(atom.getLabelAtomName(), Integer.toString(atom.getLabelSeqID()), atom.getResName(), Integer.toString(atom.getAuthSeqID()), atom.getChainID()), atom.getSerialId());
             for (AtomRecord atom : hetAtomRecords)
-                atomNameToIDMap.put(MMCIFParser.atomDescription(atom.getAtomName(), atom.getResName(), Integer.toString(atom.getResNum()), atom.getChainID()), atom.getSerialId());
-            for (String[] connection : connections2) {
-                int[] bond = new int[2];
-                bond[0] = atomNameToIDMap.get(connection[0]);
-                bond[1] = atomNameToIDMap.get(connection[1]);
-                connections1.add(bond);
+                atomNameToIDMap.put(MMCIFParser.atomDescription(atom.getLabelAtomName(), Integer.toString(atom.getLabelSeqID()), atom.getResName(), Integer.toString(atom.getAuthSeqID()), atom.getChainID()), atom.getSerialId());
+
+            for (String[] connection : mmcifConnections) {
+                Integer atom1 = atomNameToIDMap.get(connection[0]);
+                Integer atom2 = atomNameToIDMap.get(connection[1]);
+                if (atom1 == null)
+                    System.out.println("Bond atom '"+connection[0]+"' not found");
+                else if (atom2 == null)
+                    System.out.println("Bond atom '"+connection[1]+"' not found");
+                else {
+                    int[] bond = new int[2];
+                    bond[0] = atom1;
+                    bond[1] = atom2;
+                    nonStandardConnections.add(bond);
+                }
             }
         }
-        return new StructureAssembler(connections1, protAtomRecords, hetAtomRecords, detachCovalentLigands).assemble();
+
+        return new StructureAssembler(templateConnections, nonStandardConnections, protAtomRecords, hetAtomRecords, detachCovalentLigands).assemble();
     }
 
     @Override

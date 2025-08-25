@@ -4,18 +4,15 @@ import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
-import com.actelion.research.chem.alignment3d.transformation.Quaternion;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
-import com.actelion.research.chem.phesa.pharmacophore.pp.ExitVectorPoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
@@ -230,17 +227,17 @@ public class MolecularVolume extends ShapeVolume{
 		for (int i=0;i<nrOfAtoms;i++) {
 			
 			if(mol.getAtomicNo(i)==1){ //hydrogens don't contribute to the molecular volume
-				this.hydrogens.add(new Coordinates(mol.getCoordinates(i)));
+				this.hydrogens.add(new Coordinates(mol.getAtomCoordinates(i)));
 				continue;
 			}
 			else if(mol.getAtomicNo(i)==0) {
-				Coordinates coords = new Coordinates(mol.getCoordinates(i));
+				Coordinates coords = new Coordinates(mol.getAtomCoordinates(i));
 				AtomicGaussian atomicGaussian = new AtomicGaussian(i,6,coords);
 				atomicGaussian.setWeight(0.0);
 				this.atomicGaussians.add(atomicGaussian);
 			}
 			else {
-				Coordinates coords = new Coordinates(mol.getCoordinates(i));
+				Coordinates coords = new Coordinates(mol.getAtomCoordinates(i));
 				AtomicGaussian atomicGaussian = new AtomicGaussian(i,mol.getAtomicNo(i),coords);
 				this.atomicGaussians.add(atomicGaussian);
 			}
@@ -367,7 +364,7 @@ public class MolecularVolume extends ShapeVolume{
 	private void updateHydrogens(StereoMolecule mol) {
 		int h = 0;
 		for(int i = mol.getAtoms();i<mol.getAllAtoms();i++) {
-			hydrogens.get(h).set(new Coordinates(mol.getCoordinates(i)));
+			hydrogens.get(h).set(new Coordinates(mol.getAtomCoordinates(i)));
 			h++;
 		}
 			

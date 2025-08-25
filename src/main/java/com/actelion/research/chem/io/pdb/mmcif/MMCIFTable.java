@@ -43,7 +43,8 @@ public class MMCIFTable extends MMCIFElement {
 	}
 
 	public int getIndex(String headerName) {
-		return mHeaderNameToIndexMap.get(headerName);
+		Integer i = mHeaderNameToIndexMap.get(headerName);
+		return i == null ? -1 : i;
 	}
 
 	public String[] parseRow(BufferedReader reader) throws IOException {

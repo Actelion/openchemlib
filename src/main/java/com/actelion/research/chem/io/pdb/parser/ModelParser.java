@@ -132,9 +132,10 @@ public class ModelParser {
         return new AtomRecord(serialId,
                 atomName,
                 altLoc,
+                resSeq, // pdb files don't distinguish between label and author residue numbers
                 residueName,
                 chainId,
-                resSeq,
+                resSeq, // pdb files don't distinguish between label and author residue numbers
                 insertionCode,
                 x,
                 y,

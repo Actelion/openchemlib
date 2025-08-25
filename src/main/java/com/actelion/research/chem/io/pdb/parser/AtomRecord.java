@@ -47,18 +47,20 @@ public class AtomRecord implements Comparable<AtomRecord> {
     // From field atom name
     private int atomicNo;
     // From field atom name
-    private String atomName;
+    private String labelAtomName;
 
     // Alternate location indicator.
-    private String altLoc;
+    private String labelAltID;
 
-    private String residueName;
+	private int labelSeqID;
 
-    private String chainId;
+	private String authCompID;
+
+    private String authAsymId;
     
     private String insertionCode;
 
-    private int resNum;
+    private int authSeqID;
 
     private double x,y,z;
 
@@ -74,13 +76,21 @@ public class AtomRecord implements Comparable<AtomRecord> {
     
     private boolean isTerminalC;
 
+	public AtomRecord() {}
 
-    public AtomRecord(int serialId,
-                     String atomName,
-                     String altLoc,
-                     String residueName,
-                     String chainId,
-                     int resNum,
+	public void setAtomAndCompName(String labelAtomName, String authCompID) {
+		this.labelAtomName = labelAtomName;
+		this.authCompID = authCompID;
+		this.authAsymId = "A";
+	}
+
+	public AtomRecord(int serialId,
+                     String labelAtomName,
+                     String labelAltID,
+					 int labelSeqID,
+                     String authCompID,
+                     String authAsymId,
+                     int authSeqID,
                      String insertionCode,
                      double x,
                      double y,
@@ -90,11 +100,12 @@ public class AtomRecord implements Comparable<AtomRecord> {
                      String element) {
 
         this.serialId = serialId;
-        this.atomName = atomName;
-        this.altLoc = altLoc;
-        this.residueName = residueName;
-        this.chainId = chainId;
-        this.resNum = resNum;
+        this.labelAtomName = labelAtomName;
+        this.labelAltID = labelAltID;
+		this.labelSeqID = labelSeqID;
+        this.authCompID = authCompID;
+        this.authAsymId = authAsymId;
+        this.authSeqID = authSeqID;
         this.insertionCode = insertionCode;
         this.x = x;
         this.y = y;
@@ -115,12 +126,16 @@ public class AtomRecord implements Comparable<AtomRecord> {
         return anisou;
     }
 
-	public String getAltLoc() {
-		return altLoc;
+	public String getLabelAltID() {
+		return labelAltID;
 	}
 
-	public String getAtomName() {
-    	return atomName;
+	public int getLabelSeqID() {
+		return labelSeqID;
+	}
+
+	public String getLabelAtomName() {
+    	return labelAtomName;
     }
     
     public boolean isTerminalC() {
@@ -152,25 +167,25 @@ public class AtomRecord implements Comparable<AtomRecord> {
     }
     
     public String getResName() {
-    	return residueName;
+    	return authCompID;
     }
     
     public String getChainID() {
-    	return chainId;
+    	return authAsymId;
     }
     
     public String getString() {
-    	StringBuilder sb = new StringBuilder(residueName);
+    	StringBuilder sb = new StringBuilder(authCompID);
     	sb.append(" ");
-    	sb.append(resNum);
+    	sb.append(authSeqID);
     	sb.append(insertionCode);
     	sb.append(" ");
-    	sb.append(chainId);
+    	sb.append(authAsymId);
     	return sb.toString();
     }
     
-    public int getResNum() {
-    	return resNum;
+    public int getAuthSeqID() {
+    	return authSeqID;
     }
     
     

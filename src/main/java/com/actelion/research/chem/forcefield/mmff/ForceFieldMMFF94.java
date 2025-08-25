@@ -241,19 +241,21 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
      *  @return The total force field energy.
      */
 	public double getTotalEnergy(double[] pos) {
-		return getTotalEnergy(pos, null);
+		return getTotalEnergy(pos, null, false);
 	}
 
-	private double getTotalEnergy(double[] pos, StringBuilder detail) {
+	private double getTotalEnergy(double[] pos, StringBuilder detail, boolean skipHydrogen) {
 		if (detail != null)
 			detail.append("no\ttype\tis_property\topt_property\tatoms\tenergy\n");
 
         double total = 0.0;
-		int no = 0;
+		int no = 1;
         for (EnergyTerm term : mEnergies) {
-			if (detail != null)
-				detail.append(++no).append("\t");
-			total += term.getEnergy(pos, detail);
+			double energy = term.getEnergy(pos, detail, Integer.toString(no), skipHydrogen);
+			if (energy != 0.0) {
+				total += energy;
+				no++;
+			}
 		}
         return total;
     }
@@ -265,7 +267,7 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
      *  @return The total force field energy.
      */
     public double getTotalEnergy() {
-    	return getTotalEnergy(mPos, null);
+    	return getTotalEnergy(mPos, null, false);
     }
 
 	/**
@@ -275,8 +277,8 @@ public final class ForceFieldMMFF94 extends AbstractForceField {
 	 * @param detail if !=null received detailed break down of energy contributions
 	 *  @return The total force field energy.
 	 */
-	public double getTotalEnergy(StringBuilder detail) {
-		return getTotalEnergy(mPos, detail);
+	public double getTotalEnergy(StringBuilder detail, boolean skipHydrogen) {
+		return getTotalEnergy(mPos, detail, skipHydrogen);
 	}
 
 	public static void initialize(String tableSet) {

@@ -65,8 +65,7 @@ public class StretchBend implements EnergyTerm {
      *  @param a2 Atom 2, the central atom (atom j).
      *  @param a3 Atom 3 (atom k).
      */
-    public StretchBend(Tables table, MMFFMolecule mol, int a1, int a2,
-					   int a3) {
+    public StretchBend(Tables table, MMFFMolecule mol, int a1, int a2, int a3) {
         this.mol = mol;
         this.a1 = a1;
         this.a2 = a2;
@@ -86,7 +85,7 @@ public class StretchBend implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
-        return getEnergy(pos, null);
+        return getEnergy(pos, null, null, false);
     }
 
     /**
@@ -95,7 +94,10 @@ public class StretchBend implements EnergyTerm {
      *  @return The energy.
      */
     @Override
-    public double getEnergy(double[] pos, StringBuilder detail) {
+    public double getEnergy(double[] pos, StringBuilder detail, String detailID, boolean skipHydrogen) {
+        if (skipHydrogen && (mol.getAtomicNo(a1) == 1 || mol.getAtomicNo(a3) == 1))
+            return 0.0;
+
         double dist1 = new Vector3(pos, a2, a1).length();
         double dist2 = new Vector3(pos, a2, a3).length();
         double theta = new Vector3(pos,a2,a1).angle(new Vector3(pos,a2,a3));
@@ -105,7 +107,7 @@ public class StretchBend implements EnergyTerm {
         double e = factor*(dist1 - r0i)*kba_ijk + factor*(dist2 - r0k)*kba_kji;
 
         if (detail != null)
-            detail.append("stretchBend\t"
+            detail.append(detailID+"\tstretchBend\t"
                     +DoubleFormat.toString(dist1)+","+DoubleFormat.toString(dist2)+","
                     +DoubleFormat.toString(Math.toDegrees(theta))+"\t"
                     +DoubleFormat.toString(r0i)+","+DoubleFormat.toString(r0k)+","

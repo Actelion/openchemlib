@@ -549,7 +549,7 @@ public class PDBFileParser {
         //
 		SortedList<int[]> bonds = new SortedList<>(new IntArrayComparator());
 		indexLine = parseCONECTLines(liRaw, indexLine, bonds);
-		pdbCoordEntryFile.setConnections(bonds);
+		pdbCoordEntryFile.setTemplateConnections(bonds);
 
         if(liRaw.get(indexLine).startsWith(TAG_MASTER)) {
             pdbCoordEntryFile.setMaster(liRaw.get(indexLine).substring(10).trim());

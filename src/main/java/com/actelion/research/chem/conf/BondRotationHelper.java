@@ -283,17 +283,17 @@ public class BondRotationHelper {
 		}
 		if(bondIndex==-1)
 			return;
-		Coordinates t2 = mMol.getCoordinates(mTorsionAtoms[bondIndex][2]);
-		Coordinates unit = t2.subC(mMol.getCoordinates(mTorsionAtoms[bondIndex][1])).unit();
+		Coordinates t2 = mMol.getAtomCoordinates(mTorsionAtoms[bondIndex][2]);
+		Coordinates unit = t2.subC(mMol.getAtomCoordinates(mTorsionAtoms[bondIndex][1])).unit();
 		double[][] m = new double[3][3];
 		int rotationCenter = mRotationCenters[bondIndex];
 		PheSAAlignment.getRotationMatrix((rotationCenter == mTorsionAtoms[bondIndex][1]) ? alpha : -alpha,unit,m);
 		Coordinates t2Neg = t2.scaleC(-1.0);
 		for (int atom:mSmallerSideAtomLists[bondIndex]) {
 			if (atom != rotationCenter) {
-				mMol.getCoordinates(atom).add(t2Neg);
-				mMol.getCoordinates(atom).rotate(m);
-				mMol.getCoordinates(atom).add(t2);
+				mMol.getAtomCoordinates(atom).add(t2Neg);
+				mMol.getAtomCoordinates(atom).rotate(m);
+				mMol.getAtomCoordinates(atom).add(t2);
 
 				}
 			}

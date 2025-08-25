@@ -82,7 +82,7 @@ public class AminoAcids {
             Molecule3D aminoAcid = new Molecule3D(mol);
             Map<String,AtomRecord> recordMap = new HashMap<>();
             for(AtomRecord record : atomRecordList)
-                recordMap.put(record.getAtomName(), record);
+                recordMap.put(record.getLabelAtomName(), record);
 
             for (int atom=0; atom<aminoAcid.getAllAtoms(); atom++) {
                 String atomName = mol.getAtomLabel(atom);
@@ -93,10 +93,10 @@ public class AminoAcids {
                 AtomRecord record = recordMap.get(atomName);
                 if (record != null) {
                     Coordinates coords3d = new Coordinates(record.getX(), record.getY(), record.getZ());
-                    aminoAcid.setAtomName(atom, record.getAtomName());
+                    aminoAcid.setAtomName(atom, record.getLabelAtomName());
                     aminoAcid.setAtomAmino(atom, record.getResName());
                     aminoAcid.setAtomSequence(atom, record.getSerialId());
-                    aminoAcid.setResSequence(atom, record.getResNum());
+                    aminoAcid.setResSequence(atom, record.getAuthSeqID());
                     aminoAcid.setAtomAmino(atom, record.getResName());
                     aminoAcid.setAtomChainId(atom, record.getChainID());
                     aminoAcid.setAtomX(atom, coords3d.x);

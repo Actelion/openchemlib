@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.util.ArrayUtils;
 
 public class AromRingPoint implements IPharmacophorePoint {

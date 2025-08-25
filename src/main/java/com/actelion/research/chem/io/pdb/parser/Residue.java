@@ -84,7 +84,7 @@ public class Residue {
 			fragment = constructFragmentFromGeometry();
     	fragment.ensureHelperArrays(Molecule.cHelperNeighbours);
 		// We use '1' as Model-No.
-		fragment.setName(ar.getResName()+"_1_"+ar.getChainID()+"_"+ar.getResNum());
+		fragment.setName(ar.getResName()+"_1_"+ar.getChainID()+"_"+ar.getAuthSeqID());
     	return fragment;
     }
 
@@ -94,16 +94,16 @@ public class Residue {
 		for(AtomRecord record : mAtomRecordList) {
 			if (!mIncludeAltLocs) {
 				if (altLoc == null)
-					altLoc = record.getAltLoc();
-				else if (!altLoc.equals(record.getAltLoc()))
+					altLoc = record.getLabelAltID();
+				else if (!altLoc.equals(record.getLabelAltID()))
 					continue;
 			}
 			int atomicNo = record.getAtomicNo();
 			int atom = fragment.addAtom(atomicNo);
-			fragment.setAtomName(atom, record.getAtomName());
+			fragment.setAtomName(atom, record.getLabelAtomName());
 			fragment.setAtomAmino(atom, record.getResName());
 			fragment.setAtomSequence(atom,record.getSerialId());
-			fragment.setResSequence(atom, record.getResNum());
+			fragment.setResSequence(atom, record.getAuthSeqID());
 			fragment.setAtomAmino(atom, record.getResName());
 			fragment.setAtomChainId(atom, record.getChainID());
 			fragment.setAtomX(atom,record.getX());
@@ -130,7 +130,7 @@ public class Residue {
 	}
 	
 	public int getResnum() {
-		return mAtomRecordList.get(0).getResNum();
+		return mAtomRecordList.get(0).getAuthSeqID();
 	}
 	
 	public Molecule3D getMolecule() {

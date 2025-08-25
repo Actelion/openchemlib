@@ -1,17 +1,5 @@
 package com.actelion.research.chem.alignment3d.transformation;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
-import java.util.Base64;
-
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
@@ -31,7 +19,7 @@ public interface Transformation {
 	
 	public default void apply(StereoMolecule mol) {
 		for(int a=0;a<mol.getAllAtoms();a++) {
-			apply(mol.getCoordinates(a));
+			apply(mol.getAtomCoordinates(a));
 		}
 	}
 	

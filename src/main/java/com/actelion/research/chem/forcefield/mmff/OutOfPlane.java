@@ -57,6 +57,7 @@ public class OutOfPlane implements EnergyTerm {
     int a2;
     int a3;
     double koop;
+    MMFFMolecule mol;
 
     /**
      * Construct a new out of plane energy term.
@@ -68,6 +69,7 @@ public class OutOfPlane implements EnergyTerm {
      */
     public OutOfPlane(Tables table, MMFFMolecule mol, int ac, int a1,
 					  int a2, int a3) {
+        this.mol = mol;
         this.ac = ac; // j
         this.a1 = a1; // i
         this.a2 = a2; // k
@@ -87,7 +89,7 @@ public class OutOfPlane implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
-        return getEnergy(pos, null);
+        return getEnergy(pos, null, null, false);
     }
 
     /**
@@ -96,7 +98,11 @@ public class OutOfPlane implements EnergyTerm {
      *  @return The energy.
      */
     @Override
-    public double getEnergy(double[] pos, StringBuilder detail) {
+    public double getEnergy(double[] pos, StringBuilder detail, String detailID, boolean skipHydrogen) {
+        if (skipHydrogen
+         && (mol.getAtomicNo(a1) == 1 || mol.getAtomicNo(a2) == 1 || mol.getAtomicNo(a3) == 1))
+            return 0.0;
+
         Vector3 rji = new Vector3(pos, ac, a1).normalise();
         Vector3 rjk = new Vector3(pos, ac, a2).normalise();
         Vector3 rjl = new Vector3(pos, ac, a3).normalise();
@@ -109,7 +115,7 @@ public class OutOfPlane implements EnergyTerm {
         double e = 0.5 * c2 * koop * chi * chi;
 
         if (detail != null)
-            detail.append("outOfPlane\t"+DoubleFormat.toString(chi)+"\t\t"+a1+","+a2+","+a3+"\t"+ DoubleFormat.toString(e)+"\n");
+            detail.append(detailID+"\toutOfPlane\t"+DoubleFormat.toString(chi)+"\t\t"+a1+","+a2+","+a3+"\t"+ DoubleFormat.toString(e)+"\n");
 
         return e;
     }

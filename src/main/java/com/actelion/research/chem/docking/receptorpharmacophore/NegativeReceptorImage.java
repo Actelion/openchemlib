@@ -67,7 +67,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 		int[] recGridSize = receptorGrid.getGridSize();
 		bumpGrid = new boolean[recGridSize[0]][recGridSize[1]][recGridSize[2]];
 		for(int i=0;i<receptor.getAllAtoms();i++) {
-			int[] gridC = getGridCoordinates(receptor.getCoordinates(i));
+			int[] gridC = getGridCoordinates(receptor.getAtomCoordinates(i));
 			int x = gridC[0];
 			int y = gridC[1];
 			int z = gridC[2];	
@@ -92,7 +92,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 		createShapeAtoms(shapeGaussians);
 		List<Coordinates> startingPoints = new ArrayList<>();
 		for(int a=0;a<mol.getAtoms() && a<STARTING_POINTS_CAVITY_DETECTION;a++) {
-			startingPoints.add(mol.getCoordinates(a));
+			startingPoints.add(mol.getAtomCoordinates(a));
 		}
 		prunePoints(startingPoints, ppGaussians, shapeGaussians, 2.0);
 		//assign ids to SimplePPs
@@ -181,7 +181,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 					}
 					if(!clash) {
 						for(int atom : receptorAtoms) {
-							Coordinates c = receptor.getCoordinates(atom);
+							Coordinates c = receptor.getAtomCoordinates(atom);
 							double dx = (c.x-probeCoords.x);
 							double dy = (c.y-probeCoords.y);
 							double dz = (c.z-probeCoords.z);
@@ -338,7 +338,7 @@ public class NegativeReceptorImage extends MoleculeGrid {
 
 					Coordinates probeCoords = this.getCartCoordinates(new int[] {x,y,z});
 					for(int atom=0;atom<receptor.getAtoms();atom++) {
-						Coordinates c = receptor.getCoordinates(atom);
+						Coordinates c = receptor.getAtomCoordinates(atom);
 						double dx = (c.x-probeCoords.x);
 						double dy = (c.y-probeCoords.y);
 						double dz = (c.z-probeCoords.z);
@@ -407,20 +407,20 @@ public class NegativeReceptorImage extends MoleculeGrid {
 				if(receptor.getConnAtoms(a)==1) {
 					if(receptor.getBondOrder(receptor.getBond(a, receptor.getConnAtom(a,0)))==2) {//sp2 oxygen
 						if(siteCoords.size()==0) { //add interaction point along C=0 axis
-							Coordinates v = receptor.getCoordinates(a).subC(receptor.getCoordinates( receptor.getConnAtom(a,0))).unitC();
-							Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(hbondDistance));
+							Coordinates v = receptor.getAtomCoordinates(a).subC(receptor.getAtomCoordinates( receptor.getConnAtom(a,0))).unitC();
+							Coordinates c =  receptor.getAtomCoordinates(a).addC(v.scaleC(hbondDistance));
 							siteCoords.add(c);
 						}
 					}
 				}
-				Coordinates c = receptor.getCoordinates(a).addC(pp.getDirectionality().scaleC(hbondDistance )); // interaction points at lone pairs
+				Coordinates c = receptor.getAtomCoordinates(a).addC(pp.getDirectionality().scaleC(hbondDistance )); // interaction points at lone pairs
 				siteCoords.add(c);
 			}
 			else if(ppg.getPharmacophorePoint().getFunctionalityIndex()==IPharmacophorePoint.Functionality.NEG_CHARGE.getIndex()) {
 				//either -O(-) or -C(=O)-O(-)
 				if(receptor.getConnAtoms(a)==1) {
-					Coordinates v = receptor.getCoordinates(a).subC(receptor.getCoordinates( receptor.getConnAtom(a,0))).unitC();
-					Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(hbondDistance ));
+					Coordinates v = receptor.getAtomCoordinates(a).subC(receptor.getAtomCoordinates( receptor.getConnAtom(a,0))).unitC();
+					Coordinates c =  receptor.getAtomCoordinates(a).addC(v.scaleC(hbondDistance ));
 					siteCoords.add(c);
 				}
 				else if(receptor.getConnAtoms(a)==3) {
@@ -432,8 +432,8 @@ public class NegativeReceptorImage extends MoleculeGrid {
 						}
 					}
 					if(aa!=-1) {
-						Coordinates v = receptor.getCoordinates(a).subC(receptor.getCoordinates(aa)).unitC();
-						Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(4.0));
+						Coordinates v = receptor.getAtomCoordinates(a).subC(receptor.getAtomCoordinates(aa)).unitC();
+						Coordinates c =  receptor.getAtomCoordinates(a).addC(v.scaleC(4.0));
 						siteCoords.add(c);
 	
 					}
@@ -443,8 +443,8 @@ public class NegativeReceptorImage extends MoleculeGrid {
 			else if(ppg.getPharmacophorePoint().getFunctionalityIndex()==IPharmacophorePoint.Functionality.POS_CHARGE.getIndex()) {
 				//either -O(-) or -C(=O)-O(-)
 				if(receptor.getConnAtoms(a)==1) {
-					Coordinates v = receptor.getCoordinates(a).subC(receptor.getCoordinates( receptor.getConnAtom(a,0))).unitC();
-					Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(4.0));
+					Coordinates v = receptor.getAtomCoordinates(a).subC(receptor.getAtomCoordinates( receptor.getConnAtom(a,0))).unitC();
+					Coordinates c =  receptor.getAtomCoordinates(a).addC(v.scaleC(4.0));
 					siteCoords.add(c);
 				}
 				else if(receptor.getConnAtoms(a)==3) { //guanidinium
@@ -456,14 +456,14 @@ public class NegativeReceptorImage extends MoleculeGrid {
 						}
 					}
 					if(aa!=-1) {
-						Coordinates v = receptor.getCoordinates(a).subC(receptor.getCoordinates(aa)).unitC();
-						Coordinates c =  receptor.getCoordinates(a).addC(v.scaleC(4.0));
+						Coordinates v = receptor.getAtomCoordinates(a).subC(receptor.getAtomCoordinates(aa)).unitC();
+						Coordinates c =  receptor.getAtomCoordinates(a).addC(v.scaleC(4.0));
 						siteCoords.add(c);
 					}
 				}
 			}
 			else if(ppg.getPharmacophorePoint().getFunctionalityIndex()==IPharmacophorePoint.Functionality.DONOR.getIndex()) { 
-				Coordinates c = receptor.getCoordinates(a).addC(pp.getDirectionality().scaleC(hbondDistance-1.0));
+				Coordinates c = receptor.getAtomCoordinates(a).addC(pp.getDirectionality().scaleC(hbondDistance-1.0));
 				siteCoords.add(c);
 			}
 				

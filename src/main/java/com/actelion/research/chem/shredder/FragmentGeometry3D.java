@@ -71,8 +71,8 @@ public class FragmentGeometry3D {
 	private Coordinates[] determineAlignmentCoords() {
 		Coordinates[] coords = new Coordinates[2*mExitVector.length];
 		for (int i=0; i<mExitVector.length; i++) {
-			coords[i] = mMol.getCoordinates(mExitVector[i].rootAtom);
-			coords[mExitVector.length + i] = mMol.getCoordinates(mExitVector[i].exitAtom);
+			coords[i] = mMol.getAtomCoordinates(mExitVector[i].rootAtom);
+			coords[mExitVector.length + i] = mMol.getAtomCoordinates(mExitVector[i].exitAtom);
 
 			// for lonely hydrogens (single selected H connecting to non-selected exit atom)
 			// we need to place the root coord (hydrogen) further away from the exit atom,

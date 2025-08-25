@@ -973,7 +973,7 @@ public class StructureCalculator {
 				continue; //Don't add H
 			} else {
 				//Add H if close to ligand
-				if(!mol.getCoordinates(i).insideBounds(bounds)) continue;
+				if(!mol.getAtomCoordinates(i).insideBounds(bounds)) continue;
 				
 			}
 			int n = StructureCalculator.getImplicitHydrogens(mol, i);
@@ -992,7 +992,7 @@ public class StructureCalculator {
 					int a = mol.addAtom(1);
 					mol.setAtomFlags(a, mol.getAtomFlags(i) & ~Molecule3D.PREOPTIMIZED);
 					mol.addBond(i, a, 1);
-					mol.setCoordinates(a, mol.getCoordinates(i));
+					mol.setCoordinates(a, mol.getAtomCoordinates(i));
 				}
 				changed=true;			
 			}
@@ -1124,7 +1124,7 @@ public class StructureCalculator {
 		
 		//Crop the atoms
 		for(int i=0; i<mol.getAllAtoms(); i++) {
-			Coordinates c = mol.getCoordinates(i);
+			Coordinates c = mol.getAtomCoordinates(i);
 			if(center.distance(c)<=radius) {
 				int n = res.addAtom(mol, i);
 				molToCrop.put(i, n);
@@ -1344,7 +1344,7 @@ public class StructureCalculator {
 		Coordinates sum = new Coordinates();
 		int n = 0;
 		for(int i = 0; i<mol.getAllAtoms(); i++) {
-			sum = sum.addC(mol.getCoordinates(i));
+			sum = sum.addC(mol.getAtomCoordinates(i));
 			n++;
 		}				
 		return n==0? null: sum.scaleC(1.0/n);
@@ -1355,7 +1355,7 @@ public class StructureCalculator {
 		int n = 0;
 		for(int i = 0; i<mol.getAllAtoms(); i++) {
 			if(mol.getAtomicNo(i)>1 && mol.isAtomFlag(i, Molecule3D.LIGAND)) {
-				sum = sum.addC(mol.getCoordinates(i));
+				sum = sum.addC(mol.getAtomCoordinates(i));
 				n++;
 			}
 		}				
@@ -1407,7 +1407,7 @@ public class StructureCalculator {
 				if(!mol2.isAtomFlag(i2, Molecule3D.LIGAND) || mol2.getAtomicNo(i2)!=mol1.getAtomicNo(i1)) continue;
 				long s2 = getAtomHashkey(mol2, i2);
 				if(s1!=s2) continue;
-				double distSq = mol1.getCoordinates(i1).distSquareTo(mol2.getCoordinates(i2));
+				double distSq = mol1.getAtomCoordinates(i1).distSquareTo(mol2.getAtomCoordinates(i2));
 				if(distSq<bestDistSq) {
 					bestDistSq = distSq;
 					bestAtom = i2;
@@ -1424,7 +1424,7 @@ public class StructureCalculator {
 	public static void translateLigand(Molecule3D mol, Coordinates v) {
 		for(int i = 0; i<mol.getAllAtoms(); i++) {
 			if(mol.isAtomFlag(i, Molecule3D.LIGAND)) {
-				mol.setCoordinates(i, mol.getCoordinates(i).addC(v));
+				mol.setCoordinates(i, mol.getAtomCoordinates(i).addC(v));
 			}
 		}				
 	}
@@ -1432,7 +1432,7 @@ public class StructureCalculator {
 	public static void rotateLigand(Molecule3D mol, double angle, Coordinates normal, Coordinates center) {
 		for(int i = 0; i<mol.getAllAtoms(); i++) {
 			if(mol.isAtomFlag(i, Molecule3D.LIGAND)) {
-				mol.setCoordinates(i, mol.getCoordinates(i).subC(center).rotateC(normal, angle).addC(center));
+				mol.setCoordinates(i, mol.getAtomCoordinates(i).subC(center).rotateC(normal, angle).addC(center));
 			}
 		}				
 	}			
@@ -1450,7 +1450,7 @@ public class StructureCalculator {
 				if(v.dist()>0) {
 					v = v.unitC().scaleC(Math.random()*radius);
 				}
-				mol.setCoordinates(i, mol.getCoordinates(i).addC(v));
+				mol.setCoordinates(i, mol.getAtomCoordinates(i).addC(v));
 			}
 		}		
 	}
@@ -1893,10 +1893,10 @@ public class StructureCalculator {
 		Set<Integer> seen = new HashSet<Integer>();
 		seen.add(a2);			
 		dfs(mol, a3, seen);
-		Coordinates normal = mol.getCoordinates(a3).subC(mol.getCoordinates(a2)).unitC();
+		Coordinates normal = mol.getAtomCoordinates(a3).subC(mol.getAtomCoordinates(a2)).unitC();
 		for (int j: seen) {
-			Coordinates c = mol.getCoordinates(j).subC(mol.getCoordinates(a3));
-			mol.setCoordinates(j, c.rotateC(normal, angle).addC(mol.getCoordinates(a3)));
+			Coordinates c = mol.getAtomCoordinates(j).subC(mol.getAtomCoordinates(a3));
+			mol.setCoordinates(j, c.rotateC(normal, angle).addC(mol.getAtomCoordinates(a3)));
 		}
 	}
 	
@@ -1913,7 +1913,7 @@ public class StructureCalculator {
 		double dist[][] = new double[m1.getAllAtoms()][m2.getAllAtoms()];
 		for (int a1 = 0; a1 < m1.getAllAtoms(); a1++) {
 			for (int a2 = 0; a2 < m2.getAllAtoms(); a2++) {
-				dist[a1][a2] = m1.getCoordinates(a1).distance(m2.getCoordinates(a2));					
+				dist[a1][a2] = m1.getAtomCoordinates(a1).distance(m2.getAtomCoordinates(a2));
 			}
 		}
 		return dist;
@@ -2154,13 +2154,13 @@ public class StructureCalculator {
 			if(!m.isAtomFlag(i, Molecule3D.LIGAND)) continue;
 			if(donor[i]==0 && acceptor[i]==0) continue;
 
-			Set<Integer> neighbours = grid.getNeighbours(m.getCoordinates(i), 5);
+			Set<Integer> neighbours = grid.getNeighbours(m.getAtomCoordinates(i), 5);
 			for (Iterator<Integer> iter = neighbours.iterator(); iter.hasNext();) {
 				int a =  ((Integer)iter.next()).intValue();
 				if(m.isAtomFlag(a, Molecule3D.LIGAND)) continue;
 				if(!((donor[i]>0 && acceptor[a]>0) || (donor[a]>0 && acceptor[i]>0))) continue;
 
-				double d = Math.sqrt(m.getCoordinates(a).distSquareTo(m.getCoordinates(i)));
+				double d = Math.sqrt(m.getAtomCoordinates(a).distSquareTo(m.getAtomCoordinates(i)));
 				double vdw = VDWRadii.VDW_RADIUS[m.getAtomicNo(a)]+VDWRadii.VDW_RADIUS[m.getAtomicNo(i)];
 
 				if(d>vdw-.5 && d<vdw+.5) { //H-Bonds
@@ -2170,8 +2170,8 @@ public class StructureCalculator {
 						for (int k = 0; k < m.getAllConnAtoms(a); k++) {
 							if(m.getAtomicNo(m.getConnAtom(a, k))<=1) continue;
 
-							Coordinates c1 = m.getCoordinates(i).subC(m.getCoordinates(m.getConnAtom(i, j)));
-							Coordinates c2 = m.getCoordinates(a).subC(m.getCoordinates(m.getConnAtom(a, k)));
+							Coordinates c1 = m.getAtomCoordinates(i).subC(m.getAtomCoordinates(m.getConnAtom(i, j)));
+							Coordinates c2 = m.getAtomCoordinates(a).subC(m.getAtomCoordinates(m.getConnAtom(a, k)));
 							double angle = c1.getAngle(c2);
 							if(Math.abs(2*Math.PI/3-angle)<Math.PI/10) hbond = true;
 							if(Math.abs(Math.PI/3-angle)<Math.PI/10) hbond = true;

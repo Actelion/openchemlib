@@ -284,7 +284,7 @@ public class Molecule3D extends StereoMolecule implements Comparable<Molecule3D>
 		Coordinates [] coords = new Coordinates[getAtoms()];
 
 		for (int i = 0; i < getAtoms(); i++) {
-			coords[i]=getCoordinates(i);
+			coords[i]= getAtomCoordinates(i);
 		}
 
 		return coords;

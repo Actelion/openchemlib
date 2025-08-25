@@ -101,7 +101,7 @@ public class Electrostatic implements EnergyTerm {
      */
     @Override
     public double getEnergy(double[] pos) {
-        return getEnergy(pos, null);
+        return getEnergy(pos, null, null, false);
     }
 
     /**
@@ -109,7 +109,11 @@ public class Electrostatic implements EnergyTerm {
      *  @return The energy.
      */
     @Override
-    public double getEnergy(double[] pos, StringBuilder detail) {
+    public double getEnergy(double[] pos, StringBuilder detail, String detailID, boolean skipHydrogen) {
+        if (skipHydrogen
+         && (mol.getAtomicNo(a1) == 1 || mol.getAtomicNo(a2) == 1))
+            return 0.0;
+
         double dist = new Vector3(pos, a1, a2).length();
         double corr_dist = dist + 0.05;
         double diel = 332.0716;
@@ -122,7 +126,7 @@ public class Electrostatic implements EnergyTerm {
         double e = diel * charge_term / corr_dist * (rel == Separation.Relation.ONE_FOUR ? 0.75 : 1.0);
 
         if (detail != null)
-                detail.append("electrostatic\t"+ DoubleFormat.toString(dist)+"\t\t"+a1+","+a2+"\t"+DoubleFormat.toString(e)+"\n");
+                detail.append(detailID+"\telectrostatic\t"+ DoubleFormat.toString(dist)+"\t\t"+a1+","+a2+"\t"+DoubleFormat.toString(e)+"\n");
 
         return e;
     }

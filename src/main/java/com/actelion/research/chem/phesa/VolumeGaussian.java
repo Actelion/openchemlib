@@ -79,7 +79,7 @@ public class VolumeGaussian extends Gaussian3D {
 	}
 	
 	public void updateCoordinates(StereoMolecule mol) {
-		referenceVector = new Coordinates(mol.getCoordinates(atomId));
+		referenceVector = new Coordinates(mol.getAtomCoordinates(atomId));
 		center = referenceVector.addC(shiftVector);
 	}
 	

@@ -51,13 +51,13 @@ public class PheSAMolecule {
 		ArrayList<Coordinates> hydrogens = molVol.getHydrogens();
 		for(int i=0;i<nrOfAtoms;i++) {
 			if(mol.getAtomicNo(i)==1){
-				conformer.getCoordinates(i).set(hydrogens.get(hydrogenCounter));
+				conformer.getAtomCoordinates(i).set(hydrogens.get(hydrogenCounter));
 				hydrogenCounter+=1;
 			} 
 
 		for(int j=0;j<molVol.getAtomicGaussians().size();j++) {
 			int atomId =molVol.getAtomicGaussians().get(j).getAtomId();
-			conformer.getCoordinates(atomId).set(molVol.getAtomicGaussians().get(j).getCenter());
+			conformer.getAtomCoordinates(atomId).set(molVol.getAtomicGaussians().get(j).getCenter());
 		}
 		}
 		conformer.ensureHelperArrays(Molecule.cHelperNeighbours);

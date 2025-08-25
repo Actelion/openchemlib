@@ -857,7 +857,7 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		List<Integer> liIndexAtom = node.getListIndexOriginalAtoms();
 		List<Coordinates> liCoord = new ArrayList<Coordinates>();
 		for (int atom : liIndexAtom) {
-			Coordinates coord = molecule3D.getCoordinates(atom);
+			Coordinates coord = molecule3D.getAtomCoordinates(atom);
 			liCoord.add(coord);
 		}
 

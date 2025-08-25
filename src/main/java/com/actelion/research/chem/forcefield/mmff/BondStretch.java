@@ -43,6 +43,7 @@ import java.util.List;
  * bond stretching energy associated with two bonded atoms A1--A2.
  */
 public class BondStretch implements EnergyTerm {
+    private final MMFFMolecule mol;
     public final int a1;
     public final int a2;
     public final double kb; // Force constant.
@@ -68,6 +69,7 @@ public class BondStretch implements EnergyTerm {
      *  @param a2 Atom 2 index.
      */
     public BondStretch(Tables table, MMFFMolecule mol, int a1, int a2) {
+        this.mol = mol;
         this.a1 = a1;
         this.a2 = a2;
 
@@ -81,7 +83,7 @@ public class BondStretch implements EnergyTerm {
      *  @return The energy.
      */
     public double getEnergy(double[] pos) {
-        return getEnergy(pos, null);
+        return getEnergy(pos, null, null, false);
     }
 
     /**
@@ -89,7 +91,10 @@ public class BondStretch implements EnergyTerm {
      *  @param pos The atoms current positions array.
      *  @return The energy.
      */
-    public double getEnergy(double[] pos, StringBuilder detail) {
+    public double getEnergy(double[] pos, StringBuilder detail, String detailID, boolean skipHydrogen) {
+        if (skipHydrogen && (mol.getAtomicNo(a1) == 1 || mol.getAtomicNo(a2) == 1))
+            return 0.0;
+
         final double c1 = 143.9325;
         final double cs = -2.0;
         final double c3 = 7.0 / 12.0;
@@ -99,7 +104,7 @@ public class BondStretch implements EnergyTerm {
         double e = (0.5*c1*kb*diff * (1.0 + cs*(dist - r0) + c3*cs*cs*diff));
 
         if (detail != null)
-            detail.append("bondStretch\t"+DoubleFormat.toString(dist)+"\t"
+            detail.append(detailID+"\tbondStretch\t"+DoubleFormat.toString(dist)+"\t"
                     +DoubleFormat.toString(r0)+"\t"+a1+","+a2+"\t"+ DoubleFormat.toString(e)+"\n");
 
         return e;

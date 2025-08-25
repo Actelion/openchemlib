@@ -80,8 +80,8 @@ public class EvaluableFlexibleOverlap implements Evaluable  {
 		cachedCoords = new Coordinates[fitConf.getMolecule().getAllAtoms()];
 		origCOM = new Coordinates();
 		for(int a=0;a<fitConf.getMolecule().getAllAtoms();a++) {
-			origCoords[a] = new Coordinates(fitConf.getMolecule().getCoordinates(a));
-			cachedCoords[a] = new Coordinates(fitConf.getMolecule().getCoordinates(a));
+			origCoords[a] = new Coordinates(fitConf.getMolecule().getAtomCoordinates(a));
+			cachedCoords[a] = new Coordinates(fitConf.getMolecule().getAtomCoordinates(a));
 			origCOM.add(cachedCoords[a]);
 		}
 		origCOM.scale(1.0/cachedCoords.length);

@@ -30,8 +30,8 @@ public class ProteinSynthesizer {
 			coupled = true;
 		}
 		else if(newTerminalN>-1 && mTerminalC >-1) { //coupling should be performed
-			Coordinates coordsC = mProtein.getCoordinates(mTerminalC);
-			Coordinates coordsN = residue.getCoordinates(newTerminalN);
+			Coordinates coordsC = mProtein.getAtomCoordinates(mTerminalC);
+			Coordinates coordsN = residue.getAtomCoordinates(newTerminalN);
 			if(coordsC.distanceSquared(coordsN)<Residue.BOND_CUTOFF_SQ) {
 				boolean notFound = true;
 				for(int i = 0; i< mProtein.getConnAtoms(mTerminalC) && notFound; i++) {

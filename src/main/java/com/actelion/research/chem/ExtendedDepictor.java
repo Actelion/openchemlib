@@ -417,8 +417,8 @@ g.drawRect((int)r.x, (int)r.y, (int)r.width, (int)r.height);*/
 		if (mMolecule != null) {
 			for (int i=0; i<mMolecule.length; i++) {
 				for (int atom=0; atom<mMolecule[i].getAllAtoms(); atom++) {
-					double x = mDepictor[i].getTransformation().transformX(mMolecule[i].getCoordinates(atom).x);
-					double y = mDepictor[i].getTransformation().transformY(mMolecule[i].getCoordinates(atom).y);
+					double x = mDepictor[i].getTransformation().transformX(mMolecule[i].getAtomCoordinates(atom).x);
+					double y = mDepictor[i].getTransformation().transformY(mMolecule[i].getAtomCoordinates(atom).y);
 					x1 = Math.min(x1, x);
 					x2 = Math.max(x2, x);
 					y1 = Math.min(y1, y);
