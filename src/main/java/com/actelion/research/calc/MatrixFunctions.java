@@ -641,8 +641,8 @@ public class MatrixFunctions {
         List<Double> li2 = new ArrayList<Double>();
         for (int ii = 0; ii < ma1.getColDim(); ii++) {
             if((ma1.get(row1, ii) != 0) || (ma2.get(row2, ii) != 0)) {
-                li1.add(new Double(ma1.get(row1, ii)));
-                li2.add(new Double(ma2.get(row2, ii)));
+                li1.add(Double.valueOf(ma1.get(row1, ii)));
+                li2.add(Double.valueOf(ma2.get(row2, ii)));
             }
         }
 

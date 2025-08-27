@@ -132,7 +132,7 @@ public class MarkushStructure implements java.io.Serializable {
                         rGroupCount++;
                         }
                     if (i<mCoreList.size())
-                        rGroupList.add(new Integer(rGroupIndex));
+                        rGroupList.add(Integer.valueOf(rGroupIndex));
 				    }
 				}
             if (i<mCoreList.size()) {
@@ -168,7 +168,7 @@ public class MarkushStructure implements java.io.Serializable {
                     else {
                         int rGroupIndex = getRGroupIndex(mSubstituent[i][j].getAtomicNo(atom));
                         if (rGroupIndex != -1)
-                            rGroupList.add(new Integer(rGroupIndex));
+                            rGroupList.add(Integer.valueOf(rGroupIndex));
                         }
                     }
                 if (!attachmentPointFound)

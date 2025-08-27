@@ -149,7 +149,7 @@ class Lnsrch{
 			e.printStackTrace();
 			function.setState(initial);
 			f0 = function.getFGValue(grad);
-			return new Object[]{new Double(f0), grad, Boolean.FALSE};				
+			return new Object[]{Double.valueOf(f0), grad, Boolean.FALSE};
 		}
 	}	
 

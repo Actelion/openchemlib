@@ -58,7 +58,7 @@ public class BinaryEncoder {
 			encoder.initialize(dataBitCount, data.length);
 			for (int d:data)
 				encoder.write(d);
-			encoder.finalize();
+			encoder.finish();
 			} catch (IOException ioe) {}
 		return writer.toString();
 		}
@@ -77,7 +77,7 @@ public class BinaryEncoder {
 			encoder.initialize(dataBitCount, data.length);
 			for (int d:data)
 				encoder.write(d);
-			encoder.finalize();
+			encoder.finish();
 			} catch (IOException ioe) {}
 		return writer.toString();
 		}
@@ -155,7 +155,7 @@ public class BinaryEncoder {
 	/**
 	 * Writes remaining bits from buffer, if there are any and possibly adds final NL/LF.
 	 */
-	public void finalize() throws IOException {
+	public void finish() throws IOException {
 		if (mFreeBufferBits < mBitsPerCharacter) {
 			mWriter.write(mBaseCharacter+mData);
 			if (mLineLength != -1)

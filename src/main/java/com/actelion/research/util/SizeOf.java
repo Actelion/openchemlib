@@ -46,7 +46,6 @@ public class SizeOf
 
     public static void main (String [] args) throws Exception
     {
-    	
     	int numMols = 500000;
     	int par = 3;
     	
@@ -55,32 +54,26 @@ public class SizeOf
 
     	for (int i = 0; i < numMols; i++) {
     		float[] arr = new float[par];
-    		ht.put(new Integer(i), arr);
+    		ht.put(Integer.valueOf(i), arr);
 		}
      	System.out.println("Used memory " + SizeOf.usedMemory());        
     	
     	System.out.println("Finished");
     	System.exit(0);
-    	
     }
 
 
     private static void runGC() throws Exception {
-
         long usedMem1 = usedMemory();
-
         long usedMem2 = Long.MAX_VALUE;
 
         for (int i = 0; (usedMem1 < usedMem2) && (i < 500); ++ i)  {
+//          System.runFinalization();
+			System.gc();
 
-            RUNTIME.runFinalization();
-
-            RUNTIME.gc();
-
-            Thread.currentThread().yield ();
+            Thread.yield();
             
             usedMem2 = usedMem1;
-
             usedMem1 = usedMemory ();
         }
     }
@@ -93,8 +86,4 @@ public class SizeOf
     public static long usedMemoryMB () {
         return (long)((RUNTIME.totalMemory () - RUNTIME.freeMemory ())/1000000.0 + 0.5);
     }
-
-
-
-
-} // End of class
+}

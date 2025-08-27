@@ -503,7 +503,7 @@ public class ReactionSearch {
 						}
 
 					if (isMatch) {
-						mResultQueue.add(new Integer(row));
+						mResultQueue.add(Integer.valueOf(row));
 						mMatchCount.incrementAndGet();
 						}
 					}

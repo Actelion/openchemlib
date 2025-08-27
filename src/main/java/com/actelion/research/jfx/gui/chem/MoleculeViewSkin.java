@@ -450,7 +450,7 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
                 glassPane.getChildren().add(dragCanvas);
             }
             dragDepictor = new GenericDepictor(mol);
-            dragDepictor.validateView(new FXDrawContext(canvas.getGraphicsContext2D()), new GenericRectangle(0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT), JFXCanvasDepictor.cModeInflateToMaxAVBL);
+            dragDepictor.validateView(new FXDrawContext(canvas.getGraphicsContext2D()), new GenericRectangle(0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT), AbstractDepictor.cModeInflateToMaxAVBL);
             dragCanvas.setOpacity(0.7);
             dragCanvas.toFront();
             dragCanvas.setMouseTransparent(true);

@@ -301,11 +301,11 @@ public class CLogPPredictor {
 			for (int atom=0; atom<mol.getAtoms(); atom++) {
 				try {
 					long atomType = AtomTypeCalculator.getAtomType(mol, atom, ATOM_TYPE_MODE);
-					Integer typeCount = countMap.get(new Long(atomType));
+					Integer typeCount = countMap.get(Long.valueOf(atomType));
 					if (typeCount == null)
-						countMap.put(new Long(atomType), new Integer(1));
+						countMap.put(Long.valueOf(atomType), Integer.valueOf(1));
 					else
-						countMap.put(new Long(atomType), new Integer(typeCount.intValue()+1));
+						countMap.put(Long.valueOf(atomType), Integer.valueOf(typeCount.intValue()+1));
 					}
 				catch (Exception e) {
 					errorCount++;

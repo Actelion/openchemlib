@@ -1089,7 +1089,7 @@ public class IntVec implements Comparable<IntVec> {
     	List<Integer> li = new ArrayList<Integer>();
     	for (int i = 0; i < sizeBits(); i++) {
 			if(isBitSet(i)){
-				li.add(new Integer(i));
+				li.add(Integer.valueOf(i));
 			}
 		}
     	return li;

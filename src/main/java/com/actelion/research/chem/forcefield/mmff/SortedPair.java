@@ -59,7 +59,7 @@ public class SortedPair implements Comparable<SortedPair> {
      */
     @Override
     public int hashCode() {
-        return new Integer(a).hashCode() ^ new Integer(b).hashCode();
+        return Integer.hashCode(a) ^ Integer.hashCode(b);
     }
 
     /**

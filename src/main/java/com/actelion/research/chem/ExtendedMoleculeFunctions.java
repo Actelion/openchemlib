@@ -561,7 +561,7 @@ public class ExtendedMoleculeFunctions {
 		}
 		ExtendedMolecule frag = frags[indexBiggestFrag];
 		for (int i = 0; i < frag.getAllAtoms(); i++) {
-			if(liAtomicNo.contains(new Integer(frag.getAtomicNo(i)))) {
+			if(liAtomicNo.contains(Integer.valueOf(frag.getAtomicNo(i)))) {
 				bOk=false;
 				break;
 			}
@@ -695,13 +695,13 @@ public class ExtendedMoleculeFunctions {
 		List<Integer> liExamine = new ArrayList<Integer>();
 		List<Integer> liSphere = new ArrayList<Integer>();
 		List<Integer> liVisited = new ArrayList<Integer>();
-		liExamine.add(new Integer(at1));
-		liSphere.add(new Integer(1));
+		liExamine.add(Integer.valueOf(at1));
+		liSphere.add(Integer.valueOf(1));
 		boolean bFound = false;
 		while(!liExamine.isEmpty()) {
 			dist = ((Integer)liSphere.remove(0)).intValue();
 			int indAtCenter = ((Integer)liExamine.remove(0)).intValue();
-			liVisited.add(new Integer(indAtCenter));
+			liVisited.add(Integer.valueOf(indAtCenter));
 			int numJNeighbors = mol.getAllConnAtoms(indAtCenter);
 			for (int i = 0; i < numJNeighbors; i++) {
 				int indAtNeighb = mol.getConnAtom(indAtCenter, i);
@@ -709,9 +709,9 @@ public class ExtendedMoleculeFunctions {
 					bFound = true;
 					break;
 				}
-				if(!liVisited.contains(new Integer(indAtNeighb))) {
-					liExamine.add(new Integer(indAtNeighb));
-					liSphere.add(new Integer(dist + 1));
+				if(!liVisited.contains(Integer.valueOf(indAtNeighb))) {
+					liExamine.add(Integer.valueOf(indAtNeighb));
+					liSphere.add(Integer.valueOf(dist + 1));
 				}
 			}
 			if(bFound)

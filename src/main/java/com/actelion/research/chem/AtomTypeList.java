@@ -102,8 +102,8 @@ public class AtomTypeList {
 	                break;
 
 	            int tab = theLine.indexOf('\t');
-	            mCountList.put(new Long(Long.parseLong(theLine.substring(0, tab))),
-	                      new Integer(Integer.parseInt(theLine.substring(tab+1))));
+	            mCountList.put(Long.valueOf(Long.parseLong(theLine.substring(0, tab))),
+	                      Integer.valueOf(Integer.parseInt(theLine.substring(tab+1))));
 	            }
 	        theReader.close();
 	        return;
@@ -257,7 +257,7 @@ public class AtomTypeList {
 
 
 	public int getCountFromType(long type){
-	    return mCountList.get(new Long(type)).intValue();
+	    return mCountList.get(Long.valueOf(type)).intValue();
 		}
 
 

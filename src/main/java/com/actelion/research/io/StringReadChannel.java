@@ -33,15 +33,15 @@
 
 package com.actelion.research.io;
 
+import com.actelion.research.util.ConstantsDWAR;
+import com.actelion.research.util.Pipeline;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
-
-import com.actelion.research.util.ConstantsDWAR;
-import com.actelion.research.util.Pipeline;
 
 /**
  *
@@ -150,7 +150,7 @@ public class StringReadChannel {
 		return str;
 	}
 	
-	public void finalize()throws IOException{
+	public void finish()throws IOException{
 		close();
 	}
 	

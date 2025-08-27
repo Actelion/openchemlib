@@ -75,7 +75,7 @@ public class BinarySOM extends SelfOrganizedMap {
 
 		mRandomizedKeyIndexList = new ArrayList();
 		for (int i=0; i<KEY_COUNT; i++)
-		    mRandomizedKeyIndexList.add(new Integer(i));
+		    mRandomizedKeyIndexList.add(Integer.valueOf(i));
 
 		mBitCount = new byte[0x10000];
 		for (int i=0; i<0x10000; i++)

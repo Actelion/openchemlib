@@ -626,7 +626,7 @@ public class Matrix {
         vecIndices.clear();
         for(int ii = 0; ii < maVar.getColDim(); ii++) {
           if(maVar.get(0,ii) > 0) {
-            vecIndices.add(new Integer(ii));
+            vecIndices.add(Integer.valueOf(ii));
           }
         }
         maReduced = getColumns(vecIndices);
@@ -1375,7 +1375,7 @@ public class Matrix {
         int indexMin = 0;
         List<Integer> list = new ArrayList<Integer>();
         for (int i = 0; i < getColDim(); i++) {
-          list.add(new Integer(i));
+          list.add(Integer.valueOf(i));
         }
         Collections.shuffle(list);
 
