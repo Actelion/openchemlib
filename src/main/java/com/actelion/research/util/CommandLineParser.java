@@ -146,6 +146,11 @@ public class CommandLineParser {
         }
         return l;
     }
+    public String [] getAsStringArray(String command) {
+        String s = hmCommandValue.get(command);
+        String [] a = s.split(SEP_TAG);
+        return a;
+    }
     public int [] getAsIntegerArray(String command) {
         String s = hmCommandValue.get(command);
         String [] a = s.split(SEP_TAG);
