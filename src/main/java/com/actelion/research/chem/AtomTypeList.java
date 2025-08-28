@@ -227,7 +227,7 @@ public class AtomTypeList {
 				}
 
 			if (!containsMetal && mol.getAtoms() >= mMinAtoms && mol.getAtoms() <= mMaxAtoms) {
-				String idcode = new SimpleCanonizer(mol).getIDCode();
+				String idcode = new Canonizer(mol).getIDCode();
 				if (!moleculeCache.contains(idcode)) {
 					moleculeCache.add(idcode);
 

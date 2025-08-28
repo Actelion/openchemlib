@@ -1,18 +1,12 @@
 package com.actelion.research.chem.chemicalspaces.ptree;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.RingCollection;
-import com.actelion.research.chem.SmilesCreator;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.chemicalspaces.synthon.SynthonReactor;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * reactor class that can handle reactions that are defined by synthons
