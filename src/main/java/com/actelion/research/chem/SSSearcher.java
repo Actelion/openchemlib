@@ -1192,6 +1192,7 @@ System.out.println();
 				}
 
 			if (mFragmentGraphParentAtom[current] == -1) {	// if current graph atom is sub fragment anchor atom
+				// TODO index[current] is not a molecule atom. Correct four times in the following lines!!!
 				if (!atomUsed[index[current]]) {
 					if (areAtomsSimilar(index[current], mFragmentGraphAtom[current])) {
 						mMatchTable[mFragmentGraphAtom[current]] = index[current];
@@ -1202,10 +1203,8 @@ System.out.println();
 			}
 			else {
 				// skip plain hydrogens
-				if (mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]) >= mMolecule.getAtoms()) {
-					index[current]++;
+				if (mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]) >= mMolecule.getAtoms())
 					continue;
-					}
 
 				int candidate = mMolecule.getConnAtom(mMatchTable[mFragmentGraphParentAtom[current]], index[current]);
 				if (!mFragmentGraphIsRingClosure[current]) {	// current graph position is not an anchor
