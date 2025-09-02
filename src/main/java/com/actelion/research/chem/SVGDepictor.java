@@ -96,6 +96,37 @@ public class SVGDepictor extends AbstractDepictor<Void> {
         buffer.append("\n");
     }
 
+    public static String escapeXML(String s) {
+        StringBuilder sb = new StringBuilder();
+
+        int length = s.length();
+        for (int i = 0; i < length; i++) {
+            int c = s.codePointAt(i);
+            char ch = (char) c;
+            switch (c) {
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '\"':
+                    sb.append("&quot;");
+                    break;
+                case '\'':
+                    sb.append("&apos;");
+                    break;
+                default:
+                    sb.append(ch);
+            }
+        }
+
+        return sb.toString();
+    }
+
     @Override
     protected void drawBlackLine(DepictorLine theLine) {
         int x1 = (int) theLine.x1;
@@ -107,7 +138,7 @@ public class SVGDepictor extends AbstractDepictor<Void> {
                 "y1=\"" + y1 + "\" " +
                 "x2=\"" + x2 + "\" " +
                 "y2=\"" + y2 + "\" " +
-                "style=\"stroke:" + currentColor + "; stroke-width:" + lineWidth + "\"/>";
+                "style=\"stroke:" + escapeXML(currentColor) + "; stroke-width:" + lineWidth + "\"/>";
         write(s);
     }
 
@@ -123,7 +154,7 @@ public class SVGDepictor extends AbstractDepictor<Void> {
                 "y1=\"" + y1 + "\" " +
                 "x2=\"" + x2 + "\" " +
                 "y2=\"" + y2 + "\" " +
-                "style=\"stroke:" + currentColor + "; stroke-width:" + lineWidth + "\"/>";
+                "style=\"stroke:" + escapeXML(currentColor) + "; stroke-width:" + lineWidth + "\"/>";
 
         write(s);
     }
@@ -138,7 +169,7 @@ public class SVGDepictor extends AbstractDepictor<Void> {
             s.append(" ");
         }
         s.append("\" " +
-                "style=\"fill:" + currentColor + "; stroke:" + currentColor + "; stroke-width:"+lineWidth+"\"/>");
+                "style=\"fill:" + escapeXML(currentColor) + "; stroke:" + escapeXML(currentColor) + "; stroke-width:"+lineWidth+"\"/>");
         write(s.toString());
     }
 
@@ -151,7 +182,7 @@ public class SVGDepictor extends AbstractDepictor<Void> {
                 "stroke=\"none\" " +
 //                "font-family=\" " + currentFont.getName() + "\" " +
                 "font-size=\"" + currentFont.getSize() + "\" " +
-                "fill=\"" + currentColor + "\">" + theString +
+                "fill=\"" + escapeXML(currentColor) + "\">" + escapeXML(theString) +
                 "</text>";
         write(s);
     }
@@ -162,7 +193,7 @@ public class SVGDepictor extends AbstractDepictor<Void> {
                 "cx=\"" + (int) (x+d/2) + "\" " +
                 "cy=\"" + (int) (y+d/2) + "\" " +
                 "r=\"" + (int) (d/2) + "\" " +
-                "fill=\"" + currentColor + "\" />";
+                "fill=\"" + escapeXML(currentColor) + "\" />";
         write(s);
     }
 
@@ -204,7 +235,7 @@ public class SVGDepictor extends AbstractDepictor<Void> {
     @Override
     protected void onDrawBond(int bond, double x1, double y1, double x2, double y2) {
         String s = "<line " +
-                "id=\"" + getId() + ":Bond:" + bond + "\" " +
+                "id=\"" + escapeXML(getId()) + ":Bond:" + bond + "\" " +
                 "class=\"event\" " +	// class to respond to the mouse event
                 "x1=\"" + (int) (x1) + "\" " +
                 "y1=\"" + (int) (y1) + "\" " +
@@ -220,7 +251,7 @@ public class SVGDepictor extends AbstractDepictor<Void> {
     protected void onDrawAtom(int atom, String symbol, double x, double y) {
         int r = DEFAULT_ELEM_WIDTH;
         String s = "<circle " +
-                "id=\"" + getId() + ":Atom:" + atom + "\" " +
+                "id=\"" + escapeXML(getId()) + ":Atom:" + atom + "\" " +
                 "class=\"event\" " + // class to respond to the mouse event
                 "cx=\"" + (int) (x) + "\" " +
                 "cy=\"" + (int) (y) + "\" " +
@@ -233,7 +264,7 @@ public class SVGDepictor extends AbstractDepictor<Void> {
     @Override
     public String toString() {
         String header = "<svg " +
-                        "id=\"" + getId() + "\" " +
+                        "id=\"" + escapeXML(getId()) + "\" " +
                         "xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" " +
                         "width=\"" + width + "px\" " +
                         "height=\"" + height + "px\" " +
@@ -243,9 +274,9 @@ public class SVGDepictor extends AbstractDepictor<Void> {
 
         String style = legacyMode ?
                 "<style>" +
-                " #" + getId() +
+                " #" + escapeXML(getId()) +
                 " {pointer-events:none; } " +	// Disable Mouse events on the root element so they get passed to the childs
-                " #" + getId() + " .event " +
+                " #" + escapeXML(getId()) + " .event " +
                 " { pointer-events:all;} " +	// Enable Mouse events for elements possessing the class "event"
                 " </style>\n"
               : "<g style=\"font-size:"+getTextSize()+"px; fill-opacity:1; stroke-opacity:1; fill:black; stroke:black;"
