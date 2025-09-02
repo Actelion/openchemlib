@@ -1192,7 +1192,6 @@ System.out.println();
 				}
 
 			if (mFragmentGraphParentAtom[current] == -1) {	// if current graph atom is sub fragment anchor atom
-				// TODO index[current] is not a molecule atom. Correct four times in the following lines!!!
 				if (!atomUsed[index[current]]) {
 					if (areAtomsSimilar(index[current], mFragmentGraphAtom[current])) {
 						mMatchTable[mFragmentGraphAtom[current]] = index[current];
