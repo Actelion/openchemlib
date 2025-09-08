@@ -70,6 +70,7 @@ public class BondOrderCalculator {
 	private static final double METAL_LIGAND_BONUS = 0.02;
 	// TODO do we really want to put a preference on endo-cyclic just because guanine is usually drawn that way?
 	private static final double GUANIDINE_AROM_NEIGHBOUR_BONUS = 0.01;	// allowed additional deviation to prefer endo-cyclic guanine type double bonds in resonance to aromatic ring
+	private static final double CARBON_MONOXIDE_MAX_LENGTH = 1.2;
 
 	private static final int MAX_ASSIGNMENT_ROUNDS = 5;
 
@@ -667,6 +668,20 @@ if (sDebugLigandID != null && !mMol.getName().contains(sDebugLigandID)) return;
 				if (oxygen.length >= 2) {
 					assignDoubleToFirstNeighbours(oxygen, 2);
 					continue;
+				}
+			}
+
+			if (mMol.getAtomicNo(atom) == 6
+			 && mMol.getConnAtoms(atom) == 1
+			 && mMol.getAllConnAtomsPlusMetalBonds(atom) > 1) {
+				int oxygen = mMol.getConnAtom(atom, 0);
+				int bond = mMol.getConnBond(atom, 0);
+				if (mMol.getAtomicNo(oxygen) == 8
+				 && mMol.getConnAtoms(oxygen) == 1
+				 && mBondLength[bond] < CARBON_MONOXIDE_MAX_LENGTH) {
+					assignBond(bond, 3, true);
+					mMol.setAtomCharge(atom, -1);
+					mMol.setAtomCharge(oxygen, 1);
 				}
 			}
 		}
@@ -1577,8 +1592,12 @@ if (DEBUG_OUTPUT) {
 						mMol.setAtomCharge(unchargedOxygen, -1);
 				}
 			}
-		else if (mMol.isElectronegative(atom) && mMol.getAtomCharge(atom) == 1 && occupiedValence <= 3)
-			mMol.setAtomCharge(atom, 0);
+			else if (mMol.isElectronegative(atom) && mMol.getAtomCharge(atom) == 1) {
+				if ((mMol.isNitrogenFamily(atom) && occupiedValence <= 3)
+				 || (mMol.isChalcogene(atom) && occupiedValence <= 2)
+				 || (mMol.isHalogene(atom) && occupiedValence <= 1))
+					mMol.setAtomCharge(atom, 0);
+			}
 		}
 	}
 

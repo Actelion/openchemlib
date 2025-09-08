@@ -40,34 +40,35 @@ import com.actelion.research.chem.io.pdb.parser.AtomRecord;
 import java.util.*;
 
 public class AminoAcids {
-	private static final String[][] AA_TEMPLATES = {
-            { "gGX`BDdwMULPGzILwXM[jD", "Alanine", "ala" },
-            { "dctd@BE]ADf{UYjjihp`GzBfMvCS]Plw^OMtbK]hrwUj}tRfwnbXp", "Arginine", "arg" },
-            { "diEL@BDDyInvZjZL`OtiL[lFfzaYn|^{iFLO]Hi`", "Asparagine", "asn" },
-            { "diFB@BANEInvZjZLHA~eIc]`twTKMwcw]Hqa{iEL", "Aspartic Acid", "asp" },
-            { "gNxhMV@aI[jihj@?SHF{ac]PinpP", "Cysteine", "Cys" },
-            { "defB@BAAeInufjihr@?QdqnpZ[jEf{qyndQ{mFMO]hi`","Glutamic Acid", "glu" },
-            { "deeL@BdDEInufjihp`GzLfMvCS]Plw^OMtbO]hqi{mEL", "Glutamine", "gln" },
-            { "gJX`BDdvu@OtbYnpP", "Glycine", "gly" },
-            { "dmwD@ByPQInvVUZjejL`OtyL[lFfzaYn|^{iFLO]Hii{mFLo]hi`", "Histidine", "his" },
-            { "diFD@BADf{ejjdrU@_iRXwXMMuBw]xqn{oELO]Hq`", "Isoleucine", "ile" },
-            { "diFD@BADf{Yjjhr@?RdqnpZ[jEf{q{ndTp}tcF@", "Leucine", "leu" },
-            { "deeD@BdDR[mUjjjL`OtYL[lFfzaYn|^[iDV{QenkP", "Lysine", "lys" },
-            { "diFD`JxPBDivzjihI@?RdAndX[oEF{QqnhR[lD", "Methionine", "met" },
-            { "dcND@BADf{YU]Zj@@cHC}ASF{AinhV[oGnzQSCwRLZ^{QSKwZL[Vzm@", "Phenylalanine", "phe" },
-            { "daFD@BADfyVyjjhr@?PdqnpZ[jEfzQyn|P", "Proline", "pro" },
-            { "gNy`BDtf{ZjfHC}Lf[lFmuBv{q@", "Serine", "ser" },
-            { "dazL@BAFR[nZjdrT`_hRXwXMMuBw]xqn{oEL", "Threonine", "thr" },
-            { "foAP`@BZ@aInvYWejsfjiB@bFB@OttfF{AhwTKF{qywRJXW]Hqi]vbfUwZN[W]hqc]uZfmwUnYw]Di`", "Tryptophane", "trp" },
-            { "dknL@BACR[me]]Zj@BHr@?RTqnpZ[jEf{q{ndTp}tcFgntTr}vcFunkS[hd", "Tyrosine", "tyr" },
-            { "dazD@BADf{fjjL`OtIL[lFfza[n|Tw]wcF@", "Valine", "val" }
+    private static final String[][] AA_TEMPLATES = {
+            {"gGX`BDdwMULPGzILwXM[jD", "Alanine", "ala"},
+            {"dctd@BE]ADf{UYjjihp`GzBfMvCS]Plw^OMtbK]hrwUj}tRfwnbXp", "Arginine", "arg"},
+            {"diEL@BDDyInvZjZL`OtiL[lFfzaYn|^{iFLO]Hi`", "Asparagine", "asn"},
+            {"diFB@BANEInvZjZLHA~eIc]`twTKMwcw]Hqa{iEL", "Aspartic Acid", "asp"},
+            {"gNxhMV@aI[jihj@?SHF{ac]PinpP", "Cysteine", "Cys"},
+            {"defB@BAAeInufjihr@?QdqnpZ[jEf{qyndQ{mFMO]hi`", "Glutamic Acid", "glu"},
+            {"deeL@BdDEInufjihp`GzLfMvCS]Plw^OMtbO]hqi{mEL", "Glutamine", "gln"},
+            {"gJX`BDdvu@OtbYnpP", "Glycine", "gly"},
+            {"dmwD@ByPQInvVUZjejL`OtyL[lFfzaYn|^{iFLO]Hii{mFLo]hi`", "Histidine", "his"},
+            {"diFD@BADf{ejjdrU@_iRXwXMMuBw]xqn{oELO]Hq`", "Isoleucine", "ile"},
+            {"diFD@BADf{Yjjhr@?RdqnpZ[jEf{q{ndTp}tcF@", "Leucine", "leu"},
+            {"deeD@BdDR[mUjjjL`OtYL[lFfzaYn|^[iDV{QenkP", "Lysine", "lys"},
+            {"diFD`JxPBDivzjihI@?RdAndX[oEF{QqnhR[lD", "Methionine", "met"},
+            {"dcND@BADf{YU]Zj@@cHC}ASF{AinhV[oGnzQSCwRLZ^{QSKwZL[Vzm@", "Phenylalanine", "phe"},
+            {"daFD@BADfyVyjjhr@?PdqnpZ[jEfzQyn|P", "Proline", "pro"},
+            {"gNy`BDtf{ZjfHC}Lf[lFmuBv{q@", "Serine", "ser"},
+            {"dazL@BAFR[nZjdrT`_hRXwXMMuBw]xqn{oEL", "Threonine", "thr"},
+            {"foAP`@BZ@aInvYWejsfjiB@bFB@OttfF{AhwTKF{qywRJXW]Hqi]vbfUwZN[W]hqc]uZfmwUnYw]Di`", "Tryptophane", "trp"},
+            {"dknL@BACR[me]]Zj@BHr@?RTqnpZ[jEf{q{ndTp}tcFgntTr}vcFunkS[hd", "Tyrosine", "tyr"},
+            {"dazD@BADf{fjjL`OtIL[lFfza[n|Tw]wcF@", "Valine", "val"}
     };
 
-    private static TreeMap<String,StereoMolecule> sShortLabelMap;
+    private static TreeMap<String, StereoMolecule> sShortLabelMap;
 
     public static StereoMolecule getStructure(String label) {
-        return ensureAAMap().get(label.toLowerCase());
+        return getAminoAcidMap().get(label.toLowerCase());
     }
+
 
     /**
      * Build the residue (i.e. the amino acid fragment) as Molecule3D from the given atom records
@@ -77,12 +78,28 @@ public class AminoAcids {
      * @return residue with all atoms that part of the atomRecordList
      */
     public static Molecule3D createResidue(String label, List<AtomRecord> atomRecordList) {
+        if (getStructure(label) == null)
+            return null;
+
+        Map<String,AtomRecord> recordMap = new HashMap<>();
+        for(AtomRecord record : atomRecordList)
+            recordMap.put(record.getLabelAtomName(), record);
+
+        return createResidue(label, recordMap);
+    }
+
+
+    /**
+     * Build the residue (i.e. the amino acid fragment) as Molecule3D from the given atom records
+     * using their coordinates and annotations and taking bond orders from a respective amino acid template.
+     * @param label
+     * @param atomRecordMap
+     * @return residue with all atoms that part of the atomRecordList
+     */
+    public static Molecule3D createResidue(String label, Map<String,AtomRecord> atomRecordMap) {
         StereoMolecule mol = getStructure(label);
         if (mol != null) {
             Molecule3D aminoAcid = new Molecule3D(mol);
-            Map<String,AtomRecord> recordMap = new HashMap<>();
-            for(AtomRecord record : atomRecordList)
-                recordMap.put(record.getLabelAtomName(), record);
 
             for (int atom=0; atom<aminoAcid.getAllAtoms(); atom++) {
                 String atomName = mol.getAtomLabel(atom);
@@ -90,7 +107,7 @@ public class AminoAcids {
                 if (customLabel != null && customLabel.startsWith("]"))
                     atomName = atomName.concat(customLabel.substring(1));
 
-                AtomRecord record = recordMap.get(atomName);
+                AtomRecord record = atomRecordMap.get(atomName);
                 if (record != null) {
                     Coordinates coords3d = new Coordinates(record.getX(), record.getY(), record.getZ());
                     aminoAcid.setAtomName(atom, record.getLabelAtomName());
@@ -115,7 +132,7 @@ public class AminoAcids {
         return null;
     }
 
-    private static TreeMap<String,StereoMolecule> ensureAAMap() {
+    private static TreeMap<String,StereoMolecule> getAminoAcidMap() {
         if (sShortLabelMap == null) {
             sShortLabelMap = new TreeMap<>();
             for (String[] template : AA_TEMPLATES) {

@@ -38,8 +38,11 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
+import java.util.ArrayList;
+
 public class HydrogenAssembler {
 	private final StereoMolecule mMol;
+	private ArrayList<Coordinates> mHydrogenCoordinateList;
 
 	/**
 	 * The HydrogenAssembler adds all implicit hydrogen atoms as explicit ones to a Molecule
@@ -50,6 +53,10 @@ public class HydrogenAssembler {
 		mMol = mol;
 		}
 
+	/**
+	 * Add all implicit hydrogen atoms as explicit ones to all atoms of the molecule.
+	 * @return number of added hydrogen atoms
+	 */
 	public int addImplicitHydrogens() {
 		mMol.ensureHelperArrays(Molecule.cHelperRings);
 		int total = 0;
@@ -66,8 +73,28 @@ public class HydrogenAssembler {
 		return total;
 		}
 
+	/**
+	 * Add all implicit hydrogen atoms as explicit ones with proper 3D-coordinates to the given atom.
+	 * Requires helper arrays state cHelperRings.
+	 * @param atom
+	 * @return number of added hydrogen atoms
+	 */
 	public int addImplicitHydrogens(int atom) {
 		return addImplicitHydrogens(atom, false);
+	}
+
+	/**
+	 * Calculate and return 3D-coordinates of all implicit hydrogen atoms of the given atom.
+	 * Requires helper arrays state cHelperRings.
+	 * @param atom
+	 * @return number of added hydrogen atoms
+	 */
+	public ArrayList<Coordinates> getImplicitHydrogenPositions(int atom) {
+		mHydrogenCoordinateList = new ArrayList<>();
+		addImplicitHydrogens(atom, false);
+		ArrayList<Coordinates> list = mHydrogenCoordinateList;
+		mHydrogenCoordinateList = null;
+		return list;
 	}
 
 	/**
@@ -104,11 +131,7 @@ public class HydrogenAssembler {
 		if (sp == 1) {	// simple case, where we need to extend linearly
 			Coordinates cconn = mMol.getAtomCoordinates(mMol.getConnAtom(atom, 0));
 			Coordinates cnew = croot.addC(croot.subC(cconn).unit().scale(bondLength));
-			int newAtom = mMol.addAtom(1);
-			mMol.setAtomX(newAtom, cnew.x);
-			mMol.setAtomY(newAtom, cnew.y);
-			mMol.setAtomZ(newAtom, cnew.z);
-			mMol.addBond(atom, newAtom, Molecule.cBondTypeSingle);
+			addHydrogen(atom, cnew);
 			return 1;
 			}
 
@@ -123,8 +146,8 @@ public class HydrogenAssembler {
 					// sequence found. Now we check whether certain dihedrals are already blocked
 
 					if (mMol.getAllConnAtoms(atom) == 3
-					 || (count == 1 && mMol.getAllConnAtomsPlusMetalBonds(atom) == 3)) {
-						// must be sp3 with already two of three positions occupied; we calculate the dihedral of the missing H
+					 || (count == 1 && sp == 3 && mMol.getAllConnAtomsPlusMetalBonds(atom) == 3)) {
+						// sp3 with already two of three positions occupied; we calculate the dihedral of the missing H
 						atomSequence[3] = -1;
 						double dihedral = TorsionDB.calculateTorsionExtended(mMol, atomSequence);
 						addHydrogen(mMol.getAtomCoordinates(atomSequence[0]), mMol.getAtomCoordinates(atomSequence[1]),
@@ -231,11 +254,7 @@ public class HydrogenAssembler {
 			for (int i=0; i<mMol.getAllConnAtoms(atom); i++)
 				v.add(croot.subC(mMol.getAtomCoordinates(mMol.getConnAtom(atom, i))).unit());
 			v.unit();
-			int hydrogen = mMol.addAtom(1);
-			mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
-			mMol.setAtomX(hydrogen, croot.x + bondLength * v.x);
-			mMol.setAtomY(hydrogen, croot.y + bondLength * v.y);
-			mMol.setAtomZ(hydrogen, croot.z + bondLength * v.z);
+			addHydrogen(atom, v.scale(bondLength).add(croot) );
 			return 1;
 			}
 
@@ -292,12 +311,7 @@ public class HydrogenAssembler {
 				}
 			double r = bondLength * Math.sin(Math.PI - angle);
 			for (int i=0; i<count; i++) {
-				int hydrogen = mMol.addAtom(1);
-				mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
-				mMol.setAtomX(hydrogen, croot.x + r * Math.sin(rotation));
-				mMol.setAtomY(hydrogen, croot.y + r * Math.cos(rotation));
-				mMol.setAtomZ(hydrogen, croot.z + dz);
-
+				addHydrogen(atom, new Coordinates(croot.x + r * Math.sin(rotation), croot.y + r * Math.cos(rotation), croot.z + dz));
 				rotation += rotationDif;
 				}
 			return count;
@@ -333,9 +347,7 @@ public class HydrogenAssembler {
 		}
 
 		if (count == 1 || count == 4) {
-			int hydrogen = mMol.addAtom(1);
-			mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
-			mMol.getAtomCoordinates(hydrogen).set(p.subC(c2).unit().scale(bondLength).add(p));
+			addHydrogen(atom, p.subC(c2).unit().scale(bondLength).add(p));
 			if (count == 1)
 				return 1;
 		}
@@ -449,12 +461,7 @@ public class HydrogenAssembler {
 	 * @param bondLength
 	 */
 	private void addHydrogen(Coordinates c1, Coordinates c2, Coordinates c3, int rootAtom, double angle, double dihedral, double bondLength) {
-		Coordinates p = getCoordinatesWithConstraints(c1, c2, c3, angle, dihedral, bondLength);
-		int hydrogen = mMol.addAtom(1);
-		mMol.addBond(rootAtom, hydrogen, Molecule.cBondTypeSingle);
-		mMol.setAtomX(hydrogen, p.x);
-		mMol.setAtomY(hydrogen, p.y);
-		mMol.setAtomZ(hydrogen, p.z);
+		addHydrogen(rootAtom, getCoordinatesWithConstraints(c1, c2, c3, angle, dihedral, bondLength));
 	}
 
 	/**
@@ -487,5 +494,17 @@ public class HydrogenAssembler {
 		m[2][1] = axisZ.y;
 		m[2][2] = axisZ.z;
 		return new Coordinates(x, y, z).rotate(m).add(c3);
+		}
+
+		private void addHydrogen(int atom, Coordinates c) {
+			// we don't add, we just collect the positions!
+			if (mHydrogenCoordinateList != null) {
+				mHydrogenCoordinateList.add(c);
+				return;
+			}
+
+			int hydrogen = mMol.addAtom(1);
+			mMol.addBond(atom, hydrogen, Molecule.cBondTypeSingle);
+			mMol.getAtomCoordinates(hydrogen).set(c);
 		}
 	}

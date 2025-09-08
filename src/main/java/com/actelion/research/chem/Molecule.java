@@ -746,6 +746,7 @@ public class Molecule implements Serializable {
 
 	/**
 	 * High level function for constructing a molecule.
+	 * If a bond between the two atoms exists already, then its order is changed accordingly.
 	 * @param atom1
 	 * @param atom2
 	 * @param type
@@ -761,9 +762,21 @@ public class Molecule implements Serializable {
 				if (mBondType[bnd] < type)
 					mBondType[bnd] = type;
 				return bnd;
-				}
 			}
+		}
 
+		return addBondNoChecks(atom1, atom2, type);
+	}
+
+
+	/**
+	 * Low level function for adding a bond. There is no checking, whether the bond exists.
+	 * @param atom1
+	 * @param atom2
+	 * @param type
+	 * @return new bond index
+	 */
+	public int addBondNoChecks(int atom1, int atom2, int type) {
 		if (mAllBonds >= mMaxBonds)
 			setMaxBonds(mMaxBonds*2);
 

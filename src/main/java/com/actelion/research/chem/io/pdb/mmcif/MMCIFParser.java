@@ -1,7 +1,7 @@
 package com.actelion.research.chem.io.pdb.mmcif;
 
 import com.actelion.research.chem.io.pdb.parser.AtomRecord;
-import com.actelion.research.chem.io.pdb.parser.PDBCoordEntryFile;
+import com.actelion.research.chem.io.pdb.parser.PDBFileEntry;
 import com.actelion.research.util.IntArrayComparator;
 import com.actelion.research.util.SortedList;
 
@@ -17,27 +17,27 @@ import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
 
 public class MMCIFParser {
-	private ArrayList<AtomRecord> mProteinAtoms,mHetAtoms;
+	private ArrayList<AtomRecord> mAtoms;
 	private ArrayList<String[]> mTemplateConnections,mNonStandardConnections;
 	private final BufferedReader mReader;
 
-	public static PDBCoordEntryFile getFromPDB(String pdbID) throws Exception {
+	public static PDBFileEntry getFromPDB(String pdbID) throws Exception {
 		URLConnection con = new URI("https://files.rcsb.org/download/"+pdbID+".cif.gz").toURL().openConnection();
 		return MMCIFParser.parse(new BufferedReader(new InputStreamReader(new GZIPInputStream(con.getInputStream()))));
 	}
 
-	public static PDBCoordEntryFile parse(String filename) throws IOException {
+	public static PDBFileEntry parse(String filename) throws IOException {
 		return parse(new File(filename));
 	}
 
-	public static PDBCoordEntryFile parse(File file) throws IOException {
+	public static PDBFileEntry parse(File file) throws IOException {
 		InputStream stream = file.getName().toLowerCase().endsWith(".cif.gz")
 						  || file.getName().toLowerCase().endsWith(".mmcif.gz") ?
 				new GZIPInputStream(new FileInputStream(file)) : new FileInputStream(file);
 		return parse(new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)));
 	}
 
-	public static PDBCoordEntryFile parse(BufferedReader reader) throws IOException {
+	public static PDBFileEntry parse(BufferedReader reader) throws IOException {
 		return new MMCIFParser(reader).parse();
 	}
 
@@ -45,9 +45,9 @@ public class MMCIFParser {
 		mReader = reader;
 	}
 
-	private PDBCoordEntryFile parse() throws IOException {
+	private PDBFileEntry parse() throws IOException {
 		// ChimeraX Guidelines: https://www.cgl.ucsf.edu/chimerax/docs/devel/modules/mmcif/mmcif_guidelines.html
-		PDBCoordEntryFile entryFile = new PDBCoordEntryFile();
+		PDBFileEntry entryFile = new PDBFileEntry();
 		mTemplateConnections = new ArrayList<>();
 		mNonStandardConnections = new ArrayList<>();
 
@@ -75,34 +75,33 @@ public class MMCIFParser {
 			else if (line.startsWith("loop_")) {
 				MMCIFTable table = new MMCIFTable(mReader);
 				if (table.getName().equals("_atom_site"))
-					processAtomTable(table, entryFile);
+					processAtomTable(table);
 				else if (table.getName().equals("_chem_comp_bond"))
 					processTemplateConnections(table);
 				else if (table.getName().equals("_struct_conn"))
-					processNonStandardConnections(table, entryFile);
+					processNonStandardConnections(table);
 				else
 					table.skip(mReader);
 			}
 		}
 
-		entryFile.setProteinAtoms(mProteinAtoms);
-		entryFile.setHetAtoms(mHetAtoms);
+		entryFile.setAtoms(mAtoms);
 		entryFile.setNonStandardConnections(mNonStandardConnections);
 		entryFile.setTemplateConnections(translateTemplateConnections());
 
 		return entryFile;
 	}
 
-	private void processAtomTable(MMCIFTable table, PDBCoordEntryFile entryFile) throws IOException {
-		TreeSet<AtomRecord> proteinAtoms = new TreeSet<>();
-		TreeSet<AtomRecord> hetAtoms = new TreeSet<>();
+	private void processAtomTable(MMCIFTable table) throws IOException {
+		TreeSet<AtomRecord> atoms = new TreeSet<>();
 
 		String[] row;
-		while ((row = table.parseRow(mReader)) != null) {
+		while ((row = table.parseRow(mReader)) != null)
 			// Used in ChimeraX (†:required): id, label_entity_id, label_asym_id†, auth_asym_id, pdbx_PDB_ins_code,
 			// label_seq_id†, auth_seq_id, label_alt_id, type_symbol†, label_atom_id†, auth_atom_id, label_comp_id†,
 			// auth_comp_id, Cartn_x†, Cartn_y†, Cartn_z†, occupancy, B_iso_or_equiv, pdbx_PDB_model_num
-			AtomRecord atomRecord = new AtomRecord(
+			atoms.add(new AtomRecord(
+					row[table.getIndex("group_PDB")].equals("HETATM"),
 					Integer.parseInt(row[table.getIndex("id")]),
 					row[table.getIndex("label_atom_id")],
 					row[table.getIndex("label_alt_id")],
@@ -116,16 +115,9 @@ public class MMCIFParser {
 					Double.parseDouble(row[table.getIndex("Cartn_z")]),
 					Double.parseDouble(row[table.getIndex("occupancy")]),
 					Double.parseDouble(row[table.getIndex("B_iso_or_equiv")]),
-					row[table.getIndex("type_symbol")]);
-			String group = row[table.getIndex("group_PDB")];
-			if (group.equals("ATOM"))
-				proteinAtoms.add(atomRecord);
-			if (group.equals("HETATM"))
-				hetAtoms.add(atomRecord);
-		}
+					row[table.getIndex("type_symbol")]));
 
-		mProteinAtoms = new ArrayList<>(proteinAtoms);
-		mHetAtoms = new ArrayList<>(hetAtoms);
+		mAtoms = new ArrayList<>(atoms);
 	}
 
 	private void processTemplateConnections(MMCIFTable table) throws IOException {
@@ -155,7 +147,7 @@ public class MMCIFParser {
 			};
 			SortedList<AtomRecord> sortedAtoms = new SortedList<>(comparator);
 			AtomRecord probe = new AtomRecord();
-			for (AtomRecord atom : mHetAtoms)
+			for (AtomRecord atom : mAtoms)
 				sortedAtoms.add(atom);
 
 			for (String[] connection : mTemplateConnections) {
@@ -192,14 +184,13 @@ public class MMCIFParser {
 		return connections;
 	}
 
-	private void processNonStandardConnections(MMCIFTable table, PDBCoordEntryFile entryFile) throws IOException {
+	private void processNonStandardConnections(MMCIFTable table) throws IOException {
 		// Used in ChimeraX (†:required): conn_type_id†, ptnr1_label_asym_id†, pdbx_ptnr1_PDB_ins_code, ptnr1_label_seq_id†,
 		// ptnr1_auth_seq_id, pdbx_ptnr1_label_alt_id, ptnr1_label_atom_id†, ptnr1_label_comp_id†, ptnr1_symmetry,
 		// ptnr2_label_asym_id†, pdbx_ptnr2_PDB_ins_code, ptnr2_label_seq_id†, ptnr2_auth_seq_id, pdbx_ptnr2_label_alt_id,
 		// ptnr2_label_atom_id†, ptnr2_label_comp_id†, ptnr2_symmetry, pdbx_dist_value
 		String[] row;
 		while ((row = table.parseRow(mReader)) != null) {
-//			String connTypeID = row[table.getIndex("conn_type_id")];
 			String[] atomDescription = new String[2];
 			atomDescription[0] = atomDescription(
 				row[table.getIndex("ptnr1_label_atom_id")],
@@ -216,10 +207,6 @@ public class MMCIFParser {
 				row[table.getIndex("ptnr2_auth_asym_id")]
 			);
 			mNonStandardConnections.add(atomDescription);
-
-//			for (String hn : table.getHeaderNames())
-//				System.out.println(hn+":"+row[table.getIndex(hn)]);
-//			System.out.println("-----");
 		}
 	}
 

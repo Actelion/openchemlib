@@ -42,11 +42,10 @@ import com.actelion.research.util.SortedList;
 import java.util.*;
 
 /**
- * PDBCoordEntryFile
+ * PDBFileEntry
  * Created by korffmo1 on 20.03.18.
  */
-public class PDBCoordEntryFile {
-	
+public class PDBFileEntry {
 	/**
 	 *  description of pdb-file format: http://www.wwpdb.org/documentation/file-format
 	 */
@@ -125,8 +124,7 @@ public class PDBCoordEntryFile {
     private List<String> liMtrix2;
     private List<String> liMtrix3;
     
-    private List<AtomRecord> protAtomRecords;
-    private List<AtomRecord> hetAtomRecords;
+    private List<AtomRecord> atomRecords;
 
     private SortedList<int[]> templateConnections;
     private ArrayList<String[]> mmcifConnections;
@@ -167,22 +165,13 @@ public class PDBCoordEntryFile {
         this.title = title;
     }
     
-    public List<AtomRecord> getProtAtomRecords() {
-    	return protAtomRecords;
+    public List<AtomRecord> getAtomRecords() {
+        return atomRecords;
     }
-    
-    public void setProteinAtoms(List<AtomRecord> protAtomRecords) {
-    	this.protAtomRecords = protAtomRecords;
+
+    public void setAtoms(List<AtomRecord> atomRecords) {
+        this.atomRecords = atomRecords;
     }
-    
-    public List<AtomRecord> getHetAtomRecords() {
-    	return hetAtomRecords;
-    }
-    
-    public void setHetAtoms(List<AtomRecord> hetAtomRecords) {
-    	this.hetAtomRecords = hetAtomRecords;
-    }
-  
 
     public String getObsolete() {
         return obsolete;
@@ -308,16 +297,13 @@ public class PDBCoordEntryFile {
         return hmNo_Remark.get(0);
     }
 
-
     public String getRemark1() {
         return hmNo_Remark.get(1);
     }
 
-
     public String getRemark2() {
         return hmNo_Remark.get(2);
     }
-
 
     public String getRemark3() {
         return hmNo_Remark.get(3);
@@ -330,7 +316,6 @@ public class PDBCoordEntryFile {
     public String getRemark(int n) {
         return hmNo_Remark.get(n);
     }
-
 
     public List<Integer> getRemarks(){
         List<Integer> liRemarkNo = new ArrayList<>(hmNo_Remark.keySet());
@@ -601,12 +586,10 @@ public class PDBCoordEntryFile {
             templateConnections = new SortedList<>(new IntArrayComparator());
 
         SortedList<int[]> nonStandardConnections = new SortedList<>(new IntArrayComparator());
-        // If we have the data from an mmcif file, then translate connections defined by atom names to global atom indexes
+        // If we have the data from a mmcif file, then translate connections defined by atom names to global atom indexes
         if (mmcifConnections != null && !mmcifConnections.isEmpty()) {
             TreeMap<String,Integer> atomNameToIDMap = new TreeMap<>();
-            for (AtomRecord atom : protAtomRecords)
-                atomNameToIDMap.put(MMCIFParser.atomDescription(atom.getLabelAtomName(), Integer.toString(atom.getLabelSeqID()), atom.getResName(), Integer.toString(atom.getAuthSeqID()), atom.getChainID()), atom.getSerialId());
-            for (AtomRecord atom : hetAtomRecords)
+            for (AtomRecord atom : atomRecords)
                 atomNameToIDMap.put(MMCIFParser.atomDescription(atom.getLabelAtomName(), Integer.toString(atom.getLabelSeqID()), atom.getResName(), Integer.toString(atom.getAuthSeqID()), atom.getChainID()), atom.getSerialId());
 
             for (String[] connection : mmcifConnections) {
@@ -625,7 +608,7 @@ public class PDBCoordEntryFile {
             }
         }
 
-        return new StructureAssembler(templateConnections, nonStandardConnections, protAtomRecords, hetAtomRecords, detachCovalentLigands).assemble();
+        return new StructureAssembler(templateConnections, nonStandardConnections, atomRecords, detachCovalentLigands).assemble();
     }
 
     @Override

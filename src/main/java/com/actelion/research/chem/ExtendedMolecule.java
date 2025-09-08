@@ -1763,6 +1763,11 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 
+	/**
+	 * Requires helper arrays state cHelperRings.
+	 * @param atom
+	 * @return whether the atom is a member of an aromatic ring
+	 */
 	public boolean isAromaticAtom(int atom) {
 		return (atom < mAtoms) ? mRingSet.isAromaticAtom(atom) : false;
 		}

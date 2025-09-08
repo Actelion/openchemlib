@@ -37,10 +37,10 @@ package com.actelion.research.chem.io.pdb.parser;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.io.pdb.converter.AminoAcids;
-import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
 import com.actelion.research.chem.io.pdb.converter.BondOrderCalculator;
+import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * Residue handles a group of atoms, e.g. a Ligand Molecule or an AminoAcid residue
@@ -49,49 +49,76 @@ import java.util.List;
  */
 public class Residue {
 	public static double BOND_CUTOFF_SQ = 3.24;
-    private final List<AtomRecord> mAtomRecordList;
 	private boolean mIsTerminal;
+	private final boolean mIsProtein;
 	private final boolean mAddBonds,mIncludeAltLocs;
-    private final Molecule3D mMol;
+    private Molecule3D mMol;
+	private final int mResNum;
+	private final String mResName,mChainID,mInsertionCode;
+	private final String mFragmentName;
+	private Map<String,AtomRecord> mAtomRecordMap;
+	private ArrayList<AtomRecord> mAtomList;
 
 	/**
-	 * @param records
 	 * @param addBonds
 	 * @param includeAltLocations
 	 */
-    public Residue(List<AtomRecord> records, boolean addBonds, boolean includeAltLocations) {
-        mAtomRecordList = records;
+	public Residue(boolean isProtein, boolean addBonds, boolean includeAltLocations, AtomRecord firstAtom) {
+		mIsProtein = isProtein;
 		mAddBonds = addBonds;
 		mIncludeAltLocs = includeAltLocations;
-        mMol = constructFragment();
 
-		for(AtomRecord record : mAtomRecordList) {
-			if(record.isTerminalC()) {
-				mIsTerminal = true;
-				break;
-			}
-		}
+		mResNum = firstAtom.getAuthSeqID();
+		mResName = firstAtom.getResName();
+		mChainID = firstAtom.getChainID();
+		mInsertionCode = firstAtom.getInsertionCode();
+
+		// We use '1' as Model-No.
+		mFragmentName = firstAtom.getResName()+"_1_"+firstAtom.getChainID()+"_"+firstAtom.getAuthSeqID();
+
+		if (mIsProtein)
+			mAtomRecordMap = new HashMap<>();
+		else
+			mAtomList = new ArrayList<>();
+
+		addAtom(firstAtom);
+	}
+
+	public void addAtom(AtomRecord atom) {
+		if (mIsProtein)
+			mAtomRecordMap.put(atom.getLabelAtomName(), atom);
+		else mAtomList.add(atom);
+
+		if(atom.isTerminalC())
+			mIsTerminal = true;
+	}
+
+	public void build() {
+		mMol = mIsProtein ? AminoAcids.createResidue(getResname(), mAtomRecordMap) : null;
+		if (mMol == null)
+			mMol = constructFragmentFromGeometry(mIsProtein ? mAtomRecordMap.values() : mAtomList);
+		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
+		mMol.setName(mFragmentName);
 	}
 
 	public boolean isTerminal() {
 		return mIsTerminal;
 	}
 
-    private Molecule3D constructFragment() {
-		AtomRecord ar = mAtomRecordList.get(0);
-		Molecule3D fragment = AminoAcids.createResidue(getResname(), mAtomRecordList);
-		if (fragment == null)
-			fragment = constructFragmentFromGeometry();
-    	fragment.ensureHelperArrays(Molecule.cHelperNeighbours);
+    private void constructFragment(List<AtomRecord> records) {
+		AtomRecord ar = records.get(0);
+		mMol = AminoAcids.createResidue(getResname(), records);
+		if (mMol == null)
+			mMol = constructFragmentFromGeometry(records);
+		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
 		// We use '1' as Model-No.
-		fragment.setName(ar.getResName()+"_1_"+ar.getChainID()+"_"+ar.getAuthSeqID());
-    	return fragment;
+		mMol.setName(ar.getResName()+"_1_"+ar.getChainID()+"_"+ar.getAuthSeqID());
     }
 
-	private Molecule3D constructFragmentFromGeometry() {
+	private Molecule3D constructFragmentFromGeometry(Collection<AtomRecord> records) {
 		Molecule3D fragment = new Molecule3D();
 		String altLoc = null;
-		for(AtomRecord record : mAtomRecordList) {
+		for(AtomRecord record : records) {
 			if (!mIncludeAltLocs) {
 				if (altLoc == null)
 					altLoc = record.getLabelAltID();
@@ -113,14 +140,8 @@ public class Residue {
 
 		if (mAddBonds) {
 			try {
-				if (StructureAssembler.USE_NEW_BONDORDER_CALCULATOR) {
-					BondsCalculator.createBonds(fragment, true,null);
-					new BondOrderCalculator(fragment).calculateBondOrders();
-				}
-				else {
-					BondsCalculator.createBonds(fragment, true,null);
-					BondsCalculator.calculateBondOrders(fragment,true);
-				}
+				BondsCalculator.createBonds(fragment, true,null);
+				new BondOrderCalculator(fragment).calculateBondOrders();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -130,7 +151,7 @@ public class Residue {
 	}
 	
 	public int getResnum() {
-		return mAtomRecordList.get(0).getAuthSeqID();
+		return mResNum;
 	}
 	
 	public Molecule3D getMolecule() {
@@ -138,15 +159,15 @@ public class Residue {
 	}
 	
 	public String getResname() {
-		return mAtomRecordList.get(0).getResName();
+		return mResName;
 	}
 	
 	public String getChainID() {
-		return mAtomRecordList.get(0).getChainID();
+		return mChainID;
 	}
 	
 	public String getInsertionCode() {
-		return mAtomRecordList.get(0).getInsertionCode();
+		return mInsertionCode;
 	}
 	
 	/*

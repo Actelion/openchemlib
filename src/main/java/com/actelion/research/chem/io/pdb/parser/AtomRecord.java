@@ -42,7 +42,9 @@ import com.actelion.research.chem.PeriodicTable;
  */
 public class AtomRecord implements Comparable<AtomRecord> {
 
-    private int serialId;
+	private boolean isHetAtom;
+
+	private int serialId;
 
     // From field atom name
     private int atomicNo;
@@ -84,7 +86,8 @@ public class AtomRecord implements Comparable<AtomRecord> {
 		this.authAsymId = "A";
 	}
 
-	public AtomRecord(int serialId,
+	public AtomRecord(boolean isHetAtom,
+			         int serialId,
                      String labelAtomName,
                      String labelAltID,
 					 int labelSeqID,
@@ -99,6 +102,7 @@ public class AtomRecord implements Comparable<AtomRecord> {
                      double tempFactor,
                      String element) {
 
+		this.isHetAtom = isHetAtom;
         this.serialId = serialId;
         this.labelAtomName = labelAtomName;
         this.labelAltID = labelAltID;
@@ -116,7 +120,10 @@ public class AtomRecord implements Comparable<AtomRecord> {
         this.atomicNo = PeriodicTable.number(element);
         isTerminalC = false;
     }
-    
+
+	public boolean isHetAtom() {
+		return isHetAtom;
+	}
 
     public int getSerialId() {
         return serialId;
@@ -183,7 +190,7 @@ public class AtomRecord implements Comparable<AtomRecord> {
     	sb.append(authAsymId);
     	return sb.toString();
     }
-    
+
     public int getAuthSeqID() {
     	return authSeqID;
     }

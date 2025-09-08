@@ -45,8 +45,8 @@ public class ModelParser {
 
     private int indexLine;
 
-    public void parse(List<String> liRaw, int indexLine, TreeSet<AtomRecord> protAtomRecords,
-                      TreeSet<AtomRecord> hetAtomRecords) {
+    public void parse(List<String> liRaw, int indexLine,
+                      TreeSet<AtomRecord> atomRecords) {
     	
         String tagAtom = PDBFileParser.TAG_ATOM;
         String tagHeteroAtom = PDBFileParser.TAG_HETATM;
@@ -67,33 +67,25 @@ public class ModelParser {
         for (int i = start; i < liRaw.size(); i++) {
             String line = liRaw.get(i);
             if(line.startsWith(tagAtom)) {
-                AtomRecord modelAtom = parseAtom(line);
+                AtomRecord modelAtom = parseAtom(line, false);
                 lastRecord = modelAtom;
-                protAtomRecords.add(modelAtom);
+                atomRecords.add(modelAtom);
             }
              else if(line.startsWith(tagHeteroAtom)) {
-
-                AtomRecord modelAtom = parseAtom(line);
+                AtomRecord modelAtom = parseAtom(line, true);
                 lastRecord = modelAtom;
-                hetAtomRecords.add(modelAtom);
-
+                atomRecords.add(modelAtom);
             } else if (line.startsWith(PDBFileParser.TAG_ANISOU)) {
-
                 continue;
-
             } else if (line.startsWith(PDBFileParser.TAG_TER)) { // End of chain or hetero atom group
-
                 if(lastRecord!=null)
                 	lastRecord.setTerminalC(true);
 
             } else if (line.startsWith(PDBFileParser.TAG_MODEL)){
-
                 continue;
-
             } else if (line.startsWith(PDBFileParser.TAG_ENDMDL)){
                 if(lastRecord!=null)
                 	lastRecord.setTerminalC(true);
-
             } else {
                 this.indexLine = i;
                 break;
@@ -101,7 +93,7 @@ public class ModelParser {
         }
     }
 
-    private AtomRecord parseAtom(String line){
+    private AtomRecord parseAtom(String line, boolean isHetAtom){
         int serialId = Integer.parseInt(line.substring(6,11).trim());
 
         String atomName = line.substring(12,16).trim();
@@ -129,7 +121,9 @@ public class ModelParser {
         element = element.toLowerCase();
         element = element.substring(0, 1).toUpperCase() + element.substring(1);
 
-        return new AtomRecord(serialId,
+        return new AtomRecord(
+                isHetAtom,
+                serialId,
                 atomName,
                 altLoc,
                 resSeq, // pdb files don't distinguish between label and author residue numbers
