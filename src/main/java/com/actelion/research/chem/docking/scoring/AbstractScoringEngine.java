@@ -6,13 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.docking.LigandPose;
-import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
-import com.actelion.research.chem.optimization.Evaluable;
+import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 /**

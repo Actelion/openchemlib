@@ -1,7 +1,6 @@
 package com.actelion.research.chem.docking.scoring;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,16 +10,12 @@ import java.util.stream.IntStream;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
-import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.docking.LigandPose;
-import com.actelion.research.chem.docking.scoring.chemscore.HBTerm;
 import com.actelion.research.chem.docking.scoring.chemscore.SimpleMetalTerm;
 import com.actelion.research.chem.docking.scoring.plp.PLPTerm;
 import com.actelion.research.chem.docking.scoring.plp.REPTerm;
-import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
-import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
+import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 

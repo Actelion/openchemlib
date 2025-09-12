@@ -6,8 +6,8 @@ import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.HydrogenAssembler;
 import com.actelion.research.chem.conf.VDWRadii;
-import com.actelion.research.chem.io.pdb.converter.BondOrderCalculator;
-import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
+import com.actelion.research.chem.io.pdb.calc.BondOrderCalculator;
+import com.actelion.research.chem.io.pdb.calc.BondsCalculator;
 import com.actelion.research.util.IntArrayComparator;
 import com.actelion.research.util.SortedList;
 

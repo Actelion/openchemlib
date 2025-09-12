@@ -32,7 +32,7 @@
  * @author Modest v. Korff, Thomas Sander
  */
 
-package com.actelion.research.chem.io.pdb.converter;
+package com.actelion.research.chem.io.pdb.calc;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.io.pdb.parser.AtomRecord;

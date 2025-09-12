@@ -32,7 +32,7 @@
  * @author Joel Freyss
  */
 
-package com.actelion.research.chem.io.pdb.converter;
+package com.actelion.research.chem.io.pdb.calc;
 
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.Coordinates;
@@ -47,14 +47,12 @@ import java.util.TreeSet;
  * 
  */
 public class MoleculeGrid {
-	
 	protected final StereoMolecule mol;
 	protected final double gridWidth;
 	protected final Coordinates min;
 	protected final Coordinates max;
 	protected final int[] gridSize = new int[3];
 	protected final Set<Integer>[][][] grid;
-	
 
 	
 	public MoleculeGrid(StereoMolecule mol) {
@@ -128,7 +126,6 @@ public class MoleculeGrid {
 		return res;
 	}
 
-	
 	public Set<Integer> getNeighbours(Coordinates c, double maxDist, boolean enforceDist) {
 		return getNeighbours(c, maxDist, enforceDist, -1);
 	}
@@ -283,7 +280,7 @@ public class MoleculeGrid {
 		
 	}
 	
-	public     Set<Integer> getNeighbours(Molecule mol, int atom, double maxDist) {
+	public Set<Integer> getNeighbours(Molecule mol, int atom, double maxDist) {
         return getNeighbours(mol, atom, maxDist, false);
     }
 	
@@ -316,5 +313,4 @@ public class MoleculeGrid {
 	public int[] getGridSize() {
 		return gridSize;
 	}
-
 }

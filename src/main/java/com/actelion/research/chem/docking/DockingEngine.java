@@ -19,7 +19,7 @@ import com.actelion.research.chem.docking.shape.ShapeDocking;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.forcefield.mmff.MMFFPositionConstraint;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
-import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
+import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.chem.mcs.MCS;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
 import com.actelion.research.chem.phesa.EncodeFunctions;

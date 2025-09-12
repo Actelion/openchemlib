@@ -4,7 +4,7 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.docking.DockingUtils;
 import com.actelion.research.chem.docking.scoring.ProbeScanning;
-import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
+import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.chem.phesa.AtomicGaussian;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;

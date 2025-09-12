@@ -36,7 +36,7 @@ package com.actelion.research.chem.descriptor.flexophore.calculator;
 
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.conf.VDWRadii;
-import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
+import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.util.ArrayUtils;
 
 import java.util.*;

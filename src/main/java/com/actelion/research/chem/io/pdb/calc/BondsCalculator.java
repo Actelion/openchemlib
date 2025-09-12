@@ -32,7 +32,7 @@
  * @author Joel Freyss
  */
 
-package com.actelion.research.chem.io.pdb.converter;
+package com.actelion.research.chem.io.pdb.calc;
 
 import com.actelion.research.calc.SingularValueDecomposition;
 import com.actelion.research.chem.*;

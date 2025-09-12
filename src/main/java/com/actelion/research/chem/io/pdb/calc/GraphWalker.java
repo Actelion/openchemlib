@@ -25,7 +25,7 @@
  *
  * @author Thomas Sander
  */
-package com.actelion.research.chem.io.pdb.converter;
+package com.actelion.research.chem.io.pdb.calc;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;

@@ -2,32 +2,19 @@ package com.actelion.research.chem.docking.scoring;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.BondRotationHelper;
-import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.conf.torsionstrain.StatisticalTorsionPotential;
-import com.actelion.research.chem.conf.torsionstrain.StatisticalTorsionTerm;
 import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.docking.scoring.idoscore.InteractionTerm;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
-import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
-import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
-import com.actelion.research.chem.potentialenergy.AngleConstraint;
-import com.actelion.research.chem.potentialenergy.BondConstraint;
-import com.actelion.research.chem.potentialenergy.EmpiricalLigandStrain;
+import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
-import com.actelion.research.chem.potentialenergy.TorsionConstraint;
 
 public class IdoScore extends AbstractScoringEngine {
 	

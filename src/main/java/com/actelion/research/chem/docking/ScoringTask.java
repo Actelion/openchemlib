@@ -11,7 +11,7 @@ import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.docking.scoring.idoscore.InteractionTerm;
 import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
 import com.actelion.research.chem.interactionstatistics.SplineFunction;
-import com.actelion.research.chem.io.pdb.converter.MoleculeGrid;
+import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 
 
 public class ScoringTask {

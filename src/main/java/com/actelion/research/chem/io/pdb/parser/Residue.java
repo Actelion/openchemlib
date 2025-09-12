@@ -36,9 +36,9 @@ package com.actelion.research.chem.io.pdb.parser;
 
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
-import com.actelion.research.chem.io.pdb.converter.AminoAcids;
-import com.actelion.research.chem.io.pdb.converter.BondOrderCalculator;
-import com.actelion.research.chem.io.pdb.converter.BondsCalculator;
+import com.actelion.research.chem.io.pdb.calc.AminoAcids;
+import com.actelion.research.chem.io.pdb.calc.BondOrderCalculator;
+import com.actelion.research.chem.io.pdb.calc.BondsCalculator;
 
 import java.util.*;
 
