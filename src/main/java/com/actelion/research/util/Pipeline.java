@@ -72,7 +72,7 @@ public class Pipeline<T> implements IPipeline<T>, Supplier<T> {
 	 */
 	public Pipeline(List<T> li) {
 		this();
-		queue.addAll(li);
+		addData(li);
 		setAllDataIn(true);
 	}
 
