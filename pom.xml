@@ -36,6 +36,9 @@
             <organization>Alipheron AG</organization>
         </developer>
     </developers>
+    <modules>
+        <module>JNAWinClipboardHandler</module>
+    </modules>
 
     <licenses>
         <license>
