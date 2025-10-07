@@ -432,6 +432,11 @@ public class ArrayUtils {
 			a[i]=v;
 		}
 	}
+	public static void set(int [] a, int v){
+		for (int i = 0; i < a.length; i++) {
+			a[i]=v;
+		}
+	}
 
 	public final static boolean isOverlap(int[] a1, int[] a2) {
 		boolean ov = false;
