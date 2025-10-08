@@ -52,7 +52,7 @@ public class ClipboardHandler2 implements IClipboardHandler
     public static final java.util.List<String> readableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_IDCODE);
     public static final java.util.List<String> readableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CTAB, NC_MOLFILE, NC_SKETCH, NC_EMBEDDEDSKETCH, NC_IDCODE);
 
-    private static boolean jnaOverNative = true; // true = use jna, false = use dll
+    private boolean jnaOverNative = true; // true = use jna, false = use dll
     public static StereoMolecule rawToMol(byte[] buffer, String nativeFormat, boolean prefer2D) {
 
         StereoMolecule mol = null;
@@ -382,6 +382,7 @@ public class ClipboardHandler2 implements IClipboardHandler
                     mol = rawToMol((byte[]) winClipHandler.getMethod("getClipboardData", String.class).invoke(winClipHandler, f), f, prefer2D);
                 } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                     e.printStackTrace();
+                    break;
                 }
                 if (mol != null) break;
             }
@@ -391,7 +392,7 @@ public class ClipboardHandler2 implements IClipboardHandler
         return mol;
     }
 
-    private static Class getWinClipHandler() {
+    private Class getWinClipHandler() {
         java.util.List<String> classes = Arrays.asList(
                 "com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
                 "com.actelion.research.gui.clipboard.NativeClipboardAccessor"
@@ -406,7 +407,10 @@ public class ClipboardHandler2 implements IClipboardHandler
         for (String clz : classes) {
             try {
                 winClipHandler = Class.forName(clz);
-            } catch (ClassNotFoundException e1) {
+                // TODO We could invoke here to get UnsatisfiedLinkError (dll missing), so we can try
+                // the next class. Currently NativeClipboardAccessor catches his UnsatisfiedLinkError on init, so we will get the exception
+                // only when we invoke something
+            } catch (ClassNotFoundException | NoClassDefFoundError | UnsatisfiedLinkError e1) {
                 e1.printStackTrace();
             }
             if (winClipHandler != null) {
@@ -479,6 +483,7 @@ public class ClipboardHandler2 implements IClipboardHandler
                     rxn = rawToRxn((byte[]) winClipHandler.getMethod("getClipboardData", String.class).invoke(winClipHandler, f), f);
                 } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                     e.printStackTrace();
+                    break;
                 }
                 if (rxn != null) break;
             }
@@ -630,7 +635,7 @@ public class ClipboardHandler2 implements IClipboardHandler
         return copyReaction(null, r);
     }
 
-    public static boolean setClipBoardData(String format, byte[] buffer) {
+    public boolean setClipBoardData(String format, byte[] buffer) {
         if (Platform.isWindows()) {
             Class clz = getWinClipHandler();
             if (clz != null) {
@@ -650,7 +655,7 @@ public class ClipboardHandler2 implements IClipboardHandler
      * @param data byte[]
      * @return boolean
      */
-    public static boolean copyMetaFile(byte []data) {
+    public boolean copyMetaFile(byte []data) {
         return Platform.isWindows() && setClipBoardData(NC_METAFILE, data);
     }
 
@@ -682,7 +687,7 @@ public class ClipboardHandler2 implements IClipboardHandler
         ImageClipboardHandler.copyImage(image);
     }
 
-    public static void setJnaOverNative(boolean jna) {
+    public void setJnaOverNative(boolean jna) {
         jnaOverNative = jna;
     }
 }
