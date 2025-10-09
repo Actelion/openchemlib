@@ -8,6 +8,7 @@ import com.actelion.research.gui.clipboard.ClipboardHandler2;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.util.Collections;
 
 
 public class TestDialog {
@@ -25,9 +26,6 @@ public class TestDialog {
         JPanel jnaPanel = new JPanel();
         jnaPanel.setLayout(new BoxLayout(jnaPanel, BoxLayout.X_AXIS));
 
-
-        JPanel jnaPanel2 = new JPanel();
-        jnaPanel2.setLayout(new BoxLayout(jnaPanel2, BoxLayout.X_AXIS));
 
         JEditableChemistryView natMol = new JEditableChemistryView(ExtendedDepictor.TYPE_MOLECULES);
         JEditableChemistryView natRxn = new JEditableChemistryView(ExtendedDepictor.TYPE_REACTION);
@@ -47,27 +45,18 @@ public class TestDialog {
         jnaPanel.add(jnaStruct);
         jnaPanel.add(jnaRxn);
 
-        TestJEditableChemistryView jnaMol2 = new TestJEditableChemistryView(ExtendedDepictor.TYPE_MOLECULES);
-        TestJEditableChemistryView jnaRxn2 = new TestJEditableChemistryView(ExtendedDepictor.TYPE_REACTION);
-        JEditableStructureView jnaStruct2 = new JEditableStructureView();
-        ClipboardHandler2 ch2 = new ClipboardHandler2();
-        ch2.setJnaOverNative(false);
-        jnaMol2.setJna(false);
-        jnaRxn2.setJna(false);
-        jnaStruct2.setClipboardHandler(ch2);
-
-        jnaPanel2.add(jnaMol2);
-        jnaPanel2.add(jnaStruct2);
-        jnaPanel2.add(jnaRxn2);
-
-        p.add(nativePanel);
         nativePanel.setBorder(new TitledBorder("Native"));
         jnaPanel.setBorder(new TitledBorder("JNA"));
-        jnaPanel2.setBorder(new TitledBorder("Native2"));
 
         p.add(nativePanel);
         p.add(jnaPanel);
-        p.add(jnaPanel2);
+
+        JButton toggleButton = new JButton("Toggle Native/JNA");
+        toggleButton.addActionListener(a -> {
+            Collections.reverse(ClipboardHandler2.getWindowsNativeCliphandler());
+        });
+
+        p.add(toggleButton);
 
         f.setSize(new Dimension(800, 800));
         f.setVisible(true);

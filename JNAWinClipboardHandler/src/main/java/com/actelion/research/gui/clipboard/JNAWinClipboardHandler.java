@@ -195,7 +195,7 @@ public class JNAWinClipboardHandler {
         return handle;
     }
     public interface MyUser32 extends User32 {
-        MyUser32 INSTANCE = (MyUser32) Native.loadLibrary("user32", MyUser32.class, W32APIOptions.UNICODE_OPTIONS);
+        MyUser32 INSTANCE = (MyUser32) Native.load("user32", MyUser32.class, W32APIOptions.UNICODE_OPTIONS);
         boolean EmptyClipboard();
 
         int RegisterClipboardFormat(String var1);
@@ -213,7 +213,7 @@ public class JNAWinClipboardHandler {
 
     public interface MyKernel32 extends Kernel32 {
 
-        MyKernel32 INSTANCE = (MyKernel32) Native.loadLibrary("kernel32", MyKernel32.class, W32APIOptions.UNICODE_OPTIONS);
+        MyKernel32 INSTANCE = (MyKernel32) Native.load("kernel32", MyKernel32.class, W32APIOptions.UNICODE_OPTIONS);
         WinNT.HANDLE GlobalAlloc(int var1, int var2);
 
         Pointer GlobalLock(WinNT.HANDLE var1);
@@ -224,7 +224,7 @@ public class JNAWinClipboardHandler {
     }
 
     public interface MyGDI32 extends GDI32 {
-        MyGDI32 INSTANCE = (MyGDI32) Native.loadLibrary("gdi32", MyGDI32.class, W32APIOptions.UNICODE_OPTIONS);
+        MyGDI32 INSTANCE = (MyGDI32) Native.load("gdi32", MyGDI32.class, W32APIOptions.UNICODE_OPTIONS);
         WinNT.HANDLE GetEnhMetaFile(String path);
         WinNT.HANDLE GetMetaFile(String path);
         int GetMetaFileBitsEx(WinNT.HANDLE hmf, int buffsize, Pointer buff);

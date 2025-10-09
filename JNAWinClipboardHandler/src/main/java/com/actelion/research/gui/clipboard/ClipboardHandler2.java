@@ -25,7 +25,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,13 +51,12 @@ public class ClipboardHandler2 implements IClipboardHandler
     private static final byte MDLSK[] = {(byte) 'M', (byte) 'D', (byte) 'L', (byte) 'S', (byte) 'K', 0, 0};
     public static final java.util.List<String> readableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_IDCODE);
     public static final java.util.List<String> readableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CTAB, NC_MOLFILE, NC_SKETCH, NC_EMBEDDEDSKETCH, NC_IDCODE);
-    // Maybe we could load Windows class names from WINPROPERTIES
-    private java.util.List<String> windowsNativeCliphandler = Arrays.asList(
+
+    private static java.util.List<String> windowsNativeCliphandler = Arrays.asList(
             "com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
             "com.actelion.research.gui.clipboard.NativeClipboardAccessor"
     );
 
-    private boolean jnaOverNative = true; // true = use jna, false = use dll
     public static StereoMolecule rawToMol(byte[] buffer, String nativeFormat, boolean prefer2D) {
 
         StereoMolecule mol = null;
@@ -177,39 +175,6 @@ public class ClipboardHandler2 implements IClipboardHandler
             }
         }
         return rxn;
-    }
-
-    static boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch) {
-        boolean ok = false;
-
-        try {
-            ok = writeMol2Metafile((OutputStream)(new FileOutputStream(temp)), m, sketch);
-        } catch (Exception var6) {
-            System.err.println("ClipboardHandler: Exception writing molfile " + var6);
-            var6.printStackTrace();
-        }
-
-        return ok;
-    }
-
-    private static boolean writeMol2Metafile(OutputStream out, StereoMolecule m, byte[] sketch) throws IOException {
-        int w = 300;
-        int h = 200;
-        WMF wmf = new WMF();
-        WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
-        Depictor2D d = new Depictor2D(m);
-        d.updateCoords(g, new GenericRectangle(0.0, 0.0, (double)w, (double)h), 65536);
-        d.paint(g);
-        if (sketch != null) {
-            byte[] temp = new byte[MDLSK.length + sketch.length];
-            System.arraycopy(MDLSK, 0, temp, 0, MDLSK.length);
-            System.arraycopy(sketch, 0, temp, MDLSK.length, sketch.length);
-            wmf.escape(15, temp);
-        }
-
-        wmf.writeWMF(out);
-        out.close();
-        return true;
     }
 
     /**
@@ -399,16 +364,11 @@ public class ClipboardHandler2 implements IClipboardHandler
         return mol;
     }
 
-    private Class getWinClipHandler() {
-        java.util.List<String> classes = new ArrayList<>(windowsNativeCliphandler);
+    private static Class getWinClipHandler() {
 
         Class winClipHandler = null;
 
-        if (!jnaOverNative) {
-            Collections.reverse(classes);
-        }
-
-        for (String clz : classes) {
+        for (String clz : windowsNativeCliphandler) {
             try {
                 winClipHandler = Class.forName(clz);
                 // TODO We could invoke here to get UnsatisfiedLinkError (dll missing), so we can try
@@ -569,12 +529,45 @@ public class ClipboardHandler2 implements IClipboardHandler
     }
 
 
+
+    public boolean copyReaction(Reaction r) {
+        return copyReactionToClipboard(null, r);
+    }
+
+    private Reaction makeRXNCopy(Reaction r)  {
+        Reaction rxn = new Reaction(r);
+        int mols = rxn.getMolecules();
+        for (int i = 0; i < mols; i++) {
+            rxn.getMolecule(i).ensureHelperArrays(Molecule.cHelperCIP);
+        }
+        return rxn;
+    }
+
+    /**
+     * Copies a reaction to the clipboard in various formats:
+     * CTAB with an embedded sketch
+     * MDLSK Sketch
+     * serialized
+     */
+    public boolean copyReaction(String ctab) {
+        boolean ok = false;
+        try {
+            Reaction rxn = new Reaction();
+            RXNFileParser p = new RXNFileParser();
+            p.parse(rxn, ctab);
+            ok = copyReactionToClipboard(ctab, rxn);
+        } catch (Exception e) {
+            System.err.println("ClipboardHandler: Exception copying reaction " + e);
+        }
+        return ok;
+    }
+
     /**
      * Copies a reaction to the clipboard in various formats:
      * MDLSK Sketch
      * MDLCT MDL molfile
      */
-    public boolean copyReaction(String ctab, Reaction rxn) {
+    public boolean copyReactionToClipboard(String ctab, Reaction rxn) {
         if (Platform.isWindows()) {
             Class winClipHandler;
             if ((winClipHandler = getWinClipHandler())!= null) {
@@ -607,39 +600,41 @@ public class ClipboardHandler2 implements IClipboardHandler
 
     }
 
-    private Reaction makeRXNCopy(Reaction r)  {
-        Reaction rxn = new Reaction(r);
-        int mols = rxn.getMolecules();
-        for (int i = 0; i < mols; i++) {
-            rxn.getMolecule(i).ensureHelperArrays(Molecule.cHelperCIP);
-        }
-        return rxn;
-    }
 
-    /**
-     * Copies a reaction to the clipboard in various formats:
-     * CTAB with an embedded sketch
-     * MDLSK Sketch
-     * serialized
-     */
-    public boolean copyReaction(String ctab) {
+    private boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch) {
         boolean ok = false;
         try {
-            Reaction rxn = new Reaction();
-            RXNFileParser p = new RXNFileParser();
-            p.parse(rxn, ctab);
-            ok = copyReaction(ctab, rxn);
+            ok = writeMol2Metafile(new FileOutputStream(temp), m, sketch);
         } catch (Exception e) {
-            System.err.println("ClipboardHandler: Exception copying reaction " + e);
+            System.err.println("ClipboardHandler: Exception writing molfile " + e);
+            e.printStackTrace();
         }
         return ok;
     }
 
-    public boolean copyReaction(Reaction r) {
-        return copyReaction(null, r);
+    private boolean writeMol2Metafile(OutputStream out, StereoMolecule m, byte[] sketch) throws IOException {
+        int w = 300;
+        int h = 200;
+        WMF wmf = new WMF();
+        WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
+
+        Depictor2D d = new Depictor2D(m);
+        d.updateCoords(g, new GenericRectangle(0, 0, w, h), AbstractDepictor.cModeInflateToMaxAVBL);
+        d.paint(g);
+
+        if (sketch != null) {
+            byte[] temp = new byte[MDLSK.length + sketch.length];
+            System.arraycopy(MDLSK, 0, temp, 0, MDLSK.length);
+            System.arraycopy(sketch, 0, temp, MDLSK.length, sketch.length);
+            wmf.escape(WMF.MFCOMMENT, temp);
+        }
+        wmf.writeWMF(out);
+        out.close();
+//		g.dispose();
+        return true;
     }
 
-    public boolean setClipBoardData(String format, byte[] buffer) {
+    public static boolean setClipBoardData(String format, byte[] buffer) {
         if (Platform.isWindows()) {
             Class clz = getWinClipHandler();
             if (clz != null) {
@@ -649,9 +644,8 @@ public class ClipboardHandler2 implements IClipboardHandler
                     e.printStackTrace();
                 }
             }
-            return false;
-        } else
-            return false;
+        }
+        return false;
     }
 
     /**
@@ -659,9 +653,43 @@ public class ClipboardHandler2 implements IClipboardHandler
      * @param data byte[]
      * @return boolean
      */
-    public boolean copyMetaFile(byte []data) {
+    public static boolean copyMetaFile(byte []data) {
         return Platform.isWindows() && setClipBoardData(NC_METAFILE, data);
     }
+
+    /*	private boolean writeRXN2Metafile(File temp, byte sketch[], Reaction m)
+	{
+		try {
+			return writeRXN2Metafile(new FileOutputStream(temp), sketch, m);
+		} catch (Exception e) {
+			System.err.println("Error writeRXN2Metafile " + e);
+			e.printStackTrace();
+			return false;
+		}
+	}
+*/
+
+/*	private boolean writeRXN2Metafile(OutputStream out, byte sketch[], Reaction m) throws IOException
+	{
+		int w = 400;
+		int h = 300;
+		WMF wmf = new WMF();
+		WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
+		AbstractReactionDepictor d = new ReactionDepictor(m);
+		d.updateCoords(new GraphicsContext(g), 8, 8, w - 16, h - 16, AbstractDepictor.cModeInflateToMaxAVBL);
+		d.paint(new GraphicsContext(g));
+		if (sketch != null) {
+//			byte MDLSK[] = {(byte)'M',(byte)'D',(byte)'L',(byte)'S',(byte)'K',0,0};
+			byte temp[] = new byte[MDLSK.length + sketch.length];
+			System.arraycopy(MDLSK, 0, temp, 0, MDLSK.length);
+			System.arraycopy(sketch, 0, temp, MDLSK.length, sketch.length);
+			wmf.escape(WMF.MFCOMMENT, temp);
+		}
+		wmf.writeWMF(out);
+		out.close();
+		return true;
+	}
+*/
 
     /**
      * Copies an Image to the clipboard
@@ -691,11 +719,11 @@ public class ClipboardHandler2 implements IClipboardHandler
         ImageClipboardHandler.copyImage(image);
     }
 
-    public void setJnaOverNative(boolean jna) {
-        jnaOverNative = jna;
+    public static void setWindowsNativeCliphandler(List<String> windowsNativeCliphandler) {
+        ClipboardHandler2.windowsNativeCliphandler = windowsNativeCliphandler;
     }
 
-    public void setWindowsNativeCliphandler(List<String> windowsNativeCliphandler) {
-        this.windowsNativeCliphandler = windowsNativeCliphandler;
+    public static List<String> getWindowsNativeCliphandler() {
+        return ClipboardHandler2.windowsNativeCliphandler;
     }
 }

@@ -366,7 +366,6 @@ public class TestJChemistryView extends JComponent
     @Override public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals(ITEM_COPY_MOLS)) {
             ClipboardHandler2 ch = new ClipboardHandler2();
-            ch.setJnaOverNative(jna);
             if (mDepictor.getMoleculeCount() == 1) {
                 ch.copyMolecule(mDepictor.getMolecule(0));
             }
@@ -389,14 +388,12 @@ public class TestJChemistryView extends JComponent
 
         if (e.getActionCommand().equals(ITEM_COPY_RXN)) {
             ClipboardHandler2 ch = new ClipboardHandler2();
-            ch.setJnaOverNative(jna);
             Reaction rxn = mDepictor.getReaction();
             ch.copyReaction(rxn);
         }
 
         if (e.getActionCommand().equals(ITEM_PASTE_MOLS) && mIsEditable) {
             ClipboardHandler2 ch = new ClipboardHandler2();
-            ch.setJnaOverNative(jna);
             StereoMolecule mol = ch.pasteMolecule();
             if (mol != null)
                 pasteOrDropMolecule(mol);
@@ -406,7 +403,6 @@ public class TestJChemistryView extends JComponent
 
         if (e.getActionCommand().equals(ITEM_PASTE_RXN) && mIsEditable) {
             ClipboardHandler2 ch = new ClipboardHandler2();
-            ch.setJnaOverNative(jna);
             Reaction rxn = ch.pasteReaction();
             if (rxn != null)
                 pasteOrDropReaction(rxn);
