@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * <p>Title: Actelion Library</p>
@@ -51,6 +52,11 @@ public class ClipboardHandler2 implements IClipboardHandler
     private static final byte MDLSK[] = {(byte) 'M', (byte) 'D', (byte) 'L', (byte) 'S', (byte) 'K', 0, 0};
     public static final java.util.List<String> readableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_IDCODE);
     public static final java.util.List<String> readableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CTAB, NC_MOLFILE, NC_SKETCH, NC_EMBEDDEDSKETCH, NC_IDCODE);
+    // Maybe we could load Windows class names from WINPROPERTIES
+    private java.util.List<String> windowsNativeCliphandler = Arrays.asList(
+            "com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
+            "com.actelion.research.gui.clipboard.NativeClipboardAccessor"
+    );
 
     private boolean jnaOverNative = true; // true = use jna, false = use dll
     public static StereoMolecule rawToMol(byte[] buffer, String nativeFormat, boolean prefer2D) {
@@ -382,6 +388,7 @@ public class ClipboardHandler2 implements IClipboardHandler
                     mol = rawToMol((byte[]) winClipHandler.getMethod("getClipboardData", String.class).invoke(winClipHandler, f), f, prefer2D);
                 } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                     e.printStackTrace();
+                    mol = pasteMoleculeLinux();
                     break;
                 }
                 if (mol != null) break;
@@ -393,10 +400,7 @@ public class ClipboardHandler2 implements IClipboardHandler
     }
 
     private Class getWinClipHandler() {
-        java.util.List<String> classes = Arrays.asList(
-                "com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
-                "com.actelion.research.gui.clipboard.NativeClipboardAccessor"
-        );
+        java.util.List<String> classes = new ArrayList<>(windowsNativeCliphandler);
 
         Class winClipHandler = null;
 
@@ -408,8 +412,7 @@ public class ClipboardHandler2 implements IClipboardHandler
             try {
                 winClipHandler = Class.forName(clz);
                 // TODO We could invoke here to get UnsatisfiedLinkError (dll missing), so we can try
-                // the next class. Currently NativeClipboardAccessor catches his UnsatisfiedLinkError on init, so we will get the exception
-                // only when we invoke something
+                // the next class. Currently NativeClipboardAccessor catches his UnsatisfiedLinkError on init.
             } catch (ClassNotFoundException | NoClassDefFoundError | UnsatisfiedLinkError e1) {
                 e1.printStackTrace();
             }
@@ -483,6 +486,7 @@ public class ClipboardHandler2 implements IClipboardHandler
                     rxn = rawToRxn((byte[]) winClipHandler.getMethod("getClipboardData", String.class).invoke(winClipHandler, f), f);
                 } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                     e.printStackTrace();
+                    rxn = pasteReactionLinux();
                     break;
                 }
                 if (rxn != null) break;
@@ -689,5 +693,9 @@ public class ClipboardHandler2 implements IClipboardHandler
 
     public void setJnaOverNative(boolean jna) {
         jnaOverNative = jna;
+    }
+
+    public void setWindowsNativeCliphandler(List<String> windowsNativeCliphandler) {
+        this.windowsNativeCliphandler = windowsNativeCliphandler;
     }
 }

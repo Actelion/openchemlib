@@ -14,6 +14,8 @@ public class TestDialog {
 
     public static void main(String[] args) {
         JFrame f = new JFrame();
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         f.add(p);

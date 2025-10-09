@@ -19,8 +19,7 @@
         <dependency>
             <groupId>com.actelion.research</groupId>
             <artifactId>openchemlib</artifactId>
-<!--            <version>${parent.version}</version>-->
-            <version>2025.9.2</version>
+            <version>RELEASE</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
@@ -33,6 +32,6 @@
             <version>5.18.0</version>
         </dependency>
     </dependencies>
-    
+
 
 </project>
