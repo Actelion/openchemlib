@@ -135,7 +135,7 @@ public class DescriptorWeightsHelper {
 
     /**
      *
-     * @param s string with single digits '123456789'.
+     * @param s string with single digits '0123456789'.
      * @return
      */
     public static int [] parseSingleDigitString(String s) {
