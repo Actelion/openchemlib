@@ -13,11 +13,12 @@ import java.util.Map;
 
 public class JNAWinClipboardHandler {
 
+    private static Boolean isInitOK = Boolean.TRUE; // dummy to match NativeClipboardAccessor
     // Numeric windows default formats are defined in jna. E.g. User32.CF_BITMAP or User32.CF_DIB
     private static Map<String, Integer> stdWinCFValues = new HashMap() {
         {
-            put(ClipboardHandler2.NC_METAFILE, User32.CF_ENHMETAFILE);
-            put(ClipboardHandler2.NC_DIB, User32.CF_DIB);
+            put(ClipboardHandler.NC_METAFILE, User32.CF_ENHMETAFILE);
+            put(ClipboardHandler.NC_DIB, User32.CF_DIB);
         }
     };
 
@@ -75,22 +76,27 @@ public class JNAWinClipboardHandler {
         return setClipBoardData(fno, buffer);
     }
 
-    public static boolean setClipBoardData(int format, byte[] buffer) {
+    public static boolean setClipBoardData(int format, byte[] buffer, boolean emptyClipboard) {
         boolean ok = false;
         if (USER32.OpenClipboard(null)) {
             try {
-                if (USER32.EmptyClipboard()) {
-                    WinNT.HANDLE handleData = formatHandling(format, buffer);
-                    if (handleData != null) {
-                        USER32.SetClipboardData(format, handleData);
-                        ok = true;
-                    }
+                if (emptyClipboard) {
+                    USER32.EmptyClipboard();
+                }
+                WinNT.HANDLE handleData = formatHandling(format, buffer);
+                if (handleData != null) {
+                    USER32.SetClipboardData(format, handleData);
+                    ok = true;
                 }
             } finally {
                 USER32.CloseClipboard();
             }
         }
         return ok;
+    }
+
+    public static boolean setClipBoardData(int format, byte[] buffer) {
+        return setClipBoardData(format, buffer, true);
     }
 
     private static WinNT.HANDLE formatHandling(int format, byte[] buffer) {
@@ -122,8 +128,8 @@ public class JNAWinClipboardHandler {
             try {
                 if (USER32.EmptyClipboard()) {
                     WinNT.HANDLE hmeta = wmfToEmf(filename);
-                    int fmol = USER32.RegisterClipboardFormat(ClipboardHandler2.NC_SERIALIZEMOLECULE);
-                    int fcd = USER32.RegisterClipboardFormat(ClipboardHandler2.NC_CHEMDRAWINTERCHANGE);
+                    int fmol = USER32.RegisterClipboardFormat(ClipboardHandler.NC_SERIALIZEMOLECULE);
+                    int fcd = USER32.RegisterClipboardFormat(ClipboardHandler.NC_CHEMDRAWINTERCHANGE);
 
                     WinNT.HANDLE handleMol = copyToGlobalBuffer(serializedObject);
                     WinNT.HANDLE handleCD = copyToGlobalBuffer(sketch);
@@ -154,9 +160,9 @@ public class JNAWinClipboardHandler {
             try {
                 if (USER32.EmptyClipboard()) {
 
-                    int fctab = USER32.RegisterClipboardFormat(ClipboardHandler2.NC_CTAB);
-                    int frxn = USER32.RegisterClipboardFormat(ClipboardHandler2.NC_SERIALIZEREACTION);
-                    int fcd = USER32.RegisterClipboardFormat(ClipboardHandler2.NC_CHEMDRAWINTERCHANGE);
+                    int fctab = USER32.RegisterClipboardFormat(ClipboardHandler.NC_CTAB);
+                    int frxn = USER32.RegisterClipboardFormat(ClipboardHandler.NC_SERIALIZEREACTION);
+                    int fcd = USER32.RegisterClipboardFormat(ClipboardHandler.NC_CHEMDRAWINTERCHANGE);
 
                     WinNT.HANDLE handlectab = copyToGlobalBuffer(ctab);
                     WinNT.HANDLE handleRxn = copyToGlobalBuffer(serializedObject);
@@ -194,6 +200,8 @@ public class JNAWinClipboardHandler {
         f.delete();
         return handle;
     }
+
+    public static boolean isInitOK() {return isInitOK;}
     public interface MyUser32 extends User32 {
         MyUser32 INSTANCE = (MyUser32) Native.load("user32", MyUser32.class, W32APIOptions.UNICODE_OPTIONS);
         boolean EmptyClipboard();

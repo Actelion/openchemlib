@@ -1,35 +1,35 @@
 /*
-* Copyright (c) 1997 - 2016
-* Actelion Pharmaceuticals Ltd.
-* Gewerbestrasse 16
-* CH-4123 Allschwil, Switzerland
-*
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*
-* 1. Redistributions of source code must retain the above copyright notice, this
-*    list of conditions and the following disclaimer.
-* 2. Redistributions in binary form must reproduce the above copyright notice,
-*    this list of conditions and the following disclaimer in the documentation
-*    and/or other materials provided with the distribution.
-* 3. Neither the name of the the copyright holder nor the
-*    names of its contributors may be used to endorse or promote products
-*    derived from this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-*/
+ * Copyright (c) 1997 - 2016
+ * Actelion Pharmaceuticals Ltd.
+ * Gewerbestrasse 16
+ * CH-4123 Allschwil, Switzerland
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ * 3. Neither the name of the the copyright holder nor the
+ *    names of its contributors may be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 package com.actelion.research.gui.clipboard;
 
 import com.actelion.research.chem.*;
@@ -52,8 +52,13 @@ import com.actelion.research.util.Sketch;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * <p>Title: Actelion Library</p>
@@ -66,7 +71,38 @@ import java.util.ArrayList;
  */
 public class ClipboardHandler implements IClipboardHandler
 {
+	public static final String NC_SERIALIZEMOLECULE = "ACT_MOLECULE";
+	public static final String NC_SERIALIZEREACTION = "ACT_REACTION";
+	public static final String NC_CTAB = "MDLCT";
+	public static final String NC_MOLFILE = "MDL_MOL";
+	public static final String NC_SKETCH = "MDLSK";
+	public static final String NC_EMBEDDEDSKETCH = "MDLSK_EMBEDDED";
+	public static final String NC_IDCODE = "IDCODE";
+	public static final String NC_CHEMDRAWINTERCHANGE = "ChemDraw Interchange Format";
+	public static final String NC_METAFILE = "CF_METAFILEPICT";
+	public static final String NC_DIB = "CF_DIB";
 	private static final byte MDLSK[] = {(byte) 'M', (byte) 'D', (byte) 'L', (byte) 'S', (byte) 'K', 0, 0};
+	public static final java.util.List<String> readableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_IDCODE);
+	public static final java.util.List<String> readableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CTAB, NC_MOLFILE, NC_SKETCH, NC_EMBEDDEDSKETCH, NC_IDCODE);
+
+	public static java.util.List<String> writableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_CHEMDRAWINTERCHANGE);
+	public static java.util.List<String> writableMoleculeFormats;
+	private static java.util.List<String> nativeCliphandler;
+
+	static {
+		if (Platform.isWindows()) {
+			nativeCliphandler = Arrays.asList(
+					"com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
+					"com.actelion.research.gui.clipboard.NativeClipboardAccessor"
+			);
+			writableMoleculeFormats = Arrays.asList(NC_METAFILE, NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE);
+		} else {
+			nativeCliphandler = new ArrayList<>();
+			writableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_IDCODE);
+		}
+	}
+
+
 
 	/**
 	 * Get one or more Molecule(s) from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
@@ -119,7 +155,7 @@ public class ClipboardHandler implements IClipboardHandler
 	private ArrayList<StereoMolecule> pasteMolecules(boolean prefer2D, boolean allowMultiple, int smartsMode) {
 		ArrayList<StereoMolecule> molList = new ArrayList<>();
 
-		StereoMolecule mol = Platform.isWindows() ? pasteMoleculeWindowsNative(prefer2D) : pasteMoleculeLinux();
+		StereoMolecule mol = /*Platform.isWindows()*/ isNativeClipHandler() ? pasteMoleculeNative(prefer2D) : pasteMoleculeLinux();
 		if (mol != null)
 			molList.add(mol);
 
@@ -128,15 +164,15 @@ public class ClipboardHandler implements IClipboardHandler
 			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 			String text = null;
 			try {
-                text = (String)t.getTransferData(DataFlavor.stringFlavor);
-				}
+				text = (String)t.getTransferData(DataFlavor.stringFlavor);
+			}
 			catch (Exception ioe) {}
 			if (text != null) {
 				try {
 					mol = new MolfileParser().getCompactMolecule(text);
 					if (mol != null && mol.getAllAtoms() != 0)
 						molList.add(mol);
-					}
+				}
 				catch (Exception e) {}
 
 				ArrayList<String> unresolvedNameList = null;
@@ -235,71 +271,50 @@ public class ClipboardHandler implements IClipboardHandler
 		return molList;
 	}
 
-	private StereoMolecule pasteMoleculeWindowsNative(boolean prefer2D) {
-		byte[] buffer;
+	private StereoMolecule pasteMoleculeNative(boolean prefer2D) {
 		StereoMolecule mol = null;
-
-		if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SERIALIZEMOLECULE)) != null) {
-			try {
-				ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
-				Object o = is.readObject();
-				if (o instanceof StereoMolecule) {
-					mol = (StereoMolecule) o;
-				}
-				is.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("Parsing NC_SERIALIZEMOLECULE during clipboard paste: Exception " + e);
-			}
-		}
-		System.out.println("Mol is " + mol);
-		if (mol == null) {
-			if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_CTAB)) != null
-					|| (buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_MOLFILE)) != null) {
-				MolfileParser p = new MolfileParser();
-				mol = new StereoMolecule();
-				if (!p.parse(mol, new String(buffer))) {
-					mol = null;
-					System.out.println("Error Parsing CTAB during clipboard paste");
-				}
-			}
-			if (mol == null) {
-				if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SKETCH)) != null
-						|| (buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_EMBEDDEDSKETCH)) != null) {
-					try {
-						mol = new StereoMolecule();
-						if (!Sketch.createMolFromSketchBuffer(mol, buffer)) {
-							mol = null;
-						}
-					} catch (IOException e) {
-						mol = null;
-						e.printStackTrace();
-						System.out.println("Parsing NC_SKETCH during clipboard paste: Exception " + e);
-					}
-				}
-			}
-		}
-		String clipboardText = null;
-		if (mol == null) {
-			if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_IDCODE)) != null) {
-				clipboardText = new String(buffer);
+		Class clipHandlerClz = getNativeClipHandler();
+		if (clipHandlerClz != null) {
+			for (String f : readableMoleculeFormats) {
 				try {
-					mol = new StereoMolecule();
-					IDCodeParser parser = new IDCodeParser(prefer2D);
-					parser.parse(mol,buffer);
-					if (mol.getAllAtoms() == 0)
-						mol = null;
-					else
-						System.out.printf("NC_IDCODE '%s' successfully interpreted as idcode\n",clipboardText);
-				} catch (Exception e) {
+					mol = rawToMol((byte[]) clipHandlerClz.getMethod("getClipboardData", String.class).invoke(clipHandlerClz, f), f, prefer2D);
+				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
 					e.printStackTrace();
-					System.out.printf("NC_IDCODE '%s' could not be parsed: "+e+"\n", clipboardText);
-					mol = null;
+					mol = pasteMoleculeLinux();
+					break;
 				}
+				if (mol != null) break;
+			}
+		} else {
+			mol = pasteMoleculeLinux();
+		}
+		return mol;
+	}
+
+	private static Class getNativeClipHandler() {
+
+		Class clipHandlerClz = null;
+
+		for (String clz : nativeCliphandler) {
+			try {
+				clipHandlerClz = Class.forName(clz);
+			} catch (ClassNotFoundException | NoClassDefFoundError | UnsatisfiedLinkError e1) {
+				e1.printStackTrace();
+			}
+			try {
+				if (clipHandlerClz != null && Boolean.TRUE.equals(clipHandlerClz.getMethod("isInitOK").invoke(clipHandlerClz))) {
+					System.out.println("WinClipHandler class: " + clz);
+					break;
+				}
+			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException  e2) {
+				e2.printStackTrace();
 			}
 		}
+		return clipHandlerClz;
+	}
 
-		return mol;
+	public static boolean isNativeClipHandler() {
+		return nativeCliphandler != null && nativeCliphandler.size() > 0;
 	}
 
 	private StereoMolecule pasteMoleculeLinux() {
@@ -307,7 +322,7 @@ public class ClipboardHandler implements IClipboardHandler
 			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 			return (StereoMolecule)t.getTransferData(ChemistryFlavors.DF_SERIALIZED_MOLECULE);
 		} catch (Exception e) {}
-	return null;
+		return null;
 	}
 
 	/**
@@ -316,7 +331,7 @@ public class ClipboardHandler implements IClipboardHandler
 	 * @return Reaction or null if no reaction present
 	 */
 	public Reaction pasteReaction() {
-		Reaction rxn = Platform.isWindows() ? pasteReactionWindowsNative() : pasteReactionLinux();
+		Reaction rxn = isNativeClipHandler() ? pasteReactionWindowsNative() : pasteReactionLinux();
 
 		if (rxn == null) {
 			// get StringFlavor from clipboard and try parsing it as rxn-idcode, rxn-file, or reaction-smiles
@@ -331,7 +346,7 @@ public class ClipboardHandler implements IClipboardHandler
 					rxn = ReactionEncoder.decode(text, true);
 					if (rxn != null && rxn.isEmpty())
 						rxn = null;
-					}
+				}
 				catch (Exception e) {}
 				if (rxn == null) {
 					try {
@@ -354,46 +369,25 @@ public class ClipboardHandler implements IClipboardHandler
 
 		return rxn;
 	}
-
 	public Reaction pasteReactionWindowsNative() {
-		byte[] buffer;
 		Reaction rxn = null;
-
-		if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SERIALIZEREACTION)) != null) {
-			try {
-				ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
-				Object o = is.readObject();
-				if (o instanceof Reaction) {
-					rxn = (Reaction) o;
+		Class clipHandlerClz = getNativeClipHandler();
+		if (clipHandlerClz != null) {
+			for (String f : readableReactionFormats) {
+				try {
+					rxn = rawToRxn((byte[]) clipHandlerClz.getMethod("getClipboardData", String.class).invoke(clipHandlerClz, f), f);
+				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+					e.printStackTrace();
+					rxn = pasteReactionLinux();
+					break;
 				}
-				is.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("ClipboardHandler.pasteReaction(): Exception " + e);
+				if (rxn != null) break;
 			}
-		} else if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_CTAB)) != null) {
-			RXNFileParser p = new RXNFileParser();
-			rxn = new Reaction();
-			try {
-				if (!p.parse(rxn, new String(buffer)))
-					rxn = null;
-			} catch (Exception e) {
-				System.err.println("Error parsing Reaction Buffer " + e);
-				rxn = null;
-			}
-		} else if ((buffer = NativeClipboardAccessor.getClipboardData(NativeClipboardAccessor.NC_SKETCH)) != null) {
-			try {
-				rxn = new Reaction();
-				if (!Sketch.createReactionFromSketchBuffer(rxn, buffer)) {
-					rxn = null;
-				}
-			} catch (IOException e) {
-				rxn = null;
-			}
+		} else {
+			rxn = pasteReactionLinux();
 		}
 		return rxn;
 	}
-
 	private Reaction pasteReactionLinux() {
 		try {
 			Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
@@ -417,72 +411,302 @@ public class ClipboardHandler implements IClipboardHandler
 	 * MDLCT MDL molfile
 	 */
 	public boolean copyMolecule(StereoMolecule mol) {
-		if (!Platform.isWindows()) {
-			MoleculeTransferable transferable = new MoleculeTransferable(mol);
-			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
-			return true;
+		if (isNativeClipHandler()) {
+			//return copyMoleculeNative(mol);
+			Class clipHandlerClz;
+			if ((clipHandlerClz = getNativeClipHandler())!= null) {
+				try {
+					Method method = clipHandlerClz.getMethod("copyMoleculeToClipboard", String.class, byte[].class, byte[].class);
+
+					StereoMolecule m = mol.getCompactCopy();
+					for (int atom = 0; atom < m.getAllAtoms(); atom++)
+						m.setAtomMapNo(atom, 0, false);
+
+					byte buffer[] = Sketch.createSketchFromMol(m);
+
+					File temp = File.createTempFile("actnca", ".wmf");
+					temp.deleteOnExit();
+
+					String path = null;
+					if (writeMol2Metafile(temp, m, buffer))
+						path = temp.getAbsolutePath();
+
+					// Serialize to a byte array
+					/*System.out.println("CopyMolecule");
+					com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
+					byte[] cdbuffer = cdx.getChemDrawBuffer(m);
+
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					ObjectOutputStream out = new ObjectOutputStream(bos);
+					// Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
+					// which is unacceptable for 3D molecules.
+					// If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
+					out.writeObject(mol);
+					out.close();
+					bos.close();*/
+
+					boolean ok = (boolean) method.invoke(clipHandlerClz, path, molToRaw(mol, NC_CHEMDRAWINTERCHANGE), molToRaw(mol,NC_SERIALIZEMOLECULE));
+
+					temp.delete();
+
+					return ok;
+				} catch (NoSuchMethodException | IOException | IllegalAccessException | InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		MoleculeTransferable transferable = new MoleculeTransferable(mol);
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+		return true;
+	}
+
+	public static void emptyClipboard() {
+		// This Transferable clears the clipboard
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new Transferable() {
+			public DataFlavor[] getTransferDataFlavors() {
+				return new DataFlavor[0];
 			}
 
-		// For now we keep the old handling for Windows...
-		boolean ok = false;
-		try {
-			StereoMolecule m = mol.getCompactCopy();
-			for (int atom=0; atom<m.getAllAtoms(); atom++)
-				m.setAtomMapNo(atom, 0, false);
+			public boolean isDataFlavorSupported(DataFlavor flavor) {
+				return false;
+			}
 
-			byte buffer[] = Sketch.createSketchFromMol(m);
+			public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+				throw new UnsupportedFlavorException(flavor);
+			}
+		}, null);
+	}
+	public boolean copyMoleculeNative(StereoMolecule mol) {
+		Class winClipHandler;
+		boolean ok = true;
+		if ((winClipHandler = getNativeClipHandler()) != null) {
 
-			File temp = File.createTempFile("actnca", ".wmf");
-			temp.deleteOnExit();
-
-			String path = null;
-			if (writeMol2Metafile(temp, m, buffer))
-				path = temp.getAbsolutePath();
-
-			// Serialize to a byte array
-			System.out.println("CopyMolecule");
-			com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
-			byte[] cdbuffer = cdx.getChemDrawBuffer(m);
-
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(bos);
-			// Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
-			// which is unacceptable for 3D molecules.
-			// If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
-			out.writeObject(mol);
-			out.close();
-			bos.close();
-
-			ok = NativeClipboardAccessor.copyMoleculeToClipboard(path, cdbuffer, bos.toByteArray());
-
-			temp.delete();
-		} catch (IOException e) {
-			System.err.println("ClipboardHandler: Exception copying Molecule " + e);
-		}
+			emptyClipboard();
+			for (String f : writableMoleculeFormats) {
+				try{
+					byte[] bytes = molToRaw(mol, f);
+					if (bytes != null) {
+						ok &= (boolean)winClipHandler.getMethod("setClipBoardData", String.class, byte[].class, boolean.class).invoke(winClipHandler, f, bytes, false);
+					}
+				} catch (InvocationTargetException |IllegalAccessException | NoSuchMethodException e) {
+    				e.printStackTrace();
+					ok = false;
+                }
+            }
+		} else ok = false;
 		return ok;
 	}
 
+	public static StereoMolecule rawToMol(byte[] buffer, String nativeFormat, boolean prefer2D) {
 
-	/**
-	 * Copies a reaction to the clipboard in various formats:
-	 * MDLSK Sketch
-	 * MDLCT MDL molfile
-	 */
+		StereoMolecule mol = null;
+
+		if (buffer != null) {
+			switch (nativeFormat) {
+				case NC_SERIALIZEMOLECULE:
+					try (ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer))) {
+						Object o = is.readObject();
+						is.close();
+						if (o instanceof StereoMolecule) {
+							mol = (StereoMolecule) o;
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (ClassNotFoundException e) {
+						e.printStackTrace();
+					}
+					break;
+				case NC_CTAB:
+				case NC_MOLFILE:
+					MolfileParser p = new MolfileParser();
+					mol = new StereoMolecule();
+					if (!p.parse(mol, new String(buffer))) {
+						mol = null;
+						System.out.println("Error Parsing CTAB during clipboard paste");
+					}
+					break;
+				case NC_SKETCH:
+				case NC_EMBEDDEDSKETCH:
+					try {
+						mol = new StereoMolecule();
+						if (!Sketch.createMolFromSketchBuffer(mol, buffer)) {
+							mol = null;
+						}
+					} catch (IOException ex) {
+						mol = null;
+						ex.printStackTrace();
+						System.out.println("Parsing NC_SKETCH during clipboard paste: Exception " + ex);
+					}
+					break;
+				case NC_IDCODE:
+					String clipboardText = new String(buffer);
+
+					try {
+						mol = new StereoMolecule();
+						IDCodeParser parser = new IDCodeParser(prefer2D);
+						parser.parse(mol, buffer);
+						if (mol.getAllAtoms() == 0) {
+							mol = null;
+						} else {
+							System.out.printf("NC_IDCODE '%s' successfully interpreted as idcode\n", clipboardText);
+						}
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						System.out.printf("NC_IDCODE '%s' could not be parsed: " + ex + "\n", clipboardText);
+						mol = null;
+					}
+					break;
+				default:
+					System.out.printf("No known format provided: ");
+					break;
+
+			}
+		}
+		return mol;
+	}
+
+	public static Reaction rawToRxn(byte[] buffer, String nativeFormat) {
+		Reaction rxn = null;
+		if (buffer != null) {
+			switch (nativeFormat) {
+				case NC_SERIALIZEREACTION:
+					try {
+						ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(buffer));
+						Object o = is.readObject();
+						if (o instanceof Reaction) {
+							rxn = (Reaction)o;
+						}
+						is.close();
+					} catch (Exception var7) {
+						var7.printStackTrace();
+						System.out.println("ClipboardHandler.pasteReaction(): Exception " + var7);
+					}
+					break;
+				case NC_CTAB:
+					RXNFileParser p = new RXNFileParser();
+					rxn = new Reaction();
+
+					try {
+						if (!p.parse(rxn, new String(buffer))) {
+							rxn = null;
+						}
+					} catch (Exception var6) {
+						System.err.println("Error parsing Reaction Buffer " + var6);
+						rxn = null;
+					}
+					break;
+				case NC_SKETCH:
+					try {
+						rxn = new Reaction();
+						if (!Sketch.createReactionFromSketchBuffer(rxn, buffer)) {
+							rxn = null;
+						}
+					} catch (IOException var5) {
+						rxn = null;
+					}
+					break;
+				case NC_IDCODE:
+					String clipboardText = new String(buffer);
+					rxn = ReactionEncoder.decode(clipboardText, true);
+					break;
+				default:
+					System.out.printf("No known format provided: " + nativeFormat);
+					break;
+			}
+		}
+		return rxn;
+	}
+	public byte[] molToRaw(StereoMolecule mol, String nativeFormat) {
+		byte[] bytes = null;
+		if (mol != null) {
+			switch (nativeFormat) {
+				case NC_SERIALIZEMOLECULE:
+					try {
+						ByteArrayOutputStream bos = new ByteArrayOutputStream();
+						ObjectOutputStream out = new ObjectOutputStream(bos);
+						// Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
+						// which is unacceptable for 3D molecules.
+						// If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
+						out.writeObject(mol);
+						out.close();
+						bos.close();
+						bytes = bos.toByteArray();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					break;
+				case NC_CHEMDRAWINTERCHANGE:
+					StereoMolecule m = mol.getCompactCopy();
+					for (int atom = 0; atom < m.getAllAtoms(); atom++)
+						m.setAtomMapNo(atom, 0, false);
+					com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
+					bytes = cdx.getChemDrawBuffer(m);
+					break;
+				case NC_METAFILE:
+					try {
+						m = mol.getCompactCopy();
+						for (int atom = 0; atom < m.getAllAtoms(); atom++)
+							m.setAtomMapNo(atom, 0, false);
+						byte buffer[] = Sketch.createSketchFromMol(m);
+
+						File temp = File.createTempFile("actnca", ".wmf");
+						temp.deleteOnExit();
+
+						String path = null;
+						if (writeMol2Metafile(temp, m, buffer))
+							bytes = Files.readAllBytes(temp.toPath());
+						temp.delete();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					break;
+				case NC_IDCODE:
+					bytes = mol.getIDCode().getBytes();
+				default:
+					System.err.println("Unkown Format " + nativeFormat);
+			}
+		}
+		return bytes;
+	}
+
+	public byte[] rxnToRaw(Reaction rxn, String ctab, String nativeFormat) {
+		byte[] bytes = null;
+		if (rxn != null) {
+			switch (nativeFormat) {
+				case NC_SERIALIZEREACTION:
+					try {
+						ByteArrayOutputStream bos = new ByteArrayOutputStream();
+						ObjectOutputStream out = new ObjectOutputStream(bos);
+						out.writeObject(rxn);
+						out.close();
+						bos.close();
+						bytes = bos.toByteArray();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					break;
+				case NC_CHEMDRAWINTERCHANGE:
+					ChemDrawCDX cdx = new ChemDrawCDX();
+					bytes = cdx.getChemDrawBuffer(rxn);
+					break;
+				case NC_CTAB:
+					if (ctab == null) {
+						RXNFileCreator mc = new RXNFileCreator(rxn);
+						ctab = mc.getRXNfile();
+					}
+					bytes = ctab.getBytes();
+					break;
+				case NC_IDCODE:
+					bytes = ReactionEncoder.encode(rxn, true, ReactionEncoder.INCLUDE_DEFAULT).getBytes();
+				default:
+					System.err.println("Unkown Format " + nativeFormat);
+			}
+		}
+		return bytes;
+	}
+
 	public boolean copyReaction(Reaction r) {
-		if (!Platform.isWindows()) {
-			ReactionTransferable transferable = new ReactionTransferable(r);
-			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
-			return true;
-		}
-
-		// For now we keep the old handling for Windows...
-		boolean ok = false;
-		try {
-			ok = copyReactionToClipboard(null, r);
-		} catch (IOException e) {
-			System.err.println("ClipboardHandler: Exception Copying Reaction " + e);
-		}
-		return ok;
+		return copyReactionToClipboard(null, r);
 	}
 
 	private Reaction makeRXNCopy(Reaction r)  {
@@ -513,25 +737,62 @@ public class ClipboardHandler implements IClipboardHandler
 		return ok;
 	}
 
-	private boolean copyReactionToClipboard(String ctab, Reaction rxn) throws IOException {
-		if (ctab == null) {
-			RXNFileCreator mc = new RXNFileCreator(rxn);
-			ctab = mc.getRXNfile();
+	/**
+	 * Copies a reaction to the clipboard in various formats:
+	 * MDLSK Sketch
+	 * MDLCT MDL molfile
+	 */
+	public boolean copyReactionToClipboard(String ctab, Reaction rxn) {
+		if (isNativeClipHandler()) {
+			//return copyReactionNative(ctab, rxn);
+			Class clipHandlerClz;
+			if ((clipHandlerClz = getNativeClipHandler())!= null) {
+				try {
+					Method method = clipHandlerClz.getMethod("copyReactionToClipboard", byte[].class, byte[].class, byte[].class);
+					/*if (ctab == null) {
+						RXNFileCreator mc = new RXNFileCreator(rxn);
+						ctab = mc.getRXNfile();
+					}
+					ChemDrawCDX cdx = new ChemDrawCDX();
+					byte[] cdxBuffer = cdx.getChemDrawBuffer(rxn);
+					System.out.println("copyReactionToClipboard");
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					ObjectOutputStream out = new ObjectOutputStream(bos);
+					out.writeObject(rxn);
+					out.close();
+					bos.close();*/
+
+					return (boolean) method.invoke(clipHandlerClz, rxnToRaw(rxn, ctab, NC_CTAB), rxnToRaw(rxn, ctab, NC_CHEMDRAWINTERCHANGE), rxnToRaw(rxn, ctab, NC_SERIALIZEREACTION));
+
+				} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 
-		ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
-		byte[] cdxBuffer = cdx.getChemDrawBuffer(rxn);
+		ReactionTransferable transferable = new ReactionTransferable(rxn);
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+		return true;
 
-		// Serialize to a byte array
-		System.out.println("copyReactionToClipboard");
-
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutputStream out = new ObjectOutputStream(bos);
-		out.writeObject(rxn);
-		out.close();
-		bos.close();
-
-		return NativeClipboardAccessor.copyReactionToClipboard(ctab.getBytes(), cdxBuffer, bos.toByteArray());
+	}
+	public boolean copyReactionNative(String ctab, Reaction rxn) {
+		Class clipHandlerClz = null;
+		boolean ok = true;
+		if ((clipHandlerClz = getNativeClipHandler()) != null) {
+			emptyClipboard();
+			for (String f : writableReactionFormats) {
+				try{
+					byte[] bytes = rxnToRaw(rxn, ctab, f);
+					if (bytes != null) {
+						ok &= (boolean)clipHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class).invoke(clipHandlerClz, f, bytes, false);
+					}
+				} catch (InvocationTargetException |IllegalAccessException | NoSuchMethodException e) {
+					e.printStackTrace();
+					ok = false;
+				}
+			}
+		} else ok = false;
+		return ok;
 	}
 
 	private boolean writeMol2Metafile(File temp, StereoMolecule m, byte[] sketch) {
@@ -544,7 +805,6 @@ public class ClipboardHandler implements IClipboardHandler
 		}
 		return ok;
 	}
-
 
 	private boolean writeMol2Metafile(OutputStream out, StereoMolecule m, byte[] sketch) throws IOException {
 		int w = 300;
@@ -569,10 +829,17 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 
 	public static boolean setClipBoardData(String format, byte[] buffer) {
-		if (Platform.isWindows()) {
-			return NativeClipboardAccessor.setClipBoardData(format,buffer);
-		} else
-			return false;
+		if (isNativeClipHandler()) {
+			Class clipHandlerClz = getNativeClipHandler();
+			if (clipHandlerClz != null) {
+				try {
+					return (boolean) clipHandlerClz.getMethod("setClipBoardData", String.class, byte[].class).invoke(clipHandlerClz, format, buffer);
+				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -581,10 +848,10 @@ public class ClipboardHandler implements IClipboardHandler
 	 * @return boolean
 	 */
 	public static boolean copyMetaFile(byte []data) {
-		return Platform.isWindows() && setClipBoardData(NativeClipboardAccessor.NC_METAFILE, data);
-		}
+		return Platform.isWindows() && setClipBoardData(NC_METAFILE, data);
+	}
 
-/*	private boolean writeRXN2Metafile(File temp, byte sketch[], Reaction m)
+    /*	private boolean writeRXN2Metafile(File temp, byte sketch[], Reaction m)
 	{
 		try {
 			return writeRXN2Metafile(new FileOutputStream(temp), sketch, m);
@@ -618,7 +885,6 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 */
 
-
 	/**
 	 * Copies an Image to the clipboard
 	 *
@@ -645,5 +911,13 @@ public class ClipboardHandler implements IClipboardHandler
 	 */
 	public static void putImage(Image image) {
 		ImageClipboardHandler.copyImage(image);
+	}
+
+	public static void setNativeCliphandler(java.util.List<String> nativeCliphandler) {
+		ClipboardHandler.nativeCliphandler = nativeCliphandler;
+	}
+
+	public static java.util.List<String> getNativeCliphandler() {
+		return ClipboardHandler.nativeCliphandler;
 	}
 }
