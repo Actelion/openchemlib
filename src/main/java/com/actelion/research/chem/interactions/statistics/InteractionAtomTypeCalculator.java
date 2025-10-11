@@ -1,4 +1,4 @@
-package com.actelion.research.chem.interactionstatistics;
+package com.actelion.research.chem.interactions.statistics;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.PeriodicTable;

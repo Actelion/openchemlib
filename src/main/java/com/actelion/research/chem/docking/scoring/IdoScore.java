@@ -12,7 +12,7 @@ import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.docking.LigandPose;
 import com.actelion.research.chem.docking.scoring.idoscore.InteractionTerm;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 

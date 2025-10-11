@@ -1,7 +1,7 @@
 package com.actelion.research.chem.conf.torsionstrain;
 
 import com.actelion.research.chem.conf.TorsionDB;
-import com.actelion.research.chem.interactionstatistics.SplineFunction;
+import com.actelion.research.chem.interactions.SplineFunction;
 import com.actelion.research.util.FastSpline;
 import com.actelion.research.util.SmoothingSplineInterpolator;
 

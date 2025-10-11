@@ -1,6 +1,6 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
-import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
+import com.actelion.research.chem.interactions.statistics.InteractionDistanceStatistics;
 
 import java.util.HashMap;
 import java.util.List;

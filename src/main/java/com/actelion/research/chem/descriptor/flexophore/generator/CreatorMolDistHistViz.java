@@ -43,8 +43,7 @@ import com.actelion.research.chem.descriptor.DescriptorHandlerFlexophore;
 import com.actelion.research.chem.descriptor.flexophore.*;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphExtractor;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
-import com.actelion.research.util.StringFunctions;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 
 import java.util.*;
 

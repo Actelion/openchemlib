@@ -1,7 +1,7 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
-import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
-import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
+import com.actelion.research.chem.interactions.statistics.InteractionDistanceStatistics;
+import com.actelion.research.chem.interactions.statistics.InteractionSimilarityTable;
 import com.actelion.research.util.datamodel.IntegerDouble;
 
 import java.util.ArrayList;

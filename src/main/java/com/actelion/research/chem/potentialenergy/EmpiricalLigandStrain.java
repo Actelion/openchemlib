@@ -9,11 +9,9 @@ import java.util.AbstractMap.SimpleEntry;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.conf.torsionstrain.StatisticalTorsionPotential;
 import com.actelion.research.chem.conf.torsionstrain.StatisticalTorsionTerm;
 import com.actelion.research.chem.docking.scoring.idoscore.InteractionTerm;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
-import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 
 
 public class EmpiricalLigandStrain implements PotentialEnergyTerm {

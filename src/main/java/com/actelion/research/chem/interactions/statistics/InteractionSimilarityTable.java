@@ -30,15 +30,11 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-package com.actelion.research.chem.interactionstatistics;
+package com.actelion.research.chem.interactions.statistics;
 
+import com.actelion.research.chem.interactions.SplineFunction;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 /**

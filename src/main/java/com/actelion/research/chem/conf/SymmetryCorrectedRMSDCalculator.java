@@ -38,7 +38,7 @@ import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.descriptor.pharmacophoretree.HungarianAlgorithm;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 
 import java.util.*;
 

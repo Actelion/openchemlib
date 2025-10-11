@@ -18,7 +18,7 @@ import com.actelion.research.chem.docking.scoring.IdoScore;
 import com.actelion.research.chem.docking.shape.ShapeDocking;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.forcefield.mmff.MMFFPositionConstraint;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.chem.mcs.MCS;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
