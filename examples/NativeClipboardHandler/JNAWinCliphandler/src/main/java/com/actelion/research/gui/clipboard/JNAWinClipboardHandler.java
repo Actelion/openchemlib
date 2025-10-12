@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class JNAWinClipboardHandler {
 
-    private static Boolean isInitOK = Boolean.TRUE; // dummy to match NativeClipboardAccessor
+    private static boolean isInitOK = true; // dummy to match NativeClipboardAccessor
     // Numeric windows default formats are defined in jna. E.g. User32.CF_BITMAP or User32.CF_DIB
     private static Map<String, Integer> stdWinCFValues = new HashMap() {
         {
@@ -221,7 +221,7 @@ public class JNAWinClipboardHandler {
 
     public interface MyKernel32 extends Kernel32 {
 
-        MyKernel32 INSTANCE = (MyKernel32) Native.load("kernel32", MyKernel32.class, W32APIOptions.UNICODE_OPTIONS);
+        MyKernel32 INSTANCE = Native.load("kernel32", MyKernel32.class, W32APIOptions.UNICODE_OPTIONS);
         WinNT.HANDLE GlobalAlloc(int var1, int var2);
 
         Pointer GlobalLock(WinNT.HANDLE var1);
