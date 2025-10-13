@@ -8,6 +8,7 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.zip.GZIPInputStream;
 
 
 /**
@@ -153,6 +154,7 @@ public class Sketch
     public static final int MSDIFF_OFFSET = 19;
     private static String DefaultFontName = "Arial";
 //	private static final int MAXMFCOMMENT = 5000;
+    private static final byte $GzipSettings = (byte)12;
     private static final int BYTESIZE = 1;
     private static final int WORDSIZE = 2;
 
@@ -348,20 +350,39 @@ public class Sketch
                     break;
 
                 case 0:
+                    break;
 
-                    //                    System.out.println("Read a byte of value '0'");
+                case -1:
+                    byte d = fp.readByte();
+                    if (d == $GzipSettings) {
+                        fp.mark(1);
+                        int a = fp.readShort();
+                        int size = fp.readShort(); // Seems to be size of the Gzipped setting (Biovia Draw)
+                        byte[] gzipPart = new byte[size];
+                        fp.read(gzipPart,0,size);
+                        GZIPInputStream is = new GZIPInputStream(new ByteArrayInputStream(gzipPart));
+                        byte[] f = new byte[1024];
+                        while (true) {
+                            int k = is.read(f);
+                            if (k < 1)
+                                break;
+//                            System.out.printf("%s\n",new String(f).substring(0,k));
+                        }
+                        fp.reset();
+                        fp.skipBytes(a);
+                    } else {
+                        throw new IOException(String.format("Unable to parse -1/%s",d));
+                    }
                     break;
 
                 default:
                     t = fp.readShort();
-
                     if (t > 2) {
                         fp.readFully(buff, 0, (int)t - 2);
                     }
-
                     break;
             }
-        } while ((c != -1) && (fp.in.available() > 0));
+        } while ((fp.available() > 0));
 
         if (!chiralFound)
             molMain.setToRacemate();
@@ -1036,7 +1057,7 @@ public class Sketch
         byte c;
         short t;
 
-        fp.in.mark(1);
+        fp.mark(1);
 
         while ((c = fp.readByte()) != -1) {
             switch (c) {
@@ -1075,7 +1096,7 @@ public class Sketch
                     //TRACE("End of Text...\n");
                     // fp.PutBack(1);
                     // return nFound;
-                    fp.in.reset();
+                    fp.reset();
 
                     return s;
             }
@@ -1123,7 +1144,7 @@ public class Sketch
         short t;
         byte[] buff = new byte[1024];
 
-        fp.in.mark(1);
+        fp.mark(1);
 
         while ((c = fp.readByte()) != -1) {
             switch (c) {
@@ -1164,7 +1185,7 @@ public class Sketch
                 default:
 
                     //TRACE("End of Arrow...\n");
-                    fp.in.reset();
+                    fp.reset();
 
                     return bFound;
             }
@@ -1187,7 +1208,7 @@ public class Sketch
         short t;
         byte[] buff = new byte[1024];
 
-        fp.in.mark(1);
+        fp.mark(1);
 
         while ((c = fp.readByte()) != -1) {
             switch (c) {
@@ -1229,7 +1250,7 @@ public class Sketch
                 default:
 
                     //TRACE("End of Arrow...\n");
-                    fp.in.reset();
+                    fp.reset();
 
                     return bFound;
             }

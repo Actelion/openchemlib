@@ -38,49 +38,53 @@ import java.io.*;
 
 public class LittleEndianDataInputStream implements DataInput
 {
-	public LittleEndianDataInputStream(InputStream in)
+	private DataInputStream dataInputStream; // to get at high level readFully methods of DataInputStream
+	private InputStream inputStream; // to get at the low-level read methods of InputStream
+	private byte[] workBuffer; // work array for buffering input
+
+	public LittleEndianDataInputStream(InputStream inputStream)
 	{
-		this.in = in;
-		this.d = new DataInputStream(in);
-		w = new byte[8];
+		this.inputStream = inputStream;
+		this.dataInputStream = new DataInputStream(inputStream);
+		workBuffer = new byte[8];
 	}
 
 	public final short readShort() throws IOException
 	{
-		d.readFully(w, 0, 2);
+		dataInputStream.readFully(workBuffer, 0, 2);
 
-		return (short)(((w[1] & 0xff) << 8) | (w[0] & 0xff));
+		return (short)(((workBuffer[1] & 0xff) << 8) | (workBuffer[0] & 0xff));
 	}
 
 	public final int readUnsignedShort() throws IOException
 	{
-		d.readFully(w, 0, 2);
+		dataInputStream.readFully(workBuffer, 0, 2);
 
-		return (((w[1] & 0xff) << 8) | (w[0] & 0xff));
+		return (((workBuffer[1] & 0xff) << 8) | (workBuffer[0] & 0xff));
 	}
 
 	public final char readChar() throws IOException
 	{
-		d.readFully(w, 0, 2);
+		dataInputStream.readFully(workBuffer, 0, 2);
 
-		return (char)(((w[1] & 0xff) << 8) | (w[0] & 0xff));
+		return (char)(((workBuffer[1] & 0xff) << 8) | (workBuffer[0] & 0xff));
 	}
 
 	public final int readInt() throws IOException
 	{
-		d.readFully(w, 0, 4);
+		dataInputStream.readFully(workBuffer, 0, 4);
 
-		return ((w[3]) << 24) | ((w[2] & 0xff) << 16) | ((w[1] & 0xff) << 8) | (w[0] & 0xff);
+		return ((workBuffer[3]) << 24) | ((workBuffer[2] & 0xff) << 16) | ((workBuffer[1] & 0xff) << 8) | (workBuffer[0] & 0xff);
 	}
 
 	public final long readLong() throws IOException
 	{
-		d.readFully(w, 0, 8);
+		dataInputStream.readFully(workBuffer, 0, 8);
 
-		return ((long)(w[7]) << 56) /* long cast needed or shift done modulo 32 */
-		| ((long)(w[6] & 0xff) << 48) | ((long)(w[5] & 0xff) << 40) | ((long)(w[4] & 0xff) << 32)
-		| ((long)(w[3] & 0xff) << 24) | ((long)(w[2] & 0xff) << 16) | ((long)(w[1] & 0xff) << 8)
-		| (long)(w[0] & 0xff);
+		return ((long)(workBuffer[7]) << 56) /* long cast needed or shift done modulo 32 */
+		| ((long)(workBuffer[6] & 0xff) << 48) | ((long)(workBuffer[5] & 0xff) << 40) | ((long)(workBuffer[4] & 0xff) << 32)
+		| ((long)(workBuffer[3] & 0xff) << 24) | ((long)(workBuffer[2] & 0xff) << 16) | ((long)(workBuffer[1] & 0xff) << 8)
+		| (long)(workBuffer[0] & 0xff);
 	}
 
 
@@ -97,12 +101,12 @@ public class LittleEndianDataInputStream implements DataInput
 
 	public final int read(byte[] b, int off, int len) throws IOException
 	{
-		return in.read(b, off, len);
+		return inputStream.read(b, off, len);
 	}
 
 	public final void readFully(byte[] b) throws IOException
 	{
-		d.readFully(b, 0, b.length);
+		dataInputStream.readFully(b, 0, b.length);
 	}
 
 	public final void readFully(byte[] b, int off, int len)
@@ -111,39 +115,39 @@ public class LittleEndianDataInputStream implements DataInput
         if (len < 0)
             System.err.println("Error: Negative number of bytes to read");
 		else
-            d.readFully(b, off, len);
+            dataInputStream.readFully(b, off, len);
 	}
 
 
 	public final int skipBytes(int n) throws IOException
 	{
-		return d.skipBytes(n);
+		return dataInputStream.skipBytes(n);
 	}
 
 	public final boolean readBoolean() throws IOException
 	{
-		return d.readBoolean();
+		return dataInputStream.readBoolean();
 	}
 
 	public final byte readByte() throws IOException
 	{
-		return d.readByte();
+		return dataInputStream.readByte();
 	}
 
 	public final int readUnsignedByte() throws IOException
 	{
-		return d.readUnsignedByte();
+		return dataInputStream.readUnsignedByte();
 	}
 
 	@Deprecated
 	public final String readLine() throws IOException
 	{
-		return d.readLine();
+		return dataInputStream.readLine();
 	}
 
 	public final String readUTF() throws IOException
 	{
-		return d.readUTF();
+		return dataInputStream.readUTF();
 	}
 
 	public static String readUTF(DataInput in) throws IOException
@@ -153,11 +157,27 @@ public class LittleEndianDataInputStream implements DataInput
 
 	public final void close() throws IOException
 	{
-		d.close();
+		dataInputStream.close();
 	}
 
-	protected DataInputStream d; // to get at high level readFully methods of DataInputStream
-	protected InputStream in; // to get at the low-level read methods of InputStream
-	byte[] w; // work array for buffering input
 
+	public int available() throws IOException
+	{
+		return inputStream.available();
+	}
+
+	public void mark(int i)
+	{
+		inputStream.mark(i);
+	}
+
+	public void reset() throws IOException
+	{
+		inputStream.reset();
+	}
+
+	public int read(byte[] buffer) throws IOException
+	{
+		return read(buffer,0,buffer.length);
+	}
 }

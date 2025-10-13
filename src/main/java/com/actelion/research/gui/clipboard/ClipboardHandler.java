@@ -517,12 +517,25 @@ public class ClipboardHandler implements IClipboardHandler
 					}
 					break;
 				case NC_CTAB:
+					try {
+						StringBuffer mfBuffer = getMolFromCTStream(new ByteArrayInputStream(buffer));
+						MolfileParser p = new MolfileParser();
+						mol = new StereoMolecule();
+						if (!p.parse(mol, mfBuffer)) {
+							mol = null;
+							System.out.println("Error Parsing CTAB during clipboard paste");
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					break;
+
 				case NC_MOLFILE:
 					MolfileParser p = new MolfileParser();
 					mol = new StereoMolecule();
 					if (!p.parse(mol, new String(buffer))) {
 						mol = null;
-						System.out.println("Error Parsing CTAB during clipboard paste");
+						System.out.println("Error Parsing MOLFILE during clipboard paste");
 					}
 					break;
 				case NC_SKETCH:
@@ -532,6 +545,8 @@ public class ClipboardHandler implements IClipboardHandler
 						if (!Sketch.createMolFromSketchBuffer(mol, buffer)) {
 							mol = null;
 						}
+						System.out.printf("Mol Atoms %d Bonds %d MW %s\n", mol.getAllAtoms(), mol.getBonds(), mol.getMolweight());
+
 					} catch (IOException ex) {
 						mol = null;
 						ex.printStackTrace();
@@ -920,4 +935,30 @@ public class ClipboardHandler implements IClipboardHandler
 	public static java.util.List<String> getNativeCliphandler() {
 		return ClipboardHandler.nativeCliphandler;
 	}
+
+
+     private static StringBuffer getMolFromCTStream(InputStream sbis) throws IOException {
+     	StringBuffer sb = new StringBuffer();
+ 		// In MDLCT format lines are prepended with their length.  There are
+     	// no newline characters (i.e. a line is just like a Pascal string)
+     	// So, loop over lines and read them in.
+ 		int len;
+ 		while ((len = sbis.read()) != -1) {
+ 			if (len > 0) {
+ 				byte[] cbuf = new byte[len];
+ 				//  attempt to read all characters in the "line"
+ 				int rd = sbis.read(cbuf, 0, len);
+ 				// unless we read that number of characters, something is wrong
+ 				if (rd == -1) {
+ 					throw new IOException("MDLCT line specified length of " + len + " characters for line, found EOF");
+ 				} else if (rd != len) {
+ 					throw new IOException("MDLCT input specified length of " + len + " characters for line, found " + rd);
+ 				}
+ 				sb.append(new String(cbuf));
+ 			}
+ 			sb.append(System.getProperty("line.separator"));
+ 		}
+ 		return sb;
+ 	}
+
 }
