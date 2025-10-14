@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class JNAWinClipboardHandler {
 
-    private static Boolean isInitOK = Boolean.TRUE; // dummy to match NativeClipboardAccessor
+    private static boolean isInitOK = true; // dummy to match NativeClipboardAccessor
     // Numeric windows default formats are defined in jna. E.g. User32.CF_BITMAP or User32.CF_DIB
     private static Map<String, Integer> stdWinCFValues = new HashMap() {
         {

@@ -51,7 +51,7 @@ public class NativeClipboardAccessor {
 	public static final String NC_CHEMDRAWINTERCHANGE = "ChemDraw Interchange Format";
 	public static final String NC_IDCODE		= "IDCODE";
 
-	private static Boolean isInitOK;
+	private static boolean isInitOK;
 
     public static native boolean copyMoleculeToClipboard(String filname, byte[] sketch, byte[] serializedObject);
 	public static native boolean copyReactionToClipboard(byte[] ctab, byte[] sketch, byte[] serializedObject);
@@ -68,11 +68,9 @@ public class NativeClipboardAccessor {
             System.out.println("actelionclip loaded");
 			isInitOK = true;
         } catch (UnsatisfiedLinkError e) {
-			isInitOK = false;
         	// added to retain compatibility with DataWarrior installations; TLS 11Jan2018
 			e.printStackTrace();
         } catch (SecurityException e) {
-			isInitOK = false;
         	e.printStackTrace();
         }
     }
