@@ -89,8 +89,18 @@ public class ClipboardHandler implements IClipboardHandler
 	private static java.util.List<String> writableMoleculeFormats;
 	private static java.util.List<String> nativeCliphandler;
 
+	public static final String COM_MDLI_SKETCHFILE = "com.mdli.sketchfile";
+	public static final String COM_PE_CDX = "com.perkinelmer.chemdraw.cdx-clipboard";
+	public static final String COM_MDLI_MOLFILE = "com.mdli.molfile";
+
+
 	static {
-		if (Platform.isWindows()) {
+		if (Platform.isMacintosh()) {
+			nativeCliphandler = Arrays.asList(
+					"com.actelion.research.gui.clipboard.JNAMacClipboardHandler"
+			);
+			readableMoleculeFormats = Arrays.asList(COM_MDLI_MOLFILE,COM_MDLI_SKETCHFILE/*,COM_PE_CDX*/);
+		} else if (Platform.isWindows()) {
 			nativeCliphandler = Arrays.asList(
 					"com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
 					"com.actelion.research.gui.clipboard.NativeClipboardAccessor"
@@ -280,7 +290,8 @@ public class ClipboardHandler implements IClipboardHandler
 		if (clipHandlerClz != null) {
 			for (String f : readableMoleculeFormats) {
 				try {
-					mol = rawToMol((byte[]) clipHandlerClz.getMethod("getClipboardData", String.class).invoke(clipHandlerClz, f), f, prefer2D);
+					byte[] getClipboardData = (byte[]) clipHandlerClz.getMethod("getClipboardData", String.class).invoke(clipHandlerClz, f);
+					mol = rawToMol(getClipboardData, f, prefer2D);
 				} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
 					e.printStackTrace();
 					mol = pasteMoleculeLinux();
@@ -288,7 +299,8 @@ public class ClipboardHandler implements IClipboardHandler
 				}
 				if (mol != null) break;
 			}
-		} else {
+		}
+		if (mol == null) {
 			mol = pasteMoleculeLinux();
 		}
 		return mol;
@@ -436,20 +448,6 @@ public class ClipboardHandler implements IClipboardHandler
 					if (writeMol2Metafile(temp, m, buffer))
 						path = temp.getAbsolutePath();
 
-					// Serialize to a byte array
-					/*System.out.println("CopyMolecule");
-					com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
-					byte[] cdbuffer = cdx.getChemDrawBuffer(m);
-
-					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					ObjectOutputStream out = new ObjectOutputStream(bos);
-					// Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
-					// which is unacceptable for 3D molecules.
-					// If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
-					out.writeObject(mol);
-					out.close();
-					bos.close();*/
-
 					boolean ok = (boolean) method.invoke(clipHandlerClz, path, molToRaw(mol, NC_CHEMDRAWINTERCHANGE), molToRaw(mol,NC_SERIALIZEMOLECULE));
 
 					temp.delete();
@@ -521,6 +519,7 @@ public class ClipboardHandler implements IClipboardHandler
 						e.printStackTrace();
 					}
 					break;
+				case COM_MDLI_MOLFILE:
 				case NC_CTAB:
 					try {
 						StringBuffer mfBuffer = getMolFromMDLCT(new ByteArrayInputStream(buffer));
@@ -543,6 +542,7 @@ public class ClipboardHandler implements IClipboardHandler
 					}
 					break;
 				case NC_SKETCH:
+				case COM_MDLI_SKETCHFILE:
 				case NC_EMBEDDEDSKETCH:
 					try {
 						mol = new StereoMolecule();

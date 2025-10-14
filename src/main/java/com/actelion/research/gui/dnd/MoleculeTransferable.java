@@ -62,6 +62,7 @@ public class MoleculeTransferable implements Transferable,ClipboardOwner {
 
     @Override
     public synchronized Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException,IOException {
+        System.out.printf("GetTransferdata '%s'\n",flavor);
         if (flavor.equals(ChemistryFlavors.DF_SERIALIZED_MOLECULE)) {
             return new StereoMolecule(mMol);
         } else if (flavor.equals(ChemistryFlavors.DF_MDLMOLFILEV3)) {

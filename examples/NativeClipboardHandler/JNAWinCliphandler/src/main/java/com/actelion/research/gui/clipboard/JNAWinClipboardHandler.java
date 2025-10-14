@@ -1,8 +1,6 @@
 package com.actelion.research.gui.clipboard;
 
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.win32.W32APIOptions;
 
@@ -182,7 +180,8 @@ public class JNAWinClipboardHandler {
         return ok;
     }
 
-    public static WinNT.HANDLE wmfToEmf(String path) {
+    private static WinNT.HANDLE wmfToEmf(String path)
+    {
         WinNT.HANDLE hmeta = GDI32.GetEnhMetaFile(path);
         if (hmeta == null) {
             hmeta = GDI32.GetMetaFile(path);
@@ -191,7 +190,8 @@ public class JNAWinClipboardHandler {
         return hmeta;
     }
 
-    public static WinNT.HANDLE wmfToEmf(byte[] buffer) throws IOException {
+    private static WinNT.HANDLE wmfToEmf(byte[] buffer) throws IOException
+    {
         File f = File.createTempFile("wmf2emf", "tmp");
         FileOutputStream out = new FileOutputStream(f);
         out.write(buffer);
