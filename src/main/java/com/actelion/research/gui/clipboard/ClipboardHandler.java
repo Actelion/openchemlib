@@ -90,6 +90,15 @@ public class ClipboardHandler implements IClipboardHandler
 	private static java.util.List<String> nativeCliphandler;
 
 	static {
+		if (Platform.isMacintosh()) {
+			try {
+				String clazz = "com.actelion.research.gui.clipboard.JNAMacClipboardHandler";
+				Class<?> clz = Class.forName(clazz);
+				clz.getMethod("foo").invoke(null);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
 		if (Platform.isWindows()) {
 			nativeCliphandler = Arrays.asList(
 					"com.actelion.research.gui.clipboard.JNAWinClipboardHandler",

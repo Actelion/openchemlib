@@ -6,6 +6,7 @@ import com.actelion.research.chem.reaction.Reaction;
 
 import java.awt.*;
 import java.io.*;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
@@ -159,8 +160,8 @@ public class Sketch
     private static final int MOLSIZE = 1440;
     private static final int REACTIONSIZE = 4000;
     private static final int PLUSSIZE = 20;
-    
-    
+
+
     //        public static final int TAGNAMELEN (sizeof("MDLSK")/sizeof(char)+1);
     public static boolean createMolFromSketchFile(StereoMolecule mol, String szFileName)
         throws IOException
@@ -177,8 +178,8 @@ public class Sketch
     public static boolean createMolFromSketchBuffer(StereoMolecule mol, byte[] buffer)
         throws IOException
     {
-        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
-        LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
+//        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
+        EndianInputStream fp = new EndianInputStream(Platform.isWindows() ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN, buffer);
 
         return getMolObjects(mol, fp);
     }
@@ -214,8 +215,8 @@ public class Sketch
         is.read(buffer);
         is.close();
 
-        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
-        LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
+//        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
+        EndianInputStream fp = new EndianInputStream(Platform.isWindows() ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN,buffer);
 
         return createReactionFromSketchBuffer(rxn, fp);
     }
@@ -223,8 +224,8 @@ public class Sketch
     public static boolean createReactionFromSketchBuffer(Reaction rxn, byte[] buffer)
         throws IOException
     {
-        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
-        LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
+        //ByteArrayInputStream b = new ByteArrayInputStream(buffer);
+        EndianInputStream fp = new EndianInputStream(Platform.isWindows() ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN,buffer);
 
         return createReactionFromSketchBuffer(rxn, fp);
     }
@@ -248,253 +249,17 @@ public class Sketch
     {
         boolean ok = false;
         byte[] buffer = createSketchFromReaction(rxn);
-    
+
         if (buffer != null) {
             os.write(buffer);
             ok = true;
         }
-    
+
         return ok;
     }
 
-    
-    /*
-        private int getMolObjectsOl(StereoMolecule mol,LittleEndianDataInputStream fp,int molAtoms[]) throws IOException
-        {
-            byte buff[] = new byte[1024];
-            byte c;
-            byte bval;
-            short at1,at2,AtomType=0;
-            int i;
-            short t,val = 0,num=0;
-            DblPoint dblCoords = new DblPoint();
-            int ObjectCount=0;
-            int MolObject=-1,BondObject=-1,AtomObject=-1;
-            String s;
 
-            do {
-                c = fp.readByte();
-
-                switch (c) {
-                    case $Version:
-                        ObjectCount=0;
-                        MolObject = -1;
-                        t = fp.readShort();
-                        bval = fp.readByte();
-                        break;
-
-                    case $Totobjs:
-                        t = fp.readShort();
-                        val = fp.readShort();
-                        ObjectCount = -1; AtomObject=-1;BondObject=-1;
-                        break;
-
-                    case $Obj:
-                        t = fp.readShort();
-                        bval = fp.readByte();
-                        switch(bval) {
-                            case $Obj_Mol:
-                                MolObject++;AtomObject=-1;BondObject=-1;
-                                AtomType = 0;
-                                ObjectCount = -1;
-                                break;
-                            case $Obj_Chiral:
-                                //                        mol.SetChiral(true);
-                                mol.setChiral(true);
-                                ObjectCount++;
-                                break;
-                            case $Obj_Bond:
-                                BondObject++;
-                                //System.out.println("mol.vectBonds.insert(mol.vectBonds.end(),bond);");
-                                //                        mol.vectBonds.insert(mol.vectBonds.end(),bond);
-                                ObjectCount++;
-                                AtomType = 0;
-                                break;
-                            case $Obj_Atom:
-                                AtomObject++;
-                                //CXR ChemDraw Problem C atoms are not defined with symbol and number!
-                                //                        strcpy(atom.Symbol,"C");
-                                //                        atom.Number = 6;
-                                //                        mol.vectAtoms.insert(mol.vectAtoms.end(),atom);
-                                mol.addAtom("C");
-                                ObjectCount++;
-                                AtomType = 0;
-                                break;
-
-                            default:
-
-                                ObjectCount++;
-                            break;
-                        }
-                        if (MolObject > 1) {
-                            System.err.println("Sorry Only One Molecule supported\n");
-                            return 1;
-                        }
-                        break;
-
-                    case $Begsketch: // $BeginSketch
-                        t = fp.readShort();
-                        fp.readFully(buff,0,(int)t-2);
-                        //                fp.BufRead(buff,t-2);
-                        break;
-
-                    case $Endsketch: //$EndSketch
-                        t = fp.readShort();
-    //                    return 0;
-                        break;
-                    case $Atom_coords: //$Atom_coords
-                        t = fp.readShort();
-                        dblCoords.x = fp.readFloat();
-                        dblCoords.y = fp.readFloat();
-                        //                fp.BufRead(&dblCoords,sizeof(dblCoords));
-                        mol.setAtomX(AtomObject,dblCoords.x);
-                        //                mol.vectAtoms[AtomObject].x = dblCoords.x;
-                        mol.setAtomY(AtomObject,dblCoords.y);
-                        //                mol.vectAtoms[AtomObject].y = dblCoords.y;
-                        mol.setAtomZ(AtomObject,0);
-                        //                mol.vectAtoms[AtomObject].z = 0;
-                        molAtoms[AtomObject] = ObjectCount;
-
-                        //                mol.vectAtoms[AtomObject].Number = ObjectCount;
-                        //                mol.vectAtoms[AtomObject].Charge = 0;
-                        break;
-
-                    case $Atom_type: //$Atom Type
-                        t = fp.readShort();
-                        AtomType = fp.readShort();
-                        //                fp.BufRead(&AtomType,2);
-                        break;
-
-                    case $Atom_symbol:
-                        t = fp.readShort();
-                        fp.readFully(buff,0,t-2);
-                        //                fp.BufRead(buff,t-2);
-                        s = P2CStr(buff);
-                        System.out.println("Atom Symbol Length " + t + " sym = " + P2CStr(buff));
-                        //                                   %d Sym=[%s]\n",t,(char *)P2CStr(buff));
-                        switch (AtomType) {
-                            case 270:
-                                System.out.println("Atom list");
-                                //                        strcpy(mol.vectAtoms[AtomObject].Symbol,"L");
-                                break;
-                            case 271:
-                                System.out.println("Atom not list");
-                                //                        mol.vectAtoms[AtomObject].bNotList = TRUE;
-                                //                        strcpy(mol.vectAtoms[AtomObject].Symbol,"L");
-                                break;
-                            default:
-                                System.out.println("Atom Symbol ");
-                            mol.setAtomicNo(AtomObject,Molecule.getAtomicNoFromLabel(s));
-                            //                        strcpy(mol.vectAtoms[AtomObject].Symbol,P2CStr(buff));
-                            break;
-                        }
-                        break;
-
-                    case $Atom_list: //$Atom_List
-                        t = fp.readShort();
-                        num = fp.readShort();
-                        //                fp.BufRead(&num,1); // read number of atoms in list
-                        for (i = 0; i < num ; i++) {
-                            val = fp.readShort(); // read atoms in list
-                            //                    mol.vectAtoms[AtomObject].List[i] =  (int)val;
-                            //TRACE("Atom %d in List\n",(int)val);
-                        }
-                        //                mol.vectAtoms[AtomObject].List[i] = -1;
-                        break;
-
-                    case $Atom_alias: //$Atom Alias
-                        t = fp.readShort();
-                        fp.readFully(buff,0,t-2);
-                        //                fp.BufRead(buff,t-2);
-                        break;
-
-                    case $Atom_number: //Atom_number
-                        t = fp.readShort();
-                        val = fp.readShort();
-                        break;
-
-                    case $Atom_chg: //$Atom_Charge
-                        t = fp.readShort();
-                        bval = fp.readByte();
-                        mol.setAtomCharge(AtomObject,((int)bval)-16);
-    //                    System.out.println(" mol.vectAtoms[AtomObject].Charge = ((int)bval)-16;");
-                        //                mol.vectAtoms[AtomObject].Charge = ((int)bval)-16;
-                        break;
-
-                    case $Atom_rad: //Atom_rad
-                        t = fp.readShort();
-                        bval = fp.readByte();
-                        //TRACE("Atom Radical %d \n",bval);
-                        break;
-
-                    case $Atom_msdif: //$Atom_msdif
-                        t = fp.readShort();
-                        bval = fp.readByte();
-                        //TRACE("Atom Mass Diff %d \n",bval);
-                        break;
-
-                    case $Atom_valence: //$Atom_valence
-                        t = fp.readShort();
-                        bval = fp.readByte();
-                        //TRACE("Atom Valence %d \n",bval);
-                        break;
-
-
-                    case $Bond_atoms: //$Bond_atoms
-                        t = fp.readShort();
-                        at1 = fp.readShort();
-                        at2 = fp.readShort();
-                        mol.addBond(at1,at2,0);
-                        //                fp.BufRead(&at1,2);
-                        //                fp.BufRead(&at2,2);
-    //                    System.out.println(" mol.vectBonds[BondObject].Atoms[0] = at1;");
-                        //                mol.vectBonds[BondObject].Atoms[0] = at1;
-                        //                mol.vectBonds[BondObject].Atoms[1] = at2;
-                        //                mol.vectBonds[BondObject].Type = 1;                                // Default
-                        break;
-
-                    case $Bond_type: //$Bond_type
-                        t = fp.readShort();
-                        bval = fp.readByte();
-                        setBondFeatures(mol,BondObject,(int)bval,0,0);
-    //                    mol.setBondType(BondObject,getBondType((int)bval));
-    //                    System.out.println("mol.vectBonds[BondObject].Type = (int)bval;");
-                        //                mol.vectBonds[BondObject].Type = (int)bval;
-                        break;
-
-                    case $Bond_stereo_type: //Bond_stereo_type
-                        t = fp.readShort();
-                        bval = fp.readByte();
-                        setBondFeatures(mol,BondObject,0,(int)bval,0);
-    //                    System.out.println(" mol.vectBonds[BondObject].Stereo = (int)bval;");
-                        //                mol.vectBonds[BondObject].Stereo = (int)bval;
-                        break;
-
-
-                    case $Atom_aamap_num: // Atom_aamap_num
-                        t = fp.readShort();
-                        val = fp.readShort();
-    //                    System.out.println("mol.vectAtoms[AtomObject].AtomMap = (int)val;");
-                        mol.setAtomMapNo(AtomObject,(int)val,false);
-                        //                mol.vectAtoms[AtomObject].AtomMap = (int)val;
-                        break;
-
-                    case -1:
-                        break;
-
-                    default:
-                        t = fp.readShort();
-                    fp.readFully(buff,0,t-2);
-                    //                fp.BufRead(buff,t-2);
-                    break;
-
-                }
-            } while (c != -1);
-            CorrectBondAtomNumbering(mol,AtomObject+1, BondObject+1,molAtoms);
-            return 1;
-        }
-    */
-    private static boolean getMolObjects(StereoMolecule molMain, LittleEndianDataInputStream fp)
+    private static boolean getMolObjects(StereoMolecule molMain, EndianInputStream fp)
         throws IOException
     {
         byte c;
@@ -584,10 +349,8 @@ public class Sketch
                     break;
 
                 case 0:
-
-                    //                    System.out.println("Read a byte of value '0'");
+                case -1:
                     break;
-
                 default:
                     t = fp.readShort();
 
@@ -597,16 +360,16 @@ public class Sketch
 
                     break;
             }
-        } while ((c != -1) && (fp.in.available() > 0));
+        } while ((c != -1)/* && (fp.in.available() > 0)*/);
 
         if (!chiralFound)
             molMain.setToRacemate();
-
+        molMain.ensureHelperArrays(Molecule.cHelperAll);
         return ok;
     }
 
     private static boolean createReactionFromSketchBuffer(
-        Reaction rxn, LittleEndianDataInputStream fp) throws IOException
+        Reaction rxn, EndianInputStream fp) throws IOException
     {
         int numObjects;
         String strText;
@@ -696,7 +459,7 @@ public class Sketch
             r.right = (short)Math.max(x, r.right);
             r.bottom = (short)Math.max(y, r.bottom);
         }
-        debug("Bounding Rect for Molecule " + m + " is " + r.left + "," 
+        debug("Bounding Rect for Molecule " + m + " is " + r.left + ","
                            + r.top + "," + r.right + "," + r.bottom);
         return r;
     }
@@ -718,7 +481,7 @@ public class Sketch
             r.bottom = Math.max(y, r.bottom);
         }
 
-        debug("Bounding Rect2D for Molecule " + m + " is " + r.left + "," 
+        debug("Bounding Rect2D for Molecule " + m + " is " + r.left + ","
                            + r.top + "," + r.right + "," + r.bottom);
         return r;
     }
@@ -738,7 +501,7 @@ public class Sketch
             r.bottom = Math.max(r.bottom, rm.bottom);
         }
 
-        debug("Bounding Rect2D for Reaction " + rxn + " is " + r.left + "," 
+        debug("Bounding Rect2D for Reaction " + rxn + " is " + r.left + ","
                            + r.top + "," + r.right + "," + r.bottom);
         return r;
     }
@@ -758,7 +521,7 @@ public class Sketch
         return new Point(r.left + (dx / 2), r.top + (dy / 2));
     }
 
-    private static boolean getMolObject(StereoMolecule mol, LittleEndianDataInputStream fp)
+    private static boolean getMolObject(StereoMolecule mol, EndianInputStream fp)
         throws IOException
     {
         byte[] buff = new byte[1024];
@@ -852,7 +615,7 @@ public class Sketch
 
                     if (!chiralFound)
                         mol.setToRacemate();
-                        
+
                     return true;
 
                 case $Atom_coords: //$Atom_coords
@@ -1196,7 +959,7 @@ public class Sketch
         return radical;
     }
 
-    private static int readSketchHeader(LittleEndianDataInputStream fp)
+    private static int readSketchHeader(EndianInputStream fp)
         throws IOException
     {
         byte[] buff = new byte[1024];
@@ -1237,7 +1000,7 @@ public class Sketch
         return 0;
     }
 
-    private static int getNextObject(LittleEndianDataInputStream fp)
+    private static int getNextObject(EndianInputStream fp)
         throws IOException
     {
         byte[] buff = new byte[1024];
@@ -1264,7 +1027,7 @@ public class Sketch
         return 0;
     }
 
-    private static String getTextObject(Rect rect, LittleEndianDataInputStream fp)
+    private static String getTextObject(Rect rect, EndianInputStream fp)
         throws IOException
     {
         String s = null;
@@ -1272,7 +1035,8 @@ public class Sketch
         byte c;
         short t;
 
-        fp.in.mark(1);
+        fp.mark();
+        //fp.in.mark(1);
 
         while ((c = fp.readByte()) != -1) {
             switch (c) {
@@ -1311,7 +1075,8 @@ public class Sketch
                     //TRACE("End of Text...\n");
                     // fp.PutBack(1);
                     // return nFound;
-                    fp.in.reset();
+                    fp.reset();
+                    //fp.in.reset();
 
                     return s;
             }
@@ -1320,7 +1085,7 @@ public class Sketch
         return s;
     }
 
-    private static String getMDLText(LittleEndianDataInputStream fp)
+    private static String getMDLText(EndianInputStream fp)
         throws IOException
     {
         byte[] buff = new byte[1024];
@@ -1349,7 +1114,7 @@ public class Sketch
         return new String(text, StandardCharsets.UTF_8);
     }
 
-    private static boolean getArrowObject(Arrow arrow, LittleEndianDataInputStream fp)
+    private static boolean getArrowObject(Arrow arrow, EndianInputStream fp)
         throws IOException
     {
         int maxcount = 12;
@@ -1359,7 +1124,8 @@ public class Sketch
         short t;
         byte[] buff = new byte[1024];
 
-        fp.in.mark(1);
+        fp.mark();
+        //fp.in.mark(1);
 
         while ((c = fp.readByte()) != -1) {
             switch (c) {
@@ -1400,7 +1166,8 @@ public class Sketch
                 default:
 
                     //TRACE("End of Arrow...\n");
-                    fp.in.reset();
+                    fp.reset();
+                    //fp.in.reset();
 
                     return bFound;
             }
@@ -1413,7 +1180,7 @@ public class Sketch
         return bFound;
     }
 
-    private static boolean getLineArrowObject(Arrow arrow, LittleEndianDataInputStream fp)
+    private static boolean getLineArrowObject(Arrow arrow, EndianInputStream fp)
         throws IOException
     {
         int maxcount = 13;
@@ -1423,7 +1190,8 @@ public class Sketch
         short t;
         byte[] buff = new byte[1024];
 
-        fp.in.mark(1);
+        fp.mark();
+        //fp.in.mark(1);
 
         while ((c = fp.readByte()) != -1) {
             switch (c) {
@@ -1465,7 +1233,8 @@ public class Sketch
                 default:
 
                     //TRACE("End of Arrow...\n");
-                    fp.in.reset();
+                    fp.reset();
+                    //fp.in.reset();
 
                     return bFound;
             }
@@ -1728,7 +1497,7 @@ public class Sketch
             if (i < (reactants - 1)) {
                 Rect rn = getBoundingRect(rxn.getMolecule(i + 1));
                 Rect rp = calcMiddleRect(rc, rn, PLUSSIZE);
-                debug("Writing plus at " + 
+                debug("Writing plus at " +
                                    rp.left + "," + rp.top + "," + rp.right + "," + rp.bottom);
                 writePlus(fp, rp, -1, -1);
             }
@@ -2201,8 +1970,8 @@ public class Sketch
             return order;
         }
     }
-    
-    
+
+
     private static void debug(String s)
     {
         if (debug_)

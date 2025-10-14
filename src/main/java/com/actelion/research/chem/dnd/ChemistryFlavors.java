@@ -46,6 +46,42 @@ public class ChemistryFlavors {
             } catch (Throwable ex) {
                 //System.err.println("KLUDGE: This exception is thrown due to the applet context");
             }
+
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            return super.equals(o);
+        }
+
+        @Override
+        public String getHumanPresentableName() {
+            return "bar";
+        }
+
+        /**
+         * Returns the primary MIME type for this {@code DataFlavor}.
+         *
+         * @return the primary MIME type of this {@code DataFlavor}
+         */
+        @Override
+        public String getPrimaryType() {
+            return "prim";
+        }
+
+        /**
+         * Returns the sub MIME type of this {@code DataFlavor}.
+         *
+         * @return the Sub MIME type of this {@code DataFlavor}
+         */
+        @Override
+        public String getSubType() {
+            return "sub";
+        }
+
+        public String toString() {
+            return "Foo";
         }
     }
 
@@ -56,7 +92,8 @@ public class ChemistryFlavors {
     public static final DataFlavor DF_IDCODE = new DataFlavor("chemical/x-openmolecules-idcode;class=java.lang.String", "OpenChemLib ID-Code");
     public static final DataFlavor[] MOLECULE_FLAVORS = {
         DF_SERIALIZED_MOLECULE,
-        DF_MDLMOLFILE,
+
+        DF_MDLMOLFILE ,
         DF_MDLMOLFILEV3,
         DF_SMILES,
         DF_IDCODE,
