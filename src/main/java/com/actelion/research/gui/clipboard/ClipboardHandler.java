@@ -82,11 +82,11 @@ public class ClipboardHandler implements IClipboardHandler
 	public static final String NC_METAFILE = "CF_METAFILEPICT";
 	public static final String NC_DIB = "CF_DIB";
 	private static final byte MDLSK[] = {(byte) 'M', (byte) 'D', (byte) 'L', (byte) 'S', (byte) 'K', 0, 0};
-	public static final java.util.List<String> readableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_IDCODE);
-	public static final java.util.List<String> readableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CTAB, NC_MOLFILE, NC_SKETCH, NC_EMBEDDEDSKETCH, NC_IDCODE);
+	private static java.util.List<String> readableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_IDCODE);
+	private static java.util.List<String> readableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CTAB, NC_MOLFILE, NC_SKETCH, NC_EMBEDDEDSKETCH, NC_IDCODE);
 
-	public static java.util.List<String> writableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_CHEMDRAWINTERCHANGE);
-	public static java.util.List<String> writableMoleculeFormats;
+	private static java.util.List<String> writableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_CHEMDRAWINTERCHANGE);
+	private static java.util.List<String> writableMoleculeFormats;
 	private static java.util.List<String> nativeCliphandler;
 
 	static {
@@ -102,6 +102,10 @@ public class ClipboardHandler implements IClipboardHandler
 		}
 	}
 
+	// Test purpose only
+	public static void setMolReadableFormat(String format) {
+		readableMoleculeFormats = Arrays.asList(format);
+	}
 
 
 	/**
@@ -267,7 +271,6 @@ public class ClipboardHandler implements IClipboardHandler
 			}
 		}
 
-//		System.out.println("returned mol(s): " + molList.size());
 		return molList;
 	}
 
@@ -340,7 +343,9 @@ public class ClipboardHandler implements IClipboardHandler
 			try {
 				text = (String)t.getTransferData(DataFlavor.stringFlavor);
 			}
-			catch (Exception ioe) {}
+			catch (Exception ioe) {
+				// ignored
+			}
 			if (text != null) {
 				try {
 					rxn = ReactionEncoder.decode(text, true);
@@ -518,7 +523,7 @@ public class ClipboardHandler implements IClipboardHandler
 					break;
 				case NC_CTAB:
 					try {
-						StringBuffer mfBuffer = getMolFromCTStream(new ByteArrayInputStream(buffer));
+						StringBuffer mfBuffer = getMolFromMDLCT(new ByteArrayInputStream(buffer));
 						MolfileParser p = new MolfileParser();
 						mol = new StereoMolecule();
 						if (!p.parse(mol, mfBuffer)) {
@@ -529,7 +534,6 @@ public class ClipboardHandler implements IClipboardHandler
 						e.printStackTrace();
 					}
 					break;
-
 				case NC_MOLFILE:
 					MolfileParser p = new MolfileParser();
 					mol = new StereoMolecule();
@@ -545,8 +549,6 @@ public class ClipboardHandler implements IClipboardHandler
 						if (!Sketch.createMolFromSketchBuffer(mol, buffer)) {
 							mol = null;
 						}
-						System.out.printf("Mol Atoms %d Bonds %d MW %s\n", mol.getAllAtoms(), mol.getBonds(), mol.getMolweight());
-
 					} catch (IOException ex) {
 						mol = null;
 						ex.printStackTrace();
@@ -937,17 +939,16 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 
 
-     private static StringBuffer getMolFromCTStream(InputStream sbis) throws IOException {
+     private static StringBuffer getMolFromMDLCT(InputStream is) throws IOException {
      	StringBuffer sb = new StringBuffer();
  		// In MDLCT format lines are prepended with their length.  There are
      	// no newline characters (i.e. a line is just like a Pascal string)
-     	// So, loop over lines and read them in.
  		int len;
- 		while ((len = sbis.read()) != -1) {
+ 		while ((len = is.read()) != -1) {
  			if (len > 0) {
  				byte[] cbuf = new byte[len];
  				//  attempt to read all characters in the "line"
- 				int rd = sbis.read(cbuf, 0, len);
+ 				int rd = is.read(cbuf, 0, len);
  				// unless we read that number of characters, something is wrong
  				if (rd == -1) {
  					throw new IOException("MDLCT line specified length of " + len + " characters for line, found EOF");

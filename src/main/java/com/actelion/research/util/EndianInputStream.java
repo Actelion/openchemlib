@@ -46,10 +46,7 @@ public class EndianInputStream implements DataInput
 
     public EndianInputStream(ByteOrder order, byte[] bytes) throws IOException
     {
-        buffer = ByteBuffer.allocate(bytes.length);
-        buffer.mark();
-        buffer.put(bytes);
-        buffer.reset();
+        buffer = ByteBuffer.wrap(bytes);
         buffer.order(order);
     }
 
@@ -115,12 +112,11 @@ public class EndianInputStream implements DataInput
     public final int read(byte[] b, int off, int len) throws IOException
     {
         try {
-            ByteBuffer byteBuffer = buffer.get(b, off, len);
+            buffer.get(b, off, len);
             return len;
         } catch (Exception e) {
             return -1;
         }
-        //return in.read(b, off, len);
     }
 
     public final void readFully(byte[] b) throws IOException
@@ -171,6 +167,7 @@ public class EndianInputStream implements DataInput
 
     public final void close() throws IOException
     {
+        //
     }
 
     public void mark()
@@ -181,5 +178,15 @@ public class EndianInputStream implements DataInput
     public void reset()
     {
         buffer.reset();
+    }
+
+    public void mark(int i)
+    {
+        mark();
+    }
+
+    public int available()
+    {
+        return buffer.remaining();
     }
 }

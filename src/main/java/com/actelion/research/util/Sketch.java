@@ -6,6 +6,7 @@ import com.actelion.research.chem.reaction.Reaction;
 
 import java.awt.*;
 import java.io.*;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
@@ -179,9 +180,10 @@ public class Sketch
     public static boolean createMolFromSketchBuffer(StereoMolecule mol, byte[] buffer)
         throws IOException
     {
-        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
-        LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
-
+        //ByteArrayInputStream b = new ByteArrayInputStream(buffer);
+        //LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
+        EndianInputStream fp = new EndianInputStream(Platform.isWindows()
+                ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN,buffer);
         return getMolObjects(mol, fp);
     }
 
@@ -216,17 +218,20 @@ public class Sketch
         is.read(buffer);
         is.close();
 
-        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
-        LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
-
+//        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
+//        LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
+        EndianInputStream fp = new EndianInputStream(Platform.isWindows()
+                ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN,buffer);
         return createReactionFromSketchBuffer(rxn, fp);
     }
 
     public static boolean createReactionFromSketchBuffer(Reaction rxn, byte[] buffer)
         throws IOException
     {
-        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
-        LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
+//        ByteArrayInputStream b = new ByteArrayInputStream(buffer);
+//        LittleEndianDataInputStream fp = new LittleEndianDataInputStream(b);
+        EndianInputStream fp = new EndianInputStream(Platform.isWindows()
+                ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN,buffer);
 
         return createReactionFromSketchBuffer(rxn, fp);
     }
@@ -260,7 +265,7 @@ public class Sketch
     }
 
 
-    private static boolean getMolObjects(StereoMolecule molMain, LittleEndianDataInputStream fp)
+    private static boolean getMolObjects(StereoMolecule molMain, EndianInputStream fp)
         throws IOException
     {
         byte c;
@@ -391,7 +396,7 @@ public class Sketch
     }
 
     private static boolean createReactionFromSketchBuffer(
-        Reaction rxn, LittleEndianDataInputStream fp) throws IOException
+        Reaction rxn, EndianInputStream fp) throws IOException
     {
         int numObjects;
         String strText;
@@ -543,7 +548,7 @@ public class Sketch
         return new Point(r.left + (dx / 2), r.top + (dy / 2));
     }
 
-    private static boolean getMolObject(StereoMolecule mol, LittleEndianDataInputStream fp)
+    private static boolean getMolObject(StereoMolecule mol, EndianInputStream fp)
         throws IOException
     {
         byte[] buff = new byte[1024];
@@ -981,7 +986,7 @@ public class Sketch
         return radical;
     }
 
-    private static int readSketchHeader(LittleEndianDataInputStream fp)
+    private static int readSketchHeader(EndianInputStream fp)
         throws IOException
     {
         byte[] buff = new byte[1024];
@@ -1022,7 +1027,7 @@ public class Sketch
         return 0;
     }
 
-    private static int getNextObject(LittleEndianDataInputStream fp)
+    private static int getNextObject(EndianInputStream fp)
         throws IOException
     {
         byte[] buff = new byte[1024];
@@ -1049,7 +1054,7 @@ public class Sketch
         return 0;
     }
 
-    private static String getTextObject(Rect rect, LittleEndianDataInputStream fp)
+    private static String getTextObject(Rect rect, EndianInputStream fp)
         throws IOException
     {
         String s = null;
@@ -1105,7 +1110,7 @@ public class Sketch
         return s;
     }
 
-    private static String getMDLText(LittleEndianDataInputStream fp)
+    private static String getMDLText(EndianInputStream fp)
         throws IOException
     {
         byte[] buff = new byte[1024];
@@ -1134,7 +1139,7 @@ public class Sketch
         return new String(text, StandardCharsets.UTF_8);
     }
 
-    private static boolean getArrowObject(Arrow arrow, LittleEndianDataInputStream fp)
+    private static boolean getArrowObject(Arrow arrow, EndianInputStream fp)
         throws IOException
     {
         int maxcount = 12;
@@ -1198,7 +1203,7 @@ public class Sketch
         return bFound;
     }
 
-    private static boolean getLineArrowObject(Arrow arrow, LittleEndianDataInputStream fp)
+    private static boolean getLineArrowObject(Arrow arrow, EndianInputStream fp)
         throws IOException
     {
         int maxcount = 13;

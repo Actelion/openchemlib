@@ -27,6 +27,7 @@ public class TestDialog {
         JEditableChemistryView natMol = new JEditableChemistryView(ExtendedDepictor.TYPE_MOLECULES);
         JEditableChemistryView natRxn = new JEditableChemistryView(ExtendedDepictor.TYPE_REACTION);
         JEditableStructureView natStruct = new JEditableStructureView();
+        //ClipboardHandler.setMolReadableFormat(ClipboardHandler.NC_SKETCH);
         natStruct.setClipboardHandler(new ClipboardHandler());
 
         panelx.add(natMol);
