@@ -1,4 +1,4 @@
-## Native Clipboard Handler for Open Chemlib
+## Native Clipboard Handler for OpenChemLib
 *OpenChemLib* provides Clipboard functionality like Copy & Paste within its Editors by default. However, to access Data from third parties, like ChemDraw, a native Clipboard Handler is required.
 Its best to look at com.actelion.research.gui.clipboard.ClipboardHandler in *OpenChemLib* and these examples to see how things work.
 If you build a one of the cliphandler projects and put the resulting jar and JNA dependencies on the classpath, *OpenChemLib* will try to use the native implementation, if executed on the Operating System for which it is implemented.
