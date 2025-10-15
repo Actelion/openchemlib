@@ -73,7 +73,11 @@ public class JNAWinClipboardHandler {
 
     public static boolean setClipBoardData(String format, byte[] buffer) {
         int fno = getFormatNo(format);
-        return setClipBoardData(fno, buffer);
+        return setClipBoardData(fno, buffer, true);
+    }
+    public static boolean setClipBoardData(String format, byte[] buffer, boolean emptyClipboard) {
+        int fno = getFormatNo(format);
+        return setClipBoardData(fno, buffer, emptyClipboard);
     }
 
     public static boolean setClipBoardData(int format, byte[] buffer, boolean emptyClipboard) {

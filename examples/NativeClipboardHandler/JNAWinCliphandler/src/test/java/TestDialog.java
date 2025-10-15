@@ -40,8 +40,12 @@ public class TestDialog {
         toggleButton.addActionListener(a -> {
             Collections.reverse(ClipboardHandler.getNativeCliphandler());
         });
-
+        JButton toggleButton2 = new JButton("Toggle Compatibility Mode");
+        toggleButton2.addActionListener(a -> {
+            ClipboardHandler.setCompatibilityMode(!ClipboardHandler.isCompatibilityMode());
+        });
         panely.add(toggleButton);
+        panely.add(toggleButton2);
 
         f.setSize(new Dimension(800, 800));
         f.setVisible(true);

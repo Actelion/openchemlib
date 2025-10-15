@@ -89,16 +89,18 @@ public class ClipboardHandler implements IClipboardHandler
 	public static java.util.List<String> writableMoleculeFormats;
 	private static java.util.List<String> nativeCliphandler;
 
+	private static boolean compatibilityMode = false; // for NativeClipboardAccessor
+
 	static {
 		if (Platform.isWindows()) {
 			nativeCliphandler = Arrays.asList(
 					"com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
 					"com.actelion.research.gui.clipboard.NativeClipboardAccessor"
 			);
-			writableMoleculeFormats = Arrays.asList(NC_METAFILE, NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE);
+			writableMoleculeFormats = Arrays.asList(NC_METAFILE, NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
 		} else {
 			nativeCliphandler = new ArrayList<>();
-			writableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_IDCODE);
+			writableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
 		}
 	}
 
@@ -302,7 +304,7 @@ public class ClipboardHandler implements IClipboardHandler
 				e1.printStackTrace();
 			}
 			try {
-				if (clipHandlerClz != null && Boolean.TRUE.equals(clipHandlerClz.getMethod("isInitOK").invoke(clipHandlerClz))) {
+				if (clipHandlerClz != null && (boolean) clipHandlerClz.getMethod("isInitOK").invoke(clipHandlerClz)) {
 					System.out.println("WinClipHandler class: " + clz);
 					break;
 				}
@@ -331,7 +333,7 @@ public class ClipboardHandler implements IClipboardHandler
 	 * @return Reaction or null if no reaction present
 	 */
 	public Reaction pasteReaction() {
-		Reaction rxn = isNativeClipHandler() ? pasteReactionWindowsNative() : pasteReactionLinux();
+		Reaction rxn = isNativeClipHandler() ? pasteReactionNative() : pasteReactionLinux();
 
 		if (rxn == null) {
 			// get StringFlavor from clipboard and try parsing it as rxn-idcode, rxn-file, or reaction-smiles
@@ -369,7 +371,7 @@ public class ClipboardHandler implements IClipboardHandler
 
 		return rxn;
 	}
-	public Reaction pasteReactionWindowsNative() {
+	public Reaction pasteReactionNative() {
 		Reaction rxn = null;
 		Class clipHandlerClz = getNativeClipHandler();
 		if (clipHandlerClz != null) {
@@ -412,7 +414,7 @@ public class ClipboardHandler implements IClipboardHandler
 	 */
 	public boolean copyMolecule(StereoMolecule mol) {
 		if (isNativeClipHandler()) {
-			//return copyMoleculeNative(mol);
+			if (!compatibilityMode) return copyMoleculeNative(mol);
 			Class clipHandlerClz;
 			if ((clipHandlerClz = getNativeClipHandler())!= null) {
 				try {
@@ -430,20 +432,6 @@ public class ClipboardHandler implements IClipboardHandler
 					String path = null;
 					if (writeMol2Metafile(temp, m, buffer))
 						path = temp.getAbsolutePath();
-
-					// Serialize to a byte array
-					/*System.out.println("CopyMolecule");
-					com.actelion.research.gui.clipboard.external.ChemDrawCDX cdx = new com.actelion.research.gui.clipboard.external.ChemDrawCDX();
-					byte[] cdbuffer = cdx.getChemDrawBuffer(m);
-
-					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					ObjectOutputStream out = new ObjectOutputStream(bos);
-					// Changed from m to mol, because writeMol2Metafile() may have scaled xy-coords of m,
-					// which is unacceptable for 3D molecules.
-					// If an application needs coordinate scaling, then this should be done after pasting. TLS 07Feb2016
-					out.writeObject(mol);
-					out.close();
-					bos.close();*/
 
 					boolean ok = (boolean) method.invoke(clipHandlerClz, path, molToRaw(mol, NC_CHEMDRAWINTERCHANGE), molToRaw(mol,NC_SERIALIZEMOLECULE));
 
@@ -557,7 +545,7 @@ public class ClipboardHandler implements IClipboardHandler
 					}
 					break;
 				default:
-					System.out.printf("No known format provided: ");
+					System.out.printf("No known format provided: " + nativeFormat);
 					break;
 
 			}
@@ -744,23 +732,11 @@ public class ClipboardHandler implements IClipboardHandler
 	 */
 	public boolean copyReactionToClipboard(String ctab, Reaction rxn) {
 		if (isNativeClipHandler()) {
-			//return copyReactionNative(ctab, rxn);
+			if (!compatibilityMode) return copyReactionNative(ctab, rxn);
 			Class clipHandlerClz;
 			if ((clipHandlerClz = getNativeClipHandler())!= null) {
 				try {
 					Method method = clipHandlerClz.getMethod("copyReactionToClipboard", byte[].class, byte[].class, byte[].class);
-					/*if (ctab == null) {
-						RXNFileCreator mc = new RXNFileCreator(rxn);
-						ctab = mc.getRXNfile();
-					}
-					ChemDrawCDX cdx = new ChemDrawCDX();
-					byte[] cdxBuffer = cdx.getChemDrawBuffer(rxn);
-					System.out.println("copyReactionToClipboard");
-					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					ObjectOutputStream out = new ObjectOutputStream(bos);
-					out.writeObject(rxn);
-					out.close();
-					bos.close();*/
 
 					return (boolean) method.invoke(clipHandlerClz, rxnToRaw(rxn, ctab, NC_CTAB), rxnToRaw(rxn, ctab, NC_CHEMDRAWINTERCHANGE), rxnToRaw(rxn, ctab, NC_SERIALIZEREACTION));
 
@@ -919,5 +895,13 @@ public class ClipboardHandler implements IClipboardHandler
 
 	public static java.util.List<String> getNativeCliphandler() {
 		return ClipboardHandler.nativeCliphandler;
+	}
+
+	public static boolean isCompatibilityMode() {
+		return compatibilityMode;
+	}
+
+	public static void setCompatibilityMode(boolean compatibilityMode) {
+		ClipboardHandler.compatibilityMode = compatibilityMode;
 	}
 }
