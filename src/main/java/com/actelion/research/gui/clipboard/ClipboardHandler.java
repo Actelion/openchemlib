@@ -650,8 +650,10 @@ public class ClipboardHandler implements IClipboardHandler
 					break;
 				case NC_IDCODE:
 					bytes = mol.getIDCode().getBytes();
+					break;
 				default:
 					System.err.println("Unkown Format " + nativeFormat);
+					break;
 			}
 		}
 		return bytes;
@@ -686,8 +688,10 @@ public class ClipboardHandler implements IClipboardHandler
 					break;
 				case NC_IDCODE:
 					bytes = ReactionEncoder.encode(rxn, true, ReactionEncoder.INCLUDE_DEFAULT).getBytes();
+					break;
 				default:
 					System.err.println("Unkown Format " + nativeFormat);
+					break;
 			}
 		}
 		return bytes;
