@@ -414,34 +414,8 @@ public class ClipboardHandler implements IClipboardHandler
 	 */
 	public boolean copyMolecule(StereoMolecule mol) {
 		if (isNativeClipHandler()) {
-			if (!compatibilityMode) return copyMoleculeNative(mol);
-			Class clipHandlerClz;
-			if ((clipHandlerClz = getNativeClipHandler())!= null) {
-				try {
-					Method method = clipHandlerClz.getMethod("copyMoleculeToClipboard", String.class, byte[].class, byte[].class);
-
-					StereoMolecule m = mol.getCompactCopy();
-					for (int atom = 0; atom < m.getAllAtoms(); atom++)
-						m.setAtomMapNo(atom, 0, false);
-
-					byte buffer[] = Sketch.createSketchFromMol(m);
-
-					File temp = File.createTempFile("actnca", ".wmf");
-					temp.deleteOnExit();
-
-					String path = null;
-					if (writeMol2Metafile(temp, m, buffer))
-						path = temp.getAbsolutePath();
-
-					boolean ok = (boolean) method.invoke(clipHandlerClz, path, molToRaw(mol, NC_CHEMDRAWINTERCHANGE), molToRaw(mol,NC_SERIALIZEMOLECULE));
-
-					temp.delete();
-
-					return ok;
-				} catch (NoSuchMethodException | IOException | IllegalAccessException | InvocationTargetException e) {
-					e.printStackTrace();
-				}
-			}
+			if (compatibilityMode) return copyMoleculeNativeClassic(mol);
+			else return copyMoleculeNative(mol);
 		}
 		MoleculeTransferable transferable = new MoleculeTransferable(mol);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
@@ -464,7 +438,39 @@ public class ClipboardHandler implements IClipboardHandler
 			}
 		}, null);
 	}
-	public boolean copyMoleculeNative(StereoMolecule mol) {
+
+	private boolean copyMoleculeNativeClassic(StereoMolecule mol) {
+		Class clipHandlerClz;
+		boolean ok = false;
+
+		if ((clipHandlerClz = getNativeClipHandler())!= null) {
+			try {
+				Method method = clipHandlerClz.getMethod("copyMoleculeToClipboard", String.class, byte[].class, byte[].class);
+
+				StereoMolecule m = mol.getCompactCopy();
+				for (int atom = 0; atom < m.getAllAtoms(); atom++)
+					m.setAtomMapNo(atom, 0, false);
+
+				byte buffer[] = Sketch.createSketchFromMol(m);
+
+				File temp = File.createTempFile("actnca", ".wmf");
+				temp.deleteOnExit();
+
+				String path = null;
+				if (writeMol2Metafile(temp, m, buffer))
+					path = temp.getAbsolutePath();
+
+				ok = (boolean) method.invoke(clipHandlerClz, path, molToRaw(mol, NC_CHEMDRAWINTERCHANGE), molToRaw(mol,NC_SERIALIZEMOLECULE));
+
+				temp.delete();
+
+			} catch (NoSuchMethodException | IOException | IllegalAccessException | InvocationTargetException e) {
+				e.printStackTrace();
+			}
+		}
+		return ok;
+	}
+	private boolean copyMoleculeNative(StereoMolecule mol) {
 		Class winClipHandler;
 		boolean ok = true;
 		if ((winClipHandler = getNativeClipHandler()) != null) {
@@ -736,18 +742,8 @@ public class ClipboardHandler implements IClipboardHandler
 	 */
 	public boolean copyReactionToClipboard(String ctab, Reaction rxn) {
 		if (isNativeClipHandler()) {
-			if (!compatibilityMode) return copyReactionNative(ctab, rxn);
-			Class clipHandlerClz;
-			if ((clipHandlerClz = getNativeClipHandler())!= null) {
-				try {
-					Method method = clipHandlerClz.getMethod("copyReactionToClipboard", byte[].class, byte[].class, byte[].class);
-
-					return (boolean) method.invoke(clipHandlerClz, rxnToRaw(rxn, ctab, NC_CTAB), rxnToRaw(rxn, ctab, NC_CHEMDRAWINTERCHANGE), rxnToRaw(rxn, ctab, NC_SERIALIZEREACTION));
-
-				} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-					e.printStackTrace();
-				}
-			}
+			if (compatibilityMode) return copyReactionNativeClassic(ctab, rxn);
+			else return copyReactionNative(ctab, rxn);
 		}
 
 		ReactionTransferable transferable = new ReactionTransferable(rxn);
@@ -755,6 +751,22 @@ public class ClipboardHandler implements IClipboardHandler
 		return true;
 
 	}
+	public boolean copyReactionNativeClassic(String ctab, Reaction rxn) {
+		Class clipHandlerClz;
+		if ((clipHandlerClz = getNativeClipHandler())!= null) {
+			try {
+				Method method = clipHandlerClz.getMethod("copyReactionToClipboard", byte[].class, byte[].class, byte[].class);
+
+				return (boolean) method.invoke(clipHandlerClz, rxnToRaw(rxn, ctab, NC_CTAB), rxnToRaw(rxn, ctab, NC_CHEMDRAWINTERCHANGE), rxnToRaw(rxn, ctab, NC_SERIALIZEREACTION));
+
+			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+				e.printStackTrace();
+			}
+		}
+		return false;
+	}
+
+
 	public boolean copyReactionNative(String ctab, Reaction rxn) {
 		Class clipHandlerClz = null;
 		boolean ok = true;
