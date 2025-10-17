@@ -38,7 +38,7 @@ public class TestDialog {
 
         JButton toggleButton = new JButton("Toggle Native/JNA");
         toggleButton.addActionListener(a -> {
-            Collections.reverse(ClipboardHandler.getNativeCliphandler());
+            Collections.reverse(ClipboardHandler.getNativeCliphandlerList());
         });
         JButton toggleButton2 = new JButton("Toggle Compatibility Mode");
         toggleButton2.addActionListener(a -> {
