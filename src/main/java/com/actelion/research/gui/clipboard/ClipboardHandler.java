@@ -87,19 +87,22 @@ public class ClipboardHandler implements IClipboardHandler
 
 	public static java.util.List<String> writableReactionFormats = Arrays.asList(NC_SERIALIZEREACTION, NC_CTAB, NC_CHEMDRAWINTERCHANGE);
 	public static java.util.List<String> writableMoleculeFormats;
-	private static java.util.List<String> nativeCliphandler;
+	private static java.util.List<String> nativeCliphandlerList;
 
 	private static boolean compatibilityMode = false; // for NativeClipboardAccessor
 
+	private static int sketchwidth = 300;
+	private static int sketchheight = 200;
+
 	static {
 		if (Platform.isWindows()) {
-			nativeCliphandler = Arrays.asList(
+			nativeCliphandlerList = Arrays.asList(
 					"com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
 					"com.actelion.research.gui.clipboard.NativeClipboardAccessor"
 			);
 			writableMoleculeFormats = Arrays.asList(NC_METAFILE, NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
 		} else {
-			nativeCliphandler = new ArrayList<>();
+			nativeCliphandlerList = new ArrayList<>();
 			writableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
 		}
 	}
@@ -157,7 +160,7 @@ public class ClipboardHandler implements IClipboardHandler
 	private ArrayList<StereoMolecule> pasteMolecules(boolean prefer2D, boolean allowMultiple, int smartsMode) {
 		ArrayList<StereoMolecule> molList = new ArrayList<>();
 
-		StereoMolecule mol = /*Platform.isWindows()*/ isNativeClipHandler() ? pasteMoleculeNative(prefer2D) : pasteMoleculeLinux();
+		StereoMolecule mol = isNativeClipHandler() ? pasteMoleculeNative(prefer2D) : pasteMoleculeLinux();
 		if (mol != null)
 			molList.add(mol);
 
@@ -297,7 +300,7 @@ public class ClipboardHandler implements IClipboardHandler
 
 		Class clipHandlerClz = null;
 
-		for (String clz : nativeCliphandler) {
+		for (String clz : nativeCliphandlerList) {
 			try {
 				clipHandlerClz = Class.forName(clz);
 			} catch (ClassNotFoundException | NoClassDefFoundError | UnsatisfiedLinkError e1) {
@@ -316,7 +319,7 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 
 	public static boolean isNativeClipHandler() {
-		return nativeCliphandler != null && nativeCliphandler.size() > 0;
+		return nativeCliphandlerList != null && nativeCliphandlerList.size() > 0;
 	}
 
 	private StereoMolecule pasteMoleculeLinux() {
@@ -404,7 +407,14 @@ public class ClipboardHandler implements IClipboardHandler
 		p.parse(m, molfile);
 		return copyMolecule(m);
 	}
-
+	public boolean copySizedMolecule(StereoMolecule mol, int width, int height) {
+		sketchwidth = width;
+		sketchheight = height;
+		boolean ok = copyMolecule(mol);
+		sketchwidth = 300;
+		sketchheight = 200;
+		return ok;
+	}
 
 	/**
 	 * Copies a molecule to the clipboard in various formats:
@@ -423,7 +433,6 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 
 	public static void emptyClipboard() {
-		// This Transferable clears the clipboard
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new Transferable() {
 			public DataFlavor[] getTransferDataFlavors() {
 				return new DataFlavor[0];
@@ -799,8 +808,8 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 
 	private boolean writeMol2Metafile(OutputStream out, StereoMolecule m, byte[] sketch) throws IOException {
-		int w = 300;
-		int h = 200;
+		int w = sketchwidth; // 300;
+		int h = sketchheight; // 200;
 		WMF wmf = new WMF();
 		WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
 
@@ -905,12 +914,12 @@ public class ClipboardHandler implements IClipboardHandler
 		ImageClipboardHandler.copyImage(image);
 	}
 
-	public static void setNativeCliphandler(java.util.List<String> nativeCliphandler) {
-		ClipboardHandler.nativeCliphandler = nativeCliphandler;
+	public static void setNativeCliphandlerList(java.util.List<String> nativeCliphandlerList) {
+		ClipboardHandler.nativeCliphandlerList = nativeCliphandlerList;
 	}
 
-	public static java.util.List<String> getNativeCliphandler() {
-		return ClipboardHandler.nativeCliphandler;
+	public static java.util.List<String> getNativeCliphandlerList() {
+		return ClipboardHandler.nativeCliphandlerList;
 	}
 
 	public static boolean isCompatibilityMode() {
@@ -919,5 +928,19 @@ public class ClipboardHandler implements IClipboardHandler
 
 	public static void setCompatibilityMode(boolean compatibilityMode) {
 		ClipboardHandler.compatibilityMode = compatibilityMode;
+	}
+	/* Convenience Method to set compatibilityMode according to implemented method in the native clip handler
+	 */
+	public static void setCompatibilityModeAuto() {
+		Class nativeHandlerClz = getNativeClipHandler();
+		if (nativeHandlerClz != null) {
+			try{
+				nativeHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class);
+				ClipboardHandler.compatibilityMode = false;
+			} catch (NoSuchMethodException e) {
+				e.printStackTrace();
+				ClipboardHandler.compatibilityMode = true;
+			}
+		}
 	}
 }
