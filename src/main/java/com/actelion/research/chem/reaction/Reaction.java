@@ -452,7 +452,7 @@ public class Reaction implements java.io.Serializable {
 				int mapNo = reactant.getAtomMapNo(j);
 				if (mapNo != 0) {
 					if (mapNoInReactant[mapNo])
-						throw new Exception("Duplicate mapping no in reactants");
+						throw new Exception("Duplicate mapping no in reactants: "+mapNo);
 					mapNoInReactant[mapNo] = true;
 					}
 				}
@@ -464,7 +464,7 @@ public class Reaction implements java.io.Serializable {
 				int mapNo = product.getAtomMapNo(j);
 				if (mapNo != 0) {
 					if (mapNoInProduct[mapNo])
-						throw new Exception("Duplicate mapping no in products");
+						throw new Exception("Duplicate mapping no in products: "+mapNo);
 					mapNoInProduct[mapNo] = true;
 					}
 				}
