@@ -1619,7 +1619,7 @@ public class ExtendedMoleculeFunctions {
 	}
 
 	/**
-	 * Topological centaer atoms are the atoms with the lowest squared sum of topological distances to all atoms.
+	 * Topological center atoms are the atoms with the lowest squared sum of topological distances to all atoms.
 	 * @param
 	 * @return
 	 */
