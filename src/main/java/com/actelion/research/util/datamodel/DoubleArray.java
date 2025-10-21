@@ -36,6 +36,7 @@ package com.actelion.research.util.datamodel;
 import com.actelion.research.calc.INumericalDataColumn;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -63,10 +64,11 @@ public class DoubleArray implements INumericalDataColumn {
 	 * Deep constructor
 	 * @param l
 	 */
-	public DoubleArray(List<Double> l) {
+	public DoubleArray(Collection<Double> l) {
 		init(l.size());
-		for (int i = 0; i < l.size(); i++) {
-			data[i]=l.get(i);
+		int i=0;
+		for (double v : l) {
+			data[i++]=v;
 		}
 		size = l.size();
 	}
