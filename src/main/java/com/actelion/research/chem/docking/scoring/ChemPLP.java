@@ -1,15 +1,5 @@
 package com.actelion.research.chem.docking.scoring;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import com.actelion.research.calc.combinatorics.CombinationGenerator;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
@@ -29,6 +19,10 @@ import com.actelion.research.chem.phesa.pharmacophore.ChargedGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 /**
  * Implementation of ChemPLP scoring function as described in: doi: 10.1021/ci800298z
  * THIS SCORING FUNCTION REQUIRES EXPLICIT HYDROGENS TO BE PRESENT!
@@ -41,7 +35,6 @@ public class ChemPLP extends AbstractScoringEngine {
 	private static final double METAL_INTERACTION_CUTOFF = 2.6;
 	private static final double STRAIN_CUTOFF = 10;
 	private static final double METAL_OPTIMAL_DIST = 2.2;
-			
 	
 	private Set<Integer> receptorAcceptors;
 	private Set<Integer> receptorDonorHs;
@@ -70,7 +63,6 @@ public class ChemPLP extends AbstractScoringEngine {
 	public ChemPLP(Molecule3D receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid) {
 		super(receptor, bindingSiteAtoms, grid);
 		receptorAcceptors = new HashSet<>();
-		
 		receptorDonorHs = new HashSet<>();
 		receptorDonorHPos = new HashMap<Integer, Double>();
 		receptorAcceptorNeg = new HashMap<Integer, Double>();
@@ -83,11 +75,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		
 		for(int met : receptorMetals) 
 			metalInteractionSites.put(met, processMetalCoordination(receptorConf,met,receptorAcceptors));
-			
-		
-		
 	}
-	
 
 	@Override
 	public double getFGValue(double[] grad) {
@@ -139,11 +127,8 @@ public class ChemPLP extends AbstractScoringEngine {
 		if(deltaE>STRAIN_CUTOFF) {
 			energy += deltaE-STRAIN_CUTOFF;
 		}
-	
-
 		return energy;
 	}
-	
 
 	@Override
 	public void init(LigandPose candidatePose, double e0) {
@@ -161,9 +146,7 @@ public class ChemPLP extends AbstractScoringEngine {
 		ligandAcceptorNeg = new HashMap<Integer, Double>();
 		constraints = new ArrayList<>();
 		
-		
 		StereoMolecule ligand = candidatePose.getLigConf().getMolecule();
-		
 		
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
@@ -231,7 +214,6 @@ public class ChemPLP extends AbstractScoringEngine {
 							if(ligandDonors.contains(l)) {  //plp hbond donor-acceptor
 								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.HBOND_TERM);
 								plp.add(plpTerm);
-
 							}
 							else if(ligandAcceptors.contains(l)) {  //repulsive donor-donor
 								REPTerm repTerm = REPTerm.create(receptorConf, candidatePose.getLigConf(), p, l);
@@ -240,27 +222,25 @@ public class ChemPLP extends AbstractScoringEngine {
 							else { //buried
 								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.BURIED_TERM);
 								plp.add(plpTerm);
-							}			
-							
+							}
 						}
-					}	
-					
+					}
 				}
 				else if(receptorMetals.contains(p)) {
-						for(int l=0;l<ligand.getAtoms();l++) { 
-							if(ligandDonors.contains(l)) {  //met-donor -> repulsive
-								REPTerm repTerm = REPTerm.create(receptorConf, candidatePose.getLigConf(), p, l);
-								plp.add(repTerm);
-							}
-							else if(ligandAcceptors.contains(l)) { //attractive met-acc interaction
-								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.METAL_TERM);
-								plp.add(plpTerm);
-							}
-							else { //buried met-nonp interaction
-								PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.BURIED_TERM);
-								plp.add(plpTerm);
-							}	
+					for(int l=0;l<ligand.getAtoms();l++) {
+						if(ligandDonors.contains(l)) {  //met-donor -> repulsive
+							REPTerm repTerm = REPTerm.create(receptorConf, candidatePose.getLigConf(), p, l);
+							plp.add(repTerm);
 						}
+						else if(ligandAcceptors.contains(l)) { //attractive met-acc interaction
+							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.METAL_TERM);
+							plp.add(plpTerm);
+						}
+						else { //buried met-nonp interaction
+							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.BURIED_TERM);
+							plp.add(plpTerm);
+						}
+					}
 					
 					if(SIMPLE_METAL_ATOMS.contains(receptor.getAtomicNo(p))) {
 						for(int l : ligandAcceptors) {
@@ -273,9 +253,6 @@ public class ChemPLP extends AbstractScoringEngine {
 							chemscoreMetal.add(metTerm);
 						}
 					}
-	
-					
-					
 					else { //standard metal term;
 						List<Coordinates> interactionSites = metalInteractionSites.get(p);
 						for(int l : ligandAcceptors) {
@@ -287,13 +264,8 @@ public class ChemPLP extends AbstractScoringEngine {
 								MetalTerm metTerm = MetalTerm.create(candidatePose.getLigConf(), l, receptorConf,p, acceptorNeighbours, site,scale);
 								chemscoreMetal.add(metTerm);
 							}
+						}
 					}
-					
-					
-					}
-					
-
-					
 				}
 				else { // non-polar heavy atom
 					for(int l=0;l<ligand.getAtoms();l++) { 
@@ -309,12 +281,10 @@ public class ChemPLP extends AbstractScoringEngine {
 							PLPTerm plpTerm = PLPTerm.create(receptorConf, candidatePose.getLigConf(), p, l, PLPTerm.NONPOLAR_TERM);
 							plp.add(plpTerm);
 						}	
-				}
+					}
 				}
 			}
-			}
-		
-		
+		}
 	}
 	
 	//tries tetrahedral or octahedral coordination at metal and choses the one that gives the better fit with the alignment
@@ -381,10 +351,8 @@ public class ChemPLP extends AbstractScoringEngine {
 		}
 		
 		return interactionPoints;
-			
-			
-				
-		}
+	}
+
 	//for metal terms with coordination: only the most contributing term per interaction site is kept!
 	private List<PotentialEnergyTerm> getMetalTerm(List<PotentialEnergyTerm> metalTerms) {
 		double[] grad = new double[3*candidatePose.getLigConf().getMolecule().getAllAtoms()];
@@ -405,14 +373,10 @@ public class ChemPLP extends AbstractScoringEngine {
 				return Double.compare(e1.getFGValue(grad), e2.getFGValue(grad));
 			}).collect(Collectors.toList()).get(0);
 			curatedTerms.add(bestTerm);
-			
 		}
 		return curatedTerms;
-		
 	}
 
-
-	
 	private static double getBestMetalFit(Coordinates[] idealGeom, Coordinates[] occupiedSites,
 			int[][] bestMapping, int coordinationNumber) {
 		double overallMinimalRMSD = Double.MAX_VALUE;
@@ -444,13 +408,10 @@ public class ChemPLP extends AbstractScoringEngine {
 					    	 bestMapping[i][j] = mapping[i][j];
 					     }
 					}
-					
 				}
 			}
-			}
+		}
 		return overallMinimalRMSD;
-			
-
 	}
 	
 	
@@ -487,7 +448,7 @@ public class ChemPLP extends AbstractScoringEngine {
 						allAssignments.add(arr);
 					}
 				}
-				}
+			}
 		}
 		return allAssignments;
 	}
@@ -496,6 +457,7 @@ public class ChemPLP extends AbstractScoringEngine {
 	public static void identifyHBondFunctionality(StereoMolecule mol, Set<Integer> acceptors, Set<Integer> donorHs, Set<Integer> donors,
 			Set<Integer> metals, Map<Integer,Double> chargedAcceptors, Map<Integer,Double> chargedDonorHs) {
 
+		mol.ensureHelperArrays(Molecule.cHelperRings);
 		for(int a=0;a<mol.getAllAtoms();a++) {
 			if (mol.getAtomicNo(a)==7 || mol.getAtomicNo(a)==8) {
 				if(PharmacophoreCalculator.isAcceptor(mol, a))
@@ -524,7 +486,6 @@ public class ChemPLP extends AbstractScoringEngine {
 					chargedAcceptors.put(a, scale);
 				}
 			}
-		
 		}
 		for(int h : donorHs) {
 			for(List<Integer> chargedGroup : chargedGroups) {
@@ -541,13 +502,10 @@ public class ChemPLP extends AbstractScoringEngine {
 				
 				}
 			}
-		
 		}
 	}
 	
 
-	
-	
 	/*
 	 * first coordinate always is the metal
 	 */
@@ -613,14 +571,4 @@ public class ChemPLP extends AbstractScoringEngine {
 		contributions.put("STRAIN", strain);
 		return contributions;
 	}
-
-
-
-
-
-
-	
-	
-		
-
 }

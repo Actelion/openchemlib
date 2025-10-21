@@ -222,45 +222,40 @@ public class SmilesParser {
 
 		int part = 0;
 		int index = 0;
-		int closingGroupBracketIndex = -1;
 		while (index < smiles.length) {
 			while (index<smiles.length && smiles[index] == '.')
 				index++;
+			if (index == smiles.length)
+				break;
 
-			if (smiles[index] == '(') {   // brackets may be used to group unconnected fragments into one molecule (in case of reactions)
-				if (closingGroupBracketIndex != -1)
-					throw new Exception("Second open group bracket found before closing first one.");
-
-				index++;
-				int level = 0;
-				for (int i=index; i<smiles.length; i++) {
-					if (smiles[i] == '(') {
-						level++;
-						}
-					else if (smiles[i] == ')') {
-						if (level-- == 0) {
-							closingGroupBracketIndex = i;
-							break;
-							}
+			int molStart = index;
+			int molEnd = -1;
+			int level = 0;
+			for (int i=index; i<smiles.length; i++) {
+				if (smiles[i] == '(') {
+					level++;
+					continue;
+					}
+				if (smiles[i] == ')') {
+					if (--level < 0)
+						throw new Exception("Found closing bracket without matching opening one.");
+					continue;
+					}
+				if (level == 0) {
+					if ((smiles[i] == '.' && (mSingleDotSeparator || (i+1<smiles.length && smiles[i+1] == '.')))
+					 || (smiles[i] == '>' && (i == 0 || smiles[i-1] != '-'))) {
+						molEnd = i;
+						break;
 						}
 					}
 				}
 
-			int end = index;
-			while (end<smiles.length
-				&& smiles[end] != '>'
-				&& !(smiles[end] == '.' && ((mSingleDotSeparator && closingGroupBracketIndex==-1) || closingGroupBracketIndex==end-1 || end+1==smiles.length || smiles[end+1] == '.')))
-				end++;
+			if (molEnd == -1)
+				molEnd = smiles.length;
 
-			int molend = end;
-			if (closingGroupBracketIndex == end-1) {
-				molend--;
-				closingGroupBracketIndex = -1;
-				}
-
-			if (index != molend) {
+			if (molStart < molEnd) {
 				StereoMolecule mol = new StereoMolecule();
-				parse(mol, smiles, index, molend);
+				parse(mol, smiles, molStart, molEnd);
 				if (mSmartsMode == SMARTS_MODE_GUESS && mSmartsFeatureFound)
 					return new SmilesParser(mMode | SMARTS_MODE_IS_SMARTS).parseReaction(smiles);
 
@@ -272,7 +267,7 @@ public class SmilesParser {
 					rxn.addProduct(mol);
 				}
 
-			index = end;
+			index = molEnd;
 			while (index < smiles.length && smiles[index] == '>') {
 				index++;
 				part++;
@@ -737,10 +732,10 @@ public class SmilesParser {
 
 		// Check for unsatisfied open bonds
 		if (bondType != Molecule.cBondTypeSingle)
-			throw new Exception("SmilesParser: dangling open bond");
-		for (int rca : ringClosureAtom)
-			if (rca != -1)
-				throw new Exception("SmilesParser: dangling ring closure.");
+			throw new Exception("SmilesParser: dangling open bond; position:"+position);
+		for (int i=0; i<ringClosureAtom.length; i++)
+			if (ringClosureAtom[i] != -1)
+				throw new Exception("SmilesParser: dangling ring closure: "+i+"; position:"+position);
 
 		int[] handleHydrogenAtomMap = mMol.getHandleHydrogenMap();
 
