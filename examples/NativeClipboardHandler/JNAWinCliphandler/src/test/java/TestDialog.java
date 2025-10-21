@@ -35,20 +35,25 @@ public class TestDialog {
 
         panely.add(panelx);
 
-
-        JButton toggleButton = new JButton("Toggle Native/JNA");
+        String toggle = "Toggle Clz: ";
+        JButton toggleButton = new JButton(toggle + getCurrentNativeClipClass());
         toggleButton.addActionListener(a -> {
-            Collections.reverse(ClipboardHandler.getNativeCliphandlerList());
+            ClipboardHandler.useNextnativeCliphandler();
+            toggleButton.setText(toggle + getCurrentNativeClipClass());
         });
-        JButton toggleButton2 = new JButton("Toggle Compatibility Mode");
-        toggleButton2.addActionListener(a -> {
-            ClipboardHandler.setCompatibilityMode(!ClipboardHandler.isCompatibilityMode());
-        });
+
         panely.add(toggleButton);
-        panely.add(toggleButton2);
+        //panely.add(toggleButton2);
 
         f.setSize(new Dimension(800, 800));
         f.setVisible(true);
 
+    }
+    public static String getCurrentNativeClipClass() {
+        if (ClipboardHandler.getNativeCliphandlerList() != null && ClipboardHandler.getNativeCliphandlerList().size() > 0) {
+            String clz = ClipboardHandler.getNativeCliphandlerList().get(0);
+            return clz.substring(clz.lastIndexOf(".") + 1);
+        }
+        return null;
     }
 }

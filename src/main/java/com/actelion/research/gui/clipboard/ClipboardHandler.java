@@ -89,25 +89,33 @@ public class ClipboardHandler implements IClipboardHandler
 	public static java.util.List<String> writableMoleculeFormats;
 	private static java.util.List<String> nativeCliphandlerList;
 
-	private static boolean compatibilityMode = false; // for NativeClipboardAccessor
-
+	private static Class nativeCliphandlerClass = null;
+	private static Boolean compatibilityMode = false; // for NativeClipboardAccessor
 	private static int sketchwidth = 300;
 	private static int sketchheight = 200;
 
 	static {
+		initDefaults();
+	}
+
+	public static void initDefaults() {
+		nativeCliphandlerList = new ArrayList<>();
 		if (Platform.isWindows()) {
-			nativeCliphandlerList = Arrays.asList(
-					"com.actelion.research.gui.clipboard.JNAWinClipboardHandler",
-					"com.actelion.research.gui.clipboard.NativeClipboardAccessor"
-			);
+			nativeCliphandlerList.add("com.actelion.research.gui.clipboard.JNAWinClipboardHandler");
+			nativeCliphandlerList.add("com.actelion.research.gui.clipboard.NativeClipboardAccessor");
+
 			writableMoleculeFormats = Arrays.asList(NC_METAFILE, NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
 		} else {
-			nativeCliphandlerList = new ArrayList<>();
+			//nativeCliphandlerList = new ArrayList<>();
 			writableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
 		}
 	}
 
-
+	public static void resetNativeCliphandler() {
+		nativeCliphandlerClass = null;
+		getNativeClipHandler();
+		setCompatibilityModeAuto();
+	}
 
 	/**
 	 * Get one or more Molecule(s) from the Clipboard. On all platforms the first choice is a serialized StereoMolecule.
@@ -298,24 +306,32 @@ public class ClipboardHandler implements IClipboardHandler
 
 	private static Class getNativeClipHandler() {
 
-		Class clipHandlerClz = null;
+		if (nativeCliphandlerClass == null) {
+			Class clipHandlerClz = null;
 
-		for (String clz : nativeCliphandlerList) {
-			try {
-				clipHandlerClz = Class.forName(clz);
-			} catch (ClassNotFoundException | NoClassDefFoundError | UnsatisfiedLinkError e1) {
-				e1.printStackTrace();
-			}
-			try {
-				if (clipHandlerClz != null && (boolean) clipHandlerClz.getMethod("isInitOK").invoke(clipHandlerClz)) {
-					System.out.println("WinClipHandler class: " + clz);
-					break;
+			for (String clz : nativeCliphandlerList) {
+				try {
+					clipHandlerClz = Class.forName(clz);
+				} catch (ClassNotFoundException | NoClassDefFoundError | UnsatisfiedLinkError e1) {
+					e1.printStackTrace();
+					// remove from list if we can not find/init the class
+					// default list can be restored with initDefaults if required
+					nativeCliphandlerList.remove(clz);
 				}
-			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException  e2) {
-				e2.printStackTrace();
+				try {
+					if (clipHandlerClz != null && (boolean) clipHandlerClz.getMethod("isInitOK").invoke(clipHandlerClz)) {
+						System.out.println("WinClipHandler class: " + clz);
+						nativeCliphandlerClass = clipHandlerClz;
+						break;
+					}
+				} catch (NoSuchMethodException | SecurityException | IllegalAccessException |
+						 InvocationTargetException e2) {
+					e2.printStackTrace();
+					nativeCliphandlerList.remove(clz);
+				}
 			}
 		}
-		return clipHandlerClz;
+		return nativeCliphandlerClass;
 	}
 
 	public static boolean isNativeClipHandler() {
@@ -932,15 +948,21 @@ public class ClipboardHandler implements IClipboardHandler
 	/* Convenience Method to set compatibilityMode according to implemented method in the native clip handler
 	 */
 	public static void setCompatibilityModeAuto() {
-		Class nativeHandlerClz = getNativeClipHandler();
-		if (nativeHandlerClz != null) {
+		Class nativeClipHandlerClz = getNativeClipHandler();
+		if (nativeClipHandlerClz != null) {
 			try{
-				nativeHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class);
+				nativeClipHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class);
 				ClipboardHandler.compatibilityMode = false;
 			} catch (NoSuchMethodException e) {
-				e.printStackTrace();
+				System.err.println("Compatibility set to true because setClipboardData(String,byte[],boolean) not available: " + e.getLocalizedMessage());
 				ClipboardHandler.compatibilityMode = true;
 			}
+		}
+	}
+	public static void useNextnativeCliphandler() {
+		if (nativeCliphandlerList != null && nativeCliphandlerList.size() > 1) {
+			nativeCliphandlerList.add(nativeCliphandlerList.remove(0));
+			ClipboardHandler.resetNativeCliphandler();
 		}
 	}
 }
