@@ -944,8 +944,7 @@ public class ClipboardHandler implements IClipboardHandler
 
 	public static boolean isCompatibilityMode() {
 		if (compatibilityMode == null) {
-			loadNativeCliphandler();
-			setCompatibilityModeAuto();
+			if (getNativeClipHandler() != null) setCompatibilityModeAuto();
 		}
 		return compatibilityMode;
 	}
