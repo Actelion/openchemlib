@@ -121,131 +121,92 @@ public class DoubleArray implements INumericalDataColumn {
 	
 	public int add(double v){
 		data[size]=v;
-		
 		int index = size;
-		
 		size++;
-		
 		if(size==data.length){
 			resize(data.length + delta_capacity);
 			if(delta_capacity<MAX_DELTA_CAPACITY){
 				delta_capacity *= 2;
 			}
 		}
-		
 		return index;
 	}
 
 	public int add(double [] d){
-
 		int index = size-1;
-
 		for (int i = 0; i < d.length; i++) {
 			index = add(d[i]);
 		}
-
 		return index;
 	}
 
 	public int add(float [] d){
-
 		int index = size-1;
-
 		for (int i = 0; i < d.length; i++) {
 			index = add(d[i]);
 		}
-
 		return index;
 	}
 	public int add(DoubleArray d){
-
 		int index = size-1;
-
 		for (int i = 0; i < d.size; i++) {
 			index = add(d.get(i));
 		}
-
 		return index;
 	}
 
 	public double avr(){
-		
 		double avr = 0;
-		
 		for (int i = 0; i < size; i++) {
 			avr += data[i];
 		}
-		
 		return avr/size;
 	}
 
 	public double median(){
-
 		double [] arr = get();
-
 		double [] arrNew = new double[arr.length];
-
 		System.arraycopy(arr, 0, arrNew, 0, arr.length);
-
 		Arrays.sort(arrNew);
-
 		double median = 0;
-
 		if(arrNew.length % 2 > 0){
 			median = arrNew[arrNew.length/2];
 		} else {
 			int i = arrNew.length/2;
 			median = (arrNew[i-1] + arrNew[i])/2.0;
 		}
-
 		return median;
 	}
-
-
-
 	public double sum(){
-
 		double sum = 0;
-
 		for (int i = 0; i < size; i++) {
 			sum += data[i];
 		}
-
 		return sum;
 	}
 
 	public double max(){
-		
 		double max = Double.MAX_VALUE * -1;
-		
 		for (int i = 0; i < size; i++) {
 			if(data[i]>max)
 				max = data[i];
 		}
-		
 		return max;
 	}
 	
 	public double min(){
-		
 		double min = Double.MAX_VALUE;
-		
 		for (int i = 0; i < size; i++) {
 			if(data[i] < min)
 				min = data[i];
 		}
-		
 		return min;
 	}
 	
 	private void resize(int newlen){
-
 		double [] arr = new double [newlen];
-		
 		System.arraycopy(data, 0, arr, 0, Math.min(data.length, newlen));
-		
 		data = arr;
-		
 	}
 	
 	public int size(){
