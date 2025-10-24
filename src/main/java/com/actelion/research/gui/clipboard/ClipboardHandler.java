@@ -60,6 +60,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * <p>Title: Actelion Library</p>
@@ -91,9 +92,9 @@ public class ClipboardHandler implements IClipboardHandler
 	private static java.util.List<String> nativeCliphandlerList;
 
 	private static Class nativeCliphandlerClass = null;
-	private static Boolean compatibilityMode = null; // for NativeClipboardAccessor
-	private static int sketchwidth = 300;
-	private static int sketchheight = 200;
+	private static boolean compatibilityMode = false;
+	private static int sketchwidth = 0;
+	private static int sketchheight = 0;
 
 	static {
 		initDefaults();
@@ -109,11 +110,13 @@ public class ClipboardHandler implements IClipboardHandler
 		} else {
 			writableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
 		}
+		sketchheight= 0;
+		sketchwidth = 0;
 	}
 
 	public static void resetNativeCliphandler() {
 		nativeCliphandlerClass = null;
-		compatibilityMode = null;
+		compatibilityMode = false;
 	}
 
 	/**
@@ -305,15 +308,15 @@ public class ClipboardHandler implements IClipboardHandler
 
 	private static void loadNativeCliphandler() {
 		Class clipHandlerClz = null;
+		Iterator<String> iterator = nativeCliphandlerList.iterator();
 
-		for (String clz : nativeCliphandlerList) {
+		while (iterator.hasNext()) {
+			String clz = iterator.next();
 			try {
 				clipHandlerClz = Class.forName(clz);
 			} catch (ClassNotFoundException | NoClassDefFoundError | UnsatisfiedLinkError e1) {
 				e1.printStackTrace();
-				// remove from list if we can not find/init the class
-				// default list can be restored with initDefaults if required
-				nativeCliphandlerList.remove(clz);
+
 			}
 			try {
 				if (clipHandlerClz != null && (boolean) clipHandlerClz.getMethod("isInitOK").invoke(clipHandlerClz)) {
@@ -324,7 +327,11 @@ public class ClipboardHandler implements IClipboardHandler
 			} catch (NoSuchMethodException | SecurityException | IllegalAccessException |
 					 InvocationTargetException e2) {
 				e2.printStackTrace();
-				nativeCliphandlerList.remove(clz);
+			}
+			if (nativeCliphandlerClass == null) {
+				// avoid to try to use a non available cliphandler over and over again
+				System.err.println("Unable to load " + clz);
+				iterator.remove();
 			}
 		}
 	}
@@ -431,8 +438,8 @@ public class ClipboardHandler implements IClipboardHandler
 		sketchwidth = width;
 		sketchheight = height;
 		boolean ok = copyMolecule(mol);
-		sketchwidth = 300;
-		sketchheight = 200;
+		sketchwidth = 0;
+		sketchheight = 0;
 		return ok;
 	}
 
@@ -444,7 +451,7 @@ public class ClipboardHandler implements IClipboardHandler
 	 */
 	public boolean copyMolecule(StereoMolecule mol) {
 		if (isNativeClipHandler()) {
-			if (isCompatibilityMode()) return copyMoleculeNativeClassic(mol);
+			if (compatibilityMode) return copyMoleculeNativeClassic(mol);
 			else return copyMoleculeNative(mol);
 		}
 		MoleculeTransferable transferable = new MoleculeTransferable(mol);
@@ -500,20 +507,27 @@ public class ClipboardHandler implements IClipboardHandler
 		return ok;
 	}
 	private boolean copyMoleculeNative(StereoMolecule mol) {
-		Class winClipHandler;
+		Class clipHandlerClz;
 		boolean ok = true;
-		if ((winClipHandler = getNativeClipHandler()) != null) {
+		if ((clipHandlerClz = getNativeClipHandler()) != null) {
 
 			emptyClipboard();
 			for (String f : writableMoleculeFormats) {
 				try{
 					byte[] bytes = molToRaw(mol, f);
 					if (bytes != null) {
-						ok &= (boolean)winClipHandler.getMethod("setClipBoardData", String.class, byte[].class, boolean.class).invoke(winClipHandler, f, bytes, false);
+						ok &= (boolean)clipHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class).invoke(clipHandlerClz, f, bytes, false);
 					}
 				} catch (InvocationTargetException |IllegalAccessException | NoSuchMethodException e) {
-    				e.printStackTrace();
-					ok = false;
+    				System.err.println("Can not use method: " + e.getMessage() + " trying fallback");
+					ok = copyMoleculeNativeClassic(mol);
+					if (ok) compatibilityMode = true;
+					else {
+						System.err.println("Loaded cliphandler " + clipHandlerClz.getName() + " but none of the required methods to copy a Molecule was available");
+						// could be useful here
+						//useNextnativeCliphandler(true);
+					}
+					break;
                 }
             }
 		} else ok = false;
@@ -771,7 +785,7 @@ public class ClipboardHandler implements IClipboardHandler
 	 */
 	public boolean copyReactionToClipboard(String ctab, Reaction rxn) {
 		if (isNativeClipHandler()) {
-			if (isCompatibilityMode()) return copyReactionNativeClassic(ctab, rxn);
+			if (compatibilityMode) return copyReactionNativeClassic(ctab, rxn);
 			else return copyReactionNative(ctab, rxn);
 		}
 
@@ -808,8 +822,15 @@ public class ClipboardHandler implements IClipboardHandler
 						ok &= (boolean)clipHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class).invoke(clipHandlerClz, f, bytes, false);
 					}
 				} catch (InvocationTargetException |IllegalAccessException | NoSuchMethodException e) {
-					e.printStackTrace();
-					ok = false;
+					System.err.println("Issue with: " + e.getMessage() + ", trying fallback method");
+					ok = copyReactionNativeClassic(ctab, rxn);
+					if (ok) compatibilityMode = true;
+					else {
+						System.err.println("Loaded cliphandler " + clipHandlerClz.getName() + " but none of the required methods to copy a Reaction was available");
+						// could be useful here
+						//useNextnativeCliphandler(true);
+					}
+					break;
 				}
 			}
 		} else ok = false;
@@ -828,13 +849,14 @@ public class ClipboardHandler implements IClipboardHandler
 	}
 
 	private boolean writeMol2Metafile(OutputStream out, StereoMolecule m, byte[] sketch) throws IOException {
-		int w = sketchwidth; // 300;
-		int h = sketchheight; // 200;
+		int w = 300;
+		int h = 200;
 		WMF wmf = new WMF();
 		WMFGraphics2D g = new WMFGraphics2D(wmf, w, h, Color.black, Color.white);
 
 		Depictor2D d = new Depictor2D(m);
 		d.updateCoords(g, new GenericRectangle(0, 0, w, h), AbstractDepictor.cModeInflateToMaxAVBL);
+		if (sketchwidth != 0 && sketchheight != 0) g.scale((double)sketchwidth/d.getBoundingRect().getWidth(), (double)sketchheight/d.getBoundingRect().getHeight());
 		d.paint(g);
 
 		if (sketch != null) {
@@ -942,13 +964,6 @@ public class ClipboardHandler implements IClipboardHandler
 		return ClipboardHandler.nativeCliphandlerList;
 	}
 
-	public static boolean isCompatibilityMode() {
-		if (compatibilityMode == null) {
-			if (getNativeClipHandler() != null) setCompatibilityModeAuto();
-		}
-		return compatibilityMode;
-	}
-
 	public static void setCompatibilityMode(boolean compatibilityMode) {
 		ClipboardHandler.compatibilityMode = compatibilityMode;
 	}
@@ -959,16 +974,17 @@ public class ClipboardHandler implements IClipboardHandler
 		if (nativeClipHandlerClz != null) {
 			try{
 				nativeClipHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class);
-				ClipboardHandler.compatibilityMode = Boolean.FALSE;
+				ClipboardHandler.compatibilityMode = false;
 			} catch (NoSuchMethodException e) {
 				System.err.println("Compatibility set to true because setClipboardData(String,byte[],boolean) not available: " + e.getLocalizedMessage());
-				ClipboardHandler.compatibilityMode = Boolean.TRUE;
+				ClipboardHandler.compatibilityMode = true;
 			}
 		}
 	}
-	public static void useNextnativeCliphandler() {
-		if (nativeCliphandlerList != null && nativeCliphandlerList.size() > 1) {
-			nativeCliphandlerList.add(nativeCliphandlerList.remove(0));
+	public static void useNextnativeCliphandler(boolean removeFromList) {
+		if (nativeCliphandlerList != null && nativeCliphandlerList.size() > 0) {
+			String s = nativeCliphandlerList.remove(0);
+			if (!removeFromList)nativeCliphandlerList.add(s);
 			ClipboardHandler.resetNativeCliphandler();
 		}
 	}
