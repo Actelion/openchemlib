@@ -42,9 +42,12 @@ import com.actelion.research.gui.generic.GenericPolygon;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.util.ColorHelper;
 
-public class ReactionArrow extends AbstractDrawingObject {
+import java.io.Serializable;
+
+public class ReactionArrow extends AbstractDrawingObject
+		implements Serializable { // CxR: Required for C/P via serialized Objects
 	public static final String TYPE_STRING = "arrow";
-    
+
 	private static final int PART_NONE = 0;
 	private static final int PART_ARROW_START = 1;
 	private static final int PART_ARROW_END = 2;
@@ -86,7 +89,7 @@ public class ReactionArrow extends AbstractDrawingObject {
 
 	@Override
     public String getTypeString() {
-        return TYPE_STRING;   
+        return TYPE_STRING;
     	}
 
 	@Override
