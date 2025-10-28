@@ -123,8 +123,6 @@ public class ClipboardHandler implements IClipboardHandler {
             nativeCliphandlerList.add("com.actelion.research.gui.clipboard.NativeClipboardAccessor");
         } else if (Platform.isMacintosh()) {
             nativeCliphandlerList.add("com.actelion.research.gui.clipboard.JNAMacClipboardHandler");
-        } else {
-            writableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
         }
         sketchheight = 0;
         sketchwidth = 0;
@@ -550,7 +548,7 @@ public class ClipboardHandler implements IClipboardHandler {
 
     private boolean copyMoleculeNative(StereoMolecule mol) {
         Class clipHandlerClz;
-        boolean ok = true;
+        boolean ok = false;
         if ((clipHandlerClz = getNativeClipHandler()) != null) {
             emptyClipboard();
             for (ClipboardFormat format : writableMoleculeFormats) {
@@ -574,8 +572,6 @@ public class ClipboardHandler implements IClipboardHandler {
                     break;
                 }
             }
-        } else {
-            ok = false;
         }
         return ok;
     }
@@ -809,29 +805,27 @@ public class ClipboardHandler implements IClipboardHandler {
 
     public boolean copyReactionNative(String ctab, Reaction rxn) {
         Class clipHandlerClz = null;
-        boolean ok = true;
+        boolean ok = false;
         if ((clipHandlerClz = getNativeClipHandler()) != null) {
             emptyClipboard();
             for (ClipboardFormat format : writableReactionFormats) {
                 try {
                     byte[] bytes = rxnToRaw(rxn, ctab, format);
                     if (bytes != null) {
-                        ok &= (boolean) clipHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class)
+                        ok |= (boolean) clipHandlerClz.getMethod("setClipBoardData", String.class, byte[].class, boolean.class)
                                 .invoke(clipHandlerClz, format.value(), bytes, false);
                     }
                 } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-                    System.err.println("Issue with: " + e.getMessage() + ", trying fallback method");
+                    System.err.println("Issue with: " + e.getMessage() + ", trying compatibility method");
                     ok = copyReactionNativeClassic(ctab, rxn);
                     if (ok) compatibilityMode = true;
                     else {
                         System.err.println("Loaded cliphandler " + clipHandlerClz.getName() + " but none of the required methods to copy a Reaction was available");
-                        // could be useful here
-                        //useNextnativeCliphandler(true);
                     }
                     break;
                 }
             }
-        } else ok = false;
+        }
         return ok;
     }
 
@@ -890,7 +884,7 @@ public class ClipboardHandler implements IClipboardHandler {
      * @return boolean
      */
     public static boolean copyMetaFile(byte[] data) {
-        return Platform.isWindows() && setClipBoardData(NC_METAFILE.value(), data);
+        return setClipBoardData(NC_METAFILE.value(), data);
     }
 
     /**
@@ -932,9 +926,6 @@ public class ClipboardHandler implements IClipboardHandler {
     public static void setCompatibilityMode(boolean compatibilityMode) {
         ClipboardHandler.compatibilityMode = compatibilityMode;
     }
-
-    /* Convenience Method to set compatibilityMode according to implemented method in the native clip handler
-     */
     public static void setCompatibilityModeAuto() {
         Class nativeClipHandlerClz = getNativeClipHandler();
         if (nativeClipHandlerClz != null) {
