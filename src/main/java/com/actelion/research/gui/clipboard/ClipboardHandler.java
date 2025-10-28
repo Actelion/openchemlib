@@ -62,6 +62,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static com.actelion.research.gui.clipboard.ClipboardFormat.*;
+import static com.actelion.research.gui.clipboard.ClipboardFormat.NC_CHEMDRAWINTERCHANGE;
+import static com.actelion.research.gui.clipboard.ClipboardFormat.NC_CHEMDRAWINTERCHANGE;
 
 /**
  * <p>Title: Actelion Library</p>
@@ -78,19 +80,25 @@ public class ClipboardHandler implements IClipboardHandler {
 
 
     private static java.util.List<ClipboardFormat> readableMoleculeFormats =
-            Arrays.asList(NC_IDCODE, NC_DATAFLAVOR_IDCODE,NC_SERIALIZEMOLECULE,
+            Arrays.asList(
+                    NC_IDCODE, NC_DATAFLAVOR_IDCODE,NC_SERIALIZEMOLECULE,
                     NC_DATAFLAVOR_SERIALIZEDMOLECULE, NC_MOLFILE_V3, NC_MOLFILE,
                     COM_MDLI_MOLFILE, NC_CTAB,
-                    NC_CHEMDRAWINTERCHANGE,COM_PE_CDX,
                     NC_SKETCH, COM_MDLI_SKETCHFILE,
-                    NC_EMBEDDEDSKETCH, NC_METAFILE,
+                    //NC_CHEMDRAWINTERCHANGE
+                    COM_PE_CDX,
+                    NC_EMBEDDEDSKETCH,
+                    NC_METAFILE,
                     NC_SMILES);
 
     private static java.util.List<ClipboardFormat> writableMoleculeFormats =
-            Arrays.asList(NC_IDCODE, NC_SERIALIZEMOLECULE, NC_DATAFLAVOR_SERIALIZEDMOLECULE,
+            Arrays.asList(
+                    NC_IDCODE, NC_SERIALIZEMOLECULE, NC_DATAFLAVOR_SERIALIZEDMOLECULE,
                     NC_MOLFILE_V3, NC_MOLFILE, NC_DATAFLAVOR_IDCODE,
-                    NC_CHEMDRAWINTERCHANGE,NC_CTAB,NC_SKETCH,
-                    COM_MDLI_MOLFILE, COM_MDLI_SKETCHFILE, COM_PE_CDX, NC_SMILES);
+                    //NC_CHEMDRAWINTERCHANGE,
+                    NC_CTAB,NC_SKETCH, NC_METAFILE
+                    ,COM_MDLI_MOLFILE, COM_MDLI_SKETCHFILE, COM_PE_CDX, NC_SMILES
+            );
 
     private static java.util.List<ClipboardFormat> readableReactionFormats =
             Arrays.asList(NC_SERIALIZEREACTION, NC_DATAFLAVOR_SERIALIZEDREACTION,
@@ -101,7 +109,7 @@ public class ClipboardHandler implements IClipboardHandler {
             Arrays.asList(NC_SERIALIZEREACTION, NC_DATAFLAVOR_SERIALIZEDREACTION,
                     NC_CHEMDRAWINTERCHANGE,
                     NC_IDCODE, NC_CTAB, COM_MDLI_MOLFILE,
-                     NC_DATAFLAVOR_RXNSMILES);
+                    NC_DATAFLAVOR_RXNSMILES);
 
 
     private static java.util.List<String> nativeCliphandlerList;
@@ -123,6 +131,8 @@ public class ClipboardHandler implements IClipboardHandler {
             nativeCliphandlerList.add("com.actelion.research.gui.clipboard.NativeClipboardAccessor");
         } else if (Platform.isMacintosh()) {
             nativeCliphandlerList.add("com.actelion.research.gui.clipboard.JNAMacClipboardHandler");
+        } else {
+            writableMoleculeFormats = Arrays.asList(NC_SERIALIZEMOLECULE, NC_CHEMDRAWINTERCHANGE, NC_IDCODE);
         }
         sketchheight = 0;
         sketchwidth = 0;
@@ -713,6 +723,7 @@ public class ClipboardHandler implements IClipboardHandler {
                 case NC_DATAFLAVOR_SERIALIZEDREACTION:
                     bytes = serializeReaction(rxn);
                     break;
+                case COM_PE_CDX:
                 case NC_CHEMDRAWINTERCHANGE:
                     ChemDrawCDX cdx = new ChemDrawCDX();
                     bytes = cdx.getChemDrawBuffer(rxn);
@@ -926,6 +937,7 @@ public class ClipboardHandler implements IClipboardHandler {
     public static void setCompatibilityMode(boolean compatibilityMode) {
         ClipboardHandler.compatibilityMode = compatibilityMode;
     }
+
     public static void setCompatibilityModeAuto() {
         Class nativeClipHandlerClz = getNativeClipHandler();
         if (nativeClipHandlerClz != null) {
