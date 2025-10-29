@@ -133,7 +133,6 @@ public abstract class AbstractDepictor<T> {
 	public static final int	cDModeSuppressChiralText = 0x0020;
 	public static final int	cDModeSuppressCIPParity = 0x0040;
 	public static final int	cDModeSuppressESR = 0x0080;
-	public static final int	cDModeNoCarbonLabelWithCustomLabel = 0x0100;
 
 	private static final int cDModeShowSymmetryAny = 0x0300;
 	public static final int cDModeShowSymmetrySimple = 0x0100;
@@ -143,6 +142,7 @@ public abstract class AbstractDepictor<T> {
 	public static final int	cDModeNoColorOnESRAndCIP = 0x1000;
 	public static final int cDModeNoImplicitHydrogen = 0x2000;
 	public static final int cDModeDrawBondsInGray = 0x4000;
+	public static final int	cDModeNoCarbonLabelWithCustomLabel = 0x8000;
 
 	private static double cFactorTextSize = 0.6;
 	private static double cFactorLineWidth = 0.06;
