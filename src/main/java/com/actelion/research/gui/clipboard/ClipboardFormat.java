@@ -1,7 +1,5 @@
-package com.actelion.research.gui.clipboard;
-
-/**
- * Copyright (c) 2025
+/*
+ * Copyright (c) 2024-2025
  * Christian Rufener
  * All rights reserved.
  *
@@ -29,6 +27,9 @@ package com.actelion.research.gui.clipboard;
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+package com.actelion.research.gui.clipboard;
+
 public enum ClipboardFormat {
     NC_SERIALIZEMOLECULE("ACT_MOLECULE"),                       // Java serialized Molecule
     NC_SERIALIZEREACTION("ACT_REACTION"),                       // Java serialized Reaction
