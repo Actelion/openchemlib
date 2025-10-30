@@ -55,6 +55,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+@SuppressWarnings("rawtypes")
 public class GenericEditorArea implements GenericEventListener {
 	public static final int MODE_MULTIPLE_FRAGMENTS = 1;
 	public static final int MODE_MARKUSH_STRUCTURE = 2;
@@ -176,6 +177,7 @@ public class GenericEditorArea implements GenericEventListener {
 	private AbstractDrawingObject mCurrentHiliteObject;
 	private GenericPolygon mLassoRegion;
 	private ArrayList<GenericEventListener> mListeners;
+	private GenericEventListener<GenericKeyEvent> mUnusedKeyEventConsumer;
 	private IClipboardHandler mClipboardHandler;
 	private final StringBuilder mAtomKeyStrokeBuffer;
 	private final GenericUIHelper mUIHelper;
@@ -262,6 +264,15 @@ public class GenericEditorArea implements GenericEventListener {
 	 */
 	public void setClipboardHandler(IClipboardHandler h) {
 		mClipboardHandler = h;
+	}
+
+	/**
+	 * Any key events that are not handled by the draw area are sent to this consumer,
+	 * which typically is a toolbar. Key events sent are meant to change the current tool.
+	 * @param consumer
+	 */
+	public void setUnusedKeyEventConsumer(GenericEventListener<GenericKeyEvent> consumer) {
+		mUnusedKeyEventConsumer = consumer;
 	}
 
 	private void update(int mode) {
@@ -1280,16 +1291,12 @@ public class GenericEditorArea implements GenericEventListener {
 			if (key == GenericKeyEvent.KEY_SHIFT) {
 				mShiftIsDown = true;
 				updateCursor();
-			}
-			if (key == GenericKeyEvent.KEY_ALT) {
+			} else if (key == GenericKeyEvent.KEY_ALT) {
 				mAltIsDown = true;
 				updateCursor();
-			}
-			if (key == GenericKeyEvent.KEY_CTRL) {
+			} else if (key == GenericKeyEvent.KEY_CTRL) {
 				updateCursor();
-			}
-
-			if (e.isMenuShortcut()) {
+			} else if (e.isMenuShortcut()) {
 				if (key == 'z') {
 					restoreState();
 					updateAndFireEvent(UPDATE_CHECK_VIEW);
@@ -1420,29 +1427,24 @@ public class GenericEditorArea implements GenericEventListener {
 				} else if (key == '\n' || key == '\r') {
 					expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
 				}
-			} else {
-//				if (key == GenericKeyEvent.KEY_DELETE)
-//					mToolbar.setCurrentTool(GenericEditorToolbar.cToolDelete);
-
-				if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE | MODE_MULTIPLE_FRAGMENTS)) == 0) {
-					if (key == 'h')
-						flip(true);
-					if (key == 'v')
-						flip(false);
-				}
+			} else if (key == 'h' || key == 'v') {
+				if ((mMode & (MODE_REACTION | MODE_MARKUSH_STRUCTURE | MODE_MULTIPLE_FRAGMENTS)) == 0)
+					flip(key == 'h');
+			} else if (mUnusedKeyEventConsumer != null) {
+				mUnusedKeyEventConsumer.eventHappened(e);
 			}
 		}
 		if (e.getWhat() == GenericKeyEvent.KEY_RELEASED) {
 			if (key == GenericKeyEvent.KEY_SHIFT) {
 				mShiftIsDown = false;
 				updateCursor();
-			}
-			if (key == GenericKeyEvent.KEY_ALT) {
+			} else if (key == GenericKeyEvent.KEY_ALT) {
 				mAltIsDown = false;
 				updateCursor();
-			}
-			if (key == GenericKeyEvent.KEY_CTRL) {
+			} else if (key == GenericKeyEvent.KEY_CTRL) {
 				updateCursor();
+			} else if (mUnusedKeyEventConsumer != null) {
+				mUnusedKeyEventConsumer.eventHappened(e);
 			}
 		}
 	}

@@ -33,13 +33,13 @@
 
 package com.actelion.research.gui.editor;
 
-import com.actelion.research.gui.LookAndFeelHelper;
 import com.actelion.research.gui.generic.*;
 import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.gui.hidpi.HiDPIIcon;
 import com.actelion.research.util.ColorHelper;
 
-public class GenericEditorToolbar implements GenericEventListener<GenericMouseEvent> {
+@SuppressWarnings("rawtypes")
+public class GenericEditorToolbar implements GenericEventListener {
     protected static final int cButtonsPerColumn = 17;
 
 	private static final int cImageOversize = 4;  // source image size in regard to target size with no UI-scaling
@@ -86,8 +86,8 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
     protected static final int cToolESROr = 102;
     protected static final int cToolESRAnd  = 103;
 
-	private GenericCanvas mToolbarCanvas;
-	private GenericEditorArea mArea;
+	private final GenericCanvas mToolbarCanvas;
+	private final GenericEditorArea mArea;
 	private GenericImage mImageNormal, mImageDisabled, mESRImageNormal;
 	protected int mWidth,mHeight,mCurrentTool, mSelectedButton,mHighlightedButton,mESRSelected;
 	private float mImageScaling;
@@ -122,10 +122,12 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 		mCurrentTool = cToolStdBond;
 		mSelectedButton = -1;
 		mHighlightedButton = -1;
+
+		mArea.setUnusedKeyEventConsumer(this);
 	}
 
 	public void setCurrentTool(int tool) {
-		if (mCurrentTool != tool) {
+		if (mCurrentTool != tool && isSelectableButton(tool) && !isActionButton(tool)) {
 			mCurrentTool = tool;
 			mArea.toolChanged(tool);
 			mToolbarCanvas.repaint();
@@ -163,7 +165,14 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
         }
 
 	@Override
-	public void eventHappened(GenericMouseEvent e) {
+	public void eventHappened(GenericEvent e) {
+		if (e instanceof GenericMouseEvent)
+			eventHappened((GenericMouseEvent)e);
+		else if (e instanceof GenericKeyEvent)
+			eventHappened((GenericKeyEvent)e);
+	}
+
+	private void eventHappened(GenericMouseEvent e) {
 		if (e.getWhat() == GenericMouseEvent.MOUSE_PRESSED) {
 			int b = getButtonNo(e);
 			if (!isSelectableButton(b))
@@ -225,7 +234,80 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 			}
 		}
 
- 	protected int getButtonNo(GenericMouseEvent e) {
+	private void eventHappened(GenericKeyEvent e) {
+		int key = e.getKey();
+
+		if (e.getWhat() == GenericKeyEvent.KEY_PRESSED) {
+			if (key == GenericKeyEvent.KEY_LEFT && mCurrentTool >= cButtonsPerColumn)
+				setCurrentTool(mCurrentTool - cButtonsPerColumn);
+			else if (key == GenericKeyEvent.KEY_RIGHT && mCurrentTool < cButtonsPerColumn)
+				setCurrentTool(mCurrentTool + cButtonsPerColumn);
+			else if (key == GenericKeyEvent.KEY_UP && (mCurrentTool % cButtonsPerColumn) > 0)
+				setCurrentTool(mCurrentTool - 1);
+			else if (key == GenericKeyEvent.KEY_DOWN && (mCurrentTool % cButtonsPerColumn) < cButtonsPerColumn-1)
+				setCurrentTool(mCurrentTool + 1);
+			else if (key == 'z')
+				setCurrentTool(cToolZoom);
+			else if (key == ' ')
+				setCurrentTool(cToolLassoPointer);
+			else if (key == GenericKeyEvent.KEY_DELETE)
+				setCurrentTool(cToolDelete);
+			else if (key == 't')
+				setCurrentTool(cToolText);
+			else if (key == '1')
+				setCurrentTool(cToolStdBond);
+			else if (key == '2')
+				setCurrentTool(cToolChain);
+			else if (key == 'm')
+				setCurrentTool(cToolMapper);
+			else if (key == '3')
+				setCurrentTool(cTool3Ring);
+			else if (key == '4')
+				setCurrentTool(cTool4Ring);
+			else if (key == '5')
+				setCurrentTool(cTool5Ring);
+			else if (key == '6')
+				setCurrentTool(cTool6Ring);
+			else if (key == '7')
+				setCurrentTool(cTool7Ring);
+			else if (key == 'a')
+				setCurrentTool(cToolAromRing);
+			else if (key == '-')
+				setCurrentTool(cToolNegCharge);
+			else if (key == '+')
+				setCurrentTool(cToolPosCharge);
+			else if (key == 'u')
+				setCurrentTool(cToolUpBond);
+			else if (key == 'd')
+				setCurrentTool(cToolDownBond);
+			else if (key == 'c')
+				setCurrentTool(cToolAtomC);
+			else if (key == 'n')
+				setCurrentTool(cToolAtomN);
+			else if (key == 'p')
+				setCurrentTool(cToolAtomP);
+			else if (key == 'o')
+				setCurrentTool(cToolAtomO);
+			else if (key == 's')
+				setCurrentTool(cToolAtomS);
+			else if (key == 'f')
+				setCurrentTool(cToolAtomF);
+			else if (key == 'l')
+				setCurrentTool(cToolAtomCl);
+			else if (key == 'b')
+				setCurrentTool(cToolAtomBr);
+			else if (key == 'i')
+				setCurrentTool(cToolAtomI);
+			else if (key == 'h')
+				setCurrentTool(cToolAtomH);
+			else if (key == '.')
+				setCurrentTool(cToolCustomAtom);
+		}
+//		if (e.getWhat() == GenericKeyEvent.KEY_RELEASED) {
+//		}
+	}
+
+	protected int getButtonNo(GenericMouseEvent e) {
         int x = e.getX() - cBorder;
         int y = e.getY() - cBorder;
 		if (x<0 || x>=2*cButtonSize || y<0 || y>=cButtonsPerColumn*cButtonSize)
@@ -233,6 +315,12 @@ public class GenericEditorToolbar implements GenericEventListener<GenericMouseEv
 		int button = cButtonsPerColumn * (int)(x/cButtonSize) + (int)(y/cButtonSize);
 		return isSelectableButton(button) ? button : -1;
 		}
+
+	private boolean isActionButton(int button) {
+		return button == cButtonClear
+			|| button == cButtonUndo
+			|| button == cButtonCleanStructure;
+	}
 
 	private boolean isSelectableButton(int b) {
 		return b >= 0 && b < 2*cButtonsPerColumn

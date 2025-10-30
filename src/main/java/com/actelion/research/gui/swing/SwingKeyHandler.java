@@ -2,6 +2,7 @@ package com.actelion.research.gui.swing;
 
 import com.actelion.research.gui.generic.GenericEventHandler;
 import com.actelion.research.gui.generic.GenericKeyEvent;
+import javafx.scene.input.KeyCode;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -37,6 +38,10 @@ public class SwingKeyHandler extends GenericEventHandler<GenericKeyEvent> implem
 				: e.getKeyCode() == KeyEvent.VK_HELP ? GenericKeyEvent.KEY_HELP
 				: e.getKeyCode() == KeyEvent.VK_ESCAPE ? GenericKeyEvent.KEY_ESCAPE
 				: e.getKeyCode() == KeyEvent.VK_ENTER ? GenericKeyEvent.KEY_ENTER
+				: e.getKeyCode() == KeyEvent.VK_LEFT ? GenericKeyEvent.KEY_LEFT
+				: e.getKeyCode() == KeyEvent.VK_RIGHT ? GenericKeyEvent.KEY_RIGHT
+				: e.getKeyCode() == KeyEvent.VK_UP ? GenericKeyEvent.KEY_UP
+				: e.getKeyCode() == KeyEvent.VK_DOWN ? GenericKeyEvent.KEY_DOWN
 				: e.getKeyChar();
 		boolean isCtrlDown = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
 		boolean isAltDown = (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
