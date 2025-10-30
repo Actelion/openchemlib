@@ -5,7 +5,6 @@ import java.util.Map;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.interactionstatistics.SplineFunction;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 /**

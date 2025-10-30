@@ -3,7 +3,7 @@ package com.actelion.research.chem.phesa.pharmacophore;
 import com.actelion.research.chem.AtomFunctionAnalyzer;
 import com.actelion.research.chem.RingCollection;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.AcceptorPoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.AromRingPoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.DonorPoint;

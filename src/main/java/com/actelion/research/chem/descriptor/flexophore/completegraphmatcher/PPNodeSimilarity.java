@@ -36,9 +36,9 @@ import com.actelion.research.calc.Matrix;
 import com.actelion.research.calc.statistics.median.MedianStatisticFunctions;
 import com.actelion.research.chem.descriptor.flexophore.IPPNode;
 import com.actelion.research.chem.descriptor.flexophore.PPNode;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
-import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
-import com.actelion.research.chem.interactionstatistics.InteractionSimilarityTable;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactions.statistics.InteractionDistanceStatistics;
+import com.actelion.research.chem.interactions.statistics.InteractionSimilarityTable;
 import com.actelion.research.util.Formatter;
 import com.actelion.research.util.datamodel.table.TableModelString;
 

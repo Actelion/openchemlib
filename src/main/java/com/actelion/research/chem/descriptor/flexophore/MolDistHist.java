@@ -36,7 +36,7 @@ package com.actelion.research.chem.descriptor.flexophore;
 
 import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 import com.actelion.research.util.StringFunctions;
 
 import java.awt.*;

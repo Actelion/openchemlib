@@ -32,14 +32,10 @@
 */
 package com.actelion.research.chem.conf.torsionstrain;
 
-import java.text.DecimalFormat;
-import java.util.Arrays;
-
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.forcefield.mmff.Vector3;
-import com.actelion.research.chem.interactionstatistics.SplineFunction;
+import com.actelion.research.chem.interactions.SplineFunction;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 

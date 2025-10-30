@@ -38,7 +38,7 @@ import com.actelion.research.calc.ArrayUtilsCalc;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.descriptor.flexophore.calculator.StructureCalculator;
 import com.actelion.research.chem.descriptor.flexophore.generator.ConstantsFlexophoreGenerator;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 import com.actelion.research.util.Formatter;

@@ -72,6 +72,7 @@ import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
 import com.actelion.research.chem.mcs.ListWithIntVec;
 import com.actelion.research.util.BurtleHasher;
+import com.actelion.research.util.Formatter;
 import com.actelion.research.util.datamodel.IntegerDouble;
 
 import java.util.*;
@@ -1618,7 +1619,7 @@ public class ExtendedMoleculeFunctions {
 	}
 
 	/**
-	 * Topological centaer atoms are the atoms with the lowest squared sum of topological distances to all atoms.
+	 * Topological center atoms are the atoms with the lowest squared sum of topological distances to all atoms.
 	 * @param
 	 * @return
 	 */
@@ -1719,5 +1720,20 @@ public class ExtendedMoleculeFunctions {
 		}
 		Collections.sort(li, IntegerDouble.getComparatorDouble());
 		return li;
+	}
+
+	public final static String toStringCoordinates(StereoMolecule m){
+
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < m.getAllAtoms(); i++) {
+			if(i>0)
+				sb.append("\n");
+			sb.append(Formatter.format2(m.getAtomX(i)));
+			sb.append(", ");
+			sb.append(Formatter.format2(m.getAtomY(i)));
+			sb.append(", ");
+			sb.append(Formatter.format2(m.getAtomZ(i)));
+		}
+		return sb.toString();
 	}
 }

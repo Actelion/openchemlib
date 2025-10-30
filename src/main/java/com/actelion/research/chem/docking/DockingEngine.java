@@ -18,7 +18,7 @@ import com.actelion.research.chem.docking.scoring.IdoScore;
 import com.actelion.research.chem.docking.shape.ShapeDocking;
 import com.actelion.research.chem.forcefield.mmff.ForceFieldMMFF94;
 import com.actelion.research.chem.forcefield.mmff.MMFFPositionConstraint;
-import com.actelion.research.chem.interactionstatistics.InteractionAtomTypeCalculator;
+import com.actelion.research.chem.interactions.statistics.InteractionAtomTypeCalculator;
 import com.actelion.research.chem.io.pdb.calc.MoleculeGrid;
 import com.actelion.research.chem.mcs.MCS;
 import com.actelion.research.chem.optimization.OptimizerLBFGS;
@@ -482,65 +482,61 @@ public class DockingEngine {
 		rotation.apply(receptor);
 		
 	}
+
 	/**
 	 * the parameter d defines how much the atoms are allowed to move from their original position
 	 * @param d
 	 * @return
 	 */
-	
 	public double refineNativePose(double d, double[] coords) {
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
-		if(ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS)==null)
+		if (ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS) == null)
 			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
 		Molecule3D nativePose = new Molecule3D(nativeLigand);
 		new Canonizer(nativePose);
 		ForceFieldMMFF94 mmff = new ForceFieldMMFF94(nativePose, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-		MMFFPositionConstraint constraint = new MMFFPositionConstraint(nativePose,50,0.2);
+		MMFFPositionConstraint constraint = new MMFFPositionConstraint(nativePose, 50, 0.2);
 		mmff.addEnergyTerm(constraint);
 		mmff.minimise();
-		ConformerSetGenerator confSetGen = new ConformerSetGenerator(100,ConformerGenerator.STRATEGY_LIKELY_RANDOM, false,
+		ConformerSetGenerator confSetGen = new ConformerSetGenerator(100, ConformerGenerator.STRATEGY_LIKELY_RANDOM, false,
 				LigandPose.SEED);
 		ConformerSet confSet = confSetGen.generateConformerSet(nativePose);
 		double eMin = Double.MAX_VALUE;
 
 		ConformerSet initialPos = new ConformerSet();
-		for(Conformer conformer : confSet) {
-			if(conformer!=null) {
+		for (Conformer conformer : confSet) {
+			if (conformer != null) {
 				StereoMolecule conf = conformer.toMolecule();
 				conf.ensureHelperArrays(Molecule.cHelperParities);
 				mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
-				constraint = new MMFFPositionConstraint(conf,50,0.5);
+				constraint = new MMFFPositionConstraint(conf, 50, 0.5);
 				mmff.addEnergyTerm(constraint);
 				mmff.minimise();
 				Conformer ligConf = new Conformer(conf);
 				initialPos.add(ligConf);
-				if(initialPos.size()>=startPositions)
+				if (initialPos.size()>=startPositions)
 					break;
 				double e = mmff.getTotalEnergy();
-				if(e<eMin)
+				if (e<eMin)
 					eMin = e;
 			}
 		}
 		LigandPose pose = new LigandPose(new Conformer(nativePose), engine, eMin);
 		pose.addPositionalConstraints(d);
-		OptimizerLBFGS optimizer = new OptimizerLBFGS(200,0.001);
+		OptimizerLBFGS optimizer = new OptimizerLBFGS(200, 0.001);
 		optimizer.optimize(pose);
 		double energy = pose.getFGValue(new double[pose.getState().length]);
 		StereoMolecule best = pose.getLigConf().toMolecule();
 		double[][] rot = rotation.getInvert().getRotation();
 		PheSAAlignment.rotateMol(best, rot);
-		PheSAAlignment.translateMol(best, new double[] {origCOM.x, origCOM.y, origCOM.z} );
-		for(int a=0;a<best.getAllAtoms();a++) {
-			coords[3*a] = best.getAtomX(a);
-			coords[3*a+1] = best.getAtomY(a);
-			coords[3*a+2] = best.getAtomZ(a);
+		PheSAAlignment.translateMol(best, new double[]{origCOM.x, origCOM.y, origCOM.z});
+		for (int a = 0; a<best.getAllAtoms(); a++) {
+			coords[3 * a] = best.getAtomX(a);
+			coords[3 * a + 1] = best.getAtomY(a);
+			coords[3 * a + 2] = best.getAtomZ(a);
 		}
-	
-		
 		return energy;
-		
-		
 	}
 	
 	private static double getCoreRMSD(Coordinates[] coords1, Coordinates[] coords2) {

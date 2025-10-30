@@ -1,5 +1,6 @@
-package com.actelion.research.chem.interactionstatistics;
+package com.actelion.research.chem.interactions.statistics;
 
+import com.actelion.research.chem.interactions.SplineFunction;
 import com.actelion.research.util.FastSpline;
 import com.actelion.research.util.SmoothingSplineInterpolator;
 
@@ -16,7 +17,7 @@ public class InteractionDistanceStatistics {
 	
 	private static volatile InteractionDistanceStatistics instance = new InteractionDistanceStatistics(); //eager initialization
 	private static final String BASE_PATH = "/resources/interactionstatistics/";
-	private volatile Map<Long,SplineFunction> pairPotentials;
+	private volatile Map<Long, SplineFunction> pairPotentials;
 	public static final double OCCURENCE_CUTOFF = 500;
 	public static final double CUTOFF_RADIUS = 6.0;
 	public static final double BIN_SIZE = 0.2;

@@ -142,6 +142,7 @@ public abstract class AbstractDepictor<T> {
 	public static final int	cDModeNoColorOnESRAndCIP = 0x1000;
 	public static final int cDModeNoImplicitHydrogen = 0x2000;
 	public static final int cDModeDrawBondsInGray = 0x4000;
+	public static final int	cDModeNoCarbonLabelWithCustomLabel = 0x8000;
 
 	private static double cFactorTextSize = 0.6;
 	private static double cFactorLineWidth = 0.06;
@@ -1920,12 +1921,14 @@ public abstract class AbstractDepictor<T> {
 				}
 			}
 
-		boolean largeIsoString = false;
+		boolean isSmallCustomLabelOnly = false;
+		boolean isSmallCustomLabel = false;
 		String atomStr = mMol.getAtomCustomLabel(atom);
 		if (atomStr != null && atomStr.startsWith("]")) {
+			isSmallCustomLabelOnly = (isoStr == null);
+			isSmallCustomLabel = true;
 			isoStr = append(atomStr.substring(1), isoStr);
 			atomStr = null;
-			largeIsoString = true;
 			}
 		if (atomStr != null) {
 		    hydrogensToAdd = 0;
@@ -1946,7 +1949,7 @@ public abstract class AbstractDepictor<T> {
 			}
 		else if (mMol.getAtomicNo(atom) != 6
 		 || propStr != null
-		 || isoStr != null
+		 || (isoStr != null && (!isSmallCustomLabelOnly || (mDisplayMode & cDModeNoCarbonLabelWithCustomLabel) == 0))
 		 || (hydrogensToAdd > 0)
 		 || !mAtomIsConnected[atom])
 			atomStr = mMol.getAtomLabel(atom);
@@ -1976,7 +1979,7 @@ public abstract class AbstractDepictor<T> {
             isoStr = String.valueOf(atom);
 
 		if (isoStr != null) {
-			if (largeIsoString)
+			if (isSmallCustomLabel)
 				mpSetReducedLabelSize();
 			else
 				mpSetSmallLabelSize();

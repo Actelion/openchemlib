@@ -39,6 +39,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.NotDirectoryException;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -65,15 +66,11 @@ public class IO {
 
 	public static boolean canWriteAndDeleteInPath(File dir) throws IOException {
 		boolean w = false;
-
 		File f = File.createTempFile("test", ".txt", dir);
-
 		if(f.canWrite()){
 			w=true;
 		}
-
 		w = f.delete();
-
 		return w;
 	}
 
@@ -86,15 +83,12 @@ public class IO {
 	 * @return BufferedReader
 	 */
 	public static BufferedReader getBufferedReader(String sAbsolutePathIn) throws FileNotFoundException {
-
 		BufferedReader bufferedReader = null;
-
 		if (sAbsolutePathIn.length() > 0) {
 			FileInputStream fis = new FileInputStream(sAbsolutePathIn);
 			InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
 			bufferedReader = new BufferedReader(isr);
 		}
-
 		return bufferedReader;
 	}
 
@@ -106,11 +100,8 @@ public class IO {
 	 * @return
 	 */
 	public static String getUniqueFileName(String totalpath) {
-		
 		File fi = new File(totalpath);
-
 		return getUniqueFileName(fi, fi.getParentFile(), Formatter.dfI3).getAbsolutePath();
-
 	}
 	
 	public static File getUniqueFileName(File fiIn) {
@@ -135,31 +126,19 @@ public class IO {
 	public static File getUniqueFileName(File file, File dirDestination, DecimalFormat df) {
 
 		String sFileName = file.getName();
-		
 		File fiNew = new File(dirDestination, sFileName);
-		
 		if(!fiNew.exists()){
 			return fiNew;
 		}
-		
 		String sBaseName = getBaseName(file);
-		
 		String sExtension = getExtension(file);
-		
 		String sBaseNameNumber = sBaseName;
-
 		int cc = 1;
-
 		while (fiNew.isFile()) {
-
 			sBaseNameNumber = next(sBaseNameNumber, df);
-			
 			sFileName = sBaseNameNumber + sExtension;
-			
 			fiNew = new File(dirDestination, sFileName);
-
 			cc++;
-
 			if (cc > LIMIT_FILES_DIR) {
 				sFileName = null;
 				IOException ex = new IOException("To many files in this dir.");
@@ -190,34 +169,25 @@ public class IO {
 		
 		Date d = new Date();
 		DateFormat df = new SimpleDateFormat("yyMMdd");
-
 		String sDate = df.format(d);
-		
 		String name = sDate + appendix;
-		
 		File dir = new File(dirParent, name);
-		
 		int index = 1;
 		while(dir.exists()){
 			name = sDate + "_" + index + "_" + appendix;
 			index++;
 			dir = new File(dirParent, name);
 		}
-		
 		if(!dir.mkdirs()){
 			String e = "Not possible to make dir " + dir.getAbsolutePath() + ".";
 			throw new IOException(e);
 		}
-		
 		return dir;
 	}
 	
 	public static File getUniqueDir(File dirParent, String suffix) throws IOException {
-		
 		String name = suffix;
-		
 		File dir = new File(dirParent, name);
-		
 		int index = 1;
 		while(dir.exists()){
 			name = suffix+index;
@@ -239,9 +209,7 @@ public class IO {
 	 * @return
 	 */
 	public static String getNextFileName(String totalpath) {
-
 		File fi = new File(totalpath);
-
 		return getUniqueFileName(fi, fi.getParentFile(), Formatter.dfI3).getAbsolutePath();
 	}
 	
@@ -257,7 +225,6 @@ public class IO {
 	 */
 	public static String next(String txt, DecimalFormat dfExtern) {
 		String s = "";
-
 		int ind = -1;
 		for (int i = txt.length() - 1; i >= 0; i--) {
 			if (!Character.isDigit(txt.charAt(i))) {
@@ -265,32 +232,20 @@ public class IO {
 				break;
 			}
 		}
-
 		s = txt.substring(0, ind + 1);
-
 		String sN = txt.substring(ind + 1, txt.length());
-		
 		NumberFormat nfName = dfExtern;
-		
 		int num = 0;
-		
 		if (sN.length() > 0) {
 			num = Integer.parseInt(sN);
-			
 			String patFormat = "";
 			for (int i = 0; i < sN.length(); i++) {
 				patFormat += "0";
 			}
-			
 			nfName = new DecimalFormat(patFormat);
 		}
-		
 		num++;
-
-		
 		s += nfName.format(num);
-		
-
 		return s;
 	}
 
@@ -315,11 +270,8 @@ public class IO {
 	 * @return base name without extension.
 	 */
 	public static String getBaseName(String str) {
-
 		File fi = new File(str);
-
 		String name = fi.getName();
-
 		int iIndexStart = name.lastIndexOf('\\');
 		if(iIndexStart==-1){
 			iIndexStart = name.lastIndexOf(File.separator);
@@ -327,16 +279,11 @@ public class IO {
 		if(iIndexStart==-1){
 			iIndexStart = 0;
 		}
-
 		int iIndexEnd = name.lastIndexOf('.');
-
 		String sBaseName = "";
-				
 		if(iIndexEnd == -1)
 			iIndexEnd = name.length();
-				
 		sBaseName = name.substring(iIndexStart, iIndexEnd);
-		
 		return sBaseName;
 	}
 
@@ -351,50 +298,36 @@ public class IO {
 	 * Returns String with length null when no extension found.
 	 */
 	public static String getExtension(File file) {
-		
 		String sName = file.getName();
-		
 		int iIndexStartName = sName.lastIndexOf(SEP) + 1;
-		
 		int iIndexStartExtension = sName.lastIndexOf('.');
-		
 		if(iIndexStartExtension==-1){
 			return "";
 		}
-		
 		String sExtension = sName.substring(iIndexStartExtension);
-		
 		return sExtension;
 	}
 
 	public static void mkdirs(String path) throws IOException {
-		
 		mkdirs(new File(path));
-
 	}
 	
-	public static void mkdirs(File dir) throws IOException {
-		
+	public static void mkdirs(File dir) throws NotDirectoryException {
 		if (!dir.exists()) {
 			if(!dir.mkdirs()){
-				throw new IOException("Not possible to make dir " + dir.getAbsolutePath() + ".");
+				throw new NotDirectoryException("Not possible to make dir " + dir.getAbsolutePath() + ".");
 			}
 		}
-		
 	}
 	
 	public static void readBetweenTags(String sAbsolutePathIn,
 		String sTagStartRegEx, 
 		String sTagEndRegEx, 
 		Vector<String> vecStringContent) {
-
 		try {
 			StringReadChannel channel = new StringReadChannel(Channels.newChannel(new FileInputStream(new File(sAbsolutePathIn))));
-			
 			boolean bTagStartFound = false;
-			
 			boolean bTagEndFound = false;
-			
 			while (channel.hasMoreLines()) {
 				String sLine = channel.readLine();
 
@@ -405,7 +338,6 @@ public class IO {
 					}
 				}
 			}
-
 			if (bTagStartFound == true) {
 				while (channel.hasMoreLines()) {
 					String sLine = channel.readLine();
@@ -422,14 +354,11 @@ public class IO {
 				System.err.println("Tag: " + sTagStartRegEx + " not found");
 				(new RuntimeException()).printStackTrace();
 			}
-
 			channel.close();
-			
 			if (!bTagEndFound) {
 				System.err.println("Tag: " + sTagEndRegEx + " not found");
 				(new RuntimeException()).printStackTrace();
 			}
-			
 		} catch (IOException e) {
 			System.err.println(e);
 		} catch (Exception e) {
@@ -450,12 +379,10 @@ public class IO {
 	 *            contains the result of the read in.
 	 */
 	public static void readFromTag(String sAbsolutePathIn, String sTagRegEx, Vector<String> vecStringContent) {
-		
 		try {
 			StringReadChannel channel = new StringReadChannel(Channels.newChannel(new FileInputStream(new File(sAbsolutePathIn))));
 			boolean bTagFound = false;
 			String sLine = "";
-			
 			while (channel.hasMoreLines()) {
 				sLine = channel.readLine();
 
@@ -482,7 +409,6 @@ public class IO {
 				System.err.println("Tag: " + sTagRegEx + " not found");
 				(new RuntimeException()).printStackTrace();
 			}
-
 			channel.close();
 		} catch (IOException e) {
 			System.err.println(e);
@@ -492,7 +418,6 @@ public class IO {
 	}
 	
     public static void skipUntilLineMatchesRegEx(InputStream in, String regex)throws Exception {
-    	
     	int limit = 10000;
     	int cc=0;
     	String line = readLine(in);
@@ -535,40 +460,26 @@ public class IO {
 	 * @throws IOException
 	 */
 	public static int [] readLines2IntArray(File fiIntLineWise) throws IOException{
-
 		IntArray intArray = new IntArray();
-
 		BufferedReader br = new BufferedReader(new FileReader(fiIntLineWise));
-
 		String line = "";
-
 		while((line=br.readLine()) != null){
 			int val = Integer.parseInt(line);
-
 			intArray.add(val);
 		}
-
 		br.close();
-
 		return intArray.get();
 	}
 
 	public static double [] readLines2DoubleArray(File fiIntLineWise) throws IOException{
-
 		DoubleArray doubleArray = new DoubleArray();
-
 		BufferedReader br = new BufferedReader(new FileReader(fiIntLineWise));
-
 		String line = "";
-
 		while((line=br.readLine()) != null){
 			double v = Double.parseDouble(line);
-
 			doubleArray.add(v);
 		}
-
 		br.close();
-
 		return doubleArray.get();
 	}
 
@@ -576,17 +487,12 @@ public class IO {
 		StringBuilder sb = new StringBuilder();
 		int c = -1;
 		while((c = is.read()) != '\n'){
-			
 			if(c==-1)
 				break;
-			
 			sb.append((char)c);
 		}
-		
     	String str = StringFunctions.removeCharacter(sb, '\r');
-    	
     	return str;
-
 	}
 
 
@@ -603,9 +509,6 @@ public class IO {
 		return sb.toString();
 	}
 
-
-
-
     public static String readLine(Reader is) throws IOException {
 		StringBuffer b = new StringBuffer();
 		int c=0;
@@ -616,35 +519,24 @@ public class IO {
 		}
 		return b.toString();
 	}
-    
 
-	
 	public static String readLine(FileChannel fc) throws IOException {
 		ByteBuffer buf = ByteBuffer.allocate(1000);
-		
 		StringBuilder sb = new StringBuilder();
-		
 		boolean bEOF=false;
 		boolean bEOLine=false;
-		
 		long posFCPos = fc.position();
-		
-		
 		while (!bEOF){
 			buf.position(0);
 			int size = fc.read(buf);
 			if(size==-1){
 				break;
 			}
-			
 			for (int i = 0; i < size; i++) {
-			
 				int c = buf.get(i);
 				posFCPos++;
-				
 				if(c==-1) {
 					bEOF=true;
-					
 				} else {
 					if(c=='\n') {
 						fc.position(posFCPos);
@@ -658,12 +550,9 @@ public class IO {
 			if(bEOLine)
 				break;
 		}
-		
 		return sb.toString();
 	}
 
-
-	
 	public static String readFirstLine(File file) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		String line = reader.readLine();
@@ -672,17 +561,12 @@ public class IO {
 	}
 	public static List<String> readLines2List(File file) throws IOException {
 		List<String> li = new ArrayList<String>();
-
 		BufferedReader reader = new BufferedReader(new FileReader(file));
-
 		String line = null;
-
 		while ((line = reader.readLine())!=null) {
 			li.add(line);
 		}
-
 		reader.close();
-
 		return li;
 	}
 
@@ -694,38 +578,25 @@ public class IO {
 	 */
 	public static List<String> readLines2List(InputStream is) throws IOException {
 		List<String> li = new ArrayList<String>();
-
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-
 		String line = null;
-
 		while ((line = reader.readLine())!=null) {
 			li.add(line);
 		}
-
 		return li;
 	}
 
-
-
-
 	public static List<String> readLines2List(List<File> liFile) throws IOException {
-		
 		List<String> li = new ArrayList<String>();
-		
 		for (File fi : liFile) {
 			li.addAll(readLines2List(fi));
 		}
-		
 		return li;
 	}
-	
-
 
 	public static void write(String sAbsolutePathOut, String sContent) {
 		write(sAbsolutePathOut, sContent, true);
 	}
-
 
 	public static void write(String sAbsolutePathOut, String sContent, boolean bAppend) {
 		write(new File(sAbsolutePathOut), sContent, bAppend);
@@ -760,7 +631,6 @@ public class IO {
 	 * @throws IOException
 	 */
 	public static void write(File file, List<String> li) throws IOException {
-		
 		FileWriter fw = new FileWriter(file);
 		for (int i = 0; i < li.size(); i++) {
 			fw.write(li.get(i));
@@ -771,7 +641,6 @@ public class IO {
 	}
 	
 	public static void writeIntegerList(File file, List<Integer> li) throws IOException {
-		
 		FileWriter fw = new FileWriter(file);
 		for (int i = 0; i < li.size(); i++) {
 			fw.write(li.get(i).toString());
@@ -782,9 +651,7 @@ public class IO {
 	}
 
 	public static void write(File file, int [] arr) throws IOException {
-
 		BufferedWriter fw = new BufferedWriter(new FileWriter(file));
-
 		for (int i = 0; i < arr.length; i++) {
 			fw.write(Integer.toString(arr[i]));
 			if(i<arr.length-1)
@@ -794,9 +661,7 @@ public class IO {
 	}
 
 	public static void write(File file, double [] arr) throws IOException {
-
 		BufferedWriter fw = new BufferedWriter(new FileWriter(file));
-
 		for (int i = 0; i < arr.length; i++) {
 			fw.write(Double.toString(arr[i]));
 			if(i<arr.length-1)
@@ -947,7 +812,5 @@ public class IO {
 				}
 			}
 		}
-
 	}
-
 }

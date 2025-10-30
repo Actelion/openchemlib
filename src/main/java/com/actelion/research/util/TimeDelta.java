@@ -24,6 +24,7 @@ public class TimeDelta {
 	 public static final int PRECISION_MINUTES = 2;
 	 
 	 public static final int PRECISION_HOURS = 3;
+	 public static final int PRECISION_DAYS = 4;
 
     // So many nano seconds has a milli second
     public static final long NANO_MS = 1000 * 1000;
@@ -106,9 +107,7 @@ public class TimeDelta {
      * @return
      */
     public static String toString(long milliseconds) {
-    	
     	int precision = PRECISION_MS;
-    	
     	if(milliseconds > MS_YEAR) {
     		precision = PRECISION_HOURS;
     	} else if(milliseconds > MS_DAY) {
@@ -116,19 +115,28 @@ public class TimeDelta {
     	} else if(milliseconds > MS_HOUR) {
     		precision = PRECISION_SECONDS;
     	}
-    	    	
     	return toString(milliseconds, precision);
     }
-    
+    public static String toStringPrec2(long milliseconds) {
+    	int precision = PRECISION_MS;
+    	if(milliseconds > MS_YEAR) {
+    		precision = PRECISION_DAYS;
+    	} else if(milliseconds > MS_DAY) {
+    		precision = PRECISION_HOURS;
+    	} else if(milliseconds > MS_HOUR) {
+    		precision = PRECISION_MINUTES;
+    	} else if(milliseconds > MS_MINUTE) {
+    		precision = PRECISION_SECONDS;
+    	}
+    	return toString(milliseconds, precision);
+    }
+
     public static String toString(long milliseconds, int precision) {
         String str = "";
-
         if(milliseconds==0) {
             return milliseconds + " Millisec";
         }
-
         long millisecRemaining = milliseconds;
-
         if(millisecRemaining / MS_YEAR >= 1) {
         	String s = "";
         	if(millisecRemaining / MS_YEAR == 1){
@@ -151,7 +159,10 @@ public class TimeDelta {
             str += s;
             millisecRemaining = millisecRemaining - (MS_DAY * (millisecRemaining / MS_DAY));
         }
-        
+
+        if(precision == PRECISION_DAYS)
+            return str.trim();
+
         if(millisecRemaining / MS_HOUR >= 1) {
         	String s = "";
         	if(millisecRemaining / MS_HOUR == 1){

@@ -30,8 +30,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-package com.actelion.research.chem.interactionstatistics;
+package com.actelion.research.chem.interactions;
 
+import com.actelion.research.chem.interactions.statistics.InteractionDistanceStatistics;
 import com.actelion.research.util.ArrayUtils;
 import com.actelion.research.util.FastSpline;
 
@@ -79,7 +80,7 @@ public class SplineFunction {
 	}
 	
 	public double getDiscreteValue(double d) {
-		int index = (int) (0.5+d/InteractionDistanceStatistics.BIN_SIZE);
+		int index = (int) (0.5+d/ InteractionDistanceStatistics.BIN_SIZE);
 		return discreteFunction[index];
 	}
 	

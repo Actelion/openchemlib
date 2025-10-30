@@ -36,8 +36,8 @@ package com.actelion.research.chem.docking.scoring.idoscore;
 
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.conf.Conformer;
-import com.actelion.research.chem.interactionstatistics.InteractionDistanceStatistics;
-import com.actelion.research.chem.interactionstatistics.SplineFunction;
+import com.actelion.research.chem.interactions.statistics.InteractionDistanceStatistics;
+import com.actelion.research.chem.interactions.SplineFunction;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
 
 
