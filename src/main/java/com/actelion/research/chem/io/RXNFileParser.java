@@ -142,7 +142,7 @@ public class RXNFileParser
     private boolean parseV3(Reaction theReaction, BufferedReader theReader, boolean ignoreIdCode) throws Exception
     {
         String name = theReader.readLine().trim();
-        if (name.length() != 0)
+        if (!name.isEmpty())
         	theReaction.setName(name);
 
         theReader.readLine(); // skip program and time stamp
@@ -215,7 +215,7 @@ public class RXNFileParser
     private boolean parseV2(Reaction theReaction, BufferedReader theReader, boolean ignoreIdCode) throws Exception
     {
 	    String name = theReader.readLine().trim();
-	    if (name.length() != 0)
+	    if (!name.isEmpty())
 		    theReaction.setName(name);
 
 	    theReader.readLine(); // skip program and time stamp

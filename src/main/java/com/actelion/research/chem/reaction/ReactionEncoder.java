@@ -102,12 +102,6 @@ public class ReactionEncoder
 	 * @return String[5] with reaction code, mapping, coordinates, drawing objects, catalysts
 	 */
 	public static String[] encode(Reaction reaction, boolean keepAbsoluteCoordinates, boolean sortByIDCode) {
-		if (reaction == null
-			|| reaction.getReactants() == 0
-			|| reaction.getProducts() == 0) {
-			return null;
-		}
-
 		String[] idcode = new String[reaction.getMolecules()];
 		String[] mapping = new String[reaction.getMolecules()];
 		String[] coords = new String[reaction.getMolecules()];
@@ -157,9 +151,13 @@ public class ReactionEncoder
 			idcode[index] = "";
 		}
 
-		idcodeSequence.append(PRODUCT_IDENTIFIER);
-		mappingSequence.append(MOLECULE_DELIMITER);
-		coordsSequence.append(MOLECULE_DELIMITER);
+		if (reaction.getProducts() != 0) {
+			idcodeSequence.append(PRODUCT_IDENTIFIER);
+			if (reaction.getReactants() != 0) {
+				mappingSequence.append(MOLECULE_DELIMITER);
+				coordsSequence.append(MOLECULE_DELIMITER);
+			}
+		}
 
 		for (int i = reaction.getReactants(); i < reaction.getMolecules(); i++) {
 			int index = i;
@@ -235,7 +233,7 @@ public class ReactionEncoder
 			return null;
 		}
 
-		StringBuffer buf = new StringBuffer(result[0]);
+		StringBuilder buf = new StringBuilder(result[0]);
 
 		if (mode != 0) {
 			buf.append(OBJECT_DELIMITER);
@@ -291,19 +289,17 @@ public class ReactionEncoder
 	 */
 	public static Reaction decode(String rxnCode, String rxnMapping, String rxnCoords,
 								  String rxnObjects, String rxnCatalysts, boolean ensureCoordinates, Reaction rxn) {
-		if (rxnCode == null || rxnCode.length() == 0) {
+		if (rxnCode == null || rxnCode.isEmpty()) {
 			return null;
 		}
 
+		int productIndex = rxnCode.indexOf(PRODUCT_IDENTIFIER);
+
 		boolean isProduct = false;
-		int idcodeIndex = 0;
+		int idcodeIndex = (productIndex == 0) ? 1 : 0;	// we may not have any reactants
 		int mappingIndex = 0;
 		int coordsIndex = 0;
 
-		int productIndex = rxnCode.indexOf(PRODUCT_IDENTIFIER);
-		if (productIndex == -1) {
-			return null;
-		}
 
 		if (rxn == null)
 			rxn = new Reaction();
@@ -311,7 +307,7 @@ public class ReactionEncoder
 			rxn.clear();
 
 		while (idcodeIndex != -1) {
-			if (idcodeIndex > productIndex) {
+			if (productIndex != -1 && idcodeIndex > productIndex) {
 				isProduct = true;
 			}
 
@@ -331,7 +327,7 @@ public class ReactionEncoder
 			}
 
 			String mapping = null;
-			if (rxnMapping != null && rxnMapping.length() != 0) {
+			if (rxnMapping != null && !rxnMapping.isEmpty()) {
 				delimiterIndex = rxnMapping.indexOf(MOLECULE_DELIMITER, mappingIndex);
 				if (delimiterIndex == -1) {
 					mapping = rxnMapping.substring(mappingIndex);
@@ -342,7 +338,7 @@ public class ReactionEncoder
 			}
 
 			String coords = null;
-			if (rxnCoords != null && rxnCoords.length() != 0) {
+			if (rxnCoords != null && !rxnCoords.isEmpty()) {
 				delimiterIndex = rxnCoords.indexOf(MOLECULE_DELIMITER, coordsIndex);
 				if (delimiterIndex == -1) {
 					coords = rxnCoords.substring(coordsIndex);
@@ -366,11 +362,11 @@ public class ReactionEncoder
 			}
 		}
 
-		if (rxnObjects != null && rxnObjects.length() != 0) {
+		if (rxnObjects != null && !rxnObjects.isEmpty()) {
 			rxn.setDrawingObjects(new DrawingObjectList(rxnObjects));
 		}
 
-		if (rxnCatalysts != null && rxnCatalysts.length() != 0) {
+		if (rxnCatalysts != null && !rxnCatalysts.isEmpty()) {
 			IDCodeParser parser = new IDCodeParser(ensureCoordinates);
 			int index1 = 0;
 			int index2 = rxnCatalysts.indexOf(CATALYST_DELIMITER);
@@ -452,7 +448,7 @@ public class ReactionEncoder
 				rxn.addReactant(mol);
 		}
 
-		if (rxnObjects != null && rxnObjects.length() != 0) {
+		if (rxnObjects != null && !rxnObjects.isEmpty()) {
 			rxn.setDrawingObjects(new DrawingObjectList(rxnObjects));
 		}
 
