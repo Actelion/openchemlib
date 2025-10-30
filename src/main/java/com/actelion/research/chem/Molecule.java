@@ -818,7 +818,7 @@ public class Molecule implements Serializable {
 			}
 
 		boolean changed = changeAtom(atom, atomicNo, mass, abnormalValence, radical);
-		setAtomCustomLabel(atom, customLabel);
+		changed |= setAtomCustomLabel(atom, customLabel);
 		return changed;
 		}
 
@@ -3693,10 +3693,11 @@ public class Molecule implements Serializable {
 	 * setAtomCustomLabel(int, byte[])
 	 * @param atom
 	 * @param label null to remove custom label
+	 * @return whether the label was changed
 	 */
-	public void setAtomCustomLabel(int atom, String label) {
+	public boolean setAtomCustomLabel(int atom, String label) {
 		if (label != null) {
-			if (label.length() == 0)
+			if (label.isEmpty())
 				label = null;
 			else {
 				int atomicNo = getAtomicNoFromLabel(label);
@@ -3709,14 +3710,20 @@ public class Molecule implements Serializable {
 			}
 
 		if (label == null) {
-			if (mAtomCustomLabel != null)
+			if (mAtomCustomLabel != null && mAtomCustomLabel[atom] != null) {
 				mAtomCustomLabel[atom] = null;
+				return true;
+				}
 			}
 		else {
 			if (mAtomCustomLabel == null)
 				mAtomCustomLabel = new byte[mMaxAtoms][];
-			mAtomCustomLabel[atom] = label.getBytes(StandardCharsets.UTF_8);
+			if (mAtomCustomLabel[atom] == null || !new String(mAtomCustomLabel[atom], StandardCharsets.UTF_8).equals(label)) {
+				mAtomCustomLabel[atom] = label.getBytes(StandardCharsets.UTF_8);
+				return true;
+				}
 			}
+		return false;
 		}
 
 	/**
