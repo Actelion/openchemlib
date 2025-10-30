@@ -2008,7 +2008,10 @@ public class GenericEditorArea implements GenericEventListener {
 	private void changeAtomicNo(int atomicNo) {
 		storeState();
 		if (mMol.addOrChangeAtom(mX1, mY1, atomicNo, 0, -1, 0, null)) {
-			mCurrentHiliteAtom = -1;
+			if (mCurrentHiliteAtom != -1) {
+				mCurrentHiliteAtom = -1;
+				fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));
+			}
 			updateAndFireEvent(UPDATE_CHECK_COORDS);
 		}
 	}
@@ -2679,12 +2682,14 @@ public class GenericEditorArea implements GenericEventListener {
 				|| hiliteObject != null);
 
 		if (mCurrentHiliteAtom != theAtom) {
-			if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0)
+			if (mCurrentHiliteAtom != -1 && mAtomKeyStrokeBuffer.length() != 0) {
 				expandAtomKeyStrokes(mAtomKeyStrokeBuffer.toString());
-
-			mCurrentHiliteAtom = theAtom;
-			mAtomKeyStrokeBuffer.setLength(0);
-			fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));
+			}
+			else {
+				mCurrentHiliteAtom = theAtom;
+				mAtomKeyStrokeBuffer.setLength(0);
+				fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));
+			}
 		}
 		if (mCurrentHiliteBond != theBond) {
 			mCurrentHiliteBond = theBond;
@@ -2709,7 +2714,7 @@ public class GenericEditorArea implements GenericEventListener {
 
 	/**
 	 * @param s
-	 * @return true if adding one or more chars may still create a valid key stroke sequence
+	 * @return true if adding one or more chars may still create a valid keystroke sequence
 	 */
 	private boolean isValidAtomKeyStrokeStart(String s){
 		if (s.length()<3)
@@ -2726,12 +2731,17 @@ public class GenericEditorArea implements GenericEventListener {
 		int atomicNo = Molecule.getAtomicNoFromLabel(keyStrokes, mAllowedPseudoAtoms);
 		if (atomicNo != 0) {
 			storeState();
+			boolean mayChangeAtomOrder = (atomicNo == 1 ^ mMol.getAtomicNo(mCurrentHiliteAtom) == 1);
 			if (mMol.changeAtom(mCurrentHiliteAtom, atomicNo, 0, -1, 0)) {
+				if (mayChangeAtomOrder) {
+					mCurrentHiliteAtom = -1;
+					fireEventLater(new EditorEvent(this, EditorEvent.WHAT_HILITE_ATOM_CHANGED, true));
+				}
 				updateAndFireEvent(UPDATE_CHECK_COORDS);
 				return;
-			} else {
-				update(UPDATE_NONE);
 			}
+
+			update(UPDATE_NONE);
 		}
 
 		if (mAtomKeyStrokeSuggestion != null && !mAtomKeyStrokeSuggestion.isEmpty())
@@ -2741,7 +2751,7 @@ public class GenericEditorArea implements GenericEventListener {
 		if (substituent != null) {
 			storeState();
 
-			// Copy the the fragment containing the attachment point into a new molecule.
+			// Copy the fragment containing the attachment point into a new molecule.
 			// Then attach the substituent, create new atom coordinates for the substituent,
 			// while retaining coordinates of the fragment.
 			StereoMolecule fragment = new StereoMolecule();
