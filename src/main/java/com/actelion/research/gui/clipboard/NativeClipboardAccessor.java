@@ -34,6 +34,10 @@
 package com.actelion.research.gui.clipboard;
 
 public class NativeClipboardAccessor {
+
+	/*
+	 # @deprecated for all NC_XYZ. Moved to ClipboardHandler
+	 */
 	public static final String NC_SKETCH	= "MDLSK";
 	public static final String NC_CTAB		= "MDLCT";
 	public static final String NC_MOLFILE	= "MDL_MOL";
@@ -47,6 +51,8 @@ public class NativeClipboardAccessor {
 	public static final String NC_CHEMDRAWINTERCHANGE = "ChemDraw Interchange Format";
 	public static final String NC_IDCODE		= "IDCODE";
 
+	private static boolean isInitOK;
+
     public static native boolean copyMoleculeToClipboard(String filname, byte[] sketch, byte[] serializedObject);
 	public static native boolean copyReactionToClipboard(byte[] ctab, byte[] sketch, byte[] serializedObject);
 	public static native boolean copySizedMoleculeToClipboard(String filname, byte[] sketch, byte[] serializedObject, int cx,int cy);
@@ -54,10 +60,13 @@ public class NativeClipboardAccessor {
     public static native byte[] getClipboardData(String format);
     public static native boolean setClipBoardData(String format, byte[] buffer);
 
+	public static boolean isInitOK() {return isInitOK;}
+
     static {
         try {
 			System.loadLibrary("actelionclip");
             System.out.println("actelionclip loaded");
+			isInitOK = true;
         } catch (UnsatisfiedLinkError e) {
         	// added to retain compatibility with DataWarrior installations; TLS 11Jan2018
 			e.printStackTrace();
