@@ -250,7 +250,7 @@ public class GenericEditorToolbar implements GenericEventListener {
 				setCurrentTool(cToolZoom);
 			else if (key == ' ')
 				setCurrentTool(cToolLassoPointer);
-			else if (key == GenericKeyEvent.KEY_DELETE)
+			else if (key == '0')
 				setCurrentTool(cToolDelete);
 			else if (key == 't')
 				setCurrentTool(cToolText);
