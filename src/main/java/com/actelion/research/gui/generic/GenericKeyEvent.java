@@ -9,6 +9,10 @@ public class GenericKeyEvent extends GenericEvent {
 	public static final int KEY_HELP = -6;
 	public static final int KEY_ESCAPE = -7;
 	public static final int KEY_ENTER = -8;
+	public static final int KEY_LEFT = -9;
+	public static final int KEY_RIGHT = -10;
+	public static final int KEY_UP = -11;
+	public static final int KEY_DOWN = -12;
 
 	public static final int KEY_PRESSED = 1;
 	public static final int KEY_RELEASED = 2;

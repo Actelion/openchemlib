@@ -143,6 +143,7 @@ public abstract class AbstractDepictor<T> {
 	public static final int cDModeNoImplicitHydrogen = 0x2000;
 	public static final int cDModeDrawBondsInGray = 0x4000;
 	public static final int	cDModeNoCarbonLabelWithCustomLabel = 0x8000;
+	public static final int	cDModeNoAtomCustomLabels = 0x010000;
 
 	private static double cFactorTextSize = 0.6;
 	private static double cFactorLineWidth = 0.06;
@@ -1923,7 +1924,7 @@ public abstract class AbstractDepictor<T> {
 
 		boolean isSmallCustomLabelOnly = false;
 		boolean isSmallCustomLabel = false;
-		String atomStr = mMol.getAtomCustomLabel(atom);
+		String atomStr = ((mDisplayMode & cDModeNoAtomCustomLabels) != 0) ? null : mMol.getAtomCustomLabel(atom);
 		if (atomStr != null && atomStr.startsWith("]")) {
 			isSmallCustomLabelOnly = (isoStr == null);
 			isSmallCustomLabel = true;

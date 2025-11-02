@@ -17,7 +17,7 @@ import javafx.scene.paint.Paint;
 
 
 public class FXEditorToolbar extends Canvas implements GenericCanvas {
-	private GenericEditorToolbar mGenericToolbar;
+	private final GenericEditorToolbar mGenericToolbar;
 	private volatile boolean mDrawPending;
 
 	public FXEditorToolbar(FXEditorArea fxEditorArea) {
