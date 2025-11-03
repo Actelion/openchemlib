@@ -46,7 +46,7 @@ import java.util.stream.IntStream;
 
 public class BondRotationHelper {
 	
-	private StereoMolecule mMol;
+	private final StereoMolecule mMol;
 	private int[] mRotatableBonds;
 	private boolean[] mIsRotatableBond;
 	private int[][] mSmallerSideAtomLists;
