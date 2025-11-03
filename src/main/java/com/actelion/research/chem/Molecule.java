@@ -1007,17 +1007,22 @@ public class Molecule implements Serializable {
 		 && getOccupiedValence(atom) > 1)
 			return false;
 
+		boolean changed = mIsFragment && ((mAtomQueryFeatures[atom] & ~cAtomQFAny) != 0);
 		mAtomQueryFeatures[atom] &= ~cAtomQFAny;
-		if (mAtomList != null)
+		if (mAtomList != null && mAtomList[atom] != null) {
 			mAtomList[atom] = null;
-		if (mAtomCustomLabel != null)
+			changed = true;
+		}
+		if (mAtomCustomLabel != null && mAtomCustomLabel[atom] != null) {
 			mAtomCustomLabel[atom] = null;
+			changed = true;
+		}
 
 		if (atomicNo == mAtomicNo[atom]
 		 && mass == mAtomMass[atom]
 		 && abnormalValence == getAtomAbnormalValence(atom)
 		 && radical == getAtomRadical(atom))
-			return false;
+			return changed;
 
 		if (atomicNo == 151 || atomicNo == 152) {	// 'D' or 'T'
 			mass = atomicNo - 149;
