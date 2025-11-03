@@ -1155,6 +1155,18 @@ public class StringFunctions {
 	public static String toStringInt(List<Integer> li) {
 		return toStringInt(li, SEP);
 	}
+	public static HashMap<String, String> toHashMap(String obj, String sepRow) {
+		HashMap<String, String> hm = new HashMap<>();
+		String [] arr = obj.split(sepRow);
+		for (String line : arr) {
+			int indSEP = line.indexOf('"');
+			if(indSEP==-1) continue;
+			String key = line.substring(0, indSEP).trim();
+			String val = line.substring(indSEP+1).trim();
+			hm.put(key, val);
+		}
+		return hm;
+	}
 
 	public static String toSortedString(List<String> li) {
 		StringBuilder sb = new StringBuilder();
