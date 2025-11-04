@@ -151,8 +151,8 @@ public class ReactionEncoder
 			idcode[index] = "";
 		}
 
+		idcodeSequence.append(PRODUCT_IDENTIFIER);
 		if (reaction.getProducts() != 0) {
-			idcodeSequence.append(PRODUCT_IDENTIFIER);
 			if (reaction.getReactants() != 0) {
 				mappingSequence.append(MOLECULE_DELIMITER);
 				coordsSequence.append(MOLECULE_DELIMITER);
@@ -294,12 +294,13 @@ public class ReactionEncoder
 		}
 
 		int productIndex = rxnCode.indexOf(PRODUCT_IDENTIFIER);
+		if (productIndex == -1)
+			return null;
 
 		boolean isProduct = false;
 		int idcodeIndex = (productIndex == 0) ? 1 : 0;	// we may not have any reactants
 		int mappingIndex = 0;
 		int coordsIndex = 0;
-
 
 		if (rxn == null)
 			rxn = new Reaction();
@@ -307,24 +308,18 @@ public class ReactionEncoder
 			rxn.clear();
 
 		while (idcodeIndex != -1) {
-			if (productIndex != -1 && idcodeIndex > productIndex) {
+			if (idcodeIndex > productIndex)
 				isProduct = true;
-			}
 
 			int delimiterIndex = rxnCode.indexOf(MOLECULE_DELIMITER, idcodeIndex);
-			if (!isProduct
-				&& (delimiterIndex > productIndex || delimiterIndex == -1)) {
+			if ((productIndex > idcodeIndex)
+			 && (delimiterIndex > productIndex || delimiterIndex == -1))
 				delimiterIndex = productIndex;
-			}
 
-			String idcode = null;
-			if (delimiterIndex == -1) {
-				idcode = rxnCode.substring(idcodeIndex);
-				idcodeIndex = -1;
-			} else {
-				idcode = rxnCode.substring(idcodeIndex, delimiterIndex);
-				idcodeIndex = delimiterIndex + 1;
-			}
+			String idcode = (delimiterIndex == -1) ?
+					rxnCode.substring(idcodeIndex) : rxnCode.substring(idcodeIndex, delimiterIndex);
+
+			idcodeIndex = (delimiterIndex == -1 || delimiterIndex == rxnCode.length()-1) ? -1 : delimiterIndex + 1;
 
 			String mapping = null;
 			if (rxnMapping != null && !rxnMapping.isEmpty()) {
@@ -397,14 +392,14 @@ public class ReactionEncoder
 			return null;
 		}
 
-		boolean isProduct = false;
-		int idcodeIndex = 0;
-		int mappingIndex = 0;
-		int coordsIndex = 0;
-
 		int productIndex = indexOf(rxnCode, PRODUCT_IDENTIFIER);
 		if (productIndex == -1)
 			return null;
+
+		boolean isProduct = false;
+		int idcodeIndex = (productIndex == 0) ? 1 : 0;	// we may not have any reactants
+		int mappingIndex = 0;
+		int coordsIndex = 0;
 
 		Reaction rxn = new Reaction();
 
@@ -413,11 +408,12 @@ public class ReactionEncoder
 				isProduct = true;
 
 			int delimiterIndex = indexOf(rxnCode, MOLECULE_DELIMITER, idcodeIndex);
-			if (!isProduct && (delimiterIndex > productIndex || delimiterIndex == -1))
+			if ((productIndex > idcodeIndex)
+			 && (delimiterIndex > productIndex || delimiterIndex == -1))
 				delimiterIndex = productIndex;
 
 			int idcodeStart = idcodeIndex;
-			idcodeIndex = (delimiterIndex == -1) ? -1 : delimiterIndex + 1;
+			idcodeIndex = (delimiterIndex == -1 || delimiterIndex == rxnCode.length-1) ? -1 : delimiterIndex + 1;
 
 			int mappingStart = -1;
 			if (rxnMapping != null && mappingIndex < rxnMapping.length) {
