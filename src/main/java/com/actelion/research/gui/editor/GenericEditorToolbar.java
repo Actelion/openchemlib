@@ -215,8 +215,9 @@ public class GenericEditorToolbar implements GenericEventListener {
 						        : (mESRSelected == 1) ? cToolESRAnd : cToolESROr);
 	            }
 	        else if (mCurrentTool == cToolCustomAtom) {
-	        	mArea.showCustomAtomDialog(-1);
-		        mArea.toolChanged(releasedButton);
+				mArea.showCustomAtomDialog(-1, () -> {
+					mArea.toolChanged(releasedButton);
+					});
 	            }
 	        else {
 		        mArea.toolChanged(releasedButton);

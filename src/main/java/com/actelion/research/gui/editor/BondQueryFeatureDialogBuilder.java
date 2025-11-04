@@ -55,13 +55,12 @@ public class BondQueryFeatureDialogBuilder implements GenericEventListener<Gener
 		}
 
 	/**
-	 * @return true if OK was pressed and potential change was applied to molecule
+	 * Show the dialog and call back with true if OK was pressed and potential change was applied to molecule
 	 */
-	public boolean showDialog() {
+	public void showDialog(DialogBuilderCallback cb) {
 		mOKSelected = false;
-		mDialog.showDialog();
-		return mOKSelected;
-		}
+		mDialog.showDialog(() -> cb.onClose(mOKSelected));
+	}
 
 	private void build(ExtendedMolecule mol, int bond) {
 		mMol = mol;

@@ -59,7 +59,7 @@ public class SwingDialog extends JDialog implements ActionListener,GenericDialog
 	}
 
 	@Override
-	public void showDialog() {
+	public void showDialog(GenericDialogCallback cb) {
 		JPanel buttonpanel = new JPanel();
 		int gap = HiDPIHelper.scale(8);
 		buttonpanel.setBorder(BorderFactory.createEmptyBorder(gap*3/2, gap, gap, gap));
@@ -81,6 +81,7 @@ public class SwingDialog extends JDialog implements ActionListener,GenericDialog
 		pack();
 		setLocationRelativeTo(mParent);
 		setVisible(true);
+		cb.onClose();
 		}
 
 	@Override
