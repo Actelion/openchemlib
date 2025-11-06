@@ -14,7 +14,7 @@ public interface GenericDialog {
 	GenericLabel createLabel(String text);
 	GenericTextField createTextField(int width, int height);
 	void setEventConsumer(GenericEventListener<GenericActionEvent> consumer);
-	void showDialog();  // must wait until OK or Cancel is pressed
+    void showDialog(GenericDialogCallback cb); // Callback must be called after the dialog is closed.
 	void disposeDialog();
 	void showMessage(String message);
 }

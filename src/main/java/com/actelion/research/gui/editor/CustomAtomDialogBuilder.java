@@ -79,13 +79,12 @@ public class CustomAtomDialogBuilder implements GenericEventListener<GenericActi
 		}
 
 	/**
-	 * @return true if OK was pressed and potential change was applied to molecule
+	 * Show the dialog and call back with true if OK was pressed and potential change was applied to molecule
 	 */
-	public boolean showDialog() {
+	public void showDialog(DialogBuilderCallback cb) {
 		mOKSelected = false;
-		mDialog.showDialog();
-		return mOKSelected;
-		}
+		mDialog.showDialog(() -> cb.onClose(mOKSelected));
+	}
 
 	private void build() {
         int[] hLayout = {8, GenericDialog.PREFERRED, 8, GenericDialog.PREFERRED, 8 };

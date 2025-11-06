@@ -1676,28 +1676,38 @@ public class GenericEditorArea implements GenericEventListener {
 			storeState();
 			boolean showReactionHints = ((mMode & MODE_REACTION) != 0);
 			AtomQueryFeatureDialogBuilder builder = new AtomQueryFeatureDialogBuilder(mUIHelper, mMol, atom, showReactionHints);
-			if (builder.showDialog())
-				updateAndFireEvent(UPDATE_REDRAW);
-			}
+			builder.showDialog(okSelected -> {
+				if (okSelected) {
+					updateAndFireEvent(UPDATE_REDRAW);
+				}
+			});
 		}
+	}
 
 	private void showBondQFDialog(int bond) {
 		if (mAllowQueryFeatures) {
 			storeState();
 			BondQueryFeatureDialogBuilder builder = new BondQueryFeatureDialogBuilder(mUIHelper, mMol, bond);
-			if (builder.showDialog())
-				updateAndFireEvent(UPDATE_REDRAW);
-			}
+			builder.showDialog(okSelected -> {
+				if (okSelected) {
+					updateAndFireEvent(UPDATE_REDRAW);
+				}
+			});
 		}
+	}
 
-	public void showCustomAtomDialog(int atom) {
+	public void showCustomAtomDialog(int atom, GenericDialogCallback cb) {
 		storeState();
 		CustomAtomDialogBuilder builder = (atom == -1) ?
 				new CustomAtomDialogBuilder(mUIHelper, this, mCustomAtomicNo, mCustomAtomMass, mCustomAtomValence, mCustomAtomRadical, mCustomAtomLabel)
 				: new CustomAtomDialogBuilder(mUIHelper, this, mMol, atom);
-		if (builder.showDialog() && atom != -1)
-			updateAndFireEvent(UPDATE_REDRAW);
-		}
+		builder.showDialog(okSelected -> {
+			if (okSelected && atom != -1) {
+				updateAndFireEvent(UPDATE_REDRAW);
+			}
+            cb.onClose();
+		});
+	}
 
 	private void mousePressedButton1(GenericMouseEvent gme) {
 		mX1 = gme.getX();
@@ -1971,7 +1981,7 @@ public class GenericEditorArea implements GenericEventListener {
 				if (gme.isControlDown() || gme.isAltDown()) {
 					int atom = mMol.findAtom(mX1, mY1);
 					if (atom != -1) {
-						showCustomAtomDialog(atom);
+						showCustomAtomDialog(atom, () -> {});
 					}
 				} else {
 					storeState();
@@ -2000,9 +2010,10 @@ public class GenericEditorArea implements GenericEventListener {
 				} else if (mCurrentHiliteObject instanceof TextDrawingObject) {
 					object = (TextDrawingObject)mCurrentHiliteObject;
 				}
-				editTextObject(object);
-				storeState();
-				update(UPDATE_CHECK_COORDS);
+				editTextObject(object, () -> {
+					storeState();
+					update(UPDATE_CHECK_COORDS);
+				});
 				break;
 		}
 	}
@@ -2805,21 +2816,22 @@ public class GenericEditorArea implements GenericEventListener {
 		return null;
 	}
 
-	private void editTextObject(TextDrawingObject object){
-		new TextDrawingObjectDialogBuilder(mUIHelper, object);
-
-		boolean nonWhiteSpaceFound = false;
-		for (int i = 0; i<object.getText().length(); i++) {
-			if (!Character.isWhitespace(object.getText().charAt(i))) {
-				nonWhiteSpaceFound = true;
-				break;
+	private void editTextObject(TextDrawingObject object, GenericDialogCallback cb){
+		new TextDrawingObjectDialogBuilder(mUIHelper, object).showDialog((okSelected) -> {
+			boolean nonWhiteSpaceFound = false;
+			for (int i = 0; i<object.getText().length(); i++) {
+				if (!Character.isWhitespace(object.getText().charAt(i))) {
+					nonWhiteSpaceFound = true;
+					break;
+				}
 			}
-		}
 
-		if (!nonWhiteSpaceFound)
-			mDrawingObjectList.remove(object);
+			if (!nonWhiteSpaceFound)
+				mDrawingObjectList.remove(object);
 
-		mCanvas.repaint();
+			mCanvas.repaint();
+			cb.onClose();
+		});
 	}
 
 	private boolean shareSameReactionSide(int atom1, int atom2){

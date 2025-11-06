@@ -76,8 +76,9 @@ public class FXDialog extends Dialog<String> implements GenericDialog {
 	}
 
 	@Override
-	public void showDialog() {
+	public void showDialog(GenericDialogCallback cb) {
 		showAndWait();
+		cb.onClose();
 	}
 
 	@Override
