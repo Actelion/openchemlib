@@ -8,7 +8,7 @@
     Please follow the naming scheme YEAR.MONTH.RELEASE_NO_OF_MONTH
     (eg. 2016.4.1 for second release in Apr 2016)
     -->
-    <version>2025.11.1-SNAPSHOT</version>
+    <version>2025.11.2-SNAPSHOT</version>
 
     <name>OpenChemLib</name>
     <description>Open Source Chemistry Library</description>
