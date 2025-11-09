@@ -101,7 +101,7 @@ public class AminoAcids {
         if (mol != null) {
             Molecule3D aminoAcid = new Molecule3D(mol);
 
-            for (int atom=0; atom<aminoAcid.getAllAtoms(); atom++) {
+            for (int atom=0; atom<mol.getAllAtoms(); atom++) {
                 String atomName = mol.getAtomLabel(atom);
                 String customLabel = mol.getAtomCustomLabel(atom);
                 if (customLabel != null && customLabel.startsWith("]"))
@@ -119,6 +119,17 @@ public class AminoAcids {
                     aminoAcid.setAtomX(atom, coords3d.x);
                     aminoAcid.setAtomY(atom, coords3d.y);
                     aminoAcid.setAtomZ(atom, coords3d.z);
+
+                    AtomRecord bridgeRecord = record.getCovalentBridgeAtom();
+                    if (bridgeRecord != null) {
+                        int bridgeAtom = aminoAcid.addAtom(0);
+                        aminoAcid.setAtomCustomLabel(bridgeAtom,"]cov");
+                        aminoAcid.setAtomX(bridgeAtom, (bridgeRecord.getX() + record.getX()) / 2);
+                        aminoAcid.setAtomY(bridgeAtom, (bridgeRecord.getY() + record.getY()) / 2);
+                        aminoAcid.setAtomZ(bridgeAtom, (bridgeRecord.getZ() + record.getZ()) / 2);
+                        aminoAcid.addBond(atom, bridgeAtom, Molecule.cBondTypeSingle);
+                        aminoAcid.setCovalentLigand(true);
+                    }
                 }
             };
 

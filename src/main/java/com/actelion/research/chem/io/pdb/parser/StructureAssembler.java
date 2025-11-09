@@ -240,8 +240,13 @@ public class StructureAssembler {
 			if (!isProtein)
 				addConnections(mol, mTemplateConnectionList, sequenceToAtomMap, existingBondSet);
 			try {
-				if (!isProtein && mol.getAllBonds() < mol.getAllAtoms())    // template records didn't properly cover this molecule
+				if (!isProtein && mol.getAllBonds() < mol.getAllAtoms()) {    // template records didn't properly cover this molecule
 					BondsCalculator.createBonds(mol, true, null);
+					for (int bond=0; bond<mol.getAllBonds(); bond++)
+						existingBondSet.add(mol.getBondAtom(0, bond) < mol.getBondAtom(1, bond) ?
+								  ((long)mol.getBondAtom(0, bond) << 32) + mol.getBondAtom(1, bond)
+								: ((long)mol.getBondAtom(1, bond) << 32) + mol.getBondAtom(0, bond));
+				}
 				addConnections(mol, mNonStandardConnectionList, sequenceToAtomMap, existingBondSet);
 				if (!isProtein)
 					new BondOrderCalculator(mol).calculateBondOrders();
@@ -341,10 +346,16 @@ public class StructureAssembler {
 		if (!grps[0].equals(grps[1])) {
 			for (int i=0; i<2; i++) {
 				if(grps[i].equals(PROTEIN_GROUP)) {
-					if (!mDetachCovalentLigands || isMetal[1-i])
+					if (!mDetachCovalentLigands || isMetal[1-i]) {
 						reassignGroup(grps[1-i], grps[i]);
-					else
+					}
+					else {
 						mCovalentLigandGroupSet.add(grps[1-i]);
+						if (!isMetal[i]) {
+							bondAtom[i].setCovalentBridgeAtom(bondAtom[1-i]);
+							bondAtom[1-i].setCovalentBridgeAtom(bondAtom[i]);
+						}
+					}
 					return;
 				}
 			}

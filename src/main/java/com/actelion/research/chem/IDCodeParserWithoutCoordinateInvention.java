@@ -99,7 +99,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	/**
 	 * Creates and returns a molecule from the idcode with its atom and bond arrays being
 	 * just as large as needed to hold the molecule. Use this to conserve memory if no
-	 * atoms or bonds are added to the molecule afterwards.
+	 * atoms or bonds are added to the molecule afterward.
 	 * @param idcode may be null
 	 * @param coordinates may be null
 	 * @return
@@ -112,7 +112,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	/**
 	 * Creates and returns a molecule from the idcode with its atom and bond arrays being
 	 * just as large as needed to hold the molecule. Use this to conserve memory if no
-	 * atoms or bonds are added to the molecule afterwards.
+	 * atoms or bonds are added to the molecule afterward.
 	 * @param idcode may be null
 	 * @param coordinates may be null
 	 * @return

@@ -136,6 +136,16 @@ public class Residue {
 			fragment.setAtomX(atom,record.getX());
 			fragment.setAtomY(atom,record.getY());
 			fragment.setAtomZ(atom,record.getZ());
+			AtomRecord bridgeRecord = record.getCovalentBridgeAtom();
+			if (bridgeRecord != null) {
+				int bridgeAtom = fragment.addAtom(0);
+				fragment.setAtomCustomLabel(bridgeAtom,"]cov");
+				fragment.setAtomX(bridgeAtom, (bridgeRecord.getX() + record.getX()) / 2);
+				fragment.setAtomY(bridgeAtom, (bridgeRecord.getY() + record.getY()) / 2);
+				fragment.setAtomZ(bridgeAtom, (bridgeRecord.getZ() + record.getZ()) / 2);
+				fragment.addBond(atom, bridgeAtom, Molecule.cBondTypeSingle);
+				fragment.setCovalentLigand(true);
+			}
 		}
 
 		if (mAddBonds) {

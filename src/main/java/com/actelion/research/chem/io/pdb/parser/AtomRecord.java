@@ -43,7 +43,6 @@ import com.actelion.research.chem.PeriodicTable;
 public class AtomRecord implements Comparable<AtomRecord> {
 
 	private boolean isHetAtom;
-
 	private int serialId;
 
     // From field atom name
@@ -53,30 +52,19 @@ public class AtomRecord implements Comparable<AtomRecord> {
 
     // Alternate location indicator.
     private String labelAltID;
-
 	private int labelSeqID;
-
 	private String authCompID;
-
     private String authAsymId;
-    
     private String insertionCode;
-
     private int authSeqID;
-
     private double x,y,z;
-
     private double occupancy;
-
     private double tempFactor;
-
     private String element;
-
     private String charge;
-
     private String anisou;
-    
     private boolean isTerminalC;
+	private AtomRecord covalentBridgeAtom;
 
 	public AtomRecord() {}
 
@@ -203,6 +191,14 @@ public class AtomRecord implements Comparable<AtomRecord> {
     public void setTerminalC(boolean isTerminalC) {
     	this.isTerminalC = isTerminalC;
     }
+
+	public void setCovalentBridgeAtom(AtomRecord atom) {
+		covalentBridgeAtom = atom;
+	}
+
+	public AtomRecord getCovalentBridgeAtom() {
+		return covalentBridgeAtom;
+	}
 
 	@Override
 	public int compareTo(AtomRecord o) {
