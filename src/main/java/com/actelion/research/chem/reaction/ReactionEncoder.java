@@ -298,7 +298,7 @@ public class ReactionEncoder
 			return null;
 
 		boolean isProduct = false;
-		int idcodeIndex = (productIndex == 0) ? 1 : 0;	// we may not have any reactants
+		int idcodeIndex = (productIndex != 0) ? 0 : (rxnCode.length() == 1) ? -1 : 1;	// we may not have any reactants
 		int mappingIndex = 0;
 		int coordsIndex = 0;
 
