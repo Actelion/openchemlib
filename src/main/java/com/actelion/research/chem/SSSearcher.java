@@ -395,6 +395,30 @@ System.out.println();
 		return mMatchList;
 		}
 
+	private void sortMatchListByBridgeAtomCount() {
+		if (mBridgeBondList == null)
+			return;
+
+		int[] bridgeAtomInfo = new int[mMatchList.size()];
+		for (int i=0; i<bridgeAtomInfo.length; i++) {
+			bridgeAtomInfo[i] = i;
+			for (boolean iba : mBridgeBondAtomList.get(i))
+				if (iba)
+					bridgeAtomInfo[i] += 0x10000;
+			}
+
+		Arrays.sort(bridgeAtomInfo);
+		ArrayList<int[]> newMatchList = new ArrayList<>();
+		ArrayList<boolean[]> newBridgeAtomList = new ArrayList<>();
+		for (int i=0; i<bridgeAtomInfo.length; i++) {
+			newMatchList.add(mMatchList.get(bridgeAtomInfo[i] & 0xFFFF));
+			newBridgeAtomList.add(mBridgeBondAtomList.get(bridgeAtomInfo[i] & 0xFFFF));
+		}
+
+		mMatchList = newMatchList;
+		mBridgeBondAtomList = newBridgeAtomList;
+	}
+
 	/**
 	 * getMatchList() doesn't include information about atoms, which are part of a matching bridge bond.
 	 * This method returns an atom mask for a given matchNo, where all atoms are flagged that are part of a
@@ -607,6 +631,8 @@ System.out.println();
 					atomUsed[mMatchTable[mFragmentGraphAtom[current]]] = false;
 				}
 			}
+
+		sortMatchListByBridgeAtomCount();	// we prefer short bridge matches
 
 		return mMatchList.size();
 		}
