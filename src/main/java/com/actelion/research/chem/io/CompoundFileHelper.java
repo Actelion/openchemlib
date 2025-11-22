@@ -74,6 +74,7 @@ public abstract class CompoundFileHelper {
 	public static final int cFileTypeMMTF = 0x00400000;
 	public static final int cFileTypeProtein = cFileTypePDB | cFileTypeMMCIF | cFileTypeMMTF;
 	public static final int cFileTypeSDGZ = 0x00800000;
+	public static final int cFileTypeSDZIP = 0x01000000;
     public static final int cFileTypeUnknown = -1;
 	public static final int cFileTypeDirectory = -2;
 
@@ -85,8 +86,9 @@ public abstract class CompoundFileHelper {
 
 	// explicitly supported compression format (SD-files only)
 	public static final String cGZipExtention = ".gz";
+	public static final String cZipExtention = ".zip";
 
-	public static final int cFileTypeDataWarriorCompatibleData = cFileTypeDataWarrior | cFileTypeTextAny | cFileTypeRD | cFileTypeSD | cFileTypeSDGZ;
+	public static final int cFileTypeDataWarriorCompatibleData = cFileTypeDataWarrior | cFileTypeTextAny | cFileTypeRD | cFileTypeSD | cFileTypeSDGZ | cFileTypeSDZIP;
 	public static final int cFileTypeDataWarriorTemplateContaining = cFileTypeDataWarrior | cFileTypeDataWarriorQuery | cFileTypeDataWarriorTemplate;
 
 	private static File sCurrentDirectory;
@@ -339,6 +341,10 @@ public abstract class CompoundFileHelper {
 			filter.addExtension("sdf.gz");
 			filter.addDescription("gzipped MDL SD-files)");
 			}
+		if ((filetypes & cFileTypeSDZIP) != 0) {
+			filter.addExtension("sdf.zip");
+			filter.addDescription("zipped MDL SD-files)");
+			}
 		if ((filetypes & cFileTypeRD) != 0) {
 			filter.addExtension("rdf");
 			filter.addDescription("MDL RD-files");
@@ -425,7 +431,7 @@ public abstract class CompoundFileHelper {
 
 	/**
 	 * Returns the index of the dot separating filename from its extension.
-	 * Known joint extensions (currently only ".sdf.gz") are recognized.
+	 * Known joint extensions (currently only ".sdf.gz" and ".sdf.zip") are recognized.
 	 * @param filename
 	 * @return index of extension dot or -1
 	 */
@@ -433,7 +439,8 @@ public abstract class CompoundFileHelper {
 		int i = filename.lastIndexOf('.');
 
 		if (i>0 && i<filename.length()-1
-		 && filename.substring(i).equalsIgnoreCase(CompoundFileHelper.cGZipExtention))
+		 && (filename.substring(i).equalsIgnoreCase(CompoundFileHelper.cGZipExtention)
+		  || filename.substring(i).equalsIgnoreCase(CompoundFileHelper.cZipExtention)))
 			i = filename.lastIndexOf('.', i-1);
 
 		return (i>0 && i<filename.length()-1) ? i : -1;
@@ -500,6 +507,8 @@ public abstract class CompoundFileHelper {
             return cFileTypeSD;
 		if (extension.equals(".sdf.gz"))
 			return cFileTypeSDGZ;
+		if (extension.equals(".sdf.zip"))
+			return cFileTypeSDZIP;
         if (extension.equals(".rdf"))
             return cFileTypeRD;
         if (extension.equals(".rxn"))
@@ -635,6 +644,9 @@ public abstract class CompoundFileHelper {
 			break;
 		case cFileTypeSDGZ:
 			extensions.add(".sdf.gz");
+			break;
+			case cFileTypeSDZIP:
+			extensions.add(".sdf.zip");
 			break;
 			}
 		return extensions.toArray(new String[0]);
