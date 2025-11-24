@@ -2110,7 +2110,7 @@ public class Math {
      * @param x Rows of x correspond to observations, and columns correspond to variables.
      * @return a full pairwise distance matrix.
      */
-    public static double[][] pdist(double[][] x) {
+    public static double[][] pdist(double[][] x) throws InterruptedException {
         int n = x.length;
 
         double[][] dist = new double[n][n];
@@ -2126,7 +2126,7 @@ public class Math {
      * @param half If true, only the lower half of dist will be referenced.
      * @param dist The distance matrix.
      */
-    public static void pdist(double[][] x, double[][] dist, boolean squared, boolean half) {
+    public static void pdist(double[][] x, double[][] dist, boolean squared, boolean half) throws InterruptedException {
         int n = x.length;
 
         if (n < 100) {
