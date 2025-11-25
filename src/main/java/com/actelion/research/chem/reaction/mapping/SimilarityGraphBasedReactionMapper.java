@@ -34,6 +34,7 @@
 
 package com.actelion.research.chem.reaction.mapping;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.*;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
@@ -76,17 +77,22 @@ public class SimilarityGraphBasedReactionMapper {
 	private byte[][][][] mReactantConnAtomEnv,mProductConnAtomEnv;   // indexes: atom,connIndex,radius,idcode bytes
 //	private byte[][][][] mReactantNoPiAtomEnv,mProductNoPiAtomEnv;   // indexes: atom,connIndex,radius,idcode bytes
 	private byte[][][][] mReactantSkelAtomEnv,mProductSkelAtomEnv;   // indexes: atom,connIndex,radius,idcode bytes
+	private ThreadMaster mThreadMaster;
 
 	/**
 	 * Entirely maps the given reaction by setting all reactant's and product's mapping numbers.
 	 * If the reaction already contains manually mapped atoms, then these are untouched and used
 	 * as seed atoms when building the mapping graph.
 	 * @param rxn reaction with proper atom coordinates
+	 * @return false if reaction wasn't mapped due to interruption by threadmaster
 	 */
-	public void map(Reaction rxn) {
+	public boolean map(Reaction rxn) {
 		mergeReactantsAndProducts(rxn);
-		map(mReactant, mProduct, new int[mReactant.getAtoms()], new int[mProduct.getAtoms()], null);
+		if (!map(mReactant, mProduct, new int[mReactant.getAtoms()], new int[mProduct.getAtoms()], null))
+			return false;
+
 		copyMapNosToReaction(rxn, mReactantMapNo, mProductMapNo, mGraphMapNoCount);
+		return true;
 		}
 
 	/**
@@ -101,8 +107,9 @@ public class SimilarityGraphBasedReactionMapper {
 	 * @param reactantMapNo array to receive the created mapping numbers
 	 * @param productMapNo array to receive the created mapping numbers
 	 * @param vetoMatrix null or matrix of prohibited atom mappings
+	 * @return false if reaction wasn't mapped due to interruption by threadmaster
 	 */
-	public void map(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, boolean[][] vetoMatrix) {
+	public boolean map(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, boolean[][] vetoMatrix) {
 		mReactant = reactant;
 		mProduct = product;
 
@@ -125,7 +132,7 @@ public class SimilarityGraphBasedReactionMapper {
 
 		mAtomPairSequenceCount = 0;
 
-		while (rootAtomPairSource.hasNextPairSequence()) {
+		while (rootAtomPairSource.hasNextPairSequence() && (mThreadMaster == null || !mThreadMaster.threadMustDie())) {
 			mAtomPairSequenceCount++;
 			mMapNo = rootAtomPairSource.getManualMapCount();
 			int mappableAtomCount = rootAtomPairSource.getMappableAtomCount();
@@ -184,12 +191,12 @@ if (DEBUG) {
 
 			if (mScore < score) {
 				mScore = score;
-				for (int i=0; i<reactantMapNo.length; i++)
-					reactantMapNo[i] = mReactantMapNo[i];
-				for (int i=0; i<productMapNo.length; i++)
-					productMapNo[i] = mProductMapNo[i];
+				System.arraycopy(mReactantMapNo, 0, reactantMapNo, 0, reactantMapNo.length);
+				System.arraycopy(mProductMapNo, 0, productMapNo, 0, productMapNo.length);
 				}
 			}
+
+		return (mScore != -1e10f && (mThreadMaster == null || !mThreadMaster.threadMustDie()));
 		}
 
 	/**
@@ -214,6 +221,10 @@ if (DEBUG) {
 	 */
 	public float getScore() {
 		return mScore;
+		}
+
+	public void setThreadMaster(ThreadMaster tm) {
+		mThreadMaster = tm;
 		}
 
 	private void initializeRingMembership() {

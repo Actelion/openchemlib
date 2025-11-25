@@ -34,6 +34,7 @@
 
 package com.actelion.research.chem.reaction.mapping;
 
+import com.actelion.research.calc.ThreadMaster;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.MolfileCreator;
 import com.actelion.research.chem.SSSearcher;
@@ -178,9 +179,14 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 	private int mMaxRuleTries;
 	private ChemicalRule mAppliedRule;
 	private StringBuilder mHistory;
+	private ThreadMaster mThreadMaster;
 
 	public ChemicalRuleEnhancedReactionMapper() {
 		mMaxRuleTries = Integer.MAX_VALUE;
+	}
+
+	public void setThreadMaster(ThreadMaster tm) {
+		mThreadMaster = tm;
 	}
 
 	private static void initialize() {
@@ -201,9 +207,14 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 		return rxn;
 		}
 
-	public void map(Reaction rxn) {
+	/**
+	 * @param rxn
+	 * @return false if reaction wasn't mapped, e.g. due to interruption by threadmaster
+	 */
+	public boolean map(Reaction rxn) {
 		initialize();
 		SimilarityGraphBasedReactionMapper mapper = new SimilarityGraphBasedReactionMapper();
+		mapper.setThreadMaster(mThreadMaster);
 		mapper.mergeReactantsAndProducts(rxn);
 
 		StereoMolecule reactant = mapper.getReactant();
@@ -231,7 +242,7 @@ if (SimilarityGraphBasedReactionMapper.DEBUG)
 		StereoMolecule adaptedReactant = new StereoMolecule(); // reusable container
 
 		for (ChemicalRule rule:sChemicalRule) {
-			if (ruleApplicationCount++ == mMaxRuleTries)
+			if (ruleApplicationCount++ == mMaxRuleTries || (mThreadMaster != null && mThreadMaster.threadMustDie()))
 				break;
 
 			reactantSearcher.setFragment(rule.getReactant());
@@ -267,8 +278,8 @@ float historyScore = -10000;
 						int[] adaptedReactantMapNo = new int[adaptedReactant.getAtoms()];
 						int[] productMapNo = new int[product.getAtoms()];
 //System.out.println(new MolfileCreator(reactant).getMolfile());
-						mapper.map(adaptedReactant, product, adaptedReactantMapNo, productMapNo, vetoMatrix);
-						float score = mapper.getScore() - rule.getPanalty();
+						if (mapper.map(adaptedReactant, product, adaptedReactantMapNo, productMapNo, vetoMatrix)) {
+							float score = mapper.getScore() - rule.getPanalty();
 
 if (DEBUG_PRINT_REACTION_AFTER_APPLYING_RULE || DEBUG_PRINT_MOLFILES_AFTER_APPLYING_RULE) {
  if (DEBUG_PRINT_REACTION_AFTER_APPLYING_RULE) {
@@ -284,12 +295,13 @@ if (DEBUG_PRINT_REACTION_AFTER_APPLYING_RULE || DEBUG_PRINT_MOLFILES_AFTER_APPLY
 }
 
 if (historyScore < score) historyScore = score;
-						if (mScore < score) {
-							mScore = score;
-							bestReactantMapNo = mapNoToOriginal(adaptedReactantMapNo, productMapNo, originalToAdaptedAtom, reactant.getAtoms());
-							bestProductMapNo = productMapNo;
-							bestGraphMapNoCount = mapper.getGraphMapNoCount();
-							mAppliedRule = rule;
+							if (mScore < score) {
+								mScore = score;
+								bestReactantMapNo = mapNoToOriginal(adaptedReactantMapNo, productMapNo, originalToAdaptedAtom, reactant.getAtoms());
+								bestProductMapNo = productMapNo;
+								bestGraphMapNoCount = mapper.getGraphMapNoCount();
+								mAppliedRule = rule;
+								}
 							}
 						}
 String pairSequences = mapper.getAtomPairSequenceCount() <= 1 ? "" : " (rootPairSets:"+mapper.getAtomPairSequenceCount()+")";
@@ -301,24 +313,28 @@ mHistory.append(rule.getName()+ DoubleFormat.toString(historyScore)+pairSequence
 		// map and score the reaction without applying any rules
 		int[] reactantMapNo = new int[reactant.getAtoms()];
 		int[] productMapNo = new int[product.getAtoms()];
-		mapper.map(reactant, product, reactantMapNo, productMapNo, null);
-		float score = mapper.getScore();
+		if (mapper.map(reactant, product, reactantMapNo, productMapNo, null)) {
+			float score = mapper.getScore();
 
-		if (mScore <= score) {
-			mAppliedRule = null;
-			mScore = score;
-			bestReactantMapNo = reactantMapNo;
-			bestProductMapNo = productMapNo;
-			bestGraphMapNoCount = mapper.getGraphMapNoCount();
-			}
+			if (mScore <= score) {
+				mAppliedRule = null;
+				mScore = score;
+				bestReactantMapNo = reactantMapNo;
+				bestProductMapNo = productMapNo;
+				bestGraphMapNoCount = mapper.getGraphMapNoCount();
+				}
 String pairSequences = mapper.getAtomPairSequenceCount() <= 1 ? "" : " (rootPairSets:"+mapper.getAtomPairSequenceCount()+")";
 mHistory.append("no rule:"+DoubleFormat.toString(score)+pairSequences+"\n");
-
-		if (mScore != Integer.MIN_VALUE)
-			mapper.copyMapNosToReaction(rxn, bestReactantMapNo, bestProductMapNo, bestGraphMapNoCount);
+			}
 
 if (SimilarityGraphBasedReactionMapper.DEBUG)
  System.out.println("Done; used "+ruleApplicationCount+" of "+mMaxRuleTries+" allowed rule application tries.");
+
+		if (mScore == Integer.MIN_VALUE || (mThreadMaster != null && mThreadMaster.threadMustDie()))
+			return false;
+
+		mapper.copyMapNosToReaction(rxn, bestReactantMapNo, bestProductMapNo, bestGraphMapNoCount);
+		return true;
 		}
 
 	/**
