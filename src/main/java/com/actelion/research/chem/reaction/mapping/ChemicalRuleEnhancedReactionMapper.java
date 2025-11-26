@@ -208,10 +208,15 @@ public class ChemicalRuleEnhancedReactionMapper implements IReactionMapper {
 		}
 
 	/**
-	 * @param rxn
+	 * @param rxn reaction to be mapped
 	 * @return false if reaction wasn't mapped, e.g. due to interruption by threadmaster
 	 */
 	public boolean map(Reaction rxn) {
+        // Fail fast if the thread was canceled before starting.
+        if (mThreadMaster != null && mThreadMaster.threadMustDie()) {
+            return false;
+        }
+
 		initialize();
 		SimilarityGraphBasedReactionMapper mapper = new SimilarityGraphBasedReactionMapper();
 		mapper.setThreadMaster(mThreadMaster);
@@ -241,7 +246,7 @@ if (SimilarityGraphBasedReactionMapper.DEBUG)
 
 		StereoMolecule adaptedReactant = new StereoMolecule(); // reusable container
 
-		for (ChemicalRule rule:sChemicalRule) {
+        for (ChemicalRule rule:sChemicalRule) {
 			if (ruleApplicationCount++ == mMaxRuleTries || (mThreadMaster != null && mThreadMaster.threadMustDie()))
 				break;
 
@@ -254,7 +259,7 @@ if (SimilarityGraphBasedReactionMapper.DEBUG)
 float historyScore = -10000;
 					int[] productMatch = productSearcher.getMatchList().get(0);
 					for (int[] reactantMatch:reactantSearcher.getMatchList()) {
-						if (ruleApplicationCount++ >= mMaxRuleTries)
+                        if (ruleApplicationCount++ >= mMaxRuleTries || (mThreadMaster != null && mThreadMaster.threadMustDie()))
 							break;
 
 						// For every given rule we check, whether we can apply the rule and whether we get a mapping score better than anything else:
