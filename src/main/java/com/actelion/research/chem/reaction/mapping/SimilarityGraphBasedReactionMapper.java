@@ -110,7 +110,12 @@ public class SimilarityGraphBasedReactionMapper {
 	 * @return false if reaction wasn't mapped due to interruption by threadmaster
 	 */
 	public boolean map(StereoMolecule reactant, StereoMolecule product, int[] reactantMapNo, int[] productMapNo, boolean[][] vetoMatrix) {
-		mReactant = reactant;
+        // Fail fast if the thread was canceled before starting.
+        if (mThreadMaster != null && mThreadMaster.threadMustDie()) {
+            return false;
+        }
+
+        mReactant = reactant;
 		mProduct = product;
 
 		mReactantMapNo = new int[reactantMapNo.length];
@@ -138,7 +143,7 @@ public class SimilarityGraphBasedReactionMapper {
 			int mappableAtomCount = rootAtomPairSource.getMappableAtomCount();
 
 			RootAtomPair pair = rootAtomPairSource.nextPair();
-			while (pair != null) {
+			while (pair != null && (mThreadMaster == null || !mThreadMaster.threadMustDie())) {
 if (PRINT_SCORES)  { System.out.println(); System.out.println("@ SMapper.map() pair: "+pair.reactantAtom+","+pair.productAtom+" mMapNo:"+mMapNo+" sequence:"+mAtomPairSequenceCount); }
 				mapFromRootAtoms(pair);
 if (PRINT_SCORES)  { System.out.print("@ rMapNo:"); for (int mapNo:mReactantMapNo) System.out.print(" "+mapNo); System.out.println(); }
