@@ -41,6 +41,7 @@ public enum ClipboardFormat {
     NC_CHEMDRAWINTERCHANGE("ChemDraw Interchange Format"),      // ChemDraw Clipboard Format
     NC_METAFILE("CF_METAFILEPICT"),                             // Windows Metafile
    // NC_DIB("CF_DIB"),                                         // Window Device Independent Bitmapt
+    NC_TEXT("CF_TEXT"),                                         // (Windows) Standard Clipboard format
     NC_MOLFILE_V3("MOLFILE_V3"),                                // MDL Version 3 Molfile as Text
     NC_SMILES("SMILES"),                                        // SMILES as Text
     COM_MDLI_SKETCHFILE("com.mdli.sketchfile"),                 // MDL Sketch as used by ChemDraw (Mac only?)

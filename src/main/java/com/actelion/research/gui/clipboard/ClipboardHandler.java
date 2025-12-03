@@ -63,7 +63,6 @@ import java.util.Iterator;
 
 import static com.actelion.research.gui.clipboard.ClipboardFormat.*;
 import static com.actelion.research.gui.clipboard.ClipboardFormat.NC_CHEMDRAWINTERCHANGE;
-import static com.actelion.research.gui.clipboard.ClipboardFormat.NC_CHEMDRAWINTERCHANGE;
 
 /**
  * <p>Title: Actelion Library</p>
@@ -89,7 +88,7 @@ public class ClipboardHandler implements IClipboardHandler {
                     COM_PE_CDX,
                     NC_EMBEDDEDSKETCH,
                     NC_METAFILE,
-                    NC_SMILES);
+                    NC_SMILES, NC_TEXT);
 
     private static java.util.List<ClipboardFormat> writableMoleculeFormats =
             Arrays.asList(
@@ -103,7 +102,7 @@ public class ClipboardHandler implements IClipboardHandler {
     private static java.util.List<ClipboardFormat> readableReactionFormats =
             Arrays.asList(NC_SERIALIZEREACTION, NC_DATAFLAVOR_SERIALIZEDREACTION,
                     NC_IDCODE, NC_CTAB, COM_MDLI_MOLFILE,
-                    NC_SKETCH, NC_DATAFLAVOR_RXNSMILES);
+                    NC_SKETCH, NC_DATAFLAVOR_RXNSMILES, NC_TEXT);
 
     private static java.util.List<ClipboardFormat> writableReactionFormats =
             Arrays.asList(NC_SERIALIZEREACTION, NC_DATAFLAVOR_SERIALIZEDREACTION,
@@ -356,11 +355,11 @@ public class ClipboardHandler implements IClipboardHandler {
                 }
             } catch (ClassNotFoundException | NoClassDefFoundError | UnsatisfiedLinkError e) {
                 //e1.printStackTrace();
-                System.out.printf("Attempt to load %s failed: %s\n", clz, e.getMessage());
+                System.out.printf("Warn: Attempt to load %s failed: %s\n", clz, e.getMessage());
             }
             if (nativeCliphandlerClass == null) {
                 // avoid to try to use a non-available cliphandler over and over again
-                System.err.println("Unable to load " + clz);
+                System.err.println("Warn: Unable to load " + clz);
                 iterator.remove();
             }
         }
@@ -616,7 +615,7 @@ public class ClipboardHandler implements IClipboardHandler {
                     break;
 
                 case NC_SMILES:
-                    mol = parseSmiles(buffer);
+                    mol = parseSmiles(new String(buffer));
                     break;
 
                 case NC_CTAB:
@@ -624,21 +623,26 @@ public class ClipboardHandler implements IClipboardHandler {
                     mol = parsePascalStringsMolFile(buffer);
                     break;
 
+                case NC_TEXT:
+                    mol = parseText(new String(buffer));
+                    break;
+
                 case COM_PE_CDX:
                 case NC_CHEMDRAWINTERCHANGE:
                 case NC_METAFILE:
                     // Unsupported
-                    System.out.println("Unsupported format provided: " + nativeFormat);
+                    System.out.println("Warn: Unsupported format provided: " + nativeFormat);
                     break;
 
                 default:
-                    System.out.println("Unknown format provided: " + nativeFormat);
+                    System.out.println("Warn: Unknown format provided: " + nativeFormat);
                     break;
 
             }
         }
         return mol;
     }
+
 
     public static Reaction rawToRxn(byte[] buffer, ClipboardFormat nativeFormat) {
         Reaction rxn = null;
@@ -661,13 +665,17 @@ public class ClipboardHandler implements IClipboardHandler {
                 case NC_DATAFLAVOR_RXNSMILES:
                     rxn = parseReactionSmiles(buffer);
                     break;
+                case NC_TEXT:
+                    rxn = parseReactionFromText(buffer);
+                    break;
                 default:
-                    System.out.println("No known format provided: " + nativeFormat);
+                    System.out.println("Error: No known format provided: " + nativeFormat);
                     break;
             }
         }
         return rxn;
     }
+
 
     public static byte[] molToRaw(StereoMolecule mol, ClipboardFormat nativeFormat) {
         byte[] bytes = null;
@@ -739,7 +747,7 @@ public class ClipboardHandler implements IClipboardHandler {
                     bytes = serializeReactionSmiles(rxn);
                     break;
                 default:
-                    System.err.println("Unkown Format " + nativeFormat);
+                    System.err.println("Unknown Format " + nativeFormat);
                     break;
             }
         }
@@ -971,7 +979,7 @@ public class ClipboardHandler implements IClipboardHandler {
             bytes = smiles.getBytes();
             return bytes;
         } catch (Throwable e) {
-            System.out.printf("Unable to create SMILES %s\n",e.getMessage());
+            System.out.printf("Warn: Unable to create SMILES %s\n",e.getMessage());
             return null;
         }
     }
@@ -1013,7 +1021,7 @@ public class ClipboardHandler implements IClipboardHandler {
             os.close();
             return stream.toByteArray();
         } catch (IOException e) {
-            System.out.printf("Could not create Pascal-string RXN buffer: %s\n", e.getMessage());
+            System.out.printf("Warn: Could not create Pascal-string RXN buffer: %s\n", e.getMessage());
         }
         return null;
     }
@@ -1059,7 +1067,7 @@ public class ClipboardHandler implements IClipboardHandler {
             bytes = cdx.getChemDrawBuffer(m);
             return bytes;
         } catch (Exception e) {
-            System.out.printf("Unable to create ChemDraw Buffer: %s\n",e.getMessage());
+            System.out.printf("Warn: Unable to create ChemDraw Buffer: %s\n",e.getMessage());
             return null;
         }
     }
@@ -1127,7 +1135,7 @@ public class ClipboardHandler implements IClipboardHandler {
             StringBuffer sb = getMolFromMDLCT(new ByteArrayInputStream(buffer));
             return parseMolFile(sb.toString());
         } catch (IOException e) {
-            System.out.println("Unable to parse MDLCT: " + e.getMessage());
+            System.out.println("Warn: Unable to parse MDLCT: " + e.getMessage());
         }
         return null;
     }
@@ -1137,7 +1145,7 @@ public class ClipboardHandler implements IClipboardHandler {
             StringBuffer sb = getMolFromMDLCT(new ByteArrayInputStream(buffer));
             return parseRXN(sb.toString());
         } catch (IOException e) {
-            System.out.println("Unable to parse MDLCT: " + e.getMessage());
+            System.out.println("Warn: Unable to parse MDLCT: " + e.getMessage());
         }
         return null;
     }
@@ -1149,19 +1157,19 @@ public class ClipboardHandler implements IClipboardHandler {
             parser.parse(reaction, buffer);
             return reaction;
         } catch (Exception e) {
-            System.out.printf("Unable to parse RXN file: %s\n", e.getMessage());
+            System.out.printf("Warn: Unable to parse RXN file: %s\n", e.getMessage());
         }
         return null;
     }
 
-    private static StereoMolecule parseSmiles(byte[] buffer) {
+    private static StereoMolecule parseSmiles(String buffer) {
         try {
             StereoMolecule mol = new StereoMolecule();
             SmilesParser parser = new SmilesParser();
             parser.parse(mol, buffer);
             return mol;
         } catch (Exception ex) {
-            System.out.println("Unable to parse SMILES: " + ex.getMessage());
+            System.out.println("Warn: Unable to parse SMILES: " + ex.getMessage());
         }
         return null;
     }
@@ -1186,7 +1194,7 @@ public class ClipboardHandler implements IClipboardHandler {
                 mol = null;
             }
         } catch (Exception ex) {
-            System.out.printf("IdCode '%s' could not be parsed: %s\n", idCode, ex.getMessage());
+            System.out.printf("Warn: IdCode '%s' could not be parsed: %s\n", idCode, ex.getMessage());
             ex.printStackTrace();
             mol = null;
         }
@@ -1202,7 +1210,7 @@ public class ClipboardHandler implements IClipboardHandler {
                 mol = (StereoMolecule) o;
             }
         } catch (Exception e) {
-            System.out.printf("Serialized molecule could not be read: %s\n",e.getMessage());
+            System.out.printf("Warn: Serialized molecule could not be read: %s\n",e.getMessage());
             e.printStackTrace();
         }
         return mol;
@@ -1320,5 +1328,26 @@ public class ClipboardHandler implements IClipboardHandler {
         return bytes;
     }
 
+    private static StereoMolecule parseText(String buffer) {
+        StereoMolecule mol = parseIdCode(buffer, true);
+        if (mol == null) {
+            mol = parseMolFile(buffer);
+            if (mol == null) {
+                mol = parseSmiles(buffer);
+            }
+        }
+        return mol;
+    }
 
+    private static Reaction parseReactionFromText(byte[] buffer) {
+        String s = new String(buffer);
+        Reaction rxn = ReactionEncoder.decode(s, true);
+        if( rxn == null) {
+            rxn = parseRXN(s);
+            if (rxn == null) {
+                rxn = parseReactionSmiles(buffer);
+            }
+        }
+        return rxn;
+    }
 }
