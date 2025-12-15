@@ -660,6 +660,20 @@ public class ExtendedMoleculeFunctions {
 		}
 		return arr;
 	}
+	public static double [][] getDistanceArrayNonHAts(ExtendedMolecule mol) {
+		double arr[][]= new double[mol.getAtoms()][mol.getAtoms()];
+		for (int i = 0; i < arr.length; i++) {
+			for (int j = i+1; j < arr.length; j++) {
+				double dx = mol.getAtomX(i) - mol.getAtomX(j);
+				double dy = mol.getAtomY(i) - mol.getAtomY(j);
+				double dz = mol.getAtomZ(i) - mol.getAtomZ(j);
+				double v= Math.sqrt(dx*dx+dy*dy+dz*dz);
+				arr[i][j] = v;
+				arr[j][i] = v;
+			}
+		}
+		return arr;
+	}
 
 	public final static int [] getTopologicalDistances(int [][] topoDistMatrix, int [] at1, int [] at2) {
 		int [] d = new int[at1.length*at2.length];

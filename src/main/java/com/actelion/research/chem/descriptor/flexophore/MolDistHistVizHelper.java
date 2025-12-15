@@ -67,40 +67,37 @@ public class MolDistHistVizHelper {
     /**
      * Sets the weights in MolDistHistViz. Rule based unification of weight labels for a pharmacophore node.
      * @param mdhv
-     * @param arrWeightLabel Array dimension must equal number of atoms in the molecule in mdhv.
+     * @param arrWeightCategory Array dimension must equal number of atoms in the molecule in mdhv.
      */
-    public static void setWeights(MolDistHistViz mdhv, int [] arrWeightLabel){
+    public static void setWeightsFromCategory(MolDistHistViz mdhv, int [] arrWeightCategory){
 
         // The molecule in the descriptor contains the pharmacophore points as additional single atoms.
         Molecule3D m3D = new Molecule3D(mdhv.getMolecule());
         m3D.ensureHelperArrays(Molecule.cHelperRings);
         m3D.stripSmallFragments();
 
-        if(m3D.getAtoms()!=arrWeightLabel.length){
+        if(m3D.getAtoms()!=arrWeightCategory.length){
             throw new RuntimeException("Weight vector differs in dimension to number of atoms!");
         }
 
         //
-        // Rule based unification of weight labels for a pharmacophore node
+        // Rule based unification of weight labels for every pharmacophore node
         //
         for (PPNodeViz ppNodeViz : mdhv.getNodes()) {
             int [] a = ppNodeViz.getArrayIndexOriginalAtoms();
             int [] w = new int[a.length];
             for (int i = 0; i < a.length; i++) {
-                w[i]=arrWeightLabel[a[i]];
+                w[i]=arrWeightCategory[a[i]];
             }
 
             int maxWeightLabel = ArrayUtils.max(w);
 
-            // If label is not high, low is king. Means the standard wight label is overruled.
+            // If label is not high, low is king. Means the standard weight label is overruled.
             if(maxWeightLabel< DescriptorWeightsHelper.LABEL_WEIGHT_MANDATORY){
                 maxWeightLabel = ArrayUtils.min(w);
             }
 
-            if(DescriptorWeightsHelper.LABEL_WEIGHT_HIGH_USER == maxWeightLabel){
-                mdhv.addMandatoryPharmacophorePoint(ppNodeViz.getIndex());
-                mdhv.setNodeWeight(ppNodeViz.getIndex(), ConstantsFlexophore.VAL_WEIGHT_HIGH_USER);
-            } else if(DescriptorWeightsHelper.LABEL_WEIGHT_MANDATORY ==maxWeightLabel){
+            if(DescriptorWeightsHelper.LABEL_WEIGHT_MANDATORY ==maxWeightLabel){
                 mdhv.addMandatoryPharmacophorePoint(ppNodeViz.getIndex());
                 mdhv.setNodeWeight(ppNodeViz.getIndex(), ConstantsFlexophore.VAL_WEIGHT_HIGH);
             } else if(DescriptorWeightsHelper.LABEL_WEIGHT_LOW ==maxWeightLabel){
