@@ -113,7 +113,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	 * molecule is structurally different, e.g. uses custom atom labels or additional
 	 * illustrative atoms or bonds, which shall not be copied.
 	 * Custom atom colors or highlighted bonds don't require a displayMol.
-	 * The default will support copy/paste and drag&drop from this view only,
+	 * The default will support copy/paste and drag&drop FROM this view only,
 	 * but dropping anything onto this view doesn't have an effect.
 	 * Call setEditable(true) to allow changes through drag&drop and pasting.
 	 * @param mol used for clipboard copy and d&d; used for display if displayMol is null

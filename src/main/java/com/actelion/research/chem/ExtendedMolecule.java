@@ -3967,8 +3967,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 		}
 
 	/**
-	 * Removes all plain explicit hydrogens atoms from the molecule, converting them effectively to implicit ones.
-	 * If the molecules has 2D-coordinates (hasValid2DCoords==true), then this method initially perceives stereo
+	 * Removes all plain explicit hydrogen atoms from the molecule, converting them effectively to implicit ones.
+	 * If the molecule has 2D-coordinates (hasValid2DCoords==true), then this method initially perceives stereo
 	 * configurations E/Z/R/S from coordinates and up/down-bonds to explicit hydrogens before deleting them
 	 * and turns another bond into a stereo bond to indicate the proper configuration.
 	 * If the removal of a hydrogen atom would change an atom's implicit valence, the atom's abnormal valence is set accordingly.
