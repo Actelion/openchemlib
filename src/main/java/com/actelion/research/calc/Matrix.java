@@ -574,10 +574,10 @@ public class Matrix {
 
     /**
      * 
-     * @param vecIndices
-     * @return
-     * @deprecated use getColumns(List<Integer> vecIndices) instead
-     */
+     * param vecIndices
+     * return
+     * deprecated use getColumns(List<Integer> vecIndices) instead
+     *
     public Matrix getColumns(Vector<Integer> vecIndices) {
         Matrix maReduced = new Matrix(getRowDim(), vecIndices.size());
         for (int i = 0; i < vecIndices.size(); i++) {
@@ -586,7 +586,7 @@ public class Matrix {
         }
 
         return maReduced;
-    }
+    }*/
 
     public Matrix getColumns(List<Integer> liIndex) {
         Matrix maReduced = new Matrix(getRowDim(), liIndex.size());

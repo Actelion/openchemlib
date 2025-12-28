@@ -72,16 +72,13 @@ public class BitUtils {
 	 * The fastest Method (by Thomas Sander)
 	 * @param x
 	 * @return
-	 * @deprecated use Integer.bitCount() instead.
-	 */
+	 * deprecated use Integer.bitCount() instead.
+	 *
 	public static int bitCount(int x) {
-
 		int t1 = (0xFFFF0000 & x) >>> 16;
 		int t2 = 0x0000FFFF & x;
 		return BIT_COUNTS[t1] + BIT_COUNTS[t2];
-
-
-	}
+	}*/
 	
 	public static int bitCount(long x) {
 		int t1 = (int)((MASK_FOURTH_SHORT & x) >>> 48);

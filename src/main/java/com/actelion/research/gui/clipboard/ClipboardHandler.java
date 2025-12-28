@@ -923,6 +923,7 @@ public class ClipboardHandler implements IClipboardHandler {
     /**
      * @deprecated Use ImageClipboardHandler.pasteImage for consistency reasons
      */
+    @Deprecated
     public static Image getImage() {
         return ImageClipboardHandler.pasteImage();
     }
@@ -930,6 +931,7 @@ public class ClipboardHandler implements IClipboardHandler {
     /**
      * @deprecated You may use ImageClipboardHandler.copyImage for consistency reasons
      */
+    @Deprecated
     public static void putImage(Image image) {
         ImageClipboardHandler.copyImage(image);
     }
