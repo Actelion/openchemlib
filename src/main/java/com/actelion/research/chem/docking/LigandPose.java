@@ -1,22 +1,8 @@
 package com.actelion.research.chem.docking;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-
-import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.alignment3d.transformation.ExponentialMap;
-import com.actelion.research.chem.alignment3d.transformation.Quaternion;
-import com.actelion.research.chem.alignment3d.transformation.Rotation;
-import com.actelion.research.chem.alignment3d.transformation.RotationDerivatives;
-import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
-import com.actelion.research.chem.alignment3d.transformation.Translation;
+import com.actelion.research.chem.alignment3d.transformation.*;
 import com.actelion.research.chem.conf.BondRotationHelper;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.conf.TorsionDB;
@@ -24,7 +10,11 @@ import com.actelion.research.chem.docking.scoring.AbstractScoringEngine;
 import com.actelion.research.chem.optimization.Evaluable;
 import com.actelion.research.chem.optimization.MCHelper;
 import com.actelion.research.chem.potentialenergy.PositionConstraint;
-import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 
 public class LigandPose implements Evaluable{
@@ -48,7 +38,6 @@ public class LigandPose implements Evaluable{
 	
 	
 	public LigandPose(Conformer ligConf, AbstractScoringEngine engine, double e0) {
-		
 		this.engine = engine;
 		this.ligConf = ligConf;
 		init(e0);
@@ -71,7 +60,6 @@ public class LigandPose implements Evaluable{
 			mcsRotBondIndeces[i]=allowedIndices.get(i);
 		}
 		mcHelper.setMcsRotBondIndeces(mcsRotBondIndeces);
-		
 	}
 	
 	private void init(double e0) {
@@ -92,7 +80,6 @@ public class LigandPose implements Evaluable{
 		dRdvi2 = new double[3][3];
 		dRdvi3 = new double[3][3];
 		mcHelper = new MCHelper(torsionHelper,null,new Random(SEED));
-		
 	}
 	
 	private void resetLigCoordinates() {
@@ -152,7 +139,6 @@ public class LigandPose implements Evaluable{
 				gradient[6+b] += dx_dphi.x*coordGrad[3*i] + dx_dphi.y*coordGrad[3*i+1] + 
 						dx_dphi.z*coordGrad[3*i+2];
 			}
-			
 		}
 		
 		return energy;
@@ -226,7 +212,6 @@ public class LigandPose implements Evaluable{
 				}
 			}
 			this.state[i] = state[i];
-	
 		}
 		updateLigandCoordinates();
 	}
@@ -234,7 +219,6 @@ public class LigandPose implements Evaluable{
 	public double[] getState(double[] v){
 		for(int i=0;i<this.state.length;i++) {
 			v[i] = state[i];
-			
 		}
 		return v;
 	}
@@ -245,12 +229,10 @@ public class LigandPose implements Evaluable{
 			cartState[3*a] = ligConf.getCoordinates(a).x;
 			cartState[3*a+1] = ligConf.getCoordinates(a).y;
 			cartState[3*a+2] = ligConf.getCoordinates(a).z;
-			
 		}
 		return cartState;
 	}
 
-	
 	public double getScore() {
 		return this.engine.getScore();
 	}
@@ -279,15 +261,10 @@ public class LigandPose implements Evaluable{
 	public void removeConstraints() {
 		engine.removeConstraints();
 	}
-	
-	
+
 	public Conformer getLigConf() {
 		return ligConf;
 	}
-	
-
-	
-
 }
 	
 	

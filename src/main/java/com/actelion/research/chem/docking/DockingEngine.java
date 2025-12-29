@@ -108,8 +108,6 @@ public class DockingEngine {
 		
 		this.mcSteps = mcSteps;
 		this.random = new Random(LigandPose.SEED);
-
-
 	}
 	
 	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand, double gridDimension) throws DockingFailedException {
@@ -124,9 +122,7 @@ public class DockingEngine {
 		threadMaster = tm;
 		shapeDocking.setThreadMaster(tm);
 	}
-	
 
-	
 	/**
 	 * generate initial poses: 
 	 * 1) shape docking into the negative receptor image
@@ -171,11 +167,10 @@ public class DockingEngine {
 					break;
 			}
 		}
-		
-		
+
 		return eMin;
-		
 	}
+
 	/**
 	 * 1) find MCS between reference molecule and candidate molecule
 	 * 2) 
@@ -303,7 +298,6 @@ public class DockingEngine {
 				eMin = e;
 		}
 		return eMin;
-	
 	}
 	
 	
@@ -326,18 +320,17 @@ public class DockingEngine {
 		Map<String,Double> contributions = null;
 		for(Conformer ligConf : startPoints) {
 			Conformer newLigConf = new Conformer(ligConf);		
-			LigandPose pose = initiate(newLigConf,eMin);
+			LigandPose pose = new LigandPose(newLigConf, engine, eMin);
 			if(mcsRef!=null) {
 				pose.setMCSBondConstraints(mcsConstrainedBonds);
 				for(int a : mcsConstrainedAtoms) {
 					PositionConstraint constr = new PositionConstraint(newLigConf,a,50,1.0);
 					pose.addConstraint(constr);
 				}
-				
 			}
 			double energy = mcSearch(pose,steps);
 			if(energy<bestEnergy) {
-				bestEnergy = pose.getScore();
+				bestEnergy = energy;
 				bestPose = pose.getLigConf();
 				contributions = pose.getContributions();
 			}
@@ -356,10 +349,7 @@ public class DockingEngine {
 		else {
 			throw new DockingFailedException("docking failed");
 		}
-		
 	}
-	
-	
 
 	/**
 	 * use monte carlo steps to permute molecular rotation, translation, torsion angles
@@ -383,53 +373,37 @@ public class DockingEngine {
 		for(int i=0;i<steps;i++) {
 			pose.randomPerturbation();
 			double energyMC = pose.getFGValue(new double[bestState.length]);
-			if(energyMC<MINI_CUTOFF) {
-				state = optimizer.optimize(pose);	
+			if (energyMC<MINI_CUTOFF) {
+				state = optimizer.optimize(pose);
 				energy = pose.getFGValue(new double[bestState.length]);
-			}
-			else {
+			} else {
 				state = pose.getState();
-				energy=energyMC;
+				energy = energyMC;
 			}
 
-
-			if(energy<oldEnergy) { //accept new pose
+			if (energy<oldEnergy) { //accept new pose
 				oldEnergy = energy;
 				oldState = state;
-				if(energy<bestEnergy) {
+				if (energy<bestEnergy) {
 					bestEnergy = energy;
 					bestState = state;
 				}
-			}
-			else {
-				double dE = energy-oldEnergy;
+			} else {
+				double dE = energy - oldEnergy;
 				double randNr = random.nextDouble();
-				double probability = Math.exp(-dE/BOLTZMANN_FACTOR); // Metropolis-Hastings
-				if(randNr<probability) { //accept
+				double probability = Math.exp(-dE / BOLTZMANN_FACTOR); // Metropolis-Hastings
+				if (randNr<probability) { //accept
 					oldEnergy = energy;
 					oldState = state;
-				}
-				else { //reject
+				} else { //reject
 					pose.setState(oldState);
 				}
-				
 			}
-			
 		}
 
 		pose.setState(bestState);
 		pose.removeConstraints();
-		bestEnergy = pose.getScore();
-		return bestEnergy;
-		
-	}
-	
-	private LigandPose initiate(Conformer ligConf, double e0) {
-		LigandPose pose = new LigandPose(ligConf, engine, e0);
-		
-		return pose;
-		
-		
+		return pose.getScore();
 	}
 	
 	public void setMCSReference(StereoMolecule referencePose) {
@@ -453,10 +427,9 @@ public class DockingEngine {
 					if(z>0 && z<gridSize[2]) {
 						bindingSiteAtoms.add(i);
 					}
+				}
 			}
 		}
-		}
-		
 	}
 	
 	public static int[] getReceptorAtomTypes(StereoMolecule receptor) {
@@ -465,9 +438,8 @@ public class DockingEngine {
 			receptorAtomTypes[i] = InteractionAtomTypeCalculator.getAtomType(receptor, i);
 		}
 		return receptorAtomTypes;
-		
-		
 	}
+
 	/**
 	 * rotates receptor and ligand to principal moments of inertia of ligand, for efficient grid creation
 	 * @param receptor
@@ -480,7 +452,6 @@ public class DockingEngine {
 		rotation.apply(ligand);
 		translate.apply(receptor);
 		rotation.apply(receptor);
-		
 	}
 
 	/**
@@ -568,9 +539,7 @@ public class DockingEngine {
 			this.contributions = contributions;
 			this.input = input;
 		}
-		
-		
-		
+
 		public void setInput(StereoMolecule input) {
 			this.input = input;
 		}
@@ -578,7 +547,6 @@ public class DockingEngine {
 		public StereoMolecule getInput() {
 			return input;
 		}
-
 
 		public double getScore() {
 			return score;
@@ -591,7 +559,6 @@ public class DockingEngine {
 		public Map<String,Double> getContributions() {
 			return contributions;
 		}
-		
 		
 		public String encode() {
 			Encoder encoder = Base64.getEncoder();
@@ -607,7 +574,7 @@ public class DockingEngine {
 			sb.append(DELIMITER);
 			sb.append(encoder.encodeToString(EncodeFunctions.doubleToByteArray(score)));
 			sb.append(DELIMITER);
-			if(contributions==null || contributions.keySet().size()==0)
+			if(contributions==null || contributions.isEmpty())
 				sb.append(NULL_CONTRIBUTION);
 			else {
 				for(String name : contributions.keySet()) {
@@ -658,16 +625,6 @@ public class DockingEngine {
             if(Double.isNaN(o.score)) { return  1; }
 
             return Double.compare( this.score, o.score);
-           
 		}
-		
 	}
-	
-
-
-	
-	
-	
-	
-
 }
