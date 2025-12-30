@@ -325,6 +325,13 @@ public class SubGraphIndices {
         return (ccLinked>1);
     }
 
+    public static int[] getAtomIndices(List<SubGraphIndices> li) {
+        HashSetInt hsIndexAtom = new HashSetInt();
+        for (SubGraphIndices sgi : li) {
+            hsIndexAtom.add(sgi.getAtomIndices());
+        }
+        return hsIndexAtom.getValues();
+    }
 
     public static Comparator<SubGraphIndices> getComparatorNumIndices() {
 
