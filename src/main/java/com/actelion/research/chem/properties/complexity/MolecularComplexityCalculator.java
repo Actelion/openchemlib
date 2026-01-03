@@ -42,9 +42,7 @@ public class MolecularComplexityCalculator {
 	private ExhaustiveFragmentsStatistics exhaustiveFragmentsStatistics;
 	
 	public MolecularComplexityCalculator() {
-				
 		exhaustiveFragmentsStatistics = new ExhaustiveFragmentsStatistics(BitArray128.MAX_NUM_BITS, TOTAL_CAPACITY);
-		
 		exhaustiveFragmentsStatistics.setCollectFragmentIdCodes(false);
 	}
 	
@@ -54,19 +52,13 @@ public class MolecularComplexityCalculator {
 	 * @return NaN if complexity calculation failed or is not possible.
 	 */
 	public double calculate(StereoMolecule mol){
-				
 		int bondsNeededForComplexityCalc = ObjectiveExhaustiveStatistics.getNeededNumberOfBondsInFragment(mol);
-		
 		if(bondsNeededForComplexityCalc > BitArray128.MAX_NUM_BITS) {
 			return Double.NaN;
 		}
-		
 		ResultFragmentsStatistic resultFragmentsStatistic = exhaustiveFragmentsStatistics.create(mol, bondsNeededForComplexityCalc);
-				
-		SummaryFragments summaryFragments = new SummaryFragments(resultFragmentsStatistic); 
-		
+		SummaryFragments summaryFragments = new SummaryFragments(resultFragmentsStatistic);
 		return summaryFragments.getComplexityScore();
-
 	}
 	
 	public void roundUp() throws Throwable{
