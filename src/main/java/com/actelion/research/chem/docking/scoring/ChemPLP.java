@@ -109,16 +109,19 @@ public class ChemPLP extends AbstractScoringEngine {
 		double energy = getBumpTerm();
 		for(PotentialEnergyTerm term : chemscoreHbond)
 			energy+=term.getFGValue(grad);
-		for(PotentialEnergyTerm term : getMetalTerm(chemscoreMetal)) 
+		for(PotentialEnergyTerm term : getMetalTerm(chemscoreMetal))
 			energy+=term.getFGValue(grad);
-		for(PotentialEnergyTerm term : plp) 
+		for(PotentialEnergyTerm term : plp)
 			energy+=term.getFGValue(grad);
 		Map<String, Object> ffOptions = new HashMap<String, Object>();
 		ffOptions.put("dielectric constant", 80.0);
 
 		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
-		StereoMolecule toOptimize = new StereoMolecule(candidatePose.getLigConf().getMolecule());
+
+		// TLS 29Dec2025: Changed from candidatePose.getLigConf().getMolecule() to candidatePose.getLigConf().toMolecule()
+		StereoMolecule toOptimize = new StereoMolecule(candidatePose.getLigConf().toMolecule());
 		toOptimize.ensureHelperArrays(Molecule.cHelperCIP);
+
 		ForceFieldMMFF94 ff = new ForceFieldMMFF94(toOptimize, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 		double e = ff.getTotalEnergy();
 		ff.minimise();

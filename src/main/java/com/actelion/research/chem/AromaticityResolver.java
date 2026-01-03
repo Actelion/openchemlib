@@ -34,6 +34,8 @@
 
 package com.actelion.research.chem;
 
+import java.util.Arrays;
+
 public class AromaticityResolver {
 	ExtendedMolecule	mMol;
 	private boolean		mAllHydrogensAreExplicit;
@@ -122,6 +124,9 @@ public class AromaticityResolver {
 
 		protectAmideBonds(ringSet);	// using rules for detecting aromatic (thio-)amide bonds
 		protectDoubleBondAtoms();
+
+		if (mayChangeAtomCharges)	// Tripos mol2 files contain ar-bonds and no charges in carboxylates etc.
+			promoteAcidicAnions();
 
 		promoteObviousBonds();
 
@@ -458,6 +463,83 @@ public class AromaticityResolver {
                 }
 			}
 		}
+
+	private void promoteAcidicAnions() {
+		for (int atom=0; atom<mMol.getAtoms(); atom++) {
+			int delocalizedConnBondCount = 0;
+			boolean delocalizedNextBondsFound = false;
+			boolean electronegativeConnAtomFound = false;
+			for (int i=0; i<mMol.getConnAtoms(atom) && !delocalizedNextBondsFound; i++) {
+				int connBond = mMol.getConnBond(atom, i);
+				if (mIsDelocalizedBond[connBond]) {
+					delocalizedConnBondCount++;
+					int connAtom = mMol.getConnAtom(atom, i);
+					if (mMol.isElectronegative(connAtom))
+						electronegativeConnAtomFound = true;
+					for (int j=0; j<mMol.getConnAtoms(connAtom); j++) {
+						int nextAtom = mMol.getConnAtom(connAtom, j);
+						int nextBond = mMol.getConnBond(connAtom, j);
+						if (nextAtom != atom && mIsDelocalizedBond[nextBond]) {
+							delocalizedNextBondsFound = true;
+							break;
+						}
+					}
+				}
+			}
+			if (delocalizedConnBondCount >= 2 && !delocalizedNextBondsFound) {
+				int[] connBondWithRank = new int[delocalizedConnBondCount];
+
+				// We should have at least a free valence of one because otherwise protectFullValenceAtoms()
+				// would have taken the delocalized bond flag away.
+				int freeValence = mMol.getLowestFreeValence(atom);
+				if (freeValence == 0)	// for P,S,As,Se we have valence steps of 2
+					freeValence = 2;
+
+				int index = 0;
+				for (int i=0; i<mMol.getConnAtoms(atom); i++) {
+					int connBond = mMol.getConnBond(atom, i);
+					if (mIsDelocalizedBond[connBond]) {
+						int connAtom = mMol.getConnAtom(atom, i);
+						connBondWithRank[index++] = (getAcidAnionRank(connAtom) << 16) + i;
+					}
+				}
+
+				Arrays.sort(connBondWithRank);
+
+				// Acidic anions do not tale part in the added-electron to delocalized-atom balance.
+				// Thus, remove delocalized-atoms from original count and don't add to the electron count.
+				mDelocalizedAtoms -= 1 + delocalizedConnBondCount;
+
+				mIsDelocalizedAtom[atom] = false;
+				int doubleBondCount = Math.min(delocalizedConnBondCount-1, freeValence);
+				for (int i=0; i<connBondWithRank.length; i++) {
+					int connAtom = mMol.getConnAtom(atom, connBondWithRank[i] & 0x0000FFFF);
+					int connBond = mMol.getConnBond(atom, connBondWithRank[i] & 0x0000FFFF);
+					mIsDelocalizedAtom[connAtom] = false;
+					mIsDelocalizedBond[connBond] = false;
+					mDelocalizedBonds--;
+					if (i < connBondWithRank.length - doubleBondCount) {
+						mMol.setAtomCharge(connAtom, electronegativeConnAtomFound ? -1 : 1);
+					}
+					else {
+						mMol.setBondType(connBond, Molecule.cBondTypeDouble);
+					}
+				}
+			}
+		}
+	}
+
+	private int getAcidAnionRank(int atom) {
+		int atomicNo = mMol.getAtomicNo(atom);
+		return atomicNo == 8 ?  14 + (mMol.getConnAtoms(atom) == 1 ? 1 : 0)
+			 : atomicNo == 7 ?  12 + (mMol.getConnAtoms(atom) == 1 ? 1 : 0)
+			 : atomicNo == 16 ? 10 + (mMol.getConnAtoms(atom) == 1 ? 1 : 0)
+			 : atomicNo == 34 ?  8 + (mMol.getConnAtoms(atom) == 1 ? 1 : 0)
+			 : atomicNo == 15 ?  6 + (mMol.getConnAtoms(atom) == 1 ? 1 : 0)
+			 : atomicNo == 33 ?  4 + (mMol.getConnAtoms(atom) == 1 ? 1 : 0)
+			 : atomicNo == 6 ?   2 + (mMol.getConnAtoms(atom) == 1 ? 0 : 1)
+			 :						 (mMol.getConnAtoms(atom) == 1 ? 0 : 1);
+	}
 
 	private void promoteObviousBonds() {
 			// handle bond orders of aromatic bonds along the chains attached to 5- or 7-membered ring

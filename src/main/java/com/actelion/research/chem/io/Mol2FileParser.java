@@ -51,36 +51,19 @@ public class Mol2FileParser extends AbstractParser {
 	
 	private boolean isLoadHydrogen = true;
 
-	private void addMol(List<Molecule3D> res, Molecule3D m, Set<Integer> aromaticAtoms, Set<Integer> aromaticBonds) {
+	private void addMol(List<Molecule3D> res, Molecule3D m) {
 		if(m==null || m.getAllAtoms()==0) return;
-		
-		if(true) {
-			//Use AromaticityResolver		
-			ExtendedMolecule mol = new StereoMolecule(m);
-			int[] bondMap = mol.getHandleHydrogenBondMap();
-			int j =0;
-			//for (int b : aromaticBonds) {
-			//	if(mol.getAtomicNo(mol.getBondAtom(0, b))!=8 && mol.getAtomicNo(mol.getBondAtom(1, b))!=8) {
-			//		mol.setBondType(b, ExtendedMolecule.cBondTypeDelocalized);
-			//	}
-			//}
-			new AromaticityResolver(mol).locateDelocalizedDoubleBonds(null,true,true);
-			
-	
-			for (int i=0; i<mol.getBonds(); i++) {
-				m.setBondOrder(i, mol.getBondOrder(bondMap[i]));
-			}
-		}
-		/*
-		else {
-			//Use BondsCalculator.aromatize
-			boolean suc = BondsCalculator.aromatize(m, aromaticAtoms, aromaticBonds);
-			if(!suc) {
-				System.err.println("Could not aromatize the molecule");
-			}
-		//}		
-		 * 
-		 */
+
+//	To keep original atom order with hydrogens in between:
+//		ExtendedMolecule mol = new StereoMolecule(m);
+//		int[] bondMap = mol.getHandleHydrogenBondMap();
+//		new AromaticityResolver(mol).locateDelocalizedDoubleBonds(null,true,true);
+//
+//		for (int i=0; i<mol.getBonds(); i++)
+//			m.setBondOrder(i, mol.getBondOrder(bondMap[i]));
+
+		// This changes atom orders if hydrogen atoms are between non-H atoms:
+		new AromaticityResolver(m).locateDelocalizedDoubleBonds(null,true,true);
 
 		assignCharges(m);
 
@@ -93,7 +76,6 @@ public class Mol2FileParser extends AbstractParser {
 		for (int atom=0; atom<mol.getAtoms(); atom++) {
 			if (mol.getAtomicNo(atom) == 7)
 				if(mol.getOccupiedValence(atom)==4) {
-					//sulfonium ion
 					mol.setAtomCharge(atom, 1);
 				}
 				else if(mol.getOccupiedValence(atom)==2) {
@@ -102,7 +84,6 @@ public class Mol2FileParser extends AbstractParser {
 			
 			if (mol.getAtomicNo(atom) == 8)
 				if(mol.getOccupiedValence(atom)==3) {
-					//sulfonium ion
 					mol.setAtomCharge(atom, 1);
 				}
 				else if(mol.getOccupiedValence(atom)==1) {
@@ -110,7 +91,6 @@ public class Mol2FileParser extends AbstractParser {
 				}
 			if (mol.getAtomicNo(atom) == 16)
 				if(mol.getOccupiedValence(atom)==3) {
-					//sulfonium ion
 					mol.setAtomCharge(atom, 1);
 				}
 				else if(mol.getOccupiedValence(atom)==1)
@@ -149,9 +129,9 @@ public class Mol2FileParser extends AbstractParser {
 		List<Molecule3D> res = new ArrayList<Molecule3D>();
 		String line;
 
-		Molecule3D m = new Molecule3D();
-		Set<Integer> aromaticAtoms = new HashSet<Integer>();
-		Set<Integer> aromaticBonds = new HashSet<Integer>();
+		Molecule3D m = null;
+//		Set<Integer> aromaticAtoms = new HashSet<Integer>();
+//		Set<Integer> aromaticBonds = new HashSet<Integer>();
 		Map<Integer, Integer> nToA = new TreeMap<Integer, Integer>();
 		LineNumberReader reader = new LineNumberReader(in);
 		
@@ -174,19 +154,16 @@ public class Mol2FileParser extends AbstractParser {
 						count++;
 						if(from>count) continue;
 						if(to>=0 && to<count) break;
-						addMol(res, m, aromaticAtoms, aromaticBonds);
-						//Now create a new molecule
+						addMol(res, m);
 						m = new Molecule3D();
-						aromaticAtoms.clear();
-						aromaticBonds.clear();
-						String molName = line.trim();
-						m.setName(molName);
+//						aromaticAtoms.clear();
+//						aromaticBonds.clear();
+						m.setName(line.trim());
 					}
 					break;
 				}
 				case 1: {
 					try {
-
 						StringTokenizer st = new StringTokenizer(line, "\t ");
 						int n = Integer.parseInt(st.nextToken().trim());
 						String atomName = st.nextToken().trim();
@@ -227,12 +204,10 @@ public class Mol2FileParser extends AbstractParser {
 						m.setAtomName(a, atomName);
 						m.setAtomChainId(a, chainId);
 						m.setAtomAmino(a, amino);
-						if(aromatic) aromaticAtoms.add(a);
+//						if(aromatic) aromaticAtoms.add(a);
 						try {
 							m.setPartialCharge(a, Double.parseDouble(charge));
-						} catch (Exception e) {
-						}
-						
+						} catch (Exception e) {}
 	
 						nToA.put(n, a);
 					} catch (NumberFormatException e) {
@@ -247,8 +222,7 @@ public class Mol2FileParser extends AbstractParser {
 					int n1 = Integer.parseInt(st.nextToken());
 					int n2 = Integer.parseInt(st.nextToken());
 					String o = st.nextToken();
-					
-					
+
 					Integer i1 = nToA.get(n1);
 					Integer i2 = nToA.get(n2);
 
@@ -298,17 +272,18 @@ public class Mol2FileParser extends AbstractParser {
 			}
 		}
 		count++;
-		int[] bondMap = m.getHandleHydrogenBondMap();
-		int[] atomMap = m.getHandleHydrogenMap();
-		Set<Integer> aromaticAtomsMapped = new HashSet<Integer>();
-		Set<Integer> aromaticBondsMapped = new HashSet<Integer>();
-		aromaticAtoms.stream().forEach(aa -> aromaticAtomsMapped.add(atomMap[aa]));
-		aromaticBonds.stream().forEach(ab -> aromaticBondsMapped.add(bondMap[ab]));
+//		int[] bondMap = m.getHandleHydrogenBondMap();
+//		int[] atomMap = m.getHandleHydrogenMap();
+//		Set<Integer> aromaticAtomsMapped = new HashSet<Integer>();
+//		Set<Integer> aromaticBondsMapped = new HashSet<Integer>();
+//		aromaticAtoms.stream().forEach(aa -> aromaticAtomsMapped.add(atomMap[aa]));
+//		aromaticBonds.stream().forEach(ab -> aromaticBondsMapped.add(bondMap[ab]));
 		if(from>count) {}
 		else if(to>=0 && to<count) {}
 		else {
 			m.ensureHelperArrays(Molecule.cHelperRings);
-			addMol(res, m, aromaticAtoms, aromaticBonds);
+			addMol(res, m);
+//			addMol(res, m, aromaticAtoms, aromaticBonds);
 		}
 		return res;
 	}
