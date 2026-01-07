@@ -832,19 +832,23 @@ public abstract class AbstractDepictor<T> {
 	private void indicateQueryFeatures() {
 		if (mMol.isFragment()) {
 			setColorCode(Molecule.cAtomColorOrange);
-			if (((mDisplayMode & cDModeHiliteAllQueryFeatures) != 0))
-				for (int atom=0; atom<mMol.getAtoms(); atom++)
-					if ((mMol.getAtomQueryFeatures(atom) & ~Molecule.cAtomQFExcludeGroup) != 0)
-						fillCircle(getAtomX(atom)-mpQFDiameter/2,
-								   getAtomY(atom)-mpQFDiameter/2,
-								   mpQFDiameter);
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+				long atomQueryFeatures = mMol.getAtomQueryFeatures(atom);
+				if (atomQueryFeatures != 0L
+				 && (((mDisplayMode & cDModeHiliteAllQueryFeatures) != 0)
+				  || ((atomQueryFeatures & ~Molecule.cAtomQFDepictedFeatures) != 0)))
+					fillCircle(getAtomX(atom) - mpQFDiameter / 2,
+							   getAtomY(atom) - mpQFDiameter / 2, mpQFDiameter);
+				}
 			for (int bond=0; bond<mMol.getBonds(); bond++) {
-				if (mMol.getBondQueryFeatures(bond) != 0) {
+				int bondQueryFeatures = mMol.getBondQueryFeatures(bond);
+				if (bondQueryFeatures != 0
+				 && (((mDisplayMode & cDModeHiliteAllQueryFeatures) != 0)
+				  || ((bondQueryFeatures & ~Molecule.cBondQFDepictedFeatures) != 0))) {
 					int atom1 = mMol.getBondAtom(0, bond);
 					int atom2 = mMol.getBondAtom(1, bond);
 					fillCircle((getAtomX(atom1)+getAtomX(atom2)-mpQFDiameter)/2,
-							   (getAtomY(atom1)+getAtomY(atom2)-mpQFDiameter)/2,
-							   mpQFDiameter);
+							   (getAtomY(atom1)+getAtomY(atom2)-mpQFDiameter)/2, mpQFDiameter);
 					}
 				}
 			}
@@ -1831,6 +1835,9 @@ public abstract class AbstractDepictor<T> {
 			if ((queryFeatures & Molecule.cAtomQFNewRingSize) != 0) {
 				isoStr = append(isoStr, createRingSizeText(queryFeatures));
 				}
+			if ((queryFeatures & Molecule.cAtomQFOxidationState) != 0) {
+				isoStr = append(isoStr, "ox"+(((queryFeatures & Molecule.cAtomQFOxidationState)>>Molecule.cAtomQFOxidationStateShift)-Molecule.cAtomQFOxidationStateOffset));
+				}
             if ((queryFeatures & Molecule.cAtomQFFlatNitrogen) != 0) {
                 isoStr = append(isoStr, "f");
                 }
@@ -2341,15 +2348,17 @@ public abstract class AbstractDepictor<T> {
             	}
             else if ((mMol.getBondQueryFeatures(bond) & Molecule.cBondQFAromState) != 0) {
             	label = ((mMol.getBondQueryFeatures(bond) & Molecule.cBondQFAromState) == Molecule.cBondQFAromatic) ? "a"
-            		  : ((mMol.getBondQueryFeatures(bond) & Molecule.cBondQFRingState) == Molecule.cBondQFRing) ? "r!a" : "!a";
+            		  : ((mMol.getBondQueryFeatures(bond) & Molecule.cBondQFRingState) == Molecule.cBondQFRing) ? "!ar" : "!a";
             	}
             else if ((mMol.getBondQueryFeatures(bond) & Molecule.cBondQFRingState) != 0) {
             	label = ((mMol.getBondQueryFeatures(bond) & Molecule.cBondQFRingState) == Molecule.cBondQFRing) ? "r" : "!r";
             	}
 
             int ringSize = (mMol.getBondQueryFeatures(bond) & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift;
-            if (ringSize != 0)
-            	label = ((label == null) ? "" : label) + ringSize;
+            if (ringSize != 0) {
+				String ringSizeText = (ringSize == 1) ? "8-11" : (ringSize == 2) ? ">11" : Integer.toString(ringSize);
+				label = (label == null ? "" : label.endsWith("r") ? label : label + "r") + ringSizeText;
+				}
 
             if (label != null) {
 	            int atom1 = mMol.getBondAtom(0, bond);
