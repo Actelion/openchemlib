@@ -34,7 +34,6 @@
 
 package com.actelion.research.chem.descriptor.flexophore.redgraph;
 
-import com.actelion.research.chem.ExtendedMoleculeFunctions;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.hash.HashSetInt;
 
@@ -228,30 +227,34 @@ public class SubGraphIndices {
      */
     public static List<SubGraphIndices> mergeOverlapping(List<SubGraphIndices> liFragment, int minNumIndicesOverlapping) {
 
-        List<OverlappingFragments> liOverlappingFragments = new ArrayList<>();
+        LinkedList<OverlappingFragments> queue = new LinkedList<>();
+
         for (int i = 0; i < liFragment.size(); i++) {
-            SubGraphIndices frag1 = liFragment.get(i);
-            OverlappingFragments overlappingFragments = new OverlappingFragments(frag1);
-            liOverlappingFragments.add(overlappingFragments);
+            SubGraphIndices sgi = liFragment.get(i);
+            OverlappingFragments overlappingFragments = new OverlappingFragments(sgi);
+            queue.add(overlappingFragments);
         }
 
         boolean merged = true;
         while (merged) {
             merged = false;
-            for (int i = 0; i < liOverlappingFragments.size(); i++) {
-                OverlappingFragments of1 = liOverlappingFragments.get(i);
-                for (int j = liOverlappingFragments.size() - 1; j > i; j--) {
-                    OverlappingFragments of2 = liOverlappingFragments.get(j);
-                    if (of1.getNumLargestOverlap(of2) >= minNumIndicesOverlapping) {
+            out:
+            for (int i = 0; i < queue.size(); i++) {
+                OverlappingFragments of1 = queue.get(i);
+                for (int j = queue.size() - 1; j > i; j--) {
+                    OverlappingFragments of2 = queue.get(j);
+                    if (of1.getNumOverlap(of2) >= minNumIndicesOverlapping) {
                         of1.add(of2);
-                        liOverlappingFragments.remove(j);
+                        queue.remove(j);
+                        merged = true;
+                        break out;
                     }
                 }
             }
         }
 
         List<SubGraphIndices> liFragmentMerged = new ArrayList<>();
-        for (OverlappingFragments olf : liOverlappingFragments) {
+        for (OverlappingFragments olf : queue) {
             liFragmentMerged.add(olf.getSubGraphIndices());
         }
 
@@ -325,6 +328,13 @@ public class SubGraphIndices {
         return (ccLinked>1);
     }
 
+    public static int[] getAtomIndices(List<SubGraphIndices> li) {
+        HashSetInt hsIndexAtom = new HashSetInt();
+        for (SubGraphIndices sgi : li) {
+            hsIndexAtom.add(sgi.getAtomIndices());
+        }
+        return hsIndexAtom.getValues();
+    }
 
     public static Comparator<SubGraphIndices> getComparatorNumIndices() {
 
@@ -344,49 +354,65 @@ public class SubGraphIndices {
 
     private static class OverlappingFragments {
         List<SubGraphIndices> liSubGraphIndices;
+
+        HashSetInt hsIndAt;
         public OverlappingFragments(SubGraphIndices sg) {
             liSubGraphIndices = new ArrayList<>();
             liSubGraphIndices.add(sg);
+            hsIndAt = new HashSetInt();
+            add(sg);
         }
 
        public OverlappingFragments(SubGraphIndices sg1, SubGraphIndices sg2) {
-            liSubGraphIndices = new ArrayList<>();
-            liSubGraphIndices.add(sg1);
-            liSubGraphIndices.add(sg2);
+           liSubGraphIndices = new ArrayList<>();
+           add(sg1);
+           add(sg2);
         }
-
 
         public void add(SubGraphIndices sg){
             liSubGraphIndices.add(sg);
+            for (int indAt : sg.getAtomIndices()) {
+                hsIndAt.add(indAt);
+            }
         }
 
         public void add(OverlappingFragments of){
-            liSubGraphIndices.addAll(of.liSubGraphIndices);
-        }
-
-
-        public int getNumLargestOverlap(OverlappingFragments of){
-            int nOverlapMax = 0;
-            for (SubGraphIndices sgi0 : liSubGraphIndices) {
-                for (SubGraphIndices sgi1 : of.liSubGraphIndices) {
-                    int n = sgi0.getNumOverlappingIndices(sgi1);
-                    if(n > nOverlapMax){
-                        nOverlapMax = n;
-                    }
-                }
+            for (SubGraphIndices sg : of.liSubGraphIndices) {
+                add(sg);
             }
-            return nOverlapMax;
         }
 
-        public boolean containsSubGraph(OverlappingFragments of) {
+        @Override
+        public boolean equals(Object obj) {
+            OverlappingFragments of = (OverlappingFragments)obj;
+            int [] a = hsIndAt.getValues();
+            int [] b = of.hsIndAt.getValues();
+            return Arrays.equals(a,b);
+        }
+
+        public int getNumOverlap(OverlappingFragments of){
+            int nOverlap = 0;
+            for (int indAt : of.hsIndAt.getValues()) {
+                if(hsIndAt.contains(indAt))
+                    nOverlap++;
+            }
+            return nOverlap;
+        }
+        public int getNumOverlap(SubGraphIndices sgi){
+            int nOverlap = 0;
+            for (int indAt : sgi.hsIndexAtom.getValues()) {
+                if(hsIndAt.contains(indAt))
+                    nOverlap++;
+            }
+            return nOverlap;
+        }
+
+        public boolean containsSubGraph(SubGraphIndices sgi) {
             boolean contains = false;
-            containsB:
             for (SubGraphIndices sgi1 : liSubGraphIndices) {
-                for (SubGraphIndices sgi2 : of.liSubGraphIndices) {
-                    if(sgi1.equals(sgi2)){
-                        contains = true;
-                        break containsB;
-                    }
+                if(sgi1.equals(sgi)){
+                    contains = true;
+                    break;
                 }
             }
             return contains;

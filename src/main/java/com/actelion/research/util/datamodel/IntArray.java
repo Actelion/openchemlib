@@ -296,6 +296,17 @@ public class IntArray implements Serializable {
 		}
 		return sb.toString();
     }
+
+	public boolean contains(int v){
+		boolean c=false;
+		for (int i = 0; i < size; i++) {
+			if(data[i]==v) {
+				c=true;
+				break;
+			}
+		}
+		return c;
+	}
     
     public static IntArray read(InputStream s) throws IOException{
     	int size = parseInteger(s);

@@ -153,6 +153,7 @@ public class Molecule implements Serializable {
 	public static final int cAtomQFOxidationStateOffset = 7;
 	public static final long cAtomQFSimpleFeatures	= 0x00007F800E3FC7FEL;
 	public static final long cAtomQFNarrowing		= 0x0007FFFF0FFFFFFEL;
+	public static final long cAtomQFDepictedFeatures= 0x0007FFFF1FFFDFFFL;
 	public static final long cAtomQFAny				= 0x00000001;
 	public static final long cAtomQFAromState		= 0x0000400000000006L;
 	public static final long cAtomQFAromatic		= 0x00000002;
@@ -280,6 +281,7 @@ public class Molecule implements Serializable {
 	public static final int cBondQFAromStateShift	= 21;
 	public static final int cBondQFAllFeatures		= 0x00FFFFFF;
 	public static final int cBondQFSimpleFeatures	= 0x006001FF;
+	public static final int cBondQFDepictedFeatures = 0x007FFF80;
 	public static final int cBondQFNarrowing		= 0x00600180;
 	public static final int cBondQFBondTypes		= 0x0000001F;   // original 5 bond types for idcode
 	public static final int cBondQFRareBondTypes    = 0x00000060;   // using OR logic for all 7 bond types

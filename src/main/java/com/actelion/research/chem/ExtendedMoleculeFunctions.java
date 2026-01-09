@@ -70,6 +70,7 @@ import com.actelion.research.calc.statistics.StatisticsOverview;
 import com.actelion.research.calc.statistics.median.MedianStatisticFunctions;
 import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
+import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.chem.mcs.ListWithIntVec;
 import com.actelion.research.util.BurtleHasher;
 import com.actelion.research.util.Formatter;
@@ -509,6 +510,17 @@ public class ExtendedMoleculeFunctions {
 			}
 		}
 		return biggest;
+	}
+	public static StereoMolecule getFragment(StereoMolecule mol, SubGraphIndices sgi) {
+		StereoMolecule frag = new StereoMolecule();
+		int [] a = sgi.getAtomIndices();
+		boolean [] b = new boolean[mol.getAtoms()];
+		for (int at : a) {
+			b[at]=true;
+		}
+		mol.copyMoleculeByAtoms(frag, b, true, null);
+		frag.ensureHelperArrays(Molecule.cHelperRings);
+		return frag;
 	}
 
 	/**
