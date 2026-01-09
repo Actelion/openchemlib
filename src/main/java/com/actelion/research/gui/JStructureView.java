@@ -57,11 +57,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.*;
 import java.util.ArrayList;
 
 public class JStructureView extends JComponent implements ActionListener,MouseListener,MouseMotionListener,StructureListener {
@@ -627,7 +623,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 					String molfile = e.getActionCommand().equals(ITEM_SAVE_MOLFILE_V2) ?
 							  new MolfileCreator(mMol, false).getMolfile()
 							: new MolfileV3Creator(mMol, false).getMolfile();
-					BufferedWriter writer = new BufferedWriter(new FileWriter(filename, StandardCharsets.UTF_8));
+					BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename),"UTF-8"));
 					writer.write(molfile);
 					writer.close();
 				}
