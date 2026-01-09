@@ -225,7 +225,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	
 	public float getSimilarity(PheSAMolecule query, PheSAMolecule base) {
  		StereoMolecule[] bestPair = {query.getMolecule(),base.getMolecule()};
-		double[] result = PheSAAlignmentOptimizer.align(query,base,bestPair,phesaSetting);
+		double[] result = PheSAAlignmentOptimizer.align(query, base, bestPair, phesaSetting, null);
 		this.setPreviousAlignment(bestPair);
 		this.setPreviousPheSAResult(result);
 		if(flexible) {
@@ -264,7 +264,6 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 		this.previousPhesaResult = previousPhesaResult;
 	}
 
-	
 	public String getVersion() {
 		return DescriptorConstants.DESCRIPTOR_ShapeAlign.version;
 	}
@@ -272,10 +271,6 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 	public DescriptorInfo getInfo() {
 		return DescriptorConstants.DESCRIPTOR_ShapeAlign;
 	}
-	
-
-	
-
 	
 	public String encode(PheSAMolecule o) {
 

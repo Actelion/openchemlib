@@ -1,11 +1,11 @@
 package com.actelion.research.chem.docking.scoring.plp;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.potentialenergy.PotentialEnergyTerm;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * piecewise linear potential (PLP) as described in doi:10.1021/ci800298z
@@ -87,11 +87,7 @@ public class PLPTerm implements PotentialEnergyTerm {
 	public static PLPTerm create(Conformer receptor, Conformer ligand, int recAtom, int ligAtom, Map<String,Double> term) {
 		return new PLPTerm(receptor, ligand, recAtom, ligAtom, term);
 	}
-	
 
-	
-	
-	
 	@Override
 	public double getFGValue(double[] gradient) {
 		final Coordinates ci = receptor.getCoordinates(recAtom);		

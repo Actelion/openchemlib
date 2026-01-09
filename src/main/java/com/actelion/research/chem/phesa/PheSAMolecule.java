@@ -1,9 +1,11 @@
 package com.actelion.research.chem.phesa;
 
-import com.actelion.research.chem.StereoMolecule;
-import java.util.ArrayList;
 import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.StereoMolecule;
+import com.actelion.research.chem.conf.Conformer;
+
+import java.util.ArrayList;
 
 /** 
  * @version: 1.0, February 2018
@@ -63,11 +65,39 @@ public class PheSAMolecule {
 		conformer.ensureHelperArrays(Molecule.cHelperNeighbours);
 		return conformer;
 	}
-	
+
+	/**
+	 * Returns the corresponding conformer of a molecular volume
+	 * @param molVol
+	 * @return
+	 */
+	public Conformer getConformerAsConformer(MolecularVolume molVol) {
+		int nrOfAtoms = mol.getAllAtoms();
+		Conformer conformer = new Conformer(mol);
+		int hydrogenCounter = 0;
+		ArrayList<Coordinates> hydrogens = molVol.getHydrogens();
+		for(int i=0;i<nrOfAtoms;i++) {
+			if(mol.getAtomicNo(i)==1){
+				conformer.getCoordinates(i).set(hydrogens.get(hydrogenCounter));
+				hydrogenCounter+=1;
+			}
+
+			for(int j=0;j<molVol.getAtomicGaussians().size();j++) {
+				int atomId =molVol.getAtomicGaussians().get(j).getAtomId();
+				conformer.getCoordinates(atomId).set(molVol.getAtomicGaussians().get(j).getCenter());
+			}
+		}
+		return conformer;
+	}
+
 	public StereoMolecule getConformer(int index) {
 		return getConformer(shape.get(index));
 	}
-	
+
+	public Conformer getConformerAsConformer(int index) {
+		return getConformerAsConformer(shape.get(index));
+	}
+
 	public StereoMolecule getMolecule() {
 		return this.mol;
 	}
