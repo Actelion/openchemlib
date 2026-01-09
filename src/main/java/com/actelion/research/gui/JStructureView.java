@@ -35,6 +35,7 @@
 package com.actelion.research.gui;
 
 import com.actelion.research.chem.*;
+import com.actelion.research.chem.io.CompoundFileHelper;
 import com.actelion.research.chem.name.StructureNameResolver;
 import com.actelion.research.gui.clipboard.IClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDragAdapter;
@@ -56,6 +57,11 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class JStructureView extends JComponent implements ActionListener,MouseListener,MouseMotionListener,StructureListener {
@@ -67,6 +73,9 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 	private static final String ITEM_PASTE= "Paste Structure";
 	private static final String ITEM_PASTE_WITH_NAME = ITEM_PASTE+" or Name";
 	private static final String ITEM_CLEAR = "Clear Structure";
+	private static final String ITEM_OPEN_MOLFILE = "Open Molfile...";
+	private static final String ITEM_SAVE_MOLFILE_V2 = "Save As Molfile V2...";
+	private static final String ITEM_SAVE_MOLFILE_V3 = "Save As Molfile V3...";
 
 	private static final long WARNING_MILLIS = 1200;
 
@@ -587,6 +596,46 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 			mDisplayMol = mMol;
 			structureChanged();
 			}
+		if (e.getActionCommand().equals(ITEM_OPEN_MOLFILE) && mIsEditable) {
+			Component c = getParent();
+			while (c != null && !(c instanceof Frame))
+				c = c.getParent();
+			File file = new FileHelper(c).selectFileToOpen("Save Structure", CompoundFileHelper.cFileTypeMOL, null);
+			StereoMolecule mol = new MolfileParser().getCompactMolecule(file);
+			if (mol != null) {
+				if (!mAllowFragmentStatusChangeOnPasteOrDrop)
+					mol.setFragment(mMol.isFragment());
+				mMol = mol;
+				mDisplayMol = mol;
+				structureChanged();
+			}
+			else {
+				showWarningMessage("Couldn't read molecule!");
+			}
+		}
+		if (e.getActionCommand().equals(ITEM_SAVE_MOLFILE_V2)
+		 || e.getActionCommand().equals(ITEM_SAVE_MOLFILE_V3)) {
+			Component c = getParent();
+			while (c != null && !(c instanceof Frame))
+				c = c.getParent();
+			String name = mMol.getName();
+			if (name == null || name.isEmpty())
+				name = "Unknown Molecule";
+			String filename = new FileHelper(c).selectFileToSave("Save Structure", CompoundFileHelper.cFileTypeMOL, name);
+			if (filename != null) {
+				try {
+					String molfile = e.getActionCommand().equals(ITEM_SAVE_MOLFILE_V2) ?
+							  new MolfileCreator(mMol, false).getMolfile()
+							: new MolfileV3Creator(mMol, false).getMolfile();
+					BufferedWriter writer = new BufferedWriter(new FileWriter(filename, StandardCharsets.UTF_8));
+					writer.write(molfile);
+					writer.close();
+				}
+				catch (IOException ioe) {
+					showWarningMessage("Couldn't save molfile: "+ioe.getMessage());
+					}
+				}
+			}
 		}
 
 	protected void showWarningMessage(String msg) {
@@ -609,32 +658,54 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 		if (!e.isPopupTrigger())
 			return false;
 
-		if (mMol != null && mClipboardHandler != null) {
+		if (mMol != null) {
 			JPopupMenu popup = new JPopupMenu();
 
-			JMenuItem item1 = new JMenuItem(ITEM_COPY);
-			item1.addActionListener(this);
-			item1.setEnabled(mMol.getAllAtoms() != 0);
-			popup.add(item1);
+			if (mClipboardHandler != null) {
+				JMenuItem item1 = new JMenuItem(ITEM_COPY);
+				item1.addActionListener(this);
+				item1.setEnabled(mMol.getAllAtoms() != 0);
+				popup.add(item1);
 
-			JMenuItem itemCopySmiles = new JMenuItem(ITEM_COPY_SMILES);
-			itemCopySmiles.addActionListener(this);
-			itemCopySmiles.setEnabled(mMol.getAllAtoms() != 0);
-			popup.add(itemCopySmiles);
+				JMenuItem itemCopySmiles = new JMenuItem(ITEM_COPY_SMILES);
+				itemCopySmiles.addActionListener(this);
+				itemCopySmiles.setEnabled(mMol.getAllAtoms() != 0);
+				popup.add(itemCopySmiles);
 
-			if (mIsEditable) {
-				String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
-				JMenuItem item2 = new JMenuItem(itemText);
-				item2.addActionListener(this);
-				popup.add(item2);
+				if (mIsEditable) {
+					String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
+					JMenuItem item2 = new JMenuItem(itemText);
+					item2.addActionListener(this);
+					popup.add(item2);
+					}
 
 				popup.addSeparator();
+				}
 
+			if (mIsEditable) {
 				JMenuItem item3 = new JMenuItem(ITEM_CLEAR);
 				item3.addActionListener(this);
 				item3.setEnabled(mMol.getAllAtoms() != 0);
 				popup.add(item3);
+
+				popup.addSeparator();
+
+				JMenuItem itemOpenMolfile = new JMenuItem(ITEM_OPEN_MOLFILE);
+				itemOpenMolfile.addActionListener(this);
+				popup.add(itemOpenMolfile);
+
+				popup.addSeparator();
 				}
+
+			JMenuItem itemSaveMolfileV2 = new JMenuItem(ITEM_SAVE_MOLFILE_V2);
+			itemSaveMolfileV2.addActionListener(this);
+			itemSaveMolfileV2.setEnabled(mMol.getAllAtoms() != 0);
+			popup.add(itemSaveMolfileV2);
+
+			JMenuItem itemSaveMolfileV3 = new JMenuItem(ITEM_SAVE_MOLFILE_V3);
+			itemSaveMolfileV3.addActionListener(this);
+			itemSaveMolfileV3.setEnabled(mMol.getAllAtoms() != 0);
+			popup.add(itemSaveMolfileV3);
 
 			popup.show(this, e.getX(), e.getY());
 			}
