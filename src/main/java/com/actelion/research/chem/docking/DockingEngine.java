@@ -62,6 +62,7 @@ public class DockingEngine {
 	private final int startPositions;
 	private final StereoMolecule nativeLigand;
 	private final ShapeDocking shapeDocking;
+	private double mGlobalConformerEnergyMin;
 	private AbstractScoringEngine engine;
 	private ThreadMaster threadMaster;
 	private StereoMolecule mcsRef;
@@ -298,7 +299,14 @@ public class DockingEngine {
 		return eMin;
 	}
 
-	public static double getMinConformerEnergy(StereoMolecule mol) {
+	/**
+	 * @return the global conformer minimum energy applied during scoring of the previously docked molecule
+	 */
+	public double getMinConformerEnergy() {
+		return mGlobalConformerEnergyMin;
+	}
+
+	public static double calculateMinConformerEnergy(StereoMolecule mol) {
 		ConformerSetGenerator confSetGen = new ConformerSetGenerator(64, ConformerGenerator.STRATEGY_LIKELY_RANDOM, false, LigandPose.SEED);
 		ConformerSet confSet = confSetGen.generateConformerSet(new StereoMolecule(mol));
 		double eMin = Double.MAX_VALUE;
@@ -329,8 +337,8 @@ public class DockingEngine {
 	 * @throws DockingFailedException
 	 */
 	public DockingResult dockMolecule(StereoMolecule mol) throws DockingFailedException {
-//		double eMin = Double.MAX_VALUE;	// this was the old handling
-		double eMin = getMinConformerEnergy(mol);
+//		mGlobalConformerEnergyMin = Double.MAX_VALUE;	// this was the old handling
+		mGlobalConformerEnergyMin = calculateMinConformerEnergy(mol);
 
 		Conformer bestPose = null;
 		double bestEnergy = Double.MAX_VALUE;
@@ -339,17 +347,17 @@ public class DockingEngine {
 		List<Conformer> startPoints = new ArrayList<>();
 		int steps = mcSteps;
 		if(mcsRef!=null) {
-			eMin = getStartingPositionsMCS(mol, startPoints, eMin);
+			mGlobalConformerEnergyMin = getStartingPositionsMCS(mol, startPoints, mGlobalConformerEnergyMin);
 			steps=steps/MCS_EXHAUSTIVENESS;
 		}
 		else {
-			eMin = getStartingPositions(mol, startPoints, eMin);
+			mGlobalConformerEnergyMin = getStartingPositions(mol, startPoints, mGlobalConformerEnergyMin);
 		}
 
 		Map<String,Double> contributions = null;
 		for(Conformer ligConf : startPoints) {
 			Conformer newLigConf = new Conformer(ligConf);
-			LigandPose pose = new LigandPose(newLigConf, engine, eMin);
+			LigandPose pose = new LigandPose(newLigConf, engine, mGlobalConformerEnergyMin);
 			if(mcsRef!=null) {
 				pose.setMCSBondConstraints(mcsConstrainedBonds);
 				for(int a : mcsConstrainedAtoms) {
