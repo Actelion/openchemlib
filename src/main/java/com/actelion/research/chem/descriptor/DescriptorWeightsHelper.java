@@ -96,6 +96,11 @@ public class DescriptorWeightsHelper {
         Arrays.fill(weights, DescriptorWeightsHelper.LABEL_WEIGHT_NORMAL);
         return weights;
     }
+    public static void setWeightCategories(int [] basisArray, int category, int [] atsInd){
+        for (int atInd : atsInd) {
+            basisArray[atInd]=category;
+        }
+    }
 
     public static String toStringCategoryWeights(int [] weightLabels){
         StringBuilder weightBuilder = new StringBuilder();
