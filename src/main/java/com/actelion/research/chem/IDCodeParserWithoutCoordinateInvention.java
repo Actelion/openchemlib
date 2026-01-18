@@ -741,7 +741,20 @@ public class IDCodeParserWithoutCoordinateInvention {
 					int atom = decodeBits(abits);
 					long oxydationState = (long)decodeBits(Molecule.cAtomQFOxidationStateBits) << Molecule.cAtomQFOxidationStateShift;
 					mMol.setAtomQueryFeature(atom, oxydationState, true);
-				}
+					}
+				break;
+			case 40: //  datatype 'Enhanced AtomCustomLabel'
+				no = decodeBits(abits);
+				lbits = decodeBits(6);
+				int mbits = decodeBits(16);
+				for (int i=0; i<no; i++) {
+					int atom = decodeBits(abits);
+					int count = decodeBits(lbits);
+					StringBuilder label = new StringBuilder();
+					for (int j=0; j<count; j++)
+						label.append((char)decodeBits(mbits));
+					mMol.setAtomCustomLabel(atom, label.toString());
+					}
 				break;
 				}
 			}
@@ -1737,6 +1750,21 @@ public class IDCodeParserWithoutCoordinateInvention {
 						System.out.print("AtomQFOxydationState:");
 						for (int i=0; i<no; i++)
 							System.out.print(" " + decodeBits(abits) + ":" + decodeBits(Molecule.cAtomQFOxidationStateBits));
+						System.out.println();
+						break;
+					case 40: //  datatype 'Enhanced AtomCustomLabel'
+						no = decodeBits(abits);
+						System.out.print("AtomCustomLabel (enhanced):");
+						lbits = decodeBits(6);
+						int mbits = decodeBits(16);
+						for (int i = 0; i < no; i++) {
+							int atom = decodeBits(abits);
+							int count = decodeBits(lbits);
+							StringBuilder label = new StringBuilder();
+							for (int j = 0; j < count; j++)
+								label.append((char)decodeBits(mbits));
+							System.out.print(" " + atom + ":" + label.toString());
+						}
 						System.out.println();
 						break;
 					}

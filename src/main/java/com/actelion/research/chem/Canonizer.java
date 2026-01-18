@@ -3055,6 +3055,9 @@ System.out.println();
 				}
 			}
 
+		int enhancedCustomLabelMaxLength = 0;
+		int enhancedCustomLabelMaxChar = 0;
+		int enhancedCustomLabelCount = 0;
 		if ((mMode & ENCODE_ATOM_CUSTOM_LABELS) != 0
 		 ||	(mMode & ENCODE_ATOM_CUSTOM_LABELS_WITHOUT_RANKING) != 0) {
 			count = 0;
@@ -3062,6 +3065,15 @@ System.out.println();
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
 				String label = mMol.getAtomCustomLabel(mGraphAtom[atom]);
 				if (label != null) {
+					int maxChar = maxEnhancedCustomLabelCharCode(label);
+					if (label.length() > 15 || maxChar > 127) {
+						if (enhancedCustomLabelMaxLength < label.length())
+							enhancedCustomLabelMaxLength = Math.min(63, label.length());
+						if (enhancedCustomLabelMaxChar < maxChar)
+							enhancedCustomLabelMaxChar = maxChar;
+						enhancedCustomLabelCount++;
+						continue;
+					}
 					count++;
 					maxLength = Math.max(maxLength, label.length());
 					}
@@ -3072,12 +3084,12 @@ System.out.println();
 				encodeBits(count, nbits);
 				encodeBits(lbits, 4);
 				for (int atom=0; atom<mMol.getAtoms(); atom++) {
-					String customLabel = mMol.getAtomCustomLabel(mGraphAtom[atom]);
-					if (customLabel != null) {
+					String label = mMol.getAtomCustomLabel(mGraphAtom[atom]);
+					if (label != null && label.length() <= 15 && maxEnhancedCustomLabelCharCode(label) <= 127) {
 						encodeBits(atom, nbits);
-						encodeBits(customLabel.length(), lbits);
-						for (int i=0; i<customLabel.length(); i++)
-							encodeBits(customLabel.charAt(i), 7);
+						encodeBits(label.length(), lbits);
+						for (int i=0; i<label.length(); i++)
+							encodeBits(label.charAt(i), 7);
 						}
 					}
 				}
@@ -3224,8 +3236,37 @@ System.out.println();
 		if (mMol.isFragment())
 			addAtomQueryFeatures(39, nbits, Molecule.cAtomQFOxidationState, Molecule.cAtomQFOxidationStateBits, Molecule.cAtomQFOxidationStateShift);
 
+		if (enhancedCustomLabelCount != 0) {
+			int lbits = getNeededBits(enhancedCustomLabelMaxLength);
+			int mbits = getNeededBits(enhancedCustomLabelMaxChar);
+			encodeFeatureNo(40);   //  40 = datatype 'Enhanced AtomCustomLabel' (unicode and length up to 63 chars)
+			encodeBits(enhancedCustomLabelCount, nbits);
+			encodeBits(lbits, 6);
+			encodeBits(mbits, 16);
+			for (int atom=0; atom<mMol.getAtoms(); atom++) {
+				String customLabel = mMol.getAtomCustomLabel(mGraphAtom[atom]);
+				if (customLabel != null) {
+					encodeBits(atom, nbits);
+					int length = Math.min(63, customLabel.length());
+					encodeBits(length, lbits);
+					for (int i=0; i<length; i++)
+						encodeBits(customLabel.charAt(i), mbits);
+					}
+				}
+			}
+
 		encodeBits(0, 1);
 		mIDCode = encodeBitsEnd();
+		}
+
+
+	private int maxEnhancedCustomLabelCharCode(String label) {
+		int max = 0;
+		for (int i=0; i<label.length(); i++)
+			if (max < label.charAt(i))
+				max = label.charAt(i);
+
+		return max;
 		}
 
 
