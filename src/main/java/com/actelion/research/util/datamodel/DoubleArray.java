@@ -163,9 +163,12 @@ public class DoubleArray implements INumericalDataColumn {
 		return avr/size;
 	}
 
+	/**
+	 * Geometric Mean
+	 * @return
+	 */
 	public double geometricMean(){
 		if(size==0)return 0.0;
-
 		double prod = data[0];
 		for (int i = 1; i < size; i++) {
 			prod *= data[i];
