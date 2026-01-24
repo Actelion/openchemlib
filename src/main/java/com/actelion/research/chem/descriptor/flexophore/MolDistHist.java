@@ -294,26 +294,24 @@ public class MolDistHist extends DistHist implements Serializable, IMolDistHist 
 //			realize();
 		
 		StringBuilder sb = new StringBuilder(toStringNodes());
-
 		sb.append(toStringHists());
-		
 		return sb.toString();
 	}
 
 	public String toStringNodes(){
-
 		StringBuilder sb = new StringBuilder();
-
 		sb.append("[");
-		for (int i = 0; i < getNumPPNodes(); i++) {
-			sb.append(getNode(i).toString());
-			if(i<getNumPPNodes()-1){
-				sb.append(" ");
-			} else {
-				sb.append("]");
+		if(getNumPPNodes()==0){
+			sb.append("()");
+		} else {
+			for (int i = 0; i < getNumPPNodes(); i++) {
+				sb.append(getNode(i).toString());
+				if(i<getNumPPNodes()-1){
+					sb.append(" ");
+				}
 			}
 		}
-
+		sb.append("]");
 		return sb.toString();
 	}
 	public String toStringNodesElusive(){
