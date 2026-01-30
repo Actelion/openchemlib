@@ -34,6 +34,12 @@
 package com.actelion.research.util;
 
 public class DoubleFormat {
+	public static final String[] ROUNDING_MODE_TEXT = {"Non Rounded", "Significant Digits", "Multiple Of"};
+	public static final String[] ROUNDING_MODE_CODE = {"none", "digits", "multiple"};
+	public static final int ROUNDING_MODE_NONE = 0;
+	public static final int ROUNDING_MODE_SIGNIFICANT_DIGITS = 1;
+	public static final int ROUNDING_MODE_MULTIPLE_OF = 2;
+
 	private static String[] ZEROS = {"","0","00","000","0000","00000","000000","0000000","00000000"};
 	/**
 	 * Converts a double value into a String representation in scientific format
@@ -59,6 +65,25 @@ public class DoubleFormat {
 	public static String toString(double value, int significantDigits) {
 		return toString(value, significantDigits, true);
 		}
+
+	/**
+	 * Converts a double value into a String representation in scientific format rounded to
+	 * a multiple of roundingValue (if mode==ROUNDING_MODE_MULTIPLE_OF) or rounded to a
+	 * definable number of digits, e.g. 1.2345e-6 (if mode==ROUNDING_MODE_SIGNIFICANT_DIGITS).
+	 * Double values that are effectively integers are turned into the scientific
+	 * format only, if they consist of more than significantDigits+3 digits.
+	 * @param value numerical value to be converted into String representation
+	 * @param roundingMode one of ROUNDING_MODE_...
+	 * @param roundingValue roundingMode specific value for rounding
+	 * @return
+	 */
+	public static String toString(double value, int roundingMode, double roundingValue) {
+		return roundingMode == ROUNDING_MODE_NONE ? Double.toString(value)
+				: roundingMode == ROUNDING_MODE_SIGNIFICANT_DIGITS ? toString(value, (int)roundingValue, true)
+				: DoubleFormat.toString(Math.round(value / roundingValue) * roundingValue, 14);
+		// Even for ROUNDING_MODE_MULTIPLE_OF we use an additional DoubleFormat rounding with 14 digits
+		// to avoid rounding errors: 6 * 0.1 -> 0.6000000000000001 !!!
+	}
 
 	/**
 	 * Converts a double value into a String representation in scientific format
