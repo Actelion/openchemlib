@@ -388,6 +388,66 @@ public class DockingEngine {
 		}
 	}
 
+	public DockingResult[] dockMolecule(StereoMolecule mol, int maxPoseCount) throws DockingFailedException {
+//		mGlobalConformerEnergyMin = Double.MAX_VALUE;	// this was the old handling
+		mGlobalConformerEnergyMin = calculateMinConformerEnergy(mol);
+
+		Conformer bestPose = null;
+		double bestEnergy = Double.MAX_VALUE;
+		if(ForceFieldMMFF94.table(ForceFieldMMFF94.MMFF94SPLUS)==null)
+			ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+		List<Conformer> startPoints = new ArrayList<>();
+		int steps = mcSteps;
+		if(mcsRef!=null) {
+			mGlobalConformerEnergyMin = getStartingPositionsMCS(mol, startPoints, mGlobalConformerEnergyMin);
+			steps=steps/MCS_EXHAUSTIVENESS;
+		}
+		else {
+			mGlobalConformerEnergyMin = getStartingPositions(mol, startPoints, mGlobalConformerEnergyMin);
+		}
+
+		ArrayList<PreliminaryResult> resultList = new ArrayList<>();
+
+		for(Conformer ligConf : startPoints) {
+			Conformer newLigConf = new Conformer(ligConf);
+			LigandPose pose = new LigandPose(newLigConf, engine, mGlobalConformerEnergyMin);
+			if(mcsRef!=null) {
+				pose.setMCSBondConstraints(mcsConstrainedBonds);
+				for(int a : mcsConstrainedAtoms) {
+					PositionConstraint constr = new PositionConstraint(newLigConf,a,50,1.0);
+					pose.addConstraint(constr);
+				}
+			}
+			double energy = mcSearch(pose,steps);
+			int index = 0;
+			for (; index<resultList.size(); index++)
+				if(energy < resultList.get(index).energy)
+					break;
+			if (index < maxPoseCount)
+				resultList.add(index, new PreliminaryResult(pose.getLigConf(), energy, pose.getContributions()));
+			if (resultList.size() > maxPoseCount)
+				resultList.remove(maxPoseCount);
+			if(threadMaster!=null && threadMaster.threadMustDie())
+				break;
+		}
+
+		if (resultList.isEmpty())
+			throw new DockingFailedException("docking failed");
+
+		DockingResult[] result = new DockingResult[resultList.size()];
+		Rotation rot = rotation.getInvert();
+		Translation translate = new Translation(new double[] {origCOM.x, origCOM.y, origCOM.z});
+		for (int i=0; i<resultList.size(); i++) {
+			PreliminaryResult pr = resultList.get(i);
+			StereoMolecule best = pr.conformer.toMolecule(pr.conformer.getMolecule().getCompactCopy());
+			rot.apply(best);
+			translate.apply(best);
+			result[i] = new DockingResult(mol, best, pr.energy, pr.contributions);
+		}
+
+		return result;
+	}
+
 	/**
 	 * use monte carlo steps to permute molecular rotation, translation, torsion angles
 	 * promising poses (below a certain cutoff) are optimized
@@ -558,7 +618,7 @@ public class DockingEngine {
 		rmsd = Math.sqrt(rmsd);
 		return rmsd;
 	}
-	
+
 	public static class DockingResult implements Comparable<DockingResult>  {
 		private final double score;
 		private final StereoMolecule pose;
@@ -661,5 +721,17 @@ public class DockingEngine {
             if(Double.isNaN(o.score)) { return  1; }
             return Double.compare( this.score, o.score);
 		}
+	}
+}
+
+class PreliminaryResult {
+	public Conformer conformer;
+	public double energy;
+	public Map<String,Double> contributions;
+
+	public PreliminaryResult(Conformer conformer, double energy, Map<String,Double> contributions) {
+		this.conformer = conformer;
+		this.energy = energy;
+		this.contributions = contributions;
 	}
 }
