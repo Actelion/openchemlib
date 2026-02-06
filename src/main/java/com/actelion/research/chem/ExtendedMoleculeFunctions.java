@@ -1547,10 +1547,32 @@ public class ExtendedMoleculeFunctions {
 	public static StereoMolecule getSphere(StereoMolecule mol, int rootAtom, int depth){
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 		StereoMolecule fragment = new StereoMolecule(mol.getAtoms(), mol.getBonds());
+
 		boolean[] atomMask = getSphereAtomMask(mol, rootAtom, depth);
-		mol.copyMoleculeByAtoms(fragment, atomMask, true, null);
+
+		int [] atomMap = new int[atomMask.length];
+		mol.copyMoleculeByAtoms(fragment, atomMask, true, atomMap);
+		fragment.ensureHelperArrays(Molecule.cHelperRings);
+		fragment.setFragment(true);
+		for (int i = 0; i < atomMap.length; i++) {
+			int indAtFrag = atomMap[i];
+			if(indAtFrag==-1) continue;
+			long queryFeatures = 0;
+			if(mol.isRingAtom(i))
+				queryFeatures |= Molecule.cAtomQFNotChain;
+			else
+				queryFeatures |= Molecule.cAtomQFNot2RingBonds | Molecule.cAtomQFNot3RingBonds | Molecule.cAtomQFNot4RingBonds ;
+			if(mol.isAromaticAtom(i))
+				queryFeatures |= Molecule.cAtomQFAromatic;
+			else
+				queryFeatures |= Molecule.cAtomQFNotAromatic;
+
+			fragment.setAtomQueryFeature(indAtFrag, queryFeatures, true);
+		}
 		return fragment;
 	}
+
+
 	public static StereoMolecule getSphereWithDummyAtom(StereoMolecule mol, int rootAtom, int depth, int atNoDummy){
 
 		mol.ensureHelperArrays(Molecule.cHelperRings);

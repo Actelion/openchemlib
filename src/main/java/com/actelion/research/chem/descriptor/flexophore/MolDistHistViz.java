@@ -47,9 +47,7 @@ import com.actelion.research.util.graph.complete.ICompleteGraph;
 import java.io.Serializable;
 import java.util.*;
 
-/**
- * Class for Flexophore visualization and atom tracking. Information about corresponding atoms is stored in PPNodeViz.
- */
+
 public class MolDistHistViz extends DistHist implements Serializable, IMolDistHist, ICompleteGraph {
 	
 	private static final long serialVersionUID = 15052013;
@@ -289,7 +287,48 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		copy.arrWeight = new double[this.arrWeight.length];
 		System.arraycopy(this.arrWeight, 0, copy.arrWeight, 0, this.arrWeight.length);
 	}
-	
+	public MolDistHistViz copy(boolean [] nodes){
+
+		int n = 0;
+		for (boolean node : nodes) {
+			if(node)n++;
+		}
+
+		MolDistHistViz copy = new MolDistHistViz(n);
+
+		copy.liPPNodeViz = new ArrayList<PPNodeViz>();
+		for (int i = 0; i < liPPNodeViz.size(); i++) {
+			if(nodes[i]) {
+				copy.liPPNodeViz.add(new PPNodeViz(liPPNodeViz.get(i)));
+			}
+		}
+
+		int ind1=0;
+		for (int i = 0; i < liPPNodeViz.size(); i++) {
+			if(!nodes[i])
+				continue;
+			int ind2=ind1+1;
+			for (int j = i+1; j < liPPNodeViz.size(); j++) {
+				if(!nodes[j])
+					continue;
+				byte [] distHist = getDistHist(i,j);
+				copy.setDistHist(ind1,ind2,distHist);
+				ind2++;
+			}
+			ind1++;
+		}
+
+		copy.flagsDescribe = flagsDescribe;
+		if(molecule3D !=null) {
+			copy.molecule3D = new Molecule3D(molecule3D);
+			copy.molecule3D.ensureHelperArrays(Molecule.cHelperRings);
+		}
+
+		copy.realize();
+
+		return copy;
+	}
+
 	/**
 	 * Recalculates the coordinates off the pharmacophore nodes. 
 	 * Has to be called after changing the coordinates for the Molecule3D.
@@ -403,7 +442,10 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		if(ff!=null)
 			molecule3D = new Molecule3D(ff);
 	}
-	
+	public void setMoleculeNull(){
+		molecule3D = null;
+	}
+
 	public void setMappingIndex(int index, int info) {
 		getNode(index).setMappingIndex(info);
 	}
@@ -454,7 +496,6 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 			fin=true;
 			for (int i = 1; i < liPPNodeViz.size(); i++) {
 				int cmp = compareNodes(i, i-1);
-				
 				if(cmp<0){
 					fin=false;
 					swapNodes(i, i-1);
@@ -997,18 +1038,20 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 	public String toStringNodesShort(){
 		if(!finalized)
 			realize();
-		StringBuffer b = new StringBuffer();
-		b.append("[");
-		for (int i = 0; i < getNumPPNodes(); i++) {
-			PPNodeViz ppNodeViz = getNode(i);
-			b.append(ppNodeViz.toStringShort());
-			if(i<getNumPPNodes()-1){
-				b.append(" ");
-			} else {
-				b.append("]");
+		StringBuilder sb = new StringBuilder();
+		sb.append("[");
+		if(getNumPPNodes()==0){
+			sb.append("()");
+		} else {
+			for (int i = 0; i < getNumPPNodes(); i++) {
+				sb.append(getNode(i).toStringShort());
+				if(i<getNumPPNodes()-1){
+					sb.append(" ");
+				}
 			}
 		}
-		return b.toString();
+		sb.append("]");
+		return sb.toString();
 	}
 	public String toStringPPNodesText(){
 
