@@ -1,16 +1,8 @@
 package com.actelion.research.chem.phesa;
 
-import com.actelion.research.util.EncoderFloatingPointNumbers;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
-import com.actelion.research.chem.PeriodicTable;
-import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.chem.alignment3d.transformation.Transformation;
-import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.PeriodicTable;
+import com.actelion.research.chem.alignment3d.transformation.Transformation;
 
 /** 
  * @version: 1.0, February 2018
@@ -18,11 +10,11 @@ import com.actelion.research.chem.Coordinates;
  * basic class to describe Gaussian functions used for the calculation of Molecular Volumes
  * Gaussian functions have a center (3D coordinates), a width and a height 
  * this class provides functionalities for calculating higher order overlaps of Gaussians
-
 */
 
 public abstract class Gaussian3D {
-	public static final double DIST_CUTOFF = 10.0;
+	public static final double DISTANCE_CUTOFF = 3.2;
+	public static final double SQUARE_DIST_CUTOFF = DISTANCE_CUTOFF * DISTANCE_CUTOFF;
 	protected int atomId;
 	protected int atomicNo;
 	protected Coordinates center;
@@ -53,9 +45,7 @@ public abstract class Gaussian3D {
 	}
 	
 	public Gaussian3D() {}
-	
 
-	
 	public abstract double calculateHeight();
 	
 	public abstract double calculateWidth();
@@ -77,12 +67,10 @@ public abstract class Gaussian3D {
 	public double getWidth() {
 		return this.alpha;
 	}
-
 	
 	public double getVolume() {
 		return this.volume;
 	}
-	
 	
 	public Coordinates getCenter() {
 		return this.center;
@@ -118,15 +106,11 @@ public abstract class Gaussian3D {
 	public void setWeight(double weight) {
 		this.weight = weight;
 	}
-	
-	
+
 	public void transform(Transformation transform) {
 		transform.apply(center);
 	}
 
-		
-
-	
 	public final double getVolumeOverlap(Gaussian3D g2,Coordinates c2, double distCutoff) {
 		double alphaSum = getWidth() + g2.getWidth();
 		double Vij = 0.0;
@@ -141,13 +125,12 @@ public abstract class Gaussian3D {
 			Kij = getHeight()*g2.getHeight()*QuickMathCalculator.getInstance().quickExp(c); 
 			double factor = QuickMathCalculator.getInstance().getPrefactor(getAtomicNo(),g2.getAtomicNo());
 			Vij = weight*factor*Kij;
-			
 		}
 		return Vij;
 	}
 		
 	public final double getVolumeOverlap(Gaussian3D g2) {
-		return getVolumeOverlap(g2,DIST_CUTOFF);
+		return getVolumeOverlap(g2, SQUARE_DIST_CUTOFF);
 	}
 	
 	public final double getVolumeOverlap(Gaussian3D g2, double distCutoff) {
@@ -157,15 +140,11 @@ public abstract class Gaussian3D {
 	public void updateCoordinates(Coordinates[] coords) {
 		center = new Coordinates(coords[atomId]);
 	}
-	
-	
+
 	public void updateAtomIndeces(int[] map) {
 		atomId = map[atomId];
 	}
 	
 	abstract public String encode();
-	
-
-	
 }
 

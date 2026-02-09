@@ -275,7 +275,7 @@ public class EvaluableOverlap implements Evaluable  {
 				double dy = refAt.getCenter().y-fitCenterModCoord.y;
 				double dz = refAt.getCenter().z-fitCenterModCoord.z;
 				double Rij2 = dx*dx + dy*dy + dz*dz;
-				if(Rij2>=Gaussian3D.DIST_CUTOFF) 
+				if(Rij2>=Gaussian3D.SQUARE_DIST_CUTOFF)
 					continue;
 				atomOverlap = refAt.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refAt.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
 							QuickMathCalculator.getInstance().getPrefactor(refAt.getAtomicNo(),fitAt.getAtomicNo());
@@ -310,7 +310,7 @@ public class EvaluableOverlap implements Evaluable  {
 					double dz = refVol.getCenter().z-fitCenterModCoord.z;
 					double Rij2 = dx*dx + dy*dy + dz*dz;
 
-					if(Rij2>=Gaussian3D.DIST_CUTOFF) 
+					if(Rij2>=Gaussian3D.SQUARE_DIST_CUTOFF)
 						continue;
 					atomOverlap = refVol.getRole()*refVol.getHeight()*fitAt.getHeight()*QuickMathCalculator.getInstance().quickExp(-( refVol.getWidth() * fitAt.getWidth()* Rij2)/alphaSum) *
 								QuickMathCalculator.getInstance().getPrefactor(refVol.getAtomicNo(),fitAt.getAtomicNo());
@@ -369,7 +369,7 @@ public class EvaluableOverlap implements Evaluable  {
 					double dz = refAt.getCenter().z-fitCenterModCoord.z;
 					double Rij2 = dx*dx + dy*dy + dz*dz;
 
-					if(Rij2>=Gaussian3D.DIST_CUTOFF) {
+					if(Rij2>=Gaussian3D.SQUARE_DIST_CUTOFF) {
 						continue;
 					}
 					

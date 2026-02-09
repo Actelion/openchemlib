@@ -56,8 +56,8 @@ public class BondRotationHelper {
 	private int[] mRotationCenters;
 	private int[] mRotationCentersBig;
 	private String[] mTorsionIDs;
-	private boolean includeTerminalPolarH;
-	private int[] terminalPolarHBond;
+	private final boolean mIncludeTerminalPolarH;
+	private int[] mTerminalPolarHBond;
 	
 	public BondRotationHelper(StereoMolecule mol) {
 		this(mol,false);
@@ -65,7 +65,7 @@ public class BondRotationHelper {
 	
 	public BondRotationHelper(StereoMolecule mol, boolean includeTerminalPolarH) {
 		mMol = mol;
-		this.includeTerminalPolarH = includeTerminalPolarH;
+		mIncludeTerminalPolarH = includeTerminalPolarH;
 		initialize();
 	}
 	
@@ -77,8 +77,8 @@ public class BondRotationHelper {
 			disconnectedFragmentSize[disconnectedFragmentNo[atom]]++;
 		mIsRotatableBond = new boolean[mMol.getBonds()];
 		TorsionDB.findRotatableBonds(mMol,true, mIsRotatableBond);
-		if(includeTerminalPolarH)
-			terminalPolarHBond = findTerminalBondsPolarHs(mIsRotatableBond);
+		if(mIncludeTerminalPolarH)
+			mTerminalPolarHBond = findTerminalBondsPolarHs(mIsRotatableBond);
 		List<Integer> rotBonds = new ArrayList<Integer>();
 		IntStream.range(0, mIsRotatableBond.length).forEach(e -> {
 			if(mIsRotatableBond[e])
@@ -96,8 +96,8 @@ public class BondRotationHelper {
 		for(int i=0;i<mRotatableBonds.length;i++) {
 			int bond = mRotatableBonds[i];
 			boolean isSpecialBond = false;
-			if(terminalPolarHBond!=null) {
-				for(int b : terminalPolarHBond) {
+			if(mTerminalPolarHBond!=null) {
+				for(int b : mTerminalPolarHBond) {
 					if(b==bond)
 						isSpecialBond=true;
 				}

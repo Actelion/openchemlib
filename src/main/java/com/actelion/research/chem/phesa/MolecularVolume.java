@@ -10,13 +10,10 @@ import com.actelion.research.chem.phesa.pharmacophore.IonizableGroupDetector;
 import com.actelion.research.chem.phesa.pharmacophore.PharmacophoreCalculator;
 import com.actelion.research.chem.phesa.pharmacophore.pp.IPharmacophorePoint;
 import com.actelion.research.chem.phesa.pharmacophore.pp.PPGaussian;
+import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.actelion.research.util.EncoderFloatingPointNumbers;
-
-
 
 /**
  * @version: 1.0, February 2018
@@ -24,9 +21,6 @@ import com.actelion.research.util.EncoderFloatingPointNumbers;
  * class to approximate the volume of a molecule as a sum of atom-centered Gaussians, as introduced by Grant and Pickup, J. Phys. Chem. 1995, 99, 3503-3510
  * no higher order terms (atom-atom overlaps) are calculated to reduce computational costs
 */
-
-
-
 public class MolecularVolume extends ShapeVolume{
 	static public final double p = 2.82842712475; // height of Atomic Gaussian, 2*sqrt(2), commonly used in the literature: Haque and Pande, DOI 10.1002/jcc.11307 
 	static public final double alpha_pref = 2.41798793102; // taken from DOI 10.1002/jcc.11307
@@ -34,7 +28,6 @@ public class MolecularVolume extends ShapeVolume{
 	private ArrayList<VolumeGaussian> volumeGaussians; //exclusion and inclusion spheres
 	private ArrayList<Coordinates> hydrogens;
 
-	
 	public MolecularVolume(List<AtomicGaussian> atomicGaussiansInp,List<PPGaussian> ppGaussiansInp,List<VolumeGaussian> volGaussians, 
 			List<Coordinates> hydrogenCoords) {
 		this.atomicGaussians = new ArrayList<AtomicGaussian>();
@@ -48,20 +41,15 @@ public class MolecularVolume extends ShapeVolume{
 		this.hydrogens = new ArrayList<Coordinates>();
 		for(Coordinates hydrogen : hydrogenCoords) {
 			this.hydrogens.add(hydrogen);
-			
 		}
 		
 		this.volumeGaussians = new ArrayList<VolumeGaussian>();
 		for(VolumeGaussian eg : volGaussians) {
 			this.volumeGaussians.add(new VolumeGaussian(eg));
 		}
-		
 
 		this.calcCOM();
-
-		
 	}
-	
 
 	public void updateCOM() {
 		this.calcCOM();
@@ -77,23 +65,18 @@ public class MolecularVolume extends ShapeVolume{
 		updateAtomIndeces(atomicGaussians,map);
 		updateAtomIndeces(volumeGaussians,map);
 	}
-	
 
-
-	
 	public MolecularVolume(StereoMolecule mol) {
 		this.hydrogens = new ArrayList<Coordinates>();
 		this.volumeGaussians = new ArrayList<VolumeGaussian>();
 		this.calc(mol);
 		this.calcPPVolume(mol);
 		this.calcCOM();
-
 	}
 	
 	public MolecularVolume(MolecularVolume original, Conformer conf) {
 		this(original);
 		update(conf);
-
 	}
 	
 	/**
@@ -102,36 +85,29 @@ public class MolecularVolume extends ShapeVolume{
 	 * taken from Grant, Gallardo, Pickup, Journal of Computational Chemistry, 17, 1653-1666, 1996
 	 * returns a double[2]: the first double is the total overlap, whereas the second value is the specific 
 	 * contribution of additional volume gaussians (inclusion, exclusion)
-	 * @param transform
+	 * @param original
 	 * @return
 	 */
-	
 
-	
-	
 	public MolecularVolume(MolecularVolume original) {
 		this.atomicGaussians = new ArrayList<AtomicGaussian>();
 		this.ppGaussians = new ArrayList<PPGaussian>();
 		this.volumeGaussians = new ArrayList<VolumeGaussian>();
-		for(AtomicGaussian ag : original.getAtomicGaussians()) {
+
+		for(AtomicGaussian ag : original.getAtomicGaussians())
 			this.atomicGaussians.add(new AtomicGaussian(ag));
-		}
-		for(PPGaussian pg : original.getPPGaussians()) {
+
+		for(PPGaussian pg : original.getPPGaussians())
 			this.ppGaussians.add(new PPGaussian(pg));
-		}
 
 		this.hydrogens = new ArrayList<Coordinates>();
-		for(Coordinates hydrogen : original.hydrogens) {
+		for(Coordinates hydrogen : original.hydrogens)
 			this.hydrogens.add(new Coordinates(hydrogen));
-			
-		}
-		
-		for(VolumeGaussian eg : original.volumeGaussians) {
+
+		for(VolumeGaussian eg : original.volumeGaussians)
 			this.volumeGaussians.add(new VolumeGaussian(eg));
-		}
-		
+
 		this.com = new Coordinates(original.com);
-		
 	}
 	
 
@@ -139,7 +115,6 @@ public class MolecularVolume extends ShapeVolume{
 	 * calculate the self-overlap of the base molecule
 	 * @return
 	 */
-	
 	@Override
 	public double getSelfAtomOverlap(){
 			double Vtot = 0.0;
@@ -165,8 +140,8 @@ public class MolecularVolume extends ShapeVolume{
 				}
 			}
 	
-			return Vtot;
-		}
+		return Vtot;
+	}
 	
 	public double[] getTotalAtomOverlap(double[] transform, MolecularVolume fitVol){
 		double[] result = new double[2];
@@ -188,11 +163,10 @@ public class MolecularVolume extends ShapeVolume{
 			    fitCenterModCoords[k] = center;
 		}
 
-
 		for(AtomicGaussian refAt:atomicGaussians){
 			int index = 0;
 			for(AtomicGaussian fitAt:fitVol.atomicGaussians){
-				Vtot += refAt.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
+				Vtot += refAt.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.SQUARE_DIST_CUTOFF);
 				index+=1;	
 			}
 		}
@@ -200,7 +174,7 @@ public class MolecularVolume extends ShapeVolume{
 		for(VolumeGaussian refVol:volumeGaussians){
 			int index = 0;
 			for(AtomicGaussian fitAt:fitVol.atomicGaussians){
-				double overlap = refVol.getRole()*refVol.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
+				double overlap = refVol.getRole()*refVol.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.SQUARE_DIST_CUTOFF);
 				Vtot += overlap;
 				Vvol += overlap;
 				index+=1;	
@@ -211,16 +185,12 @@ public class MolecularVolume extends ShapeVolume{
 		result[0] = Vtot;
 		result[1] = Vvol;
 		return result;
-
 	}
-	
 
-	
 	/**
 	 * calculates the molecular Volume for a StereoMolecule with 3D coordinates
 	 * @param mol
 	 */
-	
 	private void calc(StereoMolecule mol) { 
 		this.atomicGaussians = new ArrayList<AtomicGaussian>();
 		int nrOfAtoms = mol.getAllAtoms();
@@ -265,9 +235,6 @@ public class MolecularVolume extends ShapeVolume{
 			ppGaussians.add(new PPGaussian(6,ppPoint));
 	}
 
-
-	
-		
 	/**
 	 * calculates volume weighted center of mass of the molecular Volume
 	 */
@@ -294,7 +261,6 @@ public class MolecularVolume extends ShapeVolume{
 		comY = comY/volume;
 		comZ = comZ/volume;
 		this.com = new Coordinates(comX,comY,comZ);
-
 	}
 	
 	@Override
@@ -353,7 +319,6 @@ public class MolecularVolume extends ShapeVolume{
 	protected void transformGaussians(Transformation transform) {
 		super.transformGaussians(transform);
 		transformGaussians(volumeGaussians,transform);
-
 	}
 
 
@@ -367,7 +332,6 @@ public class MolecularVolume extends ShapeVolume{
 			hydrogens.get(h).set(new Coordinates(mol.getAtomCoordinates(i)));
 			h++;
 		}
-			
 	}
 	
 	private void updateHydrogens(Conformer conf) {
@@ -400,38 +364,23 @@ public class MolecularVolume extends ShapeVolume{
 			vg.rotateShift(rotMat);
 		return rotMat;
 	}
-	
-
-	
 
 	@Override
 	public void translateToCOM(Coordinates com) {
-
-
-		for (AtomicGaussian ag : getAtomicGaussians()){
+		for (AtomicGaussian ag : getAtomicGaussians())
 			ag.getCenter().sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
-		}
 
-		
-		for (PPGaussian pg : getPPGaussians()){
+		for (PPGaussian pg : getPPGaussians())
 			pg.getCenter().sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
-		}
-		
-		for (VolumeGaussian vg : getVolumeGaussians()){
-			vg.translateRef(com.scaleC(-1.0));  //translate atomicGaussians. Moves center of mass to the origin.
-		}
-		
 
-		
-		for (Coordinates hydrogen : getHydrogens()){
+		for (VolumeGaussian vg : getVolumeGaussians())
+			vg.translateRef(com.scaleC(-1.0));  //translate atomicGaussians. Moves center of mass to the origin.
+
+		for (Coordinates hydrogen : getHydrogens())
 			hydrogen.sub(com);  //translate atomicGaussians. Moves center of mass to the origin.
-		}
+
 		calcCOM();
 	}
-	
-
-	
-
 
 	public String encodeFull() {
 		StringBuilder molVolString = new StringBuilder();
@@ -440,7 +389,6 @@ public class MolecularVolume extends ShapeVolume{
 		for(AtomicGaussian ag : atomicGaussians) {
 			molVolString.append(ag.encode());
 			molVolString.append("  ");
-
 		}
 
 		molVolString.append(Integer.toString(ppGaussians.size()));
@@ -449,19 +397,15 @@ public class MolecularVolume extends ShapeVolume{
 		for(PPGaussian pg : ppGaussians) {
 			molVolString.append(pg.encode().trim());
 			molVolString.append("  ");
-
 		}
 		
 		molVolString.append(Integer.toString(volumeGaussians.size()));
-		
 		molVolString.append("  ");
 		
 		for(VolumeGaussian vg : volumeGaussians) {
 			molVolString.append(vg.encode());
 			molVolString.append("  ");
 		}
-
-		
 
 		double[] hydrogenCoords = new double[3*hydrogens.size()];
 		for(int i=0;i<hydrogens.size();i++) {
@@ -472,9 +416,7 @@ public class MolecularVolume extends ShapeVolume{
 
 		molVolString.append(EncoderFloatingPointNumbers.encode(hydrogenCoords,13));
 
-		
 		return molVolString.toString();
-
 	}
 	
 	public String encodeCoordsOnly() {
@@ -489,7 +431,6 @@ public class MolecularVolume extends ShapeVolume{
 		molVolString.append(EncoderFloatingPointNumbers.encode(coords, 13));
 		molVolString.append("  ");
 
-		
 		coords = new double[3*ppGaussians.size()];
 		for(int i=0;i<ppGaussians.size();i++) {
 			coords[3*i]=ppGaussians.get(i).getCenter().x;
@@ -525,7 +466,6 @@ public class MolecularVolume extends ShapeVolume{
 			coords[3*i+2]=volumeGaussians.get(i).getShiftVector().z;
 		}
 
-
 		molVolString.append(EncoderFloatingPointNumbers.encode(coords, 13));
 		molVolString.append("  ");
 
@@ -538,17 +478,14 @@ public class MolecularVolume extends ShapeVolume{
 
 		molVolString.append(EncoderFloatingPointNumbers.encode(hydrogenCoords,13));
 
-
 		return molVolString.toString();
-
 	}
 
 	public static MolecularVolume decodeCoordsOnly(String string, MolecularVolume reference)  {
 		List<AtomicGaussian> referenceAtomicGaussians = reference.getAtomicGaussians(); 
 		List<PPGaussian> referencePPGaussians = reference.getPPGaussians(); 
 		List<VolumeGaussian> referenceVolGaussians = reference.getVolumeGaussians();
-		
-		
+
 		String[] splitString = string.split("  ");
 		double[] atomicGaussiansCoords = EncoderFloatingPointNumbers.decode(splitString[0]);
 		double[] ppGaussiansCoords = EncoderFloatingPointNumbers.decode(splitString[1]);
@@ -574,7 +511,6 @@ public class MolecularVolume extends ShapeVolume{
 			atomicGaussians.add(at);
 		}
 
-		
 		for(int i=0;i<nrOfPPGaussians;i++) {
 			Coordinates coords = new Coordinates(ppGaussiansCoords[i*3],ppGaussiansCoords[i*3+1],ppGaussiansCoords[i*3+2]);
 			PPGaussian pp = new PPGaussian(referencePPGaussians.get(i));
@@ -592,19 +528,13 @@ public class MolecularVolume extends ShapeVolume{
 			vg.setShiftVector(shift);
 			volumeGaussians.add(vg);
 		}
-		
 
-
-		for(int i=0;i<nrOfHydrogens;i++) {
+		for(int i=0;i<nrOfHydrogens;i++)
 			hydrogens.add(new Coordinates(hydrogensCoords[i*3],hydrogensCoords[i*3+1],hydrogensCoords[i*3+2]));
-		}
-
-
 
 		return new MolecularVolume(atomicGaussians,ppGaussians, volumeGaussians,hydrogens);
 	}
-	
-	
+
 	public static MolecularVolume decodeFull(String string, StereoMolecule refMol)  {
 		String[] splitString = string.split("  ");
 		int nrOfAtomicGaussians = Integer.decode(splitString[0].trim());
@@ -615,30 +545,26 @@ public class MolecularVolume extends ShapeVolume{
 		List<VolumeGaussian> volumeGaussians = new ArrayList<VolumeGaussian>();
 		List<Coordinates> hydrogens = new ArrayList<Coordinates>();
 		
-		for(int i=firstIndex;i<lastIndex;i++) {
+		for(int i=firstIndex;i<lastIndex;i++)
 			atomicGaussians.add(AtomicGaussian.fromString(splitString[i].trim()));
-		}
+
 		int nrOfPPGaussians = Integer.decode(splitString[lastIndex]);
 		firstIndex = lastIndex+1;
 		lastIndex = firstIndex + nrOfPPGaussians;
-		for(int i=firstIndex;i<lastIndex;i++) {
+		for(int i=firstIndex;i<lastIndex;i++)
 			ppGaussians.add(PPGaussian.fromString(splitString[i],refMol));
-		}
-		
+
 		int nrOfVolumeGaussians = Integer.decode(splitString[lastIndex]);
 		firstIndex = lastIndex+1;
 		lastIndex = firstIndex + nrOfVolumeGaussians;
-		for(int i=firstIndex;i<lastIndex;i++) {
+		for(int i=firstIndex;i<lastIndex;i++)
 			volumeGaussians.add(VolumeGaussian.fromString(splitString[i],refMol));
-		}
-
 
 		double[] coords = EncoderFloatingPointNumbers.decode(splitString[splitString.length-1]);
 		int nrOfHydrogens = coords.length/3;
-		for(int i=0;i<nrOfHydrogens;i++) {
+		for(int i=0;i<nrOfHydrogens;i++)
 			hydrogens.add(new Coordinates(coords[i*3],coords[i*3+1],coords[i*3+2]));
-			
-		}
+
 		return new MolecularVolume(atomicGaussians,ppGaussians,volumeGaussians,hydrogens);
 	}
 }

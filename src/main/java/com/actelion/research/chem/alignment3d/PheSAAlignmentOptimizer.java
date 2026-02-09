@@ -25,12 +25,42 @@ public class PheSAAlignmentOptimizer {
 	public static final int PMI_OPTIMIZATIONS = 10;
 	private static final double EXIT_VECTOR_WEIGHT = 10.0;
 	private static final int BEST_RESULT_SIZE = 20;
-	
+
+	private final PheSASetting mSettings;
+	private final MolecularVolume mRefVol;
+	private final Coordinates mOrigCOM;
+	private final Rotation mInverseRefRotation;
+
 	public enum SimilarityMode {REFTVERSKY,TVERSKY, TANIMOTO
 		}
 	
-	private PheSAAlignmentOptimizer() {}
-	
+	public PheSAAlignmentOptimizer(StereoMolecule refMol, double ppWeight) {
+		mSettings = new PheSASetting();
+		mSettings.setPpWeight(ppWeight);
+		mRefVol = new MolecularVolume(refMol);
+		mOrigCOM = new Coordinates(mRefVol.getCOM());
+		mInverseRefRotation = mRefVol.preProcess(new Conformer(refMol)).getInvert();
+	}
+
+	public double alignMoleculeInPlace(StereoMolecule fitMol, ThreadMaster tm) {
+		MolecularVolume fitVol = new MolecularVolume(fitMol);
+		Conformer fitConf = new Conformer(fitMol);
+		fitVol.preProcess(fitConf);
+
+		AlignmentResult bestSolution = createAlignmentSolutions(Collections.singletonList(mRefVol), Collections.singletonList(fitVol),mSettings, tm).get(0);
+
+		for(int a=0;a<fitMol.getAllAtoms();a++) {
+			fitMol.setAtomX(a, fitConf.getX(a));
+			fitMol.setAtomY(a, fitConf.getY(a));
+			fitMol.setAtomZ(a, fitConf.getZ(a));
+		}
+
+		bestSolution.getTransform().apply(fitMol);
+		mInverseRefRotation.apply(fitMol);
+		fitMol.translate(mOrigCOM.x, mOrigCOM.y, mOrigCOM.z);
+
+		return bestSolution.getSimilarity();
+	}
 	
 	public static double alignTwoMolsInPlace(StereoMolecule refMol, StereoMolecule fitMol, ThreadMaster tm) {
 		return alignTwoMolsInPlace(refMol, fitMol, 0.5, tm);
@@ -39,7 +69,6 @@ public class PheSAAlignmentOptimizer {
 	public static double alignTwoMolsInPlace(StereoMolecule refMol, StereoMolecule fitMol, double ppWeight, ThreadMaster tm) {
 		PheSASetting setting = new PheSASetting();
 		setting.setPpWeight(ppWeight);
-		double similarity = 0.0;
 		MolecularVolume refVol = new MolecularVolume(refMol);
 		MolecularVolume fitVol = new MolecularVolume(fitMol);
 		Coordinates origCOM = new Coordinates(refVol.getCOM());
@@ -49,7 +78,7 @@ public class PheSAAlignmentOptimizer {
 		rotation = rotation.getInvert();
 		fitVol.preProcess(fitConf);
 		AlignmentResult bestSolution = createAlignmentSolutions(Collections.singletonList(refVol), Collections.singletonList(fitVol),setting, tm).get(0);
-		similarity = bestSolution.getSimilarity();
+		double similarity = bestSolution.getSimilarity();
 		
 		for(int a=0;a<fitMol.getAllAtoms();a++) {
 			fitMol.setAtomX(a, fitConf.getX(a));
@@ -61,9 +90,6 @@ public class PheSAAlignmentOptimizer {
 		fitMol.translate(origCOM.x, origCOM.y, origCOM.z);
 
 		return similarity;
-		
-		
-		
 	}
 	
 	public static List<AlignmentResult> alignToNegRecImg(ShapeVolume ref,

@@ -460,7 +460,7 @@ public class ShapeVolume {
 		for(AtomicGaussian refAt:atomicGaussians){
 			int index = 0;
 			for(AtomicGaussian fitAt:fitVol.atomicGaussians){
-				Vtot += refAt.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.DIST_CUTOFF);
+				Vtot += refAt.getVolumeOverlap(fitAt, fitCenterModCoords[index],Gaussian3D.SQUARE_DIST_CUTOFF);
 				index+=1;	
 			}
 		}

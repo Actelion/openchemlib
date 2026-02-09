@@ -40,11 +40,13 @@ import java.nio.charset.StandardCharsets;
 /**
  * Typically you should use IDCodeParser instead of this class. You may instantiate this class
  * if you need to avoid a dependency to the CoordinateInventor and if you pass encoded coordinates
- * together with any idcode for parsing.
+ * together with any idcode for parsing, or if you don't need 2D-coordinates, e.g. because you
+ * intend to generate 3D-coordinates afterward.
  * We needed to introduce this class to avoid a cyclic dependency between the IDCodeParser and
- * the CoordinateInventor: If encoded atom coords are not given, then the IDcodeParser needs
- * to invent then in order to assign proper up-/down-bonds. The CoordinateInventor needs the
- * IDCodeParser to unpack its default template list.
+ * the CoordinateInventor: If encoded atom coords are not given and if you later depict the
+ * molecule in 2D, then IDCodeParser needs to invent 2D-coordinates in order to assign
+ * proper up-/down-bonds from stereo parities. CoordinateInventor needs IDCodeParser in turn
+ * to unpack its default template list.
  */
 public class IDCodeParserWithoutCoordinateInvention {
 	private StereoMolecule	mMol;
@@ -69,7 +71,7 @@ public class IDCodeParserWithoutCoordinateInvention {
 	/**
 	 * Creates and returns a molecule from the idcode with its atom and bond arrays being
 	 * just as large as needed to hold the molecule. Use this to conserve memory if no
-	 * atoms or bonds are added to the molecule afterwards. This version of the method
+	 * atoms or bonds are added to the molecule afterward. This version of the method
 	 * allows to pass idcode and atom coordinates in one String object.
 	 * @param idcode null or idcode, which may contain coordinates separated by a space character
 	 * @return

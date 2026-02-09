@@ -40,14 +40,14 @@ import java.util.Comparator;
 public class SortedList<T> {
     static final long serialVersionUID = 0x20160626;
 
-    private ArrayList<T> mList = new ArrayList<T>();
-	private Comparator mComparator;
+    private final ArrayList<T> mList = new ArrayList<T>();
+	private final Comparator<T> mComparator;
 
 	public SortedList() {
 		this(null);
 		}
 
-	public SortedList(Comparator comparator) {
+	public SortedList(Comparator<T> comparator) {
 		mComparator = comparator;
 		}
 
