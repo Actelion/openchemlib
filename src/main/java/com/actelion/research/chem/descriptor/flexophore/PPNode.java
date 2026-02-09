@@ -128,16 +128,10 @@ public class PPNode implements Comparable<PPNode>, IPPNode {
 		
 	public int compareTo(PPNode o) {
 		int cmp=0;
-		
-		
 		int size1 = getInteractionTypeCount();
-		
 		int size2 = o.getInteractionTypeCount();
-		
 		int max1 = getMaximumInteractionType(this);
-		
 		int max2 = getMaximumInteractionType(o);
-		
 		if(max1 > max2)
 			cmp=1;
 		else if(max1 < max2)
@@ -148,19 +142,17 @@ public class PPNode implements Comparable<PPNode>, IPPNode {
 			else if(size1 < size2)
 				cmp=-1;
 			else {
-				
 				for (int i = 0; i < size1; i++) {
-					
-					int id1 = getInteractionType(i);
-					
-					int id2 = o.getInteractionType(i);
-					
-					if(id1 > id2){
+					InterActionTypeFreq iaf1 = getInteraction(i);
+					InterActionTypeFreq iaf2 = o.getInteraction(i);
+					int p1 = iaf1.frequency*iaf1.interactionType;
+					int p2 = iaf2.frequency*iaf2.interactionType;
+					if(p1 > p2){
 						cmp=1;
-						
-					} else if(id1 < id2){
-						
+						break;
+					} else if(p1 < p2){
 						cmp=-1;
+						break;
 					}
 				}
 			}
