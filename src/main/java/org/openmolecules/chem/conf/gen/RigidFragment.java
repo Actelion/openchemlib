@@ -78,6 +78,21 @@ public class RigidFragment {
 	}
 
 	/**
+	 * Returns the conformer index with the lowest strain.
+	 */
+	public int getMostLikelyConformerIndex() {
+		double highestLikelihood = 0;
+		int highestIndex = -1;
+		for (int t=0; t<mConformerLikelihood.length; t++) {
+			if (highestLikelihood < mConformerLikelihood[t]) {
+				highestLikelihood = mConformerLikelihood[t];
+				highestIndex = t;
+			}
+		}
+		return highestIndex;
+	}
+
+	/**
 	 * Calculates a random conformer index giving conformers with lower strains
 	 * a higher chance to be selected. With a progress value of 0.0 selection
 	 * likelyhoods are proportional to conformer likelyhoods due to lower strains.

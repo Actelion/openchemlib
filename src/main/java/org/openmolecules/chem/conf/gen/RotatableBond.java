@@ -37,7 +37,7 @@ import com.actelion.research.chem.conf.TorsionPrediction;
 /**
  * A RotatableBond knows the two rigid fragments within a molecule
  * that are connected by this bond. It also knows about possible torsion
- * states with associated likelyhoods, which are taken from COD statistics
+ * states with associated likelihoods, which are taken from COD statistics
  * and modified to account for collisions due to bulky groups in the molecule.
  * It knows the smaller half of the molecule and rotate the smaller half to
  * a given torsion angle.
@@ -47,15 +47,17 @@ public class RotatableBond {
 	private static final short[] SIXTY_DEGREE_FREQUENCY = { 17, 17, 17, 17, 17, 17};
 	private static final short[][] SIXTY_DEGREE_RANGE = { {-20,20},{40,80},{100,140},{160,200},{220,260},{280,320}};
 
-	private RigidFragment mFragment1,mFragment2;
+	private final RigidFragment mFragment1,mFragment2;
 	private String mTorsionID;
-	private int mRotationCenter,mBond,mFragmentNo1,mFragmentNo2;
-	private boolean mBondAtomsInFragmentOrder;
+	private int mRotationCenter;
+	private final int mBond,mFragmentNo1,mFragmentNo2;
+	private final boolean mBondAtomsInFragmentOrder;
 	private float mBondRelevance;
 	private short[] mDefaultTorsion;
 	private short[] mDefaultFrequency;
 	private short[][] mDefaultTorsionRange;
-	private int[] mTorsionAtom,mRearAtom,mSmallerSideAtomList;
+	private final int[] mTorsionAtom,mRearAtom;
+	private int[] mSmallerSideAtomList;
 
 	public RotatableBond(StereoMolecule mol, int bond, int[] fragmentNo, int[] disconnectedFragmentNo,
 	                     int disconnectedFragmentSize, RigidFragment[] fragment) {
@@ -64,8 +66,6 @@ public class RotatableBond {
 
 	public RotatableBond(StereoMolecule mol, int bond, int[] fragmentNo, int[] disconnectedFragmentNo,
 	                     int disconnectedFragmentSize, RigidFragment[] fragment, boolean use60degreeSteps) {
-if (TorsionDB.getTorsionFrequencies("gGP`@dfyjidNcGI[WQCP`<")[0]==-1)
-	System.out.println("ERROR");
 		mBond = bond;
 		mTorsionAtom = new int[4];
 		mRearAtom = new int[2];
@@ -84,10 +84,6 @@ if (TorsionDB.getTorsionFrequencies("gGP`@dfyjidNcGI[WQCP`<")[0]==-1)
 		mFragment2 = fragment[mFragmentNo2];
 
 		mBondAtomsInFragmentOrder = (fragmentNo[mol.getBondAtom(0, bond)] == mFragmentNo1);
-
-if (TorsionDB.getTorsionFrequencies("gGP`@dfyjidNcGI[WQCP`<")[0]==-1)
-	System.out.println("ERROR");
-
 
 		if (use60degreeSteps) {
 			mDefaultTorsion = SIXTY_DEGREE_TORSION;
@@ -150,7 +146,7 @@ if (TorsionDB.getTorsionFrequencies("gGP`@dfyjidNcGI[WQCP`<")[0]==-1)
         	}
 
     	// A TorsionPrediction does not distinguish hetero atoms from carbons a positions 0 and 3.
-        // Therefore we can treat two sp2 neighbors as equivalent when predicting torsions.
+        // Therefore, we can treat two sp2 neighbors as equivalent when predicting torsions.
         if (mol.getAtomPi(mTorsionAtom[1]) == 0 && mol.getConnAtoms(mTorsionAtom[1]) == 3) {
 			mTorsionAtom[0] = -1;
         	}
@@ -265,13 +261,6 @@ if (TorsionDB.getTorsionFrequencies("gGP`@dfyjidNcGI[WQCP`<")[0]==-1)
 	public short[][] getDefaultTorsionRanges() {
 		return mDefaultTorsionRange;
 	}
-
-	/**
-	 * @return the likelyhood of torsion i among all torsions of this bond
-	 **
-	public double getTorsionLikelyhood(int t) {
-		return mLikelyhood[t];
-		}   */
 
 	/**
 	 * @return atoms of the smaller half of the molecule excluding anchor atom

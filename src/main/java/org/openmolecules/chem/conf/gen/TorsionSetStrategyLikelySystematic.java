@@ -36,7 +36,8 @@ import java.util.Arrays;
  * @author Thomas Sander
  */
 public class TorsionSetStrategyLikelySystematic extends TorsionSetStrategy {
-	private int[]			mCurrentMaxTorsionIndex,mCurrentMaxConformerIndex;
+	private final int[]		mCurrentMaxTorsionIndex;
+	private final int[]		mCurrentMaxConformerIndex;
 	private TorsionSet[]	mAvailableTorsionSet;
 	private int				mAvailableTorsionSetIndex;
 

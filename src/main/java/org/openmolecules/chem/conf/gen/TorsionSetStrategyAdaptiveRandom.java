@@ -32,14 +32,14 @@ import java.util.Arrays;
 
 public class TorsionSetStrategyAdaptiveRandom extends TorsionSetStrategyRandom {
 	private static final int MAX_TRIES_FOR_NEW = 64;
-	private boolean mStartWithMostProbable;
+	private final boolean mStartWithMostProbable;
 
 	/**
 	 * This torsion set strategy produces random sets of torsion indices until a torsion set
 	 * collides. Then it updates individual torsion indices of those rotatable bonds
 	 * that connect colliding fragments.
 	 * Torsion indices are picked either by pure random or with a twisted likelyhood
-	 * towards towards those angles, that show higher frequencies in the CSD.
+	 * towards those angles, that show higher frequencies in the COD/CSD.
 	 * @param conformerGenerator
 	 * @param preferLikelyTorsions if set then more frequent torsions are picked with higher probability
 	 * @param startWithMostProbable if true then the first torsion set returned contains for every bond the most frequent torsion
@@ -53,12 +53,8 @@ public class TorsionSetStrategyAdaptiveRandom extends TorsionSetStrategyRandom {
 
 	@Override
 	public TorsionSet createTorsionSet(TorsionSet previousTorsionSet) {
-		if (previousTorsionSet == null) {
-			if (mStartWithMostProbable)
-				return createTorsionSet(new int[mRotatableBond.length], new int[mRigidFragment.length]);
-			else
-				return super.createTorsionSet(null);
-			}
+		if (previousTorsionSet == null)
+			return super.createTorsionSet(mStartWithMostProbable);
 
 		if (previousTorsionSet.getCollisionStrainSum() == 0.0)
 			return super.createTorsionSet(previousTorsionSet);

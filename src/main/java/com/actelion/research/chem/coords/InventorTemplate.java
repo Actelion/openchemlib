@@ -3,10 +3,10 @@ package com.actelion.research.chem.coords;
 import com.actelion.research.chem.StereoMolecule;
 
 public class InventorTemplate {
-	private StereoMolecule mFragment;
-	private long[] mFFP;
+	private final StereoMolecule mFragment;
+	private final long[] mFFP;
 	private double mAVBL;
-	private boolean mKeepAbsoluteOrientation;
+	private final boolean mKeepAbsoluteOrientation;
 
 	public InventorTemplate(StereoMolecule fragment, long[] ffp, boolean keepAbsoluteOrientation) {
 		mFragment = fragment;

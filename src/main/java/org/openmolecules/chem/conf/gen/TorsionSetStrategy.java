@@ -74,20 +74,23 @@ public abstract class TorsionSetStrategy {
 	protected ConformerGenerator mConformerGenerator;
 	protected RotatableBond[] mRotatableBond;
 	protected RigidFragment[] mRigidFragment;
-	private TorsionSetEncoder mTorsionSetEncoder;
-	private int mFragmentCount,mCollisionCount,mMaxTotalCount,mPermutationCount,mSuccessCount;
+	private final TorsionSetEncoder mTorsionSetEncoder;
+	private int mCollisionCount;
+	private int mMaxTotalCount;
+	private int mPermutationCount;
+	private int mSuccessCount;
 	private boolean mUsingSecondChoices;
-	private int[][][] mBondsBetweenFragments;
-	private int[][] mConnFragmentNo;
-	private int[][] mConnRotatableBondNo;
-	private int[] mGraphFragment;
-	private int[] mGraphBond;
-	private int[] mGraphParent;
-	private boolean[] mGraphFragmentHandled;
+	private final int[][][] mBondsBetweenFragments;
+	private final int[][] mConnFragmentNo;
+	private final int[][] mConnRotatableBondNo;
+	private final int[] mGraphFragment;
+	private final int[] mGraphBond;
+	private final int[] mGraphParent;
+	private final boolean[] mGraphFragmentHandled;
 	private double mLowestCollisionStrain;
-	private UniqueList<TorsionSet> mTorsionSetList;
-	private SortedList<TorsionSet> mSecondChoiceList;
-	private SortedList<TorsionSetWithEliminationRuleStrain> mStrainedTorsionSetCache;
+	private final UniqueList<TorsionSet> mTorsionSetList;
+	private final SortedList<TorsionSet> mSecondChoiceList;
+	private final SortedList<TorsionSetWithEliminationRuleStrain> mStrainedTorsionSetCache;
 	private TorsionSet mBestUnacceptableTorsionSet;
 
 	public TorsionSetStrategy(ConformerGenerator conformerGenerator) {
@@ -97,10 +100,10 @@ public abstract class TorsionSetStrategy {
 		mTorsionSetEncoder = new TorsionSetEncoder(mRigidFragment, mRotatableBond);
 
 		// create arrays of neighbor fragment no's
-		mFragmentCount = 0;
+		int fragmentCount = 0;
 		for (RotatableBond rb:mRotatableBond)
-			mFragmentCount = Math.max(mFragmentCount, Math.max(1+rb.getFragmentNo(0), 1+rb.getFragmentNo(1)));
-		int[] count = new int[mFragmentCount];
+			fragmentCount = Math.max(fragmentCount, Math.max(1+rb.getFragmentNo(0), 1+rb.getFragmentNo(1)));
+		int[] count = new int[fragmentCount];
 		for (RotatableBond rb:mRotatableBond) {
 			count[rb.getFragmentNo(0)]++;
 			count[rb.getFragmentNo(1)]++;
@@ -123,14 +126,14 @@ public abstract class TorsionSetStrategy {
 			count[f2]++;
 			}
 
-		mGraphFragment = new int[mFragmentCount];
-		mGraphBond = new int[mFragmentCount];
-		mGraphParent = new int[mFragmentCount];
-		mGraphFragmentHandled = new boolean[mFragmentCount];
+		mGraphFragment = new int[fragmentCount];
+		mGraphBond = new int[fragmentCount];
+		mGraphParent = new int[fragmentCount];
+		mGraphFragmentHandled = new boolean[fragmentCount];
 
 		// initialize array for rotatable bond sequences from fragment pairs
-		mBondsBetweenFragments = new int[mFragmentCount][][];
-		for (int f1=1; f1<mFragmentCount; f1++) {
+		mBondsBetweenFragments = new int[fragmentCount][][];
+		for (int f1 = 1; f1<fragmentCount; f1++) {
 			mBondsBetweenFragments[f1] = new int[f1][];
 			for (int f2=0; f2<f1; f2++)
 				mBondsBetweenFragments[f1][f2] = getRotatableBondsBetween(f1, f2);
@@ -484,9 +487,9 @@ public abstract class TorsionSetStrategy {
 
 
 	/**
-	 * With best current knowledge about colliding torsion combinations
+	 * With the best current knowledge about colliding torsion combinations
 	 * and based on the individual frequencies of currently active torsions
-	 * this method returns the conformers's overall contribution to the
+	 * this method returns the conformer's overall contribution to the
 	 * total set of non colliding conformers.
 	 * @return this conformer's contribution to all conformers
 	 */

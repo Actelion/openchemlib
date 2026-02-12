@@ -37,13 +37,13 @@ public class BaseConformer extends Conformer {
 	private static final int ESCAPE_STEPS = 4;	// how often we apply this rotation trying to solve the collision
 	private static final double MIN_ESCAPE_GAIN_PER_STEP = 0.05;
 
-	private short[][] mTorsion;
-	private short[][] mFrequency;
-	private double[][] mLikelyhood; // considering directly connected rigid fragments (frequency and collision strain)
-	private int[] mBestTorsionIndex;
-	private RotatableBond[] mRotatableBond;
-	private ArrayList<TorsionSetEliminationRule> mEliminationRuleList;
-	private Random mRandom;
+	private final short[][] mTorsion;
+	private final short[][] mFrequency;
+	private final double[][] mLikelyhood; // considering directly connected rigid fragments (frequency and collision strain)
+	private final int[] mBestTorsionIndex;
+	private final RotatableBond[] mRotatableBond;
+	private final ArrayList<TorsionSetEliminationRule> mEliminationRuleList;
+	private final Random mRandom;
 	private int mConformerCount;
 
 	public BaseConformer(StereoMolecule mol, RigidFragment[] rigidFragment, RotatableBond[] rotatableBond, int[] fragmentPermutation, Random random) {
@@ -116,9 +116,9 @@ public class BaseConformer extends Conformer {
 	}
 
 	/**
-	 * Calculates a random torsion index giving torsions with higher likelyhoods
+	 * Calculates a random torsion index giving torsions with higher likelihoods
 	 * (i.e. frequencies and collision strains) a higher chance to be selected.
-	 * With a progress value of 0.0 selection likelyhoods are proportional to
+	 * With a progress value of 0.0 selection likelihoods are proportional to
 	 * the torsion frequencies. With increasing progress value the higher frequent
 	 * torsions are less and less preferred until 1.0 without any preference.
 	 * @param random

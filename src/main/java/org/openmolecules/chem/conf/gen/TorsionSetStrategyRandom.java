@@ -32,8 +32,8 @@ import java.util.Random;
 
 public class TorsionSetStrategyRandom extends TorsionSetStrategy {
 	private static final int MAX_TRIES_FOR_NEW = 64;
-	private Random mRandom;
-	private boolean mPreferLikelyTorsions;
+	private final Random mRandom;
+	private final boolean mPreferLikelyTorsions;
 
 	/**
 	 * This simple TorsionSetStrategy produces random sets of torsion indexes in a loop.
@@ -64,6 +64,14 @@ public class TorsionSetStrategyRandom extends TorsionSetStrategy {
 	 */
 	@Override
 	public TorsionSet createTorsionSet(TorsionSet previousTorsionSet) {
+		return createTorsionSet(mPreferLikelyTorsions);
+	}
+
+	/**
+	 * Build a new set of torsion angles by pure or biased random picking.
+	 * @return a random and new torsion index set.
+	 */
+	public TorsionSet createTorsionSet(boolean startWithMostProbable) {
 		if (getTorsionSetCount() == getPermutationCount())
 			return null;	// if we have found all permutations
 
@@ -76,7 +84,14 @@ public class TorsionSetStrategyRandom extends TorsionSetStrategy {
 			if (count++ == MAX_TRIES_FOR_NEW)
 				return null;
 
-			if (mPreferLikelyTorsions) {
+			if (startWithMostProbable && getTorsionSetCount() == 0) {
+				for (int rf=0; rf<mRigidFragment.length; rf++)
+					conformerIndex[rf] = mRigidFragment[rf].getMostLikelyConformerIndex();
+				BaseConformer baseConformer = mConformerGenerator.getBaseConformer(conformerIndex);
+				for (int rb=0; rb<mRotatableBond.length; rb++)
+					torsionIndex[rb] = baseConformer.getMostLikelyTorsionIndexes()[rb];
+				}
+			else if (mPreferLikelyTorsions) {
 				double progress = (double)count/(double)MAX_TRIES_FOR_NEW;
 				for (int rf=0; rf<mRigidFragment.length; rf++)
 					conformerIndex[rf] = mRigidFragment[rf].getLikelyRandomConformerIndex(mRandom.nextDouble(), progress);
