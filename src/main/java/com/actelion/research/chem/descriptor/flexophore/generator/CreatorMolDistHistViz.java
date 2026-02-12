@@ -173,11 +173,15 @@ public class CreatorMolDistHistViz {
      * @throws Exception
      */
     public MolDistHistViz createMultipleConformations(StereoMolecule molOrig, int nConformations) throws Exception {
-
         StereoMolecule molStand = molOrig.getCompactCopy();
         MoleculeStandardizer.standardize(molStand, MoleculeStandardizer.MODE_GET_PARENT);
         molStand.ensureHelperArrays(Molecule.cHelperRings);
-        Molecule3D molInPlace = new Molecule3D(molStand);
+        return createMultipleConformationsWithoutStandardizer(molStand, nConformations);
+    }
+    public MolDistHistViz createMultipleConformationsWithoutStandardizer(StereoMolecule molOrig, int nConformations) throws Exception {
+
+
+        Molecule3D molInPlace = new Molecule3D(molOrig);
         molInPlace.ensureHelperArrays(Molecule.cHelperRings);
 
         InteractionAtomTypeCalculator.setInteractionTypes(molInPlace);
