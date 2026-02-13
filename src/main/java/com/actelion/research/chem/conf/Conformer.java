@@ -322,7 +322,7 @@ public class Conformer implements Comparable<Conformer> {
 
 	/**
 	 * Copies this Conformer's atom coordinates to the given molecule.
-	 * If no molecule is given, then a compact copy of this conformer's
+	 * If null is passed as molecule, then a compact copy of this conformer's
 	 * molecule is created and returned with this conformer's coordinates.
 	 *
 	 * @param mol null or original molecule passed in the Constructor or identical copy
