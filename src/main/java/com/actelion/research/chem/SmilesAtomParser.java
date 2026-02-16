@@ -574,8 +574,8 @@ public class SmilesAtomParser {
 			return true;
 		}
 
-		if ((smiles[position] == 'A' && smiles[position+1] == 's')
-		 || (smiles[position] == 'S' && smiles[position+1] == 'e')) {
+		if ((smiles[position] == 'a' && smiles[position+1] == 's')
+		 || (smiles[position] == 's' && smiles[position+1] == 'e')) {
 			info.labelLength = 2;
 			info.atomicNo = Molecule.getAtomicNoFromLabel(new String(smiles, position, info.labelLength, StandardCharsets.UTF_8));
 			info.mayBeAliphatic = false;
