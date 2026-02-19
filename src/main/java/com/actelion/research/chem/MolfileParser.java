@@ -49,6 +49,8 @@ import com.actelion.research.io.BOMSkipper;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MolfileParser
 {
@@ -647,9 +649,9 @@ public class MolfileParser
 		if(l != 0) {
 			v = interpretV3AtomList(line);
 			if (l < 0)
-				bNotList = true;				
+				bNotList = true;
 			index2 = Math.abs(l);
-		} 
+		}
 		index1 = indexOfNextItem(line,index2);
 		index2 = endOfItem(line,index1);
 		float x = Float.parseFloat(line.substring(index1,index2));
@@ -694,10 +696,11 @@ public class MolfileParser
 			String specifier = line.substring(index1,index2);
 			int index = specifier.indexOf('=');
 			String field = specifier.substring(0,index);
-			int value = Integer.parseInt(specifier.substring(index + 1));
 			if(field.equals("CHG")){
+				int value = Integer.parseInt(specifier.substring(index + 1));
 				mMol.setAtomCharge(atom,value);
 			} else if(field.equals("RAD")){
+				int value = Integer.parseInt(specifier.substring(index + 1));
 				switch(value){
 					case 1:
 						mMol.setAtomRadical(atom,Molecule.cAtomRadicalStateS);
@@ -713,10 +716,13 @@ public class MolfileParser
 				//  don't read parities from molfile, they are calculated from up/down bonds
 				//  mMol.setAtomParity(atom, value, false);
 			} else if(field.equals("MASS")){
+				int value = Integer.parseInt(specifier.substring(index + 1));
 				mMol.setAtomMass(atom,value);
             } else if(field.equals("VAL")){
+				int value = Integer.parseInt(specifier.substring(index + 1));
                 mMol.setAtomAbnormalValence(atom, (value==-1) ? 0 : (value==0) ? -1 : value);
 			} else if(field.equals("HCOUNT")){
+				int value = Integer.parseInt(specifier.substring(index + 1));
 				switch(value){
 					case 0:
 						break;
@@ -739,6 +745,7 @@ public class MolfileParser
 						break;
 				}
 			} else if(field.equals("SUBST")){
+				int value = Integer.parseInt(specifier.substring(index + 1));
 				if(value == -1){
 					mMol.setAtomQueryFeature(atom,Molecule.cAtomQFNoMoreNeighbours,true);
 				} else if(value > 0){
@@ -754,6 +761,7 @@ public class MolfileParser
 					}
 				}
 			} else if(field.equals("RBCNT")){
+				int value = Integer.parseInt(specifier.substring(index + 1));
 				switch(value){
 					case -1:
 						mMol.setAtomQueryFeature(atom,
@@ -788,6 +796,13 @@ public class MolfileParser
 												 | Molecule.cAtomQFNot3RingBonds,
 												 true);
 						break;
+				}
+			} else if (field.equals("RGROUPS")) {
+				Pattern pattern = Pattern.compile("RGROUPS=\\((\\d+) (\\d+).*\\)");
+				Matcher matcher = pattern.matcher(line);
+				if (matcher.find()) {
+					String rgLabel = "R"+matcher.group(2);
+					mMol.setAtomCustomLabel(atom,rgLabel);
 				}
 			} else{
 				TRACE("Warning MolfileParser: Unused version 3 atom specifier:" + field + "\n");
@@ -1000,12 +1015,12 @@ public class MolfileParser
 	/**
 	 * Checks whether or not the atom description contains an atom list
 	 * @param line String Atom description line
-	 * @return int negative if an exclusion (NOT) list is present, positive if an atom list is present, 0 if no atom list. 
+	 * @return int negative if an exclusion (NOT) list is present, positive if an atom list is present, 0 if no atom list.
 	 * The values for negative and positive results represent the index to the closing ']' bracket
 	 */
 	private int isV3AtomList(String line)
 	{
-		
+
 		// simple check for atom list
 		if (line.indexOf("[") >= 0) {
 			// Detail check for non-quoted version
@@ -1019,7 +1034,7 @@ public class MolfileParser
 				if(i1 >= 0 && i2 > 0){
 					return i2+1; // point after the ]'
 				}
-			} 
+			}
 
 			// Detail check for quoted version
 			i1 = line.indexOf(" 'NOT[");
@@ -1032,7 +1047,7 @@ public class MolfileParser
 				if(i1 >= 0 && i2 > 0){
 					return i2+2; // point after the ]'
 				}
-			} 
+			}
 			System.err.println("Warning invalid atom list in line: " + line);
 		}
 		return 0;
