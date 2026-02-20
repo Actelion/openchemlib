@@ -74,7 +74,13 @@ public class MolDistHistVizHelper {
         // The molecule in the descriptor contains the pharmacophore points as additional single atoms.
         Molecule3D m3D = new Molecule3D(mdhv.getMolecule());
         m3D.ensureHelperArrays(Molecule.cHelperRings);
-        m3D.stripSmallFragments();
+        for (int i = 0; i < m3D.getAtoms(); i++) {
+            if(m3D.getConnAtoms(i)==0){
+                m3D.markAtomForDeletion(i);
+            }
+        }
+        m3D.deleteMarkedAtomsAndBonds();
+        m3D.ensureHelperArrays(Molecule.cHelperRings);
 
         if(m3D.getAtoms()!=arrWeightCategory.length){
             throw new RuntimeException("Weight vector differs in dimension to number of atoms!");
