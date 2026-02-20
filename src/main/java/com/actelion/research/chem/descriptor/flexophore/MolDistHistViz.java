@@ -139,7 +139,8 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 		if(molecule3D!=null) {
 			this.molecule3D = new Molecule3D(molecule3D);
 			this.molecule3D.ensureHelperArrays(Molecule.cHelperRings);
-			this.molecule3D.stripSmallFragments();
+			// Commented out 20.02.2026 MvK
+			// this.molecule3D.stripSmallFragments();
 		}
 		hsIndexMandatoryPPPoints = new HashSet<>();
 		modeFlexophore = ConstantsFlexophore.MODE_SOFT_PPPOINTS;
