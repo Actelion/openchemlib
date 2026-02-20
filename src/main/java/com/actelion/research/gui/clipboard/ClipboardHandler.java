@@ -226,8 +226,9 @@ public class ClipboardHandler implements IClipboardHandler {
                     int column = -1;    // in case we have a TAB-delimited table with '[idcode]' tags, use first tagged column
                     BufferedReader reader = new BufferedReader(new StringReader(text));
                     try {
-                        String line = reader.readLine();
-                        while (line != null) {
+                        String line ;
+                        // Read here, otherwise the 'continue' will fail!
+                        while ((line = reader.readLine()) != null) {
                             line = line.trim();
                             if (isFirstLine) {
                                 String[] header = line.split("\\t");
@@ -281,7 +282,7 @@ public class ClipboardHandler implements IClipboardHandler {
                                 unresolvedNameList.add(line);
                             }
 
-                            line = reader.readLine();
+                            //line = reader.readLine();
                         }
                     } catch (IOException ioe) {
                         // ignored!

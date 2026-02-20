@@ -177,67 +177,12 @@ public class MolfileParser
 					return false;
 				}
 
-				float x = Float.parseFloat(line.substring(0,10).trim());
-				float y = Float.parseFloat(line.substring(10,20).trim());
-				float z = Float.parseFloat(line.substring(20,30).trim());
-
-				int atom = mMol.addAtom(x, -y, -z);
-
-				String label = line.substring(31,34).trim();
-				if(label.equals("A") || label.equals("*")){
-					mMol.setAtomQueryFeature(atom,Molecule.cAtomQFAny,true);
-				} else if(label.equals("Q")) {    // 'Q' is defined as 'unspecified' for V2000; we use V3000 behaviour (any but not C,H)
-					int[] list = new int[1];
-					list[0] = 6;
-					mMol.setAtomList(atom, list, true);
-				} else {
-					int atomicNo = Molecule.getAtomicNoFromLabel(label, ALLOWED_ATOM_LABELS);
-					mMol.setAtomicNo(atom,atomicNo);
-				}
-
-				int massDif = parseIntOrSpaces(line.substring(34,36).trim());
-				if(massDif != 0){
-					mMol.setAtomMass(atom,Molecule.cRoundedMass[mMol.getAtomicNo(atom)] + massDif);
-				}
-
-				int chargeDif = parseIntOrSpaces(line.substring(36,39).trim());
-				if(chargeDif != 0){
-					if (chargeDif == 4)
-						mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
-					else
-						mMol.setAtomCharge(atom,4 - chargeDif);
-				}
-
-				int mapNo = (line.length() < 63) ? 0 : parseIntOrSpaces(line.substring(60,63).trim());
-				mMol.setAtomMapNo(atom,mapNo,false);
-
-				//parity = parseIntOrSpaces(line.substring(39, 42).trim());
-
-				int hCount = (line.length() < 45) ? 0 : parseIntOrSpaces(line.substring(42,45).trim());
-				switch(hCount){
-					case 0:
-						break;
-					case 1: // no hydrogen
-						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot1Hydrogen
-						                             | Molecule.cAtomQFNot2Hydrogen, true);
-						break;
-					case 2: // at least 1 hydrogen
-						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot0Hydrogen, true);
-						break;
-					case 3: // at least 2 hydrogens
-                        mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot0Hydrogen
-                                                     | Molecule.cAtomQFNot1Hydrogen, true);
-                        break;
-					default: // at least 3,4 hydrogens
-						mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot0Hydrogen
-						                             | Molecule.cAtomQFNot1Hydrogen
-												     | Molecule.cAtomQFNot2Hydrogen, true);
-						break;
-				}
-
-				if(line.length() >= 48 && line.charAt(47) == '1') {
-					mMol.setAtomQueryFeature(atom,Molecule.cAtomQFMatchStereo,true);
-				}
+				int atom = buildAtom(line);
+				handleQueryAtoms(atom, line);
+				handleMassDiff(atom, line);
+				handleCharge(atom, line);
+				handleAtomMaps(atom, line);
+				handleAtomQueryFeatures(atom, line);
 
                 int v = (line.length() < 51) ? 0 : parseIntOrSpaces(line.substring(48,51).trim());
 				if (v != 0) {
@@ -278,10 +223,6 @@ public class MolfileParser
 				}
 			}
 
-			/********************************************************************
-			 ***  Check for "M  CHG" charge record or "M  ISO" isomer record.
-			 ***  --> Must have "M  END" or "$$$$" at end of molecule !
-			 ********************************************************************/
 			if(null == (line = reader.readLine())){
 				TRACE("Error ReadMoleculeFromBuffer Missing M END or $$$$\n");
 
@@ -298,165 +239,13 @@ public class MolfileParser
 			}
 
 			while(line != null && (!(line.equals("M  END") || line.equals("$$$$")))){
-				if(line.startsWith("M  CHG")){
-					int aaa,vvv;
-					int j = Integer.parseInt(line.substring(6,9).trim());
-					if(j > 0){
-						aaa = 10;
-						vvv = 14;
-						for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
-							int atom = Integer.parseInt(line.substring(aaa,aaa + 3).trim()) - 1;
-							int charge = Integer.parseInt(line.substring(vvv,vvv + 3).trim());
-							mMol.setAtomCharge(atom,charge);
-						}
-					}
-				}
-
-				if(line.startsWith("M  ISO")){
-					int aaa,vvv;
-					int j = Integer.parseInt(line.substring(6,9).trim());
-					if(j > 0){
-						aaa = 10;
-						vvv = 14;
-						for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
-							int atom = Integer.parseInt(line.substring(aaa,aaa + 3).trim()) - 1;
-							int mass = Integer.parseInt(line.substring(vvv,vvv + 3).trim());
-							mMol.setAtomMass(atom,mass);
-						}
-					}
-				}
-
-				if(line.startsWith("M  RAD")){
-					int aaa,vvv;
-					int j = Integer.parseInt(line.substring(6,9).trim());
-					if(j > 0){
-						aaa = 10;
-						vvv = 14;
-						for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
-							int atom = Integer.parseInt(line.substring(aaa,aaa + 3).trim()) - 1;
-							int radical = Integer.parseInt(line.substring(vvv,vvv + 3).trim());
-							switch(radical){
-								case 1:
-									mMol.setAtomRadical(atom,Molecule.cAtomRadicalStateS);
-									break;
-								case 2:
-									mMol.setAtomRadical(atom,Molecule.cAtomRadicalStateD);
-									break;
-								case 3:
-									mMol.setAtomRadical(atom,Molecule.cAtomRadicalStateT);
-									break;
-							}
-						}
-					}
-				}
-
-				if(line.startsWith("M  RBC") || line.startsWith("M  RBD")){
-					int j = Integer.parseInt(line.substring(6,9).trim());
-					if(j > 0){
-						int aaa = 10;
-						int vvv = 14;
-						for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
-							int atom = Integer.parseInt(line.substring(aaa,aaa + 3).trim()) - 1;
-							int ringState = Integer.parseInt(line.substring(vvv,vvv + 3).trim());
-							switch(ringState){
-								case -1:
-									mMol.setAtomQueryFeature(atom,
-										Molecule.cAtomQFNot2RingBonds
-										| Molecule.cAtomQFNot3RingBonds
-										| Molecule.cAtomQFNot4RingBonds,
-										true);
-									break;
-								case 1:
-									mMol.setAtomQueryFeature(atom,
-										Molecule.cAtomQFNotChain,
-										true);
-									break;
-								case 2:
-									mMol.setAtomQueryFeature(atom,
-										Molecule.cAtomQFNotChain
-										| Molecule.cAtomQFNot3RingBonds
-										| Molecule.cAtomQFNot4RingBonds,
-										true);
-									break;
-								case 3:
-									mMol.setAtomQueryFeature(atom,
-										Molecule.cAtomQFNot2RingBonds
-										| Molecule.cAtomQFNot3RingBonds
-										| Molecule.cAtomQFNot4RingBonds,
-										true);
-									break;
-								case 4:
-									mMol.setAtomQueryFeature(atom,
-										Molecule.cAtomQFNotChain
-										| Molecule.cAtomQFNot2RingBonds
-										| Molecule.cAtomQFNot3RingBonds,
-										true);
-									break;
-							}
-						}
-					}
-				}
-
-				// The Atom list is implemented as an int[] of atomic numbers.
-				// NOT Lists are implemented as a sorted vector as negative Integers
-				if(line.startsWith("M  ALS")){
-					int atom = Integer.parseInt(line.substring(7,10).trim()) - 1;
-					if(atom >= 0){
-						int no = Integer.parseInt(line.substring(10,13).trim());
-						boolean bNotList = (line.charAt(14) == 'T');
-						int[] v = new int[no];
-						int aaa = 16;
-						for(int k = 0;k < no;k++,aaa += 4){
-							String sym = line.substring(aaa,aaa + 4).trim();
-							v[k] = Molecule.getAtomicNoFromLabel(sym, ALLOWED_ATOM_LABELS_IN_LIST);
-						}
-						mMol.setAtomicNo(atom, 6);
-						mMol.setAtomList(atom,v,bNotList);
-					}
-				}
-
-				if(line.startsWith("M  SUB")){
-					int aaa,vvv;
-					int j = Integer.parseInt(line.substring(6,9).trim());
-					if(j > 0){
-						aaa = 10;
-						vvv = 14;
-						for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
-							int atom = Integer.parseInt(line.substring(aaa,aaa + 3).trim()) - 1;
-							int substitution = Integer.parseInt(line.substring(vvv,vvv + 3).trim());
-							if(substitution == -2){
-								mMol.setAtomQueryFeature(atom,Molecule.cAtomQFNoMoreNeighbours,true);
-							} else if(substitution > 0){
-								int substitutionCount = 0;
-								for(int bond = 0;bond < mMol.getAllBonds();bond++){
-									if(mMol.getBondAtom(0,bond) == atom
-									   || mMol.getBondAtom(1,bond) == atom){
-										substitutionCount++;
-									}
-								}
-								if(substitution > substitutionCount){
-									mMol.setAtomQueryFeature(atom,Molecule.cAtomQFMoreNeighbours,true);
-								}
-							}
-						}
-					}
-				}
-
-				if(line.startsWith("M  RGP")){
-					int aaa,vvv;
-					int j = Integer.parseInt(line.substring(6,9).trim());
-					if(j > 0){
-						aaa = 10;
-						vvv = 14;
-						for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
-							int atom = Integer.parseInt(line.substring(aaa,aaa + 3).trim()) - 1;
-							int rno = Integer.parseInt(line.substring(vvv,vvv + 3).trim());
-							if(rno >= 1 && rno <= 20){
-								mMol.setAtomicNo(atom, Molecule.getAtomicNoFromLabel("R"+rno, Molecule.cPseudoAtomsRGroups));
-							}
-						}
-					}
-				}
+				handleCharge(line);
+				handleIsotops(line);
+				handleRadicals(line);
+				handleRingBondCount(line);
+				handleAtomLists(line);
+				handleSubstitutionCount(line);
+				handleRGroupLablelLocation(line);
 
 				if ((line.startsWith("M  SAL") && line.length() >= 17)
 				 || (line.startsWith("M  SDT") && line.length() >= 12)
@@ -470,15 +259,8 @@ public class MolfileParser
 						cl = new CustomLabel();
 						customLabelMap.put(sgroupNo, cl);
 					}
-
-					if (line.startsWith("M  SAL") && line.startsWith("  1", 10))
-						cl.atom = Integer.parseInt(line.substring(13,17).trim());
-					else if (line.startsWith("M  SDT"))
-						cl.isOCLCUstomLabel = line.substring(11).startsWith(MolfileParser.FIELD_NAME_CUSTOM_LABEL);
-					else if (line.startsWith("M  SED"))
-						cl.label = line.substring(11).trim();
+					buildCustomLabel(cl, line);
 				}
-
 				line = reader.readLine();
 			}
 		} catch(Exception e){
@@ -508,6 +290,264 @@ public class MolfileParser
 
 		return true;
 	}
+
+	private static void buildCustomLabel(CustomLabel cl, String line) {
+		if (line.startsWith("M  SAL") && line.startsWith("  1", 10))
+			cl.atom = Integer.parseInt(line.substring(13,17).trim());
+		else if (line.startsWith("M  SDT"))
+			cl.isOCLCUstomLabel = line.substring(11).startsWith(MolfileParser.FIELD_NAME_CUSTOM_LABEL);
+		else if (line.startsWith("M  SED"))
+			cl.label = line.substring(11).trim();
+	}
+
+	private int buildAtom(String line) {
+		float x = Float.parseFloat(line.substring(0,10).trim());
+		float y = Float.parseFloat(line.substring(10,20).trim());
+		float z = Float.parseFloat(line.substring(20,30).trim());
+
+		int atom = mMol.addAtom(x, -y, -z);
+		return atom;
+	}
+
+	private void handleQueryAtoms(int atom, String line) {
+		String label = line.substring(31,34).trim();
+		if(label.equals("A") || label.equals("*")){
+			mMol.setAtomQueryFeature(atom,Molecule.cAtomQFAny,true);
+		} else if(label.equals("Q")) {    // 'Q' is defined as 'unspecified' for V2000; we use V3000 behaviour (any but not C,H)
+			int[] list = new int[1];
+			list[0] = 6;
+			mMol.setAtomList(atom, list, true);
+		} else {
+			int atomicNo = Molecule.getAtomicNoFromLabel(label, ALLOWED_ATOM_LABELS);
+			mMol.setAtomicNo(atom,atomicNo);
+		}
+	}
+
+	private void handleMassDiff(int atom, String line) {
+		int massDif = parseIntOrSpaces(line.substring(34,36).trim());
+		if(massDif != 0){
+			mMol.setAtomMass(atom, Molecule.cRoundedMass[mMol.getAtomicNo(atom)] + massDif);
+		}
+	}
+
+	private void handleCharge(int atom, String line) {
+		int chargeDif = parseIntOrSpaces(line.substring(36,39).trim());
+		if(chargeDif != 0){
+			if (chargeDif == 4)
+				mMol.setAtomRadical(atom, Molecule.cAtomRadicalStateD);
+			else
+				mMol.setAtomCharge(atom, 4 - chargeDif);
+		}
+	}
+
+	private void handleAtomMaps(int atom, String line) {
+		int mapNo = (line.length() < 63) ? 0 : parseIntOrSpaces(line.substring(60,63).trim());
+		mMol.setAtomMapNo(atom,mapNo,false);
+	}
+
+	private void handleCharge(String line) {
+		if(line.startsWith("M  CHG")){
+			int aaa,vvv;
+			int j = Integer.parseInt(line.substring(6,9).trim());
+			if(j > 0){
+				aaa = 10;
+				vvv = 14;
+				for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
+					int atom = Integer.parseInt(line.substring(aaa, aaa + 3).trim()) - 1;
+					int charge = Integer.parseInt(line.substring(vvv, vvv + 3).trim());
+					mMol.setAtomCharge(atom,charge);
+				}
+			}
+		}
+	}
+
+	private void handleIsotops(String line) {
+		if(line.startsWith("M  ISO")){
+			int aaa,vvv;
+			int j = Integer.parseInt(line.substring(6,9).trim());
+			if(j > 0){
+				aaa = 10;
+				vvv = 14;
+				for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
+					int atom = Integer.parseInt(line.substring(aaa, aaa + 3).trim()) - 1;
+					int mass = Integer.parseInt(line.substring(vvv, vvv + 3).trim());
+					mMol.setAtomMass(atom,mass);
+				}
+			}
+		}
+	}
+
+	private void handleRadicals(String line) {
+		if(line.startsWith("M  RAD")){
+			int aaa,vvv;
+			int j = Integer.parseInt(line.substring(6,9).trim());
+			if(j > 0){
+				aaa = 10;
+				vvv = 14;
+				for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
+					int atom = Integer.parseInt(line.substring(aaa, aaa + 3).trim()) - 1;
+					int radical = Integer.parseInt(line.substring(vvv, vvv + 3).trim());
+					switch(radical){
+						case 1:
+							mMol.setAtomRadical(atom,Molecule.cAtomRadicalStateS);
+							break;
+						case 2:
+							mMol.setAtomRadical(atom,Molecule.cAtomRadicalStateD);
+							break;
+						case 3:
+							mMol.setAtomRadical(atom,Molecule.cAtomRadicalStateT);
+							break;
+					}
+				}
+			}
+		}
+	}
+
+	private void handleRingBondCount(String line) {
+		if(line.startsWith("M  RBC") || line.startsWith("M  RBD")){
+			int j = Integer.parseInt(line.substring(6,9).trim());
+			if(j > 0){
+				int aaa = 10;
+				int vvv = 14;
+				for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
+					int atom = Integer.parseInt(line.substring(aaa, aaa + 3).trim()) - 1;
+					int ringState = Integer.parseInt(line.substring(vvv, vvv + 3).trim());
+					switch(ringState){
+						case -1:
+							mMol.setAtomQueryFeature(atom,
+								Molecule.cAtomQFNot2RingBonds
+								| Molecule.cAtomQFNot3RingBonds
+								| Molecule.cAtomQFNot4RingBonds,
+								true);
+							break;
+						case 1:
+							mMol.setAtomQueryFeature(atom,
+								Molecule.cAtomQFNotChain,
+								true);
+							break;
+						case 2:
+							mMol.setAtomQueryFeature(atom,
+								Molecule.cAtomQFNotChain
+								| Molecule.cAtomQFNot3RingBonds
+								| Molecule.cAtomQFNot4RingBonds,
+								true);
+							break;
+						case 3:
+							mMol.setAtomQueryFeature(atom,
+								Molecule.cAtomQFNot2RingBonds
+								| Molecule.cAtomQFNot3RingBonds
+								| Molecule.cAtomQFNot4RingBonds,
+								true);
+							break;
+						case 4:
+							mMol.setAtomQueryFeature(atom,
+								Molecule.cAtomQFNotChain
+								| Molecule.cAtomQFNot2RingBonds
+								| Molecule.cAtomQFNot3RingBonds,
+								true);
+							break;
+					}
+				}
+			}
+		}
+	}
+
+	private void handleAtomLists(String line) {
+		// The Atom list is implemented as an int[] of atomic numbers.
+		// NOT Lists are implemented as a sorted vector as negative Integers
+		if(line.startsWith("M  ALS")){
+			int atom = Integer.parseInt(line.substring(7,10).trim()) - 1;
+			if(atom >= 0){
+				int no = Integer.parseInt(line.substring(10,13).trim());
+				boolean bNotList = (line.charAt(14) == 'T');
+				int[] v = new int[no];
+				int aaa = 16;
+				for(int k = 0;k < no;k++,aaa += 4){
+					String sym = line.substring(aaa, aaa + 4).trim();
+					v[k] = Molecule.getAtomicNoFromLabel(sym, ALLOWED_ATOM_LABELS_IN_LIST);
+				}
+				mMol.setAtomicNo(atom, 6);
+				mMol.setAtomList(atom,v,bNotList);
+			}
+		}
+	}
+
+	private void handleSubstitutionCount(String line) {
+		if(line.startsWith("M  SUB")){
+			int aaa,vvv;
+			int j = Integer.parseInt(line.substring(6,9).trim());
+			if(j > 0){
+				aaa = 10;
+				vvv = 14;
+				for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
+					int atom = Integer.parseInt(line.substring(aaa, aaa + 3).trim()) - 1;
+					int substitution = Integer.parseInt(line.substring(vvv, vvv + 3).trim());
+					if(substitution == -2){
+						mMol.setAtomQueryFeature(atom,Molecule.cAtomQFNoMoreNeighbours,true);
+					} else if(substitution > 0){
+						int substitutionCount = 0;
+						for(int bond = 0;bond < mMol.getAllBonds();bond++){
+							if(mMol.getBondAtom(0,bond) == atom
+							   || mMol.getBondAtom(1,bond) == atom){
+								substitutionCount++;
+							}
+						}
+						if(substitution > substitutionCount){
+							mMol.setAtomQueryFeature(atom,Molecule.cAtomQFMoreNeighbours,true);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void handleRGroupLablelLocation(String line) {
+		if(line.startsWith("M  RGP")){
+			int aaa,vvv;
+			int j = Integer.parseInt(line.substring(6,9).trim());
+			if(j > 0){
+				aaa = 10;
+				vvv = 14;
+				for(int k = 1;k <= j;k++,aaa += 8,vvv += 8){
+					int atom = Integer.parseInt(line.substring(aaa, aaa + 3).trim()) - 1;
+					int rno = Integer.parseInt(line.substring(vvv, vvv + 3).trim());
+					if(rno >= 1 && rno <= 20){
+						mMol.setAtomicNo(atom, Molecule.getAtomicNoFromLabel("R"+rno, Molecule.cPseudoAtomsRGroups));
+					}
+				}
+			}
+		}
+	}
+
+	private void handleAtomQueryFeatures(int atom, String line) {
+		int hCount = (line.length() < 45) ? 0 : parseIntOrSpaces(line.substring(42,45).trim());
+		switch(hCount){
+			case 0:
+				break;
+			case 1: // no hydrogen
+				mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot1Hydrogen
+											   | Molecule.cAtomQFNot2Hydrogen, true);
+				break;
+			case 2: // at least 1 hydrogen
+				mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot0Hydrogen, true);
+				break;
+			case 3: // at least 2 hydrogens
+				mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot0Hydrogen
+											   | Molecule.cAtomQFNot1Hydrogen, true);
+				break;
+			default: // at least 3,4 hydrogens
+				mMol.setAtomQueryFeature(atom, Molecule.cAtomQFNot0Hydrogen
+											   | Molecule.cAtomQFNot1Hydrogen
+											   | Molecule.cAtomQFNot2Hydrogen, true);
+				break;
+		}
+
+		if(line.length() >= 48 && line.charAt(47) == '1') {
+			mMol.setAtomQueryFeature(atom,Molecule.cAtomQFMatchStereo,true);
+		}
+	}
+
+
 
 	/**
 	 * Some software exports mol/sd-files with an unset chiral flag despite
