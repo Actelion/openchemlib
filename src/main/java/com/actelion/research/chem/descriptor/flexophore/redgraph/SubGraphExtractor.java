@@ -978,11 +978,10 @@ public class SubGraphExtractor {
      * @param mol
      * @return
      */
-    private List<SubGraphIndices> getSmallRingsWithConnEndStanding(StereoMolecule mol){
+    public static List<SubGraphIndices> getSmallRingsWithConnEndStanding(StereoMolecule mol){
 
         List<SubGraphIndices> liFragmentRings = new ArrayList<>();
-        RingHelper ringHelper = new RingHelper(mol);
-        RingCollection ringCollection = ringHelper.getRingCollection();
+        RingCollection ringCollection = mol.getRingSet();
         int rings = ringCollection.getSize();
         for (int ringNo = 0; ringNo < rings; ringNo++) {
             int ringSize = ringCollection.getRingSize(ringNo);
@@ -990,12 +989,6 @@ public class SubGraphExtractor {
                 continue;
             }
             int [] arrIndexRingAtoms = ringCollection.getRingAtoms(ringNo);
-
-            // Exclude enclosing rings
-            if(ringHelper.isEnclosingRing(arrIndexRingAtoms)){
-                continue;
-            }
-
             SubGraphIndices fragment = new SubGraphIndices();
             fragment.addIndex(arrIndexRingAtoms);
             liFragmentRings.add(fragment);
