@@ -543,7 +543,7 @@ public class CreatorMolDistHistViz {
         return molDistHistViz;
     }
 
-    private static Molecule3D createPharmacophorePoints(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
+    public static Molecule3D createPharmacophorePoints(Molecule3D molecule3D, List<MultCoordFragIndex> liMultCoordFragIndex) {
 
         Molecule3D molCenter = new Molecule3D(molecule3D);
         molCenter.ensureHelperArrays(Molecule.cHelperRings);
