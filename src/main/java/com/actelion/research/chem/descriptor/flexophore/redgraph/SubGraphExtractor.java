@@ -257,65 +257,38 @@ public class SubGraphExtractor {
      * @param mol
      * @param liFragment
      */
-    private void splitLongHeteroGroups(StereoMolecule mol, List<SubGraphIndices> liFragment){
-
+    private static void splitLongHeteroGroups(StereoMolecule mol, List<SubGraphIndices> liFragment){
         final int nAtomsSubGroup = GROUP_SIZE_SPLITTED;
-
         int [][] arrTopologicalDistanceMatrix = ExtendedMoleculeFunctions.getTopologicalDistanceMatrix(mol);
-
         for (int i = liFragment.size()-1; i >= 0; i--) {
-
             SubGraphIndices sgi = liFragment.get(i);
-
             int [] arrIndAtm = sgi.getAtomIndices();
-
             MaximumTopologicalDist maxTopoDist = getMaximumDistance(arrTopologicalDistanceMatrix, arrIndAtm);
-
             if(maxTopoDist.dist >= DISTANCE_THRESH_SPLIT_GROUP){
-
                 liFragment.remove(i);
-
                 int [] arrIndAtmPathMaxDist = new int[maxTopoDist.dist+1];
-
                 mol.getPath(arrIndAtmPathMaxDist, maxTopoDist.at1, maxTopoDist.at2, maxTopoDist.dist+1, null);
-
                 boolean ringAtm = false;
-
                 for (int indAtmPath : arrIndAtmPathMaxDist) {
-
                     if(mol.isRingAtom(indAtmPath)){
-
                         ringAtm = true;
-
                         break;
-
                     }
-
                 }
 
                 if(ringAtm){
-
                     continue;
-
                 }
 
                 HashSetInt hsIndAtmSubPath = new HashSetInt(arrIndAtmPathMaxDist);
-
                 int nAtomsInPath = arrIndAtmPathMaxDist.length;
-
                 for (int j = 0; j < nAtomsInPath; j+= nAtomsSubGroup) {
-
-                    int size = Math.min(nAtomsSubGroup, nAtomsInPath-j);
-
+                   int size = Math.min(nAtomsSubGroup, nAtomsInPath-j);
                     int [] arrAtmSubPath = new int[size];
-
                     for (int k = 0; k < size; k++) {
-
                         int index = j+k;
-
                         arrAtmSubPath[k] = arrIndAtmPathMaxDist[index];
                     }
-
 
                     SubGraphIndices sgiSub = new SubGraphIndices();
                     sgiSub.addIndex(arrAtmSubPath);
