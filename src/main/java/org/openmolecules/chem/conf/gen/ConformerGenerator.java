@@ -696,13 +696,13 @@ public class ConformerGenerator {
 	 * Open valences of the passed molecule are filled with hydrogen atoms.
 	 * The passed molecule may repeatedly be used as container for a new conformer's atom
 	 * coordinates, if it is passed as parameter to getNextConformer().
-	 * This method uses the STRATEGY_LIKELY_RANDOM strategy with a maximum of 100.000 distinct
+	 * This method uses the STRATEGY_LIKELY_RANDOM strategy with a maximum of 10.000 distinct
 	 * torsion sets and uses torsions from crystallographic data.
 	 * @param mol will be saturated with hydrogen atoms
 	 * @return false if there is a structure problem
 	 */
 	public boolean initializeConformers(StereoMolecule mol) {
-		return initializeConformers(mol, STRATEGY_LIKELY_RANDOM, 100000, false);
+		return initializeConformers(mol, STRATEGY_LIKELY_RANDOM, 10000, false);
 		}
 
 	/**
@@ -713,7 +713,7 @@ public class ConformerGenerator {
 	 * coordinates, if it is passed as parameter to getNextConformer().
 	 * @param mol will be saturated with hydrogen atoms
 	 * @param strategy one of the STRATEGY_ constants
-	 * @param maxTorsionSets maximum number of distinct torsion sets the strategy will try (default 100000)
+	 * @param maxTorsionSets maximum no of distinct torsion sets the strategy will try, e.g. 1000*Math.sqrt(maxConformers)
 	 * @param use60degreeSteps use 60 degree steps for every rotatable bond instead of torsion DB
 	 * @return false if there is a structure problem
 	 */
