@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ConformerGeneratorStageTries {
     public static final long TIMEOUT_CONFORMER_CALCULATION_MS = TimeDelta.MS_MINUTE * 3;
     public static final long SEED = 123456789;
-    public static final int MAX_TORSION_SETS = 100000;
+    public static final int MAX_TORSION_SETS_INIT = 100000;
     private static final int MAX_TRIES_CONFORMERS = 10;
 
     private static final int MAX_INITIALIZATION_STAGE = 3;
@@ -31,16 +31,23 @@ public class ConformerGeneratorStageTries {
 
     private Molecule3D molInPlace;
 
+    private int maxTorsionSets;
+
     public void resetInitializationStage() {
         initializationStage.set(0);
     }
 
-    public ConformerGeneratorStageTries() {
+    /**
+     *
+     * @param nConformations just a ballpark number to calculate the maximum number of torsion sets.
+     */
+    public ConformerGeneratorStageTries(int nConformations) {
         seed = SEED;
         conformerGenerator = new ConformerGenerator(seed, false);
         conformerGenerator.setTimeOut(TIMEOUT_CONFORMER_CALCULATION_MS);
         RigidFragmentCache.getDefaultInstance().loadDefaultCache();
         initializationStage = new AtomicInteger();
+        maxTorsionSets = (int)(1000 * Math.sqrt(nConformations));
     }
 
     private void initializeHelper() {
@@ -94,16 +101,16 @@ public class ConformerGeneratorStageTries {
 
             try {
                 if (initializationStage.get() == 0) { // default
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, false);
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, maxTorsionSets, false);
                 } else if (initializationStage.get() == 1) {
                     conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, MAX_TORSION_SETS, true);
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_RANDOM, maxTorsionSets, true);
                 }  else if (initializationStage.get() == 2) {
                     conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_SYSTEMATIC, MAX_TORSION_SETS, true);
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_LIKELY_SYSTEMATIC, maxTorsionSets, true);
                 } else if (initializationStage.get() == 3) {
                     conformerGenerator = new ConformerGenerator();
-                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_ADAPTIVE_RANDOM, MAX_TORSION_SETS, true);
+                    successfulInitialization = conformerGenerator.initializeConformers(molInPlace, ConformerGenerator.STRATEGY_ADAPTIVE_RANDOM, maxTorsionSets, true);
                 } else if (initializationStage.get() > MAX_INITIALIZATION_STAGE) {
                     break;
                 }

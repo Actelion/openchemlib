@@ -83,10 +83,6 @@ public class CreatorMolDistHistViz {
 
     // Maximum number of tries to generate conformers with the torsion rule based conformer generator from Thomas Sander
 
-
-
-    private static final int MAX_NUM_ATOMS = 1000;
-
     private static final int CONF_GEN_TS = 0;
     public static final int CONF_GIVEN_SINGLE_CONFORMATION = 1;
     public static final int SINGLE_CONFORMATION = 2;
@@ -98,7 +94,7 @@ public class CreatorMolDistHistViz {
 
     private int conformationMode;
 
-    private long seed;
+    private int nConformations;
 
 
     // for debugging
@@ -106,19 +102,15 @@ public class CreatorMolDistHistViz {
 
     private Exception recentException = null;
 
-    // Calling SSSearcher frequently generates errors.
-    // private SSSearcher ssSearcher;
-
     private StereoMolecule [] arrElectronPoorN;
     private ConformerGeneratorStageTries conformerGeneratorStageTries;
 
+
     public CreatorMolDistHistViz() {
-
+        this.nConformations = DescriptorHandlerFlexophore.NUM_CONFORMATIONS;
         subGraphExtractor = new SubGraphExtractor();
-
         conformationMode = CONF_GEN_TS;
-
-        conformerGeneratorStageTries = new ConformerGeneratorStageTries();
+        conformerGeneratorStageTries = new ConformerGeneratorStageTries(nConformations);
 
         IDCodeParser parser = new IDCodeParser();
 
@@ -205,7 +197,6 @@ public class CreatorMolDistHistViz {
 
             if(DEBUG) {
                 System.out.println("CreatorCompleteGraph: only one conformer generated.");
-                System.out.println("Seed " + seed);
                 System.out.println("Potential conformer count " + nPotentialConformers);
                 Canonizer can = new Canonizer(molInPlace);
                 System.out.println(can.getIDCode());
