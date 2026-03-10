@@ -3244,13 +3244,13 @@ System.out.println();
 			encodeBits(lbits, 6);
 			encodeBits(mbits, 16);
 			for (int atom=0; atom<mMol.getAtoms(); atom++) {
-				String customLabel = mMol.getAtomCustomLabel(mGraphAtom[atom]);
-				if (customLabel != null) {
+				String label = mMol.getAtomCustomLabel(mGraphAtom[atom]);
+				if (label != null && (label.length() > 15 || maxEnhancedCustomLabelCharCode(label) > 127)) {
 					encodeBits(atom, nbits);
-					int length = Math.min(63, customLabel.length());
+					int length = Math.min(63, label.length());
 					encodeBits(length, lbits);
 					for (int i=0; i<length; i++)
-						encodeBits(customLabel.charAt(i), mbits);
+						encodeBits(label.charAt(i), mbits);
 					}
 				}
 			}
@@ -3798,7 +3798,7 @@ System.out.println();
 		}
 
 	private void encodeBits(long data, int bits) {
-//System.out.println(bits+" bits:"+data+"  mode="+mode);
+//System.out.println(bits+" bits:"+data);
 		while (bits != 0) {
 			if (mEncodingBitsAvail == 0) {
 				if (!mEncodeAvoid127 || mEncodingTempData != 63)
