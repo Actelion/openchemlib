@@ -47,8 +47,7 @@ public class ConformerGeneratorStageTries {
         conformerGenerator.setTimeOut(TIMEOUT_CONFORMER_CALCULATION_MS);
         RigidFragmentCache.getDefaultInstance().loadDefaultCache();
         initializationStage = new AtomicInteger();
-        // maxTorsionSets = (int)(1000 * Math.sqrt(nConformations));
-        maxTorsionSets = 10000;
+        maxTorsionSets = (int)(1000 * Math.sqrt(nConformations));
     }
 
     private void initializeHelper() {
