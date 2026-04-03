@@ -93,7 +93,8 @@ public class HiDPIHelper {
 			else {  // Linux; Toolkit.getDefaultToolkit().getScreenResolution() always returns 1.0
 				try {
 					sUIScaleFactor = 1.0f;  // default in case of error
-					Process process = Runtime.getRuntime().exec("xrdb -q");
+					final String[] command = {"xrdb", "-q"};
+					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
 					BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
 					String line;
