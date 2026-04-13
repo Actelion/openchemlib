@@ -59,6 +59,7 @@ public class SmilesParser {
 	public static final int MODE_SINGLE_DOT_SEPARATOR = 32;  // CONSIDER single dots '.' (rather than '..') as moelcule separator when parsing reactions
 	public static final int MODE_CREATE_SMARTS_WARNING = 64;
 	public static final int MODE_ENUMERATE_SMARTS = 128;
+	public static final int MODE_NO_STACKTRACES = 256;
 
 	private static final int INITIAL_CONNECTIONS = 16;
 	private static final int MAX_CONNECTIONS = 100; // largest allowed one in SMILES is 99
@@ -162,7 +163,8 @@ public class SmilesParser {
 			parse(mol, smiles);
 			}
 		catch (Exception e) {
-			e.printStackTrace();
+			if ((mMode & MODE_NO_STACKTRACES) == 0)
+				e.printStackTrace();
 			return null;
 			}
 		return mol;
