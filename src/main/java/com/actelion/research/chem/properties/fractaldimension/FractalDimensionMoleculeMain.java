@@ -37,7 +37,7 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SmilesParser;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.CommandLineParser;
-import com.actelion.research.util.IO;
+import com.actelion.research.util.IOCL;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -114,7 +114,7 @@ public class FractalDimensionMoleculeMain {
             throw new IOException("No permission to write output file " + fiOutTbl.getAbsolutePath() + ".");
         }
 
-        List<String> liSMILES = IO.readLines2List(fiMolecule);
+        List<String> liSMILES = IOCL.readLines2List(fiMolecule);
 
         List<InputObjectFracDimCalc> liMolecule = new ArrayList<InputObjectFracDimCalc>();
 

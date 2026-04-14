@@ -33,7 +33,7 @@
 package com.actelion.research.calc;
 
 import com.actelion.research.calc.regression.linear.pls.SimPLS;
-import com.actelion.research.util.IO;
+import com.actelion.research.util.IOCL;
 import com.actelion.research.util.datamodel.ModelXY;
 
 import java.util.Date;
@@ -485,7 +485,7 @@ public class MatrixTests {
 
         String sSummary = "Xc(standardized):\r\n" + Xc + "\r\n\r\n";
         sSummary += "Yc:\r\n" + Yc + "\r\n\r\n";
-        IO.write(sFileDataSummaryOut, sSummary, true);
+        IOCL.write(sFileDataSummaryOut, sSummary, true);
         pls.simPlsSave(Xc,Yc,iNumPrincipalComponents);
         Matrix P = pls.getP();
         R = pls.getR();
@@ -502,7 +502,7 @@ public class MatrixTests {
         sSummary += "V:\r\n" + V + "\r\n\r\n";
         sSummary += "Q:\r\n" + Q + "\r\n\r\n";
         sSummary += "T:\r\n" + T + "\r\n\r\n";
-        IO.write(sFileDataSummaryOut, sSummary, true);
+        IOCL.write(sFileDataSummaryOut, sSummary, true);
 
         return R;
     }
