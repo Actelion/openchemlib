@@ -62,8 +62,6 @@ public class IOCL {
 
 	public static final String SEP = System.getProperty("file.separator");
 
-
-
 	public static boolean canWriteAndDeleteInPath(File dir) throws IOException {
 		boolean w = false;
 		File f = File.createTempFile("test", ".txt", dir);
