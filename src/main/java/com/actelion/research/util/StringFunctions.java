@@ -1194,11 +1194,19 @@ public class StringFunctions {
 		return str.trim();
 	}
 
+	public static String toStringBinary(long [] v) {
+		StringBuilder sb = new StringBuilder();
+		for (long l : v) {
+			if(sb.length()>0){
+				sb.append(" ");
+			}
+			sb.append(toStringBinary(l));
+		}
+		return sb.toString();
+	}
 	public static String toStringBinary(long v) {
 		String str = "";
-
 		int len = Long.SIZE;
-
 		for (int ii = 0; ii < len; ii++) {
 			if ((v & 1) == 1) {
 				str = "1 " + str;
@@ -1207,7 +1215,6 @@ public class StringFunctions {
 			}
 			v = v >> 1;
 		}
-
 		return str.trim();
 	}
 
