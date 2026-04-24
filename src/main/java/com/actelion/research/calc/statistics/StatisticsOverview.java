@@ -4,6 +4,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import com.actelion.research.calc.ArrayUtilsCalc;
@@ -80,7 +81,24 @@ public class StatisticsOverview {
 		bins = BINS;
 		evaluated = false;
 	}
-	
+	public StatisticsOverview(IntArray ia) {
+		data = new DoubleArray(ia.length());
+		for (int v : ia.get()) {
+			data.add(v);
+		}
+
+		bins = BINS;
+		evaluated = false;
+	}
+	public StatisticsOverview(List<Integer> l) {
+		data = new DoubleArray(l.size());
+		for (int v : l) {
+			data.add(v);
+		}
+		bins = BINS;
+		evaluated = false;
+	}
+
 	public void add(double value){
 		data.add(value);
 		evaluated = false;
@@ -339,15 +357,41 @@ public class StatisticsOverview {
 
 
 	public static ModelStatisticsOverview get(DoubleArray da){
-
 		StatisticsOverview statisticsOverview = new StatisticsOverview(da);
-
 		return statisticsOverview.evaluate();
 
 	}
 
 	public static ModelStatisticsOverviewMedian getMedianOverview(DoubleArray da){
 		StatisticsOverview statisticsOverview = new StatisticsOverview(da);
+		statisticsOverview.evaluate();
+		ModelStatisticsOverviewMedian model =
+				new ModelStatisticsOverviewMedian(
+						statisticsOverview.percentile05,
+						statisticsOverview.leftQuartile,
+						statisticsOverview.median,
+						statisticsOverview.rightQuartile,
+						statisticsOverview.percentile95);
+
+		return model;
+
+	}
+	public static ModelStatisticsOverviewMedian getMedianOverview(IntArray da){
+		StatisticsOverview statisticsOverview = new StatisticsOverview(da);
+		statisticsOverview.evaluate();
+		ModelStatisticsOverviewMedian model =
+				new ModelStatisticsOverviewMedian(
+						statisticsOverview.percentile05,
+						statisticsOverview.leftQuartile,
+						statisticsOverview.median,
+						statisticsOverview.rightQuartile,
+						statisticsOverview.percentile95);
+
+		return model;
+
+	}
+	public static ModelStatisticsOverviewMedian getMedianOverview(List<Integer> l){
+		StatisticsOverview statisticsOverview = new StatisticsOverview(l);
 		statisticsOverview.evaluate();
 		ModelStatisticsOverviewMedian model =
 				new ModelStatisticsOverviewMedian(
