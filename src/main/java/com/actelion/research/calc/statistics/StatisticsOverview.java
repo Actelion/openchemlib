@@ -135,6 +135,24 @@ public class StatisticsOverview {
 		return median;
 	}
 
+	public int getMedianAsInt() {
+		return (int)(median+0.5);	}
+
+	public double getMin() {
+		return min;
+	}
+
+	public double getMax() {
+		return max;
+	}
+	public int getMinAsInt() {
+		return (int)(min+0.5);
+	}
+
+	public int getMaxAsInt() {
+		return (int)(max+0.5);
+	}
+
 	public ModelStatisticsOverview evaluate(){
 
 		double histMin = data.min() - data.min() * ConstantsHistogram.TINY_FACTOR;
