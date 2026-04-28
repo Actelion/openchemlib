@@ -1469,23 +1469,36 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 	 * implicit hydrogens is basically the lowest typical valence that is compatible
 	 * with the occupied valence, minus the occupied valence corrected by atom charge
 	 * and radical state.
+	 * If the molecule is a fragment and if the atom is a wildcard or contains an atom list,
+	 * or if one of its bonds has more than one allowed bond orders, then 0 is returned.
 	 * @param atom
 	 * @return
 	 */
 	public int getImplicitHydrogens(int atom) {
-		if (mIsFragment
-		 && (mAtomQueryFeatures[atom] & cAtomQFNoMoreNeighbours) == 0)
+		if (mIsFragment && (mAtomQueryFeatures[atom] & cAtomQFNoMoreNeighbours) == 0)
 			return 0;
 
 		// H, metals except Al, noble gases don't have implicit hydrogens
 		if (!supportsImplicitHydrogen(atom))
 			return 0;
 
+		ensureHelperArrays(cHelperNeighbours);
+
+		if (mIsFragment) {
+			if ((mAtomQueryFeatures[atom] & cAtomQFAny) != 0)
+				return 0;
+
+			if (mAtomList != null && mAtomList[atom] != null && mAtomList[atom].length > 1)
+				return 0;
+
+			for (int i = 0; i<mAllConnAtoms[atom]; i++)
+				if (Integer.bitCount(mBondQueryFeatures[mConnBond[atom][i]] & Molecule.cBondQFAllBondTypes)>1)
+					return 0;
+			}
+
 		// attachment points have at least a valence of 1, i.e. they must be connected to something
 		if (mAtomicNo[atom] == 0 || "*".equals(getAtomCustomLabel(atom)))
 			return mAllConnAtoms[atom] == 0 ? 1 : 0;
-
-		ensureHelperArrays(cHelperNeighbours);
 
 		int occupiedValence = 0;
 		for (int i=0; i<mAllConnAtoms[atom]; i++)

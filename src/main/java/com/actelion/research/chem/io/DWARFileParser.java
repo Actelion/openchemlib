@@ -413,6 +413,9 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 	 * @return field index for special fields, e.g. to be used for getSpecialFieldData()
 	 */
 	public int getSpecialFieldIndex(String columnName) {
+		if (mSpecialFieldMap == null)
+			return -1;
+
 		for (SpecialField sf:mSpecialFieldMap.values())
 			if (columnName.equals(sf.name))
 				return sf.fieldIndex;
@@ -426,6 +429,9 @@ public class DWARFileParser extends CompoundFileParser implements DescriptorCons
 	 * @return field index for special fields, e.g. to be used for getSpecialFieldData()
 	 */
 	public int getChildFieldIndex(String parentColumnName, String childType) {
+		if (mSpecialFieldMap == null)
+			return -1;
+
 		for (SpecialField sf:mSpecialFieldMap.values())
 			if (parentColumnName.equals(sf.parent) && childType.equals(sf.type))
 				return sf.fieldIndex;

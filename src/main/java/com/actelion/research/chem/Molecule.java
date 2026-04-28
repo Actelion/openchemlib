@@ -1009,36 +1009,36 @@ public class Molecule implements Serializable {
 		 && getOccupiedValence(atom) > 1)
 			return false;
 
-		boolean changed = mIsFragment && ((mAtomQueryFeatures[atom] & ~cAtomQFAny) != 0);
-		mAtomQueryFeatures[atom] &= ~cAtomQFAny;
-		if (mAtomList != null && mAtomList[atom] != null) {
-			mAtomList[atom] = null;
-			changed = true;
-		}
-		if (mAtomCustomLabel != null && mAtomCustomLabel[atom] != null) {
-			mAtomCustomLabel[atom] = null;
-			changed = true;
-		}
-
-		if (atomicNo == mAtomicNo[atom]
-		 && mass == mAtomMass[atom]
-		 && abnormalValence == getAtomAbnormalValence(atom)
-		 && radical == getAtomRadical(atom))
-			return changed;
-
 		if (atomicNo == 151 || atomicNo == 152) {	// 'D' or 'T'
 			mass = atomicNo - 149;
 			atomicNo = 1;
 			}
 
-		mAtomFlags[atom] &= (cAtomFlagsColor | cAtomFlagSelected);
-		mAtomicNo[atom] = atomicNo;
+		boolean isAtomicNoChange = (atomicNo != mAtomicNo[atom]) && (!mIsFragment
+			|| ((mAtomQueryFeatures[atom] & cAtomQFAny) == 0 && (mAtomList == null || mAtomList[atom] == null)));
+
+		if (isAtomicNoChange) {
+			mAtomQueryFeatures[atom] = 0;
+			if (mAtomList != null && mAtomList[atom] != null)
+				mAtomList[atom] = null;
+			if (mAtomCustomLabel != null && mAtomCustomLabel[atom] != null)
+				mAtomCustomLabel[atom] = null;
+			}
+		else if (mass == mAtomMass[atom]
+			  && abnormalValence == getAtomAbnormalValence(atom)
+			  && radical == getAtomRadical(atom)) {
+			return false;
+			}
+
+		if (isAtomicNoChange) {
+			mAtomicNo[atom] = atomicNo;
+			mAtomFlags[atom] &= (cAtomFlagsColor | cAtomFlagSelected);
+			mAtomCharge[atom] = 0;
+			removeMappingNo(mAtomMapNo[atom]);
+		}
 		mAtomMass[atom] = mass;
-		mAtomCharge[atom] = 0;
-		mAtomQueryFeatures[atom] = 0;
 		setAtomAbnormalValence(atom, abnormalValence);
 		setAtomRadical(atom, radical);
-		removeMappingNo(mAtomMapNo[atom]);
 
 		mValidHelperArrays = cHelperNone;
 //		checkAtomParity(atom);
