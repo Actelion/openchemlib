@@ -1947,13 +1947,9 @@ public abstract class AbstractDepictor<T> {
 			atomStr = atmStart+mMol.getAtomListString(atom)+"]";
 			if (atomStr.length() > 5)
 				atomStr = atmStart+mMol.getAtomList(atom).length+"]";
-			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)
-				hydrogensToAdd = -1;
 			}
 		else if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFAny) != 0) {
 			atomStr = "?";
-			if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0)
-				hydrogensToAdd = -1;
 			}
 		else if (mMol.getAtomicNo(atom) != 6
 		 || propStr != null
@@ -1961,6 +1957,9 @@ public abstract class AbstractDepictor<T> {
 		 || (hydrogensToAdd > 0)
 		 || !mAtomIsConnected[atom])
 			atomStr = mMol.getAtomLabel(atom);
+
+		if ((mMol.getAtomQueryFeatures(atom) & Molecule.cAtomQFNoMoreNeighbours) != 0 && hydrogensToAdd == 0)
+			isoStr = append(isoStr, "!s");
 
 		double labelWidth = 0.0;
 
@@ -2039,7 +2038,7 @@ public abstract class AbstractDepictor<T> {
 			return;
 			}
 
-		double hindrance[] = new double[4];
+		double[] hindrance = new double[4];
 		for (int i=0; i<mMol.getAllConnAtomsPlusMetalBonds(atom); i++) {
 			int bnd = mMol.getConnBond(atom,i);
 			for (int j=0; j<2; j++) {
@@ -2086,12 +2085,7 @@ public abstract class AbstractDepictor<T> {
 			double hydrogenWidth = getStringWidth("H");
 			double hNoWidth = 0.0;
 			double hHeight = getTextSize();
-			if (hydrogensToAdd == -1) {
-				hNoStr = "n";
-				mpSetSmallLabelSize();
-				hNoWidth = getStringWidth(hNoStr);
-				}
-			else if (hydrogensToAdd > 1) {
+			if (hydrogensToAdd > 1) {
 				hNoStr = String.valueOf(hydrogensToAdd);
 				mpSetSmallLabelSize();
 				hNoWidth = getStringWidth(hNoStr);
