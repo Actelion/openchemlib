@@ -1502,7 +1502,8 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 		int occupiedValence = 0;
 		for (int i=0; i<mAllConnAtoms[atom]; i++)
-			occupiedValence += mConnBondOrder[atom][i];
+			if (!mIsFragment || (mAtomQueryFeatures[mConnAtom[atom][i]] & Molecule.cAtomQFExcludeGroup) == 0)
+				occupiedValence += mConnBondOrder[atom][i];
 
 		if (mIsFragment) {
 			int delocalizedBonds = 1;
