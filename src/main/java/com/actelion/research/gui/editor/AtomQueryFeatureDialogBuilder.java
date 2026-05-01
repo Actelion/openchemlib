@@ -726,7 +726,7 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 	        break;
         case 12: // between 2 and 3 non-H neighbours
 	        if (realNeighbours <= 1)
-		        queryFeatures |= (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1ENeighbour | Molecule.cAtomQFNot4Neighbours);
+		        queryFeatures |= (Molecule.cAtomQFNot0Neighbours | Molecule.cAtomQFNot1Neighbour | Molecule.cAtomQFNot4Neighbours);
 	        else if (realNeighbours <= 3)
 		        queryFeatures |= Molecule.cAtomQFNot4Neighbours;
 	        break;
