@@ -169,14 +169,8 @@ public class AtomRecord implements Comparable<AtomRecord> {
     	return authAsymId;
     }
     
-    public String getString() {
-    	StringBuilder sb = new StringBuilder(authCompID);
-    	sb.append(" ");
-    	sb.append(authSeqID);
-    	sb.append(insertionCode);
-    	sb.append(" ");
-    	sb.append(authAsymId);
-    	return sb.toString();
+    public String getGroupName() {
+		return authCompID + " " + authSeqID + insertionCode + " " + authAsymId;
     }
 
     public int getAuthSeqID() {

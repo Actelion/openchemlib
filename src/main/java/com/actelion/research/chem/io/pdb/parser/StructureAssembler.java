@@ -72,7 +72,7 @@ public class StructureAssembler {
 		for (AtomRecord atom : mAtomList) {
 			String residueKey = getAssignedGroup(atom);
 			if (PROTEIN_GROUP.equals(residueKey)) {
-				String residueName = atom.getString();
+				String residueName = atom.getGroupName();
 				Residue residue = proteinResidueMap.get(residueName);
 				if (residue == null)
 					proteinResidueMap.put(residueName, new Residue(true, true, false, atom));
@@ -343,15 +343,21 @@ public class StructureAssembler {
 			isMetal[i] = Molecule.isAtomicNoMetal(bondAtom[i].getAtomicNo());
 		}
 
+		//
 		if (!grps[0].equals(grps[1])) {
+
+			// Connection between ligand atom and protein atom
 			for (int i=0; i<2; i++) {
 				if(grps[i].equals(PROTEIN_GROUP)) {
-					if (!mDetachCovalentLigands || isMetal[1-i]) {
+					// If we attach covalent ligands to the protein,
+					// then we add the entire ligand group to the protein
+					if (!mDetachCovalentLigands) {
 						reassignGroup(grps[1-i], grps[i]);
 					}
 					else {
+						// Mark ligand group as covalently bound
 						mCovalentLigandGroupSet.add(grps[1-i]);
-						if (!isMetal[i]) {
+						if (!isMetal[i] && !isMetal[1-i]) {
 							bondAtom[i].setCovalentBridgeAtom(bondAtom[1-i]);
 							bondAtom[1-i].setCovalentBridgeAtom(bondAtom[i]);
 						}
@@ -360,6 +366,7 @@ public class StructureAssembler {
 				}
 			}
 
+			// Connection between water and ligand atom or other water: join connected water and join with connected ligands
 			for (int i=0; i<2; i++) {
 				if (grps[i].startsWith("HOH")) {
 					reassignGroup(grps[i], grps[1-i]);
@@ -367,13 +374,14 @@ public class StructureAssembler {
 				}
 			}
 
-			if (!isMetal[0] && !isMetal[1]) {
+// We want ligand-metal complexes to be returned as one entity
+//			if (!isMetal[0] && !isMetal[1]) {
 				reassignGroup(grps[1], grps[0]);
 				if (mCovalentLigandGroupSet.contains(grps[1])) {
 					mCovalentLigandGroupSet.remove(grps[1]);
 					mCovalentLigandGroupSet.add(grps[0]);
 				}
-			}
+//			}
 		}
 	}
 
@@ -389,7 +397,7 @@ public class StructureAssembler {
 		if (!atom.isHetAtom())
 			return PROTEIN_GROUP;
 
-		String group = atom.getString();
+		String group = atom.getGroupName();
 		String reassignedGroup = mGroupToReassignedGroupMap.get(group);
 		return reassignedGroup == null ? group : reassignedGroup;
 	}
