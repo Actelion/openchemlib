@@ -324,23 +324,67 @@ public class StructureAssembler {
 	private void mergeAtomGroupsByBonds() {
 		mCovalentLigandGroupSet = new TreeSet<>();
 
+		TreeSet<Integer> proteinMetalSet = determineProteinMetalSet();
+
 		// Merge atom groups that are connected by a bond
 		// unless one of the groups is all water: then move the connected water atom to the other group
 		for (int i=0; i<mTemplateConnectionList.size(); i++)
-			mergeConnectedGroups(mTemplateConnectionList.get(i));
+			mergeConnectedGroups(mTemplateConnectionList.get(i), proteinMetalSet);
 		for (int i=0; i<mNonStandardConnectionList.size(); i++)
-			mergeConnectedGroups(mNonStandardConnectionList.get(i));
+			mergeConnectedGroups(mNonStandardConnectionList.get(i), proteinMetalSet);
 	}
 
-	private void mergeConnectedGroups(int[] bond) {
+	/**
+	 * Determine all metal atoms that have at least as many bonds to protein atoms as they
+	 * have to ligand atoms. We consider these metal atoms to belong to the protein.
+	 * @return set
+	 */
+	private TreeSet<Integer> determineProteinMetalSet() {
+		TreeMap<Integer,TreeSet<Integer>> metalNeighbourMap = new TreeMap<>();
+		addMetalNeighbours(mTemplateConnectionList, metalNeighbourMap);
+		addMetalNeighbours(mNonStandardConnectionList, metalNeighbourMap);
+
+		TreeSet<Integer> proteinMetalSet = new  TreeSet<>();
+		for (int atomIndex : metalNeighbourMap.keySet()) {
+			int count = 0;
+			for (int neighbourIndex : metalNeighbourMap.get(atomIndex)) {
+				String grp = getAssignedGroup(mSerial2AtomRecordMap.get(neighbourIndex));
+				if (grp.equals(PROTEIN_GROUP))
+					count++;
+				else
+					count--;
+			}
+			if (count >= 0)
+				proteinMetalSet.add(atomIndex);
+		}
+
+		return proteinMetalSet;
+	}
+
+	private void addMetalNeighbours(SortedList<int[]> connectionList, TreeMap<Integer,TreeSet<Integer>> metalNeighbourMap) {
+		boolean[] isMetal = new boolean[2];
+		for (int i=0; i<connectionList.size(); i++) {
+			int[] bond = mTemplateConnectionList.get(i);
+			for (int j=0; j<2; j++)
+				isMetal[j] = Molecule.isAtomicNoMetal(mSerial2AtomRecordMap.get(bond[j]).getAtomicNo());
+
+			for (int j=0; j<2; j++)
+				if (isMetal[j] && !isMetal[1-j])
+					metalNeighbourMap.computeIfAbsent(bond[j], k -> new TreeSet<>()).add(bond[1-j]);
+		}
+	}
+
+	private void mergeConnectedGroups(int[] bond, TreeSet<Integer> proteinMetalSet) {
 		AtomRecord[] bondAtom = new AtomRecord[2];
 		boolean[] isMetal = new boolean[2];
+		boolean[] isProteinMetal = new boolean[2];
 		String[] grps = new String[2];
 
 		for (int i=0; i<2; i++) {
 			bondAtom[i] = mSerial2AtomRecordMap.get(bond[i]);
 			grps[i] = getAssignedGroup(bondAtom[i]);
 			isMetal[i] = Molecule.isAtomicNoMetal(bondAtom[i].getAtomicNo());
+			isProteinMetal[i] = proteinMetalSet.contains(bond[i]);
 		}
 
 		//
@@ -351,7 +395,7 @@ public class StructureAssembler {
 				if(grps[i].equals(PROTEIN_GROUP)) {
 					// If we attach covalent ligands to the protein,
 					// then we add the entire ligand group to the protein
-					if (!mDetachCovalentLigands) {
+					if (!mDetachCovalentLigands || isProteinMetal[1-i]) {
 						reassignGroup(grps[1-i], grps[i]);
 					}
 					else {
@@ -368,20 +412,23 @@ public class StructureAssembler {
 
 			// Connection between water and ligand atom or other water: join connected water and join with connected ligands
 			for (int i=0; i<2; i++) {
-				if (grps[i].startsWith("HOH")) {
+				if (grps[i].startsWith("HOH") && !isProteinMetal[1-i]) {
 					reassignGroup(grps[i], grps[1-i]);
 					return;
 				}
 			}
 
 // We want ligand-metal complexes to be returned as one entity
-//			if (!isMetal[0] && !isMetal[1]) {
-				reassignGroup(grps[1], grps[0]);
-				if (mCovalentLigandGroupSet.contains(grps[1])) {
-					mCovalentLigandGroupSet.remove(grps[1]);
-					mCovalentLigandGroupSet.add(grps[0]);
+			for (int i=0; i<2; i++) {
+				if (!isProteinMetal[0] && !isProteinMetal[1]	// don't join any ligand atoms with protein metals
+				 && (isMetal[0] || !isMetal[1])) {				// ligand metals are put into other ligand groups
+					reassignGroup(grps[0], grps[1]);
+					if (mCovalentLigandGroupSet.contains(grps[0])) {
+						mCovalentLigandGroupSet.remove(grps[0]);
+						mCovalentLigandGroupSet.add(grps[1]);
+					}
 				}
-//			}
+			}
 		}
 	}
 
