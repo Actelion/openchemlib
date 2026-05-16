@@ -7,7 +7,7 @@ import java.net.URL;
 import java.util.TreeMap;
 
 public class RFKnowledgeBase extends TreeMap<Integer, RFKnowledgeBase.RFDetail> {
-	@Serial	private static final long serialVersionUID = 0x20260513;
+	private static final long serialVersionUID = 0x20260513;
 
 	public static final String FILE_NAME = "rfInteractionDB.bin";
 
@@ -88,7 +88,7 @@ public class RFKnowledgeBase extends TreeMap<Integer, RFKnowledgeBase.RFDetail> 
 	}
 
 	public static class RFDetail implements Serializable {
-		@Serial	private static final long serialVersionUID = 0x20260513;
+		private static final long serialVersionUID = 0x20260513;
 
 		private double rfL2P,rfP2L;
 
