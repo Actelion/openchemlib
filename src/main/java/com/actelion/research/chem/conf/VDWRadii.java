@@ -9,7 +9,7 @@ public interface VDWRadii {
 	 * 
 	 * (in a few cases no value was given (marked ??), where we use estimated values)
 	 */
-	public static final float[] VDW_RADIUS = new float[]{
+	float[] VDW_RADIUS = new float[]{
 		1.00f,	1.20f,	1.43f,	2.12f,	// ??,H,He,Li
 		1.98f,	1.91f,	1.77f,	1.66f,	// Be,B,C,N
 		1.50f,	1.46f,	1.58f,	2.50f,	// O,F,Ne,Na
@@ -43,7 +43,7 @@ public interface VDWRadii {
 	 * 'Molecular Double-Bond Covalent Radii for Elements Li–E112', 2009,
 	 * Pyykkö and Atsumi, doi: 10.1002/chem.200901472
 	 */
-	public static final float[] COVALENT_RADIUS = new float[] {
+	float[] COVALENT_RADIUS = new float[] {
 			0.25f, 0.32f, 0.46f, 1.33f, // ?,H,He,Li
 			1.02f, 0.85f, 0.75f, 0.71f, // Be,B,C,N
 			0.63f, 0.64f, 0.96f, 1.60f, // O,F,Ne,Na
@@ -76,11 +76,11 @@ public interface VDWRadii {
 			1.75f, 1.65f, 1.57f         // Lv, Uus, Uuo
 	};
 
-	public static float getVDWRadius(int atomicNo) {
+	static float getVDWRadius(int atomicNo) {
 		return VDW_RADIUS[atomicNo < VDW_RADIUS.length ? atomicNo : 6]; // we assume some kind of carbon from the MDL special types
 	}
 
-	public static float getCovalentRadius(int atomicNo) {
+	static float getCovalentRadius(int atomicNo) {
 		return COVALENT_RADIUS[atomicNo < COVALENT_RADIUS.length ? atomicNo : 6]; // we assume some kind of carbon from the MDL special types
 	}
 }
