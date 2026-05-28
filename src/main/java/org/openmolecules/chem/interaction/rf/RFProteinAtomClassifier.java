@@ -40,11 +40,9 @@ public class RFProteinAtomClassifier extends AtomClassifier {
 			{ "eMhDRVCB^U~dbwUP", "N_amide_don" },
 			{ "eMhDRVCrkso}IEnj`", "N_amide_don" },
 			{ "gCi@DDeZ@|buLyb[s]?RHfzj@", "N_amide_don_tert" },
-			{ "gKT@@Ti\\YZ@pHVOIOtbAnj`", "N_arom_acc" },
-			{ "gKT@Adi\\Vf@ptVyC~dPMuT", "N_arom_acc" },
+			{ "gKT@@Ti\\YZ@pHVOIOtRAnjbwUP", "N_arom_mix" },
+			{ "gKT@Adi\\Vf@ptVyC~bPMuUfzj@", "N_arom_mix" },
 			{ "diV@@@RfU|kahDB@CA`Pfx^QWzP`MuT", "N_arom_don" },
-			{ "gKT@Adi\\Vf@ptVyC~dSMuT", "N_arom_don" },
-			{ "gKT@@Ti\\YZ@prqyI~dPmuT", "N_arom_don" },
 			{ "gCi@LDeZ@pfoEw}Hf[jh", "N_don_pos" },
 			{ "gGX`DJdjmRAyMjYsDwbw~dQMuUuB@", "N_don_pos" },
 			{ "eM`AIhLDmRwgozRC]U@", "N_don_pos" },
@@ -62,10 +60,10 @@ public class RFProteinAtomClassifier extends AtomClassifier {
 			{ "fI@FE~eC]U@", "Water" },
 	};
 
-	private static RFProteinAtomClassifier sDefaultInstance;
-	private static SortedStringList sTypeNameList;
-	private static StereoMolecule[] sFragment;
-	private static int[][] sFlaggedAtom;
+	private static volatile RFProteinAtomClassifier sDefaultInstance;
+	private static volatile SortedStringList sTypeNameList;
+	private static volatile StereoMolecule[] sFragment;
+	private static volatile int[][] sFlaggedAtom;
 
 	/**
 	 * @return not threadsafe default instance of this class
@@ -79,7 +77,7 @@ public class RFProteinAtomClassifier extends AtomClassifier {
 
 	public RFProteinAtomClassifier() {
 		if (sTypeNameList == null) {
-			synchronized (AtomClassifier.class) {
+			synchronized (RFProteinAtomClassifier.class) {
 				if (sTypeNameList == null) {
 					sTypeNameList = new SortedStringList();
 					for (String[] idcodeAndTypeName : PROTEIN_TYPE)

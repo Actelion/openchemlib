@@ -90,7 +90,7 @@ public class RFKnowledgeBase extends TreeMap<Integer, RFKnowledgeBase.RFDetail> 
 	public static class RFDetail implements Serializable {
 		private static final long serialVersionUID = 0x20260513;
 
-		private double rfL2P,rfP2L;
+		private final double rfL2P,rfP2L;
 
 		public RFDetail(double rfL2P,double rfP2L) {
 			this.rfL2P = rfL2P;

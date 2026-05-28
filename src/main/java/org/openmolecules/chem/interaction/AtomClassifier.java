@@ -12,11 +12,12 @@ public abstract class AtomClassifier implements InteractionAtomClassifier {
 	protected void initializeStaticStuff(String[][] idcodesWithTypeNames, StereoMolecule[] fragment, int[][] flaggedAtom) {
 		for (int i=0; i<fragment.length; i++) {
 			fragment[i] = new IDCodeParserWithoutCoordinateInvention().getCompactMolecule(idcodesWithTypeNames[i][0]);
-			if (fragment[i] == null)
+			if (fragment[i] == null) {
 				System.out.println("$$$ ERROR: Parsing ligand idcode: " + idcodesWithTypeNames[i][0]);
-			else
-				fragment[i].setName(idcodesWithTypeNames[i][1]);
+				continue;
+			}
 
+			fragment[i].setName(idcodesWithTypeNames[i][1]);
 			fragment[i].ensureHelperArrays(Molecule.cHelperRings);
 			int count = 0;
 			for (int atom=0; atom<fragment[i].getAtoms(); atom++)

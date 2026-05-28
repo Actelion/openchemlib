@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 
 public class RFInteractionList extends ArrayList<RFInteractionList.RFInteraction> {
+	public static final double MAX_REL_DISTANCE = 0.5;	// taken from Kuhn 2020 paper, 10.1021/acs.jmedchem.9b01545
+
 	private final StereoMolecule mLigand, mProtein;
 
 	public RFInteractionList(StereoMolecule ligand, StereoMolecule protein, boolean shortestInteractionOnly) {
@@ -32,7 +34,7 @@ public class RFInteractionList extends ArrayList<RFInteractionList.RFInteraction
 				double pRadius = VDWRadii.getVDWRadius(mProtein.getAtomicNo(pAtom));
 				double distance = mLigand.getAtomCoordinates(lAtom).distance(mProtein.getAtomCoordinates(pAtom));
 				double relDistance = distance - lRadius - pRadius;
-				if (relDistance < 1.0)
+				if (relDistance < MAX_REL_DISTANCE)
 					candidateSet.add(new InteractionCandidate(lAtom, pAtom, distance, relDistance));
 			}
 
