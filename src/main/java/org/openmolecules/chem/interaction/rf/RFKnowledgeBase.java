@@ -90,11 +90,12 @@ public class RFKnowledgeBase extends TreeMap<Integer, RFKnowledgeBase.RFDetail> 
 	public static class RFDetail implements Serializable {
 		private static final long serialVersionUID = 0x20260513;
 
-		private final double rfL2P,rfP2L;
+		private final double rfL2P,rfP2L,uncertainty;
 
-		public RFDetail(double rfL2P,double rfP2L) {
+		public RFDetail(double rfL2P,double rfP2L, double uncertainty) {
 			this.rfL2P = rfL2P;
 			this.rfP2L = rfP2L;
+			this.uncertainty = uncertainty;
 		}
 
 		public double getRFL2P() {
@@ -107,6 +108,10 @@ public class RFKnowledgeBase extends TreeMap<Integer, RFKnowledgeBase.RFDetail> 
 
 		public double getRF() {
 			return Math.sqrt(rfL2P * rfP2L);
+		}
+
+		public double getUncertainty() {
+			return uncertainty;
 		}
 	}
 }

@@ -58,6 +58,7 @@ public class RFProteinAtomClassifier extends AtomClassifier {
 			{ "fH`PAoW?Ranj`", "S_don" },
 			{ "fHbHAoW?Ranj`", "Se_don" },
 			{ "fI@FE~eC]U@", "Water" },
+			{ "fH@MjL}@p\\@aHNG`DQ@HbXaYV_iPwUP", "Metal" },
 	};
 
 	private static volatile RFProteinAtomClassifier sDefaultInstance;

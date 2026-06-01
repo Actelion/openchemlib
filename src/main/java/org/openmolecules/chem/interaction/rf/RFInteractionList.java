@@ -9,7 +9,7 @@ import org.openmolecules.chem.interaction.AtomClassifier;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
-public class RFInteractionList extends ArrayList<RFInteractionList.RFInteraction> {
+public class RFInteractionList extends ArrayList<RFInteraction> {
 	public static final double MAX_REL_DISTANCE = 0.5;	// taken from Kuhn 2020 paper, 10.1021/acs.jmedchem.9b01545
 
 	private final StereoMolecule mLigand, mProtein;
@@ -63,9 +63,9 @@ public class RFInteractionList extends ArrayList<RFInteractionList.RFInteraction
 				previousProteinAtom = candidate.pAtom;
 				if (ligandAtomType[candidate.lAtom] != AtomClassifier.TYPE_UNKNOWN
 				 && proteinAtomType[candidate.pAtom] != AtomClassifier.TYPE_UNKNOWN)
-					add(new RFInteraction(candidate.pAtom, candidate.lAtom,
+					add(new RFInteraction(mProtein, mLigand, candidate.pAtom, candidate.lAtom,
 							proteinAtomType[candidate.pAtom], ligandAtomType[candidate.lAtom],
-							candidate.calculateAngle(), candidate.getDistance()));
+							candidate.getDistance()));
 			}
 		}
 	}
@@ -155,27 +155,9 @@ public class RFInteractionList extends ArrayList<RFInteractionList.RFInteraction
 			return true;
 		}
 
-		public double calculateAngle() {
-			return 0.0;
-		}
-
 		public double getDistance() {
 			// TODO possibly calculate distance rectangular to pi-systems
 			return distance;
-		}
-	}
-
-	public static class RFInteraction {
-		public int pAtom,lAtom,pType,lType;
-		public double angle,relDistance;
-
-		RFInteraction(int pAtom, int lAtom, int pType, int lType, double angle, double relDistance) {
-			this.pAtom = pAtom;
-			this.lAtom = lAtom;
-			this.pType = pType;
-			this.lType = lType;
-			this.angle = angle;
-			this.relDistance = relDistance;
 		}
 	}
 }

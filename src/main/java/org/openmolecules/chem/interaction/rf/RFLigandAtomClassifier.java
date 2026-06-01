@@ -6,7 +6,9 @@ import org.openmolecules.chem.interaction.AtomClassifier;
 
 public class RFLigandAtomClassifier extends AtomClassifier {
 	private static final String[][] LIGAND_TYPE = {
+			{ "fI@FE~eC]U@", "O_water" },
 			{ "fHg`A?Ranj`", "P" },
+			{ "fH@MjL}@p\\@aHNG`DQ@HbXaYV_iPwUP", "Metal" },
 			{ "fHfHAoW?Ranj`", "Br_any" },
 			{ "fH@Nz?iPwUP", "C_sp2" },
 			{ "fH@Ny?iPwUP", "C_sp3" },
@@ -26,7 +28,7 @@ public class RFLigandAtomClassifier extends AtomClassifier {
 			{ "eMDARVCB_tdfzj{H", "C_carbonyl" },
 			{ "diF`@@JfyIfYZjh@pHDsmIBMFAQ`xLiDeWhpfLpVJpvNqmDnV~DNalO}HRFzj{rXUMp`", "C_imine_nh" },
 			{ "eF`BJGUNzmxw~ddwUP", "C_imine_no_h" },
-			{ "gJT@LTiZhCBCRbfJrBD`TDIBjVMc}H`[jkjq@", "C_methylene_unpolarized" },
+			{ "gNpdDqHVPR[ZZdCB[RbW}Hf[jkiBk@", "C_methylene_unpolarized" },
 			{ "fH@M{wzTMuT", "C_no_h_buried" },
 			{ "gC`@H{PFtTXhXOtbAnj`", "C_sp2_het_no_h" },
 			{ "gC`@H{PG}H`[jh", "C_sp2_no_het_no_h" },
@@ -79,7 +81,7 @@ public class RFLigandAtomClassifier extends AtomClassifier {
 			{ "eM@HzCAgTOj^MHHREXq~dbwUWZ@", "C_methyl_unpolarized" },
 			{ "eM@HzCBMS[i?iHMuT", "C_methylene_alkyl_aryl" },
 			{ "eM@HzCBMMM~d`wUP", "C_methylene_aryl_aryl" },
-			{ "gJP`@TeVhCBKRcgtKqVq`|@`hHREYl_iDS]U]`@", "C_methylene_polarized_C,S,P_O,F" },
+			{ "gJP`@TeVhCAHzT\\~a^JvLG`DEABPkMc}Hb[jkl@", "C_methylene_polarized_C,S,P_O,F" },
 			{ "eF`JLFMYpBDanG^M?iHMuT", "C_methylene_polarized_N,O,F" },
 			{ "eF`BNG}IInj`", "C_nitrile" },
 			{ "gC`@H}PFFbwHOtbAnj`", "C_tbut" },
