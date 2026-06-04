@@ -723,13 +723,14 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 
 	/**
 	 * The free valence is the number of potential additional single bonded
-	 * neighbours to reach the atom's maximum valence. Atomic numbers that have
+	 * neighbors to reach the atom's maximum valence. Atomic numbers that have
 	 * multiple possible valences, the highest value is taken.
-	 * Atom charges are considered. Implicit hydrogens are not considered.
+	 * Atom charges are considered. Implicit hydrogen atoms are not considered.
 	 * Thus, the oxygen in a R-O(-) has a free valence of 0, the nitrogen in R3N(+)
 	 * has a free valence of 1. Chlorine in Cl(-) has a free valence of 6. If you need
 	 * the free valence taking the lowest possible valence into account, use
 	 * getLowestFreeValence(), which would return 0 for Cl(-).
+	 * Atoms with higher occupied valence than the allowed maximum, a negative value is returned.
 	 * @param atom
 	 * @return
 	 */

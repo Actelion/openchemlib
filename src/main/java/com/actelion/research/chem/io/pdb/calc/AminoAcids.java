@@ -10,13 +10,13 @@
  * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ *	list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ *	this list of conditions and the following disclaimer in the documentation
+ *	and/or other materials provided with the distribution.
  * 3. Neither the name of the the copyright holder nor the
- *    names of its contributors may be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	names of its contributors may be used to endorse or promote products
+ *	derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -40,118 +40,136 @@ import com.actelion.research.chem.io.pdb.parser.AtomRecord;
 import java.util.*;
 
 public class AminoAcids {
-    private static final String[][] AA_TEMPLATES = {
-            {"gGX`BDdwMULPGzILwXM[jD", "Alanine", "ala"},
-            {"dctd@BE]ADf{UYjjihp`GzBfMvCS]Plw^OMtbK]hrwUj}tRfwnbXp", "Arginine", "arg"},
-            {"diEL@BDDyInvZjZL`OtiL[lFfzaYn|^{iFLO]Hi`", "Asparagine", "asn"},
-            {"diFB@BANEInvZjZLHA~eIc]`twTKMwcw]Hqa{iEL", "Aspartic Acid", "asp"},
-            {"gNxhMV@aI[jihj@?SHF{ac]PinpP", "Cysteine", "Cys"},
-            {"defB@BAAeInufjihr@?QdqnpZ[jEf{qyndQ{mFMO]hi`", "Glutamic Acid", "glu"},
-            {"deeL@BdDEInufjihp`GzLfMvCS]Plw^OMtbO]hqi{mEL", "Glutamine", "gln"},
-            {"gJX`BDdvu@OtbYnpP", "Glycine", "gly"},
-            {"dmwD@ByPQInvVUZjejL`OtyL[lFfzaYn|^{iFLO]Hii{mFLo]hi`", "Histidine", "his"},
-            {"diFD@BADf{ejjdrU@_iRXwXMMuBw]xqn{oELO]Hq`", "Isoleucine", "ile"},
-            {"diFD@BADf{Yjjhr@?RdqnpZ[jEf{q{ndTp}tcF@", "Leucine", "leu"},
-            {"deeD@BdDR[mUjjjL`OtYL[lFfzaYn|^[iDV{QenkP", "Lysine", "lys"},
-            {"diFD`JxPBDivzjihI@?RdAndX[oEF{QqnhR[lD", "Methionine", "met"},
-            {"dcND@BADf{YU]Zj@@cHC}ASF{AinhV[oGnzQSCwRLZ^{QSKwZL[Vzm@", "Phenylalanine", "phe"},
-            {"daFD@BADfyVyjjhr@?PdqnpZ[jEfzQyn|P", "Proline", "pro"},
-            {"gNy`BDtf{ZjfHC}Lf[lFmuBv{q@", "Serine", "ser"},
-            {"dazL@BAFR[nZjdrT`_hRXwXMMuBw]xqn{oEL", "Threonine", "thr"},
-            {"foAP`@BZ@aInvYWejsfjiB@bFB@OttfF{AhwTKF{qywRJXW]Hqi]vbfUwZN[W]hqc]uZfmwUnYw]Di`", "Tryptophane", "trp"},
-            {"dknL@BACR[me]]Zj@BHr@?RTqnpZ[jEf{q{ndTp}tcFgntTr}vcFunkS[hd", "Tyrosine", "tyr"},
-            {"dazD@BADf{fjjL`OtIL[lFfza[n|Tw]wcF@", "Valine", "val"}
-    };
+	private static final String[][] AA_TEMPLATES = {
+			{"gGX`BDdwMULPGzILwXM[jD", "Alanine", "ala"},
+			{"dctd@BE]ADf{UYjjihp`GzBfMvCS]Plw^OMtbK]hrwUj}tRfwnbXp", "Arginine", "arg"},
+			{"diEL@BDDyInvZjZL`OtiL[lFfzaYn|^{iFLO]Hi`", "Asparagine", "asn"},
+			{"diFB@BANEInvZjZLHA~eIc]`twTKMwcw]Hqa{iEL", "Aspartic Acid", "asp"},
+			{"gNxhMV@aI[jihj@?SHF{ac]PinpP", "Cysteine", "Cys"},
+			{"defB@BAAeInufjihr@?QdqnpZ[jEf{qyndQ{mFMO]hi`", "Glutamic Acid", "glu"},
+			{"deeL@BdDEInufjihp`GzLfMvCS]Plw^OMtbO]hqi{mEL", "Glutamine", "gln"},
+			{"gJX`BDdvu@OtbYnpP", "Glycine", "gly"},
+			{"dmwD@ByPQInvVUZjejL`OtyL[lFfzaYn|^{iFLO]Hii{mFLo]hi`", "Histidine", "his"},
+			{"diFD@BADf{ejjdrU@_iRXwXMMuBw]xqn{oELO]Hq`", "Isoleucine", "ile"},
+			{"diFD@BADf{Yjjhr@?RdqnpZ[jEf{q{ndTp}tcF@", "Leucine", "leu"},
+			{"deeD@BdDR[mUjjjL`OtYL[lFfzaYn|^[iDV{QenkP", "Lysine", "lys"},
+			{"diFD`JxPBDivzjihI@?RdAndX[oEF{QqnhR[lD", "Methionine", "met"},
+			{"dcND@BADf{YU]Zj@@cHC}ASF{AinhV[oGnzQSCwRLZ^{QSKwZL[Vzm@", "Phenylalanine", "phe"},
+			{"daFD@BADfyVyjjhr@?PdqnpZ[jEfzQyn|P", "Proline", "pro"},
+			{"gNy`BDtf{ZjfHC}Lf[lFmuBv{q@", "Serine", "ser"},
+			{"dazL@BAFR[nZjdrT`_hRXwXMMuBw]xqn{oEL", "Threonine", "thr"},
+			{"foAP`@BZ@aInvYWejsfjiB@bFB@OttfF{AhwTKF{qywRJXW]Hqi]vbfUwZN[W]hqc]uZfmwUnYw]Di`", "Tryptophane", "trp"},
+			{"dknL@BACR[me]]Zj@BHr@?RTqnpZ[jEf{q{ndTp}tcFgntTr}vcFunkS[hd", "Tyrosine", "tyr"},
+			{"dazD@BADf{fjjL`OtIL[lFfza[n|Tw]wcF@", "Valine", "val"}
+	};
 
-    private static TreeMap<String, StereoMolecule> sShortLabelMap;
+	private static TreeMap<String, StereoMolecule> sShortLabelMap;
 
-    public static StereoMolecule getStructure(String label) {
-        return getAminoAcidMap().get(label.toLowerCase());
-    }
-
-
-    /**
-     * Build the residue (i.e. the amino acid fragment) as Molecule3D from the given atom records
-     * using their coordinates and annotations and taking bond orders from a respective amino acid template.
-     * @param label
-     * @param atomRecordList
-     * @return residue with all atoms that part of the atomRecordList
-     */
-    public static Molecule3D createResidue(String label, List<AtomRecord> atomRecordList) {
-        if (getStructure(label) == null)
-            return null;
-
-        Map<String,AtomRecord> recordMap = new HashMap<>();
-        for(AtomRecord record : atomRecordList)
-            recordMap.put(record.getLabelAtomName(), record);
-
-        return createResidue(label, recordMap);
-    }
+	public static StereoMolecule getStructure(String label) {
+		return getAminoAcidMap().get(label.toLowerCase());
+	}
 
 
-    /**
-     * Build the residue (i.e. the amino acid fragment) as Molecule3D from the given atom records
-     * using their coordinates and annotations and taking bond orders from a respective amino acid template.
-     * @param label
-     * @param atomRecordMap
-     * @return residue with all atoms that part of the atomRecordList
-     */
-    public static Molecule3D createResidue(String label, Map<String,AtomRecord> atomRecordMap) {
-        StereoMolecule mol = getStructure(label);
-        if (mol != null) {
-            Molecule3D aminoAcid = new Molecule3D(mol);
+	/**
+	 * Build the residue (i.e. the amino acid fragment) as Molecule3D from the given atom records
+	 * using their coordinates and annotations and taking bond orders from a respective amino acid template.
+	 * @param label
+	 * @param atomRecordList
+	 * @return residue with all atoms that part of the atomRecordList
+	 */
+	public static Molecule3D createResidue(String label, List<AtomRecord> atomRecordList) {
+		if (getStructure(label) == null)
+			return null;
 
-            for (int atom=0; atom<mol.getAllAtoms(); atom++) {
-                String atomName = mol.getAtomLabel(atom);
-                String customLabel = mol.getAtomCustomLabel(atom);
-                if (customLabel != null && customLabel.startsWith("]"))
-                    atomName = atomName.concat(customLabel.substring(1));
+		Map<String,AtomRecord> recordMap = new HashMap<>();
+		for(AtomRecord record : atomRecordList)
+			recordMap.put(record.getLabelAtomName(), record);
 
-                AtomRecord record = atomRecordMap.get(atomName);
-                if (record != null) {
-                    Coordinates coords3d = new Coordinates(record.getX(), record.getY(), record.getZ());
-                    aminoAcid.setAtomName(atom, record.getLabelAtomName());
-                    aminoAcid.setAtomAmino(atom, record.getResName());
-                    aminoAcid.setAtomSequence(atom, record.getSerialId());
-                    aminoAcid.setResSequence(atom, record.getAuthSeqID());
-                    aminoAcid.setAtomAmino(atom, record.getResName());
-                    aminoAcid.setAtomChainId(atom, record.getChainID());
-                    aminoAcid.setAtomX(atom, coords3d.x);
-                    aminoAcid.setAtomY(atom, coords3d.y);
-                    aminoAcid.setAtomZ(atom, coords3d.z);
+		return createResidue(label, recordMap);
+	}
 
-                    AtomRecord bridgeRecord = record.getCovalentBridgeAtom();
-                    if (bridgeRecord != null) {
-                        int bridgeAtom = aminoAcid.addAtom(0);
-                        aminoAcid.setAtomCustomLabel(bridgeAtom,"]cov");
-                        aminoAcid.setAtomX(bridgeAtom, (bridgeRecord.getX() + record.getX()) / 2);
-                        aminoAcid.setAtomY(bridgeAtom, (bridgeRecord.getY() + record.getY()) / 2);
-                        aminoAcid.setAtomZ(bridgeAtom, (bridgeRecord.getZ() + record.getZ()) / 2);
-                        aminoAcid.addBond(atom, bridgeAtom, Molecule.cBondTypeSingle);
-                        aminoAcid.setCovalentLigand(true);
-                    }
-                }
-            };
 
-            for (int atom=0; atom<aminoAcid.getAllAtoms(); atom++)
-                if (aminoAcid.getAtomName(atom) == null)
-                    aminoAcid.markAtomForDeletion(atom);
-            aminoAcid.deleteMarkedAtomsAndBonds();
+	/**
+	 * Build the residue (i.e. the amino acid fragment) as Molecule3D from the given atom records
+	 * using their coordinates and annotations and taking bond orders from a respective amino acid template.
+	 * @param label
+	 * @param atomRecordMap
+	 * @return residue with all atoms that part of the atomRecordList
+	 */
+	public static Molecule3D createResidue(String label, Map<String,AtomRecord> atomRecordMap) {
+		StereoMolecule template = getStructure(label);
+		if (template != null) {
+			Molecule3D aminoAcid = new Molecule3D(template);
 
-            return aminoAcid;
-        }
-        return null;
-    }
+			int carboxylateOxygenToBeDeleted = -1;
 
-    private static TreeMap<String,StereoMolecule> getAminoAcidMap() {
-        if (sShortLabelMap == null) {
-            sShortLabelMap = new TreeMap<>();
-            for (String[] template : AA_TEMPLATES) {
-                StereoMolecule mol = new IDCodeParserWithoutCoordinateInvention().getCompactMolecule(template[0]);
-                mol.setName(template[1]);
-                sShortLabelMap.put(template[2], mol);
-            }
-        }
-        return sShortLabelMap;
-    }
+			for (int atom=0; atom<template.getAllAtoms(); atom++) {
+				String atomName = template.getAtomLabel(atom);
+				String customLabel = template.getAtomCustomLabel(atom);
+				if (customLabel != null && customLabel.startsWith("]"))
+					atomName = atomName.concat(customLabel.substring(1));
+
+				AtomRecord record = atomRecordMap.get(atomName);
+				if (record != null) {
+					// we need to remove the carboxylate oxygen if we have a covalent connection to the neighbor carbonyl carbon
+					if ("C".equals(atomName) && record.getCovalentBridgeAtom() != null) {
+						for (int i=0; i<template.getConnAtoms(atom); i++) {
+							int connAtom = template.getConnAtom(atom, i);
+							if (template.getConnBondOrder(atom, i) == 1
+							 && template.getConnAtoms(connAtom) == 1) {
+								carboxylateOxygenToBeDeleted = connAtom;
+								break;
+							}
+						}
+					}
+
+					Coordinates coords3d = new Coordinates(record.getX(), record.getY(), record.getZ());
+					aminoAcid.setAtomName(atom, record.getLabelAtomName());
+					aminoAcid.setAtomAmino(atom, record.getResName());
+					aminoAcid.setAtomSequence(atom, record.getSerialId());
+					aminoAcid.setResSequence(atom, record.getAuthSeqID());
+					aminoAcid.setAtomAmino(atom, record.getResName());
+					aminoAcid.setAtomChainId(atom, record.getChainID());
+					aminoAcid.setAtomX(atom, coords3d.x);
+					aminoAcid.setAtomY(atom, coords3d.y);
+					aminoAcid.setAtomZ(atom, coords3d.z);
+
+					AtomRecord bridgeRecord = record.getCovalentBridgeAtom();
+					if (bridgeRecord != null) {
+						int bridgeAtom = aminoAcid.addAtom(0);
+						aminoAcid.setAtomCustomLabel(bridgeAtom,"]cov");
+						aminoAcid.setAtomX(bridgeAtom, (bridgeRecord.getX() + record.getX()) / 2);
+						aminoAcid.setAtomY(bridgeAtom, (bridgeRecord.getY() + record.getY()) / 2);
+						aminoAcid.setAtomZ(bridgeAtom, (bridgeRecord.getZ() + record.getZ()) / 2);
+						aminoAcid.addBond(atom, bridgeAtom, Molecule.cBondTypeSingle);
+						aminoAcid.setCovalentLigand(true);
+					}
+				}
+			};
+
+			if (carboxylateOxygenToBeDeleted != -1)
+				aminoAcid.markAtomForDeletion(carboxylateOxygenToBeDeleted);
+
+			for (int atom=0; atom<aminoAcid.getAllAtoms(); atom++)
+				if (aminoAcid.getAtomName(atom) == null && aminoAcid.getAtomCustomLabel(atom) == null)
+					aminoAcid.markAtomForDeletion(atom);
+			aminoAcid.deleteMarkedAtomsAndBonds();
+
+			return aminoAcid;
+		}
+		return null;
+	}
+
+	private static TreeMap<String,StereoMolecule> getAminoAcidMap() {
+		if (sShortLabelMap == null) {
+			sShortLabelMap = new TreeMap<>();
+			for (String[] template : AA_TEMPLATES) {
+				StereoMolecule mol = new IDCodeParserWithoutCoordinateInvention().getCompactMolecule(template[0]);
+				mol.setName(template[1]);
+				mol.ensureHelperArrays(Molecule.cHelperNeighbours);
+				sShortLabelMap.put(template[2], mol);
+			}
+		}
+		return sShortLabelMap;
+	}
 }
