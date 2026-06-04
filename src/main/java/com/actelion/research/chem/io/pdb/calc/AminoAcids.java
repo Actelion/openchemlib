@@ -137,7 +137,9 @@ public class AminoAcids {
 					AtomRecord bridgeRecord = record.getCovalentBridgeAtom();
 					if (bridgeRecord != null) {
 						int bridgeAtom = aminoAcid.addAtom(0);
+						aminoAcid.setAtomAmino(bridgeAtom, aminoAcid.getAtomAmino(atom));
 						aminoAcid.setAtomCustomLabel(bridgeAtom,"]cov");
+						aminoAcid.setAtomName(bridgeAtom, "LNK");	// avoids being deleted below
 						aminoAcid.setAtomX(bridgeAtom, (bridgeRecord.getX() + record.getX()) / 2);
 						aminoAcid.setAtomY(bridgeAtom, (bridgeRecord.getY() + record.getY()) / 2);
 						aminoAcid.setAtomZ(bridgeAtom, (bridgeRecord.getZ() + record.getZ()) / 2);
@@ -151,7 +153,8 @@ public class AminoAcids {
 				aminoAcid.markAtomForDeletion(carboxylateOxygenToBeDeleted);
 
 			for (int atom=0; atom<aminoAcid.getAllAtoms(); atom++)
-				if (aminoAcid.getAtomName(atom) == null && aminoAcid.getAtomCustomLabel(atom) == null)
+				if (aminoAcid.getAtomName(atom) == null)
+//				if (aminoAcid.getAtomName(atom) == null && aminoAcid.getAtomCustomLabel(atom) == null)
 					aminoAcid.markAtomForDeletion(atom);
 			aminoAcid.deleteMarkedAtomsAndBonds();
 

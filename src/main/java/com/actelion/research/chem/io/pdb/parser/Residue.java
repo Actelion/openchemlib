@@ -129,7 +129,9 @@ public class Residue {
 			AtomRecord bridgeRecord = record.getCovalentBridgeAtom();
 			if (bridgeRecord != null) {
 				int bridgeAtom = fragment.addAtom(0);
+				fragment.setAtomAmino(bridgeAtom, fragment.getAtomAmino(atom));
 				fragment.setAtomCustomLabel(bridgeAtom,"]cov");
+				fragment.setAtomName(bridgeAtom, "LNK");	// avoids being deleted below
 				fragment.setAtomX(bridgeAtom, (bridgeRecord.getX() + record.getX()) / 2);
 				fragment.setAtomY(bridgeAtom, (bridgeRecord.getY() + record.getY()) / 2);
 				fragment.setAtomZ(bridgeAtom, (bridgeRecord.getZ() + record.getZ()) / 2);
