@@ -64,7 +64,8 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			"r>5",
 			"r7",
 			"r>6",
-			"r>7"
+			"r>7",
+			"r0|>7"
 	};
 	private static final String[] RING_SIZE_OPTIONS = {
 			"any",
@@ -89,7 +90,8 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			"> 5 members",
 			"7 members",
 			"> 6 members",
-			"> 7 members"
+			"> 7 members",
+			"no ring or >7 members"
 			};
 	public static final long[] RING_SIZE_VALUES = {
 			0,    // special handling: 0 means all allowed
@@ -115,9 +117,10 @@ public class AtomQueryFeatureDialogBuilder implements GenericEventListener<Gener
 			Molecule.cAtomQFRingSize7,
 			Molecule.cAtomQFRingSize7 | Molecule.cAtomQFRingSizeLarge,
 			Molecule.cAtomQFRingSizeLarge,
+			Molecule.cAtomQFRingSize0 | Molecule.cAtomQFRingSizeLarge
 			};
 
-	private GenericDialog       mDialog;
+	private final GenericDialog mDialog;
 	private GenericLabel        mLabelAtomList;
 	private GenericTextField    mTFAtomList;
 	private GenericCheckBox     mCBAny,mCBBlocked,mCBSubstituted,mCBMatchStereo,mCBExcludeGroup;

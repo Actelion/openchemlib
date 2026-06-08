@@ -364,7 +364,7 @@ public class StructureAssembler {
 	private void addMetalNeighbours(SortedList<int[]> connectionList, TreeMap<Integer,TreeSet<Integer>> metalNeighbourMap) {
 		boolean[] isMetal = new boolean[2];
 		for (int i=0; i<connectionList.size(); i++) {
-			int[] bond = mTemplateConnectionList.get(i);
+			int[] bond = connectionList.get(i);
 			for (int j=0; j<2; j++)
 				isMetal[j] = Molecule.isAtomicNoMetal(mSerial2AtomRecordMap.get(bond[j]).getAtomicNo());
 

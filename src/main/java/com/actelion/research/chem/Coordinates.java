@@ -81,7 +81,7 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		return Math.sqrt(distSq());
 	}
 	public double distSq() {
-		return  x*x + y*y + z*z;
+		return x*x + y*y + z*z;
 	}
 
 	public double distanceSquared(Coordinates c) {
@@ -297,6 +297,15 @@ public final class Coordinates implements Serializable, Comparable<Coordinates> 
 		y = (y + c.y) / 2.0;
 		z = (z + c.z) / 2.0;
 		return this;
+	}
+
+	/**
+	 * Calculates the center point between this and c and returns it as new Coordinates.
+	 * @param c
+	 * @return center between this and c as new Coordinates
+	 */
+	public Coordinates centerC(Coordinates c) {
+		return new Coordinates((x + c.x) / 2.0, (y + c.y) / 2.0, (z + c.z) / 2.0);
 	}
 
 	/**

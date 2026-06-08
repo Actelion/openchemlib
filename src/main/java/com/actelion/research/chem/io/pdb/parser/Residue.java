@@ -105,16 +105,6 @@ public class Residue {
 		return mIsTerminal;
 	}
 
-    private void constructFragment(List<AtomRecord> records) {
-		AtomRecord ar = records.get(0);
-		mMol = AminoAcids.createResidue(getResname(), records);
-		if (mMol == null)
-			mMol = constructFragmentFromGeometry(records);
-		mMol.ensureHelperArrays(Molecule.cHelperNeighbours);
-		// We use '1' as Model-No.
-		mMol.setName(ar.getResName()+"_1_"+ar.getChainID()+"_"+ar.getAuthSeqID());
-    }
-
 	private Molecule3D constructFragmentFromGeometry(Collection<AtomRecord> records) {
 		Molecule3D fragment = new Molecule3D();
 		String altLoc = null;
@@ -139,7 +129,9 @@ public class Residue {
 			AtomRecord bridgeRecord = record.getCovalentBridgeAtom();
 			if (bridgeRecord != null) {
 				int bridgeAtom = fragment.addAtom(0);
+				fragment.setAtomAmino(bridgeAtom, fragment.getAtomAmino(atom));
 				fragment.setAtomCustomLabel(bridgeAtom,"]cov");
+				fragment.setAtomName(bridgeAtom, "LNK");	// avoids being deleted below
 				fragment.setAtomX(bridgeAtom, (bridgeRecord.getX() + record.getX()) / 2);
 				fragment.setAtomY(bridgeAtom, (bridgeRecord.getY() + record.getY()) / 2);
 				fragment.setAtomZ(bridgeAtom, (bridgeRecord.getZ() + record.getZ()) / 2);

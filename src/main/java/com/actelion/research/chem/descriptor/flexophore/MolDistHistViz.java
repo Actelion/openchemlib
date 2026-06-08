@@ -1245,6 +1245,7 @@ public class MolDistHistViz extends DistHist implements Serializable, IMolDistHi
 	 * @param mdh stays unchanged. 
 	 * @deprecated
 	 */
+	@Deprecated
 	public static void merge(MolDistHistViz mdhviz, MolDistHist mdh){
 		
 		if(mdh.getNumPPNodes()!=mdhviz.getNumPPNodes()) {
