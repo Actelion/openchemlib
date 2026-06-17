@@ -65,7 +65,7 @@ public class RFInteractionList extends ArrayList<RFInteraction> {
 				 && proteinAtomType[candidate.pAtom] != AtomClassifier.TYPE_UNKNOWN)
 					add(new RFInteraction(mProtein, mLigand, candidate.pAtom, candidate.lAtom,
 							proteinAtomType[candidate.pAtom], ligandAtomType[candidate.lAtom],
-							candidate.getDistance()));
+							candidate.getDistance(), candidate.getRelDistance()));
 			}
 		}
 	}
@@ -156,8 +156,11 @@ public class RFInteractionList extends ArrayList<RFInteraction> {
 		}
 
 		public double getDistance() {
-			// TODO possibly calculate distance rectangular to pi-systems
 			return distance;
+		}
+
+		public double getRelDistance() {
+			return relDistance;
 		}
 	}
 }
