@@ -68,7 +68,9 @@ public class PeriodicTable {
 
 	private boolean [] arrAlkaline;
 
-	private Hashtable<Integer, Element> htblDataAtNo;
+	// private Hashtable<Integer, Element> htblDataAtNo;
+	Element [] elements;
+
 
 	private Hashtable<String, Element> htblDataName;
 
@@ -79,7 +81,7 @@ public class PeriodicTable {
 
 	private PeriodicTable() {
 
-		htblDataAtNo = new Hashtable<>();
+		elements = new Element [120];
 
 		htblDataName = new Hashtable<>();
 
@@ -191,10 +193,12 @@ public class PeriodicTable {
 
     	};
 
-		for (Element arrDatum : arrData) {
-			htblDataAtNo.put(arrDatum.getOrderNumber(), arrDatum);
-			htblDataName.put(arrDatum.getName(), arrDatum);
-			htblDataSymbol.put(arrDatum.getSymbol().toLowerCase(), arrDatum);
+		for (Element element : arrData) {
+
+			elements[element.getOrderNumber()]=element;
+			// htblDataAtNo.put(element.getOrderNumber(), element);
+			htblDataName.put(element.getName(), element);
+			htblDataSymbol.put(element.getSymbol().toLowerCase(), element);
 		}
 
 		arrAlkaline = new boolean[arrData.length];
@@ -226,23 +230,23 @@ public class PeriodicTable {
 	 */
 	public static int number(String sNameOrSymbol) {
 
-		int iOrderNumber = 0;
+		int orderNumber = 0;
 
 		Element el = getInstance().htblDataName.get(sNameOrSymbol);
 		if (el == null)
 			el = getInstance().htblDataSymbol.get(sNameOrSymbol.toLowerCase());
 
 		if (el != null)
-			iOrderNumber = el.getOrderNumber();
+			orderNumber = el.getOrderNumber();
 
-		return iOrderNumber;
+		return orderNumber;
 	}
 
-	public static String symbol(int iOrderNumber) {
+	public static String symbol(int orderNumber) {
 
 		String sSymbol = "";
 
-		Element el = getInstance().htblDataAtNo.get(iOrderNumber);
+		Element el = getInstance().elements[orderNumber];
 
 		if (el != null)
 			sSymbol = el.getSymbol();
@@ -251,35 +255,29 @@ public class PeriodicTable {
 	}
 
 	public static int size(){
-		return getInstance().htblDataAtNo.size();
+		return getInstance().elements.length;
 	}
 	
 	/**
 	 * 
-	 * @param iOrderNumber
+	 * @param orderNumber
 	 * @return element weight
 	 */
-	public static double getWeight(int iOrderNumber) {
-
-		Element el = getInstance().htblDataAtNo.get(iOrderNumber);
-
+	public static double getWeight(int orderNumber) {
+		Element el = getInstance().elements[orderNumber];
 		return el.getWeight();
 	}
 
-	public static String name(int iOrderNumber) {
-
+	public static String name(int orderNumber) {
 		String sName = "";
-
-		Element el = getInstance().htblDataAtNo.get(iOrderNumber);
-
+		Element el = getInstance().elements[orderNumber];
 		if (el != null)
 			sName = el.getName();
-
 		return sName;
 	}
 
 	public static Element getElement(int orderNumber) {
-		return getInstance().htblDataAtNo.get(orderNumber);
+		return getInstance().elements[orderNumber];
 	}
 	
 	public String toString() {
