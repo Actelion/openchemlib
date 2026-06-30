@@ -468,14 +468,14 @@ public class AromaticityResolver {
 		for (int atom=0; atom<mMol.getAtoms(); atom++) {
 			int delocalizedConnBondCount = 0;
 			boolean delocalizedNextBondsFound = false;
-			boolean electronegativeConnAtomFound = false;
+			int electronegativeConnAtomCount = 0;
 			for (int i=0; i<mMol.getConnAtoms(atom) && !delocalizedNextBondsFound; i++) {
 				int connBond = mMol.getConnBond(atom, i);
 				if (mIsDelocalizedBond[connBond]) {
 					delocalizedConnBondCount++;
 					int connAtom = mMol.getConnAtom(atom, i);
 					if (mMol.isElectronegative(connAtom))
-						electronegativeConnAtomFound = true;
+						electronegativeConnAtomCount++;
 					for (int j=0; j<mMol.getConnAtoms(connAtom); j++) {
 						int nextAtom = mMol.getConnAtom(connAtom, j);
 						int nextBond = mMol.getConnBond(connAtom, j);
@@ -486,14 +486,26 @@ public class AromaticityResolver {
 					}
 				}
 			}
-			if (delocalizedConnBondCount >= 2 && !delocalizedNextBondsFound) {
+			if (delocalizedConnBondCount >= 2
+			 && !delocalizedNextBondsFound
+			 && delocalizedConnBondCount==electronegativeConnAtomCount) {
 				int[] connBondWithRank = new int[delocalizedConnBondCount];
 
 				// We should have at least a free valence of one because otherwise protectFullValenceAtoms()
 				// would have taken the delocalized bond flag away.
 				int freeValence = mMol.getLowestFreeValence(atom);
-				if (freeValence == 0)	// for P,S,As,Se we have valence steps of 2
-					freeValence = 2;
+				if (freeValence == 0) {
+					if (mMol.getAtomicNo(atom) == 7 && mMol.getAtomCharge(atom) == 0) {    // nitro
+						freeValence = 1;
+						mMol.setAtomCharge(atom, 1);
+					}
+					else if (mMol.getAtomicNo(atom)>14) {   // for P,S,As,Se we have valence steps of 2
+						freeValence = 2;
+					}
+					else {
+						continue;
+					}
+				}
 
 				int index = 0;
 				for (int i=0; i<mMol.getConnAtoms(atom); i++) {
@@ -506,7 +518,7 @@ public class AromaticityResolver {
 
 				Arrays.sort(connBondWithRank);
 
-				// Acidic anions do not tale part in the added-electron to delocalized-atom balance.
+				// Acidic anions do not take part in the added-electron to delocalized-atom balance.
 				// Thus, remove delocalized-atoms from original count and don't add to the electron count.
 				mDelocalizedAtoms -= 1 + delocalizedConnBondCount;
 
@@ -519,9 +531,12 @@ public class AromaticityResolver {
 					mIsDelocalizedBond[connBond] = false;
 					mDelocalizedBonds--;
 					if (i < connBondWithRank.length - doubleBondCount) {
-						mMol.setAtomCharge(connAtom, electronegativeConnAtomFound ? -1 : 1);
+						if (mMol.getLowestFreeValence(connAtom) != 0)
+							mMol.setAtomCharge(connAtom, -1);
 					}
 					else {
+						if (mMol.getLowestFreeValence(connAtom) == 0)
+							mMol.setAtomCharge(connAtom, 1);
 						mMol.setBondType(connBond, Molecule.cBondTypeDouble);
 					}
 				}

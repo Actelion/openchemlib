@@ -21,16 +21,6 @@ public class RFKnowledgeBase implements Serializable {
 	private TreeMap<Integer, DensityMapsWithDistances> mLigandGeometryMap;
 	private TreeMap<Integer, DensityMapsWithDistances> mProteinGeometryMap;
 
-//	public static void createOldKnowledgeBaseFile() {
-//		ensureInitialization();
-//		RFKnowledgeBase kb = RFKnowledgeBase.createEmptyInstance();
-//		for (int key : sKnowledgeBase.mRFDetailMap.keySet()) {
-//			NewRFKnowledgeBase.RFDetail detail = sKnowledgeBase.mRFDetailMap.get(key);
-//			kb.addRFValue(key, new RFKnowledgeBase.RFDetail(detail.rfL2P, detail.rfP2L, detail.uncertainty));
-//		}
-//		kb.save("/home/thomas/dev/local/xtal/pdbinteractions");
-//	}
-
 	private RFKnowledgeBase() {
 		mRFDetailMap = new TreeMap<>();
 		mLigandGeometryMap = new TreeMap<>();
@@ -69,27 +59,50 @@ public class RFKnowledgeBase implements Serializable {
 		return rf == null ? Double.NaN : rf.getRF();
 	}
 
-	public double getRFValue(RFInteraction ia) {
+	public double getRawUncertainty(int lType, int pType) {
+		RFDetail rf = mRFDetailMap.get((pType << 16) | lType);
+		return rf == null ? Double.NaN : rf.getUncertainty();
+	}
+
+	/**
+	 * Calculates the geometry dependent RF-value for the given interaction.
+	 * @param ia RF-interaction
+	 * @param uncertaintyHolder null or double[1] to receive the uncertainty value
+	 * @return RF-value or NaN in case of unknown atom types
+	 */
+	public double getRFValue(RFInteraction ia, double[] uncertaintyHolder) {
 		return getRFValue(ia.getLType(), ia.getL2PGeometryType(), ia.getL2PAngle(), ia.getL2PTorsion(),
 						  ia.getPType(), ia.getP2LGeometryType(), ia.getP2LAngle(), ia.getP2LTorsion(),
-						  ia.getRelDistance());
+						  ia.getRelDistance(), uncertaintyHolder);
 	}
 
 	private double getRFValue(int lType, int lGeometry, double lAngle, double lTorsion,
-							 int pType, int pGeometry, double pAngle, double pTorsion, double relDistance) {
+							 int pType, int pGeometry, double pAngle, double pTorsion, double relDistance, double[] uncertaintyHolder) {
 		double rawRFValue = getRawRFValue(lType, pType);
 		if (Double.isNaN(rawRFValue))
 			return Double.NaN;
-		double lFactor = mLigandGeometryMap.get(lGeometry).getDensity(lAngle, lTorsion, relDistance);
-		double pFactor = mProteinGeometryMap.get(pGeometry).getDensity(pAngle, pTorsion, relDistance);
-		return rawRFValue * Math.pow(lFactor * pFactor, GEOMETRY_INFLUENCE);
+		RFKnowledgeBase.DensityMapsWithDistances lMap = mLigandGeometryMap.get(lGeometry);
+		RFKnowledgeBase.DensityMapsWithDistances pMap = mProteinGeometryMap.get(pGeometry);
+		if (lMap == null || pMap == null) {
+			if (uncertaintyHolder != null)
+				uncertaintyHolder[0] = getRawUncertainty(lType, pType);
+			return rawRFValue;
+		}
+		double lFactor = lMap.getDensity(lAngle, lTorsion, relDistance);
+		double pFactor = pMap.getDensity(pAngle, pTorsion, relDistance);
+		double geomFactor = Math.pow(lFactor * pFactor, GEOMETRY_INFLUENCE);
+		if (uncertaintyHolder != null)
+			uncertaintyHolder[0] = geomFactor * getRawUncertainty(lType, pType);
+		return rawRFValue * geomFactor;
 	}
 
 	public String getFullRFDetails(RFInteraction ia) {
-		return "rf:"+DoubleFormat.toString(getRFValue(ia))
-			+ " rawRF:"+DoubleFormat.toString(getRawRFValue(ia.getLType(), ia.getPType()))
-			+" LIG(geo:"+ia.getL2PGeometryName()+" "+mLigandGeometryMap.get(ia.getL2PGeometryType()).getFullInteractionDetails(ia.getL2PAngle(), ia.getL2PTorsion(), ia.getRelDistance())+")"
-			+" CAV(geo:"+ia.getP2LGeometryName()+" "+mProteinGeometryMap.get(ia.getP2LGeometryType()).getFullInteractionDetails(ia.getP2LAngle(), ia.getP2LTorsion(), ia.getRelDistance())+")";
+		return "rf:"+DoubleFormat.toString(getRFValue(ia, null), 3)
+			+ " rawRF:"+DoubleFormat.toString(getRawRFValue(ia.getLType(), ia.getPType()), 3)
+			+ "±"+DoubleFormat.toString(getRawUncertainty(ia.getLType(), ia.getPType()), 2)
+			+ " relD:"+DoubleFormat.toString(ia.getRelDistance(), 3)
+			+"\n     LIG(geo:"+ia.getL2PGeometryName()+" "+mLigandGeometryMap.get(ia.getL2PGeometryType()).getFullInteractionDetails(ia.getL2PAngle(), ia.getL2PTorsion(), ia.getRelDistance())+")"
+			+"\n     CAV(geo:"+ia.getP2LGeometryName()+" "+mProteinGeometryMap.get(ia.getP2LGeometryType()).getFullInteractionDetails(ia.getP2LAngle(), ia.getP2LTorsion(), ia.getRelDistance())+")";
 	}
 
 	public static RFKnowledgeBase createEmptyInstance() {
@@ -153,9 +166,9 @@ public class RFKnowledgeBase implements Serializable {
 	public static class RFDetail implements Serializable {
 		private static final long serialVersionUID = 0x20260513;
 
-		private double rfL2P,rfP2L,uncertainty;
+		private float rfL2P,rfP2L,uncertainty;
 
-		public RFDetail(double rfL2P,double rfP2L, double uncertainty) {
+		public RFDetail(float rfL2P,float rfP2L, float uncertainty) {
 			this.rfL2P = rfL2P;
 			this.rfP2L = rfP2L;
 			this.uncertainty = uncertainty;
@@ -178,15 +191,15 @@ public class RFKnowledgeBase implements Serializable {
 		}
 
 		private void writeObject(ObjectOutputStream stream) throws IOException {
-			stream.writeDouble(rfL2P);
-			stream.writeDouble(rfP2L);
-			stream.writeDouble(uncertainty);
+			stream.writeFloat(rfL2P);
+			stream.writeFloat(rfP2L);
+			stream.writeFloat(uncertainty);
 		}
 
 		private void readObject(ObjectInputStream stream) throws ClassNotFoundException,IOException {
-			rfL2P = stream.readDouble();
-			rfP2L = stream.readDouble();
-			uncertainty = stream.readDouble();
+			rfL2P = stream.readFloat();
+			rfP2L = stream.readFloat();
+			uncertainty = stream.readFloat();
 		}
 	}
 
@@ -215,6 +228,8 @@ public class RFKnowledgeBase implements Serializable {
 	 */
 	public static class DensityMapsWithDistances implements Serializable {
 		private static final long serialVersionUID = 0x20260611;
+		private static final int SHORT = 0;
+		private static final int LONG = 1;
 
 		byte[][][] densityGrids;
 		double[] distances,meanDensities;
@@ -225,30 +240,99 @@ public class RFKnowledgeBase implements Serializable {
 			this.meanDensities = meanDensities;
 		}
 
+// old lookup based version not adjusted by grid neighbours
+//		public double getDensity(double angle, double torsion, double distance) {
+//			int angleIndex = Math.min(DENSITY_BINS-1, (int)(angle/DENSITY_BIN_SIZE));
+//			int torsionIndex = Math.min(DENSITY_BINS-1, (int)(torsion/DENSITY_BIN_SIZE));
+//			double shortFactor = (double)(0xFF & densityGrids[SHORT][angleIndex][torsionIndex]) / meanDensities[SHORT];
+//			double longFactor = (double)(0xFF & densityGrids[LONG][angleIndex][torsionIndex]) / meanDensities[LONG];
+//			double distancePosition = (distance < distances[SHORT]) ? 0.0 : (distance > distances[LONG]) ? 1.0
+//					: (distance - distances[SHORT]) / (distances[LONG] - distances[SHORT]);
+//			return (1.0 - distancePosition) * shortFactor + distancePosition * longFactor;
+//		}
+
+		/**
+		 * Determines an interaction frequency factor for the given angle/torsion combination considering also
+		 * the relative interaction distance. The factor is determined by a lookup of the four closest angle/torsion
+		 * pairs in the density map and then calculating a neighbor adjusted mean densities. This is done for both,
+		 * the long and the short interaction density maps weighted accordingly.
+		 * @param angle
+		 * @param torsion
+		 * @param distance
+		 * @return neighbour adjusted density factor considering relative interaction distance
+		 */
 		public double getDensity(double angle, double torsion, double distance) {
-			int angleIndex = Math.min(DENSITY_BINS-1, (int)(angle/DENSITY_BIN_SIZE));
-			int torsionIndex = Math.min(DENSITY_BINS-1, (int)(torsion/DENSITY_BIN_SIZE));
-			double shortFactor = (double)(0xFF & densityGrids[0][angleIndex][torsionIndex]) / meanDensities[0];
-			double longFactor = (double)(0xFF & densityGrids[1][angleIndex][torsionIndex]) / meanDensities[1];
-			double distancePosition = (distance < distances[0]) ? 0.0 : (distance > distances[1]) ? 1.0
-					: (distance - distances[0]) / (distances[1] - distances[0]);
-			return (1.0 - distancePosition) * shortFactor + distancePosition * longFactor;
+			int angleI1 = (int)((angle-0.5*DENSITY_BIN_SIZE)/DENSITY_BIN_SIZE);
+			int angleI2 = Math.min(DENSITY_BINS-1, angleI1+1);
+			if (angleI1 == -1)
+				angleI1 = 0;
+			double angleF2 = ((angle / DENSITY_BIN_SIZE) + 0.5) % 1.0;
+			double angleF1 = 1.0 - angleF2;
+
+			int torsionI1 = (int)((torsion-0.5*DENSITY_BIN_SIZE)/DENSITY_BIN_SIZE);
+			int torsionI2 = Math.min(DENSITY_BINS-1, torsionI1+1);
+			if (torsionI1 == -1)
+				torsionI1 = 0;
+			double torsionF2 = ((torsion / DENSITY_BIN_SIZE) + 0.5) % 1.0;
+			double torsionF1 = 1.0 - torsionF2;
+
+			double shortDensity = angleF1 * torsionF1 * (double)(0xFF & densityGrids[SHORT][angleI1][torsionI1])
+								+ angleF1 * torsionF2 * (double)(0xFF & densityGrids[SHORT][angleI1][torsionI2])
+								+ angleF2 * torsionF1 * (double)(0xFF & densityGrids[SHORT][angleI2][torsionI1])
+								+ angleF2 * torsionF2 * (double)(0xFF & densityGrids[SHORT][angleI2][torsionI2]);
+
+			double longDensity =  angleF1 * torsionF1 * (double)(0xFF & densityGrids[LONG][angleI1][torsionI1])
+								+ angleF1 * torsionF2 * (double)(0xFF & densityGrids[LONG][angleI1][torsionI2])
+								+ angleF2 * torsionF1 * (double)(0xFF & densityGrids[LONG][angleI2][torsionI1])
+								+ angleF2 * torsionF2 * (double)(0xFF & densityGrids[LONG][angleI2][torsionI2]);
+
+			double distanceF2 = (distance < distances[SHORT]) ? 0.0 : (distance > distances[LONG]) ? 1.0
+							  : (distance - distances[SHORT]) / (distances[LONG] - distances[SHORT]);
+			double distanceF1 = 1.0 - distanceF2;
+
+			return distanceF1 * shortDensity / meanDensities[SHORT]
+				 + distanceF2 * longDensity / meanDensities[LONG];
 		}
 
 		public String getFullInteractionDetails(double angle, double torsion, double distance) {
-			int angleIndex = Math.min(DENSITY_BINS-1, (int)(angle/DENSITY_BIN_SIZE));
-			int torsionIndex = Math.min(DENSITY_BINS-1, (int)(torsion/DENSITY_BIN_SIZE));
-			double shortFactor = (0xFF & densityGrids[0][angleIndex][torsionIndex]) / meanDensities[0];
-			double longFactor = (0xFF & densityGrids[1][angleIndex][torsionIndex]) / meanDensities[1];
-			double distancePosition = (distance < distances[0]) ? 0.0 : (distance > distances[1]) ? 1.0
-					: (distance - distances[0]) / (distances[1] - distances[0]);
-			return "denF:"+DoubleFormat.toString((1.0 - distancePosition) * shortFactor + distancePosition * longFactor, 3)
+			int angleI1 = (int)((angle-0.5*DENSITY_BIN_SIZE)/DENSITY_BIN_SIZE);
+			int angleI2 = Math.min(DENSITY_BINS-1, angleI1+1);
+			if (angleI1 == -1)
+				angleI1 = 0;
+			double angleF2 = ((angle / DENSITY_BIN_SIZE) + 0.5) % 1.0;
+			double angleF1 = 1.0 - angleF2;
+
+			int torsionI1 = (int)((torsion-0.5*DENSITY_BIN_SIZE)/DENSITY_BIN_SIZE);
+			int torsionI2 = Math.min(DENSITY_BINS-1, torsionI1+1);
+			if (torsionI1 == -1)
+				torsionI1 = 0;
+			double torsionF2 = ((torsion / DENSITY_BIN_SIZE) + 0.5) % 1.0;
+			double torsionF1 = 1.0 - torsionF2;
+
+			double shortDensity = angleF1 * torsionF1 * (double)(0xFF & densityGrids[SHORT][angleI1][torsionI1])
+					+ angleF1 * torsionF2 * (double)(0xFF & densityGrids[SHORT][angleI1][torsionI2])
+					+ angleF2 * torsionF1 * (double)(0xFF & densityGrids[SHORT][angleI2][torsionI1])
+					+ angleF2 * torsionF2 * (double)(0xFF & densityGrids[SHORT][angleI2][torsionI2]);
+
+			double longDensity =  angleF1 * torsionF1 * (double)(0xFF & densityGrids[LONG][angleI1][torsionI1])
+					+ angleF1 * torsionF2 * (double)(0xFF & densityGrids[LONG][angleI1][torsionI2])
+					+ angleF2 * torsionF1 * (double)(0xFF & densityGrids[LONG][angleI2][torsionI1])
+					+ angleF2 * torsionF2 * (double)(0xFF & densityGrids[LONG][angleI2][torsionI2]);
+
+			double distanceF2 = (distance < distances[SHORT]) ? 0.0 : (distance > distances[LONG]) ? 1.0
+					: (distance - distances[SHORT]) / (distances[LONG] - distances[SHORT]);
+			double distanceF1 = 1.0 - distanceF2;
+
+			double f = distanceF1 * shortDensity / meanDensities[SHORT]
+					 + distanceF2 * longDensity / meanDensities[LONG];
+
+			return "f:"+DoubleFormat.toString(f, 3)
 				+" ang:"+Math.round(180/Math.PI*angle)
 				+" tor:"+Math.round(180/Math.PI*torsion)
 				+" dis:"+DoubleFormat.toString(distance,3)
-				+" pos:"+DoubleFormat.toString(distancePosition,3)
-				+" denS:"+(0xFF & densityGrids[0][angleIndex][torsionIndex])
-				+" denL:"+(0xFF & densityGrids[1][angleIndex][torsionIndex]);
+				+" pos:"+DoubleFormat.toString(distanceF2,3)
+				+" denS:"+DoubleFormat.toString(shortDensity,3)
+				+" denL:"+DoubleFormat.toString(longDensity,3);
 		}
 
 		private void writeObject(ObjectOutputStream stream) throws IOException {

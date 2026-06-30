@@ -18,12 +18,29 @@ public class RFInteraction {
 		mL2PGeometry = new InteractionGeometry(ligand, protein, lAtom, pAtom);
 	}
 
-	public double getRFValue() {
-		return RFKnowledgeBase.getInstance().getRFValue(this);
+	/**
+	 * Calculates the geometry dependent RF-value for the given interaction.
+	 * @param uncertaintyHolder null or double[1] to receive the uncertainty value
+	 * @return RF-value or NaN in case of unknown atom types
+	 */
+	public double getRFValue(double[] uncertaintyHolder) {
+		return RFKnowledgeBase.getInstance().getRFValue(this, uncertaintyHolder);
 	}
 
+	/**
+	 * Determines the geometry independent (raw) RF-value for the given interaction.
+	 * @return RF-value or NaN in case of unknown atom types
+	 */
 	public double getRawRFValue() {
 		return RFKnowledgeBase.getInstance().getRawRFValue(mLType, mPType);
+	}
+
+	/**
+	 * Determines the uncertainty of the geometry independent (raw) RF-value for the given interaction.
+	 * @return RF-value or NaN in case of unknown atom types
+	 */
+	public double getRawUncertainty() {
+		return RFKnowledgeBase.getInstance().getRawUncertainty(mLType, mPType);
 	}
 
 	public int getPAtom() {

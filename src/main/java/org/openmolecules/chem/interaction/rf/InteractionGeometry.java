@@ -22,7 +22,8 @@ public class InteractionGeometry {
 
 	private double mTorsion,mAngle;
 	private int mType;
-	private Coordinates mConnectionP,mRearP1,mRearP2,mFarP;
+	private final Coordinates mConnectionP;
+	private Coordinates mRearP1,mRearP2,mFarP;
 
 	public InteractionGeometry(StereoMolecule mol, int atom) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
@@ -40,7 +41,7 @@ public class InteractionGeometry {
 				mFarP = new Coordinates(1, 1, 1).add(mRearP1);	// create an arbitrary plane atom
 				mType = TYPE_N1SP_N1N1;
 			}
-			else if (mol.getAtomPi(rearAtom) == 1 || mol.isAromaticAtom(rearAtom)) {
+			else if (mol.getAtomPi(rearAtom) == 1 || mol.isAromaticAtom(rearAtom) || mol.isFlatNitrogen(rearAtom)) {
 				int farIndex = getMostBulkyNeighbourIndex(mol, rearAtom, atom);
 				mFarP = mol.getAtomCoordinates(mol.getConnAtom(rearAtom, farIndex));
 				mType = TYPE_N1SP2;
@@ -81,11 +82,11 @@ public class InteractionGeometry {
 
 				int farIndex = getMostBulkyNeighbourIndex(mol, atom, -1);
 				mFarP = mol.getAtomCoordinates(mol.getConnAtom(atom, farIndex));
-				mType = mol.getAtomPi(atom) == 1 || mol.isAromaticAtom(atom) ? TYPE_N2SP2 : TYPE_N2SP3;
+				mType = mol.getAtomPi(atom) == 1 || mol.isAromaticAtom(atom) || mol.isFlatNitrogen(atom) ? TYPE_N2SP2 : TYPE_N2SP3;
 			}
 		}
 		else if (mol.getConnAtoms(atom) == 3) {
-			if (mol.getAtomPi(atom) == 1 || mol.isAromaticAtom(atom)) {
+			if (mol.getAtomPi(atom) == 1 || mol.isAromaticAtom(atom) || mol.isFlatNitrogen(atom)) {
 				// Rear point is a point perpendicular to the plane and behind the interaction atom in the plane.
 				// Since at this time the other interaction atom is not known, we have two potential solutions,
 				// one on each side of the plane. We calculate both and decide later which one to use.

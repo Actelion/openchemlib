@@ -171,6 +171,7 @@ public class RFLigandAtomClassifier extends AtomClassifier {
 			{ "gJPhH`DQztAmMFZFC}Dd[jiMuT", "O_sulfonyl" },
 			{ "gCaHH@bNtAoAw}Hd[jh", "O_sulfoxide" },
 			{ "gJQhHl@bOV`LIotbAnj`", "S_sulfonate" },
+			{ "gFyHC`DISImLPFlJotbAnj`", "S_thiazole" },
 			{ "gKXHL@aJWFe`OzQ@wUP", "S_thiazole" },
 			{ "gKPH@DIRxtlA?RHFzj@", "S_thiophene" },
 			{ "gCh@@duPGTEzJLrUTMKVxK?DFTbQnjhhR`", "C_arom_c_no_h_n_acc_methyl_en" },
@@ -301,14 +302,15 @@ public class RFLigandAtomClassifier extends AtomClassifier {
 		if (sTypeNameList == null) {
 			synchronized (RFLigandAtomClassifier.class) {
 				if (sTypeNameList == null) {
-					sTypeNameList = new SortedStringList();
+					SortedStringList typeNameList = new SortedStringList();
 					for (String[] idcodeAndTypeName : LIGAND_TYPE)
-						sTypeNameList.addString(idcodeAndTypeName[1]);
+						typeNameList.addString(idcodeAndTypeName[1]);
 
 					sFragment = new StereoMolecule[LIGAND_TYPE.length];
 					sFlaggedAtom = new int[LIGAND_TYPE.length][];
 
 					initializeStaticStuff(LIGAND_TYPE, sFragment, sFlaggedAtom);
+					sTypeNameList = typeNameList;
 				}
 			}
 		}

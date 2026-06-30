@@ -80,14 +80,15 @@ public class RFProteinAtomClassifier extends AtomClassifier {
 		if (sTypeNameList == null) {
 			synchronized (RFProteinAtomClassifier.class) {
 				if (sTypeNameList == null) {
-					sTypeNameList = new SortedStringList();
+					SortedStringList typeNameList = new SortedStringList();
 					for (String[] idcodeAndTypeName : PROTEIN_TYPE)
-						sTypeNameList.addString(idcodeAndTypeName[1]);
+						typeNameList.addString(idcodeAndTypeName[1]);
 
 					sFragment = new StereoMolecule[PROTEIN_TYPE.length];
 					sFlaggedAtom = new int[PROTEIN_TYPE.length][];
 
 					initializeStaticStuff(PROTEIN_TYPE, sFragment, sFlaggedAtom);
+					sTypeNameList = typeNameList;
 				}
 			}
 		}

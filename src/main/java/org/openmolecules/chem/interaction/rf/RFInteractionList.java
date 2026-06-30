@@ -25,7 +25,7 @@ public class RFInteractionList extends ArrayList<RFInteraction> {
 
 		ArrayList<InteractionCandidate> allCandidates = new ArrayList<>();
 		TreeSet<InteractionCandidate> candidateSet = new TreeSet<>();	// candidates of one ligand atom
-		for (int lAtom = 0; lAtom<mLigand.getAtoms(); lAtom++) {
+		for (int lAtom=0; lAtom<mLigand.getAtoms(); lAtom++) {
 
 			// Find close neighbors on protein side as interaction candidates
 			// and sort them ascending on distance between VDW-spheres.
@@ -51,8 +51,8 @@ public class RFInteractionList extends ArrayList<RFInteraction> {
 			}
 		}
 
-		int[] ligandAtomType = RFLigandAtomClassifier.getDefaultInstance().classifyAtoms(mLigand);
-		int[] proteinAtomType = RFProteinAtomClassifier.getDefaultInstance().classifyAtoms(mProtein);
+		int[] ligandAtomType = new RFLigandAtomClassifier().classifyAtoms(mLigand);
+		int[] proteinAtomType = new RFProteinAtomClassifier().classifyAtoms(mProtein);
 
 		// where a protein atom has more than one ligand contact, keep only the closest
 		allCandidates.sort((o1, o2) -> (o1.pAtom != o2.pAtom) ?
