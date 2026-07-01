@@ -3677,12 +3677,17 @@ public class Molecule implements Serializable {
 			label = null;
 
 		if (label == null) {
-			if (mAtomCustomLabel != null)
+			if (mAtomCustomLabel != null) {
+				if (mAtomCustomLabel[atom] != null && mAtomicNo[atom] == 1)
+					mValidHelperArrays = 0;	// changes whether a hydrogen is considered a simple one
 				mAtomCustomLabel[atom] = null;
+				}
 			}
 		else {
 			if (mAtomCustomLabel == null)
 				mAtomCustomLabel = new byte[mMaxAtoms][];
+			if (mAtomCustomLabel[atom] == null && mAtomicNo[atom] == 1)
+				mValidHelperArrays = 0;	// changes whether a hydrogen is considered a simple one
 			mAtomCustomLabel[atom] = label;
 			}
 		}
@@ -3719,6 +3724,8 @@ public class Molecule implements Serializable {
 		if (label == null) {
 			if (mAtomCustomLabel != null && mAtomCustomLabel[atom] != null) {
 				mAtomCustomLabel[atom] = null;
+				if (mAtomicNo[atom] == 1)
+					mValidHelperArrays = 0;	// changes whether a hydrogen is considered a simple one
 				return true;
 				}
 			}
@@ -3727,6 +3734,8 @@ public class Molecule implements Serializable {
 				mAtomCustomLabel = new byte[mMaxAtoms][];
 			if (mAtomCustomLabel[atom] == null || !new String(mAtomCustomLabel[atom], StandardCharsets.UTF_8).equals(label)) {
 				mAtomCustomLabel[atom] = label.getBytes(StandardCharsets.UTF_8);
+				if (mAtomicNo[atom] == 1)
+					mValidHelperArrays = 0;	// changes whether a hydrogen is considered a simple one
 				return true;
 				}
 			}
