@@ -15,7 +15,7 @@ public class RFKnowledgeBase implements Serializable {
 	private static final double DENSITY_BIN_SIZE = Math.PI / DENSITY_BINS;
 	private static final double GEOMETRY_INFLUENCE = 0.33;	// larger values increase RF reduction with bad geometries
 
-	private static RFKnowledgeBase sKnowledgeBase;
+	private static volatile RFKnowledgeBase sKnowledgeBase;
 
 	private TreeMap<Integer, RFKnowledgeBase.RFDetail> mRFDetailMap;
 	private TreeMap<Integer, DensityMapsWithDistances> mLigandGeometryMap;
@@ -152,9 +152,10 @@ public class RFKnowledgeBase implements Serializable {
 						if (url == null)
 							throw new RuntimeException("Could not find file '"+FILE_NAME+"' in the classpath or resources.");
 						ObjectInputStream ois = new ObjectInputStream(url.openStream());
-						sKnowledgeBase = new RFKnowledgeBase();
-						sKnowledgeBase.readObject(ois);
+						RFKnowledgeBase kb = new RFKnowledgeBase();
+						kb.readObject(ois);
 						ois.close();
+						sKnowledgeBase = kb;
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -230,6 +231,7 @@ public class RFKnowledgeBase implements Serializable {
 		private static final long serialVersionUID = 0x20260611;
 		private static final int SHORT = 0;
 		private static final int LONG = 1;
+		private static final double MIN_DENSITY = 0.01;	// we don't return lower density values to prevent catastrophic influence on scores
 
 		byte[][][] densityGrids;
 		double[] distances,meanDensities;
@@ -290,8 +292,8 @@ public class RFKnowledgeBase implements Serializable {
 							  : (distance - distances[SHORT]) / (distances[LONG] - distances[SHORT]);
 			double distanceF1 = 1.0 - distanceF2;
 
-			return distanceF1 * shortDensity / meanDensities[SHORT]
-				 + distanceF2 * longDensity / meanDensities[LONG];
+			return Math.max(MIN_DENSITY, distanceF1 * shortDensity / meanDensities[SHORT]
+									   + distanceF2 * longDensity / meanDensities[LONG]);
 		}
 
 		public String getFullInteractionDetails(double angle, double torsion, double distance) {
@@ -323,8 +325,8 @@ public class RFKnowledgeBase implements Serializable {
 					: (distance - distances[SHORT]) / (distances[LONG] - distances[SHORT]);
 			double distanceF1 = 1.0 - distanceF2;
 
-			double f = distanceF1 * shortDensity / meanDensities[SHORT]
-					 + distanceF2 * longDensity / meanDensities[LONG];
+			double f = Math.max(MIN_DENSITY, distanceF1 * shortDensity / meanDensities[SHORT]
+										   + distanceF2 * longDensity / meanDensities[LONG]);
 
 			return "f:"+DoubleFormat.toString(f, 3)
 				+" ang:"+Math.round(180/Math.PI*angle)
