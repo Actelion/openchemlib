@@ -104,7 +104,7 @@ public class Canonizer {
 	// a canonical way, i.e. the label is considered when ranking. Two otherwise symmetrical
 	// atoms are considered different, if one has a custom label, or both have different custom
 	// labels. The ENCODE_ATOM_CUSTOM_LABELS_WITHOUT_RANKING option does not consider such
-	// atoms being different. This option can be used to mark an atom witghout influencing
+	// atoms being different. This option can be used to mark an atom without influencing
 	// ranking and graph generation. This is typically used for diagnostics.
 	public static final int ENCODE_ATOM_CUSTOM_LABELS_WITHOUT_RANKING = 1024;
 
