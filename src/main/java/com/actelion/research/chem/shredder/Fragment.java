@@ -99,7 +99,6 @@ public class Fragment extends IDCodeCoord {
 		return frequencySumAll;
 	}
 
-
 	/**
 	 * @param frequency the frequency to set
 	 */

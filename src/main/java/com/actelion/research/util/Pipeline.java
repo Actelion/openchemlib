@@ -121,6 +121,16 @@ public class Pipeline<T> implements IPipeline<T>, Supplier<T> {
 			polled.incrementAndGet();
 		return t;
 	}
+	/**
+	 *
+	 * @return null if nothing is in the queue.
+	 */
+	public T poll() {
+		T t = queue.poll();
+		if(t!=null)
+			polled.incrementAndGet();
+		return t;
+	}
 
 	@Override
 	public T get() {
@@ -142,7 +152,9 @@ public class Pipeline<T> implements IPipeline<T>, Supplier<T> {
 	}
 
 	public int sizePipe(){
-		return queue.size();
+		return (int)(getAdded()-getPolled());
+		// size queze is O(n)
+		// return queue.size();
 	}
 
 	public boolean isEmpty(){
