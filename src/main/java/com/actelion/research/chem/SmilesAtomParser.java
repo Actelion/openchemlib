@@ -242,8 +242,23 @@ public class SmilesAtomParser {
 		while (squareBracketOpen) {
 			if (smiles[position] == '@') {
 				position++;
+				if ((smiles[position] == 'S' && smiles[position+1] == 'P')
+				 || (smiles[position] == 'T' && smiles[position+1] == 'B')
+				 || (smiles[position] == 'O' && smiles[position+1] == 'H')) {
+					// neglect square planar, trigonal bipyrimidal, or octahedral stereo chemistry
+					position+=2;
+					while (Character.isDigit(smiles[position]))
+						position++;
+					continue;
+				}
 				if (smiles[position] == '@') {
 					isClockwise = true;
+					position++;
+				}
+				else if ((smiles[position] == 'T' && smiles[position+1] == 'H')
+					  || (smiles[position] == 'A' && smiles[position+1] == 'L')) {
+					position+=2;
+					isClockwise = (smiles[position] == '2');
 					position++;
 				}
 				parityFound = true;
