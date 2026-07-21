@@ -60,10 +60,5 @@ public class MolecularComplexityCalculator {
 		SummaryFragments summaryFragments = new SummaryFragments(resultFragmentsStatistic);
 		return summaryFragments.getComplexityScore();
 	}
-	
-	public void roundUp() throws Throwable{
-		exhaustiveFragmentsStatistics.roundUp();
-	}
-
 
 }

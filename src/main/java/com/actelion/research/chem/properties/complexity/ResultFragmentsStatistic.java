@@ -71,9 +71,6 @@ public class ResultFragmentsStatistic {
 	 * @param liModelExhaustiveStatistics
 	 */
 	public ResultFragmentsStatistic(StereoMolecule mol,	List<ModelExhaustiveStatistics> liModelExhaustiveStatistics) {
-		super();
-		
-		
 		this.mol = mol;
 		this.liModelExhaustiveStatistics = liModelExhaustiveStatistics;
 	}
@@ -120,18 +117,13 @@ public class ResultFragmentsStatistic {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		
 		if(name!=null){
 			sb.append("Name " + name);
 			sb.append("\n");
 		}
-		
 		sb.append("Atoms " + getAtoms() + ", bonds " + getBonds() + ".");
-		
 		sb.append("\n");
-		
 		sb.append(ModelExhaustiveStatistics.toString(this));
-		
 		
 		return sb.toString();
 	}
@@ -139,28 +131,16 @@ public class ResultFragmentsStatistic {
 	public Element getXMLElement(Document doc) throws ParserConfigurationException, DOMException, IOException{
 		
         Element nodeRoot  = doc.createElement(TAG_ResultFragmentsStatistic);
-        
         nodeRoot.setAttribute(TAG_ATTR_NAME, name);
-        
         Canonizer can = new Canonizer(mol);
-        
         nodeRoot.setAttribute(TAG_ATTR_IDCODE, can.getIDCode());
-        
         nodeRoot.setAttribute(TAG_ATTR_COORD, can.getEncodedCoordinates());
-                                
         Element nodeListModelExhaustiveStatistics  = doc.createElement(TAG_LIST_ModelExhaustiveStatistics);
-
         for (ModelExhaustiveStatistics model : liModelExhaustiveStatistics) {
-			
             Element nodeModelExhaustiveStatistics  = model.getXMLElement(doc);
-            
-            
-
             nodeListModelExhaustiveStatistics.appendChild(nodeModelExhaustiveStatistics);
 		}
-                        
         nodeRoot.appendChild(nodeListModelExhaustiveStatistics);
-        
 		return nodeRoot;
 	}
 	
@@ -175,62 +155,35 @@ public class ResultFragmentsStatistic {
 	public static ResultFragmentsStatistic readXMLElement(Element root) throws ParserConfigurationException, DOMException, IOException{
 				
 		String name = root.getAttribute(TAG_ATTR_NAME);
-		
 		String idcode = root.getAttribute(TAG_ATTR_IDCODE);
-		
 		String coord = root.getAttribute(TAG_ATTR_COORD);
-		
-		
 		NodeList nl = root.getChildNodes();
-		
 		int len = nl.getLength();
-		
-		Element nodeListModelExhaustiveStatistics = null; 
+		Element nodeListModelExhaustiveStatistics = null;
 		
 		for (int i = 0; i < len; i++) {
 			Node node = nl.item(i);
-			
 			String nodeName = node.getNodeName();
-			
 			if(TAG_LIST_ModelExhaustiveStatistics.equals(nodeName)){
 				nodeListModelExhaustiveStatistics = (Element)node;
 				break;
 			}
-			
 		}
-		
-		
 		NodeList nlModelExhaustiveStatistics = nodeListModelExhaustiveStatistics.getChildNodes();
-		
 		List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = new ArrayList<ModelExhaustiveStatistics>();
-
 		for (int i = 0; i < nlModelExhaustiveStatistics.getLength(); i++) {
 			Node node = nlModelExhaustiveStatistics.item(i);
-			
 			String nodeName = node.getNodeName();
-			
 			if(ModelExhaustiveStatistics.TAG_ModelExhaustiveStatistics.equals(nodeName)){
 				Element nodeModelExhaustiveStatistics = (Element)node;
-				
 				ModelExhaustiveStatistics modelExhaustiveStatistics = ModelExhaustiveStatistics.readXMLElement(nodeModelExhaustiveStatistics);
-				
 				liModelExhaustiveStatistics.add(modelExhaustiveStatistics);
-				
 			}
-			
 		}
-		
 		IDCodeParser parser = new IDCodeParser(false);
-		
 		StereoMolecule mol = parser.getCompactMolecule(idcode, coord);
-		
 		ResultFragmentsStatistic resultFragmentsStatistic = new ResultFragmentsStatistic(mol, liModelExhaustiveStatistics);
-		
 		resultFragmentsStatistic.setName(name);
-		
-
 		return resultFragmentsStatistic;
 	}
-
-
 }

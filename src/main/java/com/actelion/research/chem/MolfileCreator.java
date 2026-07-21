@@ -128,7 +128,7 @@ public class MolfileCreator {
 
         String name = (mol.getName() != null) ? mol.getName() : "";
         mBuilder.append(name+nl);
-        mBuilder.append("OCL MolfileCreator   " + (mol.is3D() ? "3D" : "2D") + nl+nl);
+        mBuilder.append("OCL MolfileCreator  "+(mol.is3D()?"3D":"2D")+nl+nl);
 
         appendThreeDigitInt(mol.getAllAtoms());
         appendThreeDigitInt(mol.getAllBonds());
