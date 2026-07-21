@@ -47,10 +47,6 @@ import java.util.List;
  */
 public class ResultFracDimCalc extends InputObjectFracDimCalc {
 
-
-
-    int idMolecule;
-
     double fractalDimension;
 
     int atomCount;
@@ -63,22 +59,24 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
 
     String message;
 
+    public ResultFracDimCalc(ResultFracDimCalc r) {
+        super(r);
+        fractalDimension = r.getFractalDimension();
+        atomCount = r.getAtomCount();
+        bondCount = r.getBondCount();
+        bondsAtMaxFrag = r.getBondsAtMaxFrag();
+        maxNumUniqueFrags = r.maxNumUniqueFrags;
+        sumUniqueFrags = r.getSumUniqueFrags();
+        message = r.getMessage();
+    }
     public ResultFracDimCalc(InputObjectFracDimCalc inputObjectFracDimCalc) {
         super(inputObjectFracDimCalc);
-
-        idMolecule = -1;
-
         fractalDimension = Double.NaN;
-
         atomCount = ExtendedMoleculeFunctions.getNumNonHydrogenAtoms(inputObjectFracDimCalc.getData());
         bondCount = ExtendedMoleculeFunctions.getNumBondsNoHydrogen(inputObjectFracDimCalc.getData());
-
         bondsAtMaxFrag = -1;
-
         maxNumUniqueFrags = -1;
-
         sumUniqueFrags = -1;
-
         message = "";
     }
 
@@ -133,5 +131,7 @@ public class ResultFracDimCalc extends InputObjectFracDimCalc {
 
         return sb.toString();
     }
+
+
 
 }
