@@ -186,8 +186,6 @@ public class FractalDimensionMoleculeMain {
 
         bw.close();
 
-        fractalDimensionMolecule.finalizeThreads();
-
         System.out.println("Wrote output into " + fiOutTbl.getAbsolutePath() + ".");
 
         System.out.println("Finished");

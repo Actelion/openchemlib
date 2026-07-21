@@ -74,13 +74,9 @@ public class ModelExhaustiveStatistics {
 	private double ratioCoveredBonds;
 		
 	public ModelExhaustiveStatistics(int numBondsInFrag, int nFragments, int nUnique, double ratioCoveredBonds) {
-				
 		this.numBondsInFrag = numBondsInFrag;
-		
 		this.nFragments = nFragments;
-		
 		this.nUnique = nUnique;
-		
 		this.ratioCoveredBonds = ratioCoveredBonds;
 	}
 	
@@ -261,8 +257,4 @@ public class ModelExhaustiveStatistics {
 		
 		return modelExhaustiveStatistics;
 	}
-	
-	
-
-
 }

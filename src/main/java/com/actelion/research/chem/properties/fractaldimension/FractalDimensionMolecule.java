@@ -99,8 +99,6 @@ public class FractalDimensionMolecule {
             return resultFracDimCalc;
         }
 
-
-
         int maxNumBondsStats = bonds -1;
         if(bonds>BONDS_LIMIT_STATS)
             maxNumBondsStats = bonds - 2;
@@ -111,11 +109,15 @@ public class FractalDimensionMolecule {
 
         List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = resultFragmentsStatistic.getExhaustiveStatistics();
 
-
         List<Point> liFragBnds_NumUniqueFrags = new ArrayList<>();
 
-        for (ModelExhaustiveStatistics modelExhaustiveStatistic : liModelExhaustiveStatistics) {
-            liFragBnds_NumUniqueFrags.add(new Point(modelExhaustiveStatistic.getNumBondsInFragment(), modelExhaustiveStatistic.getUnique()));
+        for (int i = 0; i < liModelExhaustiveStatistics.size(); i++) {
+            ModelExhaustiveStatistics modelExhaustiveStatistic = liModelExhaustiveStatistics.get(i);
+
+            int bnds = modelExhaustiveStatistic.getNumBondsInFragment();
+            int unique = modelExhaustiveStatistic.getUnique();
+
+            liFragBnds_NumUniqueFrags.add(new Point(bnds, unique));
         }
 
         Collections.sort(liFragBnds_NumUniqueFrags, PointUtils.getComparatorX());
@@ -135,13 +137,6 @@ public class FractalDimensionMolecule {
             resultFracDimCalc.sumUniqueFrags = getSumUniqueFrags(liFragBnds_NumUniqueFrags);
         }
         return resultFracDimCalc;
-    }
-
-
-    public void finalizeThreads() throws Throwable {
-        if(exhaustiveFragmentsStatistics!=null) {
-            exhaustiveFragmentsStatistics.roundUp();
-        }
     }
 
     public static int getSumUniqueFrags(List<Point> liFragBnds_NumUniqueFrags) {

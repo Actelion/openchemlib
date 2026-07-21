@@ -45,7 +45,6 @@ public class RunBondVector2IdCode implements Runnable {
 
     private static final long SLEEP = 10;
 
-    private int id;
 
     private Pipeline<IBitArray> pipeInputFragIndexListsFromEFG;
 
@@ -57,29 +56,23 @@ public class RunBondVector2IdCode implements Runnable {
 
     private AtomicInteger processedFragments;
 
-    public RunBondVector2IdCode(int id, Pipeline<IBitArray> pipeInputFragIndexListsFromEFG, Pipeline<FragmentDefinedByBondsIdCode> pipeOutputFragmentDefinedByBondsIdCode) {
-
-        this.id = id;
-
-        this.pipeInputFragIndexListsFromEFG = pipeInputFragIndexListsFromEFG;
-
-        this.pipeOutputFragmentDefinedByBondsIdCode = pipeOutputFragmentDefinedByBondsIdCode;
-
-        endOfRunReached = new AtomicBoolean(false);
-    }
-
-    public void init(StereoMolecule mol){
+    public RunBondVector2IdCode(StereoMolecule mol) {
         StereoMolecule molCopy = new StereoMolecule(mol);
         molCopy.ensureHelperArrays(Molecule.cHelperCIP);
-        bondVector2IdCode = new BondVector2IdCode(molCopy);
-        processedFragments = new AtomicInteger();
+        this.bondVector2IdCode = new BondVector2IdCode(molCopy);
+        this.processedFragments = new AtomicInteger();
+        this.endOfRunReached = new AtomicBoolean(false);
     }
 
+    public void init(Pipeline<IBitArray> pipeInputFragIndexListsFromEFG, Pipeline<FragmentDefinedByBondsIdCode> pipeOutputFragmentDefinedByBondsIdCode) {
+        endOfRunReached.set(false);
+        this.pipeInputFragIndexListsFromEFG = pipeInputFragIndexListsFromEFG;
+        this.pipeOutputFragmentDefinedByBondsIdCode = pipeOutputFragmentDefinedByBondsIdCode;
+    }
 
     public void run() {
 
         try {
-
             while(!pipeInputFragIndexListsFromEFG.wereAllDataFetched()){
                 IBitArray livIndexBond = pipeInputFragIndexListsFromEFG.pollData();
                 if(livIndexBond == null){
