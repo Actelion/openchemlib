@@ -94,75 +94,55 @@ public class ModelMedianDouble {
 	
 	
 	public String toString() {
-		StringBuilder sb = new StringBuilder(); 
-		
+		StringBuilder sb = new StringBuilder();
 		sb.append(Formatter.format4(lowerQuartile));
 		sb.append("\t");
 		sb.append(Formatter.format4(median));
 		sb.append("\t");
 		sb.append(Formatter.format4(upperQuartile));
-		
 		return sb.toString();
 	}
 	
 	public static String toString(List<ModelMedianDouble> liModelMedian) {
 		
-		StringBuilder sb = new StringBuilder(); 
-		
+		StringBuilder sb = new StringBuilder();
 		int length = LENGTH;
-
 		int lengthText = 15;
 		
 		sb.append(StringFunctions.format2DefinedLengthTrailing("Id", lengthText));
 		for (int i = 0; i < liModelMedian.size(); i++) {
 			ModelMedianDouble m = liModelMedian.get(i);
-			
 			String s = StringFunctions.format2DefinedLengthLeading(Integer.toString(m.id), length);
-			
 			sb.append(s);
 		}
 		
 		sb.append("\n");
-		
 		sb.append(StringFunctions.format2DefinedLengthTrailing("Upper quartile", lengthText));
 		for (int i = 0; i < liModelMedian.size(); i++) {
 			ModelMedianDouble m = liModelMedian.get(i);
-			
 			String s = StringFunctions.format2DefinedLengthLeading(Formatter.format2(m.upperQuartile), length);
-			
 			sb.append(s);
 		}
-		
 		sb.append("\n");
-		
 		sb.append(StringFunctions.format2DefinedLengthTrailing("Median", lengthText));
 		for (int i = 0; i < liModelMedian.size(); i++) {
 			ModelMedianDouble m = liModelMedian.get(i);
-			
 			String s = StringFunctions.format2DefinedLengthLeading(Formatter.format2(m.median), length);
-			
 			sb.append(s);
 		}
-		
 		sb.append("\n");
-		
 		sb.append(StringFunctions.format2DefinedLengthTrailing("Lower quartile", lengthText));
 		for (int i = 0; i < liModelMedian.size(); i++) {
 			ModelMedianDouble m = liModelMedian.get(i);
-			
 			String s = StringFunctions.format2DefinedLengthLeading(Formatter.format2(m.lowerQuartile), length);
-			
 			sb.append(s);
 		}
 		
 		sb.append("\n");
-		
 		sb.append(StringFunctions.format2DefinedLengthTrailing("Size", lengthText));
 		for (int i = 0; i < liModelMedian.size(); i++) {
 			ModelMedianDouble m = liModelMedian.get(i);
-			
 			String s = StringFunctions.format2DefinedLengthLeading(Integer.toString(m.size), length);
-			
 			sb.append(s);
 		}
 		

@@ -213,9 +213,7 @@ public class ExhaustiveFragmentsStatistics {
 			try {Thread.sleep(SLEEP);} catch (InterruptedException e) {e.printStackTrace();}
 		}
 
-		List<ModelExhaustiveStatistics> liModelExhaustiveStatisticsCpy = new ArrayList<>(liModelExhaustiveStatistics);
-
-		ResultFragmentsStatistic fragmentsStatistic = new ResultFragmentsStatistic(mol, liModelExhaustiveStatisticsCpy);
+		ResultFragmentsStatistic fragmentsStatistic = new ResultFragmentsStatistic(mol, liModelExhaustiveStatistics);
 		
 		return fragmentsStatistic;
 	}

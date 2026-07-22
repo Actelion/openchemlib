@@ -57,9 +57,7 @@ import java.util.List;
 public class FractalDimensionMolecule {
 
     public static final String MSG_ZERO = "Zero by definition. Max bond count at one bond.";
-
     private static final int MAX_THREADS_BOND_VECTOR_TO_IDCODE = 12;
-
     private static final int BONDS_LIMIT_STATS = 18;
 
     private ExhaustiveFragmentsStatistics exhaustiveFragmentsStatistics;
@@ -67,30 +65,19 @@ public class FractalDimensionMolecule {
     boolean elusive;
 
     public FractalDimensionMolecule(int totalCapacity, boolean elusive) {
-
         ExhaustiveFragmentsStatistics.setELUSIVE(elusive);
-
         this.elusive = elusive;
-
-        // int threadsBondVector2IdCode = Runtime.getRuntime().availableProcessors()-1;
-
         int threadsBondVector2IdCode = Math.min(MAX_THREADS_BOND_VECTOR_TO_IDCODE, Runtime.getRuntime().availableProcessors()-1);
-
         if(threadsBondVector2IdCode==0){
             threadsBondVector2IdCode=1;
         }
-
         exhaustiveFragmentsStatistics = new ExhaustiveFragmentsStatistics(BitArray128.MAX_NUM_BITS, threadsBondVector2IdCode, totalCapacity);
     }
 
     public ResultFracDimCalc process(InputObjectFracDimCalc inputObjectFracDimCalc){
-
         ResultFracDimCalc resultFracDimCalc = new ResultFracDimCalc(inputObjectFracDimCalc);
-
         StereoMolecule mol = inputObjectFracDimCalc.getData();
-
         int bonds = inputObjectFracDimCalc.getData().getBonds();
-
         if(bonds<3){
             resultFracDimCalc.message = "Num bonds in molecule below limit of 3.";
             return resultFracDimCalc;
@@ -103,20 +90,16 @@ public class FractalDimensionMolecule {
         if(bonds>BONDS_LIMIT_STATS)
             maxNumBondsStats = bonds - 2;
 
-        System.out.println("Process molecule " + inputObjectFracDimCalc.getId() + " with " + bonds + " bonds. maxNumBondsStats " + maxNumBondsStats + ".");
+        if(elusive)
+            System.out.println("Process molecule " + inputObjectFracDimCalc.getId() + " with " + bonds + " bonds. maxNumBondsStats " + maxNumBondsStats + ".");
 
         ResultFragmentsStatistic resultFragmentsStatistic = exhaustiveFragmentsStatistics.create(mol, maxNumBondsStats);
-
         List<ModelExhaustiveStatistics> liModelExhaustiveStatistics = resultFragmentsStatistic.getExhaustiveStatistics();
-
         List<Point> liFragBnds_NumUniqueFrags = new ArrayList<>();
-
         for (int i = 0; i < liModelExhaustiveStatistics.size(); i++) {
             ModelExhaustiveStatistics modelExhaustiveStatistic = liModelExhaustiveStatistics.get(i);
-
             int bnds = modelExhaustiveStatistic.getNumBondsInFragment();
             int unique = modelExhaustiveStatistic.getUnique();
-
             liFragBnds_NumUniqueFrags.add(new Point(bnds, unique));
         }
 
@@ -140,46 +123,32 @@ public class FractalDimensionMolecule {
     }
 
     public static int getSumUniqueFrags(List<Point> liFragBnds_NumUniqueFrags) {
-
         int sum = 0;
-
         int indexMaxNumUniqueFrags = getIndexMaxNumUniqueFrags(liFragBnds_NumUniqueFrags);
-
         int end = indexMaxNumUniqueFrags+1;
-
         for (int i = 0; i < end; i++) {
             int nFragsUnique = liFragBnds_NumUniqueFrags.get(i).y;
             sum += nFragsUnique;
         }
-
         return sum;
     }
 
     public static Point getMaxNumUniqueFrags(List<Point> liFragBnds_NumUniqueFrags) {
-
         int indexMaxNumUniqueFrags = getIndexMaxNumUniqueFrags(liFragBnds_NumUniqueFrags);
-
         return liFragBnds_NumUniqueFrags.get(indexMaxNumUniqueFrags);
     }
 
     public static int getIndexMaxNumUniqueFrags(List<Point> liFragBnds_NumUniqueFrags){
-
         int indexMaxNumUniqueFrags = -1;
-
         int maxNumUniqueFrags = 0;
-
         for (int i = 0; i < liFragBnds_NumUniqueFrags.size(); i++) {
             Point pFragBnds_NumUniqueFrags = liFragBnds_NumUniqueFrags.get(i);
-
             int nUniqueFrags = pFragBnds_NumUniqueFrags.y;
-
             if(nUniqueFrags>maxNumUniqueFrags){
                 maxNumUniqueFrags=nUniqueFrags;
                 indexMaxNumUniqueFrags=i;
             }
         }
-
         return indexMaxNumUniqueFrags;
     }
-
 }
