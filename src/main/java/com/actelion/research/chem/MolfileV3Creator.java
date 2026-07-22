@@ -112,7 +112,7 @@ public class MolfileV3Creator
 
 		String name = (mol.getName() != null) ? mol.getName() : "";
 		mMolfile.append(name + nl);
-		mMolfile.append("Actelion Java MolfileCreator 2.0"+nl+nl);
+		mMolfile.append("OCL MolfileCreator  "+(mol.is3D()?"3D":"2D")+nl+nl);
 		mMolfile.append("  0  0  0  0  0  0              0 V3000"+nl);
 
 		mScalingFactor = 1.0;

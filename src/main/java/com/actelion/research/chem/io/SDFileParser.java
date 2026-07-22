@@ -40,6 +40,8 @@ import com.actelion.research.io.BOMSkipper;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 
 public class SDFileParser extends CompoundFileParser {
     private static final int DEFAULT_RECORDS_TO_INSPECT = 10240;
@@ -63,7 +65,15 @@ public class SDFileParser extends CompoundFileParser {
 		mFieldName = fieldName;
 		
 		try {
-			mReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8));
+			InputStream is = new FileInputStream(fileName);
+			if (fileName.toLowerCase().endsWith(".gz"))
+				is = new GZIPInputStream(is);
+			else if (fileName.toLowerCase().endsWith(".zip")) {
+				ZipInputStream zis = new ZipInputStream(is);
+				zis.getNextEntry();
+				is = zis;
+			}
+			mReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
 		} catch (IOException e) {
 			mReader = null;
@@ -82,7 +92,16 @@ public class SDFileParser extends CompoundFileParser {
         mNoOfRecords = -1;
 		mFieldName = fieldName;
 		try {
-    		mReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+			InputStream is = new FileInputStream(file);
+			String name = file.getName().toLowerCase();
+			if (name.endsWith(".gz"))
+				is = new GZIPInputStream(is);
+			else if (name.endsWith(".zip")) {
+				ZipInputStream zis = new ZipInputStream(is);
+				zis.getNextEntry();
+				is = zis;
+			}
+    		mReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
 			BOMSkipper.skip(mReader);
 		} catch (IOException e) {
 			mReader = null;

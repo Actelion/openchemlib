@@ -206,7 +206,7 @@ public abstract class CompoundFileHelper {
 	    	return;
 		    }
 
-	    CompoundFileParser parser = (extention.equals(".sdf")) ?
+	    CompoundFileParser parser = (extention.equals(".sdf") || extention.equals(".sdf.gz") || extention.equals(".sdf.zip")) ?
 	                                           new SDFileParser(file)
 	                              : (extention.equals(".dwar")) ?
 	                                           new DWARFileParser(file)
