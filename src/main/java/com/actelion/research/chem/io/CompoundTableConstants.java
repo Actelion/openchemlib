@@ -184,6 +184,7 @@ public interface CompoundTableConstants {
     String cColumnPropertySuperposeAlign = "align";  // cSuperposeAlignValueShape or null
     String cColumnProperty3DFragmentSplit = "split3D"; // if "true": unconnected fragments of 3D-structure are shown as differently colored V3DMolecules
     String cColumnPropertyProteinCavityColumn = "proteinCavityColumn";	// for a ligand 3D-coords column this refers to a cavity 3D-coords column
+    String cColumnPropertyCavityWaterColumn = "cavityWaterColumn";	// for a ligand 3D-coords column this refers to a cavity water 3D-coords column
     String cColumnPropertyCalculated = "calculated"; //for columns that can be calculated by a task
     String cColumnPropertyChemistryDisplayMode = "chemistryDisplayMode"; // display mode for molecules, e.g. to better recognize query features
     String cColumnPropertyChemistryTextSize = "chemistryTextSize"; // display text size for molecule atom labels; default is 1.0

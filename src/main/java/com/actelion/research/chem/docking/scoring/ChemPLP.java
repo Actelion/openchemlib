@@ -46,7 +46,6 @@ public class ChemPLP extends AbstractScoringEngine {
 	private ForceFieldMMFF94 ff;
 	private double e0;
 
-
 	public ChemPLP(Molecule3D receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid) {
 		super(receptor, bindingSiteAtoms, grid);
 		receptorAcceptors = new HashSet<>();
@@ -84,7 +83,7 @@ public class ChemPLP extends AbstractScoringEngine {
 
 		return energy;
 	}
-	
+
 	@Override 
 	public void updateState() {
 		ff.setState(candidatePose.getCartState());
@@ -117,6 +116,35 @@ public class ChemPLP extends AbstractScoringEngine {
 //		double deltaE = e - e0;
 
 // suggested by Joel (global-min e0 instead of local one):
+		double deltaE = e - this.e0;
+
+		if(deltaE>STRAIN_CUTOFF)
+			energy += deltaE-STRAIN_CUTOFF;
+
+//		return energy;	// was original
+		return energy - deltaE;	// subtracted deltaE to achieve high inverse correlation with GOLD PLP Score (CASF dataset)
+	}
+
+	public double getScoreOrig() {	// TODO remove
+		double[] gradient = new double[3*candidatePose.getLigConf().getMolecule().getAllAtoms()];
+		double energy = getBumpTerm();
+		for(PotentialEnergyTerm term : chemScoreHbond)
+			energy+=term.getFGValue(gradient);
+		for(PotentialEnergyTerm term : getMetalTerm(chemScoreMetal))
+			energy+=term.getFGValue(gradient);
+		for(PotentialEnergyTerm term : plp)
+			energy += term.getFGValue(gradient);
+		Map<String, Object> ffOptions = new HashMap<String, Object>();
+		ffOptions.put("dielectric constant", 80.0);
+
+		ForceFieldMMFF94.initialize(ForceFieldMMFF94.MMFF94SPLUS);
+
+		StereoMolecule toOptimize = new StereoMolecule(candidatePose.getLigConf().toMolecule());
+		toOptimize.ensureHelperArrays(Molecule.cHelperCIP);
+
+		ForceFieldMMFF94 ff = new ForceFieldMMFF94(toOptimize, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
+		double e = ff.getTotalEnergy();
+
 		double deltaE = e - this.e0;
 
 		if(deltaE>STRAIN_CUTOFF)
@@ -555,9 +583,10 @@ public class ChemPLP extends AbstractScoringEngine {
 		toOptimize.ensureHelperArrays(Molecule.cHelperCIP);
 		ForceFieldMMFF94 ff = new ForceFieldMMFF94(toOptimize, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
 		double e = ff.getTotalEnergy();
-		ff.minimise();
-		double e0 = ff.getTotalEnergy();
-		double deltaE = e-e0;
+//		ff.minimise();
+//		double e0 = ff.getTotalEnergy();
+//		double deltaE = e-e0;
+		double deltaE = e - this.e0;	// as in getScore() we use the global min
 		if(deltaE>STRAIN_CUTOFF) {
 			strain += deltaE-STRAIN_CUTOFF;
 		}
