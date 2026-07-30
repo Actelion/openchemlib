@@ -383,9 +383,9 @@ public class PDBFileParser {
 	        // Mandatory if ATOM records exist.
 	        // Primary sequence of backbone residues.
 	        if(liRaw.get(indexLine).startsWith(TAG_SEQRES)) {
-	            ListInteger<String> liIndexChains = parseMultipleTimesMultipleLinesSEQRES(liRaw, indexLine, TAG_SEQRES);
-	            pdbFileEntry.setSEQRES(liIndexChains.getLi());
-	            indexLine = liIndexChains.getId();
+				List<String> liChain = new ArrayList<>();
+				indexLine = parseMultipleTimesMultipleLinesSEQRES(liRaw, liChain, indexLine, TAG_SEQRES);
+	            pdbFileEntry.setSEQRES(liChain);
 	        }
 	
 	        // Mandatory if modified group exists in the coordinates.
@@ -689,7 +689,7 @@ public class PDBFileParser {
 		return lineIndex;
 	}
 
-	private static ListInteger<String> parseMultipleTimesMultipleLinesSEQRES(List<String> liRaw, int indexLine, String tag) throws ParseException {
+	private static int parseMultipleTimesMultipleLinesSEQRES(List<String> liRaw, List<String> liChain, int indexLine, String tag) throws ParseException {
 
         String l0 = liRaw.get(indexLine);
         if(!l0.startsWith(tag)) {
@@ -703,8 +703,6 @@ public class PDBFileParser {
         String chainId = l0.substring(11, 12);
 
         int numResidues = Integer.parseInt(l0.substring(13,17).trim());
-
-        List<String> liChain = new ArrayList<>();
 
         for (int i = start; i < liRaw.size(); i++) {
 
@@ -752,11 +750,6 @@ public class PDBFileParser {
             liChain.add(chain);
         }
 
-        ListInteger<String> listIndexLineChain = new ListInteger<String>(liChain, indexLine);
-
-        return listIndexLineChain;
-
+        return indexLine;
     }
-
-
 }

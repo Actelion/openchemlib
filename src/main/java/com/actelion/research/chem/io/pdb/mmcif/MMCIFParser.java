@@ -23,7 +23,7 @@ public class MMCIFParser {
 
 	public static PDBFileEntry getFromPDB(String pdbID) throws Exception {
 		URLConnection con = new URI("https://files.rcsb.org/download/"+pdbID+".cif.gz").toURL().openConnection();
-		return MMCIFParser.parse(new BufferedReader(new InputStreamReader(new GZIPInputStream(con.getInputStream()))));
+		return parse(new BufferedReader(new InputStreamReader(new GZIPInputStream(con.getInputStream()))));
 	}
 
 	public static PDBFileEntry parse(String filename) throws IOException {

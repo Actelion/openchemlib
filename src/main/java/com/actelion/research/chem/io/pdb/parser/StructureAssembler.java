@@ -6,6 +6,7 @@ import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.HydrogenAssembler;
 import com.actelion.research.chem.conf.VDWRadii;
+import com.actelion.research.chem.interactions.statistics.WaterInteractionHelper;
 import com.actelion.research.chem.io.pdb.calc.BondOrderCalculator;
 import com.actelion.research.chem.io.pdb.calc.BondsCalculator;
 import com.actelion.research.util.IntArrayComparator;
@@ -29,14 +30,6 @@ public class StructureAssembler {
 	// Numbers taken from DOI 10.1038/s41598-023-43659-w; Mark Kriegel & Yves A. Muller; 2023
 	// De novo prediction of explicit water molecule positions by a novel algorithm within the protein design software MUMBO
 	private static final double MIN_PROTEIN_NEIGHBOR_COUNT_FOR_HAPPY_WATER = 2;
-	private static final double WATER_OXYGEN_DISTANCE = 2.73;
-	private static final double WATER_NITROGEN_DISTANCE = 2.87;
-	private static final double WATER_ANY_HETERO_DISTANCE = 2.73;
-	private static final double WATER_OXYGEN_DISTANCE_TOLERANCE = 2 * 0.08;	// mean distance plus 2.0 * stddev
-	private static final double WATER_NITROGEN_DISTANCE_TOLERANCE = 2 * 0.11;
-	private static final double WATER_ANY_HETERO_DISTANCE_TOLERANCE = 2 * 0.09;
-	private static final double WATER_NEIGHBOR_ANGLE = 111.0/180.0*Math.PI;
-	private static final double WATER_NEIGHBOR_ANGLE_TOLERANCE = 15.0/180.0*Math.PI;
 
 	private final SortedList<int[]> mTemplateConnectionList,mNonStandardConnectionList;
 	private final List<AtomRecord> mAtomList;
@@ -134,11 +127,10 @@ public class StructureAssembler {
 			if (Molecule.isAtomicNoMetal(atom.getAtomicNo()))
 				metalAtoms.add(atom);
 			else if (Molecule.isAtomicNoElectronegative(atom.getAtomicNo()))
-//			 && (atom.isHetAtom() || !atom.getResName().startsWith("HOH")))
 				heteroAtoms.add(atom);
 			if (atom.getAtomicNo() == 16)
 				sulfurAtoms.add(atom);
-			if (atom.getAtomicNo() == 8 && atom.getResName().startsWith("HOH"))
+			if (mAssignHappyWaterToProtein && atom.getAtomicNo() == 8 && atom.getResName().startsWith("HOH"))
 				waterAtoms.add(atom);
 		}
 
@@ -158,9 +150,11 @@ public class StructureAssembler {
 			ArrayList<AtomRecord> heteroNeighbors = new ArrayList<>();
 			for (AtomRecord water : waterAtoms) {
 				heteroNeighbors.clear();
-				for (AtomRecord hetero : heteroAtoms)
-					if (qualifiesAsWaterNeighbour(water, hetero))
+				for (AtomRecord hetero : heteroAtoms) {
+					double distance = water.getAtomCoordinates().distance(hetero.getAtomCoordinates());
+					if (WaterInteractionHelper.qualifiesAsWaterNeighbour(hetero.getAtomicNo(), distance))
 						heteroNeighbors.add(hetero);
+				}
 				mSerial2WaterNeighborMap.put(water.getSerialId(), heteroNeighbors.toArray(new AtomRecord[0]));
 			}
 		}
@@ -183,23 +177,6 @@ public class StructureAssembler {
 				}
 			}
 		}
-	}
-
-	private boolean qualifiesAsWaterNeighbour(AtomRecord water, AtomRecord hetero) {
-		double distance = water.getAtomCoordinates().distance(hetero.getAtomCoordinates());
-		if (hetero.getAtomicNo() == 7) {
-			if (Math.abs(distance-WATER_NITROGEN_DISTANCE) < WATER_NITROGEN_DISTANCE_TOLERANCE)
-				return true;
-		}
-		else if (hetero.getAtomicNo() == 8) {
-			if (Math.abs(distance-WATER_OXYGEN_DISTANCE) < WATER_OXYGEN_DISTANCE_TOLERANCE)
-				return true;
-		}
-		else {
-			if (Math.abs(distance-WATER_ANY_HETERO_DISTANCE) < WATER_ANY_HETERO_DISTANCE)
-				return true;
-		}
-		return false;
 	}
 
 	private void buildProtein(TreeMap<String,Residue> proteinResidueMap) {
@@ -392,7 +369,7 @@ public class StructureAssembler {
 				int correctAngleCount = 0;
 				for (int i=1; i<neighbor.length; i++)
 					for (int j=0; j<i; j++)
-						if (Math.abs(vec[i].getAngle(vec[j]) - WATER_NEIGHBOR_ANGLE) < WATER_NEIGHBOR_ANGLE_TOLERANCE)
+						if (WaterInteractionHelper.qualifiesAsWaterAngle(vec[i].getAngle(vec[j])))
 							correctAngleCount++;
 
 				int minCount = MIN_PROTEIN_NEIGHBOR_COUNT_FOR_HAPPY_WATER == 1 ? 0
