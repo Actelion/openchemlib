@@ -147,15 +147,18 @@ public class StructureAssembler {
 						addConnectionIfDistanceSmallerThan(sulfurAtoms.get(j), sulfurAtoms.get(i), 3.0);
 
 		if (mAssignHappyWaterToProtein) {
-			ArrayList<AtomRecord> heteroNeighbors = new ArrayList<>();
+			ArrayList<AtomRecord> proteinAndWaterNeighbors = new ArrayList<>();
 			for (AtomRecord water : waterAtoms) {
-				heteroNeighbors.clear();
+				proteinAndWaterNeighbors.clear();
 				for (AtomRecord hetero : heteroAtoms) {
 					double distance = water.getAtomCoordinates().distance(hetero.getAtomCoordinates());
-					if (WaterInteractionHelper.qualifiesAsWaterNeighbour(hetero.getAtomicNo(), distance))
-						heteroNeighbors.add(hetero);
+					if (WaterInteractionHelper.qualifiesAsWaterNeighbour(hetero.getAtomicNo(), distance)) {
+						if ((hetero.getAtomicNo() == 8 && hetero.getResName().startsWith("HOH"))
+						 || PROTEIN_GROUP.equals(getAssignedGroup(hetero)))
+							proteinAndWaterNeighbors.add(hetero);
+					}
 				}
-				mSerial2WaterNeighborMap.put(water.getSerialId(), heteroNeighbors.toArray(new AtomRecord[0]));
+				mSerial2WaterNeighborMap.put(water.getSerialId(), proteinAndWaterNeighbors.toArray(new AtomRecord[0]));
 			}
 		}
 	}
@@ -348,37 +351,64 @@ public class StructureAssembler {
 	}
 
 	private void mergeHappyWaterWithProtein() {
+		TreeSet<Integer> happyWaterSet = new TreeSet<>();
+		TreeSet<Integer> happyWaterCandidateSet = new TreeSet<>();
+
+		// First we determine happy water as water with at least three protein neighbours and three perfect neighbour angles
+		// In addition we determine happy water candidates with just two protein neighbours and a perfect neighbour angle between them
 		for (int serial : mSerial2WaterNeighborMap.keySet()) {
 			AtomRecord water = mSerial2AtomRecordMap.get(serial);
-			AtomRecord[] neighbor = mSerial2WaterNeighborMap.get(serial);
+			AtomRecord[] proteinAndWaterNeighbor = mSerial2WaterNeighborMap.get(serial);
 
 			int proteinNeighborCount = 0;
-			for (int i=0; i<neighbor.length; i++)
-				if (PROTEIN_GROUP.equals(getAssignedGroup(neighbor[i])))
+			for (int i=0; i<proteinAndWaterNeighbor.length; i++)
+				if (PROTEIN_GROUP.equals(getAssignedGroup(proteinAndWaterNeighbor[i])))
 					proteinNeighborCount++;
 
 			if (proteinNeighborCount < MIN_PROTEIN_NEIGHBOR_COUNT_FOR_HAPPY_WATER)
 				continue;
 
-			if (neighbor.length >= MIN_PROTEIN_NEIGHBOR_COUNT_FOR_HAPPY_WATER) {
-				Coordinates cw = water.getAtomCoordinates();
-				Coordinates[] vec = new Coordinates[neighbor.length];
-				for (int i=0; i<neighbor.length; i++)
-					vec[i] = cw.subC(neighbor[i].getAtomCoordinates());
+			int perfectAngeCount = getPerfectWaterAngleCount(water, proteinAndWaterNeighbor, false);
+			if (proteinNeighborCount >= 3 && perfectAngeCount >= 3)
+				happyWaterSet.add(serial);
+			else if (proteinNeighborCount == 2 && perfectAngeCount >= 1)
+				happyWaterCandidateSet.add(serial);
+		}
 
-				int correctAngleCount = 0;
-				for (int i=1; i<neighbor.length; i++)
-					for (int j=0; j<i; j++)
-						if (WaterInteractionHelper.qualifiesAsWaterAngle(vec[i].getAngle(vec[j])))
-							correctAngleCount++;
+		// Now we check all candidates, whether they are connected to another candidate or a happy water,
+		// in which case we consider them as happy as well.
+		for (int serial : happyWaterCandidateSet) {
+			AtomRecord water = mSerial2AtomRecordMap.get(serial);
+			AtomRecord[] proteinAndWaterNeighbor = mSerial2WaterNeighborMap.get(serial);
 
-				int minCount = MIN_PROTEIN_NEIGHBOR_COUNT_FOR_HAPPY_WATER == 1 ? 0
-							 : MIN_PROTEIN_NEIGHBOR_COUNT_FOR_HAPPY_WATER == 2 ? 1 : 3;
-
-				if (correctAngleCount >= minCount)
-					reassignGroup(water.getGroupName(), PROTEIN_GROUP);
+			for (int i=0; i<proteinAndWaterNeighbor.length; i++) {
+				if ((happyWaterSet.contains(serial) || happyWaterCandidateSet.contains(serial))
+				 && getPerfectWaterAngleCount(water, proteinAndWaterNeighbor, true) >= 3) {
+					happyWaterSet.add(serial);
+					break;
+				}
 			}
 		}
+
+		for (int serial : happyWaterSet)
+			reassignGroup(mSerial2AtomRecordMap.get(serial).getGroupName(), PROTEIN_GROUP);
+	}
+
+	private int getPerfectWaterAngleCount(AtomRecord water, AtomRecord[] heteroNeighbor, boolean allowWaterAtoms) {
+		Coordinates cw = water.getAtomCoordinates();
+		Coordinates[] vec = new Coordinates[heteroNeighbor.length];
+		for (int i=0; i<heteroNeighbor.length; i++)
+			vec[i] = cw.subC(heteroNeighbor[i].getAtomCoordinates());
+
+		int perfectAngleCount = 0;
+		for (int i=1; i<heteroNeighbor.length; i++)
+			if (allowWaterAtoms || heteroNeighbor[i].getAtomicNo() != 8 || !heteroNeighbor[i].getResName().startsWith("HOH"))
+				for (int j=0; j<i; j++)
+					if (allowWaterAtoms || heteroNeighbor[j].getAtomicNo() != 8 || !heteroNeighbor[j].getResName().startsWith("HOH"))
+						if (WaterInteractionHelper.qualifiesAsWaterAngle(vec[i].getAngle(vec[j])))
+							perfectAngleCount++;
+
+		return perfectAngleCount;
 	}
 
 	/**
