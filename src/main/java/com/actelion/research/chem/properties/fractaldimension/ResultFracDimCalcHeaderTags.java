@@ -33,8 +33,6 @@
 
 package com.actelion.research.chem.properties.fractaldimension;
 
-import com.actelion.research.util.ConstantsDWAR;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +83,7 @@ public class ResultFracDimCalcHeaderTags {
     private String tagColumnIdCode;
 
     public ResultFracDimCalcHeaderTags() {
-        this(ConstantsDWAR.TAG_IDCODE2);
+        this("Structure");
     }
     public ResultFracDimCalcHeaderTags(String tagColumnIdCode) {
         this.tagColumnIdCode = tagColumnIdCode;
