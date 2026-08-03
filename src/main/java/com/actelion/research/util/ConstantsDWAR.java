@@ -33,6 +33,8 @@
 
 package com.actelion.research.util;
 
+import com.actelion.research.chem.io.CompoundTableConstants;
+
 import java.text.SimpleDateFormat;
 
 /**
@@ -58,7 +60,8 @@ public class ConstantsDWAR {
 
 
 	// Separator for values in DataWarrior file.
-	public static final String SEP_VALUE = "; ";
+	// use CompoundTableConstants.cEntrySeparator instead
+	// public static final String SEP_VALUE = "; ";
 	
 	// Line separator for multiple idcodes in a DataWarrior field
 	public static final String SEP_LINE = "<NL>";

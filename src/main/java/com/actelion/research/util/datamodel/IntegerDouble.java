@@ -37,7 +37,7 @@
  */
 package com.actelion.research.util.datamodel;
 
-import com.actelion.research.util.ConstantsDWAR;
+import com.actelion.research.chem.io.CompoundTableConstants;
 import com.actelion.research.util.Formatter;
 
 import java.text.NumberFormat;
@@ -109,7 +109,7 @@ public class IntegerDouble {
 
 		for (IntegerDouble id : li) {
 			if(sb.length()>0){
-				sb.append(ConstantsDWAR.SEP_VALUE);
+				sb.append(CompoundTableConstants.cEntrySeparator);
 			}
 			sb.append(df.format(id.getDouble()));
 		}
@@ -123,7 +123,7 @@ public class IntegerDouble {
 
 		for (IntegerDouble id : arr) {
 			if(sb.length()>0){
-				sb.append(ConstantsDWAR.SEP_VALUE);
+				sb.append(CompoundTableConstants.cEntrySeparator);
 			}
 			sb.append(df.format(id.getDouble()));
 		}

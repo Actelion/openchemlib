@@ -33,6 +33,7 @@
 
 package com.actelion.research.util;
 
+import com.actelion.research.chem.io.CompoundTableConstants;
 import com.actelion.research.util.datamodel.DoubleArray;
 
 import java.awt.Point;
@@ -912,7 +913,7 @@ public class StringFunctions {
 
 			sb.append(str);
 			if(i < arr.length-1){
-				sb.append(ConstantsDWAR.SEP_VALUE);
+				sb.append(CompoundTableConstants.cEntrySeparator);
 			}
 		}
 		return sb.toString();
@@ -924,7 +925,7 @@ public class StringFunctions {
 		for (int i = 0; i < arr.length; i++) {
 			sb.append(nf.format(arr[i]));
 			if(i < arr.length-1){
-				sb.append(ConstantsDWAR.SEP_VALUE);
+				sb.append(CompoundTableConstants.cEntrySeparator);
 			}
 		}
 		return sb.toString();
@@ -937,7 +938,7 @@ public class StringFunctions {
 			int v = arr[i];
 			sb.append(v);
 			if(i < arr.length-1){
-				sb.append(ConstantsDWAR.SEP_VALUE);
+				sb.append(CompoundTableConstants.cEntrySeparator);
 			}
 		}
 		return sb.toString();
@@ -991,7 +992,7 @@ public class StringFunctions {
         for (int i = 0; i < li.size(); i++) {
             sb.append(nf.format(li.get(i)));
             if(i < li.size()-1){
-                sb.append(ConstantsDWAR.SEP_VALUE);
+                sb.append(CompoundTableConstants.cEntrySeparator);
             }
         }
         return sb.toString();
