@@ -101,8 +101,13 @@ public class RFKnowledgeBase implements Serializable {
 			+ " rawRF:"+DoubleFormat.toString(getRawRFValue(ia.getLType(), ia.getPType()), 3)
 			+ "±"+DoubleFormat.toString(getRawUncertainty(ia.getLType(), ia.getPType()), 2)
 			+ " relD:"+DoubleFormat.toString(ia.getRelDistance(), 3)
-			+"\n     LIG(geo:"+ia.getL2PGeometryName()+" "+mLigandGeometryMap.get(ia.getL2PGeometryType()).getFullInteractionDetails(ia.getL2PAngle(), ia.getL2PTorsion(), ia.getRelDistance())+")"
-			+"\n     CAV(geo:"+ia.getP2LGeometryName()+" "+mProteinGeometryMap.get(ia.getP2LGeometryType()).getFullInteractionDetails(ia.getP2LAngle(), ia.getP2LTorsion(), ia.getRelDistance())+")";
+			+"\n     LIG(geo:"+ia.getL2PGeometryName()+" "+getFullDetails(mLigandGeometryMap, ia.getL2PGeometryType(), ia.getL2PAngle(), ia.getL2PTorsion(), ia.getRelDistance())+")"
+			+"\n     CAV(geo:"+ia.getP2LGeometryName()+" "+getFullDetails(mProteinGeometryMap, ia.getP2LGeometryType(), ia.getP2LAngle(), ia.getP2LTorsion(), ia.getRelDistance())+")";
+	}
+
+	private String getFullDetails(TreeMap<Integer, DensityMapsWithDistances> geometryMap, int type, double angle, double torsion, double relDistance) {
+		DensityMapsWithDistances map = geometryMap.get(type);
+		return map == null ? "<no info>" : map.getFullInteractionDetails(angle, torsion, relDistance);
 	}
 
 	public static RFKnowledgeBase createEmptyInstance() {

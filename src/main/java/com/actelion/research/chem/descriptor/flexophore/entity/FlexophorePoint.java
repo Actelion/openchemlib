@@ -34,7 +34,7 @@
 
 package com.actelion.research.chem.descriptor.flexophore.entity;
 
-import com.actelion.research.util.ConstantsDWAR;
+import com.actelion.research.chem.io.CompoundTableConstants;
 import com.actelion.research.util.datamodel.IntArray;
 
 import java.util.ArrayList;
@@ -200,9 +200,8 @@ public class FlexophorePoint {
 			sb.append(iaInteractionType.get(i));
 			
 			if(i < types-1){
-				sb.append(ConstantsDWAR.SEP_VALUE);
+				sb.append(CompoundTableConstants.cEntrySeparator);
 			}
-			
 		}
 					
 		return sb.toString();

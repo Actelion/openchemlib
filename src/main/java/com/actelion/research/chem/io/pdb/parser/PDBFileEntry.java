@@ -578,10 +578,10 @@ public class PDBFileEntry {
     }
     
     public Map<String,List<Molecule3D>> extractMols() {
-        return extractMols(false);
+        return extractMols(false, true);
     }
 
-    public Map<String,List<Molecule3D>> extractMols(boolean detachCovalentLigands) {
+    public Map<String,List<Molecule3D>> extractMols(boolean detachCovalentLigands, boolean assignHappyWaterToProtein) {
         if (templateConnections == null)
             templateConnections = new SortedList<>(new IntArrayComparator());
 
@@ -608,7 +608,12 @@ public class PDBFileEntry {
             }
         }
 
-        return new StructureAssembler(templateConnections, nonStandardConnections, atomRecords, detachCovalentLigands).assemble();
+        Map<String,List<Molecule3D>> result = new StructureAssembler(templateConnections, nonStandardConnections, atomRecords, detachCovalentLigands, assignHappyWaterToProtein).assemble();
+        List<Molecule3D> protein = result.get(StructureAssembler.PROTEIN_GROUP);
+        if (protein != null)
+            protein.get(0).setName(pdbID);
+
+        return result;
     }
 
     @Override

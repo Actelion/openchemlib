@@ -87,6 +87,4 @@ public class SplineFunction {
 	public FastSpline getSpline() {
 		return spline;
 	}
-
-
 }

@@ -6,6 +6,7 @@ import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.HydrogenAssembler;
 import com.actelion.research.chem.conf.VDWRadii;
+import com.actelion.research.chem.interactions.statistics.WaterInteractionHelper;
 import com.actelion.research.chem.io.pdb.calc.BondOrderCalculator;
 import com.actelion.research.chem.io.pdb.calc.BondsCalculator;
 import com.actelion.research.util.IntArrayComparator;
@@ -26,12 +27,17 @@ public class StructureAssembler {
 	public static final String SOLVENT_GROUP = "water";
 	public static final String LIGAND_GROUP = "ligand";
 
+	// Numbers taken from DOI 10.1038/s41598-023-43659-w; Mark Kriegel & Yves A. Muller; 2023
+	// De novo prediction of explicit water molecule positions by a novel algorithm within the protein design software MUMBO
+	private static final double MIN_PROTEIN_NEIGHBOR_COUNT_FOR_HAPPY_WATER = 2;
+
 	private final SortedList<int[]> mTemplateConnectionList,mNonStandardConnectionList;
 	private final List<AtomRecord> mAtomList;
 	private TreeSet<String> mCovalentLigandGroupSet;
-	private final boolean mDetachCovalentLigands;
+	private final boolean mDetachCovalentLigands,mAssignHappyWaterToProtein;
 	private Map<String,List<Molecule3D>> mTypeNameToMoleculeListMap;
 	private final Map<Integer,AtomRecord> mSerial2AtomRecordMap;
+	private final Map<Integer,AtomRecord[]> mSerial2WaterNeighborMap;
 	private final Map<String,String> mGroupToReassignedGroupMap;
 
 	/**
@@ -42,15 +48,17 @@ public class StructureAssembler {
 	 * @param detachCovalentLigands	whether covalent ligands shall be detached as ligands or be part of the protein
 	 */
 	public StructureAssembler(SortedList<int[]> templateConnections, SortedList<int[]> nonStandardConnections,
-							  List<AtomRecord> atomRecords, boolean detachCovalentLigands) {
+							  List<AtomRecord> atomRecords, boolean detachCovalentLigands, boolean assignHappyWaterToProtein) {
 		mTemplateConnectionList = templateConnections;
 		mNonStandardConnectionList = nonStandardConnections == null ? new SortedList<>(new IntArrayComparator()) : nonStandardConnections;
 		mAtomList = atomRecords;
 		mDetachCovalentLigands = detachCovalentLigands;
+		mAssignHappyWaterToProtein = assignHappyWaterToProtein;
 		mGroupToReassignedGroupMap = new TreeMap<>();
 		mSerial2AtomRecordMap = new TreeMap<>();
 		for (AtomRecord atom : atomRecords)
 			mSerial2AtomRecordMap.put(atom.getSerialId(), atom);
+		mSerial2WaterNeighborMap = new TreeMap<>();
 	}
 
 	/**
@@ -62,6 +70,9 @@ public class StructureAssembler {
 
 		// Assign atom groups to other groups if we have custom or template bonds connecting them.
 		mergeAtomGroupsByBonds();
+
+		if (mAssignHappyWaterToProtein)
+			mergeHappyWaterWithProtein();
 
 		mTypeNameToMoleculeListMap = new HashMap<>();
 		mTypeNameToMoleculeListMap.putIfAbsent(SOLVENT_GROUP, new ArrayList<>());
@@ -106,19 +117,21 @@ public class StructureAssembler {
 		return mTypeNameToMoleculeListMap;
 	}
 
-
 	private void detectMetalLigandAndDisulfideBonds() {
 		ArrayList<AtomRecord> metalAtoms = new ArrayList<>();
 		ArrayList<AtomRecord> heteroAtoms = new ArrayList<>();
 		ArrayList<AtomRecord> sulfurAtoms = new ArrayList<>();
+		ArrayList<AtomRecord> waterAtoms = mAssignHappyWaterToProtein ? new ArrayList<>() : null;
+
 		for (AtomRecord atom : mAtomList) {
 			if (Molecule.isAtomicNoMetal(atom.getAtomicNo()))
 				metalAtoms.add(atom);
 			else if (Molecule.isAtomicNoElectronegative(atom.getAtomicNo()))
-//			 && (atom.isHetAtom() || !atom.getResName().startsWith("HOH")))
 				heteroAtoms.add(atom);
 			if (atom.getAtomicNo() == 16)
 				sulfurAtoms.add(atom);
+			if (mAssignHappyWaterToProtein && atom.getAtomicNo() == 8 && atom.getResName().startsWith("HOH"))
+				waterAtoms.add(atom);
 		}
 
 		for (AtomRecord metal : metalAtoms) {
@@ -132,6 +145,22 @@ public class StructureAssembler {
 				for (int j=0; j<i; j++)
 					if (!sulfurAtoms.get(j).isHetAtom())
 						addConnectionIfDistanceSmallerThan(sulfurAtoms.get(j), sulfurAtoms.get(i), 3.0);
+
+		if (mAssignHappyWaterToProtein) {
+			ArrayList<AtomRecord> proteinAndWaterNeighbors = new ArrayList<>();
+			for (AtomRecord water : waterAtoms) {
+				proteinAndWaterNeighbors.clear();
+				for (AtomRecord hetero : heteroAtoms) {
+					double distance = water.getAtomCoordinates().distance(hetero.getAtomCoordinates());
+					if (WaterInteractionHelper.qualifiesAsWaterNeighbour(hetero.getAtomicNo(), distance)) {
+						if ((hetero.getAtomicNo() == 8 && hetero.getResName().startsWith("HOH"))
+						 || PROTEIN_GROUP.equals(getAssignedGroup(hetero)))
+							proteinAndWaterNeighbors.add(hetero);
+					}
+				}
+				mSerial2WaterNeighborMap.put(water.getSerialId(), proteinAndWaterNeighbors.toArray(new AtomRecord[0]));
+			}
+		}
 	}
 
 	private void addConnectionIfDistanceSmallerThan(AtomRecord atom1, AtomRecord atom2, double distance) {
@@ -169,14 +198,17 @@ public class StructureAssembler {
 		List<Molecule3D> protMols = new ArrayList<>();
 		for (Residue residue : residues) {
 			Molecule3D fragment = residue.getMolecule();
-			if(fragment.getAtomAmino(0).trim().equals("ACT") || fragment.getAtomAmino(0).trim().equals("LIG")) {
-				mTypeNameToMoleculeListMap.get(LIGAND_GROUP).add(fragment);
-				continue;
-			}
-			else if(fragment.getAtomAmino(0).trim().equals("HOH")) {
-				mTypeNameToMoleculeListMap.get(SOLVENT_GROUP).add(fragment);
-				continue;
-			}
+// seems not necessary; TLS Jul-2026
+//			if(fragment.getAtomAmino(0).trim().equals("ACT") || fragment.getAtomAmino(0).trim().equals("LIG")) {
+//System.out.println("$$$ WARNING: LIG/ACT in Protein Residues");
+//				mTypeNameToMoleculeListMap.get(LIGAND_GROUP).add(fragment);
+//				continue;
+//			}
+//			else if(fragment.getAtomAmino(0).trim().equals("HOH")) {
+//System.out.println("$$$ WARNING: Water in Protein Residues");
+//				mTypeNameToMoleculeListMap.get(SOLVENT_GROUP).add(fragment);
+//				continue;
+//			}
 
 			if(proteinSynthesizer.addResidue(fragment)) {
 				if(residue.isTerminal()) {
@@ -318,6 +350,67 @@ public class StructureAssembler {
 		return false;
 	}
 
+	private void mergeHappyWaterWithProtein() {
+		TreeSet<Integer> happyWaterSet = new TreeSet<>();
+		TreeSet<Integer> happyWaterCandidateSet = new TreeSet<>();
+
+		// First we determine happy water as water with at least three protein neighbours and three perfect neighbour angles
+		// In addition we determine happy water candidates with just two protein neighbours and a perfect neighbour angle between them
+		for (int serial : mSerial2WaterNeighborMap.keySet()) {
+			AtomRecord water = mSerial2AtomRecordMap.get(serial);
+			AtomRecord[] proteinAndWaterNeighbor = mSerial2WaterNeighborMap.get(serial);
+
+			int proteinNeighborCount = 0;
+			for (int i=0; i<proteinAndWaterNeighbor.length; i++)
+				if (PROTEIN_GROUP.equals(getAssignedGroup(proteinAndWaterNeighbor[i])))
+					proteinNeighborCount++;
+
+			if (proteinNeighborCount < MIN_PROTEIN_NEIGHBOR_COUNT_FOR_HAPPY_WATER)
+				continue;
+
+			int perfectAngeCount = getPerfectWaterAngleCount(water, proteinAndWaterNeighbor, false);
+			if (proteinNeighborCount >= 3 && perfectAngeCount >= 3)
+				happyWaterSet.add(serial);
+			else if (proteinNeighborCount == 2 && perfectAngeCount >= 1)
+				happyWaterCandidateSet.add(serial);
+		}
+
+		// Now we check all candidates, whether they are connected to another candidate or a happy water,
+		// in which case we consider them as happy as well.
+		for (int serial : happyWaterCandidateSet) {
+			AtomRecord water = mSerial2AtomRecordMap.get(serial);
+			AtomRecord[] proteinAndWaterNeighbor = mSerial2WaterNeighborMap.get(serial);
+
+			for (int i=0; i<proteinAndWaterNeighbor.length; i++) {
+				if ((happyWaterSet.contains(serial) || happyWaterCandidateSet.contains(serial))
+				 && getPerfectWaterAngleCount(water, proteinAndWaterNeighbor, true) >= 3) {
+					happyWaterSet.add(serial);
+					break;
+				}
+			}
+		}
+
+		for (int serial : happyWaterSet)
+			reassignGroup(mSerial2AtomRecordMap.get(serial).getGroupName(), PROTEIN_GROUP);
+	}
+
+	private int getPerfectWaterAngleCount(AtomRecord water, AtomRecord[] heteroNeighbor, boolean allowWaterAtoms) {
+		Coordinates cw = water.getAtomCoordinates();
+		Coordinates[] vec = new Coordinates[heteroNeighbor.length];
+		for (int i=0; i<heteroNeighbor.length; i++)
+			vec[i] = cw.subC(heteroNeighbor[i].getAtomCoordinates());
+
+		int perfectAngleCount = 0;
+		for (int i=1; i<heteroNeighbor.length; i++)
+			if (allowWaterAtoms || heteroNeighbor[i].getAtomicNo() != 8 || !heteroNeighbor[i].getResName().startsWith("HOH"))
+				for (int j=0; j<i; j++)
+					if (allowWaterAtoms || heteroNeighbor[j].getAtomicNo() != 8 || !heteroNeighbor[j].getResName().startsWith("HOH"))
+						if (WaterInteractionHelper.qualifiesAsWaterAngle(vec[i].getAngle(vec[j])))
+							perfectAngleCount++;
+
+		return perfectAngleCount;
+	}
+
 	/**
 	 * merge atom groups that are connected by a bond
 	 */
@@ -418,7 +511,7 @@ public class StructureAssembler {
 				}
 			}
 
-// We want ligand-metal complexes to be returned as one entity
+			// We want ligand-metal complexes to be returned as one entity
 			for (int i=0; i<2; i++) {
 				if (!isProteinMetal[0] && !isProteinMetal[1]	// don't join any ligand atoms with protein metals
 				 && (isMetal[0] || !isMetal[1])) {				// ligand metals are put into other ligand groups

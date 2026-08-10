@@ -36,7 +36,6 @@ package com.actelion.research.chem.properties.complexity;
 import com.actelion.research.calc.geometry.Triangle;
 import com.actelion.research.calc.regression.linear.simple.LinearRegression;
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.util.ConstantsDWAR;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,6 +58,9 @@ public class SummaryFragments {
 
     public static final String TAG_COMPLEXITY = "Complexity";
 
+	private static final String TAG_ATOMS = "Atoms";
+
+	private static final String TAG_BONDS = "Bonds";
 
 
 	private static final int DELTA_SLOPE = 1;
@@ -263,10 +265,8 @@ public class SummaryFragments {
 
 		List<String> li = new ArrayList<String>();
 
-        li.add(ConstantsDWAR.TAG_ATOMS);
-
-        li.add(ConstantsDWAR.TAG_BONDS);
-
+        li.add(TAG_ATOMS);
+        li.add(TAG_BONDS);
         li.add(TAG_SUM_UNIQUE_FRAGMENTS_UNTIL_MAX);
         li.add(TAG_NUM_BONDS_AT_MAXIMUM_FREQ);
         li.add(TAG_NUM_BONDS_AT_MAXIMUM_SLOPE);

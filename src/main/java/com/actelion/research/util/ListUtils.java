@@ -1,5 +1,7 @@
 package com.actelion.research.util;
 
+import com.actelion.research.chem.io.CompoundTableConstants;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +48,7 @@ public class ListUtils {
         for (int i = 0; i < li.size(); i++) {
             sb.append(li.get(i));
             if(i<li.size()-1){
-                sb.append(ConstantsDWAR.SEP_VALUE);
+                sb.append(CompoundTableConstants.cEntrySeparator);
             }
         }
 
@@ -59,7 +61,7 @@ public class ListUtils {
         for (int i = 0; i < li.size(); i++) {
             sb.append(li.get(i));
             if(i<li.size()-1){
-                sb.append(ConstantsDWAR.SEP_VALUE);
+                sb.append(CompoundTableConstants.cEntrySeparator);
             }
         }
 

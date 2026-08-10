@@ -34,6 +34,7 @@
 
 package com.actelion.research.chem.io.pdb.parser;
 
+import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.PeriodicTable;
 
 /**
@@ -83,9 +84,7 @@ public class AtomRecord implements Comparable<AtomRecord> {
                      String authAsymId,
                      int authSeqID,
                      String insertionCode,
-                     double x,
-                     double y,
-                     double z,
+					 double x, double y, double z,
                      double occupancy,
                      double tempFactor,
                      String element) {
@@ -100,8 +99,8 @@ public class AtomRecord implements Comparable<AtomRecord> {
         this.authSeqID = authSeqID;
         this.insertionCode = insertionCode;
         this.x = x;
-        this.y = y;
-        this.z = z;
+		this.y = y;
+		this.z = z;
         this.occupancy = occupancy;
         this.tempFactor = tempFactor;
         this.element = element;
@@ -140,14 +139,18 @@ public class AtomRecord implements Comparable<AtomRecord> {
     public double getX() {
     	return x;
     }
-    
-    public double getY() {
-    	return y;
-    }
-    
-    public double getZ() {
-    	return z;
-    }
+
+	public double getY() {
+		return y;
+	}
+
+	public double getZ() {
+		return z;
+	}
+
+	public Coordinates getAtomCoordinates() {
+		return new Coordinates(x,y , z);
+	}
 
 	public double getOccupancy() {
 		return occupancy;

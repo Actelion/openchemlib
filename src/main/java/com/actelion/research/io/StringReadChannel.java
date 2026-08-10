@@ -33,7 +33,6 @@
 
 package com.actelion.research.io;
 
-import com.actelion.research.util.ConstantsDWAR;
 import com.actelion.research.util.Pipeline;
 
 import java.io.IOException;
@@ -41,6 +40,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -213,7 +213,7 @@ public class StringReadChannel {
 		
 		byte [] contentsOnly = Arrays.copyOf(byteBufferLine.array(), byteBufferLine.position());
 		
-		String str = new String(contentsOnly, ConstantsDWAR.CHARSET_ENCODING);
+		String str = new String(contentsOnly, StandardCharsets.UTF_8);
 		
 		StringBuilder sb = new StringBuilder(str);
 		

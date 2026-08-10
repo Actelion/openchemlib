@@ -5,20 +5,21 @@ import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.StereoMolecule;
 
 public class InteractionGeometry {
-	public static final String[] TYPE_NAME = {"n<1|n>4", "n1-sp/n1", "n1-sp2", "n1-sp3n2", "n1-sp3n3", "n1-sp3n4",
+	public static final String[] TYPE_NAME = {"n>4", "n0", "n1-sp/n1", "n1-sp2", "n1-sp3n2", "n1-sp3n3", "n1-sp3n4",
 			"n2sp", "n2sp2", "n2sp3", "n3sp2", "n3sp3", "n4"};
 	private static final int TYPE_UNSUPPORTED = 0;
-	private static final int TYPE_N1SP_N1N1 = 1;
-	private static final int TYPE_N1SP2 = 2;
-	private static final int TYPE_N1_SP3N2 = 3;
-	private static final int TYPE_N1_SP3N3 = 4;
-	private static final int TYPE_N1_SP3N4 = 5;
-	private static final int TYPE_N2SP = 6;
-	private static final int TYPE_N2SP2 = 7;
-	private static final int TYPE_N2SP3 = 8;
-	private static final int TYPE_N3SP2 = 9;
-	private static final int TYPE_N3SP3 = 10;
-	private static final int TYPE_N4 = 11;
+	private static final int TYPE_SINGLE_ATOM = 1;
+	private static final int TYPE_N1SP_N1N1 = 2;
+	private static final int TYPE_N1SP2 = 3;
+	private static final int TYPE_N1_SP3N2 = 4;
+	private static final int TYPE_N1_SP3N3 = 5;
+	private static final int TYPE_N1_SP3N4 = 6;
+	private static final int TYPE_N2SP = 7;
+	private static final int TYPE_N2SP2 = 8;
+	private static final int TYPE_N2SP3 = 9;
+	private static final int TYPE_N3SP2 = 10;
+	private static final int TYPE_N3SP3 = 11;
+	private static final int TYPE_N4 = 12;
 
 	private double mTorsion,mAngle;
 	private int mType;
@@ -31,8 +32,11 @@ public class InteractionGeometry {
 		mConnectionP = mol.getAtomCoordinates(atom);
 		mRearP2 = null;	// default
 
-		if (mol.getConnAtoms(atom) == 0 || mol.getConnAtoms(atom) > 4) {
+		if (mol.getConnAtoms(atom) > 4) {
 			mType = TYPE_UNSUPPORTED;
+		}
+		else if (mol.getConnAtoms(atom) == 0) {
+			mType = TYPE_SINGLE_ATOM;
 		}
 		else if (mol.getConnAtoms(atom) == 1) {
 			int rearAtom = mol.getConnAtom(atom, 0);
@@ -123,7 +127,7 @@ public class InteractionGeometry {
 
 		Coordinates remoteP = remoteMol.getAtomCoordinates(remoteAtom);
 
-		if (mType == TYPE_UNSUPPORTED) {
+		if (mType == TYPE_UNSUPPORTED || mType == TYPE_SINGLE_ATOM) {
 			mAngle = 0;
 			mTorsion = 0;
 			return;
