@@ -19,7 +19,7 @@ molecules_sofosbuvir02.dwar
 molecules_sofosbuvir03.dwar
 
 Result files
-Contain name of the machine learning method, successive fraction for the training data (SuccessiveFractionModel), Number of test objects, Successive error median avr, and the standarddeviation of the avr.
+Contain name of the machine learning method, successive fraction for the training data (SuccessiveFractionModel), Number of test objects, Successive error medianFractalDimReaction avr, and the standarddeviation of the avr.
 
 Result file for the the high to low sorted data
 results_h2l.dwar

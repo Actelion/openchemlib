@@ -35,9 +35,12 @@ package com.actelion.research.util.datamodel;
 
 import com.actelion.research.calc.INumericalDataColumn;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 
@@ -258,6 +261,34 @@ public class DoubleArray implements INumericalDataColumn {
 		sb.append(", size=").append(size);
 		sb.append(", delta_capacity=").append(delta_capacity);
 		sb.append('}');
+		return sb.toString();
+	}
+
+	public String toString(int width, int digits) {
+		final StringBuilder sb = new StringBuilder();
+
+		String sFormat = "";
+
+		sFormat += "0";
+		int iCounter = 0;
+		if(digits > 0)
+			sFormat += ".";
+
+		while(iCounter < digits) {
+			sFormat += "0";
+			iCounter++;
+		}
+
+		DecimalFormat nf = new DecimalFormat(sFormat, new DecimalFormatSymbols(Locale.US));
+
+		for (int i = 0; i < size; i++) {
+			String s0 = nf.format(data[i]);
+			int margin = width-s0.length();
+			for (int j = 0; j < margin; j++) {
+				sb.append(" ");
+			}
+			sb.append(s0);
+		}
 		return sb.toString();
 	}
 }
