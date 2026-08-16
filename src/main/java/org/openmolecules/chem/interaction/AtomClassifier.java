@@ -53,7 +53,8 @@ public abstract class AtomClassifier implements InteractionAtomClassifier {
 				if (mFragmentSearcher[i].findFragmentInMolecule(SSSearcher.cCountModeRigorous, SSSearcher.cDefaultMatchMode) != 0)
 					for (int[] match : mFragmentSearcher[i].getMatchList())
 						for (int atom : mFlaggedAtom[i])
-							atomType[match[atom]] = getAtomTypeIndex(mFragment[i].getName());
+							if (mol.getAtomicNo(atom) != 0)
+								atomType[match[atom]] = getAtomTypeIndex(mFragment[i].getName());
 			}
 		}
 

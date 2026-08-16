@@ -26,28 +26,32 @@ public class RFInteractionList extends ArrayList<RFInteraction> {
 		ArrayList<InteractionCandidate> allCandidates = new ArrayList<>();
 		TreeSet<InteractionCandidate> candidateSet = new TreeSet<>();	// candidates of one ligand atom
 		for (int lAtom=0; lAtom<mLigand.getAtoms(); lAtom++) {
+			if (mLigand.getAtomicNo(lAtom) != 0) {
 
-			// Find close neighbors on protein side as interaction candidates
-			// and sort them ascending on distance between VDW-spheres.
-			double lRadius = VDWRadii.getVDWRadius(mLigand.getAtomicNo(lAtom));
-			for (int pAtom = 0; pAtom<mProtein.getAtoms(); pAtom++) {
-				double pRadius = VDWRadii.getVDWRadius(mProtein.getAtomicNo(pAtom));
-				double distance = mLigand.getAtomCoordinates(lAtom).distance(mProtein.getAtomCoordinates(pAtom));
-				double relDistance = distance - lRadius - pRadius;
-				if (relDistance < MAX_REL_DISTANCE)
-					candidateSet.add(new InteractionCandidate(lAtom, pAtom, distance, relDistance));
-			}
-
-			// Collect closest line-of-sight neighbor as the interaction partner for this ligand atom
-			if (!candidateSet.isEmpty()) {
-				for (InteractionCandidate candidate : candidateSet) {
-					if (candidate.isLineOfSight(candidateSet)) {
-						allCandidates.add(candidate);
-						if (shortestInteractionOnly)
-							break;
+				// Find close neighbors on protein side as interaction candidates
+				// and sort them ascending on distance between VDW-spheres.
+				double lRadius = VDWRadii.getVDWRadius(mLigand.getAtomicNo(lAtom));
+				for (int pAtom = 0; pAtom<mProtein.getAtoms(); pAtom++) {
+					if (mProtein.getAtomicNo(pAtom) != 0) {
+						double pRadius = VDWRadii.getVDWRadius(mProtein.getAtomicNo(pAtom));
+						double distance = mLigand.getAtomCoordinates(lAtom).distance(mProtein.getAtomCoordinates(pAtom));
+						double relDistance = distance - lRadius - pRadius;
+						if (relDistance < MAX_REL_DISTANCE && !areCovalentlyConnected(lAtom, pAtom))
+							candidateSet.add(new InteractionCandidate(lAtom, pAtom, distance, relDistance));
 					}
 				}
-				candidateSet.clear();
+
+				// Collect closest line-of-sight neighbor as the interaction partner for this ligand atom
+				if (!candidateSet.isEmpty()) {
+					for (InteractionCandidate candidate : candidateSet) {
+						if (candidate.isLineOfSight(candidateSet)) {
+							allCandidates.add(candidate);
+							if (shortestInteractionOnly)
+								break;
+						}
+					}
+					candidateSet.clear();
+				}
 			}
 		}
 
@@ -68,6 +72,54 @@ public class RFInteractionList extends ArrayList<RFInteraction> {
 							candidate.getDistance(), candidate.getRelDistance()));
 			}
 		}
+	}
+
+	/**
+	 * @param lAtom
+	 * @param pAtom
+	 * @return whether lAtom and pAtom or their direct neighbours are connected through a covalent bond
+	 */
+	private boolean areCovalentlyConnected(int lAtom, int pAtom) {
+		int lCovDistance = covalentConnectorDistance(mLigand, lAtom);
+		if (lCovDistance == -1)
+			return false;
+
+		int pCovDistance = covalentConnectorDistance(mProtein, pAtom);
+		if (pCovDistance == -1)
+			return false;
+
+		return lCovDistance + pCovDistance <= 4;
+	}
+
+	/**
+	 * @param mol
+	 * @param atom
+	 * @return whether atom in mol itself or one of its neighbor atoms has a covalent bond
+	 */
+	private int covalentConnectorDistance(StereoMolecule mol, int atom) {
+		for (int i=0; i<mol.getConnAtoms(atom); i++) {
+			int connAtom = mol.getConnAtom(atom, i);
+			if ("]cov".equals(mol.getAtomCustomLabel(connAtom)))
+				return 1;
+
+			for (int j=0; j<mol.getConnAtoms(connAtom); j++) {
+				int connConn = mol.getConnAtom(connAtom, j);
+				if (connConn != atom) {
+					if ("]cov".equals(mol.getAtomCustomLabel(connConn)))
+						return 2;
+
+					for (int k=0; k<mol.getConnAtoms(connConn); k++) {
+						int nextConn = mol.getConnAtom(connConn, k);
+						if (nextConn != connAtom) {
+							if ("]cov".equals(mol.getAtomCustomLabel(nextConn)))
+								return 3;
+						}
+					}
+				}
+			}
+		}
+
+		return -1;
 	}
 
 	private class InteractionCandidate implements Comparable<InteractionCandidate> {
