@@ -45,7 +45,11 @@ public class ModelMedianInteger {
 	public int median;
 	
 	public int upperQuartile;
-	
+
+	public int min;
+
+	public int max;
+
 	public int id;
 	
 	public int size;

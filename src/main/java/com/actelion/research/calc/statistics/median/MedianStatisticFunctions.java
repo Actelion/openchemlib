@@ -221,6 +221,8 @@ public class MedianStatisticFunctions {
 		modelMedian.lowerQuartile = (int)(MedianStatisticFunctions.getPercentileFromSortedInt(liScore, 0.25) + 0.5);
 		modelMedian.median = (int)(MedianStatisticFunctions.getPercentileFromSortedInt(liScore, 0.5) + 0.5);
 		modelMedian.upperQuartile = (int)(MedianStatisticFunctions.getPercentileFromSortedInt(liScore, 0.75) + 0.5);
+		modelMedian.min = liScore.get(0);
+		modelMedian.max = liScore.get(liScore.size()-1);
 		modelMedian.size = liScore.size();
 		return modelMedian;
 	}
