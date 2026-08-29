@@ -1016,7 +1016,7 @@ public class StringFunctions {
 //        for (int i = 0; i < li.size(); i++) {
 //            sb.append(li.get(i));
 //            if(i < li.size()-1){
-//                sb.append(ConstantsDWAR.SEP_VALUE);
+//                sb.append(CompoundTableConstants.cEntrySeparator);
 //            }
 //        }
 //        return sb.toString();
