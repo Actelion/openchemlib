@@ -239,9 +239,7 @@ public class ExhaustiveMCSGeneratorParallel {
 	}
 	
 	static class MCSResult extends MCSTask {
-		
 		StereoMolecule molMCS;
-		
 		public MCSResult(MCSTask mcsTask, StereoMolecule molMCS) {
 			super(mcsTask);
 			this.molMCS = molMCS;
@@ -251,43 +249,25 @@ public class ExhaustiveMCSGeneratorParallel {
 	}
 	
 	class MCSThread implements Runnable {
-
 		int indexThread;
-		
 		private MCS mcs;
-		
 		private IDCodeParser idCodeParser;
-		
 		private AtomicBoolean calculating;
-		
 		private ErrorHashMap ehm;
-		
 		private int nFailedSimilarityCalculations;
-		
 		private int added;
 		
-		
 		public MCSThread(int indexThread, int ringStatus) {
-			
-			
 			this.indexThread = indexThread;
-			
 			ehm = new ErrorHashMap();
-			
 			idCodeParser = new IDCodeParser(false);
-			
 			mcs = new MCS(ringStatus);
-						
 			calculating = new AtomicBoolean();
 		}
 		
 		public void run() {
-			
-			
 			while(!pipeFragByteVec.wereAllDataFetched()){
-				
 				ByteVec bvFrag = pipeFragByteVec.pollData();
-				
 				if(bvFrag==null){
 					calculating.set(false);
 					try {Thread.sleep(SLEEP);} catch (InterruptedException e) {e.printStackTrace();}
@@ -297,36 +277,24 @@ public class ExhaustiveMCSGeneratorParallel {
 				calculating.set(true);
 				for (int i = 0; i < liMolByteVec.size(); i++) {
 					MCSTask mcsTask = new MCSTask(liMolByteVec.get(i), bvFrag);
-					
 					List<MCSResult> liResult = processMCS(mcsTask);
-					
 					for (MCSResult mcsResult : liResult) {
-						
 						Canonizer can = new Canonizer(mcsResult.molMCS);
-						
 						ByteVec bvMCS = new ByteVec(can.getIDCode());
-						
 						if(!hmMCS_MCS.containsKey(bvMCS)){
-							
 							hmMCS_MCS.put(bvMCS, bvMCS);
-							
 							pipeFragByteVec.addData(bvMCS);
-							
-						}
+                        }
 					}
 				}
 			}
 		}
 
 		private List<MCSResult> processMCS(MCSTask  mcsTask){
-			
 			List<MCSResult> liResult=null;
 			try {
-				
 				StereoMolecule mol1 = idCodeParser.getCompactMolecule(mcsTask.bcIdCode1.toStringString());
-				
 				StereoMolecule mol2 = idCodeParser.getCompactMolecule(mcsTask.bcIdCode2.toStringString());
-				
 				
 				if(mol1.getAtoms()>mol2.getAtoms()) {
 					mcs.set(mol1, mol2);
@@ -335,26 +303,20 @@ public class ExhaustiveMCSGeneratorParallel {
 				}
 				
 				List<StereoMolecule> liMolMCS = mcs.getAllCommonSubstructures();
-				
 				ccMCSCalculations.incrementAndGet();
-				
 				if(liMolMCS==null){
 					liResult=new ArrayList<MCSResult>();
 				} else if(!liMolMCS.isEmpty()){
-					
 					liResult=new ArrayList<MCSResult>();
-					
 					for (StereoMolecule molMCS : liMolMCS) {
 						liResult.add(new MCSResult(mcsTask, molMCS));	
 					}
-					
 				}
 				
 			} catch (Exception e) {
 				e.printStackTrace();
 				nFailedSimilarityCalculations++;
 			}
-			
 			return liResult;
 		}
 		

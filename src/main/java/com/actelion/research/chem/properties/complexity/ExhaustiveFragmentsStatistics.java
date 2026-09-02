@@ -123,7 +123,7 @@ public class ExhaustiveFragmentsStatistics {
 	 * @param molIn
 	 * @return
 	 */
-	public ResultFragmentsStatistic create(StereoMolecule molIn, int maxNumBondsFragmentDesired){
+	public ResultFragmentsStatistic create(StereoMolecule molIn, int maxNumBondsFragmentDesired) throws InterruptedException {
 
 		StereoMolecule mol = new StereoMolecule(molIn);
 		mol.ensureHelperArrays(Molecule.cHelperRings);

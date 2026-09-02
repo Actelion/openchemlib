@@ -51,7 +51,7 @@ public class MolecularComplexityCalculator {
 	 * @param mol
 	 * @return NaN if complexity calculation failed or is not possible.
 	 */
-	public double calculate(StereoMolecule mol){
+	public double calculate(StereoMolecule mol) throws InterruptedException {
 		int bondsNeededForComplexityCalc = ObjectiveExhaustiveStatistics.getNeededNumberOfBondsInFragment(mol);
 		if(bondsNeededForComplexityCalc > BitArray128.MAX_NUM_BITS) {
 			return Double.NaN;

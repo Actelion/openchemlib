@@ -10,7 +10,7 @@ import com.actelion.research.calc.Matrix;
  */
 public interface ICalculateYHat {
 
-    Matrix calculateYHat(Matrix X);
+    Matrix calculateYHat(Matrix X) ;
 
     double calculateYHat(double [] arrRow);
 

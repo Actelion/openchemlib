@@ -74,7 +74,7 @@ public class FractalDimensionMolecule {
         exhaustiveFragmentsStatistics = new ExhaustiveFragmentsStatistics(BitArray128.MAX_NUM_BITS, threadsBondVector2IdCode, totalCapacity);
     }
 
-    public ResultFracDimCalc process(InputObjectFracDimCalc inputObjectFracDimCalc){
+    public ResultFracDimCalc process(InputObjectFracDimCalc inputObjectFracDimCalc) throws InterruptedException {
         ResultFracDimCalc resultFracDimCalc = new ResultFracDimCalc(inputObjectFracDimCalc);
         StereoMolecule mol = inputObjectFracDimCalc.getData();
         int bonds = inputObjectFracDimCalc.getData().getBonds();

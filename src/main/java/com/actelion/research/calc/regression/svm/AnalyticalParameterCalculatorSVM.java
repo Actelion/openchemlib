@@ -52,7 +52,7 @@ import org.machinelearning.svm.libsvm.svm_parameter;
  */
 public class AnalyticalParameterCalculatorSVM {
 
-    public static ParameterSVM calculate(ModelXYIndex modelXYTrain){
+    public static ParameterSVM calculate(ModelXYIndex modelXYTrain) {
 
 
         System.out.println("AnalyticalParameterCalculatorSVM");

@@ -68,7 +68,7 @@ public class KNNRegression extends ARegressionMethod<ParameterKNN> {
      * @return
      */
     @Override
-    public Matrix calculateYHat(Matrix X){
+    public Matrix calculateYHat(Matrix X) {
 
         List<IdentifiedObject<double []>> liX = MatrixFunctions.createIdentifiedObject(X);
 

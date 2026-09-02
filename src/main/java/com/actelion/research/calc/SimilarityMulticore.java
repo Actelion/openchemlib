@@ -79,13 +79,13 @@ public class SimilarityMulticore<T> {
 		this.verbose = true;
 	}
 
-	public void run(IdentifiedObject<T> descriptor, List<IdentifiedObject<T>> liDescriptor2) {
+	public void run(IdentifiedObject<T> descriptor, List<IdentifiedObject<T>> liDescriptor2) throws InterruptedException {
 		List<IdentifiedObject<T>> liOneSample = new ArrayList<IdentifiedObject<T>>();
 		liOneSample.add(descriptor);
 		run(liOneSample, liDescriptor2);
 	}
 
-	public void run(List<IdentifiedObject<T>> liDescriptor) {
+	public void run(List<IdentifiedObject<T>> liDescriptor) throws InterruptedException {
 		run(liDescriptor, liDescriptor, true);
 	}
 
@@ -222,7 +222,7 @@ public class SimilarityMulticore<T> {
 		return queueScore.poll();
 	}
 
-	private void fillCalculationIndexQueueTwoLists(){
+	private void fillCalculationIndexQueueTwoLists() {
 		
 		queueIndices.setAllDataIn(false);
 		
@@ -243,7 +243,7 @@ public class SimilarityMulticore<T> {
 
 	}
 
-	private void fillCalculationIndexQueueSingleList(){
+	private void fillCalculationIndexQueueSingleList()  {
 
 		queueIndices.setAllDataIn(false);
 
