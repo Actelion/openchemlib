@@ -107,6 +107,11 @@ public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 		this.allDataIn.set(true);
 	}
 
+	/**
+	 * Waits
+	 * @param t
+	 * @throws InterruptedException
+	 */
 	public void put(T t) throws InterruptedException {
 		if(isAllDataIn())
 			throw new RuntimeException("All data in flag set!");
