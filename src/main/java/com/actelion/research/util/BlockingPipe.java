@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -52,6 +53,8 @@ import java.util.function.Supplier;
 public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 
 	public static final int CAPACITY = 10;
+	public static final long TIMEOUT = 10;
+	public static final TimeUnit MS = TimeUnit.MILLISECONDS;
 
 	private volatile AtomicBoolean allDataIn;
 
@@ -60,6 +63,9 @@ public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 	private AtomicLong added;
 
 	private AtomicLong polled;
+
+	private TimeUnit unit;
+	private long timeout;
 
 	public BlockingPipe() {
 		this(CAPACITY);
@@ -70,6 +76,7 @@ public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 		queue = new ArrayBlockingQueue<T>(capacity);
 		added = new AtomicLong();
 		polled = new AtomicLong();
+		setTimeOut(TIMEOUT, MS);
 	}
 
 	/**
@@ -80,6 +87,11 @@ public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 		this(li.size());
 		put(li);
 		setAllDataIn(true);
+	}
+
+	public void setTimeOut(long timeout, TimeUnit unit){
+		this.timeout = timeout;
+		this.unit = unit;
 	}
 
 	/**
@@ -126,24 +138,14 @@ public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 	}
 
 	/**
-	 * Waits if nothing is in the queue
-	 * @return
-	 * @throws InterruptedException
-	 */
-	public T take() throws InterruptedException {
-		T t = queue.take();
-		polled.incrementAndGet();
-		return t;
-	}
-	/**
 	 *
 	 * @return null if nothing is in the queue.
 	 */
-	public T poll() {
+	public T poll() throws InterruptedException {
 		if(wereAllDataFetched()){
 			throw new RuntimeException("All data already fetched!");
 		}
-		T t = queue.poll();
+		T t = queue.poll(timeout, unit);
 		if(t!=null)
 			polled.incrementAndGet();
 		return t;
@@ -153,7 +155,11 @@ public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 	public T get() {
         T t = null;
         try {
-            t = take();
+			while (!wereAllDataFetched()) {
+				t = poll();
+				if(t!=null)
+					break;
+			}
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -182,12 +188,14 @@ public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 	 * all data in flag has to be set.
 	 * @return all data
 	 */
-	public List<T> takeAll(){
+	public List<T> pollAll(){
 		List<T> li = new ArrayList<>();
 		while(!wereAllDataFetched()){
             T row = null;
             try {
-                row = take();
+                row = poll();
+				if(row==null)
+					continue;
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -196,12 +204,14 @@ public class BlockingPipe<T> implements IPipeline<T>, Supplier<T> {
 		return li;
 	}
 
-	public List<T> takeBatch(int sizeBatch){
+	public List<T> pollBatch(int sizeBatch){
 		List<T> li = new ArrayList<>();
 		while(!wereAllDataFetched()){
 			T row = null;
 			try {
-				row = take();
+				row = poll();
+				if(row==null)
+					continue;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
