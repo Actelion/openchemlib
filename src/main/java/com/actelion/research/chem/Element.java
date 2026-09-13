@@ -33,6 +33,7 @@
 
 package com.actelion.research.chem;
 
+import com.actelion.research.chem.conf.VDWRadii;
 import com.actelion.research.util.Formatter;
 
 import java.util.Comparator;
@@ -96,7 +97,9 @@ public class Element {
 	}
 
 	public double getVDWRadius() {
-		return vdwRadius;
+		// we prefer the Bondi values from the VDWRadii class for their more accurate values and for their completeness; TLS 13sep2026
+		return VDWRadii.getVDWRadius(orderNumber);
+//		return vdwRadius;
 	}
 
 	public double getElectronegativity() {

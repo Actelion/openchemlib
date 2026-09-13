@@ -1,13 +1,8 @@
 package com.actelion.research.chem.phesa;
 
-import com.actelion.research.util.EncoderFloatingPointNumbers;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
-import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.Coordinates;
+import com.actelion.research.chem.PeriodicTable;
+import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 /** 
  * @version: 1.0, February 2018
