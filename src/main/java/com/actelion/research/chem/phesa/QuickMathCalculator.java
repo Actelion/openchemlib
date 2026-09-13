@@ -1,6 +1,6 @@
 package com.actelion.research.chem.phesa;
 
-import com.actelion.research.chem.PeriodicTable;
+import com.actelion.research.chem.conf.VDWRadii;
 
 public class QuickMathCalculator {
 	
@@ -31,8 +31,8 @@ public class QuickMathCalculator {
 		precalcPrefactors = new double[54][54];
 		for(int i=1;i<54;i++) { //last element taken into account is Iodine
 			for(int j=1;j<54;j++) {
-				double vdwR1 = PeriodicTable.getElement(i).getVDWRadius();
-				double vdwR2 = PeriodicTable.getElement(j).getVDWRadius();
+				double vdwR1 = VDWRadii.getVDWRadius(i);
+				double vdwR2 = VDWRadii.getVDWRadius(j);
 				double alphaSum = MolecularVolume.alpha_pref/(vdwR1*vdwR1) + MolecularVolume.alpha_pref/(vdwR2*vdwR2);
 				precalcPrefactors[i][j] = Math.pow((Math.PI/alphaSum), 1.5); 		
 			}

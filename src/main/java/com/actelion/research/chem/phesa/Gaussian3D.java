@@ -1,8 +1,8 @@
 package com.actelion.research.chem.phesa;
 
 import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
+import com.actelion.research.chem.conf.VDWRadii;
 
 /** 
  * @version: 1.0, February 2018
@@ -51,7 +51,7 @@ public abstract class Gaussian3D {
 	public abstract double calculateWidth();
 	
 	public double calculateVolume() {
-		double vdwR = PeriodicTable.getElement(atomicNo).getVDWRadius();		
+		double vdwR = VDWRadii.getVDWRadius(atomicNo);
 		double volume = (4.0 * Math.PI/3.0) * vdwR*vdwR*vdwR;
 		return volume;
 	}

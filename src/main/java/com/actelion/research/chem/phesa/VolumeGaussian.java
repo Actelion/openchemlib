@@ -2,9 +2,9 @@ package com.actelion.research.chem.phesa;
 
 import com.actelion.research.calc.Matrix;
 import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.conf.Conformer;
+import com.actelion.research.chem.conf.VDWRadii;
 import com.actelion.research.util.EncoderFloatingPointNumbers;
 
 public class VolumeGaussian extends Gaussian3D {
@@ -74,7 +74,7 @@ public class VolumeGaussian extends Gaussian3D {
 
 	@Override
 	public double calculateWidth() {
-		double vdwR = PeriodicTable.getElement(atomicNo).getVDWRadius();
+		double vdwR = VDWRadii.getVDWRadius(atomicNo);
 		return MolecularVolume.alpha_pref/(vdwR*vdwR);
 	}
 	

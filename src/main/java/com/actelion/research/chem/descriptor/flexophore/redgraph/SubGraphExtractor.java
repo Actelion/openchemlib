@@ -34,7 +34,10 @@
 
 package com.actelion.research.chem.descriptor.flexophore.redgraph;
 
-import com.actelion.research.chem.*;
+import com.actelion.research.chem.ExtendedMoleculeFunctions;
+import com.actelion.research.chem.Molecule;
+import com.actelion.research.chem.RingCollection;
+import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.hash.HashSetInt;
 
 import java.util.*;
@@ -871,14 +874,9 @@ public class SubGraphExtractor {
 
                     int atomicNo = mol.getAtomicNo(indAtmConn);
 
-                    if((atomicNo == PeriodicTable.Nitrogen) ||
-                            (atomicNo == PeriodicTable.Oxygen)  ||
-                            (atomicNo == PeriodicTable.Fluorine)) {
-
+                    if(atomicNo == 7 || atomicNo == 8 || atomicNo == 9) {
                         nCarbonWithElectronegativeNeighbors++;
-
                         break;
-
                     }
                 }
             }
@@ -893,11 +891,8 @@ public class SubGraphExtractor {
         SubGraphIndices fragment = null;
 
         if(liFragment.size() > 0){
-
             Collections.sort(liFragment, SubGraphIndices.getComparatorNumIndices());
-
             fragment = liFragment.get(liFragment.size()-1);
-
         }
 
         return fragment;
@@ -1146,12 +1141,12 @@ public class SubGraphExtractor {
             if(isSmallRingAtom(indAtmConn)){
                 // If the end standing atom is of this type it will become an own pharmacophore point.
                 // Even if it is directly connected to a ring.
-                // Additionally it can be included to the atom types of the ring.
-                if(atomicNo != PeriodicTable.Nitrogen &&
-                        atomicNo != PeriodicTable.Oxygen &&
-                        atomicNo != PeriodicTable.Sulfur &&
-                        atomicNo != PeriodicTable.Chlorine &&
-                        atomicNo != PeriodicTable.Bromine)
+                // Additionally, it can be included to the atom types of the ring.
+                if (atomicNo != 7
+                 && atomicNo != 8
+                 && atomicNo != 16
+                 && atomicNo != 17
+                 && atomicNo != 35)
                 continue;
             }
 

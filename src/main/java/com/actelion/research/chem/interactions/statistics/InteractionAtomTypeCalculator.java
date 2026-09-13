@@ -1,7 +1,7 @@
 package com.actelion.research.chem.interactions.statistics;
+
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.Molecule3D;
-import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
 
 
@@ -341,7 +341,7 @@ public class InteractionAtomTypeCalculator {
 	
 	public static String getString(int atomType) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(PeriodicTable.symbol(atomType & AtomPropertyMask.ATOMIC_NO.getMask()));
+		sb.append(Molecule.cAtomLabel[atomType & AtomPropertyMask.ATOMIC_NO.getMask()]);
 		int hybrid = (atomType & AtomPropertyMask.HYBRID.getMask())>>AtomPropertyShift.HYBRID_SHIFT.getShift();
 		if(hybrid>0) {
 			sb.append("." + hybrid);

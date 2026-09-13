@@ -66,13 +66,10 @@
 package com.actelion.research.chem;
 
 import com.actelion.research.calc.ArrayUtilsCalc;
-import com.actelion.research.calc.statistics.StatisticsOverview;
 import com.actelion.research.calc.statistics.median.MedianStatisticFunctions;
-import com.actelion.research.chem.descriptor.DescriptorEncoder;
 import com.actelion.research.chem.descriptor.DescriptorHandler;
 import com.actelion.research.chem.descriptor.flexophore.redgraph.SubGraphIndices;
 import com.actelion.research.chem.mcs.ListWithIntVec;
-import com.actelion.research.util.BurtleHasher;
 import com.actelion.research.util.Formatter;
 import com.actelion.research.util.datamodel.IntegerDouble;
 
@@ -1063,7 +1060,7 @@ public class ExtendedMoleculeFunctions {
 	}
 
 	public static boolean isWildcard(StereoMolecule mol, int atom) {
-		if(mol.getAtomicNo(atom) == PeriodicTable.ConnectionPoint){
+		if(mol.getAtomicNo(atom) == 0){
 			return true;
 		}
 		return false;

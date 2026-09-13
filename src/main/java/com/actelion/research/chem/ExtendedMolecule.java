@@ -3113,8 +3113,7 @@ public class ExtendedMolecule extends Molecule implements Serializable {
 				state -= bondOrder;
 			}
 			else if (mAtomicNo[atom] != mAtomicNo[connAtom]) {
-				if (PeriodicTable.getElement(mAtomicNo[atom]).getElectronegativity()
-				  < PeriodicTable.getElement(mAtomicNo[connAtom]).getElectronegativity())
+				if (cElectronegativity[mAtomicNo[atom]] < cElectronegativity[mAtomicNo[connAtom]])
 					state += bondOrder;
 				else
 					state -= bondOrder;

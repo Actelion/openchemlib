@@ -35,7 +35,7 @@
 package com.actelion.research.chem.io.pdb.parser;
 
 import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.PeriodicTable;
+import com.actelion.research.chem.Molecule;
 
 /**
  * ModelAtom
@@ -104,7 +104,7 @@ public class AtomRecord implements Comparable<AtomRecord> {
         this.occupancy = occupancy;
         this.tempFactor = tempFactor;
         this.element = element;
-        this.atomicNo = PeriodicTable.number(element);
+        this.atomicNo = Molecule.getAtomicNoFromLabel(element);
         isTerminalC = false;
     }
 

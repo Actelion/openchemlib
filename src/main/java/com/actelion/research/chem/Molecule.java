@@ -462,6 +462,26 @@ public class Molecule implements Serializable {
 			{2,3}, {3}											//  No, Lr
 		};
 
+	public static final float[] cElectronegativity = new float[] { 2.550f,
+			2.200f, 0.000f, 0.980f, 1.570f, 2.040f, 2.550f,		//  H,  He, Li, Be, B,  C,
+			3.040f, 3.440f, 3.980f, 0.000f, 0.930f, 1.310f,		//  N,  O,  F,  Ne, Na, Mg,
+			1.610f, 1.900f, 2.190f, 2.580f, 3.160f, 0.000f,		//  Al, Si, P,  S,  Cl, Ar,
+			1.000f, 1.360f, 1.540f, 1.630f, 1.660f, 1.550f,		//  K,  Ca, Sc, Ti, V,  Cr,
+			1.830f, 1.880f, 1.910f, 1.900f, 1.650f, 1.810f,		//  Mn, Fe, Co, Ni, Cu, Zn,
+			2.010f, 0.000f, 2.180f, 2.550f, 0.000f, 2.960f,		//  Ga, Ge, As, Se, Br, Kr,
+			0.000f, 0.820f, 0.950f, 1.220f, 1.330f, 1.600f,		//  Rb, Sr, Y,  Zr, Nb, Mo,
+			2.160f, 1.900f, 2.200f, 2.280f, 2.200f, 1.930f,		//  Tc, Ru, Rh, Pd, Ag, Cd,
+			1.690f, 1.780f, 1.960f, 0.000f, 2.050f, 2.100f,		//  In, Sn, Sb, Te, I,  Xe,
+			2.660f, 2.600f, 0.790f, 0.890f, 1.100f, 1.120f,		//  Cs, Ba, La ,Ce, Pr, Nd,
+			1.130f, 1.140f, 0.000f, 1.170f, 0.000f, 1.200f,		//  Pm, Sm, Eu, Gd, Tb, Dy,
+			0.000f, 1.220f, 1.230f, 1.240f, 1.250f, 0.000f,		//  Ho, Er, Tm, Yb, Lu, Hf,
+			1.270f, 1.300f, 1.500f, 2.360f, 1.900f, 2.200f,		//  Ta, W,  Re, Os, Ir, Pt,
+			2.200f, 2.280f, 2.540f, 2.000f, 1.620f, 2.330f,		//  Au, Hg, Tl, Pb, Bi, Po,
+			2.020f, 2.000f, 2.200f, 0.000f, 0.700f, 0.890f,		//  At, Rn, Fr, Ra, Ac, Th,
+			1.100f, 1.300f, 1.500f, 1.380f, 1.360f, 1.280f,		//  Pa, U,  Np, Pu, Am, Cm,
+			1.300f, 1.300f, 1.300f, 1.300f, 1.300f				//  Bk, Cf, Es, Fm, Md,
+	};
+
 	transient protected int mMaxAtoms;
 	transient protected int mMaxBonds;
 

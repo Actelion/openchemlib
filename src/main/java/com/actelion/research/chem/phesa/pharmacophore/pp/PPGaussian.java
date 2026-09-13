@@ -1,10 +1,10 @@
 package com.actelion.research.chem.phesa.pharmacophore.pp;
 
 import com.actelion.research.chem.Coordinates;
-import com.actelion.research.chem.PeriodicTable;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.chem.alignment3d.transformation.Transformation;
 import com.actelion.research.chem.alignment3d.transformation.TransformationSequence;
+import com.actelion.research.chem.conf.VDWRadii;
 import com.actelion.research.chem.phesa.EncodeFunctions;
 import com.actelion.research.chem.phesa.Gaussian3D;
 import com.actelion.research.chem.phesa.MolecularVolume;
@@ -178,7 +178,7 @@ public class PPGaussian extends Gaussian3D {
 
 	@Override
 	public double calculateWidth() {
-		double vdwR = PeriodicTable.getElement(atomicNo).getVDWRadius();
+		double vdwR = VDWRadii.getVDWRadius(atomicNo);
 		return MolecularVolume.alpha_pref/(vdwR*vdwR);
 	}
 }
