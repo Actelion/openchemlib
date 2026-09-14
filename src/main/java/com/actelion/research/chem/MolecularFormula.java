@@ -34,7 +34,7 @@
 package com.actelion.research.chem;
 
 public class MolecularFormula {
-	private static final double[] sRelativeMass = { 0.0,
+	public static final double[] sRelativeMass = { 0.0,
 	1.00794, 4.0026, 6.9410, 9.0122, 10.811, 12.011,    //  H , He, Li, Be, B , C , 
 	 14.007, 15.999, 18.998, 20.180, 22.990, 24.305,    //  N , O , F , Ne, Na, Mg, 
 	 26.982, 28.086, 30.974, 32.066, 35.453, 39.948,    //  Al, Si, P , S , Cl, Ar, 
@@ -68,7 +68,7 @@ public class MolecularFormula {
 	113.15934, 128.17428, 131.19846, 147.17646,  97.11658,  87.0777,  //  Leu,Lys,Met,Phe,Pro,Ser,
 	101.10458, 186.2134 , 163.17546,  99.13246 };                     //  Thr,Trp,Tyr,Val,
 
-	private static final double[] sAbsoluteMass = { 0.0, 
+	public static final double[] sAbsoluteMass = { 0.0,
 	   1.007825,   4.00260 ,   7.016003,   9.012182,	//  H, He,Li,Be
 	  11.009305,  12.000000,  14.003074,  15.994915,	//  B ,C ,N, O
 	  18.998403,  19.992435,  22.989767,  23.985042,	//  F ,Ne,Na,Mg
