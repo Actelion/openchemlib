@@ -462,24 +462,25 @@ public class Molecule implements Serializable {
 			{2,3}, {3}											//  No, Lr
 		};
 
-	public static final float[] cElectronegativity = new float[] { 2.550f,
-			2.200f, 0.000f, 0.980f, 1.570f, 2.040f, 2.550f,		//  H,  He, Li, Be, B,  C,
-			3.040f, 3.440f, 3.980f, 0.000f, 0.930f, 1.310f,		//  N,  O,  F,  Ne, Na, Mg,
-			1.610f, 1.900f, 2.190f, 2.580f, 3.160f, 0.000f,		//  Al, Si, P,  S,  Cl, Ar,
-			1.000f, 1.360f, 1.540f, 1.630f, 1.660f, 1.550f,		//  K,  Ca, Sc, Ti, V,  Cr,
-			1.830f, 1.880f, 1.910f, 1.900f, 1.650f, 1.810f,		//  Mn, Fe, Co, Ni, Cu, Zn,
-			2.010f, 0.000f, 2.180f, 2.550f, 0.000f, 2.960f,		//  Ga, Ge, As, Se, Br, Kr,
-			0.000f, 0.820f, 0.950f, 1.220f, 1.330f, 1.600f,		//  Rb, Sr, Y,  Zr, Nb, Mo,
-			2.160f, 1.900f, 2.200f, 2.280f, 2.200f, 1.930f,		//  Tc, Ru, Rh, Pd, Ag, Cd,
-			1.690f, 1.780f, 1.960f, 0.000f, 2.050f, 2.100f,		//  In, Sn, Sb, Te, I,  Xe,
-			2.660f, 2.600f, 0.790f, 0.890f, 1.100f, 1.120f,		//  Cs, Ba, La ,Ce, Pr, Nd,
-			1.130f, 1.140f, 0.000f, 1.170f, 0.000f, 1.200f,		//  Pm, Sm, Eu, Gd, Tb, Dy,
-			0.000f, 1.220f, 1.230f, 1.240f, 1.250f, 0.000f,		//  Ho, Er, Tm, Yb, Lu, Hf,
-			1.270f, 1.300f, 1.500f, 2.360f, 1.900f, 2.200f,		//  Ta, W,  Re, Os, Ir, Pt,
-			2.200f, 2.280f, 2.540f, 2.000f, 1.620f, 2.330f,		//  Au, Hg, Tl, Pb, Bi, Po,
-			2.020f, 2.000f, 2.200f, 0.000f, 0.700f, 0.890f,		//  At, Rn, Fr, Ra, Ac, Th,
-			1.100f, 1.300f, 1.500f, 1.380f, 1.360f, 1.280f,		//  Pa, U,  Np, Pu, Am, Cm,
-			1.300f, 1.300f, 1.300f, 1.300f, 1.300f				//  Bk, Cf, Es, Fm, Md,
+	// Allen scale (lanthanides,actinides from ReVEBE & Pauling scale)
+	public static final float[] cElectronegativity = new float[] { 2.544f,
+			2.300f, 4.160f, 0.912f, 1.576f, 2.051f, 2.544f,		//  H,  He, Li, Be, B,  C,
+			3.066f, 3.610f, 4.193f, 4.787f, 0.869f, 1.293f,		//  N,  O,  F,  Ne, Na, Mg,
+			1.613f, 1.916f, 2.253f, 2.589f, 2.869f, 3.242f,		//  Al, Si, P,  S,  Cl, Ar,
+			0.734f, 1.034f, 1.190f, 1.380f, 1.530f, 1.650f,		//  K,  Ca, Sc, Ti, V,  Cr,
+			1.750f, 1.800f, 1.840f, 1.880f, 1.850f, 1.588f,		//  Mn, Fe, Co, Ni, Cu, Zn,
+			1.756f, 1.994f, 2.211f, 2.424f, 2.685f, 2.966f,		//  Ga, Ge, As, Se, Br, Kr,
+			0.706f, 0.963f, 1.120f, 1.320f, 1.410f, 1.470f,		//  Rb, Sr, Y,  Zr, Nb, Mo,
+			1.510f, 1.540f, 1.560f, 1.580f, 1.870f, 1.521f,		//  Tc, Ru, Rh, Pd, Ag, Cd,
+			1.656f, 1.824f, 1.984f, 2.158f, 2.359f, 2.582f,		//  In, Sn, Sb, Te, I,  Xe,
+			0.659f, 0.881f, 1.02f,  1.04f,  0.92f,  0.95f, 		//  Cs, Ba, La ,Ce, Pr, Nd,
+			0.99f,  1.03f,  1.08f,  1.06f,  1.05f,  1.09f, 		//  Pm, Sm, Eu, Gd, Tb, Dy,
+			1.12f,  1.08f,  1.11f,  1.21f,  1.09f,  1.16f, 		//  Ho, Er, Tm, Yb, Lu, Hf,
+			1.34f,  1.47f,  1.60f,  1.65f,  1.68f,  1.72f, 		//  Ta, W,  Re, Os, Ir, Pt,
+			1.92f,  1.765f, 1.789f, 1.854f, 2.01f,  2.19f, 		//  Au, Hg, Tl, Pb, Bi, Po,
+			2.39f,  2.60f,  0.67f,  0.89f,  0.98f,  1.08f, 		//  At, Rn, Fr, Ra, Ac, Th,
+			1.5f,   1.38f,  1.36f,  1.28f,  1.3f,   1.3f, 		//  Pa, U,  Np, Pu, Am, Cm,
+			1.3f,   1.3f,   1.3f,   1.3f,   1.3f,   1.3f,  		//  Bk, Cf, Es, Fm, Md, No,
 	};
 
 	transient protected int mMaxAtoms;
