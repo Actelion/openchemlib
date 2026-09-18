@@ -26,7 +26,7 @@ public class InteractionGeometry {
 	private final Coordinates mConnectionP;
 	private Coordinates mRearP1,mRearP2,mFarP;
 
-	public InteractionGeometry(StereoMolecule mol, int atom) {
+	private InteractionGeometry(StereoMolecule mol, int atom) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 
 		mConnectionP = mol.getAtomCoordinates(atom);
@@ -122,28 +122,28 @@ public class InteractionGeometry {
 		}
 	}
 
+	/**
+	 * Assigns a geometry class for mol and atom. Then calculates angle and torsion of the RF-interaction
+	 * from the mol and atom perspective, considering the remoteAtom location.
+	 * @param mol
+	 * @param remoteMol
+	 * @param atom
+	 * @param remoteAtom
+	 */
 	public InteractionGeometry(StereoMolecule mol, StereoMolecule remoteMol, int atom, int remoteAtom) {
+		this(mol, atom, remoteMol.getAtomCoordinates(remoteAtom));
+	}
+
+	/**
+	 * Assigns a geometry class for mol and atom. Then calculates angle and torsion of the RF-interaction
+	 * from the mol and atom perspective, considering remoteP as the remoteAtom location.
+	 * @param mol
+	 * @param atom
+	 * @param remoteP
+	 */
+	public InteractionGeometry(StereoMolecule mol, int atom, Coordinates remoteP) {
 		this(mol, atom);
-
-		Coordinates remoteP = remoteMol.getAtomCoordinates(remoteAtom);
-
-		if (mType == TYPE_UNSUPPORTED || mType == TYPE_SINGLE_ATOM) {
-			mAngle = 0;
-			mTorsion = 0;
-			return;
-		}
-
-		Coordinates rearP = (mRearP2 == null
-				|| mRearP2.distanceSquared(remoteP) < mRearP1.distanceSquared(remoteP)) ? mRearP1 : mRearP2;
-
-		mAngle = mConnectionP.subC(rearP).getAngle(remoteP.subC(mConnectionP));
-
-		Coordinates v1 = rearP.subC(mFarP);
-		Coordinates v2 = mConnectionP.subC(rearP);
-		Coordinates v3 = remoteP.subC(mConnectionP);
-		Coordinates n1 = v1.cross(v2);
-		Coordinates n2 = v2.cross(v3);
-		mTorsion = Math.abs(Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2)));
+		updateAngleAndTorsion(remoteP);
 	}
 
 	public double getAngle() {
@@ -160,6 +160,31 @@ public class InteractionGeometry {
 
 	public String getTypeName() {
 		return TYPE_NAME[mType];
+	}
+
+	/**
+	 * Calculates angle and torsion of the RF-interaction from the mol and atom perspective,
+	 * considering remoteP as the remoteAtom location.
+	 * @param remoteP
+	 */
+	public void updateAngleAndTorsion(Coordinates remoteP) {
+		if (mType == TYPE_UNSUPPORTED || mType == TYPE_SINGLE_ATOM || remoteP == null) {
+			mAngle = 0;
+			mTorsion = 0;
+			return;
+		}
+
+		Coordinates rearP = (mRearP2 == null
+				|| mRearP2.distanceSquared(remoteP) < mRearP1.distanceSquared(remoteP)) ? mRearP1 : mRearP2;
+
+		mAngle = mConnectionP.subC(rearP).getAngle(remoteP.subC(mConnectionP));
+
+		Coordinates v1 = rearP.subC(mFarP);
+		Coordinates v2 = mConnectionP.subC(rearP);
+		Coordinates v3 = remoteP.subC(mConnectionP);
+		Coordinates n1 = v1.cross(v2);
+		Coordinates n2 = v2.cross(v3);
+		mTorsion = Math.abs(Math.atan2(v2.getLength() * v1.dot(n2), n1.dot(n2)));
 	}
 
 	private int getMostBulkyNeighbourIndex(StereoMolecule mol, int atom, int vetoAtom) {

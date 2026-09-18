@@ -14,6 +14,8 @@ public class RFKnowledgeBase implements Serializable {
 	private static final int DENSITY_BINS = 36;
 	private static final double DENSITY_BIN_SIZE = Math.PI / DENSITY_BINS;
 	private static final double GEOMETRY_INFLUENCE = 0.33;	// larger values increase RF reduction with bad geometries
+	public static final double OFF_TOLERANCE = 0.1;	// Allowed penalty free distances (Angstrom) beyond statistical range of values within 10% and 90%
+	public static final double OFF_SLOPE_WIDTH = 0.2;	// Width of penalty range beyond OFF_TOLERANCE where probability multiplier goes from 1.0 to 0.0
 
 	private static volatile RFKnowledgeBase sKnowledgeBase;
 
@@ -94,6 +96,10 @@ public class RFKnowledgeBase implements Serializable {
 		if (uncertaintyHolder != null)
 			uncertaintyHolder[0] = geomFactor * getRawUncertainty(lType, pType);
 		return rawRFValue * geomFactor;
+	}
+
+	public RFKnowledgeBase.DensityMapsWithDistances getDensityMap(int geometryType, boolean isLigand) {
+		return isLigand ? mLigandGeometryMap.get(geometryType) : mProteinGeometryMap.get(geometryType);
 	}
 
 	public String getFullRFDetails(RFInteraction ia) {
@@ -297,8 +303,12 @@ public class RFKnowledgeBase implements Serializable {
 							  : (distance - distances[SHORT]) / (distances[LONG] - distances[SHORT]);
 			double distanceF1 = 1.0 - distanceF2;
 
-			return Math.max(MIN_DENSITY, distanceF1 * shortDensity / meanDensities[SHORT]
-									   + distanceF2 * longDensity / meanDensities[LONG]);
+			double offDistance = (distance < distances[SHORT]) ? distances[SHORT] - distance - OFF_TOLERANCE
+							   : (distance > distances[LONG]) ? distance - distances[LONG] - OFF_TOLERANCE : 0.0;
+			double outOfRangeF = (offDistance <= 0.0) ? 1.0 : Math.max(0.0, 1.0 - offDistance / OFF_SLOPE_WIDTH);
+
+			return Math.max(MIN_DENSITY, outOfRangeF * (distanceF1 * shortDensity / meanDensities[SHORT]
+													  + distanceF2 * longDensity / meanDensities[LONG]));
 		}
 
 		public String getFullInteractionDetails(double angle, double torsion, double distance) {
@@ -330,8 +340,12 @@ public class RFKnowledgeBase implements Serializable {
 					: (distance - distances[SHORT]) / (distances[LONG] - distances[SHORT]);
 			double distanceF1 = 1.0 - distanceF2;
 
-			double f = Math.max(MIN_DENSITY, distanceF1 * shortDensity / meanDensities[SHORT]
-										   + distanceF2 * longDensity / meanDensities[LONG]);
+			double offDistance = (distance < distances[SHORT]) ? distances[SHORT] - distance - OFF_TOLERANCE
+					: (distance > distances[LONG]) ? distance - distances[LONG] - OFF_TOLERANCE : 0.0;
+			double outOfRangeF = (offDistance <= 0.0) ? 1.0 : Math.max(0.0, 1.0 - offDistance / OFF_SLOPE_WIDTH);
+
+			double f = Math.max(MIN_DENSITY, outOfRangeF * (distanceF1 * shortDensity / meanDensities[SHORT]
+														  + distanceF2 * longDensity / meanDensities[LONG]));
 
 			return "f:"+DoubleFormat.toString(f, 3)
 				+" ang:"+Math.round(180/Math.PI*angle)
@@ -339,7 +353,8 @@ public class RFKnowledgeBase implements Serializable {
 				+" dis:"+DoubleFormat.toString(distance,3)
 				+" pos:"+DoubleFormat.toString(distanceF2,3)
 				+" denS:"+DoubleFormat.toString(shortDensity,3)
-				+" denL:"+DoubleFormat.toString(longDensity,3);
+				+" denL:"+DoubleFormat.toString(longDensity,3)
+				+" offF:"+DoubleFormat.toString(outOfRangeF,3);
 		}
 
 		private void writeObject(ObjectOutputStream stream) throws IOException {
