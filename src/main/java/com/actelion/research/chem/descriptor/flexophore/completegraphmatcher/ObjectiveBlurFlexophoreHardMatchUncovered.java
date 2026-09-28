@@ -855,7 +855,7 @@ public class ObjectiveBlurFlexophoreHardMatchUncovered implements IObjectiveComp
 		resetSimilarityArrays = true;
 
 		if(!checkAtomTypes(mdhvBase)) {
-			throw new RuntimeException("Base contains Invalid atom type for similarity calculation " + mdhvBase.getMolDistHist().toString() + ".");
+			throw new RuntimeException("Base contains Invalid atom type for similarity calculation " + mdhvBase.getMolDistHist().toStringNodes() + ".");
 		}
 
 		deltaNanoBaseBlur += System.nanoTime()-t0;
