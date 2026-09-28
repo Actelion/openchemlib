@@ -1,10 +1,12 @@
 package org.openmolecules.chem.interaction.rf;
 
+import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SortedStringList;
 import com.actelion.research.chem.StereoMolecule;
 import org.openmolecules.chem.interaction.AtomClassifier;
 
 public class RFProteinAtomClassifier extends AtomClassifier {
+	public static int TYPE_COUNT = 24;	// type count including TYPE_UNKNOWN
 	private static final String[][] PROTEIN_TYPE = {
 			{ "gGP@LdbMU@XPZpRu?RHFzj@", "C_ali_apol" },
 			{ "eM@HzCB[UFhXOtdVzj{P", "C_ali_apol" },
@@ -103,5 +105,18 @@ public class RFProteinAtomClassifier extends AtomClassifier {
 	@Override
 	public String getAtomTypeName(int typeIndex) {
 		return typeIndex == TYPE_UNKNOWN ? "?" : sTypeNameList.getStringAt(typeIndex-1);
+	}
+
+	/**
+	 * Cheap and dirty method.
+	 * @param pType
+	 * @return correct values for C,N,O,P,S,Se only. Otherwise, returns 0.
+	 */
+	public int getContactAtomicNoFromType(int pType) {
+		String typeName = getAtomTypeName(pType);
+		if (typeName.equals("Water"))
+			return 8;
+		int index = typeName.indexOf('_');
+		return index == -1 ? 0 : Molecule.getAtomicNoFromLabel(typeName.substring(0, index));
 	}
 }
