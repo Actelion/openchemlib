@@ -218,7 +218,7 @@ public class MCS {
 		try {
 			if (sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cMatchDBondToDelocalized, excluded) > 0) {
 				molMCS = frag;
-				List<IntVec> liIndexFragCandidates = new ArrayList<IntVec>(hsIndexFragCandidates);
+				List<IntVec> liIndexFragCandidates = new ArrayList<>(hsIndexFragCandidates);
 				if (!liIndexFragCandidates.isEmpty()) {
 					IntVec iv = liIndexFragCandidates.get(0);
 					iv.setBits(0, iv.sizeBits());
@@ -244,7 +244,7 @@ public class MCS {
 					System.out.println("Full structure in iv.");
 				}
 			}
-			StereoMolecule fragSub = getSubFrag(frag, iv);
+			StereoMolecule fragSub = getSubFrag(frag, iv, false).fragment;
 			sss.setFragment(fragSub);
 			if (sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cDefaultMatchMode, excluded) > 0) {
 				hsIndexFragSolution.add(iv);
@@ -290,10 +290,10 @@ public class MCS {
 		}
 		liIndexFragSolution.sort(comparatorBitsSet);
 		IntVec ivMCS = liIndexFragSolution.get(liIndexFragSolution.size() - 1);
-		molMCS = getSubFrag(frag, ivMCS);
+		molMCS = getSubFrag(frag, ivMCS, false).fragment;
 		List<StereoMolecule> li = new ArrayList<StereoMolecule>();
 		for (IntVec iv : liIndexFragSolution) {
-			li.add(getSubFrag(frag, iv));
+			li.add(getSubFrag(frag, iv, false).fragment);
 		}
 		return ExtendedMoleculeFunctions.removeSubStructures(li);
 	}
@@ -308,7 +308,7 @@ public class MCS {
 		}
 		liIndexFragSolution.sort(comparatorBitsSet);
 		IntVec ivMCS = liIndexFragSolution.get(liIndexFragSolution.size() - 1);
-		molMCS = getSubFrag(frag, ivMCS);
+		molMCS = getSubFrag(frag, ivMCS, false).fragment;
 		return molMCS;
 	}
 
@@ -341,22 +341,33 @@ public class MCS {
 				arrBondFrag[i]=true;
 			}
 		}		
-		StereoMolecule fragSub = getSubFrag(frag, ivMCSLargest);
-		sss.setFragment(fragSub);
+		MappedFragment mf = getSubFrag(frag, ivMCSLargest, true);
+		sss.setFragment(mf.fragment);
 		//
 		// The substructure has to be searched in the molecule because the mapping indices are not contained in the
 		// IntVec that is the solution from the MCS search.
 		arrMatchListFrag2Mol = null;
 		if(sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cDefaultMatchMode,excluded)>0){
 			ArrayList<int[]> liMatchSubFrag2Mol = sss.getMatchList();
-			arrMatchListFrag2Mol = getMappedMatchListFrag2Mol(fragSub, liMatchSubFrag2Mol.get(0));
+			int [] mapSubFrag2Mol = liMatchSubFrag2Mol.get(0);
+			arrMatchListFrag2Mol = new int[frag.getAtoms()];
+			Arrays.fill(arrMatchListFrag2Mol, -1);
+			for (int indexSubFrag = 0; indexSubFrag < mapSubFrag2Mol.length; indexSubFrag++) {
+				for (int indexFrag2SubFrag = 0; indexFrag2SubFrag < mf.map.length; indexFrag2SubFrag++) {
+					if(mf.map[indexFrag2SubFrag]==indexSubFrag){
+						arrMatchListFrag2Mol[indexFrag2SubFrag]=mapSubFrag2Mol[indexSubFrag];
+						break;
+					}
+				}
+			}
+
 			int bondsMol = mol.getBonds();
 			if(arrBondMCSMol==null) {
 				arrBondMCSMol = new boolean [bondsMol];
 			} else {
 				Arrays.fill(arrBondMCSMol, false);
 			}
-			getBondArrayMolecule(arrMatchListFrag2Mol, arrBondFrag, arrBondMCSMol);	
+			getBondArrayMolecule(arrMatchListFrag2Mol, arrBondMCSMol);
 		}
 		arrBondMol_Result[0]=arrBondMCSMol;
 		arrBondMol_Result[1]=arrBondFrag;
@@ -372,11 +383,11 @@ public class MCS {
 		return arrMatchListFrag2Mol;
 	}
 
-	private int[] getMappedMatchListFrag2Mol(StereoMolecule fragSub, int[] arrMatchListSubFrag2Mol)
-    {
+	private int[] getMappedMatchListFrag2Mol(MappedFragment mf, int[] arrMatchListSubFrag2Mol) {
 		int [] arrMatchListFrag2Mol = new int [frag.getAtoms()];
-//        SSSearcher sss = new SSSearcher();
-		sss.setMol(fragSub, frag);
+		Arrays.fill(arrMatchListFrag2Mol, -1);
+
+		sss.setMol(mf.fragment, frag);
 		sss.findFragmentInMolecule(SSSearcher.cCountModeOverlapping, SSSearcher.cDefaultMatchMode, null);
 		ArrayList<int[]> liMatchSubFrag2Mol = sss.getMatchList();
 		int [] arrMatchListSubFrag2Frag = liMatchSubFrag2Mol.get(0);
@@ -390,33 +401,41 @@ public class MCS {
 		}
 		return arrMatchListFrag2Mol;
 	}
-	
-    private boolean[] getBondArrayMolecule(int[] arrMatchFragment2Mol, boolean[] arrBondMCSFrag, boolean[] arrBondMCSMol)
-    {
-		for (int indexAtFrag=0; indexAtFrag<arrMatchFragment2Mol.length; indexAtFrag++) {
-			int indexAtMol = arrMatchFragment2Mol[indexAtFrag];
-			int nConn2Frag = frag.getConnAtoms(indexAtFrag);
-			for (int j = 0; j < nConn2Frag; j++) {
-				int indexAtFragConn = frag.getConnAtom(indexAtFrag, j);
-				int indexBondFrag = frag.getBond(indexAtFrag, indexAtFragConn);
-				if(arrBondMCSFrag[indexBondFrag]){
-					int indexAtMolConn = arrMatchFragment2Mol[indexAtFragConn];
-					int indexBondMol = mol.getBond(indexAtMol, indexAtMolConn);
-                    if (indexBondMol > -1) {
-						arrBondMCSMol[indexBondMol]=true;
-                    }
+
+
+	/**
+	 *
+	 * @param arrMatchFragment2Mol Index is the Fragment atom index, value is the matched atom index in molecule.
+	 * @param arrBondMCSMol The bits are set 'true' which corresponds to the bonds for maximum common substructure in the molecule.
+	 * @return
+	 */
+	private void getBondArrayMolecule(int[] arrMatchFragment2Mol, boolean[] arrBondMCSMol) {
+		for (int indexAtFrag1=0; indexAtFrag1<arrMatchFragment2Mol.length; indexAtFrag1++) {
+			int indexAtMol1 = arrMatchFragment2Mol[indexAtFrag1];
+			if (indexAtMol1 == -1)
+				continue;
+			for (int indexAtFrag2 = indexAtFrag1+1; indexAtFrag2 < arrMatchFragment2Mol.length; indexAtFrag2++) {
+
+				int indexAtMol2 = arrMatchFragment2Mol[indexAtFrag2];
+				if (indexAtMol2 == -1)
+					continue;
+
+				int indexBondMol = mol.getBond(indexAtMol1, indexAtMol2);
+				if (indexBondMol > -1) {
+					arrBondMCSMol[indexBondMol]=true;
 				}
 			}
 		}
-		return arrBondMCSMol;
 	}
+
 
 // The original procedure missed atom charge, mass, etc., which is particularly annoying,
 // when providing a custom SSSearcher(), which matches these properties. TLS 11Feb2021
-	private static StereoMolecule getSubFrag(StereoMolecule frag, IntVec iv) {
+	private static MappedFragment getSubFrag(StereoMolecule frag, IntVec iv, boolean withMap) {
 		boolean[] isFragmentAtom = new boolean[frag.getAtoms()];
 		int atoms = 0;
 		int bonds = frag.getBonds();
+
 		for (int bond=0; bond<bonds; bond++) {
 			if (iv.isBitSet(bond)) {
 				for (int i=0; i<2; i++) {
@@ -429,57 +448,22 @@ public class MCS {
 			}
 		}
 
+		int [] map = null;
+		if(withMap)
+			map = new int[frag.getAtoms()];
+
 		StereoMolecule fragSubBonds = new StereoMolecule(atoms, bonds);
 		fragSubBonds.setFragment(true);
-		frag.copyMoleculeByAtoms(fragSubBonds, isFragmentAtom, true, null);
+		frag.copyMoleculeByAtoms(fragSubBonds, isFragmentAtom, true, map);
 		fragSubBonds.ensureHelperArrays(Molecule.cHelperRings);
-		return fragSubBonds;
+
+		MappedFragment mf = new MappedFragment(fragSubBonds, map);
+
+		return mf;
 	}
 
-/*    private static StereoMolecule getSubFrag(StereoMolecule frag, IntVec iv)
-    {
-		int bonds = frag.getBonds();
-		HashSet<Integer> hsAtomIndex = new HashSet<Integer>();
-		for (int i = 0; i < bonds; i++) {
-			if(iv.isBitSet(i)){
-				int indexAtom1 = frag.getBondAtom(0, i);
-				int indexAtom2 = frag.getBondAtom(1, i);
-				hsAtomIndex.add(indexAtom1);
-				hsAtomIndex.add(indexAtom2);
-			}
-		}		
-		StereoMolecule fragSubBonds = new StereoMolecule(hsAtomIndex.size(), bonds);
-		fragSubBonds.setFragment(true);
-		int [] arrMapAtom = new int [frag.getAtoms()];
-		ArrayUtilsCalc.set(arrMapAtom, -1);
-		for (int indexAtom : hsAtomIndex) {
-			int indexAtomNew = fragSubBonds.addAtom(frag.getAtomicNo(indexAtom));
-			fragSubBonds.setAtomX(indexAtomNew, frag.getAtomX(indexAtom));
-			fragSubBonds.setAtomY(indexAtomNew, frag.getAtomY(indexAtom));
-			fragSubBonds.setAtomZ(indexAtomNew, frag.getAtomZ(indexAtom));
-			arrMapAtom[indexAtom]=indexAtomNew;
-		}
-		for (int i = 0; i < bonds; i++) {
-			if(iv.isBitSet(i)){
-				int indexAtom1 = frag.getBondAtom(0, i);
-				int indexAtom2 = frag.getBondAtom(1, i);
-				int indexAtomNew1 = arrMapAtom[indexAtom1];
-				int indexAtomNew2 = arrMapAtom[indexAtom2];
-				int type = frag.getBondType(i);
-				if(frag.isDelocalizedBond(i)){
-					type = Molecule.cBondTypeDelocalized;
-					// fragSubBonds.setBondQueryFeature(bondIndexNew, Molecule.cBondQFDelocalized, true);
-				}
-				// int bondIndexNew = fragSubBonds.addBond(indexAtomNew1, indexAtomNew2, type);
-				fragSubBonds.addBond(indexAtomNew1, indexAtomNew2, type);
-			}
-		}
-		fragSubBonds.ensureHelperArrays(Molecule.cHelperRings);
-		return fragSubBonds;
-	}*/
-	
-    private List<IntVec> getAllPlusOneAtomCombinations(IntVec iv, StereoMolecule frag)
-    {
+
+    private List<IntVec> getAllPlusOneAtomCombinations(IntVec iv, StereoMolecule frag) {
 		int bonds = frag.getBonds();
 		List<IntVec> liIntVec = new ArrayList<IntVec>();
 		HashSet<Integer> hsAtomIndex = new HashSet<Integer>();
@@ -510,8 +494,7 @@ public class MCS {
      *
 	 * @param ivSolution
 	 */
-    private void removeAllSubSolutions(IntVec ivSolution)
-    {
+    private void removeAllSubSolutions(IntVec ivSolution) {
 		List<IntVec> liIndexFragSolution = new ArrayList<IntVec>(hsIndexFragCandidates);
 		for (IntVec ivCandidate : liIndexFragSolution) {
 			if(isCandidateInSolution(ivSolution, ivCandidate)) {
@@ -526,8 +509,7 @@ public class MCS {
 	 * @param hsIndexFragSolution
 	 * @return
 	 */
-    private static List<IntVec> getFinalSolutionSet(HashSet<IntVec> hsIndexFragSolution)
-    {
+    private static List<IntVec> getFinalSolutionSet(HashSet<IntVec> hsIndexFragSolution){
 		List<IntVec> liIndexFragSolution = new ArrayList<IntVec>(hsIndexFragSolution);
 		for (int i = liIndexFragSolution.size()-1; i >= 0; i--) {
 			IntVec ivCandidate = liIndexFragSolution.get(i);
@@ -544,8 +526,7 @@ public class MCS {
 		return liIndexFragSolution;
 	}
 	
-    private static boolean isCandidateInSolution(IntVec ivSolution, IntVec ivCandidate)
-    {
+    private static boolean isCandidateInSolution(IntVec ivSolution, IntVec ivCandidate){
 		IntVec iv = IntVec.OR(ivSolution, ivCandidate);
 		if(iv.equals(ivSolution)){
 			return true;
@@ -553,10 +534,8 @@ public class MCS {
 		return false;
 	}
 	
-    private static class ComparatorBitsSet implements Comparator<IntVec>
-    {
-        public int compare(IntVec iv1, IntVec iv2)
-        {
+    private static class ComparatorBitsSet implements Comparator<IntVec> {
+        public int compare(IntVec iv1, IntVec iv2) {
 			int bits1 = iv1.getBitsSet();
 			int bits2 = iv2.getBitsSet();
 			if(bits1>bits2){
@@ -573,16 +552,11 @@ public class MCS {
 	 * @return 1 if full overlap and 0 if no overlap at all.
 	 */
 	public double getScore(){
-		
 		double sc = 0;
 		double nBndsFrag = frag.getBonds();
-		
 		double nBndsMol = mol.getBonds();
-		
 		double nBndsMCS = molMCS.getBonds();
-		
 		sc = nBndsMCS/Math.max(nBndsFrag, nBndsMol);
-		
 		return sc;
 	}
 
@@ -591,61 +565,18 @@ public class MCS {
 		return considerAromaticRings;
 	}
 
-    public boolean isConsiderRings()
-    {
+    public boolean isConsiderRings(){
 		return considerRings;
 	}
-//	static class Solution  {
-//		
-//		IntVec iv;
-//		
-//		int [] arrMatchMolecule;
-//		
-//		
-//		int hash;
-//		
-//		public Solution(IntVec iv, int [] arrMatchMolecule) {
-//			
-//			this.iv = new IntVec(iv);
-//			
-//			this.arrMatchMolecule = arrMatchMolecule;
-//			
-//			int [] a = iv.get();
-//			
-//			int [] arrHash = new int [a.length+arrMatchMolecule.length];
-//			
-//			System.arraycopy(a, 0, arrHash, 0, a.length);
-//			
-//			System.arraycopy(arrMatchMolecule, 0, arrHash, a.length, arrMatchMolecule.length);
-//			
-//			hash = new IntVec(arrHash).hashCode();
-//			
-//		}
-//		
-//		
-//		public int hashCode() {
-//			return hash;
-//		}
-//		
-//		public boolean equals(Object obj) {
-//			
-//			if(!(obj instanceof Solution)) {
-//				return false;
-//			}
-//			
-//			Solution solution = (Solution)obj;
-//			
-//			if(!iv.equal(solution.iv)){
-//				return false;
-//			}
-//			
-//			if(!ArrayUtilsCalc.equals(arrMatchMolecule, solution.arrMatchMolecule)){
-//				return false;
-//			}
-//			
-//			return true;
-//		}
-//		
-//
-//	}
+
+	private static class MappedFragment  {
+		StereoMolecule fragment;
+		// Index is atom index in fragment, value is atom index in original fragment.
+		int [] map;
+
+		public MappedFragment(StereoMolecule fragment, int[] map) {
+			this.fragment = fragment;
+			this.map = map;
+		}
+	}
 }

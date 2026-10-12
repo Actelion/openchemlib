@@ -105,12 +105,15 @@ public class CreatorMolDistHistViz {
     private StereoMolecule [] arrElectronPoorN;
     private ConformerGeneratorStageTries conformerGeneratorStageTries;
 
+    private List<Coordinates> coordinates;
 
     public CreatorMolDistHistViz() {
         this.nConformations = DescriptorHandlerFlexophore.NUM_CONFORMATIONS;
         subGraphExtractor = new SubGraphExtractor();
         conformationMode = CONF_GEN_TS;
         conformerGeneratorStageTries = new ConformerGeneratorStageTries(nConformations);
+        coordinates = new ArrayList<>();
+
 
         IDCodeParser parser = new IDCodeParser();
 
@@ -171,7 +174,6 @@ public class CreatorMolDistHistViz {
         return createMultipleConformationsWithoutStandardizer(molStand, nConformations);
     }
     public MolDistHistViz createMultipleConformationsWithoutStandardizer(StereoMolecule molOrig, int nConformations) throws Exception {
-
 
         Molecule3D molInPlace = new Molecule3D(molOrig);
         molInPlace.ensureHelperArrays(Molecule.cHelperRings);
@@ -266,10 +268,11 @@ public class CreatorMolDistHistViz {
         int ccConformationsGenerated = 0;
         Molecule3D molViz = null;
 
+        coordinates.clear();
         for (int i = 0; i < nConformations; i++) {
             boolean conformerGenerated = false;
             try {
-                conformerGenerated = conformerGeneratorStageTries.generateConformerAndSetCoordinates(nAtoms, molInPlace);
+                conformerGenerated = conformerGeneratorStageTries.generateConformerAndSetCoordinates(nAtoms, molInPlace, coordinates);
             } catch (ExceptionTimeOutConformerGeneration e) {
                 System.err.println(
                     "CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode " + molInPlace.getIDCode( )+ ", hence generated " + ccConformationsGenerated + " conformers.");
@@ -292,6 +295,11 @@ public class CreatorMolDistHistViz {
         }
 
         return molViz;
+    }
+
+
+    public List<Coordinates> getCoordinates() {
+        return coordinates;
     }
 
     /**
@@ -454,10 +462,11 @@ public class CreatorMolDistHistViz {
         }
         conformerGeneratorStageTries.setMolecule(molecule);
         int ccConformationsGenerated=0;
+        coordinates.clear();
         for (int i = 0; i < DescriptorHandlerFlexophore.NUM_CONFORMATIONS; i++) {
             boolean conformerGenerated = false;
             try {
-                conformerGenerated = conformerGeneratorStageTries.generateConformerAndSetCoordinates(molecule.getAtoms(), molecule);
+                conformerGenerated = conformerGeneratorStageTries.generateConformerAndSetCoordinates(molecule.getAtoms(), molecule, coordinates);
             } catch (ExceptionTimeOutConformerGeneration e) {
                 System.err.println(
                         "CreatorMolDistHistViz: ExceptionTimeOutConformerGeneration for idcode " + molecule.getIDCode( )+ ", hence generated " + ccConformationsGenerated + " conformers.");
@@ -564,9 +573,6 @@ public class CreatorMolDistHistViz {
         molCenter.ensureHelperArrays(Molecule.cHelperRings);
         return molCenter;
     }
-
-
-
 
     /**
      * Use valid only with createMultipleConformations(StereoMolecule molOrig, int nConformations)
