@@ -1,6 +1,7 @@
 package com.actelion.research.chem.descriptor.flexophore.generator;
 
 import com.actelion.research.calc.ThreadMaster;
+import com.actelion.research.chem.Coordinates;
 import com.actelion.research.chem.Molecule3D;
 import com.actelion.research.chem.conf.Conformer;
 import com.actelion.research.util.TimeDelta;
@@ -8,6 +9,7 @@ import org.openmolecules.chem.conf.gen.ConformerGenerator;
 import org.openmolecules.chem.conf.gen.RigidFragmentCache;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -146,12 +148,17 @@ public class ConformerGeneratorStageTries {
         return recentException;
     }
 
-    public boolean generateConformerAndSetCoordinates(int nAtoms, Molecule3D molInPlace){
-
+    /**
+     *
+     * @param nAtoms
+     * @param molInPlace
+     * @param coordinates contains the coordinates, can be null.
+     * @return
+     */
+    public boolean generateConformerAndSetCoordinates(int nAtoms, Molecule3D molInPlace, List<Coordinates> coordinates){
         boolean nextConformerAvailable = false;
-
+        coordinates.clear();
         Conformer conformer = conformerGenerator.getNextConformer();
-
         int ccTries=0;
         while (conformer==null && ccGeneratedConformers==0) {
             if(ccTries>MAX_TRIES_CONFORMERS){
@@ -170,7 +177,6 @@ public class ConformerGeneratorStageTries {
                 conformer = conformerGenerator.getNextConformer();
                 ccTries++;
             }
-
         }
 
         if(conformer != null){
@@ -185,6 +191,11 @@ public class ConformerGeneratorStageTries {
                 molInPlace.setAtomX(i,x);
                 molInPlace.setAtomY(i,y);
                 molInPlace.setAtomZ(i,z);
+
+                if(coordinates!=null) {
+                    Coordinates c = new Coordinates(x,y,z);
+                    coordinates.add(c);
+                }
             }
             nextConformerAvailable = true;
         } else {
@@ -193,6 +204,7 @@ public class ConformerGeneratorStageTries {
 
         return nextConformerAvailable;
     }
+
     public void injectNewSeed(){
         seed = new Date().getTime();
         conformerGenerator = new ConformerGenerator(seed, false);
