@@ -161,36 +161,36 @@ public class AtomFunctionAnalyzer {
 
 		return aromaticNeighbourFound;
 		}
-	
+
 	public static boolean hasUnbalancedAtomCharge(StereoMolecule mol, int atom) {
-		
+
 		if (mol.getAtomCharge(atom)==0) {
 			return false;
-		} 
-		
+		}
+
 		boolean unbalanced=true;
-		
+
 		int chargeCenterAtom = mol.getAtomCharge(atom);
-		
+
 		int nConnected = mol.getConnAtoms(atom);
-		
+
 		int sumChargeConnectedAtoms = 0;
-		
+
 		for (int i = 0; i < nConnected; i++) {
-			
+
 			int indexAtom = mol.getConnAtom(atom, i);
-			
+
 			sumChargeConnectedAtoms += mol.getAtomCharge(indexAtom);
 		}
-		
+
 		if(Math.abs(chargeCenterAtom) <= Math.abs(sumChargeConnectedAtoms)) {
-			
+
 			if(Math.signum(chargeCenterAtom) != Math.signum(sumChargeConnectedAtoms)) {
 				unbalanced=false;
 			}
-			
+
 		}
-			
+
 		return unbalanced;
 	}
 
@@ -212,17 +212,17 @@ public class AtomFunctionAnalyzer {
 			int nConnected2C = mol.getConnAtoms(connAtom);
 			for (int i = 0; i < nConnected2C; i++) {
 				int indexAtom = mol.getConnAtom(connAtom, i);
-				
+
 				if(indexAtom==atom){
 					continue;
 				}
-				
+
 				if(mol.getAtomicNo(indexAtom) != 8){
 					continue;
 				}
-				
+
 				int indexBond = mol.getBond(connAtom, indexAtom);
-				
+
 				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble)
 					return true;
 			}
@@ -231,11 +231,11 @@ public class AtomFunctionAnalyzer {
 				return true;
 		} else if (mol.getAtomicNo(connAtom) == 16) { // CSOOOH
 			int nConnected2S = mol.getConnAtoms(connAtom);
-			
+
 			int nDoubleBondedO2S=0;
 			for (int i = 0; i < nConnected2S; i++) {
 				int indexAtom = mol.getConnAtom(connAtom, i);
-				
+
 				if(indexAtom==atom)
 					continue;
 
@@ -243,11 +243,11 @@ public class AtomFunctionAnalyzer {
 					continue;
 
 				int indexBond = mol.getBond(connAtom, indexAtom);
-				
+
 				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble)
 					nDoubleBondedO2S++;
 			}
-			
+
 			if(nDoubleBondedO2S == 2)
 				return true;
 
@@ -264,18 +264,18 @@ public class AtomFunctionAnalyzer {
 	public static boolean isAcidicOxygenAtPhosphoricAcid(StereoMolecule mol, int atom, boolean considerCharge) {
 		if (mol.getAtomicNo(atom) != 8)
 			return false;
-		
+
 		if (mol.getConnAtoms(atom)!=1)
 			return false;
-		
+
 		int connAtom = mol.getConnAtom(atom, 0);
-		
+
 		if(mol.getAtomicNo(connAtom)==15){ // CP=O(OH)(OH)
 			int nConnected2P = mol.getConnAtoms(connAtom);
-			
+
 			for (int i = 0; i < nConnected2P; i++) {
 				int indexAtom = mol.getConnAtom(connAtom, i);
-				
+
 				if(indexAtom==atom)
 					continue;
 
@@ -283,36 +283,36 @@ public class AtomFunctionAnalyzer {
 					continue;
 
 				int indexBond = mol.getBond(connAtom, indexAtom);
-				
+
 				if(mol.getBondType(indexBond)==Molecule.cBondTypeDouble)
 					return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 
 	public static boolean isMemberOfNitroGroup(StereoMolecule mol, int atom) {
-		
+
 		boolean member = false;
-		
+
 		if ((mol.getAtomicNo(atom) != 7) && (mol.getAtomicNo(atom) != 8))
 			return false;
-		
-		
+
+
 		if (mol.getAtomicNo(atom) == 7) {
-			
+
 			if(isNitroGroupN(mol, atom)) {
 				member = true;
 			}
 		} else if (mol.getAtomicNo(atom) == 8) {
-			
+
 			int nConnAts = mol.getConnAtoms(atom);
 			for (int i = 0; i < nConnAts; i++) {
-				
+
 				int indexAt = mol.getConnAtom(atom, i);
-				
+
 				if (mol.getAtomicNo(indexAt) == 7) {
 					if(isNitroGroupN(mol, indexAt)) {
 						member = true;
@@ -321,30 +321,30 @@ public class AtomFunctionAnalyzer {
 				}
 			}
 		}
-			
+
 		return member;
 	}
-	
-	
+
+
 	public static boolean isNitroGroupN(StereoMolecule mol, int atom) {
-		
+
 		boolean nitro = false;
-		
+
 		if ((mol.getAtomicNo(atom) != 7))
 			return false;
-		
+
 		int nConnAts = mol.getConnAtoms(atom);
-		
+
 		int indexSingleBondedO = -1;
-		
+
 		int indexDoubleBondedO = -1;
-		
+
 		for (int i = 0; i < nConnAts; i++) {
 			int indexAt = mol.getConnAtom(atom, i);
-			
+
 			if(mol.getAtomicNo(indexAt)==8){
 				int indexBnd = mol.getBond(atom, indexAt);
-				
+
 				if(mol.getBondOrder(indexBnd)==1) {
 					indexSingleBondedO = indexAt;
 				} else if(mol.getBondOrder(indexBnd)==2) {
@@ -352,11 +352,11 @@ public class AtomFunctionAnalyzer {
 				}
 			}
 		}
-		
+
 		if((indexSingleBondedO>-1)&&(indexDoubleBondedO>-1)) {
 			nitro = true;
 		}
-			
+
 		return nitro;
 	}
 
@@ -368,8 +368,14 @@ public class AtomFunctionAnalyzer {
 
 	public static boolean isBasicNitrogen(StereoMolecule mol, int atom, boolean considerCharge) {
 		if (mol.getAtomicNo(atom) != 7
-		 || (considerCharge && mol.getAtomCharge(atom) != 0)
+		 || (considerCharge && mol.getAtomCharge(atom) > 0)
 		 || (mol.getConnAtoms(atom) + mol.getAtomPi(atom) > 3))
+			return false;
+
+		if (considerCharge && mol.getAtomCharge(atom) < 0)
+			return true;
+
+		if (considerCharge && isNearProtonatedAtom(mol, atom, 3))
 			return false;
 
 		if (mol.isAromaticAtom(atom)) {
@@ -392,7 +398,7 @@ public class AtomFunctionAnalyzer {
 								break;
 								}
 							}
-	
+
 						int enablerCount = 0;
 
 						int[] opi = null;	// ortho,para influences
@@ -552,6 +558,41 @@ public class AtomFunctionAnalyzer {
 			}
 
 		return true;
+		}
+
+	private static boolean isNearProtonatedAtom(StereoMolecule mol, int atom, int bondCount) {
+		int[] graphAtom = new int[mol.getAtoms()];
+		int[] level = new int[mol.getAtoms()];
+		boolean[] isUsed = new boolean[mol.getAtoms()];
+		isUsed[atom] = true;
+		graphAtom[0] = atom;
+		int current = 0;
+		int highest = 0;
+		while (current <= highest && level[current] < bondCount) {
+			int currentAtom = graphAtom[current];
+			for (int i=0; i<mol.getConnAtoms(currentAtom); i++) {
+				int connAtom = mol.getConnAtom(currentAtom, i);
+				if (!isUsed[connAtom]) {
+					if (mol.getAtomCharge(connAtom) > 0) {
+						boolean counterChargeFound = false;
+						for (int j=0; j<mol.getConnAtoms(connAtom); j++) {
+							if (mol.getAtomCharge(mol.getConnAtom(connAtom, j)) < 0) {
+								counterChargeFound = true;
+								break;
+								}
+							}
+						if (!counterChargeFound)
+							return true;
+						}
+					highest++;
+					graphAtom[highest] = connAtom;
+					level[highest] = level[current]+1;
+					isUsed[connAtom] = true;
+					}
+				}
+			current++;
+			}
+		return false;
 		}
 
 	private static boolean isVinylogFakeOxo(StereoMolecule mol, int atom) {
