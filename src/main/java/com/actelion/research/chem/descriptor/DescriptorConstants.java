@@ -85,6 +85,15 @@ public interface DescriptorConstants {
 												true,
 												true,
 												true);	// for the creation of up/down bonds
+	DescriptorInfo DESCRIPTOR_MorganFp =
+							new DescriptorInfo("MorganFingerprint",
+												"Morgan",
+												"1.0",
+												DESCRIPTOR_TYPE_MOLECULE,
+												true,
+												true,
+												true,
+												false);
 	DescriptorInfo DESCRIPTOR_ALLFRAG =
 							new DescriptorInfo("AllFragments1024",
 												"AllFragFp",
