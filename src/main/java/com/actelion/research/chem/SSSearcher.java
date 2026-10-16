@@ -822,11 +822,12 @@ System.out.println();
 
 		long fragmentRingQF = fragmentQF & Molecule.cAtomQFNewRingSize;
 		if (mMolecule.isFragment()) {
-			// For a fragment in fragment search, the query fragment must not be more restrictive than the target.
-			// Thus, if we have molecule ring features and no restriction on the query or more allowed features
-			// on the query then don't consider the atom a match.
-			long moleculeRingQF = fragmentQF & Molecule.cAtomQFNewRingSize;
-			if (moleculeRingQF != 0 && (fragmentRingQF == 0 || (fragmentRingQF & ~moleculeRingQF) != 0))
+			// For a fragment-in-fragment search, if the query just allows a subset of features, then the target
+			// fragment must not allow additional features, i.e. its allowed features must be a subset of the query's.
+			// Thus, if the query restricts to certain ring sizes, and if the target allows sizes beyond that subset,
+			// then don't consider the atom a match.
+			long moleculeRingQF = moleculeQF & Molecule.cAtomQFNewRingSize;
+			if (fragmentRingQF != 0 && (moleculeRingQF == 0 || (moleculeRingQF & ~fragmentRingQF) != 0))
 				return false;
 			}
 		else {
@@ -1350,7 +1351,7 @@ System.out.println();
 		int ringSize = (mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift;
 		if (ringSize != 0) {
 			if (mMolecule.isFragment()
-			 && ringSize == (mMolecule.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift)
+			 && ringSize == (mMolecule.getBondQueryFeatures(moleculeBond) & Molecule.cBondQFRingSize) >> Molecule.cBondQFRingSizeShift)
 				return true;
 
 			if (ringSize <= 2) {    // ring size 8-11 is encoded as 1; ring size >=12 is encoded as 2
