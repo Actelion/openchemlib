@@ -798,25 +798,6 @@ public class SSSearcherWithIndex {
 
 	public boolean isFragmentInMolecule() {
 		if (mMoleculeIndexLong != null) {
-			for (int i=0; i<mMoleculeIndexLong.length; i++) {
-				String fragments = "";
-				long colliding = mFragmentIndexLong[i] & ~mMoleculeIndexLong[i];
-				if (colliding != 0L) {
-					long bits = colliding;
-					for (int j=63; j>=0; j--) {
-						if ((bits & 1L) == 1L)
-							fragments = fragments+" "+cKeyIDCode[64*i+j];
-						bits >>>= 1;
-					}
-					System.out.println(i+" mol:"+Long.toHexString(mMoleculeIndexLong[i])+" Some query keys are not part of the target mol!");
-					System.out.println(i+" fra:"+Long.toHexString(mFragmentIndexLong[i])+(colliding == 0?" pass":" "+Long.toHexString(colliding))+fragments);
-				}
-			}
-			System.out.println();
-		}
-
-
-		if (mMoleculeIndexLong != null) {
 			for (int i=0; i<mMoleculeIndexLong.length; i++)
 				if ((mFragmentIndexLong[i] & ~mMoleculeIndexLong[i]) != 0)
 					return false;
