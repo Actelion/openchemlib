@@ -798,6 +798,25 @@ public class SSSearcherWithIndex {
 
 	public boolean isFragmentInMolecule() {
 		if (mMoleculeIndexLong != null) {
+			for (int i=0; i<mMoleculeIndexLong.length; i++) {
+				String fragments = "";
+				long colliding = mFragmentIndexLong[i] & ~mMoleculeIndexLong[i];
+				if (colliding != 0L) {
+					long bits = colliding;
+					for (int j=63; j>=0; j--) {
+						if ((bits & 1L) == 1L)
+							fragments = fragments+" "+cKeyIDCode[64*i+j];
+						bits >>>= 1;
+					}
+					System.out.println(i+" mol:"+Long.toHexString(mMoleculeIndexLong[i])+" Some query keys are not part of the target mol!");
+					System.out.println(i+" fra:"+Long.toHexString(mFragmentIndexLong[i])+(colliding == 0?" pass":" "+Long.toHexString(colliding))+fragments);
+				}
+			}
+			System.out.println();
+		}
+
+
+		if (mMoleculeIndexLong != null) {
 			for (int i=0; i<mMoleculeIndexLong.length; i++)
 				if ((mFragmentIndexLong[i] & ~mMoleculeIndexLong[i]) != 0)
 					return false;
@@ -921,6 +940,11 @@ public class SSSearcherWithIndex {
 			for (int atom=0; atom<mol.getAllAtoms(); atom++) {
 				if (mol.isExcludeGroupAtom(atom)) {
 					mol = new StereoMolecule(mol);
+					// we may remove atoms of delocalized rings, whose bonds we need to mark explicitly as delocalized
+					mol.ensureHelperArrays(Molecule.cHelperRings);
+					for (int bond=0; bond<mol.getBonds(); bond++)
+						if (mol.isDelocalizedBond(bond))
+							mol.setBondType(bond, Molecule.cBondTypeDelocalized);
 					for (int i=atom; i<mol.getAllAtoms(); i++)
 						if (mol.isExcludeGroupAtom(i))
 							mol.markAtomForDeletion(i);
@@ -1058,7 +1082,7 @@ public class SSSearcherWithIndex {
 		return new String(bytes, StandardCharsets.UTF_8);
 		}
 
-	
+
 /*  use Integer.bitCount() instead, which is supposed to use the POPCNT processor command on x86
 
     public static int bitCount(int x) {

@@ -1327,6 +1327,11 @@ System.out.println();
 		int molDefaults = mMoleculeBondFeatures[moleculeBond];
 		int frgDefaults = mFragmentBondFeatures[fragmentBond];
 
+		if (mMolecule.isFragment() && (mMolecule.getBondQueryFeatures(moleculeBond) & Molecule.cBondQFMatchFormalOrder) != 0) {
+			if ((mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFMatchFormalOrder) == 0)
+				return false;
+		}
+
 		if ((mFragment.getBondQueryFeatures(fragmentBond) & Molecule.cBondQFMatchFormalOrder) != 0) {
 			int molBondType = mMolecule.getBondTypeSimple(moleculeBond);
 			int frgBondType = mFragment.getBondTypeSimple(fragmentBond);
