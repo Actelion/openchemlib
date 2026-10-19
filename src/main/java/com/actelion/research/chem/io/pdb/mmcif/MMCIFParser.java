@@ -95,27 +95,45 @@ public class MMCIFParser {
 	private void processAtomTable(MMCIFTable table) throws IOException {
 		TreeSet<AtomRecord> atoms = new TreeSet<>();
 
+		int groupIndex = table.getIndex("group_PDB");
+		int idIndex = table.getIndex("id");
+		int labelAtomIDIndex = table.getIndex("label_atom_id");
+		int labelAltIDIndex = table.getIndex("label_alt_id");
+		int labelSeqIDIndex = table.getIndex("label_seq_id");
+		int authCompIDIndex = table.getIndex("auth_comp_id");
+		if (authCompIDIndex == -1)
+			authCompIDIndex = table.getIndex("label_comp_id");
+		int authAsymIDIndex = table.getIndex("auth_asym_id");
+		int authSeqIDIndex = table.getIndex("auth_seq_id");
+		int insCodeIndex = table.getIndex("pdbx_PDB_ins_code");
+		int xIndex = table.getIndex("Cartn_x");
+		int yIndex = table.getIndex("Cartn_y");
+		int zIndex = table.getIndex("Cartn_z");
+		int occupancyIndex = table.getIndex("occupancy");
+		int isoOrEquivIndex = table.getIndex("B_iso_or_equiv");
+		int symbolIndex = table.getIndex("type_symbol");
+
 		String[] row;
 		while ((row = table.parseRow(mReader)) != null)
 			// Used in ChimeraX (†:required): id, label_entity_id, label_asym_id†, auth_asym_id, pdbx_PDB_ins_code,
 			// label_seq_id†, auth_seq_id, label_alt_id, type_symbol†, label_atom_id†, auth_atom_id, label_comp_id†,
 			// auth_comp_id, Cartn_x†, Cartn_y†, Cartn_z†, occupancy, B_iso_or_equiv, pdbx_PDB_model_num
 			atoms.add(new AtomRecord(
-					row[table.getIndex("group_PDB")].equals("HETATM"),
-					Integer.parseInt(row[table.getIndex("id")]),
-					row[table.getIndex("label_atom_id")],
-					row[table.getIndex("label_alt_id")],
-					parseInt(row[table.getIndex("label_seq_id")]),
-					row[table.getIndex("auth_comp_id")],
-					row[table.getIndex("auth_asym_id")],
-					parseInt(row[table.getIndex("auth_seq_id")]),
-					row[table.getIndex("pdbx_PDB_ins_code")],
-					Double.parseDouble(row[table.getIndex("Cartn_x")]),
-					Double.parseDouble(row[table.getIndex("Cartn_y")]),
-					Double.parseDouble(row[table.getIndex("Cartn_z")]),
-					Double.parseDouble(row[table.getIndex("occupancy")]),
-					Double.parseDouble(row[table.getIndex("B_iso_or_equiv")]),
-					row[table.getIndex("type_symbol")]));
+					row[groupIndex].equals("HETATM"),
+					Integer.parseInt(row[idIndex]),
+					labelAtomIDIndex == -1 ? "." : row[labelAtomIDIndex],
+					labelAltIDIndex == -1 ? "." : row[labelAltIDIndex],
+					labelSeqIDIndex == -1 ? 0 : parseInt(row[labelSeqIDIndex]),
+					authCompIDIndex == -1 ? "." : row[authCompIDIndex],
+					authAsymIDIndex == -1 ? "." : row[authAsymIDIndex],
+					authSeqIDIndex == -1 ? 0 : parseInt(row[authSeqIDIndex]),
+					row[insCodeIndex],
+					Double.parseDouble(row[xIndex]),
+					Double.parseDouble(row[yIndex]),
+					Double.parseDouble(row[zIndex]),
+					Double.parseDouble(row[occupancyIndex]),
+					Double.parseDouble(row[isoOrEquivIndex]),
+					row[symbolIndex]));
 
 		mAtoms = new ArrayList<>(atoms);
 	}

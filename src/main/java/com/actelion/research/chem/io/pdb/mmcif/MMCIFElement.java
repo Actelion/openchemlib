@@ -47,6 +47,15 @@ public abstract class MMCIFElement {
 			return mLine.substring(startIndex, mLineIndex-1);
 		}
 
+		if (mLine.charAt(mLineIndex) == '"') {
+			mLineIndex++;
+			int startIndex = mLineIndex;
+			while (mLineIndex < mLine.length() && mLine.charAt(mLineIndex) != '"')
+				mLineIndex++;
+			mLineIndex++;
+			return mLine.substring(startIndex, mLineIndex-1);
+		}
+
 		int startIndex = mLineIndex;
 		while (mLineIndex < mLine.length() && mLine.charAt(mLineIndex) != ' ')
 			mLineIndex++;
