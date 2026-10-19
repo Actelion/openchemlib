@@ -921,6 +921,11 @@ public class SSSearcherWithIndex {
 			for (int atom=0; atom<mol.getAllAtoms(); atom++) {
 				if (mol.isExcludeGroupAtom(atom)) {
 					mol = new StereoMolecule(mol);
+					// we may remove atoms of delocalized rings, whose bonds we need to mark explicitly as delocalized
+					mol.ensureHelperArrays(Molecule.cHelperRings);
+					for (int bond=0; bond<mol.getBonds(); bond++)
+						if (mol.isDelocalizedBond(bond))
+							mol.setBondType(bond, Molecule.cBondTypeDelocalized);
 					for (int i=atom; i<mol.getAllAtoms(); i++)
 						if (mol.isExcludeGroupAtom(i))
 							mol.markAtomForDeletion(i);
@@ -1058,7 +1063,7 @@ public class SSSearcherWithIndex {
 		return new String(bytes, StandardCharsets.UTF_8);
 		}
 
-	
+
 /*  use Integer.bitCount() instead, which is supposed to use the POPCNT processor command on x86
 
     public static int bitCount(int x) {
