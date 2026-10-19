@@ -42,6 +42,7 @@ import com.actelion.research.gui.generic.GenericDepictor;
 import com.actelion.research.gui.generic.GenericPolygon;
 import com.actelion.research.gui.generic.GenericRectangle;
 import com.actelion.research.gui.generic.GenericShape;
+import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -72,6 +73,8 @@ import java.util.ArrayList;
  * JavaFX equivalent of JStructureView. Molecules can be exchanged with JStructureView and other
  * Swing components via drag & drop and the clipboard.
  * Except for the constructors and setClipboardHandler(), all methods should be called on the FX application thread.
+ * Like JStructureView, sizes are scaled with HiDPIHelper.getUIScaleFactor(), which is 1.0 on Windows and macOS,
+ * where JavaFX scales automatically, but reflects Xft.dpi on Linux, which JavaFX doesn't consider for scaling.
  */
 public class FXStructureView extends Pane implements StructureListener {
 	private static final int DEFAULT_SELECTION_BACKGROUND = 0x80A4C0;
@@ -89,7 +92,7 @@ public class FXStructureView extends Pane implements StructureListener {
 	private static final String ITEM_SAVE_MOLFILE_V3 = "Save As Molfile V3...";
 
 	private static final long WARNING_MILLIS = 1200;
-	private static final double WARNING_FONT_SIZE = 12;
+	private static final int WARNING_FONT_SIZE = 12;
 
 	private static final int DRAG_MARGIN = 12;
 	private static final int BORDER_ARC = 10;
@@ -383,14 +386,14 @@ public class FXStructureView extends Pane implements StructureListener {
 			gc.save();
 			FXDrawContext context = new FXDrawContext(gc);
 			mDepictor.validateView(context, new GenericRectangle(0, 0, width, height),
-								   AbstractDepictor.cModeInflateToMaxAVBL | mChiralTextPosition | AbstractDepictor.cOptAvBondLen);
+								   AbstractDepictor.cModeInflateToMaxAVBL | mChiralTextPosition | HiDPIHelper.scale(AbstractDepictor.cOptAvBondLen));
 
 			if (mShowBorder && !mDisableBorder) {
 				GenericRectangle rect = mDepictor.getBoundingRect();
 				if (rect != null) {
 					gc.setFill(toFXColor(ColorHelper.perceivedBrightness(bgRGB) < 0.5f ?
 							ColorHelper.brighter(bgRGB, 0.85f) : ColorHelper.darker(bgRGB, 0.85f)));
-					double arc = Math.min(rect.height/4, Math.min(rect.width/4, BORDER_ARC));
+					double arc = Math.min(rect.height/4, Math.min(rect.width/4, HiDPIHelper.scale(BORDER_ARC)));
 					gc.fillRoundRect(rect.x, rect.y, rect.width, rect.height, arc, arc);
 					}
 				}
@@ -403,10 +406,11 @@ public class FXStructureView extends Pane implements StructureListener {
 			}
 
 		if (mWarningMessage != null) {
-			gc.setFont(Font.font(Font.getDefault().getFamily(), FontWeight.BOLD, WARNING_FONT_SIZE));
+			double fontSize = HiDPIHelper.scale(WARNING_FONT_SIZE);
+			gc.setFont(Font.font(Font.getDefault().getFamily(), FontWeight.BOLD, fontSize));
 			gc.setFill(Color.RED);
 			double textWidth = getTextWidth(mWarningMessage, gc.getFont());
-			gc.fillText(mWarningMessage, (width-textWidth)/2, 1.4*WARNING_FONT_SIZE);
+			gc.fillText(mWarningMessage, (width-textWidth)/2, 1.4*fontSize);
 			}
 
 		if (mIsSelecting) {
@@ -628,8 +632,9 @@ public class FXStructureView extends Pane implements StructureListener {
 		}
 
 	private GenericRectangle shrink(GenericRectangle rect) {
-		double marginX = Math.min(DRAG_MARGIN, rect.width / 6);
-		double marginY = Math.min(DRAG_MARGIN, rect.height / 6);
+		int margin = HiDPIHelper.scale(DRAG_MARGIN);
+		double marginX = Math.min(margin, rect.width / 6);
+		double marginY = Math.min(margin, rect.height / 6);
 		return new GenericRectangle(rect.x+marginX, rect.y+marginY, rect.width-2*marginX, rect.height-2*marginY);
 		}
 

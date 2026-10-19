@@ -36,6 +36,7 @@ package com.actelion.research.gui;
 import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.gui.editor.FXEditorDialog;
 import com.actelion.research.gui.editor.GenericEditorArea;
+import com.actelion.research.gui.hidpi.HiDPIHelper;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -50,7 +51,7 @@ import javafx.stage.Window;
  */
 public class FXEditableStructureView extends FXStructureView {
 	private static final String EDIT_MESSAGE = "<double click or drag & drop>";
-	private static final double EDIT_MESSAGE_FONT_SIZE = 10;
+	private static final int EDIT_MESSAGE_FONT_SIZE = 10;
 
 	private boolean mAllowQueryFeatures;
 	private int mAllowedPseudoAtoms;
@@ -93,11 +94,12 @@ public class FXEditableStructureView extends FXStructureView {
 	@Override
 	protected void drawOverlay(GraphicsContext gc, double width, double height) {
 		if (!isDisabled() && isEditable() && getMolecule().getAllAtoms() == 0) {
-			Font font = Font.font(Font.getDefault().getFamily(), FontWeight.NORMAL, EDIT_MESSAGE_FONT_SIZE);
+			double fontSize = HiDPIHelper.scale(EDIT_MESSAGE_FONT_SIZE);
+			Font font = Font.font(Font.getDefault().getFamily(), FontWeight.NORMAL, fontSize);
 			gc.setFont(font);
 			gc.setFill(toFXColor(getForegroundRGB()));
 			double textWidth = getTextWidth(EDIT_MESSAGE, font);
-			gc.fillText(EDIT_MESSAGE, (width-textWidth)/2, (height+EDIT_MESSAGE_FONT_SIZE)/2);
+			gc.fillText(EDIT_MESSAGE, (width-textWidth)/2, (height+fontSize)/2);
 			}
 		}
 

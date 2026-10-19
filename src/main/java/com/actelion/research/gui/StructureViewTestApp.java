@@ -107,10 +107,10 @@ public class StructureViewTestApp {
 		}
 
 	private void addFXView(VBox content, String title, FXStructureView view) {
-		view.setPrefSize(VIEW_WIDTH, VIEW_HEIGHT);
+		view.setPrefSize(HiDPIHelper.scale(VIEW_WIDTH), HiDPIHelper.scale(VIEW_HEIGHT));
 		view.setStyle("-fx-border-color: #A0A0A0;");
 		Label idcodeLabel = new Label();
-		idcodeLabel.setMaxWidth(VIEW_WIDTH);
+		idcodeLabel.setMaxWidth(HiDPIHelper.scale(VIEW_WIDTH));
 		idcodeLabel.setText(getIDCodeText(view.getMolecule()));
 		view.addStructureListener(mol -> idcodeLabel.setText(getIDCodeText(mol)));
 		content.getChildren().addAll(new Label(title), view, idcodeLabel);
