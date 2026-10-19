@@ -184,7 +184,7 @@ public class JStructureView extends JComponent implements ActionListener,MouseLi
 
     /**
      * Call this in order to get clipboard support:
-     * setClipboardHandler(new ClipboardHandler());
+     * setClipboardHandler(new JClipboardHandler());
      */
 	public void setClipboardHandler(IClipboardHandler h) {
 		mClipboardHandler = h;

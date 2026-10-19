@@ -39,7 +39,7 @@ import com.actelion.research.chem.io.RDFileParser;
 import com.actelion.research.chem.io.RXNFileParser;
 import com.actelion.research.chem.reaction.Reaction;
 import com.actelion.research.chem.reaction.ReactionEncoder;
-import com.actelion.research.gui.clipboard.ClipboardHandler;
+import com.actelion.research.gui.clipboard.JClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.dnd.MoleculeTransferable;
 import com.actelion.research.gui.dnd.ReactionDropAdapter;
@@ -361,7 +361,7 @@ public class JChemistryView extends JComponent
 
 	@Override public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().equals(ITEM_COPY_MOLS)) {
-			ClipboardHandler ch = new ClipboardHandler();
+			JClipboardHandler ch = new JClipboardHandler();
 			if (mDepictor.getMoleculeCount() == 1) {
 				ch.copyMolecule(mDepictor.getMolecule(0));
 				}
@@ -383,13 +383,13 @@ public class JChemistryView extends JComponent
 			}
 
 		if (e.getActionCommand().equals(ITEM_COPY_RXN)) {
-			ClipboardHandler ch = new ClipboardHandler();
+			JClipboardHandler ch = new JClipboardHandler();
 			Reaction rxn = mDepictor.getReaction();
 			ch.copyReaction(rxn);
 			}
 
 		if (e.getActionCommand().equals(ITEM_PASTE_MOLS) && mIsEditable) {
-			ClipboardHandler ch = new ClipboardHandler();
+			JClipboardHandler ch = new JClipboardHandler();
 			StereoMolecule mol = ch.pasteMolecule();
 			if (mol != null)
 				pasteOrDropMolecule(mol);
@@ -398,7 +398,7 @@ public class JChemistryView extends JComponent
 			}
 
 		if (e.getActionCommand().equals(ITEM_PASTE_RXN) && mIsEditable) {
-			ClipboardHandler ch = new ClipboardHandler();
+			JClipboardHandler ch = new JClipboardHandler();
 			Reaction rxn = ch.pasteReaction();
 			if (rxn != null)
 				pasteOrDropReaction(rxn);

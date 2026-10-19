@@ -1,7 +1,7 @@
 package com.actelion.research.gui.editor;
 
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.gui.clipboard.ClipboardHandler;
+import com.actelion.research.gui.clipboard.FXClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.fx.FXDrawContext;
 import com.actelion.research.gui.fx.FXKeyHandler;
@@ -58,7 +58,7 @@ public class FXEditorArea extends Canvas implements GenericCanvas {
 		setOnKeyReleased(ke -> mKeyHandler.fireEvent(ke, GenericKeyEvent.KEY_RELEASED) );
 //		setOnKeyTyped(ke -> mKeyHandler.fireEvent(ke, GenericKeyEvent.KEY_TYPED) );
 
-		getGenericDrawArea().setClipboardHandler(new ClipboardHandler());
+		getGenericDrawArea().setClipboardHandler(new FXClipboardHandler());
 	}
 
 	private void draw() {

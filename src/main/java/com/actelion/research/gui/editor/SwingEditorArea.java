@@ -1,7 +1,7 @@
 package com.actelion.research.gui.editor;
 
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.gui.clipboard.ClipboardHandler;
+import com.actelion.research.gui.clipboard.JClipboardHandler;
 import com.actelion.research.gui.dnd.MoleculeDropAdapter;
 import com.actelion.research.gui.generic.GenericCanvas;
 import com.actelion.research.gui.generic.GenericDrawContext;
@@ -87,7 +87,7 @@ public class SwingEditorArea extends JPanel implements GenericCanvas {
 		addKeyListener(mKeyHandler);
 		mKeyHandler.addListener(mDrawArea);
 
-		getGenericDrawArea().setClipboardHandler(new ClipboardHandler());
+		getGenericDrawArea().setClipboardHandler(new JClipboardHandler());
 		}
 
 	public SwingKeyHandler getKeyHandler() {
