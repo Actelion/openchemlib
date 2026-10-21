@@ -783,6 +783,22 @@ public class IOCL {
 	}
 
 	/**
+	 * The input stream is not closed.
+	 * @param is
+	 * @param dest
+	 * @throws IOException
+	 */
+	public static void copy(InputStream is, File dest) throws IOException {
+		OutputStream os = null;
+		try {
+			os = new BufferedOutputStream(new FileOutputStream(dest));
+			redirect(is, os);
+		} finally {
+			try {if(os!=null) os.close();}catch(Exception e){}
+		}
+	}
+
+	/**
 	 * Debug instruction to view the relevant stacktrace
 	 * @throws IOException
 	 */
