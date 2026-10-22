@@ -20,8 +20,10 @@ import java.nio.charset.StandardCharsets;
  * (which extends Clipboard) such that they can be exchanged with Swing components and other applications.
  * The common denominator between JavaFX and Swing/AWT is plain text containing idcode and coordinates,
  * which is also what com.actelion.research.gui.dnd.MoleculeTransferable provides as stringFlavor.
- * Additionally, molecules are provided as idcode, molfile V2, molfile V3 and SMILES using the MIME types
- * of com.actelion.research.chem.dnd.ChemistryFlavors. When reading, these formats are also recognized,
+ * Additionally, molecules are provided as serialized StereoMolecule, molfile V2, molfile V3, SMILES and idcode
+ * using the MIME types of com.actelion.research.chem.dnd.ChemistryFlavors. The serialized molecule uses the
+ * same identifier as AWT, such that Swing and JavaFX can exchange molecule objects directly.
+ * When reading, the string formats are also recognized,
  * if they were put onto the clipboard by AWT, which encodes them as Java serialized Strings
  * using 'JAVA_DATAFLAVOR:' prefixed identifiers.
  */
@@ -32,12 +34,18 @@ public class FXMoleculeTransfer {
 	private static final String MIME_SMILES = "chemical/x-daylight-smiles";
 	private static final String AWT_PREFIX = "JAVA_DATAFLAVOR:";
 
-	public static final DataFormat DF_IDCODE = getDataFormat(MIME_IDCODE);
+	// AWT's native name of ChemistryFlavors.DF_SERIALIZED_MOLECULE. JavaFX and AWT both use Java serialization
+	// for custom formats. Thus, using the same identifier lets JavaFX and Swing exchange StereoMolecule objects.
+	private static final String SERIALIZED_MOLECULE_ID = AWT_PREFIX+"application/x-java-serialized-object; class="+StereoMolecule.class.getName();
+
+	public static final DataFormat DF_SERIALIZED_MOLECULE = getDataFormat(SERIALIZED_MOLECULE_ID);
 	public static final DataFormat DF_MOLFILE = getDataFormat(MIME_MOLFILE);
 	public static final DataFormat DF_MOLFILE_V3 = getDataFormat(MIME_MOLFILE_V3);
 	public static final DataFormat DF_SMILES = getDataFormat(MIME_SMILES);
+	public static final DataFormat DF_IDCODE = getDataFormat(MIME_IDCODE);
 
-	private static final String[] MOLECULE_MIME_TYPES = { MIME_IDCODE, MIME_MOLFILE_V3, MIME_MOLFILE, MIME_SMILES };
+	// same order as in ChemistryFlavors.MOLECULE_FLAVORS
+	private static final String[] MOLECULE_MIME_TYPES = { MIME_MOLFILE, MIME_MOLFILE_V3, MIME_SMILES, MIME_IDCODE };
 
 	private FXMoleculeTransfer() {}
 
@@ -56,22 +64,23 @@ public class FXMoleculeTransfer {
 	 */
 	public static ClipboardContent createContent(StereoMolecule mol) {
 		ClipboardContent content = new ClipboardContent();
-		Canonizer canonizer = new Canonizer(mol);
-		String idcode = canonizer.getIDCode()+" "+canonizer.getEncodedCoordinates(true);
-		content.putString(idcode);
-		content.put(DF_IDCODE, idcode);
+		content.put(DF_SERIALIZED_MOLECULE, new StereoMolecule(mol));	// copy, because local drags may deliver the object itself
 		try {
-			content.put(DF_MOLFILE_V3, new MolfileV3Creator(mol).getMolfile());
+			content.put(DF_MOLFILE, new MolfileCreator(mol).getMolfile());
 		}
 		catch (Exception e) {}
 		try {
-			content.put(DF_MOLFILE, new MolfileCreator(mol).getMolfile());
+			content.put(DF_MOLFILE_V3, new MolfileV3Creator(mol).getMolfile());
 		}
 		catch (Exception e) {}
 		try {
 			content.put(DF_SMILES, new IsomericSmilesCreator(mol).getSmiles());
 		}
 		catch (Exception e) {}
+		Canonizer canonizer = new Canonizer(mol);
+		String idcode = canonizer.getIDCode()+" "+canonizer.getEncodedCoordinates(true);
+		content.put(DF_IDCODE, idcode);
+		content.putString(idcode);
 		return content;
 	}
 
@@ -82,15 +91,20 @@ public class FXMoleculeTransfer {
 	public static boolean hasMolecule(Clipboard clipboard) {
 		if (clipboard.hasString())
 			return true;
-		for (DataFormat format : clipboard.getContentTypes())
+		for (DataFormat format : clipboard.getContentTypes()) {
+			if (isSerializedMolecule(format))
+				return true;
 			for (String mimeType : MOLECULE_MIME_TYPES)
 				if (matches(format, mimeType))
 					return true;
+			}
 		return false;
 	}
 
 	/**
-	 * Creates a molecule from the clipboard content. Chemistry specific formats are preferred.
+	 * Creates a molecule from the clipboard content. Chemistry specific formats are preferred in the same
+	 * order as by com.actelion.research.gui.dnd.MoleculeDropAdapter: serialized molecule, molfile V2,
+	 * molfile V3, SMILES, idcode. If a format cannot be interpreted, the next one is tried.
 	 * If includeText is true, plain text is tried to be interpreted as molfile, idcode, SMILES,
 	 * or (if a StructureNameResolver exists) as name, in that order.
 	 * @param clipboard
@@ -98,16 +112,49 @@ public class FXMoleculeTransfer {
 	 * @return molecule or null
 	 */
 	public static StereoMolecule readMolecule(Clipboard clipboard, boolean includeText) {
-		StereoMolecule mol = parseIDCode(getString(clipboard, MIME_IDCODE));
-		if (mol == null)
-			mol = parseMolfile(getString(clipboard, MIME_MOLFILE_V3));
+		StereoMolecule mol = getSerializedMolecule(clipboard);
 		if (mol == null)
 			mol = parseMolfile(getString(clipboard, MIME_MOLFILE));
 		if (mol == null)
+			mol = parseMolfile(getString(clipboard, MIME_MOLFILE_V3));
+		if (mol == null)
 			mol = parseSmiles(getString(clipboard, MIME_SMILES));
+		if (mol == null)
+			mol = parseIDCode(getString(clipboard, MIME_IDCODE));
 		if (mol == null && includeText && clipboard.hasString())
 			mol = parseText(clipboard.getString());
 		return mol;
+	}
+
+	/**
+	 * JavaFX deserializes custom formats itself. Within the same JVM it may even deliver the original object.
+	 * @return copy of a serialized molecule put there by JavaFX or AWT; or null
+	 */
+	private static StereoMolecule getSerializedMolecule(Clipboard clipboard) {
+		for (DataFormat format : clipboard.getContentTypes()) {
+			if (isSerializedMolecule(format)) {
+				try {
+					Object o = clipboard.getContent(format);
+					if (o instanceof Molecule) {
+						StereoMolecule mol = new StereoMolecule((Molecule)o);
+						if (mol.getAllAtoms() != 0)
+							return mol;
+					}
+				}
+				catch (Exception e) {}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return true, if one of format's identifiers is the one used by AWT for serialized StereoMolecules
+	 */
+	private static boolean isSerializedMolecule(DataFormat format) {
+		for (String id : format.getIdentifiers())
+			if (id.replace(" ", "").equalsIgnoreCase(SERIALIZED_MOLECULE_ID.replace(" ", "")))
+				return true;
+		return false;
 	}
 
 	private static StereoMolecule parseText(String text) {
