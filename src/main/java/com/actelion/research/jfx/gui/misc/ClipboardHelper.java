@@ -45,7 +45,9 @@ import java.util.Set;
 
 /**
  * Created by baerr on 7/28/14.
+ * @deprecated Use {@link com.actelion.research.gui.clipboard.ClipboardHandler} or {@link com.actelion.research.gui.fx.FXMoleculeTransfer} instead.
  */
+@Deprecated
 public class ClipboardHelper {
     private ClipboardHelper() {
     }
