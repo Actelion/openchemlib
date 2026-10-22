@@ -39,7 +39,9 @@ package com.actelion.research.jfx.gui.misc;
  * Date: 8/6/13
  * Time: 2:41 PM
  * To change this template use File | Settings | File Templates.
+ * @deprecated Outdated. Use the JavaFX components in com.actelion.research.gui instead, e.g. {@link com.actelion.research.gui.FXStructureView}.
  */
+@Deprecated
 public interface Selector<T>
 {
     public boolean match(T t);

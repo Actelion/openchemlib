@@ -71,6 +71,10 @@ import javafx.scene.paint.Color;
  */
 
 
+/**
+ * @deprecated Use {@link com.actelion.research.gui.FXStructureView} or {@link com.actelion.research.gui.FXEditableStructureView} instead.
+ */
+@Deprecated
 public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavior> //, BehaviorBase<MoleculeView>>
     implements Skin<MoleculeView>, IMoleculeView
 {
