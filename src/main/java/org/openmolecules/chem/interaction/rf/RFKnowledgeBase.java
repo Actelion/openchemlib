@@ -72,14 +72,14 @@ public class RFKnowledgeBase implements Serializable {
 	 * @param uncertaintyHolder null or double[1] to receive the uncertainty value
 	 * @return RF-value or NaN in case of unknown atom types
 	 */
-	public double getRFValue(RFInteraction ia, double[] uncertaintyHolder) {
+	public double getRFValue(RFInteraction ia, double[] uncertaintyHolder, double[] geomFactorHolder) {
 		return getRFValue(ia.getLType(), ia.getL2PGeometryType(), ia.getL2PAngle(), ia.getL2PTorsion(),
 						  ia.getPType(), ia.getP2LGeometryType(), ia.getP2LAngle(), ia.getP2LTorsion(),
-						  ia.getRelDistance(), uncertaintyHolder);
+						  ia.getRelDistance(), uncertaintyHolder, geomFactorHolder);
 	}
 
 	private double getRFValue(int lType, int lGeometry, double lAngle, double lTorsion,
-							 int pType, int pGeometry, double pAngle, double pTorsion, double relDistance, double[] uncertaintyHolder) {
+							 int pType, int pGeometry, double pAngle, double pTorsion, double relDistance, double[] uncertaintyHolder, double[] geomFactorHolder) {
 		double rawRFValue = getRawRFValue(lType, pType);
 		if (Double.isNaN(rawRFValue))
 			return Double.NaN;
@@ -95,6 +95,8 @@ public class RFKnowledgeBase implements Serializable {
 		double geomFactor = Math.pow(lFactor * pFactor, GEOMETRY_INFLUENCE);
 		if (uncertaintyHolder != null)
 			uncertaintyHolder[0] = geomFactor * getRawUncertainty(lType, pType);
+		if (geomFactorHolder != null)
+			geomFactorHolder[0] = geomFactor;
 		return rawRFValue * geomFactor;
 	}
 
@@ -103,7 +105,7 @@ public class RFKnowledgeBase implements Serializable {
 	}
 
 	public String getFullRFDetails(RFInteraction ia) {
-		return "rf:"+DoubleFormat.toString(getRFValue(ia, null), 3)
+		return "rf:"+DoubleFormat.toString(getRFValue(ia, null, null), 3)
 			+ " rawRF:"+DoubleFormat.toString(getRawRFValue(ia.getLType(), ia.getPType()), 3)
 			+ "±"+DoubleFormat.toString(getRawUncertainty(ia.getLType(), ia.getPType()), 2)
 			+ " relD:"+DoubleFormat.toString(ia.getRelDistance(), 3)

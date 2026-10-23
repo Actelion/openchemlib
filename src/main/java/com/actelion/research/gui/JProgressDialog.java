@@ -43,19 +43,19 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class JProgressDialog extends JDialog implements ActionListener,ProgressController,Runnable {
-	private static final long serialVersionUID = 0x20070301;
-
+public class JProgressDialog implements ActionListener,ProgressController {
 	private static final int sActionDispose = 2;
 	private static final int sActionStart = 4;
 	private static final int sActionUpdate = 8;
 	private static final int sActionMessage = 16;
 	private static final int sActionStop = 32;
 
+	private volatile JDialog mDialog;
+	private Frame			mOwner;
 	private JProgressBar	mProgressBar;
 	private JLabel			mProgressLabel,mLabelRemainingTime;
 	private Frame			mNewFrontFrame;
-	private String			mBusyText;
+	private volatile String	mBusyText;
 	private volatile String	mProgressMessage;
 	private volatile boolean mProcessCancelled;
 	private volatile int	mProgressMin,mProgressMax,mProgressValue,mAction;
@@ -63,33 +63,36 @@ public class JProgressDialog extends JDialog implements ActionListener,ProgressC
 	private volatile float  mProgressFactor;
 
 	/**
-	 * Creates a JProgressDialog and schedule it with invokeLater()
-	 * to be set visible without blocking the calling thread.
-	 * @param owner
+	 * Creates a facade to a progress dialog, which is not instantiated and shown immediately.
+	 * The real dialog is instantiated and shown with the first call of startProgress().
+	 * If startProgress() is never called, the dialog is neither created nor shown and none of the
+	 * other actions have any effect.
+	 * @param owner may be null, if later setOwner() is called before the first call of startProgress()
 	 */
 	public JProgressDialog(Frame owner) {
-		this(owner, true);
+		mOwner = owner;
 		}
+
+	public void setOwner(Frame owner) {
+		mOwner = owner;
+	}
 
 	/**
-	 * Creates a JProgressDialog. If invokeSetVisible is true,
-	 * then the dialog is scheduled to be set visible with invokeLater()
-	 * without blocking the current thread. Otherwise, the caller needs
-	 * to call setVisible() manually.
-	 * @param owner
-	 * @param invokeSetVisible
+	 * The first call of startProgress() instatiates the
+	 * May be called safely from any thread
+	 * @param text
+	 * @param min
+	 * @param max
 	 */
-	public JProgressDialog(Frame owner, boolean invokeSetVisible) {
-			// initialized and shows the modal dialog without blocking the thread
-		super(owner, true);
-		initialize();
-		setLocationRelativeTo(owner);
-		if (invokeSetVisible)
-			SwingUtilities.invokeLater(() -> setVisible(true) );
+	@Override
+	public void startProgress(String text, int min, int max) {
+		if (mDialog == null && mOwner != null) {
+			if (SwingUtilities.isEventDispatchThread())
+				initialize();
+			else
+				SwingUtilities.invokeLater(() -> initialize() );
 		}
 
-	public void startProgress(String text, int min, int max) {
-			// may be called safely from any thread
 		mProgressStart = System.currentTimeMillis();
 		mBusyText = text;
 		mProgressMin = min;
@@ -104,6 +107,7 @@ public class JProgressDialog extends JDialog implements ActionListener,ProgressC
 	 * Update progress status in an absolute or relative way.
 	 * @param value if negative, its abs value is added to current progress.
 	 */
+	@Override
 	public void updateProgress(int value) {
 			// may be called safely from any thread
 		int newValue = (value >= 0) ? value : mProgressValue-value;
@@ -120,6 +124,7 @@ public class JProgressDialog extends JDialog implements ActionListener,ProgressC
 	 * @param value if negative, its abs value is added to current progress.
 	 * @param message
 	 */
+	@Override
 	public void updateProgress(int value, String message) {
 		// may be called safely from any thread
 		int newValue = (value >= 0) ? value : mProgressValue-value;
@@ -135,6 +140,7 @@ public class JProgressDialog extends JDialog implements ActionListener,ProgressC
 	 * Sets progress back to zero, hides the progress bar, but keeps the dialog open.
 	 * May be called safely from any thread
 	 */
+	@Override
 	public void stopProgress() {
 		mAction |= sActionStop;
 		update();
@@ -160,26 +166,34 @@ public class JProgressDialog extends JDialog implements ActionListener,ProgressC
 		update();
 		}
 
+	/**
+	 * Shows the given message in an interactive dialog.
+	 * This may be called safely from any thread.
+	 * @param message
+	 */
+	@Override
 	public void showErrorMessage(final String message) {
 		if (SwingUtilities.isEventDispatchThread()) {
 			showMessage(message);
 			}
 		else {
 			try {
-				SwingUtilities.invokeAndWait(() -> showMessage(message) );
+				SwingUtilities.invokeLater(() -> showMessage(message) );
 				}
 			catch (Exception e) {}
 			}
-		}		
-
-	private void showMessage(String message) {
-		JOptionPane.showMessageDialog(this, message);
 		}
 
+	private void showMessage(String message) {
+		JOptionPane.showMessageDialog(mDialog, message);
+		}
+
+	@Override
 	public boolean threadMustDie() {
 		return mProcessCancelled;
 		}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		mProcessCancelled = true;
 		mAction |= sActionStop;
@@ -187,50 +201,54 @@ public class JProgressDialog extends JDialog implements ActionListener,ProgressC
 		}
 
 	private void initialize() {
+		mDialog = new JDialog(mOwner, true);
+
 		double[][] size = { {8, HiDPIHelper.scale(200), 8, TableLayout.PREFERRED, 8},
 							{8, TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 16, TableLayout.PREFERRED, 8} };
-		getContentPane().setLayout(new TableLayout(size));
+		mDialog.getContentPane().setLayout(new TableLayout(size));
 
 		mProgressLabel = new JLabel(" ");
-		getContentPane().add(mProgressLabel, "1,1,3,1");
+		mDialog.getContentPane().add(mProgressLabel, "1,1,3,1");
 
 		mProgressBar = new JProgressBar();
 		mProgressBar.setVisible(false);
-		getContentPane().add(mProgressBar, "1,3,3,3");
+		mDialog.getContentPane().add(mProgressBar, "1,3,3,3");
 
 		mLabelRemainingTime = new JLabel();
-		getContentPane().add(mLabelRemainingTime, "1,5");
+		mDialog.getContentPane().add(mLabelRemainingTime, "1,5");
 
 		JButton cancelButton = new JButton("Cancel");
 		cancelButton.addActionListener(this);
-		getContentPane().add(cancelButton, "3,5");
-		pack();
+		mDialog.getContentPane().add(cancelButton, "3,5");
+		mDialog.pack();
+		mDialog.setLocationRelativeTo(mOwner);
+		mDialog.setVisible(true);
 		}
 
 	private void update() {
-		long millis = System.currentTimeMillis();
-		if ((mAction & ~sActionUpdate) != 0 || millis - mLastUpdate > 100) {
-			if (SwingUtilities.isEventDispatchThread()) {
-				mLastUpdate = millis;
-				run();
-				}
-			else {
-//				try {
+		if (mDialog != null) {
+			long millis = System.currentTimeMillis();
+			if ((mAction & ~sActionUpdate) != 0 || millis - mLastUpdate > 100) {
+				if (SwingUtilities.isEventDispatchThread()) {
 					mLastUpdate = millis;
-					SwingUtilities.invokeLater(this);
-   //				 }
- //			   catch (Exception e) {}
+					doUpdate();
+					}
+				else {
+					mLastUpdate = millis;
+					SwingUtilities.invokeLater(() -> doUpdate());
+					}
 				}
-			}		
+			}
 		}
 
-	public void run() {
+	private void doUpdate() {
 		if ((mAction & sActionDispose) != 0) {
 			mAction &= ~sActionDispose;
-			setVisible(false);
-			dispose();
-			if (mNewFrontFrame != null)
-				mNewFrontFrame.toFront();
+			mDialog.setVisible(false);
+			mDialog.dispose();
+			if (mNewFrontFrame != null) {
+				SwingUtilities.invokeLater(() -> mNewFrontFrame.toFront() );
+			}
 			return;
 			}
 		if ((mAction & sActionStart) != 0) {

@@ -23,8 +23,8 @@ public class RFInteraction {
 	 * @param uncertaintyHolder null or double[1] to receive the uncertainty value
 	 * @return RF-value or NaN in case of unknown atom types
 	 */
-	public double getRFValue(double[] uncertaintyHolder) {
-		return RFKnowledgeBase.getInstance().getRFValue(this, uncertaintyHolder);
+	public double getRFValue(double[] uncertaintyHolder, double[] geometryFactorHolder) {
+		return RFKnowledgeBase.getInstance().getRFValue(this, uncertaintyHolder, geometryFactorHolder);
 	}
 
 	/**
