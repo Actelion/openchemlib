@@ -44,7 +44,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class JProgressDialog implements ActionListener,ProgressController {
-	private static final int sActionDispose = 2;
 	private static final int sActionStart = 4;
 	private static final int sActionUpdate = 8;
 	private static final int sActionMessage = 16;
@@ -56,7 +55,7 @@ public class JProgressDialog implements ActionListener,ProgressController {
 	private JLabel			mProgressLabel,mLabelRemainingTime;
 	private volatile String	mBusyText;
 	private volatile String	mProgressMessage;
-	private volatile boolean mProcessCancelled,mStartPending;
+	private volatile boolean mProcessCancelled, mIsInitialized;
 	private volatile int	mProgressMin,mProgressMax,mProgressValue,mAction;
 	private volatile long   mProgressStart,mLastUpdate;
 	private volatile float  mProgressFactor;
@@ -82,9 +81,9 @@ public class JProgressDialog implements ActionListener,ProgressController {
 	 */
 	@Override
 	public void startProgress(String text, int min, int max) {
-		if (!mStartPending) {
+		if (!mIsInitialized) {
 			// must be with invokeLater, because initialize() blocks until close() or stopProgress() is called
-			mStartPending = true;
+			mIsInitialized = true;
 			SwingUtilities.invokeLater(() -> initialize());
 		}
 
@@ -147,8 +146,14 @@ public class JProgressDialog implements ActionListener,ProgressController {
 	 * May be called safely from any thread
 	 */
 	public void close() {
-		mAction |= sActionDispose;
-		update();
+		try {
+			if (mIsInitialized) {
+				SwingUtilities.invokeAndWait(() -> {
+					mDialog.setVisible(false);
+					mDialog.dispose();
+					});
+				}
+			} catch (Exception e) {}
 		}
 
 	/**
@@ -219,14 +224,7 @@ public class JProgressDialog implements ActionListener,ProgressController {
 		}
 
 	private void doUpdate() {
-		if (mDialog != null) {
-			if ((mAction & sActionDispose) != 0) {
-				mAction &= ~sActionDispose;
-				mDialog.setVisible(false);
-				mDialog.dispose();
-				mDialog = null;
-				return;
-				}
+		if (mIsInitialized) {
 			if ((mAction & sActionStart) != 0) {
 				mAction &= ~sActionStart;
 				if (mProgressMin == mProgressMax) {
