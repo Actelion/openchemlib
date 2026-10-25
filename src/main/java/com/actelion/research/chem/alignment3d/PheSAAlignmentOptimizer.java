@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class PheSAAlignmentOptimizer {
-	
+
 	public static final int TRIANGLE_OPTIMIZATIONS = 50;
 	public static final int PMI_OPTIMIZATIONS = 10;
 	private static final double EXIT_VECTOR_WEIGHT = 10.0;
@@ -33,7 +33,7 @@ public class PheSAAlignmentOptimizer {
 
 	public enum SimilarityMode {REFTVERSKY,TVERSKY, TANIMOTO
 		}
-	
+
 	public PheSAAlignmentOptimizer(StereoMolecule refMol, double ppWeight) {
 		mSettings = new PheSASetting();
 		mSettings.setPpWeight(ppWeight);
@@ -61,11 +61,11 @@ public class PheSAAlignmentOptimizer {
 
 		return bestSolution.getSimilarity();
 	}
-	
+
 	public static double alignTwoMolsInPlace(StereoMolecule refMol, StereoMolecule fitMol, ThreadMaster tm) {
 		return alignTwoMolsInPlace(refMol, fitMol, 0.5, tm);
 	}
-	
+
 	public static double alignTwoMolsInPlace(StereoMolecule refMol, StereoMolecule fitMol, double ppWeight, ThreadMaster tm) {
 		PheSASetting setting = new PheSASetting();
 		setting.setPpWeight(ppWeight);
@@ -77,9 +77,12 @@ public class PheSAAlignmentOptimizer {
 		Rotation rotation = refVol.preProcess(refConf);
 		rotation = rotation.getInvert();
 		fitVol.preProcess(fitConf);
-		AlignmentResult bestSolution = createAlignmentSolutions(Collections.singletonList(refVol), Collections.singletonList(fitVol),setting, tm).get(0);
+		List<AlignmentResult> alignmentList = createAlignmentSolutions(Collections.singletonList(refVol), Collections.singletonList(fitVol),setting, tm);
+		if (alignmentList.isEmpty())
+			return Double.NaN;
+		AlignmentResult bestSolution = alignmentList.get(0);
 		double similarity = bestSolution.getSimilarity();
-		
+
 		for(int a=0;a<fitMol.getAllAtoms();a++) {
 			fitMol.setAtomX(a, fitConf.getX(a));
 			fitMol.setAtomY(a, fitConf.getY(a));
@@ -91,7 +94,7 @@ public class PheSAAlignmentOptimizer {
 
 		return similarity;
 	}
-	
+
 	public static List<AlignmentResult> alignToNegRecImg(ShapeVolume ref,
 														 List<? extends ShapeVolume> fitVols,
 														 PheSASetting setting, ThreadMaster tm) {
@@ -106,12 +109,12 @@ public class PheSAAlignmentOptimizer {
 				break;
 			}
 			results.add(solution);
-		
+
 		}
 		return results;
 	}
 
-	
+
 	public static List<AlignmentResult> createAlignmentSolutions(List<? extends ShapeVolume> refVols,
 																 List<? extends ShapeVolume> fitVols,
 																 PheSASetting setting, ThreadMaster tm) {
@@ -123,7 +126,7 @@ public class PheSAAlignmentOptimizer {
 				}
 			}
 		}
-	
+
 		List<AlignmentResult> triangleSolutions = new ArrayList<AlignmentResult>();
 		if(setting.useTriangle)
 			triangleSolutions = getBestTriangleAlignments(refVols,fitVols,setting);
@@ -161,17 +164,17 @@ public class PheSAAlignmentOptimizer {
 			AlignmentResult optimizedPMIAlignment = new AlignmentResult(r[0],pmiAlignment.getTransform(),pmiAlignment.getRefConformerIndex(),pmiAlignment.getConformerIndex());
 			optimizedPMIAlignment.setSimilarityContributions(r);
 			alignmentSolutions.add(optimizedPMIAlignment);
-			
+
 		}
 		return alignmentSolutions.stream()
 				.sorted(Comparator.reverseOrder())
 				.collect(Collectors.toList());
-		
+
 	}
-	
+
 	public static double[] align(PheSAMolecule refShape, PheSAMolecule fitShape, StereoMolecule[] bestAlignment, PheSASetting setting, ThreadMaster tm) {
 		double[] result = new double[4]; //overall sim, ppSimilarity and additional volume similarity contribution
-		
+
 		List<AlignmentResult> alignmentSolutions = createAlignmentSolutions(refShape.getVolumes(),fitShape.getVolumes(),setting, tm);
 		AlignmentResult bestResult = alignmentSolutions.get(0);
 		StereoMolecule refMol = refShape.getConformer(bestResult.getRefConformerIndex());
@@ -184,22 +187,22 @@ public class PheSAAlignmentOptimizer {
 		int n2 = fitShape.getVolumes().get(0).getExitVectorGaussians().size();
 		if(!refShape.getVolumes().get(0).getExitVectorGaussians().isEmpty() ||
 				!refShape.getVolumes().get(0).getExitVectorGaussians().isEmpty()) {
-			// there are exit vectors 
-			
+			// there are exit vectors
+
 			if(n1!=n2) { //different number of exit vectors --> no match
 				result[0] = 0.0;
 				result[1] = 0.0;
 				result[2] = 0.0;
 				result[3] = 0.0;
 			}
-			
+
 		}
-	
+
 		return result;
 	}
-	
 
-	
+
+
 	private static List<AlignmentResult> getBestTriangleAlignments(List<? extends ShapeVolume> refVols, List<? extends ShapeVolume> fitVols, PheSASetting setting) {
 		List<AlignmentResult> triangleResults = new ArrayList<AlignmentResult>();
 		for(int i=0;i<refVols.size();i++) {
@@ -241,13 +244,13 @@ public class PheSAAlignmentOptimizer {
 				.sorted(Comparator.reverseOrder())
 				.collect(Collectors.toList());
 	}
-	
+
 	private static double[][] createSubAlignments(ShapeVolume refVol, double[][] baseTransforms) {
 		final long seed = 12345L;
 		final int maxPoints = 10;
 		final int points = Math.min(refVol.getAtomicGaussians().size(), maxPoints);
 		Random rnd = new Random(seed);
-		List<double[]> transforms = new ArrayList<>(); 
+		List<double[]> transforms = new ArrayList<>();
 		for(int i=0;i<points;i++) {
 			int index = rnd.nextInt(refVol.getAtomicGaussians().size());
 			Coordinates c = refVol.getAtomicGaussians().get(index).getCenter();
@@ -258,24 +261,24 @@ public class PheSAAlignmentOptimizer {
 		transforms.addAll(Arrays.asList(baseTransforms));
 		return transforms.toArray(new double[0][]);
 	}
-	
 
-	
+
+
 	public static class AlignmentResult implements Comparable<AlignmentResult>{
 		private final double similarity;
 		private final TransformationSequence transformation;
 		private final int conformerIndex;
 		private final int refConformerIndex;
 		private double[] similarityContributions;
-		
+
 		public AlignmentResult(double similarity, TransformationSequence transformation, int refConformerIndex, int conformerIndex) {
 			this.similarity = similarity;
 			this.transformation = transformation;
 			this.refConformerIndex = refConformerIndex;
 			this.conformerIndex = conformerIndex;
 		}
-		
-		
+
+
 		public double[] getSimilarityContributions() {
 			return similarityContributions;
 		}
@@ -290,15 +293,15 @@ public class PheSAAlignmentOptimizer {
 			return transformation;
 		}
 
-		
+
 		public double getSimilarity() {
 			return similarity;
 		}
-		
+
 		public int getConformerIndex() {
 			return conformerIndex;
 		}
-		
+
 		public int getRefConformerIndex() {
 			return refConformerIndex;
 		}
@@ -308,9 +311,9 @@ public class PheSAAlignmentOptimizer {
 		public int compareTo(AlignmentResult o) {
 			return Double.compare(similarity, o.similarity);
 		}
-		
-		
-		
+
+
+
 	}
 
 	/**
@@ -351,7 +354,7 @@ public class PheSAAlignmentOptimizer {
 		}
 
 		private double ppWeight;
-		private SimilarityMode simMode; 
+		private SimilarityMode simMode;
 		private boolean useDirectionality;
 		private boolean useTriangle;
 		public boolean isUseTriangle() {
@@ -364,7 +367,7 @@ public class PheSAAlignmentOptimizer {
 		private int nrOptimizationsPMI;
 		private int nrOptimizationsTriangle;
 		private static final String DELIMITER1 ="_";
-		
+
 		public PheSASetting() {
 			this.ppWeight = 0.5;
 			this.simMode = SimilarityMode.TANIMOTO;
@@ -373,7 +376,7 @@ public class PheSAAlignmentOptimizer {
 			this.nrOptimizationsPMI = PheSAAlignmentOptimizer.PMI_OPTIMIZATIONS;
 			this.nrOptimizationsTriangle = PheSAAlignmentOptimizer.TRIANGLE_OPTIMIZATIONS;
 		}
-		
+
 		public String toString() {
 			return Double.toString(ppWeight) +
 					DELIMITER1 +
@@ -387,7 +390,7 @@ public class PheSAAlignmentOptimizer {
 					DELIMITER1 +
 					Integer.toString(nrOptimizationsTriangle);
 		}
-		
+
 		public static PheSASetting fromString(String encoded) {
 			PheSASetting setting = new PheSASetting();
 			String[] split = encoded.split(DELIMITER1);

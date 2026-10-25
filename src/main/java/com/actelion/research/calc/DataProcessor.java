@@ -36,12 +36,12 @@ package com.actelion.research.calc;
 import java.util.ArrayList;
 
 public class DataProcessor {
-	private ArrayList<ProgressListener> mListener;
+	private final ArrayList<ProgressListener> mListener;
 	private ThreadMaster	mThreadMaster;
     private boolean         mVerbose;
-	
+
 	public DataProcessor() {
-		mListener = new ArrayList<ProgressListener>();
+		mListener = new ArrayList<>();
         mVerbose = true;
 		}
 
@@ -58,28 +58,28 @@ public class DataProcessor {
 		}
 
 	public void startProgress(String message, int min, int max) {
-	    if (mListener.size() == 0 && mVerbose)
+	    if (mListener.isEmpty() && mVerbose)
 			System.out.println(message);
-		for (int i=0; i<mListener.size(); i++)
-			mListener.get(i).startProgress(message, min, max);
+		for (ProgressListener listener : mListener)
+			listener.startProgress(message, min, max);
 		}
 
 	public void updateProgress(int value) {
-		for (int i=0; i<mListener.size(); i++)
-			mListener.get(i).updateProgress(value);
+		for (ProgressListener listener : mListener)
+			listener.updateProgress(value);
 		}
 
 	public void stopProgress(String message) {
-	    if (mListener.size() == 0 && mVerbose)
+	    if (mListener.isEmpty() && mVerbose)
 			System.out.println(message);
-		for (int i=0; i<mListener.size(); i++)
-			mListener.get(i).stopProgress();
+		for (ProgressListener listener : mListener)
+			listener.stopProgress();
 		}
 
 	public boolean threadMustDie() {
-		return (mThreadMaster == null) ? false : mThreadMaster.threadMustDie();
+		return mThreadMaster != null && mThreadMaster.threadMustDie();
 		}
-	
+
 	public void setVerbose(boolean verbose) {
         mVerbose = verbose;
 	    }
