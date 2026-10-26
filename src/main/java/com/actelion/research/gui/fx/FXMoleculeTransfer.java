@@ -45,7 +45,7 @@ public class FXMoleculeTransfer {
 	public static final DataFormat DF_IDCODE = getDataFormat(MIME_IDCODE);
 
 	// same order as in ChemistryFlavors.MOLECULE_FLAVORS
-	private static final String[] MOLECULE_MIME_TYPES = { MIME_MOLFILE, MIME_MOLFILE_V3, MIME_SMILES, MIME_IDCODE };
+	private static final String[] MOLECULE_MIME_TYPES = { MIME_IDCODE, MIME_MOLFILE_V3, MIME_MOLFILE, MIME_SMILES };
 
 	private FXMoleculeTransfer() {}
 
@@ -103,8 +103,8 @@ public class FXMoleculeTransfer {
 
 	/**
 	 * Creates a molecule from the clipboard content. Chemistry specific formats are preferred in the same
-	 * order as by com.actelion.research.gui.dnd.MoleculeDropAdapter: serialized molecule, molfile V2,
-	 * molfile V3, SMILES, idcode. If a format cannot be interpreted, the next one is tried.
+	 * order as by com.actelion.research.gui.dnd.MoleculeDropAdapter and ClipboardHandler: serialized molecule,
+	 * idcode, molfile V3, molfile V2, SMILES. If a format cannot be interpreted, the next one is tried.
 	 * If includeText is true, plain text is tried to be interpreted as molfile, idcode, SMILES,
 	 * or (if a StructureNameResolver exists) as name, in that order.
 	 * @param clipboard
@@ -114,13 +114,13 @@ public class FXMoleculeTransfer {
 	public static StereoMolecule readMolecule(Clipboard clipboard, boolean includeText) {
 		StereoMolecule mol = getSerializedMolecule(clipboard);
 		if (mol == null)
-			mol = parseMolfile(getString(clipboard, MIME_MOLFILE));
+			mol = parseIDCode(getString(clipboard, MIME_IDCODE));
 		if (mol == null)
 			mol = parseMolfile(getString(clipboard, MIME_MOLFILE_V3));
 		if (mol == null)
-			mol = parseSmiles(getString(clipboard, MIME_SMILES));
+			mol = parseMolfile(getString(clipboard, MIME_MOLFILE));
 		if (mol == null)
-			mol = parseIDCode(getString(clipboard, MIME_IDCODE));
+			mol = parseSmiles(getString(clipboard, MIME_SMILES));
 		if (mol == null && includeText && clipboard.hasString())
 			mol = parseText(clipboard.getString());
 		return mol;
