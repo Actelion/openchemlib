@@ -80,8 +80,8 @@ public class ClipboardHandler implements IClipboardHandler {
 
     private static java.util.List<ClipboardFormat> readableMoleculeFormats =
             Arrays.asList(
-                    NC_IDCODE, NC_DATAFLAVOR_IDCODE,NC_SERIALIZEMOLECULE,
-                    NC_DATAFLAVOR_SERIALIZEDMOLECULE, NC_MOLFILE_V3, NC_MOLFILE,
+                    NC_SERIALIZEMOLECULE, NC_DATAFLAVOR_SERIALIZEDMOLECULE,
+                    NC_IDCODE, NC_DATAFLAVOR_IDCODE, NC_MOLFILE_V3, NC_MOLFILE,
                     COM_MDLI_MOLFILE, NC_CTAB,
                     NC_SKETCH, COM_MDLI_SKETCHFILE,
                     //NC_CHEMDRAWINTERCHANGE
@@ -694,10 +694,10 @@ public class ClipboardHandler implements IClipboardHandler {
                     bytes = createMetafile(mol);
                     break;
                 case NC_DATAFLAVOR_IDCODE:
-                    bytes = createSerializedString(mol.getIDCode());
+                    bytes = createSerializedString(createIDCodeWithCoordinates(mol));
                     break;
                 case NC_IDCODE:
-                    bytes = mol.getIDCode().getBytes();
+                    bytes = createIDCodeWithCoordinates(mol).getBytes();
                     break;
                 case NC_MOLFILE_V3:
                     bytes = createV3MolFile(mol);
@@ -1029,6 +1029,11 @@ public class ClipboardHandler implements IClipboardHandler {
         return null;
     }
 
+
+    private static String createIDCodeWithCoordinates(StereoMolecule mol) {
+        Canonizer canonizer = new Canonizer(mol);
+        return canonizer.getIDCode() + " " + canonizer.getEncodedCoordinates(true);
+    }
 
     private static byte[] createSerializedString(String input) {
         byte[] bytes = null;

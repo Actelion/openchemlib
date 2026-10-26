@@ -56,10 +56,10 @@ public class ChemistryFlavors {
     public static final DataFlavor DF_IDCODE = new DataFlavor("chemical/x-openmolecules-idcode;class=java.lang.String", "OpenChemLib ID-Code");
     public static final DataFlavor[] MOLECULE_FLAVORS = {
         DF_SERIALIZED_MOLECULE,
-        DF_MDLMOLFILE,
-        DF_MDLMOLFILEV3,
-        DF_SMILES,
         DF_IDCODE,
+        DF_MDLMOLFILEV3,
+        DF_MDLMOLFILE,
+        DF_SMILES,
         DataFlavor.stringFlavor
     };
 
