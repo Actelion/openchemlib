@@ -103,7 +103,7 @@ public class FXStructureViewTestApp {
 		Label idcodeLabel = new Label();
 		idcodeLabel.setMaxWidth(HiDPIHelper.scale(VIEW_WIDTH));
 		idcodeLabel.setText(getIDCodeText(view.getMolecule()));
-		view.addStructureListener(mol -> idcodeLabel.setText(getIDCodeText(mol)));
+		view.moleculeProperty().addListener((observable, oldMol, newMol) -> idcodeLabel.setText(getIDCodeText(newMol)));
 		content.getChildren().addAll(new Label(title), view, idcodeLabel);
 		}
 

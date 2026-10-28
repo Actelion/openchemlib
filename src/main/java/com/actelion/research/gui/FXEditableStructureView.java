@@ -80,12 +80,12 @@ public class FXEditableStructureView extends FXStructureView {
 		mAllowQueryFeatures = true;
 
 		addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-			if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2 && !isDisabled() && isEditable()) {
+			if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2 && !isDisabled() && canChangeMolecule()) {
 				FXEditorDialog theDialog = createDrawDialog();
 				theDialog.getDrawArea().setAllowedPseudoAtoms(mAllowedPseudoAtoms);
 				theDialog.getDrawArea().setAllowQueryFeatures(mAllowQueryFeatures);
 				theDialog.getDrawArea().setDisplayMode(getDisplayMode());
-				theDialog.addStructureListener(this);
+				theDialog.addStructureListener(this::setMolecule);
 				theDialog.show();
 				}
 			} );
@@ -93,7 +93,7 @@ public class FXEditableStructureView extends FXStructureView {
 
 	@Override
 	protected void drawOverlay(GraphicsContext gc, double width, double height) {
-		if (!isDisabled() && isEditable() && getMolecule().getAllAtoms() == 0) {
+		if (!isDisabled() && isEditable() && (getMolecule() == null || getMolecule().getAllAtoms() == 0)) {
 			double fontSize = HiDPIHelper.scale(EDIT_MESSAGE_FONT_SIZE);
 			Font font = Font.font(Font.getDefault().getFamily(), FontWeight.NORMAL, fontSize);
 			gc.setFont(font);
@@ -115,8 +115,11 @@ public class FXEditableStructureView extends FXStructureView {
 	public void setAllowQueryFeatures(boolean allow) {
 		if (mAllowQueryFeatures != allow) {
 			mAllowQueryFeatures = allow;
-			if (!allow && getMolecule().removeQueryFeatures())
-				structureChanged();
+			if (!allow && getMolecule() != null) {
+				StereoMolecule mol = new StereoMolecule(getMolecule());
+				if (mol.removeQueryFeatures())
+					setMolecule(mol);
+				}
 			}
 		}
 	}

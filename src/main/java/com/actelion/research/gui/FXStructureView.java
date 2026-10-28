@@ -46,6 +46,8 @@ import com.actelion.research.gui.hidpi.HiDPIHelper;
 import com.actelion.research.util.ColorHelper;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.SnapshotParameters;
@@ -72,11 +74,14 @@ import java.util.ArrayList;
 /**
  * JavaFX equivalent of JStructureView. Molecules can be exchanged with JStructureView and other
  * Swing components via drag & drop and the clipboard.
+ * The view's molecule is exposed as moleculeProperty(). Every change of the molecule, either through
+ * user interaction (drop, paste, editing, ...) or by calling setMolecule(), stores a new StereoMolecule
+ * instance in the property. Thus, ChangeListeners are informed about every change.
  * Except for the constructors and setClipboardHandler(), all methods should be called on the FX application thread.
  * Like JStructureView, sizes are scaled with HiDPIHelper.getUIScaleFactor(), which is 1.0 on Windows and macOS,
  * where JavaFX scales automatically, but reflects Xft.dpi on Linux, which JavaFX doesn't consider for scaling.
  */
-public class FXStructureView extends Pane implements StructureListener {
+public class FXStructureView extends Pane {
 	private static final int DEFAULT_SELECTION_BACKGROUND = 0x80A4C0;
 	private static final int DEFAULT_EDITABLE_BACKGROUND = 0xFFFFFF;
 	private static final int DEFAULT_INACTIVE_BACKGROUND = 0xF2F2F2;
@@ -98,9 +103,9 @@ public class FXStructureView extends Pane implements StructureListener {
 	private static final int BORDER_ARC = 10;
 
 	private final Canvas mCanvas;
-	private ArrayList<StructureListener> mListener;
+	private final ObjectProperty<StereoMolecule> mMolecule;
 	private String mIDCode;
-	private StereoMolecule mMol,mDisplayMol;
+	private StereoMolecule mDisplayMol;
 	private GenericDepictor mDepictor;
 	private boolean mShowBorder,mAllowFragmentStatusChangeOnPasteOrDrop,mIsDraggingThis,mIsEditable,mDisableBorder,
 			mIsSelectable,mIsSelecting,mIsLassoSelect;
@@ -188,8 +193,24 @@ public class FXStructureView extends Pane implements StructureListener {
 	 * @param dropAction DnDConstants.ACTION_xxx
 	 */
 	public FXStructureView(StereoMolecule mol, StereoMolecule displayMol, int dragAction, int dropAction) {
-		mMol = (mol == null) ? new StereoMolecule() : new StereoMolecule(mol);
-		mDisplayMol = (displayMol == null) ? mMol : displayMol;
+		mMolecule = new SimpleObjectProperty<StereoMolecule>(this, "molecule", (mol == null) ? new StereoMolecule() : new StereoMolecule(mol)) {
+			/**
+			 * Stores a copy of the molecule. Thus, every set() causes a change event,
+			 * even if the passed molecule is the current one, which was modified in place.
+			 */
+			@Override
+			public void set(StereoMolecule mol) {
+				super.set((mol == null) ? new StereoMolecule() : new StereoMolecule(mol));
+				}
+
+			@Override
+			protected void invalidated() {
+				mIDCode = null;
+				mDisplayMol = null;
+				repaint();
+				}
+			};
+		mDisplayMol = displayMol;
 		mDisplayMode = AbstractDepictor.cDModeHiliteAllQueryFeatures;
 		mTextSizeFactor = 1.0;
 		mIsEditable = false;
@@ -331,7 +352,7 @@ public class FXStructureView extends Pane implements StructureListener {
 
 	/**
 	 * If you want this structure view to also draw an atom background with specific colors for every atom,
-	 * then you need to call this method before or just after one of the structureChanged() calls.
+	 * then you need to call this method before or just after one of the setMolecule() calls.
 	 * @param argb if alpha < 1 then the background is mixed in accordingly
 	 * @param radius <= 1.0; if null, then a default of 0.5 of the average bond length is used
 	 */
@@ -342,7 +363,14 @@ public class FXStructureView extends Pane implements StructureListener {
 		}
 
 	public boolean canDrop() {
-		return mIsEditable && !isDisabled() && !mIsDraggingThis;
+		return canChangeMolecule() && !isDisabled() && !mIsDraggingThis;
+		}
+
+	/**
+	 * @return true if the view is editable and the molecule is not bound
+	 */
+	protected boolean canChangeMolecule() {
+		return mIsEditable && !mMolecule.isBound();
 		}
 
 	/**
@@ -371,8 +399,9 @@ public class FXStructureView extends Pane implements StructureListener {
 		gc.setFill(toFXColor(bgRGB));
 		gc.fillRect(0, 0, width, height);
 
-		if (mDisplayMol != null && mDisplayMol.getAllAtoms() != 0) {
-			mDepictor = new GenericDepictor(mDisplayMol);
+		StereoMolecule displayMol = getDisplayMolecule();
+		if (displayMol.getAllAtoms() != 0) {
+			mDepictor = new GenericDepictor(displayMol);
 			mDepictor.setDisplayMode(mDisplayMode);
 			mDepictor.setFactorTextSize(mTextSizeFactor);
 			mDepictor.setAtomText(mAtomText);
@@ -480,7 +509,7 @@ public class FXStructureView extends Pane implements StructureListener {
 			setIDCode(idcode.substring(0, index), idcode.substring(index+1));
 		}
 
-	public synchronized void setIDCode(String idcode, String coordinates) {
+	public void setIDCode(String idcode, String coordinates) {
 		if (idcode != null && idcode.isEmpty())
 			idcode = null;
 
@@ -490,84 +519,70 @@ public class FXStructureView extends Pane implements StructureListener {
 		if (mIDCode != null && mIDCode.equals(idcode))
 			return;
 
-		new IDCodeParser(true).parse(mMol, idcode, coordinates);
-		mDisplayMol = mMol;
+		StereoMolecule mol = new StereoMolecule();
+		new IDCodeParser(true).parse(mol, idcode, coordinates);
+		setMolecule(mol);
 
 		mIDCode = idcode;
-		repaint();
-		informListeners();
+		}
+
+	/**
+	 * The molecule used for drag & drop and clipboard transfer, which is also displayed,
+	 * unless a different display molecule was set with setMolecule(mol, displayMol).
+	 * Every change of the molecule stores a new StereoMolecule instance, such that
+	 * ChangeListeners are informed about every change. Changing the molecule resets
+	 * the display molecule.
+	 */
+	public ObjectProperty<StereoMolecule> moleculeProperty() {
+		return mMolecule;
+		}
+
+	/**
+	 * Don't modify the returned molecule in place without calling setMolecule() afterwards,
+	 * e.g.: theStructureView.getMolecule().setFragment(false); theStructureView.setMolecule(theStructureView.getMolecule());
+	 * @return the molecule used for display, drag & drop and clipboard transfer; null only, if bound to null
+	 */
+	public StereoMolecule getMolecule() {
+		return mMolecule.get();
 		}
 
 	/**
 	 * Updates the molecule used for display, drag & drop and clipboard transfer.
-	 * Also triggers a repaint().
+	 * A copy of mol is stored, which also resets the display molecule.
 	 * @param mol new molecule used for display, clipboard copy and d&d; may be null
 	 */
-	@Override
-	public synchronized void structureChanged(StereoMolecule mol) {
-		if (mol == null) {
-			mMol.clear();
-			}
-		else {
-			mol.copyMolecule(mMol);
-			}
-
-		mDisplayMol = mMol;
-		structureChanged();
+	public void setMolecule(StereoMolecule mol) {
+		mMolecule.set(mol);
 		}
 
 	/**
 	 * Updates both molecules used for display and for drag & drop/clipboard transfer.
-	 * Also triggers a repaint().
 	 * @param mol new molecule used for clipboard copy and d&d; may be null
-	 * @param displayMol new molecule used for display, may be null
+	 * @param displayMol new molecule used for display; if null, then mol is displayed
 	 */
-	public synchronized void structureChanged(StereoMolecule mol, StereoMolecule displayMol) {
-		if (mol == null) {
-			mMol.clear();
-			}
-		else {
-			mol.copyMolecule(mMol);
-			}
-
+	public void setMolecule(StereoMolecule mol, StereoMolecule displayMol) {
+		mMolecule.set(mol);
 		mDisplayMol = displayMol;
-		structureChanged();
+		repaint();
 		}
 
 	/**
-	 * Should only be called if FXStructureView's internal Molecule is changed
-	 * from outside as: theStructureView.getMolecule().setFragment(false);
-	 * The caller is responsible to update displayMol also, if it is different from
-	 * the molecule.
+	 * @return the displayed molecule, which is the molecule, unless a different display molecule was set
 	 */
-	public synchronized void structureChanged() {
-		mIDCode = null;
-		repaint();
-		informListeners();
-		}
-
-	public StereoMolecule getMolecule() {
-		return mMol;
-		}
-
 	public StereoMolecule getDisplayMolecule() {
-		return mDisplayMol;
+		return (mDisplayMol != null) ? mDisplayMol : getMoleculeOrEmpty();
+		}
+
+	/**
+	 * @return the molecule or an empty one, if the property is bound to null
+	 */
+	private StereoMolecule getMoleculeOrEmpty() {
+		StereoMolecule mol = mMolecule.get();
+		return (mol != null) ? mol : new StereoMolecule();
 		}
 
 	public AbstractDepictor getDepictor() {
 		return mDepictor;
-		}
-
-	public void addStructureListener(StructureListener l) {
-		if (mListener == null)
-			mListener = new ArrayList<>();
-
-		mListener.add(l);
-		}
-
-	public void removeStructureListener(StructureListener l) {
-		if (mListener != null)
-			mListener.remove(l);
 		}
 
 	public void setChiralDrawPosition(int p) {
@@ -659,10 +674,11 @@ public class FXStructureView extends Pane implements StructureListener {
 			}
 
 		if (selectedShape != null && mDepictor != null) {
-			for (int atom=0; atom<mDisplayMol.getAllAtoms(); atom++) {
+			StereoMolecule displayMol = getDisplayMolecule();
+			for (int atom=0; atom<displayMol.getAllAtoms(); atom++) {
 				boolean isSelected = selectedShape.contains((int)mDepictor.getAtomX(atom), (int)mDepictor.getAtomY(atom));
-				if (isSelected != mDisplayMol.isSelectedAtom(atom))
-					mDisplayMol.setAtomSelection(atom, isSelected);
+				if (isSelected != displayMol.isSelectedAtom(atom))
+					displayMol.setAtomSelection(atom, isSelected);
 				}
 			}
 
@@ -670,20 +686,17 @@ public class FXStructureView extends Pane implements StructureListener {
 		}
 
 	private void showPopupMenu(double screenX, double screenY) {
-		if (mMol == null)
-			return;
-
 		if (mPopup != null)
 			mPopup.hide();
 
 		mPopup = new ContextMenu();
-		boolean hasAtoms = (mMol.getAllAtoms() != 0);
+		boolean hasAtoms = (getMoleculeOrEmpty().getAllAtoms() != 0);
 
 		if (mClipboardHandler != null) {
-			addMenuItem(ITEM_COPY, hasAtoms, () -> mClipboardHandler.copyMolecule(mMol));
+			addMenuItem(ITEM_COPY, hasAtoms, () -> mClipboardHandler.copyMolecule(getMoleculeOrEmpty()));
 			addMenuItem(ITEM_COPY_SMILES, hasAtoms, () -> copySmiles());
 
-			if (mIsEditable) {
+			if (canChangeMolecule()) {
 				String itemText = StructureNameResolver.getInstance() == null ? ITEM_PASTE : ITEM_PASTE_WITH_NAME;
 				addMenuItem(itemText, true, () -> paste());
 				}
@@ -691,12 +704,8 @@ public class FXStructureView extends Pane implements StructureListener {
 			mPopup.getItems().add(new SeparatorMenuItem());
 			}
 
-		if (mIsEditable) {
-			addMenuItem(ITEM_CLEAR, hasAtoms, () -> {
-				mMol.clear();
-				mDisplayMol = mMol;
-				structureChanged();
-				} );
+		if (canChangeMolecule()) {
+			addMenuItem(ITEM_CLEAR, hasAtoms, () -> setMolecule(null) );
 
 			mPopup.getItems().add(new SeparatorMenuItem());
 
@@ -720,23 +729,22 @@ public class FXStructureView extends Pane implements StructureListener {
 
 	private void copySmiles() {
 		ClipboardContent content = new ClipboardContent();
-		content.putString(new IsomericSmilesCreator(mMol).getSmiles());
+		content.putString(new IsomericSmilesCreator(getMoleculeOrEmpty()).getSmiles());
 		Clipboard.getSystemClipboard().setContent(content);
 		}
 
 	private void paste() {
-		if (!mIsEditable)
+		if (!canChangeMolecule())
 			return;
 
+		boolean isFragment = getMoleculeOrEmpty().isFragment();
 		int smartsMode = mAllowFragmentStatusChangeOnPasteOrDrop ? SmilesParser.SMARTS_MODE_GUESS
-					   : mMol.isFragment() ? SmilesParser.SMARTS_MODE_IS_SMARTS : SmilesParser.SMARTS_MODE_IS_SMILES;
+					   : isFragment ? SmilesParser.SMARTS_MODE_IS_SMARTS : SmilesParser.SMARTS_MODE_IS_SMILES;
 		StereoMolecule mol = mClipboardHandler.pasteMolecule(true, smartsMode);
 		if (mol != null) {
 			if (!mAllowFragmentStatusChangeOnPasteOrDrop)
-				mol.setFragment(mMol.isFragment());
-			mMol = mol;
-			mDisplayMol = mol;
-			structureChanged();
+				mol.setFragment(isFragment);
+			setMolecule(mol);
 			}
 		else {
 			showWarningMessage("No molecule on clipboard!");
@@ -752,10 +760,8 @@ public class FXStructureView extends Pane implements StructureListener {
 		StereoMolecule mol = new MolfileParser().getCompactMolecule(file);
 		if (mol != null) {
 			if (!mAllowFragmentStatusChangeOnPasteOrDrop)
-				mol.setFragment(mMol.isFragment());
-			mMol = mol;
-			mDisplayMol = mol;
-			structureChanged();
+				mol.setFragment(getMoleculeOrEmpty().isFragment());
+			setMolecule(mol);
 			}
 		else {
 			showWarningMessage("Couldn't read molecule!");
@@ -763,7 +769,8 @@ public class FXStructureView extends Pane implements StructureListener {
 		}
 
 	private void saveMolfile(boolean isV3) {
-		String name = mMol.getName();
+		StereoMolecule mol = getMoleculeOrEmpty();
+		String name = mol.getName();
 		if (name == null || name.isEmpty())
 			name = "Unknown Molecule";
 
@@ -773,7 +780,7 @@ public class FXStructureView extends Pane implements StructureListener {
 		if (file == null)
 			return;
 
-		String molfile = isV3 ? new MolfileV3Creator(mMol, false).getMolfile() : new MolfileCreator(mMol, false).getMolfile();
+		String molfile = isV3 ? new MolfileV3Creator(mol, false).getMolfile() : new MolfileCreator(mol, false).getMolfile();
 		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
 			writer.write(molfile);
 			}
@@ -812,12 +819,6 @@ public class FXStructureView extends Pane implements StructureListener {
 		mWarningTimer.play();
 		}
 
-	private void informListeners() {
-		if (mListener != null)
-			for (int i = 0; i<mListener.size(); i++)
-				mListener.get(i).structureChanged(mMol);
-		}
-
 	private void initializeDragAndDrop(int dragAction, int dropAction) {
 		mAllowedDragAction = dragAction;
 		mAllowedDropAction = dropAction;
@@ -827,7 +828,7 @@ public class FXStructureView extends Pane implements StructureListener {
 			mCanvas.setOnDragDetected(e -> {
 				// If selectable, then dragging outside of the molecule's area selects atoms.
 				if (!mIsSelecting
-				 && mMol.getAllAtoms() != 0
+				 && getMoleculeOrEmpty().getAllAtoms() != 0
 				 && (!mIsSelectable || isInDragRect(e.getX(), e.getY()))) {
 					ClipboardContent content = getMoleculeContent(e.getX(), e.getY());
 					if (content != null) {
@@ -872,16 +873,11 @@ public class FXStructureView extends Pane implements StructureListener {
 			setOnDragDropped(e -> {
 				StereoMolecule m = canDrop() ? FXMoleculeTransfer.readMolecule(e.getDragboard(), true) : null;
 				if (m != null) {
-					boolean isFragment = mMol.isFragment();
-					mMol = new StereoMolecule(m);
-					mMol.removeAtomColors();
-					mMol.removeBondHiliting();
+					m.removeAtomColors();
+					m.removeBondHiliting();
 					if (!mAllowFragmentStatusChangeOnPasteOrDrop)
-						mMol.setFragment(isFragment);
-					mDisplayMol = mMol;
-					mIDCode = null;
-					repaint();
-					informListeners();
+						m.setFragment(getMoleculeOrEmpty().isFragment());
+					setMolecule(m);
 					onDrop();
 					}
 				updateBorder(false);
@@ -913,7 +909,7 @@ public class FXStructureView extends Pane implements StructureListener {
 	 * @return content or null, if no drag shall be started
 	 */
 	protected ClipboardContent getMoleculeContent(double x, double y) {
-		return FXMoleculeTransfer.createContent(mMol);
+		return FXMoleculeTransfer.createContent(getMoleculeOrEmpty());
 		}
 
 	// Drag notifications if needed by subclasses; called when a drag, which could be dropped, enters, exits, or moves over this view
