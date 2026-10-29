@@ -33,6 +33,7 @@
 
 package com.actelion.research.chem.descriptor;
 
+import com.actelion.research.chem.Canonizer;
 import com.actelion.research.chem.Molecule;
 import com.actelion.research.chem.SSSearcherWithIndex;
 import com.actelion.research.chem.StereoMolecule;
@@ -40,8 +41,6 @@ import com.actelion.research.util.SortedList;
 
 public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLongFP<StereoMolecule> {
 	private static final double CORRECTION_FACTOR = 0.68;
-
-	public static boolean skipIDCodes;
 
 	private static DescriptorHandlerAllFragmentsFP sDefaultInstance;
 
@@ -167,6 +166,10 @@ public class DescriptorHandlerAllFragmentsFP extends AbstractDescriptorHandlerLo
 					mIsBondMember[candidateBond] = true;
 					boolean isAtomMember = mIsAtomMember[candidateAtom];
 					if (!isAtomMember) {
+if (candidateAtom >=mIsAtomMember.length) {
+	System.out.println("candidateAtom:"+candidateAtom+" idcode:"+new Canonizer(mMol).getIDCode()+" atoms:"+mMol.getAtoms());
+	System.out.flush();
+}
 						mIsAtomMember[candidateAtom] = true;
 						mMemberAtom[atomCount] = candidateAtom;
 						atomCount++;
@@ -234,7 +237,7 @@ System.out.println(hash+"\t"+bondCount+"\t"+new Canonizer(frag).getIDCode());
 }
 
 class BondSet implements Comparable<BondSet> {
-	private int[] mMask;
+	private final int[] mMask;
 
 	public BondSet(int[] bond, int usedBonds, int bondCount) {
 		mMask = new int[(bondCount + 31) / 32];
