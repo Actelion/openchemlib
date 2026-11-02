@@ -45,7 +45,7 @@ import java.util.Arrays;
 
 public class SimilarityGraphBasedReactionMapper {
 	public static final boolean DEBUG = false;
-	private static final boolean DEBUG_RED_CENTER_MAPPING = true;	// use red mapping numbers for ReactionCenterMapper
+	private static final boolean DEBUG_RED_CENTER_MAPPING = false;	// use red mapping numbers for ReactionCenterMapper
 	private static final boolean DEBUG_PRINT_REACTION_BEFORE_CENTER_MAPPING = false;
 	private static final boolean DEBUG_PRINT_MOLFILES_BEFORE_CENTER_MAPPING = false;
 	public static final boolean PRINT_SCORES = false;
@@ -545,7 +545,9 @@ if (DEBUG) {
 					reactant = rxn.getReactant(++reactantIndex);
 					}
 				} while (reactant.isFragment() && reactant.isExcludeGroupAtom(reactantAtom));
-			reactant.setAtomMapNo(reactantAtom, reactantMapNo[atom], reactantMapNo[atom] <= graphMapNoCount || !DEBUG_RED_CENTER_MAPPING);
+			boolean isAutoMapped = DEBUG_RED_CENTER_MAPPING ? reactantMapNo[atom] <= graphMapNoCount
+					: reactant.getAtomMapNo(reactantAtom) == 0 || reactant.isAutoMappedAtom(reactantAtom);
+			reactant.setAtomMapNo(reactantAtom, reactantMapNo[atom], isAutoMapped);
 			}
 
 		int productIndex = 0;
@@ -559,7 +561,9 @@ if (DEBUG) {
 					product = rxn.getProduct(++productIndex);
 					}
 				} while (product.isFragment() && product.isExcludeGroupAtom(productAtom));
-			product.setAtomMapNo(productAtom, productMapNo[atom], productMapNo[atom] <= graphMapNoCount || !DEBUG_RED_CENTER_MAPPING);
+			boolean isAutoMapped = DEBUG_RED_CENTER_MAPPING ? productMapNo[atom] <= graphMapNoCount
+					: product.getAtomMapNo(productAtom) == 0 || product.isAutoMappedAtom(productAtom);
+			product.setAtomMapNo(productAtom, productMapNo[atom], isAutoMapped);
 			}
 		}
 
