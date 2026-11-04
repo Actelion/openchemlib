@@ -55,7 +55,7 @@ public class JProgressDialog implements ActionListener,ProgressController {
 	private JLabel			mProgressLabel,mLabelRemainingTime;
 	private volatile String	mBusyText;
 	private volatile String	mProgressMessage;
-	private volatile boolean mProcessCancelled, mIsInitialized;
+	private volatile boolean mProcessCancelled,mIsInitialized,mIsClosed;
 	private volatile int	mProgressMin,mProgressMax,mProgressValue,mAction;
 	private volatile long   mProgressStart,mLastUpdate;
 	private volatile float  mProgressFactor;
@@ -81,7 +81,7 @@ public class JProgressDialog implements ActionListener,ProgressController {
 	 */
 	@Override
 	public void startProgress(String text, int min, int max) {
-		if (!mIsInitialized) {
+		if (!mIsInitialized && !mIsClosed) {
 			// must be with invokeLater, because initialize() blocks until close() or stopProgress() is called
 			mIsInitialized = true;
 			SwingUtilities.invokeLater(() -> initialize());
@@ -141,19 +141,47 @@ public class JProgressDialog implements ActionListener,ProgressController {
 		}
 
 	/**
-	 * Closes and disposes the dialog.
-	 * If you need to move a newly created window to the front, then use close(Frame newFrontFrame).
-	 * May be called safely from any thread
+	 * Closes and disposes the dialog. May be called safely from any thread.
+	 * If you don't call from the EDT, the close action will be launched with invokeLater.
+	 * If you need to wait for the dialog to be closed, use close(true).
 	 */
 	public void close() {
-		try {
-			if (mIsInitialized) {
-				SwingUtilities.invokeAndWait(() -> {
-					mDialog.setVisible(false);
-					mDialog.dispose();
-					});
+		close(false);
+	}
+
+	/**
+	 * Closes and disposes the dialog. May be called safely from any thread.
+	 * If you don't call from the EDT, you may wait for the dialog to close, which may be useful
+	 * if you need to create a new window that is supposed to open as front window. On some platforms
+	 * this is not possible with an open dialog belonging to a different window.
+	 * @param waitForIt if true and if not calling from the EDT, then it waits until the dialog is closed
+	 */
+	public void close(boolean waitForIt) {
+		if (!mIsClosed) {
+			mIsClosed = true;
+			if (SwingUtilities.isEventDispatchThread()) {
+				closeDialog();
 				}
-			} catch (Exception e) {}
+			else {
+				if (waitForIt) {
+					try {
+						SwingUtilities.invokeAndWait(() -> closeDialog() );
+						}
+					catch (Exception e) {}
+				}
+				else {
+					SwingUtilities.invokeLater(() -> closeDialog() );
+					}
+				}
+			}
+		}
+
+	private void closeDialog() {
+		if (mDialog != null) {
+			mDialog.setVisible(false);
+			mDialog.dispose();
+			mDialog = null;
+			}
 		}
 
 	/**
@@ -191,28 +219,30 @@ public class JProgressDialog implements ActionListener,ProgressController {
 		}
 
 	private void initialize() {
-		mDialog = new JDialog(mOwner, true);
+		if (!mIsClosed) {
+			mDialog = new JDialog(mOwner, true);
 
-		double[][] size = { {8, HiDPIHelper.scale(200), 8, TableLayout.PREFERRED, 8},
-							{8, TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 16, TableLayout.PREFERRED, 8} };
-		mDialog.getContentPane().setLayout(new TableLayout(size));
+			double[][] size = { {8, HiDPIHelper.scale(200), 8, TableLayout.PREFERRED, 8},
+								{8, TableLayout.PREFERRED, 8, TableLayout.PREFERRED, 16, TableLayout.PREFERRED, 8} };
+			mDialog.getContentPane().setLayout(new TableLayout(size));
 
-		mProgressLabel = new JLabel(" ");
-		mDialog.getContentPane().add(mProgressLabel, "1,1,3,1");
+			mProgressLabel = new JLabel(" ");
+			mDialog.getContentPane().add(mProgressLabel, "1,1,3,1");
 
-		mProgressBar = new JProgressBar();
-		mProgressBar.setVisible(false);
-		mDialog.getContentPane().add(mProgressBar, "1,3,3,3");
+			mProgressBar = new JProgressBar();
+			mProgressBar.setVisible(false);
+			mDialog.getContentPane().add(mProgressBar, "1,3,3,3");
 
-		mLabelRemainingTime = new JLabel();
-		mDialog.getContentPane().add(mLabelRemainingTime, "1,5");
+			mLabelRemainingTime = new JLabel();
+			mDialog.getContentPane().add(mLabelRemainingTime, "1,5");
 
-		JButton cancelButton = new JButton("Cancel");
-		cancelButton.addActionListener(this);
-		mDialog.getContentPane().add(cancelButton, "3,5");
-		mDialog.pack();
-		mDialog.setLocationRelativeTo(mOwner);
-		mDialog.setVisible(true);
+			JButton cancelButton = new JButton("Cancel");
+			cancelButton.addActionListener(this);
+			mDialog.getContentPane().add(cancelButton, "3,5");
+			mDialog.pack();
+			mDialog.setLocationRelativeTo(mOwner);
+			mDialog.setVisible(true);
+			}
 		}
 
 	private void update() {
@@ -224,7 +254,7 @@ public class JProgressDialog implements ActionListener,ProgressController {
 		}
 
 	private void doUpdate() {
-		if (mIsInitialized) {
+		if (mIsInitialized && !mIsClosed) {
 			if ((mAction & sActionStart) != 0) {
 				mAction &= ~sActionStart;
 				if (mProgressMin == mProgressMax) {

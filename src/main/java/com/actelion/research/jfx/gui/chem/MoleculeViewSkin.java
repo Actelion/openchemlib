@@ -251,8 +251,7 @@ public class MoleculeViewSkin //extends SkinBase<MoleculeView,MoleculeViewBehavi
             }
             else {
                 java.awt.Color bg = new java.awt.Color((float)backgroundColor.getRed(), (float)backgroundColor.getGreen(), (float)backgroundColor.getBlue());
-                java.awt.Color fg = (ColorHelper.perceivedBrightness(bg)>0.5) ? java.awt.Color.BLACK : java.awt.Color.WHITE;
-                depictor.setOverruleColor(fg.getRGB(), bg.getRGB());
+                depictor.setForegroundColor(0, bg.getRGB());
             }
             GenericDrawContext context = new FXDrawContext(ctx);
             depictor.validateView(context, new GenericRectangle(0, 0, (float) w, (float) h), AbstractDepictor.cModeInflateToMaxAVBL + (int) (d));
