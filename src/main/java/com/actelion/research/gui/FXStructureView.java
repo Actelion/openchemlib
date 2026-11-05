@@ -82,10 +82,10 @@ import java.util.ArrayList;
  * where JavaFX scales automatically, but reflects Xft.dpi on Linux, which JavaFX doesn't consider for scaling.
  */
 public class FXStructureView extends Pane {
-	private static final int DEFAULT_SELECTION_BACKGROUND = 0x80A4C0;
-	private static final int DEFAULT_EDITABLE_BACKGROUND = 0xFFFFFF;
-	private static final int DEFAULT_INACTIVE_BACKGROUND = 0xF2F2F2;
-	private static final int DEFAULT_FOREGROUND = 0x000000;
+	private static final int DEFAULT_SELECTION_BACKGROUND = 0xFF80A4C0;
+	private static final int DEFAULT_EDITABLE_BACKGROUND = 0xFFFFFFFF;
+	private static final int DEFAULT_INACTIVE_BACKGROUND = 0xFFF2F2F2;
+	private static final int DEFAULT_FOREGROUND = 0xFF000000;
 
 	private static final String ITEM_COPY = "Copy Structure";
 	private static final String ITEM_COPY_SMILES = "Copy Structure As SMILES-String";
@@ -494,11 +494,11 @@ public class FXStructureView extends Pane {
 		}
 
 	protected static Color toFXColor(int rgb) {
-		return Color.rgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+		return Color.rgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, ((rgb >> 24) & 0xFF) / 255.0);
 		}
 
 	private static int toRGB(Color c) {
-		return ((int)Math.round(255*c.getRed()) << 16) + ((int)Math.round(255*c.getGreen()) << 8) + (int)Math.round(255*c.getBlue());
+		return  ((int) Math.round(255 * c.getOpacity()) << 24) + ((int) Math.round(255 * c.getRed()) << 16) + ((int) Math.round(255 * c.getGreen()) << 8) + (int) Math.round(255 * c.getBlue());
 		}
 
 	public void setIDCode(String idcode) {

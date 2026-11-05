@@ -43,6 +43,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
@@ -78,6 +79,7 @@ public class FXStructureViewTestApp {
 		sourceView.setSelectable(true);
 
 		FXEditableStructureView editableView = new FXEditableStructureView();
+//		editableView.setBackgroundColor(new Color(1.0, 0.0, 0.5, 0.5));
 		editableView.setClipboardHandler(clipboardHandler);
 
 		FXEditableStructureView fragmentView = new FXEditableStructureView(createFragment());
