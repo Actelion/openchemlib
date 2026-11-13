@@ -40,19 +40,25 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.ArrayUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeSet;
 
 
 public class ConformerSet extends TreeSet<Conformer> {
-	
+	public static final String PLUS_ENANTIOMERS = " plusEnantiomers";
+
 	public ConformerSet() {
 		this(null);
 	}
-	
+
 	public ConformerSet(String s) {
 		super();
 		if (s != null) {
+			boolean plusEnantiomers = s.endsWith(PLUS_ENANTIOMERS);
+			if (plusEnantiomers)
+				s = s.substring(0, s.length()-PLUS_ENANTIOMERS.length());
+
 			String[] confString = s.split(" ");
 			if (confString.length >= 2) {
 				IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
@@ -66,6 +72,13 @@ public class ConformerSet extends TreeSet<Conformer> {
 						parser.parseCoordinates(confString[i].getBytes(StandardCharsets.UTF_8), 0, mol, conf.getCoordinates());
 						add(conf);
 					} catch (Exception e) {}
+				}
+
+				if (plusEnantiomers) {
+					ArrayList<Conformer> enantiomerList = new ArrayList<>();
+					for (Conformer c : this)
+						enantiomerList.add(c.createEnantiomer());
+					addAll(enantiomerList);
 				}
 			}
 		}
@@ -86,6 +99,22 @@ public class ConformerSet extends TreeSet<Conformer> {
 					parser.parseCoordinates(coords, index+1, mol, conf.getCoordinates());
 					add(conf);
 				} catch (Exception e) {}
+				index = ArrayUtils.indexOf(coords, (byte)32,index+1);
+
+				boolean isPlusEnantioners = true;
+				for (int i=0; i<PLUS_ENANTIOMERS.length(); i++) {
+					if (coords.length <= index+i || coords[index+i] != (byte)PLUS_ENANTIOMERS.charAt(i)) {
+						isPlusEnantioners = false;
+						break;
+					}
+				}
+				if (isPlusEnantioners) {
+					ArrayList<Conformer> enantiomerList = new ArrayList<>();
+					for (Conformer c : this)
+						enantiomerList.add(c.createEnantiomer());
+					addAll(enantiomerList);
+					break;
+				}
 			}
 		}
 	}
@@ -94,9 +123,9 @@ public class ConformerSet extends TreeSet<Conformer> {
 		ConformerSet treeSet = new ConformerSet();
 		this.stream().limit(size).forEach(c->treeSet.add(c));
 		return treeSet;
-		
+
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -107,12 +136,21 @@ public class ConformerSet extends TreeSet<Conformer> {
 			sb.append(can.getIDCode());
 			sb.append(" ");
 			sb.append(can.getEncodedCoordinates(true));
+			boolean isPlusEnantioners = false;
 			while (iterator.hasNext()) {
-				can.invalidateCoordinates();
-				iterator.next().toMolecule(mol);
-				sb.append(" ");
-				sb.append(can.getEncodedCoordinates(true));
+				Conformer conformer = iterator.next();
+				if (conformer.isEnantiomer()) {
+					isPlusEnantioners = true;
+				}
+				else {
+					can.invalidateCoordinates();
+					conformer.toMolecule(mol);
+					sb.append(" ");
+					sb.append(can.getEncodedCoordinates(true));
+				}
 			}
+			if (isPlusEnantioners)
+				sb.append(PLUS_ENANTIOMERS);
 		}
 		return sb.toString();
 	}

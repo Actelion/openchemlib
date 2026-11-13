@@ -90,7 +90,7 @@ private double[] mDWStrain; 	// TODO get rid of this section
 	private double[]            mMinStrainInPool;
 	private final int[]			mRuleCount;
 	private final boolean[]		mSkipRule;
-	private int[]				mRotatableBondForDescriptor;
+	private TorsionDescriptorHelper mTorsionDescriptorHelper;
 	private ThreadMaster        mThreadMaster;
 	private long                mStopMillis;
 
@@ -225,7 +225,7 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 	 * This convenience method returns the StereoMolecule that has been passed
 	 * to the constructor after modifying its atom coordinates
 	 * to reflect the conformer internally created by generateOneConformer().
-	 * @return 
+	 * @return
 	 */
 	public StereoMolecule generateOneConformerInPlace(long randomSeed) {
 		SelfOrganizedConformer conformer = generateOneConformer(randomSeed);
@@ -342,15 +342,15 @@ System.out.println("angle:"+a+"  in degrees:"+(a*180/Math.PI));
 	 * @return true if the conformer was added or replaced another one
 	 */
 	private boolean addIfNewOrReplaceIfBetter(SelfOrganizedConformer conformer, ArrayList<SelfOrganizedConformer> conformerList, int poolIndex) {
-		if (mRotatableBondForDescriptor == null)
-			mRotatableBondForDescriptor = TorsionDescriptorHelper.findRotatableBonds(getMolecule());
+		if (mTorsionDescriptorHelper == null)
+			mTorsionDescriptorHelper = new TorsionDescriptorHelper(getMolecule(), true);
 
 		double maxStrain = Math.max(mMinStrainInPool[poolIndex] + MAX_POOL_STRAIN_DIF, mMinStrainInPool[poolIndex] * MAX_POOL_STRAIN_FACTOR);
 
 		if (conformer.getTotalStrain() > maxStrain)
 			return false;
 
-		conformer.calculateDescriptor(mRotatableBondForDescriptor);
+		conformer.calculateDescriptor(mTorsionDescriptorHelper);
 
 		for (int i=conformerList.size()-1; i>=0; i--) {
 			SelfOrganizedConformer soc = conformerList.get(i);
