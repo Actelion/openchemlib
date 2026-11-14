@@ -315,27 +315,18 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	}
 
 	public String encode(Object o) {
-
 		if(calculationFailed(o)){
 			return FAILED_STRING;
 		}
-
 		MolDistHist mdh = null;
-
 		if(o instanceof MolDistHist){
-
 			mdh = (MolDistHist)o;
-
 		} else if(o instanceof MolDistHistViz){
-
 			mdh = ((MolDistHistViz)o).getMolDistHist();
-
 		} else {
 			return FAILED_STRING;
 		}
-
 		return molDistHistEncoder.encode(mdh);
-
 	}
 
 	public MolDistHist decode(byte[] bytes) {
@@ -357,44 +348,32 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	}
 
 	public MolDistHist createDescriptorSingleConf(StereoMolecule mol) {
-
 		MolDistHistViz mdhv = creatorMolDistHistViz.createFromGivenConformation(mol);
-
 		return mdhv.getMolDistHist();
 	}
 
 	public MolDistHist createDescriptorSingleConf(ConformerSet conformerSet) {
-
 		if(conformerSet==null){
 			return FAILED_OBJECT;
 		}
-
 		MolDistHistViz mdhv = createVisualDescriptorSingleConf(conformerSet);
-
 		return mdhv.getMolDistHist();
 	}
 
 	public MolDistHistViz createVisualDescriptorSingleConf(ConformerSet conformerSet) {
-
 		if(conformerSet==null){
 			return new MolDistHistViz();
 		}
-
 		StereoMolecule mol = conformerSet.first().toMolecule();
-
 		MolDistHistViz mdhv = creatorMolDistHistViz.createFromGivenConformation(mol);
-
 		return mdhv;
 	}
 
 
 	public MolDistHist createDescriptor(Object mol) {
 		StereoMolecule fragBiggest = (StereoMolecule)mol;
-
 		int[] oldToNewAtom = fragBiggest.stripSmallFragments();
-
 		fragBiggest.ensureHelperArrays(StereoMolecule.cHelperCIP);
-
 		if(fragBiggest.getAtoms() < MIN_NUM_ATOMS){
 			return FAILED_OBJECT;
 		} else if(fragBiggest.getAtoms() > MAX_NUM_HEAVY_ATOMS){
@@ -403,9 +382,7 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 
 		MolDistHistViz mdhv = createVisualDescriptor(fragBiggest);
 		MolDistHist mdh = (mdhv == null) ? null : mdhv.getMolDistHist();
-
 		recentException = null;
-
 		if(mdh == null) {
 			mdh = FAILED_OBJECT;
 		} else if (mdh.getNumPPNodes() > ConstantsFlexophore.MAX_NUM_NODES_FLEXOPHORE) {
@@ -429,7 +406,6 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 			}
 			mdh.setNodeAtoms(nodeAtom);
 		}
-
 		return mdh;
 	}
 
@@ -440,7 +416,6 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	 * @return
 	 */
 	public MolDistHistViz createVisualDescriptor(StereoMolecule fragBiggest) {
-
 		MolDistHistViz mdhv = null;
 		recentException = null;
 		try {
@@ -475,15 +450,12 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	 * @return
 	 */
 	public float getSimilarity(Object query, Object base) {
-
 		float sc=0;
-
 		if(base == null
 				|| query == null
 				|| ((IMolDistHist)base).getNumPPNodes() == 0
 				|| ((IMolDistHist)query).getNumPPNodes() == 0) {
 			sc = 0;
-
 		} else {
 			IMolDistHist mdhvBase = (IMolDistHist)base;
 			IMolDistHist mdhvQuery = (IMolDistHist)query;
@@ -495,43 +467,33 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 				System.out.println("DescriptorHandlerFlexophore getSimilarity(...) mdhvQuery.getNumPPNodes() " + mdhvQuery.getNumPPNodes());
 				return 0;
 			}
-
 			sc = (float) getSimilarity(mdhvBase, mdhvQuery);
 		}
-
 		return normalizeValue(sc);
 	}
 
 	private double getSimilarity(IMolDistHist iBase, IMolDistHist iQuery){
-
 		MolDistHistViz mdhvBase = null;
 		if(iBase instanceof MolDistHist){
 			mdhvBase = new MolDistHistViz((MolDistHist)iBase);
 		} else if(iBase instanceof MolDistHistViz){
 			mdhvBase = new MolDistHistViz((MolDistHistViz)iBase);
 		}
-
 		MolDistHistViz mdhvQuery = null;
 		if(iQuery instanceof MolDistHist){
 			mdhvQuery = new MolDistHistViz((MolDistHist)iQuery);
 		} else if(iQuery instanceof MolDistHistViz){
 			mdhvQuery = new MolDistHistViz((MolDistHistViz)iQuery);
 		}
-
 		CompleteGraphMatcher<IMolDistHist> cgMatcher = queueCGM.poll();
 
 		if(cgMatcher == null){
 			cgMatcher = getNewCompleteGraphMatcher();
 		}
-
 		cgMatcher.set(mdhvBase, mdhvQuery);
-
 		double sc = (float)cgMatcher.calculateSimilarity();
-
 		solution = cgMatcher.getBestMatchingSolution();
-
 		queueCGM.add(cgMatcher);
-
 		return sc;
 	}
 
@@ -546,39 +508,26 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	 * @return
 	 */
 	public ModelSolutionSimilarity getBestMatch(MolDistHistViz mdhvBase, MolDistHistViz mdhvQuery){
-
 		CompleteGraphMatcher<IMolDistHist> cgMatcher = queueCGM.poll();
-
 		if(cgMatcher == null){
 			cgMatcher = getNewCompleteGraphMatcher();
 		}
-
 		cgMatcher.set(mdhvBase, mdhvQuery);
 		cgMatcher.calculateSimilarity();
-
 		SolutionCompleteGraph scgBest = cgMatcher.getBestMatchingSolution();
-
 		int n = scgBest.getSizeHeap();
-
 		if (n == 0) // added to prevent NegativeArraySizeException in next statement; TLS 10Jan2022
 			return null;
-
 		float [] arrSimNode = new float[scgBest.getNodesQuery()];
-
-		Arrays.fill(arrSimNode, -1);
-
+    	Arrays.fill(arrSimNode, -1);
 		ObjectiveBlurFlexophoreHardMatchUncovered objectiveCompleteGraphHard = (ObjectiveBlurFlexophoreHardMatchUncovered)cgMatcher.getObjectiveCompleteGraph();
 		objectiveCompleteGraphHard.setMatchingInfoInQueryAndBase(scgBest);
-
 		for (int indexHeap = 0; indexHeap < n; indexHeap++) {
-
 			int indexQuery = scgBest.getIndexQueryFromHeap(indexHeap);
-
 			arrSimNode[indexQuery] = mdhvQuery.getNode(indexQuery).getSimilarityMappingNodes();
 		}
 
 		ModelSolutionSimilarity mss = new ModelSolutionSimilarity(scgBest, arrSimNode);
-
 		return mss;
 	}
 
@@ -586,39 +535,26 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 
 		MolDistHistViz mdhvBase = new MolDistHistViz(mdhBase);
 		MolDistHistViz mdhvQuery = new MolDistHistViz(mdhQuery);
-
 		CompleteGraphMatcher<IMolDistHist> cgMatcher = queueCGM.poll();
-
 		if(cgMatcher == null){
 			cgMatcher = getNewCompleteGraphMatcher();
 		}
-
 		cgMatcher.set(mdhvBase, mdhvQuery);
 		cgMatcher.calculateSimilarity();
-
 		SolutionCompleteGraph scgBest = cgMatcher.getBestMatchingSolution();
-
 		int n = scgBest.getSizeHeap();
-
 		if (n == 0) // added to prevent NegativeArraySizeException in next statement; TLS 10Jan2022
 			return null;
-
 		float [] arrSimNode = new float[scgBest.getNodesQuery()];
-
 		Arrays.fill(arrSimNode, -1);
-
 		ObjectiveBlurFlexophoreHardMatchUncovered objectiveCompleteGraphHard = (ObjectiveBlurFlexophoreHardMatchUncovered)cgMatcher.getObjectiveCompleteGraph();
 		objectiveCompleteGraphHard.setMatchingInfoInQueryAndBase(scgBest);
 
 		for (int indexHeap = 0; indexHeap < n; indexHeap++) {
-
 			int indexQuery = scgBest.getIndexQueryFromHeap(indexHeap);
-
 			arrSimNode[indexQuery] = mdhvQuery.getNode(indexQuery).getSimilarityMappingNodes();
 		}
-
 		ModelSolutionSimilarity mss = new ModelSolutionSimilarity(scgBest, arrSimNode);
-
 		return mss;
 	}
 
@@ -654,5 +590,4 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 	public void setObjectiveQueryBiased(boolean enable){
 		throw new RuntimeException("setObjectiveQueryBiased(...) is not implemented");
 	}
-
 }
