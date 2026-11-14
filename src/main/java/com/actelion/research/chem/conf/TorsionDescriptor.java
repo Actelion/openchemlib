@@ -39,19 +39,26 @@ import com.actelion.research.util.Angle;
 import com.actelion.research.util.DoubleFormat;
 
 public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
-	private static final float TORSION_EQUIVALENCE_TOLERANCE = (float)Math.PI / 12f;
+	private static final float TORSION_TOLERANCE_ABSOLUTE = (float)Math.PI / 12f;
 
-	private float[] mTorsion;
-	private float[] mMaxTorsion;
+	// If we consider bond relevances, then be more tolerant for peripheral bonds (relevance<<0.5)
+	// and less tolerant for central bonds (relevance>>0.5).
+	private static final float TORSION_TOLERANCE_RELATIVE = 0.5f * TORSION_TOLERANCE_ABSOLUTE;
+
+	private final float[] mTorsion;
+	private final float[] mMaxTorsion;
+	private final float[] mRelevance;
 
 	/**
 	 *
 	 * @param torsion torsion angles of rotatable bonds from 0 to maxTorsion
 	 * @param maxTorsion maximum torsions of rotatable bonds defining individual symmetry dependent range
+	 * @param relevance null or weighting factor of rotatable bonds to be considered for comparisons, if given
 	 */
-	public TorsionDescriptor(float[] torsion, float[] maxTorsion) {
+	public TorsionDescriptor(float[] torsion, float[] maxTorsion, float[] relevance) {
 		mTorsion = torsion;
 		mMaxTorsion = maxTorsion;
+		mRelevance = relevance;
 		}
 
 	/**
@@ -90,9 +97,17 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 	public boolean equals(TorsionDescriptor td) {
 		for (int i=0; i<mTorsion.length; i++) {
 			float dif = Math.abs(mTorsion[i] - td.mTorsion[i]);
-			if (dif > TORSION_EQUIVALENCE_TOLERANCE
-			 && dif < mMaxTorsion[i] - TORSION_EQUIVALENCE_TOLERANCE)
-				return false;
+			if (mRelevance == null) {
+				if (dif > TORSION_TOLERANCE_ABSOLUTE
+				 && dif < mMaxTorsion[i] - TORSION_TOLERANCE_ABSOLUTE)
+					return false;
+				}
+			else {
+				dif *= mRelevance[i];
+				if (dif > TORSION_TOLERANCE_RELATIVE
+				 && dif < mMaxTorsion[i] - TORSION_TOLERANCE_RELATIVE)
+					return false;
+				}
 			}
 		return true;
 		}
@@ -107,9 +122,17 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 	public int compareTo(TorsionDescriptor td) {
 		for (int i=0; i<mTorsion.length; i++) {
 			float dif = Math.abs(mTorsion[i] - td.mTorsion[i]);
-			if (dif > TORSION_EQUIVALENCE_TOLERANCE
-			 && dif < mMaxTorsion[i] - TORSION_EQUIVALENCE_TOLERANCE)
-				return (dif < mMaxTorsion[i]/2) ^ (mTorsion[i] < td.mTorsion[i]) ? 1 : -1;
+			if (mRelevance == null) {
+				if (dif > TORSION_TOLERANCE_ABSOLUTE
+				 && dif < mMaxTorsion[i] - TORSION_TOLERANCE_ABSOLUTE)
+					return (dif < mMaxTorsion[i] / 2) ^ (mTorsion[i] < td.mTorsion[i]) ? 1 : -1;
+				}
+			else {
+				dif *= mRelevance[i];
+				if (dif > TORSION_TOLERANCE_RELATIVE
+				 && dif < mMaxTorsion[i] - TORSION_TOLERANCE_RELATIVE)
+					return (dif < mMaxTorsion[i] / 2) ^ (mTorsion[i] < td.mTorsion[i]) ? 1 : -1;
+				}
 			}
 		return 0;
 		}
@@ -144,7 +167,7 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 
 		float weightSum = 0f;
 		for (int i=0; i<mTorsion.length; i++) {
-			meanAngleDiff += bondWeight[i] * Math.abs(Angle.difference(mTorsion[i], td.mTorsion[i]));
+			meanAngleDiff = (float)(meanAngleDiff + bondWeight[i] * Math.abs(Angle.difference(mTorsion[i], td.mTorsion[i])));
 			weightSum += bondWeight[i];
 			}
 		return meanAngleDiff / ((float)Math.PI * weightSum);
@@ -155,7 +178,11 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 		StringBuilder sb = new StringBuilder();
 		for (int i=0; i<mTorsion.length; i++) {
 			sb.append(i == 0? "Torsions: " : ", ");
-			sb.append(DoubleFormat.toString(mTorsion[i], 3)+"("+Math.round(mMaxTorsion[i]+0.5f)+")");
+			sb.append(DoubleFormat.toString(mTorsion[i]*180/Math.PI, 1));
+			sb.append("(").append(Math.round(mMaxTorsion[i]*180/Math.PI));
+			if (mRelevance != null)
+				sb.append(",").append(DoubleFormat.toString(mRelevance[i], 2));
+			sb.append(")");
 			}
 		return sb.toString();
 		}

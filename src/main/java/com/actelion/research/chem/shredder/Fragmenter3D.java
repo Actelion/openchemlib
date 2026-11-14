@@ -14,7 +14,7 @@ public class Fragmenter3D {
 	private final ArrayList<Fragment3D> mFragmentList;
 
 	/**
-	 * 
+	 *
 	 * @param minAtoms
 	 * @param maxAtoms
 	 * @param maxBondFlexibilitySum
@@ -173,7 +173,7 @@ public class Fragmenter3D {
 		Canonizer canonizer = new Canonizer(fragment, Canonizer.ENCODE_ATOM_CUSTOM_LABELS);
 		String idcode = canonizer.getIDCode();
 		String coords = canonizer.getEncodedCoordinates();
-		TorsionDescriptor td = new TorsionDescriptorHelper(canonizer.getCanMolecule()).getTorsionDescriptor();
+		TorsionDescriptor td = new TorsionDescriptorHelper(canonizer.getCanMolecule(), false).getTorsionDescriptor();
 
 		for (int i=0; i<exitAtom.length; i++)
 			exitAtom[i] = canonizer.getGraphIndexes()[exitAtom[i]];

@@ -56,23 +56,25 @@ public class TorsionDescriptorHelper {
 			{ SYMMETRY_360, SYMMETRY_180, SYMMETRY_180, SYMMETRY_60  },
 			{ SYMMETRY_120, SYMMETRY_120, SYMMETRY_60 , SYMMETRY_120 } };
 
-	private StereoMolecule mMol;
-	private int[] mRotatableBond;
+	private final StereoMolecule mMol;
+	private final int[] mRotatableBond;
+	private final float[] mBondRelevance;
 	private int[][] mAtomSequence;
-	private int[][] mRearAtom;
 	private int[] mSymmetryClass;
 
-	public TorsionDescriptorHelper(StereoMolecule mol) {
+	public TorsionDescriptorHelper(StereoMolecule mol, boolean considerBondRelevance) {
 		mMol = mol;
 		mMol.ensureHelperArrays(Molecule.cHelperSymmetrySimple);
 		mRotatableBond = findRotatableBonds(mol);
+		mBondRelevance = considerBondRelevance ? TorsionDescriptor.getRotatableBondWeights(mol, mRotatableBond) : null;
 		findAtomSequences();
 		}
 
-	public TorsionDescriptorHelper(StereoMolecule mol, int[] rotatableBond) {
+	public TorsionDescriptorHelper(StereoMolecule mol, int[] rotatableBond, boolean considerBondRelevance) {
 		mMol = mol;
 		mMol.ensureHelperArrays(Molecule.cHelperSymmetrySimple);
 		mRotatableBond = rotatableBond;
+		mBondRelevance = considerBondRelevance ? TorsionDescriptor.getRotatableBondWeights(mol, rotatableBond) : null;
 		findAtomSequences();
 		}
 
@@ -91,7 +93,7 @@ public class TorsionDescriptorHelper {
 			maxTorsion[i] = (float)SYMMETRY_REDUNDANCY_ANGLE[mSymmetryClass[i]];
 			}
 
-		return new TorsionDescriptor(torsion, maxTorsion);
+		return new TorsionDescriptor(torsion, maxTorsion, mBondRelevance);
 		}
 
 	/**
@@ -110,7 +112,7 @@ public class TorsionDescriptorHelper {
 			maxTorsion[i] = (float)SYMMETRY_REDUNDANCY_ANGLE[mSymmetryClass[i]];
 			}
 
-		return new TorsionDescriptor(torsion, maxTorsion);
+		return new TorsionDescriptor(torsion, maxTorsion, mBondRelevance);
 		}
 
 	/**
@@ -249,9 +251,9 @@ public class TorsionDescriptorHelper {
 
 	private void findAtomSequences() {
 		mAtomSequence = new int[mRotatableBond.length][4];
-		mRearAtom = new int[mRotatableBond.length][2];
 		mSymmetryClass = new int[mRotatableBond.length];
 
+		int[][] rearAtom = new int[mRotatableBond.length][2];
 		int[] atom = new int[2];	// rear bond atom, front bond atom, first conn atom
 		for (int i=0; i<mRotatableBond.length; i++) {
 			for (int j=0; j<2; j++) {
@@ -262,16 +264,16 @@ public class TorsionDescriptorHelper {
 					getFirstNonSPAtom(mMol, atom[0], atom, null);
 
 				mAtomSequence[i][1+j] = atom[1];
-				mRearAtom[i][j] = atom[0];
+				rearAtom[i][j] = atom[0];
 				}
 
-			int halfSymmetry1 = getHalfSymmetry(mAtomSequence[i][1], mRearAtom[i][0]);
-			int halfSymmetry2 = getHalfSymmetry(mAtomSequence[i][2], mRearAtom[i][1]);
+			int halfSymmetry1 = getHalfSymmetry(mAtomSequence[i][1], rearAtom[i][0]);
+			int halfSymmetry2 = getHalfSymmetry(mAtomSequence[i][2], rearAtom[i][1]);
 			mSymmetryClass[i] = SYMMETRY[halfSymmetry1][halfSymmetry2];
 
 			// update atom in atom sequence, where we should consider virtual torsions or need to select a particular neighbour atom
-			mAtomSequence[i][0] = chooseSequenceEndAtom(mAtomSequence[i][1], mRearAtom[i][0], halfSymmetry1);
-			mAtomSequence[i][3] = chooseSequenceEndAtom(mAtomSequence[i][2], mRearAtom[i][1], halfSymmetry2);
+			mAtomSequence[i][0] = chooseSequenceEndAtom(mAtomSequence[i][1], rearAtom[i][0], halfSymmetry1);
+			mAtomSequence[i][3] = chooseSequenceEndAtom(mAtomSequence[i][2], rearAtom[i][1], halfSymmetry2);
 			}
 		}
 

@@ -300,7 +300,7 @@ public class Canonizer {
 		}
 
 	/**
-	 * Calculates and stores implicit abnormal valences due to 
+	 * Calculates and stores implicit abnormal valences due to
 	 * explicit hydrogen attachments.
 	 * @param atom
 	 * @return
@@ -905,7 +905,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				mCanBase[mMol.getBondAtom(0, bond)].add(ezParityInfo);
 				mCanBase[mMol.getBondAtom(1, bond)].add(ezParityInfo);
 				}
-	
+
 			int newNoOfRanks = canPerformRanking();
 			if (mNoOfRanks == newNoOfRanks)
 				break;
@@ -942,7 +942,7 @@ System.out.println("mEZParity["+bond+"] = "+mEZParity[bond]);
 				mCanBase[mMol.getBondAtom(0,bond)].add(mEZParity[bond]);
 				mCanBase[mMol.getBondAtom(1,bond)].add(mEZParity[bond]);
 				}
-	
+
 			int newNoOfRanks = canPerformRanking();
 			if (mNoOfRanks == newNoOfRanks)
 				break;
@@ -1159,7 +1159,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 			}
 		}
 
-	
+
 	private int[][] canGetESRGroupRank(int[][][] groupMember) {
 		int[][] groupRank = new int[2][Molecule.cESRMaxGroups];
 		for (int groupTypeIndex=0; groupTypeIndex<2; groupTypeIndex++) {
@@ -1171,7 +1171,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 					atomRank[group] = new int[memberCount];
 					for (int i=0; i<memberCount; i++)
 						atomRank[group][i] = mCanRank[groupMember[groupTypeIndex][group][i]];
-	
+
 					Arrays.sort(atomRank[group]);
 					rankCount++;
 					}
@@ -1262,7 +1262,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 							typeAndGroups++;
 							andGroupUsed[group] = true;
 							}
-							
+
 						if (mTHESRGroup[atom] == 0)
 							stereoCentersTypeAndGroup0++;
 						if (mMesoHelper != null && mMesoHelper.isInMesoFragment(atom))
@@ -1295,7 +1295,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 							typeAndGroups++;
 							andGroupUsed[group] = true;
 							}
-							
+
 						if (mEZESRGroup[bond] == 0)
 							stereoCentersTypeAndGroup0++;
 						if (mMesoHelper != null
@@ -1344,7 +1344,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 			mMol.setChirality(Molecule.cChiralityDiastereomers+(1<<typeAndGroups));
 			}
 		}
-	
+
 	private boolean canFindPseudoParities() {
 		boolean[] isFreshPseudoParityAtom = new boolean[mMol.getAtoms()];
 		boolean[] isFreshPseudoParityBond = new boolean[mMol.getBonds()];
@@ -1540,7 +1540,7 @@ System.out.println("mCanBaseValue["+atom+"] = "+Long.toHexString(mCanBase[atom].
 						int connBond = mMol.getConnBond(fragmentAtom[current],i);
 						if (mMol.isRingBond(connBond) || mMol.getBondOrder(connBond) == 2 || mMol.isBINAPChiralityBond(connBond)) {
 							int connAtom = mMol.getConnAtom(fragmentAtom[current],i);
-	
+
 							if (!bondHandled[connBond]) {
 								fragmentBond[fragmentBonds++] = connBond;
 								bondHandled[connBond] = true;
@@ -2264,7 +2264,7 @@ System.out.println("noOfRanks:"+canRank);
 					mEZParity[bond] = Molecule.cBondParityUnknown;
 					mMol.setBondType(bond, ExtendedMolecule.cBondTypeCross);
 					}
-	
+
 				if (mEZParity[bond] == Molecule.cBondParityUnknown
 				 && !mEZParityIsPseudo[bond]) {
 					if (mMol.getBondType(bond) != ExtendedMolecule.cBondTypeCross) {
@@ -2620,7 +2620,7 @@ System.out.println("noOfRanks:"+canRank);
 							if (mMol.isStereoBond(mMol.getConnBond(atom, j)))
 								return false;
 						}
-	
+
 						// This must be parity2 (rather than 1) because
 						// group parities are normalized at this stage
 						// and parity2 is the normalized parity of the
@@ -2628,10 +2628,10 @@ System.out.println("noOfRanks:"+canRank);
 					mEZParity[bond] = Molecule.cBondParityZor2;
 					mEZESRType[bond] = Molecule.cESRTypeAnd;
 					mEZESRGroup[bond] = 0;
-	
+
 					mMol.setBondParity(bond, Molecule.cBondParityZor2, false);
 					mMol.setAtomESR(bond, Molecule.cESRTypeAnd, 0);
-	
+
 					int stereoBond = mMol.getBondPreferredStereoBond(bond);
 					mMol.setBondType(stereoBond, Molecule.cBondTypeUp);
 					if (mMol.getBondAtom(1, stereoBond) == mMol.getBondAtom(0, bond)
@@ -3421,12 +3421,7 @@ System.out.println();
 	 * @return
 	 */
 	public String getEncodedCoordinates(boolean keepPositionAndScale) {
-		if (mEncodedCoords == null) {
-			generateGraph();
-			encodeCoordinates(keepPositionAndScale, mMol.getAtomCoordinates());
-			}
-
-		return mEncodedCoords;
+		return getEncodedCoordinates(keepPositionAndScale, mMol.getAtomCoordinates());
 		}
 
 	/**
@@ -3435,7 +3430,7 @@ System.out.println();
 	 * original molecule including coordinates.<br>
 	 * If keepPositionAndScale==false, then coordinate encoding will be relative,
 	 * i.e. scale and absolute positions get lost during the encoding.
-	 * Otherwise the encoding retains scale and absolute positions.<br>
+	 * Otherwise, the encoding retains scale and absolute positions.<br>
 	 * If the molecule has 3D-coordinates and if there are no implicit hydrogen atoms,
 	 * i.e. all hydrogen atoms are explicitly available with their coordinates, then
 	 * hydrogen 3D-coordinates are also encoded despite the fact that the idcode itself does
@@ -3447,13 +3442,28 @@ System.out.println();
 	public String getEncodedCoordinates(boolean keepPositionAndScale, Coordinates[] atomCoordinates) {
 		if (mEncodedCoords == null) {
 			generateGraph();
-			encodeCoordinates(keepPositionAndScale, atomCoordinates);
+			encodeCoordinates(keepPositionAndScale, atomCoordinates, mZCoordinatesAvailable ? 16 : 8);
 			}
 
 		return mEncodedCoords;
 		}
 
-	private void encodeCoordinates(boolean keepPositionAndScale, Coordinates[] coords) {
+	public String getEncodedCoordinates(boolean keepPositionAndScale, Coordinates[] atomCoordinates, int resolutionBits) {
+		if (mEncodedCoords == null) {
+			generateGraph();
+			encodeCoordinates(keepPositionAndScale, atomCoordinates, resolutionBits);
+		}
+
+		return mEncodedCoords;
+	}
+
+    /**
+     *
+     * @param keepPositionAndScale
+     * @param coords
+     * @param resolutionBits must be an even number
+     */
+	private void encodeCoordinates(boolean keepPositionAndScale, Coordinates[] coords, int resolutionBits) {
 		if (mMol.getAtoms() == 0) {
 			mEncodedCoords = "";
 			return;
@@ -3462,7 +3472,6 @@ System.out.println();
 		// if we have 3D-coords and explicit hydrogens and if all hydrogens are explicit then encode hydrogen coordinates
 		boolean includeHydrogenCoordinates = mZCoordinatesAvailable & mAllHydrogensAreExplicit;
 
-		int resolutionBits = mZCoordinatesAvailable ? 16 : 8;	// must be an even number
 		encodeBitsStart(true);
 		mEncodingBuffer.append(includeHydrogenCoordinates ? '#' : '!');
 		encodeBits(mZCoordinatesAvailable ? 1 : 0, 1);
@@ -3714,7 +3723,7 @@ System.out.println();
 		idNormalizeESRGroupNumbers(Molecule.cESRTypeOr);
 		}
 
-	
+
 	private void idNormalizeESRGroupNumbers(int type) {
 		int[] groupRank = new int[Molecule.cESRMaxGroups];
 		int groups = 0;
@@ -4625,7 +4634,7 @@ System.out.println("");
 				}
 			}
 		}
-	
+
 	/**
 	 * @return an int[] giving all atom indexes in the order as they appear in the graph
 	 */
@@ -4802,7 +4811,7 @@ class CanonizerParity implements Comparable<CanonizerParity> {
 	int atom;
 	int group;
 	int rank;
-	
+
 	protected CanonizerParity(int atom, int group, int type, int rank) {
 		this.atom = atom;
 		this.group = group + (type << 8);

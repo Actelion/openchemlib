@@ -42,12 +42,13 @@ import java.util.Arrays;
 
 public class Conformer implements Comparable<Conformer> {
 	private Coordinates[] mCoordinates;
-	private StereoMolecule mMol;
+	private final StereoMolecule mMol;
 	private String mName;
 	private short[] mBondTorsion;
 	private double mEnergy;
 	private double mLikelihood;
 	private TorsionDescriptor mTorsionDescriptor;
+	private boolean mIsEnantiomer;
 
 	/**
 	 * Creates a Conformer, i.e. basically a new set of atom coordinates for the given Molecule.
@@ -339,6 +340,18 @@ public class Conformer implements Comparable<Conformer> {
 		return mol;
 	}
 
+	public Conformer createEnantiomer() {
+		Conformer enantiomer = new Conformer(this);
+		for (int atom=0; atom<mCoordinates.length; atom++)
+			enantiomer.setZ(atom, -mCoordinates[atom].z);
+		enantiomer.mIsEnantiomer = true;
+		return enantiomer;
+	}
+
+	public boolean isEnantiomer() {
+		return mIsEnantiomer;
+	}
+
 	public double getEnergy() {
 		return mEnergy;
 	}
@@ -372,34 +385,36 @@ public class Conformer implements Comparable<Conformer> {
 	 * @return true if all torsions are similar
 	 */
 	public boolean equals(Conformer conformer) {
-		ensureDescriptors(conformer);
 		return mTorsionDescriptor.equals(conformer.mTorsionDescriptor);
 	}
 
 	@Override
 	public int compareTo(Conformer conformer) {
-		ensureDescriptors(conformer);
+// ensureDescriptors() is an inefficient solution; better make sure that all Conformers of the same molecule,
+// which need to be compared, always contain valid descriptors calculated by the same TorsionDescriptorHelper.
+// ensureDescriptors() creates a new TorsionDescriptorHelper for every conformer, which we  don't want.
+//		ensureDescriptors(conformer);
 		return mTorsionDescriptor.compareTo(conformer.mTorsionDescriptor);
 	}
 
 	/**
 	 * Calculates the torsion descriptor for the current coordinates using the passed set of rotatable bonds.
-	 * You may use TorsionDescriptorHelper.findRotatableBonds() once and pass it for every new conformer to this method.
-	 * @param rotatableBond set of rotatable bonds to be considered
+	 * You should instantiate a TorsionDescriptorHelper once and pass it for every new conformer to this method.
+	 * @param helper considering or not considering bond location specific weights for conformer similarity comparisons
 	 */
-	public void calculateDescriptor(int[] rotatableBond) {
-		mTorsionDescriptor = new TorsionDescriptorHelper(getMolecule(), rotatableBond).getTorsionDescriptor(this);
+	public void calculateDescriptor(TorsionDescriptorHelper helper) {
+		mTorsionDescriptor = helper.getTorsionDescriptor(this);
 	}
 
-	private void ensureDescriptors(Conformer c) {
+/*	private void ensureDescriptors(Conformer c) {
 		if (mTorsionDescriptor == null || c.mTorsionDescriptor == null) {
-			TorsionDescriptorHelper tdh = new TorsionDescriptorHelper(mMol);
+			TorsionDescriptorHelper tdh = new TorsionDescriptorHelper(mMol, true);
 			if (mTorsionDescriptor == null)
 				mTorsionDescriptor = tdh.getTorsionDescriptor(this);
 			if (c.mTorsionDescriptor == null)
 				c.mTorsionDescriptor = tdh.getTorsionDescriptor(c);
 		}
-	}
+	}*/
 
 
 	/**
