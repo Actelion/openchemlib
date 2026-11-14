@@ -63,21 +63,27 @@ public class ConformerSet extends TreeSet<Conformer> {
 			if (confString.length >= 2) {
 				IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
 				StereoMolecule mol = parser.getCompactMolecule(confString[0], confString[1]);
+				TorsionDescriptorHelper tdh = new TorsionDescriptorHelper(mol, true);
 				Conformer firstConformer = new Conformer(mol);
+				firstConformer.calculateDescriptor(tdh);
 				add(firstConformer);
 
 				for(int i=2; i<confString.length;i++) {
-					Conformer conf = new Conformer(firstConformer);
+					Conformer conformer = new Conformer(firstConformer);
 					try {
-						parser.parseCoordinates(confString[i].getBytes(StandardCharsets.UTF_8), 0, mol, conf.getCoordinates());
-						add(conf);
+						parser.parseCoordinates(confString[i].getBytes(StandardCharsets.UTF_8), 0, mol, conformer.getCoordinates());
+						conformer.calculateDescriptor(tdh);
+						add(conformer);
 					} catch (Exception e) {}
 				}
 
 				if (plusEnantiomers) {
 					ArrayList<Conformer> enantiomerList = new ArrayList<>();
-					for (Conformer c : this)
-						enantiomerList.add(c.createEnantiomer());
+					for (Conformer c : this) {
+						Conformer enantiomer = c.createEnantiomer();
+						enantiomer.calculateDescriptor(tdh);
+						enantiomerList.add(enantiomer);
+					}
 					addAll(enantiomerList);
 				}
 			}
@@ -89,15 +95,18 @@ public class ConformerSet extends TreeSet<Conformer> {
 		if (idcode != null && coords != null) {
 			IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
 			StereoMolecule mol = parser.getCompactMolecule(idcode, coords);
+			TorsionDescriptorHelper tdh = new TorsionDescriptorHelper(mol, true);
 			Conformer firstConformer = new Conformer(mol);
+			firstConformer.calculateDescriptor(tdh);
 			add(firstConformer);
 
 			int index = ArrayUtils.indexOf(coords, (byte)32,0);
 			while (index != -1) {
-				Conformer conf = new Conformer(firstConformer);
+				Conformer conformer = new Conformer(firstConformer);
 				try {
-					parser.parseCoordinates(coords, index+1, mol, conf.getCoordinates());
-					add(conf);
+					parser.parseCoordinates(coords, index+1, mol, conformer.getCoordinates());
+					conformer.calculateDescriptor(tdh);
+					add(conformer);
 				} catch (Exception e) {}
 				index = ArrayUtils.indexOf(coords, (byte)32,index+1);
 
@@ -110,8 +119,11 @@ public class ConformerSet extends TreeSet<Conformer> {
 				}
 				if (isPlusEnantioners) {
 					ArrayList<Conformer> enantiomerList = new ArrayList<>();
-					for (Conformer c : this)
-						enantiomerList.add(c.createEnantiomer());
+					for (Conformer c : this) {
+						Conformer enantiomer = c.createEnantiomer();
+						enantiomer.calculateDescriptor(tdh);
+						enantiomerList.add(enantiomer);
+					}
 					addAll(enantiomerList);
 					break;
 				}
