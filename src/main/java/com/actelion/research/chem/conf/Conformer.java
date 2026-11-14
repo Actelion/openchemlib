@@ -40,7 +40,7 @@ import com.actelion.research.chem.StereoMolecule;
 
 import java.util.Arrays;
 
-public class Conformer implements Comparable<Conformer> {
+public class Conformer {
 	private Coordinates[] mCoordinates;
 	private final StereoMolecule mMol;
 	private String mName;
@@ -53,21 +53,31 @@ public class Conformer implements Comparable<Conformer> {
 	/**
 	 * Creates a Conformer, i.e. basically a new set of atom coordinates for the given Molecule.
 	 * The conformer is initialized with an exact copy of the molecules internal coordinates.
-	 *
 	 * @param mol
 	 */
 	public Conformer(StereoMolecule mol) {
+		this(mol, true);
+	}
+
+	/**
+	 * Creates a Conformer, i.e. basically a new set of atom coordinates for the given Molecule.
+	 * The conformer's coordinate array is initiallized and populated from mol only if copyCoordinates=true.
+	 * @param mol
+	 * @param copyCoordinates if true, coodinates are taken from mol, otherwise, they are kept empty
+	 */
+	public Conformer(StereoMolecule mol, boolean copyCoordinates) {
 		mMol = mol;
 		mCoordinates = new Coordinates[mol.getAllAtoms()];
-		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
-			mCoordinates[atom] = new Coordinates(mol.getAtomCoordinates(atom));
+
+		if (copyCoordinates)
+			for (int atom = 0; atom < mol.getAllAtoms(); atom++)
+				mCoordinates[atom] = new Coordinates(mol.getAtomCoordinates(atom));
 
 		mEnergy = Double.NaN;
 	}
 
 	/**
-	 * Creates a new conformer as an exact copy of the given one.
-	 *
+	 * Creates a new conformer as an exact copy of the given one, but without a torsion descriptor
 	 * @param c
 	 */
 	public Conformer(Conformer c) {
@@ -76,7 +86,6 @@ public class Conformer implements Comparable<Conformer> {
 
 	/**
 	 * Use at own risk!!
-	 *
 	 * Initializes the conformer as a copy of c but replaces the
 	 * StereoMolecule by the supplied molecule.
 	 *
@@ -388,15 +397,6 @@ public class Conformer implements Comparable<Conformer> {
 		return mTorsionDescriptor.equals(conformer.mTorsionDescriptor);
 	}
 
-	@Override
-	public int compareTo(Conformer conformer) {
-// ensureDescriptors() is an inefficient solution; better make sure that all Conformers of the same molecule,
-// which need to be compared, always contain valid descriptors calculated by the same TorsionDescriptorHelper.
-// ensureDescriptors() creates a new TorsionDescriptorHelper for every conformer, which we  don't want.
-//		ensureDescriptors(conformer);
-		return mTorsionDescriptor.compareTo(conformer.mTorsionDescriptor);
-	}
-
 	/**
 	 * Calculates the torsion descriptor for the current coordinates using the passed set of rotatable bonds.
 	 * You should instantiate a TorsionDescriptorHelper once and pass it for every new conformer to this method.
@@ -406,16 +406,9 @@ public class Conformer implements Comparable<Conformer> {
 		mTorsionDescriptor = helper.getTorsionDescriptor(this);
 	}
 
-/*	private void ensureDescriptors(Conformer c) {
-		if (mTorsionDescriptor == null || c.mTorsionDescriptor == null) {
-			TorsionDescriptorHelper tdh = new TorsionDescriptorHelper(mMol, true);
-			if (mTorsionDescriptor == null)
-				mTorsionDescriptor = tdh.getTorsionDescriptor(this);
-			if (c.mTorsionDescriptor == null)
-				c.mTorsionDescriptor = tdh.getTorsionDescriptor(c);
-		}
-	}*/
-
+	public boolean hasTorsionDescriptor() {
+		return mTorsionDescriptor != null;
+	}
 
 	/**
 	 * Serializes the given conformer to a string.

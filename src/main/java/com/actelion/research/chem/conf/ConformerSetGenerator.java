@@ -15,13 +15,13 @@ public class ConformerSetGenerator {
 
 	public static final int CONFORMERS=200;
 
-	private int mMaxNrConfs;
-	private int mStrategy;
-	private boolean mUseFF;
-	private long mSeed;
-	private static long DEFAULT_SEED = 12345L;
+	private final int mMaxNrConfs;
+	private final int mStrategy;
+	private final boolean mUseFF;
+	private final long mSeed;
+	private static final long DEFAULT_SEED = 12345L;
 	private ThreadMaster threadMaster;
-	
+
 	public ConformerSetGenerator(int maxNrConfs, int strategy, boolean useFF, long seed) {
 		mMaxNrConfs = maxNrConfs;
 		mStrategy = strategy;
@@ -30,30 +30,30 @@ public class ConformerSetGenerator {
 		RigidFragmentCache fragCache = RigidFragmentCache.getDefaultInstance();
 		fragCache.loadDefaultCache();
 	}
-	
-	
+
+
 	/**
 	 * STRATEGY_LIKELY_RANDOM was evaluated to be the best strategy for reproducing bioactive
 	 * conformers (J.W. 05/19)
-	 * 
+	 *
 	 */
-	
+
 	public ConformerSetGenerator(int maxConfs) {
 		this(maxConfs,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,DEFAULT_SEED);
 	}
-	
+
 	public ConformerSetGenerator() {
 		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,false,DEFAULT_SEED);
 	}
-	
+
 	public ConformerSetGenerator(boolean useFF) {
 		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,DEFAULT_SEED);
 	}
-	
+
 	public ConformerSetGenerator(boolean useFF, long seed) {
 		this(CONFORMERS,ConformerGenerator.STRATEGY_LIKELY_RANDOM,useFF,seed);
 	}
-	
+
 	public void setThreadMaster(ThreadMaster tm) {
 		this.threadMaster = tm;
 	}
@@ -63,8 +63,8 @@ public class ConformerSetGenerator {
 	 * @param mol
 	 * @return
 	 */
-	public ConformerSet generateConformerSet(StereoMolecule mol) {   
-		ConformerSet confSet = new ConformerSet();
+	public ConformerSet generateConformerSet(StereoMolecule mol) {
+		ConformerSet confSet = new ConformerSet(new TorsionDescriptorHelper(mol, true));
 
 /* Simplified; TLS 31Jan2023
 		StereoMolecule canMol = new StereoMolecule(mol);

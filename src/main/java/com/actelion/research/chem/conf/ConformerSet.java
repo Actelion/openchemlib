@@ -42,18 +42,37 @@ import com.actelion.research.util.ArrayUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.TreeSet;
 
-
-public class ConformerSet extends TreeSet<Conformer> {
+/**
+ * A ConformerSet is a set of any or just of distinct Conformers, depending on whether a TorsionDescriptorHelper
+ * is provided. If one is given, then it is used to calculate a torsion descriptor for every added Copnformer
+ * and to check, whether it is equal (actually highly similar) to any other conformer in the set and added only,
+ * if it is substantially different. If no TorsionDescriptorHelper is given, then any Conformers are added.
+ */
+public class ConformerSet extends ArrayList<Conformer> {
 	public static final String PLUS_ENANTIOMERS = " plusEnantiomers";
 
-	public ConformerSet() {
-		this(null);
+	private TorsionDescriptorHelper mDescriptorHelper;
+
+	/**
+	 * Instantiates an empty ConformerSet for new Conformers of the same molecule to be added.
+	 * @param descriptorHelper null or helper used to generate torsion descriptors and to check for novelty
+	 */
+	public ConformerSet(TorsionDescriptorHelper descriptorHelper) {
+		super();
+		mDescriptorHelper = descriptorHelper;
 	}
 
-	public ConformerSet(String s) {
+	/**
+	 * Instantiates a ConformerSet which is populated by one or more Conformers encoded as SPACE-separated String
+	 * of one idcode, multiple idcoordinates, and optionally a 'plusEnantiomers', which would generate an enantiomeric
+	 * set of all the conformers given before that.
+	 * @param s String starting with an idcode followed multiple times by ' '+id_coordinates and possible by ' plusEnantiomers'
+	 * @param descriptorHelper null or helper used to generate torsion descriptors and to check for novelty
+	 */
+	public ConformerSet(String s, TorsionDescriptorHelper descriptorHelper) {
 		super();
+		mDescriptorHelper = descriptorHelper;
 		if (s != null) {
 			boolean plusEnantiomers = s.endsWith(PLUS_ENANTIOMERS);
 			if (plusEnantiomers)
@@ -63,49 +82,45 @@ public class ConformerSet extends TreeSet<Conformer> {
 			if (confString.length >= 2) {
 				IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
 				StereoMolecule mol = parser.getCompactMolecule(confString[0], confString[1]);
-				TorsionDescriptorHelper tdh = new TorsionDescriptorHelper(mol, true);
-				Conformer firstConformer = new Conformer(mol);
-				firstConformer.calculateDescriptor(tdh);
-				add(firstConformer);
+				add(new Conformer(mol));
 
 				for(int i=2; i<confString.length;i++) {
-					Conformer conformer = new Conformer(firstConformer);
+					Conformer conformer = new Conformer(mol, false);
 					try {
 						parser.parseCoordinates(confString[i].getBytes(StandardCharsets.UTF_8), 0, mol, conformer.getCoordinates());
-						conformer.calculateDescriptor(tdh);
 						add(conformer);
 					} catch (Exception e) {}
 				}
 
 				if (plusEnantiomers) {
-					ArrayList<Conformer> enantiomerList = new ArrayList<>();
-					for (Conformer c : this) {
-						Conformer enantiomer = c.createEnantiomer();
-						enantiomer.calculateDescriptor(tdh);
-						enantiomerList.add(enantiomer);
-					}
-					addAll(enantiomerList);
+					int originalCount = size();
+					for (int i=0; i<originalCount; i++)
+						add(get(i).createEnantiomer());
 				}
 			}
 		}
 	}
 
-	public ConformerSet(byte[] idcode, byte[] coords) {
+	/**
+	 * Instantiates a ConformerSet which is populated by one or more Conformers encoded as idcode plus
+	 * SPACE-separated byte[] with multiple conformer idcoordinates optionally followed by 'plusEnantiomers',
+	 * which would generate an enantiomeric set of all the conformers given before that.
+	 * @param idcode Canonizer encoded molecule
+	 * @param coords multiple times Canonizer encoded 3D-coordinates, possible followed by ' plusEnantiomers'
+	 * @param descriptorHelper null or helper used to generate torsion descriptors and to check for novelty
+	 */
+	public ConformerSet(byte[] idcode, byte[] coords, TorsionDescriptorHelper descriptorHelper) {
 		super();
 		if (idcode != null && coords != null) {
 			IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
 			StereoMolecule mol = parser.getCompactMolecule(idcode, coords);
-			TorsionDescriptorHelper tdh = new TorsionDescriptorHelper(mol, true);
-			Conformer firstConformer = new Conformer(mol);
-			firstConformer.calculateDescriptor(tdh);
-			add(firstConformer);
+			add(new Conformer(mol));
 
 			int index = ArrayUtils.indexOf(coords, (byte)32,0);
 			while (index != -1) {
-				Conformer conformer = new Conformer(firstConformer);
+				Conformer conformer = new Conformer(mol, false);
 				try {
 					parser.parseCoordinates(coords, index+1, mol, conformer.getCoordinates());
-					conformer.calculateDescriptor(tdh);
 					add(conformer);
 				} catch (Exception e) {}
 				index = ArrayUtils.indexOf(coords, (byte)32,index+1);
@@ -118,24 +133,23 @@ public class ConformerSet extends TreeSet<Conformer> {
 					}
 				}
 				if (isPlusEnantioners) {
-					ArrayList<Conformer> enantiomerList = new ArrayList<>();
-					for (Conformer c : this) {
-						Conformer enantiomer = c.createEnantiomer();
-						enantiomer.calculateDescriptor(tdh);
-						enantiomerList.add(enantiomer);
-					}
-					addAll(enantiomerList);
+					int originalCount = size();
+					for (int i=0; i<originalCount; i++)
+						add(get(i).createEnantiomer());
 					break;
 				}
 			}
 		}
 	}
 
+	/**
+	 * @param size
+	 * @return shallow subset
+	 */
 	public ConformerSet getSubset(int size) {
-		ConformerSet treeSet = new ConformerSet();
-		this.stream().limit(size).forEach(c->treeSet.add(c));
-		return treeSet;
-
+		ConformerSet subset = new ConformerSet(mDescriptorHelper);
+		subset.addAll(this.subList(0, size));
+		return subset;
 	}
 
 	@Override
@@ -165,5 +179,19 @@ public class ConformerSet extends TreeSet<Conformer> {
 				sb.append(PLUS_ENANTIOMERS);
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public boolean add(Conformer c) {
+		if (mDescriptorHelper != null) {
+			if (!c.hasTorsionDescriptor())
+				c.calculateDescriptor(mDescriptorHelper);
+
+			for (Conformer existing : this)
+				if (c.equals(existing))
+					return false;
+		}
+
+		return super.add(c);
 	}
 }

@@ -20,12 +20,12 @@ public class ShapeDocking {
 	private final ShapeVolume negRecImage;
 	private final DescriptorHandlerShape dhs;
 	private final PheSASetting phesaSetting;
-	
+
 	/**
 	 * @param negRecImage
 	 * @param transformation: transformation used during creation of ShapeVolume of NegRecImage (translate COM to (0,0,0)
 	 */
-	
+
 	public ShapeDocking(ShapeVolume negRecImage, Transformation transformation) {
 		this.negRecImage = negRecImage;
 		this.transformation = transformation;
@@ -36,7 +36,7 @@ public class ShapeDocking {
 		phesaSetting.setUseDirectionality(false);
 		phesaSetting.setSimMode(PheSAAlignmentOptimizer.SimilarityMode.TVERSKY);
 	}
-	
+
 	public PheSASetting getPhesaSetting() {
 		return phesaSetting;
 	}
@@ -58,7 +58,7 @@ public class ShapeDocking {
 //	}
 
 	public ConformerSet dock(StereoMolecule candidate, ThreadMaster tm) {
-		ConformerSet aligned = new ConformerSet();
+		ConformerSet aligned = new ConformerSet(null);
 		PheSAMolecule candidateShape = dhs.createDescriptor(candidate);
 		List<AlignmentResult> results = PheSAAlignmentOptimizer.alignToNegRecImg(negRecImage, candidateShape.getVolumes(), phesaSetting, tm);
 		for(AlignmentResult result: results) {

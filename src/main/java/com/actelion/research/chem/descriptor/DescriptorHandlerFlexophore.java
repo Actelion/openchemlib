@@ -364,7 +364,7 @@ public class DescriptorHandlerFlexophore implements IDescriptorHandlerFlexophore
 		if(conformerSet==null){
 			return new MolDistHistViz();
 		}
-		StereoMolecule mol = conformerSet.first().toMolecule();
+		StereoMolecule mol = conformerSet.get(0).toMolecule();
 		MolDistHistViz mdhv = creatorMolDistHistViz.createFromGivenConformation(mol);
 		return mdhv;
 	}

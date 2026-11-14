@@ -38,7 +38,7 @@ import com.actelion.research.chem.StereoMolecule;
 import com.actelion.research.util.Angle;
 import com.actelion.research.util.DoubleFormat;
 
-public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
+public class TorsionDescriptor {
 	private static final float TORSION_TOLERANCE_ABSOLUTE = (float)Math.PI / 12f;
 
 	// If we consider bond relevances, then be more tolerant for peripheral bonds (relevance<<0.5)
@@ -117,7 +117,7 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 	 * Returns -1 if the first non-equivalent torsion angle is smaller for this than for the passed TorsionDescriptor td.
 	 * @param td
 	 * @return
-	 */
+	 *
 	@Override
 	public int compareTo(TorsionDescriptor td) {
 		for (int i=0; i<mTorsion.length; i++) {
@@ -135,7 +135,7 @@ public class TorsionDescriptor implements Comparable<TorsionDescriptor> {
 				}
 			}
 		return 0;
-		}
+		}*/
 
 	/**
 	 * The relevance of a rotatable bond and its torsion angle for creating substantially different conformers

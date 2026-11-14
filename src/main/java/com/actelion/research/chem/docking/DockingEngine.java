@@ -44,7 +44,7 @@ public class DockingEngine {
  * @author wahljo1
  *
  */
-	
+
 	public enum ScoringFunction {CHEMPLP,IDOSCORE;}
 	private static final int DEFAULT_NR_MC_STEPS = 50;
 	private static final int DEFAULT_START_POSITIONS = 10;
@@ -53,7 +53,7 @@ public class DockingEngine {
 	public static final double GRID_RESOLUTION = 0.5;
 	public static final double MINI_CUTOFF = 100; //if energy higher after MC step, don't minimize
 	public static final int MCS_EXHAUSTIVENESS = 3; //MCS docking requires more starting positions, but less MC sampling (reduced DOF)
-	
+
 
 	private final Rotation rotation; //for initial prealignment to native ligand
 	private final Coordinates origCOM;
@@ -69,7 +69,7 @@ public class DockingEngine {
 	private List<Integer> mcsConstrainedBonds;
 	private List<Integer> mcsConstrainedAtoms;
 
-	
+
 	public DockingEngine(StereoMolecule rec, StereoMolecule nativeLig, int mcSteps, int startPositions, double gridDimension,
 			ScoringFunction scoringFunction) throws DockingFailedException {
 		for(int ra=0;ra<rec.getAtoms();ra++) {
@@ -86,17 +86,17 @@ public class DockingEngine {
 		rotation = molVol.preProcess(conf);
 		this.startPositions = startPositions;
 		preprocess(receptor,nativeLigand);
-		
+
 		TransformationSequence transform = new TransformationSequence();
 		ShapeVolume bsVolume = NegativeReceptorImageCreator.create(nativeLigand, receptor, transform);
 		shapeDocking = new ShapeDocking(bsVolume,transform);
-		
+
 		MoleculeGrid grid = new MoleculeGrid(nativeLigand,GRID_RESOLUTION,
 				new Coordinates(gridDimension,gridDimension,
 						gridDimension));
-		
+
 		Set<Integer> bindingSiteAtoms = new HashSet<Integer>();
-		
+
 		if(scoringFunction==ScoringFunction.CHEMPLP) {
 			DockingEngine.getBindingSiteAtoms(receptor, bindingSiteAtoms, grid, true);
 			engine = new ChemPLP(receptor,bindingSiteAtoms,grid);
@@ -105,25 +105,25 @@ public class DockingEngine {
 			DockingEngine.getBindingSiteAtoms(receptor, bindingSiteAtoms, grid, false);
 			engine = new IdoScore(receptor,bindingSiteAtoms, getReceptorAtomTypes(receptor),grid);
 		}
-		
+
 		this.mcSteps = mcSteps;
 		this.random = new Random(LigandPose.SEED);
 	}
-	
+
 	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand, double gridDimension) throws DockingFailedException {
 		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS, gridDimension,ScoringFunction.CHEMPLP);
 	}
-	
+
 	public DockingEngine(StereoMolecule receptor, StereoMolecule nativeLigand) throws DockingFailedException {
 		this(receptor,nativeLigand,DEFAULT_NR_MC_STEPS,DEFAULT_START_POSITIONS, GRID_DIMENSION,ScoringFunction.CHEMPLP);
 	}
-	
+
 	public void setThreadMaster(ThreadMaster tm) {
 		threadMaster = tm;
 	}
 
 	/**
-	 * generate initial poses: 
+	 * generate initial poses:
 	 * 1) shape docking into the negative receptor image
 	 * 2) constrained optimization of initial poses to reduce strain energy
 	 * @param mol
@@ -145,7 +145,7 @@ public class DockingEngine {
 			if(c!=null) {
 				StereoMolecule conf = c.toMolecule();
 				conf.ensureHelperArrays(Molecule.cHelperParities);
-				
+
 				ForceFieldMMFF94 mmff;
 				try {
 					mmff = new ForceFieldMMFF94(conf, ForceFieldMMFF94.MMFF94SPLUS, ffOptions);
@@ -173,14 +173,14 @@ public class DockingEngine {
 
 	/**
 	 * 1) find MCS between reference molecule and candidate molecule
-	 * 2) 
+	 * 2)
 	 * @param mol
 	 */
 	private double getStartingPositionsMCS(StereoMolecule mol, List<Conformer> initialPos, double eMin) {
 		int rotBondsMol = mol.getRotatableBondCount();
 		int rotBondsRef = nativeLigand.getRotatableBondCount();
 		MCS mcs = new MCS();
-		//in MCS, the first molecule should have more rotatable bonds than the second 
+		//in MCS, the first molecule should have more rotatable bonds than the second
 		boolean[] bondMCSMol = null;
 		boolean[] bondMCSFrag = null;
 		boolean isNativeLigFrag;//if native ligand is smaller than the candidate molecule
@@ -219,9 +219,9 @@ public class DockingEngine {
 		mcs.getMCSBondArray(bondMCSMol, bondMCSFrag);
 		mcsConstrainedBonds = new ArrayList<>();
 		boolean[] bondArray = null;
-		if(isNativeLigFrag) 
+		if(isNativeLigFrag)
 			bondArray = bondMCSMol;
-		else 
+		else
 			bondArray = bondMCSFrag;
 		for(int b=0;b<bondArray.length;b++) {
 				if(bondArray[b])
@@ -251,7 +251,7 @@ public class DockingEngine {
 				counter++;
 			}
 			Coordinates trans1 = new Coordinates();
-			Matrix rot = new Matrix(3,3); 
+			Matrix rot = new Matrix(3,3);
 			Coordinates trans2 = new Coordinates();
 			KabschAlignment alignment = new KabschAlignment(coords1,coords2,mapping);
 			alignment.align(trans1,rot,trans2);
@@ -263,7 +263,7 @@ public class DockingEngine {
 			}
 			confsWithRMSDs.put(conf, rmsd);
 		}
-		
+
 		LinkedHashMap<Conformer,Double> sortedConfs = confsWithRMSDs.entrySet().stream().sorted(Map.Entry.<Conformer,Double>comparingByValue()).collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue,
 				(e1, e2) -> e1, LinkedHashMap::new));
 		Iterator<Entry<Conformer,Double>> iterator = sortedConfs.entrySet().iterator();
@@ -374,7 +374,7 @@ public class DockingEngine {
 			if(threadMaster!=null && threadMaster.threadMustDie())
 				break;
 		}
-		
+
 		if(bestPose!=null) {
 			StereoMolecule best = bestPose.toMolecule();
 			Rotation rot = rotation.getInvert();
@@ -466,7 +466,7 @@ public class DockingEngine {
 		bestState = oldState;
 		oldEnergy = pose.getFGValue(new double[bestState.length]);
 		bestEnergy = oldEnergy;
-	
+
 		for(int i=0;i<steps;i++) {
 			pose.randomPerturbation();
 			double energyMC = pose.getFGValue(new double[bestState.length]);
@@ -502,23 +502,23 @@ public class DockingEngine {
 		pose.removeConstraints();
 		return pose.getScore();
 	}
-	
+
 	public void setMCSReference(StereoMolecule referencePose) {
 		mcsRef = referencePose;
 	}
-	
+
 	public static void getBindingSiteAtoms(StereoMolecule receptor, Set<Integer> bindingSiteAtoms, MoleculeGrid grid,
 			boolean includeHydrogens) {
 		int[] gridSize = grid.getGridSize();
 		int atoms = receptor.getAtoms();
 		if(includeHydrogens)
 			atoms = receptor.getAllAtoms();
-		
+
 		for(int i=0;i<atoms;i++) {
 			int[] gridC = grid.getGridCoordinates(receptor.getAtomCoordinates(i));
 			int x = gridC[0];
 			int y = gridC[1];
-			int z = gridC[2];	
+			int z = gridC[2];
 			if(x>0 && x<gridSize[0]) {
 				if(y>0 && y<gridSize[1]) {
 					if(z>0 && z<gridSize[2]) {
@@ -528,7 +528,7 @@ public class DockingEngine {
 			}
 		}
 	}
-	
+
 	public static int[] getReceptorAtomTypes(StereoMolecule receptor) {
 		int[] receptorAtomTypes = new int[receptor.getAtoms()];
 		for(int i=0;i<receptor.getAtoms();i++) {
@@ -572,7 +572,7 @@ public class DockingEngine {
 		ConformerSet confSet = confSetGen.generateConformerSet(nativePose);
 		double eMin = Double.MAX_VALUE;
 
-		ConformerSet initialPos = new ConformerSet();
+		ConformerSet initialPos = new ConformerSet(null);
 		for (Conformer conformer : confSet) {
 			if (conformer != null) {
 				StereoMolecule conf = conformer.toMolecule();
@@ -606,10 +606,10 @@ public class DockingEngine {
 		}
 		return energy;
 	}
-	
+
 	private static double getCoreRMSD(Coordinates[] coords1, Coordinates[] coords2) {
 		double rmsd = 0.0;
-		for(int i=0;i<coords1.length;i++) { 
+		for(int i=0;i<coords1.length;i++) {
 			Coordinates c1 = coords1[i];
 			Coordinates c2 = coords2[i];
 			rmsd+=c1.distanceSquared(c2);
@@ -628,7 +628,7 @@ public class DockingEngine {
 		private static final String DELIMITER2 = ":";
 		private static final String DELIMITER3 = "%";
 		private static final String NULL_CONTRIBUTION = "#";
-		
+
 		public DockingResult(StereoMolecule input,
 				StereoMolecule pose, double score, Map<String,Double> contributions) {
 			this.score = score;
@@ -648,15 +648,15 @@ public class DockingEngine {
 		public double getScore() {
 			return score;
 		}
-		
+
 		public StereoMolecule getPose() {
 			return pose;
 		}
-		
+
 		public Map<String,Double> getContributions() {
 			return contributions;
 		}
-		
+
 		public String encode() {
 			Encoder encoder = Base64.getEncoder();
 			StringBuilder sb = new StringBuilder();
@@ -682,10 +682,10 @@ public class DockingEngine {
 				}
 				sb.setLength(sb.length() - 1);
 			}
-			
+
 			return sb.toString();
 		}
-		
+
 		public static DockingResult decode(String resultString) {
 			Decoder decoder = Base64.getDecoder();
 			String[] s = resultString.split(DELIMITER);
