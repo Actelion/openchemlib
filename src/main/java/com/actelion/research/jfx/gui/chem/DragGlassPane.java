@@ -38,7 +38,9 @@ package com.actelion.research.jfx.gui.chem;
  * User: rufenec
  * Date: 2/21/14
  * Time: 6:14 PM
+ * @deprecated Use {@link com.actelion.research.gui.FXStructureView} or {@link com.actelion.research.gui.FXEditableStructureView} instead.
  */
+@Deprecated
 public class DragGlassPane extends javafx.scene.layout.Pane
 {
 }
