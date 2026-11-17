@@ -85,11 +85,13 @@ public class ConformerSet extends ArrayList<Conformer> {
 				add(new Conformer(mol));
 
 				for(int i=2; i<confString.length;i++) {
-					Conformer conformer = new Conformer(mol, false);
+					Conformer conformer = new Conformer(mol);
 					try {
 						parser.parseCoordinates(confString[i].getBytes(StandardCharsets.UTF_8), 0, mol, conformer.getCoordinates());
 						add(conformer);
-					} catch (Exception e) {}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 
 				if (plusEnantiomers) {
@@ -118,7 +120,7 @@ public class ConformerSet extends ArrayList<Conformer> {
 
 			int index = ArrayUtils.indexOf(coords, (byte)32,0);
 			while (index != -1) {
-				Conformer conformer = new Conformer(mol, false);
+				Conformer conformer = new Conformer(mol);
 				try {
 					parser.parseCoordinates(coords, index+1, mol, conformer.getCoordinates());
 					add(conformer);

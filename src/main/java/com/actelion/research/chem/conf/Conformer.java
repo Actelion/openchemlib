@@ -56,22 +56,11 @@ public class Conformer {
 	 * @param mol
 	 */
 	public Conformer(StereoMolecule mol) {
-		this(mol, true);
-	}
-
-	/**
-	 * Creates a Conformer, i.e. basically a new set of atom coordinates for the given Molecule.
-	 * The conformer's coordinate array is initiallized and populated from mol only if copyCoordinates=true.
-	 * @param mol
-	 * @param copyCoordinates if true, coodinates are taken from mol, otherwise, they are kept empty
-	 */
-	public Conformer(StereoMolecule mol, boolean copyCoordinates) {
 		mMol = mol;
 		mCoordinates = new Coordinates[mol.getAllAtoms()];
 
-		if (copyCoordinates)
-			for (int atom = 0; atom < mol.getAllAtoms(); atom++)
-				mCoordinates[atom] = new Coordinates(mol.getAtomCoordinates(atom));
+		for (int atom = 0; atom < mol.getAllAtoms(); atom++)
+			mCoordinates[atom] = new Coordinates(mol.getAtomCoordinates(atom));
 
 		mEnergy = Double.NaN;
 	}
