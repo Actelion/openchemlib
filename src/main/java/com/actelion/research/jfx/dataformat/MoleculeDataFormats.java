@@ -41,6 +41,7 @@ import javafx.scene.input.DataFormat;
  * Date: 9/9/13
  * Time: 10:35 AM
  * To change this template use File | Settings | File Templates.
+ * @deprecated Use {@link com.actelion.research.gui.clipboard.ClipboardHandler} or {@link com.actelion.research.gui.fx.FXMoleculeTransfer} instead.
  */
 @Deprecated
 public class MoleculeDataFormats

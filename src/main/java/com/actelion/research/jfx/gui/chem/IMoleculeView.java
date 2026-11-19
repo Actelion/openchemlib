@@ -34,6 +34,10 @@
 package com.actelion.research.jfx.gui.chem;
 
 
+/**
+ * @deprecated Use {@link com.actelion.research.gui.FXStructureView} or {@link com.actelion.research.gui.FXEditableStructureView} instead.
+ */
+@Deprecated
 public interface IMoleculeView
 {
     public void setMolecule(com.actelion.research.chem.StereoMolecule mol);
