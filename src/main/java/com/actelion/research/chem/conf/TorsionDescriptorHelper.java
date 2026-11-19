@@ -43,29 +43,31 @@ public class TorsionDescriptorHelper {
 	private static final int SYMMETRY_120 = 2;  // 0 -> 119 (equals 120 -> 239 and 240 -> 359)
 	private static final int SYMMETRY_60  = 3;  // 0 -> 59 (60 -> 119, 120 -> 179, 180 -> 239, 240 -> 299, 300 -> 359)
 
-	private static double[] SYMMETRY_REDUNDANCY_ANGLE = { 2*Math.PI, Math.PI, 2*Math.PI/3, Math.PI/3};
+	private static final double[] SYMMETRY_REDUNDANCY_ANGLE = { 2*Math.PI, Math.PI, 2*Math.PI/3, Math.PI/3};
 
-	private static final int HALF_SYMMETRY_C1 = 0;  // three distinct terminal neighbors
-	private static final int HALF_SYMMETRY_D1 = 1;  // e.g. single terminal neighbor or two equal sp3 neighbors
-	private static final int HALF_SYMMETRY_D2 = 2;  // two equal sp2 neighbors
-	private static final int HALF_SYMMETRY_D3 = 3;  // for simplicity reasons this is covered by D1
+	private static final int HALF_SYMMETRY_NONE = 0; // this includes C1 and D1, which behave like none in the conformer context
+	private static final int HALF_SYMMETRY_D1 = 1;   // only one external neighbor
+	private static final int HALF_SYMMETRY_D2 = 2;   // two equal sp2 neighbors
+	private static final int HALF_SYMMETRY_D3 = 3;   // for simplicity reasons this is covered by D1
 
 	private static final int[][] SYMMETRY =
-		  { { SYMMETRY_360, SYMMETRY_360, SYMMETRY_360, SYMMETRY_120 },
+		  { { SYMMETRY_360, SYMMETRY_360, SYMMETRY_180, SYMMETRY_120 },
 			{ SYMMETRY_360, SYMMETRY_360, SYMMETRY_180, SYMMETRY_120 },
-			{ SYMMETRY_360, SYMMETRY_180, SYMMETRY_180, SYMMETRY_60  },
-			{ SYMMETRY_120, SYMMETRY_120, SYMMETRY_60 , SYMMETRY_120 } };
+			{ SYMMETRY_180, SYMMETRY_180, SYMMETRY_180, SYMMETRY_60 },
+			{ SYMMETRY_120, SYMMETRY_120, SYMMETRY_60, SYMMETRY_120  } };
 
 	private final StereoMolecule mMol;
 	private final int[] mRotatableBond;
 	private final float[] mBondRelevance;
+	private final boolean[] mIsRotatableBond;
 	private int[][] mAtomSequence;
 	private int[] mSymmetryClass;
 
 	public TorsionDescriptorHelper(StereoMolecule mol, boolean considerBondRelevance) {
 		mMol = mol;
 		mMol.ensureHelperArrays(Molecule.cHelperSymmetrySimple);
-		mRotatableBond = findRotatableBonds(mol);
+		mIsRotatableBond = new boolean[mMol.getBonds()];
+		mRotatableBond = findRotatableBonds(mol, mIsRotatableBond);
 		mBondRelevance = considerBondRelevance ? TorsionDescriptor.getRotatableBondWeights(mol, mRotatableBond) : null;
 		findAtomSequences();
 		}
@@ -73,10 +75,21 @@ public class TorsionDescriptorHelper {
 	public TorsionDescriptorHelper(StereoMolecule mol, int[] rotatableBond, boolean considerBondRelevance) {
 		mMol = mol;
 		mMol.ensureHelperArrays(Molecule.cHelperSymmetrySimple);
+		mIsRotatableBond = new boolean[mMol.getBonds()];
+		for (int bond : rotatableBond)
+			mIsRotatableBond[bond] = true;
 		mRotatableBond = rotatableBond;
 		mBondRelevance = considerBondRelevance ? TorsionDescriptor.getRotatableBondWeights(mol, rotatableBond) : null;
 		findAtomSequences();
 		}
+
+	public int[] getRotatableBonds() {
+		return mRotatableBond;
+	}
+
+	public float[] getBondRelevances() {
+		return mBondRelevance;
+	}
 
 	/**
 	 * Creates a TorsionDescriptor from the coordinates of the molecule passed to the constructor
@@ -108,6 +121,7 @@ public class TorsionDescriptorHelper {
 		float[] maxTorsion = new float[mRotatableBond.length];
 
 		for (int i=0; i<mRotatableBond.length; i++) {
+//if (i==0) System.out.println("TorsionDescriptorHelper bond: "+mRotatableBond[i]+" torsion:"+conformer.getBondTorsion(mRotatableBond[i])+" calculated:"+TorsionDB.calculateTorsionExtended(conformer, mAtomSequence[i])+" normalized:"+getNormalizedTorsion(TorsionDB.calculateTorsionExtended(conformer, mAtomSequence[i]), mSymmetryClass[i])+" symClass:"+mSymmetryClass[i]);
 			torsion[i] = (float) getNormalizedTorsion(TorsionDB.calculateTorsionExtended(conformer, mAtomSequence[i]), mSymmetryClass[i]);
 			maxTorsion[i] = (float)SYMMETRY_REDUNDANCY_ANGLE[mSymmetryClass[i]];
 			}
@@ -125,10 +139,12 @@ public class TorsionDescriptorHelper {
 	 * An exception are linear chains of sp-hybridized atoms, of which not more than one
 	 * bond is considered rotatable.
 	 */
-	public static int[] findRotatableBonds(StereoMolecule mol) {
+	public static int[] findRotatableBonds(StereoMolecule mol, boolean[] isRotatableBond) {
 		mol.ensureHelperArrays(Molecule.cHelperRings);
 
-		boolean[] isRotatableBond = new boolean[mol.getBonds()];
+		if (isRotatableBond == null)
+			isRotatableBond = new boolean[mol.getBonds()];
+
 		int count = 0;
 		for (int bond=0; bond<mol.getBonds(); bond++) {
 			if (qualifiesAsDescriptorBond(mol, bond)) {
@@ -177,7 +193,7 @@ public class TorsionDescriptorHelper {
 					}
 				}
 
-			if (maxBond != null && bond != maxBond[0])	// in case of linear chains, we only consider the bond with the highest index rotatable
+			if (bond != maxBond[0])	// in case of linear chains, we only consider the bond with the highest index rotatable
 				return false;
 
 			// now we replace the bondAtom by the end-of-chain atom
@@ -293,6 +309,9 @@ public class TorsionDescriptorHelper {
 	 * @return
 	 */
 	private int getHalfSymmetry(int atom, int rearAtom) {
+		if (hasRemoteRotatableBonds(atom, rearAtom))
+			return HALF_SYMMETRY_NONE;
+
 		if (mMol.getConnAtoms(atom) == 2)
 			return HALF_SYMMETRY_D1;
 
@@ -302,7 +321,7 @@ public class TorsionDescriptorHelper {
 			if (mMol.getSymmetryRank(connAtom[0]) == mMol.getSymmetryRank(connAtom[1]))
 				return isFlatAtom(atom) ? HALF_SYMMETRY_D2 : HALF_SYMMETRY_D1;
 			else
-				return isFlatAtom(atom) ? HALF_SYMMETRY_D1 : HALF_SYMMETRY_C1;
+				return isFlatAtom(atom) ? HALF_SYMMETRY_D1 : HALF_SYMMETRY_NONE;
 		}
 
 		if (mMol.getConnAtoms(atom) == 4) {
@@ -317,7 +336,35 @@ public class TorsionDescriptorHelper {
 				return HALF_SYMMETRY_D1;
 		}
 
-		return HALF_SYMMETRY_C1;
+		return HALF_SYMMETRY_NONE;
+	}
+
+	/**
+	 * @param atom
+	 * @param rearAtom
+	 * @return whether that molecule half (atom->rearAtom and behind) has more rotatable bonds
+	 */
+	private boolean hasRemoteRotatableBonds(int atom, int rearAtom) {
+		int[] graphAtom = new int[mMol.getAtoms()];
+		graphAtom[0] = atom;
+		boolean[] isUsedAtom = new boolean[mMol.getAtoms()];
+		int current = 0;
+		int highest = 0;
+		isUsedAtom[rearAtom] = true;
+		isUsedAtom[atom] = true;
+		while (current <= highest) {
+			for (int i=0; i<mMol.getConnAtoms(graphAtom[current]); i++) {
+				int connAtom = mMol.getConnAtom(graphAtom[current], i);
+				if (!isUsedAtom[connAtom]) {
+					if (mIsRotatableBond[mMol.getConnBond(graphAtom[current], i)])
+						return true;
+					graphAtom[++highest] = connAtom;
+					isUsedAtom[connAtom] = true;
+				}
+			}
+			current++;
+		}
+		return false;
 	}
 
 	/**
@@ -349,7 +396,7 @@ public class TorsionDescriptorHelper {
 			if (mMol.getConnAtoms(rootAtom) == 3)	// two symmetrical neighbours at sp3
 				return -1;
 
-			if (mMol.getConnAtoms(rootAtom) == 3) {	// three neighbours of which two are symmetrical
+			if (mMol.getConnAtoms(rootAtom) == 4) {	// three neighbours of which two are symmetrical
 				int[] connAtom = getTerminalAtoms(rootAtom, rearAtom);
 				if (mMol.getSymmetryRank(connAtom[0]) == mMol.getSymmetryRank(connAtom[1]))
 					return connAtom[2];
@@ -382,13 +429,13 @@ public class TorsionDescriptorHelper {
 	 * @return angle within native range of symmetry type
 	 */
 	private static double getNormalizedTorsion(double angle, int symmetryClass) {
-		double limit = SYMMETRY_REDUNDANCY_ANGLE[symmetryClass] / 2;
+		double limit = SYMMETRY_REDUNDANCY_ANGLE[symmetryClass];
 
-		while (angle < -limit)
+		if (angle < 0)
 			angle += 2*Math.PI;
 
 		while (angle >= limit)
-			angle -= SYMMETRY_REDUNDANCY_ANGLE[symmetryClass];
+			angle -= limit;
 
 		return angle;
 		}

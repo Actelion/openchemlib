@@ -1,6 +1,6 @@
 /*
  * Copyright 2013-2020 Thomas Sander, openmolecules.org
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
@@ -167,7 +167,7 @@ public class ConformerGenerator {
 			for (int i=0; i<firstNewHydrogenConnIndex; i++)
 				if (i != stereoBondIndex)
 					angle[bond++] = mol.getBondAngle(atom, mol.getConnAtom(atom, i));
-	
+
 			Arrays.sort(angle);
 			}
 
@@ -303,7 +303,7 @@ public class ConformerGenerator {
 	/**
 	 * If the conformer generation shall be stopped after a certain time
 	 * of unsuccessfully trying generating conformers, then set a timeout.
-	 * @param millis milli-seconds after which to stop the conformer generation or 0L to remove the timeout
+	 * @param millis milliseconds after which to stop the conformer generation or 0L to remove the timeout
 	 */
 	public void setTimeOut(long millis) {
 		mTimeOut = millis;

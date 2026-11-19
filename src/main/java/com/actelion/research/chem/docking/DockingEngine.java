@@ -572,7 +572,7 @@ public class DockingEngine {
 		ConformerSet confSet = confSetGen.generateConformerSet(nativePose);
 		double eMin = Double.MAX_VALUE;
 
-		ConformerSet initialPos = new ConformerSet(null);
+		ConformerSet initialPos = new ConformerSet();
 		for (Conformer conformer : confSet) {
 			if (conformer != null) {
 				StereoMolecule conf = conformer.toMolecule();

@@ -386,6 +386,10 @@ public class Conformer {
 		return mTorsionDescriptor.equals(conformer.mTorsionDescriptor);
 	}
 
+	public double getSimilarity(Conformer conformer) {
+		return 1f - mTorsionDescriptor.getDissimilarity(conformer.mTorsionDescriptor);
+	}
+
 	/**
 	 * Calculates the torsion descriptor for the current coordinates using the passed set of rotatable bonds.
 	 * You should instantiate a TorsionDescriptorHelper once and pass it for every new conformer to this method.
@@ -395,100 +399,7 @@ public class Conformer {
 		mTorsionDescriptor = helper.getTorsionDescriptor(this);
 	}
 
-	public boolean hasTorsionDescriptor() {
-		return mTorsionDescriptor != null;
+	public TorsionDescriptor getTorsionDescriptor() {
+		return mTorsionDescriptor;
 	}
-
-	/**
-	 * Serializes the given conformer to a string.
-	 * <p>
-	 * Use the constructor Conformer(String serialized) to deserialize
-	 * the conformer.
-	 *
-	 * @return
-	 *
-	public String serialize() {
-		StringBuilder sb = new StringBuilder();
-
-		Canonizer c = new Canonizer(mMol);
-		String s_idcode = c.getIDCode();
-
-		List<String> s_coordinates = new ArrayList<>();
-		for (Coordinates coords:mCoordinates)
-			s_coordinates.add(encodeCoordinates(coords));
-
-		String s_bondTorsion = null;
-		if (mBondTorsion == null) {
-			s_bondTorsion = "N";
-		} else {
-			s_bondTorsion = "X" + SimpleEncoder.encodeShortArray(mBondTorsion);
-		}
-
-		sb.append(s_idcode);
-		sb.append(" ");
-		sb.append(String.join(";", s_coordinates));
-		sb.append(" ");
-		sb.append(String.join(";", s_bondTorsion));
-		sb.append(" ");
-		sb.append("" + mEnergy);
-		sb.append(" ");
-		sb.append("" + mName);
-
-		return sb.toString();
-	}*/
-
-	/**
-	 * Constructor for deserialization.
-	 *
-	 * @param serialized
-	 *
-	public Conformer(String serialized) {
-		mTorsionDescriptor = null;
-
-		String[] splits = serialized.split(" ");
-
-		String idcode   = splits[0];
-		String coords   = splits[1];
-		String torsions = splits[2];
-		String energy   = splits[3];
-		String name     = splits[4];
-
-		IDCodeParser p = new IDCodeParser();
-		mMol = new StereoMolecule();
-		p.parse(mMol,idcode);
-		String[] c_split = coords.split(";");
-		mCoordinates = new Coordinates[c_split.length];
-		for(int zi=0;zi<c_split.length;zi++) { mCoordinates[zi] = decodeCoordinates(c_split[zi]); }
-
-		if(torsions.startsWith("N")) {
-			mBondTorsion = null;
-		}
-		else {
-			mBondTorsion = SimpleEncoder.decodeShortArray(torsions.substring(1));
-		}
-
-		mEnergy = Double.parseDouble(energy);
-		mName = name;
-	}
-
-	public static String encodeCoordinates(Coordinates c) {
-		StringBuilder sb = new StringBuilder();
-
-		byte[] data = ByteBuffer.allocate(4*3).putFloat((float) c.x)
-				.putFloat((float) c.y)
-				.putFloat((float) c.z).array();
-		return SimpleEncoder.convertByteArrayToS3IDCode(data);
-	}
-
-	public static Coordinates decodeCoordinates(String s) {
-		byte[] data = SimpleEncoder.convertS3IDCodeToByteArray(s);
-		byte[] fx = new byte[]{data[0],data[1],data[2],data[3]};
-		byte[] fy = new byte[]{data[4],data[5],data[6],data[7]};
-		byte[] fz = new byte[]{data[8],data[9],data[10],data[11]};
-		float cx = ByteBuffer.wrap(fx).getFloat();
-		float cy = ByteBuffer.wrap(fy).getFloat();
-		float cz = ByteBuffer.wrap(fz).getFloat();
-		return new Coordinates(cx,cy,cz);
-	}
-*/
 }

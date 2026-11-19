@@ -58,7 +58,7 @@ public class ShapeDocking {
 //	}
 
 	public ConformerSet dock(StereoMolecule candidate, ThreadMaster tm) {
-		ConformerSet aligned = new ConformerSet(null);
+		ConformerSet aligned = new ConformerSet();
 		PheSAMolecule candidateShape = dhs.createDescriptor(candidate);
 		List<AlignmentResult> results = PheSAAlignmentOptimizer.alignToNegRecImg(negRecImage, candidateShape.getVolumes(), phesaSetting, tm);
 		for(AlignmentResult result: results) {

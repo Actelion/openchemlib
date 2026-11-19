@@ -52,7 +52,14 @@ import java.util.Iterator;
 public class ConformerSet extends ArrayList<Conformer> {
 	public static final String PLUS_ENANTIOMERS = " plusEnantiomers";
 
-	private TorsionDescriptorHelper mDescriptorHelper;
+	private final TorsionDescriptorHelper mDescriptorHelper;
+
+	/**
+	 * Instantiates an empty ConformerSet for new Conformers of the same molecule to be added.
+	 */
+	public ConformerSet() {
+		this((TorsionDescriptorHelper)null);
+	}
 
 	/**
 	 * Instantiates an empty ConformerSet for new Conformers of the same molecule to be added.
@@ -64,7 +71,17 @@ public class ConformerSet extends ArrayList<Conformer> {
 	}
 
 	/**
-	 * Instantiates a ConformerSet which is populated by one or more Conformers encoded as SPACE-separated String
+	 * Instantiates a ConformerSet, which is populated by one or more Conformers encoded as SPACE-separated String
+	 * of one idcode, multiple idcoordinates, and optionally a 'plusEnantiomers', which would generate an enantiomeric
+	 * set of all the conformers given before that.
+	 * @param s String starting with an idcode followed multiple times by ' '+id_coordinates and possible by ' plusEnantiomers'
+	 */
+	public ConformerSet(String s) {
+		this(s, null);
+	}
+
+	/**
+	 * Instantiates a ConformerSet, which is populated by one or more Conformers encoded as SPACE-separated String
 	 * of one idcode, multiple idcoordinates, and optionally a 'plusEnantiomers', which would generate an enantiomeric
 	 * set of all the conformers given before that.
 	 * @param s String starting with an idcode followed multiple times by ' '+id_coordinates and possible by ' plusEnantiomers'
@@ -87,7 +104,7 @@ public class ConformerSet extends ArrayList<Conformer> {
 				for(int i=2; i<confString.length;i++) {
 					Conformer conformer = new Conformer(mol);
 					try {
-						parser.parseCoordinates(confString[i].getBytes(StandardCharsets.UTF_8), 0, mol, conformer.getCoordinates());
+						new IDCodeParserWithoutCoordinateInvention().parseCoordinates(confString[i].getBytes(StandardCharsets.UTF_8), 0, mol, conformer.getCoordinates());
 						add(conformer);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -109,10 +126,22 @@ public class ConformerSet extends ArrayList<Conformer> {
 	 * which would generate an enantiomeric set of all the conformers given before that.
 	 * @param idcode Canonizer encoded molecule
 	 * @param coords multiple times Canonizer encoded 3D-coordinates, possible followed by ' plusEnantiomers'
+	 */
+	public ConformerSet(byte[] idcode, byte[] coords) {
+		this(idcode, coords, null);
+	}
+
+	/**
+	 * Instantiates a ConformerSet which is populated by one or more Conformers encoded as idcode plus
+	 * SPACE-separated byte[] with multiple conformer idcoordinates optionally followed by 'plusEnantiomers',
+	 * which would generate an enantiomeric set of all the conformers given before that.
+	 * @param idcode Canonizer encoded molecule
+	 * @param coords multiple times Canonizer encoded 3D-coordinates, possible followed by ' plusEnantiomers'
 	 * @param descriptorHelper null or helper used to generate torsion descriptors and to check for novelty
 	 */
 	public ConformerSet(byte[] idcode, byte[] coords, TorsionDescriptorHelper descriptorHelper) {
 		super();
+		mDescriptorHelper = descriptorHelper;
 		if (idcode != null && coords != null) {
 			IDCodeParserWithoutCoordinateInvention parser = new IDCodeParserWithoutCoordinateInvention();
 			StereoMolecule mol = parser.getCompactMolecule(idcode, coords);
@@ -183,17 +212,21 @@ public class ConformerSet extends ArrayList<Conformer> {
 		return sb.toString();
 	}
 
-	@Override
-	public boolean add(Conformer c) {
+	public boolean contains(Conformer c) {
 		if (mDescriptorHelper != null) {
-			if (!c.hasTorsionDescriptor())
+			if (c.getTorsionDescriptor() == null)
 				c.calculateDescriptor(mDescriptorHelper);
 
 			for (Conformer existing : this)
 				if (c.equals(existing))
-					return false;
+					return true;
 		}
 
-		return super.add(c);
+		return false;
+	}
+
+	@Override
+	public boolean add(Conformer c) {
+		return !contains(c) && super.add(c);
 	}
 }

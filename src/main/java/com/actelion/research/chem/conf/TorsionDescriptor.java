@@ -35,14 +35,13 @@
 package com.actelion.research.chem.conf;
 
 import com.actelion.research.chem.StereoMolecule;
-import com.actelion.research.util.Angle;
 import com.actelion.research.util.DoubleFormat;
 
 public class TorsionDescriptor {
 	private static final float TORSION_TOLERANCE_ABSOLUTE = (float)Math.PI / 12f;
 
-	// If we consider bond relevances, then be more tolerant for peripheral bonds (relevance<<0.5)
-	// and less tolerant for central bonds (relevance>>0.5).
+	// If we consider bond relevance, then be more tolerant for peripheral bonds (relevance < 0.5)
+	// and less tolerant for central bonds (relevance > 0.5).
 	private static final float TORSION_TOLERANCE_RELATIVE = 0.5f * TORSION_TOLERANCE_ABSOLUTE;
 
 	private final float[] mTorsion;
@@ -95,47 +94,18 @@ public class TorsionDescriptor {
 	 * @return
 	 */
 	public boolean equals(TorsionDescriptor td) {
+		float tolerance = mRelevance == null ? TORSION_TOLERANCE_ABSOLUTE : TORSION_TOLERANCE_RELATIVE;
 		for (int i=0; i<mTorsion.length; i++) {
 			float dif = Math.abs(mTorsion[i] - td.mTorsion[i]);
-			if (mRelevance == null) {
-				if (dif > TORSION_TOLERANCE_ABSOLUTE
-				 && dif < mMaxTorsion[i] - TORSION_TOLERANCE_ABSOLUTE)
-					return false;
-				}
-			else {
+			if (2 * dif > mMaxTorsion[i])
+				dif = mMaxTorsion[i] - dif;
+			if (mRelevance != null)
 				dif *= mRelevance[i];
-				if (dif > TORSION_TOLERANCE_RELATIVE
-				 && dif < mMaxTorsion[i] - TORSION_TOLERANCE_RELATIVE)
-					return false;
-				}
+			if (dif > tolerance)
+				return false;
 			}
 		return true;
 		}
-
-	/**
-	 * Returns 0, if none of the torsion angles are more different than TORSION_EQUIVALENCE_TOLERANCE;
-	 * Returns -1 if the first non-equivalent torsion angle is smaller for this than for the passed TorsionDescriptor td.
-	 * @param td
-	 * @return
-	 *
-	@Override
-	public int compareTo(TorsionDescriptor td) {
-		for (int i=0; i<mTorsion.length; i++) {
-			float dif = Math.abs(mTorsion[i] - td.mTorsion[i]);
-			if (mRelevance == null) {
-				if (dif > TORSION_TOLERANCE_ABSOLUTE
-				 && dif < mMaxTorsion[i] - TORSION_TOLERANCE_ABSOLUTE)
-					return (dif < mMaxTorsion[i] / 2) ^ (mTorsion[i] < td.mTorsion[i]) ? 1 : -1;
-				}
-			else {
-				dif *= mRelevance[i];
-				if (dif > TORSION_TOLERANCE_RELATIVE
-				 && dif < mMaxTorsion[i] - TORSION_TOLERANCE_RELATIVE)
-					return (dif < mMaxTorsion[i] / 2) ^ (mTorsion[i] < td.mTorsion[i]) ? 1 : -1;
-				}
-			}
-		return 0;
-		}*/
 
 	/**
 	 * The relevance of a rotatable bond and its torsion angle for creating substantially different conformers
@@ -151,26 +121,27 @@ public class TorsionDescriptor {
 		}
 
 	/**
-	 * Calculates a similarity value between td and this considering
-	 * individual torsion values, the importance of the rotatable bond,
-	 * and the ratio of rotatable/non-rotatable bonds.
+	 * Calculates a dissimilarity value between td and this considering
+	 * individual torsion values and rotatable bond relevance, if available.
 	 * @param td
 	 * @return
 	 */
-	public float getDissimilarity(TorsionDescriptor td, float[] bondWeight) {
-		assert(mTorsion.length == td.mTorsion.length);
-
+	public double getDissimilarity(TorsionDescriptor td) {
 		if (mTorsion.length == 0)
-			return 0.0f;
+			return 0f;
 
-		float meanAngleDiff = 0f;
-
+		float difSum = 0f;
 		float weightSum = 0f;
 		for (int i=0; i<mTorsion.length; i++) {
-			meanAngleDiff = (float)(meanAngleDiff + bondWeight[i] * Math.abs(Angle.difference(mTorsion[i], td.mTorsion[i])));
-			weightSum += bondWeight[i];
+			float dif = Math.abs(mTorsion[i] - td.mTorsion[i]);
+			if (2 * dif > mMaxTorsion[i])
+				dif = mMaxTorsion[i] - dif;
+			if (mRelevance != null)
+				dif *= mRelevance[i];
+			difSum += dif * dif;
+			weightSum += (mRelevance == null) ? 1f : mRelevance[i];
 			}
-		return meanAngleDiff / ((float)Math.PI * weightSum);
+		return Math.sqrt(difSum) / ((float)Math.PI * weightSum);
 		}
 
 	@Override
@@ -178,7 +149,7 @@ public class TorsionDescriptor {
 		StringBuilder sb = new StringBuilder();
 		for (int i=0; i<mTorsion.length; i++) {
 			sb.append(i == 0? "Torsions: " : ", ");
-			sb.append(DoubleFormat.toString(mTorsion[i]*180/Math.PI, 1));
+			sb.append(Math.round(mTorsion[i]*180/Math.PI));
 			sb.append("(").append(Math.round(mMaxTorsion[i]*180/Math.PI));
 			if (mRelevance != null)
 				sb.append(",").append(DoubleFormat.toString(mRelevance[i], 2));

@@ -179,7 +179,7 @@ public class DescriptorHandlerShape implements DescriptorHandler<PheSAMolecule,S
 				System.err.println("missing hydrogens in 3D structure");
 				return FAILED_OBJECT;
 			}
-			confSet = new ConformerSet(null);
+			confSet = new ConformerSet();
 			confSet.add(new Conformer(shapeMolecule)); //take input conformation
 			}
 
