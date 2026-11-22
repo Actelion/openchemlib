@@ -181,7 +181,7 @@ public interface DescriptorConstants {
    
     DescriptorInfo DESCRIPTOR_MAX_COMMON_SUBSTRUCT =
         					new DescriptorInfo("MaximumCommonSubstructure",
-        										"Structure",
+        										"MCS",
 												"1.0",
         										DESCRIPTOR_TYPE_MOLECULE,
         										false,
