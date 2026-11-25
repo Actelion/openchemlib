@@ -240,17 +240,16 @@ public class BondAngleSet {
 					break;
 					}
 				}
-				// acyclic atoms and non-aromatic 6-membered or larger rings
-			else {
-				float angle = (mMol.getAtomicNo(atom) > 10) ? 109.47f * (float)Math.PI/180.0f
-							: (mMol.getAtomPi(atom) == 2)   ? (float)Math.PI
-				            :  mMol.isFlatNitrogen(atom)    ? 120.00f * (float)Math.PI/180.0f
-							: (mMol.getAtomPi(atom) == 0)   ? 109.47f * (float)Math.PI/180.0f
-															: 120.00f * (float)Math.PI/180.0f;
-				for (int i=1; i<connAtoms; i++)
-					for (int j=0; j<i; j++)
-						mBondAngle[atom][i][j] = angle;
-				}
+			// Use default estimates for angles left unset by the ring rules.
+			float defaultAngle = (mMol.getAtomicNo(atom) > 10) ? 109.47f * (float)Math.PI/180.0f
+							   : (mMol.getAtomPi(atom) == 2) ? (float)Math.PI
+							   : mMol.isFlatNitrogen(atom) ? 120.00f * (float)Math.PI/180.0f
+							   : (mMol.getAtomPi(atom) == 0) ? 109.47f * (float)Math.PI/180.0f
+							   : 120.00f * (float)Math.PI/180.0f;
+			for (int i=1; i<connAtoms; i++)
+				for (int j=0; j<i; j++)
+					if (mBondAngle[atom][i][j] == 0.0f)
+						mBondAngle[atom][i][j] = defaultAngle;
 			}
 		}
 
